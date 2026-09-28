@@ -18,42 +18,31 @@ use std::time::Instant;
 use allocative::Allocative;
 use anyhow::Context;
 use buck2_core::buck2_env;
-use buck2_core::execution_types::executor_config::MetaInternalExtraParams;
-use buck2_core::execution_types::executor_config::RemoteExecutorDependency;
 use buck2_core::execution_types::executor_config::RemoteExecutorUseCase;
 use buck2_core::fs::project::ProjectRoot;
 use buck2_core::fs::project_rel_path::ProjectRelativePath;
-use buck2_data::ReQueueAcquiringDependencies;
 use buck2_data::ReQueueCancelled;
 use buck2_data::ReQueueNoWorkerAvailable;
 use buck2_data::ReQueueOverQuota;
 use buck2_error::BuckErrorContext;
 use buck2_error::BuckErrorOptionContext;
 use buck2_error::buck2_error;
-use buck2_error::conversion::from_any_with_tag;
-use buck2_events::dispatch::get_dispatcher;
-use buck2_events::schedule_type::SandcastleScheduleType;
 use buck2_fs::error::IoResultExt;
 use buck2_fs::fs_util;
 use buck2_fs::paths::abs_norm_path::AbsNormPath;
 use buck2_hash::BuckMutMap;
-#[cfg(fbcode_build)]
-use buck2_re_configuration::CASdMode;
 use buck2_re_configuration::RemoteExecutionStaticMetadataImpl;
 use dupe::Dupe;
 use either::Either;
 use futures::FutureExt;
 use futures::StreamExt;
 use futures::stream::BoxStream;
-use gazebo::prelude::*;
 use itertools::Itertools;
 use prost::Message;
 use remote_execution as RE;
 use remote_execution::ActionResultRequest;
 use remote_execution::ActionResultResponse;
 use remote_execution::BuckInfo;
-#[cfg(fbcode_build)]
-use remote_execution::ClientBuilderCommonMethods;
 use remote_execution::DownloadRequest;
 use remote_execution::ExecuteRequest;
 use remote_execution::ExecuteWithProgressResponse;
@@ -67,13 +56,10 @@ use remote_execution::OperationMetadata;
 use remote_execution::REClient;
 use remote_execution::REClientBuilder;
 use remote_execution::RemoteExecutionMetadata;
-#[cfg(fbcode_build)]
-use remote_execution::RemoteFetchPolicy;
 use remote_execution::Stage;
 use remote_execution::TActionResult2;
 use remote_execution::TClientContextMetadata;
 use remote_execution::TCode;
-use remote_execution::TDependency;
 use remote_execution::TDigest;
 use remote_execution::TExecutionPolicy;
 use remote_execution::THostResourceRequirements;
@@ -96,7 +82,6 @@ use crate::knobs::ExecutorGlobalKnobs;
 use crate::materialize::materializer::Materializer;
 use crate::re::action_identity::ReActionIdentity;
 use crate::re::convert::platform_to_proto;
-use crate::re::digest_sampler::should_sample_action_digest;
 use crate::re::error::RemoteExecutionError;
 use crate::re::error::test_re_error;
 use crate::re::error::test_re_error_with_group;
@@ -105,7 +90,6 @@ use crate::re::manager::RemoteExecutionConfig;
 use crate::re::metadata::RemoteExecutionMetadataExt;
 use crate::re::queue_stats::QueueStats;
 use crate::re::remote_action_result::ExecuteResponseWithQueueStats;
-use crate::re::remote_action_result::RemoteActionResult;
 use crate::re::stats::LocalCacheRemoteExecutionClientStats;
 use crate::re::stats::LocalCacheStats;
 use crate::re::stats::OpStats;
@@ -169,16 +153,6 @@ struct RemoteExecutionClientData {
     get_digests_ttl: OpStats,
     extend_digest_ttl: OpStats,
     local_cache: LocalCacheStats,
-    persistent_cache_mode: Option<String>,
-}
-
-#[cfg(fbcode_build)]
-fn map_casd_mode_into_remote_fetch_policy(casd_mode: &CASdMode) -> RemoteFetchPolicy {
-    match casd_mode {
-        CASdMode::LocalWithoutSync => RemoteFetchPolicy::LOCAL_FETCH_WITHOUT_SYNC,
-        CASdMode::Remote => RemoteFetchPolicy::REMOTE_FETCH,
-        CASdMode::LocalWithSync => RemoteFetchPolicy::LOCAL_FETCH_WITH_SYNC,
-    }
 }
 
 impl RemoteExecutionClient {
@@ -208,7 +182,6 @@ impl RemoteExecutionClient {
                 })??
         };
 
-        let persistent_cache_mode = client.persistent_cache_mode.clone();
         Ok(Self {
             data: Arc::new(RemoteExecutionClientData {
                 client,
@@ -221,7 +194,6 @@ impl RemoteExecutionClient {
                 get_digests_ttl: OpStats::default(),
                 extend_digest_ttl: OpStats::default(),
                 local_cache: Default::default(),
-                persistent_cache_mode,
             }),
         })
     }
@@ -317,12 +289,10 @@ impl RemoteExecutionClient {
             .await
     }
 
-    pub async fn execute<'a>(
+    pub async fn execute(
         &self,
         action_digest: ActionDigest,
         platform: &RE::Platform,
-        dependencies: impl IntoIterator<Item = &'a RemoteExecutorDependency>,
-        re_gang_workers: &[buck2_core::execution_types::executor_config::ReGangWorker],
         use_case: RemoteExecutorUseCase,
         identity: &ReActionIdentity<'_>,
         manager: &mut CommandExecutionManager,
@@ -331,7 +301,6 @@ impl RemoteExecutionClient {
         re_max_queue_time: Option<Duration>,
         re_resource_units: Option<i64>,
         knobs: &ExecutorGlobalKnobs,
-        meta_internal_extra_params: &MetaInternalExtraParams,
         worker_tool_action_digest: Option<ActionDigest>,
         priority: Option<i32>,
     ) -> buck2_error::Result<ExecuteResponseOrCancelled> {
@@ -340,8 +309,6 @@ impl RemoteExecutionClient {
             .op(self.data.client.execute(
                 action_digest,
                 platform,
-                dependencies,
-                re_gang_workers,
                 use_case,
                 identity,
                 manager,
@@ -350,7 +317,6 @@ impl RemoteExecutionClient {
                 re_max_queue_time,
                 re_resource_units,
                 knobs,
-                meta_internal_extra_params,
                 worker_tool_action_digest,
                 priority,
             ))
@@ -483,18 +449,6 @@ impl RemoteExecutionClient {
         self.data.client.get_session_id()
     }
 
-    pub fn get_persistent_cache_mode(&self) -> Option<String> {
-        self.data.persistent_cache_mode.clone()
-    }
-
-    pub fn get_experiment_name(&self) -> buck2_error::Result<Option<String>> {
-        self.data
-            .client
-            .client()
-            .get_experiment_name()
-            .map_err(|e| from_any_with_tag(e, buck2_error::ErrorTag::ReExperimentName))
-    }
-
     pub fn fill_network_stats(&self, stats: &mut RemoteExecutionClientStats) {
         stats.uploads = RemoteExecutionClientOpStats::from(&self.data.uploads);
         stats.downloads = RemoteExecutionClientOpStats::from(&self.data.downloads);
@@ -535,21 +489,6 @@ struct RemoteExecutionClientImpl {
     /// How many files to kick off downloading concurrently for one request. This should be smaller
     /// than the files semaphore to ensure we can actually *acquire* that semaphore.
     download_chunk_size: usize,
-    /// Preserve file symlinks as symlinks when uploading action result.
-    respect_file_symlinks: bool,
-    persistent_cache_mode: Option<String>,
-}
-
-fn re_platform(x: &RE::Platform) -> remote_execution::TPlatform {
-    #[allow(clippy::needless_update)] // Defaults are needed internally but not in OSS
-    remote_execution::TPlatform {
-        properties: x.properties.map(|x| remote_execution::TProperty {
-            name: x.name.clone(),
-            value: x.value.clone(),
-            ..Default::default()
-        }),
-        ..Default::default()
-    }
 }
 
 fn anticipated_queue_duration(
@@ -576,59 +515,6 @@ fn anticipated_queue_duration(
         return Ok(Some(Duration::from_millis(est)));
     }
     Ok(None)
-}
-
-fn action_result_costs(result: &remote_execution::TActionResult2) -> (u64, u64) {
-    let storage: u64 = result
-        .output_files
-        .iter()
-        .map(|f| f.digest.digest.size_in_bytes.max(0) as u64)
-        .chain(
-            result
-                .output_directories
-                .iter()
-                // Note: This size is not at all the size of the constituent files;
-                // however we can't know that value without talking to CAS, so this
-                // will have to do.
-                .map(|d| d.tree_digest.size_in_bytes.max(0) as u64),
-        )
-        .sum();
-    let meta = &result.execution_metadata;
-    let execution_time = meta
-        .execution_completed_timestamp
-        .saturating_duration_since(&meta.execution_start_timestamp);
-    let compute = execution_time.as_millis() as u64;
-    (storage, compute)
-}
-
-fn trace_action_digest(
-    digest: &ActionDigest,
-    ttl_secs: Option<i64>,
-    use_case: RemoteExecutorUseCase,
-    event: buck2_data::action_digest_trace::ActionDigestTraceEvent,
-    event_subtype: Option<&'static str>,
-    storage_cost_bytes: Option<u64>,
-    compute_cost_ms: Option<u64>,
-) {
-    if let Some(weight) = should_sample_action_digest(digest) {
-        let dispatcher = get_dispatcher();
-        let metadata = buck2_events::metadata::collect(dispatcher.daemon_id());
-        let schedule_type = SandcastleScheduleType::new()
-            .ok()
-            .and_then(|s| s.as_str().map(|s| s.to_owned()));
-        dispatcher.instant_event(buck2_data::ActionDigestTrace {
-            metadata,
-            action_digest: digest.to_string(),
-            event: event as i32,
-            event_subtype: event_subtype.map(|s| s.to_owned()),
-            ttl_secs: ttl_secs.filter(|t| *t >= 0).map(|t| t as u64),
-            re_use_case: use_case.as_str().to_owned(),
-            weight,
-            schedule_type,
-            storage_cost_bytes,
-            compute_cost_ms,
-        });
-    }
 }
 
 // Debugging tool: A set of action digests to pretend that we got cache misses on regardless of the
@@ -666,368 +552,12 @@ impl RemoteExecutionClientImpl {
             let download_chunk_size = std::cmp::max(download_concurrency / 8, 1);
             let static_metadata = &re_config.static_metadata;
 
-            #[allow(unused_mut)]
-            let mut persistent_cache_mode = None;
-            #[cfg(fbcode_build)]
-            let client = {
-                use buck2_fs::fs_util;
-                use remote_execution::CASDaemonClientCfg;
-                use remote_execution::CopyPolicy;
-                use remote_execution::CurlReactorConfig;
-                use remote_execution::EmbeddedCASDaemonClientCfg;
-                use remote_execution::RichClientMode;
-                use remote_execution::TTLExtendingConfig;
-                use remote_execution::ThreadConfig;
-                use remote_execution::create_default_config;
-
-                let mut re_client_config = create_default_config();
-
-                let mut embedded_cas_daemon_config = EmbeddedCASDaemonClientCfg {
-                    connection_count: static_metadata.cas_connection_count,
-                    address: static_metadata.cas_address.clone(),
-                    name: "buck2".to_owned(),
-                    ..Default::default()
-                };
-
-                if re_config.is_paranoid_mode {
-                    // Dedupe is not compatible with us downloading blobs and moving them.
-                    embedded_cas_daemon_config.disable_download_dedup = true;
-                }
-
-                // buck2 makes find_missing calls for the same blobs
-                // so having a 50Mb cache to amortize that
-                embedded_cas_daemon_config
-                    .cache_config
-                    .find_missing_cache_size_byte = 50 << 20;
-                // a small cache maps inodes to digests
-                // useful for both uploads and downloads
-                embedded_cas_daemon_config.cache_config.digest_cache_size = 100000;
-
-                // If a shared CAS cache directory is configured, we
-                // want to tell the RE client to rely on an external
-                // CAS daemon to manage the cache.
-                if let Some(external_casd_address) = &static_metadata.shared_casd_address {
-                    use buck2_re_configuration::CASdAddress;
-                    use buck2_re_configuration::CopyPolicy as Buck2CopyPolicy;
-                    use remote_execution::RemoteCASdAddress;
-                    use remote_execution::RemoteCacheConfig;
-                    use remote_execution::RemoteCacheSyncConfig;
-
-                    let policies: buck2_error::Result<(RemoteFetchPolicy, RemoteFetchPolicy)> =
-                        if let Some(legacy_mode) = &static_metadata.legacy_shared_casd_mode {
-                            let upper_legacy_mode = legacy_mode.to_uppercase();
-                            match upper_legacy_mode.trim() {
-                                "BIG_FILES" => Ok((
-                                    RemoteFetchPolicy::LOCAL_FETCH_WITHOUT_SYNC,
-                                    RemoteFetchPolicy::REMOTE_FETCH,
-                                )),
-                                "ALL_FILES" => Ok((
-                                    RemoteFetchPolicy::REMOTE_FETCH,
-                                    RemoteFetchPolicy::REMOTE_FETCH,
-                                )),
-                                "ALL_FILES_LOCAL_WITHOUT_SYNC" => Ok((
-                                    RemoteFetchPolicy::LOCAL_FETCH_WITHOUT_SYNC,
-                                    RemoteFetchPolicy::LOCAL_FETCH_WITHOUT_SYNC,
-                                )),
-                                unknown => {
-                                    return Err(buck2_error!(
-                                        buck2_error::ErrorTag::Input,
-                                        "Unknown RemoteCacheManagerMode: {}",
-                                        unknown
-                                    ));
-                                }
-                            }
-                        } else {
-                            Ok((
-                                static_metadata
-                                    .shared_casd_mode_small_files
-                                    .as_ref()
-                                    .map(map_casd_mode_into_remote_fetch_policy)
-                                    .unwrap_or(RemoteFetchPolicy::LOCAL_FETCH_WITHOUT_SYNC),
-                                static_metadata
-                                    .shared_casd_mode_large_files
-                                    .as_ref()
-                                    .map(map_casd_mode_into_remote_fetch_policy)
-                                    .unwrap_or(RemoteFetchPolicy::LOCAL_FETCH_WITHOUT_SYNC),
-                            ))
-                        };
-                    let (small_files_policy, large_files_policy) = policies?;
-
-                    let remote_cache_config = {
-                        let mut remote_cache_config = RemoteCacheConfig {
-                            small_files: small_files_policy,
-                            large_files: large_files_policy,
-                            address: match external_casd_address {
-                                CASdAddress::Uds(path) => RemoteCASdAddress::uds_path(path.clone()),
-                                CASdAddress::Tcp(port) => RemoteCASdAddress::tcp_port(*port as i32),
-                            },
-                            sync_files_config: Some(RemoteCacheSyncConfig {
-                                max_batch_size: static_metadata
-                                    .shared_casd_cache_sync_max_batch_size
-                                    .unwrap_or(100)
-                                    as i32,
-                                max_delay_ms: static_metadata
-                                    .shared_casd_cache_sync_max_delay_ms
-                                    .unwrap_or(1000)
-                                    as i32,
-                                wal_buckets: static_metadata
-                                    .shared_casd_cache_sync_wal_files_count
-                                    .unwrap_or(8)
-                                    as i32,
-                                wal_max_file_size: static_metadata
-                                    .shared_casd_cache_sync_wal_file_max_size
-                                    .unwrap_or(200 << 20)
-                                    as i64,
-                                ..Default::default()
-                            }),
-                            destination_path_hint: Some(
-                                re_config
-                                    .buck_out_path
-                                    .to_str()
-                                    .buck_error_context("invalid destination path")?
-                                    .to_owned(),
-                            ),
-                            sync_copy_policy: match static_metadata
-                                .shared_casd_copy_policy
-                                .clone()
-                                .unwrap_or(Buck2CopyPolicy::Copy)
-                            {
-                                Buck2CopyPolicy::Copy => CopyPolicy::FULL_COPY,
-                                Buck2CopyPolicy::Reflink => CopyPolicy::SOFT_COPY,
-                                Buck2CopyPolicy::Hybrid => CopyPolicy::HYBRID_COPY,
-                            },
-                            ..Default::default()
-                        };
-                        if let Some(tls) = static_metadata.shared_casd_use_tls {
-                            remote_cache_config.use_tls = tls;
-                        }
-                        remote_cache_config
-                    };
-                    persistent_cache_mode = Some(format!(
-                        "small=>{small_files_policy:?}, large=>{large_files_policy:?}"
-                    ));
-
-                    embedded_cas_daemon_config.remote_cache_config = Some(remote_cache_config);
-                    embedded_cas_daemon_config.cache_config.writable_cache = false;
-                    embedded_cas_daemon_config
-                        .cache_config
-                        .downloads_cache_config
-                        .dir_path = static_metadata.shared_casd_cache_path.clone();
-                }
-
-                // prevents downloading the same trees (dirs)
-                embedded_cas_daemon_config
-                    .rich_client_config
-                    .get_tree_cache_size = 50 << 20; // 50 Mb
-
-                // disabling zippy rich client until we have limits in place
-                embedded_cas_daemon_config
-                    .rich_client_config
-                    .zdb_client_mode = if static_metadata.use_zippy_rich_client {
-                    RichClientMode::ENABLED
-                } else {
-                    RichClientMode::DISABLED
-                };
-                embedded_cas_daemon_config.rich_client_config.disable_p2p =
-                    !static_metadata.use_p2p;
-                embedded_cas_daemon_config
-                    .rich_client_config
-                    .enable_rich_client = static_metadata.use_manifold_rich_client;
-
-                if let Some(channels) = static_metadata.rich_client_channels_per_blob {
-                    embedded_cas_daemon_config
-                        .rich_client_config
-                        .number_of_parallel_channels = channels;
-                }
-
-                if let Some(attempt_timeout) = static_metadata.rich_client_attempt_timeout_ms {
-                    embedded_cas_daemon_config
-                        .rich_client_config
-                        .attempt_timeout_ms = attempt_timeout;
-                }
-
-                embedded_cas_daemon_config.force_enable_deduplicate_find_missing =
-                    static_metadata.force_enable_deduplicate_find_missing;
-
-                // Will either choose the SOFT_COPY (on some linux fs like btrfs/extfs etc, on Mac if using APFS) or FULL_COPY otherwise
-                embedded_cas_daemon_config.copy_policy = CopyPolicy::BEST_AVAILABLE;
-                embedded_cas_daemon_config.materialization_mount_path = Some(
-                    re_config
-                        .buck_out_path
-                        .to_str()
-                        .buck_error_context("invalid meterialization_mount_path")?
-                        .to_owned(),
-                );
-
-                if static_metadata.cas_thread_count_ratio == 0.0 {
-                    embedded_cas_daemon_config.thread_count =
-                        ThreadConfig::fixed_thread_count(static_metadata.cas_thread_count);
-                } else {
-                    embedded_cas_daemon_config.thread_count =
-                        ThreadConfig::thread_count_ratio(static_metadata.cas_thread_count_ratio);
-                }
-
-                // make sure that outputs are writable
-                // otherwise actions that are modifying outputs will fail due to a permission error
-                embedded_cas_daemon_config.writable_outputs = true;
-
-                embedded_cas_daemon_config.client_label = static_metadata
-                    .cas_client_label
-                    .clone()
-                    .unwrap_or_else(|| "".to_owned());
-
-                let minimal_blob_ttl_threshold =
-                    static_metadata.minimal_blob_ttl_seconds.unwrap_or(3600);
-                let remaining_ttl_fraction_refresh_threshold = static_metadata
-                    .remaining_ttl_fraction_refresh_threshold
-                    .unwrap_or(0.1)
-                    as f64;
-                let remaining_ttl_random_extra_threshold = static_metadata
-                    .remaining_ttl_random_extra_threshold
-                    .unwrap_or(0.25)
-                    as f64;
-                embedded_cas_daemon_config.ttl_extending_config = Some(TTLExtendingConfig {
-                    blocking_ttl_extending_seconds_threshold: minimal_blob_ttl_threshold,
-                    remaining_ttl_fraction_refresh_threshold,
-                    remaining_ttl_random_extra_threshold,
-                    ..Default::default()
-                });
-                embedded_cas_daemon_config.action_cache_ttl_extending_config =
-                    Some(TTLExtendingConfig {
-                        blocking_ttl_extending_seconds_threshold: minimal_blob_ttl_threshold,
-                        remaining_ttl_fraction_refresh_threshold,
-                        remaining_ttl_random_extra_threshold,
-                        ..Default::default()
-                    });
-
-                re_client_config.cas_client_config =
-                    CASDaemonClientCfg::embedded_config(embedded_cas_daemon_config);
-                if let Some(logs_dir_path) = &re_config.logs_dir_path {
-                    // make sure that the log dir exists as glog is expecting that :(
-                    fs_util::create_dir_all(logs_dir_path)?;
-                    re_client_config.log_file_location = Some(
-                        logs_dir_path
-                            .to_str()
-                            .buck_error_context("Invalid log_file_location")?
-                            .to_owned(),
-                    );
-                    // keep last 10 sessions (similar to a number of buck builds)
-                    re_client_config.log_rollup_window_size = 10;
-                }
-
-                if static_metadata.curl_reactor_max_number_of_retries.is_some()
-                    || static_metadata.curl_reactor_connection_timeout_ms.is_some()
-                    || static_metadata.curl_reactor_request_timeout_ms.is_some()
-                {
-                    let mut curl_config = CurlReactorConfig {
-                        ..Default::default()
-                    };
-
-                    if let Some(max_number_of_retries) =
-                        static_metadata.curl_reactor_max_number_of_retries
-                    {
-                        curl_config.max_number_of_retries = max_number_of_retries;
-                    }
-
-                    if let Some(request_timeout_ms) =
-                        static_metadata.curl_reactor_request_timeout_ms
-                    {
-                        curl_config.request_timeout_ms = request_timeout_ms;
-                    }
-
-                    if let Some(connection_timeout_ms) =
-                        static_metadata.curl_reactor_connection_timeout_ms
-                    {
-                        curl_config.connection_timeout_ms = connection_timeout_ms;
-                    }
-
-                    re_client_config.curl_reactor_config = Some(curl_config);
-                }
-
-                re_client_config.features_config_path = static_metadata
-                    .features_config_path
-                    .as_deref()
-                    .unwrap_or(
-                        if static_metadata.use_zippy_rich_client && cfg!(target_os = "linux") {
-                            if static_metadata.shared_casd_address.is_some() {
-                                "remote_execution/features/client_buck2_pc"
-                            } else {
-                                "remote_execution/features/client_buck2"
-                            }
-                        } else {
-                            "remote_execution/features/client_buck2_alternative"
-                        },
-                    )
-                    .to_owned();
-
-                re_client_config.client_config_path = static_metadata
-                    .client_config_path
-                    .as_deref()
-                    .unwrap_or("remote_execution/client/configs/buck")
-                    .to_owned();
-
-                re_client_config.disable_fallocate = static_metadata.disable_fallocate;
-
-                re_client_config
-                    .thrift_execution_client_config
-                    .concurrency_limit = static_metadata.execution_concurrency_limit;
-
-                if let Some(engine_tier) = static_metadata.engine_tier.to_owned() {
-                    re_client_config.thrift_execution_client_config.tier = engine_tier;
-                }
-
-                if static_metadata.engine_host.is_some() || static_metadata.engine_port.is_some() {
-                    if static_metadata.engine_host.is_some()
-                        && let Some(engine_port) = static_metadata.engine_port
-                    {
-                        re_client_config.thrift_execution_client_config.host_port =
-                            Some(remote_execution::HostPort {
-                                host: static_metadata.engine_host.clone().unwrap(),
-                                port: engine_port,
-                                ..Default::default()
-                            });
-                    } else {
-                        return Err(buck2_error!(
-                            buck2_error::ErrorTag::Input,
-                            "Both engine_host and engine_port must be set if either is set"
-                        ));
-                    }
-                }
-
-                // TODO(ndmitchell): For now, we just drop RE log messages, but ideally we'd put them in our log stream.
-                let logger = slog::Logger::root(slog::Discard, slog::o!());
-                // TODO T179215751: If RE client fails we don't get the RE session ID and we can't find the RE logs.
-                // Better to generate the RE session ID ourselves and pass it to the RE client.
-                with_error_handler(
-                    op_name,
-                    "<none>",
-                    REClientBuilder::new(re_config.fb)
-                        .with_config(re_client_config)
-                        .with_cancellation(static_metadata.enable_download_cancellation)
-                        .with_logger(logger)
-                        .build_and_connect()
-                        .await,
-                )?
-            };
-
-            #[cfg(not(fbcode_build))]
             let client = {
                 with_error_handler(
                     op_name,
                     "<none>",
                     REClientBuilder::build_and_connect(&static_metadata.0).await,
                 )?
-            };
-
-            let respect_file_symlinks = {
-                #[cfg(fbcode_build)]
-                {
-                    static_metadata.respect_file_symlinks
-                }
-                #[cfg(not(fbcode_build))]
-                {
-                    false
-                }
             };
 
             Self {
@@ -1040,8 +570,6 @@ impl RemoteExecutionClientImpl {
                 exec_semaphore: Arc::new(Semaphore::new(static_metadata.exec_semaphore_size())),
                 download_files_semapore: Arc::new(Semaphore::new(download_concurrency)),
                 download_chunk_size,
-                respect_file_symlinks,
-                persistent_cache_mode,
             }
         };
 
@@ -1081,7 +609,7 @@ impl RemoteExecutionClientImpl {
                     &use_case.metadata(None),
                     ActionResultRequest {
                         digest: action_digest.to_re(),
-                        platform: Some(re_platform(platform)),
+                        platform: Some(platform.clone()),
                         ..Default::default()
                     },
                 )
@@ -1095,19 +623,6 @@ impl RemoteExecutionClientImpl {
                 _ => return Err(e),
             },
         };
-        trace_action_digest(
-            &action_digest,
-            res.as_ref().map(|r| r.ttl),
-            use_case,
-            if res.is_some() {
-                buck2_data::action_digest_trace::ActionDigestTraceEvent::CacheHit
-            } else {
-                buck2_data::action_digest_trace::ActionDigestTraceEvent::CacheMiss
-            },
-            None,
-            None,
-            None,
-        );
         Ok(res)
     }
 
@@ -1303,9 +818,6 @@ impl RemoteExecutionClientImpl {
                 // Waiting to run, no extra info needed
                 Some(TaskState::enqueued(..)) => re_stage::Stage::Queue(queue_info),
                 Some(TaskState::waiting_on_reservation(..)) => re_stage::Stage::Queue(queue_info),
-                Some(TaskState::waiting_for_gang_allocation(..)) => {
-                    re_stage::Stage::Queue(queue_info)
-                }
                 // Useful info to display
                 Some(TaskState::no_worker_available(..)) => {
                     re_stage::Stage::QueueNoWorkerAvailable(ReQueueNoWorkerAvailable {
@@ -1319,11 +831,6 @@ impl RemoteExecutionClientImpl {
                 }
                 Some(TaskState::over_quota(..)) => {
                     re_stage::Stage::QueueOverQuota(ReQueueOverQuota {
-                        queue_info: Some(queue_info),
-                    })
-                }
-                Some(TaskState::acquiring_dependencies(..)) => {
-                    re_stage::Stage::QueueAcquiringDependencies(ReQueueAcquiringDependencies {
                         queue_info: Some(queue_info),
                     })
                 }
@@ -1400,7 +907,6 @@ impl RemoteExecutionClientImpl {
         let mut exe_stage = Stage::QUEUED;
         let mut execution_started = ExecutionStarted::No;
         let mut operation_metadata = None;
-        let mut log_stream_emitted = false;
 
         let re_fallback_on_estimated_queue_time_exceeds = knobs
             .re_fallback_on_estimated_queue_time_exceeds
@@ -1454,31 +960,13 @@ impl RemoteExecutionClientImpl {
                 execution_started = ExecutionStarted::Yes;
             }
             operation_metadata = Some(progress_response.metadata);
-
-            // Emit log stream handles when first available
-            if !log_stream_emitted {
-                if let Some(ref meta) = operation_metadata {
-                    if !meta.stdout_stream_name.is_empty() || !meta.stderr_stream_name.is_empty() {
-                        log_stream_emitted = true;
-                        get_dispatcher().instant_event(buck2_data::ReLogStreamAvailable {
-                            action_digest: action_digest_str.clone(),
-                            stdout_stream_name: meta.stdout_stream_name.clone(),
-                            stderr_stream_name: meta.stderr_stream_name.clone(),
-                            action_key: action_key.clone(),
-                            use_case: re_use_case.clone(),
-                        });
-                    }
-                }
-            }
         }
     }
 
-    pub async fn execute<'a>(
+    pub async fn execute(
         &self,
         action_digest: ActionDigest,
         platform: &RE::Platform,
-        dependencies: impl IntoIterator<Item = &'a RemoteExecutorDependency>,
-        re_gang_workers: &[buck2_core::execution_types::executor_config::ReGangWorker],
         use_case: RemoteExecutorUseCase,
         identity: &ReActionIdentity<'_>,
         manager: &mut CommandExecutionManager,
@@ -1487,16 +975,12 @@ impl RemoteExecutionClientImpl {
         re_max_queue_time: Option<Duration>,
         re_resource_units: Option<i64>,
         knobs: &ExecutorGlobalKnobs,
-        meta_internal_extra_params: &MetaInternalExtraParams,
         worker_tool_action_digest: Option<ActionDigest>,
         priority: Option<i32>,
     ) -> buck2_error::Result<ExecuteResponseOrCancelled> {
         let _exec_permit = self.exec_semaphore.acquire().await;
 
-        #[cfg(not(fbcode_build))]
         let _unused = worker_tool_action_digest;
-        #[cfg(not(fbcode_build))]
-        let _unused = re_gang_workers;
 
         if buck2_env!("BUCK2_TEST_FAIL_RE_EXECUTE", bool, applicability = testing)? {
             return Err(test_re_error("Injected error", TCode::FAILED_PRECONDITION));
@@ -1521,7 +1005,7 @@ impl RemoteExecutionClientImpl {
         };
 
         let metadata = RemoteExecutionMetadata {
-            platform: Some(re_platform(platform)),
+            platform: Some(platform.clone()),
             do_not_cache: skip_cache_write,
             buck_info: Some(BuckInfo {
                 version: buck2_build_info::revision()
@@ -1530,7 +1014,6 @@ impl RemoteExecutionClientImpl {
                 build_id: identity.trace_id.to_string(),
                 ..Default::default()
             }),
-            respect_file_symlinks: Some(self.respect_file_symlinks),
             ..use_case.metadata(Some(identity))
         };
 
@@ -1540,136 +1023,18 @@ impl RemoteExecutionClientImpl {
                 || induced_cache_miss.is_some(),
             execution_policy: Some(TExecutionPolicy {
                 affinity_keys: vec![identity.affinity_key.clone()],
-                // TODO: figure out what to do with priority from `meta_internal_extra_params`
-                priority: priority
-                    .or(meta_internal_extra_params.remote_execution_policy.priority)
-                    .unwrap_or_default(),
-                region_preference: meta_internal_extra_params
-                    .remote_execution_policy
-                    .region_preference
-                    .clone()
-                    .unwrap_or_default(),
-                setup_preference_key: meta_internal_extra_params
-                    .remote_execution_policy
-                    .setup_preference_key
-                    .clone()
-                    .unwrap_or_default(),
+                priority: priority.unwrap_or_default(),
                 ..Default::default()
             }),
             action_digest: action_digest.to_re(),
             host_runtime_requirements: THostRuntimeRequirements {
-                platform: re_platform(platform),
+                platform: platform.clone(),
                 host_resource_requirements: THostResourceRequirements {
                     input_files_bytes: identity.paths.input_files_bytes() as i64,
                     resource_units: re_resource_units.unwrap_or_default(),
                     ..Default::default()
                 },
-                dependencies: dependencies
-                    .into_iter()
-                    .map(|dep| TDependency {
-                        smc_tier: dep.smc_tier.clone(),
-                        id: dep.id.clone(),
-                        ..Default::default()
-                    })
-                    .collect(),
-                #[cfg(fbcode_build)]
-                worker_tool_action_digest: worker_tool_action_digest
-                    .map(|d| d.to_re())
-                    .unwrap_or(Default::default()),
                 ..Default::default()
-            },
-            #[cfg(fbcode_build)]
-            gang: if let Some(gang) = meta_internal_extra_params.gang.as_ref() {
-                let properties: Vec<_> = gang
-                    .capabilities
-                    .iter()
-                    .map(|(k, v)| remote_execution::TProperty {
-                        name: k.clone(),
-                        value: v.clone(),
-                        ..Default::default()
-                    })
-                    .collect();
-
-                let member_spec = remote_execution::GangMember {
-                    host_runtime_requirements: THostRuntimeRequirements {
-                        platform: remote_execution::TPlatform {
-                            properties,
-                            ..Default::default()
-                        },
-                        host_resource_requirements: THostResourceRequirements {
-                            resource_units: gang.resource_units.map(i64::from).unwrap_or_default(),
-                            ..Default::default()
-                        },
-                        ..Default::default()
-                    },
-                    ..Default::default()
-                };
-
-                let locality = gang.locality.map(|l| {
-                    use buck2_core::execution_types::executor_config::ReGangLocality;
-                    match l {
-                        ReGangLocality::Unspecified => {
-                            remote_execution::LocalityConstraint::UNSPECIFIED
-                        }
-                        ReGangLocality::Region => remote_execution::LocalityConstraint::REGION,
-                        ReGangLocality::Datacenter => {
-                            remote_execution::LocalityConstraint::DATACENTER
-                        }
-                        ReGangLocality::NetworkDomain => {
-                            remote_execution::LocalityConstraint::NETWORK_DOMAIN
-                        }
-                        ReGangLocality::Rack => remote_execution::LocalityConstraint::RACK,
-                    }
-                });
-
-                Some(remote_execution::GangSpecification {
-                    workers_spec: remote_execution::GangWorkersSpec::constrained_spec(
-                        remote_execution::ConstrainedGangSpec {
-                            num_workers: gang.num_of_workers,
-                            member_spec,
-                            locality,
-                            num_sub_groups: gang.num_sub_groups.unwrap_or(1),
-                            ..Default::default()
-                        },
-                    ),
-                    ..Default::default()
-                })
-            } else if re_gang_workers.is_empty() {
-                None
-            } else {
-                let mut gang_members = Vec::with_capacity(re_gang_workers.len());
-                for worker in re_gang_workers.iter() {
-                    let properties: Vec<_> = worker
-                        .capabilities
-                        .iter()
-                        .map(|(k, v)| remote_execution::TProperty {
-                            name: k.clone(),
-                            value: v.clone(),
-                            ..Default::default()
-                        })
-                        .collect();
-
-                    gang_members.push(remote_execution::GangMember {
-                        host_runtime_requirements: THostRuntimeRequirements {
-                            platform: remote_execution::TPlatform {
-                                properties,
-                                ..Default::default()
-                            },
-                            ..Default::default()
-                        },
-                        ..Default::default()
-                    });
-                }
-
-                Some(remote_execution::GangSpecification {
-                    workers_spec: remote_execution::GangWorkersSpec::enumerated_spec(
-                        remote_execution::EnumeratedGangSpec {
-                            workers: gang_members,
-                            ..Default::default()
-                        },
-                    ),
-                    ..Default::default()
-                })
             },
             ..Default::default()
         };
@@ -1692,64 +1057,6 @@ impl RemoteExecutionClientImpl {
 
         if let Some(induced_cache_miss) = induced_cache_miss {
             induced_cache_miss.store(true, std::sync::atomic::Ordering::Relaxed);
-        }
-
-        let trace = match &res {
-            Ok(ExecuteResponseOrCancelled::Response(r)) => {
-                // If the action was served from cache or deduplicated, we don't treat it as a cache
-                // hit instead of an execution - it'll be treated as an execution on the side of the
-                // thing that it got a hit or deduplicated against.
-                #[cfg(fbcode_build)]
-                let was_not_actually_executed = r
-                    .execute_response
-                    .executed_action_details
-                    .was_served_from_cache
-                    || r.execute_response.executed_action_details.was_deduplicated;
-                #[cfg(not(fbcode_build))]
-                let was_not_actually_executed = r.execute_response.cached_result;
-                let event = if was_not_actually_executed {
-                    buck2_data::action_digest_trace::ActionDigestTraceEvent::CacheHit
-                } else {
-                    buck2_data::action_digest_trace::ActionDigestTraceEvent::RemoteExecution
-                };
-                let (storage_cost_bytes, compute_cost_ms) = if !was_not_actually_executed {
-                    let (storage, compute) = action_result_costs(&r.execute_response.action_result);
-                    (Some(storage), Some(compute))
-                } else {
-                    (None, None)
-                };
-                Some((
-                    event,
-                    Some(r.ttl()),
-                    "completed",
-                    storage_cost_bytes,
-                    compute_cost_ms,
-                ))
-            }
-            // Cancelling an execution request from the RE client causes it to be cancelled on the
-            // server side if and only if it had not yet started executing - if it had started
-            // executing, it'll run to completion and be written to the cache, so treat it mostly
-            // like a completed execution.
-            Ok(ExecuteResponseOrCancelled::Cancelled(_, _, ExecutionStarted::Yes)) => Some((
-                buck2_data::action_digest_trace::ActionDigestTraceEvent::RemoteExecution,
-                None,
-                "cancelled-after-execution-started",
-                None,
-                None,
-            )),
-            Ok(ExecuteResponseOrCancelled::Cancelled(_, _, ExecutionStarted::No)) => None,
-            Err(_) => None,
-        };
-        if let Some((event, ttl, subtype, storage_cost_bytes, compute_cost_ms)) = trace {
-            trace_action_digest(
-                &action_digest,
-                ttl,
-                use_case,
-                event,
-                Some(subtype),
-                storage_cost_bytes,
-                compute_cost_ms,
-            );
         }
 
         res
@@ -1981,14 +1288,6 @@ impl RemoteExecutionClientImpl {
         platform: &RE::Platform,
         write_type: ActionCacheWriteType,
     ) -> buck2_error::Result<WriteActionResultResponse> {
-        let (storage_cost_bytes, compute_cost_ms) =
-            if matches!(write_type, ActionCacheWriteType::LocalCacheUpload) {
-                let (storage, compute) = action_result_costs(&result);
-                (Some(storage), Some(compute))
-            } else {
-                (None, None)
-            };
-
         let attributes =
             BTreeMap::from([("write_type".to_owned(), write_type.as_str().to_owned())]);
         let response = with_error_handler(
@@ -1998,7 +1297,7 @@ impl RemoteExecutionClientImpl {
                 .get_action_cache_client()
                 .write_action_result(
                     &RemoteExecutionMetadata {
-                        platform: Some(re_platform(platform)),
+                        platform: Some(platform.clone()),
                         client_context: Some(TClientContextMetadata {
                             attributes,
                             ..Default::default()
@@ -2008,33 +1307,16 @@ impl RemoteExecutionClientImpl {
                     WriteActionResultRequest {
                         action_digest: digest.to_re(),
                         action_result: result,
-                        platform: Some(re_platform(platform)),
+                        platform: Some(platform.clone()),
                         ..Default::default()
                     },
                 )
                 .await,
         )?;
 
-        trace_action_digest(
-            &digest,
-            Some(response.ttl_seconds),
-            use_case,
-            buck2_data::action_digest_trace::ActionDigestTraceEvent::CacheUpload,
-            Some(write_type.as_str()),
-            storage_cost_bytes,
-            compute_cost_ms,
-        );
-
         Ok(response)
     }
 }
-
-#[cfg(fbcode_build)] // Relies on fbcode future sizes
-buck2_util::size_assert::words_of_async_fn_future!(
-    RemoteExecutionClientImpl::get_digests_ttl,
-    (_, _, _, _),
-    ~38
-);
 
 /// Drop the REClient on a blocking thread. The REClient destructor does a blocking wait on async
 /// calls (it tells the server to cancel its calls, but it waits for an ack), so we shouldn't drop

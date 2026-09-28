@@ -24,7 +24,6 @@ impl RemoteExecutionMetadataExt for RemoteExecutorUseCase {
     fn metadata(&self, identity: Option<&ReActionIdentity>) -> RemoteExecutionMetadata {
         let trace_id = match get_dispatcher_opt() {
             Some(dispatcher) => dispatcher.trace_id().to_string(),
-            // See the FIXME added in D54396421
             None => String::new(),
         };
         RemoteExecutionMetadata {

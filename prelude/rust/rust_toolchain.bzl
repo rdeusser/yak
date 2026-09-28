@@ -91,7 +91,7 @@ rust_toolchain_attrs = {
     # However, for "regular" builds, e.g. when building tests or binaries, or building this target
     # as a dependency of another target, these flags will be surfaced only as warnings. The primary
     # benefit here is that you can develop + test your code as normal and will not be blocked by
-    # these lints. However, once you run rust check, or submit your code to phabricator, these
+    # these lints. However, once you run rust check, or submit your code for review, these
     # lints will prevent you from landing your code. This way we can introduce lints that we'd like
     # to deny from our codebase without slowing down your inner dev loop, or encouraging you to
     # --cap-warns=lint for your projects.

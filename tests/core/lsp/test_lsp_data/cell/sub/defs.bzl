@@ -5,8 +5,6 @@
 # License, Version 2.0 found in the LICENSE-APACHE file in the root directory
 # of this source tree.
 
-# @nolint
-
 def _dummy_binary_impl(ctx):
     out = ctx.write("out.txt", ctx.attrs.name)
     return [DefaultInfo(default_output=out)]

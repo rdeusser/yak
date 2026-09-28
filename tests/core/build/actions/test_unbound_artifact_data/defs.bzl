@@ -18,7 +18,7 @@ def _action_with_unbound_artifact_impl(ctx):
         has_content_based_path = False,
     )
 
-    args = cmd_args(["fbpython", script, out.as_output(), out])
+    args = cmd_args(["python3", script, out.as_output(), out])
 
     ctx.actions.run(args, category = "test_run")
 
@@ -51,7 +51,7 @@ def _action_with_unbound_artifact_inside_tset_impl(ctx):
         has_content_based_path = False,
     )
 
-    args = cmd_args(["fbpython", script, out.as_output(), tset.project_as_args("identity")])
+    args = cmd_args(["python3", script, out.as_output(), tset.project_as_args("identity")])
 
     ctx.actions.run(args, category = "test_run")
 

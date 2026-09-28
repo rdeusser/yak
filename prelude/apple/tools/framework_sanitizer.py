@@ -6,8 +6,6 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-# pyre-strict
-
 """
 Removes files from a framework that are not necessary when distributing
 inside app bundles. Specifically Modules/* Headers/* and Documentation/*

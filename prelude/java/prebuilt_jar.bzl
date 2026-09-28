@@ -81,7 +81,7 @@ def prebuilt_jar_impl(ctx: AnalysisContext) -> list[Provider]:
         )
     )
 
-    # TODO(T107163344) this shouldn't be in prebuilt_jar itself, use overlays to remove it.
+    # TODO: this shouldn't be in prebuilt_jar itself, use overlays to remove it.
     android_packageable_info = merge_android_packageable_info(ctx.label, ctx.actions, ctx.attrs.deps)
 
     sub_targets = get_classpath_subtargets(ctx.actions, java_packaging_info)

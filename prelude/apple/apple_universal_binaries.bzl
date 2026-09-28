@@ -67,7 +67,7 @@ def create_universal_binary(
 
     # Universal binaries can be created out of plain `cxx_binary()` / `cxx_library()`
     # which lack the `AppleDebuggableInfo` provider.
-    # TODO(T174234334): Uniformly support debuggable info for apple_*/cxx_*
+    # TODO: Uniformly support debuggable info for apple_*/cxx_*
     contains_full_debuggable_info = _all_binaries_have_apple_debuggable_info(binary_deps)
 
     dsym_output = None

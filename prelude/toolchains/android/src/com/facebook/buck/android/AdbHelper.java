@@ -446,8 +446,7 @@ public class AdbHelper implements AndroidDevicesHelper {
       String errorMsg =
           String.format(
               "You are trying to install %s%s onto a device with the following CPU(s): %s. "
-                  + "Please try again with a correct one. If you used an alias, "
-                  + "some default aliases may have changed: https://fburl.com/workplace/p4ty6uvo.",
+                  + "Build the APK for one of these CPUs and try again.",
               apk.getName(),
               String.format(" (CPU(s): %s)", String.join(", ", apkAbis)),
               String.join(", ", abis));

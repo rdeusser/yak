@@ -101,10 +101,8 @@ pub fn buck2_show_soft_errors_env() -> buck2_error::Result<Option<&'static str>>
 static HARD_ERROR_PANIC_ALLOWLIST: LazyLock<SmallSet<String>> =
     LazyLock::new(|| SmallSet::from_iter(["spawn_version_control_collector_failed".to_owned()]));
 
-/// Throw a "soft_error" ie. a non-fatal error logged to logview.
+/// Throw a "soft_error" ie. a non-fatal error recorded in the event log.
 /// Errors will not be logged to stderr as warnings to the user, unless `quiet=false` is passed.
-/// Logview will generate tasks for each error category, unless `task=false` is passed.
-/// If `deprecation=true` this error should ideally become a hard error in the future.
 ///
 /// The macro lives in this crate to allow it be made available everywhere.
 /// Calling programs are responsible for calling initialize() to provide a handler for
@@ -113,11 +111,9 @@ static HARD_ERROR_PANIC_ALLOWLIST: LazyLock<SmallSet<String>> =
 /// You should pass two arguments:
 ///
 /// * The category string that will remain constant and identifies this specific soft error
-///   (used to report as a key).
+///   (used to report as a key, and to select it in `BUCK2_HARD_ERROR` and
+///   `BUCK2_SHOW_SOFT_ERRORS`).
 /// * The error is a `buck2_error::Error`.
-///
-/// Soft errors from Meta internal runs can be viewed
-/// [in logview](https://www.internalfb.com/logview/overview/buck2).
 ///
 /// You'll get the error back as the Ok() value if it wasn't thrown, otherwise you get a Err() to
 /// propagate.
@@ -132,7 +128,7 @@ static HARD_ERROR_PANIC_ALLOWLIST: LazyLock<SmallSet<String>> =
 ///         value,
 ///     )
 ///     .into(),
-///     quiet = false,
+///     quiet: false,
 /// )?;
 /// ```
 pub macro soft_error {
@@ -185,37 +181,22 @@ pub macro tag_result {
 }
 
 pub struct StructuredErrorOptions {
-    /// Log this error (to our event log and possibly to a task), but do not print it to stderr.
+    /// Log this error to the event log, but do not print it to stderr.
     pub quiet: bool,
-    /// Create a task for this error.
-    pub task: bool,
-    pub deprecation: bool,
-    /// When true, this soft error will be promoted to a hard error in open source builds.
-    /// Use this for deprecation/migration errors that OSS users should see.
-    /// Monitoring/logging errors should leave this as false (the default).
-    pub error_on_oss: bool,
+    /// Return this error as `Err` after reporting it, as if `BUCK2_HARD_ERROR` selected its
+    /// category. Deprecations and migrations whose old behavior is no longer accepted set this.
+    pub hard_error: bool,
     pub daemon_in_memory_state_is_corrupted: bool,
     pub daemon_materializer_state_is_corrupted: bool,
-    pub action_cache_is_corrupted: bool,
-    // By default, we only get a handful of traces per error category in Logview.
-    // This key, if specified, enables logging one trace per unique key using
-    // the "trace cut" feature of Logview. Note that the dimensionality of this
-    // key must not be too large otherwise it can bring significant capacity cost
-    // and may even bring down Logview.
-    pub low_cardinality_key_for_additional_logview_samples: Option<Box<dyn ToString>>,
 }
 
 impl Default for StructuredErrorOptions {
     fn default() -> Self {
         Self {
             quiet: true,
-            task: true,
-            deprecation: false,
-            error_on_oss: false,
+            hard_error: false,
             daemon_in_memory_state_is_corrupted: false,
             daemon_materializer_state_is_corrupted: false,
-            action_cache_is_corrupted: false,
-            low_cardinality_key_for_additional_logview_samples: None,
         }
     }
 }
@@ -228,7 +209,7 @@ pub fn handle_soft_error(
     loc: (&'static str, u32, u32),
     options: StructuredErrorOptions,
 ) -> Result<buck2_error::Error, buck2_error::Error> {
-    validate_logview_category(category)?;
+    validate_category_name(category)?;
 
     let context = soft_error_context()?;
 
@@ -237,7 +218,7 @@ pub fn handle_soft_error(
         options.quiet = false;
     }
 
-    let error_on_oss = options.error_on_oss;
+    let hard_error = options.hard_error;
 
     // We want to limit each error to appearing at most 10 times in a build (no point spamming people)
     if context.should_emit(loc) {
@@ -256,12 +237,7 @@ pub fn handle_soft_error(
         return Err(err.context("Upgraded warning to failure via $BUCK2_HARD_ERROR"));
     }
 
-    // @oss-disable: let is_open_source = false;
-    let is_open_source = true; // @oss-enable
-    if is_open_source && error_on_oss {
-        // In open source builds, only deprecation/migration soft errors (those with
-        // error_on_oss: true) are promoted to hard errors. Monitoring/logging soft errors
-        // are no-ops, matching internal behavior.
+    if hard_error {
         return Err(err);
     }
 
@@ -442,8 +418,10 @@ enum InvalidSoftError {
     InvalidCategory(String),
 }
 
-/// A category must be a-z with no consecutive underscores. Or we raise an error.
-pub fn validate_logview_category(category: &str) -> buck2_error::Result<()> {
+/// `validate_category_name` accepts a category made of `a-z` words joined by single underscores.
+/// `BUCK2_HARD_ERROR=only=...` and `BUCK2_SHOW_SOFT_ERRORS=only=...` take comma-separated,
+/// lowercased category lists, so only such names can be selected there.
+pub fn validate_category_name(category: &str) -> buck2_error::Result<()> {
     let mut allow_underscore = false;
     for &x in category.as_bytes() {
         if x.is_ascii_lowercase() {
@@ -549,15 +527,15 @@ pub(crate) mod tests {
     }
 
     #[test]
-    fn test_validate_logview_category() {
-        assert_matches!(validate_logview_category("valid"), Ok(_));
-        assert_matches!(validate_logview_category("a_valid_category"), Ok(_));
-        assert_matches!(validate_logview_category(""), Err(_));
-        assert_matches!(validate_logview_category("Invalid_because_capital"), Err(_));
-        assert_matches!(validate_logview_category("some_1number"), Err(_));
-        assert_matches!(validate_logview_category("two__underscore"), Err(_));
-        assert_matches!(validate_logview_category("a-dash"), Err(_));
-        assert_matches!(validate_logview_category("_leading_underscore"), Err(_));
-        assert_matches!(validate_logview_category("trailing_underscore_"), Err(_));
+    fn test_validate_category_name() {
+        assert_matches!(validate_category_name("valid"), Ok(_));
+        assert_matches!(validate_category_name("a_valid_category"), Ok(_));
+        assert_matches!(validate_category_name(""), Err(_));
+        assert_matches!(validate_category_name("Invalid_because_capital"), Err(_));
+        assert_matches!(validate_category_name("some_1number"), Err(_));
+        assert_matches!(validate_category_name("two__underscore"), Err(_));
+        assert_matches!(validate_category_name("a-dash"), Err(_));
+        assert_matches!(validate_category_name("_leading_underscore"), Err(_));
+        assert_matches!(validate_category_name("trailing_underscore_"), Err(_));
     }
 }

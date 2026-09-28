@@ -44,7 +44,7 @@ def _filter_flags(clang_flags: List[str]) -> List[str]:  # noqa: C901
     # The default values may change across compiler versions.
     # Make sure they are always synced with the current values.
     opt_flags = [
-        # TODO(T139459294):
+        # TODO:
         # -O2 is the default optimization flag for the link-time optimizer
         # this setting matches current llvm implementation:
         # https://github.com/llvm/llvm-project/blob/main/llvm/include/llvm/LTO/Config.h#L57
@@ -62,7 +62,7 @@ def _filter_flags(clang_flags: List[str]) -> List[str]:  # noqa: C901
     #
     # For (1) and (2), we need to convert them case by case.
     # For (3) and (4), we should be able to pass them through into the optimizer directly by prefixing "-mllvm".
-    # TODO(T139448744): Cover all the flags. Check available flags using "ld.lld --help | grep -A 1 '\-\-plugin-opt='"
+    # TODO: Cover all the flags. Check available flags using "ld.lld --help | grep -A 1 '\-\-plugin-opt='"
     PLUGIN_OPT_PREFIXES = ["-Wl,-plugin-opt,", "-Wl,-plugin-opt="]
 
     def _find_plugin_opt_prefix(flag: str) -> str:
@@ -132,7 +132,7 @@ def _filter_flags(clang_flags: List[str]) -> List[str]:  # noqa: C901
                 # This assumes -mllvm and its arg are provided consecutively,
                 # mostly to handle the case where they come from Buck's
                 # linker_flags.
-                # TODO(T159109840): Generalize this logic to handle -Xlinker
+                # TODO: Generalize this logic to handle -Xlinker
                 #       -mllvm -unrelated-flag -Xlinker -actual-mllvm-arg
                 if (
                     index + 2 >= len(clang_flags)
@@ -203,8 +203,7 @@ def _cleanup_flags(clang_opt_flags: List[str]) -> List[str]:
     return clean_output
 
 
-# Flags that fbcc consumes and does NOT pass through to the compiler.
-# See fbcode/tools/build/buck/wrappers/fbcc.py for the full list.
+# Flags that the fbcc compiler wrapper consumes and does NOT pass through to the compiler.
 _FBCC_CONSUMED_PREFIXES = (
     "--log-fbcc",
     "--fbcc-create-external-debug-info=",
@@ -278,7 +277,7 @@ def main(argv: List[str]) -> int:
     #   3. the "--cc" arg pointing to the compiler we use
     #   4. (optional) fbcc-consumed args like "--log-fbcc"
     #   5. (optional) pass-through args like "--target=" (from buckified toolchains)
-    # EXAMPLE: ['--', 'buck-out/v2/gen/fbcode/8e3db19fe005003a/tools/build/buck/wrappers/__fbcc__/fbcc', '--cc=fbcode/third-party-buck/platform010/build/llvm-fb/<ver>/bin/clang++', '--log-fbcc=False', '--target=x86_64-redhat-linux-gnu', ...]
+    # EXAMPLE: ['--', 'path/to/fbcc', '--cc=path/to/clang++', '--log-fbcc=False', '--target=x86_64-redhat-linux-gnu', ...]
     clang_cc1_flags = _cleanup_flags(args.opt_args[2:] + clang_opt_flags)
     if clang_cc1_flags is None:
         return EXIT_FAILURE

@@ -88,7 +88,7 @@ mod tests {
         };
         let mut child = command.spawn().unwrap();
         let pid = Pid::from_u32(child.id()).unwrap();
-        // TODO T187306095: we only check for existence once, because flakiness
+        // TODO: we only check for existence once, because flakiness
         assert!(
             process_exists(pid).unwrap(),
             "process should exist; attempt 1; pid {pid}"

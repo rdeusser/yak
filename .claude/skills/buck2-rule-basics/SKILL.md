@@ -3,8 +3,6 @@ name: buck2-rule-basics
 description: Guide users through writing their first Buck2 rule to learn fundamental concepts including rules, actions, targets, configurations, analysis, and select(). Use this skill when users want to learn Buck2 basics hands-on or need help understanding rule writing.
 ---
 
-@nolint
-
 # Buck2 Rule Basics - Interactive Tutorial
 
 ## Overview
@@ -143,12 +141,15 @@ The tutorial has 8 progressive steps:
 
 ### Step 0: Setup
 
-Create a new directory for the tutorial and navigate into it:
+Create a Buck2 project that uses the prelude bundled with `buck2`, then create
+a directory for the tutorial inside it and navigate into it:
 
 **Run this:**
 
 ```bash
-mkdir 'buck2-tutorial'
+buck2 init buck2-tutorial-project
+cd buck2-tutorial-project
+mkdir buck2-tutorial
 cd buck2-tutorial
 ```
 
@@ -469,8 +470,8 @@ error. Advance only once they show they understand.
 buck2 targets :
 
 # Expected output shows targets like:
-# fbcode//buck2/buck2-tutorial:hello
-# fbcode//buck2/buck2-tutorial:goodbye
+# root//buck2-tutorial:hello
+# root//buck2-tutorial:goodbye
 ```
 
 **Explain target name anatomy:**
@@ -487,14 +488,14 @@ cell//package/path:target_name
 
 **Examples with explanations:**
 
-- `fbcode//buck2/buck2-tutorial:hello`
+- `root//buck2-tutorial:hello`
   - **Full target name** with all three parts explicitly specified
   - Always valid and unambiguous from anywhere
   - Use this when referring to targets from a different cell/repository
 
-- `//buck2/buck2-tutorial:hello`
+- `//buck2-tutorial:hello`
   - **Cell name omitted** - defaults to the current repository's cell
-  - Since we're working in the fbcode repository, `//` is shorthand for `fbcode//`
+  - Since we're working in the `root` cell, `//` is shorthand for `root//`
   - Valid when referring to any target in the same repository/cell
   - This is the most common form you'll see in BUCK files
 
@@ -502,7 +503,7 @@ cell//package/path:target_name
   - **Cell and package path omitted** - only the target name
   - Only valid when you're in the same directory/package
   - Shortest form for referring to targets in the current BUCK file
-  - When you run `buck2 build :hello` from the `buck2-tutorial` directory, Buck2 knows you mean `fbcode//buck2/buck2-tutorial:hello`
+  - When you run `buck2 build :hello` from the `buck2-tutorial` directory, Buck2 knows you mean `root//buck2-tutorial:hello`
 
 **Now query the targets:**
 
@@ -530,10 +531,10 @@ buck2 cquery :hello --output-attribute=src
 
 **Show the difference:**
 
-- Unconfigured: `fbcode//buck2/buck2-tutorial:hello`
-- Configured: `fbcode//buck2/buck2-tutorial:hello (cfg:dev-linux-x86_64-...)`
+- Unconfigured: `root//buck2-tutorial:hello`
+- Configured: `root//buck2-tutorial:hello (prelude//platforms:default#<hash>)`
 
-Notice the configuration suffix `(cfg:...)` is added when Buck2 applies platform-specific settings.
+Notice the configuration suffix in parentheses is added when Buck2 applies platform-specific settings.
 
 **Before moving on — Socratic check:**
 
@@ -552,7 +553,7 @@ once they show they understand.
 **What to do:**
 
 1. Add `output_name` attribute to the rule
-2. Use `select()` in TARGETS to choose different names per platform
+2. Use `select()` in BUCK to choose different names per platform
 3. Query to see select() before and after resolution
 4. Build and verify the platform-specific name is used
 
@@ -603,9 +604,9 @@ uppercase(
     src = "input.txt",
     output_name = select({
         "DEFAULT": "result.txt",
-        "ovr_config//os:windows": "result_windows.txt",
-        "ovr_config//os:linux": "result_linux.txt",
-        "ovr_config//os:macos": "result_macos.txt",
+        "prelude//os:windows": "result_windows.txt",
+        "prelude//os:linux": "result_linux.txt",
+        "prelude//os:macos": "result_macos.txt",
     }),
 )
 ```
@@ -776,7 +777,7 @@ they show they understand.
 
 1. Explain that what they created is a RULE
 2. Create a MACRO that wraps the rule
-3. Use the macro in TARGETS
+3. Use the macro in BUCK
 4. Build and compare
 
 **Add macro to `uppercase.bzl`:**
@@ -939,7 +940,7 @@ again.]
 1. **Read the reference materials**: This skill includes detailed documentation:
    - `references/concepts.md` - Deep dive into Buck2 core concepts (build model, targets, artifacts, actions, providers, configurations, build graph)
    - `references/advanced_patterns.md` - Production-ready patterns (custom providers, transitive sets, toolchains, multiple outputs, testing rules)
-2. **Explore Buck2's prelude**: See real production rules in `fbcode/buck2/prelude/`
+2. **Explore Buck2's prelude**: See real production rules in the `prelude/` directory of the Buck2 repository
 3. **Try more complex rules**: Multiple outputs, custom providers, transitive dependencies
 4. **Learn BXL**: Buck Extension Language for build introspection
 5. **Build something real**: Apply what you learned to your project

@@ -163,7 +163,7 @@ impl Action for SimpleAction {
             sorted_vector_map![],
         );
 
-        let prepared_action = ctx.prepare_action(&req, true)?;
+        let prepared_action = ctx.prepare_action(&req)?;
         let manager = ctx.command_execution_manager(WaitingData::new());
         let result = ctx.exec_cmd(manager, &req, &prepared_action).await;
         let (outputs, meta) = ctx.unpack_command_execution_result(

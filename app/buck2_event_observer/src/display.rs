@@ -553,7 +553,6 @@ fn display_file_watcher(provider: i32) -> &'static str {
         Ok(buck2_data::FileWatcherProvider::Watchman) => "Watchman",
         Ok(buck2_data::FileWatcherProvider::RustNotify) => "notify",
         Ok(buck2_data::FileWatcherProvider::FsHashCrawler) => "fs_hash_crawler",
-        Ok(buck2_data::FileWatcherProvider::EdenFs) => "EdenFS",
         Err(_) => "unknown mechanism",
     }
 }
@@ -662,7 +661,6 @@ pub fn display_executor_stage(
                 Stage::Download(..) => "re_download",
                 Stage::Queue(..) => "re_queued",
                 Stage::QueueOverQuota(..) => "re_queued(over_quota)",
-                Stage::QueueAcquiringDependencies(..) => "re_queued(waiting_on_deps)",
                 Stage::QueueNoWorkerAvailable(..) => "re_queued(no_workers)",
                 Stage::QueueCancelled(..) => "re_cancelled",
                 Stage::WorkerDownload(..) => "re_worker_download",
@@ -732,7 +730,6 @@ pub fn is_active_execution_stage(event: &BuckEvent) -> bool {
                 Some(Re::Download(..))
                 | Some(Re::Queue(..))
                 | Some(Re::QueueOverQuota(..))
-                | Some(Re::QueueAcquiringDependencies(..))
                 | Some(Re::QueueNoWorkerAvailable(..))
                 | Some(Re::QueueCancelled(..))
                 | Some(Re::WorkerDownload(..))
@@ -826,7 +823,7 @@ pub fn format_test_result(
     }
     // If a test has details, we always show them. It's the test runner's
     // responsibility to withhold details when these are not relevant.
-    // For instance, tpx will always withhold details of passing tests
+    // For instance, a runner can withhold details of passing tests
     // unless the --print-passing-details is set.
     let mut lines = vec![base];
     if !details.is_empty() {
@@ -923,19 +920,7 @@ impl ActionErrorDisplay<'_> {
                     );
                 }
                 Some(Command::RemoteCommand(remote_command)) => {
-                    if buck2_core::is_open_source() {
-                        append!("Remote action digest: '{}'", remote_command.action_digest);
-                    } else {
-                        append!(
-                            "Remote action{}, reproduce with: `frecli cas download-action {}`",
-                            if remote_command.cache_hit {
-                                " cache hit"
-                            } else {
-                                ""
-                            },
-                            remote_command.action_digest
-                        );
-                    }
+                    append!("Remote action digest: '{}'", remote_command.action_digest);
                 }
                 Some(Command::OmittedLocalCommand(..)) | None => {
                     // Nothing to show in this case.

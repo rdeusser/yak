@@ -6,8 +6,6 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-# @nolint
-
 def _tr(platform, refs, attrs):
     _ignore = platform
     constraint_value = getattr(refs, attrs.use_constraint)[ConstraintValueInfo]

@@ -15,8 +15,6 @@ import com.facebook.buck.core.filesystems.AbsPath
 import com.facebook.buck.core.filesystems.RelPath
 import com.facebook.buck.core.util.log.Logger
 import com.facebook.buck.jvm.core.BuildTargetValue
-import com.facebook.buck.jvm.kotlin.cd.analytics.KotlinCDLoggingContext
-import com.facebook.buck.jvm.kotlin.cd.analytics.SourceTokenCounter
 import com.facebook.buck.jvm.kotlin.kotlinc.Kotlinc
 import com.facebook.buck.jvm.kotlin.kotlinc.incremental.KotlincMode
 import com.facebook.buck.util.ClassLoaderCache
@@ -27,7 +25,6 @@ import java.io.PrintStream
 import java.nio.file.Path
 import java.util.Optional
 import java.util.UUID
-import kotlin.io.path.extension
 import org.jetbrains.kotlin.buildtools.api.CompilationService
 import org.jetbrains.kotlin.buildtools.api.ExperimentalBuildToolsApi
 import org.jetbrains.kotlin.buildtools.api.ProjectId
@@ -49,7 +46,6 @@ class BuildToolsKotlinc : Kotlinc {
       workingDirectory: Optional<Path>,
       ruleCellRoot: AbsPath,
       mode: KotlincMode,
-      kotlinCDLoggingContext: KotlinCDLoggingContext,
   ): Int {
     val argsStart = System.nanoTime()
     val compilerArgs = buildCompilerArgs(
@@ -58,7 +54,6 @@ class BuildToolsKotlinc : Kotlinc {
         workingDirectory,
         invokingRule,
         options,
-        kotlinCDLoggingContext,
     )
     val argsMs = (System.nanoTime() - argsStart) / 1_000_000
 
@@ -81,10 +76,8 @@ class BuildToolsKotlinc : Kotlinc {
     val classLoaderMs = (System.nanoTime() - classLoaderStart) / 1_000_000
 
     val serviceLoadStart = System.nanoTime()
-    val kotlinCompilationService = KotlinCompilationService(
-        CompilationService.loadImplementation(classLoader),
-        kotlinCDLoggingContext,
-    )
+    val kotlinCompilationService =
+        KotlinCompilationService(CompilationService.loadImplementation(classLoader))
     val serviceLoadMs = (System.nanoTime() - serviceLoadStart) / 1_000_000
 
     val gcBefore = getGcStats()
@@ -94,7 +87,7 @@ class BuildToolsKotlinc : Kotlinc {
             ProjectId.ProjectUUID(UUID.randomUUID()),
             compilerArgs,
             mode,
-            BuckKotlinLogger(UncloseablePrintStream(context.stdErr), kotlinCDLoggingContext),
+            BuckKotlinLogger(UncloseablePrintStream(context.stdErr)),
         )
     val compileMs = (System.nanoTime() - compileStart) / 1_000_000
     val gcAfter = getGcStats()
@@ -141,7 +134,6 @@ class BuildToolsKotlinc : Kotlinc {
       workingDirectory: Optional<Path>,
       invokingRule: BuildTargetValue,
       options: List<String>,
-      kotlinCDLoggingContext: KotlinCDLoggingContext,
   ): List<String> {
     val expandStart = System.nanoTime()
     val expandedSources: ImmutableList<Path> = getExpandedSourcePathsOrThrow(
@@ -154,28 +146,6 @@ class BuildToolsKotlinc : Kotlinc {
     if (expandMs > 100) {
       LOG.info(
           "KOTLINCD_SOURCE_EXPAND|${invokingRule.fullyQualifiedName}|expand_ms=$expandMs|source_count=${expandedSources.size}",
-      )
-    }
-
-    expandedSources
-        .groupingBy { path -> path.extension }
-        .eachCount()
-        .forEach { (extension, count) ->
-          kotlinCDLoggingContext.addExtras(
-              BuildToolsKotlinc::class.java.simpleName,
-              "Total count of $extension files: $count",
-          )
-        }
-
-    try {
-      val tokenCounts = SourceTokenCounter.countTokens(expandedSources, ruleCellRoot.path)
-      kotlinCDLoggingContext.numKotlinTokens = tokenCounts.kotlinTokens
-      kotlinCDLoggingContext.numJavaTokens = tokenCounts.javaTokens
-    } catch (e: Exception) {
-      // Token counting is best-effort telemetry; don't fail the build
-      kotlinCDLoggingContext.addExtras(
-          BuildToolsKotlinc::class.java.simpleName,
-          "Token counting failed: ${e.message}",
       )
     }
 

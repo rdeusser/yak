@@ -30,8 +30,6 @@ pub(crate) enum OverrideSource {
 pub(super) enum SettingSource {
     /// Repo-root `.bucksettings.toml`
     Base,
-    /// Wrapper-cached rollout settings.
-    Rollout,
     Override(OverrideSource),
 }
 
@@ -50,35 +48,20 @@ pub(crate) struct SettingKeyMetadata {
 impl SettingKeyMetadata {
     pub(super) fn allows_source(&self, source: SettingSource) -> bool {
         match source {
-            SettingSource::Base | SettingSource::Rollout => true,
+            SettingSource::Base => true,
             SettingSource::Override(source) => self.overridable_in.contains(&source),
         }
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub(crate) struct SectionMetadata {
-    pub(crate) section_name: &'static str,
-    pub(crate) section_version: u32,
-}
-
 struct SettingKey<T> {
     metadata: SettingKeyMetadata,
-    internal_default: Option<T>,
-    oss_default: Option<T>,
+    default: Option<T>,
 }
 
 impl<T: Clone> SettingKey<T> {
-    fn default_value(&self) -> Option<T> {
-        if cfg!(fbcode_build) {
-            self.internal_default.clone()
-        } else {
-            self.oss_default.clone()
-        }
-    }
-
     fn resolve(&self, value: Option<T>) -> Option<T> {
-        value.or_else(|| self.default_value())
+        value.or_else(|| self.default.clone())
     }
 }
 
@@ -90,21 +73,7 @@ const LOG_URL: SettingKey<&'static str> = SettingKey {
         },
         overridable_in: &[OverrideSource::CommandLine, OverrideSource::LocalSettings],
     },
-    internal_default: None,
-    oss_default: None,
-};
-
-const LOG_USE_MANIFOLD: SettingKey<bool> = SettingKey {
-    metadata: SettingKeyMetadata {
-        key: SettingKeyRef {
-            section: "log_download",
-            name: "log_use_manifold",
-        },
-        overridable_in: &[OverrideSource::CommandLine, OverrideSource::LocalSettings],
-    },
-    // None is a migration placeholder to support buckconfig fallback
-    internal_default: None,
-    oss_default: Some(false),
+    default: None,
 };
 
 const HYDRATION_ENABLE_PAGING: SettingKey<bool> = SettingKey {
@@ -116,8 +85,7 @@ const HYDRATION_ENABLE_PAGING: SettingKey<bool> = SettingKey {
         overridable_in: &[OverrideSource::CommandLine, OverrideSource::LocalSettings],
     },
     // Absence must remain distinct from `false` while legacy buckconfig is the fallback.
-    internal_default: None,
-    oss_default: None,
+    default: None,
 };
 
 const HYDRATION_PAGE_OUT_ON_IDLE: SettingKey<bool> = SettingKey {
@@ -129,8 +97,7 @@ const HYDRATION_PAGE_OUT_ON_IDLE: SettingKey<bool> = SettingKey {
         overridable_in: &[OverrideSource::CommandLine, OverrideSource::LocalSettings],
     },
     // Absence must remain distinct from `false` while legacy buckconfig is the fallback.
-    internal_default: None,
-    oss_default: None,
+    default: None,
 };
 
 #[derive(
@@ -160,23 +127,15 @@ const HYDRATION_PAGE_OUT_ON_IDLE_ISOLATION_DIR_SCOPE: SettingKey<PageOutOnIdleIs
             },
             overridable_in: &[OverrideSource::CommandLine, OverrideSource::LocalSettings],
         },
-        internal_default: Some(PageOutOnIdleIsolationDirScope::All),
-        oss_default: Some(PageOutOnIdleIsolationDirScope::All),
+        default: Some(PageOutOnIdleIsolationDirScope::All),
     };
 
 pub(crate) static ALL_SETTING_METADATA: &[SettingKeyMetadata] = &[
     HYDRATION_ENABLE_PAGING.metadata,
     HYDRATION_PAGE_OUT_ON_IDLE.metadata,
     HYDRATION_PAGE_OUT_ON_IDLE_ISOLATION_DIR_SCOPE.metadata,
-    LOG_USE_MANIFOLD.metadata,
     LOG_URL.metadata,
 ];
-#[cfg_attr(
-    not(fbcode_build),
-    expect(dead_code, reason = "Settings rollouts are internal-only")
-)]
-pub(crate) static ALL_SECTION_METADATA: &[SectionMetadata] =
-    &[HydrationSection::METADATA, LogDownloadSection::METADATA];
 
 pub(crate) fn find_setting_metadata<'a>(
     metadata: &'a [SettingKeyMetadata],
@@ -188,7 +147,6 @@ pub(crate) fn find_setting_metadata<'a>(
 #[derive(Debug, Default, Deserialize, Serialize, PartialEq, Eq, Allocative)]
 #[serde(deny_unknown_fields)]
 struct LogDownloadSectionData {
-    log_use_manifold: Option<bool>,
     log_url: Option<String>,
 }
 
@@ -225,12 +183,6 @@ pub(crate) struct BuckSettingsData {
 pub struct HydrationSection(Arc<HydrationSectionData>);
 
 impl HydrationSection {
-    /// Bump when the section's settings schema or semantics change.
-    pub(crate) const METADATA: SectionMetadata = SectionMetadata {
-        section_name: "hydration",
-        section_version: 1,
-    };
-
     /// Returns `None` when legacy buckconfig should determine the behavior.
     pub fn enable_paging(&self) -> Option<bool> {
         HYDRATION_ENABLE_PAGING.resolve(self.0.enable_paging)
@@ -272,21 +224,8 @@ impl HydrationSection {
 pub struct LogDownloadSection(Arc<LogDownloadSectionData>);
 
 impl LogDownloadSection {
-    /// Bump when the section's settings schema or semantics change.
-    pub(crate) const METADATA: SectionMetadata = SectionMetadata {
-        section_name: "log_download",
-        section_version: 0,
-    };
-
-    pub fn log_use_manifold(&self) -> Option<bool> {
-        LOG_USE_MANIFOLD.resolve(self.0.log_use_manifold)
-    }
-
     pub fn log_url(&self) -> Option<&str> {
-        self.0
-            .log_url
-            .as_deref()
-            .or_else(|| LOG_URL.default_value())
+        self.0.log_url.as_deref().or(LOG_URL.default)
     }
 }
 
@@ -347,27 +286,6 @@ mod tests {
     use crate::settings::parser::table;
 
     #[test]
-    fn test_default_log_use_manifold() {
-        let expected = if cfg!(fbcode_build) {
-            None
-        } else {
-            Some(false)
-        };
-        assert_eq!(
-            BuckSettings::empty().log_download.log_use_manifold(),
-            expected
-        );
-    }
-
-    #[test]
-    fn test_log_use_manifold() -> buck2_error::Result<()> {
-        let settings =
-            resolve_setting_flags(vec![table("[log_download]\nlog_use_manifold = false")])?;
-        assert_eq!(settings.log_download.log_use_manifold(), Some(false));
-        Ok(())
-    }
-
-    #[test]
     fn test_log_url() -> buck2_error::Result<()> {
         let settings =
             resolve_setting_flags(vec![table("[log_download]\nlog_url = \"test.com\"")])?;
@@ -423,17 +341,17 @@ mod tests {
                 ALL_SETTING_METADATA,
                 SettingKeyRef {
                     section: "log_download",
-                    name: "log_use_manifold",
+                    name: "log_url",
                 },
             ),
-            Some(&LOG_USE_MANIFOLD.metadata)
+            Some(&LOG_URL.metadata)
         );
         assert_eq!(
             find_setting_metadata(
                 ALL_SETTING_METADATA,
                 SettingKeyRef {
                     section: "log_download",
-                    name: "log_use_maniflod",
+                    name: "log_ulr",
                 },
             ),
             None
@@ -482,39 +400,6 @@ mod tests {
         assert_eq!(
             fields, registered,
             "Every `BuckSettingsData` field must be registered in `ALL_SETTING_METADATA`, and vice versa"
-        );
-    }
-
-    #[test]
-    fn test_all_sections_are_registered() {
-        // Remove once buck_settings! macro generates both BuckSettingsData and sections registry
-        let serialized = serde_json::to_value(BuckSettingsData::default())
-            .expect("`BuckSettingsData` should serialize");
-        let sections: BTreeSet<_> = serialized
-            .as_object()
-            .expect("settings data should serialize to a JSON object")
-            .iter()
-            .map(|(name, value)| {
-                assert!(
-                    value.is_object(),
-                    "Every top-level `BuckSettingsData` field must be a settings section"
-                );
-                name.as_str()
-            })
-            .collect();
-        let registered: BTreeSet<_> = ALL_SECTION_METADATA
-            .iter()
-            .map(|metadata| metadata.section_name)
-            .collect();
-
-        assert_eq!(
-            ALL_SECTION_METADATA.len(),
-            registered.len(),
-            "Section metadata names must be unique"
-        );
-        assert_eq!(
-            sections, registered,
-            "Every `BuckSettingsData` section must be registered in `ALL_SECTION_METADATA`, and vice versa"
         );
     }
 }

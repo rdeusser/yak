@@ -6,13 +6,12 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-# pyre-strict
+import pytest
+from e2e_util.api.buck import Buck
+from e2e_util.buck_workspace import buck_test
 
 
-from buck2.tests.e2e_util.api.buck import Buck
-from buck2.tests.e2e_util.buck_workspace import buck_test
-
-
+@pytest.mark.remote_execution
 @buck_test()
 async def test_blake3(buck: Buck) -> None:
     await buck.build("//:cp")

@@ -1,0 +1,5 @@
+# Opts in without a `visibility` list, so this PACKAGE adds nothing to the
+# cap.
+enforce_visibility_intersection()
+
+package(inherit = True, within_view = ["root//inherit_test/..."])

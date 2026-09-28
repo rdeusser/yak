@@ -3609,7 +3609,6 @@ fn test_partial_deser_materializes_in_demand_order() -> crate::Result<()> {
 /// A pointer into a heap that no ref list read so far names - the shape of a
 /// value relocated into a shared blob - resolves through the heap-key index,
 /// and fails cleanly rather than dangling without it.
-#[cfg(fbcode_build)]
 #[test]
 fn test_pointer_into_unlisted_heap_resolves_by_identity() -> crate::Result<()> {
     use pagable::storage::handle::PagableStorageHandle;
@@ -3700,7 +3699,6 @@ fn test_pointer_into_unlisted_heap_resolves_by_identity() -> crate::Result<()> {
     Ok(())
 }
 
-#[cfg(fbcode_build)]
 #[test]
 fn test_scope_cache_hit_retains_unlisted_target_in_each_owner() -> crate::Result<()> {
     use pagable::storage::handle::PagableStorageHandle;
@@ -3810,7 +3808,6 @@ fn test_scope_cache_hit_retains_unlisted_target_in_each_owner() -> crate::Result
 /// Two heaps sealed under one name, each the unlisted target of a different
 /// pointer. Identity tells them apart, so each pointer resolves into the heap
 /// it was written against.
-#[cfg(fbcode_build)]
 #[test]
 fn test_pointers_into_unlisted_heaps_sealed_under_one_name_resolve_by_identity() -> crate::Result<()>
 {
@@ -3882,7 +3879,6 @@ fn test_pointers_into_unlisted_heaps_sealed_under_one_name_resolve_by_identity()
 /// Page-in reads the owner's row and no more: a dependency nothing points
 /// into is bound by name from the slot that names it, retained, and left in
 /// storage.
-#[cfg(fbcode_build)]
 #[test]
 fn test_unread_dependency_is_bound_but_not_read() -> crate::Result<()> {
     use pagable::storage::handle::PagableStorageHandle;
@@ -4012,7 +4008,6 @@ fn assert_points_into_g(restored: &OwnedFrozen<Value<'static>>) {
 /// A pointer into a heap that is not a direct dependency is found in the
 /// index, read, and retained by the heap that used it; the heap between them
 /// stays a skeleton.
-#[cfg(fbcode_build)]
 #[test]
 fn test_pointer_into_indirect_dependency_resolves_through_the_index() -> crate::Result<()> {
     use crate::pagable::starlark_partial_deser_stats;
@@ -4079,7 +4074,6 @@ fn test_projection_into_retained_dependency_reserializes() -> crate::Result<()> 
 /// A skeleton bound by one root page-in and first read by another resolves
 /// the pointers in its values: bindings are per storage, not per root.
 #[test]
-#[cfg(fbcode_build)]
 fn test_skeleton_first_read_by_another_root_resolves_its_dependencies() -> crate::Result<()> {
     use pagable::storage::handle::PagableStorageHandle;
     use pagable::storage::in_memory::InMemoryPagableStorage;
@@ -4165,7 +4159,6 @@ fn test_skeleton_first_read_by_another_root_resolves_its_dependencies() -> crate
 
 /// Without the index the same pointer is found by reading the rows between
 /// the origin and the target, and only those.
-#[cfg(fbcode_build)]
 #[test]
 fn test_pointer_into_indirect_dependency_walks_from_origin_without_the_index() -> crate::Result<()>
 {
@@ -4210,7 +4203,6 @@ fn test_pointer_into_indirect_dependency_walks_from_origin_without_the_index() -
 
 /// A restored heap whose dependencies are still skeletons re-serializes by
 /// reusing its stored representation, without reading them.
-#[cfg(fbcode_build)]
 #[test]
 fn test_restored_heap_with_unread_dependencies_reserializes_by_key() -> crate::Result<()> {
     use pagable::storage::handle::PagableStorageHandle;

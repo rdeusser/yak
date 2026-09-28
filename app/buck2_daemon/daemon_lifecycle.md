@@ -25,9 +25,9 @@ only a single daemon is allowed at a time. It redirects its stdout and stderr to
 files in the daemon directory.
 
 The daemon then starts up the grpc DaemonApi server. Once that is running, it
-will write the port it is running on (along with some other information) to the
+will write the endpoint it is running on, its pid, and an auth token to the
 "buckd.info" file in the daemon dir. Once that is done, the server is ready to
-be used.
+be used. The client sends the auth token with every request.
 
 There are 3 ways that the buckd process will shutdown:
 
@@ -41,29 +41,30 @@ There are 3 ways that the buckd process will shutdown:
 When the client is processing a command that requires communicating with the
 buckd server it will follow this approach:
 
-1. read the "buckd.info" file to get the port the grpc api is being served on
-2. connect to the api on that port
-3. send a `status()` request to get the version
+1. read the "buckd.info" file to get the endpoint the grpc api is being served on
+2. connect to the api on that endpoint
+3. send a `status()` request and check the daemon's `DaemonConstraints` (binary
+   version, daemon startup config, and others) against the client's request
 
-If there is an error during 1-3, or if there is a version mismatch the client
-needs to (re)start the buck daemon. Otherwise, the client can continue as it now
-has made a connection with a correctly versioned buckd.
+If there is an error during 1-3, or if the constraints are not satisfied, the
+client needs to (re)start the buck daemon. Otherwise, the client can continue as
+it now has made a connection with a compatible buckd.
 
 When the client is killing or starting the buckd process, it will grab an
-exclusive lock on the "lifecycle.lock" file in the daemon directory to ensure
+exclusive lock on the "buckd.lifecycle" file in the daemon directory to ensure
 that multiple clients aren't racing with each other.
 
 To start/restart the buckd process, the client does:
 
-1. lock the "lifecycle.lock" file
+1. lock the "buckd.lifecycle" file
 2. send a kill command to the existing buckd
 3. ensure the buckd process has exited (based on pid)
 4. run a `buck daemon` command to start buckd
 5. wait for the daemon to start up and the grpc server to be ready
-6. release the "lifecycle.lock" file
+6. release the "buckd.lifecycle" file
 
-After that, it will repeat the connection steps (including verifying the version
-after connecting).
+After that, it will repeat the connection steps (including checking the
+constraints after connecting).
 
 # buck kill and other daemon restarts
 

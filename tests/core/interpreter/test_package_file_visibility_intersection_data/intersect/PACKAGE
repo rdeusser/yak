@@ -1,0 +1,6 @@
+# Opts this subtree in to capping `visibility`. Only targets under
+# `root//intersect/...` can depend on targets below, whatever their own
+# `visibility`.
+enforce_visibility_intersection()
+
+package(visibility = ["root//intersect/..."])

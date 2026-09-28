@@ -192,24 +192,7 @@ fn decode_windows_project_roots(components: &[OsString]) -> Vec<PathBuf> {
 }
 
 fn cleanall_target_priority(target: &CleanallTarget) -> u8 {
-    let is_default_isolation_dir = target.isolation_dir == DEFAULT_ISOLATION_DIR;
-
-    if cfg!(fbcode_build) {
-        let is_fbsource_checkout = target
-            .project_root
-            .file_name()
-            .and_then(OsStr::to_str)
-            // Check for all checkouts containing name fbsource so we can also
-            // catch other common names like `fbsource2` and `fbsource3`.
-            .is_some_and(|name| name.contains("fbsource"));
-
-        match (is_fbsource_checkout, is_default_isolation_dir) {
-            (true, true) => 0,
-            (false, true) => 1,
-            (true, false) => 2,
-            (false, false) => 3,
-        }
-    } else if is_default_isolation_dir {
+    if target.isolation_dir == DEFAULT_ISOLATION_DIR {
         0
     } else {
         1
@@ -346,37 +329,27 @@ mod tests {
             buckd_root,
             [
                 marker("d/repo/custom"),
-                marker("c/fbsource_backup/beta"),
+                marker("c/backup/beta"),
                 marker("b/checkout/v2"),
-                marker("z/fbsource/v2"),
-                marker("c/fbsource_backup/alpha"),
-                marker("a/my_fbsource_checkout/v2"),
-                marker("z/fbsource/v2"),
+                marker("z/monorepo/v2"),
+                marker("c/backup/alpha"),
+                marker("a/my_checkout/v2"),
+                marker("z/monorepo/v2"),
             ],
             BuckdPathLayout::Unix,
         );
 
-        let expected = if cfg!(fbcode_build) {
+        assert_eq!(
+            targets,
             vec![
-                target("/a/my_fbsource_checkout", "v2"),
-                target("/z/fbsource", "v2"),
+                target("/a/my_checkout", "v2"),
                 target("/b/checkout", "v2"),
-                target("/c/fbsource_backup", "alpha"),
-                target("/c/fbsource_backup", "beta"),
+                target("/z/monorepo", "v2"),
+                target("/c/backup", "alpha"),
+                target("/c/backup", "beta"),
                 target("/d/repo", "custom"),
             ]
-        } else {
-            vec![
-                target("/a/my_fbsource_checkout", "v2"),
-                target("/b/checkout", "v2"),
-                target("/z/fbsource", "v2"),
-                target("/c/fbsource_backup", "alpha"),
-                target("/c/fbsource_backup", "beta"),
-                target("/d/repo", "custom"),
-            ]
-        };
-
-        assert_eq!(targets, expected);
+        );
     }
 
     #[cfg(not(windows))]

@@ -6,18 +6,16 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-# pyre-strict
-
 import json
 import os
 import tempfile
 from dataclasses import dataclass
 from typing import Optional
 
-from buck2.tests.e2e_util.api.buck import Buck
-from buck2.tests.e2e_util.buck_workspace import buck_test
-from buck2.tests.e2e_util.helper.golden import golden_replace_temp_path
-from buck2.tests.e2e_util.helper.utils import filter_events
+from e2e_util.api.buck import Buck
+from e2e_util.buck_workspace import buck_test
+from e2e_util.helper.golden import golden_replace_temp_path
+from e2e_util.helper.utils import filter_events
 
 
 @buck_test(
@@ -91,12 +89,12 @@ async def test_external_buckconfigs(buck: Buck) -> None:
         and not external_path_config_value["is_cli"]
     )
 
-    # Next comes the values from the buckconfig.local file (which may include other files https://fburl.com/wd54jnpu)
+    # Next come the values from the .buckconfig.local file, which includes another file.
     local_path_configs = external_configs[1]["data"]["GlobalExternalConfigFile"]
     assert len(local_path_configs["values"]) == 2
     assert local_path_configs["origin_path"] == ".buckconfig.local"
-    # Note that buck parses configfiles ordered by section: https://fburl.com/rnzlt05n
-    # That's why, we first have the values from the included file,
+    # Buck orders the values of a config file by section, so the values from
+    # the included file come first.
     included_config_value = local_path_configs["values"][0]
     assert (
         included_config_value["section"] == "included_section"

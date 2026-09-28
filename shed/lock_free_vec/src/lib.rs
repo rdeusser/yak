@@ -572,8 +572,6 @@ mod tests {
         let flame_graph = builder.finish_and_write_flame_graph();
         // Proper test is possible but expensive to maintain.
         // So print it out and eyeball it.
-        // At the moment of writing it looks like this:
-        // https://www.internalfb.com/intern/px/p/2GgX5
         // Alternatively we can set up a golden test.
         if false {
             println!("{flame_graph}");

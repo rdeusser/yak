@@ -5,8 +5,6 @@
 # License, Version 2.0 found in the LICENSE-APACHE file in the root directory
 # of this source tree.
 
-# @nolint
-
 # Type of `platform` must be `PlatformInfo`.
 def _impl(platform: str, refs):
     _ignore = (platform, refs)

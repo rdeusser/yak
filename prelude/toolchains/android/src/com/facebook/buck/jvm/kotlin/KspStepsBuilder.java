@@ -24,14 +24,12 @@ import com.facebook.buck.jvm.java.ActionMetadata;
 import com.facebook.buck.jvm.java.CompilerOutputPaths;
 import com.facebook.buck.jvm.java.JavacPluginParams;
 import com.facebook.buck.jvm.java.ResolvedJavacPluginProperties;
-import com.facebook.buck.jvm.kotlin.cd.analytics.KotlinCDAnalytics;
 import com.facebook.buck.jvm.kotlin.kotlinc.Kotlinc;
 import com.facebook.buck.jvm.kotlin.ksp.Ksp2Step;
 import com.facebook.buck.step.isolatedsteps.IsolatedStep;
 import com.facebook.buck.step.isolatedsteps.common.CopyIsolatedStep;
 import com.facebook.buck.step.isolatedsteps.common.MakeCleanDirectoryIsolatedStep;
 import com.facebook.buck.step.isolatedsteps.common.MkdirIsolatedStep;
-import com.facebook.buck.step.isolatedsteps.common.RmIsolatedStep;
 import com.facebook.buck.step.isolatedsteps.common.ZipIsolatedStep;
 import com.facebook.buck.util.zip.ZipCompressionLevel;
 import com.google.common.collect.ImmutableList;
@@ -46,12 +44,6 @@ public class KspStepsBuilder {
   private static final String KSP_PLUGIN_ID = "plugin:com.google.devtools.ksp.symbol-processing:";
   private static final String MODULE_NAME = "-module-name";
   private static final String PLUGIN = "-P";
-  private static final ImmutableSet<String> PROCESSORS_USING_FINAL_ROUND_PLACEHOLDER =
-      ImmutableSet.of(
-          "KSP:com.facebook.annotationprocessors.inject.ksp.InjectorKspProcessorProvider",
-          "KSP:com.facebook.metagen.processor.kspmetagen.MetagenKspProcessorProvider",
-          "KSP:com.facebook.annotationprocessors.gatekeepers.ksp.GatekeeperDeclarationKspProcessor",
-          "KSP:com.facebook.annotationprocessors.qe.ksp.QEKspProcessorProvider");
 
   /** Initialize all the folders, steps and parameters needed to run KSP plugins for this rule. */
   public static KSPInvocationStatus prepareKspProcessorsIfNeeded(
@@ -77,11 +69,9 @@ public class KspStepsBuilder {
       Kotlinc kotlinc,
       CompilerOutputPaths compilerOutputPaths,
       RelPath configuredBuckOut,
-      ImmutableMap<String, AbsPath> resolvedKosabiPluginOptionPath,
       ImmutableSortedSet.Builder<RelPath> sourceBuilderWithKspOutputs,
       ImmutableList<AbsPath> compilationClasspath,
-      String moduleName,
-      KotlinCDAnalytics kotlinCDAnalytics) {
+      String moduleName) {
 
     ImmutableList<ResolvedJavacPluginProperties> kspAnnotationProcessors =
         getKspAnnotationProcessors(getAnnotationProcessors(annotationProcessorParams));
@@ -166,7 +156,6 @@ public class KspStepsBuilder {
             extraParams.getLanguageVersion(),
             getJvmDefaultMode(extraParams.getExtraKotlincArguments()),
             extraParams.getJavaBinary(),
-            kotlinCDAnalytics,
             Ksp2ModeFactory.create(
                 rootPath,
                 invokingRule.isSourceOnlyAbi(),
@@ -182,8 +171,7 @@ public class KspStepsBuilder {
             kspClassesOutput,
             kspAnnotationGenFolder,
             kspGenOutput,
-            annotationGenFolder,
-            kspAnnotationProcessors));
+            annotationGenFolder));
 
     // Generated classes should be part of the output. This way generated files such as
     // META-INF dirs will also be added to the final jar.
@@ -207,8 +195,7 @@ public class KspStepsBuilder {
       RelPath kspClassesOutput,
       RelPath kspAnnotationGenFolder,
       RelPath kspGenOutput,
-      RelPath annotationGenFolder,
-      ImmutableList<ResolvedJavacPluginProperties> kspAnnotationProcessors) {
+      RelPath annotationGenFolder) {
     ImmutableList.Builder<IsolatedStep> stagingSteps = ImmutableList.builder();
     stagingSteps.add(
         CopyIsolatedStep.forDirectory(
@@ -219,18 +206,6 @@ public class KspStepsBuilder {
     stagingSteps.add(
         CopyIsolatedStep.forDirectory(
             kspClassesOutput, kspAnnotationGenFolder, CopySourceMode.DIRECTORY_CONTENTS_ONLY));
-
-    if (usesFinalRoundPlaceholder(kspAnnotationProcessors)) {
-      // The KSP adapter generates this empty source only to force KSP's final processing round.
-      // Keep it in KSP's own output for round and incremental bookkeeping, but exclude it from the
-      // staged generated sources consumed by Kotlin and javac.
-      stagingSteps.add(
-          new RmIsolatedStep(
-              kspAnnotationGenFolder.resolveRel("com/facebook/Dummy.java"),
-              false,
-              ImmutableSet.of()));
-    }
-
     stagingSteps.add(
         new ZipIsolatedStep(
             rootPath,
@@ -246,14 +221,7 @@ public class KspStepsBuilder {
     return stagingSteps.build();
   }
 
-  static boolean usesFinalRoundPlaceholder(
-      ImmutableList<ResolvedJavacPluginProperties> kspAnnotationProcessors) {
-    return kspAnnotationProcessors.stream()
-        .flatMap(processor -> processor.getProcessorNames().stream())
-        .anyMatch(PROCESSORS_USING_FINAL_ROUND_PLACEHOLDER::contains);
-  }
-
-  private static ImmutableList<String> getKspPluginsArgs(
+  static ImmutableList<String> getKspPluginsArgs(
       ImmutableMap<AbsPath, ImmutableMap<String, String>> resolvedKotlinCompilerPlugins,
       String outputDir) {
     return getKotlinCompilerPluginsArgs(
@@ -290,7 +258,7 @@ public class KspStepsBuilder {
 
   private static boolean isPluginRequiredForStandaloneKsp(
       AbsPath sourcePath, ImmutableMap<String, String> options) {
-    return isKspPlugin(sourcePath) || CompilerPluginUtils.isDiK1PluginForKsp(sourcePath, options);
+    return isKspPlugin(sourcePath);
   }
 
   private static boolean isPluginNotRequiredForStandaloneKsp(

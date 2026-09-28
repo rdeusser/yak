@@ -764,7 +764,7 @@ impl ConcurrencyHandler {
                             .into(),
                             Box::pin(async {
                                 // This wait can last arbitrarily long (and forever if
-                                // the blocking command is wedged, e.g. on stale Eden
+                                // the blocking command is wedged, e.g. on stale filesystem
                                 // handles), so periodically tell the user what they
                                 // are actually waiting on.
                                 let wait = self.cond.wait((data, &self.data));
@@ -847,13 +847,13 @@ impl ConcurrencyHandler {
             );
         }
 
-        // `soft_error!` may perform a synchronous Scribe write, so report after registration has
-        // released the state lock. The guard cleans up if the warning is escalated.
+        // Report after registration has released the state lock, so the soft error handler never
+        // runs under it. The guard cleans up if the warning is escalated.
         if let Some((running, argv)) = nested_warning {
             soft_error!(
                 "nested_invocation_same_dice_state",
                 ConcurrencyHandlerError::NestedInvocationWithSameStates(running, argv).into(),
-                error_on_oss: true
+                hard_error: true
             )?;
         }
 
@@ -1061,7 +1061,6 @@ mod tests {
     use allocative::Allocative;
     use assert_matches::assert_matches;
     use async_trait::async_trait;
-    use buck2_core::is_open_source;
     use buck2_util::early_command_timing::EXCLUSIVE_COMMAND_WAIT;
     use buck2_util::early_command_timing::FILE_WATCHER_WAIT;
     use derivative::Derivative;
@@ -1951,11 +1950,8 @@ mod tests {
     }
 
     #[tokio::test]
+    #[ignore = "a nested invocation on the same DICE state is a hard error, so the barrier never completes"]
     async fn nested_invocation_same_transaction() {
-        // FIXME: This times out on open source, and we don't know why
-        if is_open_source() {
-            return;
-        }
         let dice = make_default_dice();
         let concurrency = ConcurrencyHandler::new(dice);
 
@@ -2666,13 +2662,9 @@ mod tests {
 
     /// A queued exclusive command must not deadlock a nested invocation with its parent.
     #[tokio::test]
+    #[ignore = "a nested invocation on the same DICE state is a hard error"]
     async fn a_queued_exclusive_command_does_not_block_nested_invocations()
     -> buck2_error::Result<()> {
-        // Matches the existing nested-invocation test's OSS exclusion.
-        if is_open_source() {
-            return Ok(());
-        }
-
         let concurrency = ConcurrencyHandler::new(make_default_dice());
 
         let block = Arc::new(RwLock::new(()));

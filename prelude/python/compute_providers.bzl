@@ -52,7 +52,7 @@ def compute_test_providers(ctx: AnalysisContext, exe: PexProviders) -> list[Prov
             default_executor = re_executors.default_executor,
             executor_overrides = re_executors.executor_overrides,
             # We implicitly make this test via the project root, instead of
-            # the cell root (e.g. fbcode root). `network_access` is carried on
+            # the cell root. `network_access` is carried on
             # the executor config (see `get_re_executors_from_props`).
             run_from_project_root = re_executors.run_from_project_root,
             use_project_relative_paths = re_executors.use_project_relative_paths,

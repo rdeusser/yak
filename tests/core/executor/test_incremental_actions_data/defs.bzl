@@ -10,7 +10,7 @@ def _basic_incremental_actions_impl(ctx) -> list[Provider]:
     out = ctx.actions.declare_output("out", has_content_based_path = ctx.attrs.use_content_based_path)
     ctx.actions.run(
         cmd_args(
-            ["fbpython", ctx.attrs.script] + ["--out", out.as_output()],
+            ["python3", ctx.attrs.script] + ["--out", out.as_output()],
             hidden = [ctx.actions.write("invalidate_action_and_metadata", ctx.attrs.invalidate, has_content_based_path = False)],
         ),
         category = "incremental",
@@ -57,7 +57,7 @@ with open(sys.argv[1], "w") as f:
 
     ctx.actions.run(
         cmd_args(
-            ["fbpython", script, out.as_output()],
+            ["python3", script, out.as_output()],
             hidden = [
                 artifact_tag.tag_artifacts(input_not_in_metadata),
                 artifact_tag.tag_artifacts(input_in_metadata),
@@ -85,7 +85,7 @@ def _incremental_action_with_multiple_outputs_impl(ctx) -> list[Provider]:
     out1 = ctx.actions.declare_output("out1", has_content_based_path = ctx.attrs.use_content_based_path)
     out2 = ctx.actions.declare_output("out2", has_content_based_path = ctx.attrs.use_content_based_path)
     ctx.actions.run(
-        cmd_args(["fbpython", ctx.attrs.script] + ["--out1", out1.as_output(), "--out2", out2.as_output()]),
+        cmd_args(["python3", ctx.attrs.script] + ["--out1", out1.as_output(), "--out2", out2.as_output()]),
         category = "incremental",
         no_outputs_cleanup = True,
         env = {"INVALIDATE_ACTION": ctx.attrs.invalidate},

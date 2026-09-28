@@ -1,8 +1,5 @@
 load("@prelude//toolchains/android/tools:build_rules.bzl", "SIGNED_JAR_BLOCKLIST", "buck_java_binary", "buck_java_library", "buck_kotlin_library")
-load("@prelude//toolchains/android/tools/build_rules:fb_native.bzl", "fb_native")
 load("@prelude//utils:source_listing.bzl", "source_listing")
-
-oncall("android_devxx")
 
 source_listing()
 
@@ -67,17 +64,15 @@ buck_java_binary(
     ],
 )
 
-fb_native.kotlin_library(
+kotlin_library(
     name = "resource_source_map_format",
     srcs = ["ResourceSourceMapFormat.kt"],
     _kotlin_toolchain = "toolchains//:kotlin_bootstrap",
     provided_deps = [
         "prelude//toolchains/android/third-party:kotlin-stdlib",
     ],
-    # @oss-disable[end= ]: source = "8",
-    # @oss-disable[end= ]: target = "8",
-    source = "11", # @oss-enable
-    target = "11", # @oss-enable
+    source = "11",
+    target = "11",
     visibility = ["PUBLIC"],
 )
 

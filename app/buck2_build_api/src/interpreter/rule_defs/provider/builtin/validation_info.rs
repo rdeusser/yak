@@ -75,7 +75,7 @@ enum ValidationInfoError {
 ///     ]
 /// ```
 ///
-/// See the [Validations guide](https://buck2.build/docs/rule_authors/validation/)
+/// See the [Validations guide](https://rdeusser.github.io/buck2/docs/rule_authors/validation/)
 /// for the end-to-end story.
 #[internal_provider(validation_info_creator)]
 #[derive(
@@ -93,7 +93,7 @@ pub struct ValidationInfo<'v> {
     /// Non-empty list of `ValidationSpec` values, each representing a single
     /// validation. Spec names must be unique within this provider.
     ///
-    /// See the [Validations guide](https://buck2.build/docs/rule_authors/validation/)
+    /// See the [Validations guide](https://rdeusser.github.io/buck2/docs/rule_authors/validation/)
     /// for how to declare validations end-to-end and write the validator
     /// action that produces each spec's `validation_result`.
     validations: ValueOfUnchecked<'v, Vec<StarlarkValidationSpec<'static>>>,

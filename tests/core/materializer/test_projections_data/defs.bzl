@@ -29,7 +29,7 @@ def _produce_impl(ctx):
     out = ctx.actions.declare_output("out", dir = True, has_content_based_path = False)
     ctx.actions.run(
         cmd_args(
-            ["fbpython", "-c", _WRITE_DIR, out.as_output()],
+            ["python3", "-c", _WRITE_DIR, out.as_output()],
             ["{}={}".format(name, content) for name, content in ctx.attrs.contents.items()],
         ),
         category = "produce",
@@ -50,7 +50,7 @@ def _consume_impl(ctx):
 
     out = ctx.actions.declare_output("out.txt", has_content_based_path = False)
     ctx.actions.run(
-        cmd_args(["fbpython", "-c", _CAT, out.as_output()], inputs),
+        cmd_args(["python3", "-c", _CAT, out.as_output()], inputs),
         category = "consume",
         # Force the inputs to be materialized on disk rather than read from
         # wherever the action would otherwise have run.

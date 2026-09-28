@@ -9,8 +9,9 @@
 
 import os
 
-from buck2.tests.e2e_util.api.buck import Buck
-from buck2.tests.e2e_util.buck_workspace import buck_test
+import pytest
+from e2e_util.api.buck import Buck
+from e2e_util.buck_workspace import buck_test
 
 # TODO(nga): Local and remote execution of `//:dog_and_bone` must produce identical output.
 #   This is a known limitation of at least our RE implementation. It reads through symlinks.
@@ -24,6 +25,7 @@ async def test_symlink_preserves_empty_directory_local(buck: Buck) -> None:
     assert os.path.isfile(out)
 
 
+@pytest.mark.remote_execution
 @buck_test(skip_for_os=["windows"])
 async def test_symlink_preserves_empty_directory_remote(buck: Buck) -> None:
     result = await buck.build("//:dog_and_bone", "--prefer-remote")
@@ -31,8 +33,3 @@ async def test_symlink_preserves_empty_directory_remote(buck: Buck) -> None:
     # This is incorrect, should be a symlink.
     assert not os.path.islink(out)
     assert os.path.isfile(out)
-
-
-@buck_test()
-async def test_noop(buck: Buck) -> None:
-    return

@@ -61,11 +61,6 @@ _RESOURCE_BUNDLE_FIELDS = [
 ] + get_apple_info_plist_build_system_identification_attrs().keys()
 
 def _is_resources_toolchain_enabled() -> bool:
-    is_xplat_query_mode = read_root_config("mode", "is_xplat_mode_query") in ("True", "true")
-    if is_xplat_query_mode:
-        # Avoid returning buck2-only targets
-        return False
-
     return read_root_config("apple", "resources_toolchain_enabled", "true").lower() == "true"
 
 def make_resource_bundle_rule(apple_resource_bundle_rule, **kwargs) -> [None, str]:
@@ -91,7 +86,7 @@ def make_resource_bundle_rule(apple_resource_bundle_rule, **kwargs) -> [None, st
     for field_name in _RESOURCE_BUNDLE_FIELDS:
         resource_bundle_kwargs[field_name] = kwargs.get(field_name)
 
-    # TODO(T125269558): Remove usage of apple_resource_bundle() once we have exec groups.
+    # TODO: Remove usage of apple_resource_bundle() once we have exec groups.
     apple_resource_bundle_rule(name = resource_bundle_name, **resource_bundle_kwargs)
 
     return ":{}".format(resource_bundle_name)

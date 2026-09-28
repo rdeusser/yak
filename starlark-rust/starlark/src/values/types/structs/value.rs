@@ -170,9 +170,7 @@ impl<'v> StarlarkValue<'v> for Struct<'v> {
 
     fn documentation(&self) -> DocItem {
         // This treats structs as being value-like, and intentionally generates bad docs in the case
-        // of namespace-like usage. See
-        // <https://fb.workplace.com/groups/starlark/permalink/1463680027654154/> for some
-        // additional discussion
+        // of namespace-like usage.
         let typ = self.self_ty();
         DocItem::Member(DocMember::Property(DocProperty { docs: None, typ }))
     }

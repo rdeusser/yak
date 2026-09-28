@@ -63,7 +63,7 @@ use crate::interpreter::rule_defs::provider::builtin::worker_info::WorkerInfo;
 use crate::interpreter::rule_defs::required_test_local_resource::StarlarkRequiredTestLocalResource;
 
 /// Provider that signals that a rule can be tested using Buck2's internal test
-/// runner, bypassing the external TPX runner. This provider has the same API as
+/// runner, bypassing the external test executor. This provider has the same API as
 /// `ExternalRunnerTestInfo` but uses a different execution strategy.
 #[internal_provider(internal_runner_test_info_creator)]
 #[derive(
@@ -103,6 +103,8 @@ pub struct InternalRunnerTestInfo<'v> {
     contacts: ValueOfUnchecked<'v, Vec<String>>,
 
     /// Whether this test should use relative paths
+    ///
+    /// Defaults to `True`.
     use_project_relative_paths: ValueOfUnchecked<'v, bool>,
 
     /// Whether this test should run from the project root, as opposed to the cell root
@@ -206,7 +208,7 @@ impl<'v> InternalRunnerTestInfo<'v> {
             .unwrap()
             .unwrap()
             .into_option()
-            .unwrap_or_else(buck2_core::is_open_source)
+            .unwrap_or(true)
     }
 
     pub fn run_from_project_root(&self) -> bool {

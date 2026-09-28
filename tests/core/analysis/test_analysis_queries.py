@@ -6,12 +6,9 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-# pyre-strict
-
-
-from buck2.tests.e2e_util.api.buck import Buck
-from buck2.tests.e2e_util.buck_workspace import buck_test
-from buck2.tests.e2e_util.helper.golden import golden
+from e2e_util.api.buck import Buck
+from e2e_util.buck_workspace import buck_test
+from e2e_util.helper.golden import golden
 
 
 async def _test_analysis_query_invalidation_impl(buck: Buck, name: str) -> None:
@@ -40,7 +37,7 @@ async def _test_analysis_query_invalidation_impl(buck: Buck, name: str) -> None:
 @buck_test(data_dir="analysis_query_invalidation")
 async def test_analysis_query_invalidation_deps(buck: Buck) -> None:
     """
-    This is a regression test for T133069783.
+    Checks that a `deps()` analysis query sees the dependencies that a buckconfig change selects.
     """
     await _test_analysis_query_invalidation_impl(
         buck, name="analysis_query_invalidation"
@@ -52,7 +49,7 @@ async def test_analysis_query_invalidation_deps(buck: Buck) -> None:
 )
 async def test_analysis_query_invalidation_classpath(buck: Buck) -> None:
     """
-    Equivalent of T133069783 for `classpath()` instead of `deps()` queries.
+    Same as `test_analysis_query_invalidation_deps`, for `classpath()` queries.
     """
     await _test_analysis_query_invalidation_impl(
         buck, name="analysis_query_invalidation_classpath"
@@ -93,7 +90,7 @@ async def test_analysis_query_deps_with_depth(buck: Buck) -> None:
     assert ":qux" not in deps.stdout
 
 
-@buck_test(setup_eden=True, data_dir="analysis_query_deps")
+@buck_test(data_dir="analysis_query_deps")
 async def test_analysis_query_target_deps(buck: Buck) -> None:
     deps = await buck.build_without_report(":target_deps", "--out=-")
     golden(

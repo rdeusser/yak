@@ -8,7 +8,6 @@
 
 %% @format
 -module(dependency_analyzer).
--author("loscher@fb.com").
 -moduledoc """
  Extract direct dependencies from a given erl or hrl file
 

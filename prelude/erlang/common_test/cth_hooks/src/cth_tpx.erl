@@ -9,8 +9,6 @@
 -module(cth_tpx).
 -compile(warn_missing_spec_all).
 
--export([is_running_in_sandcastle/0]).
-
 %% Callbacks
 -export([id/1]).
 -export([init/2]).
@@ -779,15 +777,3 @@ modify_shared_state(HookState, Caller, Action) ->
         {ok, Action(State)}
     end),
     NewHookState.
-
--spec is_running_in_sandcastle() -> boolean().
-is_running_in_sandcastle() ->
-    case os:getenv("SANDCASTLE_DIFF_ID") of
-        [$D | _] ->
-            true;
-        _ ->
-            case os:getenv("SANDCASTLE") of
-                false -> false;
-                _ -> true
-            end
-    end.

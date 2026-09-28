@@ -24,7 +24,7 @@ ShlibInterfacesMode = enum(
     "stub_from_linker_invocation",  # For linkers that support it, generate an interface from the linker invocation that would ordinarily produce the shared library, adding some extra flags
 )
 
-# TODO(T110378149): Consider whether it makes sense to move these things to
+# TODO: Consider whether it makes sense to move these things to
 # configurations/constraints rather than part of the toolchain.
 LinkerInfo = provider(
     # @unsorted-dict-items
@@ -44,9 +44,8 @@ LinkerInfo = provider(
         "extra_outputs": provider_field(list[str], default = []),
         "generate_linker_maps": provider_field(typing.Any, default = None),  # bool
         "generate_gc_sections": provider_field(typing.Any, default = None),  # bool
-        # Whether to run native links locally.  We support this for fbcode platforms
-        # to avoid issues with C++ static links (see comment in
-        # `platform/cxx_toolchains.bzl` for details).
+        # Whether to run native links locally, to avoid issues with large C++
+        # static links.
         "link_binaries_locally": provider_field(typing.Any, default = None),
         # Whether to run native shared library links locally. For certain use cases
         # (e.g., large Apple frameworks), it's more efficient to link locally due
@@ -131,11 +130,11 @@ DepTrackingMode = enum(
     "none",
 )
 
-# TODO(T110378147): There's a bunch of info encoded in random places in buck
+# TODO: There's a bunch of info encoded in random places in buck
 # derived from information in these toolchains but hardcoded (for example,
 # which file extensions are preprocessable/compilable). We should figure out
 # how to move most of that into these toolchain infos.
-# TODO(T110378146): The inclusion of compiler and preprocessor in here is really
+# TODO: The inclusion of compiler and preprocessor in here is really
 # just a legacy thing that was never cleaned up. Historically, buck supported a
 # mode where compilation was done in two, explicitly separate phases
 # (preprocess and then compile). We don't support that today, and including
@@ -162,7 +161,6 @@ _compiler_fields = [
     # Controls cache upload for object files
     "allow_cache_upload",
     "supports_two_phase_compilation",
-    "compiler_with_wrapper",
     "supports_content_based_paths",
 ]
 
@@ -257,10 +255,10 @@ RuntimeDependencyHandling = enum(
     "symlink",
 )
 
-# TODO(T110378094): We should consider if we can change this from a hardcoded
+# TODO: We should consider if we can change this from a hardcoded
 # list of compiler_info to something more general. We could maybe do a list of
 # compiler_info where each one also declares what extensions it supports.
-# TODO(T110378145): Could we split up this Info so that each of the compilers
+# TODO: Could we split up this Info so that each of the compilers
 # could be provided by different dependencies? That would allow a target to
 # only depend on the compilers it actually needs.
 CxxToolchainInfo = provider(
@@ -272,7 +270,7 @@ CxxToolchainInfo = provider(
         "c_compiler_info": provider_field(typing.Any, default = None),
         # Maps cell names to their repo-relative path prefix. Used by coverage
         # prefix maps to translate cell-relative paths to repo-relative paths.
-        # e.g. {"fbcode": "fbcode"} means cell "fbcode" maps to the "fbcode/"
+        # e.g. {"lib": "lib"} means cell "lib" maps to the "lib/"
         # subdirectory. Cells not in the map are assumed to be the repo root.
         "cell_to_path_prefix_map": provider_field(dict[str, str], default = {}),
         "clang_llvm_statistics": provider_field(typing.Any, default = None),
@@ -404,7 +402,7 @@ def cxx_toolchain_infos(
     of those other types.
     """
 
-    # TODO(T110378099): verify types of the inner info objects.
+    # TODO: verify types of the inner info objects.
     _validate_linker_info(linker_info)
 
     # Maintain backwards compatibility with ObjC compilation using the C compiler.

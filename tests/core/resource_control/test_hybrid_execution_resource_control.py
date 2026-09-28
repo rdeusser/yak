@@ -6,22 +6,16 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-# pyre-strict
-
 from __future__ import annotations
 
 import json
 import os
 from pathlib import Path
 
-from buck2.tests.e2e_util.api.buck import Buck
-from buck2.tests.e2e_util.buck_workspace import buck_test
-from buck2.tests.e2e_util.helper.utils import filter_events
-
-
-# To not fail listing on Mac or Windows
-def test_dummy() -> None:
-    pass
+import pytest
+from e2e_util.api.buck import Buck
+from e2e_util.buck_workspace import buck_test
+from e2e_util.helper.utils import filter_events
 
 
 def _use_some_memory_args(buck: Buck) -> list[str]:
@@ -62,6 +56,7 @@ async def test_memory_pressure_telemetry(
     )
 
 
+@pytest.mark.needs_binary("USE_SOME_MEMORY_BIN")
 @buck_test(skip_for_os=["darwin", "windows"], disable_daemon_cgroup=False)
 async def test_resource_control_events_created(
     buck: Buck,

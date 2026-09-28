@@ -75,7 +75,7 @@ MacOSXCatalystSdkMetadata = AppleSdkMetadata(
     name = "maccatalyst",
     target_device_flags = [
         "--target-device",
-        # TODO(T112097815): Support for macOS idiom
+        # TODO: Support for macOS idiom
         "ipad",
         # Needed so that `actool` works generates app icons correctly
         "--ui-framework-family",

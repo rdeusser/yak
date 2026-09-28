@@ -150,7 +150,6 @@ impl BuckSubcommand for ReplayCommand {
                 timekeeper,
                 "(replay)", // Could be better
                 console_opts.superconsole_config(),
-                None,
             );
 
             let mut events_ctx = EventsCtx::new(None, vec![console]);

@@ -82,7 +82,7 @@ const TAG_LEN_3: usize = TAGS_NEVER_VALUE[2];
 /// 32-bit targets). For all but the shortest slices the tag is `TAG_HEADER` and the length sits
 /// in a header before the elements; for lengths two and three the tag is the length and there is
 /// no header. Skipping the header for short slices was measured at 0.8% wall time and 0.2% max
-/// RSS on a large analysis (D66773980) when it covered lengths two through four, so changes to
+/// RSS on a large analysis when it covered lengths two through four, so changes to
 /// the encoding should be benchmarked.
 ///
 /// The current implementation returns what amounts to a null pointer for an

@@ -9,4 +9,3 @@
  */
 
 pub mod certs;
-pub mod validate;

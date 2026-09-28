@@ -13,8 +13,6 @@
 pub mod args;
 pub mod parser;
 mod path;
-#[cfg(fbcode_build)]
-mod rollouts;
 pub mod settings;
 
 pub use settings::BuckSettings;

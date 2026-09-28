@@ -365,7 +365,7 @@ def filter_out_language_version(extra_arguments: list) -> list:
 def kotlin_library_impl(ctx: AnalysisContext) -> list[Provider]:
     packaging_deps = ctx.attrs.deps + ctx.attrs.exported_deps + ctx.attrs.runtime_deps
 
-    # TODO(T107163344) this shouldn't be in kotlin_library itself, use overlays to remove it.
+    # TODO: this shouldn't be in kotlin_library itself, use overlays to remove it.
     android_packageable_info = merge_android_packageable_info(ctx.label, ctx.actions, packaging_deps)
     if ctx.attrs._build_only_native_code:
         shared_library_info, cxx_resource_info, linkable_graph = create_native_providers(ctx, ctx.label, packaging_deps)

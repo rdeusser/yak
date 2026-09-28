@@ -6,17 +6,15 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-# pyre-strict
-
-
 import json
 import sys
 from pathlib import Path
 
-from buck2.tests.e2e_util.api.buck import Buck
-from buck2.tests.e2e_util.asserts import expect_failure
-from buck2.tests.e2e_util.buck_workspace import buck_test
-from buck2.tests.e2e_util.helper.golden import (
+import pytest
+from e2e_util.api.buck import Buck
+from e2e_util.asserts import expect_failure
+from e2e_util.buck_workspace import buck_test
+from e2e_util.helper.golden import (
     golden,
     sanitize_build_report,
     sanitize_hashes,
@@ -26,7 +24,9 @@ from buck2.tests.e2e_util.helper.golden import (
 )
 
 
-def build_report_test(name: str, command: list[str]) -> None:
+def build_report_test(
+    name: str, command: list[str], remote_execution: bool = False
+) -> None:
     async def impl(buck: Buck, tmp_path: Path) -> None:
         report = tmp_path / "build-report.json"
         await expect_failure(
@@ -52,6 +52,8 @@ def build_report_test(name: str, command: list[str]) -> None:
         pass
 
     globals()[name] = impl
+    if remote_execution:
+        pytest.mark.remote_execution(impl)
 
     return buck_test()(impl)
 
@@ -158,6 +160,7 @@ if not running_on_windows() and not running_on_mac():
     build_report_test(
         "test_action_fail_error_handler_with_output_remote_only",
         ["//fail_action:fail_error_handler_with_output", "--remote-only"],
+        remote_execution=True,
     )
 
     build_report_test(
@@ -173,6 +176,7 @@ if not running_on_windows() and not running_on_mac():
             "-c",
             "test.use_content_based_path=true",
         ],
+        remote_execution=True,
     )
 
     build_report_test(
@@ -188,6 +192,7 @@ if not running_on_windows() and not running_on_mac():
     build_report_test(
         "test_action_fail_error_handler_output_not_written_remote_only",
         ["//fail_action:fail_error_handler_output_not_written", "--remote-only"],
+        remote_execution=True,
     )
 
     build_report_test(
@@ -257,7 +262,7 @@ build_report_test(
 )
 
 
-@buck_test(setup_eden=True)
+@buck_test()
 async def test_two_action_dep_failures(buck: Buck, tmp_path: Path) -> None:
     # When we pass `--keep-going`, we should get error reports for both dependencies of the action.
     # However, we don't. Instead, we just get one error non-deterministically. This is also why we

@@ -66,13 +66,6 @@ load(
 
 LinkPreference = enum("default", "full", "incremental")
 
-CxxLibraryInfo = provider(
-    fields = dict(
-        target = provider_field(Label),
-        labels = provider_field(list[str]),
-    ),
-)
-
 # Parameters to control which sub targets to define when processing Cxx rules.
 # By default, generates all subtargets.
 CxxRuleSubTargetParams = record(
@@ -283,8 +276,6 @@ CxxRuleConstructorParams = record(
     # Any extra diagnostics to include in [check] subtarget, maps from
     # identifier (usually filename) to diagnostic output.
     extra_diagnostics = field(dict[str, Artifact] | None, None),
-    # Whether to use fbcc Rust wrapper
-    use_fbcc_rust_wrapper = field(bool, False),
     # Precompiled header
     precompiled_header = field(Dependency | None, None),
     # Prefix header

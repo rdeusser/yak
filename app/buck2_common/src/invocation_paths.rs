@@ -80,12 +80,6 @@ impl TenantPaths {
         &self.isolation
     }
 
-    /// Directory containing remote-execution logs for this tenant.
-    pub fn re_logs_dir(&self) -> AbsNormPathBuf {
-        self.buck_out_path()
-            .join(ForwardRelativePath::unchecked_new("re_logs"))
-    }
-
     /// Top-level directory name under the project root used for Buck outputs.
     pub fn buck_out_dir_prefix() -> &'static ProjectRelativePath {
         ProjectRelativePath::unchecked_new("buck-out")
@@ -201,11 +195,6 @@ impl InvocationPaths {
             .join(ForwardRelativePath::unchecked_new("tmp"))
     }
 
-    pub fn re_logs_dir(&self) -> AbsNormPathBuf {
-        self.buck_out_path()
-            .join(ForwardRelativePath::unchecked_new("re_logs"))
-    }
-
     pub fn build_count_dir(&self) -> AbsNormPathBuf {
         self.buck_out_path()
             .join(ForwardRelativePath::unchecked_new("build_count"))
@@ -317,12 +306,6 @@ impl InvocationPaths {
             self.incremental_state_dir_name(),
             self.dep_file_state_dir_name(),
         ]
-    }
-
-    /// This is used by the health check server and client to preserve states across runs, and for temporary files.
-    pub fn health_check_state_dir(&self) -> AbsNormPathBuf {
-        self.buck_out_path()
-            .join(ForwardRelativePath::unchecked_new("health_check"))
     }
 
     /// Trash directory for background clean operations.
@@ -444,20 +427,9 @@ mod tests {
             OsStr::new(expected_path),
         );
 
-        let expected_path = if cfg!(windows) {
-            "C:\\my\\project\\buck-out\\isolation\\health_check"
-        } else {
-            "/my/project/buck-out/isolation/health_check"
-        };
-        assert_eq!(
-            paths.health_check_state_dir().as_os_str(),
-            OsStr::new(expected_path),
-        );
-
         let tenant_paths = paths.tenant_paths();
         assert_eq!(tenant_paths.project_root(), paths.project_root());
         assert_eq!(tenant_paths.isolation().as_str(), paths.isolation.as_str());
-        assert_eq!(tenant_paths.re_logs_dir(), paths.re_logs_dir());
         assert_eq!(tenant_paths.buck_out_dir(), paths.buck_out_dir());
         assert_eq!(tenant_paths.buck_out_path(), paths.buck_out_path());
         assert_eq!(tenant_paths.cache_dir(), paths.cache_dir());

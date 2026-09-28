@@ -23,9 +23,9 @@ if (isDev) {
 // The main window which is the UI
 let mainWindow;
 
-// The directory all buck2 commands are run from.
-// TODO: We might want better detection or user persistence in future.
-let buckDir = `${app.getPath('home')}/fbsource`;
+// The directory all buck2 commands are run from. It starts at the home
+// directory until the user selects a project.
+let buckDir = app.getPath('home');
 
 function createWindow () {
     mainWindow = new BrowserWindow({
@@ -51,16 +51,13 @@ function validateTarget(target) {
     }
 }
 
-async function runCommand(args, host, mode) {
+async function runCommand(args, host) {
     // Rendering too much data goes really slow, so just error
     // beyond a certain threshold.
     const buffer = 5 * 1024 * 1024;
 
     if (host !== "") {
         args.push("--fake-host=" + host);
-    }
-    if (mode !== "") {
-        args.push("--config-file=fbcode//mode/" + mode.toLowerCase())
     }
 
     console.log("Start: " + args.join(" "));
@@ -76,22 +73,22 @@ async function runCommand(args, host, mode) {
 }
 
 ipcMain.handle('buck2-status', async _ => {
-    return await runCommand(["status"], "", "")
+    return await runCommand(["status"], "")
 });
 
-ipcMain.handle('buck2-targets', async (_, target, host, mode) => {
+ipcMain.handle('buck2-targets', async (_, target, host) => {
     validateTarget(target);
-    return await runCommand(["targets", target], host, mode);
+    return await runCommand(["targets", target], host);
 });
 
-ipcMain.handle('buck2-attributes', async (_, target, host, mode) => {
+ipcMain.handle('buck2-attributes', async (_, target, host) => {
     validateTarget(target);
-    return await runCommand(["uquery", `'${target}'`, "--output-attribute=.*"], host, mode);
+    return await runCommand(["uquery", `'${target}'`, "--output-attribute=.*"], host);
 });
 
-ipcMain.handle('buck2-providers', async (_, target, host, mode) => {
+ipcMain.handle('buck2-providers', async (_, target, host) => {
     validateTarget(target);
-    return await runCommand(["audit", "providers", target], host, mode);
+    return await runCommand(["audit", "providers", target], host);
 });
 
 ipcMain.handle('select-buck-dir', async _ => {

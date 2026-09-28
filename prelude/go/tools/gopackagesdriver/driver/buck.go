@@ -121,7 +121,7 @@ func (b *buckShell) BXL(ctx context.Context, label string, args []string) ([]byt
 	return data, nil
 }
 
-// Use this hacky way to get errors until https://fburl.com/workplace/q79a59rn implemented
+// Use this hacky way to get errors until BXL reports action errors in structured form
 func retriveActionErrors(buckStderr []byte) string {
 	logPrefix := regexp.MustCompile(`^\[\S+\]\s*`)
 	scanner := bufio.NewScanner(bytes.NewReader(buckStderr))

@@ -102,7 +102,7 @@ impl LiteralParser {
                             value.to_owned()
                         )
                         .into(),
-                        error_on_oss: true
+                        hard_error: true
                     )?;
                 }
                 ParsedPattern::Target(package, target_name, TargetPatternExtra)

@@ -11,7 +11,6 @@
 # the generated docs, and so those should be verified to be accurate and
 # well-formatted (and then delete this TODO)
 
-load("@prelude//:is_full_meta_repo.bzl", "is_full_meta_repo")
 load(":apple_toolchain_types.bzl", "AppleToolchainInfo", "AppleToolsInfo")
 
 def _headers_arg():
@@ -195,55 +194,9 @@ def _uses_explicit_modules_arg():
         "uses_explicit_modules": attrs.bool(default = False),
     }
 
-def _meta_apple_library_validation_enabled_default_value():
-    if not is_full_meta_repo():
-        return False
-
-    meta_apple_library_validation_enabled_default = read_root_config("apple", "meta_apple_library_validation", "false").lower() == "true"
-
-    is_arvr_build = read_root_config("fb", "arvr_build", "false").lower() == "true"
-    if is_arvr_build:
-        # Not all arvr builds have `arvr_mode_enabled` constraint, so under arvr
-        # build mode, always disable suffixing checks as those graphs are not suffixed
-        return False
-
-    return select({
-        "DEFAULT": select({
-            "DEFAULT": meta_apple_library_validation_enabled_default,
-            "config//features/apple:fb_xplat_suffixing_check_disabled": False,
-            "config//features/apple:fb_xplat_suffixing_check_enabled": True,
-        }),
-        # arvr targets do not use suffixed targets, as any xplat target deps
-        # get rewritten without the Apple-specific suffixes.
-        "config//build_mode:arvr_mode[enabled]": False,
-    })
-
-def _meta_apple_library_validation_enabled_arg():
-    return {
-        "_meta_apple_library_validation_enabled": attrs.bool(default = _meta_apple_library_validation_enabled_default_value()),
-    }
-
-def _skip_universal_resource_dedupe_default_value():
-    if not is_full_meta_repo():
-        return False
-
-    return select({
-        "DEFAULT": False,
-        "config//features/apple:skip_universal_resource_dedupe_disabled": False,
-        "config//features/apple:skip_universal_resource_dedupe_enabled": True,
-    })
-
 def _skip_universal_resource_dedupe_arg():
     return {
-        "skip_universal_resource_dedupe": attrs.bool(default = _skip_universal_resource_dedupe_default_value()),
-    }
-
-def _apple_sanitizer_compatibility_arg():
-    if not is_full_meta_repo():
-        return {}
-
-    return {
-        "_sanitizer_compatibility": attrs.default_only(attrs.dep(default = "fbsource//tools/build_defs/apple/sanitizers:sanitizer_compatibility")),
+        "skip_universal_resource_dedupe": attrs.bool(default = False),
     }
 
 def _apple_tools_arg():
@@ -299,9 +252,15 @@ def _asset_catalogs_compilation_options_arg():
     }
 
 def _apple_installer_arg():
-    installer_target = "fbsource//xplat/buck2/platform/apple/python_installer:apple_installer"
     return {
-        "installer": attrs.default_only(attrs.exec_dep(default = installer_target)),
+        "installer": attrs.option(
+            attrs.exec_dep(providers = [RunInfo]),
+            default = None,
+            doc = """
+    The tool that `buck2 install` runs to install an `apple_bundle()` built with this
+     toolchain. Without it, bundles cannot be installed.
+""",
+        ),
     }
 
 def _enforce_minimum_os_plist_key():
@@ -469,9 +428,7 @@ apple_common = struct(
     privacy_manifest_arg = _privacy_manifest_arg,
     serialize_debugging_options_arg = _serialize_debugging_options_arg,
     uses_explicit_modules_arg = _uses_explicit_modules_arg,
-    meta_apple_library_validation_enabled_arg = _meta_apple_library_validation_enabled_arg,
     skip_universal_resource_dedupe_arg = _skip_universal_resource_dedupe_arg,
-    apple_sanitizer_compatibility_arg = _apple_sanitizer_compatibility_arg,
     apple_tools_arg = _apple_tools_arg,
     product_name_from_module_name_arg = _product_name_from_module_name_arg,
     executable_name_for_universal_arg = _executable_name_for_universal_arg,

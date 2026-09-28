@@ -14,7 +14,7 @@ import java.io.File
 import org.junit.runner.Description
 
 /**
- * Per-test JaCoCo coverage `RunListener` for fbcode JVM (JUnit/Jupiter) tests.
+ * Per-test JaCoCo coverage `RunListener` for JVM (JUnit/Jupiter) tests.
  *
  * Reads the JaCoCo runtime agent via reflection on `org.jacoco.agent.rt.RT`. If the agent isn't on
  * the classpath (non-coverage builds), construction throws and the runner skips registration.

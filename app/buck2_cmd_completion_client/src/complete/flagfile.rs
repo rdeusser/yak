@@ -188,11 +188,7 @@ mod tests {
     use super::*;
 
     fn paths_to_test_data() -> &'static [&'static str] {
-        &[
-            "fbcode/buck2/app/buck2_cmd_completion_client/test_data",
-            "app/buck2_cmd_completion_client/test_data",
-            "test_data",
-        ]
+        &["app/buck2_cmd_completion_client/test_data", "test_data"]
     }
 
     fn in_root() -> CommandOutcome<(InvocationRoots, AbsWorkingDir)> {

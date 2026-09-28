@@ -1,4 +1,4 @@
-# This file is @generated, regenerate by re-running test with `-- --env BUCK2_UPDATE_GOLDEN=1` appended to the test command
+# This file is @generated, regenerate by rerunning the test with `BUCK2_UPDATE_GOLDEN=1` set
 
 {
   "error_messages": [
@@ -6,7 +6,5 @@
     "Failed to build 'root//:fail2 (<unspecified>)'"
   ],
   "exit_code": 3,
-  "finalizing_error_messages": [
-    "'invocation recorder' failed to finalize\n\nCaused by:\n    Scribe sink not enabled (internal error)"
-  ]
+  "finalizing_error_messages": []
 }

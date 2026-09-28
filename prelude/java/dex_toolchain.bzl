@@ -6,7 +6,7 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-# TODO(T107163344) These should be part of the Android toolchain!
+# TODO: These should be part of the Android toolchain!
 # Move out once we have overlays.
 DexToolchainInfo = provider(
     doc = "Dex toolchain info",

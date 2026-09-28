@@ -15,11 +15,9 @@ import com.facebook.buck.core.filesystems.RelPath;
 import com.facebook.buck.jvm.cd.command.kotlin.LanguageVersion;
 import com.facebook.buck.jvm.core.BuildTargetValue;
 import com.facebook.buck.jvm.java.CompilerOutputPaths;
-import com.facebook.buck.jvm.kotlin.cd.analytics.KotlinCDAnalytics;
 import com.facebook.buck.jvm.kotlin.kotlinc.Kotlinc;
 import com.facebook.buck.jvm.kotlin.kotlinc.incremental.KotlincMode;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSortedSet;
 import java.nio.file.Path;
 import java.util.Optional;
@@ -40,7 +38,6 @@ public class KaptStep extends KotlincStep {
       ImmutableList<String> extraArguments,
       CompilerOutputPaths outputPaths,
       RelPath configuredBuckOut,
-      KotlinCDAnalytics kotlinCDAnalytics,
       LanguageVersion languageVersion) {
     super(
         invokingRule,
@@ -56,19 +53,9 @@ public class KaptStep extends KotlincStep {
         outputPaths,
         false,
         configuredBuckOut,
-        ImmutableMap.of(),
-        null,
-        ImmutableList.of(),
-        ImmutableList.of(),
-        false,
-        ImmutableList.of(),
         Optional.empty(),
         KotlincMode.NonIncremental.INSTANCE,
-        kotlinCDAnalytics,
-        languageVersion,
-        // Flag turning on/off K2 support for jvm-abi-gen actions
-        // not part of KAPT, since jvm-abi-gen doesn't run on KAPT steps
-        false);
+        languageVersion);
   }
 
   @Override

@@ -162,12 +162,12 @@ mod tests {
 
     #[test]
     fn test_dotslash_failure_is_environment() {
-        let stderr = "dotslash error: problem with `fbcode/tools/build/buck/wrappers/bin/fbcc_rust`\n\
+        let stderr = "dotslash error: problem with `tools/bin/rustc_wrapper`\n\
              caused by: failed to download artifact into cache `/home/user/.cache/dotslash` artifact location `/home/user/.cache/dotslash/obj/cas/d0/318634b943`\n\
              \n\
              This failed because the artifact likely no longer exists.\n\
              caused by: backend fetch failed\n\
-             caused by: failed to fetch CAS digest from `https://re-cas-prod-l7.internal.tfbnw.net:8443/cas/use_cases/dotslash_msdk_prod/digests/d0318634b943/440154`\n\
+             caused by: failed to fetch CAS digest from `https://cas.example.com:8443/digests/d0318634b943/440154`\n\
              caused by: 404 Not Found\n";
 
         assert_eq!(
@@ -179,7 +179,7 @@ mod tests {
 
     #[test]
     fn test_dotslash_unsupported_platform_is_not_infra() {
-        let stderr = "dotslash error: problem with `xplat/arfx/skylight/tools/skyscript/bin/skyscript`\n\
+        let stderr = "dotslash error: problem with `tools/bin/some_tool`\n\
              caused by: error when parsing DotSlash file\n\
              caused by: platform not supported\n\
              caused by: expected `windows`, `windows/x86_64` - but found `linux`, `macos`\n";
@@ -193,7 +193,7 @@ mod tests {
 
     #[test]
     fn test_dotslash_exclusion_does_not_mask_other_infra_patterns() {
-        let stderr = "dotslash error: problem with `xplat/arfx/skylight/tools/skyscript/bin/skyscript`\n\
+        let stderr = "dotslash error: problem with `tools/bin/some_tool`\n\
              caused by: error when parsing DotSlash file\n\
              caused by: Input/output error\n";
 

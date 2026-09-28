@@ -1,8 +1,4 @@
-load("@fbcode//buck2:proto_defs.bzl", "proto_srcs", "rust_protobuf_library")
-load("@fbcode//grpc_fb/codegen:buck_macros.bzl", "grpc_library")
-load("@fbcode_macros//build_defs/lib:oss.bzl", "translate_target")
-
-oncall("build_infra")
+load("//build_defs:proto.bzl", "proto_srcs", "rust_protobuf_library")
 
 rust_protobuf_library(
     name = "buck2_worker_proto",
@@ -16,16 +12,6 @@ proto_srcs(
     srcs = ["worker.proto"],
     visibility = ["PUBLIC"],
     deps = [
-        translate_target("//buck2/app/buck2_data:data_proto"),
-    ],
-)
-
-grpc_library(
-    name = "worker",
-    srcs = [
-        "worker.proto",
-    ],
-    languages = [
-        "py",
+        "//app/buck2_data:data_proto",
     ],
 )

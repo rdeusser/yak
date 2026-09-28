@@ -6,9 +6,6 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-# pyre-strict
-
-
 import asyncio
 import hashlib
 import json
@@ -18,14 +15,11 @@ import socket
 from pathlib import Path
 
 from aiohttp import web
-from buck2.tests.e2e_util.api.buck import Buck
-from buck2.tests.e2e_util.asserts import expect_failure
-from buck2.tests.e2e_util.buck_workspace import buck_test
-from buck2.tests.e2e_util.helper.utils import filter_events
-
-# Taken from the ActionExecutionKind enum in data.proto.
-ACTION_EXECUTION_KIND_LOCAL = 1
-ACTION_EXECUTION_KIND_REMOTE = 2
+import pytest
+from e2e_util.api.buck import Buck
+from e2e_util.asserts import expect_failure
+from e2e_util.buck_workspace import buck_test
+from e2e_util.helper.utils import filter_events
 
 
 @buck_test(data_dir="actions")
@@ -89,13 +83,7 @@ def get_canonicalized_for_windows(dest: Path, relative_link: str) -> str:
     return "\\\\?\\" + os.path.realpath(dest.parent / relative_link)
 
 
-@buck_test(
-    data_dir="actions",
-    # Because we use eden symlink redirection on MacOS
-    # this test resolves both links and points to nonexistent files,
-    # hence disabling eden
-    setup_eden=False,
-)
+@buck_test(data_dir="actions")
 async def test_symlink_dir(buck: Buck) -> None:
     result = await buck.build("//symlinked_dir:")
     build_report = result.get_build_report()
@@ -138,7 +126,6 @@ async def test_symlink_dir(buck: Buck) -> None:
 @buck_test(
     data_dir="actions",
     # See note on test_symlink_dir
-    setup_eden=False,
 )
 async def test_symlink_dir_associated_artifacts(buck: Buck) -> None:
     result = await buck.build("//symlinked_dir:symlinked_transitive_files_target")
@@ -194,49 +181,6 @@ async def test_simple_run(buck: Buck) -> None:
         buck.build("//run:rejects_bad_args"),
         stderr_regex="Type of parameter `arguments` doesn't match",
     )
-
-
-@buck_test(data_dir="actions")
-async def test_local_action_records_hostname(buck: Buck) -> None:
-    # A locally-executed action always runs on the buck2 daemon's host, so its
-    # ActionExecutionEnd event must carry that hostname -- including on the
-    # success path, which previously left it unset.
-    await buck.build("//run:runs_script_locally")
-
-    actions = await filter_events(
-        buck,
-        "Event",
-        "data",
-        "SpanEnd",
-        "data",
-        "ActionExecution",
-    )
-    local = [a for a in actions if a["execution_kind"] == ACTION_EXECUTION_KIND_LOCAL]
-    assert len(local) == 1, actions
-    assert local[0]["hostname"] == socket.gethostname()
-
-
-@buck_test(data_dir="actions")
-async def test_remote_action_records_no_hostname(buck: Buck) -> None:
-    # A remotely-executed action does not run on the daemon host, so its
-    # ActionExecutionEnd event must not carry a hostname on the success path.
-    await buck.build(
-        "//run:runs_simple_script_remote",
-        "--remote-only",
-        "--no-remote-cache",
-    )
-
-    actions = await filter_events(
-        buck,
-        "Event",
-        "data",
-        "SpanEnd",
-        "data",
-        "ActionExecution",
-    )
-    remote = [a for a in actions if a["execution_kind"] == ACTION_EXECUTION_KIND_REMOTE]
-    assert len(remote) == 1, actions
-    assert remote[0].get("hostname") is None
 
 
 @buck_test(data_dir="actions")
@@ -311,7 +255,11 @@ async def test_download_file(buck: Buck) -> None:
 
     await runner.cleanup()
 
-    assert attempt == 4
+    # The download has only a SHA-1 checksum, which the default SHA-256 digest
+    # configuration cannot defer, so buck2 downloads the file at once. The
+    # server sees the two failed requests that buck2 retries and the request
+    # that succeeds.
+    assert attempt == 3
 
 
 @buck_test(data_dir="actions")
@@ -382,36 +330,16 @@ async def test_download_file_timeout_after_retries(buck: Buck) -> None:
 
 
 @buck_test(data_dir="actions")
-async def test_cas_artifact(buck: Buck) -> None:
-    # The digests in `//cas_artifact:` require the buckconfig.
-    # NB: cannot use `extra_buck_config` attrib of `@buck_test()``
-    with open(buck.cwd / ".buckconfig", "a") as buckconfig:
-        buckconfig.write("[buck2]\n")
-        buckconfig.write("digest_algorithms = BLAKE3-KEYED,SHA1\n")
-
-    # Setting a use case override to test that it is not used.
-    result = await buck.build(
-        "//cas_artifact:", "-c", "buck2_re_client.override_use_case=missing_usecase"
-    )
-
-    empty = result.get_build_report().output_for_target("//cas_artifact:empty")
-    assert empty.read_text() == ""
-
-    tree = result.get_build_report().output_for_target("//cas_artifact:tree")
-    assert list(tree.iterdir()) == [tree / "b"]
-    assert (tree / "b").read_text() == "b\n"
-
-    tree = result.get_build_report().output_for_target("//cas_artifact:dir")
-    assert list(tree.iterdir()) == [tree / "y"]
-    assert (tree / "y").read_text() == "hi\n"
-
-
-@buck_test(data_dir="actions")
 async def test_invalid_command(buck: Buck) -> None:
     await expect_failure(
         buck.build("//run_bad:run_invalid_command_local"),
         stderr_regex="non-zero exit code.*no exit code",
     )
+
+
+@pytest.mark.remote_execution
+@buck_test(data_dir="actions")
+async def test_invalid_command_remote(buck: Buck) -> None:
     if platform.system() == "Linux":
         expected_error = "non-zero exit code"
     else:

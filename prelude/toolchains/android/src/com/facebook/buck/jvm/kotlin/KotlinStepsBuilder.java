@@ -20,7 +20,6 @@ import com.facebook.buck.jvm.cd.command.BuildMode;
 import com.facebook.buck.jvm.cd.command.kotlin.BuildKotlinCommand;
 import com.facebook.buck.jvm.cd.command.kotlin.KotlinExtraParams;
 import com.facebook.buck.jvm.java.ActionMetadata;
-import com.facebook.buck.jvm.kotlin.cd.analytics.KotlinCDAnalytics;
 import com.facebook.buck.step.isolatedsteps.IsolatedStep;
 import com.google.common.collect.ImmutableList;
 import javax.annotation.Nullable;
@@ -31,10 +30,8 @@ public class KotlinStepsBuilder implements BuildCommandStepsBuilder {
   private final AbsPath ruleCellRoot;
 
   public KotlinStepsBuilder(
-      BuildKotlinCommand buildKotlinCommand,
-      @Nullable ActionMetadata actionMetadata,
-      KotlinCDAnalytics kotlinCDAnalytics) {
-    steps = buildSteps(buildKotlinCommand, actionMetadata, kotlinCDAnalytics);
+      BuildKotlinCommand buildKotlinCommand, @Nullable ActionMetadata actionMetadata) {
+    steps = buildSteps(buildKotlinCommand, actionMetadata);
     ruleCellRoot = buildKotlinCommand.getBaseJarCommand().getBuildCellRootPath();
   }
 
@@ -55,11 +52,8 @@ public class KotlinStepsBuilder implements BuildCommandStepsBuilder {
   }
 
   private ImmutableList<IsolatedStep> buildSteps(
-      BuildKotlinCommand buildKotlinCommand,
-      @Nullable ActionMetadata actionMetadata,
-      KotlinCDAnalytics kotlinCDAnalytics) {
-    DaemonKotlincToJarStepFactory kotlincToJarStepFactory =
-        new DaemonKotlincToJarStepFactory(kotlinCDAnalytics);
+      BuildKotlinCommand buildKotlinCommand, @Nullable ActionMetadata actionMetadata) {
+    DaemonKotlincToJarStepFactory kotlincToJarStepFactory = new DaemonKotlincToJarStepFactory();
 
     DefaultCompileStepsBuilderFactory<KotlinExtraParams> stepsBuilderFactory =
         new DefaultCompileStepsBuilderFactory<>(kotlincToJarStepFactory);

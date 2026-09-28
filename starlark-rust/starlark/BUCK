@@ -1,12 +1,8 @@
-load("@fbcode_macros//build_defs:native_rules.bzl", "alias", "buck_filegroup")
-load("@fbsource//tools/build_defs:rust_library.bzl", "rust_library")
-
-oncall("build_infra")
+load("//build_defs:rust.bzl", "rust_library")
 
 # Constraint controlling the "pagable" Cargo feature of the starlark crate.
 # When enabled, pagable serialization/deserialization support for starlark values is enabled.
-# Buck2 internal targets set this to "enabled" via package modifier in buck2/PACKAGE.
-# External consumers get "disabled" by default.
+# `//:buck2` sets it to "enabled" with a transition (`defs.bzl`). Other targets get "disabled".
 constraint(
     name = "pagable",
     default = "disabled",
@@ -20,10 +16,11 @@ constraint(
 
 alias(
     name = "starlark-bin",
-    actual = "//buck2/starlark-rust/starlark_bin:starlark_bin",
+    actual = "//starlark-rust/starlark_bin:starlark_bin",
+    visibility = ["PUBLIC"],
 )
 
-buck_filegroup(
+filegroup(
     name = "testcases",
     srcs = glob([
         "src/**/golden/**",
@@ -31,62 +28,14 @@ buck_filegroup(
         "testcases/**",
     ]),
     copy = False,
+    visibility = ["PUBLIC"],
 )
 
 rust_library(
     name = "starlark",
     srcs = glob(["src/**/*.rs"]),
-    autocargo = {
-        "cargo_toml_config": {
-            "dependencies_override": {
-                "dependencies": {
-                    # Only the impls the published crate needs, not everything
-                    # buck2 enables on these crates.
-                    "allocative": {"features": ["bumpalo", "dashmap", "num-bigint", "triomphe"]},
-                    # fbsource enables `allocator_api`, which needs nightly; the
-                    # starlark-rust repository builds on stable.
-                    "bumpalo": {"features": ["collections"], "workspace": False},
-                    "pagable": {"features": []},
-                    "strong_hash": {"features": []},
-                },
-            },
-            "extra_buck_dependencies": {
-                # rustyline does not build for wasm, which the OSS CI covers.
-                "dependencies": [(None, "fbsource//third-party/rust:rustyline")],
-                "target": {
-                    "'cfg(not(target_arch = \"wasm32\"))'": {
-                        "dependencies": ["fbsource//third-party/rust:rustyline"],
-                    },
-                },
-            },
-            "extra_check_cfgs": [
-                "cfg(rust_nightly)",
-                "cfg(starlark_require_heap_names)",
-            ],
-            "features": {
-                "default": [],
-                "pagable": [],
-            },
-            "package": {
-                "authors": [
-                    "Damien Martin-Guillerez <dmarting@google.com>",
-                    "Stepan Koltsov <stepan.koltsov@gmail.com>",
-                    "Facebook",
-                ],
-                "categories": ["parser-implementations", "development-tools"],
-                "description": "An implementation of the Starlark language in Rust.",
-                "documentation": "https://docs.rs/starlark",
-                "keywords": ["starlark", "skylark", "bazel", "language", "interpreter"],
-                "license": "Apache-2.0",
-                "repository": "https://github.com/facebook/starlark-rust",
-                "version": "0.14.2",
-            },
-        },
-        # The `features` attribute is a `select`, which autocargo cannot read.
-        "edge_features": ["pagable"],
-    },
     # `pagable` controls type registration for starlark values which shouldn't be enforced everywhere.
-    # `pagable_dep` controls whether to depend on pagable at all, used for OSS because to support stable rustc.
+    # `pagable_dep` controls whether to depend on pagable at all, so the published crate builds with stable rustc.
     features = select({
         ":pagable[enabled]": [
             "pagable",
@@ -100,55 +49,44 @@ rust_library(
         ":pagable[enabled]": ["--cfg=starlark_require_heap_names"],
         "DEFAULT": [],
     }),
-    test_deps = [
-        # This is a hack to build `:testcases` when invoking a test.
-        # Otherwise `OUT_DIR` is set, but it points to non-existing directory.
-        # This is likely a bug in `rust_test` rule.
-        ":testcases",
-    ],
-    test_env = {
-        # Some of our tests include testcase files relative to CARGO_MANIFEST_DIR.
-        # This is a hack that allows both `cargo test` and `buck test` to work.
-        "CARGO_MANIFEST_DIR": "$(location :testcases)",
-    },
     deps = [
-        "fbsource//third-party/rust:anyhow",
-        "fbsource//third-party/rust:blake3",
-        "fbsource//third-party/rust:bumpalo",
-        "fbsource//third-party/rust:dashmap",
-        "fbsource//third-party/rust:debugserver-types",
-        "fbsource//third-party/rust:derivative",
-        "fbsource//third-party/rust:derive_more",
-        "fbsource//third-party/rust:either",
-        "fbsource//third-party/rust:erased-serde",
-        "fbsource//third-party/rust:hashbrown",
-        "fbsource//third-party/rust:indexmap",
-        "fbsource//third-party/rust:inventory",
-        "fbsource//third-party/rust:itertools",
-        "fbsource//third-party/rust:maplit",
-        "fbsource//third-party/rust:num-bigint",
-        "fbsource//third-party/rust:num-traits",
-        "fbsource//third-party/rust:once_cell",
-        "fbsource//third-party/rust:rand",
-        "fbsource//third-party/rust:ref-cast",
-        "fbsource//third-party/rust:regex",
-        "fbsource//third-party/rust:rustyline",
-        "fbsource//third-party/rust:serde",
-        "fbsource//third-party/rust:serde_json",
-        "fbsource//third-party/rust:stacker",
-        "fbsource//third-party/rust:static_assertions",
-        "fbsource//third-party/rust:strsim",
-        "fbsource//third-party/rust:textwrap",
-        "fbsource//third-party/rust:thiserror",
-        "fbsource//third-party/rust:triomphe",
-        "//buck2/allocative/allocative:allocative",
-        "//buck2/gazebo/cmp_any:cmp_any",
-        "//buck2/gazebo/display_container:display_container",
-        "//buck2/gazebo/dupe:dupe",
-        "//buck2/gazebo/strong_hash:strong_hash",
-        "//buck2/pagable:pagable",
-        "//buck2/starlark-rust/starlark_derive:starlark_derive",
-        "//buck2/starlark-rust/starlark_map:starlark_map",
-        "//buck2/starlark-rust/starlark_syntax:starlark_syntax",
+        "//allocative/allocative:allocative",
+        "//gazebo/cmp_any:cmp_any",
+        "//gazebo/display_container:display_container",
+        "//gazebo/dupe:dupe",
+        "//gazebo/strong_hash:strong_hash",
+        "//pagable:pagable",
+        "//starlark-rust/starlark_derive:starlark_derive",
+        "//starlark-rust/starlark_map:starlark_map",
+        "//starlark-rust/starlark_syntax:starlark_syntax",
+        "//third-party/rust:anyhow",
+        "//third-party/rust:blake3",
+        "//third-party/rust:bumpalo",
+        "//third-party/rust:dashmap",
+        "//third-party/rust:debugserver-types",
+        "//third-party/rust:derivative",
+        "//third-party/rust:derive_more",
+        "//third-party/rust:either",
+        "//third-party/rust:erased-serde",
+        "//third-party/rust:hashbrown",
+        "//third-party/rust:indexmap",
+        "//third-party/rust:inventory",
+        "//third-party/rust:itertools",
+        "//third-party/rust:maplit",
+        "//third-party/rust:num-bigint",
+        "//third-party/rust:num-traits",
+        "//third-party/rust:once_cell",
+        "//third-party/rust:rand",
+        "//third-party/rust:ref-cast",
+        "//third-party/rust:regex",
+        "//third-party/rust:rustyline",
+        "//third-party/rust:serde",
+        "//third-party/rust:serde_json",
+        "//third-party/rust:stacker",
+        "//third-party/rust:static_assertions",
+        "//third-party/rust:strsim",
+        "//third-party/rust:textwrap",
+        "//third-party/rust:thiserror",
+        "//third-party/rust:triomphe",
     ],
 )

@@ -393,8 +393,7 @@ public class MorePaths {
         target = MorePaths.normalize(symLink.getParent().resolve(target));
         // `isDirectory()` here returns false if target doesn’t exist, causing a problem with
         // Windows build.
-        // Ideally we should crash or log if target doesn't exist. More detail can be found at
-        // D27587133.
+        // Ideally we should crash or log if target doesn't exist.
         winFS.createSymbolicLink(symLink, target, isDirectory(target));
       } else {
         Files.createSymbolicLink(symLink, target);

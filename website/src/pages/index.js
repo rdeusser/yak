@@ -15,7 +15,6 @@ import Link from '@docusaurus/Link';
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 import styles from './index.module.css';
 import HomepageFeatures from '../components/HomepageFeatures';
-import { FbInternalOnly, OssOnly } from 'docusaurus-plugin-internaldocs-fb/internal';
 
 function HomepageHeader() {
   const {siteConfig} = useDocusaurusContext();
@@ -27,34 +26,18 @@ function HomepageHeader() {
           A large-scale build tool. The successor to Buck.<br/>
             Ready for users ∈ &#123;C++, Python, Rust, Haskell, Erlang, OCaml, Java, Kotlin, Go&#125;
         </p>
-        <FbInternalOnly>
-          <div className={styles.buttons}>
-            <Link
-              className="button button--secondary button--lg"
-              to="/docs/about/benefits/compared_to_buck1">
-              Why switch?
-            </Link>
-            <Link
-              className="button button--secondary button--lg"
-              to="/docs/users/migration_guide">
-              How to switch
-            </Link>
-          </div>
-        </FbInternalOnly>
-        <OssOnly>
-          <div className={styles.buttons}>
-            <Link
-              className="button button--secondary button--lg"
-              to="/docs/about/why">
-              Why Buck2?
-            </Link>
-            <Link
-              className="button button--secondary button--lg"
-              to="/docs/getting_started">
-              Getting started
-            </Link>
-          </div>
-        </OssOnly>
+        <div className={styles.buttons}>
+          <Link
+            className="button button--secondary button--lg"
+            to="/docs/about/why">
+            Why Buck2?
+          </Link>
+          <Link
+            className="button button--secondary button--lg"
+            to="/docs/getting_started">
+            Getting started
+          </Link>
+        </div>
       </div>
     </header>
   );
@@ -65,7 +48,7 @@ export default function Home() {
   return (
     <Layout
       title="Buck2 build system website"
-      description="Buck2 is an open-source large-scale build system from Meta. The successor to Buck.">
+      description="Buck2 is an open-source large-scale build system. The successor to Buck.">
       <HomepageHeader />
       <main>
         <HomepageFeatures />

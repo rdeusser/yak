@@ -311,8 +311,7 @@ impl<'p> LegacyConfigFileParser<'p> {
     }
 
     fn parse_section_marker(line: &str) -> buck2_error::Result<Option<&str>> {
-        // We allow trailing comment markers at the end of sections, since otherwise
-        // using oss-enable/oss-disable is super tricky
+        // A section header may end with a ` #` comment.
         match line.strip_prefix('[') {
             Some(remaining) => match Self::strip_line_comment(remaining).strip_suffix(']') {
                 None => Err(ConfigError::SectionMissingTrailingBracket(line.to_owned()).into()),

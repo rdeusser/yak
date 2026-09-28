@@ -25,7 +25,6 @@ pub enum StarlarkFileType {
 /// What type of file are we parsing - a `.bzl` file, `.bxl` file, or a `BUCK`/`TARGETS` file.
 impl StarlarkFileType {
     pub fn dialect(&self, disable_starlark_types: bool) -> Dialect {
-        let enable_f_strings = buck2_core::is_open_source();
         let buck_dialect: Dialect = Dialect {
             enable_def: false,
             enable_lambda: true,
@@ -34,7 +33,7 @@ impl StarlarkFileType {
             enable_types: DialectTypes::Disable,
             enable_load_reexport: false,
             enable_top_level_stmt: false,
-            enable_f_strings,
+            enable_f_strings: true,
             ..Dialect::Standard
         };
         let package_dialect: Dialect = Dialect {
@@ -45,7 +44,7 @@ impl StarlarkFileType {
             enable_types: DialectTypes::Disable,
             enable_load_reexport: false,
             enable_top_level_stmt: false,
-            enable_f_strings,
+            enable_f_strings: true,
             ..Dialect::Standard
         };
         let bzl_dialect: Dialect = Dialect {
@@ -60,7 +59,7 @@ impl StarlarkFileType {
             },
             enable_load_reexport: false,
             enable_top_level_stmt: true,
-            enable_f_strings,
+            enable_f_strings: true,
             ..Dialect::Standard
         };
         let bxl_dialect: Dialect = Dialect {
@@ -75,7 +74,7 @@ impl StarlarkFileType {
             },
             enable_load_reexport: false,
             enable_top_level_stmt: true,
-            enable_f_strings,
+            enable_f_strings: true,
             ..Dialect::Standard
         };
 

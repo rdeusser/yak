@@ -14,7 +14,6 @@ use std::path::Path;
 use std::process::Stdio;
 
 use buck2_error::BuckErrorContext as _;
-use buck2_events::metadata::username;
 use buck2_util::process::async_background_command;
 use tokio::net::UnixStream;
 
@@ -27,7 +26,7 @@ const BUCK2_TEST_EXECUTOR_USER_ENV_VAR: &str = "BUCK2_TEST_EXECUTOR_USER";
 pub(crate) async fn spawn(
     executable: &Path,
     args: Vec<String>,
-    tpx_args: Vec<String>,
+    executor_args: Vec<String>,
 ) -> buck2_error::Result<(ExecutorFuture, UnixStream, UnixStream)> {
     let (executor_client_async_io, executor_server_async_io) =
         UnixStream::pair().buck_error_context("Failed to create executor channel")?;
@@ -58,10 +57,9 @@ pub(crate) async fn spawn(
         .arg("--orchestrator-fd")
         .arg(orchestrator_client_fd)
         .arg("--")
-        .args(tpx_args);
+        .args(executor_args);
 
-    // Pass the actual username from Buck2 client to the executor.
-    if let Ok(Some(user)) = username() {
+    if let Some(user) = std::env::var_os("USER") {
         command.env(BUCK2_TEST_EXECUTOR_USER_ENV_VAR, user);
     }
 

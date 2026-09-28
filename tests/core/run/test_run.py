@@ -6,16 +6,13 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-# pyre-strict
-
-
 import subprocess
 from pathlib import Path
 from typing import List
 
-from buck2.tests.e2e_util.api.buck import Buck
-from buck2.tests.e2e_util.asserts import expect_failure
-from buck2.tests.e2e_util.buck_workspace import buck_test
+from e2e_util.api.buck import Buck
+from e2e_util.asserts import expect_failure
+from e2e_util.buck_workspace import buck_test
 
 
 @buck_test()
@@ -60,7 +57,7 @@ async def test_run_exit_result(buck: Buck) -> None:
     assert record["exit_result_name"] == "EXEC"
 
 
-@buck_test(allow_soft_errors=True)
+@buck_test()
 async def test_passing_arguments(buck: Buck) -> None:
     async def f(args1: List[str], args2: List[str]) -> None:
         result = await buck.run("root//:echo_args", *args1, *args2)
@@ -68,10 +65,6 @@ async def test_passing_arguments(buck: Buck) -> None:
 
     await f(["--"], ["val", "--long", "-s", "spa  ces"])
     await f(["--"], ["val", "--", "test"])
-    # Without --, a deprecation warning is emitted but command still succeeds
-    result = await buck.run("root//:echo_args", "val", "--long")
-    assert result.stdout.strip() == "val --long"
-    assert "will require" in result.stderr
     await f([], ["val", "--", "x"])  # Would work differently in Buck1 (no -- to user)
     await expect_failure(
         buck.run("root//:echo_args", "--not-a-flag"),
@@ -87,11 +80,18 @@ async def test_executable_fail_to_build(buck: Buck) -> None:
     )
 
 
-@buck_test(allow_soft_errors=True)
-async def test_run_args_without_separator_warning(buck: Buck) -> None:
-    result = await buck.run("root//:echo_args", "my_arg")
-    assert result.stdout.strip() == "my_arg"
-    assert "will require" in result.stderr
+# `run_args_without_separator` is a hard error, so buck2 fails a `run` whose
+# arguments contain no `--`.
+@buck_test()
+async def test_run_args_without_separator(buck: Buck) -> None:
+    await expect_failure(
+        buck.run("root//:echo_args", "my_arg"),
+        stderr_regex="`buck2 run` will require a `--` separator before target arguments",
+    )
+    await expect_failure(
+        buck.run("root//:echo_args", "val", "--long"),
+        stderr_regex="`buck2 run` will require a `--` separator before target arguments",
+    )
 
 
 @buck_test()

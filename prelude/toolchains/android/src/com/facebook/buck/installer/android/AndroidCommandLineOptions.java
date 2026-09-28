@@ -14,10 +14,7 @@ import com.google.common.annotations.VisibleForTesting;
 import javax.annotation.Nullable;
 import org.kohsuke.args4j.Option;
 
-/**
- * Constructs the Command Line Options to Support Android Install. The majority of these were copied
- * from {@code com.facebook.buck.cli.TargetDeviceCommandLineOptions}.
- */
+/** Constructs the Command Line Options to Support Android Install. */
 class AndroidCommandLineOptions {
   @VisibleForTesting public static final String EMULATOR_MODE_SHORT_ARG = "-e";
 
@@ -112,7 +109,7 @@ class AndroidCommandLineOptions {
       name = "--activity",
       aliases = {"-a"},
       metaVar = "<pkg/activity>",
-      usage = "Activity to launch e.g. com.facebook.katana/.LoginActivity. Implies -r.")
+      usage = "Activity to launch e.g. com.example.app/.MainActivity. Implies -r.")
   @Nullable
   public String activity = null;
 
@@ -167,13 +164,8 @@ class AndroidCommandLineOptions {
       usage = "Do not exit with nonzero, even if ADB detects no devices connected.")
   public boolean ignoreMissingDevices = false;
 
-  @Option(
-      name = "--enable-app-links",
-      usage =
-          "Enable app links after installation. If not specified, only enables for allowlisted"
-              + " packages.")
-  @Nullable
-  public Boolean enableAppLinks = null;
+  @Option(name = "--enable-app-links", usage = "Enable app links after installation.")
+  public boolean enableAppLinks = false;
 
   public enum RestartMode {
     auto,

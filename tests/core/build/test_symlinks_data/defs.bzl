@@ -10,7 +10,7 @@ def _cp_impl(ctx: AnalysisContext):
     out = ctx.actions.declare_output("out", has_content_based_path = False)
     ctx.actions.run(
         cmd_args(
-            "fbpython",
+            "python3",
             "-c",
             "import shutil, sys; from pathlib import Path; shutil.copyfile(Path(sys.argv[1]), Path(sys.argv[2]))",
             ctx.attrs.src,
@@ -51,7 +51,7 @@ def _stat_path_impl(ctx: AnalysisContext):
         project = ""
     ctx.actions.run(
         cmd_args(
-            "fbpython",
+            "python3",
             "-c",
             cmd_args(
                 "import sys",

@@ -3,12 +3,8 @@
   prelude = prelude
 
 [cell_aliases]
-  ovr_config = prelude
+  config = prelude
   toolchains = root
-  # Just have to exist, not actually used for this test
-  fbsource = root
-  fbcode = root
-  buck = root
 
 # This test runs in a workspace of its own, with no path back to the repository's
 # prelude/ directory. `bundled` uses the copy that gets compiled into the buck2

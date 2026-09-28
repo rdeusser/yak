@@ -6,9 +6,6 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-# pyre-strict
-
-
 import asyncio
 import json
 import re
@@ -16,9 +13,9 @@ from pathlib import Path
 from typing import Any
 
 import pytest
-from buck2.tests.e2e_util.api.buck import Buck
-from buck2.tests.e2e_util.api.buck_result import BuildResult
-from buck2.tests.e2e_util.buck_workspace import buck_test, env
+from e2e_util.api.buck import Buck
+from e2e_util.api.buck_result import BuildResult
+from e2e_util.buck_workspace import buck_test, env
 
 # The fixture's `.buckconfig` sets two `DaemonStartupConfig`s:
 # `buck2_hydration.enable_paging` (pagable DICE storage on disk) and
@@ -189,7 +186,7 @@ async def test_config_change_after_page_out_analysis_validation(buck: Buck) -> N
     assert analysis_resident == 0, "all AnalysisKey values should have been evicted"
     assert analysis_paged_out >= 3, "the three fixture AnalysisKeys should be paged out"
 
-    result = await buck.build("//:analysis_root", "-c", "fbcode.unused=0")
+    result = await buck.build("//:analysis_root", "-c", "test.unused=0")
     analysis_checks, analysis_computes = await _analysis_activity(buck, result)
     analysis_page_ins = _paged_in_count_for_key_type(result, "AnalysisKey")
     assert analysis_checks > 0, (

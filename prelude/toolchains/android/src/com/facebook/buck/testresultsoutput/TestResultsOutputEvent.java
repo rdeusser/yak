@@ -17,11 +17,9 @@ import java.io.IOException;
 import java.util.Optional;
 
 /**
- * TestResultsOutputEvent implements the following thrift schema.
- * https://www.internalfb.com/code/fbsource/[8bed6a02e7ed]/fbcode/testinfra/if/test_result_output_spec.thrift
- *
- * <p>It keeps and serializes events pertaining to the execution of test cases and replicates
- * instead of using the thrift structs directly to avoid the need for a dependency on fbcode.
+ * TestResultsOutputEvent holds the test start, test finish, and run failure events that {@link
+ * TestResultsOutputSender} writes as JSON. The field names follow the schema that the test runner
+ * setting {@code TEST_RESULTS_OUTPUT_FILE} reads.
  */
 public class TestResultsOutputEvent {
   private static final JsonFactory jsonFactory = new JsonFactory();

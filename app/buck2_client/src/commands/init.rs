@@ -131,15 +131,9 @@ fn initialize_buckconfig(repo_root: &AbsPath, prelude: bool, git: bool) -> buck2
     if prelude {
         writeln!(buckconfig, "  prelude = prelude")?;
         writeln!(buckconfig, "  toolchains = toolchains")?;
-        writeln!(buckconfig, "  none = none")?;
         writeln!(buckconfig)?;
         writeln!(buckconfig, "[cell_aliases]")?;
         writeln!(buckconfig, "  config = prelude")?;
-        writeln!(buckconfig, "  ovr_config = prelude")?;
-        writeln!(buckconfig, "  fbcode = none")?;
-        writeln!(buckconfig, "  fbsource = none")?;
-        writeln!(buckconfig, "  fbcode_macros = none")?;
-        writeln!(buckconfig, "  buck = none")?;
         writeln!(buckconfig)?;
         writeln!(
             buckconfig,
@@ -196,7 +190,7 @@ fn initialize_root_buck(repo_root: &AbsPath, prelude: bool) -> buck2_error::Resu
     if prelude {
         writeln!(
             buck,
-            "# A list of available rules and their signatures can be found here: https://buck2.build/docs/prelude/globals/"
+            "# A list of available rules and their signatures can be found here: https://rdeusser.github.io/buck2/docs/prelude/globals/"
         )?;
         writeln!(buck)?;
         writeln!(buck, "genrule(")?;
@@ -335,15 +329,9 @@ mod tests {
   root = .
   prelude = prelude
   toolchains = toolchains
-  none = none
 
 [cell_aliases]
   config = prelude
-  ovr_config = prelude
-  fbcode = none
-  fbsource = none
-  fbcode_macros = none
-  buck = none
 
 # Uses a copy of the prelude bundled with the buck2 binary. You can alternatively delete this
 # section and vendor a copy of the prelude to the `prelude` directory of your project.
@@ -393,7 +381,7 @@ mod tests {
         let buck_path = tempdir_path.join("BUCK");
         initialize_root_buck(tempdir_path, true)?;
         let actual_buck = fs_util::read_to_string(buck_path)?;
-        let expected_buck = "# A list of available rules and their signatures can be found here: https://buck2.build/docs/prelude/globals/
+        let expected_buck = "# A list of available rules and their signatures can be found here: https://rdeusser.github.io/buck2/docs/prelude/globals/
 
 genrule(
     name = \"hello_world\",

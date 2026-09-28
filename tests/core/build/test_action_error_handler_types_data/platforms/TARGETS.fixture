@@ -5,8 +5,6 @@ platform(
 execution_platform(
     name = "exec_platform",
     platform = ":p",
-    remote_enabled = True,
-    remote_cache_enabled = True,
 )
 
 execution_platforms(

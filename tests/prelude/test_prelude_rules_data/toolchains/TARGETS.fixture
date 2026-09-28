@@ -1,0 +1,4 @@
+load("@prelude//toolchains:demo.bzl", "system_demo_toolchains")
+
+# Toolchains that use the compilers and interpreters installed on the host.
+system_demo_toolchains()

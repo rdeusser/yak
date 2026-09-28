@@ -11,7 +11,6 @@
 use std::fs::File;
 use std::sync::OnceLock;
 
-use buck2_core::buck2_env;
 use buck2_error::BuckErrorContext;
 use buck2_error::ErrorTag;
 use object::Object;
@@ -48,8 +47,6 @@ impl BuckVersion {
             Some(hex::encode(build_id))
         } else if let Ok(Some(uuid)) = file.mach_uuid() {
             Some(hex::encode(uuid))
-        } else if cfg!(windows) {
-            buck2_build_info::win_internal_version().map(|s| s.to_owned())
         } else {
             None
         }
@@ -86,18 +83,12 @@ impl BuckVersion {
             )
         })?;
 
-        let (internal_exe_hash, internal_exe_hash_kind) = if let Some(internal_exe_hash) =
-            Self::extract_unique_id(&file_object)
-        {
-            (internal_exe_hash, "<build-id>")
-        } else {
-            if !(buck2_core::is_open_source() || buck2_env!("BUCK2_IGNORE_VERSION_EXTRACTION_FAILURE", type=bool, default=false, applicability=testing).unwrap_or(false)) {
-                let _ignored = crate::eprintln!(
-                    "version extraction failed. This indicates an issue with the buck2 release, will fallback to binary hash"
-                );
-            }
-            (Self::hash_binary(&mut file)?, "<exe-hash>")
-        };
+        let (internal_exe_hash, internal_exe_hash_kind) =
+            if let Some(internal_exe_hash) = Self::extract_unique_id(&file_object) {
+                (internal_exe_hash, "<build-id>")
+            } else {
+                (Self::hash_binary(&mut file)?, "<exe-hash>")
+            };
 
         let version = if let Some(version) = buck2_build_info::revision() {
             version.to_owned()

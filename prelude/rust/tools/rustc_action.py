@@ -49,14 +49,7 @@ INHERITED_ENV = [
     "PROGRAMDATA",
     "TEMP",
     "TMP",
-    # TODO(andirauter): Required by RE. Remove them when no longer required T119466023
-    "EXECUTION_ID",
-    "SESSION_ID",
-    "ACTION_DIGEST",
-    "RE_PLATFORM",
-    "CAS_DAEMON_PORT",
-    "CAS_DAEMON_ADDR",
-    # Required by Dotslash, which is how the Rust toolchain is shipped on Mac.
+    # Required by DotSlash, for toolchains shipped as DotSlash files.
     "USER",
     "DOTSLASH_CACHE",
     # Required to run Python on Windows (for linker wrapper).
@@ -66,7 +59,6 @@ INHERITED_ENV = [
     # Option to disable hg pre-fork client.
     # We might pass it to avoid long-running process created inside a per-action cgroup.
     # Such long-running process make it impossible to clean up systemd slices.
-    # Context https://fb.workplace.com/groups/mercurialusers/permalink/2901424916673036/
     "CHGDISABLE",
     # Nix
     "NIX_BINTOOLS",

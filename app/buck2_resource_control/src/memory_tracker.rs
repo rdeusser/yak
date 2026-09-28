@@ -90,15 +90,7 @@ pub fn spawn_memory_reporter(
             tokio::select! {
                 Some(resource_control_event) = resource_control_event_rx.recv() => {
                     let event = resource_control_event.complete(dispatcher.trace_id());
-                    // Spawn and detach the send_now call so we don't block
-                    // the event loop. send_now bypasses the scribe producer
-                    // queue; under memory pressure the queue-based path gets
-                    // blocked while send_now can still deliver events directly
-                    // to scribed.
-                    let dispatcher = dispatcher.dupe();
-                    tokio::spawn(async move {
-                        dispatcher.instant_event_send_now(event).await;
-                    });
+                    dispatcher.instant_event(event);
                 }
                 _ = cancel.cancelled() => {
                     break;
@@ -302,28 +294,11 @@ mod tests {
             10000000,
             "allprocs_memory_current",
         );
-        let check_memory_pressure;
-        #[cfg(fbcode_build)]
-        {
-            if environment::is_on_demand() {
-                // In OD environments, memory pressure may be lower due to different cgroup configurations
-                // or resource constraints, so skip this assertion there.
-                check_memory_pressure = false;
-            } else {
-                check_memory_pressure = true;
-            }
-        }
-        #[cfg(not(fbcode_build))]
-        {
-            check_memory_pressure = true;
-        }
-        if check_memory_pressure {
-            assert_max_over(
-                |e| e.allprocs_memory_pressure,
-                10,
-                "allprocs_memory_pressure",
-            );
-        }
+        assert_max_over(
+            |e| e.allprocs_memory_pressure,
+            10,
+            "allprocs_memory_pressure",
+        );
         assert_max_over(
             |e| e.daemon_memory_current,
             10000000,

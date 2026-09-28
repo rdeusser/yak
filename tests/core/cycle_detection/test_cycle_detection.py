@@ -6,16 +6,13 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-# pyre-strict
-
-
 import asyncio
 from typing import Awaitable
 
-from buck2.tests.e2e_util.api.buck import Buck
-from buck2.tests.e2e_util.api.buck_result import BuckException, BuckResult
-from buck2.tests.e2e_util.asserts import expect_failure
-from buck2.tests.e2e_util.buck_workspace import buck_test
+from e2e_util.api.buck import Buck
+from e2e_util.api.buck_result import BuckException, BuckResult
+from e2e_util.asserts import expect_failure
+from e2e_util.buck_workspace import buck_test
 
 
 def check_load_cycle_stderr(stderr: str) -> None:

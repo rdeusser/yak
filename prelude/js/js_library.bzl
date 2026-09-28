@@ -191,9 +191,6 @@ def _build_library_files(ctx: AnalysisContext, transform_profile: str, flavors: 
     if ctx.attrs.extra_json:
         job_args["extraData"] = cmd_args(ctx.attrs.extra_json, delimiter = "")
 
-    if ctx.attrs._asset_dest_path_resolver:
-        job_args["assetDestPathResolver"] = ctx.attrs._asset_dest_path_resolver
-
     command_args_file = ctx.actions.write_json(
         "library_files_{}_command_args".format(transform_profile),
         job_args,

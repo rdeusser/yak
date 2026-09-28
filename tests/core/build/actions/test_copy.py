@@ -6,12 +6,9 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-# pyre-strict
-
-
 import pytest
-from buck2.tests.e2e_util.api.buck import Buck
-from buck2.tests.e2e_util.buck_workspace import buck_test
+from e2e_util.api.buck import Buck
+from e2e_util.buck_workspace import buck_test
 
 
 @pytest.mark.parametrize("executable_bit_override", [None, True, False])
@@ -59,8 +56,3 @@ async def test_exec_bit_of_copied_file(
         assert line[3] == expected_val
         assert line[6] == expected_val
         assert line[9] == expected_val
-
-
-@buck_test()  # Make sure there's at least one test defined
-async def test_dummy(buck: Buck) -> None:
-    pass

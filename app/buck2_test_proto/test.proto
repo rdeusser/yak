@@ -236,8 +236,8 @@ message DeclaredOutput {
   optional TtlConfig ttl_config = 3;
 }
 
-// Copy of Digest from Remote Execution API:
-// https://github.com/facebook/buck2/blob/main/remote_execution/oss/re_grpc_proto/proto/build/bazel/remote/execution/v2/remote_execution.proto#L936-L943
+// Copy of Digest from the Remote Execution API
+// (remote_execution/re_grpc_proto/proto/build/bazel/remote/execution/v2/remote_execution.proto).
 message CasDigest {
   // The hash. In the case of SHA-256, it will always be a lowercase hex string
   // exactly 64 characters long.

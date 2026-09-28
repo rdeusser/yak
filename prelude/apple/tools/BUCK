@@ -1,17 +1,12 @@
-# @noautodeps
 load("@prelude//utils:source_listing.bzl", "source_listing")
-load(":defs.bzl", "apple_oso_scrubber_target", "bundle_telemetry_logger_target", "swiftmodule_change_analysis_target")
-
-oncall("build_infra")
+load(":defs.bzl", "swiftmodule_change_analysis_target")
 
 source_listing()
 
 apple_tools(
     name = "apple-tools",
-    adhoc_codesign_tool = None, # @oss-enable
-    # @oss-disable[end= ]: adhoc_codesign_tool = "prelude//apple/tools/meta_only/codesign_rust:adhoc-signer",
+    adhoc_codesign_tool = None,
     assemble_bundle = "prelude//apple/tools/bundling:assemble_bundle",
-    bundle_telemetry_logger = bundle_telemetry_logger_target(),
     codesign_manifest_tree_postprocessor = "prelude//apple/tools/codesign_manifest_tree_postprocessor:codesign_manifest_tree_postprocessor",
     dedupe_swift_module_map = ":dedupe_swift_module_map",
     dry_codesign_tool = ":dry_codesign_tool",
@@ -22,7 +17,7 @@ apple_tools(
     make_vfsoverlay = ":make_vfsoverlay",
     provisioning_manifest = "prelude//apple/tools/bundling:provisioning_manifest",
     resolve_signing_context = "prelude//apple/tools/bundling:resolve_signing_context",
-    selective_debugging_scrubber = apple_oso_scrubber_target(),
+    selective_debugging_scrubber = "prelude//apple/tools/selective_debugging:tool",
     signing_context_tree_postprocessor = "prelude//apple/tools/signing_context_tree_postprocessor:signing_context_tree_postprocessor",
     signing_info = "prelude//apple/tools/bundling:signing_info",
     split_arch_combine_dsym_bundles_tool = ":split_arch_combine_dsym_bundles_tool",

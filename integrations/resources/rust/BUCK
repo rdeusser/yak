@@ -1,7 +1,4 @@
-load("@fbsource//tools/build_defs:rust_binary.bzl", "rust_binary")
-load("@fbsource//tools/build_defs:rust_library.bzl", "rust_library")
-
-oncall("rust_foundation")
+load("//build_defs:rust.bzl", "rust_binary", "rust_library")
 
 rust_library(
     name = "buck_resources",
@@ -9,40 +6,25 @@ rust_library(
         "src/lib.rs",
         "src/manifest.rs",
     ],
-    autocargo = {
-        "cargo_toml_config": {
-            "package": {
-                # The tests below are buck-only rules.
-                "autotests": False,
-                "description": "Load resource paths from a resources.json produced by Buck",
-                "name": "buck-resources",
-                "version": "1.0.0",
-            },
-        },
-    },
-    # Prefer to use the published version of this library through crates.io,
-    # instead of this target. fbsource//third-party/rust:buck-resources
+    # Other targets use the published crate, `//third-party/rust:buck-resources`.
     visibility = [],
     deps = [
-        "fbsource//third-party/rust:dunce",
-        "fbsource//third-party/rust:once_cell",
-        "fbsource//third-party/rust:serde",
-        "fbsource//third-party/rust:serde_json",
-        "fbsource//third-party/rust:thiserror",
+        "//third-party/rust:dunce",
+        "//third-party/rust:once_cell",
+        "//third-party/rust:serde",
+        "//third-party/rust:serde_json",
+        "//third-party/rust:thiserror",
     ],
 )
 
 rust_binary(
     name = "hello",
     srcs = ["tests/src/hello.rs"],
-    autocargo = {"ignore_rule": True},
-    unittests = False,
 )
 
 rust_binary(
     name = "buck_resources_test",
     srcs = ["tests/src/main.rs"],
-    autocargo = {"ignore_rule": True},
     resources = {
         "hello_binary": ":hello",
     },

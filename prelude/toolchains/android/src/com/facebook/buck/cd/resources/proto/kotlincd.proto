@@ -40,16 +40,15 @@ message KotlinExtraParams {
   // kotlinCompilerPlugin keys are strings encoded as strings due to limitations
   // in proto3.
   map<string, PluginParams> kotlinCompilerPlugins = 7;
-  map<string, string> kosabiPluginOptions = 8;
+  reserved 8;
   reserved 9;
-  reserved "kosabiJvmAbiGenEarlyTerminationMessagePrefix";
   repeated string friendPaths = 10;
   repeated string kotlinHomeLibraries = 11;
   string jvmTarget = 12;
   reserved 13;
   bool shouldUseJvmAbiGen = 14;
   string jvmAbiGenPlugin = 15;
-  bool shouldVerifySourceOnlyAbiConstraints = 16;
+  reserved 16;
   bool shouldRemoveKotlinCompilerFromClassPath = 17;
   string depTrackerPlugin = 18;
   bool shouldKotlincRunIncrementally = 21;
@@ -57,16 +56,11 @@ message KotlinExtraParams {
   string languageVersion = 23;
   repeated string extraClassPathSnapshots = 24;
   bool shouldKsp2RunIncrementally = 26;
-  reserved 27; // was shouldKosabiJvmAbiGenUseK2, unused (kotlincd derives K2
-               // from LanguageVersion.getSupportsK2())
+  reserved 27;
   string kotlinClassesDir = 28;
   reserved 29; // was skipClasspathRemovalRebuild, removed after KT-85740 fix
   string javaBinary = 30;
-  // Reduced SO-ABI classpath for the applicability plugin (only deps with
-  // required_for_source_only_abi=True or in source_only_abi_deps). Distinct
-  // from compileTimeClasspathPaths which contains the full dep set during
-  // library builds.
-  repeated string applicabilityClasspath = 31;
+  reserved 31;
 }
 
 message PluginParams {
@@ -74,7 +68,7 @@ message PluginParams {
 }
 
 /** Model for metadata provided by Buck2 incremental action see:
- * https://buck2.build/docs/rule_authors/incremental_actions */
+ * https://rdeusser.github.io/buck2/docs/rule_authors/incremental_actions */
 message ActionMetadata {
   Metadata previousMetadata = 1;
   Metadata currentMetadata = 2;

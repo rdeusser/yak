@@ -53,18 +53,16 @@ impl RemoteCommandStdStreams {
     }
 
     pub async fn prefetch_lossy_stderr(mut self) -> Self {
-        self.stderr
-            .prefetch_lossy(&self.client, self.digest_config)
-            .await;
+        self.stderr.prefetch_lossy(&self.client).await;
         self
     }
 
     pub(crate) async fn to_lossy_stdout(&self) -> String {
-        self.stdout.to_lossy(&self.client, self.digest_config).await
+        self.stdout.to_lossy(&self.client).await
     }
 
     pub(crate) async fn to_lossy_stderr(&self) -> String {
-        self.stderr.to_lossy(&self.client, self.digest_config).await
+        self.stderr.to_lossy(&self.client).await
     }
 
     pub(crate) async fn into_stdout_stderr_bytes(self) -> buck2_error::Result<(Vec<u8>, Vec<u8>)> {

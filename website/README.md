@@ -1,102 +1,49 @@
 # Website
 
-This website is built using [Docusaurus 2](https://docusaurus.io/), a modern
-static website generator.
-
-## Mac Setup
-
-`yarn` and `node` are installed by default on devservers, but not on Macs. To
-work on this site on Macs, add `fbsource/xplat/third-party/node/bin` and
-`fbsource/third-party/yarn` to your `PATH`.
+This directory holds the documentation site, which [Docusaurus](https://docusaurus.io/) builds from the pages in `docs/`.
 
 ## Installation
 
-The very first time:
-
 ```shell
-$ yarn global add node-gyp
+yarn install
 ```
 
-And if on Eden:
+## Generated content
+
+`gen_docs.py` runs `buck2` to write the Starlark API reference, the prelude rule pages, the command reference, and the query function pages into `docs/`. Git ignores its output. Rerun it to see changes to generated content.
 
 ```shell
-$ eden redirect add $PWD/node_modules bind
-$ eden redirect add $PWD/build bind
+# Use the buck2 on PATH
+yarn generate
+# Build buck2 from source with ./buck2.py, which needs the Buck build of this repository
+# and a buck2 on PATH built from this repository
+yarn generate_local
+# Build buck2 from source with Cargo
+./gen_docs.py --cargo
 ```
 
-Also on your first time, and potentially after each large rebase:
+## Local development
 
 ```shell
-$ yarn install
+yarn start
 ```
 
-## Building Generated Content
+This command starts a development server at `http://localhost:3000/buck2/`. It reloads a page when its Markdown in `docs/` changes. Restart the server after changing the site configuration.
 
-Again, on your first time:
+## Production build
 
-```shell
-$ yarn generate
-```
-
-You will need to re-run this each time you want to see changes to generated
-content, primarily the API docs. You can alternatively `yarn generate_local` to
-update generated content using a built-from-source buck2.
-
-## Local Development
-
-```shell
-$ yarn start-fb
-```
-
-This command starts a local development server, and if on Mac, opens up a local
-browser window.
-
-On a devserver, the window does not open for you, but you can head to
-https://devvmXX.foo.com:9094 in your browser. This requires lighthouse or VPN.
-
-To get your changes reflected on the local server:
-
-1.  For non-generated markdown content in the `docs/` directory, reload the
-    page.
-2.  For generated markdown content, re-run `yarn generate` as above and reload
-    the page.
-3.  For other changes to the site configuration, Ctrl+C and restart
-    `yarn start`. Then, hard-reload the page (Ctrl+Shift+R).
-
-## OSS Variants
-
-To see the external versions of the page, do:
-
-```shell
-$ yarn start
-```
-
-If on a devserver, this will require manually setting up an SSH tunnel by
-running the following **from your mac**:
-
-```shell
-ssh -L 3000:localhost:3000 $DEVSERVER
-```
-
-In all cases, you'll need to be either on lighthouse or VPN for this to work.
-
-## Prod Build
-
-You can perform a production build via `yarn build` or `yarn build-fb`. This
-generates a static site into `build/`. This site can be served via any static
-site viewer - docusaurus has one built in that you can run via `yarn serve`. As
-of Oct 2024 this only works on Macs, not on devservers.
-
-Iterating on the prod build is slower than on the local `yarn start` server.
+`yarn build` generates the reference pages and writes the static site to `build/`. `yarn serve` serves `build/` locally. `yarn build_cargo` and `yarn build_prebuilt` do the same with a Cargo build of `buck2` or with the binary that `BUCK2_BIN` names.
 
 ## Deployment
 
-```shell
-$ GIT_USER=<Your GitHub username> USE_SSH=true yarn deploy
-```
+`.github/workflows/upload_buck2.yml` builds the site and publishes `build/` to the `gh-pages` branch on every push to `main`. GitHub Pages serves that branch at `https://rdeusser.github.io/buck2/` once the repository's Pages settings select it.
 
-If you are using GitHub pages for hosting, this command is a convenient way to
-build the website and push to the `gh-pages` branch.
+To deploy from a local checkout, generate the reference pages first, because `yarn deploy` builds the site without running `gen_docs.py`:
+
+```shell
+yarn generate
+GIT_USER=<Your GitHub username> USE_SSH=true yarn deploy
+```
 
 ## Fixing GitHub Security Alerts
 

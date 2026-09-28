@@ -31,12 +31,6 @@ use tokio::sync::oneshot;
 static ACTIVE_COMMANDS: LazyLock<Mutex<BuckMutMap<TraceId, ActiveCommandHandle>>> =
     LazyLock::new(|| Mutex::new(BuckMutMap::default()));
 
-/// Return the active commands, if you can access them.
-pub fn try_active_commands() -> Option<BuckMutMap<TraceId, ActiveCommandHandle>> {
-    // Note that this function is accessed during panic, so have to be super careful
-    Some(ACTIVE_COMMANDS.try_lock()?.clone())
-}
-
 pub fn active_commands() -> MutexGuard<'static, BuckMutMap<TraceId, ActiveCommandHandle>> {
     ACTIVE_COMMANDS.lock()
 }

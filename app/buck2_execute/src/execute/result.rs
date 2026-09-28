@@ -365,9 +365,8 @@ pub struct CommandExecutionReport {
     /// 128 + SIGNUM, which is the convention shells follow.
     pub exit_code: Option<i32>,
     /// Any additional message that a command's executor wants to be user visible in case of a
-    /// failure. Provided by non-Meta RE server.
+    /// failure. Some RE servers provide one.
     pub additional_message: Option<String>,
-    pub inline_environment_metadata: buck2_data::InlineCommandExecutionEnvironmentMetadata,
 }
 
 impl CommandExecutionReport {
@@ -412,7 +411,6 @@ impl CommandExecutionReport {
         buck2_data::CommandExecution {
             details: Some(details),
             status: Some(status),
-            inline_environment_metadata: Some(self.inline_environment_metadata),
         }
     }
 
@@ -529,9 +527,6 @@ mod tests {
             std_streams,
             exit_code: Some(456),
             additional_message: None,
-            inline_environment_metadata: buck2_data::InlineCommandExecutionEnvironmentMetadata {
-                sandcastle_instance_id: Some(123),
-            },
         }
     }
 
@@ -608,11 +603,6 @@ mod tests {
             status: Some(buck2_data::command_execution::Status::Success(
                 buck2_data::command_execution::Success {},
             )),
-            inline_environment_metadata: Some(
-                buck2_data::InlineCommandExecutionEnvironmentMetadata {
-                    sandcastle_instance_id: Some(123),
-                },
-            ),
         }
     }
 

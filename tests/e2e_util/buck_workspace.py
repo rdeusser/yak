@@ -1,4 +1,3 @@
-#!/usr/bin/env fbpython
 # Copyright (c) Meta Platforms, Inc. and affiliates.
 #
 # This source code is dual-licensed under either the MIT license found in the
@@ -7,16 +6,11 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-# pyre-strict
-
 import contextlib
-import hashlib
-import inspect
 import json
 import os
 import platform
 import shutil
-import subprocess
 import sys
 import tempfile
 from collections import namedtuple
@@ -28,127 +22,125 @@ from typing import (
     Awaitable,
     Callable,
     Dict,
-    Iterable,
     List,
     Optional,
 )
 
-import __manifest__
 import pytest
-from buck2.tests.e2e_util.api.buck import Buck
-from buck2.tests.e2e_util.api.executable import WindowsCmdOption
 from decorator import decorator
+from e2e_util.api.buck import Buck
+from e2e_util.api.executable import WindowsCmdOption
+
+# The directory that holds `e2e_util`, `core`, and the other test directories.
+TESTS_DIR: Path = Path(__file__).resolve().parent.parent
+
+# BUCK2_BINARY names the binary under test. It defaults to the Cargo debug build.
+BUCK2_BINARY_ENV_VAR = "BUCK2_BINARY"
+# BUCK2_TEST_RE_CONFIG names a buckconfig file with the `[buck2_re_client]`
+# settings of a Remote Execution backend. Every test project reads it, and tests
+# marked `remote_execution` run only when it is set.
+RE_CONFIG_ENV_VAR = "BUCK2_TEST_RE_CONFIG"
+# Tests marked `cgroups` run only when BUCK2_TEST_CGROUPS is 1.
+CGROUPS_ENV_VAR = "BUCK2_TEST_CGROUPS"
 
 BuckTestMarker = namedtuple(
     "BuckTestMarker",
     [
-        "inplace",
         "data_dir",
         "allow_soft_errors",
         "extra_buck_config",
         "skip_final_kill",
-        "setup_eden",
         "disable_daemon_cgroup",
         "write_invocation_record",
     ],
 )
 
 
-def _is_core_test() -> bool:
-    """Whether the running test is one of the `tests/core` tests."""
-    return os.environ.get("BUCK2_E2E_TEST_FLAVOR") == "isolated"
+def buck2_binary() -> Path:
+    """buck2_binary returns the absolute path of the binary under test."""
+    configured = os.environ.get(BUCK2_BINARY_ENV_VAR)
+    if configured:
+        return Path(configured).resolve()
+    exe = "buck2.exe" if platform.system() == "Windows" else "buck2"
+    return TESTS_DIR.parent / "target" / "debug" / exe
+
+
+def test_data_dir(test_file: Path) -> Path:
+    """test_data_dir returns the data directory paired with a test module.
+
+    The data for `test_foo.py` lives in `test_foo_data/` next to it.
+    """
+    return test_file.with_name(test_file.stem + "_data")
 
 
 @contextlib.asynccontextmanager
 async def buck_fixture(  # noqa C901 : "too complex"
     marker: BuckTestMarker,
+    test_file: Path,
 ) -> AsyncGenerator[Buck, None]:
-    """Returns a Buck for testing"""
+    """Returns a Buck that runs in a new temporary project for the test in `test_file`."""
 
-    is_windows = platform.system() == "Windows"
-    test_executable = os.environ["TEST_EXECUTABLE"]
+    binary = buck2_binary()
+    if not binary.is_file():
+        raise Exception(
+            f"buck2 binary `{binary}` does not exist. Build it with "
+            f"`cargo build --bin=buck2` or set {BUCK2_BINARY_ENV_VAR}."
+        )
 
-    env: Dict[str, str] = {**os.environ}
+    # Remove variables that describe the outer pytest run, so a Python test that
+    # buck2 runs inside the test project does not inherit them.
+    env: Dict[str, str] = {
+        key: value for key, value in os.environ.items() if not key.startswith("PYTEST_")
+    }
     # This is necessary for static linking on Linux.
     if platform.system() != "Windows":
         env["BUCKD_STARTUP_TIMEOUT"] = "120"
         env["BUCKD_STARTUP_INIT_TIMEOUT"] = "120"
 
-    # allow_soft_errors will override any existing environment variable behavior
-    if marker.allow_soft_errors or marker.inplace:
-        env["BUCK2_HARD_ERROR"] = "false"
-
+    env["BUCK2_HARD_ERROR"] = "false" if marker.allow_soft_errors else "true"
     # Use a very small stdin buffer to catch any scenarios in which we
     # don't properly handle partial input.
     env["BUCK2_TEST_STDIN_BUFFER_SIZE"] = "8"
-    # Explicitly disable log uploading, we don't care about stats for tests.
-    env["BUCK2_TEST_DISABLE_LOG_UPLOAD"] = "true"
-    # But still block on it, because the upload process also writes
-    # locally, and we want that to be synchronous instead of backgrounded.
-    env["BUCK2_TEST_BLOCK_ON_UPLOAD"] = "true"
     # Require the events dispatcher to be set for e2e tests.
     env["ENFORCE_DISPATCHER_SET"] = "true"
     # Inform buck of the test timeout
     env["BUCK2_SELF_TEST_TIMEOUT_S"] = "600"
     # Timeout Watchman requests because we often see it hang and crash.
     env["BUCK2_WATCHMAN_TIMEOUT"] = "30"
+    # Use few threads. Tests do little work, but many daemons can run at once.
     env["BUCK2_RUNTIME_THREADS"] = "8"
-    # Avoid noise in stderr.
-    env["BUCK2_IGNORE_VERSION_EXTRACTION_FAILURE"] = "true"
+    # Windows uses blocking threads for subprocess I/O, so the blocking pool
+    # keeps its default size.
+    env.pop("BUCK2_MAX_BLOCKING_THREADS", None)
+    # A fixed console size keeps golden files independent of the terminal.
     env["SUPERCONSOLE_TESTING_WIDTH"] = "100"
     env["SUPERCONSOLE_TESTING_HEIGHT"] = "100"
+    # clap wraps help text to `COLUMNS`, which pytest sets to 80 while it
+    # captures output and leaves unset under `-s`.
+    env["COLUMNS"] = "100"
+    # The `nano_prelude` bundled cell that most test projects use loads its
+    # files from this directory.
+    env["NANO_PRELUDE"] = str(TESTS_DIR / "e2e_util" / "nano_prelude")
     # Don't try to assign to a new cgroup during tests.
     if marker.disable_daemon_cgroup:
         env["BUCK2_TEST_DISABLE_DAEMON_CGROUP"] = "true"
-
-    assert "BUCK2_RUNTIME_THREADS" in env, (
-        "BUCK2_RUNTIME_THREADS should be set by the test macros"
-    )
-    assert "BUCK2_MAX_BLOCKING_THREADS" in env, (
-        "BUCK2_MAX_BLOCKING_THREADS should be set by the test macros"
-    )
-    # Windows uses blocking threads for subprocess I/O so we can't do this there.
-    del env["BUCK2_MAX_BLOCKING_THREADS"]
-
-    # Filter out some environment variables that may interfere with the
-    # running of tests. Notably, since this framework is used to write
-    # Python tests that run Buck, we clear out Python test environment
-    # variables so that if we run a Python test via Buck 2, they won't
-    # interfere.
-    for var in ["PYTEST_CURRENT_TEST", "TEST_PILOT"]:
-        env.pop(var, None)
-
-    common_dir = await _get_common_dir()
-    base_dir = Path(tempfile.mkdtemp(dir=common_dir))
-
-    isolation_prefix = None
-    keep_temp = os.environ.get("BUCK_E2E_KEEP_TEMP") == "1"
-
     env["BUCK2_TEST_SKIP_DEFAULT_EXTERNAL_CONFIG"] = "true"
 
-    # Because we may change the working directory, create an absolute path to the test data srcs if
-    # the exist and make it available in a different envvar. This is used by golden tests
-    test_repo_data = os.environ.get("TEST_REPO_DATA")
-    if test_repo_data is not None:
-        os.environ["TEST_REPO_DATA_SRC"] = str(Path(test_repo_data).absolute())
+    base_dir = Path(tempfile.mkdtemp())
+    keep_temp = os.environ.get("BUCK_E2E_KEEP_TEMP") == "1"
 
-    # Create a temporary file to store all lines of extra buck config values.
-    extra_config_lines = []
+    # Keep the daemon directories (`~/.buck/buckd`) of the test inside its
+    # temporary directory.
+    home_dir = base_dir / "home"
+    home_dir.mkdir()
+    env["BUCK2_TEST_HOME_DIR"] = str(home_dir)
 
-    # Core tests run all their RE actions under `buck2-testing`, which has an
-    # isolated CAS namespace (cas_store_version offset by TEST_OFFSET=200). Its
-    # quota is sized for their small actions only; the other users of this
-    # harness build real targets and stay on the use case their execution
-    # platforms declare.
-    if _is_core_test():
-        extra_config_lines.append(
-            "[buck2_re_client]\noverride_use_case = buck2-testing\n"
-        )
+    # Golden file helpers find the test data through this variable.
+    test_data = test_data_dir(test_file)
+    os.environ["TEST_REPO_DATA_SRC"] = str(test_data)
 
     project_dir = base_dir / "project"
-
-    # Temp dir needed for EdenFS, will only be created if necessary
-    eden_dir = base_dir / "eden"
+    extra_config_lines = []
 
     orig_stdout = sys.stdout
     try:
@@ -156,67 +148,31 @@ async def buck_fixture(  # noqa C901 : "too complex"
         # show up in the test failure output by default for debugging.
         sys.stdout = sys.stderr
 
-        if marker.setup_eden:
-            assert not marker.inplace, (
-                "EdenFS for e2e tests is not supported for inplace tests"
-            )
-
-            _setup_eden(
-                eden_dir,
-                project_dir,
-                env,
-                is_windows,
-            )
-
-        if marker.inplace:
-            # We need a unique isolated prefix per test case.
-            current_test = (
-                __manifest__.fbmake["build_rule"] + os.environ["PYTEST_CURRENT_TEST"]
-            )
-            isolation_prefix = hashlib.sha256(current_test.encode("utf-8")).hexdigest()[
-                :40
-            ]
-            # FIXME(T136079642): Buck2 on Windows has problem with relative symlinks over 260 chars, shorten the hash
-            if is_windows:
-                isolation_prefix = isolation_prefix[:5]
-            else:
-                isolation_prefix = ".buck_e2e" + isolation_prefix
-
-            buck_cwd = Path.cwd()
-
-            # NOTE: In theory, this isn't true of all Linux hosts, but all
-            # our tests actually rely on it and will break if you ran them
-            # on a host without this, so just make it the default.
-            if sys.platform == "linux":
-                extra_config_lines.append("[host_features]\ngvfs = true\n")
-            extra_config_lines.append("[buildfile]\nextra_for_test = TARGETS.test\n")
-
+        if marker.data_dir is not None:
+            src = test_data / marker.data_dir
+            if not src.is_dir():
+                raise Exception(f"Test data directory `{src}` does not exist")
+            _copytree(src, project_dir)
+            with open(Path(project_dir, ".watchmanconfig"), "w") as f:
+                # Use the FS Events watcher, which is more reliable than the default.
+                json.dump(
+                    {
+                        "ignore_dirs": ["buck-out", ".git", ".hg"],
+                        "fsevents_watch_files": True,
+                        "prefer_split_fsevents_watcher": False,
+                    },
+                    f,
+                )
         else:
-            if marker.data_dir is not None:
-                src = Path(os.environ["TEST_REPO_DATA"], marker.data_dir)
-                _copytree(src, project_dir)
-                _maybe_setup_prelude_and_ovr_config(project_dir)
-                with open(Path(project_dir, ".watchmanconfig"), "w") as f:
-                    # Use the FS Events watcher, which is more reliable than the default.
-                    json.dump(
-                        {
-                            "ignore_dirs": ["buck-out", ".hg"],
-                            "fsevents_watch_files": True,
-                            "prefer_split_fsevents_watcher": False,
-                        },
-                        f,
-                    )
+            project_dir.mkdir()
 
-            # `edenfs` watcher requires eden to be setup which is too slow to enable on all tests
-            # use edenfs watcher whenever possible in test, otherwise use `fs_hash_crawler`
-            # FYI: if you remove this, make sure to remove it from external_buckconfig tests too
-            if marker.setup_eden:
-                extra_config_lines.append("[buck2]\nfile_watcher = edenfs\n")
-                extra_config_lines.append("[buck2]\nallow_eden_io = true\n")
-            else:
-                extra_config_lines.append("[buck2]\nfile_watcher = fs_hash_crawler\n")
+        # The crawler rehashes the project on every command, so each command
+        # sees the files a test changed without waiting for file system events.
+        extra_config_lines.append("[buck2]\nfile_watcher = fs_hash_crawler\n")
 
-            buck_cwd = project_dir
+        re_config = os.environ.get(RE_CONFIG_ENV_VAR)
+        if re_config:
+            extra_config_lines.append(Path(re_config).read_text() + "\n")
 
         for section, config in marker.extra_buck_config.items():
             extra_config_lines.append(f"[{section}]\n")
@@ -234,15 +190,12 @@ async def buck_fixture(  # noqa C901 : "too complex"
         env["BUCK2_TEST_SETTINGS_HOME_DIR"] = settings_home_dir
 
         buck = Buck(
-            Path(test_executable),
-            cwd=buck_cwd,
+            binary,
+            cwd=project_dir,
             encoding="utf-8",
             env=env,
             write_invocation_record=marker.write_invocation_record,
         )
-
-        if isolation_prefix is not None:
-            buck.set_isolation_prefix(isolation_prefix)
 
         yield buck
 
@@ -253,12 +206,11 @@ async def buck_fixture(  # noqa C901 : "too complex"
                 await buck.clean()
     finally:
         sys.stdout = orig_stdout
+        os.environ.pop("TEST_REPO_DATA_SRC", None)
 
         if keep_temp:
             print(f"Not deleting temporary directory at {base_dir}", file=sys.stderr)
         else:
-            if marker.setup_eden:
-                _cleanup_eden(eden_dir, project_dir, env)
             shutil.rmtree(base_dir, ignore_errors=True)
 
 
@@ -269,199 +221,11 @@ async def buck(request: pytest.FixtureRequest) -> AsyncIterator[Buck]:
         raise Exception(
             "Test method must be decorated with @buck_test() to use the buck fixture."
         )
-    marker = marker.args[0]
-    async with buck_fixture(marker) as buck:
+    async with buck_fixture(marker.args[0], request.path) as buck:
         yield buck
 
 
-async def _get_common_dir() -> Path:
-    from asyncio import subprocess
-
-    """
-    Returns a temporary directory using mkscratch.
-    The advantage of using mkscratch is that it can return the same directory on multiple calls.
-    If mkscratch is not available (e.g., Windows or remote environments), fall back to the system temp directory.
-    """
-    # Check if mkscratch is available, fall back to tempfile.gettempdir() if not
-    if shutil.which("mkscratch") is None:
-        return Path(tempfile.gettempdir())
-
-    # Need to use `--hash` over `--subdir` here because the tmp path would be too long and
-    # Eden would fail with `Socket path too large to fit into sockaddr_un` otherwise
-    mkscratch_proc = await subprocess.create_subprocess_exec(
-        "mkscratch",
-        "path",
-        "--hash",
-        stdout=subprocess.PIPE,
-    )
-    stdout, _ = await mkscratch_proc.communicate()
-    assert stdout is not None, "stdout should not be None"
-    common_dir = Path(stdout.decode().strip())
-    return common_dir
-
-
-def nobuckd(fn: Callable[..., Any]) -> Callable[..., Any]:
-    """Disables buck daemon"""
-
-    def wrapped(fn: Callable[..., Any], buck: Buck, *args: Any, **kwargs: Any) -> Any:
-        buck.set_buckd(True)
-        return fn(buck, *args, **kwargs)
-
-    return decorator(wrapped, fn)
-
-
-def _eden_base_cmd(eden_dir: Path) -> List[str]:
-    config_dir = eden_dir / "config"
-    etc_dir = eden_dir / "etc"
-    home_dir = eden_dir / "home"
-
-    config_dir.mkdir(exist_ok=True)
-    etc_dir.mkdir(exist_ok=True)
-    home_dir.mkdir(exist_ok=True)
-
-    return [
-        "eden",
-        "--config-dir",
-        str(config_dir),
-        "--home-dir",
-        str(home_dir),
-        "--etc-eden-dir",
-        str(etc_dir),
-    ]
-
-
-# Adapted from Eden integration test, didn't use their code because Eden uses the compiled binary in their buck-out
-# which we don't have, extracting that part out would be more work than what was done below.
-# https://www.internalfb.com/code/fbsource/[45334ead4a72]/fbcode/eden/integration/lib/testcase.py?lines=123
-def _setup_eden(
-    eden_dir: Path,
-    project_dir: Path,
-    env: Dict[str, str],
-    is_windows: bool,
-) -> None:
-    eden_dir.mkdir(exist_ok=True)
-    # Start up an EdenFS Client and point it to the temp dirs
-    subprocess.check_call(
-        _eden_base_cmd(eden_dir)
-        + [
-            "start",
-        ],
-        stdout=sys.stdout,
-        stderr=sys.stderr,
-        env=env,
-    )
-
-    temp_repo = eden_dir / "temp_repo"
-    # Initialize a hg repo, so Eden can mount it
-    subprocess.check_call(
-        ["hg", "init", str(temp_repo)],
-        stdout=sys.stdout,
-        stderr=sys.stderr,
-        env=env,
-    )
-
-    # Use .eden-redirections to force redirection to be setup at mount time
-    # The number of concurrent APFS volumes we can create on macOS
-    # is limited. Furthermore, cleaning up disk image redirections is non-trivial.
-    # Let's use symlink redirections to avoid these issues.
-    redirection_type = "symlink" if sys.platform == "darwin" else "bind"
-    with open(temp_repo / ".eden-redirections", "w") as f:
-        f.write(f'[redirections]\n"buck-out" = "{redirection_type}"\n')
-
-    # Make sure the repo's `sl status` is clean. Eden auto-creates the redirections
-    with open(temp_repo / ".gitignore", "w") as f:
-        f.write("/buck-out\n")
-
-    subprocess.check_call(
-        ["hg", "commit", "--addremove", "-m", "init"],
-        stdout=sys.stdout,
-        stderr=sys.stderr,
-        env=env,
-        cwd=temp_repo,
-    )
-
-    # Mount the hg repo we created
-    project_dir.mkdir(exist_ok=True)
-    cmd = _eden_base_cmd(eden_dir) + [
-        "clone",
-        temp_repo,
-        project_dir,
-        "--allow-empty-repo",
-        "--case-insensitive",
-    ]
-
-    if is_windows:
-        cmd.append("--enable-windows-symlinks")
-
-    subprocess.check_call(
-        cmd,
-        stdout=sys.stdout,
-        stderr=sys.stderr,
-        env=env,
-    )
-
-
-def eden_restart(
-    eden_dir: Path,
-    env: Dict[str, str],
-) -> None:
-    """Gracefully restart the EdenFS daemon (the mount survives via takeover, but the
-    daemon process changes)."""
-    subprocess.check_call(
-        _eden_base_cmd(eden_dir)
-        + [
-            "restart",
-            "--graceful",
-        ],
-        stdout=sys.stdout,
-        stderr=sys.stderr,
-        env=env,
-    )
-
-
-def eden_remove(
-    eden_dir: Path,
-    project_dir: Path,
-    env: Dict[str, str],
-) -> None:
-    """Remove an Eden checkout mount."""
-    subprocess.run(
-        _eden_base_cmd(eden_dir)
-        + [
-            "remove",
-            str(project_dir),
-            "-y",
-        ],
-        stdout=sys.stdout,
-        stderr=sys.stderr,
-        env=env,
-    )
-
-
-def _cleanup_eden(
-    eden_dir: Path,
-    project_dir: Path,
-    env: Dict[str, str],
-) -> None:
-    eden_remove(eden_dir, project_dir, env)
-
-    subprocess.run(
-        _eden_base_cmd(eden_dir)
-        + [
-            "shutdown",
-        ],
-        stdout=sys.stdout,
-        stderr=sys.stderr,
-        env=env,
-    )
-
-
-def _copytree(
-    src: Path,
-    dst: Path,
-    symlinks: bool = False,
-    ignore: Optional[Callable[..., Iterable[str]]] = None,
-) -> None:
+def _copytree(src: Path, dst: Path) -> None:
     """Copies all files and directories from src into dst"""
     dst.mkdir(parents=True, exist_ok=True)
     for item in os.listdir(src):
@@ -470,58 +234,9 @@ def _copytree(
         s = src / item
         d = dst / item
         if os.path.isdir(s):
-            shutil.copytree(s, d, symlinks, ignore, dirs_exist_ok=True)
+            shutil.copytree(s, d, dirs_exist_ok=True)
         else:
             shutil.copy2(s, d)
-
-
-def _maybe_setup_prelude_and_ovr_config(path: Path) -> None:
-    if "PRELUDE" in os.environ or "OVR_CONFIG" in os.environ:
-        if _is_core_test():
-            raise Exception(
-                "Don't set `PRELUDE` or `OVR_CONFIG` in `tests/core` - these tests are always isolated"
-            )
-
-    if "PRELUDE" in os.environ:
-        prelude = Path(path, "prelude")
-        if not prelude.exists():
-            _copytree(
-                Path(os.environ["PRELUDE"]),
-                Path(path, "prelude"),
-            )
-
-    # TODO: The toolchain platform definitions we hard-code in the prelude are
-    # in the ovr_config cell, so copy them in for now.  Longer-term, D31566140
-    # has a discusion on bettter approaches.
-    if "OVR_CONFIG" not in os.environ:
-        return
-    _copytree(
-        Path(os.pardir, "arvr", "tools", "build_defs", "config"),
-        Path(path, "arvr", "tools", "build_defs", "config"),
-    )
-
-    _copytree(
-        Path(os.pardir, "tools", "build_defs", "fbcode_macros"),
-        Path(path, "tools", "build_defs", "fbcode_macros"),
-    )
-
-    with Path(path, ".buckconfig").open("a") as f:
-        print(
-            "", file=f
-        )  # append newline because test `.buckconfig` may not end with newline
-        print("# Following lines are added by buck_workspace.py", file=f)
-        print("[repositories]", file=f)
-        print("ovr_config = arvr/tools/build_defs/config", file=f)
-        print("fbcode_macros = tools/build_defs/fbcode_macros", file=f)
-        print("config = arvr/tools/build_defs/config", file=f)
-    with Path(path, "arvr", "tools", "build_defs", "config", ".buckconfig").open(
-        "w"
-    ) as f:
-        pass
-    with Path(path, "tools", "build_defs", "fbcode_macros", ".buckconfig").open(
-        "w"
-    ) as f:
-        pass
 
 
 BuckTestFn = Callable[..., Awaitable[None]]
@@ -529,64 +244,27 @@ BuckTestFn = Callable[..., Awaitable[None]]
 SKIPPABLE_PLATFORMS = ["darwin", "linux", "windows"]
 
 
-def _make_passing_test_for_skipped_platform(
-    fn: Callable[..., Any],
-) -> Callable[..., Any]:
-    def always_pass(*args: Any, **kwargs: Any) -> None:
-        pass
-
-    always_pass.__name__ = fn.__name__
-    always_pass.__qualname__ = fn.__qualname__
-    always_pass.__module__ = fn.__module__
-    always_pass.__doc__ = fn.__doc__
-
-    signature = inspect.signature(fn)
-    always_pass.__signature__ = signature.replace(  # pyre-ignore[16]
-        parameters=[
-            parameter
-            for name, parameter in signature.parameters.items()
-            if name != "buck"
-        ],
-    )
-
-    parametrize_marks = [
-        mark
-        for mark in getattr(fn, "pytestmark", [])
-        if getattr(mark, "name", None) == "parametrize"
-    ]
-    if parametrize_marks:
-        always_pass.pytestmark = parametrize_marks  # pyre-ignore[16]
-
-    return always_pass
-
-
 def buck_test(
-    inplace: bool | None = None,
     data_dir: Optional[str] = "",
     # Accepted values are specified in SKIPPABLE_PLATFORMS
     skip_for_os: List[str] = [],  # noqa: B006 value is read-only
     allow_soft_errors: bool = False,
     extra_buck_config: Optional[Dict[str, Dict[str, str]]] = None,
     skip_final_kill: bool = False,
-    setup_eden: bool = False,
     disable_daemon_cgroup: bool = True,
     write_invocation_record: bool = False,
 ) -> Callable[..., Any]:
     """
     Defines a buck test. This is a must have decorator on all test case functions.
 
+    Each test runs in a new temporary project. `buck_test` copies the test's data
+    directory (`test_foo_data/` for `test_foo.py`) into the project.
+
     Parameters:
-        inplace:
-            A bool for whether to run tests in-repo.
-            If false, runs test under a sandbox repo. If `data_dir` or `data` are set on the target,
-            the sandbox repo will be initialized with the contents of that directory. This can be
-            disabled by setting `data_dir = None` on the test, or the test can set
-            `data_dir = "subdir"` to just use the contents of a subdirectory.
-            If true, runs test in fbsource.
         data_dir:
-            data_dir is an optional string.
-            If data_dir is set, then data_dir is the directory that contains test project data to
-            copy, or the working directory relative to the cwd.
+            The subdirectory of the test data directory to copy into the project.
+            The default, "", copies the whole data directory, and None starts
+            from an empty project.
         skip_for_os:
             List of OS to skip the test on.
         allow_soft_errors:
@@ -596,51 +274,42 @@ def buck_test(
             The key is the section name, the value is a dict of key value pairs.
         skip_final_kill:
             Don't run a `buck2 kill` or `buck2 clean` at the end of the test
-        setup_eden:
-            Whether or not to set up an EdenFS repo for this test. Only matters for inplace=False.
-            Note that this will slow the test down, so it should not be widely enabled.
+        disable_daemon_cgroup:
+            False lets the daemon move itself into a cgroup with
+            `systemd-run --user`, and marks the test `cgroups`.
+        write_invocation_record:
+            Makes each command write its invocation record, which
+            `BuckResult.invocation_record()` reads.
     """
 
-    if inplace and data_dir == "":
-        data_dir = None
-
-    if _is_core_test():
-        if inplace is not None:
-            raise Exception(
-                "Don't set `inplace` in `tests/core` - these tests are always isolated"
-            )
-
-        inplace = False
-    else:
-        if inplace is None:
-            raise Exception("`inplace` must be set for `buck_test()`")
-
-    # Set up arguments to use for the buck fixture.
-
-    # Just ignore the test, calling pytest.skip() is treated as a failure by tpx unfortunately
     for p in skip_for_os:
         if p not in SKIPPABLE_PLATFORMS:
             raise Exception(f"skip_for_os must specifiy one of {SKIPPABLE_PLATFORMS}")
-    if platform.system().lower() in skip_for_os:
-        return _make_passing_test_for_skipped_platform
 
-    if data_dir is not None and inplace:
-        raise Exception(
-            "`data_dir` is not an allowed parameter for an `inplace=True`test"
+    marks = [
+        pytest.mark.buck_test(
+            BuckTestMarker(
+                data_dir=data_dir,
+                allow_soft_errors=allow_soft_errors,
+                extra_buck_config=extra_buck_config or {},
+                skip_final_kill=skip_final_kill,
+                disable_daemon_cgroup=disable_daemon_cgroup,
+                write_invocation_record=write_invocation_record,
+            )
         )
+    ]
+    if not disable_daemon_cgroup:
+        marks.append(pytest.mark.cgroups)
+    current_os = platform.system().lower()
+    if current_os in skip_for_os:
+        marks.append(pytest.mark.skip(reason=f"test does not support {current_os}"))
 
-    return pytest.mark.buck_test(
-        BuckTestMarker(
-            inplace=inplace,
-            data_dir=data_dir,
-            allow_soft_errors=allow_soft_errors,
-            extra_buck_config=extra_buck_config or {},
-            skip_final_kill=skip_final_kill,
-            setup_eden=setup_eden,
-            disable_daemon_cgroup=disable_daemon_cgroup,
-            write_invocation_record=write_invocation_record,
-        )
-    )
+    def apply_marks(fn: Callable[..., Any]) -> Callable[..., Any]:
+        for mark in marks:
+            fn = mark(fn)
+        return fn
+
+    return apply_marks
 
 
 def env(key: str, value: str) -> Callable[..., Any]:
@@ -677,49 +346,3 @@ def windows_cmd_option(key: WindowsCmdOption, value: bool) -> Callable[..., Any]
         return decorator(wrapped, fn)
 
     return inner_decorator
-
-
-def is_deployed_buck2() -> bool:
-    """
-    This function detects whether or not you are using a deployed version of buck2
-    so you can skip certain rule tests to only use deployed buck2.
-    This may break deployed buck2, so please make sure this only affects tests for rules
-    that buck2 users are not using.
-
-    Example of skipping test case with deployed buck2:
-        @pytest.mark.skipif(
-            is_deployed_buck2(),
-            reason="Skip if testing with deployed buck2",
-        )
-    """
-    return os.environ.get("TEST_EXECUTABLE") == "buck2"
-
-
-def get_mode_from_platform(
-    mode: str = "dev",
-    prefix: bool = True,
-    skip_validation_i_know_what_im_doing: bool = False,
-) -> str:
-    if not skip_validation_i_know_what_im_doing and (mode not in ("dev", "opt")):
-        raise Exception(f"Invalid mode: {mode}")
-
-    def modefile_basename() -> str:
-        if sys.platform == "darwin":
-            if mode.startswith("dev"):
-                return "mac"
-            else:
-                return "opt-mac"
-        elif sys.platform == "win32":
-            if mode.startswith("dev"):
-                return "win"
-            else:
-                return "opt-win"
-        if mode.startswith("dev"):
-            return "dev"
-        else:
-            return "opt"
-
-    if prefix:
-        return f"@fbcode//mode/{modefile_basename()}"
-
-    return modefile_basename()

@@ -62,13 +62,13 @@ impl New {
 
         info!(?path);
 
-        // create the `TARGETS` file
-        let targets_path = path.join("TARGETS");
-        let mut targets_file =
-            fs::File::create(targets_path).context("Unable to create `TARGETS` file")?;
-        targets_file
+        // create the `BUCK` file
+        let buildfile_path = path.join("BUCK");
+        let mut buildfile =
+            fs::File::create(buildfile_path).context("Unable to create `BUCK` file")?;
+        buildfile
             .write_all(target.render().as_bytes())
-            .context("Unable to write generated template to `TARGETS` file")?;
+            .context("Unable to write generated template to `BUCK` file")?;
 
         // create src dir
         let src_dur = path.join(Path::new("src"));
@@ -107,7 +107,7 @@ struct MainFile;
 impl MainFile {
     fn render(&self) -> String {
         "fn main() {
-    println!(\"Hello from Rust at Meta!\");
+    println!(\"Hello, world!\");
 }
 "
         .into()
@@ -164,9 +164,7 @@ fn test_render() {
         name: String::from("a-rust-library"),
     };
 
-    let expected = r#"load("@fbsource//tools/build_defs:rust_library.bzl", "rust_library")
-
-rust_library(
+    let expected = r#"rust_library(
     name = "a-rust-library",
     srcs = glob(["src/**/*.rs"]),
     deps = [],
@@ -179,9 +177,7 @@ rust_library(
         name: String::from("a-rust-binary"),
     };
 
-    let expected = r#"load("@fbsource//tools/build_defs:rust_binary.bzl", "rust_binary")
-
-rust_binary(
+    let expected = r#"rust_binary(
     name = "a-rust-binary",
     srcs = glob(["src/**/*.rs"]),
     deps = [],

@@ -58,7 +58,7 @@ cpp_binary(
     name = "app",
     srcs = select({
         "DEFAULT": ["main.cpp"],
-        "ovr_config//os:windows": ["main_windows.cpp"],
+        "prelude//os:windows": ["main_windows.cpp"],
     }),
 )
 
@@ -70,7 +70,7 @@ cpp_binary(
 #### 2. Configured Target
 
 - **What it is:** A target with a specific configuration applied
-- **Identifier:** `//package:name (fbcode//platform/linux:configuration)`
+- **Identifier:** `//package:name (prelude//platforms:default#<hash>)`
 - **Query tool:** `buck2 cquery`
 - **Characteristics:**
   - `select()` expressions are resolved to concrete values
@@ -105,19 +105,19 @@ cpp_binary(
 A **cell** is a repository or unit of code in Buck2. Cells allow Buck2 to work
 with multiple repositories or isolated parts of a monorepo.
 
-- **Explicit cell reference:** `fbcode//buck2/app:buck2`
-  - `fbcode` = cell name
-  - `buck2/app` = package path within that cell
-  - `buck2` = target name
-- **Implicit cell reference:** `//buck2/app:buck2`
+- **Explicit cell reference:** `root//app:server`
+  - `root` = cell name
+  - `app` = package path within that cell
+  - `server` = target name
+- **Implicit cell reference:** `//app:server`
   - Uses the current cell based on your working directory
-  - Equivalent to `fbcode//buck2/app:buck2` if your current directory is under
-    the `fbcode` cell folder (e.g., `/path/to/fbsource/fbcode/`)
+  - Equivalent to `root//app:server` if your current directory is under
+    the `root` cell folder (the project root that `buck2 init` creates)
 
 **When to use explicit cells:**
 
 - **Cross-cell dependencies:** Depend on targets in a different cell
-  - Example: `fbcode//buck2:buck2` depending on `prelude//rules.bzl`
+  - Example: `root//app:server` depending on `prelude//rules.bzl`
 - **Clarity:** Make dependencies explicit, especially in shared code
 - **Cell boundaries:** When working across repository or monorepo boundaries
 
@@ -462,12 +462,12 @@ This is not actual Buck2 syntax - it's a conceptual representation.
 Defined in Starlark:
 
 ```starlark
-# fbcode//platform/linux.bzl
+# root//platforms/BUCK
 platform(
     name = "linux-x86_64",
     constraint_values = [
-        "ovr_config//os:linux",
-        "ovr_config//cpu:x86_64",
+        "prelude//os/constraints:linux",
+        "prelude//cpu/constraints:x86_64",
     ],
 )
 ```
@@ -486,8 +486,8 @@ cpp_binary(
     name = "app",
     srcs = ["main.cpp"],
     compiler_flags = select({
-        "ovr_config//os:linux": ["-DLINUX"],
-        "ovr_config//os:macos": ["-DMACOS"],
+        "prelude//os:linux": ["-DLINUX"],
+        "prelude//os:macos": ["-DMACOS"],
         "DEFAULT": [],
     }),
 )
@@ -502,8 +502,8 @@ cpp_binary(
 The same unconfigured target can be built for multiple platforms simultaneously:
 
 ```bash
-buck2 build //app:main --target-platforms fbcode//platform/linux:x86_64
-buck2 build //app:main --target-platforms fbcode//platform/macos:arm64
+buck2 build //app:main --target-platforms root//platforms:linux-x86_64
+buck2 build //app:main --target-platforms root//platforms:macos-arm64
 ```
 
 These create two distinct configured targets in the build graph.

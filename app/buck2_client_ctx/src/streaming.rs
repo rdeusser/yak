@@ -39,17 +39,12 @@ use crate::events_ctx::EventsCtx;
 use crate::exit_result::ExitResult;
 use crate::path_arg::PathArg;
 use crate::signal_handler::with_simple_sigint_handler;
-use crate::subscribers::build_graph_stats::BuildGraphStats;
 use crate::subscribers::build_id_writer::BuildIdWriter;
 use crate::subscribers::event_log::EventLog;
-use crate::subscribers::health_check_subscriber::HealthCheckSubscriber;
-use crate::subscribers::re_log::ReLog;
 use crate::subscribers::subscriber::EventSubscriber;
 use crate::subscribers::superconsole::timekeeper::RealtimeClock;
 use crate::subscribers::superconsole::timekeeper::Timekeeper;
 use crate::subscribers::test_id_writer::TestIdWriter;
-
-const HEALTH_CHECK_CHANNEL_SIZE: usize = 100;
 
 fn update_events_ctx<T: StreamingCommand>(
     cmd: &T,
@@ -68,31 +63,6 @@ fn update_events_ctx<T: StreamingCommand>(
     // and log it in another (invocation_recorder)
     let log_size_counter_bytes = Some(Arc::new(AtomicU64::new(0)));
 
-    let enable_health_checks = ctx
-        .immediate_config
-        .daemon_startup_config()
-        .map(|daemon_startup_config| {
-            daemon_startup_config
-                .health_check_config
-                .enable_health_checks
-        })
-        .unwrap_or(false)
-        // Force-enable health checks when the test override is set.
-        || std::env::var_os("BUCK2_TEST_SLOW_BUILD_CHECK").is_some();
-
-    let (
-        health_check_tags_receiver,
-        health_check_display_reports_receiver,
-        health_check_subscriber,
-    ) = if enable_health_checks {
-        let (tag_tx, tag_rx) = tokio::sync::mpsc::channel(HEALTH_CHECK_CHANNEL_SIZE);
-        let (report_tx, report_rx) = tokio::sync::mpsc::channel(HEALTH_CHECK_CHANNEL_SIZE);
-        let subscriber = HealthCheckSubscriber::new(tag_tx, report_tx, paths);
-        (Some(tag_rx), Some(report_rx), Some(subscriber))
-    } else {
-        (None, None, None)
-    };
-
     let (console_subscriber, used_superconsole) = get_console_with_root(
         ctx.trace_id.dupe(),
         console_opts.console_type,
@@ -104,29 +74,22 @@ fn update_events_ctx<T: StreamingCommand>(
         ),
         T::COMMAND_NAME,
         console_opts.superconsole_config(),
-        health_check_display_reports_receiver,
     );
     subscribers.push(console_subscriber);
     events_ctx.used_superconsole = used_superconsole;
 
-    if let Some(paths) = paths {
-        let re_log_subscriber = ReLog::new(paths.isolation.clone());
-        subscribers.push(Box::new(re_log_subscriber));
-
-        if !event_log_opts.no_event_log {
-            let event_log_subscriber =
-                get_event_log_subscriber(cmd, ctx, log_size_counter_bytes.clone(), paths);
-            subscribers.push(event_log_subscriber);
-        }
+    if let Some(paths) = paths
+        && !event_log_opts.no_event_log
+    {
+        let event_log_subscriber =
+            get_event_log_subscriber(cmd, ctx, log_size_counter_bytes.clone(), paths);
+        subscribers.push(event_log_subscriber);
     }
     if let Some(build_id_writer) = get_build_id_writer(cmd.event_log_opts(), ctx) {
         subscribers.push(build_id_writer)
     }
     if let Some(test_id_writer) = get_test_id_writer(cmd, ctx) {
         subscribers.push(test_id_writer)
-    }
-    if let Some(build_graph_stats) = get_build_graph_stats(cmd, ctx) {
-        subscribers.push(build_graph_stats)
     }
     let representative_config_flags = if ctx.paths().is_ok() {
         matches.get_representative_config_flags()
@@ -142,13 +105,8 @@ fn update_events_ctx<T: StreamingCommand>(
             Some(cmd.build_config_opts()),
             representative_config_flags,
             log_size_counter_bytes,
-            health_check_tags_receiver,
             paths,
         );
-    }
-
-    if let Some(subscriber) = health_check_subscriber {
-        subscribers.push(subscriber);
     }
 
     subscribers.extend(cmd.extra_subscribers());
@@ -243,10 +201,6 @@ impl<T: StreamingCommand> BuckSubcommand for T {
                 BuckdConnectOptions::Options(BuckdConnectDaemonOptions {
                     constraints: req,
                     daemon_startup_mode: T::daemon_startup_mode(),
-                    #[cfg(all(fbcode_build, target_os = "linux"))]
-                    allow_daemon_start_unsandboxed_via_wrapper: ctx
-                        .immediate_config
-                        .allow_daemon_start_unsandboxed_via_wrapper()?,
                 })
             };
             let buckd = match ctx.start_in_process_daemon.take() {
@@ -363,26 +317,4 @@ fn get_test_id_writer<T: StreamingCommand>(
     } else {
         None
     }
-}
-
-fn get_build_graph_stats<T: StreamingCommand>(
-    cmd: &T,
-    ctx: &ClientCommandContext,
-) -> Option<Box<dyn EventSubscriber>> {
-    if should_handle_build_graph_stats(cmd) {
-        Some(Box::new(BuildGraphStats::new(
-            ctx.fbinit(),
-            ctx.trace_id.dupe(),
-        )))
-    } else {
-        None
-    }
-}
-
-fn should_handle_build_graph_stats<T: StreamingCommand>(cmd: &T) -> bool {
-    // Currently, we only care about graph size info in BuildResponse which build command produces
-    cmd.build_config_opts()
-        .config_values
-        .contains(&"buck2.log_configured_graph_size=true".to_owned())
-        && cmd.logging_name() == "build"
 }

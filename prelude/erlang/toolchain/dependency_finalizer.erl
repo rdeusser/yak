@@ -7,7 +7,6 @@
 
 %% @format
 -module(dependency_finalizer).
--author("loscher@meta.com").
 
 -export([main/1]).
 

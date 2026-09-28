@@ -8,8 +8,6 @@
  * above-listed licenses.
  */
 
-import { isInternal } from 'docusaurus-plugin-internaldocs-fb/internal';
-
 const baseRedirects = [
     {
       to: '/docs/about/why',
@@ -33,7 +31,7 @@ const baseRedirects = [
     }
   ];
 
-// Redirects that need to be introduced following changes to the generated API docs in D61778036
+// Redirects from the API page names that the generator used before it named pages after Starlark types
 const globalsBasedApiDocs = [
   {
     from: '/docs/api/build/actions',
@@ -205,12 +203,4 @@ const globalsBasedApiDocs = [
   },
 ];
 
-// Internal-only redirects
-const internalRedirects = !isInternal() ? [] : [
-      {
-        to: '/docs/about/knowledge_sharing',
-        from: '/docs/knowledge_sharing',
-      },
-];
-
-export const redirects = [...baseRedirects, ...globalsBasedApiDocs, ...internalRedirects];
+export const redirects = [...baseRedirects, ...globalsBasedApiDocs];

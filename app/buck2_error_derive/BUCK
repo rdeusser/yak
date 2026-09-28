@@ -1,6 +1,4 @@
-load("@fbsource//tools/build_defs:rust_library.bzl", "rust_library")
-
-oncall("buck2")
+load("//build_defs:rust.bzl", "rust_library")
 
 rust_library(
     name = "buck2_error_derive",
@@ -9,8 +7,8 @@ rust_library(
     ),
     proc_macro = True,
     deps = [
-        "fbsource//third-party/rust:proc-macro2",
-        "fbsource//third-party/rust:quote",
-        "fbsource//third-party/rust:syn",
+        "//third-party/rust:proc-macro2",
+        "//third-party/rust:quote",
+        "//third-party/rust:syn",
     ],
 )

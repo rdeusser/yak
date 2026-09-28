@@ -6,8 +6,6 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-# pyre-strict
-
 
 import contextlib
 import json
@@ -17,7 +15,6 @@ import unittest
 from collections.abc import Generator, Mapping
 from pathlib import Path
 
-# pyre-fixme[21]: Could not find module `sourcedb_merger.inputs`.
 from sourcedb_merger.inputs import (
     BuildMapLoadError,
     load_targets_and_build_maps_from_json,

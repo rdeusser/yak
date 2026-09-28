@@ -6,7 +6,6 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-load("@prelude//:is_full_meta_repo.bzl", "is_full_meta_repo")
 # Combine the attributes we generate, we the custom implementations we have.
 load("@prelude//:rules_impl.bzl", "categorized_extra_attributes", "categorized_rule_decl_records", "extra_implemented_rules", "toolchain_rule_names")
 load("@prelude//apple:apple_platforms.bzl", "APPLE_PLATFORMS_KEY")
@@ -24,29 +23,10 @@ def _unimplemented_impl(name):
 
 def _mk_rule(rule_spec: typing.Any, extra_attrs: dict[str, typing.Any] = dict(), impl_override: [typing.Callable, None] = None, **kwargs):
     name = rule_spec.name
-    attributes = rule_spec.attrs
 
-    # We want native code-containing rules to be marked incompatible with fat
-    # platforms. Getting the ones that use cxx/apple toolchains is a little
-    # overly broad as it includes things like python that don't themselves have
-    # native code but need the toolchains if they depend on native code and in
-    # that case incompatibility is transitive and they'll get it.
-    fat_platform_compatible = True
-    if name not in ("python_library", "python_binary", "python_test"):
-        for toolchain_attr in ("_apple_toolchain", "_cxx_toolchain", "_go_toolchain"):
-            if toolchain_attr in attributes:
-                fat_platform_compatible = False
-
-    # Fat platforms is an idea specific to our toolchains, so doesn't apply to
-    # open source. Ideally this restriction would be done at the toolchain level.
-    if not is_full_meta_repo():
-        fat_platform_compatible = True
-
-    attributes = dict(attributes)
+    # copy so we don't try change the passed in object
+    attributes = dict(rule_spec.attrs)
     attributes.update(extra_attrs)
-    if not fat_platform_compatible:
-        # copy so we don't try change the passed in object
-        attributes["_cxx_toolchain_target_configuration"] = attrs.dep(default = "prelude//platforms:fat_platform_incompatible")
 
     # Add _apple_platforms to all rules so that we may query the target platform to use until we support configuration
     # modifiers and can use them to set the configuration to use for operations.

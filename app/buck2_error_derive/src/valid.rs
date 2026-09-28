@@ -23,6 +23,8 @@ use crate::ast::Struct;
 use crate::ast::Variant;
 use crate::attr::Attrs;
 
+const MISSING_TAG: &str = "missing #[buck2(tag = ...)] attribute. Every `buck2_error` needs a tag. Common choices are `Input`, `Tier0`, and `Environment`, and `ErrorTag` in app/buck2_data/error.proto lists them all.";
+
 impl Input<'_> {
     pub(crate) fn validate(&self) -> Result<()> {
         match self {
@@ -50,11 +52,7 @@ impl Struct<'_> {
             }
         }
         if self.attrs.tags.is_empty() && self.attrs.tags_expr.is_none() {
-            return Err(Error::new(
-                self.ident.span(),
-                "missing #[buck2(tag = ...)] attribute. All 'buck2_error' must have a tag (Common choices are 'Input', 'Tier0', and 'Environment').
-                Full list: https://www.internalfb.com/code/fbsource/[4e97d95ed7f3145bf6828827e779eecaeb0c5712]/fbcode/buck2/app/buck2_data/error.proto?lines=42",
-            ));
+            return Err(Error::new(self.ident.span(), MISSING_TAG));
         }
         check_field_attrs(&self.fields)?;
         for field in &self.fields {
@@ -81,11 +79,7 @@ impl Enum<'_> {
                 && variant.attrs.tags.is_empty()
                 && self.attrs.tags_expr.is_none()
             {
-                return Err(Error::new_spanned(
-                    variant.original,
-                    "missing #[buck2(tag = ...)] attribute. All 'buck2_error' must have a tag (Default choices are 'Input', 'Tier0', and 'Environment').
-                    Full list: https://www.internalfb.com/code/fbsource/[4e97d95ed7f3145bf6828827e779eecaeb0c5712]/fbcode/buck2/app/buck2_data/error.proto?lines=42",
-                ));
+                return Err(Error::new_spanned(variant.original, MISSING_TAG));
             }
         }
         Ok(())

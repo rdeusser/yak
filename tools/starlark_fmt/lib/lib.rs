@@ -19,10 +19,6 @@ mod autofixes;
 mod config;
 mod formatting;
 mod sort_key;
-// Uses the Meta-internal `quickcheck_arbitrary_derive`, so it is compiled only
-// in the internal (fbcode) build, not the open-source build.
-#[cfg(all(test, fbcode_build))]
-mod fuzz_starlark;
 
 pub use api::FormattedSource;
 pub use api::format_source;

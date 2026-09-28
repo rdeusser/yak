@@ -6,18 +6,16 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-# pyre-strict
-
-
 import json
 import os
 import re
 from pathlib import Path
 
-from buck2.tests.e2e_util.api.buck import Buck
-from buck2.tests.e2e_util.asserts import expect_failure
-from buck2.tests.e2e_util.buck_workspace import buck_test
-from buck2.tests.e2e_util.helper.golden import (
+import pytest
+from e2e_util.api.buck import Buck
+from e2e_util.asserts import expect_failure
+from e2e_util.buck_workspace import buck_test
+from e2e_util.helper.golden import (
     golden,
     sanitize_build_report,
     sanitize_hashes,
@@ -31,6 +29,7 @@ def _replace_hash(s: str) -> str:
 BUCK_OUT_ROOT_REL_PATH = "buck-out/v2/art/root"
 
 
+@pytest.mark.remote_execution
 @buck_test()
 async def test_bxl_ensure_no_materialization(buck: Buck) -> None:
     result = await buck.bxl(

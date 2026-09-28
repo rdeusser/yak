@@ -23,7 +23,7 @@ def _maybe_wrap_for_exec_platform(
     """
     When execution_modifier=False, wrap the constraint value in a conditional
     modifier that returns None (skips) when the exec platform marker
-    (ovr_config//platform/execution/constraints:execution-platform-transitioned)
+    (`get_exec_platform_marker()` in prelude//cfg/exec_platform:marker.bzl)
     is present in the configuration. This means modifiers with
     execution_modifier=False won't apply when configuring exec deps.
 

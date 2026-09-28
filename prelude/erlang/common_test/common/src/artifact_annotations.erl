@@ -9,7 +9,7 @@
 -module(artifact_annotations).
 -moduledoc """
 This file acts as a manual erlang sync for the thrift type struct
-TestResultArtifactAnnotations defined in  https://fburl.com/code/r2t4vclb
+TestResultArtifactAnnotations that the test runner reads.
 
  == How To Update This File ==
 We mostly expect next iterations of thrift data structure to include
@@ -75,5 +75,5 @@ test_metrics_artifact_annotation(FileName, Tests) ->
             FirstTest#ct_test.test_name
         )
     ),
-    % All tests share this artifact. Attach to first test only to prevent the Scuba uploader from uploading the same data multiple times.
+    % All tests share this artifact. Attach to first test only so that consumers do not process the same data multiple times.
     #{type => #{generic_blob => #{}}, description => list_to_binary(FileName), test_case => FirstTestName}.

@@ -2,8 +2,6 @@
 
 load("@prelude//utils:source_listing.bzl", "source_listing")
 
-oncall("windows_ide_support")
-
 source_listing()
 
 filegroup(

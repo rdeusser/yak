@@ -14,8 +14,8 @@ from enum import Enum
 from pathlib import Path
 from typing import Dict, List, Optional
 
-from buck2.tests.e2e_util.api.process import Process
-from buck2.tests.e2e_util.api.result import Result
+from e2e_util.api.process import Process
+from e2e_util.api.result import Result
 
 
 class WindowsCmdOption(Enum):

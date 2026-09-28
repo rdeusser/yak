@@ -1,31 +1,46 @@
-Those are fixtures used for CLI tests. The idea is to not regenerate them very
-often, we should only need to do this when our daemon / cli protocol changes.
+These files are event logs that `test_console.py` replays with `buck2 log replay`
+and reads with `buck2 log what-ran`. They only need regenerating when the event
+log format or the daemon and client protocol changes.
 
-Those fixtures are event logs, so they should be possible to re-generate by
-just re-running the corresponding build.
-
-Regenerate `my_genrule0` using, from the `buck2` path:
-
-```
-rm "$(hg root)/fbcode/buck2/tests/core/console/fixtures/my_genrule0.proto" && \
-./buck2.py build fbcode//buck2/tests/targets/rules/genrule:my_genrule0 --prefer-remote && \
-./buck2.py kill && \
-./buck2.py build fbcode//buck2/tests/targets/rules/genrule:my_genrule0 --prefer-remote --event-log "$(hg root)/fbcode/buck2/tests/core/console/fixtures/my_genrule0.proto"
-```
-
-(this runs Buck twice to ensure we get a cache hit)
-
-You also need to update the action digests in `test_whatran` and `test_whatran_no_repo` in test_console.py.
-To find the new digest, run:
+`my_genrule0.proto` records a build of one action whose result came from a
+remote cache. To regenerate it, run a cache that serves the Remote Execution
+API action cache and CAS, such as bazel-remote, and point `[buck2_re_client]`
+at it. The project's execution platform runs actions locally, looks them up in
+the cache, and uploads their results:
 
 ```
-./buck2.py log whatran "$(hg root)/fbcode/buck2/tests/core/console/fixtures/my_genrule0.proto"
+CommandExecutorConfig(
+    local_enabled = True,
+    remote_enabled = False,
+    remote_cache_enabled = True,
+    allow_cache_uploads = True,
+)
 ```
 
-and you will see a line like:
+`//path/to:my_genrule0` runs one `ctx.actions.run` with
+`allow_cache_upload = True`. The first build uploads the result, `buck2 clean`
+deletes it locally, and the second build takes it from the cache:
 
 ```
-build   fbcode//buck2/tests/targets/rules/genrule:my_genrule0 (ovr_config//platform/linux:x86_64-fbcode-platform010-clang#da4de3c780a17bfa) (genrule)   cache   87eeee88c133dfa39711399a81f500147275cfeeb1f06b6b4805f2c0588615d1:145
+buck2 build //path/to:my_genrule0
+buck2 clean
+buck2 build //path/to:my_genrule0 --event-log my_genrule0.proto
 ```
 
-The last part after "cache" is the action digest.
+The console prints byte counts only from snapshots taken before the command
+ends. A build shorter than the snapshot interval ends before the first snapshot
+that counts the cache traffic, and `test_console_facts` then fails. Add latency
+to the cache connection for the second build, for example with
+`tc qdisc add dev lo root netem delay 400ms` when the cache listens on
+localhost.
+
+Then update the action digest that `test_whatran` and `test_whatran_no_repo`
+expect. `buck2 log what-ran my_genrule0.proto` prints it as the last column of
+the `cache` line.
+
+`my_genrule1.proto` records a local build that follows a change to `dir1/file1`
+and the creation of `dir1/sub/file3`. To regenerate it, build a target whose
+sources glob `dir1/**`, make those changes, and build again with
+`--event-log my_genrule1.proto`. The log records the host name and the paths of
+the project and the binary. Replace them with placeholders of the same length,
+so the protobuf framing stays valid, before you check the file in.

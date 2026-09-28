@@ -1,0 +1,18 @@
+prelude = native
+
+prelude.cxx_library(
+    name = "clib",
+    srcs = ["lib.c"],
+    public_include_directories = ["."],
+    raw_headers = glob([
+        "headers/*.h",
+    ]),
+)
+
+prelude.go_library(
+    name = "golib",
+    package_name = "go/cgo/include_dir/golib",
+    srcs = ["lib.go"],
+    visibility = ["PUBLIC"],
+    deps = [":clib"],
+)

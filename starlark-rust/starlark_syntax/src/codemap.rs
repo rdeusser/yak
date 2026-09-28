@@ -314,10 +314,10 @@ impl Hash for CodeMap {
     }
 }
 
-// TODO(jtbraun): when the invalid spans are root caused, back out D115579787:
-// this reporting machinery, the clamping in `find_line`/`find_line_col`/
+// TODO(jtbraun): when the invalid spans are root caused, back out this
+// reporting machinery, the clamping in `find_line`/`find_line_col`/
 // `source_span`, the `HeapFileSpan::new` check, and the frame-formatting
-// early exit are a mitigation, not a feature.
+// early exit. They are a mitigation, not a feature.
 static CORRUPT_SPAN_REPORTER: std::sync::OnceLock<fn(&str)> = std::sync::OnceLock::new();
 
 /// Installs the reporter used when a span is resolved against a `CodeMap` it

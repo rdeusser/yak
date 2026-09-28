@@ -6,8 +6,6 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-# pyre-strict
-
 import os
 import shutil
 import stat
@@ -16,8 +14,8 @@ import sys
 import typing
 from pathlib import Path
 
-from buck2.tests.e2e_util.api.buck import Buck
-from buck2.tests.e2e_util.buck_workspace import buck_test
+from e2e_util.api.buck import Buck
+from e2e_util.buck_workspace import buck_test
 
 
 def _repo(cwd: Path) -> Path:
@@ -47,9 +45,11 @@ def _set_revision(rev: str, cwd: Path) -> None:
 
 def _init_repo(cwd: Path) -> None:
     _repo(cwd).mkdir(parents=True, exist_ok=True)
-    _git(["init"], cwd=cwd)
+    # The tests switch back to `master`, so the name must not depend on the
+    # `init.defaultBranch` setting.
+    _git(["init", "--initial-branch=master"], cwd=cwd)
     _git(["config", "user.name", "notarealuser"], cwd=cwd)
-    _git(["config", "user.email", "notarealuser@fb.com"], cwd=cwd)
+    _git(["config", "user.email", "notarealuser@example.com"], cwd=cwd)
     shutil.copytree(cwd / "template", _repo(cwd), dirs_exist_ok=True)
     rev = _git_commit(cwd=cwd)
     _set_revision(rev, cwd=cwd)

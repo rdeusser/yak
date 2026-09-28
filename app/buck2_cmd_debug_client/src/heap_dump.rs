@@ -17,12 +17,10 @@ use buck2_client_ctx::common::CommonEventLogOptions;
 use buck2_client_ctx::common::CommonStarlarkOptions;
 use buck2_client_ctx::common::ui::CommonConsoleOptions;
 use buck2_client_ctx::daemon::client::BuckdClientConnector;
-use buck2_client_ctx::daemon::client::connect::BuckdProcessInfo;
 use buck2_client_ctx::events_ctx::EventsCtx;
 use buck2_client_ctx::exit_result::ExitResult;
 use buck2_client_ctx::path_arg::PathArg;
 use buck2_client_ctx::streaming::StreamingCommand;
-use buck2_core::is_open_source;
 
 /// Write jemalloc heap profile to a file.
 ///
@@ -73,19 +71,7 @@ impl StreamingCommand for HeapDumpCommand {
             )
             .await?;
 
-        let daemon_dir = ctx.paths()?.daemon_dir()?;
-        let process_info = BuckdProcessInfo::load(&daemon_dir)?;
-        if !is_open_source() {
-            buck2_client_ctx::eprint!(
-                "\
-                Consider using this command to upload heap profile to Scuba:\n\
-                stackstoscuba --heap {} --heap_pid {}\n",
-                path.to_str()?,
-                process_info.pid()?,
-            )?;
-        } else {
-            buck2_client_ctx::eprintln!("Heap dump written to `{}`", path.to_str()?)?;
-        }
+        buck2_client_ctx::eprintln!("Heap dump written to `{}`", path.to_str()?)?;
 
         ExitResult::success()
     }

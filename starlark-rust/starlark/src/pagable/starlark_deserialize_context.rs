@@ -574,7 +574,7 @@ impl HeapDeserializationState {
             if let Some(header) = self.header.get() {
                 partial_deser_stats::add(
                     &partial_deser_stats::HEAP_RETAINED_BLOB_BYTES,
-                    recipe_retained_data_len(&*header.recipe),
+                    header.recipe.retained_data_len() as u64,
                 );
             }
         }
@@ -670,7 +670,7 @@ impl HeapDeserializationState {
         // Recorded by `metadata` only for the parse that is kept: two threads
         // can race to parse one heap, and counting here would count it twice.
         let stats = partial_deser_stats::enabled().then(|| partial_deser_stats::MetadataStats {
-            retained_blob_bytes: recipe_retained_data_len(&*header.recipe),
+            retained_blob_bytes: header.recipe.retained_data_len() as u64,
             values: total_count as u64,
             // Walks every slot, so it is behind the same branch.
             value_alloc_bytes: slots.iter().map(|s| s.alloc_size.get() as u64).sum(),
@@ -1098,19 +1098,6 @@ pub fn starlark_deserialization_state_retained_bytes(storage: &PagableStorageHan
     cached_heap_deserialization_state_retained_bytes(storage)
 }
 
-/// `recipe.retained_data_len()`, compiled out where the OSS build's published
-/// `pagable` predates the method. Unreachable there: `enabled()` is false
-/// without `fbcode_build`. Remove with that check once a release has it.
-fn recipe_retained_data_len(recipe: &dyn PagableDeserializerRecipe) -> u64 {
-    #[cfg(fbcode_build)]
-    return recipe.retained_data_len() as u64;
-    #[cfg(not(fbcode_build))]
-    {
-        let _ = recipe;
-        unreachable!("counting is disabled outside fbcode_build")
-    }
-}
-
 /// Process-wide counters contrasting what a page-in must load with what it
 /// uses. A value is only reachable through its heap, so claiming one value
 /// pays for the whole heap's blob and slot table: `heap_*` is that cost,
@@ -1131,17 +1118,11 @@ mod partial_deser_stats {
 
     /// Off unless `BUCK2_STARLARK_PARTIAL_DESER_STATS` is set: the claim site
     /// runs millions of times per page-in and shared counters there are a
-    /// contended cache line. Always on under `cfg(test)` in the fbcode build —
-    /// the `fbcode_build` gate below runs first — so the counting paths stay
-    /// exercised there; the counters are process-global and never reset, so
-    /// tests must not assert on absolute values. Callers branch on this
+    /// contended cache line. Always on under `cfg(test)`, so the counting
+    /// paths stay exercised. The counters are process-global and never reset,
+    /// so tests must not assert on absolute values. Callers branch on this
     /// before computing anything a counter needs, not just before storing it.
     pub(super) fn enabled() -> bool {
-        // fbcode-only until a `pagable` release with `retained_data_len` is
-        // published (see `recipe_retained_data_len`).
-        if !cfg!(fbcode_build) {
-            return false;
-        }
         if cfg!(test) {
             return true;
         }

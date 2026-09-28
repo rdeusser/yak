@@ -167,7 +167,6 @@ pub(crate) fn process_status(status: StatusResponse) -> buck2_error::Result<serd
         "project_root": status.project_root,
         "isolation_dir": status.isolation_dir,
         "forkserver_pid": serde_json::to_value(status.forkserver_pid)?,
-        "supports_vpnless": status.supports_vpnless.unwrap_or_default(),
         "http2": status.http2,
         "io_provider": status.io_provider,
         "allprocs_cgroup_path": status.allprocs_cgroup_path,
@@ -180,10 +179,6 @@ pub(crate) fn process_status(status: StatusResponse) -> buck2_error::Result<serd
 
     if let Some(valid_working_directory) = status.valid_working_directory {
         value["valid_working_directory"] = serde_json::to_value(valid_working_directory)?;
-    }
-
-    if let Some(valid_buck_out_mount) = status.valid_buck_out_mount {
-        value["valid_buck_out_mount"] = serde_json::to_value(valid_buck_out_mount)?;
     }
 
     Ok(value)

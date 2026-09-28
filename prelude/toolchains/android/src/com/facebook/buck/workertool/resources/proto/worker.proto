@@ -8,8 +8,7 @@
  * above-listed licenses.
  */
 
-// This file is synced from fbcode/buck2/app/buck2_worker_proto/worker.proto
-// To update run xplat/toolchains/android/sdk/scripts/sync_proto.sh
+// The Buck2 side of this protocol is app/buck2_worker_proto/worker.proto.
 
 syntax = "proto3";
 

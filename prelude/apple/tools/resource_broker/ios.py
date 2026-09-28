@@ -6,13 +6,9 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-# pyre-strict
-
 import os
 from dataclasses import dataclass
 from typing import Optional
-
-from packaging.version import Version
 
 from .simctl_runtime import list_runtimes, XCSimRuntime
 from .simulator import (
@@ -119,7 +115,7 @@ def _select_simulator_spec(
             for device_type in runtime.supported_device_types
         )
     ]
-    runtimes.sort(key=lambda x: Version(x.version), reverse=True)
+    runtimes.sort(key=lambda x: _parse_version(x.version), reverse=True)
 
     if os_version:
         runtimes = [x for x in runtimes if x.name == os_version]
@@ -148,9 +144,15 @@ async def _list_managed_simulators(simulator_manager: str) -> list[Simulator]:
     )
 
 
-def normalize_os_version(os_version: str) -> Version:
-    # os version should be in the format "iOS 17.2.0" or "iOS 17.2"
-    return Version(os_version.split(" ")[1])
+def _parse_version(version: str) -> tuple[int, ...]:
+    # Runtime versions are dotted integers, such as "17.2" or "17.2.1".
+    return tuple(int(part) for part in version.split("."))
+
+
+def normalize_os_version(os_version: str) -> tuple[int, int]:
+    """Returns the major and minor version of an OS version such as "iOS 17.2.0" or "iOS 17.2"."""
+    parts = _parse_version(os_version.split(" ")[1]) + (0, 0)
+    return (parts[0], parts[1])
 
 
 def choose_simulators(
@@ -177,10 +179,8 @@ def choose_simulators(
     filtered_simulators = filter(
         lambda simulator: (
             (
-                normalize_os_version(simulator.os_version).major
-                == normalize_os_version(os_version).major
-                and normalize_os_version(simulator.os_version).minor
-                == normalize_os_version(os_version).minor
+                normalize_os_version(simulator.os_version)
+                == normalize_os_version(os_version)
                 if os_version
                 else True
             )

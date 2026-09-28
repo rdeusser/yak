@@ -1,8 +1,6 @@
 load("@prelude//python:internal_tools.bzl", "python_internal_tools")
 load("@prelude//utils:source_listing.bzl", "source_listing")
 
-oncall("plf_experience")
-
 source_listing()
 
 python_internal_tools(
@@ -166,8 +164,7 @@ prelude.command_alias(
     name = "patchelf",
     args = [
         "--patchelf",
-        # @oss-disable[end= ]: "$(exe_target fbsource//third-party/patchelf:patchelf)",
-        "patchelf", # @oss-enable
+        "patchelf",
     ],
     exe = ":patchelf.py",
     visibility = ["PUBLIC"],

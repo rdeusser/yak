@@ -6,24 +6,22 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-# pyre-strict
-
-
 import asyncio
 import json
+import platform
 import signal
 from pathlib import Path
 
-from buck2.tests.e2e_util.api.buck import Buck
-from buck2.tests.e2e_util.asserts import expect_failure
-from buck2.tests.e2e_util.buck_workspace import buck_test
-from buck2.tests.e2e_util.helper.golden import golden, sanitize_stderr
-from buck2.tests.e2e_util.helper.utils import read_invocation_record
+from e2e_util.api.buck import Buck
+from e2e_util.asserts import expect_failure
+from e2e_util.buck_workspace import buck_test
+from e2e_util.helper.golden import golden, sanitize_stderr
+from e2e_util.helper.utils import read_invocation_record
 
 # FIXME(JakobDegen): Flakey in CI
 if False:
 
-    @buck_test(skip_for_os=["windows"])  # TODO(T154836875)
+    @buck_test(skip_for_os=["windows"])
     async def test_has_end_of_stream_false(buck: Buck, tmp_path: Path) -> None:
         hang_path = tmp_path / "hang_path"
         record = tmp_path / "record.json"
@@ -66,7 +64,7 @@ async def test_has_end_of_stream_true(buck: Buck) -> None:
     assert record["repo_path"] == str(buck.cwd)
 
 
-@buck_test(skip_for_os=["windows"], write_invocation_record=True)  # TODO(T154836632)
+@buck_test(skip_for_os=["windows"], write_invocation_record=True)
 async def test_has_no_command_result(buck: Buck) -> None:
     # Start the daemon
     await buck.build()
@@ -96,17 +94,19 @@ async def test_has_no_command_result(buck: Buck) -> None:
     )
 
 
-@buck_test(skip_for_os=["windows"], write_invocation_record=True)  # TODO(T154836632)
+@buck_test(skip_for_os=["windows"], write_invocation_record=True)
 async def test_metadata(buck: Buck) -> None:
     # Start the daemon
     res = await buck.build()
 
     record = res.invocation_record()
 
-    assert "username" in record["metadata"]["strings"]
+    metadata = record["metadata"]["strings"]
+    assert metadata["os"] == platform.system().lower()
+    assert "username" not in metadata
 
 
-@buck_test(skip_for_os=["windows"], write_invocation_record=True)  # TODO(T154836632)
+@buck_test(skip_for_os=["windows"], write_invocation_record=True)
 async def test_client_metadata(buck: Buck) -> None:
     # Start the daemon
     res = await buck.build(
@@ -124,7 +124,7 @@ async def test_client_metadata(buck: Buck) -> None:
     assert record["metadata"]["strings"]["client"] == "baz"
 
 
-@buck_test(skip_for_os=["windows"], write_invocation_record=True)  # TODO(T154836632)
+@buck_test(skip_for_os=["windows"], write_invocation_record=True)
 async def test_client_metadata_env(buck: Buck) -> None:
     # Start the daemon
     res = await buck.build(
@@ -146,21 +146,6 @@ async def test_client_metadata_env(buck: Buck) -> None:
 
 
 @buck_test(skip_for_os=["windows"], write_invocation_record=True)
-async def test_agent_context_from_env(buck: Buck) -> None:
-    res = await buck.build(
-        env={
-            "CODING_AGENT_METADATA": "id=test_agent,invocation_id=test_inv_123",
-        },
-    )
-
-    record = res.invocation_record()
-    agent_ctx = {e["key"]: e["value"] for e in record["agent_context"]}
-
-    assert agent_ctx["id"] == "test_agent"
-    assert agent_ctx["invocation_id"] == "test_inv_123"
-
-
-@buck_test(skip_for_os=["windows"], write_invocation_record=True)  # TODO(T154836632)
 async def test_client_metadata_clean(buck: Buck) -> None:
     # Start the daemon
     res = await buck.clean(
@@ -184,7 +169,8 @@ async def test_client_metadata_debug(buck: Buck) -> None:
     await buck.build()
 
     res = await buck.debug(
-        "allocator-stats",
+        "hydration",
+        "status",
         "--client-metadata=foo=bar",
         "--client-metadata=id=baz",
     )
@@ -225,7 +211,7 @@ async def test_non_action_error_message_in_record(buck: Buck) -> None:
     )
 
 
-@buck_test(skip_for_os=["windows"], write_invocation_record=True)  # TODO(T154836632)
+@buck_test(skip_for_os=["windows"], write_invocation_record=True)
 async def test_rule_type_names_ci(buck: Buck) -> None:
     # Start the daemon
     res = await buck.build(
@@ -245,27 +231,7 @@ async def test_rule_type_names_ci(buck: Buck) -> None:
     ]
 
 
-@buck_test(skip_for_os=["windows"], write_invocation_record=True)  # TODO(T154836632)
-async def test_rule_type_names_sandcastle(buck: Buck) -> None:
-    # Start the daemon
-    res = await buck.build(
-        ":duplicate",
-        ":and_a_two",
-        ":last_three",
-        ":a_one",
-        env={"SANDCASTLE": "my_fake_job"},
-    )
-
-    record = res.invocation_record()
-
-    assert record["target_rule_type_names"] == [
-        "one",
-        "pass_",
-        "two",
-    ]
-
-
-@buck_test(skip_for_os=["windows"], write_invocation_record=True)  # TODO(T154836632)
+@buck_test(skip_for_os=["windows"], write_invocation_record=True)
 async def test_rule_type_names_user(buck: Buck) -> None:
     # Start the daemon
     res = await buck.build(
@@ -283,7 +249,7 @@ async def test_rule_type_names_user(buck: Buck) -> None:
     ]
 
 
-@buck_test(skip_for_os=["windows"], write_invocation_record=True)  # TODO(T154836632)
+@buck_test(skip_for_os=["windows"], write_invocation_record=True)
 async def test_rule_type_names_on_failure(buck: Buck) -> None:
     # Start the daemon
     res = await expect_failure(
@@ -323,36 +289,6 @@ async def test_peak_memory_and_disk(buck: Buck) -> None:
     assert (
         "peak_used_disk_space_bytes" in record and "peak_process_memory_bytes" in record
     )
-
-
-@buck_test(setup_eden=True, skip_for_os=["darwin"], write_invocation_record=True)
-async def test_version_control_collector_slow(buck: Buck) -> None:
-    # Force a 5 second sleep, hg commands should finish within that period of time
-    res = await buck.build(
-        ":sleep",
-        "--local-only",
-        "--no-remote-cache",
-    )
-
-    record = res.invocation_record()
-
-    assert "has_local_changes" in record and "hg_revision" in record
-    assert record["hg_revision"] is not None
-
-
-# NOTE: Delete or disable if flaky, ran a bunch of times on my devserver and it passes fine
-@buck_test(
-    setup_eden=True, skip_for_os=["darwin", "windows"], write_invocation_record=True
-)
-async def test_version_control_collector_fast(buck: Buck) -> None:
-    res = await buck.targets(
-        ":",
-    )
-
-    record = res.invocation_record()
-
-    assert "has_local_changes" in record and "hg_revision" in record
-    assert record["hg_revision"] is not None
 
 
 @buck_test(write_invocation_record=True)
@@ -423,20 +359,3 @@ async def test_parallelism_logging(buck: Buck) -> None:
     # The available parallelism should still be a positive integer (system dependent)
     assert isinstance(command_options_no_j["available_parallelism"], int)
     assert command_options_no_j["available_parallelism"] > 0
-
-
-@buck_test(write_invocation_record=True)
-async def test_client_metadata_vscode_fallback(buck: Buck) -> None:
-    # Test that vscode-fallback is set when VSCODE_PID is present
-    res = await buck.build(
-        ":pass",
-        env={"VSCODE_PID": "12345"},
-        stdin=None,  # Ensure stdin is not a terminal
-    )
-
-    record = res.invocation_record()
-
-    # Should have vscode-fallback as client id
-    client_metadata_dict = {m["key"]: m["value"] for m in record["client_metadata"]}
-    assert client_metadata_dict.get("id") == "vscode-fallback"
-    assert record["metadata"]["strings"]["client"] == "vscode-fallback"

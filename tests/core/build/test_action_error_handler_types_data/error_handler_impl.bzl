@@ -38,7 +38,7 @@ def error_handler_impl(ctx: ActionErrorCtx) -> list[ActionSubError]:
 def _does_not_use_error_handler_impl(ctx: AnalysisContext):
     out = ctx.actions.declare_output("out", has_content_based_path = False)
     ctx.actions.run(
-        cmd_args(["fbpython", "-c", "import sys\nsys.exit(1)"], hidden = out.as_output()),
+        cmd_args(["python3", "-c", "import sys\nsys.exit(1)"], hidden = out.as_output()),
         category = "test_failure",
         error_handler = error_handler_impl,
     )
@@ -53,7 +53,7 @@ does_not_use_error_handler = rule(
 def _error_handler_nonetype_impl(ctx: AnalysisContext):
     out = ctx.actions.declare_output("out", has_content_based_path = False)
     ctx.actions.run(
-        cmd_args(["fbpython", "-c", "import sys; open(sys.argv[1], 'w').write('something')"], out.as_output()),
+        cmd_args(["python3", "-c", "import sys; open(sys.argv[1], 'w').write('something')"], out.as_output()),
         category = "test_doesnt_fail",
         error_handler = None,
     )
@@ -99,7 +99,7 @@ def error_handler_errorformat_impl(ctx: ActionErrorCtx) -> list[ActionSubError]:
 def _error_handler_with_errorformat(ctx: AnalysisContext):
     out = ctx.actions.declare_output("out", has_content_based_path = False)
     ctx.actions.run(
-        cmd_args(["fbpython", "-c", "import sys\nprint('main.rs:10: expected `;`, found `}`')\nsys.exit(1)"], hidden = out.as_output()),
+        cmd_args(["python3", "-c", "import sys\nprint('main.rs:10: expected `;`, found `}`')\nsys.exit(1)"], hidden = out.as_output()),
         category = "test_failure",
         error_handler = error_handler_errorformat_impl,
     )

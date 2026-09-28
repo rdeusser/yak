@@ -17,8 +17,6 @@ use buck2_error::BuckErrorContext;
 #[cfg(unix)]
 use buck2_fs::paths::abs_norm_path::AbsNormPathBuf;
 use buck2_fs::paths::file_name::FileName;
-#[cfg(fbcode_build)]
-use buck2_http::ProxyHostAllowlist;
 use dice::PagableStorageBackend;
 use dupe::Dupe;
 use serde::Deserialize;
@@ -62,8 +60,6 @@ impl Timeout {
     Eq
 )]
 pub struct HttpConfig {
-    #[cfg(fbcode_build)]
-    pub proxy_env_allowlist: ProxyHostAllowlist,
     connect_timeout_ms: Option<u64>,
     read_timeout_ms: Option<u64>,
     write_timeout_ms: Option<u64>,
@@ -102,14 +98,6 @@ impl HttpConfig {
         })?;
 
         Ok(Self {
-            #[cfg(fbcode_build)]
-            proxy_env_allowlist: config
-                .parse_list::<String>(BuckconfigKeyRef {
-                    section: "http",
-                    property: "proxy_env_allowlist",
-                })?
-                .unwrap_or_default()
-                .try_into()?,
             connect_timeout_ms,
             read_timeout_ms,
             write_timeout_ms,
@@ -171,13 +159,6 @@ pub struct SystemWarningConfig {
     /// If None, we don't warn the user.
     /// The corresponding buckconfig is `buck2_system_warning.avg_re_download_bytes_per_sec_threshold`.
     pub avg_re_download_bytes_per_sec_threshold: Option<u64>,
-    /// A regex that controls which targets are opted into the vpn check.
-    /// The corresponding buckconfig is `buck2_health_check.optin_vpn_check_targets_regex`.
-    pub optin_vpn_check_targets_regex: Option<String>,
-    /// Whether to enable the stable revision check.
-    pub enable_stable_revision_check: Option<bool>,
-    /// Run the health checks in a separate process.
-    pub enable_health_check_process_isolation: Option<bool>,
 }
 
 impl SystemWarningConfig {
@@ -198,26 +179,11 @@ impl SystemWarningConfig {
             section: "buck2_system_warning",
             property: "avg_re_download_bytes_per_sec_threshold",
         })?;
-        let optin_vpn_check_targets_regex = config.parse(BuckconfigKeyRef {
-            section: "buck2_health_check",
-            property: "optin_vpn_check_targets_regex",
-        })?;
-        let enable_stable_revision_check = config.parse(BuckconfigKeyRef {
-            section: "buck2_health_check",
-            property: "enable_stable_revision_check",
-        })?;
-        let enable_health_check_process_isolation = config.parse(BuckconfigKeyRef {
-            section: "buck2_health_check",
-            property: "enable_health_check_process_isolation",
-        })?;
         Ok(Self {
             memory_pressure_threshold_percent,
             remaining_disk_space_threshold_gb,
             min_re_download_bytes_threshold,
             avg_re_download_bytes_per_sec_threshold,
-            optin_vpn_check_targets_regex,
-            enable_stable_revision_check,
-            enable_health_check_process_isolation,
         })
     }
 
@@ -501,43 +467,8 @@ impl ResourceControlConfig {
 
 #[derive(Allocative, Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub enum LogDownloadMethod {
-    Manifold,
     Curl(String),
     None,
-}
-
-#[derive(
-    Allocative,
-    Clone,
-    Debug,
-    Default,
-    Serialize,
-    Deserialize,
-    PartialEq,
-    Eq
-)]
-pub struct HealthCheckConfig {
-    pub enable_health_checks: bool,
-    pub disabled_health_check_names: Option<String>,
-}
-
-impl HealthCheckConfig {
-    pub fn from_config(config: &LegacyBuckConfig) -> buck2_error::Result<Self> {
-        let enable_health_checks = config.parse(BuckconfigKeyRef {
-            section: "buck2_health_check",
-            property: "enable_health_checks",
-        })?;
-        let disabled_health_check_names = config.parse(BuckconfigKeyRef {
-            section: "buck2_health_check",
-            property: "disabled_health_check_names",
-        })?;
-
-        Ok(Self {
-            // TODO(rajneeshl): When the rollout is successful, change this to default to true.
-            enable_health_checks: enable_health_checks.unwrap_or(false),
-            disabled_health_check_names,
-        })
-    }
 }
 
 /// Pagable DICE storage settings, present (`Some`) only when paging is enabled by
@@ -640,7 +571,6 @@ pub struct DaemonStartupConfig {
     pub http: HttpConfig,
     pub resource_control: ResourceControlConfig,
     pub log_download_method: LogDownloadMethod,
-    pub health_check_config: HealthCheckConfig,
     pub retained_event_logs: usize,
     pub macos_qos_class: Option<String>,
     pub daemon_idle_timeout_s: Option<u64>,
@@ -656,45 +586,22 @@ impl DaemonStartupConfig {
     ) -> buck2_error::Result<Self> {
         // Intepreted client side because we need the value here.
 
-        let log_download_method = {
-            // Determine the log download method to use. Only default to
-            // manifold in fbcode contexts, or when specifically asked.
-            let use_manifold = settings
-                .log_download
-                .log_use_manifold()
-                .map(Ok::<_, buck2_error::Error>)
-                .unwrap_or_else(|| {
-                    Ok(config
-                        .parse(BuckconfigKeyRef {
-                            section: "buck2",
-                            property: "log_use_manifold",
-                        })?
-                        .unwrap_or(cfg!(fbcode_build)))
-                })?;
-
-            if use_manifold {
-                Ok(LogDownloadMethod::Manifold)
-            } else {
-                let log_url = settings.log_download.log_url().or_else(|| {
-                    config.get(BuckconfigKeyRef {
-                        section: "buck2",
-                        property: "log_url",
-                    })
-                });
-                if let Some(log_url) = log_url {
-                    if log_url.is_empty() {
-                        Err(buck2_error::buck2_error!(
-                            buck2_error::ErrorTag::Input,
-                            "log_url is empty, but log_use_manifold is false"
-                        ))
-                    } else {
-                        Ok(LogDownloadMethod::Curl(log_url.to_owned()))
-                    }
-                } else {
-                    Ok(LogDownloadMethod::None)
-                }
+        let log_url = settings.log_download.log_url().or_else(|| {
+            config.get(BuckconfigKeyRef {
+                section: "buck2",
+                property: "log_url",
+            })
+        });
+        let log_download_method = match log_url {
+            None => LogDownloadMethod::None,
+            Some("") => {
+                return Err(buck2_error::buck2_error!(
+                    buck2_error::ErrorTag::Input,
+                    "The `log_url` setting is empty"
+                ));
             }
-        }?;
+            Some(log_url) => LogDownloadMethod::Curl(log_url.to_owned()),
+        };
 
         Ok(Self {
             buck_settings: settings.dupe(),
@@ -732,7 +639,6 @@ impl DaemonStartupConfig {
             http: HttpConfig::from_config(config)?,
             resource_control: ResourceControlConfig::from_config(config)?,
             log_download_method,
-            health_check_config: HealthCheckConfig::from_config(config)?,
             retained_event_logs: config
                 .get(BuckconfigKeyRef {
                     section: "buck2",
@@ -756,9 +662,8 @@ impl DaemonStartupConfig {
                              Use `[buck2] macos_qos_class = skip_lowering` in buckconfig instead. \
                              This will be the default very soon."
                         ),
-                        deprecation: true,
                         quiet: false,
-                        error_on_oss: true
+                        hard_error: true
                     )?;
                     Some(from_config.unwrap_or_else(|| "skip_lowering".to_owned()))
                 } else {
@@ -808,12 +713,7 @@ impl DaemonStartupConfig {
             materializations: None,
             http: HttpConfig::default(),
             resource_control: ResourceControlConfig::testing_default(),
-            log_download_method: if cfg!(fbcode_build) {
-                LogDownloadMethod::Manifold
-            } else {
-                LogDownloadMethod::None
-            },
-            health_check_config: HealthCheckConfig::default(),
+            log_download_method: LogDownloadMethod::None,
             retained_event_logs: DEFAULT_RETAINED_EVENT_LOGS,
             macos_qos_class: None,
             daemon_idle_timeout_s: None,

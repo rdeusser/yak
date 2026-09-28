@@ -4,11 +4,8 @@
 
 [cell_aliases]
   alias = root
-  ovr_config = prelude
+  config = prelude
   toolchains = root
-  fbsource = root
-  fbcode = root
-  buck = root
 
 [external_cells]
   prelude = bundled

@@ -13,12 +13,10 @@ use buck2_core::buck2_env_name;
 use buck2_core::soft_error;
 use buck2_event_observer::event_observer::NoopEventObserverExtra;
 use buck2_event_observer::verbosity::Verbosity;
-use buck2_health_check::report::DisplayReport;
 use buck2_wrapper_common::invocation_id::TraceId;
 use clap::builder::FalseyValueParser;
 use dupe::Dupe;
 use termwiz::istty::IsTty;
-use tokio::sync::mpsc::Receiver;
 
 use crate::final_console::FinalConsole;
 use crate::subscribers::errorconsole::ErrorConsole;
@@ -73,7 +71,6 @@ pub fn get_console_with_root(
     timekeeper: Timekeeper,
     command_name: &str,
     config: SuperConsoleConfig,
-    health_check_display_reports_receiver: Option<Receiver<Vec<DisplayReport>>>,
 ) -> (Box<dyn EventSubscriber>, bool) {
     let result: buck2_error::Result<(Box<dyn EventSubscriber>, bool)> = match console_type {
         ConsoleType::Simple => Ok((
@@ -81,7 +78,6 @@ pub fn get_console_with_root(
                 trace_id.dupe(),
                 verbosity,
                 expect_spans,
-                health_check_display_reports_receiver,
             )),
             false,
         )),
@@ -90,7 +86,6 @@ pub fn get_console_with_root(
                 trace_id.dupe(),
                 verbosity,
                 expect_spans,
-                health_check_display_reports_receiver,
             )),
             false,
         )),
@@ -99,7 +94,6 @@ pub fn get_console_with_root(
                 trace_id.dupe(),
                 verbosity,
                 expect_spans,
-                health_check_display_reports_receiver,
             )),
             false,
         )),
@@ -111,7 +105,6 @@ pub fn get_console_with_root(
             timekeeper,
             None,
             config,
-            health_check_display_reports_receiver,
         )
         .map(|c| (Box::new(c) as Box<dyn EventSubscriber>, true)),
         ConsoleType::Auto => match StatefulSuperConsole::console_builder().build() {
@@ -123,7 +116,6 @@ pub fn get_console_with_root(
                 expect_spans,
                 timekeeper,
                 config,
-                health_check_display_reports_receiver,
             )
             .map(|c| (Box::new(c) as Box<dyn EventSubscriber>, true)),
             _ => Ok((
@@ -131,7 +123,6 @@ pub fn get_console_with_root(
                     trace_id.dupe(),
                     verbosity,
                     expect_spans,
-                    health_check_display_reports_receiver,
                 )),
                 false,
             )),
@@ -149,8 +140,6 @@ pub fn get_console_with_root(
                     trace_id,
                     verbosity,
                     expect_spans,
-                    // Maybe refactor and set this.
-                    None,
                 )),
                 false,
             )

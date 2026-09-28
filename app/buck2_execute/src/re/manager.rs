@@ -21,19 +21,15 @@ use allocative::Allocative;
 use async_trait::async_trait;
 use buck2_core::async_once_cell::AsyncOnceCell;
 use buck2_core::buck2_env;
-use buck2_core::execution_types::executor_config::MetaInternalExtraParams;
-use buck2_core::execution_types::executor_config::RemoteExecutorDependency;
 use buck2_core::execution_types::executor_config::RemoteExecutorUseCase;
 use buck2_core::fs::project::ProjectRoot;
 use buck2_core::fs::project_rel_path::ProjectRelativePath;
 use buck2_error::BuckErrorContext;
 use buck2_error::BuckErrorOptionContext;
 use buck2_error::conversion::from_any_with_tag;
-use buck2_fs::paths::abs_norm_path::AbsNormPathBuf;
 use buck2_re_configuration::RemoteExecutionStaticMetadata;
 use buck2_re_configuration::RemoteExecutionStaticMetadataImpl;
 use dupe::Dupe;
-use fbinit::FacebookInit;
 use futures::FutureExt;
 use prost::Message;
 use remote_execution as RE;
@@ -88,17 +84,11 @@ use crate::re::uploader::UploadStats;
 
 #[derive(Clone, Allocative)]
 pub struct RemoteExecutionConfig {
-    #[allocative(skip)] // TODO(nga): implement in `allocative`.
-    pub fb: FacebookInit,
     /// whether to skip the cache when performing RE
     pub skip_remote_cache: bool,
     /// number of retries when attempting the initial RE connection
     pub connection_retries: usize,
     pub static_metadata: Arc<RemoteExecutionStaticMetadata>,
-    pub logs_dir_path: Option<AbsNormPathBuf>,
-    pub buck_out_path: AbsNormPathBuf,
-    /// Whether Buck is running in paranoid mode.
-    pub is_paranoid_mode: bool,
 }
 
 impl RemoteExecutionConfig {
@@ -197,24 +187,16 @@ pub struct ReConnectionManager {
 
 impl ReConnectionManager {
     pub fn new(
-        fb: FacebookInit,
         skip_remote_cache: bool,
         connection_retries: usize,
         static_metadata: Arc<RemoteExecutionStaticMetadata>,
-        logs_dir_path: Option<AbsNormPathBuf>,
-        buck_out_path: AbsNormPathBuf,
-        is_paranoid_mode: bool,
     ) -> Self {
         Self {
             data: RwLock::new(Weak::new()),
             config: RemoteExecutionConfig {
-                fb,
                 skip_remote_cache,
                 connection_retries,
                 static_metadata,
-                logs_dir_path,
-                buck_out_path,
-                is_paranoid_mode,
             },
         }
     }
@@ -256,11 +238,6 @@ impl ReConnectionManager {
             downloaded: client_stats.downloaded as _,
             ..Default::default()
         };
-
-        res.upload_stats
-            .fill_from_re_client_metrics(&client_stats.upload_storage_stats);
-        res.download_stats
-            .fill_from_re_client_metrics(&client_stats.download_storage_stats);
 
         // The rest of the fields are known to be their default value if we don't have a client, so
         // we ask the client to fill them iff we have one.
@@ -425,12 +402,10 @@ impl ManagedRemoteExecutionClient {
             .await
     }
 
-    pub async fn execute<'a>(
+    pub async fn execute(
         &self,
         action_digest: ActionDigest,
         platform: &RE::Platform,
-        dependencies: impl IntoIterator<Item = &'a RemoteExecutorDependency>,
-        re_gang_workers: &[buck2_core::execution_types::executor_config::ReGangWorker],
         identity: &ReActionIdentity<'_>,
         manager: &mut CommandExecutionManager,
         skip_cache_read: bool,
@@ -438,7 +413,6 @@ impl ManagedRemoteExecutionClient {
         re_max_queue_time: Option<Duration>,
         re_resource_units: Option<i64>,
         knobs: &ExecutorGlobalKnobs,
-        meta_internal_extra_params: &MetaInternalExtraParams,
         worker_tool_action_digest: Option<ActionDigest>,
         priority: Option<i32>,
     ) -> buck2_error::Result<ExecuteResponseOrCancelled> {
@@ -448,8 +422,6 @@ impl ManagedRemoteExecutionClient {
             .execute(
                 action_digest,
                 platform,
-                dependencies,
-                re_gang_workers,
                 self.use_case,
                 identity,
                 manager,
@@ -458,7 +430,6 @@ impl ManagedRemoteExecutionClient {
                 re_max_queue_time,
                 re_resource_units,
                 knobs,
-                meta_internal_extra_params,
                 worker_tool_action_digest,
                 priority,
             )

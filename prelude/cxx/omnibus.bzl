@@ -195,7 +195,7 @@ def _link_deps(link_infos: dict[Label, LinkableNode], deps: list[Label], pic_beh
     """
     Return transitive deps required to link dynamically against the given deps.
     This will following through deps of statically linked inputs and exported
-    deps of everything else (see https://fburl.com/diffusion/rartsbkw from v1).
+    deps of everything else (as v1 did).
     """
 
     def find_deps(node: Label):
@@ -360,7 +360,7 @@ def _extract_global_symbols_from_link_args(
     `-Wl,--export-dynamic-symbol=<sym>`).
     """
 
-    # TODO(T110378137): This is ported from D24065414, but it might make sense
+    # TODO: This is ported from Buck1, but it might make sense
     # to explicitly tell Buck about the global symbols, rather than us trying to
     # extract it from linker flags (which is brittle).
     output = ctx.actions.declare_output(name, has_content_based_path = False)
@@ -370,12 +370,12 @@ def _extract_global_symbols_from_link_args(
     # to materialize artifacts to do this.
     argsfile, _ = ctx.actions.write(name + ".args", link_args, allow_args = True, has_content_based_path = False)
 
-    # TODO(T110378133): Make this work with other platforms.
+    # TODO: Make this work with other platforms.
     param = "--export-dynamic-symbol"
     pattern = "\\(-Wl,\\)\\?{}[,=]\\([^,]*\\)".format(param)
 
     # Used sed/grep to filter the symbol name from the relevant flags.
-    # TODO(T110378130): As is the case in v1, we don't properly extract flags
+    # TODO: As is the case in v1, we don't properly extract flags
     # from argsfiles embedded in existing args.
     script = "set -euo pipefail; " + "cat \"$@\" | (grep -- '{0}' || [[ $? == 1 ]]) | sed 's|{0}|\\2|' | LC_ALL=C sort -S 10% -u > {{}}".format(pattern)
     ctx.actions.run(
@@ -406,7 +406,7 @@ def _create_global_symbols_version_script(
     # path of incremental flows (e.g. that only update a single root).
     global_symbols_files = [root.global_syms for root in roots]
 
-    # TODO(T110378126): Processing all excluded libs together may get expensive.
+    # TODO: Processing all excluded libs together may get expensive.
     # We should probably split this up and operate on individual libs.
     if excluded:
         global_symbols_files.append(
@@ -574,9 +574,8 @@ def _create_omnibus(
         opts = link_options(
             links = [LinkArgs(flags = extra_ldflags), LinkArgs(infos = inputs)],
             category_suffix = "omnibus",
-            # TODO(T110378138): As with static C++ links, omnibus links are
-            # currently too large for RE, so run them locally for now (e.g.
-            # https://fb.prod.workplace.com/groups/buck2dev/posts/2953023738319012/).
+            # TODO: As with static C++ links, omnibus links are
+            # currently too large for RE, so run them locally for now.
             # NB: We explicitly pass a value here to override
             # the linker_info.link_libraries_locally that's used by `cxx_link_shared_library`.
             # That's because we do not want to apply the linking behavior universally,

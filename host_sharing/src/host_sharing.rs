@@ -26,16 +26,12 @@ const SINGLE_RUN: usize = 1;
 /// This class is intended to represent the resources required by each test. This is then used to
 /// map onto resources available on the machine where the tests are run on in order to not saturate the
 /// machine and adversely impact testrunning performance and reliability.
-/// Testpilot Classic uses the concept of machine cores to manage resources. Testpilot has two types of
-/// tests: Normal (1 core) and Heavy (4 cores) where this would run on a machine with typically 24 cores
-/// (managed through a semaphore with size 24). Since Testpilot was introduced we have moved to run
-/// on Sandcastle machines with 56 cores so we want to move away from the core-analogy and instead use
-/// the term "permits" to describe the limited resources available on each machine.
+/// Resources are counted in "permits" rather than cores, because machine sizes vary.
 /// More long term we want improve this to also take into account memory usage, cpu usage etc.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Allocative, Hash, Pagable)]
 pub enum WeightClass {
     /// Tests can require any number of permits and this can be used to mimic resource utilization like
-    /// memory or cpu. For now, we map the Testpilot behaviour as Normal->Permits(1) and Heavy->Permits(4).
+    /// memory or cpu. A normal test takes 1 permit and a heavy test takes 4.
     Permits(usize),
     /// A percentage of available resources.
     Percentage(WeightPercentage),

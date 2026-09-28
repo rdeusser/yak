@@ -32,7 +32,7 @@ Use What Ran as follows:
   - You can grep the output for a given target.
   - You can then grep by identifier if necessary. For example, if you're after
     C++ compilation, try grepping for the basename of your file (for example,
-    for `fbcode/my/stuff.cpp`, grep for `stuff.cpp`).
+    for `src/my/stuff.cpp`, grep for `stuff.cpp`).
 - Once you found it, reproduce as follows:
   - If the executor was `local`, the command is in the output, so just run it.
     It's expected that you'll do this from the root of your project (use
@@ -40,43 +40,27 @@ Use What Ran as follows:
   - If the executor was `re` or `cache`, you're provided a RE digest of the form
     `HASH:SIZE`.
 
-<FbInternalOnly>
-:::note
-  For `re` or `cache`, run `cas download-action HASH:SIZE` to retrieve the action, then follow the instructions to run it.
-:::
-</FbInternalOnly>
-
 ## Examples
 
 The following ran locally:
 
 ```bash
-build  fbcode//scripts/torozco/getenv:getenv-san-conf-__generated-lib__ (archive_thin libgetenv-san-conf-__generated-lib__.pic.a)  local  fbcode/third-party-buck/platform010/build/llvm-fb/bin/llvm-ar qcsTD buck-out/v2/gen/fbcode/d839c731f5505c62/scripts/torozco/getenv/__getenv-san-conf-__generated-lib____/libgetenv-san-conf-__generated-lib__.pic.a buck-out/v2/gen/fbcode/d839c731f5505c62/scripts/torozco/getenv/__getenv-san-conf-__generated-lib____/__objects__/san-conf.c.pic.o
+build  root//hello:hello (<unspecified>) (greeting)  local  env -C "$(buck2 root --kind project)" -- 'TMPDIR=/home/user/project/buck-out/v2/tmp/root/ba301b9fe7f0e990/greeting' 'BUCK_SCRATCH_PATH=buck-out/v2/tmp/root/ba301b9fe7f0e990/greeting' 'BUCK2_DAEMON_UUID=d02fef8c-7036-445f-a9e2-154afd2bb4f1' 'BUCK_BUILD_ID=a0e94d01-7a74-427e-bf45-5a0f4483322f' sh -c 'echo "$1" > "$2"' -- hello buck-out/v2/art/root/hello/__hello__/output_artifacts/greeting.txt
 ```
 
 To repro, you'd run:
 
 ```bash
-fbcode/third-party-buck/platform010/build/llvm-fb/bin/llvm-ar qcsTD buck-out/v2/gen/fbcode/d839c731f5505c62/scripts/torozco/getenv/__getenv-san-conf-__generated-lib____/libgetenv-san-conf-__generated-lib__.pic.a buck-out/v2/gen/fbcode/d839c731f5505c62/scripts/torozco/getenv/__getenv-san-conf-__generated-lib____/__objects__/san-conf.c.pic.
+env -C "$(buck2 root --kind project)" -- 'TMPDIR=/home/user/project/buck-out/v2/tmp/root/ba301b9fe7f0e990/greeting' 'BUCK_SCRATCH_PATH=buck-out/v2/tmp/root/ba301b9fe7f0e990/greeting' 'BUCK2_DAEMON_UUID=d02fef8c-7036-445f-a9e2-154afd2bb4f1' 'BUCK_BUILD_ID=a0e94d01-7a74-427e-bf45-5a0f4483322f' sh -c 'echo "$1" > "$2"' -- hello buck-out/v2/art/root/hello/__hello__/output_artifacts/greeting.txt
 ```
 
 The following ran on RE:
 
 ```bash
-build  fbcode//common/init:kill (cxx_compile Kill.cpp (pic))  re  97feca9d014155a80ec55fe27e6bb17f9d2f8574:94
+build  root//cpp:main (prelude//platforms:default#<hash>) (cxx_compile main.cpp)  re  <digest hash>:<size>
 ```
 
-<FbInternalOnly>
-To repro, you'd run:
-
-```bash
-cas download-action 97feca9d014155a80ec55fe27e6bb17f9d2f8574:94
-```
-
-</FbInternalOnly>
-<OssOnly>
 Reproducing this command will depend on the particular RE implementation you use.
-</OssOnly>
 
 ## Expired Digests
 

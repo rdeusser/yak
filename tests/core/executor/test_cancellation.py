@@ -6,20 +6,17 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-# pyre-strict
-
-
 import asyncio
 import os
 import signal
 from collections.abc import Callable
 from pathlib import Path
 
-from buck2.tests.e2e_util.api.buck import Buck
-from buck2.tests.e2e_util.api.buck_result import BuckException, BuckResult, ExitCodeV2
-from buck2.tests.e2e_util.api.process import Process
-from buck2.tests.e2e_util.buck_workspace import buck_test
-from buck2.tests.e2e_util.helper.utils import read_invocation_record
+from e2e_util.api.buck import Buck
+from e2e_util.api.buck_result import BuckException, BuckResult, ExitCodeV2
+from e2e_util.api.process import Process
+from e2e_util.buck_workspace import buck_test
+from e2e_util.helper.utils import read_invocation_record
 
 
 async def _test_cancellation_helper(

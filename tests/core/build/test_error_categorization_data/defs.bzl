@@ -71,7 +71,7 @@ def _slow(ctx):
     slow = ctx.actions.declare_output("slow", has_content_based_path = False)
 
     ctx.actions.run(
-        ["fbpython", "-c", "import time, sys; time.sleep(60); sys.exit(1)", slow.as_output()],
+        ["python3", "-c", "import time, sys; time.sleep(60); sys.exit(1)", slow.as_output()],
         category = "slow_default_output",
     )
 

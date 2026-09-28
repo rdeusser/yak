@@ -11,7 +11,6 @@
 package com.facebook.buck.jvm.kotlin.buildtools
 
 import com.facebook.buck.core.util.log.Logger
-import com.facebook.buck.jvm.kotlin.cd.analytics.KotlinCDLoggingContext
 import com.facebook.buck.jvm.kotlin.kotlinc.incremental.ClasspathChanges
 import com.facebook.buck.jvm.kotlin.kotlinc.incremental.KotlincMode
 import com.facebook.buck.jvm.kotlin.kotlinc.incremental.KotlincMode.Incremental
@@ -24,7 +23,6 @@ import org.jetbrains.kotlin.buildtools.api.jvm.JvmCompilationConfiguration
 @OptIn(ExperimentalBuildToolsApi::class)
 internal class JvmCompilationConfigurationFactory(
     private val compilationService: CompilationService,
-    private val kotlinCDLoggingContext: KotlinCDLoggingContext,
 ) {
 
   fun create(mode: KotlincMode): JvmCompilationConfiguration =
@@ -55,20 +53,12 @@ internal class JvmCompilationConfigurationFactory(
                         LOG.info(
                             "Non-incremental compilation will be performed: ${rebuildReason.message}",
                         )
-                        kotlinCDLoggingContext.addExtras(
-                            JvmCompilationConfigurationFactory::class.java.simpleName,
-                            "Non-incremental compilation will be performed: ${rebuildReason.message}",
-                        )
                         forceNonIncrementalMode(true)
                       }
 
                       when (mode.classpathChanges) {
                         is ClasspathChanges.Unknown -> {
                           LOG.info(
-                              "Non-incremental compilation will be performed: classpath changes not available",
-                          )
-                          kotlinCDLoggingContext.addExtras(
-                              JvmCompilationConfigurationFactory::class.java.simpleName,
                               "Non-incremental compilation will be performed: classpath changes not available",
                           )
                           forceNonIncrementalMode(true)

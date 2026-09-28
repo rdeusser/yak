@@ -492,8 +492,8 @@ class ParseModuleGraphTest(unittest.TestCase):
         """Parse a graph with 2 modules and 2 target mappings."""
         path = self._write_module_graph(
             "2\n"
-            "dex com/facebook/CanaryClass dex\n"
-            "feature1 com/facebook/feature1/Canary dex\n"
+            "dex com/example/CanaryClass dex\n"
+            "feature1 com/example/feature1/Canary dex\n"
             "//apps:lib1 dex\n"
             "//apps:lib2 feature1\n"
         )
@@ -507,7 +507,7 @@ class ParseModuleGraphTest(unittest.TestCase):
             },
         )
         self.assertEqual(
-            module_metadata["dex"]["canary_class_name"], "com/facebook/CanaryClass"
+            module_metadata["dex"]["canary_class_name"], "com/example/CanaryClass"
         )
         self.assertEqual(module_metadata["dex"]["module_deps"], ["dex"])
         self.assertEqual(module_metadata["feature1"]["module_deps"], ["dex"])

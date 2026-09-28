@@ -5,19 +5,18 @@ and generate a
 [rust-project.json](https://rust-analyzer.github.io/manual.html#non-cargo-based-projects)
 file for use with `rust-analyzer`.
 
-The primary motivation for this tool is that there are some projects that fail
-to work with `autocargo`. Therefore, to use `rust-analyzer` with those projects,
-another solution is needed to provide it with the project structure.
+A project that builds its Rust code with `buck` has no Cargo manifests for
+`rust-analyzer` to read, so `rust-project` describes the project structure
+instead.
 
 # Usage
 
 To generate a `rust-project.json` file using `rust-project`, supply it with one
-or more `buck` targets. Assuming that the current working directory is
-`fbcode//common/rust/tools/rust-project`, the following command will create a
-`rust-project.json` in the directory corresponding to the above target:
+or more `buck` targets. The following command, run from the root of this
+repository, creates a `rust-project.json` for the `rust-project` target itself:
 
 ```bash
-./fbcode/common/rust/tools/rust-project/rust-project develop fbcode//common/rust/tools/rust-project:rust-project
+rust-project develop //integrations/rust-project:rust-project
 ```
 
 The `develop` command will write to the current working directory.

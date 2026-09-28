@@ -60,7 +60,7 @@ pub(crate) async fn required_providers<'v>(
             Ok(Some(x)) => Some(Ok(x)),
             Ok(None) => None,
             Err(e) => {
-                let _ignore = soft_error!("missing_required_local_resource", e, quiet: true, error_on_oss: true);
+                let _ignore = soft_error!("missing_required_local_resource", e, quiet: true, hard_error: true);
                 None
             }
         })

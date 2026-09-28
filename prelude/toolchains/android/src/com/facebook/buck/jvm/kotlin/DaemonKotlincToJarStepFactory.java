@@ -11,7 +11,6 @@
 package com.facebook.buck.jvm.kotlin;
 
 import static com.facebook.buck.jvm.kotlin.ClasspathUtils.getClasspathSnapshots;
-import static com.facebook.buck.jvm.kotlin.KosabiStubgenStepsBuilder.prepareKosabiStubgenIfNeeded;
 import static com.facebook.buck.jvm.kotlin.KspStepsBuilder.prepareKspProcessorsIfNeeded;
 
 import com.facebook.buck.core.filesystems.AbsPath;
@@ -33,7 +32,6 @@ import com.facebook.buck.jvm.java.JavacPluginParams;
 import com.facebook.buck.jvm.java.ResolvedJavac;
 import com.facebook.buck.jvm.java.ResolvedJavacOptions;
 import com.facebook.buck.jvm.java.ResolvedJavacPluginProperties;
-import com.facebook.buck.jvm.kotlin.cd.analytics.KotlinCDAnalytics;
 import com.facebook.buck.jvm.kotlin.kotlinc.Kotlinc;
 import com.facebook.buck.step.isolatedsteps.IsolatedStep;
 import com.facebook.buck.step.isolatedsteps.common.CopyIsolatedStep;
@@ -56,12 +54,6 @@ import javax.annotation.Nullable;
 public class DaemonKotlincToJarStepFactory extends BaseCompileToJarStepFactory<KotlinExtraParams> {
   static final PathMatcher KOTLIN_PATH_MATCHER = FileExtensionMatcher.of("kt");
   static final PathMatcher SRC_ZIP_MATCHER = GlobPatternMatcher.of("**.src.zip");
-
-  private final KotlinCDAnalytics kotlinCDAnalytics;
-
-  public DaemonKotlincToJarStepFactory(KotlinCDAnalytics kotlinCDAnalytics) {
-    this.kotlinCDAnalytics = kotlinCDAnalytics;
-  }
 
   @Override
   public KotlinExtraParams castExtraParams(ExtraParams extraParams) {
@@ -140,15 +132,11 @@ public class DaemonKotlincToJarStepFactory extends BaseCompileToJarStepFactory<K
                   extraParams.getExtraClassPathSnapshots())
               : ImmutableList.of();
 
-      KosabiPluginOptions kosabiPluginOptions =
-          new KosabiPluginOptions(extraParams.getKosabiPluginOptions());
-
       String moduleName = buildTargetValueExtraParams.getModuleName();
       String kotlinPluginGeneratedFullPath =
           buildCellRootPath.resolve(kotlincPluginGeneratedOutput).toString();
 
       Builder<IsolatedStep> postKotlinCompilationSteps = ImmutableList.builder();
-      Builder<IsolatedStep> postKotlinCompilationFailureSteps = ImmutableList.builder();
 
       postKotlinCompilationSteps.add(
           CopyIsolatedStep.forDirectory(
@@ -187,33 +175,8 @@ public class DaemonKotlincToJarStepFactory extends BaseCompileToJarStepFactory<K
           extraParams.getKotlinCompilerPlugins(),
           kotlinPluginGeneratedFullPath,
           moduleName,
-          kotlinCDAnalytics,
           sourceWithStubsAndKaptAndKspOutputBuilder,
           sourceWithStubsAndKaptOutputBuilder,
-          extraParams.getLanguageVersion());
-      ImmutableList.Builder<AbsPath> compilationClasspathBuilder =
-          buildCompilationClasspath(parameters, extraParams);
-
-      prepareKosabiStubgenIfNeeded(
-          buckOut,
-          buildCellRootPath,
-          invokingRule,
-          parameters,
-          steps,
-          extraParams,
-          buildTargetValueExtraParams,
-          sourceWithStubsAndKaptOutputBuilder,
-          sourceWithStubsAndKaptAndKspOutputBuilder,
-          outputDirectory,
-          sourceFilePaths,
-          pathToSrcsList,
-          allClasspaths,
-          reportsOutput,
-          kotlinc,
-          kosabiPluginOptions.getAllKosabiPlugins(),
-          compilationClasspathBuilder,
-          postKotlinCompilationFailureSteps,
-          kotlinCDAnalytics,
           extraParams.getLanguageVersion());
 
       prepareKspProcessorsIfNeeded(
@@ -239,16 +202,9 @@ public class DaemonKotlincToJarStepFactory extends BaseCompileToJarStepFactory<K
           kotlinc,
           compilerOutputPaths,
           buckOut,
-          kosabiPluginOptions.getKosabiPlugins(),
           sourceWithStubsAndKaptAndKspOutputBuilder,
-          compilationClasspathBuilder.build(),
-          moduleName,
-          kotlinCDAnalytics);
-
-      // Reduced SO-ABI classpath for the applicability plugin (rfsoa +
-      // source_only_abi_deps only). Distinct from compilationClasspath which
-      // contains the full dep set during library builds.
-      ImmutableList<AbsPath> applicabilityClasspath = extraParams.getApplicabilityClasspath();
+          buildCompilationClasspath(parameters, extraParams).build(),
+          moduleName);
 
       KotlinCStepsBuilder.prepareKotlinCompilation(
           buckOut,
@@ -267,12 +223,7 @@ public class DaemonKotlincToJarStepFactory extends BaseCompileToJarStepFactory<K
           allClasspaths,
           reportsOutput,
           kotlinc,
-          kosabiPluginOptions,
-          compilationClasspathBuilder.build(),
-          applicabilityClasspath,
-          postKotlinCompilationFailureSteps,
-          classpathSnapshots,
-          kotlinCDAnalytics);
+          classpathSnapshots);
       steps.addAll(postKotlinCompilationSteps.build());
     }
 
@@ -346,7 +297,6 @@ public class DaemonKotlincToJarStepFactory extends BaseCompileToJarStepFactory<K
         javaAnnotationProcessorParams.getPluginProperties().stream()
             .filter(AnnotationProcessorUtils::isRunsOnJavaOnlyProcessor)
             .collect(ImmutableList.toImmutableList());
-    // See https://fburl.com/diff/d1msdqm8
     // If pluginProperties is empty, make sure parameters is empty too, or javac will complain
     if (filteredPluginProperties.isEmpty()) {
       return JavacPluginParams.EMPTY;

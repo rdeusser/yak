@@ -1,3 +1,3 @@
 # buck2_protoc_dev
 
-Build script helpers to setup Protobuf compilation through Cargo within Meta.
+Build script helpers that compile Protobuf files under Cargo. They point `PROTOC` at the `protoc` binary from the `protoc-bin-vendored` crate, which `BUCK2_BUILD_PROTOC` overrides.

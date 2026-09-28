@@ -13,7 +13,7 @@ use buck2_build_api_derive::internal_provider;
 use buck2_core::cells::CellAliasResolver;
 use buck2_core::cells::CellResolver;
 use buck2_core::cells::name::CellName;
-use buck2_core::error::validate_logview_category;
+use buck2_core::error::validate_category_name;
 use buck2_core::pattern::pattern::ParsedPattern;
 use buck2_core::pattern::pattern_type::TargetPatternExtra;
 use buck2_core::target::label::label::TargetLabel;
@@ -96,7 +96,7 @@ fn dep_only_incompatible_info_creator(globals: &mut GlobalsBuilder) {
                 ))
                 .into_internal_error()
             })?;
-            validate_logview_category(category_str)?;
+            validate_category_name(category_str)?;
             result.insert(category_str, value.value);
         }
         Ok(DepOnlyIncompatibleInfo {

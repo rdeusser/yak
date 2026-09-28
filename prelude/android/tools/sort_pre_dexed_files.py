@@ -6,8 +6,6 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-# pyre-strict
-
 """
 Sorts pre-dexed libraries into primary/secondary dex groups for an Android APK.
 
@@ -401,7 +399,6 @@ def _flatten_groups(groups: list[DexGroup]) -> list[FlatGroup]:
         lib_ids: list[str] = [str(entry["id"]) for entry in group]
         class_names: list[str] = []
         for entry in group:
-            # pyre-ignore[6]: entry["class_names"] is always list[str]
             class_names.extend(entry["class_names"])
         result.append({"lib_ids": lib_ids, "class_names": class_names})
     return result

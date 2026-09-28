@@ -582,7 +582,7 @@ pub(crate) fn parse_bxl_label_from_cli(
                 wanted: reformed_path,
             }
             .into(),
-            error_on_oss: true
+            hard_error: true
         )?;
     }
 

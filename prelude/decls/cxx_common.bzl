@@ -479,13 +479,6 @@ def _runtime_dependency_handling_arg():
         ),
     }
 
-def _use_fbcc_rust_wrapper_arg():
-    return {
-        "use_fbcc_rust_wrapper": attrs.bool(
-            default = False, doc = "Opt-in for the rust version of the fbcode C++ Compiler wrapper (replacing the existing fbcc.py)"
-        ),
-    }
-
 def _use_content_based_paths_arg():
     return {
         # Use content-based paths by default for compile action; targets may opt out
@@ -531,7 +524,6 @@ cxx_common = struct(
     public_system_include_directories_arg = _public_system_include_directories_arg,
     version_arg = _version_arg,
     runtime_dependency_handling_arg = _runtime_dependency_handling_arg,
-    use_fbcc_rust_wrapper_arg = _use_fbcc_rust_wrapper_arg,
     use_content_based_paths_arg = _use_content_based_paths_arg,
     expect_eligible_for_dedupe_arg = _expect_eligible_for_dedupe_arg,
     supports_stripping = _supports_stripping,

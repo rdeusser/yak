@@ -9,10 +9,8 @@
  */
 
 use std::sync::Arc;
-use std::sync::OnceLock;
 
 use dupe::Dupe;
-use dupe::OptionDupedExt;
 use uuid::Uuid;
 
 #[derive(derive_more::Display, Debug, Clone, Dupe, allocative::Allocative)]
@@ -40,23 +38,6 @@ impl DaemonId {
             uuid: Arc::new(Uuid::try_parse(s)?),
         })
     }
-}
-
-static DAEMON_UUID_FOR_PANICS: OnceLock<DaemonId> = OnceLock::new();
-
-/// Access the daemon id for the purpose of reporting a panic.
-///
-/// This will report a placeholder id in the client and *very* early on in the daemon startup code,
-/// but otherwise report the daemon id
-pub fn get_daemon_id_for_panics() -> DaemonId {
-    DAEMON_UUID_FOR_PANICS
-        .get()
-        .duped()
-        .unwrap_or_else(DaemonId::null)
-}
-
-pub fn set_daemon_id_for_panics(id: DaemonId) {
-    DAEMON_UUID_FOR_PANICS.set(id).expect("Only called once");
 }
 
 #[cfg(test)]

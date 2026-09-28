@@ -1,0 +1,3 @@
+# This package sets its own within_view without opting into the cap, so it
+# keeps the cap of `within_view_cap_dir`.
+package(within_view = ["root//other/..."])

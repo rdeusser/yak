@@ -6,18 +6,14 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-# pyre-strict
-
-
-from buck2.tests.e2e_util.api.buck import Buck
-from buck2.tests.e2e_util.asserts import expect_failure
-from buck2.tests.e2e_util.buck_workspace import buck_test
-from buck2.tests.e2e_util.helper.golden import golden
+from e2e_util.api.buck import Buck
+from e2e_util.asserts import expect_failure
+from e2e_util.buck_workspace import buck_test
+from e2e_util.helper.golden import golden
 
 _PASS_TARGETS = [
     "select_resolution_error_after_compatibility",
     "select_resolution_error_in_dep_after_self_compatibility",
-    "select_resolution_error_in_dep_after_dep_compatibility",
     "select_resolution_error_in_exec_dep_after_exec_dep_compatibility_1",
     "select_resolution_error_in_exec_dep_after_exec_dep_compatibility_2",
     "configured_dep_platform_error_after_compatibility",
@@ -43,6 +39,14 @@ async def test_evaluation_order(buck: Buck) -> None:
         if t == "default_target_platform_no_error_if_global_override":
             extra_flags = ["--target-platforms", "root//:p-cat"]
         await buck.ctargets(":" + t, *extra_flags)
+    # buck2 fails a target whose dependency is incompatible
+    # (`dep_only_incompatible_version_two` is a hard error). It checks that
+    # compatibility before it resolves the select in the other dependency, so
+    # the error names the incompatibility.
+    await expect_failure(
+        buck.ctargets(":select_resolution_error_in_dep_after_dep_compatibility"),
+        stderr_regex="does not pass compatibility check .* because its transitive dep root//:incompat",
+    )
     for t in _FAIL_TARGETS:
         res = await expect_failure(buck.ctargets(":" + t, "-v0", "--console=none"))
         golden(

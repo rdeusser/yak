@@ -67,7 +67,7 @@ pub fn cleanup_path(fs: &ProjectRoot, path: &ProjectRelativePath) -> buck2_error
 
     let mut path: &AbsNormPath = &path;
 
-    // Be aware of T85589819 - the parent directory might already exist, but as a _file_.  It might
+    // Be aware that the parent directory might already exist, but as a _file_.  It might
     // be even worse, it might be 2 parents up, which will cause create_dir to fail when we try to
     // execute. So, we walk up the tree until we either find a dir we're happy with, or a file we
     // can delete. It's safe to delete this file because we know it doesn't overlap with a current
@@ -101,7 +101,7 @@ pub fn cleanup_path(fs: &ProjectRoot, path: &ProjectRelativePath) -> buck2_error
             }
             Ok(None) if cfg!(unix) => {
                 // If we get ENOENT that guarantees there is no file on the path. If there was
-                // one, we would get ENOTDIR. TODO (T123279320) This probably works on Windows,
+                // one, we would get ENOTDIR. TODO: This probably works on Windows,
                 // but it wasn't tested there.
                 //
                 // On non-Unix we don't have this optimization. Recursing all the way up

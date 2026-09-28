@@ -40,7 +40,7 @@ def get_swift_pcm_anon_targets(ctx: AnalysisContext, uncompiled_deps: list[Depen
         if SwiftPCMUncompiledInfo not in uncompiled_dep:
             continue
 
-        # T209485965: workaround for depagg to avoid duplicate clang modules
+        # Workaround for depagg to avoid duplicate clang modules
         # when traversing deps through the base target and [headers] subtarget.
         # By always requesting the [headers] subtarget we should use the same
         # anon actions for both paths.

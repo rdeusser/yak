@@ -35,7 +35,6 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
-import org.mockito.kotlin.mock
 
 @OptIn(ExperimentalBuildToolsApi::class)
 internal class KotlinCompilationServiceTest {
@@ -60,7 +59,6 @@ internal class KotlinCompilationServiceTest {
     kotlinCompilationService =
         KotlinCompilationService(
             CompilationService.loadImplementation(this::class.java.classLoader),
-            mock(),
         )
 
     sourcesDir = temporaryFolder.newFolder("src")

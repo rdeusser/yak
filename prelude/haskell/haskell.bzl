@@ -419,7 +419,7 @@ def _make_package(
 
     if enable_profiling:
         # Add the `-p` suffix otherwise ghc will look for objects
-        # following this logic (https://fburl.com/code/3gmobm5x) and will fail.
+        # without it and will fail.
         libname += "_p"
 
     def mk_artifact_dir(dir_prefix: str, profiled: bool) -> str:
@@ -885,7 +885,7 @@ def haskell_library_impl(ctx: AnalysisContext) -> list[Provider]:
         )
         templ_vars[name] = args
 
-    # TODO(T110378127): To implement `$(ldflags-shared ...)` properly, we'd need
+    # TODO: To implement `$(ldflags-shared ...)` properly, we'd need
     # to setup a symink tree rule for all transitive shared libs.  Since this
     # currently would be pretty costly (O(N^2)?), and since it's not that
     # commonly used anyway, just use `static-pic` instead.  Longer-term, once

@@ -106,7 +106,7 @@ def strip_object(
     output_path = output_path or unstripped.short_path
     stripped_lib = ctx.actions.declare_output("stripped/{}".format(output_path), has_content_based_path = False)
 
-    # TODO(T109996375) support configuring the flags used for stripping
+    # TODO: support configuring the flags used for stripping
     cmd = cmd_args(
         strip,
         strip_flags,

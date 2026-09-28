@@ -16,7 +16,6 @@ load(
     "JavacProtocol",
     "PrebuiltJarToolchainInfo",
 )
-load("@prelude//tests:test_listing.bzl", "TestListingInfo")
 
 def _system_java_tool_impl(ctx):
     return [
@@ -218,9 +217,6 @@ def _java_test_toolchain_rule_impl(ctx):
             test_runner_library_jar = ctx.attrs.test_runner_library_jar,
             testng_test_runner_main_class_args = ctx.attrs.testng_test_runner_main_class_args,
         ),
-        TestListingInfo(
-            list_tests = ctx.attrs.list_tests,
-        ),
     ]
 
 _java_test_toolchain_rule = rule(
@@ -233,7 +229,6 @@ _java_test_toolchain_rule = rule(
             default = [],
         ),
         "list_class_names": attrs.exec_dep(providers = [RunInfo]),
-        "list_tests": attrs.option(attrs.exec_dep(providers = [RunInfo]), default = None),
         "test_runner_library_jar": attrs.source(),
         "testng_test_runner_main_class_args": attrs.list(attrs.string()),
     },

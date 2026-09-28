@@ -11,7 +11,7 @@ def _test(ctx: AnalysisContext):
 
     ctx.actions.run(
         [
-            "fbpython",
+            "python3",
             ctx.attrs.script,
             out.as_output(),
         ],

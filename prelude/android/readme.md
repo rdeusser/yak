@@ -3,9 +3,9 @@
 ## 1. 🧭 Overview
 
 The Buck2 Android Prelude is a comprehensive build system for Android
-applications and libraries within Meta's Buck2 build system. It provides a
-complete set of build rules, toolchain integrations, and utilities for building
-Android APKs, AABs (Android App Bundles), libraries, and running tests.
+applications and libraries. It provides a complete set of build rules,
+toolchain integrations, and utilities for building Android APKs, AABs (Android
+App Bundles), libraries, and running tests.
 
 ### Key Features
 

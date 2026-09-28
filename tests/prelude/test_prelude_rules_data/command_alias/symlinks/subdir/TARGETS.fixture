@@ -1,0 +1,25 @@
+prelude = native
+
+prelude.export_file(
+    name = "some_file",
+)
+
+prelude.command_alias(
+    name = "script",
+    args = select({
+        "DEFAULT": [
+            "sh",
+            "-c",
+            "cat $1",
+            "--",
+            "$(location :some_file)",
+        ],
+        "prelude//os:windows": [
+            "cmd.exe",
+            "/c",
+            "type",
+            "$(location :some_file)",
+        ],
+    }),
+    visibility = ["PUBLIC"],
+)

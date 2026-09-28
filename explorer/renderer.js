@@ -14,7 +14,6 @@ const $forward = document.getElementById("forward");
 const $backward = document.getElementById("backward");
 const $buckdir = document.getElementById("buckdir");
 const $host = document.getElementById("host");
-const $mode = document.getElementById("mode");
 
 // Note that we clear the $output by setting innerHTML,
 // which doesn't unregister event handlers.
@@ -131,15 +130,15 @@ addTab("status", /(\"[a-z_]+\")/, async () => {
 });
 
 addTab("targets", /not-useful/, async () => {
-    return await window.api.targets($target.value, $host.value, $mode.value);
+    return await window.api.targets($target.value, $host.value);
 });
 
 addTab("attributes", /(\n    \"[^\"]+\":)/, async () => {
-    return await window.api.attributes($target.value, $host.value, $mode.value);
+    return await window.api.attributes($target.value, $host.value);
 });
 
 addTab("providers", /(Providers|[A-Z][A-Za-z]*Info)/, async () => {
-    return await window.api.providers($target.value, $host.value, $mode.value);
+    return await window.api.providers($target.value, $host.value);
 });
 
 function update_buckdir(dir) {

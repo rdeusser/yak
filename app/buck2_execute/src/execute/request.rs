@@ -16,10 +16,6 @@ use allocative::Allocative;
 use buck2_common::file_ops::metadata::TrackedFileDigest;
 use buck2_common::local_resource_state::LocalResourceState;
 use buck2_core::content_hash::ContentBasedPathHash;
-use buck2_core::execution_types::executor_config::MetaInternalExtraParams;
-use buck2_core::execution_types::executor_config::ReGangWorker;
-use buck2_core::execution_types::executor_config::RemoteExecutorCustomImage;
-use buck2_core::execution_types::executor_config::RemoteExecutorDependency;
 use buck2_core::fs::artifact_path_resolver::ArtifactFs;
 use buck2_core::fs::buck_out_path::BuckOutScratchPath;
 use buck2_core::fs::buck_out_path::BuckOutTestPath;
@@ -388,14 +384,6 @@ pub struct CommandExecutionRequest {
     /// Remote dep file key, if the action has a dep file.
     /// If this key is set and remote dep file caching is enabled, it will be used to query the cache.
     pub remote_dep_file_key: Option<DepFileDigest>,
-    /// RE gang workers for gang scheduling.
-    re_gang_workers: Vec<ReGangWorker>,
-    /// RE dependencies to pass in action metadata.
-    remote_execution_dependencies: Vec<RemoteExecutorDependency>,
-    /// RE custom tupperware image.
-    remote_execution_custom_image: Option<RemoteExecutorCustomImage>,
-    /// RE execution policy.
-    meta_internal_extra_params: Arc<MetaInternalExtraParams>,
     /// Failed action outputs to materialize
     outputs_for_error_handler: Vec<BuildArtifactPath>,
     /// String representation of a key that uniquely identifies a RunAction
@@ -442,10 +430,6 @@ impl CommandExecutionRequest {
             remote_worker: None,
             unique_input_inodes: false,
             remote_dep_file_key: None,
-            re_gang_workers: Vec::new(),
-            remote_execution_dependencies: Vec::new(),
-            remote_execution_custom_image: None,
-            meta_internal_extra_params: MetaInternalExtraParams::default_arc(),
             outputs_for_error_handler: Vec::new(),
             run_action_key: None,
             is_test: false,
@@ -658,27 +642,6 @@ impl CommandExecutionRequest {
         self.unique_input_inodes
     }
 
-    pub fn with_re_gang_workers(mut self, re_gang_workers: Vec<ReGangWorker>) -> Self {
-        self.re_gang_workers = re_gang_workers;
-        self
-    }
-
-    pub fn re_gang_workers(&self) -> &Vec<ReGangWorker> {
-        &self.re_gang_workers
-    }
-
-    pub fn with_remote_execution_dependencies(
-        mut self,
-        remote_execution_dependencies: Vec<RemoteExecutorDependency>,
-    ) -> Self {
-        self.remote_execution_dependencies = remote_execution_dependencies;
-        self
-    }
-
-    pub fn remote_execution_dependencies(&self) -> &Vec<RemoteExecutorDependency> {
-        &self.remote_execution_dependencies
-    }
-
     pub fn with_outputs_for_error_handler(
         mut self,
         outputs_for_error_handler: Vec<BuildArtifactPath>,
@@ -689,30 +652,6 @@ impl CommandExecutionRequest {
 
     pub fn outputs_for_error_handler(&self) -> &Vec<BuildArtifactPath> {
         &self.outputs_for_error_handler
-    }
-
-    pub fn with_remote_execution_custom_image(
-        mut self,
-        remote_execution_custom_image: Option<RemoteExecutorCustomImage>,
-    ) -> Self {
-        self.remote_execution_custom_image = remote_execution_custom_image;
-        self
-    }
-
-    pub fn remote_execution_custom_image(&self) -> &Option<RemoteExecutorCustomImage> {
-        &self.remote_execution_custom_image
-    }
-
-    pub fn with_meta_internal_extra_params(
-        mut self,
-        meta_internal_extra_params: Arc<MetaInternalExtraParams>,
-    ) -> Self {
-        self.meta_internal_extra_params = meta_internal_extra_params;
-        self
-    }
-
-    pub fn meta_internal_extra_params(&self) -> &MetaInternalExtraParams {
-        &self.meta_internal_extra_params
     }
 
     pub fn with_run_action_key(mut self, run_action_key: Option<String>) -> Self {
@@ -809,9 +748,8 @@ impl OutputType {
                     OutputType::File
                 )
                 .into(),
-                deprecation: true,
                 quiet: true,
-                error_on_oss: true
+                hard_error: true
             )?;
             Ok(())
         } else if self == output_type

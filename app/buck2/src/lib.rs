@@ -18,7 +18,6 @@ use buck2_client::commands::clean::CleanCommand;
 use buck2_client::commands::cleanall::CleanallCommand;
 use buck2_client::commands::ctargets::ConfiguredTargetsCommand;
 use buck2_client::commands::expand_external_cell::ExpandExternalCellsCommand;
-use buck2_client::commands::explain::ExplainCommand;
 use buck2_client::commands::help_env::HelpEnvCommand;
 use buck2_client::commands::init::InitCommand;
 use buck2_client::commands::install::InstallCommand;
@@ -36,8 +35,6 @@ use buck2_client::commands::status::StatusCommand;
 use buck2_client::commands::subscribe::SubscribeCommand;
 use buck2_client::commands::targets::TargetsCommand;
 use buck2_client::commands::test::TestCommand;
-use buck2_client_ctx::agent_context::AgentContextEntry;
-use buck2_client_ctx::agent_context::parse_agent_context;
 use buck2_client_ctx::argfiles::expand_argv;
 use buck2_client_ctx::client_ctx::BuckSubcommand;
 use buck2_client_ctx::client_ctx::ClientCommandContext;
@@ -51,7 +48,6 @@ use buck2_client_ctx::version::BuckVersion;
 use buck2_cmd_audit_client::AuditCommand;
 use buck2_cmd_debug_client::DebugCommand;
 use buck2_cmd_log_client::LogCommand;
-use buck2_cmd_rage_client::rage::RageCommand;
 use buck2_cmd_starlark_client::StarlarkCommand;
 use buck2_common::argv::Argv;
 use buck2_common::invocation_paths::RESERVED_BUCK_OUT_PREFIX;
@@ -65,7 +61,6 @@ use buck2_data::ErrorReport;
 use buck2_error::BuckErrorContext;
 use buck2_error::ErrorTag;
 use buck2_error::ExitCode;
-use buck2_error::buck2_error;
 use buck2_error::conversion::clap::buck_error_clap_parser;
 use buck2_event_observer::verbosity::Verbosity;
 use buck2_fs::paths::file_name::FileNameBuf;
@@ -80,8 +75,8 @@ use crate::process_context::ProcessContext;
 mod check_user_allowed;
 mod cli_style;
 pub(crate) mod commands;
-pub mod panic;
 pub mod process_context;
+pub mod soft_error;
 
 fn parse_isolation_dir(s: &str) -> buck2_error::Result<FileNameBuf> {
     if s.starts_with(RESERVED_BUCK_OUT_PREFIX) {
@@ -133,13 +128,12 @@ struct BeforeSubcommandOptions {
     )]
     verbosity: Verbosity,
 
-    /// The oncall executing this command
+    /// The team that owns this command. Buck2 records it in the event log.
     #[clap(long, global = true)]
     oncall: Option<String>,
 
-    /// Metadata key-value pairs to inject into Buck2's logging. Client metadata must be of the
-    /// form `key=value`, where `key` is a snake_case identifier, and will be sent to backend
-    /// datasets.
+    /// Metadata key-value pairs to record in the event log. Client metadata must be of the form
+    /// `key=value`, where `key` is a snake_case identifier.
     #[clap(long, global = true, value_parser = buck_error_clap_parser(parse_client_metadata))]
     client_metadata: Vec<ClientMetadata>,
 
@@ -153,15 +147,6 @@ struct BeforeSubcommandOptions {
     )]
     settings: Vec<SettingOverride>,
 
-    /// Agent context key=value pairs for telemetry.
-    /// Used by AI agents to pass structured metadata. Schema is defined via buckconfig.
-    /// Entries can be comma-separated or passed as separate flags.
-    /// Examples:
-    ///   --agent-context intent=fix,attempt=2,prior_error=missing_target
-    ///   --agent-context intent=build --agent-context attempt=1
-    #[clap(long, global = true, value_delimiter = ',', value_parser = buck_error_clap_parser(parse_agent_context))]
-    agent_context: Vec<AgentContextEntry>,
-
     /// Do not launch a daemon process, run buck server in client process.
     ///
     /// Note even when running in no-buckd mode, it still writes state files.
@@ -174,20 +159,13 @@ struct BeforeSubcommandOptions {
     // is not supported for production work for buck2 and lots of places already set
     // NO_BUCKD=1 for buck1.
     no_buckd: bool,
-
-    /// Print buck wrapper help.
-    #[clap(skip)] // @oss-enable
-    // @oss-disable: #[clap(long)]
-    help_wrapper: bool,
 }
 
-#[rustfmt::skip] // Formatting in internal and in OSS versions disagree after oss markers applied.
 fn help() -> &'static str {
     concat!(
         "A build system\n",
         "\n",
-        "Documentation: https://buck2.build/docs/\n", // @oss-enable
-        // @oss-disable: "Documentation: https://internalfb.com/intern/staticdocs/buck2/docs/\n",
+        "Documentation: https://rdeusser.github.io/buck2/docs/\n",
     )
 }
 
@@ -279,50 +257,6 @@ pub fn exec(process: ProcessContext<'_>) -> ExitResult {
             .client_metadata
             .splice(0..0, client_metadata);
     }
-
-    let agent_env_metadata = AgentContextEntry::from_env()?;
-    if !agent_env_metadata.is_empty() {
-        opt.opt
-            .common_opts
-            .agent_context
-            .splice(0..0, agent_env_metadata);
-    }
-
-    // If --client-metadata=? was not set and from_env did not find "id", then
-    // if we are running in a terminal, we add id=terminal-fallback to
-    // opt.opt.common_opts.client_metadata to transmit to scuba that the client
-    // is an end user: https://fburl.com/scuba/buck2_builds/n4klo51d
-    let has_client_id = opt
-        .opt
-        .common_opts
-        .client_metadata
-        .iter()
-        .any(|m| m.key == "id");
-
-    if !has_client_id {
-        use std::io::IsTerminal;
-        let client_id = if std::io::stdin().is_terminal() {
-            Some("terminal-fallback")
-        } else {
-            // Check if running from VSCode
-            let is_vscode = std::env::var("VSCODE_PID")
-                .ok()
-                .is_some_and(|v| !v.is_empty())
-                || std::env::var("TERM_PROGRAM").ok().as_deref() == Some("vscode");
-            if is_vscode {
-                Some("vscode-fallback")
-            } else {
-                None
-            }
-        };
-
-        if let Some(val) = client_id {
-            opt.opt.common_opts.client_metadata.push(ClientMetadata {
-                key: "id".to_owned(),
-                value: val.to_owned(),
-            });
-        }
-    }
     opt.exec(process, &immediate_config)
 }
 
@@ -335,13 +269,6 @@ struct ParsedArgv {
 impl ParsedArgv {
     fn parse(argv: Argv, matches: clap::ArgMatches) -> buck2_error::Result<Self> {
         let opt: Opt = Opt::from_arg_matches(&matches)?;
-
-        if opt.common_opts.help_wrapper {
-            return Err(buck2_error!(
-                buck2_error::ErrorTag::Tier0,
-                "`--help-wrapper` should have been handled by the wrapper"
-            ));
-        }
 
         match &opt.cmd {
             #[cfg(not(client_only))]
@@ -387,12 +314,10 @@ pub(crate) enum CommandKind {
     Build(BuildCommand),
     Bxl(BxlCommand),
     // TODO(nga): implement `buck2 help-buckconfig` too
-    //   https://www.internalfb.com/tasks/?t=183528129
     HelpEnv(HelpEnvCommand),
     Test(TestCommand),
     Cquery(CqueryCommand),
     Init(InitCommand),
-    Explain(ExplainCommand),
     ExpandExternalCell(ExpandExternalCellsCommand),
     Install(InstallCommand),
     Kill(KillCommand),
@@ -418,8 +343,6 @@ pub(crate) enum CommandKind {
     Docs(buck2_cmd_docs_client::DocsCommand),
     #[clap(subcommand)]
     Profile(ProfileCommand),
-    #[clap(hide(true))] // @oss-enable
-    Rage(RageCommand),
     Clean(CleanCommand),
     Cleanall(CleanallCommand),
     #[clap(subcommand)]
@@ -493,8 +416,6 @@ impl CommandKind {
             }
         }
 
-        let fb = buck2_common::fbinit::get_or_init_fbcode_globals();
-
         let ProcessContext {
             trace_id,
             events_ctx,
@@ -523,7 +444,6 @@ impl CommandKind {
         };
 
         let command_ctx = ClientCommandContext::new(
-            fb,
             immediate_config,
             paths,
             shared.working_dir.clone(),
@@ -538,7 +458,6 @@ impl CommandKind {
             common_opts.oncall,
             common_opts.client_metadata,
             common_opts.isolation_dir,
-            common_opts.agent_context,
         );
         if let Some(recorder) = events_ctx.recorder.as_mut() {
             recorder.update_for_client_ctx(&command_ctx, self.command_name());
@@ -587,9 +506,7 @@ impl CommandKind {
             CommandKind::Completion(cmd) => cmd.exec(Opt::command(), matches, command_ctx),
             CommandKind::Docs(cmd) => cmd.exec(Opt::command(), matches, command_ctx, events_ctx),
             CommandKind::Profile(cmd) => cmd.exec(matches, command_ctx, events_ctx),
-            CommandKind::Rage(cmd) => cmd.exec(matches, command_ctx),
             CommandKind::Init(cmd) => cmd.exec(matches, command_ctx),
-            CommandKind::Explain(cmd) => command_ctx.exec(cmd, matches, events_ctx),
             CommandKind::Install(cmd) => command_ctx.exec(cmd, matches, events_ctx),
             CommandKind::Log(cmd) => cmd.exec(matches, command_ctx, events_ctx),
             CommandKind::Lsp(cmd) => command_ctx.exec(cmd, matches, events_ctx),
@@ -632,9 +549,7 @@ impl CommandKind {
             CommandKind::Completion(_) => "completion",
             CommandKind::Docs(_) => "docs",
             CommandKind::Profile(_) => "profile",
-            CommandKind::Rage(_) => "rage",
             CommandKind::Init(_) => "init",
-            CommandKind::Explain(cmd) => cmd.logging_name(),
             CommandKind::Install(cmd) => cmd.logging_name(),
             CommandKind::Log(cmd) => cmd.command_name(),
             CommandKind::Lsp(cmd) => cmd.logging_name(),

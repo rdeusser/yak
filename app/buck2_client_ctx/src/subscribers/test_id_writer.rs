@@ -167,7 +167,7 @@ mod tests {
         let mut writer = TestIdWriter::new(path.clone());
 
         let event = test_discovery_session_event(
-            "https://www.internalfb.com/intern/testinfra/testrun/10414574293803519",
+            "https://tests.example.com/run/10414574293803519",
             Some("10414574293803519"),
         );
         writer.handle_events(&[event]).await?;
@@ -250,10 +250,7 @@ mod tests {
         let path = AbsPathBuf::new(dir.path().join("test_id.txt"))?;
         let mut writer = TestIdWriter::new(path.clone());
 
-        let event = test_discovery_session_event(
-            "https://www.internalfb.com/intern/testinfra/testrun/12345",
-            None,
-        );
+        let event = test_discovery_session_event("https://tests.example.com/run/12345", None);
         let result = writer.handle_events(&[event]).await;
 
         assert!(result.is_err());
@@ -267,10 +264,7 @@ mod tests {
         let path = AbsPathBuf::new(dir.path().join("test_id.txt"))?;
         let mut writer = TestIdWriter::new(path.clone());
 
-        let event = test_discovery_session_event(
-            "https://www.internalfb.com/intern/testinfra/testrun/12345",
-            Some(""),
-        );
+        let event = test_discovery_session_event("https://tests.example.com/run/12345", Some(""));
         let result = writer.handle_events(&[event]).await;
 
         assert!(result.is_err());

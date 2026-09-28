@@ -133,7 +133,7 @@ def _command_f_impl(actions: AnalysisActions, hello: ArtifactValue, world: Outpu
     src = hello.read_string().strip()
     assert_eq(src, "Hello")
     actions.run(
-        cmd_args(["fbpython", script, src, world, universe]),
+        cmd_args(["python3", script, src, world, universe]),
         category = "dynamic_check",
     )
     return []
@@ -159,7 +159,7 @@ def _command(ctx: AnalysisContext) -> list[Provider]:
         ],
         has_content_based_path = False,
     )
-    ctx.actions.run(cmd_args(["fbpython", write_hello], hidden = hello.as_output()), category = "test_category")
+    ctx.actions.run(cmd_args(["python3", write_hello], hidden = hello.as_output()), category = "test_category")
 
     world = ctx.actions.declare_output("world", has_content_based_path = False)
     universe = ctx.actions.declare_output("universe", has_content_based_path = False)
@@ -291,7 +291,7 @@ def _assert_output_value_impl(ctx: AnalysisContext) -> list[Provider]:
         ],
         has_content_based_path = False,
     )
-    ctx.actions.run(cmd_args(["fbpython", run, value, produced, output.as_output()]), category = "test_category")
+    ctx.actions.run(cmd_args(["python3", run, value, produced, output.as_output()]), category = "test_category")
     return [DefaultInfo(default_output = output)]
 
 assert_output_value = rule(
@@ -308,7 +308,7 @@ def _proto_genrule_impl(ctx):
         "OUT": cmd_args(out_artifact.as_output()),
     }
     ctx.actions.run(
-        cmd_args(["fbpython", "-c", ctx.attrs.python]),
+        cmd_args(["python3", "-c", ctx.attrs.python]),
         env = env_vars,
         category = "genrule",
     )

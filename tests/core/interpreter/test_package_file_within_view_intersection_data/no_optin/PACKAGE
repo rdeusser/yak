@@ -1,0 +1,2 @@
+# Sets a default `within_view` without opting in to the cap.
+package(within_view = ["root//no_optin/..."])

@@ -56,7 +56,6 @@ pub mod testing {
             self.set_io_provider(Arc::new(FsIoProvider::new(
                 fs.path().dupe(),
                 CasDigestConfig::testing_default(),
-                false,
             )))
         }
     }

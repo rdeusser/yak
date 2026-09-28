@@ -1,86 +1,50 @@
-load("@fbsource//tools/build_defs:rust_library.bzl", "rust_library")
-
-oncall("buck2")
+load("//build_defs:rust.bzl", "rust_library")
 
 rust_library(
     name = "buck2_error",
     srcs = glob(
         ["src/**/*.rs"],
     ),
-    autocargo = {
-        "cargo_toml_config": {
-            "dependencies_override": {
-                "dependencies": {
-                    "rusqlite": {
-                        "features": [
-                            "backup",
-                            "blob",
-                            "bundled",
-                            "column_decltype",
-                            "fallible_uint",
-                            "functions",
-                            "limits",
-                            "modern_sqlite",
-                            "serde_json",
-                            "vtab",
-                        ],
-                    },
-                },
-            },
-            "extra_buck_dependencies": {
-                "dependencies": [
-                    (None, "//eden/fs/service:thrift-rust-clients"),
-                    (None, "//thrift/lib/rust:fbthrift"),
-                    (None, "//watchman/rust/watchman_client:watchman_client"),
-                    "fbsource//third-party/rust:watchman_client",
-                ],
-            },
-        },
-    },
-    named_deps = {
-        # @oss-disable[end= ]: "edenfs_clients": "//eden/fs/service:thrift-rust-clients",
-    },
     deps = [
-        "fbsource//third-party/rust:anyhow",
-        "fbsource//third-party/rust:clap",
-        "fbsource//third-party/rust:derive_more",
-        "fbsource//third-party/rust:fancy-regex",
-        "fbsource//third-party/rust:hex",
-        "fbsource//third-party/rust:http",
-        "fbsource//third-party/rust:hyper",
-        "fbsource//third-party/rust:hyper-util",
-        "fbsource//third-party/rust:libc",
-        "fbsource//third-party/rust:prost",
-        "fbsource//third-party/rust:prost-types",
-        "fbsource//third-party/rust:ref-cast",
-        "fbsource//third-party/rust:regex",
-        "fbsource//third-party/rust:rusqlite",
-        "fbsource//third-party/rust:rustls-native-certs",
-        "fbsource//third-party/rust:rustls-pki-types",
-        "fbsource//third-party/rust:serde",
-        "fbsource//third-party/rust:serde_json",
-        "fbsource//third-party/rust:smallvec",
-        "fbsource//third-party/rust:thiserror",
-        "fbsource//third-party/rust:tokio",
-        "fbsource//third-party/rust:toml",
-        "fbsource//third-party/rust:tonic",
-        "fbsource//third-party/rust:uuid",
-        "//buck2/allocative/allocative:allocative",
-        "//buck2/app/buck2_data:buck2_data",
-        "//buck2/app/buck2_error_derive:buck2_error_derive",
-        "//buck2/dice/dice_error:dice_error",
-        "//buck2/gazebo/dupe:dupe",
-        "//buck2/starlark-rust/starlark_syntax:starlark_syntax",
-        "//buck2/superconsole:superconsole",
-        # @oss-disable[end= ]: "//thrift/lib/rust:fbthrift",
-        "//watchman/rust/watchman_client:watchman_client",
+        "//allocative/allocative:allocative",
+        "//app/buck2_data:buck2_data",
+        "//app/buck2_error_derive:buck2_error_derive",
+        "//dice/dice_error:dice_error",
+        "//gazebo/dupe:dupe",
+        "//starlark-rust/starlark_syntax:starlark_syntax",
+        "//superconsole:superconsole",
+        "//third-party/rust:anyhow",
+        "//third-party/rust:clap",
+        "//third-party/rust:derive_more",
+        "//third-party/rust:fancy-regex",
+        "//third-party/rust:hex",
+        "//third-party/rust:http",
+        "//third-party/rust:hyper",
+        "//third-party/rust:hyper-util",
+        "//third-party/rust:libc",
+        "//third-party/rust:prost",
+        "//third-party/rust:prost-types",
+        "//third-party/rust:ref-cast",
+        "//third-party/rust:regex",
+        "//third-party/rust:rusqlite",
+        "//third-party/rust:rustls-native-certs",
+        "//third-party/rust:rustls-pki-types",
+        "//third-party/rust:serde",
+        "//third-party/rust:serde_json",
+        "//third-party/rust:smallvec",
+        "//third-party/rust:thiserror",
+        "//third-party/rust:tokio",
+        "//third-party/rust:toml",
+        "//third-party/rust:tonic",
+        "//third-party/rust:uuid",
+        "//third-party/rust:watchman_client",
     ] + select({
         "DEFAULT": [],
-        "ovr_config//os:linux": [
-            "fbsource//third-party/rust:nix",
+        "prelude//os:linux": [
+            "//third-party/rust:nix",
         ],
-        "ovr_config//os:macos": [
-            "fbsource//third-party/rust:nix",
+        "prelude//os:macos": [
+            "//third-party/rust:nix",
         ],
     }),
 )

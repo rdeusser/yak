@@ -21,7 +21,7 @@ def get_apple_dsym(
     output_path = output_path_override or "{}.dSYM".format(executable.short_path)
     return get_apple_dsym_ext(ctx, executable, debug_info, action_identifier, output_path)
 
-# TODO(T110672942): Things which are still unsupported:
+# TODO: Things which are still unsupported:
 # - oso_prefix
 def get_apple_dsym_ext(ctx: AnalysisContext, executable: [ArgLike, Artifact], debug_info: list[ArgLike], action_identifier: str, output_path: str) -> Artifact:
     dsymutil = ctx.attrs._apple_toolchain[AppleToolchainInfo].dsymutil

@@ -23,15 +23,11 @@ use buck2_build_api::interpreter::rule_defs::cmd_args::SimpleCommandLineArtifact
 use buck2_build_api::interpreter::rule_defs::cmd_args::StarlarkCmdArgs;
 use buck2_build_api::interpreter::rule_defs::cmd_args::StarlarkCommandLineValueUnpack;
 use buck2_build_api::interpreter::rule_defs::cmd_args::value_as::ValueAsCommandLineLike;
-use buck2_build_api::interpreter::rule_defs::command_executor_config::parse_custom_re_image;
-use buck2_build_api::interpreter::rule_defs::command_executor_config::parse_meta_internal_extra_params;
 use buck2_build_api::interpreter::rule_defs::context::AnalysisActions;
 use buck2_build_api::interpreter::rule_defs::provider::builtin::run_info::RunInfo;
 use buck2_build_api::interpreter::rule_defs::provider::builtin::worker_run_info::WorkerRunInfo;
 use buck2_core::category::CategoryRef;
 use buck2_core::deferred::base_deferred_key::BaseDeferredKey;
-use buck2_core::execution_types::executor_config::ReGangWorker;
-use buck2_core::execution_types::executor_config::RemoteExecutorDependency;
 use buck2_error::BuckErrorContext;
 use buck2_error::conversion::from_any_with_tag;
 use buck2_fs::paths::forward_rel_path::ForwardRelativePathBuf;
@@ -40,19 +36,15 @@ use dupe::Dupe;
 use either::Either;
 use host_sharing::WeightClass;
 use host_sharing::WeightPercentage;
-use mini_vec::MiniBoxSlice;
 use starlark::collections::SmallSet;
 use starlark::environment::MethodsBuilder;
 use starlark::eval::Evaluator;
 use starlark::starlark_module;
 use starlark::values::StringValue;
 use starlark::values::UnpackAndDiscard;
-use starlark::values::Value;
 use starlark::values::ValueOf;
 use starlark::values::ValueTyped;
-use starlark::values::dict::DictRef;
 use starlark::values::dict::UnpackDictEntries;
-use starlark::values::list::UnpackList;
 use starlark::values::list_or_tuple::UnpackListOrTuple;
 use starlark::values::none::NoneOr;
 use starlark::values::none::NoneType;
@@ -146,7 +138,7 @@ pub(crate) fn analysis_actions_methods_run(methods: &mut MethodsBuilder) {
     ///       by `metadata_env_var`
     ///     * Both `metadata_env_var` and `metadata_path` are useful when making actions behave in
     ///       an incremental manner (for details, see [Incremental
-    ///       Actions](https://buck2.build/docs/rule_authors/incremental_actions/))
+    ///       Actions](https://rdeusser.github.io/buck2/docs/rule_authors/incremental_actions/))
     /// * `dep_files`: a dictionary mapping labels to `ArtifactTag` instances for tracking actual
     ///   dependencies via dependency files (depfiles). This enables precise incremental builds by
     ///   allowing the build tool to report which inputs it actually used.
@@ -187,18 +179,6 @@ pub(crate) fn analysis_actions_methods_run(methods: &mut MethodsBuilder) {
     ///     and `--local-only` CLI flags. The CLI flags take precedence.
     ///     * The `force_full_hybrid_if_capable` option overrides the `use_limited_hybrid` hybrid.
     ///     The options listed above take precedence if set.
-    /// * `remote_execution_dependencies`: list of dependencies which is passed to Remote Execution.
-    ///   Each dependency is dictionary with the following keys:
-    ///     * `smc_tier`: name of the SMC tier to call by RE Scheduler.
-    ///     * `id`: name of the dependency.
-    /// * `remote_execution_dynamic_image`: a custom Tupperware image which is passed to Remote Execution.
-    ///   It takes a dictionary with the following keys:
-    ///     * `identifier`: name of the SMC tier to call by RE Scheduler.
-    ///         * `name`: name of the image.
-    ///         * `uuid`: uuid of the image.
-    ///     * `drop_host_mount_globs`: list of strings containing file
-    ///     globs. Any mounts globs specified will not be bind mounted
-    ///     from the host.
     /// * `timeout_seconds`: an optional timeout for the action, in seconds. If
     ///   the action takes longer than this, it will be cancelled and behave as if
     ///   it has failed. Must be a positive number. The default is no timeout.
@@ -209,14 +189,12 @@ pub(crate) fn analysis_actions_methods_run(methods: &mut MethodsBuilder) {
     ///     specific set of actions: action runtime is often variable so setting
     ///     a timeout to try and enforce a specific runtime goal will inevitably
     ///     result in flaky failures for end users running builds.
-    ///  * `meta_internal_extra_params`: a dictionary to pass extra parameters to RE, can add more keys in the future:
-    ///     * `remote_execution_policy`: refer to TExecutionPolicy.
     ///  * `error_handler`: an optional function that analyzes action failures and produces structured error information.
     ///     * Type signature: `def error_handler(ctx: ActionErrorCtx) -> list[ActionSubError]`
     ///     * The function receives an [`ActionErrorCtx`](../ActionErrorCtx) parameter and should return a list of [`ActionSubError`](../ActionSubError) objects
     ///     * Error handlers enable better error diagnostics and language-specific error categorization
     ///  * `outputs_for_error_handler`: Output files to be provided to the action error handler and read by
-    /// [error handler](https://buck2.build/docs/api/build/ActionErrorCtx/#actionerrorctxoutput_artifacts) in the event of a failure..
+    /// [error handler](https://rdeusser.github.io/buck2/docs/api/build/ActionErrorCtx/#actionerrorctxoutput_artifacts) in the event of a failure..
     ///     * The output must also be declared as an output of the action
     ///     * The output artifact must be created if the action fails
     ///     * Nothing will be provided if left empty (Which is the default)
@@ -287,16 +265,7 @@ pub(crate) fn analysis_actions_methods_run(methods: &mut MethodsBuilder) {
             StarlarkCallable<'v>,
         >,
         eval: &mut Evaluator<'v, '_, '_>,
-        #[starlark(require = named, default=UnpackList::default())]
-        remote_execution_dependencies: UnpackList<SmallMap<&'v str, &'v str>>,
-        #[starlark(require = named, default=UnpackList::default())] re_gang_workers: UnpackList<
-            SmallMap<&'v str, &'v str>,
-        >,
-        #[starlark(default = NoneType, require = named)] remote_execution_dynamic_image: Value<'v>,
         #[starlark(require = named, default = NoneOr::None)] timeout_seconds: NoneOr<u32>,
-        #[starlark(require = named, default = NoneOr::None)] meta_internal_extra_params: NoneOr<
-            DictRef<'v>,
-        >,
         // Note: Intentionally don't support frozen output artifacts
         #[starlark(require = named, default = UnpackListOrTuple::default())]
         outputs_for_error_handler: UnpackListOrTuple<
@@ -565,24 +534,6 @@ pub(crate) fn analysis_actions_methods_run(methods: &mut MethodsBuilder) {
             outputs_for_error_handler: outputs_for_error_handler.items,
         });
 
-        let re_dependencies = remote_execution_dependencies
-            .into_iter()
-            .map(RemoteExecutorDependency::parse)
-            .collect::<buck2_error::Result<MiniBoxSlice<RemoteExecutorDependency>>>()?;
-
-        let re_gang_workers = re_gang_workers
-            .into_iter()
-            .map(ReGangWorker::parse)
-            .collect::<buck2_error::Result<MiniBoxSlice<ReGangWorker>>>()?;
-
-        let re_custom_image = parse_custom_re_image(
-            "remote_execution_dynamic_image",
-            remote_execution_dynamic_image,
-        )?;
-
-        let extra_params =
-            parse_meta_internal_extra_params(meta_internal_extra_params.into_option())?;
-
         let timeout = match timeout_seconds.into_option() {
             Some(t) => {
                 if t == 0 {
@@ -620,10 +571,6 @@ pub(crate) fn analysis_actions_methods_run(methods: &mut MethodsBuilder) {
             allow_offline_output_cache,
             force_full_hybrid_if_capable,
             unique_input_inodes,
-            remote_execution_dependencies: re_dependencies,
-            re_gang_workers,
-            remote_execution_custom_image: re_custom_image,
-            meta_internal_extra_params: extra_params,
             expected_eligible_for_dedupe: expect_eligible_for_dedupe.into_option(),
             timeout,
         };

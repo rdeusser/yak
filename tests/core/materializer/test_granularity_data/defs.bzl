@@ -70,7 +70,7 @@ def _gen_impl(ctx):
             out = _declare(ctx, path, dir = True)
             ctx.actions.run(
                 cmd_args(
-                    ["fbpython", "-c", _WRITE_DIR, out.as_output()],
+                    ["python3", "-c", _WRITE_DIR, out.as_output()],
                     ["{}={}".format(name, content) for name, content in contents.items()],
                 ),
                 category = "gen",
@@ -79,7 +79,7 @@ def _gen_impl(ctx):
         else:
             out = _declare(ctx, path, dir = False)
             ctx.actions.run(
-                cmd_args(["fbpython", "-c", _WRITE_FILE, out.as_output(), contents]),
+                cmd_args(["python3", "-c", _WRITE_FILE, out.as_output(), contents]),
                 category = "gen",
                 identifier = path,
             )
@@ -105,7 +105,7 @@ def _list_dir_impl(ctx):
     dep = ctx.attrs.dep[DefaultInfo].default_outputs[0]
     out = ctx.actions.declare_output("listing.txt", has_content_based_path = False)
     ctx.actions.run(
-        cmd_args(["fbpython", "-c", _LIST_DIR, out.as_output(), dep]),
+        cmd_args(["python3", "-c", _LIST_DIR, out.as_output(), dep]),
         category = "list_dir",
         # Force the directory to be materialized on disk rather than read from
         # wherever the action would otherwise have run.

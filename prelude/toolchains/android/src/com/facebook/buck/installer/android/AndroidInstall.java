@@ -36,8 +36,6 @@ class AndroidInstall {
   private static final Logger LOG = Logger.getLogger(AndroidInstall.class.getName());
   private static final DateTimeFormatter INSTALL_COMPLETION_TIME_FORMAT =
       DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-  private static final Set<String> ENABLE_APP_LINKS_ALLOWLIST =
-      Set.of("com.facebook.wakizashi", "com.facebook.lite", "com.instagram.lite");
 
   private final IsolatedApkInfo apkInfo;
   private final Optional<IsolatedExopackageInfo> exopackageInfo;
@@ -127,17 +125,7 @@ class AndroidInstall {
 
         String packageName = state.packageName();
 
-        // Determine if app links should be enabled based on command line option or allowlist
-        boolean shouldEnableAppLinks = false;
-        if (cliOptions.enableAppLinks != null) {
-          // Explicit option provided by user
-          shouldEnableAppLinks = cliOptions.enableAppLinks;
-        } else {
-          // No option provided, check allowlist
-          shouldEnableAppLinks = ENABLE_APP_LINKS_ALLOWLIST.contains(packageName);
-        }
-
-        if (shouldEnableAppLinks) {
+        if (cliOptions.enableAppLinks) {
           try {
             adbHelper.adbCall(
                 "enable app links",

@@ -12,8 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# @lint-ignore-every LICENSELINT
-
 """Unit testing support.
 
 This is a modified version of https://github.com/bazelbuild/bazel-skylib/blob/main/lib/unittest.bzl.

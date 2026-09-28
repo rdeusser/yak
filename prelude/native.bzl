@@ -11,7 +11,6 @@
 # This is buck2's shim import. Any public symbols here will be available within
 # **all** interpreted files.
 
-load("@prelude//:is_full_meta_repo.bzl", "is_full_meta_repo")
 load("@prelude//:paths.bzl", "paths")
 load("@prelude//:rules.bzl", __rules__ = "rules")
 load("@prelude//android:cpu_filters.bzl", "ALL_CPU_FILTERS", "CPU_FILTER_FOR_DEFAULT_PLATFORM")
@@ -56,17 +55,17 @@ def __struct_to_dict(s):
         vals[name] = getattr(s, name)
     return vals
 
-def _tp2_constraint(project, version):
+def _version_constraint(project, version):
     """
     Return the target configuration constraint to use for the given project
-    version
+    version. The config cell defines these constraints.
     """
 
-    return "ovr_config//third-party/{}/constraints:{}".format(project, version)
+    return "config//third-party/{}/constraints:{}".format(project, version)
 
-def _tp2_constraint_multi(versions):
+def _version_constraint_multi(versions):
     """
-    Return the `select` key rule name which corresponds to the given tp2 project
+    Return the `select` key rule name which corresponds to the given project
     versions.
     """
 
@@ -76,15 +75,15 @@ def _tp2_constraint_multi(versions):
     # pre-defined constraint value rule name.
     if len(versions) == 1:
         (project, version) = versions.items()[0]
-        return _tp2_constraint(project, version)
+        return _version_constraint(project, version)
 
     # Otherwise, generate a `config_setting` to combine the constraint value
     # rules for all the project/version pairs.
-    name = "-".join(["_tp2_constraints_"] + ["{}-{}".format(p, v) for p, v in sorted(versions.items())])
+    name = "-".join(["_version_constraints_"] + ["{}-{}".format(p, v) for p, v in sorted(versions.items())])
     if not rule_exists(name):
         __rules__["config_setting"](
             name = name,
-            constraint_values = [_tp2_constraint(p, v) for p, v in versions.items()],
+            constraint_values = [_version_constraint(p, v) for p, v in versions.items()],
         )
     return ":" + name
 
@@ -98,9 +97,9 @@ def _extract_versions(constraints):
 
     versions = {}
 
-    # Since the constraints will be duplicated for each fbcode "platform", do
-    # some initial work to de-duplicate them here, by extracting just the
-    # project and version and verify we get just a single reduced result.
+    # Since the constraints can be duplicated for each platform, do some
+    # initial work to de-duplicate them here, by extracting just the project
+    # and version and verify we get just a single reduced result.
     for project, version in constraints.items():
         expect(project not in versions or version == versions[project])
         versions[project] = version
@@ -119,12 +118,7 @@ def _versioned_param_to_select(items, default = None):
     if items == None:
         return None
 
-    # TODO(agallagher): Remove once we move to a `uquery` based TD.
-    if read_root_config("fbcode", "cquery_td") == "true":
-        return None
-
-    # Special case a form of "empty" constraints that `buckify_tp2` may
-    # generate in tp2 TARGETS.
+    # A single item with empty constraints applies to every version.
     if len(items) == 1 and not items[0][0]:
         return items[0][1]
 
@@ -134,11 +128,11 @@ def _versioned_param_to_select(items, default = None):
     if default != None:
         select_map["DEFAULT"] = default
 
-    # Convert v1 tp2-style versioned_* params to their analogous v2 select
+    # Convert v1-style versioned_* params to their analogous v2 select
     # constraint maps.
     for constraints, item in items:
         versions = _extract_versions(constraints)
-        select_map[_tp2_constraint_multi(versions)] = item
+        select_map[_version_constraint_multi(versions)] = item
 
     if not select_map:
         return None
@@ -231,7 +225,7 @@ def _android_binary_macro_stub(allow_r_dot_java_in_secondary_dex = False, cpu_fi
             "^com/facebook/buck_generated/AppWithoutResourcesStub^",
         ]
 
-    # TODO: T218493860 Accept `select` for `cpu_filters` and apply the same logic as for non-select cases
+    # TODO: Accept `select` for `cpu_filters` and apply the same logic as for non-select cases
     __rules__["android_binary"](
         allow_r_dot_java_in_secondary_dex = allow_r_dot_java_in_secondary_dex,
         cpu_filters = cpu_filters if isinstance(cpu_filters, Select) else _get_valid_cpu_filters(cpu_filters),
@@ -241,7 +235,7 @@ def _android_binary_macro_stub(allow_r_dot_java_in_secondary_dex = False, cpu_fi
 
 def _android_bundle_macro_stub(cpu_filters = None, **kwargs):
     __rules__["android_bundle"](
-        # TODO: T218493860 Accept `select` for `cpu_filters` and apply the same logic as for non-select cases
+        # TODO: Accept `select` for `cpu_filters` and apply the same logic as for non-select cases
         cpu_filters = cpu_filters if isinstance(cpu_filters, Select) else _get_valid_cpu_filters(cpu_filters),
         **kwargs,
     )
@@ -311,7 +305,7 @@ def _python_library_macro_stub(srcs = None, versioned_srcs = None, resources = N
 
 def _versioned_alias_macro_stub(versions = {}, **kwargs):
     project = paths.basename(package_name())
-    __rules__["alias"](actual = select({_tp2_constraint(project, version): actual for version, actual in versions.items()}), **kwargs)
+    __rules__["alias"](actual = select({_version_constraint(project, version): actual for version, actual in versions.items()}), **kwargs)
 
 def _configured_alias_macro_stub(
     name,
@@ -381,12 +375,6 @@ def _swift_toolchain_macro_stub(**kwargs):
     swift_toolchain_macro_impl(swift_toolchain_rule = rule, **kwargs)
 
 def _cxx_toolchain_macro_stub(**kwargs):
-    if is_full_meta_repo():
-        cache_links = kwargs.get("cache_links")
-        kwargs["cache_links"] = select({
-            "DEFAULT": cache_links,
-            "ovr_config//platform/execution/constraints:execution-platform-transitioned": True,
-        })
     cxx_toolchain_macro_impl(cxx_toolchain_rule = cxx_toolchain_inheriting_target_platform, **kwargs)
 
 def _cxx_toolchain_override_macro_stub(**kwargs):

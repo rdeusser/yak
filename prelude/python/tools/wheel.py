@@ -8,8 +8,6 @@
 
 from __future__ import annotations
 
-# pyre-strict
-
 import argparse
 import configparser
 import contextlib
@@ -48,7 +46,6 @@ def readme_content_type(path: str) -> str:
     return "text/plain"
 
 
-# pyre-fixme[24]: Generic type `AbstractContextManager` expects 1 type parameter.
 class WheelBuilder(contextlib.AbstractContextManager):
     def __init__(
         self,
@@ -68,7 +65,7 @@ class WheelBuilder(contextlib.AbstractContextManager):
         self._normalized_name: str = normalize_name(name)
 
         # TODO normalize version like we normalized name above
-        #  can follow pypi/packaging.utils.canonicalize_version (see: https://fburl.com/code/amuvl3d2)
+        #  can follow pypi/packaging.utils.canonicalize_version
         #  punted for later since it was not a clean copy/paste and
         #  taking a dep to tp from toolchains is not straightforward
         self._version = version

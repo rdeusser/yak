@@ -59,10 +59,6 @@ use buck2_core::category::CategoryRef;
 use buck2_core::configuration::pair::Configuration;
 use buck2_core::content_hash::ContentBasedPathHash;
 use buck2_core::deferred::base_deferred_key::BaseDeferredKey;
-use buck2_core::execution_types::executor_config::MetaInternalExtraParams;
-use buck2_core::execution_types::executor_config::ReGangWorker;
-use buck2_core::execution_types::executor_config::RemoteExecutorCustomImage;
-use buck2_core::execution_types::executor_config::RemoteExecutorDependency;
 use buck2_core::fs::artifact_path_resolver::ArtifactFs;
 use buck2_core::fs::buck_out_path::BuckOutPathKind;
 use buck2_core::fs::buck_out_path::BuildArtifactPath;
@@ -102,7 +98,6 @@ use gazebo::prelude::*;
 use host_sharing::HostSharingRequirements;
 use host_sharing::WeightClass;
 use itertools::Itertools;
-use mini_vec::MiniBoxSlice;
 use pagable::Pagable;
 use pagable::pagable_typetag;
 use serde_json::json;
@@ -290,12 +285,6 @@ pub(crate) struct UnregisteredRunAction {
     pub(crate) allow_offline_output_cache: bool,
     pub(crate) force_full_hybrid_if_capable: bool,
     pub(crate) unique_input_inodes: bool,
-    pub(crate) remote_execution_dependencies: MiniBoxSlice<RemoteExecutorDependency>,
-    pub(crate) re_gang_workers: MiniBoxSlice<ReGangWorker>,
-    // Since this is usually None, use a Box to avoid using memory that is the size
-    // of RemoteExecutorCustomImage.
-    pub(crate) remote_execution_custom_image: Option<Box<RemoteExecutorCustomImage>>,
-    pub(crate) meta_internal_extra_params: Arc<MetaInternalExtraParams>,
     pub(crate) expected_eligible_for_dedupe: Option<bool>,
     pub(crate) timeout: Option<Duration>,
 }
@@ -1160,7 +1149,7 @@ impl RunAction {
             self.command_execution_request(ctx, prepared_run_action, host_sharing_requirements)?;
 
         // Prepare the action, check the action cache, fully check the local dep file cache if needed, then execute the command
-        let prepared_action = ctx.prepare_action(&req, true)?;
+        let prepared_action = ctx.prepare_action(&req)?;
         waiting_data.start_waiting_category_now(WaitingCategory::CheckingCaches);
         let manager = ctx.command_execution_manager(waiting_data);
 
@@ -1246,7 +1235,7 @@ impl RunAction {
                             digest_config,
                             ctx.run_action_knobs().action_paths_interner.as_ref(),
                         )?;
-                        let override_prepared_action = ctx.prepare_action(&override_req, true)?;
+                        let override_prepared_action = ctx.prepare_action(&override_req)?;
                         (override_req, override_prepared_action)
                     } else {
                         (req, prepared_action)
@@ -1277,7 +1266,7 @@ impl RunAction {
         let output_paths = {
             let mut output_paths = Vec::new();
             for output in &self.outputs {
-                // TODO(T219919866): support content based paths
+                // TODO: support content based paths
                 let path = fs.resolve_build(output.get_path(), None)?;
                 output_paths.push(path);
             }
@@ -1312,12 +1301,6 @@ impl RunAction {
             .with_local_environment_inheritance(EnvironmentInheritance::local_command_exclusions())
             .with_force_full_hybrid_if_capable(self.inner.force_full_hybrid_if_capable)
             .with_unique_input_inodes(self.inner.unique_input_inodes)
-            .with_remote_execution_dependencies(self.inner.remote_execution_dependencies.to_vec())
-            .with_re_gang_workers(self.inner.re_gang_workers.to_vec())
-            .with_remote_execution_custom_image(
-                self.inner.remote_execution_custom_image.clone().map(|s| *s),
-            )
-            .with_meta_internal_extra_params(self.inner.meta_internal_extra_params.clone())
             .with_outputs_for_error_handler(outputs_for_error_handler);
 
         if let Some(timeout) = self.inner.timeout {

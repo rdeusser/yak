@@ -27,7 +27,6 @@
   * in "developers/" are included in the developers glob, e.g.
   */
 
-import { isInternal } from "docusaurus-plugin-internaldocs-fb/internal";
 import type { SidebarsConfig } from '@docusaurus/plugin-content-docs';
 
 
@@ -49,9 +48,8 @@ export const sidebars: SidebarsConfig = {
             'about/benefits/compared_to_buck1',
           ],
         },
-        isInternal() ? 'about/knowledge_sharing' : null,
-        isInternal() ? null : 'about/bootstrapping',
-      ].flatMap(x => x !== null ? [x] : []),
+        'about/bootstrapping',
+      ],
     },
     {
         type: 'category',
@@ -101,7 +99,6 @@ export const sidebars: SidebarsConfig = {
       label: 'Buck2 Users',
       collapsed: false,
       items: [
-        isInternal() ? 'users/migration_guide' : null,
         {
           type: 'category' as const,
           label: 'Commands',
@@ -160,16 +157,10 @@ export const sidebars: SidebarsConfig = {
           label: 'Troubleshooting',
           collapsed: false,
           items: [
-            isInternal() ? 'users/faq/getting_help' : null,
             'users/faq/common_issues',
-            isInternal() ? 'users/faq/meta_issues' : null,
-            isInternal() ? 'users/faq/meta_installation' : null,
-            isInternal() ? 'users/faq/remote_execution' : null,
             'users/faq/starlark_peak_mem',
             'users/faq/buck_hanging',
-            isInternal() ? 'users/faq/how_to_bisect' : null,
-            isInternal() ? 'users/faq/how_to_expedite_fix' : null,
-          ].flatMap(x => x !== null ? [x] : []),
+          ],
         },
         {
           type: 'category' as const,
@@ -179,11 +170,7 @@ export const sidebars: SidebarsConfig = {
             'users/build_observability/interactive_console',
             'users/build_observability/logging',
             'users/build_observability/build_report',
-            isInternal() ? 'users/build_observability/observability' : null,
-            isInternal() ? 'users/build_observability/scuba' : null,
-            isInternal() ? 'users/build_observability/derived_user_tables' : null,
-            isInternal() ? 'users/build_observability/ods' : null,
-          ].flatMap(x => x !== null ? [x] : []),
+          ],
         },
         'users/remote_execution',
         {
@@ -203,11 +190,9 @@ export const sidebars: SidebarsConfig = {
             'users/advanced/restarter',
             'users/advanced/in_memory_cache',
             'users/advanced/external_cells',
-            isInternal() ? 'users/advanced/offline_build_archives' : null,
-            isInternal() ? 'users/advanced/vpnless' : null,
-          ].flatMap(x => x !== null ? [x] : []),
+          ],
         },
-      ].flatMap(x => x !== null ? [x] : []),
+      ],
     },
     {
       type: 'category',
@@ -225,7 +210,6 @@ export const sidebars: SidebarsConfig = {
         'rule_authors/content_based_paths',
         'rule_authors/test_execution',
         'rule_authors/optimization',
-        isInternal() ? 'rule_authors/rule_writing_tips' : null,
         'rule_authors/persistent_workers',
         'rule_authors/incremental_actions',
         'rule_authors/load',
@@ -234,11 +218,9 @@ export const sidebars: SidebarsConfig = {
         'rule_authors/local_resources',
         'rule_authors/validation',
         'rule_authors/package_files',
-        isInternal() ? 'rule_authors/client_metadata' : null,
-        isInternal() ? 'rule_authors/action_error_handler' : null,
         'rule_authors/dep_files',
         'rule_authors/string_parameter_macros',
-      ].flatMap(x => x !== null ? [x] : []),
+      ],
     },
     {
       type: 'category',
@@ -251,8 +233,7 @@ export const sidebars: SidebarsConfig = {
           collapsed: false,
           items: [
             'bxl/index',
-            isInternal() ? 'bxl/testimonials' : null,
-          ].flatMap(x => x !== null ? [x] : []),
+          ],
         },
         'bxl/tutorial',
         {

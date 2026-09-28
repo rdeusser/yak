@@ -6,16 +6,17 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-# pyre-strict
-
 import os
 import platform
 import subprocess
 import typing
 from pathlib import Path
 
-from buck2.tests.e2e_util.api.buck import Buck
-from buck2.tests.e2e_util.buck_workspace import buck_test
+import pytest
+from e2e_util.api.buck import Buck
+from e2e_util.buck_workspace import buck_test
+
+pytestmark = pytest.mark.needs_binary("BUCK2_COMPLETION_VERIFY")
 
 IS_LINUX: bool = platform.system() == "Linux"
 
@@ -53,7 +54,7 @@ def completion_test(
             shell_home = (tmp_path / f"{shell}_tmp").absolute()
             shell_home.mkdir(exist_ok=True)
 
-            # Write this to a script to make it easier to debug with `BUCK_E2E_KEEP_TMP=1`
+            # Write this to a script to make it easier to debug with `BUCK_E2E_KEEP_TEMP=1`
             script = "\n".join(
                 [
                     "#!/bin/bash",

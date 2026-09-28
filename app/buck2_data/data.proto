@@ -39,8 +39,8 @@ message BuckEvent {
     SpanStartEvent span_start = 20;
     SpanEndEvent span_end = 21;
     InstantEvent instant = 22;
-    // Not present in daemon -> CLI stream or event-log, sent to Scribe
-    // directly.
+    // Not present in daemon -> CLI stream or event-log. The client writes it
+    // to the path given by `--unstable-write-invocation-record`.
     RecordEvent record = 23;
   }
 }
@@ -264,7 +264,7 @@ message PageOutSummary {
 
 // An event that represents a single point in time.
 message InstantEvent {
-  reserved 2, 8, 9, 12, 13, 22, 24, 38, 41, 52, 53, 60;
+  reserved 2, 8, 9, 12, 13, 20, 22, 23, 24, 33, 38, 41, 52, 53, 57, 58, 60;
 
   oneof data {
     StructuredError structured_error = 1;
@@ -282,7 +282,7 @@ message InstantEvent {
 
     DiceStateSnapshot dice_state_snapshot = 11;
 
-    // A tag to mark on the scuba tables
+    // Tags to add to the invocation record
     TagEvent tag_event = 14;
 
     // Sent when the target pattern gets resolved to update the invocation info
@@ -301,13 +301,8 @@ message InstantEvent {
     // Notify the client that the daemon is shutting down.
     DaemonShutdown daemon_shutdown = 19;
 
-    // Information collected by buck2 rage command
-    RageResult rage_result = 20;
-
     // Notify the client that the daemon would like to update the rendering.
     ConsolePreferences console_preferences = 21;
-
-    IoProviderInfo io_provider_info = 23;
 
     // Stacktrace from the fail_no_stacktrace() call.
     StarlarkFailNoStacktrace starlark_fail_no_stacktrace = 25;
@@ -332,9 +327,6 @@ message InstantEvent {
 
     // Concurrent active commands.
     ConcurrentCommands concurrent_commands = 32;
-
-    // Info coming from the `buck2 debug persist-event-log` subprocess
-    PersistEventLogSubprocess persist_event_log_subprocess = 33;
 
     // An action error encountered during the build
     ActionError action_error = 34;
@@ -388,11 +380,7 @@ message InstantEvent {
     // Orphan processes were killed via cgroup after action completed
     OrphanProcessesKilled orphan_processes_killed = 56;
 
-    // Action digest tracing event
-    ActionDigestTrace action_digest_trace = 57;
-
     // RE log stream handles available for a running action
-    ReLogStreamAvailable re_log_stream_available = 58;
 
     // Rule type name for a CLI-resolved top-level target. Emitted once per
     // resolved target so downstream subscribers (e.g. the invocation
@@ -628,9 +616,9 @@ message StarlarkPartialDeserStats {
 }
 
 message RemoteExecutionSessionCreated {
+  reserved 2, 3;
+
   string session_id = 1;
-  string experiment_name = 2;
-  optional string persistent_cache_mode = 3;
 }
 
 message Location {
@@ -641,62 +629,22 @@ message Location {
 
 // An error that needs to be reported. This may be a panic, or a soft error.
 message StructuredError {
-  // A resolved symbol, obtained through symbolicating the stack trace.
-  message Symbol {
-    // The name of the symbol (i.e. the function).
-    string name = 1;
-    // The address of the symbol.
-    string address = 2;
-    // The file containing the symbol.
-    string file = 3;
-    // The line where the symbol is defined.
-    uint32 line = 4;
-    // The column where the symbol is defined.
-    uint32 column = 5;
-  }
-
-  // A stack frame, representing a single frame of execution in a backtrace.
-  message StackFrame {
-    // The instruction pointer at this frame. For terminal frames, this is the
-    // faulting IP.
-    string instruction_pointer = 1;
-    // The address of the symbol associated with this stack frame.
-    string symbol_address = 2;
-    // The base address of the loaded module containing the given symbol
-    // address, for use in symbolication.
-    string module_base_address = 3;
-    // The list of symbols known to resolve to the given symbol address, after
-    // symbolication. A symbol address may resolve to multiple symbols if
-    // inlining or COMDAT folding occurred. A symbol address may also resolve
-    // to zero symbols if no symbols were found while symbolicating.
-    repeated Symbol symbols = 4;
-  }
+  reserved 3, 4, 7, 10, 11;
 
   // The payload of the error (the argument to panic! if we are reporting a
   // panic).
   string payload = 1;
   // The code location this occurred at.
   Location location = 2;
-  // Metadata associated with this daemon.
-  map<string, string> metadata = 3;
-  // A backtrace, we set this for panics.
-  repeated StackFrame backtrace = 4;
   // StructuredError is used to propagate soft_errors, which can be hidden from
   // users. If true, it won't get logged to console
   bool quiet = 5;
   // If this was a soft error, its category.
   optional SoftError soft_error_category = 6;
-  // Whether a tracking task should be created for this error.
-  optional bool task = 7;
   // Is this error indicative of needing to restart the daemon?
   bool daemon_in_memory_state_is_corrupted = 8;
   // Is this error indicative of needing to drop the materializer state?
   bool daemon_materializer_state_is_corrupted = 9;
-  // Is this error indicative of the RE action cache returning corrupted
-  // results?
-  bool action_cache_is_corrupted = 10;
-  // Whether the error should be converted to a hard error in the future.
-  bool deprecation = 11;
 }
 
 message CriticalPathEntry {
@@ -1049,36 +997,6 @@ enum ResourceControlEventKind {
   SCHEDULED = 10;
 }
 
-// Result of invoking buck2 rage
-message RageResult {
-  reserved 1 to 8;
-  // TODO iguridi: remove string_data and int_data
-  map<string, string> string_data = 9;
-  map<string, uint64> int_data = 10;
-
-  google.protobuf.Timestamp timestamp = 11;
-  google.protobuf.Duration command_duration = 12;
-
-  optional string command = 13;
-  optional string buck2_revision = 14;
-  optional string username = 15;
-  optional string hostname = 16;
-  optional string os = 17;
-  optional string os_version = 18;
-
-  string dice_dump = 19;
-  string materializer_state = 20;
-  string materializer_fsck = 21;
-  string thread_dump = 22;
-  string daemon_stderr_dump = 23;
-  string hg_snapshot_id = 24;
-  string invocation_id = 25;
-  string event_log_dump = 26;
-  string re_logs = 27;
-
-  optional int64 daemon_uptime_s = 28;
-}
-
 message VersionControlRevision {
   // 40 characters hash.
   optional string hg_revision = 1;
@@ -1110,7 +1028,8 @@ message TargetRuleTypeName {
 
 // A snapshot of current system state, with useful info.
 message Snapshot {
-  reserved 102, 120;
+  reserved 102, 105 to 108, 111, 120, 400 to 403, 410 to 413, 420 to 423,
+      430 to 433, 1201 to 1208, 1106, 1110, 1118, 1124, 1128, 1136;
   // Resident set size in bytes of the buck2 daemon.
   // Does not include subprocesses (e.g. local actions).
   optional uint64 buck2_rss = 11;
@@ -1161,11 +1080,9 @@ message Snapshot {
   uint32 io_in_flight_hardlink = 1103;
   uint32 io_in_flight_mk_dir = 1104;
   uint32 io_in_flight_read_dir = 1105;
-  uint32 io_in_flight_read_dir_eden = 1106;
   uint32 io_in_flight_rm_dir = 1107;
   uint32 io_in_flight_rm_dir_all = 1108;
   uint32 io_in_flight_stat = 1109;
-  uint32 io_in_flight_stat_eden = 1110;
   uint32 io_in_flight_chmod = 1111;
   uint32 io_in_flight_read_link = 1112;
   uint32 io_in_flight_remove = 1113;
@@ -1173,7 +1090,6 @@ message Snapshot {
   uint32 io_in_flight_read = 1115;
   uint32 io_in_flight_write = 1116;
   uint32 io_in_flight_canonicalize = 1117;
-  uint32 io_in_flight_eden_settle = 1118;
 
   // Total I/O operations count.
   optional uint32 io_copy_count = 1119;
@@ -1181,11 +1097,9 @@ message Snapshot {
   optional uint32 io_hardlink_count = 1121;
   optional uint32 io_mkdir_count = 1122;
   optional uint32 io_readdir_count = 1123;
-  optional uint32 io_readdir_eden_count = 1124;
   optional uint32 io_rmdir_count = 1125;
   optional uint32 io_rmdir_all_count = 1126;
   optional uint32 io_stat_count = 1127;
-  optional uint32 io_stat_eden_count = 1128;
   optional uint32 io_chmod_count = 1129;
   optional uint32 io_readlink_count = 1130;
   optional uint32 io_remove_count = 1131;
@@ -1193,7 +1107,6 @@ message Snapshot {
   optional uint32 io_read_count = 1133;
   optional uint32 io_write_count = 1134;
   optional uint32 io_canonicalize_count = 1135;
-  optional uint32 io_eden_settle_count = 1136;
 
   // Time passed since buck2 daemon was started
   uint64 daemon_uptime_s = 7;
@@ -1218,26 +1131,6 @@ message Snapshot {
 
   uint64 deferred_materializer_queue_size = 104;
 
-  // Sink write statistics; counts of sink statistics taken at this snapshot.
-  // Cumulative count of messages that were successfully emitted.
-  optional uint64 sink_successes = 105;
-  // Cumulative count of messages that failed to be emitted.
-  optional uint64 sink_failures = 106;
-  // These are only stored in snapshot events, but not written to scuba.
-  optional uint64 sink_failures_invalid_request = 1201;
-  optional uint64 sink_failures_unauthorized = 1202;
-  optional uint64 sink_failures_rate_limited = 1203;
-  optional uint64 sink_failures_pushed_back = 1204;
-  optional uint64 sink_failures_enqueue_failed = 1205;
-  optional uint64 sink_failures_internal_error = 1206;
-  optional uint64 sink_failures_timed_out = 1207;
-  optional uint64 sink_failures_unknown = 1208;
-  // Current number of messages queued up to be submitted.
-  optional uint64 sink_buffer_depth = 107;
-  // Cumulative count of messages that were dropped (i.e. not even processed).
-  optional uint64 sink_dropped = 108;
-  optional uint64 sink_bytes_written = 111;
-
   // Network statistics for "interesting" network interfaces.
   map<string, NetworkInterfaceStats> network_interface_stats = 109;
 
@@ -1249,26 +1142,6 @@ message Snapshot {
   uint64 deferred_materializer_intermediate_only_logical_bytes = 203;
 
   optional UnixSystemStats unix_system_stats = 300;
-
-  uint64 zdb_download_queries = 400;
-  uint64 zdb_download_bytes = 401;
-  uint64 zdb_upload_queries = 402;
-  uint64 zdb_upload_bytes = 403;
-
-  uint64 zgateway_download_queries = 410;
-  uint64 zgateway_download_bytes = 411;
-  uint64 zgateway_upload_queries = 412;
-  uint64 zgateway_upload_bytes = 413;
-
-  uint64 manifold_download_queries = 420;
-  uint64 manifold_download_bytes = 421;
-  uint64 manifold_upload_queries = 422;
-  uint64 manifold_upload_bytes = 423;
-
-  uint64 hedwig_download_queries = 430;
-  uint64 hedwig_download_bytes = 431;
-  uint64 hedwig_upload_queries = 432;
-  uint64 hedwig_upload_bytes = 433;
 
   // Local cache hits and misses stats
   int64 local_cache_hits_files = 434;
@@ -1470,7 +1343,7 @@ message TestResult {
 // At the beginning of discovery, the test orchestrator will advertise
 // some information about the session
 message TestSessionInfo {
-  // Usually this contains a test link, like in Tpx
+  // Usually this contains a link to the test run
   string info = 2;
   optional string test_session_id = 3;
 }
@@ -1486,6 +1359,8 @@ message TestSuite {
 
 // An event that marks the beginning of a command.
 message CommandStart {
+  reserved 40;
+
   // Metadata associated with this build. Values in this map have no particular
   // semantics and are useful for logging and telemetry only.
   //
@@ -1516,21 +1391,10 @@ message CommandStart {
     TraceIoCommandStart trace = 37;
     ConfiguredTargetsCommandStart ctargets = 38;
     StarlarkDebugAttachCommandStart starlark_debug_attach = 39;
-    ExplainCommandStart explain = 40;
     ExpandExternalCellsCommandStart expand_external_cell = 41;
     CompleteCommandStart complete = 42;
     HydrationCommandStart hydration = 43;
   }
-}
-
-// A struct that combines a trace ID with CommandStart data.
-message CommandStartWithTraceId {
-  // The trace ID for the command
-  string trace_id = 1;
-  // The CommandStart data
-  CommandStart command_start = 2;
-  // Timestamp when the command was started
-  google.protobuf.Timestamp timestamp = 3;
 }
 
 // An event that marks that the command has start execution and synced it's
@@ -1583,8 +1447,6 @@ message TestCommandStart {}
 
 message DocsCommandStart {}
 
-message ExplainCommandStart {}
-
 message CleanCommandStart {}
 
 message InstallCommandStart {}
@@ -1602,7 +1464,7 @@ message CompleteCommandStart {}
 message HydrationCommandStart {}
 
 message CommandEnd {
-  reserved 3, 4;
+  reserved 3, 4, 40;
   oneof data {
     BuildCommandEnd build = 20;
     TargetsCommandEnd targets = 21;
@@ -1624,7 +1486,6 @@ message CommandEnd {
     TraceIoCommandEnd trace = 37;
     ConfiguredTargetsCommandEnd ctargets = 38;
     StarlarkDebugAttachCommandEnd starlark_debug_attach = 39;
-    ExplainCommandEnd explain = 40;
     ExpandExternalCellsCommandEnd expand_external_cell = 41;
     CompleteCommandEnd complete = 42;
     HydrationCommandEnd hydration = 43;
@@ -1691,8 +1552,6 @@ message TestCommandEnd {
 }
 
 message DocsCommandEnd {}
-
-message ExplainCommandEnd {}
 
 message CleanCommandEnd {
   optional CleanStaleStats clean_stale_stats = 1;
@@ -2089,7 +1948,7 @@ message CommandExecution {
   // local & RE.
   message Cancelled {}
 
-  reserved 6;
+  reserved 6, 20;
 
   // Serialization of CommandExecutionStatus.
   oneof status {
@@ -2100,12 +1959,6 @@ message CommandExecution {
     Cancelled cancelled = 7;
     WorkerFailure worker_failure = 8;
   }
-
-  InlineCommandExecutionEnvironmentMetadata inline_environment_metadata = 20;
-}
-
-message InlineCommandExecutionEnvironmentMetadata {
-  optional uint64 sandcastle_instance_id = 1;
 }
 
 // NOTE: This is an empty message. When this is returned as an error, the
@@ -2117,7 +1970,7 @@ message ActionOutput {
 }
 
 message ActionExecutionEnd {
-  reserved 2, 20;
+  reserved 2, 20, 31, 32, 34;
 
   // A unique key identifying this action within the build.
   ActionKey key = 1;
@@ -2178,22 +2031,9 @@ message ActionExecutionEnd {
   bool allows_cache_upload = 29;
   UploadResult cache_upload_result = 30;
 
-  // Revision hash (version) for this action. This is set only when the action
-  // fails.
-  optional string buck2_revision = 31;
-  // Time when the buck2 binary servicing this action was built. This is set
-  // only when the action fails.
-  optional string buck2_build_time = 32;
-
   // Was this command eligible for full hybrid execution (i.e. no exclusions
   // from the command, hybrid is turned on).
   optional bool eligible_for_full_hybrid = 33;
-
-  // Hostname of the host this action ran on. Always set for locally-executed
-  // actions (which run on the buck2 daemon's host). Additionally set for any
-  // failed action regardless of execution kind, for logging in
-  // buck2_action_errors.
-  optional string hostname = 34;
 
   // Fields related to the remote dep file cache
   bool allows_dep_file_cache_upload = 35;
@@ -2497,7 +2337,8 @@ message CacheHit {
 }
 
 message ReStage {
-  reserved 1, 2, 3, 4;
+  reserved 1, 2, 3, 4, 16;
+  reserved "queue_acquiring_dependencies";
 
   oneof stage {
     ReExecute execute = 5;
@@ -2511,7 +2352,6 @@ message ReStage {
     ReAfterAction after_action_execution = 13;
     ReQueueOverQuota queue_over_quota = 14;
     ReQueueNoWorkerAvailable queue_no_worker_available = 15;
-    ReQueueAcquiringDependencies queue_acquiring_dependencies = 16;
     ReQueueCancelled queue_cancelled = 17;
   }
 }
@@ -2549,10 +2389,6 @@ message ReQueueOverQuota {
   ReQueue queue_info = 1;
 }
 
-message ReQueueAcquiringDependencies {
-  ReQueue queue_info = 1;
-}
-
 message ReQueueNoWorkerAvailable {
   ReQueue queue_info = 1;
 }
@@ -2577,42 +2413,6 @@ message ReBeforeAction {
 
 message ReAfterAction {
   string action_digest = 1;
-}
-
-// Event that traces operations on a subset of action digests
-message ActionDigestTrace {
-  enum ActionDigestTraceEvent {
-    UNKNOWN = 0;
-    CACHE_HIT = 1;
-    CACHE_MISS = 2;
-    REMOTE_EXECUTION = 3;
-    CACHE_UPLOAD = 4;
-  }
-
-  // Command level metadata
-  map<string, string> metadata = 1;
-  string action_digest = 2;
-  ActionDigestTraceEvent event = 3;
-  optional string event_subtype = 4;
-  optional uint64 ttl_secs = 5;
-  string re_use_case = 6;
-  // Inverse sampling rate
-  uint64 weight = 7;
-  // Schedule type (e.g., "diff", "continuous")
-  optional string schedule_type = 8;
-  // Sum of output digest sizes in bytes
-  optional uint64 storage_cost_bytes = 9;
-  // Execution time in milliseconds
-  optional uint64 compute_cost_ms = 10;
-}
-
-// RE log stream handles available for a running action
-message ReLogStreamAvailable {
-  string action_digest = 1;
-  string stdout_stream_name = 2;
-  string stderr_stream_name = 3;
-  optional string action_key = 4;
-  string use_case = 5;
 }
 
 message LocalStage {
@@ -2659,14 +2459,14 @@ message ExecutorStageEnd {
   CacheQueryError cache_query_error = 1;
 }
 
-// For most tests, tpx calls the test orchestrator's `execute` method.
+// For most tests, the test executor calls the test orchestrator's `execute` method.
 // The `execute` method calls a test binary.
 // We instrument the span associated specifically with the execution of this
 // binary, ignoring time spent resolving deps, etc.
 //
 // `Execute` is called in two different ways:
-// - Discovery: `tpx` is trying to figure out what tests to run for a suite.
-// - SuiteRun: `tpx` wants to run one or more tests for a suite.
+// - Discovery: the test executor is trying to figure out what tests to run for a suite.
+// - SuiteRun: the test executor wants to run one or more tests for a suite.
 // These different ways are tracked using the span events below.
 
 message TestDiscoveryStart {
@@ -2700,11 +2500,12 @@ message FileWatcherStart {
 }
 
 enum FileWatcherProvider {
+  reserved 3;
+
   WATCHMAN = 0;
   // The Rust `notify` crate
   RUST_NOTIFY = 1;
   FS_HASH_CRAWLER = 2;
-  EDEN_FS = 3;
 }
 
 enum FileWatcherEventType {
@@ -2729,7 +2530,7 @@ message FileWatcherEvent {
 // outside of the cells we care about, which is why events_total and
 // events_processed might differ.
 message FileWatcherStats {
-  reserved 5;
+  reserved 5, 12;
 
   bool fresh_instance = 1;
   uint64 events_total = 2;
@@ -2746,8 +2547,6 @@ message FileWatcherStats {
   optional FreshInstance fresh_instance_data = 9;
   // Timestamp in seconds of the 'Branched From Revision' commit
   optional uint64 branched_from_revision_timestamp = 11;
-  // Version of eden if available
-  optional string eden_version = 12;
 }
 
 message FreshInstance {
@@ -2853,7 +2652,7 @@ message BuildArtifact {
 }
 
 // A target pattern, representing a set of targets. See
-// `<https://buck2.build/docs/concepts/target_pattern>` for Buck's
+// `<https://rdeusser.github.io/buck2/docs/concepts/target_pattern>` for Buck's
 // documentation on target patterns.
 message TargetPattern {
   string value = 1;
@@ -2951,9 +2750,10 @@ message Invocation {
 }
 
 message RecordEvent {
+  reserved 2;
+
   oneof data {
     InvocationRecord invocation_record = 1;
-    BuildGraphStats build_graph_stats = 2;
   }
 }
 
@@ -2978,9 +2778,10 @@ message TypedMetadata {
 
 // Why current command started buckd.
 enum DaemonWasStartedReason {
+  reserved 2;
+
   UNKNOWN_REASON = 0;
   CONSTRAINT_MISMATCH_VERSION = 1;
-  CONSTRAINT_MISMATCH_USER_VERSION = 2;
   CONSTRAINT_MISMATCH_STARTUP_CONFIG = 3;
   CONSTRAINT_REJECT_DAEMON_ID = 4;
   CONSTRAINT_MISMATCH_TRACE_IO = 5;
@@ -3005,11 +2806,12 @@ message ActionConcurrencyPercentile {
   uint64 concurrency = 2;
 }
 
-// This is the origin for every sample in buck2_builds scuba table
-// It's sent from the client to Scribe at the end of each invocation
+// A summary of one command. The client writes it at the end of the command to
+// the path given by `--unstable-write-invocation-record`.
 message InvocationRecord {
-  reserved 1, 22, 27, 28, 36, 61, 62, 66, 77, 82, 88, 89, 100, 234, 235, 400,
-      401, 443;
+  reserved 1, 22, 27, 28, 36, 51 to 54, 61, 62, 66, 77, 82, 88, 89, 90, 100,
+      101, 200 to 203, 210 to 213, 220 to 223, 230 to 233, 234, 235, 247, 400,
+      401, 437, 443, 58, 23, 245, 260, 30, 418, 422, 430;
 
   // Optional - present if ever sent to client.
   // Will be missing on a cancelled build.
@@ -3023,7 +2825,7 @@ message InvocationRecord {
   google.protobuf.Duration client_walltime = 6;
   // Optional - present if BuildGraphExecutionInfo sent to client.
   google.protobuf.Duration critical_path_duration = 7;
-  // Optional - any contents are copied directly to scuba buck2_builds.
+  // Optional - typed metadata of the command.
   TypedMetadata metadata = 8;
   // Tags for this command
   repeated string tags = 9;
@@ -3051,9 +2853,6 @@ message InvocationRecord {
   Snapshot first_snapshot = 20;
   // Optional - the last snapshot sent.
   Snapshot last_snapshot = 21;
-  // If any, the name of the RE experiment config that was used by the RE
-  // client in this build.
-  string re_experiment_name = 23;
   // Minimum successful builds among the build counts for each target
   // involved in the command.
   uint64 min_build_count_since_rebase = 24;
@@ -3063,8 +2862,6 @@ message InvocationRecord {
   uint64 cache_upload_attempt_count = 26;
   // Resolved target pattern for the command. Codebase considers these "parsed."
   ParsedTargetPatterns parsed_target_patterns = 29;
-  // Whether repository is Eden filesystem / mount (EdenFS)
-  string filesystem = 30;
   // Test session
   optional string test_info = 31;
   // Whether there were any full-hybrid-eligible actions.
@@ -3104,19 +2901,11 @@ message InvocationRecord {
   optional string isolation_dir = 49;
   // Number of materializer entries loaded from db on daemon start.
   optional uint64 initial_materializer_entries_from_sqlite = 50;
-  // Sink write statistics for the command
-  optional uint64 sink_success_count = 51;
-  optional uint64 sink_failure_count = 52;
-  optional uint64 sink_dropped_count = 53;
-  optional uint64 sink_bytes_written = 101;
-  optional uint64 sink_max_buffer_depth = 54;
   // Version number of watchman
   optional string watchman_version = 55;
   optional string command_name = 56;
   // Any soft errors we hit during this invocation.
   repeated SoftError soft_error_categories = 57;
-  // Version number of EdenFS if mount is EdenFS
-  optional string eden_version = 58;
   // Duration of when the concurrent command is blocking
   google.protobuf.Duration concurrent_command_blocking_duration = 59;
   // How many analyses were executed
@@ -3144,8 +2933,7 @@ message InvocationRecord {
   optional DaemonWasStartedReason daemon_was_started = 751;
   // Set if an event occurred that should trigger a command restart.
   optional bool should_restart = 752;
-  // Metadata provided by the client. Unlike TypedMetadata, this won't become
-  // its own column in Scuba, all those entries will land in a NormVector.
+  // Metadata provided by the client with `--client-metadata`.
   repeated ClientMetadata client_metadata = 76;
   // The errors that occurred during the command.
   repeated ProcessedErrorReport errors = 79;
@@ -3169,7 +2957,6 @@ message InvocationRecord {
   google.protobuf.Duration install_duration = 86;
   // Peak process memory which is max of RSS and malloc-active bytes
   optional uint64 peak_process_memory_bytes = 87;
-  optional uint64 event_log_manifold_ttl_s = 90;
   optional uint64 peak_used_disk_space_bytes = 92;
   optional uint64 total_disk_space_bytes = 93;
   // Average RE download speed
@@ -3185,10 +2972,6 @@ message InvocationRecord {
   uint64 min_attempted_build_count_since_rebase = 98;
   // Metadata about devices installed to by an install command.
   repeated DeviceMetadata install_device_metadata = 99;
-  // Path to uploaded installer log file.
-  optional string installer_log_url = 247;
-  // Which installer implementation ran an install command, e.g. `android`.
-  optional string installer_name = 260;
   // The list of active network devices
   repeated NetworkKind active_networks_kinds = 102;
   // Configuration used during the build command.
@@ -3214,27 +2997,6 @@ message InvocationRecord {
   // 40 characters hash for git revision.
   optional string git_revision = 109;
 
-  // Detailed per-backend RE stats.
-  optional uint64 zdb_download_queries = 200;
-  optional uint64 zdb_download_bytes = 201;
-  optional uint64 zdb_upload_queries = 202;
-  optional uint64 zdb_upload_bytes = 203;
-
-  optional uint64 zgateway_download_queries = 210;
-  optional uint64 zgateway_download_bytes = 211;
-  optional uint64 zgateway_upload_queries = 212;
-  optional uint64 zgateway_upload_bytes = 213;
-
-  optional uint64 manifold_download_queries = 220;
-  optional uint64 manifold_download_bytes = 221;
-  optional uint64 manifold_upload_queries = 222;
-  optional uint64 manifold_upload_bytes = 223;
-
-  optional uint64 hedwig_download_queries = 230;
-  optional uint64 hedwig_download_bytes = 231;
-  optional uint64 hedwig_upload_queries = 232;
-  optional uint64 hedwig_upload_bytes = 233;
-
   // Local cache hits and misses stats
   optional int64 local_cache_hits_files = 236;
   optional int64 local_cache_hits_bytes = 237;
@@ -3251,9 +3013,6 @@ message InvocationRecord {
   // UUID of the previous command stored only if external configs are different
   optional string previous_uuid_with_mismatched_config = 243;
   optional string file_watcher = 244;
-
-  // CASd persistent cache mode used by the RE client
-  optional string persistent_cache_mode = 245;
 
   // Buck2 binary start time, if invoked through the wrapper, then it will be
   // the wrapper start time as that'd be more accurate
@@ -3335,11 +3094,9 @@ message InvocationRecord {
   optional uint32 io_hardlink_count = 415;
   optional uint32 io_mkdir_count = 416;
   optional uint32 io_readdir_count = 417;
-  optional uint32 io_readdir_eden_count = 418;
   optional uint32 io_rmdir_count = 419;
   optional uint32 io_rmdir_all_count = 420;
   optional uint32 io_stat_count = 421;
-  optional uint32 io_stat_eden_count = 422;
   optional uint32 io_chmod_count = 423;
   optional uint32 io_readlink_count = 424;
   optional uint32 io_remove_count = 425;
@@ -3347,7 +3104,6 @@ message InvocationRecord {
   optional uint32 io_read_count = 427;
   optional uint32 io_write_count = 428;
   optional uint32 io_canonicalize_count = 429;
-  optional uint32 io_eden_settle_count = 430;
 
   // Absolute path to the repo (project root).
   optional string repo_path = 431;
@@ -3365,9 +3121,6 @@ message InvocationRecord {
   // Peak memory pressure (PSI full avg60 %) of all Buck2
   // processes during the invocation, from allprocs cgroup memory.pressure.
   double memory_max_pressure_60s_avg_allprocs = 436;
-
-  // Agent context entries passed via --agent-context.
-  repeated AgentContextEntry agent_context = 437;
 
   // DICE page-in overhead for this invocation, computed as the delta between
   // the first and last snapshot of the command.
@@ -3464,31 +3217,12 @@ enum InvocationOutcome {
   Crashed = 4;
 }
 
-// Record event sent directly to scribe.
-message BuildGraphStats {
-  repeated BuildTarget build_targets = 1;
-}
-
 message SoftError {
   string category = 1;
   bool is_quiet = 2;
 }
 
-message BuildTarget {
-  string target = 1;
-  string configuration = 2;
-  // The dependency graph size for this target, if enabled and the target was
-  // not skipped.
-  optional uint64 configured_graph_size = 3;
-}
-
 message ClientMetadata {
-  string key = 1;
-  string value = 2;
-}
-
-// A single agent context key-value pair passed via --agent-context.
-message AgentContextEntry {
   string key = 1;
   string value = 2;
 }
@@ -3663,9 +3397,9 @@ message ErrorReport {
   reserved 1, 2;
   // The error message that is shown to users on the CLI
   string message = 3;
-  // If different from `message`, the error message that is shown to the
-  // build report or logged in scuba. Currently, this distinction only exists
-  // for action errors - they show the full stderr in telemetry and in a
+  // If different from `message`, the error message that is shown in the
+  // build report and the invocation record. Currently, this distinction only
+  // exists for action errors - they show the full stderr in the record and in a
   // separate event, but the error message only contains `failed to build target
   // foo`
   optional string telemetry_message = 4;
@@ -3713,22 +3447,8 @@ message MaterializerStateInfo {
   uint64 num_entries_from_sqlite = 1;
 }
 
-message IoProviderInfo {
-  optional string eden_version = 1;
-}
-
 message ConcurrentCommands {
   repeated string trace_ids = 1;
-}
-
-message PersistEventLogSubprocess {
-  repeated string local_error_messages = 1;
-  optional string local_error_category = 2;
-  bool local_success = 3;
-  repeated string remote_error_messages = 4;
-  optional string remote_error_category = 5;
-  bool remote_success = 6;
-  map<string, string> metadata = 8;
 }
 
 message StarlarkFailNoStacktrace {
@@ -3813,24 +3533,21 @@ message DeviceMetadata {
 }
 
 message InstallFinished {
+  reserved 3, 4;
+
   google.protobuf.Duration duration = 1;
   repeated DeviceMetadata device_metadata = 2;
-  optional string log_url = 3;
-  // Which installer implementation ran this install, as it named itself at the
-  // handshake. Absent when the install never reached an installer.
-  optional string installer_name = 4;
 }
 
 message SystemInfo {
+  reserved 8, 9, 10;
+
   optional uint64 system_total_memory_bytes = 1;
   optional uint64 memory_pressure_threshold_percent = 2;
   optional uint64 total_disk_space_bytes = 3;
   optional uint64 remaining_disk_space_threshold_gb = 4;
   optional uint64 min_re_download_bytes_threshold = 5;
   optional uint64 avg_re_download_bytes_per_sec_threshold = 6;
-  optional string optin_vpn_check_targets_regex = 8;
-  optional bool enable_stable_revision_check = 9;
-  optional bool enable_health_check_process_isolation = 10;
   optional string daemon_cgroup_path = 11;
   optional string allprocs_cgroup_path = 12;
   optional string daemon_cgroup_slice_path = 13;

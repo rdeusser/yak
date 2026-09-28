@@ -168,17 +168,6 @@ enum HttpDownloadError {
         debug: Box<MaybeResponseDebugInfo>,
     },
 
-    #[error(
-        "Received invalid {kind} digest from {url}; perhaps this is not allowed on vpnless?. Expected {want}, got {got}. {debug}"
-    )]
-    MaybeNotAllowedOnVpnless {
-        kind: &'static str,
-        want: String,
-        got: String,
-        url: String,
-        debug: Box<MaybeResponseDebugInfo>,
-    },
-
     #[error(transparent)]
     IoError(buck2_error::Error),
 }
@@ -187,7 +176,7 @@ impl HttpDownloadError {
     fn into_final(mut self) -> Self {
         match &mut self {
             Self::Client(..) | Self::IoError(..) => {}
-            Self::InvalidChecksum { debug, .. } | Self::MaybeNotAllowedOnVpnless { debug, .. } => {
+            Self::InvalidChecksum { debug, .. } => {
                 debug.is_final = true;
             }
         }
@@ -214,13 +203,7 @@ impl HttpErrorForRetry for HttpDownloadError {
     fn is_retryable(&self) -> bool {
         match self {
             Self::Client(e) => e.is_retryable(),
-            Self::InvalidChecksum { .. } => {
-                // Normally, invalid checksums don't make sense to retry, but the HTTP servers we
-                // talk to internally tend to happily return 200s and give you the error in the
-                // message body... so it's a good idea to retry those.
-                cfg!(fbcode_build)
-            }
-            Self::IoError(..) | Self::MaybeNotAllowedOnVpnless { .. } => false,
+            Self::InvalidChecksum { .. } | Self::IoError(..) => false,
         }
     }
 }
@@ -286,7 +269,6 @@ pub async fn http_download(
                 buf_writer,
                 digest_config.cas_digest_config(),
                 checksum,
-                client.supports_vpnless(),
             )
             .await?;
 
@@ -315,7 +297,6 @@ async fn copy_and_hash(
     mut writer: impl Write,
     digest_config: CasDigestConfig,
     checksum: &Checksum,
-    is_vpnless: bool,
 ) -> Result<FileDigest, HttpDownloadError> {
     let mut digester = FileDigest::digester(digest_config);
 
@@ -393,16 +374,6 @@ async fn copy_and_hash(
                 head,
                 is_final: false,
             });
-
-            if is_vpnless {
-                return Err(HttpDownloadError::MaybeNotAllowedOnVpnless {
-                    kind,
-                    want: expected.to_owned(),
-                    got: obtained,
-                    url: url.to_owned(),
-                    debug,
-                });
-            }
             return Err(HttpDownloadError::InvalidChecksum {
                 digest_kind: kind,
                 expected: expected.to_owned(),
@@ -532,7 +503,6 @@ mod tests {
             &mut out,
             digest_config,
             checksum,
-            false,
         )
         .await?;
 

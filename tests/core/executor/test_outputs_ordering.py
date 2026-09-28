@@ -6,20 +6,10 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-# pyre-strict
-
-import os
-import re
-import subprocess
-
-from buck2.tests.e2e_util.api.buck import Buck
-from buck2.tests.e2e_util.buck_workspace import buck_test
-from buck2.tests.e2e_util.helper.utils import (
-    get_buck2_re_use_case,
-    json_get,
-    random_string,
-    read_what_ran,
-)
+import pytest
+from e2e_util.api.buck import Buck
+from e2e_util.buck_workspace import buck_test
+from e2e_util.helper.utils import json_get, random_string
 
 
 @buck_test()
@@ -46,19 +36,20 @@ async def test_local_action(buck: Buck) -> None:
         )
         if outputs is None:
             continue
-        # da39a3ee is a digest for empty directory.
+        # e3b0c442 is the SHA-256 digest of an empty directory.
         # We have 2 directories "a" and "z", where
         # "a" is empty and "z" is not.
         # "z" is a first output for action.
         digests = [o["tiny_digest"] for o in outputs]
         assert len(digests) == 2
         # Checking that "a" is first in action outputs
-        assert digests[0] == "da39a3ee"
+        assert digests[0] == "e3b0c442"
         return
 
     raise AssertionError("Didn't find ActionExecution data")
 
 
+@pytest.mark.remote_execution
 @buck_test()
 async def test_remote_action(buck: Buck) -> None:
     await buck.build(
@@ -83,37 +74,14 @@ async def test_remote_action(buck: Buck) -> None:
         )
         if outputs is None:
             continue
-        # da39a3ee is a digest for empty directory.
+        # e3b0c442 is the SHA-256 digest of an empty directory.
         # We have 2 directories "a" and "z", where
         # "a" is empty and "z" is not.
         # "z" is a first output for action.
         digests = [o["tiny_digest"] for o in outputs]
         assert len(digests) == 2
         # Checking that "a" is first in action outputs
-        assert digests[0] == "da39a3ee"
-        break
+        assert digests[0] == "e3b0c442"
+        return
 
-    what_ran = await read_what_ran(buck)
-    assert len(what_ran) == 1
-    digest = what_ran[0]["reproducer"]["details"]["digest"]
-    use_case = await get_buck2_re_use_case(buck)
-    action_definition = subprocess.check_output(
-        [
-            "dotslash",
-            os.environ["RECLI"],
-            "--use-case",
-            use_case,
-            "cas",
-            "download-action",
-            digest,
-        ],
-        text=True,
-    )
-    # Though RE action has "a" first and then "z"
-    assert (
-        re.search(
-            'Output\\WDirectories.+\n\\["buck-out/.+/__foo__/a",\\W"buck-out/.+/__foo__/z"',
-            action_definition,
-        )
-        is not None
-    )
+    raise AssertionError("Didn't find ActionExecution data")

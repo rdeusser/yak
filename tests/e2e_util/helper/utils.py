@@ -7,22 +7,80 @@
 # above-listed licenses.
 
 
+import contextlib
+import hashlib
 import json
 import random
 import re
+import socket
 import string
 import sys
 import typing
-from configparser import ConfigParser
+from dataclasses import dataclass
 from pathlib import Path
 
 import psutil
-from buck2.tests.e2e_util.api.buck import Buck
-from buck2.tests.e2e_util.api.buck_result import InvocationRecord
+from aiohttp import web
+from e2e_util.api.buck import Buck
+from e2e_util.api.buck_result import InvocationRecord
 
 
 def daemon_is_alive(pid: int) -> bool:
     return psutil.pid_exists(pid)
+
+
+@dataclass
+class ServedFile:
+    """ServedFile describes a file that `serve_file` serves over HTTP."""
+
+    url: str
+    sha1: str
+    sha256: str
+    size: int
+
+
+@contextlib.asynccontextmanager
+async def serve_file(content: bytes) -> typing.AsyncIterator[ServedFile]:
+    """Serves `content` at `/download` on 127.0.0.1 until the context exits.
+
+    Download tests use it in place of a server on the internet.
+    """
+
+    async def handle(request: web.Request) -> web.Response:
+        return web.Response(body=content)
+
+    app = web.Application()
+    app.router.add_get("/download", handle)
+    runner = web.AppRunner(app, access_log=None)
+    await runner.setup()
+    with socket.socket() as sock:
+        sock.bind(("127.0.0.1", 0))
+        port = sock.getsockname()[1]
+        try:
+            await web.SockSite(runner, sock).start()
+            yield ServedFile(
+                url=f"http://127.0.0.1:{port}/download",
+                sha1=hashlib.sha1(content).hexdigest(),
+                sha256=hashlib.sha256(content).hexdigest(),
+                size=len(content),
+            )
+        finally:
+            await runner.cleanup()
+
+
+def configure_served_file(buck: Buck, served: ServedFile) -> None:
+    """Appends the URL and checksums of `served` to the project's .buckconfig.
+
+    Test data reads them as `test.download_url`, `test.download_sha1`, and
+    `test.download_sha256`.
+    """
+    with open(buck.cwd / ".buckconfig", "a") as f:
+        f.write(
+            "\n[test]\n"
+            f"  download_url = {served.url}\n"
+            f"  download_sha1 = {served.sha1}\n"
+            f"  download_sha256 = {served.sha256}\n"
+        )
 
 
 def replace_in_file(old: str, new: str, file: Path, encoding: str = "utf-8") -> None:
@@ -129,36 +187,7 @@ def replace_hash(s: str) -> str:
 
 
 def replace_digest(s: str) -> str:
-    return re.sub(r"\b[0-9a-f]{40}:[0-9]{1,3}\b", "<DIGEST>", s)
-
-
-async def get_buck2_re_use_case(buck: Buck) -> str:
-    key = "buck2_re_client.override_use_case"
-    config = (
-        await buck.audit_config("--reuse-current-config", "--style=json", key)
-    ).get_json()
-    use_case = config.get(key)
-    if use_case is not None:
-        return use_case
-
-    # The test harness's extra external config is part of normal Buck config
-    # parsing, but `override_use_case` is filtered out of DICE-backed config
-    # reads, so `audit config --reuse-current-config` may not report it. We need
-    # to manually check the test config here.
-    extra_config_path = buck.get_env_var("BUCK2_TEST_EXTRA_EXTERNAL_CONFIG")
-    if extra_config_path is not None:
-        use_case = _get_buck2_re_use_case_from_config_file(Path(extra_config_path))
-        if use_case is not None:
-            return use_case
-
-    return "buck2-default"
-
-
-def _get_buck2_re_use_case_from_config_file(path: Path) -> typing.Optional[str]:
-    parser = ConfigParser(strict=False)
-    if not parser.read(path):
-        return None
-    return parser.get("buck2_re_client", "override_use_case", fallback=None)
+    return re.sub(r"\b(?:[0-9a-f]{40}|[0-9a-f]{64}):[0-9]+\b", "<DIGEST>", s)
 
 
 def read_invocation_record(record: Path) -> InvocationRecord:

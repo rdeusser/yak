@@ -1,14 +1,8 @@
 # Buck2 Prelude
 
-This repo contains a copy of the Buck2 Prelude, which is often included as a
-submodule with a Buck2 project. To obtain a copy of this repo, and set up other
-details of a Buck2, you should usually run `buck2 init --git`. Most information
-can be found on the main
-[Buck2 GitHub project](https://github.com/facebook/buck2).
-
-Pull requests and issues should be raised at
-[facebook/buck2](https://github.com/facebook/buck2) as that project is more
-closely monitored and contains CI checks.
+The prelude is the library of Starlark rules and toolchains that Buck2 embeds.
+It is developed in <https://github.com/rdeusser/buck2> under the `prelude/`
+directory, and issues and pull requests belong there.
 
 ## License
 

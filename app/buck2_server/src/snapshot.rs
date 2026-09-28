@@ -19,7 +19,6 @@ use std::time::Instant;
 
 use buck2_core::io_counters::IoCounterKey;
 use buck2_error::BuckErrorContext;
-use buck2_events::EventSinkStats;
 use buck2_execute::dep_file_state::DepFileDbSize;
 use buck2_execute::dep_file_state::DepFileStore;
 use buck2_execute::re::manager::ReConnectionManager;
@@ -213,7 +212,6 @@ impl SnapshotCollector {
         self.add_io_metrics(&mut snapshot);
         self.add_dice_metrics(&mut snapshot);
         self.add_materializer_metrics(&mut snapshot);
-        self.add_sink_metrics(&mut snapshot);
         self.add_net_io_metrics(&mut snapshot);
         self.add_cpu_usage(&mut snapshot);
         self.add_memory_metrics(&mut snapshot).await;
@@ -286,10 +284,8 @@ impl SnapshotCollector {
                 IoCounterKey::Hardlink => &mut snapshot.io_in_flight_hardlink,
                 IoCounterKey::MkDir => &mut snapshot.io_in_flight_mk_dir,
                 IoCounterKey::ReadDir => &mut snapshot.io_in_flight_read_dir,
-                IoCounterKey::ReadDirEden => &mut snapshot.io_in_flight_read_dir_eden,
                 IoCounterKey::RmDir => &mut snapshot.io_in_flight_rm_dir,
                 IoCounterKey::RmDirAll => &mut snapshot.io_in_flight_rm_dir_all,
-                IoCounterKey::StatEden => &mut snapshot.io_in_flight_stat_eden,
                 IoCounterKey::Chmod => &mut snapshot.io_in_flight_chmod,
                 IoCounterKey::ReadLink => &mut snapshot.io_in_flight_read_link,
                 IoCounterKey::Remove => &mut snapshot.io_in_flight_remove,
@@ -297,7 +293,6 @@ impl SnapshotCollector {
                 IoCounterKey::Read => &mut snapshot.io_in_flight_read,
                 IoCounterKey::Write => &mut snapshot.io_in_flight_write,
                 IoCounterKey::Canonicalize => &mut snapshot.io_in_flight_canonicalize,
-                IoCounterKey::EdenSettle => &mut snapshot.io_in_flight_eden_settle,
             };
             *pointer = key.get();
         }
@@ -309,11 +304,9 @@ impl SnapshotCollector {
                 IoCounterKey::Hardlink => &mut snapshot.io_hardlink_count,
                 IoCounterKey::MkDir => &mut snapshot.io_mkdir_count,
                 IoCounterKey::ReadDir => &mut snapshot.io_readdir_count,
-                IoCounterKey::ReadDirEden => &mut snapshot.io_readdir_eden_count,
                 IoCounterKey::RmDir => &mut snapshot.io_rmdir_count,
                 IoCounterKey::RmDirAll => &mut snapshot.io_rmdir_all_count,
                 IoCounterKey::Stat => &mut snapshot.io_stat_count,
-                IoCounterKey::StatEden => &mut snapshot.io_stat_eden_count,
                 IoCounterKey::Chmod => &mut snapshot.io_chmod_count,
                 IoCounterKey::ReadLink => &mut snapshot.io_readlink_count,
                 IoCounterKey::Remove => &mut snapshot.io_remove_count,
@@ -321,7 +314,6 @@ impl SnapshotCollector {
                 IoCounterKey::Read => &mut snapshot.io_read_count,
                 IoCounterKey::Write => &mut snapshot.io_write_count,
                 IoCounterKey::Canonicalize => &mut snapshot.io_canonicalize_count,
-                IoCounterKey::EdenSettle => &mut snapshot.io_eden_settle_count,
             };
             *pointer = Some(key.get_finished());
         }
@@ -366,26 +358,6 @@ impl SnapshotCollector {
             snapshot.re_get_digest_expirations_finished_with_error =
                 stats.get_digest_expirations.finished_with_error;
 
-            snapshot.zdb_download_queries = stats.download_stats.zdb.queries;
-            snapshot.zdb_download_bytes = stats.download_stats.zdb.bytes;
-            snapshot.zdb_upload_queries = stats.upload_stats.zdb.queries;
-            snapshot.zdb_upload_bytes = stats.upload_stats.zdb.bytes;
-
-            snapshot.zgateway_download_queries = stats.download_stats.zgateway.queries;
-            snapshot.zgateway_download_bytes = stats.download_stats.zgateway.bytes;
-            snapshot.zgateway_upload_queries = stats.upload_stats.zgateway.queries;
-            snapshot.zgateway_upload_bytes = stats.upload_stats.zgateway.bytes;
-
-            snapshot.manifold_download_queries = stats.download_stats.manifold.queries;
-            snapshot.manifold_download_bytes = stats.download_stats.manifold.bytes;
-            snapshot.manifold_upload_queries = stats.upload_stats.manifold.queries;
-            snapshot.manifold_upload_bytes = stats.upload_stats.manifold.bytes;
-
-            snapshot.hedwig_download_queries = stats.download_stats.hedwig.queries;
-            snapshot.hedwig_download_bytes = stats.download_stats.hedwig.bytes;
-            snapshot.hedwig_upload_queries = stats.upload_stats.hedwig.queries;
-            snapshot.hedwig_upload_bytes = stats.upload_stats.hedwig.bytes;
-
             snapshot.local_cache_hits_files = stats.local_cache.hits_files;
             snapshot.local_cache_hits_bytes = stats.local_cache.hits_bytes;
             snapshot.local_cache_misses_files = stats.local_cache.misses_files;
@@ -419,38 +391,6 @@ impl SnapshotCollector {
 
     fn add_materializer_metrics(&self, snapshot: &mut buck2_data::Snapshot) {
         self.repo.materializer.add_snapshot_stats(snapshot);
-    }
-
-    fn add_sink_metrics(&self, snapshot: &mut buck2_data::Snapshot) {
-        if let Some(metrics) = self.daemon.scribe_sink.as_ref().map(|sink| sink.stats()) {
-            let EventSinkStats {
-                successes,
-                failures_invalid_request,
-                failures_unauthorized,
-                failures_rate_limited,
-                failures_pushed_back,
-                failures_enqueue_failed,
-                failures_internal_error,
-                failures_timed_out,
-                failures_unknown,
-                buffered,
-                dropped,
-                bytes_written,
-            } = metrics;
-            snapshot.sink_successes = Some(successes);
-            snapshot.sink_failures = Some(metrics.failures());
-            snapshot.sink_failures_invalid_request = Some(failures_invalid_request);
-            snapshot.sink_failures_unauthorized = Some(failures_unauthorized);
-            snapshot.sink_failures_rate_limited = Some(failures_rate_limited);
-            snapshot.sink_failures_pushed_back = Some(failures_pushed_back);
-            snapshot.sink_failures_enqueue_failed = Some(failures_enqueue_failed);
-            snapshot.sink_failures_internal_error = Some(failures_internal_error);
-            snapshot.sink_failures_timed_out = Some(failures_timed_out);
-            snapshot.sink_failures_unknown = Some(failures_unknown);
-            snapshot.sink_buffer_depth = Some(buffered);
-            snapshot.sink_dropped = Some(dropped);
-            snapshot.sink_bytes_written = Some(bytes_written);
-        }
     }
 
     fn add_net_io_metrics(&self, snapshot: &mut buck2_data::Snapshot) {
@@ -781,7 +721,7 @@ mod tokio_unstable_smoke {
     //! Self-test that the tokio APIs `add_tokio_runtime_stats` depends on
     //! are available at build time. Every method called below is gated
     //! behind tokio's `cfg(tokio_unstable)` macro — if the
-    //! `tokio_unstable` rustflag in `fbcode/buck2/.cargo/config.toml` is
+    //! `tokio_unstable` rustflag in `.cargo/config.toml` is
     //! ever removed, THIS TEST is the loud, localized failure (instead of
     //! a generic "no method named X found" deep inside snapshot
     //! collection). Also exercises `enable_metrics_poll_time_histogram`

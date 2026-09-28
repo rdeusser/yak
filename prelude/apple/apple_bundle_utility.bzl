@@ -70,7 +70,7 @@ def get_bundle_min_target_version(ctx: AnalysisContext, binary_or_binaries: [dic
     if min_version != None:
         return min_version
 
-    # TODO(T110378109): support default value from SDK `Info.plist`
+    # TODO: support default value from SDK `Info.plist`
     fail("Could not determine min target sdk version for bundle: {}".format(ctx.label))
 
 def get_bundle_resource_processing_options(ctx: AnalysisContext) -> AppleResourceProcessingOptions:

@@ -163,8 +163,7 @@ async fn build(
             "run_args_without_separator",
             RunArgsMissingSeparator.into(),
             quiet: false,
-            deprecation: true,
-            error_on_oss: true,
+            hard_error: true,
         )?;
     }
 
@@ -567,13 +566,11 @@ async fn process_build_result(
 
     let result_reports = ResultReporter::convert(
         artifact_fs,
-        server_ctx.cert_state(),
         ResultReporterOptions {
             return_outputs: response_options.return_outputs,
         },
         &build_result,
-    )
-    .await?;
+    )?;
 
     let serialized_build_report = if build_opts.unstable_print_build_report {
         let build_report_opts = build_report_opts(

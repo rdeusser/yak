@@ -6,16 +6,10 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-# @oss-disable[end= ]: load("@prelude//apple/meta_only:xcode_argsfiles.bzl", "get_meta_specific_xcode_arg_substitutions")
-
-def _get_meta_specific_xcode_arg_substitutions():
-    # @oss-disable[end= ]: return get_meta_specific_xcode_arg_substitutions()
-    return [] # @oss-enable
-
 XCODE_ARGSFILES_SUB_TARGET = "xcode-argsfiles"
 
 XCODE_ARG_SUBSTITUTIONS = [
     (regex("-filter-error=.+"), "-fcolor-diagnostics"),
     (regex("-filter-ignore=.+"), "-fcolor-diagnostics"),
     (regex("-filter-warning=.+"), "-fcolor-diagnostics"),
-] + _get_meta_specific_xcode_arg_substitutions()
+]

@@ -12,7 +12,7 @@
                 "args": [
                     "build",
                     "--bin=buck2",
-                    "--package=cli"
+                    "--package=buck2"
                 ],
                 "env": {
                     // Doesn't work, but has been requested upstream
@@ -26,7 +26,7 @@
             },
             "args": [
                 "build",
-                "fbcode//buck2:buck2"
+                "//:buck2"
             ],
             "cwd": "${workspaceFolder}"
         },

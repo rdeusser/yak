@@ -164,7 +164,7 @@ public class ApkJarBuilder {
 
         // Do not take anything inside a potential META-INF folder, except for some
         // META-INF/services files that we know we need.
-        // TODO(T139016417) This hack is only necessary because we are using an old and deprecated
+        // TODO: This hack is only necessary because we are using an old and deprecated
         // version of this class. We should migrate to Android-Builder instead.
         if (name.startsWith("META-INF/")) {
           if (!isMetaInfFileAllowed(name)) {

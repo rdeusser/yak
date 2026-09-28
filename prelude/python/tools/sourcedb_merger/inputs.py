@@ -6,8 +6,6 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-# pyre-strict
-
 
 import dataclasses
 import json
@@ -78,7 +76,6 @@ def load_targets_and_build_maps_from_json(input_json: object) -> Iterable[Target
             )
         yield TargetEntry(
             target=Target(key),
-            # pyre-fixme[6]: For 1st argument expected `Path` but got `str`.
             build_map=PartialBuildMap.load_from_path(value),
         )
 

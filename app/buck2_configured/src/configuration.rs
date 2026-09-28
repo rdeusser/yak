@@ -165,7 +165,7 @@ async fn compute_platform_configuration_no_label_check(
     target: &TargetLabel,
 ) -> buck2_error::Result<ConfigurationData> {
     ctx
-        // TODO(T198223238): Not supporting platforms being supplied via subtargets for now
+        // TODO: Not supporting platforms being supplied via subtargets for now
         .get_configuration_analysis_result(&ProvidersLabel::default_for(target.dupe()))
         .await?
         .provider_collection()

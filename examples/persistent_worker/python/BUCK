@@ -1,7 +1,5 @@
 load(":defs.bzl", "fetch_python_libraries")
 
-oncall("build_infra")
-
 fetch_python_libraries(
     pkgs = {
         "grpcio": {

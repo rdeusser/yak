@@ -31,7 +31,7 @@ def get_test_frameworks_bundle_parts(ctx: AnalysisContext, swift_support_needed:
     if swift_support_needed or ctx.attrs.swift_testing:
         paths.append(_get_object_from_platform_path(ctx, "Developer/usr/lib/libXCTestSwiftSupport.dylib"))
 
-        # T201426509: Xcode 16 introduces the Swift Testing framework
+        # Xcode 16 introduces the Swift Testing framework
         # that is a load dependency of libXCTestSwiftSupport.dylib
         if xcode_version >= 1600:
             paths.append(_get_object_from_platform_path(ctx, "Developer/Library/Frameworks/Testing.framework"))

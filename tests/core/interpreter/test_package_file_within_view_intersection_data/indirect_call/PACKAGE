@@ -1,0 +1,7 @@
+# `enforce_within_view_intersection()` has to be called from the PACKAGE file
+# itself. `setup_cap` calls it from a `.bzl` file, which buck2 rejects with an
+# error that points at the call in `helper.bzl`.
+
+load(":helper.bzl", "setup_cap")
+
+setup_cap()

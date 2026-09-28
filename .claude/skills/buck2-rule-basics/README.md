@@ -198,7 +198,7 @@ Suggest these resources:
 1. Explore Buck2's prelude for real production rules
 2. Try more complex rules (multiple outputs, custom providers)
 3. Learn BXL for build introspection
-4. Read internal docs for advanced patterns
+4. Read the Buck2 documentation for advanced patterns
 5. Apply learnings to their actual project
 
 ## Maintenance

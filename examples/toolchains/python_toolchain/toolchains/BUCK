@@ -3,8 +3,6 @@ load("@prelude//toolchains:no_toolchain.bzl", "no_toolchain")
 load("@prelude//toolchains:python.bzl", "remote_python_toolchain")
 load(":cpython_urls.json", cpython_urls = "value")
 
-oncall("plf")
-
 remote_python_toolchain(
     name = "python",
     cpython_urls = cpython_urls,

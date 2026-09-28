@@ -1406,7 +1406,7 @@ def _add_mixed_library_flags_to_cmd(
         return
 
     for objc_modulemap_pp_info in filter(None, [public_modulemap_pp_info]):
-        # TODO(T99100029): We cannot use VFS overlays to mask this import from
+        # TODO: We cannot use VFS overlays to mask this import from
         # the debugger as they require absolute paths. Instead we will enforce
         # that mixed libraries do not have serialized debugging info and rely on
         # rdeps to serialize the correct paths.

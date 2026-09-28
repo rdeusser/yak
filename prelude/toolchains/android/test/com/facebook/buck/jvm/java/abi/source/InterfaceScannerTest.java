@@ -557,16 +557,16 @@ public class InterfaceScannerTest extends CompilerTreeApiTest {
   public void testIgnoresStaticImportsOfNonStaticTypes() throws IOException {
     withClasspath(
         ImmutableMap.of(
-            "com/facebook/bar/Bar.java",
+            "com/example/bar/Bar.java",
             Joiner.on('\n')
                 .join(
-                    "package com.facebook.bar;",
+                    "package com.example.bar;",
                     "public class Bar {",
                     "  public class Inner { }",
                     "  public static void Inner() {}",
                     "}")));
 
-    findTypeReferences("import static com.facebook.bar.Bar.Inner;", "class Foo { }");
+    findTypeReferences("import static com.example.bar.Bar.Inner;", "class Foo { }");
 
     assertThat(importedTypes, Matchers.empty());
   }
@@ -575,15 +575,15 @@ public class InterfaceScannerTest extends CompilerTreeApiTest {
   public void testDoesNotFindInaccessibleStaticImportsOfNestedTypes() throws IOException {
     withClasspath(
         ImmutableMap.of(
-            "com/facebook/bar/Bar.java",
+            "com/example/bar/Bar.java",
             Joiner.on('\n')
                 .join(
-                    "package com.facebook.bar;",
+                    "package com.example.bar;",
                     "public class Bar {",
                     "  public static void Inner() {}",
                     "private static class Inner { }",
                     "}")));
-    findTypeReferences("import static com.facebook.bar.Bar.Inner;", "class Foo { }");
+    findTypeReferences("import static com.example.bar.Bar.Inner;", "class Foo { }");
 
     assertThat(importedTypes, Matchers.empty());
   }
@@ -617,15 +617,15 @@ public class InterfaceScannerTest extends CompilerTreeApiTest {
   public void testFindsSimpleNameConstants() throws IOException {
     withClasspath(
         ImmutableMap.of(
-            "com/facebook/foo/Constants.java",
+            "com/example/foo/Constants.java",
             Joiner.on('\n')
                 .join(
-                    "package com.facebook.foo;",
+                    "package com.example.foo;",
                     "class Constants {",
                     "  protected static final int CONSTANT = 3;",
                     "}")));
     findTypeReferences(
-        "package com.facebook.foo;",
+        "package com.example.foo;",
         "class Foo extends Constants {",
         "  public static final int CONSTANT2 = CONSTANT;",
         "}");
@@ -638,16 +638,16 @@ public class InterfaceScannerTest extends CompilerTreeApiTest {
   public void testFindsQualifiedNameConstants() throws IOException {
     withClasspath(
         ImmutableMap.of(
-            "com/facebook/foo/Constants.java",
+            "com/example/foo/Constants.java",
             Joiner.on('\n')
                 .join(
-                    "package com.facebook.foo;",
+                    "package com.example.foo;",
                     "public class Constants {",
                     "  public static final int CONSTANT = 3;",
                     "}")));
     findTypeReferences(
         "class Foo {",
-        "  public static final int CONSTANT2 = com.facebook.foo.Constants.CONSTANT;",
+        "  public static final int CONSTANT2 = com.example.foo.Constants.CONSTANT;",
         "}");
 
     assertThat(
@@ -673,15 +673,15 @@ public class InterfaceScannerTest extends CompilerTreeApiTest {
   public void testFindsSimpleNameInstanceConstants() throws IOException {
     withClasspath(
         ImmutableMap.of(
-            "com/facebook/foo/Constants.java",
+            "com/example/foo/Constants.java",
             Joiner.on('\n')
                 .join(
-                    "package com.facebook.foo;",
+                    "package com.example.foo;",
                     "class Constants {",
                     "  protected final int CONSTANT = 3;",
                     "}")));
     findTypeReferences(
-        "package com.facebook.foo;",
+        "package com.example.foo;",
         "class Foo extends Constants {",
         "  public final int CONSTANT2 = CONSTANT;",
         "}");
@@ -693,7 +693,7 @@ public class InterfaceScannerTest extends CompilerTreeApiTest {
   @Test
   public void testIgnoresReferencesToNonexistentTypes() throws IOException {
     findTypeReferencesErrorsOK(
-        "package com.facebook.foo;",
+        "package com.example.foo;",
         "class Foo {",
         "  protected Bar getBar() { return null; };",
         "}");

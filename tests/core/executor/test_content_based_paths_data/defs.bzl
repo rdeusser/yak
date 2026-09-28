@@ -15,8 +15,8 @@
 # submits its own declare_write. Each call runs cleanup_path -> write_file
 # via the immediate-write path, and the cleanup operations race on the
 # shared __<target>__/<content_hash>/ on-disk path. The losing writer's
-# remove then returns ENOENT, which caused the OSS bootstrap
-# "No such file or directory" failures that motivated D101857169.
+# remove then returns ENOENT, which failed the open-source bootstrap
+# build with "No such file or directory".
 #
 # The fixture defines a single shared producer target and a consumer rule
 # that exercises the output; TARGETS.fixture instantiates many consumers
@@ -48,7 +48,7 @@ def _rust_pattern_consumer_impl(ctx):
     # so the consumer references the producer's on-disk content-based path.
     ctx.actions.run(
         cmd_args(
-            "fbpython",
+            "python3",
             "-c",
             "import argparse\np = argparse.ArgumentParser()\np.add_argument('--artifacts', type=argparse.FileType('r'), required=True)\np.add_argument('--out', required=True)\na = p.parse_args()\nopen(a.out, 'w').write(a.artifacts.read())",
             cmd_args(producer_out, format = "--artifacts={}"),
@@ -142,7 +142,7 @@ def _run_with_content_based_path_impl(ctx):
     )
 
     out = ctx.actions.declare_output("out", has_content_based_path = True)
-    args = cmd_args(["fbpython", script, out.as_output(), ctx.attrs.data])
+    args = cmd_args(["python3", script, out.as_output(), ctx.attrs.data])
     args.add(cmd_args(hidden = ctx.attrs.depends_on))
     kwargs = {
         "category": "test_run",
@@ -207,7 +207,7 @@ def _symlink_and_copy_impl(ctx):
     )
 
     out = ctx.actions.declare_output("out", has_content_based_path = True)
-    args = cmd_args(["fbpython", script, symlink, out.as_output()])
+    args = cmd_args(["python3", script, symlink, out.as_output()])
 
     ctx.actions.run(args, category = "test_run")
 
@@ -309,18 +309,18 @@ cas_artifact_with_content_based_path = rule(
 )
 
 def _download_with_content_based_path_impl(ctx: AnalysisContext):
-    url = "https://interncache-all.fbcdn.net/manifold/buck_build_test/tree/buck2_test/http_archive/test.tgz"
-
     if ctx.attrs.defer_download:
-        sha1 = "1a45666759704bf08fc670aa96118a0415c470fc"
-        dummy_sha_256 = None
-    else:
-        # sha256 is not actually supported for deferrable downloads, but we do need to provide either a sha1 or a sha256.
-        # So, this causes us to fall into the "non-deferrable" code path, which is what we want.
+        # The SHA-256 checksum matches the default digest algorithm, so buck2
+        # can defer the download.
         sha1 = None
-        dummy_sha_256 = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        sha256 = ctx.attrs.sha256
+    else:
+        # buck2 cannot defer a download that has only a SHA-1 checksum, which
+        # takes the "non-deferrable" code path.
+        sha1 = ctx.attrs.sha1
+        sha256 = None
 
-    download = ctx.actions.download_file("download", url, sha1 = sha1, sha256 = dummy_sha_256, has_content_based_path = True)
+    download = ctx.actions.download_file("download", ctx.attrs.url, sha1 = sha1, sha256 = sha256, has_content_based_path = True)
     return [
         DefaultInfo(default_output = download),
     ]
@@ -329,6 +329,9 @@ download_with_content_based_path = rule(
     impl = _download_with_content_based_path_impl,
     attrs = {
         "defer_download": attrs.bool(default = True),
+        "sha1": attrs.string(default = read_config("test", "download_sha1", "")),
+        "sha256": attrs.string(default = read_config("test", "download_sha256", "")),
+        "url": attrs.string(default = read_config("test", "download_url", "")),
     },
 )
 
@@ -428,7 +431,7 @@ def _use_projection_with_content_based_path_impl(ctx):
     out = ctx.actions.declare_output("out", has_content_based_path = True)
     projection1 = out.project("projection1.txt")
     projection2 = out.project("projection2.txt")
-    args = cmd_args(["fbpython", script, out.as_output(), projection1.as_output(), projection2.as_output()])
+    args = cmd_args(["python3", script, out.as_output(), projection1.as_output(), projection2.as_output()])
     ctx.actions.run(args, category = "test_run", prefer_remote = True)
 
     copy_script = ctx.actions.write(
@@ -442,11 +445,11 @@ def _use_projection_with_content_based_path_impl(ctx):
     )
 
     first_copy_projection1 = ctx.actions.declare_output("first_copied_projection1.txt", has_content_based_path = True)
-    args = cmd_args(["fbpython", copy_script, projection1, first_copy_projection1.as_output()], hidden = [out])
+    args = cmd_args(["python3", copy_script, projection1, first_copy_projection1.as_output()], hidden = [out])
     ctx.actions.run(args, category = "test_first_copy_projection1", prefer_local = True)
 
     second_copy_projection1 = ctx.actions.declare_output("second_copied_projection1.txt", has_content_based_path = True)
-    args = cmd_args(["fbpython", copy_script, projection1, second_copy_projection1.as_output()], hidden = [first_copy_projection1])
+    args = cmd_args(["python3", copy_script, projection1, second_copy_projection1.as_output()], hidden = [first_copy_projection1])
     ctx.actions.run(args, category = "test_second_copy_projection1", prefer_local = True)
 
     return [DefaultInfo(default_output = second_copy_projection1)]
@@ -486,7 +489,7 @@ def _slow_running_local_action_with_content_based_path_impl(ctx):
     )
 
     out = ctx.actions.declare_output("out", has_content_based_path = True)
-    args = cmd_args(["fbpython", script, out.as_output(), ctx.attrs.data])
+    args = cmd_args(["python3", script, out.as_output(), ctx.attrs.data])
 
     ctx.actions.run(args, category = "test_run", local_only = True)
 
@@ -512,7 +515,7 @@ def _writes_input_to_output_impl(ctx):
     )
 
     out = ctx.actions.declare_output("out", has_content_based_path = True)
-    args = cmd_args(["fbpython", script, out.as_output(), ctx.attrs.input])
+    args = cmd_args(["python3", script, out.as_output(), ctx.attrs.input])
 
     ctx.actions.run(args, category = "test_run", local_only = True)
 
@@ -565,7 +568,7 @@ def _argsfile_with_incorrectly_declared_output_impl(ctx):
         ],
     )
 
-    args = cmd_args(["fbpython", script], hidden = [out.as_output()])
+    args = cmd_args(["python3", script], hidden = [out.as_output()])
 
     ctx.actions.run(args, category = "test_run")
 
@@ -588,7 +591,7 @@ def _incremental_action_impl(ctx) -> list[Provider]:
     )
 
     out = ctx.actions.declare_output("out", has_content_based_path = True)
-    args = cmd_args(["fbpython", script, out.as_output()])
+    args = cmd_args(["python3", script, out.as_output()])
 
     ctx.actions.run(
         args,
@@ -708,7 +711,7 @@ def _run_with_anon_non_cbp_dep_impl(ctx):
 
     # Content-based output
     out = ctx.actions.declare_output("out", has_content_based_path = True)
-    args = cmd_args(["fbpython", script, out.as_output(), "hello world"])
+    args = cmd_args(["python3", script, out.as_output(), "hello world"])
     args.add(cmd_args(hidden = anon_artifact))
 
     ctx.actions.run(
@@ -739,7 +742,7 @@ def _not_eligible_for_dedupe_impl(ctx) -> list[Provider]:
     )
 
     out = ctx.actions.declare_output("out", has_content_based_path = ctx.attrs.run_action_output_has_content_based_path)
-    args = cmd_args(["fbpython", script, out.as_output()])
+    args = cmd_args(["python3", script, out.as_output()])
 
     ctx.actions.run(
         args,
@@ -768,7 +771,7 @@ def _failing_run_with_content_based_path_impl(ctx):
     )
 
     out = ctx.actions.declare_output("out", has_content_based_path = True)
-    args = cmd_args(["fbpython", script, out.as_output()])
+    args = cmd_args(["python3", script, out.as_output()])
 
     ctx.actions.run(
         args,
@@ -794,7 +797,7 @@ def _non_content_based_exec_dep_impl(ctx):
     )
     out = ctx.actions.declare_output("out", has_content_based_path = True)
     ctx.actions.run(
-        cmd_args(["fbpython", script, out.as_output()]),
+        cmd_args(["python3", script, out.as_output()]),
         category = "test_exec_dep",
         # This is ignored for exec deps
         expect_eligible_for_dedupe = True,
@@ -806,7 +809,7 @@ non_content_based_exec_dep = rule(
     attrs = {},
 )
 
-# Fixture for the symlink dedupe-eligibility blind spot (T276504188).
+# Fixture for the symlink dedupe-eligibility blind spot.
 #
 # The consuming `run` action depends on a symlink whose OWN path is
 # content-based, but which points at a NON-content-based (configuration-based)
@@ -843,7 +846,7 @@ def _run_with_symlink_to_non_cbp_input_impl(ctx):
     # target is reachable only *through* the symlink, so the check never sees it.
     out = ctx.actions.declare_output("out", has_content_based_path = True)
     ctx.actions.run(
-        cmd_args(["fbpython", script, symlink, out.as_output()]),
+        cmd_args(["python3", script, symlink, out.as_output()]),
         category = "test_run",
     )
 
@@ -867,7 +870,7 @@ def _uses_exec_dep_impl(ctx):
     )
     out = ctx.actions.declare_output("out", has_content_based_path = True)
     ctx.actions.run(
-        cmd_args(["fbpython", script, dep_out, out.as_output()]),
+        cmd_args(["python3", script, dep_out, out.as_output()]),
         category = "test_uses_exec_dep",
     )
     return [DefaultInfo(default_output = out)]

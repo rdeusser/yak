@@ -6,10 +6,7 @@ load(
     "buck_prebuilt_artifact",
     "buck_prebuilt_jar",
 )
-load("@prelude//toolchains/android/tools/build_rules:fb_native.bzl", "fb_native")
 load("@prelude//utils:source_listing.bzl", "source_listing")
-
-oncall("android_devxx")
 
 source_listing()
 
@@ -64,15 +61,13 @@ buck_java_library(
     ],
 )
 
-fb_native.alias(
+alias(
     name = "zip_scrubber",
     actual = ":zip_scrubber_prebuilt",
     visibility = ["PUBLIC"],
 )
 
 # This is a prebuilt jar so that it can be part of the buck2 bootstrap toolchain.
-# To rebuild the jar, do:
-# `buck build prelude//toolchains/android/src/com/facebook/buck/util/zip:zip_scrubber_main --out xplat/toolchains/android/sdk/src/com/facebook/buck/util/zip/zip_scrubber_main.jar`
 buck_prebuilt_jar(
     name = "zip_scrubber_prebuilt",
     _dex_toolchain = "toolchains//:empty_dex",
@@ -81,13 +76,11 @@ buck_prebuilt_jar(
     visibility = ["PUBLIC"],
 )
 
-# To rebuild the jar and upload it to CAS, do:
-# buck build prelude//toolchains/android/src/com/facebook/buck/util/zip:zip_scrubber_main --show-simple-output | xargs frecli --use-case android_build_infra_tools cas upload-blob
+# Built from `prelude//toolchains/android/src/com/facebook/buck/util/zip:zip_scrubber_main`. To update it, build that target and publish the jar at a new `url`.
 buck_prebuilt_artifact(
     name = "zip_scrubber_main.jar",
-    # @oss-disable[end= ]: cas_digest = "9cec24a193a236fc5acdaff4fae66769f22c56af19c1e9204affad545d0ec7ab:10388458",
-    oss_sha1 = "23c85d8db2958ad502c1cd1eb3bbcd1342c37c7d",
-    oss_url = "https://github.com/facebook/buck2/releases/download/androidToolchain%2F2025-04-03/zip_scrubber_main.jar",
+    sha1 = "23c85d8db2958ad502c1cd1eb3bbcd1342c37c7d",
+    url = "https://github.com/facebook/buck2/releases/download/androidToolchain%2F2025-04-03/zip_scrubber_main.jar",
 )
 
 buck_java_binary(
@@ -112,7 +105,7 @@ buck_java_library(
     ],
 )
 
-fb_native.alias(
+alias(
     name = "jar_builder",
     actual = ":jar_builder_prebuilt",
     visibility = ["PUBLIC"],
@@ -127,13 +120,11 @@ buck_prebuilt_jar(
     visibility = ["PUBLIC"],
 )
 
-# To rebuild the jar and upload it to CAS, do:
-# buck build prelude//toolchains/android/src/com/facebook/buck/util/zip:jar_builder_main --show-simple-output | xargs frecli --use-case android_build_infra_tools cas upload-blob
+# Built from `prelude//toolchains/android/src/com/facebook/buck/util/zip:jar_builder_main`. To update it, build that target and publish the jar at a new `url`.
 buck_prebuilt_artifact(
     name = "jar_builder_main.jar",
-    # @oss-disable[end= ]: cas_digest = "73149775903042a6a323255a7b40862323c8afc35afd582c4b8861ff77d8fbe9:23604183",
-    oss_sha1 = "18f839ebb58babae4ae35900ef33cdf065d0cbc5",
-    oss_url = "https://github.com/facebook/buck2/releases/download/androidToolchain%2F2025-04-03/jar_builder_main.jar",
+    sha1 = "18f839ebb58babae4ae35900ef33cdf065d0cbc5",
+    url = "https://github.com/facebook/buck2/releases/download/androidToolchain%2F2025-04-03/jar_builder_main.jar",
 )
 
 buck_java_binary(

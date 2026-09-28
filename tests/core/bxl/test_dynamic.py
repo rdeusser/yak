@@ -6,16 +6,14 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-# pyre-strict
-
-
 import json
 import re
 from pathlib import Path
 
-from buck2.tests.e2e_util.api.buck import Buck
-from buck2.tests.e2e_util.buck_workspace import buck_test
-from buck2.tests.e2e_util.helper.golden import golden
+from e2e_util.api.buck import Buck
+from e2e_util.asserts import expect_failure
+from e2e_util.buck_workspace import buck_test
+from e2e_util.helper.golden import golden
 
 
 def _replace_hash(s: str) -> str:
@@ -48,16 +46,16 @@ async def test_bxl_dynamic_with_bxl_ctx(buck: Buck) -> None:
     )
 
 
-# Very simple test that the exec_deps/toolchains get propagatd to the dynamic bxl_ctx correctly
-@buck_test(allow_soft_errors=True)
+# A dynamic action cannot read the exec_deps or toolchains of the bxl_ctx that
+# created it (`bxl_acessing_exec_platform` is a hard error).
+@buck_test()
 async def test_bxl_dynamic_execution_resolution(buck: Buck) -> None:
-    result = await buck.bxl(
-        "//:dynamic.bxl:dynamic_test_execution_resolution",
+    await expect_failure(
+        buck.bxl(
+            "//:dynamic.bxl:dynamic_test_execution_resolution",
+        ),
+        stderr_regex="Anon target or dynamic action accesses bxl.Actions.exec_deps",
     )
-
-    outputs = json.loads(result.stdout)
-
-    assert Path(outputs["dynamic"]).read_text() == Path(outputs["root"]).read_text()
 
 
 @buck_test()

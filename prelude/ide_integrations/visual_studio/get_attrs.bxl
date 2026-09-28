@@ -185,7 +185,7 @@ def _get_args(attrs) -> list:
     elif isinstance(args, list):
         return args
     else:
-        # args can be non-list, e.g., ci_skycastle has dict type args. We're not generating vcxproj for them, but still need to get attrs.
+        # args can be a dict on some rules. We don't generate a vcxproj for those, but still need to get attrs.
         return []
 
 def _get_env(attrs) -> dict:

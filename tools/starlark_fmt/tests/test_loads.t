@@ -104,19 +104,19 @@ Buildifier sort order: external (@), then cell-path, then relative (:)
   load(":local.bzl", "local_func")
   result = local_func(path_func(aaa_func()))
 
-External @fbsource loads sorted before cell-path, before relative
-  $ cat <<'EOF' > fbsource_loads.bzl
+External @repo loads sorted before cell-path, before relative
+  $ cat <<'EOF' > repo_loads.bzl
   > load(   ":SOCKETS.bzl"   ,    "SOCKET_A"   )
-  > load(  "@fbsource//tools:defs.bzl"  ,   "tool_func"  )
+  > load(  "@repo//tools:defs.bzl"  ,   "tool_func"  )
   > load(   "//lib:lib.bzl"   ,    "lib_func"   )
   > load(  "@external//ext:ext.bzl"  ,   "ext_func"  )
   > result   =   lib_func(   tool_func(   ext_func(   SOCKET_A(   )   )   )   )
   > EOF
-  $ starlark-fmt fbsource_loads.bzl
-   INFO process_file: fbsource_loads.bzl: formatted
-  $ cat fbsource_loads.bzl
+  $ starlark-fmt repo_loads.bzl
+   INFO process_file: repo_loads.bzl: formatted
+  $ cat repo_loads.bzl
   load("@external//ext:ext.bzl", "ext_func")
-  load("@fbsource//tools:defs.bzl", "tool_func")
+  load("@repo//tools:defs.bzl", "tool_func")
   load("//lib:lib.bzl", "lib_func")
   load(":SOCKETS.bzl", "SOCKET_A")
   result = lib_func(tool_func(ext_func(SOCKET_A())))

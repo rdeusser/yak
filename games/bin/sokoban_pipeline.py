@@ -28,37 +28,28 @@ import sys
 import tempfile
 
 
-def find_buck2_root():
-    """Find the fbcode directory to run buck commands from."""
-    d = os.path.dirname(os.path.abspath(__file__))
-    while d != "/":
-        if os.path.exists(os.path.join(d, "BUCK")) or os.path.exists(
-            os.path.join(d, ".buckconfig")
-        ):
-            # Go up one more to fbcode
-            parent = os.path.dirname(d)
-            if os.path.basename(d) == "buck2" and os.path.basename(parent) == "fbcode":
-                return parent
-        d = os.path.dirname(d)
-    # Fallback
-    return os.environ.get("FBCODE_DIR", "/home/cjhopman/fbsource-3/fbcode")
+# The repository root, two directories above this script (games/bin/).
+REPO_ROOT = os.path.dirname(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+)
+GEN_BIN = "sokoban_gen"
+SOKOBAN_BIN = "sokoban"
 
 
-FBCODE = find_buck2_root()
-GEN_TARGET = "fbcode//buck2/games:sokoban_gen"
-SOKOBAN_TARGET = "fbcode//buck2/games:sokoban"
+def cargo_command(verb, binary):
+    return ["cargo", verb, "--quiet", "--package", "games", "--bin", binary]
 
 
-def run_buck(target, args, capture=True):
-    """Run a buck2 target with args."""
-    cmd = ["buck2", "run", target, "--"] + args
+def run_bin(binary, args, capture=True):
+    """Run a binary of the games package with args."""
+    cmd = cargo_command("run", binary) + ["--"] + args
     if capture:
         result = subprocess.run(
-            cmd, capture_output=True, text=True, cwd=FBCODE, timeout=300
+            cmd, capture_output=True, text=True, cwd=REPO_ROOT, timeout=300
         )
         return result.stdout, result.stderr, result.returncode
     else:
-        result = subprocess.run(cmd, cwd=FBCODE, timeout=300)
+        result = subprocess.run(cmd, cwd=REPO_ROOT, timeout=300)
         return "", "", result.returncode
 
 
@@ -86,8 +77,8 @@ def cmd_generate(args):
 
     # Build first
     subprocess.run(
-        ["buck2", "build", GEN_TARGET],
-        cwd=FBCODE,
+        cargo_command("build", GEN_BIN),
+        cwd=REPO_ROOT,
         capture_output=True,
         timeout=300,
     )
@@ -107,7 +98,7 @@ def cmd_generate(args):
                 "--time-limit",
                 str(args.time_limit),
             ]
-            stdout, stderr, rc = run_buck(GEN_TARGET, gen_args)
+            stdout, stderr, rc = run_bin(GEN_BIN, gen_args)
             if rc != 0 or not stdout.strip():
                 print("FAILED", file=sys.stderr)
                 continue
@@ -188,8 +179,8 @@ def cmd_solve(args):
 
     # Build solver
     subprocess.run(
-        ["buck2", "build", SOKOBAN_TARGET],
-        cwd=FBCODE,
+        cargo_command("build", SOKOBAN_BIN),
+        cwd=REPO_ROOT,
         capture_output=True,
         timeout=300,
     )
@@ -204,8 +195,8 @@ def cmd_solve(args):
     for i, (comment, level_text) in enumerate(levels):
         level_num = i + 1
         print(f"  Level {level_num}: ", end="", flush=True, file=sys.stderr)
-        stdout, stderr, rc = run_buck(
-            SOKOBAN_TARGET,
+        stdout, stderr, rc = run_bin(
+            SOKOBAN_BIN,
             ["--levels-file", tmp.name, "--solve", str(level_num)],
         )
         pushes_match = re.search(r"solved in (\d+) pushes", stderr)

@@ -29,7 +29,6 @@ import com.facebook.buck.jvm.core.BuildTargetValueExtraParams;
 import com.facebook.buck.jvm.java.CompilerOutputPaths;
 import com.facebook.buck.jvm.java.JavacPluginParams;
 import com.facebook.buck.jvm.java.ResolvedJavacPluginProperties;
-import com.facebook.buck.jvm.kotlin.cd.analytics.KotlinCDAnalytics;
 import com.facebook.buck.jvm.kotlin.kotlinc.Kotlinc;
 import com.facebook.buck.step.isolatedsteps.IsolatedStep;
 import com.facebook.buck.step.isolatedsteps.common.CopyIsolatedStep;
@@ -109,7 +108,6 @@ public class KaptStepsBuilder {
       ImmutableMap<AbsPath, ImmutableMap<String, String>> resolvedKotlinCompilerPlugins,
       String kotlinPluginGeneratedOutFullPath,
       String moduleName,
-      KotlinCDAnalytics kotlinCDAnalytics,
       ImmutableSortedSet.Builder<RelPath> sourceWithStubsAndKaptAndKspOutputBuilder,
       ImmutableSortedSet.Builder<RelPath> sourceWithStubsAndKaptOutputBuilder,
       LanguageVersion kotlinLanguageVersion) {
@@ -226,20 +224,11 @@ public class KaptStepsBuilder {
 
     // Use kapt4 or kapt3 base on language version is 1.9 or 2.0+
     if (isKapt4SupportedForCurrentKotlinLanguageVersion(kotlinLanguageVersion)) {
-      // Notice K2 and KAPT4 can no longer use K1 DI plugin, so we no longer pass it
-      // What it miss is the DI plugin's analysis part, which is needed BEFORE annotation
-      // processing, the main KotlincStep still get k2 DI transformation plugin
-      // Because of that, KAPT+DI should be avoided and migrate to KSP+DI ASAP,
-      // and modules who still use KAPT+DI must turn off k2 and fallback to k1 and kapt3.
       annotationProcessingOptionsBuilder.add(getKapt4Flag(kotlinLanguageVersion));
-      annotationProcessingOptionsBuilder.addAll(
-          getOtherPluginsRequiredForKapt4(
-              resolvedKotlinCompilerPlugins, kotlinPluginGeneratedOutFullPath));
-    } else {
-      annotationProcessingOptionsBuilder.addAll(
-          getOtherPluginsRequiredForKapt3(
-              resolvedKotlinCompilerPlugins, kotlinPluginGeneratedOutFullPath));
     }
+    annotationProcessingOptionsBuilder.addAll(
+        getOtherPluginsRequiredForKapt(
+            resolvedKotlinCompilerPlugins, kotlinPluginGeneratedOutFullPath));
 
     steps.add(
         new KaptStep(
@@ -254,7 +243,6 @@ public class KaptStepsBuilder {
             annotationProcessingOptionsBuilder.build(),
             compilerOutputPaths,
             configuredBuckOut,
-            kotlinCDAnalytics,
             kotlinLanguageVersion));
 
     steps.add(
@@ -338,27 +326,10 @@ public class KaptStepsBuilder {
   }
 
   /**
-   * Plugins required to run on the KotlincStep for KAPT3, excluding kapt3 itself. So far it's DI
-   * and Kotlin all-open, because (1) KAPT+DI need DI K1 plugin to do an analysis and codegen before
-   * it, (2) kotlin all-open also need to run before KAPT to avoid crashing during KAPT
+   * Plugins required to run on the KotlincStep for KAPT, excluding KAPT itself. So far just Kotlin
+   * all-open, which needs to run before KAPT to avoid crashing during KAPT.
    */
-  private static ImmutableList<String> getOtherPluginsRequiredForKapt3(
-      ImmutableMap<AbsPath, ImmutableMap<String, String>> resolvedKotlinCompilerPlugins,
-      String outputDir) {
-    return getKotlinCompilerPluginsArgs(
-        resolvedKotlinCompilerPlugins,
-        outputDir,
-        (sourcePath, pluginOptions) ->
-            CompilerPluginUtils.isDiK1PluginForKapt(sourcePath, pluginOptions)
-                || CompilerPluginUtils.isKotlinAllOpenPlugin(sourcePath, pluginOptions));
-  }
-
-  /**
-   * Plugins required to run on the KotlincStep for KAPT4, excluding kapt4 itself. So far just
-   * Kotlin all-open. Notice DI K2 plugin only kept the transform functionality, which is only
-   * useful in main KotlincStep, no need to run on KAPT KotlincStep.
-   */
-  private static ImmutableList<String> getOtherPluginsRequiredForKapt4(
+  static ImmutableList<String> getOtherPluginsRequiredForKapt(
       ImmutableMap<AbsPath, ImmutableMap<String, String>> resolvedKotlinCompilerPlugins,
       String outputDir) {
     return getKotlinCompilerPluginsArgs(

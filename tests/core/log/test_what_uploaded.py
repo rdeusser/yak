@@ -6,14 +6,15 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-# pyre-strict
-
 import csv
 import random
 import string
 
-from buck2.tests.e2e_util.api.buck import Buck
-from buck2.tests.e2e_util.buck_workspace import buck_test
+import pytest
+from e2e_util.api.buck import Buck
+from e2e_util.buck_workspace import buck_test
+
+pytestmark = pytest.mark.remote_execution
 
 
 @buck_test()

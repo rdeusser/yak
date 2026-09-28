@@ -22,9 +22,9 @@ import org.junit.runners.Parameterized;
 public class StandalonePackageTypeTest extends CompilerTreeApiParameterizedTest {
   @Test
   public void testToString() throws IOException {
-    compile(Joiner.on('\n').join("package com.facebook.foo;", "class Foo { }"));
+    compile(Joiner.on('\n').join("package com.example.foo;", "class Foo { }"));
 
     assertEquals(
-        "com.facebook.foo", elements.getPackageElement("com.facebook.foo").asType().toString());
+        "com.example.foo", elements.getPackageElement("com.example.foo").asType().toString());
   }
 }

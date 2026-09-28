@@ -6,17 +6,15 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-# pyre-strict
-
-
 import json
 from pathlib import Path
 from typing import Any
 
-from buck2.tests.e2e_util.api.buck import Buck
-from buck2.tests.e2e_util.buck_workspace import buck_test
-from buck2.tests.e2e_util.helper.golden import golden
-from buck2.tests.e2e_util.helper.utils import replace_digest, replace_hash
+import pytest
+from e2e_util.api.buck import Buck
+from e2e_util.buck_workspace import buck_test
+from e2e_util.helper.golden import golden
+from e2e_util.helper.utils import replace_digest, replace_hash
 
 
 def _sanitize_timing_fields(obj: Any) -> None:
@@ -403,6 +401,7 @@ async def test_streaming_build_report_overwrites_existing_file(
             assert "project_root" in report_data
 
 
+@pytest.mark.remote_execution
 @buck_test(data_dir="re_platform_names")
 async def test_build_report_re_platform_names(buck: Buck, tmp_path: Path) -> None:
     report = tmp_path / "build-report.json"

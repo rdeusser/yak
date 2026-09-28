@@ -16,13 +16,10 @@ mod proxy;
 mod redirect;
 pub mod retries;
 mod stats;
-mod x2p;
 
 pub use client::HttpClient;
 pub use client::HttpClientBuilder;
 pub use client::to_bytes;
-#[cfg(fbcode_build)]
-pub use proxy::ProxyHostAllowlist;
 
 fn http_error_label(status: StatusCode) -> &'static str {
     if status.is_server_error() {
@@ -60,12 +57,6 @@ pub enum HttpError {
         #[source]
         source: http::uri::InvalidUri,
     },
-    #[error("HTTP URI Error: URI parts {uri} is malformed: {source:?}")]
-    InvalidUriParts {
-        uri: String,
-        #[source]
-        source: http::uri::InvalidUriParts,
-    },
     #[error("HTTP: Error building request")]
     BuildRequest(#[source] http::Error),
     #[error("HTTP: Error sending request to {uri}")]
@@ -89,12 +80,6 @@ pub enum HttpError {
     #[error("HTTP: Timed out while making request to URI: {uri} after {duration} seconds.")]
     #[buck2(tier0)]
     Timeout { uri: String, duration: u64 },
-    #[error("While making request to {uri} via x2p")]
-    X2P {
-        uri: String,
-        #[source]
-        source: x2p::X2PAgentError,
-    },
 }
 
 impl From<http::Error> for HttpError {

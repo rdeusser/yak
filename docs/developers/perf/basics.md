@@ -36,15 +36,15 @@ Implications for measurement:
 Any one checkout can only have one daemon running at a time. If an existing daemon is running and
 a new command is issued using a different version/build of buck2, the existing daemon is killed.
 
- - Use `sl worktree` to create additional checkouts
+ - Use `git worktree add` to create additional checkouts
  - If making changes to buck itself, don't run benchmarks in the same checkouts, it will make your
    rebuilds of buck slow.
  - Usually one checkout for all benchmarking is enough, unless you need persistent daemons
  - Isolation dirs offer some of the same behaviors but are not recommended because they split the
    remote action cache.
 
-The first build in any checkout should normally be thrown out as it may need to populate kernel and
-Eden IO caches.
+The first build in any checkout should normally be thrown out as it may need to populate kernel IO
+caches.
 
 ## Metrics
 
@@ -72,15 +72,13 @@ Choosing the right workload means higher SNR and faster results. *Typically:*
 Additionally: `-v0`, `--console=none`, and `--no-buckd` helps reduce variance. Event log is still
 produced.
 
-See `recommended_targets.fb.md` for recommended targets at Meta.
-
 This is not to the exclusion of anything else, other workloads may be appropriate depending on what
 you're doing.
 
 ## Daemon management
 
-Builds of buck2 at Meta are statically linked, have debug symbols, and use jemalloc as the allocator
-except on Windows.
+Cargo builds of buck2 use jemalloc as the allocator on Linux and macOS and mimalloc on Windows. The
+`release-symbols` profile in `Cargo.toml` adds debug symbols to a release build.
 
 ```sh
 # Start a daemon if not yet started
@@ -101,6 +99,3 @@ buck2 kill
 - [benchmarking.md](benchmarking.md) — making measurements meaningful
 - [memory_regression_hunting.md](memory_regression_hunting.md) — comparing two binaries
 - [scripts/](scripts/) — runnable tooling that wraps the recipes above
-- `stackstoscuba.fb.md` - for uploading a profile to Scuba so that a human can look at it
-  (Meta-only)
-- `ci.fb.md` - for profiling in CI jobs (Meta-only, mostly human-only)

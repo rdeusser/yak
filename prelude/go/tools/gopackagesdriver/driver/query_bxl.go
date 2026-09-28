@@ -53,7 +53,7 @@ func queryBXL(
 		if errors.As(err, &ee) {
 			// Create ad-hoc package with information about the error
 			// This is likely will be done inside BXL
-			// once  https://fburl.com/workplace/q79a59rn implemented
+			// once BXL reports action errors in structured form
 			actionErrors := retriveActionErrors(ee.Stderr)
 			if len(actionErrors) > 0 {
 				slog.Warn("failed to query BXL, but we have action errors", "err", err)

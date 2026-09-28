@@ -1,0 +1,3 @@
+# Replaces the default `within_view` without opting in, so the cap from
+# `root//intersect/PACKAGE` still applies.
+package(inherit = False, within_view = ["PUBLIC"])

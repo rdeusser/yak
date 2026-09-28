@@ -9,8 +9,8 @@
  */
 
 /// Buck2 having full control over how FS IO works is beneficial for implementing
-/// IO counters and retry policies that are optimized for Buck2 and the EdenFS
-/// virtualized file system.
+/// IO counters and retry policies that are optimized for Buck2 and virtualized
+/// file systems.
 use std::env;
 use std::fs;
 use std::fs::File;
@@ -100,7 +100,6 @@ where
             original_ref.display(),
             link_ref.display(),
         ))
-        .check_eden(link_ref)
     })
 }
 
@@ -184,7 +183,7 @@ fn symlink_impl(original: &Path, link: &AbsPath) -> Result<(), IoError> {
         Err(e) if e.kind() != ErrorKind::NotFound => Err(IoError::new(e)),
         _ => {
             // Either file or not existent. Default to file.
-            // TODO(T144443238): This will cause issues if the file type turns out to be directory, fix this
+            // TODO: This will cause issues if the file type turns out to be directory, fix this
             permission_check(std::os::windows::fs::symlink_file(&target_canonical, link))
         }
     }
@@ -354,14 +353,11 @@ pub fn copy<P: AsRef<AbsPath>, Q: AsRef<AbsPath>>(from: P, to: Q) -> Result<u64,
         )
     })
     .map_err(|e| {
-        IoError::new(e)
-            .context(format!(
-                "copy(from={}, to={})",
-                from_ref.display(),
-                to_ref.display(),
-            ))
-            .check_eden(from_ref)
-            .check_eden(to_ref)
+        IoError::new(e).context(format!(
+            "copy(from={}, to={})",
+            from_ref.display(),
+            to_ref.display(),
+        ))
     })
 }
 
@@ -382,14 +378,11 @@ pub fn rename<P: AsRef<AbsPath>, Q: AsRef<AbsPath>>(from: P, to: Q) -> Result<()
         )
     })
     .map_err(|e| {
-        IoError::new(e)
-            .context(format!(
-                "rename(from={}, to={})",
-                from_ref.display(),
-                to_ref.display()
-            ))
-            .check_eden(from_ref)
-            .check_eden(to_ref)
+        IoError::new(e).context(format!(
+            "rename(from={}, to={})",
+            from_ref.display(),
+            to_ref.display()
+        ))
     })
 }
 
@@ -436,9 +429,7 @@ pub fn set_permissions<P: AsRef<AbsPath>>(path: P, perm: fs::Permissions) -> Res
     let _guard = IoCounterKey::Chmod.guard();
     with_retries(|| fs::set_permissions(path.as_ref().as_maybe_relativized(), perm.clone()))
         .map_err(|e| {
-            IoError::new(e)
-                .context(format!("set_permissions({}, _)", path.as_ref().display()))
-                .check_eden(path.as_ref())
+            IoError::new(e).context(format!("set_permissions({}, _)", path.as_ref().display()))
         })
 }
 

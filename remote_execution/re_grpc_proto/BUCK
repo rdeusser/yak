@@ -1,0 +1,13 @@
+load("//build_defs:proto.bzl", "rust_protobuf_library")
+
+rust_protobuf_library(
+    name = "re_grpc_proto",
+    srcs = glob(["src/**/*.rs"]),
+    build_script = "build.rs",
+    protos = glob(["proto/**/*.proto"]),
+    deps = [
+        "//app/buck2_proto_serde:buck2_proto_serde",
+        "//third-party/rust:prost-types",
+        "//third-party/rust:serde",
+    ],
+)

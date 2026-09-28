@@ -6,8 +6,6 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-# pyre-strict
-
 DEFAULT_OPERATION_TIMEOUT = 10
 
 # Simulator boot is an expensive command and can take a long time to complete

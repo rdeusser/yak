@@ -519,9 +519,9 @@ fn test_parse_go_errorformat_patterns() {
     let error_format = split_lines(error_format);
 
     let error_text = r#"
-fbcode/neteng/vending_machine/bin/spy/semlock.go:158:93: not enough arguments in call to vmtask.CreateTaskWithClient
-    have (*"facebook/task".Task, string, "facebook/task".TaskServiceClient)
-    want ("context".Context, *"facebook/task".Task, string, "facebook/task".TaskServiceClient)
+src/cmd/spy/semlock.go:158:93: not enough arguments in call to vmtask.CreateTaskWithClient
+    have (*"example/task".Task, string, "example/task".TaskServiceClient)
+    want ("context".Context, *"example/task".Task, string, "example/task".TaskServiceClient)
 "#;
     let lines = split_lines(error_text);
 
@@ -530,24 +530,21 @@ fbcode/neteng/vending_machine/bin/spy/semlock.go:158:93: not enough arguments in
     assert_eq!(entries.len(), 1);
     let entry = &entries[0];
 
-    assert_eq!(
-        entry.filename,
-        Some("fbcode/neteng/vending_machine/bin/spy/semlock.go".to_owned())
-    );
+    assert_eq!(entry.filename, Some("src/cmd/spy/semlock.go".to_owned()));
     assert_eq!(entry.lnum, Some(158));
     assert_eq!(entry.end_lnum, None);
     assert_eq!(entry.col, Some(93));
     assert_eq!(entry.end_col, None);
     assert_eq!(
         entry.message,
-        Some("not enough arguments in call to vmtask.CreateTaskWithClient\nhave (*\"facebook/task\".Task, string, \"facebook/task\".TaskServiceClient)\nwant (\"context\".Context, *\"facebook/task\".Task, string, \"facebook/task\".TaskServiceClient)".to_owned())
+        Some("not enough arguments in call to vmtask.CreateTaskWithClient\nhave (*\"example/task\".Task, string, \"example/task\".TaskServiceClient)\nwant (\"context\".Context, *\"example/task\".Task, string, \"example/task\".TaskServiceClient)".to_owned())
     );
     assert_eq!(entry.error_type, Some("A".to_owned()));
     assert_eq!(entry.error_number, None);
 
     let error_text2 = r#"
-fbcode/security/duo-2fac/pam_duo.go:26:43: undefined: pam.Style
-fbcode/security/duo-2fac/pam_duo.go:28:11: undefined: pam.PromptEchoOn
+src/auth/pam_duo.go:26:43: undefined: pam.Style
+src/auth/pam_duo.go:28:11: undefined: pam.PromptEchoOn
 "#;
     let lines2 = split_lines(error_text2);
 
@@ -557,10 +554,7 @@ fbcode/security/duo-2fac/pam_duo.go:28:11: undefined: pam.PromptEchoOn
 
     // First error
     let entry2_1 = &entries2[0];
-    assert_eq!(
-        entry2_1.filename,
-        Some("fbcode/security/duo-2fac/pam_duo.go".to_owned())
-    );
+    assert_eq!(entry2_1.filename, Some("src/auth/pam_duo.go".to_owned()));
     assert_eq!(entry2_1.lnum, Some(26));
     assert_eq!(entry2_1.end_lnum, None);
     assert_eq!(entry2_1.col, Some(43));
@@ -571,10 +565,7 @@ fbcode/security/duo-2fac/pam_duo.go:28:11: undefined: pam.PromptEchoOn
 
     // Second error
     let entry2_2 = &entries2[1];
-    assert_eq!(
-        entry2_2.filename,
-        Some("fbcode/security/duo-2fac/pam_duo.go".to_owned())
-    );
+    assert_eq!(entry2_2.filename, Some("src/auth/pam_duo.go".to_owned()));
     assert_eq!(entry2_2.lnum, Some(28));
     assert_eq!(entry2_2.end_lnum, None);
     assert_eq!(entry2_2.col, Some(11));

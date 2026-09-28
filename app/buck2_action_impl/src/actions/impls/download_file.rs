@@ -67,7 +67,6 @@ pub(crate) struct UnregisteredDownloadFileAction {
     checksum: Checksum,
     size_bytes: Option<u64>,
     url: Arc<str>,
-    vpnless_url: Option<Arc<str>>,
     is_executable: bool,
 }
 
@@ -76,14 +75,12 @@ impl UnregisteredDownloadFileAction {
         checksum: Checksum,
         size_bytes: Option<u64>,
         url: Arc<str>,
-        vpnless_url: Option<Arc<str>>,
         is_executable: bool,
     ) -> Self {
         Self {
             checksum,
             size_bytes,
             url,
-            vpnless_url,
             is_executable,
         }
     }
@@ -128,14 +125,6 @@ impl DownloadFileAction {
             .expect("a single artifact by construction")
     }
 
-    fn url(&self, client: &HttpClient) -> &Arc<str> {
-        if client.supports_vpnless() {
-            self.inner.vpnless_url.as_ref().unwrap_or(&self.inner.url)
-        } else {
-            &self.inner.url
-        }
-    }
-
     /// Try to produce a FileMetadata without downloading the file.
     async fn declared_metadata(
         &self,
@@ -164,7 +153,7 @@ impl DownloadFileAction {
         let size = match self.inner.size_bytes {
             Some(s) => Some(s),
             None => {
-                let url = self.url(client);
+                let url = &self.inner.url;
                 let head = http_head(client, url)
                     .await
                     .map_err(|e| e.tag([ErrorTag::DownloadFileHeadRequest]))?;
@@ -273,7 +262,7 @@ impl Action for DownloadFileAction {
         }
 
         let client = ctx.http_client();
-        let url = self.url(&client);
+        let url = &self.inner.url;
 
         let (value, execution_kind) = {
             match self.declared_metadata(&client, ctx.digest_config()).await? {

@@ -6,13 +6,11 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-# pyre-strict
-
 import typing
 from pathlib import Path
 
-from buck2.tests.e2e_util.api.buck import Buck
-from buck2.tests.e2e_util.buck_workspace import buck_test
+from e2e_util.api.buck import Buck
+from e2e_util.buck_workspace import buck_test
 
 
 def complete_test(
@@ -57,7 +55,7 @@ complete_test(
 complete_test(
     name="test_provides_targets_in_nested_cell",
     input="buck2:",
-    expected=["buck2:buck2", "buck2:symlinked_buck2_and_tpx"],
+    expected=["buck2:buck2", "buck2:symlinked_buck2_and_runner"],
     cwd="cell1",
 )
 
@@ -77,14 +75,14 @@ complete_test(
 complete_test(
     name="test_completes_other_cell_from_subdirectory",
     input="cell1//buck2:",
-    expected=["cell1//buck2:buck2", "cell1//buck2:symlinked_buck2_and_tpx"],
+    expected=["cell1//buck2:buck2", "cell1//buck2:symlinked_buck2_and_runner"],
     cwd="baredir0",
 )
 
 complete_test(
     name="test_expands_cell_to_canonical_with_colon",
     input="cell1/buck2:",
-    expected=["cell1//buck2:buck2", "cell1//buck2:symlinked_buck2_and_tpx"],
+    expected=["cell1//buck2:buck2", "cell1//buck2:symlinked_buck2_and_runner"],
 )
 
 complete_test(
@@ -96,14 +94,17 @@ complete_test(
 complete_test(
     name="test_expands_target_for_bare_colon",
     input=":",
-    expected=[":buck2", ":symlinked_buck2_and_tpx"],
+    expected=[":buck2", ":symlinked_buck2_and_runner"],
     cwd="cell1/buck2",
 )
 
 complete_test(
     name="test_target_completion_with_aliased_cells",
     input="cell1_alias//buck2:",
-    expected=["cell1_alias//buck2:buck2", "cell1_alias//buck2:symlinked_buck2_and_tpx"],
+    expected=[
+        "cell1_alias//buck2:buck2",
+        "cell1_alias//buck2:symlinked_buck2_and_runner",
+    ],
     cwd="cell1/buck2/fake_prelude",
 )
 

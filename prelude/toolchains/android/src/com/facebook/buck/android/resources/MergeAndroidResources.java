@@ -339,8 +339,7 @@ public class MergeAndroidResources {
         RDotTxtEntry resource = linesInSymbolsFile.get(index);
 
         if (uberRDotTxtIds.isPresent()) {
-          // TODO(natthu): Make this a hard error once we fix fbandroid and remove all unreferenced
-          // non-english strings.
+          // TODO(natthu): Make this a hard error once no app has unreferenced non-English strings.
           Objects.requireNonNull(finalIds);
           if (!finalIds.containsKey(resource)) {
             LOG.debug("Cannot find resource '%s' in the uber R.txt.", resource);

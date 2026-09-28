@@ -74,14 +74,13 @@ public class ActionMetadataSerializerTest {
   private static Map<Path, String> createPreviousDigest() {
     Map<Path, String> previousDigest = new HashMap<>();
     previousDigest.put(
-        Paths.get("xplat/toolchains/android/sdk/third-party/java/kotlin/2.0.0/trove4j.jar"),
+        Paths.get("third-party/kotlin/2.0.0/trove4j.jar"),
         "3eb9d0002a9e400709df1aec6e4f4d148ffc32beba871b55aad26287e5ff7606:572985");
     previousDigest.put(
-        Paths.get("xplat/toolchains/android/sdk/third-party/java/kotlin/2.0.0/kotlin-stdlib.jar"),
+        Paths.get("third-party/kotlin/2.0.0/kotlin-stdlib.jar"),
         "cfb3956679c288345070ac45b032f1998ef4b76475560804f9c6f32c9b5fc5c4:1729731");
     previousDigest.put(
-        Paths.get(
-            "xplat/toolchains/android/sdk/third-party/java/kotlin/2.0.0/kotlin-script-runtime.jar"),
+        Paths.get("third-party/kotlin/2.0.0/kotlin-script-runtime.jar"),
         "6c42020b21b0f11ae847392de86c304bbcd5d3b445914d43514052c15c170473:43404");
     return previousDigest;
   }
@@ -89,14 +88,13 @@ public class ActionMetadataSerializerTest {
   private static Map<Path, String> createCurrentDigest() {
     Map<Path, String> previousDigest = new HashMap<>();
     previousDigest.put(
-        Paths.get("xplat/toolchains/android/sdk/third-party/java/kotlin/2.0.0/trove4j.jar"),
+        Paths.get("third-party/kotlin/2.0.0/trove4j.jar"),
         "1191f75f1a9440a13b88ab83c8f1614ed7ba70b2bdca5d7266c154fa292f6630:3056424");
     previousDigest.put(
-        Paths.get("xplat/toolchains/android/sdk/third-party/java/kotlin/2.0.0/kotlin-compiler.jar"),
+        Paths.get("third-party/kotlin/2.0.0/kotlin-compiler.jar"),
         "cfb3956679c288345070ac45b032f1998ef4b76475560804f9c6f32c9b5fc5c4:1729731");
     previousDigest.put(
-        Paths.get(
-            "xplat/toolchains/android/sdk/third-party/java/kotlin/2.0.0/kotlin-script-runtime.jar"),
+        Paths.get("third-party/kotlin/2.0.0/kotlin-script-runtime.jar"),
         "6c42020b21b0f11ae847392de86c304bbcd5d3b445914d43514052c15c170473:43404");
     return previousDigest;
   }

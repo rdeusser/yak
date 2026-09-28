@@ -6,25 +6,17 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-# pyre-strict
-
-
 import json
 from typing import Any
 
-from buck2.tests.e2e_util.api.buck import Buck
-from buck2.tests.e2e_util.buck_workspace import buck_test
+from e2e_util.api.buck import Buck
+from e2e_util.buck_workspace import buck_test
 
 
 async def _log_download_method(buck: Buck) -> Any:
     result = await buck.status()
     config = json.loads(result.stdout)["daemon_constraints"]["daemon_startup_config"]
     return json.loads(config)["log_download_method"]
-
-
-def _write_buckconfig_log_use_manifold(buck: Buck, value: bool) -> None:
-    with open(buck.cwd / ".buckconfig", "a") as f:
-        f.write(f"\n[buck2]\nlog_use_manifold = {str(value).lower()}\n")
 
 
 def _write_buckconfig_log_url(buck: Buck, value: str) -> None:
@@ -39,10 +31,9 @@ def _write_home_local_settings(buck: Buck, settings: str) -> None:
 
 @buck_test()
 async def test_settings_override_buckconfig(buck: Buck) -> None:
-    _write_buckconfig_log_use_manifold(buck, True)
     _write_buckconfig_log_url(buck, "abc.com")
     (buck.cwd / ".bucksettings.toml").write_text(
-        '[log_download]\nlog_use_manifold = false\nlog_url = "test.com"\n'
+        '[log_download]\nlog_url = "test.com"\n'
     )
 
     await buck.server()
@@ -50,19 +41,7 @@ async def test_settings_override_buckconfig(buck: Buck) -> None:
 
 
 @buck_test()
-async def test_log_use_manifold_fallback_to_buckconfig(buck: Buck) -> None:
-    _write_buckconfig_log_use_manifold(buck, True)
-
-    await buck.server()
-    assert await _log_download_method(buck) == "Manifold"
-
-
-@buck_test()
 async def test_log_url_fallback_to_buckconfig(buck: Buck) -> None:
-    (buck.cwd / ".bucksettings.toml").write_text(
-        "[log_download]\nlog_use_manifold = false\n"
-    )
-
     await buck.server()
     assert await _log_download_method(buck) == "None"
 
@@ -75,17 +54,16 @@ async def test_log_url_fallback_to_buckconfig(buck: Buck) -> None:
 @buck_test()
 async def test_home_local_settings_override_repo(buck: Buck) -> None:
     (buck.cwd / ".bucksettings.toml").write_text(
-        "[log_download]\nlog_use_manifold = false\n"
+        '[log_download]\nlog_url = "repo_root"\n'
     )
-    _write_home_local_settings(buck, "[log_download]\nlog_use_manifold = true\n")
+    _write_home_local_settings(buck, '[log_download]\nlog_url = "home_local"\n')
 
     await buck.server()
-    assert await _log_download_method(buck) == "Manifold"
+    assert await _log_download_method(buck) == {"Curl": "home_local"}
 
 
 @buck_test()
 async def test_repo_local_settings_override_repo_and_home_local(buck: Buck) -> None:
-    _write_buckconfig_log_use_manifold(buck, False)
     (buck.cwd / ".bucksettings.toml").write_text(
         '[log_download]\nlog_url = "repo_root"\n'
     )
@@ -100,14 +78,12 @@ async def test_repo_local_settings_override_repo_and_home_local(buck: Buck) -> N
 
 @buck_test()
 async def test_cli_settings_override_local(buck: Buck) -> None:
-    _write_home_local_settings(buck, "[log_download]\nlog_use_manifold = true\n")
+    _write_home_local_settings(buck, '[log_download]\nlog_url = "home_local"\n')
     (buck.cwd / ".bucksettings.local.toml").write_text(
         '[log_download]\nlog_url = "repo_local"\n'
     )
 
     await buck.server(
-        "--setting",
-        "log_download.log_use_manifold=false",
         "--setting",
         "log_download.log_url=args",
     )
@@ -118,5 +94,5 @@ async def test_cli_settings_override_local(buck: Buck) -> None:
 async def test_cli_settings_after_mode(buck: Buck) -> None:
     (buck.cwd / "mode").write_text("--verbose=0\n")
 
-    await buck.server("@mode", "--setting", "log_download.log_use_manifold=true")
-    assert await _log_download_method(buck) == "Manifold"
+    await buck.server("@mode", "--setting", "log_download.log_url=args")
+    assert await _log_download_method(buck) == {"Curl": "args"}

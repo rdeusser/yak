@@ -635,7 +635,7 @@ mod tests {
     }
 
     /// A stale file in a *parent* position of the destination must be
-    /// repaired (the T85589819 shape `cleanup_path`'s parent walk exists
+    /// repaired (the case `cleanup_path`'s parent walk exists
     /// for). Statting the destination itself fails with `ENOTDIR` here,
     /// which must route to the repair branch, not out of the writer.
     #[test]

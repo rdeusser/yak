@@ -6,12 +6,10 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-# pyre-strict
-
 import json
 
-from buck2.tests.e2e_util.api.buck import Buck
-from buck2.tests.e2e_util.buck_workspace import buck_test
+from e2e_util.api.buck import Buck
+from e2e_util.buck_workspace import buck_test
 
 
 @buck_test()
@@ -94,7 +92,7 @@ async def test_visibility_cap_change_target_hash(buck: Buck) -> None:
     # `enforce_visibility_intersection()` caps visibility at the PACKAGE level
     # without touching the target's `visibility` attribute (here `PUBLIC`), so
     # without hashing the cap this change would be invisible to the target hash
-    # and thus to target determination. Regression for T279420508.
+    # and thus to target determination.
     with open(buck.cwd / "PACKAGE", "w") as package:
         package.write(
             'package(visibility = ["//foo/..."])\nenforce_visibility_intersection()\n'

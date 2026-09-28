@@ -39,16 +39,15 @@ def get_resources_map(java_toolchain: JavaToolchainInfo, package: str, resources
             resource.short_path,
         )
 
-        # As in v1 (https://fburl.com/code/j2vwny56, https://fburl.com/code/9era0xpz),
-        # if this resource starts with the resource root, relativize and insert it as
-        # is.
+        # As in v1, if this resource starts with the resource root, relativize and
+        # insert it as is.
         if resources_root != None and paths.starts_with(full_resource, resources_root):
             resource_name = paths.relativize(
                 full_resource,
                 resources_root,
             )
             if not resource_name:
-                # Match v1 behavior: https://fburl.com/code/x7zhlz5m
+                # As in v1, a resource at the resource root keeps its short path.
                 resource_name = resource.short_path
         else:
             resource_name = get_src_package(java_toolchain.src_root_prefixes, java_toolchain.src_root_elements, full_resource)

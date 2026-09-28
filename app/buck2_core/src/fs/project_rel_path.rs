@@ -35,14 +35,14 @@
 //! use buck2_fs::paths::relative_path::RelativePath;
 //!
 //! let root = if cfg!(not(windows)) {
-//!     AbsNormPathBuf::from("/usr/local/fbsource/".into())?
+//!     AbsNormPathBuf::from("/usr/local/project/".into())?
 //! } else {
-//!     AbsNormPathBuf::from("C:\\open\\fbsource\\".into())?
+//!     AbsNormPathBuf::from("C:\\open\\project\\".into())?
 //! };
 //! let some_path = if cfg!(not(windows)) {
-//!     AbsNormPath::new("/usr/local/fbsource/buck/BUCK")?
+//!     AbsNormPath::new("/usr/local/project/buck/BUCK")?
 //! } else {
-//!     AbsNormPath::new("c:/open/fbsource/buck/BUCK")?
+//!     AbsNormPath::new("c:/open/project/buck/BUCK")?
 //! };
 //!
 //! let fs = ProjectRoot::new_unchecked(root);

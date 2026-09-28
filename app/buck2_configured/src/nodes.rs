@@ -1336,29 +1336,28 @@ impl ConfiguredTargetNodeCalculationImpl for ConfiguredTargetNodeCalculationInst
                         &reason.cause,
                         &IncompatiblePlatformReasonCause::Dependency(_)
                     ) {
-                        if check_error_on_incompatible_dep(ctx, target.unconfigured_label()).await? {
+                        if check_error_on_incompatible_dep(ctx, target.unconfigured_label()).await?
+                        {
                             return ResultMaybeCompatible::Err(reason.to_err());
                         }
                         soft_error!(
                             "dep_only_incompatible_version_two", reason.to_soft_err(),
                             quiet: false,
-                            error_on_oss: true,
-                            // Log at least one sample per unique package.
-                            low_cardinality_key_for_additional_logview_samples: Some(Box::new(target.unconfigured().pkg())),
+                            hard_error: true,
                         )?;
-                        if let Some(custom_soft_errors) = get_dep_only_incompatible_custom_soft_error(
-                            ctx,
-                            target.unconfigured_label(),
-                        )
-                        .await?
+                        if let Some(custom_soft_errors) =
+                            get_dep_only_incompatible_custom_soft_error(
+                                ctx,
+                                target.unconfigured_label(),
+                            )
+                            .await?
                         {
                             for custom_soft_error in custom_soft_errors {
                                 soft_error!(
                                     &custom_soft_error,
                                     reason.to_soft_err(),
                                     quiet: true,
-                                    task: false,
-                                    error_on_oss: true,
+                                    hard_error: true,
                                 )?;
                             }
                         }

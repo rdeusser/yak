@@ -21,7 +21,6 @@ use serde::Serialize;
 use crate::build::build_report::BuildReportCollector;
 
 /// Maximum size for error content when truncation is enabled (20KB).
-/// This matches the MAX_STRING_BYTES limit used in smart_truncate_event.rs for Scribe logging.
 pub(crate) const MAX_ERROR_CONTENT_BYTES: usize = 20 * 1024;
 
 /// Options for building action errors in build reports.
@@ -76,7 +75,7 @@ struct BuildReportActionSubError {
     remediation: Option<String>,
 }
 
-/// DO NOT UPDATE WITHOUT UPDATING `docs/users/build_observability/build_report.md`!
+/// DO NOT UPDATE WITHOUT UPDATING `website/docs/users/build_observability/build_report.md`!
 #[derive(Debug, Clone, Serialize, PartialOrd, Ord, PartialEq, Eq)]
 pub(crate) struct BuildReportActionError {
     name: BuildReportActionName,

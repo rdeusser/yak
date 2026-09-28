@@ -6,15 +6,18 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-# pyre-strict
-
-
 import sys
 from pathlib import Path
 
-from buck2.tests.e2e_util.api.buck import Buck
-from buck2.tests.e2e_util.buck_workspace import buck_test, env
-from buck2.tests.e2e_util.helper.utils import filter_events, replace_in_file
+import pytest
+from e2e_util.api.buck import Buck
+from e2e_util.buck_workspace import buck_test, env
+from e2e_util.helper.utils import (
+    configure_served_file,
+    filter_events,
+    replace_in_file,
+    serve_file,
+)
 
 
 def watchman_dependency_linux_only() -> bool:
@@ -67,6 +70,7 @@ async def test_modify_dep_materialization(buck: Buck) -> None:
         assert f.read().strip() == "TEXT3"
 
 
+@pytest.mark.remote_execution
 @buck_test(
     data_dir="deferred_materializer_matching_artifact_optimization",
 )
@@ -128,6 +132,7 @@ async def test_cache_directory_cleanup(buck: Buck) -> None:
     assert cache_dir_listing == [incremental_state_dir]
 
 
+@pytest.mark.remote_execution
 @buck_test(
     data_dir="deferred_materializer_matching_artifact_optimization",
 )
@@ -169,20 +174,23 @@ async def test_sqlite_materializer_state_matching_artifact_optimization(
 async def test_download_file_sqlite_matching_artifact_optimization(
     buck: Buck,
 ) -> None:
-    # sqlite materializer state is already enabled
-    target = "root//:download"
-    res = await buck.build(target)
-    # Check output is correctly materialized
-    assert res.get_build_report().output_for_target(target).exists()
+    async with serve_file(b"downloaded by the materializer test\n") as served:
+        configure_served_file(buck, served)
+        # sqlite materializer state is already enabled
+        target = "root//:download"
+        res = await buck.build(target)
+        # Check output is correctly materialized
+        assert res.get_build_report().output_for_target(target).exists()
 
-    await buck.kill()
+        await buck.kill()
 
-    res = await buck.build(target)
-    # Check that materializer did not report any rematerialization
-    assert "already materialized, updating deps only" in res.stderr, res.stderr
-    assert "materialize artifact" not in res.stderr
+        res = await buck.build(target)
+        # Check that materializer did not report any rematerialization
+        assert "already materialized, updating deps only" in res.stderr, res.stderr
+        assert "materialize artifact" not in res.stderr
 
 
+@pytest.mark.remote_execution
 @buck_test(
     data_dir="deferred_materializer_matching_artifact_optimization",
 )
@@ -297,6 +305,7 @@ def disable_sqlite_materializer_state(buck: Buck) -> None:
     )
 
 
+@pytest.mark.remote_execution
 @buck_test(
     data_dir="modify_deferred_materialization_deps",
     skip_for_os=["windows"],  # TODO(marwhal): Fix and enable on Windows

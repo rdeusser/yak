@@ -47,7 +47,7 @@ use crate::transform_format;
 ///
 /// The output is presented as a series of tab-delimited records with the following structure:
 ///
-/// build    fbsource//your:target    local    clang foo.c
+/// build    root//your:target    local    clang foo.c
 ///
 /// 1: The reason for executing a given command. That's either to build or to test.
 ///
@@ -57,10 +57,8 @@ use crate::transform_format;
 ///
 /// 4: Details to reproduce it. For RE, that's the action digest. For local, the command.
 ///
-/// To reproduce an action that ran on RE, use the following command then follow the instructions.
-/// The DIGEST is of the form `hash:size`.
-///
-/// $ frecli cas download-action DIGEST
+/// To reproduce an action that ran on RE, download the action and its inputs by digest with a
+/// client for your remote execution service. The digest is of the form `hash:size`.
 ///
 /// To reproduce an action that ran locally, make sure your working directory is the project root
 /// (if unsure, use `buck2 root --kind project` to find it), then run the command. The command is

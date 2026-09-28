@@ -35,7 +35,7 @@ BUILD_INFO_ATTR = attrs.dict(
     value = attrs.option(attrs.any()),
     sorted = False,
     default = {},
-    doc = "Build info that is passed along here will be late-stamped into a fb_build_info section on the output binary",
+    doc = "Build info that is passed along here will be late-stamped into a build_info section on the output binary",
 )
 
 def _cxx_binary_and_test_attrs():
@@ -145,7 +145,6 @@ cxx_binary = prelude_rule(
         | cxx_common.include_directories_arg()
         | cxx_common.raw_headers_as_headers_mode_arg()
         | cxx_common.runtime_dependency_handling_arg()
-        | cxx_common.use_fbcc_rust_wrapper_arg()
         | cxx_common.use_content_based_paths_arg()
         | {
             "cxx_runtime_type": attrs.option(attrs.enum(CxxRuntimeType), default = None),
@@ -179,8 +178,7 @@ cxx_binary = prelude_rule(
         | buck.contacts_arg()
         | _cxx_binary_and_test_attrs()
     ),
-    # @oss-disable[end= ]: cfg = constraint_overrides.transition,
-    supports_incoming_transition = True, # @oss-enable
+    supports_incoming_transition = True,
 )
 
 cxx_genrule = prelude_rule(
@@ -449,9 +447,7 @@ library_attrs = (
     | apple_common.extra_xcode_sources()
     | apple_common.extra_xcode_files()
     | apple_common.uses_explicit_modules_arg()
-    | apple_common.meta_apple_library_validation_enabled_arg()
     | cxx_common.version_arg()
-    | cxx_common.use_fbcc_rust_wrapper_arg()
     | cxx_common.use_content_based_paths_arg()
     | cxx_common.expect_eligible_for_dedupe_arg()
     | validation_common.attrs_validators_arg()
@@ -717,8 +713,7 @@ cxx_precompiled_header = prelude_rule(
     """,
     further = None,
     attrs = (
-        cxx_common.use_fbcc_rust_wrapper_arg()
-        | {
+        {
             "compile_pch_file": attrs.bool(
                 default = False,
                 doc = """
@@ -853,7 +848,6 @@ cxx_test = prelude_rule(
         | cxx_common.raw_headers_as_headers_mode_arg()
         | cxx_common.include_directories_arg()
         | cxx_common.runtime_dependency_handling_arg()
-        | cxx_common.use_fbcc_rust_wrapper_arg()
         | cxx_common.use_content_based_paths_arg()
         | {
             "args": attrs.list(
@@ -952,8 +946,7 @@ cxx_test = prelude_rule(
         | test_common.attributes()
         | _cxx_binary_and_test_attrs()
     ),
-    # @oss-disable[end= ]: cfg = constraint_overrides.transition,
-    supports_incoming_transition = True, # @oss-enable
+    supports_incoming_transition = True,
 )
 
 cxx_toolchain = prelude_rule(

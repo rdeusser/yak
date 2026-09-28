@@ -8,17 +8,6 @@
  * above-listed licenses.
  */
 
-//----------------------------------------------
-//  Generate command
-//----------------------------------------------
-//
-// When modifying this file, please run the following generate command,
-// and include generated code in your commit
-//
-// fbcode/buck2/prelude/toolchains/android/tools/protobuf/gen.py
-//
-//-----------------------
-
 syntax = "proto3";
 
 option java_multiple_files = true;

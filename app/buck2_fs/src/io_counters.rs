@@ -20,11 +20,9 @@ pub enum IoCounterKey {
     Hardlink,
     MkDir,
     ReadDir,
-    ReadDirEden,
     RmDir,
     RmDirAll,
     Stat,
-    StatEden,
     Chmod,
     ReadLink,
     Remove,
@@ -32,13 +30,9 @@ pub enum IoCounterKey {
     Read,
     Write,
     Canonicalize,
-    EdenSettle,
 }
 
 static IN_PROGRESS: [AtomicU32; IoCounterKey::COUNT] = [
-    AtomicU32::new(0),
-    AtomicU32::new(0),
-    AtomicU32::new(0),
     AtomicU32::new(0),
     AtomicU32::new(0),
     AtomicU32::new(0),
@@ -72,9 +66,6 @@ static FINISHED: [AtomicU32; IoCounterKey::COUNT] = [
     AtomicU32::new(0),
     AtomicU32::new(0),
     AtomicU32::new(0),
-    AtomicU32::new(0),
-    AtomicU32::new(0),
-    AtomicU32::new(0),
 ];
 
 impl IoCounterKey {
@@ -84,11 +75,9 @@ impl IoCounterKey {
         IoCounterKey::Hardlink,
         IoCounterKey::MkDir,
         IoCounterKey::ReadDir,
-        IoCounterKey::ReadDirEden,
         IoCounterKey::RmDir,
         IoCounterKey::RmDirAll,
         IoCounterKey::Stat,
-        IoCounterKey::StatEden,
         IoCounterKey::Chmod,
         IoCounterKey::ReadLink,
         IoCounterKey::Remove,
@@ -96,7 +85,6 @@ impl IoCounterKey {
         IoCounterKey::Read,
         IoCounterKey::Write,
         IoCounterKey::Canonicalize,
-        IoCounterKey::EdenSettle,
     ];
 
     const COUNT: usize = IoCounterKey::ALL.len();

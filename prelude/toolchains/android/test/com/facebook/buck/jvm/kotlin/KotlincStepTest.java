@@ -14,54 +14,141 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 
+import com.facebook.buck.cd.model.java.BuildTargetValue.Type;
+import com.facebook.buck.core.build.execution.context.IsolatedExecutionContext;
 import com.facebook.buck.core.filesystems.AbsPath;
+import com.facebook.buck.core.filesystems.RelPath;
+import com.facebook.buck.jvm.cd.command.kotlin.LanguageVersion;
+import com.facebook.buck.jvm.core.BuildTargetValue;
+import com.facebook.buck.jvm.java.CompilerOutputPaths;
+import com.facebook.buck.jvm.kotlin.kotlinc.Kotlinc;
+import com.facebook.buck.jvm.kotlin.kotlinc.incremental.KotlincMode;
+import com.facebook.buck.step.StepExecutionResult;
+import com.facebook.buck.step.TestExecutionContext;
+import com.facebook.buck.testutil.TemporaryPaths;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSortedSet;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Optional;
+import org.junit.Rule;
 import org.junit.Test;
 
 public class KotlincStepTest {
-  private static final AbsPath TEST_ROOT = AbsPath.of(Paths.get(".").toAbsolutePath().normalize());
+  @Rule public TemporaryPaths tmp = new TemporaryPaths();
 
   @Test
-  public void structuredOptionsIncludeContextAndExplicitEmptyClasspath() {
-    ImmutableList<String> options =
-        KotlincStep.getKosabiApplicabilityPluginOptions(
-            "fbcode//example:target", TEST_ROOT, ImmutableList.of(), Optional.of(path("fbcode")));
+  public void sourceOnlyAbiIsRejected() {
+    KotlincStep step =
+        createStep(Type.SOURCE_ONLY_ABI, new FakeKotlinc(0, ""), false, Optional.empty());
+    IsolatedExecutionContext context = TestExecutionContext.newInstance(tmp.getRoot());
 
-    assertEquals(
-        ImmutableList.of(
-            "-P",
-            "plugin:com.facebook.kotlin.compilerplugins.kosabiapplicability:target-label=fbcode//example:target",
-            "-P",
-            "plugin:com.facebook.kotlin.compilerplugins.kosabiapplicability:source-root="
-                + TEST_ROOT.getPath(),
-            "-P",
-            "plugin:com.facebook.kotlin.compilerplugins.kosabiapplicability:source-root-prefix=fbcode",
-            "-P",
-            "plugin:com.facebook.kotlin.compilerplugins.kosabiapplicability:source-only-abi-classpath="),
-        options);
+    Error error = assertThrows(Error.class, () -> step.getOptions(context, ImmutableList.of()));
+    assertTrue(error.getMessage().contains("Source-only ABI"));
   }
 
   @Test
-  public void structuredOptionsFailClosedWithoutRequiredBuckContext() {
-    IllegalStateException missingPlugin =
-        assertThrows(
-            IllegalStateException.class,
-            () -> KotlincStep.getRequiredKosabiApplicabilityPlugin(ImmutableMap.of()));
-    assertTrue(missingPlugin.getMessage().contains("plugin path is missing"));
+  public void trackingClassUsageRequiresDepTracker() {
+    KotlincStep step = createStep(Type.LIBRARY, new FakeKotlinc(0, ""), true, Optional.empty());
+    IsolatedExecutionContext context = TestExecutionContext.newInstance(tmp.getRoot());
 
-    IllegalStateException missingCellRoot =
+    IllegalStateException error =
         assertThrows(
-            IllegalStateException.class,
-            () ->
-                KotlincStep.getKosabiApplicabilityPluginOptions(
-                    "fbcode//example:target", TEST_ROOT, ImmutableList.of(), Optional.empty()));
-    assertTrue(missingCellRoot.getMessage().contains("cell root path is missing"));
+            IllegalStateException.class, () -> step.getOptions(context, ImmutableList.of()));
+    assertTrue(error.getMessage().contains("track_class_usage_plugin"));
   }
 
-  private static AbsPath path(String relativePath) {
-    return TEST_ROOT.resolve(relativePath);
+  @Test
+  public void trackingClassUsageAddsDepTrackerPlugin() {
+    AbsPath depTracker = tmp.getRoot().resolve("dep-tracker.jar");
+    KotlincStep step =
+        createStep(Type.LIBRARY, new FakeKotlinc(0, ""), true, Optional.of(depTracker));
+    IsolatedExecutionContext context = TestExecutionContext.newInstance(tmp.getRoot());
+
+    ImmutableList<String> options = step.getOptions(context, ImmutableList.of());
+
+    int pluginIndex = options.indexOf("-Xplugin=" + depTracker);
+    assertTrue(pluginIndex >= 0);
+    assertEquals("-P", options.get(pluginIndex + 1));
+    assertTrue(options.get(pluginIndex + 2).startsWith("plugin:buck_deps_tracker:out="));
+  }
+
+  @Test
+  public void failedCompileReturnsStderr() {
+    KotlincStep step =
+        createStep(Type.LIBRARY, new FakeKotlinc(1, "kotlinc stderr\n"), false, Optional.empty());
+    IsolatedExecutionContext context = TestExecutionContext.newInstance(tmp.getRoot());
+
+    StepExecutionResult result = step.executeIsolatedStep(context);
+
+    assertEquals(1, result.getExitCode());
+    assertEquals(Optional.of("kotlinc stderr\n"), result.getStderr());
+  }
+
+  private static KotlincStep createStep(
+      Type targetType, Kotlinc kotlinc, boolean trackClassUsage, Optional<AbsPath> depTracker) {
+    return new KotlincStep(
+        new BuildTargetValue(targetType, "//foo:bar"),
+        Paths.get("classes"),
+        ImmutableSortedSet.of(),
+        Paths.get("srcs.txt"),
+        ImmutableList.of(),
+        ImmutableList.of(),
+        RelPath.get("reports"),
+        kotlinc,
+        ImmutableList.of(),
+        ImmutableList.of(),
+        new CompilerOutputPaths(
+            RelPath.get("classesDir"),
+            RelPath.get("outputJarDirPath"),
+            Optional.empty(),
+            RelPath.get("annotationPath"),
+            RelPath.get("pathToSourcesList"),
+            RelPath.get("workingDirectory"),
+            Optional.empty()),
+        trackClassUsage,
+        RelPath.get("buck-out/v2"),
+        depTracker,
+        KotlincMode.NonIncremental.INSTANCE,
+        new LanguageVersion("2.1"));
+  }
+
+  /** FakeKotlinc writes a fixed message to stderr and returns a fixed exit code. */
+  private static class FakeKotlinc implements Kotlinc {
+    private final int exitCode;
+    private final String stdErr;
+
+    FakeKotlinc(int exitCode, String stdErr) {
+      this.exitCode = exitCode;
+      this.stdErr = stdErr;
+    }
+
+    @Override
+    public int buildWithClasspath(
+        IsolatedExecutionContext context,
+        BuildTargetValue invokingRule,
+        ImmutableList<String> options,
+        ImmutableList<AbsPath> kotlinHomeLibraries,
+        ImmutableSortedSet<RelPath> kotlinSourceFilePaths,
+        Path pathToSrcsList,
+        Optional<Path> workingDirectory,
+        AbsPath ruleCellRoot,
+        KotlincMode mode) {
+      context.getStdErr().print(stdErr);
+      return exitCode;
+    }
+
+    @Override
+    public String getDescription(
+        ImmutableList<String> options,
+        ImmutableSortedSet<RelPath> kotlinSourceFilePaths,
+        Path pathToSrcsList) {
+      return "fakeKotlinc";
+    }
+
+    @Override
+    public String getShortName() {
+      return "fakeKotlinc";
+    }
   }
 }

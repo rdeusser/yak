@@ -176,7 +176,7 @@ def _write_json_with_inputs_rule(ctx: AnalysisContext) -> list[Provider]:
         ["import sys;p_fp=open(sys.argv[1],'r');p=p_fp.read().replace('\"',\"\");i_fp=open(p,'r');i=i_fp.read();o_fp=open(sys.argv[2],'w');o_fp.write(i)"],
         has_content_based_path = False,
     )
-    cmd = cmd_args("fbpython", script, as_json, output.as_output())
+    cmd = cmd_args("python3", script, as_json, output.as_output())
     ctx.actions.run(cmd, category = "cmd")
 
     marker = ctx.actions.declare_output("marker", has_content_based_path = False)

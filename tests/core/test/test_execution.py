@@ -6,13 +6,13 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-# pyre-strict
+import pytest
+from e2e_util.api.buck import Buck
+from e2e_util.buck_workspace import buck_test
+from e2e_util.helper.utils import random_string, read_what_ran
 
-from buck2.tests.e2e_util.api.buck import Buck
-from buck2.tests.e2e_util.buck_workspace import buck_test
-from buck2.tests.e2e_util.helper.utils import random_string, read_what_ran
 
-
+@pytest.mark.remote_execution
 @buck_test()
 async def test_stable_action_digest_with_deterministic_paths(buck: Buck) -> None:
     args = [
@@ -46,30 +46,7 @@ async def test_stable_action_digest_with_deterministic_paths(buck: Buck) -> None
     )
 
 
-@buck_test()
-async def test_stress_runs_have_different_action_digests(buck: Buck) -> None:
-    await buck.test(
-        "-c",
-        "test.local_enabled=false",
-        "-c",
-        "test.remote_enabled=true",
-        "//:test",
-        "--",
-        "--stress-runs",
-        "2",
-    )
-    what_ran = await read_what_ran(buck)
-    test_runs = [entry for entry in what_ran if entry["reason"] == "test.run"]
-    assert len(test_runs) == 2, (
-        f"Expected exactly 2 test.run entries for stress runs, got {len(test_runs)}"
-    )
-
-    digests = [entry["reproducer"]["details"]["digest"] for entry in test_runs]
-    assert digests[0] != digests[1], (
-        f"Stress run action digests should differ but were both: {digests[0]}"
-    )
-
-
+@pytest.mark.remote_execution
 @buck_test()
 async def test_remote_test_execution_cached(buck: Buck) -> None:
     args = [
@@ -93,37 +70,6 @@ async def test_remote_test_execution_cached(buck: Buck) -> None:
     assert len(second_test_runs) == 1, (
         f"Expected exactly one cached test.run entry, got {len(second_test_runs)}"
     )
-
-
-@buck_test()
-async def test_remote_test_execution_not_cached_for_stress_runs(buck: Buck) -> None:
-    args = [
-        "-c",
-        "test.local_enabled=false",
-        "-c",
-        "test.remote_enabled=true",
-        "//:cacheable_test",
-        "--",
-        "--stress-runs",
-        "2",
-    ]
-
-    await buck.test(*args)
-
-    await buck.test(*args)
-    what_ran = await read_what_ran(buck)
-    test_runs = [entry for entry in what_ran if entry["reason"] == "test.run"]
-    assert len(test_runs) == 2, (
-        f"Expected exactly 2 test.run entries for stress runs, got {len(test_runs)}"
-    )
-
-    # Stress runs disable caching — even on the second invocation, both runs
-    # should execute remotely rather than hitting the cache.
-    for entry in test_runs:
-        executor = entry.get("reproducer", {}).get("executor", "")
-        assert executor == "Re", (
-            f"Expected Re executor for stress runs, got: {executor}"
-        )
 
 
 @buck_test()
@@ -154,6 +100,7 @@ async def test_local_test_execution_not_cached(buck: Buck) -> None:
     )
 
 
+@pytest.mark.remote_execution
 @buck_test()
 async def test_remote_test_execution_not_cached_with_no_remote_cache(
     buck: Buck,
@@ -165,35 +112,6 @@ async def test_remote_test_execution_not_cached_with_no_remote_cache(
         "test.remote_enabled=true",
         "--no-remote-cache",
         "//:cacheable_test",
-    ]
-
-    await buck.test(*args)
-
-    await buck.test(*args)
-    second_what_ran = await read_what_ran(buck)
-    second_test_runs = [
-        entry for entry in second_what_ran if entry["reason"] == "test.run"
-    ]
-    assert len(second_test_runs) == 1, (
-        f"Expected exactly one test.run entry, got {len(second_test_runs)}"
-    )
-    assert second_test_runs[0]["reproducer"]["executor"] == "Re", (
-        "Expected test to run remotely, not be cached!"
-    )
-
-
-@buck_test()
-async def test_remote_test_execution_not_cached_with_disable_flag(
-    buck: Buck,
-) -> None:
-    args = [
-        "-c",
-        "test.local_enabled=false",
-        "-c",
-        "test.remote_enabled=true",
-        "//:cacheable_test",
-        "--",
-        "--disable-test-execution-caching",
     ]
 
     await buck.test(*args)

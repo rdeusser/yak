@@ -9,18 +9,18 @@
 
 import json
 
-from buck2.tests.e2e_util.api.buck import Buck
-from buck2.tests.e2e_util.buck_workspace import buck_test
+from e2e_util.api.buck import Buck
+from e2e_util.buck_workspace import buck_test
 
 
-@buck_test(inplace=False)
+@buck_test()
 async def test_buck_config_logging_disabled(buck: Buck) -> None:
     result = await buck.targets("//:")
     assert "starlark_log_buckconfig" not in result.stderr
     assert "starlark_log_all_buckconfigs" not in result.stderr
 
 
-@buck_test(inplace=False)
+@buck_test()
 async def test_buck_config_logging_enabled(buck: Buck) -> None:
     result = await buck.targets("//:", "--config", "buckconfig.log=test.read1")
     lines = [
@@ -42,7 +42,7 @@ async def test_buck_config_logging_enabled(buck: Buck) -> None:
     assert len(lines) == 0
 
 
-@buck_test(inplace=False)
+@buck_test()
 async def test_buck_config_logging_enabled_json(buck: Buck) -> None:
     result = await buck.targets("//:", "--config", "buckconfig.log_json=test.read1")
     lines = [
@@ -64,7 +64,7 @@ async def test_buck_config_logging_enabled_json(buck: Buck) -> None:
     assert len(lines) == 0
 
 
-@buck_test(inplace=False)
+@buck_test()
 async def test_buck_config_logging_all_enabled(buck: Buck) -> None:
     result = await buck.targets(
         "//:",

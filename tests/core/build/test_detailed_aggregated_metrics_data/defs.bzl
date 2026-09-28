@@ -60,7 +60,7 @@ my_rule = rule(
 def _slow_impl(ctx: AnalysisContext) -> list[Provider]:
     out = ctx.actions.declare_output("out", has_content_based_path = False)
     ctx.actions.run(
-        ["fbpython", ctx.attrs.src, out.as_output()],
+        ["python3", ctx.attrs.src, out.as_output()],
         category = "slow",
     )
     return [DefaultInfo(out)]

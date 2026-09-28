@@ -1,4 +1,3 @@
-#!/usr/bin/env fbpython
 # Copyright (c) Meta Platforms, Inc. and affiliates.
 #
 # This source code is dual-licensed under either the MIT license found in the
@@ -7,15 +6,12 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-# pyre-strict
-
-import os
 import uuid
 from asyncio import subprocess
 from pathlib import Path
 from typing import Any, Dict, Iterable, Optional, Tuple
 
-from buck2.tests.e2e_util.api.buck_result import (
+from e2e_util.api.buck_result import (
     AuditConfigResult,
     BuckException,
     BuckResult,
@@ -23,11 +19,11 @@ from buck2.tests.e2e_util.api.buck_result import (
     TargetsResult,
     TestResult,
 )
-from buck2.tests.e2e_util.api.executable import Executable
-from buck2.tests.e2e_util.api.lsp import LspClient
-from buck2.tests.e2e_util.api.process import Process
-from buck2.tests.e2e_util.api.result import R, Result
-from buck2.tests.e2e_util.api.subscribe import SubscribeClient
+from e2e_util.api.executable import Executable
+from e2e_util.api.lsp import LspClient
+from e2e_util.api.process import Process
+from e2e_util.api.result import R, Result
+from e2e_util.api.subscribe import SubscribeClient
 
 
 class Buck(Executable):
@@ -39,22 +35,14 @@ class Buck(Executable):
         encoding: str,
         env: Dict[str, str],
         cwd: Optional[Path] = None,
-        isolation_prefix: Optional[str] = None,
         write_invocation_record: bool = False,
     ) -> None:
         super().__init__(path_to_executable, encoding, env, cwd)
-        self.set_buckd(False)
-        self.isolation_prefix = isolation_prefix
         self.write_invocation_record = write_invocation_record
-
-    def set_buckd(self, toggle: bool) -> None:
-        """
-        Setting buckd env to value of toggle.
-        toggle can be 0 for enabled and 1 for disabled
-        """
-        self._env["NO_BUCKD"] = str(int(toggle))
+        self.isolation_prefix: Optional[str] = None
 
     def set_isolation_prefix(self, isolation_prefix: str) -> None:
+        """Runs later commands with `--isolation-dir <isolation_prefix>`."""
         self.isolation_prefix = isolation_prefix
 
     def _get_cwd(self, rel_cwd: Optional[Path]) -> Path:
@@ -259,6 +247,8 @@ class Buck(Executable):
         created with the test command and any
         additional arguments
 
+        test_executor: Optional test executor to use in place of the one the
+        project configures. An empty string selects the built-in executor.
         rel_cwd: Optional Path specifying the workding directive to run
         the command relative to the root.
         env: Optional dictionary for environment variables to run command with.
@@ -272,19 +262,12 @@ class Buck(Executable):
         buck_argv = argv_list[0:argv_separator_idx]
         test_argv = argv_list[argv_separator_idx + 1 :]
 
-        if test_executor is None:
-            test_executor = os.environ.get("BUCK2_TPX")
-
         if test_executor is not None:
             buck_argv = [
                 "--config",
                 "test.v2_test_executor={}".format(test_executor),
                 *buck_argv,
             ]
-
-        # Ignore disabled test status if using tpx.
-        if test_executor is None or "tpx" in test_executor:
-            test_argv += ["--run-disabled"]
 
         patched_argv = buck_argv + ["--"] + test_argv
 
@@ -782,14 +765,10 @@ class Buck(Executable):
         """
         Returns a list of strings representing the buck command
         """
-        cmd_to_run = [str(self.path_to_executable), cmd]
+        cmd_to_run = [str(self.path_to_executable)]
         if self.isolation_prefix:
-            cmd_to_run = [
-                cmd_to_run[0],
-                "--isolation-dir",
-                str(self.isolation_prefix),
-                *cmd_to_run[1:],
-            ]
+            cmd_to_run += ["--isolation-dir", self.isolation_prefix]
+        cmd_to_run.append(cmd)
         cmd_to_run.extend(argv)
         cmd_to_run = self._get_windows_cmd_options() + cmd_to_run
         return cmd_to_run
@@ -882,7 +861,6 @@ class Buck(Executable):
             stdout=subprocess.PIPE,
             stderr=stderr,
             result_type=make_result,
-            # pyrefly: ignore [bad-argument-type]
             exception_type=make_exception,
             encoding=self.encoding,
         )
@@ -925,36 +903,6 @@ class Buck(Executable):
         stderr: int = subprocess.PIPE,
     ) -> Process[Result, Exception]:
         raise NotImplementedError("Buck does not use execute.")
-
-    def rage(
-        self,
-        *argv: str,
-        input: Optional[bytes] = None,
-        rel_cwd: Optional[Path] = None,
-        env: Optional[Dict[str, str]] = None,
-    ) -> Process[BuckResult, BuckException]:
-        return self._run_buck_command(
-            "rage",
-            *argv,
-            input=input,
-            rel_cwd=rel_cwd,
-            env=env,
-        )
-
-    def explain(
-        self,
-        *argv: str,
-        input: Optional[bytes] = None,
-        rel_cwd: Optional[Path] = None,
-        env: Optional[Dict[str, str]] = None,
-    ) -> Process[BuckResult, BuckException]:
-        return self._run_buck_command(
-            "explain",
-            *argv,
-            input=input,
-            rel_cwd=rel_cwd,
-            env=env,
-        )
 
     def init(
         self,

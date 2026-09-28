@@ -84,6 +84,8 @@ pub struct ExternalRunnerTestInfo<'v> {
     contacts: ValueOfUnchecked<'v, Vec<String>>,
 
     /// Whether this test should use relative paths
+    ///
+    /// Defaults to `True`.
     use_project_relative_paths: ValueOfUnchecked<'v, bool>,
 
     /// Whether this test should run from the project root, as opposed to the cell root
@@ -95,7 +97,7 @@ pub struct ExternalRunnerTestInfo<'v> {
     /// passed we will default to the execution platform.
     default_executor: Option<ValueTyped<'v, StarlarkCommandExecutorConfig>>,
 
-    /// Executors that Tpx can use to override the default executor.
+    /// Executors that the test executor can use to override the default executor.
     executor_overrides: ValueOfUnchecked<'v, DictType<String, StarlarkCommandExecutorConfig>>,
 
     /// Mapping from a local resource type to a target with a corresponding provider.
@@ -149,7 +151,7 @@ impl<'v> ExternalRunnerTestInfo<'v> {
             .unwrap()
             .unwrap()
             .into_option()
-            .unwrap_or_else(buck2_core::is_open_source)
+            .unwrap_or(true)
     }
 
     pub fn run_from_project_root(&self) -> bool {

@@ -78,7 +78,7 @@ fn load_nano_prelude() -> buck2_error::Result<BundledCell> {
         .map_err(|e| from_any_with_tag(e, buck2_error::ErrorTag::Input))
         .buck_error_context(
             "NANO_PRELUDE env var must be set to the location of nano prelude\n\
-        Consider `export NANO_PRELUDE=$HOME/fbsource/fbcode/buck2/tests/e2e_util/nano_prelude`",
+        Consider `export NANO_PRELUDE=<buck2 repository>/tests/e2e_util/nano_prelude`",
         )?;
     if path.is_empty() {
         return Err(buck2_error!(

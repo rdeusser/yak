@@ -7,6 +7,7 @@
 # above-listed licenses.
 
 load("@prelude//apple/user:apple_ipa_package.bzl", "make_apple_ipa_package_target")
+load("@prelude//cfg/exec_platform:marker.bzl", "get_exec_platform_marker")
 load("@prelude//utils:selects.bzl", "selects")
 load(":apple_bundle_config.bzl", "apple_bundle_config")
 load(":apple_info_plist_substitutions_parsing.bzl", "parse_codesign_entitlements")
@@ -79,7 +80,7 @@ def apple_macro_layer_set_bool_override_attrs_from_config(overrides: list[AppleB
             attribs[override.name] = select({
                 "DEFAULT": override.value_if_true if config_is_true else override.value_if_false,
                 # Do not set attribute value for host tools
-                "ovr_config//platform/execution/constraints:execution-platform-transitioned": None,
+                get_exec_platform_marker(): None,
             })
     return attribs
 

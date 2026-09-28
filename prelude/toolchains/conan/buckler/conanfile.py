@@ -248,5 +248,5 @@ This package provides a
 
 [generator]: https://docs.conan.io/en/latest/reference/generators.html#generators-reference
 """
-    url = "https://github.com/facebookincubator/buck2"
+    url = "https://github.com/rdeusser/buck2"
     license = "Apache-2.0"

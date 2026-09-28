@@ -28,8 +28,8 @@ load(":apple_sdk_metadata.bzl", "get_apple_sdk_metadata_for_sdk_name")
 load(":apple_swift_stdlib.bzl", "should_copy_swift_stdlib")
 load(":apple_toolchain_types.bzl", "AppleToolchainInfo", "AppleToolsInfo")
 
-# Must match the null case returned by `serialize_signing_context_data`:
-# https://www.internalfb.com/code/fbsource/fbcode/buck2/prelude/apple/tools/bundling/signing_context_data.py?lines=39%2C58
+# Must match the null case returned by `serialize_signing_context_data` in
+# prelude/apple/tools/bundling/signing_context_data.py.
 _EMPTY_SIGNING_CONTEXT_DATA = {
     "provisioning_profile_data_base64": None,
     "selected_identity": None,
@@ -137,8 +137,6 @@ def assemble_bundle(
     elif code_signing_configuration == CodeSignConfiguration("fast-adhoc"):
         if _get_fast_adhoc_signing_enabled(ctx):
             codesign_configuration_args = ["--codesign-configuration", "fast-adhoc"]
-            if getattr(ctx.attrs, "_fast_adhoc_signing_probe_enabled", False):
-                codesign_configuration_args = codesign_configuration_args + ["--fast-adhoc-signing-probe-enabled"]
         else:
             codesign_configuration_args = []
     elif code_signing_configuration == CodeSignConfiguration("none"):
@@ -189,8 +187,9 @@ def assemble_bundle(
 
         profile_selection_required = _should_embed_provisioning_profile(ctx, codesign_type)
         if profile_selection_required:
-            sources_info = ctx.attrs._provisioning_profile_sources[AppleProvisioningProfileSourcesInfo]
-            for i, source in enumerate(sources_info.sources):
+            profile_sources = ctx.attrs._provisioning_profile_sources
+            sources_info = profile_sources[AppleProvisioningProfileSourcesInfo].sources if profile_sources else []
+            for i, source in enumerate(sources_info):
                 if source.profiles:
                     profiles_dir = ctx.actions.symlinked_dir(
                         "provisioning_profile_source_{}".format(i),
@@ -256,9 +255,6 @@ def assemble_bundle(
 
         if ctx.attrs._no_check_certificates:
             codesign_selection_args.append("--no-check-certificates")
-
-        if ctx.attrs.entitlements_verification_check_enabled:
-            codesign_selection_args.append("--verify-entitlements")
 
     elif codesign_type == CodeSignType("skip"):
         pass
@@ -395,10 +391,6 @@ def assemble_bundle(
         if extension_allowed:
             command.add("--include-build-info-file")
     command.add(codesign_configuration_args)
-
-    bundle_telemetry_logger = tools.bundle_telemetry_logger
-    if bundle_telemetry_logger:
-        command.add("--bundle-telemetry-logger", bundle_telemetry_logger)
 
     ctx.actions.run(
         command,

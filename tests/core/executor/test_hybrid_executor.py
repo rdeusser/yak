@@ -6,19 +6,17 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-# pyre-strict
-
-
 from typing import Optional
 
 import pytest
-from buck2.tests.e2e_util.api.buck import Buck
-from buck2.tests.e2e_util.api.buck_result import BuckException, InvocationRecord
-from buck2.tests.e2e_util.asserts import expect_failure
-from buck2.tests.e2e_util.buck_workspace import buck_test, env
-from buck2.tests.e2e_util.helper.utils import json_get, random_string, read_what_ran
+from e2e_util.api.buck import Buck
+from e2e_util.api.buck_result import BuckException, InvocationRecord
+from e2e_util.asserts import expect_failure
+from e2e_util.buck_workspace import buck_test, env
+from e2e_util.helper.utils import json_get, random_string, read_what_ran
 
 
+@pytest.mark.remote_execution
 @buck_test()
 async def test_hybrid_executor_threshold(buck: Buck) -> None:
     await buck.build(
@@ -38,6 +36,7 @@ async def test_hybrid_executor_threshold(buck: Buck) -> None:
     assert executors == expected
 
 
+@pytest.mark.remote_execution
 @buck_test()
 @pytest.mark.parametrize(
     "low_pass_filter",
@@ -95,6 +94,7 @@ async def test_hybrid_executor_fallback_preferred_error(buck: Buck) -> None:
     )
 
 
+@pytest.mark.remote_execution
 @buck_test()
 @pytest.mark.parametrize(
     "target",
@@ -130,6 +130,7 @@ async def test_hybrid_executor_cancels_local_execution(buck: Buck, target: str) 
     assert commands[1]["status"] == {"Success": {}}
 
 
+@pytest.mark.remote_execution
 @buck_test()
 async def test_hybrid_executor_logging(buck: Buck) -> None:
     await buck.build(
@@ -221,6 +222,7 @@ async def test_hybrid_executor_prefer_remote_local_fallback(buck: Buck) -> None:
     )
 
 
+@pytest.mark.remote_execution
 @buck_test()
 async def test_hybrid_executor_prefer_remote(buck: Buck) -> None:
     opts = [
@@ -237,6 +239,7 @@ async def test_hybrid_executor_prefer_remote(buck: Buck) -> None:
     )
 
 
+@pytest.mark.remote_execution
 @buck_test()
 async def test_executor_preference_priority(buck: Buck) -> None:
     opts = [
@@ -251,6 +254,7 @@ async def test_executor_preference_priority(buck: Buck) -> None:
     )
 
 
+@pytest.mark.remote_execution
 @buck_test()
 async def test_executor_preference_with_remote_args(buck: Buck) -> None:
     opts = [
@@ -314,6 +318,7 @@ async def test_local_only(buck: Buck) -> None:
     )
 
 
+@pytest.mark.remote_execution
 @buck_test()
 async def test_remote_only(buck: Buck) -> None:
     args = [
@@ -355,6 +360,7 @@ async def test_build_offline(buck: Buck) -> None:
     assert executors == expected
 
 
+@pytest.mark.remote_execution
 @buck_test(write_invocation_record=True)
 async def test_hybrid_executor_remote_queuing_fallback(buck: Buck) -> None:
     async def build(

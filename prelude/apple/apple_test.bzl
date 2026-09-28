@@ -11,12 +11,8 @@ load(
     "project_artifacts",
 )
 load("@prelude//apple:apple_library.bzl", "AppleLibraryAdditionalParams", "apple_library_rule_constructor_params_and_swift_providers")
-load("@prelude//apple:apple_test_device_types.bzl", "AppleTestDeviceType", "get_default_test_device", "tpx_label_for_test_device_type")
 load("@prelude//apple:apple_test_frameworks_utility.bzl", "get_test_frameworks_bundle_parts")
 load("@prelude//apple:apple_toolchain_types.bzl", "AppleToolchainInfo")
-# @oss-disable[end= ]: load("@prelude//apple/meta_only:apple_test_local_execution.bzl", "local_test_execution_is_available")
-# @oss-disable[end= ]: load("@prelude//apple/meta_only:apple_test_re_capabilities.bzl", "apple_test_re_capabilities")
-# @oss-disable[end= ]: load("@prelude//apple/meta_only:apple_test_re_use_case.bzl", "apple_test_re_use_case")
 load("@prelude//apple/swift:swift_compilation.bzl", "get_swift_anonymous_targets")
 load("@prelude//apple/swift:swift_helpers.bzl", "uses_explicit_modules")
 load(
@@ -254,50 +250,23 @@ def _get_test_info(
     dsym_artifact: Artifact | None = None,
     ui_test_target_app_bundle: Artifact | None = None,
 ) -> Provider:
-    # When interacting with Tpx, we just pass our various inputs via env vars,
-    # since Tpx basically wants structured output for this.
-
+    # `command` does not run the tests. A test runner for `apple_test` reads the bundle paths
+    # from these environment variables and builds its own command. The built-in test runner
+    # runs `command` as is, and `false` exits with status 1.
     xctest_bundle = cmd_args(xctest_bundle, hidden = dsym_artifact) if dsym_artifact else xctest_bundle
     env = {"XCTEST_BUNDLE": xctest_bundle}
 
-    if test_host_app_bundle == None:
-        tpx_label = "tpx:apple_test:buck2:logicTest"
-    else:
+    if test_host_app_bundle != None:
         env["HOST_APP_BUNDLE"] = test_host_app_bundle
-        tpx_label = "tpx:apple_test:buck2:appTest"
 
     if ui_test_target_app_bundle != None:
         env["TARGET_APP_BUNDLE"] = ui_test_target_app_bundle
-        tpx_label = "tpx:apple_test:buck2:uiTest"
-
-    labels = ctx.attrs.labels
-    labels.append(tpx_label)
-
-    test_device_type = AppleTestDeviceType(ctx.attrs.test_device_type)
-    if test_device_type == AppleTestDeviceType("default"):
-        # determine the device type from the sdk and platform
-        sdk_name = get_apple_sdk_name(ctx)
-        test_device_type = get_default_test_device(sdk = sdk_name, platform = ctx.attrs.default_target_platform)
-    labels.append(tpx_label_for_test_device_type(test_device_type))
-
-    remote_execution_properties = None # @oss-enable
-    remote_execution_use_case = None # @oss-enable
-
-    # @oss-disable[end= ]: if ctx.attrs.test_re_capabilities:
-        # @oss-disable[end= ]: remote_execution_properties = ctx.attrs.test_re_capabilities
-    # @oss-disable[end= ]: else:
-        # @oss-disable[end= ]: uses_test_host = test_host_app_bundle != None or ui_test_target_app_bundle != None
-        # @oss-disable[end= ]: remote_execution_properties = apple_test_re_capabilities(test_device_type = test_device_type, uses_test_host = uses_test_host)
-    # @oss-disable[end= ]: remote_execution_use_case = ctx.attrs.test_re_use_case or apple_test_re_use_case(test_device_type = test_device_type)
-
-    # @oss-disable[end= ]: if local_test_execution_is_available():
-        # @oss-disable[end= ]: labels.append("tpx:apple_test:local_execution_available")
 
     return ExternalRunnerTestInfo(
         type = "apple_test",
-        command = ["false"],  # Tpx makes up its own args, we just pass params via the env.
+        command = ["false"],
         env = flatten_x([ctx.attrs.env or {}, env]),
-        labels = labels,
+        labels = ctx.attrs.labels,
         use_project_relative_paths = True,
         run_from_project_root = True,
         contacts = ctx.attrs.contacts,
@@ -311,16 +280,20 @@ def _get_test_info(
             "ios-simulator-remote": CommandExecutorConfig(
                 local_enabled = False,
                 remote_enabled = True,
-                remote_execution_properties = remote_execution_properties,
-                remote_execution_use_case = remote_execution_use_case,
+                remote_execution_properties = ctx.attrs.test_re_capabilities,
+                remote_execution_use_case = ctx.attrs.test_re_use_case,
             ),
             "static-listing": CommandExecutorConfig(local_enabled = True, remote_enabled = False),
         },
         local_resources = {
-            "ipad_simulator": ctx.attrs._ipad_simulator.label,
-            "iphone_booted_simulator": ctx.attrs._iphone_booted_simulator.label,
-            "iphone_unbooted_simulator": ctx.attrs._iphone_unbooted_simulator.label,
-            "watch_simulator": ctx.attrs._watch_simulator.label,
+            name: simulator.label
+            for name, simulator in {
+                "ipad_simulator": ctx.attrs._ipad_simulator,
+                "iphone_booted_simulator": ctx.attrs._iphone_booted_simulator,
+                "iphone_unbooted_simulator": ctx.attrs._iphone_unbooted_simulator,
+                "watch_simulator": ctx.attrs._watch_simulator,
+            }.items()
+            if simulator
         },
     )
 

@@ -6,8 +6,6 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-# pyre-strict
-
 import json
 import plistlib
 import sys
@@ -36,7 +34,6 @@ def _deepmerge_plist_dicts(source: dict[str, Any], destination: dict[str, Any]):
             exit(3)
 
 
-# Corresponding v1 code is contained in `com/facebook/buck/apple/PlistProcessStep.java`, `PlistProcessStep::execute` method.
 def _merge_plist_dicts(
     source: dict[str, Any],
     destination: dict[str, Any],
@@ -130,7 +127,7 @@ def _apply_insert(plist_data: dict[str, Any], insert_params: dict[str, Any]) -> 
     </key>
 
     Sample mutation:
-    {"keypath": "CFBundleURLTypes.CFBundleURLSchemes", "value": "fb-messenger-public"}
+    {"keypath": "CFBundleURLTypes.CFBundleURLSchemes", "value": "example-app"}
 
     Result:
     <key>CFBundleURLTypes</key>
@@ -139,7 +136,7 @@ def _apply_insert(plist_data: dict[str, Any], insert_params: dict[str, Any]) -> 
                         <key>CFBundleURLSchemes</key>
                         <array>
                                 <string>spotify</string>
-                                <string>fb-messenger-public</string>
+                                <string>example-app</string>
                         </array>
                 </dict>
                 …

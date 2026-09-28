@@ -6,12 +6,9 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-# pyre-strict
-
-
 import json
 
-from buck2.tests.e2e_util.api.buck import Buck
+from e2e_util.api.buck import Buck
 
 
 async def get_files(buck: Buck) -> list[str]:

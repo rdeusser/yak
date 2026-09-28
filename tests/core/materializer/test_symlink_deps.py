@@ -6,8 +6,6 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-# pyre-strict
-
 """
 An artifact that is (or contains) a symlink carries the values its symlinks
 point at alongside it, so that materializing the symlink also puts something at
@@ -20,8 +18,9 @@ Every read through a symlink is done by a local action copying what it read to
 its own output, so that the assertion is on what a consumer actually saw.
 """
 
-from buck2.tests.e2e_util.api.buck import Buck
-from buck2.tests.e2e_util.buck_workspace import buck_test
+import pytest
+from e2e_util.api.buck import Buck
+from e2e_util.buck_workspace import buck_test
 
 
 async def read_through(buck: Buck, target: str) -> str:
@@ -49,6 +48,7 @@ async def test_symlinked_dir_to_artifact_across_restart(buck: Buck) -> None:
     assert await read_through(buck, "root//:check_dir_to_artifact") == "TEXT3"
 
 
+@pytest.mark.remote_execution
 @buck_test(skip_for_os=["windows"])
 async def test_restarted_daemon_materializes_symlink_and_its_target(buck: Buck) -> None:
     result = await buck.build(

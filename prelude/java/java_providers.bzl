@@ -533,12 +533,12 @@ def _create_global_code_tset(actions: AnalysisActions, children: list[JavaCompil
 # Example: Below configuration specifies criteria for the "di" framework:
 # GLOBAL_CODE_CONFIG = {
 #     "di": (
-#         triggers = ["//fbandroid/java/com/facebook/inject:inject"],
+#         triggers = ["//java/com/example/inject:inject"],
 #         deps = [],
 #         requires_first_order_classpath = False,
 #     ),
 # }
-# With this setup, if a target depends on "//fbandroid/java/com/facebook/inject:inject", the `global_code_info` provider for that target will have an entry under "di".
+# With this setup, if a target depends on "//java/com/example/inject:inject", the `global_code_info` provider for that target will have an entry under "di".
 # This entry will be a JavaCompilingDepsTSet containing the .jar files associated with that target.
 # Each framework (like "di") can use a Buck rule to identify dependencies with matching values for their framework key in the `global_code_info` provider.
 # They can then compile all the .jars needed for global code generation.

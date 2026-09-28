@@ -1,7 +1,5 @@
 load("@prelude//utils:source_listing.bzl", "source_listing")
 
-oncall("build_infra")
-
 source_listing()
 
 erlang_application(
@@ -30,7 +28,6 @@ erlang_application(
 )
 
 erlang_tests(
-    contacts = ["whatsapp_testing_infra"],
     labels = ["unit"],
     suites = ["test/ct_executor_SUITE.erl"],
     deps = [
@@ -40,7 +37,6 @@ erlang_tests(
 )
 
 erlang_tests(
-    contacts = ["whatsapp_testing_infra"],
     labels = ["unit"],
     suites = ["test/ct_daemon_capture_SUITE.erl"],
     deps = [

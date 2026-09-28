@@ -6,16 +6,12 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-# pyre-strict
-
 
 import unittest
 from collections.abc import Mapping
 
-# pyre-fixme[21]: Could not find module `sourcedb_merger.inputs`.
 from sourcedb_merger.inputs import PartialBuildMap, Target, TargetEntry
 
-# pyre-fixme[21]: Could not find module `sourcedb_merger.legacy_outputs`.
 from sourcedb_merger.legacy_outputs import (
     ConflictInfo,
     ConflictMap,
@@ -24,7 +20,6 @@ from sourcedb_merger.legacy_outputs import (
     MergeResult,
 )
 
-# pyre-fixme[21]: Could not find module `sourcedb_merger.outputs`.
 from sourcedb_merger.outputs import SourceInfo
 
 
@@ -35,13 +30,13 @@ class LegacyOutputsTest(unittest.TestCase):
                 build_map=FullBuildMap(
                     {
                         "a.py": SourceInfo(
-                            source_path="fbcode/a.py", target=Target("//test:foo")
+                            source_path="src/a.py", target=Target("//test:foo")
                         ),
                         "b.py": SourceInfo(
-                            source_path="fbcode/b.py", target=Target("//test:bar")
+                            source_path="src/b.py", target=Target("//test:bar")
                         ),
                         "c.py": SourceInfo(
-                            source_path="fbcode/c.py", target=Target("//test:foo")
+                            source_path="src/c.py", target=Target("//test:foo")
                         ),
                     }
                 ),
@@ -50,25 +45,25 @@ class LegacyOutputsTest(unittest.TestCase):
                         Target("//test:baz"): ConflictInfo(
                             conflict_with=Target("//test:foo"),
                             artifact_path="a.py",
-                            preserved_source_path="fbcode/a.py",
-                            dropped_source_path="fbcode/another/a.py",
+                            preserved_source_path="src/a.py",
+                            dropped_source_path="src/another/a.py",
                         ),
                     }
                 ),
             ).to_json(),
             {
                 "build_map": {
-                    "a.py": "fbcode/a.py",
-                    "b.py": "fbcode/b.py",
-                    "c.py": "fbcode/c.py",
+                    "a.py": "src/a.py",
+                    "b.py": "src/b.py",
+                    "c.py": "src/c.py",
                 },
                 "built_targets_count": 2,
                 "dropped_targets": {
                     "//test:baz": {
                         "artifact_path": "a.py",
                         "conflict_with": "//test:foo",
-                        "dropped_source_path": "fbcode/another/a.py",
-                        "preserved_source_path": "fbcode/a.py",
+                        "dropped_source_path": "src/another/a.py",
+                        "preserved_source_path": "src/a.py",
                     }
                 },
             },

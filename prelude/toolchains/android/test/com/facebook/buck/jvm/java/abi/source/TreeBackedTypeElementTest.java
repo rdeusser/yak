@@ -258,14 +258,14 @@ public class TreeBackedTypeElementTest extends CompilerTreeApiParameterizedTest 
             "Foo.java",
             String.join(
                 System.lineSeparator(),
-                "package com.facebook.foo;",
-                "public class Foo extends com.facebook.bar.Bar { }"),
+                "package com.example.foo;",
+                "public class Foo extends com.example.bar.Bar { }"),
             "Bar.java",
             String.join(
-                System.lineSeparator(), "package com.facebook.bar;", "public class Bar { }")));
+                System.lineSeparator(), "package com.example.bar;", "public class Bar { }")));
 
-    TypeElement fooElement = elements.getTypeElement("com.facebook.foo.Foo");
-    TypeElement barElement = elements.getTypeElement("com.facebook.bar.Bar");
+    TypeElement fooElement = elements.getTypeElement("com.example.foo.Foo");
+    TypeElement barElement = elements.getTypeElement("com.example.bar.Bar");
 
     DeclaredType superclass = (DeclaredType) fooElement.getSuperclass();
     assertSame(barElement, superclass.asElement());
@@ -276,10 +276,10 @@ public class TreeBackedTypeElementTest extends CompilerTreeApiParameterizedTest 
     compile(
         String.join(
             System.lineSeparator(),
-            "package com.facebook.foo;",
+            "package com.example.foo;",
             "public abstract class Foo implements Runnable, java.io.Closeable { }"));
 
-    TypeElement fooElement = elements.getTypeElement("com.facebook.foo.Foo");
+    TypeElement fooElement = elements.getTypeElement("com.example.foo.Foo");
     TypeMirror runnableType = elements.getTypeElement("java.lang.Runnable").asType();
     TypeMirror closeableType = elements.getTypeElement("java.io.Closeable").asType();
 
@@ -294,10 +294,10 @@ public class TreeBackedTypeElementTest extends CompilerTreeApiParameterizedTest 
     compile(
         String.join(
             System.lineSeparator(),
-            "package com.facebook.foo;",
+            "package com.example.foo;",
             "public interface Foo extends Runnable, java.io.Closeable { }"));
 
-    TypeElement fooElement = elements.getTypeElement("com.facebook.foo.Foo");
+    TypeElement fooElement = elements.getTypeElement("com.example.foo.Foo");
     TypeMirror runnableType = elements.getTypeElement("java.lang.Runnable").asType();
     TypeMirror closeableType = elements.getTypeElement("java.io.Closeable").asType();
 
@@ -310,9 +310,9 @@ public class TreeBackedTypeElementTest extends CompilerTreeApiParameterizedTest 
   @Test
   public void testGetInterfacesDefaultsEmptyForClass() throws IOException {
     compile(
-        String.join(System.lineSeparator(), "package com.facebook.foo;", "public class Foo { }"));
+        String.join(System.lineSeparator(), "package com.example.foo;", "public class Foo { }"));
 
-    TypeElement fooElement = elements.getTypeElement("com.facebook.foo.Foo");
+    TypeElement fooElement = elements.getTypeElement("com.example.foo.Foo");
     assertThat(fooElement.getInterfaces(), Matchers.empty());
   }
 
@@ -320,18 +320,18 @@ public class TreeBackedTypeElementTest extends CompilerTreeApiParameterizedTest 
   public void testGetInterfacesDefaultsEmptyForInterface() throws IOException {
     compile(
         String.join(
-            System.lineSeparator(), "package com.facebook.foo;", "public interface Foo { }"));
+            System.lineSeparator(), "package com.example.foo;", "public interface Foo { }"));
 
-    TypeElement fooElement = elements.getTypeElement("com.facebook.foo.Foo");
+    TypeElement fooElement = elements.getTypeElement("com.example.foo.Foo");
     assertThat(fooElement.getInterfaces(), Matchers.empty());
   }
 
   @Test
   public void testGetInterfacesDefaultsEmptyForEnum() throws IOException {
     compile(
-        String.join(System.lineSeparator(), "package com.facebook.foo;", "public enum Foo { }"));
+        String.join(System.lineSeparator(), "package com.example.foo;", "public enum Foo { }"));
 
-    TypeElement fooElement = elements.getTypeElement("com.facebook.foo.Foo");
+    TypeElement fooElement = elements.getTypeElement("com.example.foo.Foo");
     assertThat(fooElement.getInterfaces(), Matchers.empty());
   }
 
@@ -339,9 +339,9 @@ public class TreeBackedTypeElementTest extends CompilerTreeApiParameterizedTest 
   public void testGetInterfacesDefaultsAnnotationForAnnotation() throws IOException {
     compile(
         String.join(
-            System.lineSeparator(), "package com.facebook.foo;", "public @interface Foo { }"));
+            System.lineSeparator(), "package com.example.foo;", "public @interface Foo { }"));
 
-    TypeElement fooElement = elements.getTypeElement("com.facebook.foo.Foo");
+    TypeElement fooElement = elements.getTypeElement("com.example.foo.Foo");
     TypeMirror annotationType = elements.getTypeElement("java.lang.annotation.Annotation").asType();
 
     List<? extends TypeMirror> interfaces = fooElement.getInterfaces();

@@ -1,4 +1,3 @@
-#!/usr/bin/env fbpython
 # Copyright (c) Meta Platforms, Inc. and affiliates.
 #
 # This source code is dual-licensed under either the MIT license found in the
@@ -15,7 +14,7 @@ from pathlib import Path
 from typing import Awaitable, Optional, Type, TypeVar, Union
 
 import pytest
-from buck2.tests.e2e_util.api.buck_result import (
+from e2e_util.api.buck_result import (
     BuckException,
     BuckResult,
     ExitCode,

@@ -17,7 +17,7 @@ fn test_select_funcs() {
     let mut tester = Tester::new().unwrap();
     tester
         .run_starlark_test(indoc!(
-            // This is from //xplat/build_infra/buck_client/test/com/facebook/buck/parser/testdata/select_introspection/defs.bzl
+            // Adapted from Buck1's `select_introspection` parser test data.
             r#"
 def _map_func(value):
     if type(value) == type(""):

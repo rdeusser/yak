@@ -6,15 +6,14 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-# pyre-strict
-
 import json
 import os
 import subprocess
 from pathlib import Path
 
-from buck2.tests.e2e_util.api.buck import Buck
-from buck2.tests.e2e_util.buck_workspace import buck_test
+import pytest
+from e2e_util.api.buck import Buck
+from e2e_util.buck_workspace import buck_test
 
 
 def _get_sketch_cardinality(sketch_str: str) -> float:
@@ -169,6 +168,7 @@ async def _get_load_peak_sketches(
 # =============================================================================
 
 
+@pytest.mark.needs_binary("SKETCH_SIZE_BIN")
 @buck_test()
 async def test_retained_analysis_memory_sketch(buck: Buck, tmp_path: Path) -> None:
     """
@@ -182,6 +182,7 @@ async def test_retained_analysis_memory_sketch(buck: Buck, tmp_path: Path) -> No
     check_merged_cardinality([sketches["//:target1"]], 6_000_000)
 
 
+@pytest.mark.needs_binary("SKETCH_SIZE_BIN")
 @buck_test()
 async def test_retained_analysis_memory_sketch_merging(
     buck: Buck, tmp_path: Path
@@ -208,6 +209,7 @@ async def test_retained_analysis_memory_sketch_merging(
     check_merged_cardinality([sketch1, sketch2], 7_500_000)
 
 
+@pytest.mark.needs_binary("SKETCH_SIZE_BIN")
 @buck_test()
 async def test_retained_analysis_memory_sketch_bzl_globals(
     buck: Buck, tmp_path: Path
@@ -248,6 +250,7 @@ async def test_retained_analysis_memory_sketch_daemon_restart(
     )
 
 
+@pytest.mark.needs_binary("SKETCH_SIZE_BIN")
 @buck_test()
 async def test_retained_analysis_memory_sketch_anon_targets(
     buck: Buck, tmp_path: Path
@@ -296,6 +299,7 @@ async def test_retained_analysis_memory_sketch_disabled(
 # =============================================================================
 
 
+@pytest.mark.needs_binary("SKETCH_SIZE_BIN")
 @buck_test()
 async def test_peak_analysis_memory_sketch(buck: Buck, tmp_path: Path) -> None:
     """
@@ -309,6 +313,7 @@ async def test_peak_analysis_memory_sketch(buck: Buck, tmp_path: Path) -> None:
     check_merged_cardinality([sketches["//:target1"]], 6_000_000)
 
 
+@pytest.mark.needs_binary("SKETCH_SIZE_BIN")
 @buck_test()
 async def test_peak_analysis_memory_sketch_merging(buck: Buck, tmp_path: Path) -> None:
     """
@@ -358,6 +363,7 @@ async def test_peak_analysis_memory_sketch_disabled(buck: Buck, tmp_path: Path) 
     )
 
 
+@pytest.mark.needs_binary("SKETCH_SIZE_BIN")
 @buck_test()
 async def test_peak_analysis_memory_sketch_gte_retained(
     buck: Buck, tmp_path: Path
@@ -399,6 +405,7 @@ async def test_peak_analysis_memory_sketch_gte_retained(
     )
 
 
+@pytest.mark.needs_binary("SKETCH_SIZE_BIN")
 @buck_test()
 async def test_analysis_memory_peak_captures_temporaries(
     buck: Buck, tmp_path: Path
@@ -452,6 +459,7 @@ async def test_analysis_memory_peak_captures_temporaries(
 # =============================================================================
 
 
+@pytest.mark.needs_binary("SKETCH_SIZE_BIN")
 @buck_test()
 async def test_peak_load_memory_sketch(buck: Buck, tmp_path: Path) -> None:
     """
@@ -466,6 +474,7 @@ async def test_peak_load_memory_sketch(buck: Buck, tmp_path: Path) -> None:
     assert _get_sketch_cardinality(sketches["//:target1"]) > 0
 
 
+@pytest.mark.needs_binary("SKETCH_SIZE_BIN")
 @buck_test()
 async def test_peak_load_memory_sketch_with_globals(buck: Buck, tmp_path: Path) -> None:
     """
@@ -504,6 +513,7 @@ async def test_peak_load_memory_sketch_disabled(buck: Buck, tmp_path: Path) -> N
     )
 
 
+@pytest.mark.needs_binary("SKETCH_SIZE_BIN")
 @buck_test()
 async def test_load_and_analysis_peak_sketches(buck: Buck, tmp_path: Path) -> None:
     """Test that load and analysis peak sketches separate load/analysis memory."""

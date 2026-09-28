@@ -6,14 +6,12 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-# pyre-strict
-
-
 import os
 from pathlib import Path
 
-from buck2.tests.e2e_util.api.buck import Buck
-from buck2.tests.e2e_util.buck_workspace import buck_test
+import pytest
+from e2e_util.api.buck import Buck
+from e2e_util.buck_workspace import buck_test
 
 
 @buck_test()
@@ -50,6 +48,7 @@ async def test_build_local(buck: Buck) -> None:
     assert p.read_text().strip() == "\n".join(["value", "6", "foobar", "foobar2"])
 
 
+@pytest.mark.remote_execution
 @buck_test()
 async def test_build_remote(buck: Buck) -> None:
     result = await buck.build_without_report(

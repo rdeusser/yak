@@ -1,24 +1,11 @@
-load("@fbsource//tools/build_defs:rust_library.bzl", "rust_library")
-
-oncall("build_infra")
+load("//build_defs:rust.bzl", "rust_library")
 
 rust_library(
     name = "dupe",
     srcs = glob(
         ["src/**/*.rs"],
     ),
-    autocargo = {
-        "cargo_toml_config": {
-            "package": {
-                "authors": ["Facebook"],
-                "categories": ["rust-patterns"],
-                "description": "Marker for types which are cheap to clone",
-                "documentation": "https://docs.rs/dupe",
-                "version": "0.9.1",
-            },
-        },
-    },
     deps = [
-        "//buck2/gazebo/dupe_derive:dupe_derive",
+        "//gazebo/dupe_derive:dupe_derive",
     ],
 )

@@ -14,7 +14,6 @@ import com.facebook.buck.core.build.execution.context.IsolatedExecutionContext;
 import com.facebook.buck.core.filesystems.AbsPath;
 import com.facebook.buck.core.filesystems.RelPath;
 import com.facebook.buck.jvm.core.BuildTargetValue;
-import com.facebook.buck.jvm.kotlin.cd.analytics.KotlinCDLoggingContext;
 import com.facebook.buck.jvm.kotlin.kotlinc.incremental.KotlincMode;
 import com.facebook.buck.jvm.kotlin.util.KotlinUnarchiverKt;
 import com.google.common.collect.ImmutableList;
@@ -36,8 +35,7 @@ public interface Kotlinc {
       Path pathToSrcsList,
       Optional<Path> workingDirectory,
       AbsPath ruleCellRoot,
-      KotlincMode mode,
-      KotlinCDLoggingContext kotlinCDLoggingContext)
+      KotlincMode mode)
       throws InterruptedException;
 
   String getDescription(

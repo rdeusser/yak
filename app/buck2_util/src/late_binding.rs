@@ -43,24 +43,23 @@ use buck2_error::BuckErrorOptionContext;
 ///
 /// `LateBinding` is stored in a static variable, and must be initialized explicitly.
 /// We tried to use `#[ctor]` crate for initialization, but unfortunately it does not work
-/// reliably on macOS. Some details are in [this post](https://fburl.com/ctor).
+/// reliably on macOS.
 ///
 /// Suppose you have a function `fn foo()` initialized with `LateBinding`.
-/// The convention is this:
+/// The convention is this, and `AUDIT_CELL` follows it:
 /// * in the interface crate define a static variable
 ///   `static FOO: LateBinding<fn()> = LateBinding::new("FOO");`
-///   ([example](https://fburl.com/code/rvxqbf4f)).
+///   (`AUDIT_CELL` in `app/buck2_build_api/src/audit_cell.rs`).
 /// * in the implementation crate define an implementation like `fn foo() { ... }`,
 ///   and next to the implementation, define a function like `fn init_foo() { FOO.init(foo); }`
-///   ([example](https://fburl.com/code/0wd4xoql)).
+///   (`init_audit_cell` in `app/buck2_cmd_audit_server/src/cell.rs`).
 /// * in the root of the implementation crate, define a function `fn init_late_bindings() { ... }`
 ///   that calls `init_foo()` and other `init_*` functions
-///   ([example](https://fburl.com/code/wbj4tt25)).
-/// * in the file `app/buck2/bin/buck2.rs` call `init_late_bindings()` of the corresponding crate
-///   ([example](https://fburl.com/code/maorfzdy)).
+///   (`app/buck2_cmd_audit_server/src/lib.rs`).
+/// * in the file `app/buck2/bin/buck2.rs` call `init_late_bindings()` of the corresponding crate.
 /// * In the test crates that need to call this function, also call `init_late_bindings()`
 ///   of the corresponding crates
-///   ([example](https://fburl.com/code/ynd8ylo1)).
+///   (`init_late_bindings_for_test` in `app/buck2_build_api_tests/src/lib.rs`).
 ///   Note, to use `#[ctor]` in test crate, it should be placed in `#[test]`
 ///   to avoid rust compiler and linker erase the initialization code.
 ///

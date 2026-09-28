@@ -30,7 +30,7 @@ pub(crate) const TARGET_NAME_VALID_CHARS_SET: AsciiCharSet =
     AsciiCharSet::new(TARGET_NAME_VALID_CHARS);
 
 /// 'TargetName' is the name given to a particular target.
-/// e.g. `foo` in the label `fbsource//package/path:foo`.
+/// e.g. `foo` in the label `root//package/path:foo`.
 #[derive(
     Clone,
     Debug,
@@ -121,18 +121,16 @@ impl TargetName {
             soft_error!(
                 "label_has_comma",
                 TargetNameError::LabelHasSpecialCharacter(name.to_owned(), ',').into(),
-                deprecation: true,
                 quiet: true,
-                error_on_oss: true
+                hard_error: true
             )?;
         }
         if name.contains('$') {
             soft_error!(
                 "label_has_dollar_sign",
                 TargetNameError::LabelHasSpecialCharacter(name.to_owned(), '$').into(),
-                deprecation: true,
                 quiet: true,
-                error_on_oss: true
+                hard_error: true
             )?;
         }
 

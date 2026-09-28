@@ -186,7 +186,7 @@ public class JavacStepTest {
 
   @Test
   public void sourceZipWithoutJavaEntriesSkipsCompilation() throws Exception {
-    JavacStep step = skippableJavacStep(writeSourceZip("com/facebook/resource.txt"));
+    JavacStep step = skippableJavacStep(writeSourceZip("com/example/resource.txt"));
 
     StepExecutionResult result =
         step.executeIsolatedStep(TestExecutionContext.newInstance(tmp.getRoot()));
@@ -197,7 +197,7 @@ public class JavacStepTest {
 
   @Test
   public void sourceZipWithJavaEntriesRunsCompilation() throws Exception {
-    JavacStep step = skippableJavacStep(writeSourceZip("com/facebook/Dummy.java"));
+    JavacStep step = skippableJavacStep(writeSourceZip("com/example/Dummy.java"));
 
     StepExecutionResult result =
         step.executeIsolatedStep(TestExecutionContext.newInstance(tmp.getRoot()));

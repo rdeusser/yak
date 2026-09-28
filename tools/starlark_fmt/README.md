@@ -11,12 +11,12 @@ starlark_fmt formats Starlark source files through a three-phase pipeline:
 2. **Autofixes** — Structural transforms applied in order:
    - **Remove unused loads** — Deletes load symbols not referenced in the file.
    - **Sort load statements** — Orders loads by path (cell `//` < external
-     `fbsource//` < relative `:`), then sorts symbols within each load.
+     `other_cell//` < relative `:`), then sorts symbols within each load.
    - **Sort dictionary keys** — Alphabetizes string keys in dict literals
      (multi-pass, up to 5 iterations for nested dicts).
    - **Sort list arguments** — Sorts values in allowlisted rule arguments
      (e.g. `deps`, `srcs`, `visibility`). Uses target-path ordering:
-     relative `:` < cell `//` < external `fbsource//`.
+     relative `:` < cell `//` < external `other_cell//`.
    - **Sort keyword arguments** — Orders kwargs by priority from config
      (e.g. `name` first), then alphabetically.
 3. **Cosmetic formatting** — Ruff-based Python formatter pass:
@@ -39,7 +39,6 @@ starlark_fmt --config <CONFIG_PATH> <SUBCOMMAND>
 | Subcommand | Description |
 |------------|-------------|
 | `fmt <FILES...>` | Format files in-place. Supports `@argfile` for file lists. |
-| `lint <FILES...>` | Emit JSON `LintMessage` records to stdout (for `arc lint` integration). |
 | `diff <FILE>` | Show a colored diff of what would change. `--show-all` includes unchanged lines. |
 | `stdin [--path FILE]` | Read from stdin, write formatted output to stdout. `--path` provides context for config matching. |
 
@@ -237,38 +236,26 @@ config lives at `tools/third-party/buildifier/tables.json`. The schema:
 ### Rust unit tests
 
 ```bash
-buck2 test fbcode//buck2/tools/starlark_fmt:starlark_fmt-unittest
+cargo test --package starlark_fmt_lib
 ```
 
 This runs all `#[cfg(test)]` modules across the crate, covering the parser
-infrastructure, each autofix pass, formatting, and fuzz tests.
+infrastructure, each autofix pass, and formatting.
 
 ### Cram integration tests
 
-```bash
-buck2 test fbcode//buck2/tools/starlark_fmt:tests
-```
-
-This runs 9 `.t` files under `tests/` that exercise the CLI end-to-end.
-
-### Run everything
+The 9 `.t` files under `tests/` exercise the CLI end to end. They run under
+[prysk](https://www.prysk.net/), a cram-compatible runner, with bash as the
+test shell and `STARLARK_FMT_PATH` set to an absolute path to the binary:
 
 ```bash
-buck2 test fbcode//buck2/tools/starlark_fmt:
+cargo build --package starlark_fmt_lib --bin starlark_fmt
+STARLARK_FMT_PATH="$PWD/target/debug/starlark_fmt" \
+  prysk --shell=/bin/bash tools/starlark_fmt/tests/test_*.t
 ```
-
-## arc lint Integration
-
-The `lint` subcommand outputs one JSON `LintMessage` per line with
-`original` / `replacement` fields, enabling `arc lint` to show diffs and
-auto-apply fixes. Lint exits 0 even when files have errors (errors are
-reported as `LintMessage` records with severity `error`).
 
 ## Building
 
 ```bash
-buck2 build fbcode//buck2/tools/starlark_fmt:starlark_fmt
+cargo build --package starlark_fmt_lib --bin starlark_fmt
 ```
-
-The binary is also distributed cross-platform (macOS aarch64/x86_64, Linux
-aarch64/x86_64, Windows) via DotSlash.

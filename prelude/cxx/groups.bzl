@@ -287,7 +287,7 @@ def _find_targets_in_mapping(graph_map: dict[Label, typing.Any], mapping: GroupM
             # ("evict-mkl", [
             #   (":mkl_ilp64_omp", "node", None, "shared"),
             #   (select(
-            #     {"DEFAULT": None, "ovr_config//runtime:platform010": "//IntelComposerXE:mkl_ilp64_omp" }),
+            #     {"DEFAULT": None, "config//os:linux": "//IntelComposerXE:mkl_ilp64_omp" }),
             #     "node", None, "shared"
             #   ),
             # ])
@@ -459,7 +459,7 @@ def _generate_group_subfolder_name(
 def _hash_group_name(prefix: str, name: str) -> str:
     """
     Creates new name via simple hashing.
-    Hash algorithm is stable in starlark: https://fburl.com/code/ptegkov6
+    Hash algorithm is stable in starlark.
     """
     return "{}_{}".format(prefix, str(hash(name)))
 

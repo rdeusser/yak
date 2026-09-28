@@ -1,50 +1,22 @@
-load("@fbcode_macros//build_defs:native_rules.bzl", "buck_command_alias")
-load("@fbsource//tools/build_defs:rust_binary.bzl", "rust_binary")
-load("@fbsource//tools/build_defs:rust_library.bzl", "rust_library")
-
-oncall("build_infra")
+load("//build_defs:rust.bzl", "rust_binary", "rust_library")
 
 rust_library(
     name = "dice-examples",
     srcs = glob(
         ["src/**/*.rs"],
     ),
-    autocargo = {
-        "cargo_toml_config": {
-            "dependencies_override": {
-                "target": {
-                    '\'cfg(any(target_os = "linux", target_os = "macos"))\'': {
-                        "dependencies": {
-                            "tikv-jemallocator": {
-                                "features": ["stats", "unprefixed_malloc_on_supported_platforms"],
-                            },
-                        },
-                    },
-                },
-            },
-            "extra_buck_dependencies": {
-                "target": {
-                    '\'cfg(any(target_os = "linux", target_os = "macos"))\'': {
-                        "dependencies": [
-                            "fbsource//third-party/rust:jemallocator",
-                        ],
-                    },
-                },
-            },
-        },
-    },
     deps = [
-        "fbsource//third-party/rust:anyhow",
-        "fbsource//third-party/rust:async-trait",
-        "fbsource//third-party/rust:derive_more",
-        "fbsource//third-party/rust:futures",
-        "fbsource//third-party/rust:ref-cast",
-        "//buck2/allocative/allocative:allocative",
-        "//buck2/dice/dice:dice",
-        "//buck2/dice/dice_futures:dice_futures",
-        "//buck2/gazebo/dupe:dupe",
-        "//buck2/gazebo/gazebo:gazebo",
-        "//buck2/pagable:pagable",
+        "//allocative/allocative:allocative",
+        "//dice/dice:dice",
+        "//dice/dice_futures:dice_futures",
+        "//gazebo/dupe:dupe",
+        "//gazebo/gazebo:gazebo",
+        "//pagable:pagable",
+        "//third-party/rust:anyhow",
+        "//third-party/rust:async-trait",
+        "//third-party/rust:derive_more",
+        "//third-party/rust:futures",
+        "//third-party/rust:ref-cast",
     ],
 )
 
@@ -52,15 +24,15 @@ rust_binary(
     name = "many_cancel",
     srcs = ["bin/many_cancel.rs"],
     deps = [
-        "fbsource//third-party/rust:async-trait",
-        "fbsource//third-party/rust:clap",
-        "fbsource//third-party/rust:derive_more",
-        "fbsource//third-party/rust:tokio",
-        "//buck2/allocative/allocative:allocative",
-        "//buck2/dice/dice:dice",
-        "//buck2/dice/dice_futures:dice_futures",
-        "//buck2/gazebo/dupe:dupe",
-        "//buck2/pagable:pagable",
+        "//allocative/allocative:allocative",
+        "//dice/dice:dice",
+        "//dice/dice_futures:dice_futures",
+        "//gazebo/dupe:dupe",
+        "//pagable:pagable",
+        "//third-party/rust:async-trait",
+        "//third-party/rust:clap",
+        "//third-party/rust:derive_more",
+        "//third-party/rust:tokio",
     ],
 )
 
@@ -68,15 +40,15 @@ rust_binary(
     name = "invalidate_stress",
     srcs = ["bin/invalidate_stress.rs"],
     deps = [
-        "fbsource//third-party/rust:async-trait",
-        "fbsource//third-party/rust:clap",
-        "fbsource//third-party/rust:derive_more",
-        "fbsource//third-party/rust:tokio",
-        "//buck2/allocative/allocative:allocative",
-        "//buck2/dice/dice:dice",
-        "//buck2/dice/dice_futures:dice_futures",
-        "//buck2/gazebo/dupe:dupe",
-        "//buck2/pagable:pagable",
+        "//allocative/allocative:allocative",
+        "//dice/dice:dice",
+        "//dice/dice_futures:dice_futures",
+        "//gazebo/dupe:dupe",
+        "//pagable:pagable",
+        "//third-party/rust:async-trait",
+        "//third-party/rust:clap",
+        "//third-party/rust:derive_more",
+        "//third-party/rust:tokio",
     ],
 )
 
@@ -84,85 +56,17 @@ rust_binary(
     name = "shapes_bench",
     srcs = ["bin/shapes_bench.rs"],
     deps = [
-        "fbsource//third-party/rust:async-trait",
-        "fbsource//third-party/rust:derive_more",
-        "fbsource//third-party/rust:tokio",
-        "//buck2/allocative/allocative:allocative",
-        "//buck2/dice/dice:dice",
-        "//buck2/dice/dice_futures:dice_futures",
-        "//buck2/gazebo/dupe:dupe",
-        "//buck2/pagable:pagable",
+        "//allocative/allocative:allocative",
+        "//dice/dice:dice",
+        "//dice/dice_futures:dice_futures",
+        "//gazebo/dupe:dupe",
+        "//pagable:pagable",
+        "//third-party/rust:async-trait",
+        "//third-party/rust:derive_more",
+        "//third-party/rust:tokio",
     ],
 )
 
-rust_binary(
-    name = "memory_by_key",
-    srcs = ["bin/memory_by_key.rs"],
-    target_compatible_with = [
-        "ovr_config//build_mode:sanitizer_type[no-san]",
-        "ovr_config//os:linux",
-    ],
-    deps = [
-        "fbsource//third-party/rust:async-trait",
-        "fbsource//third-party/rust:derive_more",
-        "fbsource//third-party/rust:tokio",
-        "//buck2/allocative/allocative:allocative",
-        "//buck2/dice/dice:dice",
-        "//buck2/dice/dice_futures:dice_futures",
-        "//buck2/gazebo/dupe:dupe",
-        "//buck2/pagable:pagable",
-    ],
-)
-
-rust_binary(
-    name = "hydration_bench",
-    srcs = [
-        "bin/benchmarks/benchmark_utils.rs",
-        "bin/benchmarks/hydration_bench.rs",
-    ],
-    # Depends on internal `json_value`; not part of the OSS workspace.
-    autocargo = {"ignore_rule": True},
-    compatible_with = ["ovr_config//os:linux"],
-    unittests = False,
-    deps = [
-        "fbsource//third-party/rust:anyhow",
-        "fbsource//third-party/rust:async-trait",
-        "fbsource//third-party/rust:clap",
-        "fbsource//third-party/rust:derive_more",
-        "fbsource//third-party/rust:jemalloc-ctl",
-        "fbsource//third-party/rust:libc",
-        "fbsource//third-party/rust:serde_json",
-        "fbsource//third-party/rust:tokio",
-        "//buck2/allocative/allocative:allocative",
-        "//buck2/dice/dice:dice",
-        "//buck2/dice/dice_futures:dice_futures",
-        "//buck2/gazebo/dupe:dupe",
-        "//buck2/pagable:pagable",
-        "//common/rust/json_value:json_value",
-    ],
-)
-
-rust_binary(
-    name = "bench_runner",
-    srcs = [
-        "bin/benchmarks/bench_runner.rs",
-        "bin/benchmarks/table.rs",
-    ],
-    # Depends on internal `json_value`; not part of the OSS workspace.
-    autocargo = {"ignore_rule": True},
-    deps = [
-        "fbsource//third-party/rust:anyhow",
-        "fbsource//third-party/rust:clap",
-        "fbsource//third-party/rust:serde_json",
-        "//common/rust/json_value:json_value",
-    ],
-)
-
-buck_command_alias(
-    name = "run_hydration_bench",
-    compatible_with = ["ovr_config//os:linux"],
-    env = {
-        "PAGABLE_BIN": "$(exe :hydration_bench)",
-    },
-    exe = ":bench_runner",
-)
+# `bin/memory_by_key.rs` reads jemalloc's statistics, and only the Cargo build
+# links jemalloc (`third-party/rust/fixups/tikv-jemalloc-sys` does not build it),
+# so the binary has no target here.

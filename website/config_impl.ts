@@ -9,7 +9,6 @@
  */
 
 import { themes } from 'prism-react-renderer';
-import { fbContent, isInternal } from 'docusaurus-plugin-internaldocs-fb/internal';
 import type { ThemeConfig as ClassicPresetConfig, Options as ClassicPresetOptions } from '@docusaurus/preset-classic';
 import type { DocusaurusConfig } from '@docusaurus/types';
 
@@ -21,8 +20,7 @@ const darkCodeTheme = themes.dracula;
 
 const presetOptions: ClassicPresetOptions = ({
   docs: {
-    path: '../docs',
-    exclude: ['developers/**'],
+    path: 'docs',
     sidebarPath: require.resolve('./sidebars_generated.ts'),
     async sidebarItemsGenerator({ defaultSidebarItemsGenerator, ...args }) {
       const items = await defaultSidebarItemsGenerator({
@@ -34,8 +32,6 @@ const presetOptions: ClassicPresetOptions = ({
   theme: {
     customCss: require.resolve('./src/css/custom.css'),
   },
-  internSearch: true,
-  staticDocsProject: 'buck2',
 });
 
 const themeConfig: ClassicPresetConfig = ({
@@ -70,15 +66,8 @@ const themeConfig: ClassicPresetConfig = ({
         activeBasePath: '/docs/prelude',
       },
       {
-        href: fbContent({
-          internal: 'https://www.internalfb.com/code/buck2',
-          external: 'https://github.com/facebook/buck2',
-        }),
-        // @ts-ignore : The type signature for `fbContent` incorrectly claims it might return a `[]`
-        label: fbContent({
-          internal: 'CodeHub',
-          external: 'GitHub',
-        }),
+        href: 'https://github.com/rdeusser/buck2',
+        label: 'GitHub',
         position: 'right',
       },
     ],
@@ -97,23 +86,10 @@ const themeConfig: ClassicPresetConfig = ({
       },
       {
         title: 'Community',
-        items: isInternal() ? [
-          {
-            label: 'User group',
-            href: 'https://fb.workplace.com/groups/buck2users',
-          },
-          {
-            label: 'Announcement group',
-            href: 'https://fb.workplace.com/groups/buck2prototyping',
-          },
-        ] : [
+        items: [
           {
             label: 'GitHub issues',
-            href: 'https://github.com/facebook/buck2/issues',
-          },
-          {
-            label: 'Community Discord server',
-            href: 'https://discord.gg/N6NtcYQXU8',
+            href: 'https://github.com/rdeusser/buck2/issues',
           },
         ],
       },
@@ -122,65 +98,40 @@ const themeConfig: ClassicPresetConfig = ({
         items: [
           {
             label: 'Code',
-            href: fbContent({
-              internal: 'https://www.internalfb.com/code/fbsource/fbcode/buck2/',
-              external: 'https://github.com/facebook/buck2',
-            }),
-          },
-          {
-            label: 'Terms of Use',
-            href: 'https://opensource.fb.com/legal/terms',
-          },
-          {
-            label: 'Privacy Policy',
-            href: 'https://opensource.fb.com/legal/privacy',
+            href: 'https://github.com/rdeusser/buck2',
           },
         ],
       },
     ],
-    copyright: `Copyright © ${new Date().getFullYear()} Meta Platforms, Inc. Built with Docusaurus.`,
+    copyright: 'Based on Buck2, © Meta Platforms, Inc. and affiliates. Built with Docusaurus.',
   },
   prism: {
     additionalLanguages: ['bash', 'powershell', 'cpp', 'ini', 'mermaid'],
     theme: lightCodeTheme,
     darkTheme: darkCodeTheme,
   },
-  algolia: fbContent({
-    internal: undefined,
-    external: {
-      appId: '9RT0EWXQO8',
-      apiKey: 'cf8a08e681e1e1d8a73a08d3f13948c7',
-      indexName: 'buck2',
-    }
-  }),
 });
 
 const config: DocusaurusConfig = ({
   title: 'Buck2',
-  url: 'https://buck2.build',
-  baseUrl: '/',
+  // GitHub Pages serves a project site from https://<owner>.github.io/<repository>/.
+  url: 'https://rdeusser.github.io',
+  baseUrl: '/buck2/',
   onBrokenLinks: 'throw',
   trailingSlash: true,
   onBrokenMarkdownLinks: 'warn',
   favicon: 'img/logo.png',
-  organizationName: 'facebook',
+  organizationName: 'rdeusser',
   projectName: 'buck2',
 
   presets: [
     [
-      require.resolve('docusaurus-plugin-internaldocs-fb/docusaurus-preset'),
+      '@docusaurus/preset-classic',
       presetOptions,
     ],
   ],
 
   plugins: [
-    [
-      '@docusaurus/plugin-google-gtag',
-      {
-        trackingID: 'G-GEGGHE39PE',
-        anonymizeIP: true,
-      },
-    ],
     [
       '@docusaurus/plugin-client-redirects',
       {

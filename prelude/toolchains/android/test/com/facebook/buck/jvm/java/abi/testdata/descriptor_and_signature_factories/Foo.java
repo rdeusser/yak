@@ -8,7 +8,7 @@
  * above-listed licenses.
  */
 
-package com.facebook.foo;
+package com.example.foo;
 
 import java.util.Collection;
 import java.util.List;

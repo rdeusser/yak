@@ -6,17 +6,15 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-# pyre-strict
-
 import json
 
-from buck2.tests.e2e.configurations.cfg_constructor.modifiers_util import get_cfg
-from buck2.tests.e2e_util.api.buck import Buck
-from buck2.tests.e2e_util.asserts import expect_failure
-from buck2.tests.e2e_util.buck_workspace import buck_test
+from e2e.configurations.cfg_constructor.modifiers_util import get_cfg
+from e2e_util.api.buck import Buck
+from e2e_util.asserts import expect_failure
+from e2e_util.buck_workspace import buck_test
 
 
-@buck_test(inplace=False)
+@buck_test()
 async def test_cfg_modifiers_attr(buck: Buck) -> None:
     result = await buck.targets(
         "root//:test",
@@ -30,7 +28,7 @@ async def test_cfg_modifiers_attr(buck: Buck) -> None:
     assert target_modifiers == ["root//:A_1"]
 
 
-@buck_test(inplace=False)
+@buck_test()
 async def test_cfg_modifiers_attr_ctargets(buck: Buck) -> None:
     result = await get_cfg(
         buck,
@@ -39,7 +37,7 @@ async def test_cfg_modifiers_attr_ctargets(buck: Buck) -> None:
     assert ":A_1" in result
 
 
-@buck_test(inplace=False)
+@buck_test()
 async def test_metadata_modifiers_is_hard_error(buck: Buck) -> None:
     result = await expect_failure(buck.ctargets("root//:test_metadata_modifiers"))
     assert (

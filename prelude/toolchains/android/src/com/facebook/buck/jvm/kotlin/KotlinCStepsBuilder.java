@@ -15,12 +15,10 @@ import static com.facebook.buck.jvm.kotlin.CompilerPluginUtils.getKotlinCompiler
 import com.facebook.buck.core.filesystems.AbsPath;
 import com.facebook.buck.core.filesystems.RelPath;
 import com.facebook.buck.jvm.cd.command.kotlin.KotlinExtraParams;
-import com.facebook.buck.jvm.cd.command.kotlin.LanguageVersion;
 import com.facebook.buck.jvm.core.BuildTargetValue;
 import com.facebook.buck.jvm.java.ActionMetadata;
 import com.facebook.buck.jvm.java.CompilerOutputPaths;
 import com.facebook.buck.jvm.java.CompilerParameters;
-import com.facebook.buck.jvm.kotlin.cd.analytics.KotlinCDAnalytics;
 import com.facebook.buck.jvm.kotlin.kotlinc.Kotlinc;
 import com.facebook.buck.step.isolatedsteps.IsolatedStep;
 import com.google.common.collect.ImmutableList;
@@ -48,12 +46,7 @@ public class KotlinCStepsBuilder {
       ImmutableList<AbsPath> allClasspaths,
       RelPath reportsOutput,
       Kotlinc kotlinc,
-      KosabiPluginOptions kosabiPluginOptions,
-      ImmutableList<AbsPath> compilationClasspath,
-      ImmutableList<AbsPath> applicabilityClasspath,
-      ImmutableList.Builder<IsolatedStep> postKotlinCompilationFailureSteps,
-      ImmutableList<AbsPath> classpathSnapshots,
-      KotlinCDAnalytics kotlinCDAnalytics) {
+      ImmutableList<AbsPath> classpathSnapshots) {
     ImmutableList.Builder<String> extraArguments =
         getKotlincExtraArguments(
             buildCellRootPath,
@@ -63,8 +56,6 @@ public class KotlinCStepsBuilder {
             friendPathsArg,
             kotlinPluginGeneratedFullPath,
             moduleName);
-
-    LanguageVersion kotlincLanguageVersion = extraParams.getLanguageVersion();
 
     KotlincStep kotlincStep =
         new KotlincStep(
@@ -81,12 +72,6 @@ public class KotlinCStepsBuilder {
             parameters.getOutputPaths(),
             parameters.getShouldTrackClassUsage(),
             buckOut,
-            kosabiPluginOptions.getKosabiPlugins(),
-            extraParams.getKosabiJvmAbiGenEarlyTerminationMessagePrefix().orElse(null),
-            compilationClasspath,
-            applicabilityClasspath,
-            extraParams.getShouldVerifySourceOnlyAbiConstraints(),
-            postKotlinCompilationFailureSteps.build(),
             extraParams.getDepTrackerPlugin(),
             new KotlincModeFactory()
                 .create(
@@ -101,9 +86,7 @@ public class KotlinCStepsBuilder {
                     extraParams,
                     Optional.ofNullable(actionMetadata),
                     classpathSnapshots),
-            kotlinCDAnalytics,
-            kotlincLanguageVersion,
-            kotlincLanguageVersion.getSupportsK2());
+            extraParams.getLanguageVersion());
     steps.add(kotlincStep);
   }
 

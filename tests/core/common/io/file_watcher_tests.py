@@ -6,31 +6,60 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-# pyre-strict
-
-
+import os
 import subprocess
-from enum import Enum
 
-from buck2.tests.core.common.io.file_watcher import FileWatcherEvent
-from buck2.tests.core.common.io.utils import get_files
-from buck2.tests.e2e_util.api.buck import Buck
+from core.common.io.file_watcher import FileWatcherEvent
+from core.common.io.utils import get_files
+from e2e_util.api.buck import Buck
 
 
-class FileSystemType(Enum):
-    NATIVE = 0
-    EDEN_FS = 1
+def git(buck: Buck, *args: str) -> str:
+    """Runs git on the repository in the test project and returns its stdout.
+
+    `--git-dir` pins git to that repository, and the user's git configuration
+    is ignored so that hooks and signing settings do not apply.
+    """
+    project = str(buck.cwd)
+    result = subprocess.run(
+        [
+            "git",
+            f"--git-dir={os.path.join(project, '.git')}",
+            f"--work-tree={project}",
+            "-c",
+            "user.name=buck2 tests",
+            "-c",
+            "user.email=tests@example.com",
+            *args,
+        ],
+        cwd=project,
+        env={
+            **os.environ,
+            "GIT_CONFIG_GLOBAL": os.devnull,
+            "GIT_CONFIG_NOSYSTEM": "1",
+        },
+        check=True,
+        stdout=subprocess.PIPE,
+        text=True,
+    )
+    return result.stdout
+
+
+def git_commit(buck: Buck, message: str) -> str:
+    """Commits every change in the test project and returns the new commit."""
+    git(buck, "add", "--all")
+    git(buck, "commit", "--quiet", "--message", message)
+    return git(buck, "rev-parse", "HEAD").strip()
 
 
 async def setup_file_watcher_test(buck: Buck) -> None:
-    # Fails on eden because the repo exists, that's ok
-    subprocess.run(["sl", "init"], cwd=buck.cwd)
-    subprocess.run(["sl", "commit", "--addremove", "-m", "temp"], cwd=buck.cwd)
-    subprocess.run(["sl", "bookmark", "main"], cwd=buck.cwd, check=True)
+    git(buck, "init", "--quiet", "--initial-branch=main")
+    (buck.cwd / ".gitignore").write_text("/buck-out\n")
+    git_commit(buck, "temp")
 
-    sl_status = subprocess.check_output(["sl", "status"], cwd=buck.cwd)
-    assert sl_status == b"", (
-        f"Expected clean working directory, but `sl status` returned:\n{sl_status.decode(errors='replace')}"
+    status = git(buck, "status", "--porcelain")
+    assert status == "", (
+        f"Expected clean working directory, but `git status` returned:\n{status}"
     )
     assert (await get_files(buck)) == ["files/abc", "files/d/empty"]
 
@@ -49,8 +78,9 @@ def verify_results(
 async def run_aba_test(buck: Buck) -> None:
     await setup_file_watcher_test(buck)
 
-    subprocess.run(["sl", "mv", "files/abc", "files/d/"], cwd=buck.cwd, check=True)
+    git(buck, "mv", "files/abc", "files/d/")
     assert (await get_files(buck)) == ["files/d/abc", "files/d/empty"]
 
-    subprocess.run(["sl", "shelve"], cwd=buck.cwd, check=True)
+    # Sets the move aside, which restores the committed files.
+    git(buck, "stash", "--quiet")
     assert (await get_files(buck)) == ["files/abc", "files/d/empty"]

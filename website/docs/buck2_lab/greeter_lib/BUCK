@@ -1,0 +1,16 @@
+rust_library(
+    name = "library",
+    srcs = ["src/lib.rs"],
+    visibility = ["PUBLIC"],
+    deps = [
+        "//website/docs/buck2_lab/logging_lib:logging_lib",
+    ],
+)
+
+rust_test(
+    name = "test",
+    srcs = ["tests/test.rs"],
+    deps = [
+        ":library",
+    ],
+)

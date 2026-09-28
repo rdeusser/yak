@@ -6,6 +6,6 @@
     name = TARGETS.fixture
 [buck2]
   materializations = deferred
-  digest_algorithms = BLAKE3-KEYED,SHA1
+  digest_algorithms = BLAKE3,SHA1
 [build]
   execution_platforms = root//:exec_platforms

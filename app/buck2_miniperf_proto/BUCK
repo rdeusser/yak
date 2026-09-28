@@ -1,17 +1,10 @@
-load("@fbsource//tools/build_defs:rust_library.bzl", "rust_library")
-
-oncall("build_infra")
+load("//build_defs:rust.bzl", "rust_library")
 
 rust_library(
     name = "buck2_miniperf_proto",
     srcs = glob(["src/**/*.rs"]),
-    test_deps = [
-        "fbsource//third-party/rust:bincode",
-    ],
-    # Keep this dep set small and slow-moving: this is `buck2_miniperf`'s only
-    # first-party dep. See the note in `buck2_miniperf/BUCK`.
     deps = [
-        "fbsource//third-party/rust:serde",
-        "//buck2/gazebo/dupe:dupe",
+        "//gazebo/dupe:dupe",
+        "//third-party/rust:serde",
     ],
 )

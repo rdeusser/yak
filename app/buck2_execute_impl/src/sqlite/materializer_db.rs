@@ -291,8 +291,9 @@ mod tests {
             // to just check anyways.
             "C:\\external\\symlink\\to\\artifact"
         } else {
-            "/mnt/gvfs/third-party2/zstd/28def025ee38919d509596da7d09e7a5262cbf32/1.4.x/platform010/64091f4/share"
-        }).unwrap();
+            "/opt/vendor/zstd/1.4.x/share"
+        })
+        .unwrap();
         // We use `new_symlink` as a helper but it can technically create both Symlink and ExternalSymlink.
         // Verify that we have proper symlink and external symlink.
         assert_matches!(symlink, ActionDirectoryMember::Symlink(..));

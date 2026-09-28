@@ -12,73 +12,24 @@ between two versions of Buck or of the repo.
 We typically aim to detect changes down to 0.3–0.5%; anything over 1% is a large win or regression.
 Single-shot measurements detect ~nothing in this range — every benchmark needs many samples.
 
-## abtest
+## Metrics and the daemon lifecycle
 
-[`scripts/abtest`](../../../scripts/abtest/) is the standard A/B benchmarking tool (Meta-only).
-Given a revision per row, it schedules a Skycastle workflow that builds Buck, runs the benchmark
-command many times per row striped across many hosts, and reports each metric as a per-row ratio
-with a confidence interval computed across hosts.
+How the daemon is managed around each sample decides which metric answers which question:
 
-```sh
-# CLI recipes for pairing revisions and rerunning rows; read before scheduling
-buck run @fbcode//mode/opt fbcode//buck2/scripts/abtest:abtest -- agent-instructions
+| Question                                 | Daemon lifecycle                          | Metric                    |
+|------------------------------------------|-------------------------------------------|---------------------------|
+| "How long does buck2 take?"              | any (`--no-buckd` has the least variance) | Wall time                 |
+| "How much memory at peak?"               | a fresh daemon for each sample            | Daemon `VmHWM` (peak RSS) |
+| "Peak of a single `--no-buckd` process?" | `--no-buckd`                              | Max RSS of the process    |
+| "How much does the daemon retain?"       | a fresh daemon for each sample            | jemalloc `allocated`      |
+| "Does the daemon grow across commands?"  | one daemon reused across samples          | jemalloc `allocated`      |
+| "Is fragmentation to blame?"             | fresh or reused                           | jemalloc `active - allocated` ([memory_fragmentation.md](memory_fragmentation.md)) |
 
-# Compare two Buck revisions on the current repo state
-buck run @fbcode//mode/opt fbcode//buck2/scripts/abtest:abtest -- \
-  abtest --remote -b DBASE -b DCHANGED -r . -d base -d changed \
-  -- audit providers --quiet @fbcode//mode/opt fbcode//buck2/app/buck2:buck2-bin
-
-# Block until the workflow finishes, then write graphs + stats locally
-buck run @fbcode//mode/opt fbcode//buck2/scripts/abtest:abtest -- \
-  analyze --workflow-run-id <id-or-url> -o /tmp/ab.png --text_output /tmp/ab.txt
-```
-
-- `-b` is the revision Buck is built at; `-r` is the repo checkout the command runs in (prelude,
-  macros, configs, workload). Both accept hashes, D-numbers, or `.`; `-b buck2` runs the released
-  Buck instead of building one.
-- Everything after the second `--` is the Buck command to benchmark; the workload advice in
-  [basics.md](basics.md#workloads) applies.
-- `--remote` gives each shard its own machine. The `--local` default runs the whole workflow on
-  your machine and is only good for smoke-testing a setup, along with `--dummy` and `--no-action`.
-- Scheduling prints the workflow URL; `analyze` waits for the workflow, so it can be run
-  immediately after.
-- Start with the default `--samples 100 --shards 10`. Intervals are computed across shards, so if
-  the reported interval is wider than the effect you're hunting, more shards help most.
-
-## Metrics and `--daemon-lifecycle`
-
-`--daemon-lifecycle` decides how buckd is managed around each sample, and thereby which metric
-answers which question:
-
-| Question                                 | Lifecycle                           | Metric column      |
-|------------------------------------------|-------------------------------------|--------------------|
-| "How long does buck2 take?"              | any (`none` has the least variance) | Wall Time          |
-| "How much memory at peak?"               | `fresh`                             | buckd Max RSS      |
-| "Peak of a single `--no-buckd` process?" | `none`                              | rusage Max RSS     |
-| "How much does the daemon retain?"       | `fresh`                             | jemalloc Allocated |
-| "Does the daemon grow across commands?"  | `reuse`                             | jemalloc Allocated |
-| "Is fragmentation to blame?"             | `fresh` / `reuse`                   | jemalloc Waste     |
-| "How much CPU?"                          | —                                   | not analyzed; raw `ru_*` fields are in `samples.json` |
-
-- `fresh` (the default) kills buckd around every sample; `reuse` keeps one daemon per host alive
-  across samples; `none` adds `--no-buckd`.
-- In `fresh`/`reuse`, the memory columns come from `buck2 status --snapshot` after purging the
-  allocator, so "jemalloc Allocated" is retained memory and "buckd Max RSS" is the daemon's real
-  peak. The rusage columns in those modes describe the thin gRPC client
-  ([basics.md](basics.md#the-process-model)) — ignore "rusage Max RSS" there.
-- With `reuse`, "buckd Max RSS" is the peak since the daemon started, not per sample.
-
-## Reading the output
-
-The workflow (and `analyze`) produce a histogram grid (`buckabtest.png`) and text stats
-(`buckabtest_stats.txt`), plus `*_filtered` variants with IQR outliers dropped. For each metric,
-every row after the first is summarized as `B/A <ratio> <low>..<high> => <pct>%`: the paired
-ratio against row A with its 95% interval.
-
-- Take the warnings in the text output seriously — dropped shards, shards sharing a physical
-  machine, and mixed CPU models all mean the interval is less trustworthy than it looks.
-- If the filtered and unfiltered results disagree materially, look at the histograms before
-  believing either.
+- With a daemon, the max RSS of the invoked process describes the thin gRPC client
+  ([basics.md](basics.md#the-process-model)), so read the daemon's numbers.
+- With a reused daemon, `VmHWM` is the peak since the daemon started, not per sample.
+- [`scripts/measure.sh`](scripts/measure.sh) takes one sample with a fresh daemon and records the
+  daemon's `VmHWM`, `buck2 debug allocator-stats`, and a heap profile.
 
 ## Per-iteration variance
 
@@ -88,18 +39,18 @@ ratio against row A with its 95% interval.
 | Daemon `VmHWM` (peak RSS)  | ~50 MB on a 4–5 GB build          |
 | jemalloc `allocated`       | a few MB; very stable             |
 
-`allocated` is stable enough that small samples are usable; for peak RSS and wall time, sub-1%
-effects only emerge from pairing many samples across many hosts, which is what abtest does.
+`allocated` is stable enough that small samples are usable. For peak RSS and wall time, sub-1%
+effects only emerge from pairing many samples across many hosts.
 
 ## Quick local checks
 
-For coarse local iteration — effects of several percent, or checking that a workload behaves
-before scheduling — [absh](https://github.com/stepancheg/absh) is convenient:
+For coarse local iteration — effects of several percent, or checking that a workload behaves —
+[absh](https://github.com/stepancheg/absh) is convenient:
 
 ```sh
-buck2 build @fbcode//mode/opt fbsource//third-party/rust:absh-absh --out /tmp/absh
+cargo install --git https://github.com/stepancheg/absh absh
 # -i: ignore the first iteration; -r: randomize A/B order; -m: max RSS of the spawned process
-/tmp/absh -a '/tmp/b2a ...' -b '/tmp/b2b ...' -i -r -m -n 30
+absh -a '/tmp/b2a ...' -b '/tmp/b2b ...' -i -r -m -n 30
 ```
 
 `-m` is only meaningful with `--no-buckd`, where the spawned process is the one doing the work.

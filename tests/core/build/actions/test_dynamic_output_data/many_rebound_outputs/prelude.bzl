@@ -6,8 +6,6 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-# @nolint
-
 # Number of artifacts re-bound through the dynamic_output. The cost of the
 # regression this fixture guards against is quadratic in this (each re-bound
 # artifact's action key holds the producing action's full output map as its

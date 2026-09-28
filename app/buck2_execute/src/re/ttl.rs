@@ -60,7 +60,7 @@ pub fn re_expiration_from_ttl(now: Timestamp, ttl_seconds: i64, what: &dyn Displ
 mod tests {
     use super::*;
 
-    /// The S671995 pattern: a TTL in nanoseconds mistakenly reported in a seconds field.
+    /// A TTL in nanoseconds mistakenly reported in a seconds field.
     const NS_AS_SECONDS_TTL: i64 = 2_600_000_000_000_000;
 
     #[test]

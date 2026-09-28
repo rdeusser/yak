@@ -480,17 +480,14 @@ async fn page_out_on_idle(
     // A command may have arrived (and cancelled us) while we waited for idle. That's
     // rare, so don't check here — `page_out` observes the flag and stops promptly.
     tracing::info!("Daemon is idle; paging DICE out to reclaim memory");
-    let (result, summary) = page_out_measured(&dice, page_out_cancelled, &dispatcher).await;
+    // The triggering command has finished, so its event channel is closed and the summary
+    // has no reader.
+    let (result, _summary) = page_out_measured(&dice, page_out_cancelled, &dispatcher).await;
     if result.is_err() {
         // Set before this function returns (dropping the single-flight guard) so a
         // `status --wait` that unblocks on guard release already sees the flag.
         PAGE_OUT_FAILED.store(true, Ordering::Relaxed);
     }
-    // A "late" event on the finalized triggering command's trace: its
-    // per-command channel is gone, but the dispatcher tees to the daemon
-    // Scribe sink, so this still reaches `buck2_page_outs` with the command's
-    // trace id. The manual command deliberately leaves that table alone.
-    dispatcher.instant_event(summary);
     result.map(|_| ())
 }
 

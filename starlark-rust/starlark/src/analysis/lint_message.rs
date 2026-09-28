@@ -22,8 +22,6 @@ use crate::errors::EvalSeverity;
 
 /// A JSON-deriving type that gives a stable interface to downstream types.
 /// Do NOT change this type, change Message instead.
-///
-/// [Linter JSON format](https://www.internalfb.com/intern/wiki/Linting/adding-linters/).
 #[derive(Debug, Clone, Serialize)]
 pub struct LintMessage {
     path: String,

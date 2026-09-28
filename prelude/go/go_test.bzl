@@ -163,23 +163,12 @@ def go_test_impl(ctx: AnalysisContext) -> list[Provider]:
     # Setup RE executors based on the `remote_execution` param.
     re_executors = get_re_executors_from_props(ctx)
 
-    # Emit TPX_LIST_TESTS_COMMAND so TPX can enumerate tests via AST parsing
-    # of the *_test.go sources instead of running the compiled binary with
-    # -test.list. Eliminates cgo and TestMain startup costs from listing.
-    # The lister mirrors `go test -list <regex>`
-    env = dict(ctx.attrs.env)
-    env["TPX_LIST_TESTS_COMMAND"] = cmd_args(
-        [ctx.attrs._list_tests[RunInfo]],
-        "-match=^Test.*",
-        cmd_args(test_go_files_argsfile, format = "@{}"),
-    )
-
     return inject_test_run_info(
         ctx,
         ExternalRunnerTestInfo(
             type = "go",
             command = [run_cmd],
-            env = env,
+            env = ctx.attrs.env,
             labels = ctx.attrs.labels,
             contacts = ctx.attrs.contacts,
             default_executor = re_executors.default_executor,

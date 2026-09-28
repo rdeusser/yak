@@ -13,7 +13,6 @@ load("@prelude//utils:type_defs.bzl", "type_utils")
 ReArg = record(
     disabled = field(bool | None, default = None),
     re_props = field(dict | None, default = None),
-    default_run_as_bundle = field(bool | None, default = None),
 )
 
 # Result of `get_re_executors_from_props`.
@@ -35,16 +34,11 @@ def _network_access_kwargs(network_access: str | None) -> dict[str, str]:
         return {}
     return {"network_access": network_access}
 
-_FORCE_RUN_AS_BUNDLE = read_root_config("tpx", "force_run_as_bundle", "False")
-
 def _force_local_re_tests() -> bool:
-    # Must agree with the `read_bool` of this key in
-    # `tools/build_defs/fb_native_wrapper.bzl`, which strips `remote_execution` off
-    # test targets: when the two disagree a target keeps its RE props but loses its
-    # executor, or vice versa. `read_bool` itself is not reusable here because its
-    # `read_config` binding is unavailable during analysis, so mirror its coercion —
-    # including rejecting values it cannot coerce rather than guessing.
-    value = read_root_config("fbcode", "disable_re_tests", "")
+    # `read_bool` is not usable here because its `read_config` binding is unavailable
+    # during analysis, so this mirrors its coercion, including rejecting values it
+    # cannot coerce.
+    value = read_root_config("tests", "disable_re_tests", "")
 
     # An empty value means "unset", so that a later config can clear an earlier one.
     if value == "":
@@ -54,16 +48,14 @@ def _force_local_re_tests() -> bool:
         return True
     if lowered == "false":
         return False
-    fail("`fbcode:disable_re_tests`: cannot coerce {!r} to bool".format(value))
+    fail("`tests.disable_re_tests`: cannot coerce {!r} to bool".format(value))
 
 def _get_re_arg(ctx: AnalysisContext) -> ReArg:
     if _force_local_re_tests() or not hasattr(ctx.attrs, "remote_execution"):
-        # NOTE: this is kinda weird, we take this path if the attr is missing completely
-        # Even if the value is None we still follow. Adding force.local to give users
-        # some means of bypassing.
-        # Example usecase: SGW wants to run kotlin_test targets on MBP/OSX locally
-        # eg: buck2 test --local-only -c fbcode.disable_re_tests=True //signals/cloudbridge/v2/libs/cb-meters:test
-        return ReArg(re_props = None, default_run_as_bundle = False)
+        # This path is also taken when the attribute is missing entirely.
+        # `-c tests.disable_re_tests=true` lets users run tests locally, for example
+        # `buck2 test --local-only -c tests.disable_re_tests=true //path/to:test`.
+        return ReArg(re_props = None)
 
     if ctx.attrs.remote_execution != None:
         if ctx.attrs.remote_execution == "disabled":
@@ -73,29 +65,18 @@ def _get_re_arg(ctx: AnalysisContext) -> ReArg:
             expect_non_none(ctx.attrs._remote_test_execution_toolchain)
             return ReArg(
                 re_props = ctx.attrs._remote_test_execution_toolchain[RemoteTestExecutionToolchainInfo].profiles[ctx.attrs.remote_execution],
-                default_run_as_bundle = ctx.attrs._remote_test_execution_toolchain[RemoteTestExecutionToolchainInfo].default_run_as_bundle,
             )
 
-        return ReArg(re_props = ctx.attrs.remote_execution, default_run_as_bundle = False)
+        return ReArg(re_props = ctx.attrs.remote_execution)
 
     # Check for a default RE option on the toolchain.
     re_toolchain = ctx.attrs._remote_test_execution_toolchain
     if re_toolchain != None and re_toolchain[RemoteTestExecutionToolchainInfo].default_profile != None:
-        return ReArg(
-            re_props = re_toolchain[RemoteTestExecutionToolchainInfo].default_profile,
-            default_run_as_bundle = re_toolchain[RemoteTestExecutionToolchainInfo].default_run_as_bundle,
-        )
+        return ReArg(re_props = re_toolchain[RemoteTestExecutionToolchainInfo].default_profile)
 
-    return ReArg(re_props = None, default_run_as_bundle = False)
+    return ReArg(re_props = None)
 
-def maybe_add_run_as_bundle_label(ctx: AnalysisContext, labels: list[str]) -> None:
-    if "re_ignore_force_run_as_bundle" in labels:
-        return
-    re_arg = _get_re_arg(ctx)
-    if re_arg.default_run_as_bundle or _FORCE_RUN_AS_BUNDLE == "True":
-        labels.extend(["run_as_bundle"])
-
-def get_re_executors_from_props(ctx: AnalysisContext, dynamic_image_override: [dict, None] = None) -> RemoteTestExecutorConfig:
+def get_re_executors_from_props(ctx: AnalysisContext) -> RemoteTestExecutorConfig:
     """
     Convert the `remote_execution` properties param into `CommandExecutorConfig` objects to use with test providers.
 
@@ -107,16 +88,10 @@ def get_re_executors_from_props(ctx: AnalysisContext, dynamic_image_override: [d
     `run_from_project_root = False` so the test keeps running in-place rather than
     being switched to project-root/RE-style execution.
 
-    Args:
-        ctx: The analysis context.
-        dynamic_image_override: If provided, overrides the `remote_execution_dynamic_image`
-            from `remote_execution` props. Use this to inject a resolved snapshotted fbpkg
-            image (with pinned uuid) at analysis time.
-
     Returns a `RemoteTestExecutorConfig`.
     """
 
-    return _get_re_executors(ctx, _get_re_arg(ctx), dynamic_image_override)
+    return _get_re_executors(ctx, _get_re_arg(ctx))
 
 def get_re_executors_from_explicit_props(ctx: AnalysisContext, re_props: dict | None) -> RemoteTestExecutorConfig:
     """
@@ -136,17 +111,9 @@ def get_re_executors_from_explicit_props(ctx: AnalysisContext, re_props: dict | 
     if _force_local_re_tests():
         re_props = None
 
-    return _get_re_executors(
-        ctx,
-        ReArg(re_props = re_props, default_run_as_bundle = False),
-        None,
-    )
+    return _get_re_executors(ctx, ReArg(re_props = re_props))
 
-def _get_re_executors(
-    ctx: AnalysisContext,
-    re_arg: ReArg,
-    dynamic_image_override: [dict, None],
-) -> RemoteTestExecutorConfig:
+def _get_re_executors(ctx: AnalysisContext, re_arg: ReArg) -> RemoteTestExecutorConfig:
     network_access = getattr(ctx.attrs, "network_access", None)
 
     if re_arg.disabled:
@@ -162,9 +129,8 @@ def _get_re_executors(
         # the rule's build execution platform: that platform may be remote-only when
         # cross-building, even though the target binary must run on the local host.
         #
-        # `remote_cache_enabled = False` keeps this a plain `Executor::Local`
-        # (parity: the unset default is True in fbcode but False in OSS), and nothing
-        # is uploaded from here anyway (`allow_cache_uploads` is False).
+        # `remote_cache_enabled = False` keeps this a plain `Executor::Local`, and
+        # nothing is uploaded from here anyway (`allow_cache_uploads` is False).
         executor = CommandExecutorConfig(local_enabled = True, remote_enabled = False, remote_cache_enabled = False, **_network_access_kwargs(network_access))
         return RemoteTestExecutorConfig(default_executor = executor)
 
@@ -176,36 +142,21 @@ def _get_re_executors(
     use_case = re_props_copy.pop("use_case")
     listing_capabilities = re_props_copy.pop("listing_capabilities", None)
     remote_cache_enabled = re_props_copy.pop("remote_cache_enabled", None)
-    re_dependencies = re_props_copy.pop("dependencies", [])
-    re_gang_workers = re_props_copy.pop("gang_workers", [])
-    re_gang = re_props_copy.pop("gang", None)
     local_enabled = re_props_copy.pop("local_enabled", False)
     local_listing_enabled = re_props_copy.pop("local_listing_enabled", None)
     re_resource_units = re_props_copy.pop("resource_units", None)
     re_listing_resource_units = re_props_copy.pop("listing_resource_units", re_resource_units)
-    re_dynamic_image = re_props_copy.pop("remote_execution_dynamic_image", None)
-    meta_internal_extra_params = re_props_copy.pop("meta_internal_extra_params", None)
-    if dynamic_image_override != None:
-        re_dynamic_image = dynamic_image_override
     if re_props_copy:
         unexpected_props = ", ".join(re_props_copy.keys())
         fail("{}: found unexpected re props: {}".format(ctx.label, unexpected_props))
-
-    if re_gang != None:
-        meta_internal_extra_params = dict(meta_internal_extra_params or {})
-        meta_internal_extra_params["remote_execution_gang"] = re_gang
 
     default_executor = CommandExecutorConfig(
         local_enabled = local_enabled,
         remote_enabled = True,
         remote_execution_properties = capabilities,
-        remote_execution_use_case = use_case or "tpx-default",
+        remote_execution_use_case = use_case,
         remote_cache_enabled = remote_cache_enabled,
-        remote_execution_dependencies = re_dependencies,
-        remote_execution_gang_workers = re_gang_workers,
         remote_execution_resource_units = re_resource_units,
-        remote_execution_dynamic_image = re_dynamic_image,
-        meta_internal_extra_params = meta_internal_extra_params,
         **_network_access_kwargs(network_access),
     )
 
@@ -215,11 +166,9 @@ def _get_re_executors(
             local_enabled = local_listing_enabled if local_listing_enabled != None else local_enabled,
             remote_enabled = True,
             remote_execution_properties = listing_capabilities if listing_capabilities != None else capabilities,
-            remote_execution_use_case = use_case or "tpx-default",
+            remote_execution_use_case = use_case,
             remote_cache_enabled = remote_cache_enabled,
             remote_execution_resource_units = re_listing_resource_units,
-            remote_execution_dynamic_image = re_dynamic_image,
-            meta_internal_extra_params = meta_internal_extra_params,
             **_network_access_kwargs(network_access),
         )
     return RemoteTestExecutorConfig(

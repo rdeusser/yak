@@ -94,9 +94,9 @@ extracting a specific stack see the other scripts in that directory.
 ## Demangling Rust v0 names
 
 `c++filt` does not handle Rust v0 (`_R…`) names, even with `--format=rust`.
-Use `rustfilt`. Inside fbsource it lives at
-`fbsource/third-party/rust/tools/rustfilt`. The included scripts auto-detect
-it.
+Use `rustfilt` (`cargo install rustfilt`). The included scripts use the
+program that `RUSTFILT` names, then `rustfilt` on `PATH`, then
+`~/.cargo/bin/rustfilt`.
 
 `.llvm.NNN` suffixes (LLVM-added for inlined functions) sometimes cause
 rustfilt to leave a frame undemangled even though it can demangle the
@@ -118,7 +118,7 @@ re-pipe the offending symbol on its own to demangle it.
 ## When the answer is in DICE
 
 For "what is reachable from object X" rather than "where was X allocated",
-use [`allocative`](https://github.com/facebookincubator/allocative) (already
+use [`allocative`](../../../allocative/) (already
 integrated into buck2). The DICE state implements `Allocative`;
 `buck2 debug allocative` serializes a graph for offline analysis. This is
 the right tool when a heap profile shows lots of attribution to upstream

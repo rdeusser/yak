@@ -24,7 +24,6 @@ JavaToolchainInfo = provider(
     fields = {
         "abi_generation_mode": provider_field(typing.Any, default = None),
         "bootclasspath_7": provider_field(typing.Any, default = None),
-        "bootclasspath_8": provider_field(typing.Any, default = None),
         "class_abi_generator": provider_field(typing.Any, default = None),
         "class_loader_bootstrapper": provider_field(typing.Any, default = None),
         "compile_and_package": provider_field(typing.Any, default = None),

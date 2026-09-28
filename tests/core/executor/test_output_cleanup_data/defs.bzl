@@ -12,7 +12,7 @@ def _action_impl(ctx):
 
     ctx.actions.run(
         [
-            "fbpython",
+            "python3",
             "-c",
             "\n".join([
                 "import os, sys",

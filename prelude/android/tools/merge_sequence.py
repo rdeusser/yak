@@ -7,8 +7,6 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-# pyre-strict
-
 """
 Applies the merge sequence to the linkable_graph and module graph to produce merged libraries.
 
@@ -132,8 +130,8 @@ class LinkableGraphNode(typing.NamedTuple):
 
     @staticmethod
     def parse(json: dict[str, object]) -> LinkableGraphNode:
-        deps = [Label(x) for x in json.pop("deps")]  # pyre-ignore
-        return LinkableGraphNode(deps=deps, **json)  # pyre-ignore
+        deps = [Label(x) for x in json.pop("deps")]
+        return LinkableGraphNode(deps=deps, **json)
 
 
 class MergemapInput(typing.NamedTuple):
@@ -430,9 +428,9 @@ def get_native_linkables_by_merge_sequence(  # noqa: C901
             if x.search(raw_target):
                 return True
 
-        # TODO(cjhopman): This logic does not explicitly exclude targets that are used_by_wrap_script. D38377593
-        # enforces that such targets never can_be_asset and are therefore implicitly excluded, but D38845949 still
-        # explicitly excludes them for Buck 1.
+        # TODO(cjhopman): This logic does not explicitly exclude targets that are used_by_wrap_script.
+        # Such targets never can_be_asset and are therefore implicitly excluded, but Buck 1 still
+        # excludes them explicitly.
         return False
 
     def get_children_without_merge_group(label: Label) -> list[Label]:

@@ -13,8 +13,6 @@ use dupe::Dupe;
 #[derive(Debug, PartialEq, Eq, Ord, PartialOrd, Copy, Clone, Dupe)]
 pub enum Applicability {
     All,
-    /// Not meaningful in open source
-    Internal,
     /// Only used in self-tests of buck2
     Testing,
 }
@@ -47,7 +45,7 @@ mod tests {
 
     #[test]
     fn test_env_info() {
-        let _ignore = buck2_env!("TEST_VAR_1", applicability = internal);
+        let _ignore = buck2_env!("TEST_VAR_1", applicability = testing);
         let _ignore = buck2_env!("TEST_VAR_2", type = u32, default=20);
         let var_1 = ENV_INFO.iter().find(|e| e.name == "TEST_VAR_1").unwrap();
         let var_2 = ENV_INFO.iter().find(|e| e.name == "TEST_VAR_2").unwrap();
@@ -56,7 +54,7 @@ mod tests {
                 name: "TEST_VAR_1",
                 ty: "std :: string :: String",
                 default: None,
-                applicability: Applicability::Internal,
+                applicability: Applicability::Testing,
             },
             var_1
         );

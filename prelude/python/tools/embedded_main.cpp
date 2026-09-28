@@ -89,7 +89,7 @@ int main(int argc, char* argv[]) {
   }
 #endif /* NATIVE_PAR_STYLE */
 
-  // TODO (T129253406) We can do some code generation on build, we will have tho
+  // TODO: We can do some code generation on build, we will have tho
   // full library name and the symbol name. FYI the currently we mangle symbol
   // names to avoid collision so PyInit_bye ->
   // PyInit_python_efficiency_experimental_linking_tests_bye

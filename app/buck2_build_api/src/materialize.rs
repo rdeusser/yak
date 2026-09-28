@@ -65,18 +65,6 @@ pub async fn materialize_and_upload_artifact_group(
     Ok(values)
 }
 
-#[cfg(fbcode_build)] // Relies on fbcode future sizes
-buck2_util::size_assert::words_of_async_fn_future!(
-    materialize_and_upload_artifact_group,
-    (_, _, _, _),
-    ~45
-);
-// These are here just for understanding
-#[cfg(fbcode_build)]
-buck2_util::size_assert::words_of_async_fn_future!(materialize_artifact_group, (_, _, _, _), ~26);
-#[cfg(fbcode_build)]
-buck2_util::size_assert::words_of_async_fn_future!(ensure_uploaded, (_, _), ~401);
-
 async fn materialize_artifact_group(
     ctx: &mut DiceComputations<'_>,
     artifact_group: &ArtifactGroup,

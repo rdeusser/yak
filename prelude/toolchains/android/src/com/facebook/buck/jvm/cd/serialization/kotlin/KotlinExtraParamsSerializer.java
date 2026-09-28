@@ -18,7 +18,6 @@ import com.facebook.infer.annotation.Nullsafe;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSortedSet;
-import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -56,12 +55,6 @@ public class KotlinExtraParamsSerializer {
                 ImmutableMap.toImmutableMap(
                     e -> AbsPathSerializer.deserialize(e.getKey()),
                     e -> ImmutableMap.copyOf(e.getValue().getParamsMap()))),
-        kotlinExtraParams.getKosabiPluginOptionsMap().entrySet().stream()
-            .collect(
-                ImmutableMap.toImmutableMap(
-                    Map.Entry::getKey, e -> AbsPathSerializer.deserialize(e.getValue()))),
-        Optional.of(
-            "exception: java.lang.RuntimeException: Terminating compilation. We're done with ABI."),
         kotlinExtraParams.getFriendPathsList().stream()
             .map(AbsPathSerializer::deserialize)
             .collect(ImmutableSortedSet.toImmutableSortedSet(AbsPath.comparator())),
@@ -76,7 +69,6 @@ public class KotlinExtraParamsSerializer {
         Optional.of(kotlinExtraParams.getJvmAbiGenPlugin())
             .filter(s -> !s.isEmpty())
             .map(AbsPathSerializer::deserialize),
-        kotlinExtraParams.getShouldVerifySourceOnlyAbiConstraints(),
         Optional.of(kotlinExtraParams.getDepTrackerPlugin())
             .filter(s -> !s.isEmpty())
             .map(AbsPathSerializer::deserialize),
@@ -87,9 +79,6 @@ public class KotlinExtraParamsSerializer {
         kotlinExtraParams.getShouldKsp2RunIncrementally(),
         kotlinExtraParams.getLanguageVersion(),
         AbsPathSerializer.deserialize(kotlinExtraParams.getKotlinClassesDir()),
-        Optional.of(kotlinExtraParams.getJavaBinary()).filter(s -> !s.isEmpty()),
-        kotlinExtraParams.getApplicabilityClasspathList().stream()
-            .map(AbsPathSerializer::deserialize)
-            .collect(ImmutableList.toImmutableList()));
+        Optional.of(kotlinExtraParams.getJavaBinary()).filter(s -> !s.isEmpty()));
   }
 }

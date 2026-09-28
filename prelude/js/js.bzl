@@ -15,41 +15,11 @@ load("@prelude//js:js_library.bzl", "js_library_impl")
 
 def _select_platform():
     return select({
-        "DEFAULT": select({
-            "DEFAULT": "android",
-            "config//os/constraints:appletvos": "ios",
-            "config//os/constraints:iphoneos": "ios",
-            "config//os/constraints:macos": "macos",
-            "config//os/constraints:windows": "windows",
-        }),
-        "config//react-native:macos": "macos",
-        "fbsource//tools/build_defs/js/constraints/metro_js_platform_override:metro_js_platform_override[android]": "android",
-        "fbsource//tools/build_defs/js/constraints/metro_js_platform_override:metro_js_platform_override[ios]": "ios",
-        "fbsource//tools/build_defs/js/constraints/metro_js_platform_override:metro_js_platform_override[macos]": "macos",
-        "fbsource//tools/build_defs/js/constraints/metro_js_platform_override:metro_js_platform_override[vr]": "vr",
-        "fbsource//tools/build_defs/js/constraints/metro_js_platform_override:metro_js_platform_override[windows]": "windows",
-    })
-
-def _is_release():
-    return select({
-        "DEFAULT": select({
-            "DEFAULT": select({
-                "DEFAULT": False,
-                "config//build_mode:optimization[opt]": True,
-            }),
-            "config//build_mode/constraints:build_mode[release]": True,
-        }),
-        "config//runtime:fbcode": select({
-            "DEFAULT": False,
-            "config//build_mode/constraints:opt": True,
-        }),
-    })
-
-def _select_asset_dest_path_resolver():
-    return select({
-        "DEFAULT": None,
-        "fbsource//tools/build_defs/js/constraints/asset_dest_path_resolver:asset_dest_path_resolver[android]": "android",
-        "fbsource//tools/build_defs/js/constraints/asset_dest_path_resolver:asset_dest_path_resolver[generic]": "generic",
+        "DEFAULT": "android",
+        "config//os/constraints:iphoneos": "ios",
+        "config//os/constraints:macos": "macos",
+        "config//os/constraints:windows": "windows",
+        "config//os:tvos": "ios",
     })
 
 implemented_rules = {
@@ -62,8 +32,9 @@ extra_attributes = {
     "js_bundle": {
         "worker": attrs.exec_dep(),
         "_android_toolchain": toolchains_common.android(),
+        # The prelude has no build mode constraint to select release bundles on.
         "_is_release": attrs.bool(
-            default = _is_release(),
+            default = False,
         ),
         "_platform": attrs.string(
             default = _select_platform(),
@@ -72,17 +43,14 @@ extra_attributes = {
     "js_bundle_genrule": genrule_attributes()
     | {
         "has_content_based_path": attrs.bool(
-            default = select({
-                "DEFAULT": False,
-                "config//features/apple:content_based_path_hashing_enabled": True,
-            })
+            default = False,
         ),
         "type": attrs.string(
             default = "js_bundle_genrule",
         ),
         "_exec_os_type": buck.exec_os_type_arg(),
         "_is_release": attrs.bool(
-            default = _is_release(),
+            default = False,
         ),
         "_platform": attrs.string(
             default = _select_platform(),
@@ -94,12 +62,8 @@ extra_attributes = {
             default = [],
         ),
         "worker": attrs.exec_dep(),
-        "_asset_dest_path_resolver": attrs.option(
-            attrs.string(),
-            default = _select_asset_dest_path_resolver(),
-        ),
         "_is_release": attrs.bool(
-            default = _is_release(),
+            default = False,
         ),
         "_platform": attrs.string(
             default = _select_platform(),

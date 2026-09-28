@@ -27,27 +27,12 @@ TargetCpuType = ["arm", "armv7", "arm64", "arm64e", "x86", "x86_64", "mips", "ri
 
 def _has_content_based_path_attr():
     return {
-        "has_content_based_path": attrs.bool(
-            default = select({
-                "DEFAULT": False,
-                # @oss-disable[end= ]: "config//os/constraints:android": True,
-                # @oss-disable[end= ]: "config//runtime/constraints:android-host-test": True,
-                # @oss-disable[end= ]: "config//runtime/constraints:android-unit-test": True,
-            })
-        ),
+        "has_content_based_path": attrs.bool(default = False),
     }
 
 def _optional_has_content_based_path_attr():
     return {
-        "has_content_based_path": attrs.option(
-            attrs.bool(),
-            default = select({
-                "DEFAULT": None,
-                # @oss-disable[end= ]: "config//os/constraints:android": True,
-                # @oss-disable[end= ]: "config//runtime/constraints:android-host-test": True,
-                # @oss-disable[end= ]: "config//runtime/constraints:android-unit-test": True,
-            }),
-        ),
+        "has_content_based_path": attrs.option(attrs.bool(), default = None),
     }
 
 alias = prelude_rule(
@@ -198,7 +183,7 @@ command_alias = prelude_rule(
                  In that case, the build will fail if the command is invoked on a platform not specified in
                  the mapping.
 
-                Valid platforms are all values of the [`Platform` enum](https://dev.buck.build/javadoc/com/facebook/buck/util/environment/Platform.html) :
+                Valid platforms are:
 
                 * `FREEBSD`
                 * `LINUX`
@@ -376,7 +361,7 @@ configured_alias = prelude_rule(
             #   actual `actual` attribute used in rule implementation is named `configured_actual`.
             #   Logically this should be `attrs.configuration_label`, but `configuration_label`
             #   is currently an alias for `attrs.dep`, which makes non-transitioned dependency
-            #   also a dependency along with transitioned dependency. (See D40255132).
+            #   also a dependency along with transitioned dependency.
             "actual": attrs.label(),
             "configured_actual": attrs.option(attrs.configured_dep(), default = None),
             "fallback_actual": attrs.option(attrs.dep(), default = None),
@@ -1178,14 +1163,6 @@ remote_file = prelude_rule(
                  javadocs for MavenUrlDecoder See the example section below.
             """,
             ),
-            "vpnless_url": attrs.option(
-                attrs.string(),
-                default = None,
-                doc = """
-                An optional additional URL from which this resource can be downloaded when
-                  off VPN. Meta-internal only.
-            """,
-            ),
             "sha1": attrs.string(
                 default = "",
                 doc = """
@@ -1311,10 +1288,8 @@ test_suite = prelude_rule(
     attrs = (
         # @unsorted-dict-items
         {
-            # On buck1 query, tests attribute on test_suite is treated as deps, while on buck2 it is not.
-            # While buck2's behavior makes more sense, we want to preserve buck1 behavior on test_suite for now to make TD behavior match between buck1 and buck2.
-            # This diff makes the behaviors match by adding a test_deps attribute to test_suite on buck2 that is used as a deps attribute. In the macro layer, we set test_deps = tests if we are using buck2.
-            # For more context: https://fb.prod.workplace.com/groups/603286664133355/posts/682567096205311/?comment_id=682623719532982&reply_comment_id=682650609530293
+            # Buck1 query treated the `tests` attribute of test_suite as deps, and Buck2 query does not.
+            # `test_deps` is a deps attribute, so a macro that sets `test_deps = tests` gets the Buck1 query behavior.
             "test_deps": attrs.list(attrs.dep(), default = []),
         }
         | buck.licenses_arg()
@@ -1572,7 +1547,6 @@ worker_tool = prelude_rule(
                  to process the same input—with different contents—twice!
             """,
             ),
-            # FIXME: prelude// should be standalone (not refer to fbsource//)
             "_worker_tool_runner": attrs.default_only(attrs.dep(default = "prelude//js/worker_runner:worker_tool_runner")),
         }
         | buck.licenses_arg()

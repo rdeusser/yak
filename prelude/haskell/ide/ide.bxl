@@ -36,8 +36,6 @@ _HASKELL_LIB = "prelude//rules.bzl:haskell_library"
 
 linkStyle = LinkStyle("static")
 
-configuration_modifiers = ["ovr_config//third-party/ghc/constraints:9.2.4"]
-
 def _impl_target(ctx):
     target = ctx.cli_args.target
     project_universe = ctx.cli_args.project_universe
@@ -101,14 +99,7 @@ def _find_project_and_solve(ctx, target, project_universe = []):
 
 def _find_target_in_universe(ctx, target, project_universe):
     for p in project_universe:
-        cfg_p = (
-            ctx.lazy.configured_target_node(
-                p,
-                modifiers = configuration_modifiers,
-            )
-            .catch()
-            .resolve()
-        )
+        cfg_p = ctx.lazy.configured_target_node(p).catch().resolve()
         if not (cfg_p.is_ok()) or cfg_p.unwrap() == None:
             continue
         cfg_p = cfg_p.unwrap()
@@ -140,10 +131,7 @@ def _solution_for_haskell_ide(ctx, target):
     results = []
     deps = {}
     for dep in resolved_attrs.deps_query:
-        t = ctx.configured_targets(
-            dep.label.raw_target(),
-            modifiers = configuration_modifiers,
-        )
+        t = ctx.configured_targets(dep.label.raw_target())
         if t.rule_type == _HASKELL_LIB or t.rule_type == _HASKELL_BIN:
             deps[dep.label] = t
     for lib in deps.values():
@@ -198,7 +186,7 @@ def _solution_for_haskell_lib(ctx, target, exclude):
 
     flags = [
         "-this-unit-id",
-        "fbcode_fake_unit_id",
+        "fake_unit_id",
         "-optP-undef",
         "-optP-traditional-cpp",
         "-I.",

@@ -1362,7 +1362,7 @@ impl<T: IoHandler> DeferredMaterializerCommandProcessor<T> {
                         let timestamp = Timestamp::now();
                         *last_access_time = timestamp;
 
-                        // NOTE (T142264535): We mostly expect that artifacts are always declared
+                        // NOTE: We mostly expect that artifacts are always declared
                         // before they are materialized, but there's one case where that doesn't
                         // happen. In particular, when incremental actions execute, they will trigger
                         // materialization of outputs from a previous run. The artifact isn't really
@@ -1391,8 +1391,6 @@ impl<T: IoHandler> DeferredMaterializerCommandProcessor<T> {
             EntryDetails::DepsOnly => None,
         };
 
-        // `method` is grepped for by tests/core/trace_io/test_trace_io.py (it asserts on the
-        // Debug method name, e.g. `LocalCopy`). Keep logging it so refactors don't break those tests.
         tracing::debug!(
             entry_details = entry_details.kind(),
             method = ?method,

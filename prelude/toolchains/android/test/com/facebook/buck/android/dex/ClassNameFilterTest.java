@@ -25,32 +25,32 @@ public class ClassNameFilterTest {
                 "^org/acra/",
                 "^org/tukaani/",
                 "/FbInjector^",
-                "^com/facebook/build/Config^",
+                "^com/example/build/Config^",
                 "/nodex/",
                 // regex patterns
-                "^-com\\/facebook\\/intent\\$(FbrpcIntent|ChooserActivityIntent)$",
-                "^-^com\\/facebook\\/.*\\/util"));
+                "^-com\\/example\\/intent\\$(FbrpcIntent|ChooserActivityIntent)$",
+                "^-^com\\/example\\/.*\\/util"));
 
     assertTrue(filter.matches("org/acra/Reporter"));
     assertTrue(filter.matches("org/tukaani/Decoder$State"));
-    assertTrue(filter.matches("com/facebook/inject/FbInjector"));
-    assertTrue(filter.matches("com/facebook/build/Config"));
-    assertTrue(filter.matches("com/facebook/nodex/Splash"));
+    assertTrue(filter.matches("com/example/inject/FbInjector"));
+    assertTrue(filter.matches("com/example/build/Config"));
+    assertTrue(filter.matches("com/example/nodex/Splash"));
     assertFalse(filter.matches("borg/acra/Reporter"));
     assertFalse(filter.matches("worg/tukaani/Decoder"));
-    assertFalse(filter.matches("com/facebook/inject/FbInjectorImpl"));
-    assertFalse(filter.matches("com/facebook/inject/FbInjector^"));
-    assertFalse(filter.matches("com/facebook/build/Configs"));
-    assertFalse(filter.matches("dcom/facebook/build/Config"));
-    assertFalse(filter.matches("com/facebook/fake/build/Config"));
-    assertFalse(filter.matches("com/facebook/modex/Splash"));
+    assertFalse(filter.matches("com/example/inject/FbInjectorImpl"));
+    assertFalse(filter.matches("com/example/inject/FbInjector^"));
+    assertFalse(filter.matches("com/example/build/Configs"));
+    assertFalse(filter.matches("dcom/example/build/Config"));
+    assertFalse(filter.matches("com/example/fake/build/Config"));
+    assertFalse(filter.matches("com/example/modex/Splash"));
     // Test cases for regex match
-    assertTrue(filter.matches("com/facebook/intent$FbrpcIntent"));
-    assertFalse(filter.matches("com/facebook/intent$FbrpcIntent/Config"));
-    assertTrue(filter.matches("com/facebook/intent$ChooserActivityIntent"));
-    assertTrue(filter.matches("/com/facebook/intent$ChooserActivityIntent"));
-    assertTrue(filter.matches("com/facebook/intent/local/utility/store"));
-    assertFalse(filter.matches("com/facebook/intent/local/store"));
-    assertFalse(filter.matches("/com/facebook/whatever/util/whatever"));
+    assertTrue(filter.matches("com/example/intent$FbrpcIntent"));
+    assertFalse(filter.matches("com/example/intent$FbrpcIntent/Config"));
+    assertTrue(filter.matches("com/example/intent$ChooserActivityIntent"));
+    assertTrue(filter.matches("/com/example/intent$ChooserActivityIntent"));
+    assertTrue(filter.matches("com/example/intent/local/utility/store"));
+    assertFalse(filter.matches("com/example/intent/local/store"));
+    assertFalse(filter.matches("/com/example/whatever/util/whatever"));
   }
 }

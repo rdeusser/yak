@@ -1,12 +1,9 @@
-load("@fbsource//tools/build_defs:testpilot_defs.bzl", "tpx_labels")
 load(
     "@prelude//toolchains/android/tools:build_rules.bzl",
     "buck_java_library",
     "buck_java_test",
 )
 load("@prelude//utils:source_listing.bzl", "source_listing")
-
-oncall("android_devxx")
 
 source_listing()
 
@@ -65,7 +62,7 @@ buck_java_test(
     _java_toolchain = "toolchains//:java_for_android",
     java_version = "21",
     labels = [
-        tpx_labels.long_running,
+        "long_running",
     ],
     deps = [
         "prelude//toolchains/android/src/com/facebook/buck/android:helpers",

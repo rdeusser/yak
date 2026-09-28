@@ -12,7 +12,6 @@ load(":apple_bundle_utility.bzl", "get_apple_versioned_macos_bundle_value_primit
 # Abstraction of a place in a resulting bundle where file or directory will be copied. Actual value
 # of path relative to bundle root depends on a platform. This class is an implementation detail and
 # is not exposed to user unlike `AppleResourceDestination`.
-# v1 code is `com/facebook/buck/apple/AppleBundleDestination.java`
 AppleBundleDestination = enum(
     "resources",
     "frameworks",

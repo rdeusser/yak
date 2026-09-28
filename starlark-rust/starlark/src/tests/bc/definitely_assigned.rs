@@ -18,7 +18,7 @@
 use crate::assert::Assert;
 use crate::tests::bc::golden::bc_golden_test;
 
-/// Test for bug reported in D36808160.
+/// Regression test for a definite-assignment bug.
 #[test]
 fn test_definitely_assigned_bug() {
     let mut a = Assert::new();

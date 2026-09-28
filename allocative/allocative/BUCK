@@ -1,15 +1,13 @@
-load("@fbcode_macros//build_defs:native_rules.bzl", "buck_filegroup")
-load("@fbsource//tools/build_defs:rust_library.bzl", "rust_library")
+load("//build_defs:rust.bzl", "rust_library")
 
-oncall("build_infra")
-
-buck_filegroup(
+filegroup(
     name = "testcases",
     srcs = glob([
         "src/**/*.svg",
         "src/**/*.src",
     ]),
     copy = False,
+    visibility = ["PUBLIC"],
 )
 
 rust_library(
@@ -17,86 +15,6 @@ rust_library(
     srcs = glob(
         ["src/**/*.rs"],
     ),
-    autocargo = {
-        "cargo_toml_config": {
-            "dependencies_override": {
-                "dependencies": {
-                    # Each is gated behind a same-named feature and wants none
-                    # of the features fbsource enables on it.
-                    "anyhow": {"features": [], "optional": True, "workspace": False},
-                    "bumpalo": {"features": [], "optional": True, "workspace": False},
-                    "compact_str": {"features": [], "optional": True, "workspace": False},
-                    "dashmap": {"features": [], "optional": True, "workspace": False},
-                    "either": {"features": [], "optional": True, "workspace": False},
-                    "futures": {"features": [], "optional": True, "workspace": False},
-                    "hashbrown": {"features": [], "optional": True, "workspace": False},
-                    "indexmap": {"features": [], "optional": True, "workspace": False},
-                    "jiff": {"features": [], "optional": True, "workspace": False},
-                    "num-bigint": {"features": [], "optional": True, "workspace": False},
-                    "once_cell": {"features": [], "optional": True, "workspace": False},
-                    "parking_lot": {"features": [], "optional": True, "workspace": False},
-                    "prost-types": {"features": [], "optional": True, "workspace": False},
-                    "serde_json": {"features": [], "optional": True, "workspace": False},
-                    "slab": {"features": [], "optional": True, "workspace": False},
-                    "smallvec": {"features": [], "optional": True, "workspace": False},
-                    "sorted_vector_map": {"features": [], "optional": True, "workspace": False},
-                    "tokio": {"features": ["sync"], "optional": True, "workspace": False},
-                    "triomphe": {"features": [], "optional": True, "workspace": False},
-                },
-            },
-            "extra_check_cfgs": ["cfg(rust_nightly)"],
-            "features": {
-                "anyhow": ["dep:anyhow"],
-                "bumpalo": ["dep:bumpalo"],
-                "compact_str": ["dep:compact_str"],
-                "dashmap": ["dep:dashmap"],
-                "default": [],
-                "either": ["dep:either"],
-                "futures": ["dep:futures"],
-                "hashbrown": ["dep:hashbrown"],
-                "indexmap": ["dep:indexmap"],
-                "jiff": ["dep:jiff"],
-                "num-bigint": ["dep:num-bigint"],
-                "once_cell": ["dep:once_cell"],
-                "parking_lot": ["dep:parking_lot"],
-                "prost-types": ["dep:prost-types"],
-                "serde_json": ["dep:serde_json"],
-                "slab": ["dep:slab"],
-                "smallvec": ["dep:smallvec"],
-                "sorted_vector_map": ["dep:sorted_vector_map"],
-                "tokio": ["dep:tokio"],
-                "triomphe": ["dep:triomphe"],
-            },
-            "package": {
-                "authors": ["Meta"],
-                "description": "Inspect rust object tree and output it as flamegraph",
-                "documentation": "https://docs.rs/allocative",
-                "version": "0.3.6",
-            },
-        },
-        # FIXME(JakobDegen): Needed because autocargo doesn't handle the select below
-        "edge_features": [
-            "anyhow",
-            "bumpalo",
-            "dashmap",
-            "either",
-            "futures",
-            "hashbrown",
-            "indexmap",
-            "jiff",
-            "num-bigint",
-            "once_cell",
-            "parking_lot",
-            "prost-types",
-            "slab",
-            "smallvec",
-            "compact_str",
-            "serde_json",
-            "sorted_vector_map",
-            "tokio",
-            "triomphe",
-        ],
-    },
     features = [
         "anyhow",
         "bumpalo",
@@ -116,44 +34,32 @@ rust_library(
         "serde_json",
         "sorted_vector_map",
         "triomphe",
-    ] + select({
-        "DEFAULT": ["tokio"],
-        # @oss-disable[end= ]: "ovr_config//runtime/constraints:wasm": [],
-    }),
+        "tokio",
+    ],
     rustc_flags = [
         "--cfg=rust_nightly",
     ],
-    test_deps = [
-        "fbsource//third-party/rust:inferno",
-        ":testcases",
-    ],
-    test_env = {
-        # Test files are relative to `CARGO_MANIFEST_DIR`.
-        "CARGO_MANIFEST_DIR": "$(location :testcases)",
-    },
     deps = [
-        "fbsource//third-party/rust:anyhow",
-        "fbsource//third-party/rust:bumpalo",
-        "fbsource//third-party/rust:compact_str",
-        "fbsource//third-party/rust:ctor",
-        "fbsource//third-party/rust:dashmap",
-        "fbsource//third-party/rust:either",
-        "fbsource//third-party/rust:futures",
-        "fbsource//third-party/rust:hashbrown",
-        "fbsource//third-party/rust:indexmap",
-        "fbsource//third-party/rust:jiff",
-        "fbsource//third-party/rust:num-bigint",
-        "fbsource//third-party/rust:once_cell",
-        "fbsource//third-party/rust:parking_lot",
-        "fbsource//third-party/rust:prost-types",
-        "fbsource//third-party/rust:serde_json",
-        "fbsource//third-party/rust:slab",
-        "fbsource//third-party/rust:smallvec",
-        "fbsource//third-party/rust:sorted_vector_map",
-        "fbsource//third-party/rust:triomphe",
-        "//buck2/allocative/allocative_derive:allocative_derive",
-    ] + select({
-        "DEFAULT": ["fbsource//third-party/rust:tokio"],
-        # @oss-disable[end= ]: "ovr_config//runtime/constraints:wasm": [],
-    }),
+        "//allocative/allocative_derive:allocative_derive",
+        "//third-party/rust:anyhow",
+        "//third-party/rust:bumpalo",
+        "//third-party/rust:compact_str",
+        "//third-party/rust:ctor",
+        "//third-party/rust:dashmap",
+        "//third-party/rust:either",
+        "//third-party/rust:futures",
+        "//third-party/rust:hashbrown",
+        "//third-party/rust:indexmap",
+        "//third-party/rust:jiff",
+        "//third-party/rust:num-bigint",
+        "//third-party/rust:once_cell",
+        "//third-party/rust:parking_lot",
+        "//third-party/rust:prost-types",
+        "//third-party/rust:serde_json",
+        "//third-party/rust:slab",
+        "//third-party/rust:smallvec",
+        "//third-party/rust:sorted_vector_map",
+        "//third-party/rust:tokio",
+        "//third-party/rust:triomphe",
+    ],
 )

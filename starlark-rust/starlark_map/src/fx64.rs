@@ -240,12 +240,12 @@ test dependency version.";
             [
                 hash_str(""),
                 hash_str("hello"),
-                hash_str("fbcode//some/package/path:some_rule_name_12345"),
+                hash_str("root//some/package/path:some_rule_name_12345"),
             ],
             [
                 13933120620573868840,
                 12393608695761977456,
-                17686632965210403629,
+                13438010450407586227,
             ],
             "the hash function changed; persisted pagable data embedding \
              `StarlarkHashValue` must be versioned or invalidated"

@@ -6,8 +6,6 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-load("@fbcode_macros//build_defs/lib:oss.bzl", "translate_target")
-
 def _transition_impl(platform: PlatformInfo, refs: struct) -> PlatformInfo:
     val = refs.val[ConstraintValueInfo]
     new_cfg = ConfigurationInfo(
@@ -22,7 +20,7 @@ def _transition_impl(platform: PlatformInfo, refs: struct) -> PlatformInfo:
 _transition_func = transition(
     impl = _transition_impl,
     refs = {
-        "val": translate_target("//buck2/app/buck2:buck2_client_only_setting[build]"),
+        "val": "//app/buck2:buck2_client_only_setting[build]",
     },
 )
 

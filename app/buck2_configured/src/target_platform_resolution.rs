@@ -61,7 +61,7 @@ async fn get_target_platform_detector<'d>(
             ctx: &mut DiceComputations,
             _cancellation: &CancellationContext,
         ) -> Self::Value {
-            // We get this off the root cell's config. It's not clear that that's the appropriate way to do it, but its the easiest to get working at FB.
+            // We get this off the root cell's config. It's not clear that that's the appropriate way to do it, but it was the easiest to get working.
             // TODO(cjhopman): Consider revisiting that approach.
             let resolver = ctx.get_cell_resolver().await?;
             let root_cell = resolver.root_cell();

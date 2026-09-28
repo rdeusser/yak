@@ -3,5 +3,5 @@ stub(
 )
 
 stub(
-    name = "symlinked_buck2_and_tpx",
+    name = "symlinked_buck2_and_runner",
 )

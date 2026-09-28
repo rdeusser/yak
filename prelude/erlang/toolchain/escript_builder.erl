@@ -7,7 +7,6 @@
 
 %% @format
 -module(escript_builder).
--author("loscher@fb.com").
 -moduledoc """
 Build an escript from a given spec file. The spec file format
 is defined in erlang_escript.bzl

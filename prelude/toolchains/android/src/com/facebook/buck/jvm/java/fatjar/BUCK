@@ -5,8 +5,6 @@ load(
 )
 load("@prelude//utils:source_listing.bzl", "source_listing")
 
-oncall("android_devxx")
-
 source_listing()
 
 buck_java_library(
@@ -15,10 +13,8 @@ buck_java_library(
         "WindowsCreateProcessEscape.java",
     ],
     # Maximum compatibility
-    # @oss-disable[end= ]: source = "8",
-    # @oss-disable[end= ]: target = "8",
-    source = "11", # @oss-enable
-    target = "11", # @oss-enable
+    source = "11",
+    target = "11",
     visibility = [
         "prelude//toolchains/android/src/com/facebook/buck/util:util",
         "prelude//toolchains/android/test/com/facebook/buck/util:util",
@@ -31,10 +27,8 @@ buck_java_library(
         "FatJarMain.java",
     ],
     # Maximum compatibility
-    # @oss-disable[end= ]: source = "8",
-    # @oss-disable[end= ]: target = "8",
-    source = "11", # @oss-enable
-    target = "11", # @oss-enable
+    source = "11",
+    target = "11",
     visibility = [
         "PUBLIC",
     ],

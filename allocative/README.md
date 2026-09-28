@@ -38,13 +38,7 @@ When allocative is used, binary size is slightly increased due to
 implementations of [`Allocative`] trait, but it has no runtime/memory overhead
 when it is enabled but not used.
 
-## Source code
-
-Note there are several copies of this project on GitHub due to how Meta monorepo
-is synchronized to GitHub. The main copy is in
-[facebook/buck2](https://github.com/facebook/buck2).
-
 ## License
 
 Allocative is both MIT and Apache License, Version 2.0 licensed, as found in the
-[LICENSE-MIT](LICENSE-MIT) and [LICENSE-APACHE](LICENSE-APACHE) files.
+[LICENSE-MIT](../LICENSE-MIT) and [LICENSE-APACHE](../LICENSE-APACHE) files.

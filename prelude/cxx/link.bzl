@@ -13,7 +13,6 @@ load(
     "project_artifacts",
 )
 load("@prelude//:paths.bzl", "paths")
-# @oss-disable[end= ]: load("@prelude//apple/meta_only:shared_library_interfaces.bzl", "get_shared_library_interface_generation_linker_flags")
 load(
     "@prelude//cxx:cxx_bolt.bzl",
     "bolt",
@@ -369,11 +368,6 @@ def cxx_link_into(
             link_cmd_parts.linker,
             cmd_args(shared_library_interface_generation_argfile, format = "@{}"),
         )
-
-        shared_library_interface_generation_command.add(
-            # @oss-disable[end= ]: get_shared_library_interface_generation_linker_flags(shared_library_interface),
-            cmd_args(),
-        )
         ctx.actions.run(
             shared_library_interface_generation_command,
             category = "generate_shared_library_interface",
@@ -519,7 +513,7 @@ def cxx_link_into(
             output,
             identifier = opts.identifier,
             category_suffix = opts.category_suffix,
-            # TODO(T110378142): Ideally, referenced objects are a list of
+            # TODO: Ideally, referenced objects are a list of
             # artifacts, but currently we don't track them properly.  So, we
             # just pass in the full link line and extract all inputs from that,
             # which is a bit of an overspecification.

@@ -7,7 +7,6 @@
 
 %% @format
 -module(release_variables_builder).
--author("loscher@fb.com").
 -moduledoc """
 Reads a file containing a mapping from ENV variable to string value
 and outputs a shell file that can be included in other scripts. It

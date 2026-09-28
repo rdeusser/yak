@@ -1,6 +1,4 @@
-load("@fbcode//buck2:proto_defs.bzl", "proto_srcs", "rust_protobuf_library")
-
-oncall("build_infra")
+load("//build_defs:proto.bzl", "proto_srcs", "rust_protobuf_library")
 
 rust_protobuf_library(
     name = "buck2_action_metadata_proto",

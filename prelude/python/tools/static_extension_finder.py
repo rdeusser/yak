@@ -6,24 +6,18 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-# pyre-strict
-
 
 # Add a try except to force eager importing
 try:
-    # pyre-fixme[21]: Could not find module `_static_extension_utils`.
     from _static_extension_utils import _check_module, StaticExtensionLoader
 except BaseException:
     raise
 
 
 class StaticExtensionFinder:
-    # pyre-fixme
     ModuleSpec = None
 
     @classmethod
-    # pyre-fixme[3]: Return type must be annotated.
-    # pyre-fixme[2]: Parameter must be annotated.
     def find_spec(cls, fullname, path, target=None):
         """
         Use fullname to look up the PyInit function in the main binary. Returns None if not present.
@@ -41,7 +35,7 @@ class StaticExtensionFinder:
 
 
 def _initialize() -> None:
-    # This imports are here to avoid tricking circular dependencies. see S389486
+    # The imports are here to avoid circular dependencies.
     import sys
     from importlib.machinery import ModuleSpec
 

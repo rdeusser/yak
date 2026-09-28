@@ -13,7 +13,7 @@ use std::ops::Deref;
 
 use allocative::Allocative;
 // Used only by `register_ty_starlark_value!` invocations below, which expand to nothing
-// when the starlark `pagable` feature is off (e.g. in OSS cargo builds).
+// when the starlark `pagable` feature is off (e.g. in Cargo builds).
 #[allow(unused_imports)]
 use buck2_build_api::actions::query::ActionQueryNode;
 #[allow(unused_imports)]

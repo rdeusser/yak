@@ -76,9 +76,6 @@ pub(crate) struct Crate {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) source: Option<Source>,
     /// The set of cfgs activated for a given crate.
-    ///
-    /// With how fb imports crates into fbsource/third-party,
-    /// the answer is "all of them".
     pub(crate) cfg: Vec<String>,
     /// The target triple for a given crate.
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -109,21 +106,21 @@ pub(crate) struct Crate {
 ///
 /// ```json
 /// "target_spec": {
-///     "manifest_file": "/Users/dbarsky/fbsource/fbcode/buck2/integrations/rust-project/TARGETS",
-///     "target_label": "fbcode//buck2/integrations/rust-project:rust-project",
+///     "manifest_file": "/home/user/project/integrations/rust-project/BUCK",
+///     "target_label": "root//integrations/rust-project:rust-project",
 ///     "target_kind": "bin",
 ///     "runnables": {
 ///         "check": [
 ///            "build",
-///            "fbcode//buck2/integrations/rust-project:rust-project"
+///            "root//integrations/rust-project:rust-project"
 ///         ],
 ///         "run": [
 ///             "run",
-///             "fbcode//buck2/integrations/rust-project:rust-project"
+///             "root//integrations/rust-project:rust-project"
 ///         ],
 ///         "test": [
 ///             "test",
-///             "fbcode//buck2/integrations/rust-project:rust-project",
+///             "root//integrations/rust-project:rust-project",
 ///             "--",
 ///             "{test_id}",
 ///             "--print-passing-details"
@@ -131,7 +128,7 @@ pub(crate) struct Crate {
 ///     },
 ///     "flycheck_command": [
 ///         "build",
-///         "fbcode//buck2/integrations/rust-project:rust-project"
+///         "root//integrations/rust-project:rust-project"
 ///     ]
 /// }
 /// ```
@@ -237,7 +234,7 @@ pub(crate) struct Sysroot {
     /// like `std` and `core` and binaries like `rust-analyzer-proc-macro-srv`,
     /// which enable rust-analyzer to expand procedural macros.
     ///
-    /// For example, a `sysroot` is `~/fbsource/fbcode/third-party-buck/platform010/build/rust/`.
+    /// For example, a `sysroot` is `~/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/`.
     ///
     /// `rust-analyzer` relies on an external binary to expand procedural
     /// macros and the source code location can be predictably inferred.
@@ -246,16 +243,6 @@ pub(crate) struct Sysroot {
     pub(crate) sysroot: PathBuf,
     /// Legacy sysroot config containing only the source code of libraries such
     /// as `std` and core`.
-    ///
-    /// Inside Meta, this is necessary on non-Linux platforms since the sources
-    /// are packaged separately from binaries such as `rust-analyzer-proc-macro-srv`.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) sysroot_src: Option<PathBuf>,
-    /// A nested rust-project for the sysroot itself. If not provided, rust-analyzer
-    /// will attempt to compute the sysroot layout with Cargo.
-    ///
-    /// Inside Meta, we have a Buck-ified rust toolchain and we can provide the
-    /// sysroot layout directly with Buck.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub(crate) sysroot_project: Option<ProjectJson>,
 }

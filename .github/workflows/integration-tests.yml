@@ -1,0 +1,35 @@
+name: Integration tests
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch: # allows manual triggering
+
+permissions:
+  contents: read
+
+jobs:
+  linux-integration-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+    - uses: actions/checkout@v6
+    - uses: ./.github/actions/setup_linux_env
+    - uses: ./.github/actions/build_debug
+    # setup_linux_env installs uv.
+    - name: Install test dependencies
+      run: |-
+        uv venv --python 3.12 tests/.venv
+        uv pip install --python tests/.venv/bin/python -r tests/requirements.txt
+      shell: bash
+    # `test_thread_dump` attaches lldb to the daemon, which Ubuntu's default
+    # `kernel.yama.ptrace_scope` of 1 forbids (tests/README.md).
+    - name: Install lldb and allow it to attach to the daemon
+      run: |-
+        sudo apt-get install -y lldb
+        sudo sysctl -w kernel.yama.ptrace_scope=0
+      shell: bash
+    - name: Run the integration tests
+      run: tests/.venv/bin/python -m pytest tests -n auto -rs
+      shell: bash

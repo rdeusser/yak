@@ -15,7 +15,6 @@ pub mod clean_stale;
 pub mod cleanall;
 pub mod ctargets;
 pub mod expand_external_cell;
-pub mod explain;
 pub mod help_env;
 pub mod init;
 pub mod install;

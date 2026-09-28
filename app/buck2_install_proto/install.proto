@@ -28,10 +28,7 @@ message InstallInfoRequest {
 
 message InstallResponse {
   string install_id = 1;
-  // Names the installer implementation, e.g. `android`. Reported at the
-  // handshake rather than alongside a device, so an install that reaches the
-  // installer says which one ran it even when it resolves no device.
-  string installer_name = 2;
+  reserved 2;
 }
 
 message FileReadyRequest {
@@ -48,7 +45,7 @@ message FileResponse {
   string name = 2;
   string path = 3;
   ErrorDetail error_detail = 4;
-  // Connected device metadata to be logged to scuba.
+  // Connected device metadata.
   // Should be sent once per device per install command,
   // not per FileReadyRequest.
   // Returned here in case the installer needs information

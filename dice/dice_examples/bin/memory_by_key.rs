@@ -67,15 +67,15 @@
 //! - The suspended phases can't use `wait_for_idle()` — their parked
 //!   transactions never go idle — so they sleep to quiesce, and detect
 //!   full spin-up via a counter that every `compute` bumps.
-//! - jemalloc `stats.allocated` via `mallctl` (fbcode rust binaries link
+//! - jemalloc `stats.allocated` via `mallctl` (the binary links
 //!   jemalloc): byte-granular, immune to LLVM eliding alloc+free pairs,
 //!   refreshed via `epoch` advance before each read.
 
-// fbcode rust binaries link (unprefixed) jemalloc by default; in a cargo build we have to bring
-// it ourselves or the `mallctl` heap metric below won't even link. Mirrors app/buck2/bin/buck2.rs;
-// the `unprefixed_malloc_on_supported_platforms` feature is what makes plain `mallctl` resolve.
+// The `mallctl` heap metric below links only against jemalloc, so the binary sets it as the global
+// allocator. Only Cargo builds this binary, because the Buck build does not build jemalloc. The
+// `unprefixed_malloc_on_supported_platforms` feature is what makes plain `mallctl` resolve.
 #[global_allocator]
-#[cfg(all(any(target_os = "linux", target_os = "macos"), not(buck_build)))]
+#[cfg(any(target_os = "linux", target_os = "macos"))]
 static ALLOC: tikv_jemallocator::Jemalloc = tikv_jemallocator::Jemalloc;
 
 use std::sync::Arc;
@@ -113,7 +113,7 @@ impl Snapshot {
 }
 
 /// Bytes currently allocated by the application according to the heap
-/// allocator. fbcode rust binaries link jemalloc by default (the
+/// allocator. The binary links jemalloc (the
 /// `_je_*` symbols are present in this binary), so we use jemalloc's
 /// `mallctl("stats.allocated", ...)` API.
 ///

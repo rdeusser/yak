@@ -20,10 +20,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Optional;
 
-/**
- * TestResultsOutputSender provides an interface for serializing test_result_output_spec.thrift Test
- * Events.
- */
+/** TestResultsOutputSender writes test events to a file as JSON, one event per line. */
 public class TestResultsOutputSender implements AutoCloseable {
   private static final String TEST_RESULTS_OUTPUT_FILE_ENV_NAME = "TEST_RESULTS_OUTPUT_FILE";
   private final FileOutputStream fileOutputStream;

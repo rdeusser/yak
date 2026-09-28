@@ -118,9 +118,7 @@ impl IoRequest for GitFetchIoRequest {
                 .collect()
         });
 
-        // FIXME(JakobDegen): Ideally we'd use libgit2 directly here instead of shelling out, but
-        // unfortunately the third party situation for that library in fbsource isn't great, so
-        // let's do this for now
+        // FIXME(JakobDegen): Ideally we'd use libgit2 directly here instead of shelling out.
         fn run_git(cwd: &AbsNormPath, f: impl FnOnce(&mut Command)) -> buck2_error::Result<()> {
             let mut cmd = background_command("git");
             f(&mut cmd);
@@ -352,8 +350,7 @@ impl FileOpsDelegate for GitFileOpsDelegate {
         let mut entries = (&self.io as &dyn IoProvider)
             .read_dir(project_path)
             .await
-            .with_buck_error_context(|| format!("Error listing dir `{path}`"))?
-            .into_entries();
+            .with_buck_error_context(|| format!("Error listing dir `{path}`"))?;
 
         // Make sure entries are deterministic, since read_dir isn't.
         entries.sort_by(|a, b| a.file_name.cmp(&b.file_name));
@@ -429,7 +426,6 @@ pub(crate) async fn get_file_ops_delegate(
                 io: FsIoProvider::new(
                     artifact_fs.fs().dupe(),
                     ctx.global_data().get_digest_config().cas_digest_config(),
-                    false,
                 ),
             };
             download_and_materialize(ctx, &ops.get_base_path(), &self.1, cancellations).await?;

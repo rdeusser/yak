@@ -44,9 +44,8 @@ use crate::watchman::core::WatchmanKind;
 use crate::watchman::utils::find_first_valid_parent;
 
 struct WatchmanQueryProcessor {
-    // FIXME(JakobDegen): Storing these values statically is completely broken. See
-    // `tests/e2e/cells/test_file_watcher_resolution:test_changing_cell_location_bug` for a repro of
-    // a bug.
+    // FIXME(JakobDegen): Storing these values statically is broken, because a cell whose location
+    // changes keeps its old location here.
     cells: CellResolver,
     ignore_specs: StdBuckHashMap<CellName, IgnoreSet>,
     empty_on_fresh_instance: bool,

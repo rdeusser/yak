@@ -360,7 +360,7 @@ mod tests {
         argv.push("-m=//bar3:baz".to_owned());
         argv.push("--modifier".to_owned());
         argv.push("//bar:foo".to_owned());
-        argv.push("--target-platforms=ovr_config//platforms/linux:some_linux_platform".to_owned());
+        argv.push("--target-platforms=config//platforms/linux:some_linux_platform".to_owned());
         argv.push("--target-universe".to_owned());
         argv.push("//some:target".to_owned());
         argv.push("-u".to_owned());
@@ -389,7 +389,7 @@ mod tests {
                 "-m //foo:bar",
                 "-m //bar3:baz",
                 "-m //bar:foo",
-                "--target-platforms ovr_config//platforms/linux:some_linux_platform",
+                "--target-platforms config//platforms/linux:some_linux_platform",
                 "--target-universe //some:target",
                 "--target-universe //other:target",
                 "--target-universe //third:target",

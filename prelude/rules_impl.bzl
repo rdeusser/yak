@@ -20,7 +20,6 @@ load("@prelude//android:android.bzl", _android_implemented_rules = "implemented_
 load("@prelude//android:configuration.bzl", "is_building_android_binary_attr")
 load("@prelude//apple:apple_common.bzl", "apple_common")
 load("@prelude//apple:apple_rules_decls.bzl", "apple_rules")
-load("@prelude//apple:apple_rules_impl.bzl", _apple_extra_attributes = "extra_attributes", _apple_implemented_rules = "implemented_rules")
 load("@prelude//configurations:rules.bzl", _config_extra_attributes = "extra_attributes", _config_implemented_rules = "implemented_rules")
 load("@prelude//csharp:csharp.bzl", "csharp_library_impl", "prebuilt_dotnet_library_impl")
 load("@prelude//cxx:bitcode.bzl", "llvm_link_bitcode_impl")
@@ -232,7 +231,6 @@ extra_implemented_rules = struct(
     # merged **kwargs
     **_merge_dictionaries([
         _android_implemented_rules,
-        _apple_implemented_rules,
         _config_implemented_rules,
         _erlang_implemented_rules,
         _java_implemented_rules,
@@ -436,7 +434,6 @@ _go_extra_attributes = {
         "_exec_os_type": buck.exec_os_type_arg(),
         "_go_stdlib": attrs.default_only(attrs.dep(default = "prelude//go/tools:stdlib")),
         "_go_toolchain": toolchains_common.go(),
-        "_list_tests": attrs.default_only(attrs.dep(providers = [RunInfo], default = "prelude//go/tools:list_tests")),
         "_testmaingen": attrs.default_only(attrs.exec_dep(providers = [RunInfo], default = "prelude//go/tools:testmaingen")),
     },
 }
@@ -557,7 +554,7 @@ categorized_extra_attributes = {
     _DOTNET_RULES_KEY: _dotnet_extra_attributes,
     _GO_RULES_KEY: _go_extra_attributes,
     _HASKELL_RULES_KEY: _haskell_extra_attributes,
-    _APPLE_RULES_KEY: _apple_extra_attributes,
+    _APPLE_RULES_KEY: {},
     _JAVA_RULES_KEY: {},
     _JS_RULES_KEY: _js_extra_attributes,
     _JULIA_RULES_KEY: _julia_extra_attributes,

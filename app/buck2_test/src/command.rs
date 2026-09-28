@@ -51,12 +51,9 @@ use buck2_common::liveliness_observer::TimeoutLivelinessObserver;
 use buck2_common::pattern::parse_from_cli::parse_patterns_with_modifiers_from_cli_args;
 use buck2_common::pattern::resolve::ResolveTargetPatterns;
 use buck2_common::pattern::resolve::ResolvedPattern;
-use buck2_common::tenting::HasTentingAclProvider;
-use buck2_common::tenting::TentingStatus;
 use buck2_core::cells::CellResolver;
 use buck2_core::cells::name::CellName;
 use buck2_core::configuration::compatibility::ResultMaybeCompatible;
-use buck2_core::fs::project_rel_path::ProjectRelativePathBuf;
 use buck2_core::global_cfg_options::GlobalCfgOptions;
 use buck2_core::package::PackageLabelWithModifiers;
 use buck2_core::pattern::pattern::Modifiers;
@@ -95,7 +92,6 @@ use buck2_server_ctx::partial_result_dispatcher::PartialResultDispatcher;
 use buck2_server_ctx::template::ServerCommandTemplate;
 use buck2_server_ctx::template::run_server_command;
 use buck2_server_ctx::test_command::TEST_COMMAND;
-use buck2_server_ctx::tpx_experiment_util::get_tpx_experiments;
 use buck2_test_api::data::TestResult;
 use buck2_test_api::data::TestStatus;
 use buck2_test_api::protocol::TestExecutor;
@@ -497,17 +493,7 @@ async fn test(
         .transpose()
         .buck_error_context("Invalid `duration`")?;
 
-    let project_root = server_ctx.project_root();
-    let tpx_experiments = get_tpx_experiments(ctx.dupe(), project_root).await?;
-
-    // Forward AI agent identity to TPX as run tags (e.g. ai_agent_id=claude_code).
-    #[allow(unused_mut)]
-    let mut extra_tpx_args: Vec<String> = Vec::new();
-    #[cfg(fbcode_build)]
-    extra_tpx_args.extend(ai_agent_tpx_args(&client_ctx.agent_context));
-
-    let mut test_executor_args = request.test_executor_args.clone();
-    test_executor_args.extend(extra_tpx_args);
+    let test_executor_args = request.test_executor_args.clone();
 
     let (streaming_build_result_tx, streaming_build_result_rx) =
         tokio::sync::mpsc::unbounded_channel();
@@ -542,7 +528,6 @@ async fn test(
         request.ignore_tests_attribute,
         build_default_info,
         build_run_info,
-        tpx_experiments,
         streaming_build_result_tx,
     );
 
@@ -695,7 +680,6 @@ async fn test_targets(
     ignore_tests_attribute: bool,
     build_default_info: bool,
     build_run_info: bool,
-    tpx_experiments: BuckMutSet<String>,
     streaming_build_result_tx: Option<UnboundedSender<BuildTargetResult>>,
 ) -> buck2_error::Result<TestOutcome> {
     let session = Arc::new(session);
@@ -708,28 +692,18 @@ async fn test_targets(
         liveliness_observer = Arc::new(liveliness_observer.and(timeout_observer.dupe())) as _;
     }
 
-    let tpx_args = {
+    let executor_args = {
         let mut args = vec![
             "ignored".to_owned(),
             "--buck-test-info".to_owned(),
             "ignored".to_owned(),
         ];
         args.extend(external_runner_args);
-
-        if cfg!(fbcode_build) {
-            // Our OSS test runner does not support `--experiment` flags, so only pass these flags internally.
-            args.extend(
-                tpx_experiments
-                    .iter()
-                    .flat_map(|experiment| ["--experiment".to_owned(), experiment.to_owned()]),
-            );
-        }
-
         args
     };
 
     let res = launcher
-        .launch(tpx_args)
+        .launch(executor_args)
         .await
         .buck_error_context("Failed to launch executor");
 
@@ -738,7 +712,6 @@ async fn test_targets(
         res,
         quiet: true,
         daemon_in_memory_state_is_corrupted: true,
-        task: false
     )?;
 
     let ExecutorLaunch {
@@ -987,14 +960,12 @@ enum TestDriverTask {
         label_with_modifiers: ProvidersLabelWithModifiers,
         skippable: bool,
         test_config_unification_rollout: bool,
-        tenting_acl_names: TentingStatus,
     },
     BuildTarget {
         label: ConfiguredProvidersLabel,
         modifiers: Modifiers,
         test_config_unification_rollout: bool,
         oncall: Option<String>,
-        tenting_acl_names: TentingStatus,
     },
     TestTarget {
         label: ConfiguredProvidersLabel,
@@ -1003,7 +974,6 @@ enum TestDriverTask {
         build_target_result: BuildTargetResult,
         test_config_unification_rollout: bool,
         oncall: Option<String>,
-        tenting_acl_names: TentingStatus,
     },
 }
 
@@ -1096,13 +1066,11 @@ impl<'a, 'e> TestDriver<'a, 'e> {
                                 label_with_modifiers,
                                 skippable,
                                 test_config_unification_rollout,
-                                tenting_acl_names,
                             } => {
                                 self.configure_target(
                                     label_with_modifiers,
                                     skippable,
                                     test_config_unification_rollout,
-                                    tenting_acl_names,
                                 );
                             }
                             TestDriverTask::BuildTarget {
@@ -1110,14 +1078,12 @@ impl<'a, 'e> TestDriver<'a, 'e> {
                                 modifiers,
                                 test_config_unification_rollout,
                                 oncall,
-                                tenting_acl_names,
                             } => {
                                 self.build_target(
                                     label,
                                     modifiers,
                                     test_config_unification_rollout,
                                     oncall,
-                                    tenting_acl_names,
                                 );
                             }
                             TestDriverTask::TestTarget {
@@ -1127,7 +1093,6 @@ impl<'a, 'e> TestDriver<'a, 'e> {
                                 build_target_result,
                                 test_config_unification_rollout,
                                 oncall,
-                                tenting_acl_names,
                             } => {
                                 self.test_target(
                                     label,
@@ -1136,7 +1101,6 @@ impl<'a, 'e> TestDriver<'a, 'e> {
                                     build_target_result,
                                     test_config_unification_rollout,
                                     oncall,
-                                    tenting_acl_names,
                                 );
                             }
                         }
@@ -1222,26 +1186,6 @@ impl<'a, 'e> TestDriver<'a, 'e> {
                     }
                 }
 
-                let tenting_acl_names = if let Ok(project_path) =
-                    state.cell_resolver.resolve_path(package.as_cell_path())
-                {
-                    if let Ok(rel_path) = ProjectRelativePathBuf::try_from(project_path.to_string())
-                    {
-                        match state.ctx.global_data().get_tenting_acl_provider() {
-                            Some(provider) => provider
-                                .get_tenting_acl_names(&rel_path)
-                                .await
-                                .unwrap_or(TentingStatus::Unknown),
-                            // No provider configured: we cannot determine tenting.
-                            None => TentingStatus::Unknown,
-                        }
-                    } else {
-                        TentingStatus::Unknown
-                    }
-                } else {
-                    TentingStatus::Unknown
-                };
-
                 let labels =
                     targets
                         .into_iter()
@@ -1270,7 +1214,6 @@ impl<'a, 'e> TestDriver<'a, 'e> {
                             label_with_modifiers,
                             skippable,
                             test_config_unification_rollout,
-                            tenting_acl_names: tenting_acl_names.dupe(),
                         }
                     })
                     .collect();
@@ -1286,7 +1229,6 @@ impl<'a, 'e> TestDriver<'a, 'e> {
         label_with_modifiers: ProvidersLabelWithModifiers,
         skippable: bool,
         test_config_unification_rollout: bool,
-        tenting_acl_names: TentingStatus,
     ) {
         if !self
             .labels_configured
@@ -1361,7 +1303,6 @@ impl<'a, 'e> TestDriver<'a, 'e> {
                 modifiers: modifiers.dupe(),
                 test_config_unification_rollout,
                 oncall,
-                tenting_acl_names: tenting_acl_names.dupe(),
             }];
 
             // If this node is a forward, it'll get flattened when we do analysis and run the
@@ -1382,9 +1323,6 @@ impl<'a, 'e> TestDriver<'a, 'e> {
                         // should change.
                         skippable: false,
                         test_config_unification_rollout,
-                        // Tenting is resolved per top-level target, not for targets
-                        // pulled in via the `tests` attribute; treat as undetermined.
-                        tenting_acl_names: TentingStatus::Unknown,
                     });
                 }
             }
@@ -1402,7 +1340,6 @@ impl<'a, 'e> TestDriver<'a, 'e> {
         modifiers: Modifiers,
         test_config_unification_rollout: bool,
         oncall: Option<String>,
-        tenting_acl_names: TentingStatus,
     ) {
         if !self.labels_tested.insert(label.dupe()) {
             self.work.push(
@@ -1460,7 +1397,6 @@ impl<'a, 'e> TestDriver<'a, 'e> {
                 modifiers,
                 test_config_unification_rollout,
                 oncall,
-                tenting_acl_names,
             }])
         }
         .boxed();
@@ -1476,7 +1412,6 @@ impl<'a, 'e> TestDriver<'a, 'e> {
         build_target_result: BuildTargetResult,
         test_config_unification_rollout: bool,
         oncall: Option<String>,
-        tenting_acl_names: TentingStatus,
     ) {
         let should_test = !build_target_result.build_failed && !build_target_result.is_empty();
         self.build_target_result.extend(build_target_result);
@@ -1499,7 +1434,6 @@ impl<'a, 'e> TestDriver<'a, 'e> {
                 state.internal_test_timeout,
                 test_config_unification_rollout,
                 oncall,
-                tenting_acl_names,
             )
             .await
             {
@@ -1527,7 +1461,7 @@ async fn build_target_result(
 ) -> buck2_error::Result<(BuildTargetResult, FrozenProviderCollectionValue)> {
     // NOTE: We fail if we hit an incompatible target here. This can happen if we reach an
     // incompatible target via `tests = [...]`. This should perhaps change, but that's how it works
-    // in v1: https://fb.workplace.com/groups/buckeng/posts/8520953297953210
+    // in v1.
     let providers = ctx
         .get()
         .get_providers(&label)
@@ -1600,13 +1534,12 @@ async fn test_target<'a, 'e>(
     internal_test_timeout: Duration,
     test_config_unification_rollout: bool,
     oncall: Option<String>,
-    tenting_acl_names: TentingStatus,
 ) -> buck2_error::Result<Option<ConfiguredProvidersLabel>> {
     let collection = providers.provider_collection();
 
     // Check for InternalRunnerTestInfo first — run in-process.
     // Gated by [test].use_internal_runner (default true, comma-separated framework types,
-    // or false to force TPX fallback).
+    // or false to use the external test executor).
     let internal_provider: Option<OwnedInternalRunnerTestInfo> =
         providers.builtin_provider_value::<InternalRunnerTestInfo>();
     if let Some(internal_provider) = internal_provider {
@@ -1664,7 +1597,6 @@ async fn test_target<'a, 'e>(
                     provider.contacts(),
                     handle.clone(),
                     working_dir_cell,
-                    &tenting_acl_names,
                 );
                 let spec = build_external_runner_spec(
                     provider.command(),
@@ -1674,7 +1606,6 @@ async fn test_target<'a, 'e>(
                     provider.contacts(),
                     handle,
                     working_dir_cell,
-                    &tenting_acl_names,
                 );
                 (spec, listing_spec)
             };
@@ -1704,7 +1635,6 @@ async fn test_target<'a, 'e>(
                 working_dir_cell,
                 test_config_unification_rollout,
                 oncall,
-                tenting_acl_names,
             )
             .map(|l| Some(l).transpose())
             .left_future()
@@ -1747,7 +1677,6 @@ fn run_tests<'a, 'b>(
     working_dir_cell: CellName,
     test_config_unification_rollout: bool,
     oncall: Option<String>,
-    tenting_acl_names: TentingStatus,
 ) -> BoxFuture<'a, buck2_error::Result<ConfiguredProvidersLabel>> {
     let maybe_handle = build_configured_target_handle(
         providers_label.dupe(),
@@ -1759,8 +1688,7 @@ fn run_tests<'a, 'b>(
 
     match maybe_handle {
         Ok(handle) => {
-            let fut =
-                test_info.dispatch(handle, test_executor, working_dir_cell, tenting_acl_names);
+            let fut = test_info.dispatch(handle, test_executor, working_dir_cell);
 
             (async move {
                 fut.await
@@ -1906,7 +1834,7 @@ fn generate_config_entry_args(
                     }
                 }
                 representative_config_flag::Source::TargetUniverse(_) => {
-                    // Target universe is not passed to TPX
+                    // Target universe is not passed to the test executor
                 }
             }
         }
@@ -1971,51 +1899,13 @@ fn post_process_test_executor(s: &str) -> buck2_error::Result<PathBuf> {
     }
 }
 
-/// Generates `--tags` TPX args from agent context entries.
-/// Tags exceeding 80 chars are silently dropped to avoid TPX failures
-/// (testinfra MAXIMUM_TAG_LENGTH = 80).
-#[cfg(any(fbcode_build, test))]
-fn ai_agent_tpx_args(agent_context: &[buck2_data::AgentContextEntry]) -> Vec<String> {
-    use buck2_data::AgentContextEntry;
-
-    const MAX_TAG_LEN: usize = 80;
-
-    let find = |key: &str| agent_context.iter().find(|e| e.key == key);
-
-    let Some(id_entry) = find(AgentContextEntry::KEY_ID) else {
-        return Vec::new();
-    };
-
-    let mut args = Vec::new();
-    let mut push_tag = |tag: String| {
-        if tag.len() <= MAX_TAG_LEN {
-            args.extend(["--tags".to_owned(), tag]);
-        }
-    };
-
-    push_tag("ai-agent".to_owned());
-    push_tag(format!("ai_agent_id={}", id_entry.value));
-
-    if let Some(inv) = find(AgentContextEntry::KEY_INVOCATION_ID) {
-        let inv_id = inv
-            .value
-            .rsplit_once("_invocation_")
-            .map_or(inv.value.as_str(), |(_, uuid)| uuid);
-        push_tag(format!("ai_inv_id={}", inv_id));
-    }
-
-    args
-}
-
 #[cfg(test)]
 mod tests {
     use buck2_cli_proto::RepresentativeConfigFlag;
     use buck2_cli_proto::representative_config_flag;
-    use buck2_data::AgentContextEntry;
 
     use crate::command::InternalRunnerConfig;
     use crate::command::TestLabelFiltering;
-    use crate::command::ai_agent_tpx_args;
     use crate::command::generate_config_entry_args;
 
     #[test]
@@ -2171,7 +2061,7 @@ mod tests {
 
         generate_config_entry_args(&mut args, &config_flags);
 
-        // TargetUniverse is intentionally not passed to TPX, so the output
+        // TargetUniverse is intentionally not passed to the test executor, so the output
         // should contain all other types but no entry for target_universe.
         let expected = vec![
             "--config-entry",
@@ -2240,83 +2130,6 @@ mod tests {
         generate_config_entry_args(&mut args, &config_flags);
 
         assert_eq!(args, vec!["--config-entry", "config=key=value"]);
-    }
-
-    fn agent_entry(key: &str, value: &str) -> AgentContextEntry {
-        AgentContextEntry {
-            key: key.to_owned(),
-            value: value.to_owned(),
-        }
-    }
-
-    #[test]
-    fn test_ai_agent_tpx_args_claude_code() {
-        let ctx = vec![
-            agent_entry("id", "claude_code"),
-            agent_entry(
-                "invocation_id",
-                "claude_code_invocation_c9e892fa-148a-4494-8466-c1f44f1647d3",
-            ),
-        ];
-        assert_eq!(
-            ai_agent_tpx_args(&ctx),
-            vec![
-                "--tags",
-                "ai-agent",
-                "--tags",
-                "ai_agent_id=claude_code",
-                "--tags",
-                "ai_inv_id=c9e892fa-148a-4494-8466-c1f44f1647d3",
-            ]
-        );
-    }
-
-    #[test]
-    fn test_ai_agent_tpx_args_devmate() {
-        let ctx = vec![
-            agent_entry("id", "devmate_vscode"),
-            agent_entry(
-                "invocation_id",
-                "agent--38920caa-4558-45dd-bc90-b6abff501f8a",
-            ),
-        ];
-        let args = ai_agent_tpx_args(&ctx);
-        assert_eq!(
-            args,
-            vec![
-                "--tags",
-                "ai-agent",
-                "--tags",
-                "ai_agent_id=devmate_vscode",
-                "--tags",
-                "ai_inv_id=agent--38920caa-4558-45dd-bc90-b6abff501f8a",
-            ]
-        );
-    }
-
-    #[test]
-    fn test_ai_agent_tpx_args_no_invocation_id() {
-        let ctx = vec![agent_entry("id", "some_agent")];
-        assert_eq!(
-            ai_agent_tpx_args(&ctx),
-            vec!["--tags", "ai-agent", "--tags", "ai_agent_id=some_agent"]
-        );
-    }
-
-    #[test]
-    fn test_ai_agent_tpx_args_no_agent() {
-        let ctx = vec![agent_entry("intent", "build")];
-        let args = ai_agent_tpx_args(&ctx);
-        assert!(args.is_empty());
-    }
-
-    #[test]
-    fn test_ai_agent_tpx_args_tag_too_long() {
-        let long_name = "a".repeat(80); // ai_agent_id= is 14 chars + 80 = 94 > 80
-        let ctx = vec![agent_entry("id", &long_name)];
-        let args = ai_agent_tpx_args(&ctx);
-        // ai-agent (8 chars) is kept, ai_agent_id=aaa... (94 chars) is dropped
-        assert_eq!(args, vec!["--tags", "ai-agent"]);
     }
 
     #[test]

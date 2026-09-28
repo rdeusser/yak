@@ -146,8 +146,8 @@ mod tests {
 
     #[test]
     fn normalize_target_for_re_replaces_backslashes_when_host_is_windows() {
-        let out = normalize_target_for_re(r"\mnt\gvfs\third-party2\openssl\lib".to_owned(), true);
-        assert_eq!(out, "/mnt/gvfs/third-party2/openssl/lib");
+        let out = normalize_target_for_re(r"\opt\vendor\openssl\lib".to_owned(), true);
+        assert_eq!(out, "/opt/vendor/openssl/lib");
         assert!(
             !out.contains('\\'),
             "normalize_target_for_re should replace all backslashes with forward slashes on Windows, got: {out}",
@@ -164,7 +164,7 @@ mod tests {
 
     #[test]
     fn normalize_target_for_re_is_idempotent_on_already_posix_paths() {
-        let input = "/mnt/gvfs/third-party2/openssl/lib".to_owned();
+        let input = "/opt/vendor/openssl/lib".to_owned();
         assert_eq!(
             normalize_target_for_re(input.clone(), true),
             normalize_target_for_re(input.clone(), false),
@@ -183,11 +183,11 @@ mod tests {
     #[test]
     fn new_normalizes_windows_path_separators_on_windows_hosts() {
         let sym = ExternalSymlink::new(
-            PathBuf::from(r"\mnt\gvfs\third-party2\openssl\lib"),
+            PathBuf::from(r"\opt\vendor\openssl\lib"),
             ForwardRelativePathBuf::default(),
         )
         .unwrap();
-        assert_eq!(sym.target_str(), "/mnt/gvfs/third-party2/openssl/lib");
+        assert_eq!(sym.target_str(), "/opt/vendor/openssl/lib");
         assert!(
             !sym.target_str().contains('\\'),
             "ExternalSymlink::new must normalize backslashes to forward slashes on Windows, got: {}",

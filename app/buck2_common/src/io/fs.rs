@@ -44,21 +44,18 @@ use crate::file_ops::metadata::RawSymlink;
 use crate::file_ops::metadata::Symlink;
 use crate::file_ops::metadata::TrackedFileDigest;
 use crate::io::IoProvider;
-use crate::io::ReadDirOutcome;
 
 #[derive(Clone, Dupe, Allocative, Pagable)]
 pub struct FsIoProvider {
     fs: ProjectRoot,
     cas_digest_config: CasDigestConfig,
-    is_eden: bool,
 }
 
 impl FsIoProvider {
-    pub fn new(fs: ProjectRoot, cas_digest_config: CasDigestConfig, is_eden: bool) -> Self {
+    pub fn new(fs: ProjectRoot, cas_digest_config: CasDigestConfig) -> Self {
         Self {
             fs,
             cas_digest_config,
-            is_eden,
         }
     }
 
@@ -106,8 +103,8 @@ enum FsIoError {
 }
 
 /// i/o operations use tokio's blocking threads to not block the cpu threads on i/o. This avoids a lot of bottlenecks
-/// and is especially important when fs operations are particularly slow (when using a network fs or something like
-/// edenfs, for example).
+/// and is especially important when fs operations are particularly slow (when using a network or virtual fs, for
+/// example).
 #[async_trait]
 impl IoProvider for FsIoProvider {
     async fn read_file_if_exists_impl(
@@ -117,8 +114,7 @@ impl IoProvider for FsIoProvider {
         let path = self.fs.resolve(&path);
 
         // Don't want to totally saturate the executor with these so that some other work can progress.
-        // For normal fs (or warm eden), something smaller would probably be fine, for eden this is probably
-        // good (current plan in that impl is to allow multiple batches of 32 files at a time).
+        // For a local fs something smaller would probably be fine, and this is probably good for a virtual fs.
         static SEMAPHORE: LazyLock<Semaphore> = LazyLock::new(|| Semaphore::new(100));
         let _permit = SEMAPHORE.acquire().await.unwrap();
 
@@ -128,28 +124,15 @@ impl IoProvider for FsIoProvider {
     async fn read_dir_impl(
         &self,
         path: ProjectRelativePathBuf,
-    ) -> buck2_error::Result<ReadDirOutcome> {
+    ) -> buck2_error::Result<Vec<RawDirEntry>> {
         // Don't want to totally saturate the executor with these so that some other work can progress.
-        // For normal fs (or warm eden), something smaller would probably be fine, for eden couple hundred is probably
-        // good (current plan in that impl is to allow multiple batches of 128 dirs at a time).
         static SEMAPHORE: LazyLock<Semaphore> = LazyLock::new(|| Semaphore::new(400));
         let _permit = SEMAPHORE.acquire().await.unwrap();
 
         let path = self.fs.resolve(&path);
-        let is_eden = self.is_eden;
 
         spawn_blocking(move || {
-            let dir_entries = match fs_util::read_dir(&path) {
-                Ok(entries) => entries,
-                Err(e) if is_eden && e.io_error_kind() == Some(std::io::ErrorKind::PermissionDenied) => {
-                    tracing::debug!(
-                        "read_dir({}): permission denied on Eden repo, treating as restricted directory",
-                        path.display()
-                    );
-                    return Ok(ReadDirOutcome::EdenPermissionDenied);
-                }
-                Err(e) => return Err(e.categorize_input()),
-            };
+            let dir_entries = fs_util::read_dir(&path).categorize_input()?;
 
             let mut entries = Vec::new();
 
@@ -165,7 +148,7 @@ impl IoProvider for FsIoProvider {
                 });
             }
 
-            buck2_error::Ok(ReadDirOutcome::Entries(entries))
+            buck2_error::Ok(entries)
         })
         .await?
         .buck_error_context("Error listing directory")
@@ -196,20 +179,12 @@ impl IoProvider for FsIoProvider {
         "fs"
     }
 
-    async fn eden_version(&self) -> buck2_error::Result<Option<String>> {
-        Ok(None)
-    }
-
     fn project_root(&self) -> &ProjectRoot {
         &self.fs
     }
 
     fn as_any(&self) -> &dyn std::any::Any {
         self
-    }
-
-    fn is_eden_repo(&self) -> bool {
-        self.is_eden
     }
 }
 

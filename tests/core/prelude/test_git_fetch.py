@@ -6,13 +6,11 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-# pyre-strict
-
 import subprocess
 from pathlib import Path
 
-from buck2.tests.e2e_util.api.buck import Buck
-from buck2.tests.e2e_util.buck_workspace import buck_test
+from e2e_util.api.buck import Buck
+from e2e_util.buck_workspace import buck_test
 
 
 def _git(args: list[str], cwd: Path) -> str:
@@ -29,7 +27,7 @@ def _init_repo(cwd: Path) -> str:
     repo.mkdir()
     _git(["init"], cwd=repo)
     _git(["config", "user.name", "notarealuser"], cwd=repo)
-    _git(["config", "user.email", "notarealuser@fb.com"], cwd=repo)
+    _git(["config", "user.email", "notarealuser@example.com"], cwd=repo)
     # git_fetch asks for a commit by hash, which a repository only serves when told to.
     # The hosts it is aimed at allow that; a freshly created repository does not.
     _git(["config", "uploadpack.allowAnySHA1InWant", "true"], cwd=repo)

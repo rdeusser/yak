@@ -26,8 +26,6 @@ public class CompilerPluginUtils {
   static final String VERBOSE = "-verbose";
   static final String JB_JVM_ABI_OUTPUT_DIR = "plugin:org.jetbrains.kotlin.jvm.abi:outputDir";
   private static final String PLUGIN = "-P";
-  private static final String PLUGIN_KOTLIN_DI_KSP_ACTIVE =
-      "plugin:com.facebook.kotlin.di:kspActive";
 
   public static ImmutableList<String> getKotlinCompilerPluginsArgs(
       ImmutableMap<AbsPath, ImmutableMap<String, String>> resolvedKotlinCompilerPlugins,
@@ -76,24 +74,6 @@ public class CompilerPluginUtils {
       pluginArgs.add(PLUGIN).add(pluginOptionString);
     }
     return pluginArgs.build();
-  }
-
-  public static boolean isDiK1PluginForKapt(
-      AbsPath sourcePath, ImmutableMap<String, String> options) {
-    return isDiK1Plugin(sourcePath) && !isDiKspActive(options);
-  }
-
-  public static boolean isDiK1PluginForKsp(
-      AbsPath sourcePath, ImmutableMap<String, String> options) {
-    return isDiK1Plugin(sourcePath) && isDiKspActive(options);
-  }
-
-  private static boolean isDiK1Plugin(AbsPath sourcePath) {
-    return sourcePath.endsWith("di.jar");
-  }
-
-  private static boolean isDiKspActive(ImmutableMap<String, String> options) {
-    return "True".equals(options.get(PLUGIN_KOTLIN_DI_KSP_ACTIVE));
   }
 
   public static boolean isKotlinAllOpenPlugin(

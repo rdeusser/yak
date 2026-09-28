@@ -37,7 +37,7 @@ pub(crate) struct DynamicLambdaStaticFields {
     pub(crate) artifact_values: Box<[Artifact]>,
     /// Dynamic values I depend on.
     pub(crate) dynamic_values: Box<[DynamicValue]>,
-    /// Execution platform inherited from the owner to use for actionsfbcode/buck2/app/buck2_action_impl/src/dynamic/deferred.rs
+    /// Execution platform inherited from the owner to use for actions.
     #[starlark_pagable(pagable)]
     pub(crate) execution_platform: ExecutionPlatformResolution,
 }

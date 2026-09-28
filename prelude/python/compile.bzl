@@ -39,7 +39,7 @@ def compile_manifests(ctx: AnalysisContext, manifests: list[ManifestInfo]) -> Ma
         # (and then the change in the Cinder codebase would be sufficient to invalidate caches)
         # currently though, the action uses the platform Cinder for PYC compilation,
         # and these are deployed in-place (no change to toolchain paths),
-        # so we need to force cache invalidation when needed (e.g. for S411091)
+        # so we need to force cache invalidation when needed.
         env["CINDER_DUMMY_PYC_CACHE_BUSTER"] = "3451"
     elif version and "3.12" in version:
         # for CPython, the magic number *shouldn't* change during the lifetime of a feature release

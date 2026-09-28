@@ -6,12 +6,9 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-# pyre-strict
-
-
-from buck2.tests.e2e_util.api.buck import Buck
-from buck2.tests.e2e_util.asserts import expect_failure
-from buck2.tests.e2e_util.buck_workspace import buck_test
+from e2e_util.api.buck import Buck
+from e2e_util.asserts import expect_failure
+from e2e_util.buck_workspace import buck_test
 
 
 @buck_test()
@@ -21,16 +18,14 @@ async def test_ok(buck: Buck) -> None:
 
 @buck_test()
 async def test_fail(buck: Buck) -> None:
-    await expect_failure(
-        buck.test("//:fail"), stderr_regex="Fail: root//:fail - unmanaged"
-    )
+    await expect_failure(buck.test("//:fail"), stderr_regex="Fail: root//:fail")
 
 
 @buck_test()
 async def test_tests_attribute(buck: Buck) -> None:
     await expect_failure(
         buck.test("//:noop_references_fail"),
-        stderr_regex="Fail: root//:fail - unmanaged",
+        stderr_regex="Fail: root//:fail",
     )
 
 
@@ -40,7 +35,7 @@ async def test_tests_attribute_transitive(buck: Buck) -> None:
         buck.test(
             "//:noop_transitively_references_fail",
         ),
-        stderr_regex="Fail: root//:fail - unmanaged",
+        stderr_regex="Fail: root//:fail",
     )
 
 
@@ -55,5 +50,5 @@ async def test_tests_attribute_cycle(buck: Buck) -> None:
 async def test_tests_attribute_self_transition(buck: Buck) -> None:
     await expect_failure(
         buck.test("//:noop_self_transition_references_fail"),
-        stderr_regex="Fail: root//:fail - unmanaged",
+        stderr_regex="Fail: root//:fail",
     )

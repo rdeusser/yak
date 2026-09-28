@@ -416,18 +416,16 @@ cython_toolchain_rule = prelude_rule(
     docs = """
         A toolchain rule that provides the Cython compiler configuration.
 
-        Python version-based compiler selection is handled via select() +
-        py_version_select() on the "compiler" attribute in the toolchain
-        BUCK definition, mirroring the fbsource//third-party/pypi/cython:compiler
-        alias pattern.
+        Python version-based compiler selection is handled via select() on
+        the "compiler" attribute in the toolchain BUCK definition.
     """,
     is_toolchain_rule = True,
     attrs = {
         "compiler": attrs.dep(
             providers = [RunInfo],
             doc = """
-            The Cython compiler binary target. Use select() + py_version_select()
-            to vary the compiler by Python version.
+            The Cython compiler binary target. Use select() to vary the compiler
+            by Python version.
         """,
         ),
         "default_flags": attrs.list(

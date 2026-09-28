@@ -11,7 +11,7 @@ cache_buster = read_config("test", "cache_buster", "")
 def _impl(ctx) -> list[Provider]:
     fast = ctx.actions.declare_output("validation.json", has_content_based_path = False)
     ctx.actions.run(
-        ["fbpython", ctx.attrs.fast, fast.as_output()],
+        ["python3", ctx.attrs.fast, fast.as_output()],
         env = {
             "cache_buster": cache_buster,
         },
@@ -19,7 +19,7 @@ def _impl(ctx) -> list[Provider]:
     )
     slow = ctx.actions.declare_output("out", has_content_based_path = False)
     ctx.actions.run(
-        ["fbpython", ctx.attrs.slow, slow.as_output()],
+        ["python3", ctx.attrs.slow, slow.as_output()],
         env = {
             "cache_buster": cache_buster,
         },

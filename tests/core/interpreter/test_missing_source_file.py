@@ -6,12 +6,9 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-# pyre-strict
-
-
-from buck2.tests.e2e_util.api.buck import Buck
-from buck2.tests.e2e_util.asserts import expect_failure
-from buck2.tests.e2e_util.buck_workspace import buck_test, env
+from e2e_util.api.buck import Buck
+from e2e_util.asserts import expect_failure
+from e2e_util.buck_workspace import buck_test, env
 
 
 @buck_test()
@@ -32,4 +29,9 @@ async def test_missing_source_file_when_hard_errors_enabled(buck: Buck) -> None:
     "false",
 )
 async def test_missing_source_file_when_hard_errors_disabled(buck: Buck) -> None:
-    await buck.uquery("//package1:")
+    # `source_file_missing` is a hard error, so the command fails even when
+    # `BUCK2_HARD_ERROR` turns other soft errors into warnings.
+    await expect_failure(
+        buck.uquery("//package1:"),
+        stderr_regex="Source file `non_existent_source_file.txt` does not exist as a member of package `prelude//package1`",
+    )

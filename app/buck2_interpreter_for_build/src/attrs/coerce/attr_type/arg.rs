@@ -119,21 +119,10 @@ impl AttrTypeCoerce for ArgAttrType {
                         _ => {
                             // TODO(jtbraun): Remove the remaining generation sites and turn
                             // this into a load-time error.
-                            // The macro name is arbitrary user input; the logview key must
-                            // stay low-cardinality, so only known names pass through.
-                            let logview_key = if UNIMPLEMENTED_MACROS.contains(macro_type.as_str())
-                            {
-                                macro_type.clone()
-                            } else {
-                                "other".to_owned()
-                            };
                             soft_error!(
                                 "unrecognized_arg_macro",
                                 MacroError::UnrecognizedMacro(macro_type.clone(), args.len())
                                     .into(),
-                                deprecation: true,
-                                low_cardinality_key_for_additional_logview_samples:
-                                    Some(Box::new(logview_key))
                             )?;
                             UnconfiguredMacro::new_unrecognized(macro_type, args)
                         }

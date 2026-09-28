@@ -417,9 +417,9 @@ pub struct CommonStarlarkOptions {
     ///    load/cell//build_defs/json.bzl
     ///    load/prelude//playground/test.bxl
     ///    load/cell//build_defs/json.bzl@other_cell
-    ///    load_buildfile/fbcode//third-party-buck/platform010/build/ncurses
-    ///    load_packagefile/fbcode//cli/rust/cli_delegate
-    ///    anon_analysis/anon//:_anon_link_rule (anon: 766183dc9b6f680a) (fbcode//buck2/platform/execution:linux-x86_64#08961b14cfb182aa)
+    ///    load_buildfile/cell//third-party/ncurses
+    ///    load_packagefile/cell//cli/rust/cli_delegate
+    ///    anon_analysis/anon//:_anon_link_rule (anon: 766183dc9b6f680a) (cell//platform/execution:linux-x86_64#08961b14cfb182aa)
     ///    bxl/prelude//playground/test.bxl:playground
     ///
     /// You can pass `--profile-patterns=.*` to enable no-op profiling for everything (additionally pass `--profile-patterns-mode=none` to

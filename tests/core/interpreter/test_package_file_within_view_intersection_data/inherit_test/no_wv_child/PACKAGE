@@ -1,0 +1,6 @@
+# Opts in without a `within_view` list, so this PACKAGE adds nothing to the
+# cap. With `inherit = True` and no `within_view`, the default `within_view`
+# below is PUBLIC.
+enforce_within_view_intersection()
+
+package(inherit = True, visibility = ["PUBLIC"])

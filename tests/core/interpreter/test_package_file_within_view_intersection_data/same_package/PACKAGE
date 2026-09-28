@@ -1,0 +1,3 @@
+enforce_within_view_intersection()
+
+package(within_view = ["root//outside/..."])

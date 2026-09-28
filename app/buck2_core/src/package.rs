@@ -21,8 +21,8 @@
 //!
 //! Example:
 //! ```ignore
-//! fbsource
-//! +-- .buck
+//! project
+//! +-- .buckconfig
 //! +-- package1
 //! |   +-- TARGETS
 //! |   +-- my.java

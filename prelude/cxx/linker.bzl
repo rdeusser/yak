@@ -11,8 +11,8 @@ load("@prelude//utils:arglike.bzl", "ArgLike")
 load("@prelude//utils:expect.bzl", "expect")
 
 # Platform-specific linker flags handling.  Modeled after the `Linker` abstraction
-# in v1 (https://fburl.com/diffusion/kqd2ylcy).
-# TODO(T110378136): It might make more sense to pass these in via the toolchain.
+# in v1.
+# TODO: It might make more sense to pass these in via the toolchain.
 Linker = record(
     # Given the soname for the shared library, how to format the install name argument
     shared_library_install_name_format = str,
@@ -139,7 +139,7 @@ def get_default_shared_library_name(linker_info: LinkerInfo, label: Label):
     Generate a platform-specific shared library name based for the given rule.
     """
 
-    # TODO(T110378119): v1 doesn't use the cell/repo name, so we don't here for
+    # TODO: v1 doesn't use the cell/repo name, so we don't here for
     # initial compatibility, but maybe we should?
     short_name = "{}_{}".format(_sanitize(label.package), _sanitize(label.name))
     return get_shared_library_name(linker_info, short_name, apply_default_prefix = True)

@@ -49,8 +49,8 @@ public class ZipAlign {
             errorMessage.concat(
                 "\n"
                     + "This issue is usually caused by having more than 2^^16 files in the APK. Try"
-                    + " filtering out some resources, or follow D75775793 to only pack single"
-                    + " preferred density resource as mitigation\n");
+                    + " filtering out some resources, or set aapt2_preferred_density on the"
+                    + " android_binary to package one density of each resource.\n");
       }
 
       throw new RuntimeException("zipalign failed to process apk file:\n" + errorMessage);

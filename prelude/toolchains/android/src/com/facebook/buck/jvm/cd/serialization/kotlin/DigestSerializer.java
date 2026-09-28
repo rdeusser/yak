@@ -21,7 +21,7 @@ import java.util.Map;
  *
  * <ul>
  *   <li>{@link Map.Entry<Path-String>} (metadata provided by incremental actions, see: <a
- *       href="https://buck2.build/docs/rule_authors/incremental_actions/">...</a>), and
+ *       href="https://rdeusser.github.io/buck2/docs/rule_authors/incremental_actions/">...</a>), and
  *   <li>{@link com.facebook.buck.cd.model.kotlin.Digests} (part of the protocol buffer model).
  * </ul>
  */

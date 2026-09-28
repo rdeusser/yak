@@ -462,19 +462,6 @@ impl CacheUploader {
 
         let ((), std_streams) = future::try_join(uploads, std_streams).await?;
 
-        let worker;
-
-        #[cfg(fbcode_build)]
-        {
-            let hostname = hostname::get()?;
-            worker = hostname.to_string_lossy().into_owned();
-        }
-
-        #[cfg(not(fbcode_build))]
-        {
-            worker = "".to_owned();
-        }
-
         let (stdout_raw, stdout_digest) = std_streams.stdout.into_raw_or_digest();
         let (stderr_raw, stderr_digest) = std_streams.stderr.into_raw_or_digest();
 
@@ -487,7 +474,7 @@ impl CacheUploader {
             stderr_raw,
             stderr_digest,
             execution_metadata: TExecutedActionMetadata {
-                worker,
+                worker: String::new(),
                 execution_dir: "".to_owned(),
                 execution_start_timestamp: systemtime_to_ttimestamp(
                     result.report.timing.start_time,

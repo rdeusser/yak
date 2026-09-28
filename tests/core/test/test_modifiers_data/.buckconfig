@@ -6,9 +6,7 @@ root = .
 prelude = prelude
 
 [cell_aliases]
-fbsource = root
-fbcode = root
-ovr_config = prelude
+config = prelude
 toolchains = prelude
 
 [external_cells]

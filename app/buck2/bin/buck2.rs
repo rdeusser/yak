@@ -17,10 +17,10 @@ use std::sync::Arc;
 use std::time::SystemTime;
 
 use buck2::exec;
-use buck2::panic;
 use buck2::process_context::ClientRuntime;
 use buck2::process_context::ProcessContext;
 use buck2::process_context::SharedProcessContext;
+use buck2::soft_error;
 use buck2_build_info::BUCK2_BUILD_INFO;
 use buck2_build_info::Buck2BuildInfo;
 use buck2_client_ctx::events_ctx::EventsCtx;
@@ -37,28 +37,14 @@ use buck2_wrapper_common::invocation_id::TraceId;
 use dupe::Dupe;
 use superconsole::Stdin;
 
-// fbcode likes to set its own allocator in fbcode.default_allocator
-// So when we set our own allocator, buck build buck2 or buck2 build buck2 often breaks.
-// Making jemalloc the default only when we do a cargo build.
+// Cargo builds use jemalloc on Linux and macOS. A Buck build (`cfg(buck_build)`) uses the system
+// allocator, because `third-party/rust/fixups/tikv-jemalloc-sys` does not build jemalloc.
 #[global_allocator]
-#[cfg(all(
-    any(target_os = "linux", target_os = "macos"),
-    not(buck_build),
-    not(buck2_memfrag)
-))]
+#[cfg(all(any(target_os = "linux", target_os = "macos"), not(buck_build)))]
 static ALLOC: tikv_jemallocator::Jemalloc = tikv_jemallocator::Jemalloc;
 #[global_allocator]
-#[cfg(all(target_os = "windows", not(buck2_memfrag)))]
+#[cfg(target_os = "windows")]
 static ALLOC: mimalloc::MiMalloc = mimalloc::MiMalloc;
-
-// Opt-in fragmentation profiler, enabled with `-c buck2_dev.memfrag=true`. It wraps
-// the system allocator (jemalloc in an fbcode build) rather than bringing its
-// own, so it doesn't double-link jemalloc the way the tikv allocator above
-// would. It stays a passthrough unless BUCK2_MEMFRAG_SHIFT is set at process
-// start, so a memfrag build can still serve as a normal daemon.
-#[global_allocator]
-#[cfg(buck2_memfrag)]
-static ALLOC: mem_frag::SamplingAlloc = mem_frag::SamplingAlloc::new();
 
 fn init_logging() -> buck2_error::Result<Arc<dyn LogConfigurationReloadHandle>> {
     static ENV_TRACING_LOG_FILE_PATH: &str = "BUCK_LOG_TO_FILE_PATH";
@@ -77,30 +63,7 @@ fn init_logging() -> buck2_error::Result<Arc<dyn LogConfigurationReloadHandle>> 
         _ => init_tracing_for_writer(io::stderr),
     }?;
 
-    #[cfg(fbcode_build)]
-    {
-        use buck2_event_log::should_upload_log;
-        use buck2_events::sink::remote;
-
-        if !should_upload_log()? {
-            remote::disable();
-        }
-    }
-
     Ok(handle)
-}
-
-// When using a cargo build, some essential services (e.g. RE, scribe)
-// fall back to slow paths that give terrible performance.
-// Therefore, if we are using cargo, warn strongly.
-fn check_cargo() {
-    if !cfg!(fbcode_build) && !buck2_core::is_open_source() {
-        eprintln!("=====================================================================");
-        eprintln!("WARNING: You are using Buck v2 compiled with `cargo`, not `buck`.");
-        eprintln!("         Some operations may go slower and logging may be impaired.");
-        eprintln!("=====================================================================");
-        eprintln!();
-    }
 }
 
 fn print_retry() -> buck2_error::Result<()> {
@@ -146,12 +109,6 @@ fn exec_with_logging(
 // it must be single-threaded. Commands that want to be multi-threaded/async
 // will start up their own tokio runtime.
 fn main() -> ! {
-    // Enable sampling early so the side table exists before the daemon forks
-    // (fork copies the heap). The dump watcher is started later, post-fork, in
-    // buck2_daemon — threads do not survive the daemonizing fork.
-    #[cfg(buck2_memfrag)]
-    mem_frag::init();
-
     buck2_core::client_only::CLIENT_ONLY_VAL.init(cfg!(client_only));
     #[cfg(not(client_only))]
     {
@@ -179,16 +136,13 @@ fn main() -> ! {
     }
     BUCK2_BUILD_INFO.init(Buck2BuildInfo {
         revision: std::option_env!("BUCK2_SET_EXPLICIT_VERSION"),
-        win_internal_version: std::option_env!("BUCK2_WIN_INTERNAL_VERSION"),
-        release_timestamp: std::option_env!("BUCK2_RELEASE_TIMESTAMP"),
     });
 
     // Set up crypto impl once per process
     buck2_certs::certs::setup_cryptography_or_fail();
 
     fn init_shared_context() -> buck2_error::Result<SharedProcessContext> {
-        panic::initialize()?;
-        check_cargo();
+        soft_error::initialize()?;
 
         // Log the start timestamp
         tracing::debug!("Client initialized logging");

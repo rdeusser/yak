@@ -19,10 +19,8 @@
 //! excluding queue and cache-check time. Actions served from cache (which do not
 //! execute) are excluded entirely.
 //!
-//! This module is consumed by both the client-side `InvocationRecorder` (which
-//! computes the distribution live and emits it on the `InvocationRecord`) and the
-//! offline backfill binary (which recomputes it from a decoded `.pb.zst` event
-//! log), so the two paths produce identical numbers. It operates on
+//! The client-side `InvocationRecorder` computes the distribution live and emits
+//! it on the `InvocationRecord`. The computation operates on
 //! `buck2_data::ActionExecutionEnd`.
 
 use std::collections::BTreeMap;
@@ -30,16 +28,11 @@ use std::collections::BTreeMap;
 use buck2_event_observer::last_command_execution_kind::LastCommandExecutionKind;
 use buck2_event_observer::last_command_execution_kind::get_last_command_execution_kind;
 
-/// Percentiles reported into the `buck2_action_parallelism` Scuba table.
-/// `100` resolves to the maximum observed concurrency level.
+/// Percentiles reported on the `InvocationRecord`. `100` resolves to the maximum
+/// observed concurrency level.
 ///
-/// Only percentile values that have a matching `concurrency_pN` Scuba column
-/// are logged; any other value is dropped by the logger rather than misplaced
-/// (see `action_parallelism_scuba::set_percentiles`). Because the reported
-/// distribution is self-describing — each concurrency carries its own
-/// percentile label and is matched to its column by value — this list can change
-/// over time without corrupting historical rows: old samples keep their own labels,
-/// and any percentile whose column was since added or removed is simply ignored.
+/// Each reported concurrency carries its percentile label, so this list can change
+/// without misreading the records of earlier invocations.
 pub const PERCENTILES: [u32; 9] = [5, 10, 25, 50, 75, 90, 95, 99, 100];
 
 /// The wall-clock execution window of a single action, in microseconds (in the
@@ -114,8 +107,7 @@ fn to_us(seconds: i64, nanos: i32) -> Option<i64> {
 
 /// Compute the concurrency distribution over `intervals` using a sweep line.
 ///
-/// Mirrors `fbobjc/buck2/speed_analysis/parallel_actions/parallel_actions.py`:
-/// each interval contributes a `+1` event at its start and a `-1` at its end;
+/// Each interval contributes a `+1` event at its start and a `-1` at its end;
 /// at equal timestamps ends are processed before starts so an action ending
 /// exactly as another begins does not spuriously bump the count.
 pub fn compute(intervals: &[ActionInterval], percentiles: &[u32]) -> ParallelismResult {

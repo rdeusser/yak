@@ -6,8 +6,6 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-# pyre-strict
-
 """
 A projection is a subpath of another target's directory artifact. These tests
 consume projections from local actions, which forces their inputs onto disk, and
@@ -16,9 +14,10 @@ is consumed at two granularities, when the projected subpath or the directory's
 shape changes between builds, and across a daemon restart.
 """
 
-from buck2.tests.e2e_util.api.buck import Buck
-from buck2.tests.e2e_util.buck_workspace import buck_test
-from buck2.tests.e2e_util.helper.utils import replace_in_file
+import pytest
+from e2e_util.api.buck import Buck
+from e2e_util.buck_workspace import buck_test
+from e2e_util.helper.utils import replace_in_file
 
 
 async def read_consumer(buck: Buck, target: str) -> str:
@@ -68,6 +67,7 @@ async def test_projected_subpath_changes_between_builds(buck: Buck) -> None:
     assert await read_consumer(buck, target) == "moving-b-2"
 
 
+@pytest.mark.remote_execution
 @buck_test()
 async def test_projection_consumed_after_daemon_restart(buck: Buck) -> None:
     # Declare the directory artifact without putting it on disk, so that the

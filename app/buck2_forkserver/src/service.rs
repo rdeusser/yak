@@ -9,11 +9,7 @@
  */
 
 use std::ffi::OsStr;
-#[cfg(all(fbcode_build, target_os = "linux"))]
-use std::fs::OpenOptions;
 use std::os::unix::ffi::OsStrExt;
-#[cfg(all(fbcode_build, target_os = "linux"))]
-use std::os::unix::fs::OpenOptionsExt;
 use std::path::Path;
 use std::path::PathBuf;
 use std::pin::Pin;
@@ -37,10 +33,6 @@ use buck2_forkserver_proto::RequestEvent;
 use buck2_forkserver_proto::SetLogFilterRequest;
 use buck2_forkserver_proto::SetLogFilterResponse;
 use buck2_forkserver_proto::forkserver_server::Forkserver;
-#[cfg(all(fbcode_build, target_os = "linux"))]
-use buck2_fs::error::IoResultExt;
-#[cfg(all(fbcode_build, target_os = "linux"))]
-use buck2_fs::fs_util;
 use buck2_fs::paths::abs_norm_path::AbsNormPath;
 use buck2_fs::paths::abs_norm_path::AbsNormPathBuf;
 use buck2_fs::paths::abs_path::AbsPath;
@@ -223,12 +215,6 @@ impl UnixForkserverService {
             .network_access
             .is_some_and(is_restricted_network_access)
         {
-            #[cfg(fbcode_build)]
-            {
-                cmd.env("INSIDE_NETWORK_ISOLATION", "1");
-                cmd.env("DOTSLASH_OFFLINE", "1");
-            }
-
             use std::os::unix::process::CommandExt;
             // Safety: unshare() is async-signal-safe.
             // It only makes a single syscall with no memory allocation.
@@ -403,53 +389,10 @@ struct MiniperfContainer {
 }
 
 impl MiniperfContainer {
-    /// Must match the section key in `//buck2/app/buck2:buck2-bin`.
-    #[cfg(all(fbcode_build, target_os = "linux"))]
-    const SECTION_NAME: &'static str = "buck2_miniperf";
-
-    fn new(forkserver_state_dir: &AbsNormPath) -> buck2_error::Result<Option<Self>> {
-        #[cfg(not(all(fbcode_build, target_os = "linux")))]
-        {
-            let _ = forkserver_state_dir;
-            return Ok(None);
-        };
-
-        #[cfg(all(fbcode_build, target_os = "linux"))]
-        {
-            let miniperf =
-                forkserver_state_dir.join(ForwardRelativePath::unchecked_new("miniperf"));
-            let output_dir = forkserver_state_dir.join(ForwardRelativePath::unchecked_new("out"));
-
-            fs_util::remove_all(&miniperf).categorize_internal()?;
-            fs_util::remove_all(&output_dir).categorize_internal()?;
-            fs_util::create_dir_all(&output_dir)?;
-
-            let mut opts = OpenOptions::new();
-            opts.create_new(true);
-            opts.write(true);
-
-            opts.mode(0o755);
-
-            let mut miniperf_writer = opts
-                .open(miniperf.as_path())
-                .with_buck_error_context(|| format!("Error opening: `{}`", miniperf.display()))?;
-
-            let section = buck2_embedded_section::EmbeddedSection {
-                name: Self::SECTION_NAME,
-                encoding: buck2_embedded_section::SectionEncoding::Zstd,
-            };
-
-            section
-                .copy_to(&mut miniperf_writer)
-                .with_buck_error_context(|| {
-                    format!("Error writing miniperf to `{}`", miniperf.display())
-                })?;
-
-            Ok(Some(Self {
-                miniperf,
-                output_dir,
-            }))
-        }
+    /// new returns `None` because Miniperf runs only from a copy embedded in the buck2 binary, and
+    /// this build embeds none.
+    fn new(_forkserver_state_dir: &AbsNormPath) -> buck2_error::Result<Option<Self>> {
+        Ok(None)
     }
 
     fn allocate_output_path(&self) -> AbsNormPathBuf {

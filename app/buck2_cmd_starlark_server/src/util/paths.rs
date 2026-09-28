@@ -76,7 +76,7 @@ async fn starlark_file(
 
     match typ {
         FileType::Directory => {
-            for x in io.read_dir(proj_path.clone()).await?.into_entries() {
+            for x in io.read_dir(proj_path.clone()).await? {
                 let Ok(file_name) = FileName::new(&x.file_name) else {
                     // Skip files which buck does not like:
                     // this function works with `CellPath` values,

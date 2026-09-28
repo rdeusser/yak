@@ -27,11 +27,6 @@ def cxx_by_language_ext(x: dict[typing.Any, typing.Any], ext: str) -> list[typin
     # that would be OBJC.
     if ext == ".c":
         key_pp = "c"
-
-        # TODO(gabrielrc): v1 docs have other keys
-        # https://buck.build/rule/cxx_library.html#lang_compiler_flags
-        # And you can see them in java code, but somehow it works with
-        # this one, which is seem across the repo. Find out what's happening.
         key_compiler = "c_cpp_output"
     elif ext in (".cpp", ".cc", ".cl", ".cxx", ".c++", ".bc"):
         key_pp = "cxx"

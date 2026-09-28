@@ -70,7 +70,7 @@ pub fn process_stats() -> ProcessStats {
 
     let mut pmc: PROCESS_MEMORY_COUNTERS = unsafe { std::mem::zeroed() };
     pmc.cb = std::mem::size_of_val(&pmc) as u32;
-    // Code is referenced from eden/scm/lib/procinfo/src/lib.rs
+    // Adapted from `eden/scm/lib/procinfo/src/lib.rs` in https://github.com/facebook/sapling.
     // API reference: https://learn.microsoft.com/en-us/windows/win32/api/psapi/ns-psapi-process_memory_counters
     let (wss_bytes, max_wss_bytes) =
         match unsafe { K32GetProcessMemoryInfo(GetCurrentProcess(), &mut pmc, pmc.cb) } {

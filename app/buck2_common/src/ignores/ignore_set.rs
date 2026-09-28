@@ -60,15 +60,9 @@ impl Eq for IgnoreSet {}
 impl IgnoreSet {
     /// Creates an IgnoreSet from an "ignore spec".
     ///
-    /// This is modeled after buck1's parsing of project.ignores.
-    ///
-    /// An ignore spec is a comma-separated list of ignore patterns. If an ignore pattern
-    /// contains a glob character, then it uses java.nio.file.FileSystem.getPathMatcher,
-    /// otherwise it creates a com.facebook.buck.io.filesystem.RecursivePathMatcher
-    ///
-    /// Java's path matcher does not allow  '*' to cross directory boundaries. We get
-    /// the RecursivePathMatcher behavior by identifying non-globby things and appending
-    /// a '/**'.
+    /// An ignore spec is a comma-separated list of ignore patterns. A pattern that contains a
+    /// glob character is a glob in which `*` does not cross directory boundaries. Any other
+    /// pattern matches the path it names and every path below it.
     ///
     /// Always ignores `buck-out` if it is a `root_cell`.
     pub fn from_ignore_spec(spec: &str, root_cell: bool) -> buck2_error::Result<Self> {

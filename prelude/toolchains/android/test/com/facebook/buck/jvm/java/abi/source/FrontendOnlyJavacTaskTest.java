@@ -79,7 +79,7 @@ public class FrontendOnlyJavacTaskTest extends CompilerTreeApiParameterizedTest 
             "Foo.java",
             Joiner.on('\n')
                 .join(
-                    "package com.facebook.foo;",
+                    "package com.example.foo;",
                     "public class Foo {",
                     "  private Runnable field = new Runnable() {",
                     "    public void run() { }",
@@ -91,19 +91,19 @@ public class FrontendOnlyJavacTaskTest extends CompilerTreeApiParameterizedTest 
                     "}",
                     "class Extra { }"),
             "Bar.java",
-            Joiner.on('\n').join("package com.facebook.bar;", "class Bar { }"),
+            Joiner.on('\n').join("package com.example.bar;", "class Bar { }"),
             "package-info.java",
-            "package com.facebook.foo;"));
+            "package com.example.foo;"));
 
     Iterable<? extends Element> actualElements = testCompiler.enter();
 
     assertThat(
         actualElements,
         Matchers.containsInAnyOrder(
-            elements.getTypeElement("com.facebook.foo.Foo"),
-            elements.getTypeElement("com.facebook.foo.Extra"),
-            elements.getTypeElement("com.facebook.bar.Bar"),
-            elements.getPackageElement("com.facebook.foo")));
+            elements.getTypeElement("com.example.foo.Foo"),
+            elements.getTypeElement("com.example.foo.Extra"),
+            elements.getTypeElement("com.example.bar.Bar"),
+            elements.getPackageElement("com.example.foo")));
   }
 
   @Test

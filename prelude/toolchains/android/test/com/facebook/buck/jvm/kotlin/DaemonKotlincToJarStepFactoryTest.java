@@ -79,6 +79,40 @@ public class DaemonKotlincToJarStepFactoryTest {
   }
 
   @Test
+  public void test_getOtherPluginsRequiredForKapt_includesOnlyAllOpen() {
+    AbsPath allOpenPlugin = new FakePath("/plugins/kotlin-allopen.jar");
+    ImmutableMap<AbsPath, ImmutableMap<String, String>> plugins =
+        ImmutableMap.of(
+            allOpenPlugin,
+            ImmutableMap.of(),
+            new FakePath("/plugins/di.jar"),
+            ImmutableMap.of(),
+            new FakePath("/plugins/symbol-processing-cmdline.jar"),
+            ImmutableMap.of());
+
+    assertEquals(
+        ImmutableList.of("-Xplugin=" + allOpenPlugin),
+        KaptStepsBuilder.getOtherPluginsRequiredForKapt(plugins, "default/codegen/output/dir"));
+  }
+
+  @Test
+  public void test_getKspPluginsArgs_includesOnlySymbolProcessing() {
+    AbsPath kspPlugin = new FakePath("/plugins/symbol-processing-cmdline.jar");
+    ImmutableMap<AbsPath, ImmutableMap<String, String>> plugins =
+        ImmutableMap.of(
+            kspPlugin,
+            ImmutableMap.of(),
+            new FakePath("/plugins/di.jar"),
+            ImmutableMap.of(),
+            new FakePath("/plugins/kotlin-allopen.jar"),
+            ImmutableMap.of());
+
+    assertEquals(
+        ImmutableList.of("-Xplugin=" + kspPlugin),
+        KspStepsBuilder.getKspPluginsArgs(plugins, "default/codegen/output/dir"));
+  }
+
+  @Test
   public void test_getRunsOnJavaOnlyProcessors_includeJavaOnlyProcessors() {
     ResolvedJavacPluginProperties javaOnlyPlugin = getJavaOnlyPlugin();
     ResolvedJavacPluginProperties usualPlugin = getUsualPlugin();
@@ -215,6 +249,11 @@ public class DaemonKotlincToJarStepFactoryTest {
     @Override
     public Path getPath() {
       return path;
+    }
+
+    @Override
+    public String toString() {
+      return path.toString();
     }
   }
 

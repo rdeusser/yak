@@ -40,8 +40,7 @@ flowchart LR;
     c.o --> main;
 ```
 
-([Rendered](https://fburl.com/mermaid/rzup8o32). Compilation and optimization of
-a, b, and c can proceed in parallel.)
+(Compilation and optimization of a, b, and c can proceed in parallel.)
 
 In cases where absolute performance is required, though, the inability to
 perform cross-translation-unit (or "cross-module", in LLVM parlance)
@@ -58,8 +57,8 @@ major drawback of the LTO approach is that all of the parallelism gained from
 optimizing translation units individually is now completely lost; instead, the
 linker (using a plugin) will do a single-threaded pass of _all code_ produced by
 compilation steps. This is extremely slow, memory-intensive, and unable to be
-run incrementally. There are targets at Meta that simply can't be LTO-compiled
-because of their size.
+run incrementally. Some large targets simply can't be LTO-compiled because of
+their size.
 
 ```
 flowchart LR;
@@ -84,7 +83,7 @@ flowchart LR;
     main.o --> |ld| main
 ```
 
-([Rendered](https://fburl.com/mermaid/kid35io9). `a.bc`, `b.bc`, and `c.bc` are
+(`a.bc`, `b.bc`, and `c.bc` are
 LLVM bitcode; they are all merged together into a single module,
 `a_b_c_optimized.bc`, which is then optimized and codegen'd into a final
 binary.)
@@ -130,8 +129,6 @@ flowchart LR;
     c.o --> main;
 ```
 
-([Rendered](https://fburl.com/mermaid/56oc99t5))
-
 The `index` step looks like a link step. However, it does not produce a final
 binary; instead, it looks at every compiler IR input file that it receives and
 heuristically determines which other IR modules it should be optimized with in
@@ -155,12 +152,12 @@ compilation by pushing the majority of work to the parallel `opt` phase of
 execution. When LLVM performs ThinLTO by default, it will launch a thread pool
 and process independent modules in parallel. ThinLTO does not produce as
 performant a binary as a monolithic LTO; however, in practice, ThinLTO binaries
-[paired with AutoFDO](https://fburl.com/wiki/q480euco) perform comparably to
+paired with AutoFDO perform comparably to
 monolithic LTO. Furthermore, ThinLTO's greater efficiency allows for more
 expensive optimization passes to be run, which can further improve code quality
 near that of a monolithic LTO.
 
-This is all great, and ThinLTO has been in use at Meta for some time. However,
+ThinLTO is widely used. However,
 Buck2 has the ability to take a step further than Buck1 could ever have - Buck2
 can distribute parallel `opt` actions across many machines via Remote Execution
 to achieve drastic speedups in ThinLTO wall clock time, memory usage, and
@@ -173,7 +170,7 @@ actions that directly mirrors the graph that the `index` step outputs. The graph
 that the `index` step outputs is entirely dynamic and, as such, the build system
 is only aware of what the graph could be after the `index` step is complete.
 Unlike Buck1 (or even Blaze/Bazel), Buck2 has explicit support for this paradigm
-[("dynamic dependencies")](https://fburl.com/gdoc/zklwhkll). Therefore, for
+[("dynamic dependencies")](https://rdeusser.github.io/buck2/docs/rule_authors/dynamic_dependencies/). Therefore, for
 Buck2, the basic strategy looks like:
 
 1. Invoke `clang` to act as `index`. `index` will output a file for every object
@@ -300,7 +297,7 @@ declare dependencies on every object file referenced by that object's
 compilation plan; it does so here by adding `hidden` dependencies on every
 object file and archive that the archive plan says that this object depends on.
 
-`thin_lto_opt` uses a Python wrapper around LLVM because of a bug (T116695431)
+`thin_lto_opt` uses a Python wrapper around LLVM because of a bug
 where LTO fatal errors don't prevent `clang` from returning an exit code of
 zero. The Python script wraps `clang` and exits with a non-zero exit code if
 `clang` produced an empty object file.

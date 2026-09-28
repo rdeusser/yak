@@ -1,0 +1,8 @@
+package(
+    visibility = [
+        "root//bar_dir/...",
+        "root//sub_dir:",
+        target_name_glob(["*-test"]),
+    ],
+    within_view = ["root//..."],
+)

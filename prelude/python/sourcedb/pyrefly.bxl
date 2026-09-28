@@ -17,8 +17,7 @@
 #   + https://github.com/facebook/buck2/blob/2b6c84ef285519a86ad793800296b3cda17e85dd/prelude/python/python_library.bzl#L339-L341
 #   + https://github.com/facebook/buck2/blob/2b6c84ef285519a86ad793800296b3cda17e85dd/prelude/python/python_library.bzl#L290-L306
 
-load("@prelude//python:typing.bzl", "DEFAULT_PY_VERSION") # @oss-enable
-# @oss-disable[end= ]: load("@prelude//python/meta_only:config.bzl", "DEFAULT_PY_VERSION")
+load("@prelude//python:typing.bzl", "DEFAULT_PY_VERSION")
 
 _MODULE_SUFFIXES = set([
     "dll",
@@ -42,9 +41,7 @@ def _rule_has_no_manifest(rule_type: str) -> bool:
     return (
         rule_type in _MANIFESTLESS_RULE_TYPES
         or rule_type.endswith(":target_group")
-        or rule_type.endswith("_fbcode_configured_alias_transition")
         or rule_type.endswith(":rust_proc_macro_alias")
-        or rule_type.endswith(":fbpkg_builder")
         or rule_type.endswith(":_source_listing")
     )
 
@@ -465,9 +462,7 @@ def _main(ctx: bxl.Context) -> None:
 
         if (
             x.rule_type == "prelude//rules.bzl:alias"
-            or x.rule_type.endswith("_fbcode_configured_alias")
             or x.rule_type.endswith(":build_mode_alias")
-            or x.rule_type.endswith(":_sanitizer_alias")
         ):
             _handle_alias(entry, attrs, x)
         elif x.rule_type == "prelude//rules.bzl:cxx_python_extension":

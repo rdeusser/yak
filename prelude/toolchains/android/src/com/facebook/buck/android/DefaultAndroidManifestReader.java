@@ -48,7 +48,7 @@ public class DefaultAndroidManifestReader implements AndroidManifestReader {
 
   /**
    * XPath expression to get the package. For a manifest as {@code <manifest
-   * package="com.facebook.katana" />}, this results in {@code com.facebook.katana}.
+   * package="com.example.app" />}, this results in {@code com.example.app}.
    */
   private static final String XPATH_PACKAGE = "/manifest/@package";
 

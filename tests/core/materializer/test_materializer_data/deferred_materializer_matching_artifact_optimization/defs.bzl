@@ -27,11 +27,8 @@ copy = rule(
 )
 
 def _download(ctx: AnalysisContext):
-    url = "https://interncache-all.fbcdn.net/manifold/buck_build_test/tree/buck2_test/http_archive/test.tgz"
-    sha1 = "1a45666759704bf08fc670aa96118a0415c470fc"
-
     download = ctx.actions.declare_output("download", has_content_based_path = False)
-    ctx.actions.download_file(download, url, sha1 = sha1)
+    ctx.actions.download_file(download, ctx.attrs.url, sha256 = ctx.attrs.sha256)
 
     return [
         DefaultInfo(default_output = download),
@@ -39,5 +36,8 @@ def _download(ctx: AnalysisContext):
 
 download = rule(
     impl = _download,
-    attrs = {},
+    attrs = {
+        "sha256": attrs.string(default = read_config("test", "download_sha256", "")),
+        "url": attrs.string(default = read_config("test", "download_url", "")),
+    },
 )

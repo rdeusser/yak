@@ -15,8 +15,6 @@ use std::path::PathBuf;
 use anyhow::Context as _;
 use clap::Parser;
 use clap::Subcommand;
-#[cfg(fbcode_build)]
-use lint_message::LintSeverity;
 use starlark_fmt_lib::Config;
 use starlark_map::small_set::SmallSet;
 use tracing::error;
@@ -27,8 +25,6 @@ use tracing_subscriber::fmt::format::FmtSpan;
 use crate::subcommands::diff_file;
 use crate::subcommands::format_files;
 use crate::subcommands::format_stdin;
-#[cfg(fbcode_build)]
-use crate::subcommands::lint_files;
 
 #[derive(Debug, Parser)]
 #[clap(name = "starlark_fmt")]
@@ -56,17 +52,6 @@ enum Command {
         /// File paths to format in-place (supports @file for reading paths from a file).
         #[clap(required = true, value_name = "FILE")]
         files: Vec<PathBuf>,
-    },
-    /// Lint files for issues.
-    #[cfg(fbcode_build)]
-    Lint {
-        /// File paths to lint (supports @file for reading paths from a file).
-        #[clap(required = true, value_name = "FILE")]
-        files: Vec<PathBuf>,
-
-        /// Severity mode for linting.
-        #[clap(long, default_value = "warning")]
-        severity: LintSeverity,
     },
     /// Show diff between original and formatted file.
     Diff {
@@ -96,14 +81,6 @@ fn try_main(args: Args) -> anyhow::Result<()> {
                 info!("Formatting {} file(s)", files.len());
             }
             format_files(&files, &config)
-        }
-        #[cfg(fbcode_build)]
-        Command::Lint { files, severity } => {
-            let files = deduplicated_files(files);
-            if args.timing {
-                info!("Linting {} file(s)", files.len());
-            }
-            lint_files(&files, severity, &config)
         }
         Command::Diff { file, show_all } => diff_file(&file, show_all, &config),
         Command::Stdin { path } => format_stdin(&path, &config),

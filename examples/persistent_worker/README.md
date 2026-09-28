@@ -1,12 +1,8 @@
 # Persistent Worker Demo
 
-At the time of writing (2024-09-25) Buck2 supports persistent workers for local
-builds through a dedicated Buck2 persistent worker gRPC protocol. However, Buck2
-does not support persistent workers for builds that use remote execution. This
-demo is part of a patch-set that adds support for remote persistent workers to
-Buck2, see [#776].
-
-[#776]: https://github.com/facebook/buck2/issues/776
+This demo builds the same actions locally and on BuildBuddy remote execution,
+each with and without persistent workers. `test.sh` runs all four builds and
+checks which executor ran each demo action.
 
 ## Requirements
 
@@ -20,9 +16,8 @@ Credentials for [BuildBuddy] stored in `.envrc.private`:
 export BUILDBUDDY_API_KEY=...
 ```
 
-On CI the API key is not available for pipelines initiated from forks of the
-main Buck2 repository. The corresponding tests will be skipped in that case. A
-Meta engineer can manually initiate a pipeline run with the token set.
+`test.sh` skips the remote execution builds when `BUILDBUDDY_API_KEY` is not
+set. CI reads the key from the `BUILDBUDDY_API_KEY` secret.
 
 [direnv]: https://direnv.net/
 [BuildBuddy]: https://www.buildbuddy.io/
@@ -41,7 +36,7 @@ Run a clean build:
 ```
 $ buck2 clean; buck2 build : -vstderr
 ...
-stderr for root//:demo-7 (demo):
+stderr for root//:demo-3 (demo):
 ...
 ONE-SHOT START
 ...
@@ -61,7 +56,7 @@ Run a clean build:
 ```
 $ buck2 clean; buck2 build : -vstderr
 ...
-stderr for root//:demo-7 (demo):
+stderr for root//:demo-3 (demo):
 ...
 Buck2 persistent worker ...
 ...
@@ -81,7 +76,7 @@ Run a clean build:
 ```
 $ buck2 clean; buck2 build : -vstderr
 ...
-stderr for root//:demo-7 (demo):
+stderr for root//:demo-3 (demo):
 ...
 ONE-SHOT START
 ...
@@ -101,7 +96,7 @@ Run a clean build:
 ```
 $ buck2 clean; buck2 build : -vstderr
 ...
-stderr for root//:demo-7 (demo):
+stderr for root//:demo-3 (demo):
 ...
 Bazel persistent worker ...
 ...
@@ -112,8 +107,8 @@ Bazel persistent worker ...
 ### Starlark
 
 A Buck2 persistent worker is created by a rule that emits the `WorkerInfo`
-provider. Setting `remote = True` on this provider indicates that this worker is
-remote execution capable.
+provider. Setting `supports_bazel_remote_persistent_worker_protocol = True` on
+this provider indicates that this worker is remote execution capable.
 
 Buck2 actions indicate that they can utilize a persistent worker by setting the
 `exe` parameter to `ctx.actions.run` to `WorkerRunInfo(worker, exe)`, where

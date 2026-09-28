@@ -16,12 +16,12 @@ from pathlib import Path
 from typing import Any
 
 import pytest
-from buck2.tests.e2e_util.api.buck import Buck
-from buck2.tests.e2e_util.api.buck_result import BuckException, BuildResult
-from buck2.tests.e2e_util.asserts import expect_failure
-from buck2.tests.e2e_util.buck_workspace import buck_test, env
-from buck2.tests.e2e_util.helper.golden import golden, sanitize_stderr
-from buck2.tests.e2e_util.helper.utils import (
+from e2e_util.api.buck import Buck
+from e2e_util.api.buck_result import BuckException, BuildResult
+from e2e_util.asserts import expect_failure
+from e2e_util.buck_workspace import buck_test, env
+from e2e_util.helper.golden import golden, sanitize_stderr
+from e2e_util.helper.utils import (
     expect_exec_count,
     filter_events,
     get_last_execution_kind,
@@ -367,8 +367,6 @@ async def check_cache_query(buck: Buck) -> None:
 
 # Skipping on windows due to gcc dependency
 @buck_test(
-    # test uses symlinks that mess up with eden symlink redirection on MacOS
-    setup_eden=False,
     data_dir="dep_files",
     skip_for_os=["windows"],
 )
@@ -430,7 +428,6 @@ async def _execution_kinds(buck: Buck) -> list[int]:
 # materialized on disk, the identical action is served from the LOCAL_ACTION_CACHE without
 # re-executing. The `_disabled` control proves this only happens with the feature enabled.
 @buck_test(
-    setup_eden=False,
     data_dir="dep_files",
     skip_for_os=["windows"],
     # The persisted dep-file cache is gated on a daemon-startup buckconfig (read once when the daemon
@@ -498,7 +495,6 @@ async def _prepare_persisted_dep_file_input_after_clean(
 
 
 @buck_test(
-    setup_eden=False,
     data_dir="dep_files",
     skip_for_os=["windows"],
     extra_buck_config={
@@ -523,7 +519,6 @@ async def test_persisted_dep_file_hit_survives_clean_stale(
 
 
 @buck_test(
-    setup_eden=False,
     data_dir="dep_files",
     skip_for_os=["windows"],
 )
@@ -546,7 +541,6 @@ async def test_dep_file_not_persisted_across_restart_when_disabled(buck: Buck) -
 
 
 @buck_test(
-    setup_eden=False,
     data_dir="dep_files",
     skip_for_os=["windows"],
     extra_buck_config={"buck2": {"sqlite_dep_file_state": "true"}},
@@ -586,7 +580,6 @@ async def test_changed_action_is_not_served_from_persisted_cache(buck: Buck) -> 
 # restart the tree is rehydrated from the materializer (which persists+reloads it) and verified
 # against that fingerprint, so an action with a directory output still hits the LOCAL_ACTION_CACHE.
 @buck_test(
-    setup_eden=False,
     data_dir="dep_files",
     skip_for_os=["windows"],
     extra_buck_config={"buck2": {"sqlite_dep_file_state": "true"}},
@@ -608,7 +601,6 @@ async def test_dir_output_dep_file_hit_persisted_across_restart(buck: Buck) -> N
 
 
 @buck_test(
-    setup_eden=False,
     data_dir="dep_files",
     skip_for_os=["windows"],
     extra_buck_config={"buck2": {"sqlite_dep_file_state": "true"}},
@@ -635,7 +627,6 @@ async def test_dir_output_dep_file_hit_persisted_without_content_based_paths(
 
 
 @buck_test(
-    setup_eden=False,
     data_dir="dep_files",
     skip_for_os=["windows"],
     extra_buck_config={"buck2": {"sqlite_dep_file_state": "true"}},
@@ -663,7 +654,6 @@ async def test_flush_dep_files_clears_persisted_cache(buck: Buck) -> None:
 
 
 @buck_test(
-    setup_eden=False,
     data_dir="dep_files",
     skip_for_os=["windows"],
     # The persisted cache re-validates reloaded outputs against the materializer's own state db, so
@@ -692,8 +682,6 @@ async def test_dep_file_persistence_disabled_without_materializer_state(
 
 # Skipping on windows: simple_dep_file's action uses symlinks, which aren't supported there.
 @buck_test(
-    # test uses symlinks that mess up with eden symlink redirection on MacOS
-    setup_eden=False,
     data_dir="dep_files",
     skip_for_os=["windows"],
 )
@@ -782,7 +770,6 @@ async def test_dep_file_hit_across_configurations(buck: Buck) -> None:
 
 
 @buck_test(
-    setup_eden=False,
     data_dir="dep_files",
     skip_for_os=["windows"],
 )
@@ -815,7 +802,6 @@ async def test_no_cross_config_hit_without_content_based_paths(buck: Buck) -> No
 
 
 @buck_test(
-    setup_eden=False,
     data_dir="dep_files",
     skip_for_os=["windows"],
 )
@@ -877,7 +863,6 @@ async def test_select_divergent_actions_do_not_thrash_across_configurations(
 # during analysis) does not cause a dep-file cache miss when the dep-file action itself is
 # identical -- the dep-file/output comparison is configuration- and ActionKey-independent.
 @buck_test(
-    setup_eden=False,
     data_dir="dep_files",
     skip_for_os=["windows"],
 )
@@ -914,6 +899,9 @@ async def test_dep_file_hit_with_action_key_change(buck: Buck) -> None:
 # Flaky because of watchman on mac (and maybe windows)
 # Skipping on windows due to gcc dependency
 # This test tombstones the hash of the dep file produced by this action.
+# The tombstone applies only when the materializer downloads the dep file from
+# the CAS, so the action has to run remotely.
+@pytest.mark.remote_execution
 @buck_test(data_dir="dep_files", skip_for_os=["darwin", "windows"])
 @env(
     "BUCK2_TEST_TOMBSTONED_DIGESTS",
@@ -1007,6 +995,7 @@ async def _check_uploaded_dep_file_key(buck: Buck, dep_file_key: str) -> None:
     assert dep_file_key == uploaded_key
 
 
+@pytest.mark.remote_execution
 @buck_test(data_dir="upload_dep_files")
 @env("BUCK_LOG", "buck2_execute_impl::executors::caching=debug")
 @env("BUCK2_TEST_SKIP_ACTION_CACHE_WRITE", "true")
@@ -1044,6 +1033,7 @@ async def test_re_dep_file_uploads_same_key(buck: Buck) -> None:
     assert key == key_tagged_input_change
 
 
+@pytest.mark.remote_execution
 @buck_test(data_dir="upload_dep_files")
 @env("BUCK_LOG", "buck2_execute_impl::executors::caching=debug")
 @env("BUCK2_TEST_SKIP_ACTION_CACHE_WRITE", "true")
@@ -1107,6 +1097,7 @@ async def test_re_dep_file_uploads_different_key(buck: Buck) -> None:
     keys_seen.append(key_untagged_input_change)
 
 
+@pytest.mark.remote_execution
 @buck_test(data_dir="upload_dep_files")
 @env("BUCK_LOG", "buck2_execute_impl::executors::caching=debug")
 @env("BUCK2_TEST_SKIP_ACTION_CACHE_WRITE", "true")
@@ -1131,6 +1122,7 @@ async def test_dep_file_does_not_upload_when_allow_cache_upload_is_true(
     assert len(uploads) == 0
 
 
+@pytest.mark.remote_execution
 @buck_test(data_dir="upload_dep_files")
 @env("BUCK_LOG", "buck2_execute_impl::executors::caching=debug")
 @env("BUCK2_TEST_SKIP_ACTION_CACHE_WRITE", "true")
@@ -1169,6 +1161,7 @@ async def test_only_do_cache_lookup_when_dep_file_upload_is_enabled(
     await check_cache_query(buck)
 
 
+@pytest.mark.remote_execution
 @buck_test(data_dir="upload_dep_files")
 @env("BUCK_LOG", "buck2_execute_impl::executors::caching=debug")
 @env("BUCK2_TEST_SKIP_ACTION_CACHE_WRITE", "true")
@@ -1188,6 +1181,7 @@ async def test_re_dep_file_remote_upload(buck: Buck) -> None:
     await _check_uploaded_dep_file_key(buck, key)
 
 
+@pytest.mark.remote_execution
 @buck_test(data_dir="upload_dep_files", write_invocation_record=True)
 @env("BUCK_LOG", "buck2_action_impl=debug,buck2_execute_impl::executors::caching=debug")
 @env("BUCK2_TEST_SKIP_ACTION_CACHE_WRITE", "true")
@@ -1459,11 +1453,13 @@ async def run_test_input_cannot_be_normalized(
         )
 
 
+@pytest.mark.remote_execution
 @buck_test(data_dir="upload_dep_files", allow_soft_errors=False)
 async def test_input_cannot_be_normalized_and_hard_error(buck: Buck) -> None:
     await run_test_input_cannot_be_normalized(buck, False)
 
 
+@pytest.mark.remote_execution
 @buck_test(data_dir="upload_dep_files", allow_soft_errors=True)
 async def test_input_cannot_be_normalized(buck: Buck) -> None:
     await run_test_input_cannot_be_normalized(buck, True)
@@ -1673,7 +1669,6 @@ async def test_canonical_input_invalid_placement(
 
 @buck_test(
     data_dir="dep_files",
-    setup_eden=False,
     skip_for_os=["windows"],
     extra_buck_config={"buck2": {"sqlite_dep_file_state": "true"}},
 )

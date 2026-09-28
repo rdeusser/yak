@@ -1,7 +1,5 @@
 load(":defs.bzl", "execution_platforms")
 
-oncall("build_infra")
-
 execution_platforms(
     name = "default",
     visibility = ["PUBLIC"],

@@ -33,7 +33,7 @@ def _impl_foo_runnable(_ctx):
     return [
         DefaultInfo(),
         RunInfo([
-            "fbpython",
+            "python3",
             "-c",
             "import sys; sys.exit(0)",
         ]),

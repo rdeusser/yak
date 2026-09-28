@@ -540,13 +540,10 @@ impl ActionExecutionCtx for BuckActionExecutionContext<'_, '_> {
     fn prepare_action(
         &mut self,
         request: &CommandExecutionRequest,
-        re_outputs_required: bool,
     ) -> buck2_error::Result<PreparedAction> {
-        self.executor.command_executor.prepare_action(
-            request,
-            self.digest_config(),
-            re_outputs_required,
-        )
+        self.executor
+            .command_executor
+            .prepare_action(request, self.digest_config())
     }
 
     async fn action_cache(
@@ -615,7 +612,7 @@ impl ActionExecutionCtx for BuckActionExecutionContext<'_, '_> {
             ..
         } = result;
 
-        // TODO(T156483516): We should also validate that the outputs match the expected outputs
+        // TODO: We should also validate that the outputs match the expected outputs
         let action_outputs = ActionOutputs::new(
             outputs
                 .into_iter()
@@ -836,7 +833,7 @@ impl<'d> BuckActionExecutor<'d> {
                 outputs_count == result_output_paths.len()
             }
 
-            // TODO (T122966509): Check projections here as well
+            // TODO: Check projections here as well
             if !check_all_requested_outputs_returned_without_extra(
                 &outputs,
                 result.0.outputs.keys(),

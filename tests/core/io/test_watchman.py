@@ -6,220 +6,116 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-# pyre-strict
+import shutil
 
-from buck2.tests.core.common.io.file_watcher import (
+import pytest
+from core.common.io.file_watcher import (
     FileWatcherEvent,
     FileWatcherEventType,
     FileWatcherKind,
     FileWatcherProvider,
     get_file_watcher_events,
 )
-from buck2.tests.core.common.io.file_watcher_dir_tests import (
+from core.common.io.file_watcher_dir_tests import (
     run_create_directory_test,
     run_remove_directory_test,
     run_rename_directory_test,
 )
-from buck2.tests.core.common.io.file_watcher_file_tests import (
+from core.common.io.file_watcher_file_tests import (
     run_create_file_test,
     run_modify_file_test,
     run_remove_file_test,
     run_rename_file_test,
     run_replace_file_test,
 )
-from buck2.tests.core.common.io.file_watcher_scm_tests import (
+from core.common.io.file_watcher_scm_tests import (
     run_checkout_mergebase_changes_test,
     run_checkout_with_mergebase_test,
     run_rebase_with_mergebase_test,
     run_restack_with_mergebase_test,
     setup_file_watcher_scm_test,
 )
-from buck2.tests.core.common.io.file_watcher_symlink_tests import (
+from core.common.io.file_watcher_symlink_tests import (
     run_change_symlink_target_test,
     run_create_symlink_test,
     run_replace_file_with_symlink_test,
 )
-from buck2.tests.core.common.io.file_watcher_tests import (
-    FileSystemType,
+from core.common.io.file_watcher_tests import (
     setup_file_watcher_test,
     verify_results,
 )
-from buck2.tests.e2e_util.api.buck import Buck
-from buck2.tests.e2e_util.buck_workspace import buck_test
+from e2e_util.api.buck import Buck
+from e2e_util.buck_workspace import buck_test
+
+# The daemon finds the Watchman server by running the `watchman` program on
+# PATH.
+pytestmark = pytest.mark.skipif(
+    shutil.which("watchman") is None, reason="needs Watchman"
+)
 
 
-@buck_test(setup_eden=False)
-async def test_watchman_create_file_no_eden(buck: Buck) -> None:
-    await run_create_file_test(
-        buck, FileSystemType.NATIVE, FileWatcherProvider.WATCHMAN
-    )
+@buck_test()
+async def test_watchman_create_file(buck: Buck) -> None:
+    await run_create_file_test(buck, FileWatcherProvider.WATCHMAN)
 
 
-@buck_test(setup_eden=True)
-async def test_watchman_create_file_eden(buck: Buck) -> None:
-    await run_create_file_test(
-        buck, FileSystemType.EDEN_FS, FileWatcherProvider.WATCHMAN
-    )
+@buck_test()
+async def test_watchman_modify_file(buck: Buck) -> None:
+    await run_modify_file_test(buck, FileWatcherProvider.WATCHMAN)
 
 
-@buck_test(setup_eden=False)
-async def test_watchman_modify_file_no_eden(buck: Buck) -> None:
-    await run_modify_file_test(
-        buck, FileSystemType.NATIVE, FileWatcherProvider.WATCHMAN
-    )
+@buck_test()
+async def test_watchman_remove_file(buck: Buck) -> None:
+    await run_remove_file_test(buck, FileWatcherProvider.WATCHMAN)
 
 
-@buck_test(setup_eden=True)
-async def test_watchman_modify_file_eden(buck: Buck) -> None:
-    await run_modify_file_test(
-        buck, FileSystemType.EDEN_FS, FileWatcherProvider.WATCHMAN
-    )
-
-
-@buck_test(setup_eden=False)
-async def test_watchman_remove_file_no_eden(buck: Buck) -> None:
-    await run_remove_file_test(
-        buck, FileSystemType.NATIVE, FileWatcherProvider.WATCHMAN
-    )
-
-
-@buck_test(setup_eden=True)
-async def test_watchman_remove_file_eden(buck: Buck) -> None:
-    await run_remove_file_test(
-        buck, FileSystemType.EDEN_FS, FileWatcherProvider.WATCHMAN
-    )
-
-
-@buck_test(setup_eden=False)
-async def test_watchman_rename_file_no_eden(buck: Buck) -> None:
-    await run_rename_file_test(
-        buck, FileSystemType.NATIVE, FileWatcherProvider.WATCHMAN
-    )
-
-
-@buck_test(setup_eden=True)
-async def test_watchman_rename_file_eden(buck: Buck) -> None:
-    await run_rename_file_test(
-        buck, FileSystemType.EDEN_FS, FileWatcherProvider.WATCHMAN
-    )
+@buck_test()
+async def test_watchman_rename_file(buck: Buck) -> None:
+    await run_rename_file_test(buck, FileWatcherProvider.WATCHMAN)
 
 
 # File replace is not supported on Windows
-@buck_test(setup_eden=False, skip_for_os=["windows"])
-async def test_watchman_replace_file_no_eden(buck: Buck) -> None:
-    await run_replace_file_test(
-        buck, FileSystemType.NATIVE, FileWatcherProvider.WATCHMAN
-    )
+@buck_test(skip_for_os=["windows"])
+async def test_watchman_replace_file(buck: Buck) -> None:
+    await run_replace_file_test(buck, FileWatcherProvider.WATCHMAN)
 
 
-# File replace is not supported on Windows
-@buck_test(setup_eden=True, skip_for_os=["windows"])
-async def test_watchman_replace_file_eden(buck: Buck) -> None:
-    await run_replace_file_test(
-        buck, FileSystemType.EDEN_FS, FileWatcherProvider.WATCHMAN
-    )
+@buck_test()
+async def test_watchman_create_directory(buck: Buck) -> None:
+    await run_create_directory_test(buck, FileWatcherProvider.WATCHMAN)
 
 
-@buck_test(setup_eden=False)
-async def test_watchman_create_directory_no_eden(buck: Buck) -> None:
-    await run_create_directory_test(
-        buck, FileSystemType.NATIVE, FileWatcherProvider.WATCHMAN
-    )
+@buck_test()
+async def test_watchman_remove_directory(buck: Buck) -> None:
+    await run_remove_directory_test(buck, FileWatcherProvider.WATCHMAN)
 
 
-@buck_test(setup_eden=True)
-async def test_watchman_create_directory_eden(buck: Buck) -> None:
-    await run_create_directory_test(
-        buck, FileSystemType.EDEN_FS, FileWatcherProvider.WATCHMAN
-    )
+@buck_test()
+async def test_watchman_rename_directory(buck: Buck) -> None:
+    await run_rename_directory_test(buck, FileWatcherProvider.WATCHMAN)
 
 
-@buck_test(setup_eden=False)
-async def test_watchman_remove_directory_no_eden(buck: Buck) -> None:
-    await run_remove_directory_test(
-        buck, FileSystemType.NATIVE, FileWatcherProvider.WATCHMAN
-    )
+@buck_test()
+async def test_watchman_checkout_mergebase_changes(buck: Buck) -> None:
+    await run_checkout_mergebase_changes_test(buck, FileWatcherProvider.WATCHMAN)
 
 
-@buck_test(setup_eden=True)
-async def test_watchman_remove_directory_eden(buck: Buck) -> None:
-    await run_remove_directory_test(
-        buck, FileSystemType.EDEN_FS, FileWatcherProvider.WATCHMAN
-    )
+@buck_test()
+async def test_watchman_checkout_with_mergebase(buck: Buck) -> None:
+    await run_checkout_with_mergebase_test(buck, FileWatcherProvider.WATCHMAN)
 
 
-@buck_test(setup_eden=False)
-async def test_watchman_rename_directory_no_eden(buck: Buck) -> None:
-    await run_rename_directory_test(
-        buck, FileSystemType.NATIVE, FileWatcherProvider.WATCHMAN
-    )
+@buck_test()
+async def test_watchman_rebase_with_mergebase(buck: Buck) -> None:
+    await run_rebase_with_mergebase_test(buck, FileWatcherProvider.WATCHMAN)
 
 
-@buck_test(setup_eden=True)
-async def test_watchman_rename_directory_eden(buck: Buck) -> None:
-    await run_rename_directory_test(
-        buck, FileSystemType.EDEN_FS, FileWatcherProvider.WATCHMAN
-    )
-
-
-@buck_test(setup_eden=False)
-async def test_watchman_checkout_mergebase_changes_no_eden(buck: Buck) -> None:
-    await run_checkout_mergebase_changes_test(
-        buck, FileSystemType.NATIVE, FileWatcherProvider.WATCHMAN
-    )
-
-
-@buck_test(setup_eden=True)
-async def test_watchman_checkout_mergebase_changes_eden(buck: Buck) -> None:
-    await run_checkout_mergebase_changes_test(
-        buck, FileSystemType.EDEN_FS, FileWatcherProvider.WATCHMAN
-    )
-
-
-@buck_test(setup_eden=False)
-async def test_watchman_checkout_with_mergebase_no_eden(buck: Buck) -> None:
-    await run_checkout_with_mergebase_test(
-        buck, FileSystemType.NATIVE, FileWatcherProvider.WATCHMAN
-    )
-
-
-@buck_test(setup_eden=True)
-async def test_watchman_checkout_with_mergebase_eden(buck: Buck) -> None:
-    await run_checkout_with_mergebase_test(
-        buck, FileSystemType.EDEN_FS, FileWatcherProvider.WATCHMAN
-    )
-
-
-@buck_test(setup_eden=False)
-async def test_watchman_rebase_with_mergebase_no_eden(buck: Buck) -> None:
-    await run_rebase_with_mergebase_test(
-        buck, FileSystemType.NATIVE, FileWatcherProvider.WATCHMAN
-    )
-
-
-@buck_test(setup_eden=True)
-async def test_watchman_rebase_with_mergebase_eden(buck: Buck) -> None:
-    await run_rebase_with_mergebase_test(
-        buck, FileSystemType.EDEN_FS, FileWatcherProvider.WATCHMAN
-    )
-
-
-@buck_test(setup_eden=False)
-async def test_watchman_restack_with_mergebase_no_eden(buck: Buck) -> None:
-    await run_restack_with_mergebase_test(
-        buck, FileSystemType.NATIVE, FileWatcherProvider.WATCHMAN
-    )
-
-
-@buck_test(setup_eden=True)
-async def test_watchman_restack_with_mergebase_eden(buck: Buck) -> None:
-    await run_restack_with_mergebase_test(
-        buck, FileSystemType.EDEN_FS, FileWatcherProvider.WATCHMAN
-    )
+@buck_test()
+async def test_watchman_restack_with_mergebase(buck: Buck) -> None:
+    await run_restack_with_mergebase_test(buck, FileWatcherProvider.WATCHMAN)
 
 
 @buck_test(
-    setup_eden=True,
     extra_buck_config={
         "buck2": {"disable_watchman_empty_on_fresh_instance": "true"},
     },
@@ -243,43 +139,16 @@ async def test_watchman_files_report_on_fresh_instance(buck: Buck) -> None:
     verify_results(results, required)
 
 
-@buck_test(setup_eden=True)
-async def test_watchman_create_symlink_test_eden(buck: Buck) -> None:
-    await run_create_symlink_test(
-        buck, FileSystemType.EDEN_FS, FileWatcherProvider.WATCHMAN
-    )
+@buck_test()
+async def test_watchman_create_symlink_test(buck: Buck) -> None:
+    await run_create_symlink_test(buck, FileWatcherProvider.WATCHMAN)
 
 
-@buck_test(setup_eden=False)
-async def test_watchman_create_symlink_test_no_eden(buck: Buck) -> None:
-    await run_create_symlink_test(
-        buck, FileSystemType.NATIVE, FileWatcherProvider.WATCHMAN
-    )
+@buck_test()
+async def test_watchman_replace_file_with_symlink(buck: Buck) -> None:
+    await run_replace_file_with_symlink_test(buck, FileWatcherProvider.WATCHMAN)
 
 
-@buck_test(setup_eden=True)
-async def test_watchman_replace_file_with_symlink_eden(buck: Buck) -> None:
-    await run_replace_file_with_symlink_test(
-        buck, FileSystemType.EDEN_FS, FileWatcherProvider.WATCHMAN
-    )
-
-
-@buck_test(setup_eden=False)
-async def test_watchman_replace_file_with_symlink_no_eden(buck: Buck) -> None:
-    await run_replace_file_with_symlink_test(
-        buck, FileSystemType.NATIVE, FileWatcherProvider.WATCHMAN
-    )
-
-
-@buck_test(setup_eden=True)
-async def test_watchman_change_symlink_target_test_eden(buck: Buck) -> None:
-    await run_change_symlink_target_test(
-        buck, FileSystemType.EDEN_FS, FileWatcherProvider.WATCHMAN
-    )
-
-
-@buck_test(setup_eden=False)
-async def test_watchman_change_symlink_target_test_no_eden(buck: Buck) -> None:
-    await run_change_symlink_target_test(
-        buck, FileSystemType.NATIVE, FileWatcherProvider.WATCHMAN
-    )
+@buck_test()
+async def test_watchman_change_symlink_target_test(buck: Buck) -> None:
+    await run_change_symlink_target_test(buck, FileWatcherProvider.WATCHMAN)

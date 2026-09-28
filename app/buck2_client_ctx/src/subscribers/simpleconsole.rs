@@ -31,15 +31,10 @@ use buck2_event_observer::what_ran::WhatRanCommandConsoleFormat;
 use buck2_event_observer::what_ran::WhatRanOutputCommand;
 use buck2_event_observer::what_ran::WhatRanOutputWriter;
 use buck2_events::BuckEvent;
-use buck2_hash::BuckMutMap;
-use buck2_health_check::interface::HealthCheckType;
-use buck2_health_check::report::DisplayReport;
 use buck2_wrapper_common::invocation_id::TraceId;
 use dupe::Dupe;
 use superconsole::DrawMode;
 use superconsole::SuperConsole;
-use tokio::sync::mpsc::Receiver;
-use tokio::sync::mpsc::error::TryRecvError;
 
 use crate::subscribers::console_output_limit::ConsoleOutputLimit;
 use crate::subscribers::console_output_limit::EmitResult;
@@ -101,30 +96,32 @@ enum TtyMode {
     Disabled,
 }
 
-struct HealthWarningBackoff {
-    elapsed: BuckMutMap<HealthCheckType, (Instant, u64)>,
+#[derive(Copy, Clone, Dupe, Debug)]
+enum SystemWarning {
+    MemoryPressure,
+    LowDiskSpace,
 }
 
-impl HealthWarningBackoff {
+/// SystemWarningBackoff holds, for each warning, when it was last shown and the interval in
+/// seconds that must pass before it shows again.
+struct SystemWarningBackoff {
+    memory_pressure: (Instant, u64),
+    low_disk_space: (Instant, u64),
+}
+
+impl SystemWarningBackoff {
     fn new(now: Instant) -> Self {
-        let elapsed = [
-            HealthCheckType::MemoryPressure,
-            HealthCheckType::LowDiskSpace,
-            HealthCheckType::SlowDownloadSpeed,
-            HealthCheckType::VpnEnabled,
-            HealthCheckType::StableRevision,
-            HealthCheckType::SlowBuild,
-        ]
-        .into_iter()
-        .map(|warning| (warning, (now, 1)))
-        .collect();
-        Self { elapsed }
+        Self {
+            memory_pressure: (now, 1),
+            low_disk_space: (now, 1),
+        }
     }
 
     // Report only if at least double the previous reporting interval has passed.
-    fn should_display(&mut self, warning: &HealthCheckType, now: Instant) -> bool {
-        let Some((last_reported, every_x)) = self.elapsed.get_mut(warning) else {
-            return false;
+    fn should_display(&mut self, warning: SystemWarning, now: Instant) -> bool {
+        let (last_reported, every_x) = match warning {
+            SystemWarning::MemoryPressure => &mut self.memory_pressure,
+            SystemWarning::LowDiskSpace => &mut self.low_disk_space,
         };
         let new_every_double = 2 * *every_x;
         if now.duration_since(*last_reported) <= Duration::from_secs(new_every_double) {
@@ -137,8 +134,8 @@ impl HealthWarningBackoff {
 }
 
 fn echo_system_warning_exponential(
-    backoff: &mut HealthWarningBackoff,
-    warning: &HealthCheckType,
+    backoff: &mut SystemWarningBackoff,
+    warning: SystemWarning,
     message: &str,
 ) -> buck2_error::Result<()> {
     if backoff.should_display(warning, Instant::now()) {
@@ -157,8 +154,7 @@ pub struct SimpleConsole<E> {
     action_errors: Vec<buck2_data::ActionError>,
     last_print_time: Instant,
     last_shown_snapshot_ts: Option<SystemTime>,
-    health_check_reports_receiver: Option<Receiver<Vec<DisplayReport>>>,
-    health_warning_backoff: HealthWarningBackoff,
+    system_warning_backoff: SystemWarningBackoff,
     pub(crate) output_limit: ConsoleOutputLimit,
 }
 
@@ -166,12 +162,7 @@ impl<E> SimpleConsole<E>
 where
     E: EventObserverExtra,
 {
-    pub(crate) fn with_tty(
-        trace_id: TraceId,
-        verbosity: Verbosity,
-        expect_spans: bool,
-        health_check_reports_receiver: Option<Receiver<Vec<DisplayReport>>>,
-    ) -> Self {
+    pub(crate) fn with_tty(trace_id: TraceId, verbosity: Verbosity, expect_spans: bool) -> Self {
         let now = Instant::now();
         SimpleConsole {
             tty_mode: TtyMode::Enabled,
@@ -181,18 +172,12 @@ where
             action_errors: Vec::new(),
             last_print_time: now,
             last_shown_snapshot_ts: None,
-            health_check_reports_receiver,
-            health_warning_backoff: HealthWarningBackoff::new(now),
+            system_warning_backoff: SystemWarningBackoff::new(now),
             output_limit: ConsoleOutputLimit::new(),
         }
     }
 
-    pub(crate) fn without_tty(
-        trace_id: TraceId,
-        verbosity: Verbosity,
-        expect_spans: bool,
-        health_check_reports_receiver: Option<Receiver<Vec<DisplayReport>>>,
-    ) -> Self {
+    pub(crate) fn without_tty(trace_id: TraceId, verbosity: Verbosity, expect_spans: bool) -> Self {
         let now = Instant::now();
         SimpleConsole {
             tty_mode: TtyMode::Disabled,
@@ -202,32 +187,16 @@ where
             action_errors: Vec::new(),
             last_print_time: now,
             last_shown_snapshot_ts: None,
-            health_check_reports_receiver,
-            health_warning_backoff: HealthWarningBackoff::new(now),
+            system_warning_backoff: SystemWarningBackoff::new(now),
             output_limit: ConsoleOutputLimit::new(),
         }
     }
 
     /// Create a SimpleConsole that auto detects whether it has a TTY or not.
-    pub(crate) fn autodetect(
-        trace_id: TraceId,
-        verbosity: Verbosity,
-        expect_spans: bool,
-        health_check_reports_receiver: Option<Receiver<Vec<DisplayReport>>>,
-    ) -> Self {
+    pub(crate) fn autodetect(trace_id: TraceId, verbosity: Verbosity, expect_spans: bool) -> Self {
         match SuperConsole::compatible() {
-            true => Self::with_tty(
-                trace_id,
-                verbosity,
-                expect_spans,
-                health_check_reports_receiver,
-            ),
-            false => Self::without_tty(
-                trace_id,
-                verbosity,
-                expect_spans,
-                health_check_reports_receiver,
-            ),
+            true => Self::with_tty(trace_id, verbosity, expect_spans),
+            false => Self::without_tty(trace_id, verbosity, expect_spans),
         }
     }
 
@@ -449,14 +418,7 @@ where
         _command: &buck2_data::CommandStart,
         event: &BuckEvent,
     ) -> buck2_error::Result<()> {
-        if cfg!(fbcode_build) {
-            echo!(
-                "Buck UI: https://www.internalfb.com/buck2/{}",
-                event.trace_id()?
-            )?;
-        } else {
-            echo!("Build ID: {}", event.trace_id()?)?;
-        }
+        echo!("Build ID: {}", event.trace_id()?)?;
         self.notify_printed();
         Ok(())
     }
@@ -612,38 +574,6 @@ where
         self.notify_printed();
         Ok(())
     }
-
-    pub(crate) fn try_recv_health_check_display_reports(&mut self) -> Option<Vec<DisplayReport>> {
-        if let Some(receiver) = self.health_check_reports_receiver.as_mut() {
-            let mut reports = Vec::new();
-            loop {
-                match receiver.try_recv() {
-                    Ok(report) => reports.extend(report),
-                    Err(TryRecvError::Empty) => break,
-                    Err(TryRecvError::Disconnected) => {
-                        // If the sender has been dropped, remove the receiver so that we can avoid trying again.
-                        self.health_check_reports_receiver = None;
-                        break;
-                    }
-                }
-            }
-            if !reports.is_empty() {
-                return Some(reports);
-            }
-        }
-        None
-    }
-
-    fn echo_health_check_warning(&mut self, report: &DisplayReport) -> buck2_error::Result<()> {
-        if let Some(warning) = &report.health_issue {
-            echo_system_warning_exponential(
-                &mut self.health_warning_backoff,
-                &report.health_check_type,
-                &warning.to_string(),
-            )?;
-        }
-        Ok(())
-    }
 }
 
 #[async_trait]
@@ -700,13 +630,6 @@ where
         {
             let mut show_stats = self.expect_spans;
 
-            for report in self
-                .try_recv_health_check_display_reports()
-                .unwrap_or_default()
-            {
-                self.echo_health_check_warning(&report)?;
-            }
-
             let mut roots = self.observer.spans().iter_roots();
             let sample_event = roots.next();
             match sample_event {
@@ -742,8 +665,8 @@ where
                         check_memory_pressure_snapshot(last_snapshot, sysinfo)
                     {
                         echo_system_warning_exponential(
-                            &mut self.health_warning_backoff,
-                            &HealthCheckType::MemoryPressure,
+                            &mut self.system_warning_backoff,
+                            SystemWarning::MemoryPressure,
                             &system_memory_exceeded_msg(&memory_pressure),
                         )?;
                     }
@@ -751,8 +674,8 @@ where
                         check_remaining_disk_space_snapshot(last_snapshot, sysinfo)
                     {
                         echo_system_warning_exponential(
-                            &mut self.health_warning_backoff,
-                            &HealthCheckType::LowDiskSpace,
+                            &mut self.system_warning_backoff,
+                            SystemWarning::LowDiskSpace,
                             &low_disk_space_msg(&low_disk_space),
                         )?;
                     }
@@ -808,15 +731,29 @@ mod tests {
     use super::*;
 
     #[test]
-    fn health_warning_backoff_is_exponential_and_instance_local() {
+    fn system_warning_backoff_is_exponential_and_instance_local() {
         let start = Instant::now();
-        let warning = HealthCheckType::MemoryPressure;
-        let mut first = HealthWarningBackoff::new(start);
-        let mut second = HealthWarningBackoff::new(start);
+        let warning = SystemWarning::MemoryPressure;
+        let mut first = SystemWarningBackoff::new(start);
+        let mut second = SystemWarningBackoff::new(start);
 
-        assert!(!first.should_display(&warning, start + Duration::from_secs(2)));
-        assert!(first.should_display(&warning, start + Duration::from_secs(3)));
-        assert!(!first.should_display(&warning, start + Duration::from_secs(7)));
-        assert!(second.should_display(&warning, start + Duration::from_secs(3)));
+        assert!(!first.should_display(warning, start + Duration::from_secs(2)));
+        assert!(first.should_display(warning, start + Duration::from_secs(3)));
+        assert!(!first.should_display(warning, start + Duration::from_secs(7)));
+        assert!(second.should_display(warning, start + Duration::from_secs(3)));
+    }
+
+    #[test]
+    fn system_warning_backoff_tracks_each_warning_separately() {
+        let start = Instant::now();
+        let mut backoff = SystemWarningBackoff::new(start);
+
+        assert!(backoff.should_display(
+            SystemWarning::MemoryPressure,
+            start + Duration::from_secs(3)
+        ));
+        assert!(
+            backoff.should_display(SystemWarning::LowDiskSpace, start + Duration::from_secs(3))
+        );
     }
 }

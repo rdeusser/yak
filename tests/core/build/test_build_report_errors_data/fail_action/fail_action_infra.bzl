@@ -10,7 +10,7 @@ def _fail_infra_impl(ctx):
     out = ctx.actions.declare_output("out", has_content_based_path = False)
     ctx.actions.run(
         [
-            "fbpython",
+            "python3",
             "-c",
             "import sys; print('error: Transport endpoint is not connected', file=sys.stderr); sys.exit(1)",
             out.as_output(),

@@ -1,0 +1,4 @@
+# `test_attributes` reads this value back as `buck.tree_modifiers`. No
+# configuration constructor is set, so the modifier does not change any
+# configuration.
+set_modifiers(["cfg//os:linux"])

@@ -6,8 +6,6 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-# pyre-strict
-
 import logging
 import os
 import shlex
@@ -34,7 +32,7 @@ class SwiftSupportArguments:
 
 
 def run_swift_stdlib_tool(bundle_path: Path, args: SwiftSupportArguments) -> List[Path]:
-    # TODO(T181556849) when incremental bundling is on, binary, frameworks and plugins are not changed, signing identity is unchanged skip this step.
+    # TODO: when incremental bundling is on, binary, frameworks and plugins are not changed, signing identity is unchanged skip this step.
     bundle_relative_output_paths = []
     with tempfile.TemporaryDirectory() as tmp_dir:
         # When signing, swift-stdlib-tool needs a proper PATH environment variable.

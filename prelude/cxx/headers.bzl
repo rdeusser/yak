@@ -254,7 +254,7 @@ def prepare_headers(
 
     header_mode = _header_mode(cxx_toolchain_info, header_mode)
 
-    # TODO(T110378135): There's a bug in clang where using header maps w/o
+    # TODO: There's a bug in clang where using header maps w/o
     # explicit `-I` anchors breaks module map lookups.  This will be fixed
     # by https://reviews.llvm.org/D103930 so, until it lands, disable header
     # maps when we see a module map.

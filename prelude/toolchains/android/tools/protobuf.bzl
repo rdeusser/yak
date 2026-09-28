@@ -36,7 +36,8 @@ def protobuf_src_gen(name, srcs, proto_path = [], deps = [], exported_deps = [])
         out = name,
         cmd = " ".join(command),
         cmd_exe = " ".join(command_exe),
-        exec_compatible_with = ["ovr_config//cpu:x86_64"],
+        # The protoc and gRPC plugin binaries in toolchains/android/third-party are x86_64 builds.
+        exec_compatible_with = ["prelude//cpu:x86_64"],
     )
 
     zip_rule_name = name + ".src.zip"

@@ -111,7 +111,7 @@ def _file_impl(ctx):
 
     ctx.actions.run(
         [
-            "fbpython",
+            "python3",
             "-c",
             script,
             str(ctx.attrs.file_size),
@@ -136,7 +136,7 @@ def _cp_impl(ctx):
     out = ctx.actions.declare_output("out", has_content_based_path = False)
     ctx.actions.run(
         [
-            "fbpython",
+            "python3",
             "-c",
             "import shutil; import sys; shutil.copy(sys.argv[1], sys.argv[2]);",
             ctx.attrs.file[DefaultInfo].default_outputs[0],
@@ -160,7 +160,7 @@ def _symlink_impl(ctx):
     target = ctx.actions.declare_output("target", has_content_based_path = False)
     ctx.actions.run(
         [
-            "fbpython",
+            "python3",
             "-c",
             "import os; import shutil; import sys; shutil.copy(sys.argv[1], sys.argv[2]); os.symlink(os.path.relpath(sys.argv[2], os.path.dirname(sys.argv[3])), sys.argv[3]);",
             ctx.attrs.source[DefaultInfo].default_outputs[0],
@@ -176,7 +176,6 @@ def _symlink_impl(ctx):
 symlink = rule(
     impl = _symlink_impl,
     attrs = {
-        # @lint-ignore BUCKRESTRICTEDSYNTAX
         "cache_buster": attrs.string(default = read_config("test", "cache_buster", "")),
         "source": attrs.dep(),
     },
@@ -186,7 +185,7 @@ def _command_impl(ctx):
     out = ctx.actions.declare_output("out", has_content_based_path = False)
     ctx.actions.run(
         [
-            "fbpython",
+            "python3",
             ctx.attrs.command,
             out.as_output(),
         ],

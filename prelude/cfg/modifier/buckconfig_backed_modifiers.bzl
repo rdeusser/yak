@@ -64,7 +64,6 @@ BuckconfigBackedModifier = record(
     value = str | bool | None,
     modifiers = field(list[str], default = []),
     platforms = field(list[str], default = []),
-    oncall = str,
 )
 
 IS_SET_VALUE = "__is_set__"

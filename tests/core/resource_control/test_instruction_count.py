@@ -6,15 +6,15 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-# pyre-strict
-
-
 import os
 from typing import Any, Dict, List
 
-from buck2.tests.e2e_util.api.buck import Buck
-from buck2.tests.e2e_util.buck_workspace import buck_test
-from buck2.tests.e2e_util.helper.utils import filter_events, random_string
+import pytest
+from e2e_util.api.buck import Buck
+from e2e_util.buck_workspace import buck_test
+from e2e_util.helper.utils import filter_events, random_string
+
+pytestmark = pytest.mark.needs_binary("THREE_BILLION_INSTRUCTIONS_BIN")
 
 
 def helper_bin_flags() -> List[str]:
@@ -90,6 +90,7 @@ async def test_instruction_count_enabled(buck: Buck) -> None:
     assert instruction_count < 3300000000
 
 
+@pytest.mark.remote_execution
 @buck_test(skip_for_os=["windows", "darwin"], disable_daemon_cgroup=False)
 async def test_instruction_count_remote(buck: Buck) -> None:
     await buck.build(
@@ -124,9 +125,3 @@ async def test_instruction_count_remote(buck: Buck) -> None:
     instruction_count = details["metadata"]["execution_stats"]["cpu_instructions_user"]
     assert instruction_count > 2850000000
     assert instruction_count < 3150000000
-
-
-@buck_test()
-def test_instruction_count_nop(buck: Buck) -> None:
-    # Pytest gets upset if we have no windows or mac tests in this file
-    pass

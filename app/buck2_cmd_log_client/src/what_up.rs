@@ -100,7 +100,6 @@ impl BuckSubcommand for WhatUpCommand {
                 max_lines: 1000000,
                 ..Default::default()
             },
-            None,
         )?;
         // Ignore any events that are truncated, hence unreadable
         while let Ok(Some(event)) = events.try_next().await {

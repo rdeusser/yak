@@ -6,14 +6,10 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-# pyre-strict
-
 import json
 from dataclasses import dataclass
 from enum import Enum
-from typing import Optional
-
-from dataclasses_json import dataclass_json
+from typing import Any, Optional
 
 
 class SimulatorState(str, Enum):
@@ -56,7 +52,6 @@ class SimulatorType(str, Enum):
         return identifier_prefix in identifier
 
 
-@dataclass_json
 @dataclass
 class Simulator:
     name: str = ""
@@ -64,6 +59,17 @@ class Simulator:
     os_version: str = ""
     udid: str = ""
     state: SimulatorState = SimulatorState.shutdown
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> "Simulator":
+        # The simulator manager can omit fields, and the defaults stand in for them.
+        return cls(
+            name=data.get("name", ""),
+            device_type_identifier=data.get("device_type_identifier", ""),
+            os_version=data.get("os_version", ""),
+            udid=data.get("udid", ""),
+            state=SimulatorState(data.get("state", SimulatorState.shutdown)),
+        )
 
     def is_type(self, simulator_type: SimulatorType) -> bool:
         return simulator_type.matches_device_identifier(self.device_type_identifier)
@@ -81,7 +87,6 @@ class SimulatorInfo:
 def managed_simulator_from_stdout(stdout: Optional[str]) -> Simulator:
     if not stdout:
         return None
-    # pyre-ignore[16]: `from_dict` is dynamically provided by `dataclass_json`
     return Simulator.from_dict(json.loads(stdout))
 
 
@@ -89,7 +94,6 @@ def managed_simulators_list_from_stdout(stdout: Optional[str]) -> list[Simulator
     if not stdout:
         return []
     targets = map(
-        # pyre-ignore[16]: `from_dict` is dynamically provided by `dataclass_json`
         Simulator.from_dict,
         json.loads(stdout),
     )

@@ -301,7 +301,7 @@ fn bxl_actions_methods(builder: &mut MethodsBuilder) {
                 "bxl_acessing_exec_platform",
                 buck2_error!(buck2_error::ErrorTag::Input, "Anon target or dynamic action accesses bxl.Actions.exec_deps."),
                 quiet: true,
-                error_on_oss: true
+                hard_error: true
             )?;
         }
 
@@ -319,7 +319,7 @@ fn bxl_actions_methods(builder: &mut MethodsBuilder) {
                 "bxl_acessing_exec_platform",
                 buck2_error!(buck2_error::ErrorTag::Input, "Anon target or dynamic action accesses bxl.Actions.toolchains."),
                 quiet: true,
-                error_on_oss: true
+                hard_error: true
             )?;
         }
         Ok(this.toolchains)

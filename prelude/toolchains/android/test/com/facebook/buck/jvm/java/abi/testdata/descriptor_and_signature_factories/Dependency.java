@@ -8,7 +8,7 @@
  * above-listed licenses.
  */
 
-package com.facebook.foo;
+package com.example.foo;
 
 public class Dependency<T> {
   public class Inner {

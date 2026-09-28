@@ -6,17 +6,15 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-# pyre-strict
-
-
 import os
 import shutil
 import tempfile
 from pathlib import Path
 
-from buck2.tests.e2e_util.api.buck import Buck
-from buck2.tests.e2e_util.buck_workspace import buck_test
-from buck2.tests.e2e_util.helper.utils import expect_exec_count
+import pytest
+from e2e_util.api.buck import Buck
+from e2e_util.buck_workspace import buck_test
+from e2e_util.helper.utils import expect_exec_count
 
 
 def setup_symlink(symlink_path: Path, target: Path) -> None:
@@ -50,8 +48,11 @@ async def test_symlink_target_tracked_for_rebuild(buck: Buck) -> None:
     await expect_exec_count(buck, 1)
 
 
+@pytest.mark.xfail(
+    reason="the fs_hash_crawler file watcher that tests use does not notice a symlink changing its target",
+    strict=True,
+)
 @buck_test(
-    setup_eden=True,
     extra_buck_config={"buck2": {"use_correct_source_symlink_reading": "true"}},
 )
 async def test_symlinks_redirection(buck: Buck) -> None:
@@ -70,8 +71,11 @@ async def test_symlinks_redirection(buck: Buck) -> None:
     await expect_exec_count(buck, 1)
 
 
+@pytest.mark.xfail(
+    reason="the fs_hash_crawler file watcher that tests use does not notice a symlink changing its target",
+    strict=True,
+)
 @buck_test(
-    setup_eden=True,
     extra_buck_config={"buck2": {"use_correct_source_symlink_reading": "true"}},
 )
 async def test_symlinks_external(buck: Buck) -> None:
@@ -96,6 +100,7 @@ async def test_symlinks_external(buck: Buck) -> None:
     await expect_exec_count(buck, 1)
 
 
+@pytest.mark.remote_execution
 @buck_test(extra_buck_config={"buck2": {"use_correct_source_symlink_reading": "true"}})
 async def test_no_read_through_symlinks(buck: Buck) -> None:
     res = await buck.build_without_report(
@@ -126,6 +131,7 @@ async def test_no_read_through_symlinks(buck: Buck) -> None:
     assert res.stdout.strip() == "True"
 
 
+@pytest.mark.remote_execution
 @buck_test(extra_buck_config={"buck2": {"use_correct_source_symlink_reading": "true"}})
 async def test_no_read_through_source_symlinks_to_file(buck: Buck) -> None:
     res = await buck.build_without_report(
@@ -173,15 +179,15 @@ async def test_no_read_through_source_symlinks_to_in_symlink_target(buck: Buck) 
     assert res.stdout.strip() == "dir"
 
 
-@buck_test(setup_eden=True)
-async def test_eden_io_read_symlink_dir_build_target(buck: Buck) -> None:
+@buck_test()
+async def test_read_symlink_dir_build_target(buck: Buck) -> None:
     setup_symlink(buck.cwd / "testlink", buck.cwd / "symdir" / "dir")
 
     await buck.build("//:symlink_dep")
 
 
-@buck_test(setup_eden=True)
-async def test_eden_io_read_symlink_dir_list_target(buck: Buck) -> None:
+@buck_test()
+async def test_read_symlink_dir_list_target(buck: Buck) -> None:
     setup_symlink(buck.cwd / "testlink", buck.cwd / "symdir")
 
     await buck.targets("//testlink/dir:")

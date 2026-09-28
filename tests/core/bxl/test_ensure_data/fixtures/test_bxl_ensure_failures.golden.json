@@ -1,4 +1,4 @@
-# This file is @generated, regenerate by re-running test with `-- --env BUCK2_UPDATE_GOLDEN=1` appended to the test command
+# This file is @generated, regenerate by rerunning the test with `BUCK2_UPDATE_GOLDEN=1` set
 
 {
   "error_category": "USER",
@@ -51,9 +51,9 @@
   },
   "strings": {
     "<STRING_HASH>": "",
-    "<STRING_HASH>": "Action failed: root//build:fail (<unspecified>) (run)\nRemote command returned non-zero exit code 127\nRemote action, reproduce with: `frecli cas download-action <DIGEST>`\nStdout: <empty>\nStderr:\nError while resolving command \"exit\": cannot find binary path\n",
-    "<STRING_HASH>": "Error while resolving command \"exit\": cannot find binary path\n",
-    "<STRING_HASH>": "Remote command returned non-zero exit code 127",
+    "<STRING_HASH>": "Action failed: root//build:fail (<unspecified>) (run)\nLocal command returned non-zero exit code <no exit code>\nLocal command: env -C \"$(buck2 root --kind project)\" -- 'BUCK_SCRATCH_PATH=buck-out/v2/tmp/root/<HASH>/run' exit 1\nStdout: <empty>\nStderr:\nSpawning executable `exit` failed: Failed to spawn a process: No such file or directory (os error 2)\n",
+    "<STRING_HASH>": "Local command returned non-zero exit code <no exit code>",
+    "<STRING_HASH>": "Spawning executable `exit` failed: Failed to spawn a process: No such file or directory (os error 2)",
     "<STRING_HASH>": "fail to build"
   },
   "success": false,

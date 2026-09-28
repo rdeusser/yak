@@ -802,13 +802,8 @@ erlang_test = prelude_rule(
         - `buck2 test //my_app:other_test_SUITE` to run the test.
         - `buck2 run //my_app:other_test_SUITE` to open an interactive test shell, where tests can be run iteratively.
 
-        buck2 test will rely on tpx to run the suite. To get access to tpx commands, add `--` after the
-        target. For example:
-
-        - `buck2 test //my_app:other_test_SUITE -- --help` will print the list of tpx available
-        command line parameters.
-        - `buck2 test //my_app:other_test_SUITE -- group.mycase` will only run those test cases
-        that match the pattern `group.mycase`
+        `buck2 test` runs the suite with the built-in test runner, unless `[test] v2_test_executor`
+        names another test executor. Arguments after `--` go to the test executor.
     """,
     examples = """
         erlang_test(

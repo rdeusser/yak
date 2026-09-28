@@ -766,8 +766,6 @@ fn parse_arg(
         //   and without `#[starlark(require = pos)]`, parameter is positional-or-named.
         //   We want to change that: either make it positional by default,
         //   or require explicit `#[starlark(pos, named)]`.
-        //   Discussion there:
-        //   https://fb.workplace.com/groups/1267349253953900/posts/1299495914072567
         (false, false, false, false, false) => StarArgPassStyle::PosOrNamed,
         (false, false, false, true, false) => StarArgPassStyle::PosOnly,
         (false, false, false, false, true) => StarArgPassStyle::NamedOnly,

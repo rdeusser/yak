@@ -5,8 +5,6 @@
 # License, Version 2.0 found in the LICENSE-APACHE file in the root directory
 # of this source tree.
 
-# @nolint
-
 def _impl(ctx: AnalysisContext) -> list[Provider]:
     # To trigger the bug we need to specify both `prefix` and `filename` arguments.
     dir = ctx.actions.declare_output("one", "two", has_content_based_path = False)

@@ -6,9 +6,6 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-# pyre-strict
-
-
 import collections
 import json
 import os
@@ -16,13 +13,13 @@ import re
 from pathlib import Path
 from typing import Any
 
-from buck2.tests.e2e_util.api.buck import Buck
-from buck2.tests.e2e_util.buck_workspace import buck_test, env
+from e2e_util.api.buck import Buck
+from e2e_util.buck_workspace import buck_test, env
 
 
 def fixture(name: str) -> str:
-    p = Path(os.environ["FIXTURES"]) / f"{name}.proto"
-    return str(p.absolute())
+    p = Path(__file__).resolve().parent / "fixtures" / f"{name}.proto"
+    return str(p)
 
 
 @buck_test()
@@ -64,7 +61,7 @@ async def test_whatran(buck: Buck) -> None:
     )
     assert "cache" in res.stdout
     assert (
-        "87eeee88c133dfa39711399a81f500147275cfeeb1f06b6b4805f2c0588615d1:145"
+        "317ac52ba10a8231a17a66dd40ffbf825a274ba63ca034653c289c5e4ca20e05:141"
         in res.stdout
     )
 
@@ -78,7 +75,7 @@ async def test_whatran_no_repo(buck: Buck) -> None:
     )
     assert "cache" in res.stdout
     assert (
-        "87eeee88c133dfa39711399a81f500147275cfeeb1f06b6b4805f2c0588615d1:145"
+        "317ac52ba10a8231a17a66dd40ffbf825a274ba63ca034653c289c5e4ca20e05:141"
         in res.stdout
     )
 
@@ -166,16 +163,20 @@ def _get(data: dict[str, Any], *key: str) -> dict[str, Any] | None:
 @buck_test()
 async def test_super_console_changes(buck: Buck) -> None:
     res = await buck.log("replay", fixture("my_genrule1"))
-    assert "File changed: fbcode//buck2/dir1/file1" in res.stderr
-    assert "Directory changed: fbcode//buck2/dir1" in res.stderr
+    assert "File changed: root//dir1/file1" in res.stderr
+    assert "Directory changed: root//dir1/sub" in res.stderr
 
 
+# The daemon measures its memory with RSS, which it does not read on macOS,
+# and with jemalloc statistics, which Cargo builds do not collect. On macOS it
+# has no measurement, so it never warns.
 @buck_test(
     extra_buck_config={
         "buck2_system_warning": {
             "memory_pressure_threshold_percent": "1",
         },
     },
+    skip_for_os=["darwin"],
 )
 @env("BUCK2_TEST_FAKE_SYSTEM_TOTAL_MEMORY", "1000")
 async def test_system_memory_exceeded_warning(buck: Buck) -> None:

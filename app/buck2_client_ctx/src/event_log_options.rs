@@ -56,7 +56,7 @@ pub struct EventLogOptions {
     #[clap(long, requires = "trace_id")]
     pub allow_remote: bool,
 
-    /// Do not allow downloading the log from manifold if it's not found locally.
+    /// Do not download the log from the configured `log_url` if it's not found locally.
     #[clap(long, requires = "trace_id")]
     pub no_remote: bool,
 
@@ -126,63 +126,38 @@ impl EventLogOptions {
 
         // Delete the file on failure.
         let temp_path = TempPath::new_path(temp_path);
-        let (command_name, command) = match ctx.log_download_method()? {
-            LogDownloadMethod::Manifold => {
-                let args = [
-                    "get",
-                    &format!("buck2_logs/flat/{log_file_name}"),
-                    temp_path
-                        .path()
-                        .as_os_str()
-                        .to_str()
-                        .internal_error("temp_path is not valid UTF-8")?,
-                ];
-                crate::eprintln!("Spawning: manifold {}", args.join(" "))?;
-                (
-                    "Manifold",
-                    async_background_command("manifold")
-                        .args(args)
-                        .stdin(Stdio::null())
-                        .stdout(Stdio::null())
-                        .stderr(Stdio::piped())
-                        .spawn()?,
-                )
-            }
-            LogDownloadMethod::Curl(log_url) => {
-                let log_url = log_url.trim_end_matches('/');
-
-                let args = [
-                    "--fail",
-                    "-L",
-                    &format!("{log_url}/v1/logs/get/{trace_id}"),
-                    "-o",
-                    temp_path
-                        .path()
-                        .as_os_str()
-                        .to_str()
-                        .internal_error("temp_path is not valid UTF-8")?,
-                ];
-                crate::eprintln!("Spawning: curl {}", args.join(" "))?;
-                (
-                    "Curl",
-                    async_background_command("curl")
-                        .args(args)
-                        .stdin(Stdio::null())
-                        .stdout(Stdio::null())
-                        .stderr(Stdio::piped())
-                        .spawn()?,
-                )
-            }
+        let log_url = match ctx.log_download_method()? {
+            LogDownloadMethod::Curl(log_url) => log_url,
             LogDownloadMethod::None => {
                 return Err(EventLogOptionsError::LogNotFoundLocally(trace_id.dupe()).into());
             }
         };
+        let log_url = log_url.trim_end_matches('/');
+
+        let args = [
+            "--fail",
+            "-L",
+            &format!("{log_url}/v1/logs/get/{trace_id}"),
+            "-o",
+            temp_path
+                .path()
+                .as_os_str()
+                .to_str()
+                .internal_error("temp_path is not valid UTF-8")?,
+        ];
+        crate::eprintln!("Spawning: curl {}", args.join(" "))?;
+        let command = async_background_command("curl")
+            .args(args)
+            .stdin(Stdio::null())
+            .stdout(Stdio::null())
+            .stderr(Stdio::piped())
+            .spawn()?;
 
         // No timeout here, just press Ctrl-C if you want it to cancel.
         let result = command.wait_with_output().await?;
         if !result.status.success() {
             return Err(EventLogOptionsError::DownloadFailed(
-                command_name.to_owned(),
+                "Curl".to_owned(),
                 String::from_utf8_lossy(&result.stderr).into_owned(),
             )
             .into());

@@ -6,19 +6,25 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-# pyre-strict
-
-
 import asyncio
 import re
 import shutil
 import time
 from datetime import datetime, timedelta, UTC
 
-from buck2.tests.e2e_util.api.buck import Buck
-from buck2.tests.e2e_util.buck_workspace import buck_test, env
-from buck2.tests.e2e_util.helper.golden import golden, sanitize_hashes
-from buck2.tests.e2e_util.helper.utils import expect_exec_count, replace_in_file
+import pytest
+from e2e_util.api.buck import Buck
+from e2e_util.buck_workspace import buck_test, env
+from e2e_util.helper.golden import golden, sanitize_hashes
+from e2e_util.helper.utils import (
+    configure_served_file,
+    expect_exec_count,
+    replace_in_file,
+    serve_file,
+)
+
+# The content of the file that the `download` targets download.
+DOWNLOAD_CONTENT = b"downloaded by the clean stale tests\n"
 
 
 def configure_active_unmaterialization(
@@ -62,6 +68,7 @@ async def audit_entry(buck: Buck, artifact_name: str) -> str:
 
 def golden_audit_entries(*, entries: list[str], rel_path: str) -> None:
     output = re.sub(r"ts=[^,)]*", "ts=<TIMESTAMP>", "\n".join(entries))
+    output = re.sub(r"http://127\.0\.0\.1:\d+/", "http://127.0.0.1:<PORT>/", output)
     golden(output=sanitize_hashes(output), rel_path=rel_path)
 
 
@@ -118,7 +125,6 @@ async def test_artifact_access_time(buck: Buck) -> None:
 
 @buck_test()
 @env("BUCK_LOG", "buck2_execute_impl::materializers=trace")
-@env("BUCK_ACCESS_TIME_UPDATE_MAX_BUFFER_SIZE", "0")
 async def test_clean_stale_artifacts(buck: Buck) -> None:
     target_1 = "root//:copy"
     result_1 = await buck.build(target_1)
@@ -185,7 +191,6 @@ async def test_clean_stale_artifact_dir(buck: Buck) -> None:
 
 
 @buck_test()
-@env("BUCK_ACCESS_TIME_UPDATE_MAX_BUFFER_SIZE", "0")
 async def test_clean_stale_buck_out_empty(buck: Buck) -> None:
     output = await buck.clean("--stale")
     assert "Nothing to clean" in output.stderr
@@ -193,26 +198,27 @@ async def test_clean_stale_buck_out_empty(buck: Buck) -> None:
 
 @buck_test()
 @env("BUCK_LOG", "buck2_execute_impl::materializers=trace")
-@env("BUCK_ACCESS_TIME_UPDATE_MAX_BUFFER_SIZE", "0")
 async def test_clean_stale_actions(buck: Buck) -> None:
-    query_res = await buck.cquery("root//...")
-    targets = [
-        target.split(" ")[0] for target in query_res.stdout.split("\n") if target
-    ]
+    async with serve_file(DOWNLOAD_CONTENT) as served:
+        configure_served_file(buck, served)
+        query_res = await buck.cquery("root//...")
+        targets = [
+            target.split(" ")[0] for target in query_res.stdout.split("\n") if target
+        ]
 
-    outputs = []
-    for target in targets:
-        res = await buck.build(target)
-        output = res.get_build_report().outputs_for_target(target)
-        outputs += output
+        outputs = []
+        for target in targets:
+            res = await buck.build(target)
+            output = res.get_build_report().outputs_for_target(target)
+            outputs += output
 
-    assert len(outputs) >= len(targets)
-    for output in outputs:
-        assert output.exists()
+        assert len(outputs) >= len(targets)
+        for output in outputs:
+            assert output.exists()
 
-    await buck.clean("--stale")
-    for output in outputs:
-        assert output.exists()
+        await buck.clean("--stale")
+        for output in outputs:
+            assert output.exists()
 
 
 @buck_test()
@@ -517,28 +523,35 @@ async def test_adaptive_unmaterializes_active_remote_intermediate(
     buck: Buck,
 ) -> None:
     configure_active_unmaterialization(buck, enabled=True)
-    result = await buck.build(
-        "root//:consume_remote", "--local-only", "--no-remote-cache"
-    )
-    output = result.get_build_report().output_for_target("root//:consume_remote")
-    assert output.exists()
-    audit_entries = [await audit_entry(buck, "__download_deferred__")]
+    async with serve_file(DOWNLOAD_CONTENT) as served:
+        configure_served_file(buck, served)
+        result = await buck.build(
+            "root//:consume_remote", "--local-only", "--no-remote-cache"
+        )
+        output = result.get_build_report().output_for_target("root//:consume_remote")
+        assert output.exists()
+        audit_entries = [await audit_entry(buck, "__download_deferred__")]
 
-    await asyncio.sleep(30)
-    audit_entries.append(await audit_entry(buck, "__download_deferred__"))
+        await asyncio.sleep(30)
+        audit_entries.append(await audit_entry(buck, "__download_deferred__"))
 
-    remote = await buck.build("root//:download_deferred")
-    await expect_exec_count(buck, 0)
-    assert (
-        remote.get_build_report().output_for_target("root//:download_deferred").exists()
-    )
-    audit_entries.append(await audit_entry(buck, "__download_deferred__"))
+        remote = await buck.build("root//:download_deferred")
+        await expect_exec_count(buck, 0)
+        assert (
+            remote.get_build_report()
+            .output_for_target("root//:download_deferred")
+            .exists()
+        )
+        audit_entries.append(await audit_entry(buck, "__download_deferred__"))
     golden_audit_entries(
         entries=audit_entries,
         rel_path="golden/test_adaptive_unmaterializes_active_remote_intermediate.golden.txt",
     )
 
 
+# buck2 unmaterializes a locally built artifact only after it uploads the
+# artifact to the Remote Execution CAS.
+@pytest.mark.remote_execution
 @buck_test(skip_for_os=["windows"])
 async def test_adaptive_unmaterializes_active_write_intermediate(
     buck: Buck,
@@ -596,6 +609,9 @@ async def test_adaptive_unmaterialization_fails_for_modified_local_intermediate(
     assert artifact.read_text(encoding="utf-8") == "EDITED"
 
 
+# buck2 unmaterializes a locally built artifact only after it uploads the
+# artifact to the Remote Execution CAS.
+@pytest.mark.remote_execution
 @buck_test(skip_for_os=["windows"])
 async def test_adaptive_unmaterializes_active_local_copy_intermediate(
     buck: Buck,
@@ -621,6 +637,9 @@ async def test_adaptive_unmaterializes_active_local_copy_intermediate(
     )
 
 
+# buck2 unmaterializes a locally built artifact only after it uploads the
+# artifact to the Remote Execution CAS.
+@pytest.mark.remote_execution
 @buck_test(skip_for_os=["windows"])
 async def test_adaptive_unmaterializes_active_local_action_intermediate(
     buck: Buck,
@@ -648,29 +667,39 @@ async def test_adaptive_unmaterializes_active_local_action_intermediate(
 @buck_test(skip_for_os=["windows"])
 async def test_adaptive_does_not_unmaterialize_active_final_output(buck: Buck) -> None:
     configure_active_unmaterialization(buck, enabled=True)
-    result = await buck.build("root//:download_deferred")
-    assert (
-        result.get_build_report().output_for_target("root//:download_deferred").exists()
-    )
+    async with serve_file(DOWNLOAD_CONTENT) as served:
+        configure_served_file(buck, served)
+        result = await buck.build("root//:download_deferred")
+        assert (
+            result.get_build_report()
+            .output_for_target("root//:download_deferred")
+            .exists()
+        )
 
-    await asyncio.sleep(30)
-    golden_audit_entries(
-        entries=[await audit_entry(buck, "__download_deferred__")],
-        rel_path="golden/test_adaptive_does_not_unmaterialize_active_final_output.golden.txt",
-    )
+        await asyncio.sleep(30)
+        golden_audit_entries(
+            entries=[await audit_entry(buck, "__download_deferred__")],
+            rel_path="golden/test_adaptive_does_not_unmaterialize_active_final_output.golden.txt",
+        )
 
 
 @buck_test(skip_for_os=["windows"])
 async def test_adaptive_does_not_unmaterialize_when_disabled(buck: Buck) -> None:
     configure_active_unmaterialization(buck, enabled=False)
-    result = await buck.build(
-        "root//:consume_remote", "--local-only", "--no-remote-cache"
-    )
-    assert result.get_build_report().output_for_target("root//:consume_remote").exists()
-    audit_entries = [await audit_entry(buck, "__download_deferred__")]
+    async with serve_file(DOWNLOAD_CONTENT) as served:
+        configure_served_file(buck, served)
+        result = await buck.build(
+            "root//:consume_remote", "--local-only", "--no-remote-cache"
+        )
+        assert (
+            result.get_build_report()
+            .output_for_target("root//:consume_remote")
+            .exists()
+        )
+        audit_entries = [await audit_entry(buck, "__download_deferred__")]
 
-    await asyncio.sleep(30)
-    audit_entries.append(await audit_entry(buck, "__download_deferred__"))
+        await asyncio.sleep(30)
+        audit_entries.append(await audit_entry(buck, "__download_deferred__"))
     golden_audit_entries(
         entries=audit_entries,
         rel_path="golden/test_adaptive_does_not_unmaterialize_when_disabled.golden.txt",

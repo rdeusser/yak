@@ -128,7 +128,7 @@ def _labels_arg():
             attrs.string(),
             default = [],
             doc = """
-    Set of arbitrary strings which allow you to annotate a [build rule](https://buck2.build/docs/concepts/build_rule/) with tags
+    Set of arbitrary strings which allow you to annotate a [build rule](https://rdeusser.github.io/buck2/docs/concepts/build_rule/) with tags
     that can be searched for over an entire dependency tree using `buck query()`.
 """,
         ),
@@ -220,7 +220,7 @@ def _licenses_arg():
             default = [],
             doc = """
             Set of license files for this library. To get the list of license files for a given build rule and
-            all of its dependencies, you can use [buck query](https://buck2.build/docs/users/commands/query/)
+            all of its dependencies, you can use [buck query](https://rdeusser.github.io/buck2/docs/users/commands/query/)
         """,
         ),
     }

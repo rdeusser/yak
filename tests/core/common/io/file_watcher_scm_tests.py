@@ -6,27 +6,28 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-# pyre-strict
-
-
 import os
-import subprocess
 
-from buck2.tests.core.common.io.file_watcher import (
+from core.common.io.file_watcher import (
     FileWatcherProvider,
     get_file_watcher_events,
 )
-from buck2.tests.core.common.io.file_watcher_tests import (
-    FileSystemType,
+from core.common.io.file_watcher_tests import (
+    git,
+    git_commit,
     setup_file_watcher_test,
 )
-from buck2.tests.e2e_util.api.buck import Buck
+from e2e_util.api.buck import Buck
 
 
-# Setup repo structure to test these conditions: https://www.internalfb.com/excalidraw/EX346258
+# Creates this history, with the working copy at commit_d:
+#
+#   commit_a -- commit_b
+#          \
+#           -- commit_c -- commit_d
 async def setup_file_watcher_scm_test(buck: Buck) -> tuple[str, str, str, str]:
     # Run after setup_file_watcher_test to create a simple stack of commits
-    commit_a = subprocess.check_output(["sl", "whereami"], cwd=buck.cwd).decode()
+    commit_a = git(buck, "rev-parse", "HEAD").strip()
 
     # Create a file
     path = os.path.join(buck.cwd, "files", "def")
@@ -34,11 +35,10 @@ async def setup_file_watcher_scm_test(buck: Buck) -> tuple[str, str, str, str]:
         pass
 
     # Commit it
-    subprocess.run(["sl", "commit", "--addremove", "-m", "commit_b"], cwd=buck.cwd)
-    commit_b = subprocess.check_output(["sl", "whereami"], cwd=buck.cwd).decode()
+    commit_b = git_commit(buck, "commit_b")
 
     # Go back to commit_a
-    subprocess.run(["sl", "co", commit_a], cwd=buck.cwd)
+    git(buck, "checkout", "--quiet", commit_a)
 
     # Create a file
     path = os.path.join(buck.cwd, "files", "ghi")
@@ -46,8 +46,7 @@ async def setup_file_watcher_scm_test(buck: Buck) -> tuple[str, str, str, str]:
         pass
 
     # Commit it
-    subprocess.run(["sl", "commit", "--addremove", "-m", "commit_c"], cwd=buck.cwd)
-    commit_c = subprocess.check_output(["sl", "whereami"], cwd=buck.cwd).decode()
+    commit_c = git_commit(buck, "commit_c")
 
     # Create a file
     path = os.path.join(buck.cwd, "files", "jkl")
@@ -55,8 +54,7 @@ async def setup_file_watcher_scm_test(buck: Buck) -> tuple[str, str, str, str]:
         pass
 
     # Commit it
-    subprocess.run(["sl", "commit", "--addremove", "-m", "commit_d"], cwd=buck.cwd)
-    commit_d = subprocess.check_output(["sl", "whereami"], cwd=buck.cwd).decode()
+    commit_d = git_commit(buck, "commit_d")
 
     # clear log - run build twice
     await buck.targets("root//:")
@@ -67,7 +65,6 @@ async def setup_file_watcher_scm_test(buck: Buck) -> tuple[str, str, str, str]:
 
 async def run_checkout_mergebase_changes_test(
     buck: Buck,
-    file_system_type: FileSystemType,
     file_watcher_provider: FileWatcherProvider,
 ) -> None:
     await setup_file_watcher_test(buck)
@@ -78,8 +75,7 @@ async def run_checkout_mergebase_changes_test(
         pass
 
     # Commit it
-    subprocess.run(["sl", "commit", "--addremove", "-m", "next"], cwd=buck.cwd)
-    commit_a = subprocess.check_output(["sl", "whereami"], cwd=buck.cwd).decode()
+    commit_a = git_commit(buck, "next")
 
     # Create a file
     path = os.path.join(buck.cwd, "files", "ghi")
@@ -87,26 +83,26 @@ async def run_checkout_mergebase_changes_test(
         pass
 
     # Commit it
-    subprocess.run(["sl", "commit", "--addremove", "-m", "next"], cwd=buck.cwd)
-    commit_b = subprocess.check_output(["sl", "whereami"], cwd=buck.cwd).decode()
+    commit_b = git_commit(buck, "next")
 
     # Go back to the previous commit
-    subprocess.run(["sl", "co", commit_a], cwd=buck.cwd)
+    git(buck, "checkout", "--quiet", commit_a)
 
     is_fresh_instance, _ = await get_file_watcher_events(buck)
     if file_watcher_provider in [
         FileWatcherProvider.FS_HASH_CRAWLER,
         FileWatcherProvider.RUST_NOTIFY,
     ]:
-        # Stats only records the first 100 events (https://fburl.com/code/x9esqun4)
-        # so we can't verify the results when making commit transitions
+        # Stats only records the first 100 events (`MAX_FILE_CHANGE_RECORDS` in
+        # app/buck2_file_watcher/src/stats.rs), so we can't verify the results
+        # when making commit transitions
         assert not is_fresh_instance
     else:
         # We might have some events even for a fresh instance, so we ignore
         assert is_fresh_instance
 
     # Go back to the next commit
-    subprocess.run(["sl", "co", commit_b], cwd=buck.cwd)
+    git(buck, "checkout", "--quiet", commit_b)
 
     is_fresh_instance, results = await get_file_watcher_events(buck)
     print(results)
@@ -122,14 +118,13 @@ async def run_checkout_mergebase_changes_test(
 
 async def run_checkout_with_mergebase_test(
     buck: Buck,
-    file_system_type: FileSystemType,
     file_watcher_provider: FileWatcherProvider,
 ) -> None:
     await setup_file_watcher_test(buck)
     [_, _, commit_c, _] = await setup_file_watcher_scm_test(buck)
 
     # Go back to commit_c
-    subprocess.run(["sl", "co", commit_c], cwd=buck.cwd)
+    git(buck, "checkout", "--quiet", commit_c)
 
     is_fresh_instance, results = await get_file_watcher_events(buck)
     print(results)
@@ -139,36 +134,31 @@ async def run_checkout_with_mergebase_test(
 
 async def run_rebase_with_mergebase_test(
     buck: Buck,
-    file_system_type: FileSystemType,
     file_watcher_provider: FileWatcherProvider,
 ) -> None:
     await setup_file_watcher_test(buck)
     [_, commit_b, commit_c, _] = await setup_file_watcher_scm_test(buck)
 
     # Rebase C->D from A to B
-    subprocess.run(["sl", "rebase", "-s", commit_c, "-d", commit_b], cwd=buck.cwd)
+    git(buck, "rebase", "--quiet", "--onto", commit_b, f"{commit_c}^")
 
     is_fresh_instance, results = await get_file_watcher_events(buck)
     print(results)
 
-    if file_system_type == FileSystemType.NATIVE:
-        # Watchman is flaky on native file systems
-        if file_watcher_provider != FileWatcherProvider.WATCHMAN:
-            assert not is_fresh_instance
-    else:
-        assert is_fresh_instance
+    # Watchman is flaky on native file systems
+    if file_watcher_provider != FileWatcherProvider.WATCHMAN:
+        assert not is_fresh_instance
 
 
 async def run_restack_with_mergebase_test(
     buck: Buck,
-    file_system_type: FileSystemType,
     file_watcher_provider: FileWatcherProvider,
 ) -> None:
     await setup_file_watcher_test(buck)
     [commit_a, _, _, commit_d] = await setup_file_watcher_scm_test(buck)
 
     # Rebase D from C to A
-    subprocess.run(["sl", "rebase", "-s", commit_d, "-d", commit_a], cwd=buck.cwd)
+    git(buck, "rebase", "--quiet", "--onto", commit_a, f"{commit_d}^")
 
     is_fresh_instance, results = await get_file_watcher_events(buck)
     print(results)

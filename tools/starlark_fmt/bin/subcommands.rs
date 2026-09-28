@@ -10,10 +10,6 @@
 
 mod diff;
 mod fmt;
-// The `lint` subcommand emits `lint_message::LintMessage` records for `arc lint`
-// integration and is Meta-internal only; excluded from the open-source build.
-#[cfg(fbcode_build)]
-mod lint;
 mod stdin;
 
 use std::fs;
@@ -22,8 +18,6 @@ use std::path::PathBuf;
 
 pub(crate) use diff::diff_file;
 pub(crate) use fmt::format_files;
-#[cfg(fbcode_build)]
-pub(crate) use lint::lint_files;
 use rayon::prelude::*;
 use starlark_fmt_lib::Config;
 use starlark_fmt_lib::FormattedSource;
@@ -33,14 +27,6 @@ use tracing::info_span;
 
 pub(crate) struct ProcessedFile<'a> {
     pub(crate) path: &'a Path,
-    /// File contents as read from disk, with line endings preserved. Used as
-    /// the `original` field in lint output so `arc lint --apply-patches` finds
-    /// and replaces the exact byte range that exists on disk (files with
-    /// `\r\n` line endings would otherwise leave a tail of unconsumed CRs).
-    // Only read by the `lint` subcommand, which is `#[cfg(fbcode_build)]`, so this
-    // field is unused in the open-source build.
-    #[cfg_attr(not(fbcode_build), allow(dead_code))]
-    pub(crate) raw: String,
     /// Source after normalizing line endings (`\r\n` → `\n`).
     pub(crate) source: String,
     pub(crate) formatted: String,
@@ -65,7 +51,6 @@ impl<'a> ProcessedFile<'a> {
 
         Ok(Self {
             path,
-            raw,
             source,
             formatted,
         })

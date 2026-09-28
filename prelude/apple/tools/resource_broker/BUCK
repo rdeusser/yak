@@ -1,7 +1,5 @@
 load("@prelude//utils:source_listing.bzl", "source_listing")
 
-oncall("build_infra")
-
 source_listing()
 
 python_binary(
@@ -31,8 +29,4 @@ python_library(
             "main.py",
         ],
     ),
-    deps = [
-        "fbsource//third-party/pypi/dataclasses-json:dataclasses-json",
-        "fbsource//third-party/pypi/packaging:packaging",
-    ],
 )

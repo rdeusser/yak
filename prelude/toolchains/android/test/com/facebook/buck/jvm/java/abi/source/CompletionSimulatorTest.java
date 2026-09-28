@@ -35,15 +35,15 @@ public class CompletionSimulatorTest extends CompilerTreeApiTest {
     withClasspath(SimulatorTestSources.INTERFACE2);
 
     ruleInfo.addElementOwner(
-        "com.facebook.superclass.Super", "//com/facebook/superclass:superclass");
+        "com.example.superclass.Super", "//com/example/superclass:superclass");
     ruleInfo.addElementOwner(
-        "com.facebook.grandsuper.GrandSuper", "//com/facebook/grandsuper:grandsuper");
-    ruleInfo.addElementOwner("com.facebook.iface1.Interface1", "//com/facebook/iface1:iface1");
+        "com.example.grandsuper.GrandSuper", "//com/example/grandsuper:grandsuper");
+    ruleInfo.addElementOwner("com.example.iface1.Interface1", "//com/example/iface1:iface1");
     ruleInfo.addElementOwner(
-        "com.facebook.grandinterface.GrandInterface",
-        "//com/facebook/grandinterface:grandinterface");
-    ruleInfo.addElementOwner("com.facebook.iface2.Interface2", "//com/facebook/iface2:iface2");
-    ruleInfo.addElementOwner("com.facebook.subclass.Subclass", "//com/facebook/subclass:subclass");
+        "com.example.grandinterface.GrandInterface",
+        "//com/example/grandinterface:grandinterface");
+    ruleInfo.addElementOwner("com.example.iface2.Interface2", "//com/example/iface2:iface2");
+    ruleInfo.addElementOwner("com.example.subclass.Subclass", "//com/example/subclass:subclass");
   }
 
   @Override
@@ -59,11 +59,11 @@ public class CompletionSimulatorTest extends CompilerTreeApiTest {
       throws IOException {
     compile(SimulatorTestSources.SUBCLASS);
 
-    ruleInfo.addAvailableRule("//com/facebook/superclass:superclass");
-    ruleInfo.addAvailableRule("//com/facebook/grandsuper:grandsuper");
-    ruleInfo.addAvailableRule("//com/facebook/iface1:iface1");
-    ruleInfo.addAvailableRule("//com/facebook/iface2:iface2");
-    ruleInfo.addAvailableRule("//com/facebook/grandinterface:grandinterface");
+    ruleInfo.addAvailableRule("//com/example/superclass:superclass");
+    ruleInfo.addAvailableRule("//com/example/grandsuper:grandsuper");
+    ruleInfo.addAvailableRule("//com/example/iface1:iface1");
+    ruleInfo.addAvailableRule("//com/example/iface2:iface2");
+    ruleInfo.addAvailableRule("//com/example/grandinterface:grandinterface");
 
     CompletedType result = completeSubclass(true);
 
@@ -76,11 +76,11 @@ public class CompletionSimulatorTest extends CompilerTreeApiTest {
       throws IOException {
     compile(SimulatorTestSources.SUBCLASS);
 
-    ruleInfo.addAvailableRule("//com/facebook/superclass:superclass");
-    ruleInfo.addAvailableRule("//com/facebook/grandsuper:grandsuper");
-    ruleInfo.addAvailableRule("//com/facebook/iface1:iface1");
-    ruleInfo.addAvailableRule("//com/facebook/iface2:iface2");
-    ruleInfo.addAvailableRule("//com/facebook/grandinterface:grandinterface");
+    ruleInfo.addAvailableRule("//com/example/superclass:superclass");
+    ruleInfo.addAvailableRule("//com/example/grandsuper:grandsuper");
+    ruleInfo.addAvailableRule("//com/example/iface1:iface1");
+    ruleInfo.addAvailableRule("//com/example/iface2:iface2");
+    ruleInfo.addAvailableRule("//com/example/grandinterface:grandinterface");
 
     CompletedType result = completeSubclassMember(true);
 
@@ -92,16 +92,16 @@ public class CompletionSimulatorTest extends CompilerTreeApiTest {
   public void testTransitiveCompletionWithSomeSupersMissingCompletesPartially() throws IOException {
     compile(SimulatorTestSources.SUBCLASS);
 
-    ruleInfo.addAvailableRule("//com/facebook/grandsuper:grandsuper");
-    ruleInfo.addAvailableRule("//com/facebook/iface1:iface1");
-    ruleInfo.addAvailableRule("//com/facebook/iface2:iface2");
-    ruleInfo.addAvailableRule("//com/facebook/grandinterface:grandinterface");
+    ruleInfo.addAvailableRule("//com/example/grandsuper:grandsuper");
+    ruleInfo.addAvailableRule("//com/example/iface1:iface1");
+    ruleInfo.addAvailableRule("//com/example/iface2:iface2");
+    ruleInfo.addAvailableRule("//com/example/grandinterface:grandinterface");
 
     CompletedType result = completeSubclass(true);
 
     assertThat(
         result.getMissingDependencies(),
-        Matchers.containsInAnyOrder("//com/facebook/superclass:superclass"));
+        Matchers.containsInAnyOrder("//com/example/superclass:superclass"));
     assertEquals(CompletedTypeKind.PARTIALLY_COMPLETED_TYPE, result.kind);
   }
 
@@ -109,10 +109,10 @@ public class CompletionSimulatorTest extends CompilerTreeApiTest {
   public void testNonTransitiveCompletionWithSomeSupersMissingCompletes() throws IOException {
     compile(SimulatorTestSources.SUBCLASS);
 
-    ruleInfo.addAvailableRule("//com/facebook/grandsuper:grandsuper");
-    ruleInfo.addAvailableRule("//com/facebook/iface1:iface1");
-    ruleInfo.addAvailableRule("//com/facebook/iface2:iface2");
-    ruleInfo.addAvailableRule("//com/facebook/grandinterface:grandinterface");
+    ruleInfo.addAvailableRule("//com/example/grandsuper:grandsuper");
+    ruleInfo.addAvailableRule("//com/example/iface1:iface1");
+    ruleInfo.addAvailableRule("//com/example/iface2:iface2");
+    ruleInfo.addAvailableRule("//com/example/grandinterface:grandinterface");
 
     CompletedType result = completeSubclass(false);
 
@@ -125,16 +125,16 @@ public class CompletionSimulatorTest extends CompilerTreeApiTest {
       throws IOException {
     compile(SimulatorTestSources.SUBCLASS);
 
-    ruleInfo.addAvailableRule("//com/facebook/superclass:superclass");
-    ruleInfo.addAvailableRule("//com/facebook/grandsuper:grandsuper");
-    ruleInfo.addAvailableRule("//com/facebook/iface2:iface2");
-    ruleInfo.addAvailableRule("//com/facebook/grandinterface:grandinterface");
+    ruleInfo.addAvailableRule("//com/example/superclass:superclass");
+    ruleInfo.addAvailableRule("//com/example/grandsuper:grandsuper");
+    ruleInfo.addAvailableRule("//com/example/iface2:iface2");
+    ruleInfo.addAvailableRule("//com/example/grandinterface:grandinterface");
 
     CompletedType result = completeSubclassMember(true);
 
     assertThat(
         result.getMissingDependencies(),
-        Matchers.containsInAnyOrder("//com/facebook/iface1:iface1"));
+        Matchers.containsInAnyOrder("//com/example/iface1:iface1"));
     assertEquals(CompletedTypeKind.PARTIALLY_COMPLETED_TYPE, result.kind);
   }
 
@@ -143,10 +143,10 @@ public class CompletionSimulatorTest extends CompilerTreeApiTest {
       throws IOException {
     compile(SimulatorTestSources.SUBCLASS);
 
-    ruleInfo.addAvailableRule("//com/facebook/superclass:superclass");
-    ruleInfo.addAvailableRule("//com/facebook/grandsuper:grandsuper");
-    ruleInfo.addAvailableRule("//com/facebook/iface2:iface2");
-    ruleInfo.addAvailableRule("//com/facebook/grandinterface:grandinterface");
+    ruleInfo.addAvailableRule("//com/example/superclass:superclass");
+    ruleInfo.addAvailableRule("//com/example/grandsuper:grandsuper");
+    ruleInfo.addAvailableRule("//com/example/iface2:iface2");
+    ruleInfo.addAvailableRule("//com/example/grandinterface:grandinterface");
 
     CompletedType result = completeSubclassMember(false);
 
@@ -159,16 +159,16 @@ public class CompletionSimulatorTest extends CompilerTreeApiTest {
       throws IOException {
     compile(SimulatorTestSources.SUBCLASS);
 
-    ruleInfo.addAvailableRule("//com/facebook/superclass:superclass");
-    ruleInfo.addAvailableRule("//com/facebook/iface1:iface1");
-    ruleInfo.addAvailableRule("//com/facebook/iface2:iface2");
+    ruleInfo.addAvailableRule("//com/example/superclass:superclass");
+    ruleInfo.addAvailableRule("//com/example/iface1:iface1");
+    ruleInfo.addAvailableRule("//com/example/iface2:iface2");
 
     CompletedType result = completeSubclass(true);
     assertThat(
         result.getMissingDependencies(),
         Matchers.containsInAnyOrder(
-            "//com/facebook/grandsuper:grandsuper",
-            "//com/facebook/grandinterface:grandinterface"));
+            "//com/example/grandsuper:grandsuper",
+            "//com/example/grandinterface:grandinterface"));
     assertEquals(CompletedTypeKind.CRASH, result.kind);
   }
 
@@ -177,9 +177,9 @@ public class CompletionSimulatorTest extends CompilerTreeApiTest {
       throws IOException {
     compile(SimulatorTestSources.SUBCLASS);
 
-    ruleInfo.addAvailableRule("//com/facebook/superclass:superclass");
-    ruleInfo.addAvailableRule("//com/facebook/iface1:iface1");
-    ruleInfo.addAvailableRule("//com/facebook/iface2:iface2");
+    ruleInfo.addAvailableRule("//com/example/superclass:superclass");
+    ruleInfo.addAvailableRule("//com/example/iface1:iface1");
+    ruleInfo.addAvailableRule("//com/example/iface2:iface2");
 
     CompletedType result = completeSubclass(false);
     assertThat(result.getMissingDependencies(), Matchers.empty());
@@ -192,15 +192,15 @@ public class CompletionSimulatorTest extends CompilerTreeApiTest {
           throws IOException {
     compile(SimulatorTestSources.SUBCLASS);
 
-    ruleInfo.addAvailableRule("//com/facebook/superclass:superclass");
-    ruleInfo.addAvailableRule("//com/facebook/grandsuper:grandsuper");
-    ruleInfo.addAvailableRule("//com/facebook/iface1:iface1");
-    ruleInfo.addAvailableRule("//com/facebook/iface2:iface2");
+    ruleInfo.addAvailableRule("//com/example/superclass:superclass");
+    ruleInfo.addAvailableRule("//com/example/grandsuper:grandsuper");
+    ruleInfo.addAvailableRule("//com/example/iface1:iface1");
+    ruleInfo.addAvailableRule("//com/example/iface2:iface2");
 
     CompletedType result = completeSubclassMember(true);
     assertThat(
         result.getMissingDependencies(),
-        Matchers.containsInAnyOrder("//com/facebook/grandinterface:grandinterface"));
+        Matchers.containsInAnyOrder("//com/example/grandinterface:grandinterface"));
     assertEquals(CompletedTypeKind.CRASH, result.kind);
   }
 
@@ -210,10 +210,10 @@ public class CompletionSimulatorTest extends CompilerTreeApiTest {
           throws IOException {
     compile(SimulatorTestSources.SUBCLASS);
 
-    ruleInfo.addAvailableRule("//com/facebook/superclass:superclass");
-    ruleInfo.addAvailableRule("//com/facebook/grandsuper:grandsuper");
-    ruleInfo.addAvailableRule("//com/facebook/iface1:iface1");
-    ruleInfo.addAvailableRule("//com/facebook/iface2:iface2");
+    ruleInfo.addAvailableRule("//com/example/superclass:superclass");
+    ruleInfo.addAvailableRule("//com/example/grandsuper:grandsuper");
+    ruleInfo.addAvailableRule("//com/example/iface1:iface1");
+    ruleInfo.addAvailableRule("//com/example/iface2:iface2");
 
     CompletedType result = completeSubclassMember(false);
     assertThat(result.getMissingDependencies(), Matchers.empty());
@@ -226,17 +226,17 @@ public class CompletionSimulatorTest extends CompilerTreeApiTest {
     withClasspath(SimulatorTestSources.SUBCLASS);
     initCompiler();
 
-    ruleInfo.addAvailableRule("//com/facebook/iface1:iface1");
-    ruleInfo.addAvailableRule("//com/facebook/grandinterface:grandinterface");
+    ruleInfo.addAvailableRule("//com/example/iface1:iface1");
+    ruleInfo.addAvailableRule("//com/example/grandinterface:grandinterface");
 
     CompletedType result = completeSubclass(true);
     assertThat(
         result.getMissingDependencies(),
         Matchers.containsInAnyOrder(
-            "//com/facebook/subclass:subclass",
-            "//com/facebook/superclass:superclass",
-            "//com/facebook/grandsuper:grandsuper",
-            "//com/facebook/iface2:iface2"));
+            "//com/example/subclass:subclass",
+            "//com/example/superclass:superclass",
+            "//com/example/grandsuper:grandsuper",
+            "//com/example/iface2:iface2"));
     assertEquals(CompletedTypeKind.ERROR_TYPE, result.kind);
   }
 
@@ -246,13 +246,13 @@ public class CompletionSimulatorTest extends CompilerTreeApiTest {
     withClasspath(SimulatorTestSources.SUBCLASS);
     initCompiler();
 
-    ruleInfo.addAvailableRule("//com/facebook/iface1:iface1");
-    ruleInfo.addAvailableRule("//com/facebook/grandinterface:grandinterface");
+    ruleInfo.addAvailableRule("//com/example/iface1:iface1");
+    ruleInfo.addAvailableRule("//com/example/grandinterface:grandinterface");
 
     CompletedType result = completeSubclass(false);
     assertThat(
         result.getMissingDependencies(),
-        Matchers.containsInAnyOrder("//com/facebook/subclass:subclass"));
+        Matchers.containsInAnyOrder("//com/example/subclass:subclass"));
     assertEquals(CompletedTypeKind.ERROR_TYPE, result.kind);
   }
 
@@ -261,17 +261,17 @@ public class CompletionSimulatorTest extends CompilerTreeApiTest {
     withClasspath(SimulatorTestSources.SUBCLASS);
     initCompiler();
 
-    ruleInfo.addAvailableRule("//com/facebook/subclass:subclass");
-    ruleInfo.addAvailableRule("//com/facebook/iface1:iface1");
-    ruleInfo.addAvailableRule("//com/facebook/grandinterface:grandinterface");
+    ruleInfo.addAvailableRule("//com/example/subclass:subclass");
+    ruleInfo.addAvailableRule("//com/example/iface1:iface1");
+    ruleInfo.addAvailableRule("//com/example/grandinterface:grandinterface");
 
     CompletedType result = completeSubclass(true);
     assertThat(
         result.getMissingDependencies(),
         Matchers.containsInAnyOrder(
-            "//com/facebook/superclass:superclass",
-            "//com/facebook/grandsuper:grandsuper",
-            "//com/facebook/iface2:iface2"));
+            "//com/example/superclass:superclass",
+            "//com/example/grandsuper:grandsuper",
+            "//com/example/iface2:iface2"));
     assertEquals(CompletedTypeKind.CRASH, result.kind);
   }
 
@@ -281,9 +281,9 @@ public class CompletionSimulatorTest extends CompilerTreeApiTest {
     withClasspath(SimulatorTestSources.SUBCLASS);
     initCompiler();
 
-    ruleInfo.addAvailableRule("//com/facebook/subclass:subclass");
-    ruleInfo.addAvailableRule("//com/facebook/iface1:iface1");
-    ruleInfo.addAvailableRule("//com/facebook/grandinterface:grandinterface");
+    ruleInfo.addAvailableRule("//com/example/subclass:subclass");
+    ruleInfo.addAvailableRule("//com/example/iface1:iface1");
+    ruleInfo.addAvailableRule("//com/example/grandinterface:grandinterface");
 
     CompletedType result = completeSubclass(false);
     assertThat(result.getMissingDependencies(), Matchers.empty());
@@ -291,13 +291,13 @@ public class CompletionSimulatorTest extends CompilerTreeApiTest {
   }
 
   private CompletedType completeSubclass(boolean transitive) {
-    TypeElement subclass = elements.getTypeElement("com.facebook.subclass.Subclass");
+    TypeElement subclass = elements.getTypeElement("com.example.subclass.Subclass");
 
     return completer.complete(subclass, transitive);
   }
 
   private CompletedType completeSubclassMember(boolean transitive) {
-    TypeElement subclass = elements.getTypeElement("com.facebook.subclass.Subclass.SubclassMember");
+    TypeElement subclass = elements.getTypeElement("com.example.subclass.Subclass.SubclassMember");
 
     return completer.complete(subclass, transitive);
   }

@@ -315,7 +315,6 @@ apple_binary = prelude_rule(
         | apple_common.extra_xcode_files()
         | apple_common.serialize_debugging_options_arg()
         | apple_common.uses_explicit_modules_arg()
-        | apple_common.apple_sanitizer_compatibility_arg()
         | apple_common.executable_name_arg()
         | apple_common.info_plist_substitutions_arg()
         | cxx_common.supported_platforms_regex_arg()
@@ -358,12 +357,7 @@ apple_binary = prelude_rule(
             "can_be_asset": attrs.option(attrs.bool(), default = None),
             "cxx_runtime_type": attrs.option(attrs.enum(CxxRuntimeType), default = None),
             "dist_thin_lto_codegen_flags": attrs.list(attrs.arg(), default = []),
-            "enable_distributed_thinlto": attrs.bool(
-                default = select({
-                    "DEFAULT": False,
-                    "config//build_mode/constraints:distributed-thin-lto[enabled]": True,
-                })
-            ),
+            "enable_distributed_thinlto": attrs.bool(default = False),
             "enable_library_evolution": attrs.option(attrs.bool(), default = None),
             "exported_lang_preprocessor_flags": attrs.dict(key = attrs.enum(CxxSourceType), value = attrs.list(attrs.arg()), sorted = False, default = {}),
             "focused_list_target": attrs.option(attrs.dep(), default = None),
@@ -635,7 +629,6 @@ apple_library = prelude_rule(
         | apple_common.extra_xcode_files()
         | apple_common.serialize_debugging_options_arg()
         | apple_common.uses_explicit_modules_arg()
-        | apple_common.meta_apple_library_validation_enabled_arg()
         | apple_common.executable_name_arg()
         | apple_common.info_plist_substitutions_arg()
         | cxx_common.supported_platforms_regex_arg()
@@ -675,12 +668,7 @@ apple_library = prelude_rule(
             "can_be_asset": attrs.option(attrs.bool(), default = None),
             "cxx_runtime_type": attrs.option(attrs.enum(CxxRuntimeType), default = None),
             "dist_thin_lto_codegen_flags": attrs.list(attrs.arg(), default = []),
-            "enable_distributed_thinlto": attrs.bool(
-                default = select({
-                    "DEFAULT": False,
-                    "config//build_mode/constraints:distributed-thin-lto[enabled]": True,
-                })
-            ),
+            "enable_distributed_thinlto": attrs.bool(default = False),
             "enable_library_evolution": attrs.option(attrs.bool(), default = None),
             "exported_lang_preprocessor_flags": attrs.dict(key = attrs.enum(CxxSourceType), value = attrs.list(attrs.arg()), sorted = False, default = {}),
             "exported_post_linker_flags": attrs.list(attrs.arg(), default = []),
@@ -719,7 +707,7 @@ apple_library = prelude_rule(
             "_swift_enable_testing": attrs.bool(
                 default = select({
                     "DEFAULT": False,
-                    "config//features/apple:swift_enable_testing_enabled": True,
+                    "prelude//apple/constraints:swift_enable_testing[enabled]": True,
                 })
             ),
             APPLE_ARCHIVE_OBJECTS_LOCALLY_OVERRIDE_ATTR_NAME: attrs.option(attrs.bool(), default = None),
@@ -1051,7 +1039,6 @@ apple_test = prelude_rule(
         | apple_common.extra_xcode_files()
         | apple_common.serialize_debugging_options_arg()
         | apple_common.uses_explicit_modules_arg()
-        | apple_common.apple_sanitizer_compatibility_arg()
         | apple_common.executable_name_arg()
         | apple_common.asset_catalogs_compilation_options_arg()
         | cxx_common.supported_platforms_regex_arg()
@@ -1207,10 +1194,10 @@ apple_toolchain = prelude_rule(
             "xcode_build_version": attrs.option(attrs.string(), default = None),
             "xcode_version": attrs.string(),
             "xctest": attrs.exec_dep(providers = [RunInfo]),
-            # TODO(T111858757): Mirror of `platform_path` but treated as a string. It allows us to
+            # TODO: Mirror of `platform_path` but treated as a string. It allows us to
             #                   pass abs paths during development and using the currently selected Xcode.
             "_internal_platform_path": attrs.option(attrs.string(), default = None),
-            # TODO(T111858757): Mirror of `sdk_path` but treated as a string. It allows us to
+            # TODO: Mirror of `sdk_path` but treated as a string. It allows us to
             #                   pass abs paths during development and using the currently selected Xcode.
             "_internal_sdk_path": attrs.option(attrs.string(), default = None),
         }
@@ -1428,7 +1415,7 @@ swift_toolchain = prelude_rule(
             "swiftc_flags": attrs.list(attrs.arg(), default = []),
             "use_depsfiles": attrs.bool(default = False),
             "uses_content_based_paths": attrs.bool(default = False),
-            # TODO(T111858757): Mirror of `sdk_path` but treated as a string. It allows us to
+            # TODO: Mirror of `sdk_path` but treated as a string. It allows us to
             #                   pass abs paths during development and using the currently selected Xcode.
             "_internal_sdk_path": attrs.option(attrs.string(), default = None),
             "_swiftc_wrapper": attrs.exec_dep(providers = [RunInfo], default = "prelude//apple/tools:swift_exec"),
@@ -1551,7 +1538,6 @@ apple_tools = prelude_rule(
     attrs = {
         "adhoc_codesign_tool": attrs.option(attrs.exec_dep(providers = [RunInfo]), default = None),
         "assemble_bundle": attrs.exec_dep(providers = [RunInfo]),
-        "bundle_telemetry_logger": attrs.option(attrs.exec_dep(providers = [RunInfo]), default = None),
         "codesign_manifest_tree_postprocessor": attrs.exec_dep(providers = [RunInfo]),
         "dedupe_swift_module_map": attrs.exec_dep(providers = [RunInfo]),
         "dry_codesign_tool": attrs.exec_dep(providers = [RunInfo]),

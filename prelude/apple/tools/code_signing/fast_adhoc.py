@@ -6,8 +6,6 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-# pyre-strict
-
 import logging
 import os
 import plistlib
@@ -16,9 +14,6 @@ import sys
 from pathlib import Path
 from typing import List, Optional, Tuple, Union
 
-# @oss-disable[end= ]: from ..meta_only.codesign_rust.check_adhoc_signature import (
-    # @oss-disable[end= ]: read_signature_info,
-# @oss-disable[end= ]: )
 from .apple_platform import ApplePlatform
 
 _LOGGER: logging.Logger = logging.getLogger(__name__)
@@ -69,7 +64,7 @@ def _logged_subprocess_run(
     return result
 
 
-def is_fast_adhoc_codesign_allowed(probe_enabled: bool) -> bool:
+def is_fast_adhoc_codesign_allowed() -> bool:
     if sys.platform == "darwin":
         # Xcode's active-developer-dir symlink is /var/db/xcode_select_link on
         # older macOS and /var/select/developer_dir on Sonoma+/Xcode 15+.
@@ -81,8 +76,6 @@ def is_fast_adhoc_codesign_allowed(probe_enabled: bool) -> bool:
             )
             return False
         return True
-    # @oss-disable[end= ]: if probe_enabled:
-        # @oss-disable[end= ]: return True
     _LOGGER.info(f"Running on {sys.platform}, fast adhoc signing not allowed")
     return False
 
@@ -144,9 +137,6 @@ def _read_signature_info(
     """
     if sys.platform == "darwin":
         return _read_signature_info_macos(path, platform, check_entitlements)
-    # @oss-disable[end= ]: elif sys.platform == "linux":
-        # @oss-disable[end= ]: binary = _find_executable_for_signed_path(path, platform)
-        # @oss-disable[end= ]: return read_signature_info(binary, check_entitlements)
     return None
 
 

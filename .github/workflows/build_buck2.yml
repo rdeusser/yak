@@ -7,36 +7,9 @@ on:
         description: "Version string stamped into the binaries via BUCK2_SET_EXPLICIT_VERSION"
         required: true
         type: string
-      release_timestamp:
-        description: "Timestamp stamped into the binaries via BUCK2_RELEASE_TIMESTAMP"
-        required: true
-        type: string
 
 jobs:
-  get_prelude_hash:
-    name: Get the latest prelude hash
-    runs-on: ubuntu-latest
-    outputs:
-      prelude_hash: ${{ steps.get_latest_prelude_hash.outputs.prelude_hash }}
-    steps:
-      - name: Shallow clone buck2-prelude
-        run: git clone --depth=1 https://github.com/facebook/buck2-prelude
-      - name: Get latest commit hash into prelude_hash
-        id: get_latest_prelude_hash
-        run: |
-          mkdir artifacts/
-          cd buck2-prelude/
-          git rev-parse HEAD > ../artifacts/prelude_hash
-          echo "prelude_hash=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
-      - name: Upload prelude_hash
-        uses: actions/upload-artifact@v6
-        with:
-          path: artifacts/prelude_hash
-          name: prelude_hash
-
   build:
-    needs:
-      - get_prelude_hash
     strategy:
       fail-fast: false
       matrix:
@@ -114,7 +87,6 @@ jobs:
         env:
           # BUCK2 prefixed variables used within the build to stamp in a version information
           # BUCK2_SET_EXPLICIT_VERSION will populate the buck2 --version string
-          BUCK2_RELEASE_TIMESTAMP: ${{ inputs.release_timestamp }}
           BUCK2_SET_EXPLICIT_VERSION: ${{ inputs.buck2_version }}
           RUSTFLAGS: "--cfg tokio_unstable -C strip=debuginfo -C codegen-units=1"
         run: |

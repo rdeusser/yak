@@ -33,18 +33,18 @@ public class JavaInMemoryFileObjectTest {
 
   @Test
   public void testJavaFileName() {
-    String relativePath = "com/facebook/buck/java/JavaInMemoryFileObjectTest.class";
+    String relativePath = "com/example/app/java/JavaInMemoryFileObjectTest.class";
     JavaInMemoryFileObject inMemoryFileObject =
         new JavaInMemoryFileObject(
             URI.create("file://tmp/" + relativePath), relativePath, JavaFileObject.Kind.CLASS);
 
-    String expectedName = "com/facebook/buck/java/JavaInMemoryFileObjectTest.class";
+    String expectedName = "com/example/app/java/JavaInMemoryFileObjectTest.class";
     assertEquals(expectedName, inMemoryFileObject.getName());
   }
 
   @Test
   public void testJavaFileContent() throws Exception {
-    String relativePath = "com/facebook/buck/java/JavaInMemoryFileObjectTest.class";
+    String relativePath = "com/example/app/java/JavaInMemoryFileObjectTest.class";
     JavaInMemoryFileObject inMemoryFileObject =
         new JavaInMemoryFileObject(
             URI.create("file://tmp/" + relativePath), relativePath, JavaFileObject.Kind.CLASS);
@@ -61,12 +61,12 @@ public class JavaInMemoryFileObjectTest {
 
   @Test
   public void testMultipleJavaFiles() throws Exception {
-    String relativePath = "com/facebook/buck/java/JavaFileParser.class";
+    String relativePath = "com/example/app/java/JavaFileParser.class";
     JavaInMemoryFileObject file1 =
         new JavaInMemoryFileObject(
             URI.create("file://tmp/" + relativePath), relativePath, JavaFileObject.Kind.CLASS);
 
-    String relativePath2 = "com/facebook/buck/java/JavaLibrary.class";
+    String relativePath2 = "com/example/app/java/JavaLibrary.class";
     JavaInMemoryFileObject file2 =
         new JavaInMemoryFileObject(
             URI.create("file://tmp/" + relativePath2), relativePath2, JavaFileObject.Kind.CLASS);
@@ -89,7 +89,7 @@ public class JavaInMemoryFileObjectTest {
   @Test
   public void testJarURIName() {
     String jarPath = "/tmp/test.jar";
-    String relativePath = "com/facebook/buck/java/JavaInMemoryFileObjectTest.class";
+    String relativePath = "com/example/app/java/JavaInMemoryFileObjectTest.class";
     JavaInMemoryFileObject inMemoryFileObject =
         new JavaInMemoryFileObject(
             URI.create("jar:file://" + jarPath + "!/" + relativePath),
@@ -97,7 +97,7 @@ public class JavaInMemoryFileObjectTest {
             JavaFileObject.Kind.CLASS);
 
     String expectedName =
-        "jar:file:///tmp/test.jar!/com/facebook/buck/java/JavaInMemoryFileObjectTest.class";
+        "jar:file:///tmp/test.jar!/com/example/app/java/JavaInMemoryFileObjectTest.class";
 
     assertEquals(relativePath, inMemoryFileObject.getName());
     assertEquals(expectedName, inMemoryFileObject.toUri().toString());
@@ -106,7 +106,7 @@ public class JavaInMemoryFileObjectTest {
   @Test(expected = FileNotFoundException.class)
   public void testOpenForInputThrowsWhenNotWritten() throws Exception {
     String jarPath = "/tmp/test.jar";
-    String relativePath = "com/facebook/buck/java/JavaInMemoryFileObjectTest.class";
+    String relativePath = "com/example/app/java/JavaInMemoryFileObjectTest.class";
     JavaInMemoryFileObject inMemoryFileObject =
         new JavaInMemoryFileObject(
             URI.create("jar:file://" + jarPath + "!/" + relativePath),
@@ -121,7 +121,7 @@ public class JavaInMemoryFileObjectTest {
   @Test(expected = IOException.class)
   public void testOpenForOutputTwiceThrows() throws Exception {
     String jarPath = "/tmp/test.jar";
-    String relativePath = "com/facebook/buck/java/JavaInMemoryFileObjectTest.class";
+    String relativePath = "com/example/app/java/JavaInMemoryFileObjectTest.class";
     JavaInMemoryFileObject inMemoryFileObject =
         new JavaInMemoryFileObject(
             URI.create("jar:file://" + jarPath + "!/" + relativePath),

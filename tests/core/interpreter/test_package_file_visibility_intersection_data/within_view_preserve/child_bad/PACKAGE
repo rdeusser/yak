@@ -1,0 +1,3 @@
+# Opts in without calling `package()`, so the `within_view` from
+# `root//within_view_preserve/PACKAGE` still applies below.
+enforce_visibility_intersection()

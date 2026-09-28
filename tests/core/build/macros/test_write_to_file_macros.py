@@ -12,8 +12,8 @@ import re
 import sys
 
 import pytest
-from buck2.tests.e2e_util.api.buck import Buck
-from buck2.tests.e2e_util.buck_workspace import buck_test
+from e2e_util.api.buck import Buck
+from e2e_util.buck_workspace import buck_test
 
 
 def _normalize_path(p: str) -> str:
@@ -33,7 +33,7 @@ def _find_file(dir, name: str) -> str:
     return f
 
 
-@buck_test(setup_eden=True)
+@buck_test()
 @pytest.mark.parametrize("fingerprint", ["true", "false"])
 async def test_xxx(buck: Buck, fingerprint: str) -> None:
     result = await buck.build(

@@ -8,8 +8,6 @@
 
 # buildifier: disable=no-effect
 
-oncall("build_infra")
-
 cxx_library(
     name = "python-3.10",
     exported_linker_flags = [

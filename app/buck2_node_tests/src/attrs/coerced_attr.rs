@@ -218,7 +218,7 @@ fn select_the_first_match() {
     );
 }
 
-#[test] // T177093673
+#[test]
 fn test_select_refines_bug() {
     let c_windows = (
         ConstraintKey::testing_new("config//c:os"),

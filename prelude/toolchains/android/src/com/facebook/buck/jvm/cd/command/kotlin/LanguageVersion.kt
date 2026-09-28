@@ -16,8 +16,6 @@ enum class KotlinSupportedLanguageVersion(val value: String) {
   V2_1("2.1"),
 }
 
-@RequiresOptIn(level = RequiresOptIn.Level.ERROR) annotation class LanguageVersionForLogs
-
 class LanguageVersion(private val internalValue: String) {
 
   init {
@@ -31,8 +29,6 @@ class LanguageVersion(private val internalValue: String) {
       "Invalid language version: $internalValue"
     }
   }
-
-  @LanguageVersionForLogs val valueForLogs: String? = internalValue
 
   val value: String
     get() {

@@ -1,7 +1,3 @@
----
-oncalls: ['build_infra']
----
-
 General guidelines for writing code comments, API documentation including doc comments, internal
 documentation including LLM context files and READMEs (together "documentation").
 

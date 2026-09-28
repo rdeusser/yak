@@ -22,11 +22,11 @@ import org.junit.Test;
 public class InterfaceValidatorTest extends CompilerTreeApiTest {
   final ImmutableMap<String, String> CLASSPATH_WITH_COMPLEX_MEMBER_TYPES =
       ImmutableMap.of(
-          "com/facebook/bar/Bar.java",
+          "com/example/bar/Bar.java",
           Joiner.on('\n')
               .join(
-                  "package com.facebook.bar;",
-                  "import com.facebook.baz.Baz;",
+                  "package com.example.bar;",
+                  "import com.example.baz.Baz;",
                   "public class Bar extends Baz {",
                   "  public static class StaticMember extends SuperStaticMember{",
                   "    public static class StaticMemberer extends SuperStaticMemberer {",
@@ -34,10 +34,10 @@ public class InterfaceValidatorTest extends CompilerTreeApiTest {
                   "  }",
                   "  public class Inner extends Baz.Inner { }",
                   "}"),
-          "com/facebook/baz/Baz.java",
+          "com/example/baz/Baz.java",
           Joiner.on('\n')
               .join(
-                  "package com.facebook.baz;",
+                  "package com.example.baz;",
                   "public class Baz {",
                   "  public static class SuperStaticMember {",
                   "    public static class SuperStaticMemberer {",
@@ -98,30 +98,30 @@ public class InterfaceValidatorTest extends CompilerTreeApiTest {
   public void testMissingGrandSuperFailsButMissingSuperDoesNot() throws IOException {
     withClasspath(
         ImmutableMap.of(
-            "com/facebook/bar/Bar.java",
+            "com/example/bar/Bar.java",
             Joiner.on('\n')
                 .join(
-                    "package com.facebook.bar;",
-                    "import com.facebook.baz.Baz;",
-                    "import com.facebook.iface2.Interface2;",
+                    "package com.example.bar;",
+                    "import com.example.baz.Baz;",
+                    "import com.example.iface2.Interface2;",
                     "public class Bar extends Baz implements Interface2 { }"),
-            "com/facebook/baz/Baz.java",
-            Joiner.on('\n').join("package com.facebook.baz;", "public class Baz { }"),
-            "com/facebook/iface/Interface.java",
-            Joiner.on('\n').join("package com.facebook.iface;", "public interface Interface { }"),
-            "com/facebook/iface2/Interface2.java",
+            "com/example/baz/Baz.java",
+            Joiner.on('\n').join("package com.example.baz;", "public class Baz { }"),
+            "com/example/iface/Interface.java",
+            Joiner.on('\n').join("package com.example.iface;", "public interface Interface { }"),
+            "com/example/iface2/Interface2.java",
             Joiner.on('\n')
-                .join("package com.facebook.iface2;", "public interface Interface2 { }")));
-    taskListenerFactory.addTargetAvailableForSourceOnlyAbi("//com/facebook/bar:bar");
+                .join("package com.example.iface2;", "public interface Interface2 { }")));
+    taskListenerFactory.addTargetAvailableForSourceOnlyAbi("//com/example/bar:bar");
     testCompiler.setAllowCompilationErrors(true);
     compileWithValidation(
         ImmutableMap.of(
-            "com/facebook/foo/Foo.java",
+            "com/example/foo/Foo.java",
             Joiner.on('\n')
                 .join(
-                    "package com.facebook.foo;",
-                    "import com.facebook.bar.Bar;",
-                    "import com.facebook.iface.Interface;",
+                    "package com.example.foo;",
+                    "import com.example.bar.Bar;",
+                    "import com.example.iface.Interface;",
                     "public class Foo extends Bar implements Interface { }")));
 
     assertErrors(
@@ -130,31 +130,31 @@ public class InterfaceValidatorTest extends CompilerTreeApiTest {
             + "public class Foo extends Bar implements Interface { }\n"
             + "                         ^\n"
             + "  To fix, add the following rules to source_only_abi_deps in //:rule:"
-            + " //com/facebook/baz:baz, //com/facebook/iface2:iface2");
+            + " //com/example/baz:baz, //com/example/iface2:iface2");
   }
 
   @Test
   public void testMissingSuperSucceeds() throws IOException {
     withClasspath(
         ImmutableMap.of(
-            "com/facebook/bar/Bar.java",
+            "com/example/bar/Bar.java",
             Joiner.on('\n')
                 .join(
-                    "package com.facebook.bar;",
-                    "import com.facebook.baz.Baz;",
+                    "package com.example.bar;",
+                    "import com.example.baz.Baz;",
                     "public class Bar extends Baz { }"),
-            "com/facebook/baz/Baz.java",
-            Joiner.on('\n').join("package com.facebook.baz;", "public class Baz { }"),
-            "com/facebook/iface/Interface.java",
-            Joiner.on('\n').join("package com.facebook.iface;", "public interface Interface { }")));
+            "com/example/baz/Baz.java",
+            Joiner.on('\n').join("package com.example.baz;", "public class Baz { }"),
+            "com/example/iface/Interface.java",
+            Joiner.on('\n').join("package com.example.iface;", "public interface Interface { }")));
     compileWithValidation(
         ImmutableMap.of(
-            "com/facebook/foo/Foo.java",
+            "com/example/foo/Foo.java",
             Joiner.on('\n')
                 .join(
-                    "package com.facebook.foo;",
-                    "import com.facebook.bar.Bar;",
-                    "import com.facebook.iface.Interface;",
+                    "package com.example.foo;",
+                    "import com.example.bar.Bar;",
+                    "import com.example.iface.Interface;",
                     "public class Foo extends Bar implements Interface { }")));
 
     assertNoErrors();
@@ -171,9 +171,9 @@ public class InterfaceValidatorTest extends CompilerTreeApiTest {
   public void testFullyQualifiedNameFromClasspathSucceeds() throws IOException {
     withClasspath(
         ImmutableMap.of(
-            "com/facebook/bar/Bar.java",
-            Joiner.on('\n').join("package com.facebook.bar;", "public class Bar { }")));
-    compileWithValidation("class Foo extends com.facebook.bar.Bar { }");
+            "com/example/bar/Bar.java",
+            Joiner.on('\n').join("package com.example.bar;", "public class Bar { }")));
+    compileWithValidation("class Foo extends com.example.bar.Bar { }");
 
     assertNoErrors();
   }
@@ -218,14 +218,14 @@ public class InterfaceValidatorTest extends CompilerTreeApiTest {
             "Foo.java",
             Joiner.on('\n')
                 .join(
-                    "package com.facebook.foo;",
+                    "package com.example.foo;",
                     "class Foo {",
                     "  class Inner {",
                     "    Bar b;",
                     "  }",
                     "}"),
             "Bar.java",
-            Joiner.on('\n').join("package com.facebook.foo;", "class Bar { }")));
+            Joiner.on('\n').join("package com.example.foo;", "class Bar { }")));
 
     assertNoErrors();
   }
@@ -234,14 +234,14 @@ public class InterfaceValidatorTest extends CompilerTreeApiTest {
   public void testImportedPackageAnnotationSucceeds() throws IOException {
     withClasspath(
         ImmutableMap.of(
-            "com/facebook/anno/Anno.java",
-            Joiner.on('\n').join("package com.facebook.anno;", "public @interface Anno { }")));
+            "com/example/anno/Anno.java",
+            Joiner.on('\n').join("package com.example.anno;", "public @interface Anno { }")));
 
     compileWithValidation(
         ImmutableMap.of(
-            "com/facebook/foo/package-info.java",
+            "com/example/foo/package-info.java",
             Joiner.on('\n')
-                .join("@Anno", "package com.facebook.foo;", "import com.facebook.anno.Anno;")));
+                .join("@Anno", "package com.example.foo;", "import com.example.anno.Anno;")));
 
     assertNoErrors();
   }
@@ -250,12 +250,12 @@ public class InterfaceValidatorTest extends CompilerTreeApiTest {
   public void testBadCaseImportFromClasspathSucceeds() throws IOException {
     withClasspath(
         ImmutableMap.of(
-            "com/facebook/bar/someclass.java",
-            Joiner.on('\n').join("package com.facebook.bar;", "public class someclass { }")));
+            "com/example/bar/someclass.java",
+            Joiner.on('\n').join("package com.example.bar;", "public class someclass { }")));
 
-    taskListenerFactory.addTargetAvailableForSourceOnlyAbi("//com/facebook/bar:bar");
+    taskListenerFactory.addTargetAvailableForSourceOnlyAbi("//com/example/bar:bar");
     compileWithValidation(
-        Joiner.on('\n').join("import com.facebook.bar.someclass;", "public class Foo { }"));
+        Joiner.on('\n').join("import com.example.bar.someclass;", "public class Foo { }"));
 
     assertNoErrors();
   }
@@ -264,20 +264,20 @@ public class InterfaceValidatorTest extends CompilerTreeApiTest {
   public void testBadCaseImportFails() throws IOException {
     withClasspath(
         ImmutableMap.of(
-            "com/facebook/bar/someclass.java",
-            Joiner.on('\n').join("package com.facebook.bar;", "public class someclass { }")));
+            "com/example/bar/someclass.java",
+            Joiner.on('\n').join("package com.example.bar;", "public class someclass { }")));
 
     testCompiler.setAllowCompilationErrors(true);
     compileWithValidation(
-        Joiner.on('\n').join("import com.facebook.bar.someclass;", "public class Foo { }"));
+        Joiner.on('\n').join("import com.example.bar.someclass;", "public class Foo { }"));
 
     assertErrors(
         Joiner.on('\n')
             .join(
                 "Foo.java:1: error: Source-only ABI generation requires top-level class names to"
                     + " start with a capital letter.",
-                "import com.facebook.bar.someclass;",
-                "                       ^",
+                "import com.example.bar.someclass;",
+                "                      ^",
                 "  To fix: ",
                 "  Rename \"someclass\" to \"Someclass\"."));
   }
@@ -286,12 +286,12 @@ public class InterfaceValidatorTest extends CompilerTreeApiTest {
   public void testStarImportedTypeFromClasspathFails() throws IOException {
     withClasspath(
         ImmutableMap.of(
-            "com/facebook/bar/Bar.java",
-            Joiner.on('\n').join("package com.facebook.bar;", "public class Bar { }")));
+            "com/example/bar/Bar.java",
+            Joiner.on('\n').join("package com.example.bar;", "public class Bar { }")));
     testCompiler.setAllowCompilationErrors(true);
     compileWithValidation(
         Joiner.on('\n')
-            .join("import com.facebook.bar.*;", "public abstract class Foo extends Bar { }"));
+            .join("import com.example.bar.*;", "public abstract class Foo extends Bar { }"));
 
     assertErrors(
         Joiner.on('\n')
@@ -301,18 +301,18 @@ public class InterfaceValidatorTest extends CompilerTreeApiTest {
                 "public abstract class Foo extends Bar { }",
                 "                                  ^",
                 "  To fix: ",
-                "  Add an import for \"com.facebook.bar.Bar\""));
+                "  Add an import for \"com.example.bar.Bar\""));
   }
 
   @Test
   public void testStarImportedTypeCompiledTogetherSucceeds() throws IOException {
     compileWithValidation(
         ImmutableMap.of(
-            "com/facebook/bar/Bar.java",
-            Joiner.on('\n').join("package com.facebook.bar;", "public class Bar { }"),
+            "com/example/bar/Bar.java",
+            Joiner.on('\n').join("package com.example.bar;", "public class Bar { }"),
             "Foo.java",
             Joiner.on('\n')
-                .join("import com.facebook.bar.*;", "public abstract class Foo extends Bar { }")));
+                .join("import com.example.bar.*;", "public abstract class Foo extends Bar { }")));
 
     assertNoErrors();
   }
@@ -330,58 +330,58 @@ public class InterfaceValidatorTest extends CompilerTreeApiTest {
   public void testStaticImportedMemberWithMissingSuperclassFails() throws IOException {
     withClasspath(
         ImmutableMap.of(
-            "com/facebook/base/Base.java",
-            Joiner.on('\n').join("package com.facebook.base;", "public class Base {", "}")));
+            "com/example/base/Base.java",
+            Joiner.on('\n').join("package com.example.base;", "public class Base {", "}")));
 
     testCompiler.setAllowCompilationErrors(true);
     this.compileWithValidation(
         ImmutableMap.of(
-            "com/facebook/bar/Bar.java",
+            "com/example/bar/Bar.java",
             Joiner.on('\n')
                 .join(
-                    "package com.facebook.bar;",
-                    "public class Bar extends com.facebook.base.Base {",
+                    "package com.example.bar;",
+                    "public class Bar extends com.example.base.Base {",
                     "  public static void foo() { }",
                     "}"),
-            "com/facebook/foo/Foo.java",
+            "com/example/foo/Foo.java",
             Joiner.on('\n')
                 .join(
-                    "package com.facebook.foo;",
-                    "import static com.facebook.bar.Bar.foo;",
+                    "package com.example.foo;",
+                    "import static com.example.bar.Bar.foo;",
                     "public class Foo {",
                     "}")));
 
     assertError(
         "Foo.java:2: error: Source-only ABI generation requires that this type be unavailable, or"
             + " that all of its superclasses/interfaces be available.\n"
-            + "import static com.facebook.bar.Bar.foo;\n"
-            + "                              ^\n"
+            + "import static com.example.bar.Bar.foo;\n"
+            + "                             ^\n"
             + "  To fix, add the following rules to source_only_abi_deps in //:rule:"
-            + " //com/facebook/base:base");
+            + " //com/example/base:base");
   }
 
   @Test
   public void testCanonicallyStaticImportedTypeFails() throws IOException {
     withClasspath(
         ImmutableMap.of(
-            "com/facebook/bar/Bar.java",
+            "com/example/bar/Bar.java",
             Joiner.on('\n')
                 .join(
-                    "package com.facebook.bar;",
-                    "import com.facebook.baz.Baz;",
+                    "package com.example.bar;",
+                    "import com.example.baz.Baz;",
                     "public class Bar extends Baz { }"),
-            "com/facebook/baz/Baz.java",
+            "com/example/baz/Baz.java",
             Joiner.on('\n')
                 .join(
-                    "package com.facebook.baz;",
+                    "package com.example.baz;",
                     "public class Baz { public static class Inner { } }")));
 
     testCompiler.setAllowCompilationErrors(true);
     this.compileWithValidation(
         Joiner.on('\n')
             .join(
-                "package com.facebook.foo;",
-                "import static com.facebook.baz.Baz.Inner;",
+                "package com.example.foo;",
+                "import static com.example.baz.Baz.Inner;",
                 "public class Foo {",
                 "  Inner i;",
                 "}"));
@@ -392,30 +392,30 @@ public class InterfaceValidatorTest extends CompilerTreeApiTest {
             + "  Inner i;\n"
             + "  ^\n"
             + "  To fix, add the following rules to source_only_abi_deps in //:rule:"
-            + " //com/facebook/baz:baz");
+            + " //com/example/baz:baz");
   }
 
   @Test
   public void testNonCanonicallyStaticImportedTypeFails() throws IOException {
     withClasspath(
         ImmutableMap.of(
-            "com/facebook/bar/Bar.java",
+            "com/example/bar/Bar.java",
             Joiner.on('\n')
                 .join(
-                    "package com.facebook.bar;",
-                    "import com.facebook.baz.Baz;",
+                    "package com.example.bar;",
+                    "import com.example.baz.Baz;",
                     "public class Bar extends Baz { }"),
-            "com/facebook/baz/Baz.java",
+            "com/example/baz/Baz.java",
             Joiner.on('\n')
                 .join(
-                    "package com.facebook.baz;",
+                    "package com.example.baz;",
                     "public class Baz { public static class Inner { } }")));
     testCompiler.setAllowCompilationErrors(true);
     this.compileWithValidation(
         Joiner.on('\n')
             .join(
-                "package com.facebook.foo;",
-                "import static com.facebook.bar.Bar.Inner;",
+                "package com.example.foo;",
+                "import static com.example.bar.Bar.Inner;",
                 "public class Foo {",
                 "  Inner i;",
                 "}"));
@@ -426,7 +426,7 @@ public class InterfaceValidatorTest extends CompilerTreeApiTest {
             + "  Inner i;\n"
             + "  ^\n"
             + "  To fix, add the following rules to source_only_abi_deps in //:rule:"
-            + " //com/facebook/baz:baz");
+            + " //com/example/baz:baz");
   }
 
   @Test
@@ -434,7 +434,7 @@ public class InterfaceValidatorTest extends CompilerTreeApiTest {
     compileWithValidation(
         Joiner.on('\n')
             .join(
-                "package com.facebook.foo;",
+                "package com.example.foo;",
                 "public class Foo {",
                 "  Inner i;",
                 "  class Inner { }",
@@ -447,24 +447,24 @@ public class InterfaceValidatorTest extends CompilerTreeApiTest {
   public void testSuperclassMemberTypeFromClasspathFails() throws IOException {
     withClasspath(
         ImmutableMap.of(
-            "com/facebook/bar/Bar.java",
+            "com/example/bar/Bar.java",
             Joiner.on('\n')
                 .join(
-                    "package com.facebook.bar;",
-                    "import com.facebook.foo.Baz;",
+                    "package com.example.bar;",
+                    "import com.example.foo.Baz;",
                     "public class Bar implements Baz { }"),
-            "com/facebook/foo/Baz.java",
+            "com/example/foo/Baz.java",
             Joiner.on('\n')
                 .join(
-                    "package com.facebook.foo;", "public interface Baz { interface Inner { } }")));
+                    "package com.example.foo;", "public interface Baz { interface Inner { } }")));
     testCompiler.setAllowCompilationErrors(true);
     compileWithValidation(
         ImmutableMap.of(
             "Foo.java",
             Joiner.on('\n')
                 .join(
-                    "package com.facebook.foo;",
-                    "import com.facebook.bar.Bar;",
+                    "package com.example.foo;",
+                    "import com.example.bar.Bar;",
                     "class Foo extends Bar {",
                     "  Inner i;",
                     "}")));
@@ -477,7 +477,7 @@ public class InterfaceValidatorTest extends CompilerTreeApiTest {
                 "  Inner i;",
                 "  ^",
                 "  To fix: ",
-                "  Add an import for \"com.facebook.foo.Baz\"",
+                "  Add an import for \"com.example.foo.Baz\"",
                 "  Use \"Baz.Inner\" here instead of \"Inner\"."));
   }
 
@@ -485,24 +485,24 @@ public class InterfaceValidatorTest extends CompilerTreeApiTest {
   public void testImportedSuperclassMemberTypeFromClasspathSucceeds() throws IOException {
     withClasspath(
         ImmutableMap.of(
-            "com/facebook/bar/Bar.java",
+            "com/example/bar/Bar.java",
             Joiner.on('\n')
                 .join(
-                    "package com.facebook.bar;",
-                    "import com.facebook.foo.Baz;",
+                    "package com.example.bar;",
+                    "import com.example.foo.Baz;",
                     "public class Bar implements Baz { }"),
-            "com/facebook/foo/Baz.java",
+            "com/example/foo/Baz.java",
             Joiner.on('\n')
                 .join(
-                    "package com.facebook.foo;", "public interface Baz { interface Inner { } }")));
+                    "package com.example.foo;", "public interface Baz { interface Inner { } }")));
     compileWithValidation(
         ImmutableMap.of(
             "Foo.java",
             Joiner.on('\n')
                 .join(
-                    "package com.facebook.foo;",
-                    "import com.facebook.bar.Bar;",
-                    "import com.facebook.foo.Baz.Inner;",
+                    "package com.example.foo;",
+                    "import com.example.bar.Bar;",
+                    "import com.example.foo.Baz.Inner;",
                     "class Foo extends Bar {",
                     "  Inner i;",
                     "}")));
@@ -515,9 +515,9 @@ public class InterfaceValidatorTest extends CompilerTreeApiTest {
     compileWithValidation(
         ImmutableMap.of(
             "Foo.java",
-            Joiner.on('\n').join("package com.facebook.foo;", "class Foo extends Bar { }"),
+            Joiner.on('\n').join("package com.example.foo;", "class Foo extends Bar { }"),
             "Bar.java",
-            Joiner.on('\n').join("package com.facebook.foo;", "class Bar { }")));
+            Joiner.on('\n').join("package com.example.foo;", "class Bar { }")));
 
     assertNoErrors();
   }
@@ -526,12 +526,12 @@ public class InterfaceValidatorTest extends CompilerTreeApiTest {
   public void testPackageMemberTypeFromClasspathSucceeds() throws IOException {
     withClasspath(
         ImmutableMap.of(
-            "com/facebook/foo/Bar.java",
-            Joiner.on('\n').join("package com.facebook.foo;", "class Bar { }")));
+            "com/example/foo/Bar.java",
+            Joiner.on('\n').join("package com.example.foo;", "class Bar { }")));
     compileWithValidation(
         ImmutableMap.of(
             "Foo.java",
-            Joiner.on('\n').join("package com.facebook.foo;", "class Foo extends Bar { }")));
+            Joiner.on('\n').join("package com.example.foo;", "class Foo extends Bar { }")));
 
     assertNoErrors();
   }
@@ -540,13 +540,13 @@ public class InterfaceValidatorTest extends CompilerTreeApiTest {
   public void testQualifiedPackageMemberInnerTypeFromClasspathSucceeds() throws IOException {
     withClasspath(
         ImmutableMap.of(
-            "com/facebook/foo/Bar.java",
+            "com/example/foo/Bar.java",
             Joiner.on('\n')
-                .join("package com.facebook.foo;", "class Bar { static class Inner { } }")));
+                .join("package com.example.foo;", "class Bar { static class Inner { } }")));
     compileWithValidation(
         ImmutableMap.of(
             "Foo.java",
-            Joiner.on('\n').join("package com.facebook.foo;", "class Foo extends Bar.Inner { }")));
+            Joiner.on('\n').join("package com.example.foo;", "class Foo extends Bar.Inner { }")));
 
     assertNoErrors();
   }
@@ -555,15 +555,15 @@ public class InterfaceValidatorTest extends CompilerTreeApiTest {
   public void testUnqualifiedPackageMemberInnerTypeFromClasspathFails() throws IOException {
     withClasspath(
         ImmutableMap.of(
-            "com/facebook/foo/Bar.java",
+            "com/example/foo/Bar.java",
             Joiner.on('\n')
-                .join("package com.facebook.foo;", "class Bar { static class Inner { } }")));
+                .join("package com.example.foo;", "class Bar { static class Inner { } }")));
     testCompiler.setAllowCompilationErrors(true);
     compileWithValidation(
         ImmutableMap.of(
             "Foo.java",
             Joiner.on('\n')
-                .join("package com.facebook.foo;", "class Foo extends Bar {", "  Inner i;", "}")));
+                .join("package com.example.foo;", "class Foo extends Bar {", "  Inner i;", "}")));
 
     assertError(
         Joiner.on('\n')
@@ -573,7 +573,7 @@ public class InterfaceValidatorTest extends CompilerTreeApiTest {
                 "  Inner i;",
                 "  ^",
                 "  To fix: ",
-                "  Add an import for \"com.facebook.foo.Bar\"",
+                "  Add an import for \"com.example.foo.Bar\"",
                 "  Use \"Bar.Inner\" here instead of \"Inner\"."));
   }
 
@@ -587,8 +587,8 @@ public class InterfaceValidatorTest extends CompilerTreeApiTest {
             "FooBar.java",
             Joiner.on('\n')
                 .join(
-                    "package com.facebook.baz;",
-                    "import com.facebook.bar.Bar;",
+                    "package com.example.baz;",
+                    "import com.example.bar.Bar;",
                     "class FooBar extends Bar {",
                     "  StaticMember.StaticMemberer.StaticMemberest i;",
                     "}")));
@@ -601,7 +601,7 @@ public class InterfaceValidatorTest extends CompilerTreeApiTest {
                 "  StaticMember.StaticMemberer.StaticMemberest i;",
                 "  ^",
                 "  To fix: ",
-                "  Add an import for \"com.facebook.baz.Baz.SuperStaticMember\"",
+                "  Add an import for \"com.example.baz.Baz.SuperStaticMember\"",
                 "  Use \"SuperStaticMember\" here instead of \"StaticMember\"."),
         Joiner.on('\n')
             .join(
@@ -623,9 +623,9 @@ public class InterfaceValidatorTest extends CompilerTreeApiTest {
             "Foo.java",
             Joiner.on('\n')
                 .join(
-                    "package com.facebook.foo;",
-                    "import com.facebook.bar.Bar;",
-                    "import com.facebook.baz.Baz;",
+                    "package com.example.foo;",
+                    "import com.example.bar.Bar;",
+                    "import com.example.baz.Baz;",
                     "public class Foo {",
                     "  Baz b;",
                     "  Bar.SuperStaticMember m;",
@@ -637,7 +637,7 @@ public class InterfaceValidatorTest extends CompilerTreeApiTest {
             + "  Bar.SuperStaticMember m;\n"
             + "  ^\n"
             + "  To fix: \n"
-            + "  Add an import for \"com.facebook.baz.Baz\"\n"
+            + "  Add an import for \"com.example.baz.Baz\"\n"
             + "  Use \"Baz\" here instead of \"Bar\".");
   }
 
@@ -645,10 +645,10 @@ public class InterfaceValidatorTest extends CompilerTreeApiTest {
   public void testQualifiedNestedGenericSucceeds() throws IOException {
     withClasspath(
         ImmutableMap.of(
-            "com/facebook/bar/Bar.java",
+            "com/example/bar/Bar.java",
             Joiner.on('\n')
                 .join(
-                    "package com.facebook.bar;",
+                    "package com.example.bar;",
                     "public class Bar<T> {",
                     "  public class Inner<U> { }",
                     "}")));
@@ -658,9 +658,9 @@ public class InterfaceValidatorTest extends CompilerTreeApiTest {
             "Foo.java",
             Joiner.on('\n')
                 .join(
-                    "package com.facebook.foo;",
+                    "package com.example.foo;",
                     "public class Foo {",
-                    "  com.facebook.bar.Bar<Integer>.Inner<String> i;",
+                    "  com.example.bar.Bar<Integer>.Inner<String> i;",
                     "}")));
 
     assertNoErrors();
@@ -670,10 +670,10 @@ public class InterfaceValidatorTest extends CompilerTreeApiTest {
   public void testQualifiedAnnotatedTypeSucceeds() throws IOException {
     withClasspath(
         ImmutableMap.of(
-            "com/facebook/bar/Bar.java",
+            "com/example/bar/Bar.java",
             Joiner.on('\n')
                 .join(
-                    "package com.facebook.bar;",
+                    "package com.example.bar;",
                     "public class Bar {",
                     "  public class Inner { }",
                     "}")));
@@ -684,10 +684,10 @@ public class InterfaceValidatorTest extends CompilerTreeApiTest {
             "Foo.java",
             Joiner.on('\n')
                 .join(
-                    "package com.facebook.foo;",
+                    "package com.example.foo;",
                     "import java.lang.annotation.*;",
                     "public class Foo {",
-                    "  com.facebook.bar.@Anno Bar.Inner i;",
+                    "  com.example.bar.@Anno Bar.Inner i;",
                     "}",
                     "@Target(ElementType.TYPE_USE)",
                     "@interface Anno { }")));
@@ -724,7 +724,7 @@ public class InterfaceValidatorTest extends CompilerTreeApiTest {
             "Constants.java",
             Joiner.on('\n')
                 .join(
-                    "package com.facebook.constants;",
+                    "package com.example.constants;",
                     "public class Constants {",
                     "  public static final int CONSTANT = 3 + 5;",
                     "  public static final int CONST2 = 3;",
@@ -735,7 +735,7 @@ public class InterfaceValidatorTest extends CompilerTreeApiTest {
             "Foo.java",
             Joiner.on('\n')
                 .join(
-                    "import com.facebook.constants.Constants;",
+                    "import com.example.constants.Constants;",
                     "class Foo {",
                     "  public static final int CONSTANT = Constants.CONSTANT + 1 +"
                         + " Constants.CONST2;",
@@ -749,7 +749,7 @@ public class InterfaceValidatorTest extends CompilerTreeApiTest {
                 "  public static final int CONSTANT = Constants.CONSTANT + 1 + Constants.CONST2;",
                 "                                              ^",
                 "  For a quick fix, add required_for_source_only_abi = True to"
-                    + " //com/facebook/constants:constants.",
+                    + " //com/example/constants:constants.",
                 "  A better fix is to move Constants to a new rule that contains only",
                 "  constants, and mark that rule required_for_source_only_abi."),
         Joiner.on('\n')
@@ -759,7 +759,7 @@ public class InterfaceValidatorTest extends CompilerTreeApiTest {
                 "  public static final int CONSTANT = Constants.CONSTANT + 1 + Constants.CONST2;",
                 "                                                                       ^",
                 "  For a quick fix, add required_for_source_only_abi = True to"
-                    + " //com/facebook/constants:constants.",
+                    + " //com/example/constants:constants.",
                 "  A better fix is to move Constants to a new rule that contains only",
                 "  constants, and mark that rule required_for_source_only_abi."));
   }
@@ -771,18 +771,18 @@ public class InterfaceValidatorTest extends CompilerTreeApiTest {
             "Constants.java",
             Joiner.on('\n')
                 .join(
-                    "package com.facebook.constants;",
+                    "package com.example.constants;",
                     "public class Constants {",
                     "  public static final int CONSTANT = 3 + 5;",
                     "  public static final int CONST2 = 3;",
                     "}")));
-    taskListenerFactory.addTargetAvailableForSourceOnlyAbi("//com/facebook/constants:constants");
+    taskListenerFactory.addTargetAvailableForSourceOnlyAbi("//com/example/constants:constants");
     compileWithValidation(
         ImmutableMap.of(
             "Foo.java",
             Joiner.on('\n')
                 .join(
-                    "import com.facebook.constants.Constants;",
+                    "import com.example.constants.Constants;",
                     "class Foo {",
                     "  public static final int CONSTANT = Constants.CONSTANT + 1 +"
                         + " Constants.CONST2;",

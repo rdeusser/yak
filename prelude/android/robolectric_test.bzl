@@ -17,9 +17,8 @@ load("@prelude//test:inject_test_run_info.bzl", "inject_test_run_info")
 load("@prelude//utils:expect.bzl", "expect")
 
 def _target_build_file_path(target):
-    cell = "" if target.cell in ["", "fbsource"] else target.cell + "/"
     package = target.package + "/" if target.package else ""
-    return cell + package + "BUCK"
+    return target.cell + "/" + package + "BUCK"
 
 def robolectric_test_impl(ctx: AnalysisContext) -> list[Provider]:
     if ctx.attrs._build_only_native_code:

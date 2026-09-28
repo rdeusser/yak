@@ -26,9 +26,6 @@ pub(crate) async fn crash(req: UnstableCrashRequest) -> buck2_error::Result<Gene
         }
         CrashType::Abort => {
             // Crash with SIGABRT.
-            // Should trigger folly signal handler to dump stack trace.
-            // SIGSEGV,SIGTERM,SIGBUS,SIGILL,etc. should behave similarly.
-            // https://fburl.com/code/ap385ats
             crash_on_dedicated_thread(|| std::process::abort())
         }
         CrashType::Oom => allocate_memory(req.bytes).await,

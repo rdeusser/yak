@@ -10,7 +10,6 @@
 
 package com.facebook.buck.jvm.kotlin.buildtools
 
-import com.facebook.buck.jvm.kotlin.cd.analytics.KotlinCDLoggingContext
 import com.facebook.buck.jvm.kotlin.kotlinc.incremental.KotlincMode
 import org.jetbrains.kotlin.buildtools.api.CompilationResult
 import org.jetbrains.kotlin.buildtools.api.CompilationService
@@ -19,13 +18,10 @@ import org.jetbrains.kotlin.buildtools.api.KotlinLogger
 import org.jetbrains.kotlin.buildtools.api.ProjectId
 
 @OptIn(ExperimentalBuildToolsApi::class)
-internal class KotlinCompilationService(
-    private val compilationService: CompilationService,
-    kotlinCDLoggingContext: KotlinCDLoggingContext,
-) {
+internal class KotlinCompilationService(private val compilationService: CompilationService) {
 
   private val jvmCompilationConfigurationFactory =
-      JvmCompilationConfigurationFactory(compilationService, kotlinCDLoggingContext)
+      JvmCompilationConfigurationFactory(compilationService)
 
   fun compile(
       projectId: ProjectId,

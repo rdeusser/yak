@@ -55,19 +55,19 @@ kotlin_library = prelude_rule(
         # individual file that may have additional dependencies, so it is
         # compiled by a separate rule.
         kotlin_library(
-          name = 'messenger',
-          srcs = glob(['**/*.kt'], excludes = ['MessengerModule.kt']),
+          name = 'app',
+          srcs = glob(['**/*.kt'], excludes = ['AppModule.kt']),
           deps = [
-            '//src/com/facebook/base:base',
+            '//src/com/example/base:base',
             '//third_party/guava:guava',
           ],
         )
 
         kotlin_library(
-          name = 'MessengerModule',
-          srcs = ['MessengerModule.kt'],
+          name = 'AppModule',
+          srcs = ['AppModule.kt'],
           deps = [
-            '//src/com/facebook/base:base',
+            '//src/com/example/base:base',
             '//src/com/google/inject:inject',
             '//third_party/guava:guava',
             '//third_party/jsr-330:jsr-330',
@@ -80,8 +80,8 @@ kotlin_library = prelude_rule(
           name = 'testutil',
           srcs = glob(['tests/**/*.kt'], excludes = 'tests/**/*Test.kt'),
           deps = [
-            ':lib-fb4a',
-            '//java/com/facebook/base:base',
+            ':lib-app',
+            '//java/com/example/base:base',
           ],
         )
         ```

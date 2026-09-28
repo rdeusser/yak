@@ -6,20 +6,18 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-# pyre-strict
-
-
 import asyncio
 import csv
 import json
 import platform
 import re
+import shutil
 import subprocess
 from pathlib import Path
 
-from buck2.tests.e2e_util.api.buck import Buck
-from buck2.tests.e2e_util.buck_workspace import buck_test, eden_remove, env
-from buck2.tests.e2e_util.helper.golden import golden, sanitize_daemon_stderr
+from e2e_util.api.buck import Buck
+from e2e_util.buck_workspace import buck_test, env
+from e2e_util.helper.golden import golden, sanitize_daemon_stderr
 
 
 def _get_process_name(pid: int) -> str | None:
@@ -46,7 +44,7 @@ def _get_process_name(pid: int) -> str | None:
     return result.stdout.strip() or None
 
 
-@buck_test(setup_eden=True, skip_final_kill=True)
+@buck_test(skip_final_kill=True)
 @env("BUCK2_TESTING_CHECKER_INTERVAL_SECONDS", "1")
 async def test_daemon_killed_on_checkout_removal(buck: Buck) -> None:
     # Start the daemon and capture its PID and daemon dir before removal.
@@ -59,10 +57,7 @@ async def test_daemon_killed_on_checkout_removal(buck: Buck) -> None:
     daemon_dir = await buck.get_daemon_dir()
 
     project_dir = Path(buck.cwd)
-    eden_dir = project_dir.parent / "eden"
-    eden_remove(eden_dir, project_dir, buck._env)
-
-    assert not project_dir.exists(), f"Eden checkout was not removed: {project_dir}"
+    shutil.rmtree(project_dir)
 
     # Wait for the daemon to detect the missing project root and shut down.
     await asyncio.sleep(20)

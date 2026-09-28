@@ -94,7 +94,7 @@ impl ReClientWithCache {
     /// Upload a raw local file to CAS by its absolute path.
     ///
     /// Computes the file's digest, uploads it to CAS, and returns the RE digest.
-    /// Called by the `upload_to_cas` RPC handler when tpx requests CAS upload
+    /// Called by the `upload_to_cas` RPC handler when the test executor requests CAS upload
     /// of a local test artifact file.
     pub async fn upload_local_file(
         &self,

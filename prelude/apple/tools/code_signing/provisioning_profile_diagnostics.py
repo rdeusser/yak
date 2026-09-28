@@ -6,23 +6,14 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-# pyre-strict
-
 from abc import ABCMeta, abstractmethod
 from pathlib import Path
 from typing import List, Optional, Type, TypeVar
 
-# Remediation text for diagnostic messages. Meta builds import from
-# meta_only/codesign_diagnostics_text.py (arc ios-certs doctor + internal links);
-# OSS builds use the generic Apple Developer Portal defaults from
-# codesign_diagnostics_text.py in this directory.
-# @oss-disable[end= ]: from ..meta_only.codesign_diagnostics_text import (
-    # @oss-disable[end= ]: CodesignDiagnosticsText,
-# @oss-disable[end= ]: )
 from .apple_platform import ApplePlatform
+from .codesign_diagnostics_text import CodesignDiagnosticsText
 from .identity import CodeSigningIdentity
 from .provisioning_profile_metadata import ProvisioningProfileMetadata
-from .codesign_diagnostics_text import CodesignDiagnosticsText # @oss-enable
 
 
 class IProvisioningProfileDiagnostics(metaclass=ABCMeta):

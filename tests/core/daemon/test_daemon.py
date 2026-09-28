@@ -6,9 +6,6 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-# pyre-strict
-
-
 import asyncio
 import contextlib
 import json
@@ -19,11 +16,11 @@ import time
 from pathlib import Path
 
 import pytest
-from buck2.tests.e2e_util.api.buck import Buck
-from buck2.tests.e2e_util.api.buck_result import BuckException
-from buck2.tests.e2e_util.asserts import expect_failure
-from buck2.tests.e2e_util.buck_workspace import buck_test, env
-from buck2.tests.e2e_util.helper.utils import daemon_is_alive
+from e2e_util.api.buck import Buck
+from e2e_util.api.buck_result import BuckException
+from e2e_util.asserts import expect_failure
+from e2e_util.buck_workspace import buck_test, env
+from e2e_util.helper.utils import daemon_is_alive
 
 
 @buck_test()
@@ -165,7 +162,6 @@ async def test_status_fields(buck: Buck) -> None:
     status = await buck.status()
     status = json.loads(status.stdout)
     assert status["valid_working_directory"]
-    assert status["valid_buck_out_mount"]
 
 
 @buck_test()

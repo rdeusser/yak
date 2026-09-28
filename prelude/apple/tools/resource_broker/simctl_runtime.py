@@ -6,40 +6,46 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-# pyre-strict
-
 import json
-from dataclasses import dataclass, field
-from typing import Optional
-
-from dataclasses_json import config, dataclass_json
+from dataclasses import dataclass
+from typing import Any, Optional
 
 from .utils import execute_generic_text_producing_command
 
 
-@dataclass_json
 @dataclass
 class XCSimDevice:
     name: str
     identifier: str
-    product_family: str = field(metadata=config(field_name="productFamily"))
+    product_family: str
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> "XCSimDevice":
+        return cls(
+            name=data["name"],
+            identifier=data["identifier"],
+            product_family=data["productFamily"],
+        )
 
 
-@dataclass_json
 @dataclass
 class XCSimRuntime:
     name: str
     platform: str
     version: str
-    supported_device_types: list[XCSimDevice] = field(
-        metadata=config(field_name="supportedDeviceTypes")
-    )
+    supported_device_types: list[XCSimDevice]
 
-
-@dataclass_json
-@dataclass
-class _XCSimRuntimes:
-    runtimes: list[XCSimRuntime]
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> "XCSimRuntime":
+        return cls(
+            name=data["name"],
+            platform=data["platform"],
+            version=data["version"],
+            supported_device_types=[
+                XCSimDevice.from_dict(device)
+                for device in data["supportedDeviceTypes"]
+            ],
+        )
 
 
 def _list_runtimes_command() -> list[str]:
@@ -57,8 +63,7 @@ def _simctl_runtimes_from_stdout(stdout: Optional[str]) -> list[XCSimRuntime]:
     if not stdout:
         return []
     data = json.loads(stdout)
-    # pyre-ignore[16]: `from_dict` is dynamically provided by `dataclass_json`
-    return _XCSimRuntimes.from_dict(data).runtimes
+    return [XCSimRuntime.from_dict(runtime) for runtime in data["runtimes"]]
 
 
 async def list_runtimes() -> list[XCSimRuntime]:

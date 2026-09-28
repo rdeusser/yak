@@ -1,21 +1,19 @@
-load("@fbcode//buck2:buck_rust_binary.bzl", "buck_rust_binary")
+load("//build_defs:rust.bzl", "rust_binary")
 
-oncall("build_infra")
-
-buck_rust_binary(
+rust_binary(
     name = "benchmark_memory",
     srcs = glob(
         ["src/**/*.rs"],
     ),
     crate_root = "src/main.rs",
     deps = [
-        "fbsource//third-party/rust:clap",
-        "//buck2/starlark-rust/starlark:starlark",
-        "//buck2/starlark-rust/starlark_syntax:starlark_syntax",
+        "//starlark-rust/starlark:starlark",
+        "//starlark-rust/starlark_syntax:starlark_syntax",
+        "//third-party/rust:clap",
     ] + select({
         "DEFAULT": [],
-        "ovr_config//os:linux": [
-            "fbsource//third-party/rust:libc",
+        "prelude//os:linux": [
+            "//third-party/rust:libc",
         ],
     }),
 )

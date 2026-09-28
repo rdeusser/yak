@@ -40,12 +40,6 @@ pub(crate) async fn new_generic_command(
         NewGenericRequest::DebugEval(e) => NewGenericResponse::DebugEval(
             OTHER_SERVER_COMMANDS.get()?.debug_eval(context, e).await?,
         ),
-        NewGenericRequest::Explain(m) => NewGenericResponse::Explain(
-            OTHER_SERVER_COMMANDS
-                .get()?
-                .explain(context, partial_result_dispatcher, m)
-                .await?,
-        ),
         NewGenericRequest::ExpandExternalCells(e) => NewGenericResponse::ExpandExternalCells(
             OTHER_SERVER_COMMANDS
                 .get()?

@@ -17,11 +17,11 @@ def set_cfg_modifiers(cfg_modifiers: list[Modifier] | None = None, extra_cfg_mod
     Args:
         cfg_modifiers:
             A list of modifiers to set. The simplest modifier is a constraint value target.
-            For example, to change the OS to linux in fbsource, this can be specified as `["ovr_config//os/constraints:linux"]`.
+            For example, to change the OS to linux, this can be specified as `["prelude//os/constraints:linux"]`.
         extra_cfg_modifiers_per_rule:
             A dictionary of rule name to a list of modifiers to set. This is applied on top of modifiers from `cfg_modifiers` parameter
             if a target's rule name matches the key, so it can override any modifier from `cfg_modifiers` parameter in the same PACKAGE.
-            For example, if this dictionary is `{"python_binary": ["ovr_config//os/constraints:macos"]}`,
+            For example, if this dictionary is `{"python_binary": ["prelude//os/constraints:macos"]}`,
             then all python_binary targets covered will have the macos constraint added to their configurations.
     """
 
@@ -29,11 +29,7 @@ def set_cfg_modifiers(cfg_modifiers: list[Modifier] | None = None, extra_cfg_mod
     # We want to enforce that `set_cfg_modifiers` is only invokable from a PACKAGE file and not a bzl file
     frame1 = call_stack_frame(1)
     if not _is_buck_tree_file(frame1.module_path):
-        # Now check the old bzl file for `set_cfg_modifiers` in case it is invoked through that one.
-        frame2 = call_stack_frame(2)
-        if not (frame2 and frame1.module_path.endswith("fbcode/buck2/cfg/experimental/set_cfg_modifiers.bzl") and _is_buck_tree_file(frame2.module_path)):
-            if not "third-party-buck" in frame2.module_path:
-                fail("set_cfg_modifiers is only allowed to be used from a PACKAGE or BUCK_TREE file, not a bzl file.")
+        fail("set_cfg_modifiers is only allowed to be used from a PACKAGE or BUCK_TREE file, not a bzl file.")
 
     cfg_modifiers = cfg_modifiers or []
     extra_cfg_modifiers_per_rule = extra_cfg_modifiers_per_rule or {}

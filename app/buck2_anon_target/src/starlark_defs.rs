@@ -250,7 +250,7 @@ fn analysis_actions_methods_anon_target(builder: &mut MethodsBuilder) {
     /// During analysis, rules can define and access the providers of anonymous targets before producing their own providers.
     /// Two distinct rules might ask for the same anonymous target, sharing the work it performs.
     ///
-    /// For more details see https://buck2.build/docs/rule_authors/anon_targets/
+    /// For more details see https://rdeusser.github.io/buck2/docs/rule_authors/anon_targets/
     fn anon_target<'v>(
         this: &AnalysisActions<'v>,
         // TODO(nga): this should be either positional or named, not both.

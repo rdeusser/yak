@@ -4,15 +4,12 @@ load(
 )
 load("@prelude//utils:source_listing.bzl", "source_listing")
 
-oncall("android_devxx")
-
 source_listing()
 
 buck_java_library(
     name = "cd",
     srcs = glob(["*.java"]),
     visibility = [
-        "prelude//toolchains/android/meta_only/src/com/facebook/buck/jvm/remote_worker/...",
         "prelude//toolchains/android/src/com/facebook/buck/...",
         "prelude//toolchains/android/test/com/facebook/buck/...",
     ],

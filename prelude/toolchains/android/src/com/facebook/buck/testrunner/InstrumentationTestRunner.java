@@ -851,8 +851,7 @@ public class InstrumentationTestRunner extends DeviceRunner {
     // Install the extra APEXes before the preTestSetupScript.
     // If installation requires reboot, such as if you are sideloading an APEX that doesn't support
     // rebootless updating per https://source.android.com/docs/core/ota/apex#installing-an-apex,
-    // that can be added in preTestSetupScript, e.g.
-    // arvr/projects/codec_avatar/prod/pre_test_setup_script_with_apex.sh.
+    // that can be added in preTestSetupScript.
     if (this.apexesToInstall != null && !this.apexesToInstall.isEmpty()) {
       System.err.println(String.format("Installing %d APEX(es)...", this.apexesToInstall.size()));
 
@@ -1310,7 +1309,7 @@ public class InstrumentationTestRunner extends DeviceRunner {
   }
 
   public Path createTRALogcatLog(String description, String name) throws IOException {
-    // Use Logcat type(id = 4 https://fburl.com/code/8xzvasdf)
+    // log_source 4 is the logcat log type.
     String annotationTemplate =
         String.format(
             "{\"type\": {\"formatted_log\": {\"log_source\": 4}}, \"description\": \"%s\"}",
@@ -1319,7 +1318,7 @@ public class InstrumentationTestRunner extends DeviceRunner {
   }
 
   public Path createTRAPlainTextLog(String description, String name) throws IOException {
-    // Use PLAIN_TEXT type(id = 5 https://fburl.com/code/8xzvasdf)
+    // log_source 5 is the plain text log type.
     String annotationTemplate =
         String.format(
             "{\"type\": {\"formatted_log\": {\"log_source\": 5}}, \"description\": \"%s\"}",

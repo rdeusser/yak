@@ -1,2 +1,2 @@
-# @nolint
+# The test needs a build file that fails to parse.
 not starlark code

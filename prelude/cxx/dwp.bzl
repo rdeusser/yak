@@ -79,7 +79,7 @@ def dwp(
     # A category suffix that will be added to the category of the link action that is generated.
     category_suffix: [str, None],
     # All `.o`/`.dwo` paths referenced in `obj`.
-    # TODO(T110378122): Ideally, referenced objects are a list of artifacts,
+    # TODO: Ideally, referenced objects are a list of artifacts,
     # but currently we don't track them properly.  So, we just pass in the full
     # link line and extract all inputs from that, which is a bit of an
     # overspecification.

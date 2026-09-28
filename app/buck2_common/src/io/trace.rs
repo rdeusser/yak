@@ -15,10 +15,10 @@ use buck2_fs::paths::abs_norm_path::AbsNormPathBuf;
 use buck2_fs::paths::forward_rel_path::ForwardRelativePath;
 use buck2_hash::BuckDashSet;
 
+use crate::file_ops::metadata::RawDirEntry;
 use crate::file_ops::metadata::RawPathMetadata;
 use crate::file_ops::metadata::RawSymlink;
 use crate::io::IoProvider;
-use crate::io::ReadDirOutcome;
 
 #[derive(Allocative, Debug, Hash, PartialEq, Eq, Clone)]
 pub struct Symlink {
@@ -134,14 +134,14 @@ impl IoProvider for TracingIoProvider {
     async fn read_dir_impl(
         &self,
         path: ProjectRelativePathBuf,
-    ) -> buck2_error::Result<ReadDirOutcome> {
-        let entries = self.io.read_dir_impl(path.clone()).await?.into_entries();
+    ) -> buck2_error::Result<Vec<RawDirEntry>> {
+        let entries = self.io.read_dir_impl(path.clone()).await?;
         self.add_project_path(path.clone());
         for entry in entries.iter() {
             self.add_project_path(path.join(ForwardRelativePath::unchecked_new(&entry.file_name)));
         }
 
-        Ok(ReadDirOutcome::Entries(entries))
+        Ok(entries)
     }
 
     async fn read_path_metadata_if_exists_impl(
@@ -176,23 +176,11 @@ impl IoProvider for TracingIoProvider {
         self.io.name()
     }
 
-    async fn eden_version(&self) -> buck2_error::Result<Option<String>> {
-        self.io.eden_version().await
-    }
-
-    async fn verify_eden_identity(&self) -> buck2_error::Result<()> {
-        self.io.verify_eden_identity().await
-    }
-
     fn project_root(&self) -> &ProjectRoot {
         self.io.project_root()
     }
 
     fn as_any(&self) -> &dyn std::any::Any {
         self
-    }
-
-    fn is_eden_repo(&self) -> bool {
-        self.io.is_eden_repo()
     }
 }

@@ -2661,7 +2661,7 @@ mod tests {
 
         // Paths with spaces should not be split.
         assert_eq!(
-            split_cfg("//fbobjc/Xcode Templates/File Templates/foo/..."),
+            split_cfg("//apple/Xcode Templates/File Templates/foo/..."),
             None,
         );
         assert_eq!(split_cfg("//path/dir name/sub dir/..."), None,);

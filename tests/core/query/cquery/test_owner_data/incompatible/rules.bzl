@@ -6,8 +6,6 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-# @nolint
-
 def _genrule(ctx):
     _ignore = ctx
     fail("Not needed in test")

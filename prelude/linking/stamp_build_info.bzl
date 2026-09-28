@@ -62,7 +62,7 @@ def stamp_build_info(
     build_info_json: Artifact | None = None,
 ) -> Artifact:
     """
-    If necessary, add fb_build_info section to binary via late-stamping
+    If necessary, add a build_info section to the binary via late-stamping
     """
     if cxx_stamp_build_info(ctx):
         if build_info_json == None:
@@ -79,7 +79,7 @@ def stamp_build_info(
         return add_elf_sections(
             ctx,
             obj,
-            {"fb_build_info": build_info_json},
+            {"build_info": build_info_json},
             stamped_output,
             category = "stamp_build_info",
         )

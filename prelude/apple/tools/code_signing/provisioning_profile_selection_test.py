@@ -414,7 +414,7 @@ class TestSelection(unittest.TestCase):
         )
 
     def test_matches_specific_app(self):
-        info_plist = InfoPlistMetadata("com.facebook.test", None, False)
+        info_plist = InfoPlistMetadata("com.example.test", None, False)
         identity = CodeSigningIdentity(
             "fingerprint",
             "name",
@@ -426,7 +426,7 @@ class TestSelection(unittest.TestCase):
             {"iOS"},
             {identity.fingerprint},
             {
-                "application-identifier": "BBBBBBBBBB.com.facebook.test",
+                "application-identifier": "BBBBBBBBBB.com.example.test",
             },
         )
         profiles = [
@@ -438,7 +438,7 @@ class TestSelection(unittest.TestCase):
                 {"iOS"},
                 {identity.fingerprint},
                 {
-                    "application-identifier": "BBBBBBBBBB.com.facebook.*",
+                    "application-identifier": "BBBBBBBBBB.com.example.*",
                 },
             ),
         ]
@@ -465,7 +465,7 @@ class TestSelection(unittest.TestCase):
         self.assertEqual(selected, SelectedProvisioningProfileInfo(expected, identity))
 
     def test_matches_wildcard(self):
-        info_plist = InfoPlistMetadata("com.facebook.test", None, False)
+        info_plist = InfoPlistMetadata("com.example.test", None, False)
         identity = CodeSigningIdentity(
             "fingerprint",
             "name",
@@ -492,7 +492,7 @@ class TestSelection(unittest.TestCase):
         self.assertEqual(selected, SelectedProvisioningProfileInfo(expected, identity))
 
     def test_force_included_app_entitlements(self):
-        info_plist = InfoPlistMetadata("com.facebook.test", None, False)
+        info_plist = InfoPlistMetadata("com.example.test", None, False)
         identity = CodeSigningIdentity(
             "fingerprint",
             "name",
@@ -504,7 +504,7 @@ class TestSelection(unittest.TestCase):
             {"iOS"},
             {identity.fingerprint},
             {
-                "application-identifier": "AAAAAAAAAA.com.facebook.test",
+                "application-identifier": "AAAAAAAAAA.com.example.test",
                 "keychain-access-groups": ["AAAAAAAAAA.*"],
                 "aps-environment": "production",
             },
@@ -515,7 +515,7 @@ class TestSelection(unittest.TestCase):
             provisioning_profiles=[profile],
             entitlements={
                 # Force included key, even if not present in the profile
-                "application-identifier": "AAAAAAAAAA.com.facebook.BuckApp",
+                "application-identifier": "AAAAAAAAAA.com.example.BuckApp",
                 "keychain-access-groups": ["AAAAAAAAAA.*"],
                 "aps-environment": "production",
             },
@@ -526,7 +526,7 @@ class TestSelection(unittest.TestCase):
         self.assertIsNotNone(selected)
 
     def test_unmatched_app_entitlement(self):
-        info_plist = InfoPlistMetadata("com.facebook.test", None, False)
+        info_plist = InfoPlistMetadata("com.example.test", None, False)
         identity = CodeSigningIdentity(
             "fingerprint",
             "name",
@@ -538,7 +538,7 @@ class TestSelection(unittest.TestCase):
             {"iOS"},
             {identity.fingerprint},
             {
-                "application-identifier": "AAAAAAAAAA.com.facebook.test",
+                "application-identifier": "AAAAAAAAAA.com.example.test",
                 "keychain-access-groups": ["AAAAAAAAAA.*"],
                 "aps-environment": "production",
             },
@@ -563,7 +563,7 @@ class TestSelection(unittest.TestCase):
         )
 
     def test_wildcard_app_entitlement_matches_any_value(self):
-        info_plist = InfoPlistMetadata("com.facebook.test", None, False)
+        info_plist = InfoPlistMetadata("com.example.test", None, False)
         identity = CodeSigningIdentity(
             "fingerprint",
             "name",
@@ -575,7 +575,7 @@ class TestSelection(unittest.TestCase):
             {"iOS"},
             {identity.fingerprint},
             {
-                "application-identifier": "AAAAAAAAAA.com.facebook.test",
+                "application-identifier": "AAAAAAAAAA.com.example.test",
                 "keychain-access-groups": ["AAAAAAAAAA.*"],
                 "aps-environment": "production",
                 "com.apple.security.hardened-process.enhanced-security-version": "*",
@@ -597,7 +597,7 @@ class TestSelection(unittest.TestCase):
         self.assertEqual(selected, SelectedProvisioningProfileInfo(profile, identity))
 
     def test_unmatched_wildcard_app_entitlement(self):
-        info_plist = InfoPlistMetadata("com.facebook.test", None, False)
+        info_plist = InfoPlistMetadata("com.example.test", None, False)
         identity = CodeSigningIdentity(
             "fingerprint",
             "name",
@@ -609,7 +609,7 @@ class TestSelection(unittest.TestCase):
             {"iOS"},
             {identity.fingerprint},
             {
-                "application-identifier": "AAAAAAAAAA.com.facebook.test",
+                "application-identifier": "AAAAAAAAAA.com.example.test",
                 "keychain-access-groups": ["AAAAAAAAAA.*"],
                 "aps-environment": "production",
             },

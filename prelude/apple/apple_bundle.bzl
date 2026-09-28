@@ -22,7 +22,6 @@ load(
     "ModularizationDependencyGraphInfo",  # @unused Used as a type
     "create_modularization_dep_graph_subtargets_and_provider",
 )
-# @oss-disable[end= ]: load("@prelude//apple/meta_only:linker_outputs.bzl", "subtargets_for_apple_bundle_extra_outputs")
 load("@prelude//apple/user:apple_selected_debug_path_file.bzl", "SELECTED_DEBUG_PATH_FILE_NAME")
 load("@prelude//apple/user:apple_selective_debugging.bzl", "AppleSelectiveDebuggingInfo")
 load("@prelude//apple/validation:required_reasons.bzl", "get_required_reasons_validator_output")
@@ -309,7 +308,7 @@ def _get_deps_selective_metadata(deps_debuggable_infos: list[AppleDebuggableInfo
 def _get_bundle_binary_dsym_artifacts(ctx: AnalysisContext, binary_output: AppleBundleBinaryOutput, executable_arg: ArgLike) -> list[Artifact]:
     if not ctx.attrs.split_arch_dsym:
         # Calling `dsymutil` on the correctly named binary in the _final bundle_ to yield dsym files
-        # with naming convention compatible with Meta infra.
+        # whose names match the binary in the bundle.
         binary_debuggable_info = binary_output.debuggable_info
         bundle_binary_dsym_artifact = get_apple_dsym_ext(
             ctx = ctx,
@@ -513,8 +512,6 @@ def apple_bundle_impl(ctx: AnalysisContext) -> list[Provider]:
 
     # Collect extra bundle outputs
     extra_output_provider = _extra_output_provider(ctx)
-    # @oss-disable[end= ]: extra_output_subtargets = subtargets_for_apple_bundle_extra_outputs(ctx, extra_output_provider)
-    # @oss-disable[end= ]: sub_targets.update(extra_output_subtargets)
 
     # index store
     index_store_subtargets, index_store_info = _index_store_data(ctx, deps_with_binary)
@@ -593,13 +590,6 @@ def apple_bundle_impl(ctx: AnalysisContext) -> list[Provider]:
                 filtered_map = aggregated_debug_info.debug_info.filtered_map,
                 selective_metadata = all_selective_metadata,
             ),
-            InstallInfo(
-                installer = ctx.attrs._apple_toolchain[AppleToolchainInfo].installer,
-                files = {
-                    "app_bundle": bundle,
-                    "options": install_data,
-                },
-            ),
             RunInfo(args = primary_binary_path_arg),
             linker_map_info,
             xcode_data_info,
@@ -613,6 +603,17 @@ def apple_bundle_impl(ctx: AnalysisContext) -> list[Provider]:
         + bundle_result.providers
         + validation_providers
     )
+    installer = ctx.attrs._apple_toolchain[AppleToolchainInfo].installer
+    if installer:
+        providers.append(
+            InstallInfo(
+                installer = installer,
+                files = {
+                    "app_bundle": bundle,
+                    "options": install_data,
+                },
+            ),
+        )
     if xplugins_debug_info:
         providers.append(xplugins_debug_info)
     providers.append(xplugins_function_mapping_manifest_info)
@@ -700,7 +701,7 @@ def generate_install_data(ctx: AnalysisContext, plist_path: str, populate_rule_s
         "fullyQualifiedName": ctx.label,
         "info_plist": plist_path,
         "platform_name": get_apple_sdk_name(ctx),
-        ## TODO(T110665037): read from .buckconfig
+        ## TODO: read from .buckconfig
         # We require the user to have run `xcode-select` and `/var/db/xcode_select_link` to symlink
         # to the selected Xcode. e.g: `/Applications/Xcode_14.2.app/Contents/Developer`
         "xcode_developer_path": "/var/db/xcode_select_link",

@@ -7,8 +7,6 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-# pyre-strict
-
 from __future__ import annotations
 
 import itertools
@@ -236,7 +234,6 @@ def __patch_spawn(var_names: list[str], saved_env: dict[str, str]) -> None:
         _resolve_path_entries(sys.path, dirs_only=True)
     )
 
-    # pyre-fixme[53]: Captured variable is not annotated.
     def _setup_child_env() -> None:
         proxy_dir = _extract_sitecustomize()
         for var in var_names:
@@ -285,8 +282,6 @@ def __patch_spawn(var_names: list[str], saved_env: dict[str, str]) -> None:
 
         std_spawn = mp_util.spawnv_passfds
 
-        # pyre-fixme[53]: Captured variable is not annotated.
-        # pyre-fixme[2]: Parameter must be annotated.
         def spawnv_passfds(path, args, passfds) -> None | int:
             with lock:
                 try:
@@ -320,15 +315,14 @@ def _resolve_path_entries(path: list[str], dirs_only: bool = False) -> list[str]
 
 def __patch_spawn_preparation_data() -> None:
     # Only needed for fastzip PARs, which use /proc/self/fd/<N> (Linux) or
-    # /dev/fd/<N> (macOS) paths in sys.path. Other PAR styles (e.g. xar) use
-    # real filesystem paths and don't need this patch.
+    # /dev/fd/<N> (macOS) paths in sys.path. Other PAR styles use real
+    # filesystem paths and don't need this patch.
     #
-    # We must also avoid importing multiprocessing.spawn during sitecustomize
-    # for xar PARs: importing it captures sys.executable in a module-level
-    # _python_exe variable (via set_executable(sys.executable)), but xar PARs
-    # fix up sys.executable later in __run_xar_main__.py. Importing too early
-    # would cause multiprocessing to spawn subprocesses (e.g. the resource
-    # tracker) with the wrong executable, crashing them.
+    # Importing multiprocessing.spawn captures sys.executable in a module-level
+    # _python_exe variable (via set_executable(sys.executable)). If a PAR's
+    # entry point fixes up sys.executable after sitecustomize runs, an early
+    # import makes multiprocessing spawn subprocesses (such as the resource
+    # tracker) with the wrong executable, which crashes them.
     if not any(entry.startswith(("/proc/self/fd/", "/dev/fd/")) for entry in sys.path):
         return
 
@@ -357,8 +351,6 @@ def __patch_subprocess_run(saved_env: dict[str, str]) -> None:
         _lib_path_vars = ("LD_LIBRARY_PATH", "LD_PRELOAD")
 
     @wraps(std_run)
-    # pyre-fixme[2]: Parameter must be annotated.
-    # pyre-fixme[53]: Captured variable `std_run` is not annotated.
     def _patched_run(args, env=None, **kwargs) -> subprocess.CompletedProcess[str]:
         if (
             args
@@ -415,7 +407,6 @@ def __patch_resource_tracker_fork() -> None:
     """
     Fix deadlock between multiprocessing resource tracker and forked children.
 
-    SEV: S630420
     Upstream Python issue: https://github.com/python/cpython/issues/88887
 
     Problem: Python 3.12 added ResourceTracker.__del__ which calls waitpid() on
@@ -533,7 +524,6 @@ def __clear_env(
 
 def __startup__() -> None:
     try:
-        # pyre-fixme[21]: Could not find module `__par__.__startup_function_loader__`.
         from __par__.__startup_function_loader__ import load_startup_functions
     except ImportError:
         par = os.environ.get("FB_PAR_FILENAME", "")
@@ -571,7 +561,6 @@ def __passthrough_exec_module() -> None:
     if spec:
         mod = module_from_spec(spec)
         sys.modules[__name__] = mod
-        # pyre-fixme[16]: Optional type has no attribute `exec_module`.
         spec.loader.exec_module(mod)
 
 

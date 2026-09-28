@@ -70,8 +70,7 @@ use crate::config::Config;
 /// Sort key for an `external_deps`-style tuple `(project, version, name)`
 /// (`version`/`name` may be `None`), or `None` if it isn't safe to reorder.
 ///
-/// Ordered by project, then name, then version — matching
-/// `fbcode/scripts/orvid/target_format.d`. Encoded as `project:name:version` so
+/// Ordered by project, then name, then version. Encoded as `project:name:version` so
 /// the existing Buildifier comparator (which splits on `:`/`.`) yields that order.
 fn tuple_sort_key(tuple: &ExprTuple) -> Option<String> {
     // Non-empty string keys by value; `None`/missing keys as empty. Non-string

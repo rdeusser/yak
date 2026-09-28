@@ -60,9 +60,9 @@ Test: .bzl files DO sort explicit keep-sorted list expressions
   > def get_deps():
   >     return [
   >         # buildifier: keep sorted
-  >         "fbsource//xplat/sonar/iOS:FlipperKitApple",
-  >         "fbsource//fbobjc/Apps/LightSpeed/Libraries/LightSpeedUIUtils:LSMountableViewFlipperSupport",
-  >         "fbsource//fbobjc/Libraries/Merlin:FBMerlinFlipperPlugin",
+  >         "root//shared/kit/iOS:KitApple",
+  >         "root//apple/Apps/Demo/Libraries/DemoUIUtils:MountableViewSupport",
+  >         "root//apple/Libraries/Plugins:PluginSupport",
   >     ]
   > EOF
   $ starlark-fmt-cfg keep_sorted_return.bzl
@@ -71,9 +71,9 @@ Test: .bzl files DO sort explicit keep-sorted list expressions
   def get_deps():
       return [
           # buildifier: keep sorted
-          "fbsource//fbobjc/Apps/LightSpeed/Libraries/LightSpeedUIUtils:LSMountableViewFlipperSupport",
-          "fbsource//fbobjc/Libraries/Merlin:FBMerlinFlipperPlugin",
-          "fbsource//xplat/sonar/iOS:FlipperKitApple",
+          "root//apple/Apps/Demo/Libraries/DemoUIUtils:MountableViewSupport",
+          "root//apple/Libraries/Plugins:PluginSupport",
+          "root//shared/kit/iOS:KitApple",
       ]
 
 Test: BUILD files DO get list args sorted

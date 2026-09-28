@@ -27,7 +27,6 @@
 pub mod daemon_id;
 pub mod dispatch;
 pub mod metadata;
-pub mod schedule_type;
 pub mod sink;
 pub mod source;
 pub mod span;
@@ -37,7 +36,6 @@ use std::str::FromStr;
 use std::sync::Arc;
 use std::time::SystemTime;
 
-use async_trait::async_trait;
 use buck2_cli_proto::CommandResult;
 use buck2_cli_proto::PartialResult;
 use buck2_wrapper_common::invocation_id::TraceId;
@@ -199,89 +197,18 @@ pub enum Event {
     Buck(BuckEvent),
 }
 
-/// Statistics from this event sink on how messages were processed.
-#[derive(Clone, Debug)]
-pub struct EventSinkStats {
-    /// Count of number of successful messages (e.g. those that have been processed by their downstream destination).
-    pub successes: u64,
-    // Count of messages that failed to be submitted and will not be retried.
-    pub failures_invalid_request: u64,
-    pub failures_unauthorized: u64,
-    pub failures_rate_limited: u64,
-    pub failures_pushed_back: u64,
-    pub failures_enqueue_failed: u64,
-    pub failures_internal_error: u64,
-    pub failures_timed_out: u64,
-    pub failures_unknown: u64,
-    /// How many messages are currently buffered by this sink.
-    pub buffered: u64,
-    /// How many messages were not even enqueued by this sink.
-    pub dropped: u64,
-    /// How many bytes were written into this sink.
-    pub bytes_written: u64,
-}
-
-impl EventSinkStats {
-    pub fn failures(&self) -> u64 {
-        let EventSinkStats {
-            successes: _,
-            failures_invalid_request,
-            failures_unauthorized,
-            failures_rate_limited,
-            failures_pushed_back,
-            failures_enqueue_failed,
-            failures_internal_error,
-            failures_timed_out,
-            failures_unknown,
-            buffered: _,
-            dropped: _,
-            bytes_written: _,
-        } = self;
-        *failures_invalid_request
-            + *failures_unauthorized
-            + *failures_rate_limited
-            + *failures_pushed_back
-            + *failures_enqueue_failed
-            + *failures_internal_error
-            + *failures_timed_out
-            + *failures_unknown
-    }
-}
-
 /// A sink for events, easily plumbable to the guts of systems that intend to produce events consumeable by
 /// higher-level clients. Sending an event is synchronous.
-#[async_trait]
 pub trait EventSink: Send + Sync {
     /// Sends an event into this sink, to be consumed elsewhere. Explicitly does not return a Result type; if sending
     /// an event does fail, implementations will handle the failure by panicking or performing some other graceful
     /// recovery; callers of EventSink are not expected to handle failures.
     fn send(&self, event: Event);
-
-    /// Like `send`, but bypasses any internal buffering and delivers the event
-    /// as directly as possible. For the scribe sink this means calling thrift
-    /// synchronously instead of going through the producer queue. This is
-    /// useful for high-priority events that must be delivered even under memory
-    /// pressure. The default implementation falls back to `send`.
-    async fn send_now(&self, event: Event) {
-        self.send(event);
-    }
 }
 
-pub trait EventSinkWithStats: Send + Sync {
-    fn to_event_sync(self: Arc<Self>) -> Arc<dyn EventSink>;
-
-    /// Collects stats on this sink (e.g. messages accepted, rejected).
-    fn stats(&self) -> EventSinkStats;
-}
-
-#[async_trait]
 impl EventSink for Arc<dyn EventSink> {
     fn send(&self, event: Event) {
         EventSink::send(self.as_ref(), event);
-    }
-
-    async fn send_now(&self, event: Event) {
-        EventSink::send_now(self.as_ref(), event).await;
     }
 }
 
@@ -337,16 +264,5 @@ mod tests {
             test,
             BuckEvent::try_from(Box::<buck2_data::BuckEvent>::from(test.clone())).unwrap()
         );
-    }
-
-    #[test]
-    fn trace_id_hash_produces_a_reasonable_number() {
-        let trace_id = TraceId::from_str("0436430c-2b02-624c-2032-570501212b57").unwrap();
-        let hash = trace_id.hash();
-        assert_eq!(3365465628718372403, hash);
-
-        let other_trace_id = TraceId::from_str("586615bb-f57a-45a6-8804-3c6fcb0347de").unwrap();
-        let hash = other_trace_id.hash();
-        assert_eq!(-386302638890495926, hash);
     }
 }

@@ -17,7 +17,6 @@ use buck2_client_ctx::exit_result::ExitResult;
 use buck2_error::BuckErrorContext;
 use buck2_fs::fs_util::uncategorized as fs_util;
 use buck2_wrapper_common::KillallFilter;
-use buck2_wrapper_common::is_buck2::WhoIsAsking;
 
 /// Kill all buck2 processes on the machine
 ///
@@ -69,7 +68,7 @@ impl BuckSubcommand for KillallCommand {
             project_root,
         };
 
-        buck2_wrapper_common::killall(WhoIsAsking::Buck2, &filter, |s| {
+        buck2_wrapper_common::killall(&filter, |s| {
             let _ignored = buck2_client_ctx::eprintln!("{}", s);
         })
         .then_some(())

@@ -10,7 +10,7 @@ def _dep_impl(ctx):
     out = ctx.actions.declare_output("dep", has_content_based_path = ctx.attrs.use_content_based_path)
     ctx.actions.run(
         [
-            "fbpython",
+            "python3",
             ctx.attrs.script,
             out.as_output(),
         ],
@@ -33,7 +33,7 @@ def _action_fail(ctx):
     out = ctx.actions.declare_output("failed_action", has_content_based_path = False)
     ctx.actions.run(
         cmd_args(
-            "fbpython",
+            "python3",
             "-c",
             "import sys; sys.exit(1)",
             out.as_output(),

@@ -6,18 +6,12 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-# @oss-disable[end= ]: load("@fbcode_macros//build_defs:platform_utils.bzl", "platform_utils")
 load(":rules.bzl", "BANNED_DEP_PATHS", "LATE_BINDING_ONLY_CRATES", "TOP_LEVEL_ONLY_CRATES")
-
-platform_utils = None # @oss-enable
-
-def _dtp():
-    return platform_utils.get_cxx_platform_for_base_path(package_name()).target_platform if platform_utils else None
 
 def _check_client_to_re_path(ctx: AnalysisContext):
     path = ctx.attrs.client_to_re_path
     if len(path) != 0:
-        m = "Buck2 client binary may not have a dependency on `fbcode//remote_execution/`!"
+        m = "Buck2 client binary may not have a dependency on `//remote_execution/`!"
         m += "\nDependency path:"
         m += "".join(["\n" + str(t) for t in path])
         fail(m)
@@ -36,7 +30,7 @@ def _check_top_level_only(ctx: AnalysisContext):
     for all_paths in ctx.attrs.top_level_only_paths:
         all_paths = list(all_paths)
         target = all_paths.pop()
-        remainder = filter(lambda t: not str(t.label).startswith("fbcode//buck2/app/buck2:"), all_paths)
+        remainder = filter(lambda t: not str(t.label).startswith("root//app/buck2:"), all_paths)
 
         if len(remainder) != 0:
             m = "Top-level-only crate `" + str(target.label) + "` may not be depended on by:"
@@ -69,13 +63,13 @@ _test_buck2_dep_graph = rule(
     },
 )
 
-_CLIENT_BIN = "fbcode//buck2/app/buck2:buck2_client-bin"
+_CLIENT_BIN = "//app/buck2:buck2_client-bin"
 
-_BUCK2_BIN = "fbcode//buck2/app/buck2:buck2-bin"
+_BUCK2_BIN = "//app/buck2:buck2-bin"
 
-_RE_CLIENT_TARGET = "//remote_execution/client_lib/wrappers/rust:re_client_lib"
+_RE_CLIENT_TARGET = "//remote_execution/re_grpc:remote_execution"
 
-_CLIENT_TO_RE = "somepath({}, filter(fbcode//remote_execution/, deps({})) + {})".format(_CLIENT_BIN, _CLIENT_BIN, _RE_CLIENT_TARGET)
+_CLIENT_TO_RE = "somepath({}, filter(root//remote_execution/, deps({})) + {})".format(_CLIENT_BIN, _CLIENT_BIN, _RE_CLIENT_TARGET)
 
 def test_buck2_dep_graph(name):
     banned_dep_paths = []
@@ -93,7 +87,6 @@ def test_buck2_dep_graph(name):
         name = name,
         banned_dep_paths = banned_dep_paths,
         client_to_re_path = _CLIENT_TO_RE,
-        default_target_platform = _dtp(),
         late_binding_only_paths = ["allpaths({}, {})".format(_BUCK2_BIN, c) for c in LATE_BINDING_ONLY_CRATES],
         top_level_only_paths = ["allpaths({}, {})".format(_BUCK2_BIN, c) for c in TOP_LEVEL_ONLY_CRATES],
     )

@@ -24,7 +24,7 @@
         "prelude//python/sourcedb/tests/test_files/triton_collision/a:b"
       ],
       "python_platform": "linux",
-      "python_version": "3.12-pyrefly",
+      "python_version": "3.12",
       "relative_to": null,
       "srcs": {
         "python.sourcedb.tests.test_files.triton_collision.kernel": [
@@ -56,7 +56,7 @@
         "prelude//python/sourcedb/tests/test_files/triton_collision:a_b"
       ],
       "python_platform": "linux",
-      "python_version": "3.12-pyrefly",
+      "python_version": "3.12",
       "relative_to": null,
       "srcs": {
         "python.sourcedb.tests.test_files.triton_collision.kernel": [
@@ -251,7 +251,7 @@
         "prelude//python/sourcedb/tests/test_files:triton_test"
       ],
       "python_platform": "linux",
-      "python_version": "3.12-pyrefly",
+      "python_version": "3.12",
       "relative_to": null,
       "srcs": {
         "python.sourcedb.tests.test_files.triton_kernel": [

@@ -27,7 +27,7 @@ int main(int argc, char const* argv[]) {
     //   /var/db/xcode_select_link/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang
     //   -c file.c -o file.o
 
-    // TODO(T128745718): We need to figure out the fastest way to implement this
+    // TODO: We need to figure out the fastest way to implement this
     // forwarder. There are multiple options with varying tradeoffs and we need
     // to make decisions along the following axes:
     // - Plist parsing vs memory comparison

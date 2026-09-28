@@ -106,7 +106,7 @@ def main(argv: List[str]) -> int:
         print(result.stderr, file=sys.stderr)
         return result.returncode
 
-    # Work around Clang bug where it fails silently: T187767815
+    # Work around a Clang bug where it fails silently.
     if os.stat(args.out).st_size == 0:
         print("error: clang produced empty file", file=sys.stderr)
         return EXIT_FAILURE

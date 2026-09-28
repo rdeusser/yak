@@ -37,7 +37,7 @@ def _projected_symlink_output_impl(ctx):
     )
     ctx.actions.run(
         cmd_args(
-            "fbpython",
+            "python3",
             "-c",
             _PROJECTED_SYMLINK_DIR,
             out.as_output(),

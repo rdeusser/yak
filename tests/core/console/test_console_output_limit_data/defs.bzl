@@ -47,7 +47,7 @@ def _noisy_test_rule_impl(ctx):
     return [
         DefaultInfo(out),
         ExternalRunnerTestInfo(
-            command = ["fbpython", "-c", _noisy_test_script],
+            command = ["python3", "-c", _noisy_test_script],
             use_project_relative_paths = True,
             type = "custom",
         ),

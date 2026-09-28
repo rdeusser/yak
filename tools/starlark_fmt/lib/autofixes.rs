@@ -220,7 +220,7 @@ x = z_func() + a_func()
         let source = indoc::indoc! {r#"
             my_rule(
                 deps = select({
-                    "ovr_config//cpu:arm64": [":z", ":a"],
+                    "config//cpu:arm64": [":z", ":a"],
                     "DEFAULT": None
                 }),
                 name = "x",
@@ -231,7 +231,7 @@ x = z_func() + a_func()
                 name = "x",
                 deps = select({
                     "DEFAULT": None,
-                    "ovr_config//cpu:arm64": [":a", ":z"],
+                    "config//cpu:arm64": [":a", ":z"],
                 }),
             )
         "#};

@@ -31,13 +31,9 @@ def python_needed_coverage_test_impl(ctx: AnalysisContext) -> list[Provider]:
         for module in needed_coverage.modules:
             test_cmd.append("--coverage-verdict={}={}".format(module, needed_coverage.ratio))
 
-    # A needed coverage run just runs the entire test binary as bundle to
-    # determine coverage.  Rather than special implementation in tpx, we
-    # just use a simple test type to do this, which requires settings a few
-    # additional flags/env-vars which the Python tpx test type would
-    # otherwise handle.
+    # A needed coverage run measures coverage by running the whole test binary once, so it
+    # uses the `simple` test type with the coverage flags added above.
     test_type = "simple"
-    test_env["TEST_PILOT"] = "1"
 
     # Setup RE executors based on the `remote_execution` param.
     re_executors = get_re_executors_from_props(ctx)
@@ -53,7 +49,7 @@ def python_needed_coverage_test_impl(ctx: AnalysisContext) -> list[Provider]:
             default_executor = re_executors.default_executor,
             executor_overrides = re_executors.executor_overrides,
             # We implicitly make this test via the project root, instead of
-            # the cell root (e.g. fbcode root).
+            # the cell root.
             run_from_project_root = re_executors.run_from_project_root,
             use_project_relative_paths = re_executors.use_project_relative_paths,
             supports_test_execution_caching = ctx.attrs.supports_test_execution_caching,

@@ -1,36 +1,30 @@
-load("@fbsource//tools/build_defs:rust_library.bzl", "rust_library")
-
-oncall("build_infra")
+load("//build_defs:rust.bzl", "rust_library")
 
 rust_library(
     name = "buck2_wrapper_common",
     srcs = glob(["src/**/*.rs"]),
-    test_deps = [
-        "fbsource//third-party/rust:serde_json",
-        "fbsource//third-party/rust:tempfile",
-    ],
     deps = [
-        "fbsource//third-party/rust:derive_more",
-        "fbsource//third-party/rust:dirs",
-        "fbsource//third-party/rust:futures",
-        "fbsource//third-party/rust:serde",
-        "fbsource//third-party/rust:sysinfo",
-        "fbsource//third-party/rust:tokio",
-        "fbsource//third-party/rust:uuid",
-        "//buck2/allocative/allocative:allocative",
-        "//buck2/app/buck2_error:buck2_error",
-        "//buck2/app/buck2_hash:buck2_hash",
-        "//buck2/gazebo/dupe:dupe",
+        "//allocative/allocative:allocative",
+        "//app/buck2_error:buck2_error",
+        "//app/buck2_hash:buck2_hash",
+        "//gazebo/dupe:dupe",
+        "//third-party/rust:derive_more",
+        "//third-party/rust:dirs",
+        "//third-party/rust:futures",
+        "//third-party/rust:serde",
+        "//third-party/rust:sysinfo",
+        "//third-party/rust:tokio",
+        "//third-party/rust:uuid",
     ] + select({
         "DEFAULT": [],
-        "ovr_config//os:linux": [
-            "fbsource//third-party/rust:nix",
+        "prelude//os:linux": [
+            "//third-party/rust:nix",
         ],
-        "ovr_config//os:macos": [
-            "fbsource//third-party/rust:nix",
+        "prelude//os:macos": [
+            "//third-party/rust:nix",
         ],
-        "ovr_config//os:windows": [
-            "fbsource//third-party/rust:windows-sys",
+        "prelude//os:windows": [
+            "//third-party/rust:windows-sys",
         ],
     }),
 )

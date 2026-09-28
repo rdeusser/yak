@@ -15,8 +15,6 @@ use std::process;
 use std::sync::Arc;
 use std::time::Duration;
 
-#[cfg(all(fbcode_build, target_os = "linux"))]
-use bpfjailer_client_rs::SOCK_PATHS as BPFJAILER_SOCK_PATHS;
 use buck2_cli_proto::DaemonProcessInfo;
 use buck2_client_ctx::daemon_constraints::gen_daemon_constraints;
 use buck2_client_ctx::version::BuckVersion;
@@ -33,7 +31,6 @@ use buck2_error::ErrorTag;
 use buck2_error::buck2_error;
 use buck2_error::conversion::clap::buck_error_clap_parser;
 use buck2_events::daemon_id::DaemonId;
-use buck2_events::daemon_id::set_daemon_id_for_panics;
 use buck2_fs::error::IoResultExt;
 use buck2_fs::fs_util;
 use buck2_fs::paths::forward_rel_path::ForwardRelativePath;
@@ -44,7 +41,6 @@ use buck2_server::daemon::server::BuckdServerInitPreferences;
 use buck2_util::threads::thread_spawn;
 use buck2_util::tokio_runtime::new_tokio_runtime;
 use dice::DetectCycles;
-use dupe::Dupe;
 use futures::FutureExt;
 use futures::StreamExt;
 use futures::channel::mpsc;
@@ -54,11 +50,6 @@ use futures::select;
 
 use crate::daemon_lower_priority::daemon_lower_priority;
 use crate::schedule_termination::maybe_schedule_termination;
-
-#[cfg(all(fbcode_build, target_os = "linux"))]
-const BPFJAILER_CONNECT_TO_SOCKET_RETRY_MS: i32 = 3000;
-#[cfg(all(fbcode_build, target_os = "linux"))]
-const BPFJAILER_RESPONSE_FROM_SOCKET_TIMEOUT_MS: i32 = 60000;
 
 #[derive(Debug, buck2_error::Error)]
 #[buck2(tag = Tier0)]
@@ -331,13 +322,7 @@ impl DaemonCommand {
             (listener, process_info, endpoint)
         };
 
-        // Start the fragmentation dump watcher now that we are in the final
-        // (post-daemonize-fork) process; threads do not survive that fork.
-        #[cfg(buck2_memfrag)]
-        mem_frag::start_dump_watcher();
-
         let daemon_id = DaemonId::parse_from_str(&self.daemon_id)?;
-        set_daemon_id_for_panics(daemon_id.dupe());
 
         tracing::info!("Starting Buck2 daemon");
         tracing::info!("Version: {}", BuckVersion::get_version()?);
@@ -359,38 +344,6 @@ impl DaemonCommand {
         // Higher performance for jemalloc, recommended (but may not have any effect on Mac)
         // https://github.com/jemalloc/jemalloc/blob/dev/TUNING.md#notable-runtime-options-for-performance-tuning
         memory::enable_background_threads()?;
-
-        // Lets DICE attribute the memory paging actually moves, by reading the
-        // allocator's per-thread counters around the work that frees and rebuilds
-        // values. Without a reader installed the totals stay zero.
-        //
-        // Not on Windows: `mem_frag` reaches jemalloc through bare
-        // `__attribute__((weak))` symbols, which need linker support it only has
-        // on ELF and Mach-O. Linking it into a Windows build makes the binary
-        // fault on startup, so the BUCK dep is gated to match this `cfg`.
-        //
-        // The runtime check is still needed where jemalloc is simply not the
-        // allocator, such as `mode/dev`. It is the precondition itself rather
-        // than a proxy for one: folly establishes it by reading
-        // `thread.allocatedp`, the very counter the reader goes on to use.
-        #[cfg(all(fbcode_build, not(windows)))]
-        if memory::is_using_jemalloc() {
-            dice::set_thread_alloc_counters(mem_frag::thread_alloc_counters);
-        }
-
-        let fb = buck2_common::fbinit::get_or_init_fbcode_globals();
-
-        if cfg!(target_os = "linux") {
-            #[cfg(fbcode_build)]
-            {
-                gflags::set_gflag_value(
-                    fb,
-                    "cgroup2_reader_update_interval_ms",
-                    gflags::GflagValue::U32(2000),
-                )
-                .expect("failed to set gflag --cgroup2_reader_update_interval_ms");
-            }
-        }
 
         // Unfortunately, buck-out doesn't really have a well-defined place/time at which it creates
         // the buck-out dir, instead just creating it whenever it first wants to write something to
@@ -491,7 +444,6 @@ impl DaemonCommand {
                 gen_daemon_constraints(&server_init_ctx.daemon_startup_config, &daemon_id)?;
 
             let buckd_server = BuckdServer::run(
-                fb,
                 log_reload_handle,
                 paths,
                 server_init_ctx,
@@ -604,7 +556,6 @@ impl DaemonCommand {
                         e
                     ),
                     quiet: true,
-                    task: false,
                 );
 
                 let _ignored = hard_shutdown_sender.unbounded_send(msg);
@@ -691,42 +642,6 @@ impl DaemonCommand {
         ))
     }
 
-    #[cfg(all(fbcode_build, target_os = "linux"))]
-    fn exit_bpfjailer() {
-        // Attempts to request that the BPFJailer remove this process (pid=0)
-        // from all jail Role IDs (uuid=""). If the process was not in any jail
-        // to begin with, this is a no-op.
-        //
-        // Note that there IS a `buck` Role ID that is assigned to us based on
-        // our cgroup name, and it's this role that allows the exit_jail request
-        // here to succeed.
-        let Some(sock_path) = BPFJAILER_SOCK_PATHS
-            .iter()
-            .find(|sock_path| std::path::Path::new(sock_path).exists())
-        else {
-            return;
-        };
-
-        match bpfjailer_handler_polyglot::exit_jail(
-            sock_path.to_string(),
-            "".to_owned(),
-            0,
-            -1,
-            BPFJAILER_CONNECT_TO_SOCKET_RETRY_MS,
-            BPFJAILER_RESPONSE_FROM_SOCKET_TIMEOUT_MS,
-        ) {
-            Ok(()) => tracing::info!("Exited BPFJailer jail"),
-            Err(e) => {
-                let _ignored = soft_error!(
-                    "failed_to_exit_bpfjailer",
-                    buck2_error::internal_error!("Failed to exit BPFJailer jail: {}", e)
-                );
-                tracing::warn!("Failed to exit BPFJailer jail: {}", e)
-            }
-        }
-    }
-
-    #[cfg(not(all(fbcode_build, target_os = "linux")))]
     fn exit_bpfjailer() {}
 }
 
@@ -756,13 +671,10 @@ mod tests {
     use rand::SeedableRng;
     use tokio::runtime::Handle;
 
-    // `fbinit_tokio` is not on crates, so we cannot use `#[fbinit::test]`.
     #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
     async fn test_daemon_smoke() {
         buck2_certs::certs::maybe_setup_cryptography();
         buck2_action_impl::init_late_bindings();
-
-        let fbinit = unsafe { fbinit::perform_init() };
 
         buck2_core::client_only::CLIENT_ONLY_VAL.init(false);
 
@@ -803,7 +715,6 @@ mod tests {
         let daemon_id = DaemonId::new();
 
         let handle = tokio::spawn(BuckdServer::run(
-            fbinit,
             <dyn LogConfigurationReloadHandle>::noop(),
             invocation_paths,
             BuckdServerInitPreferences {

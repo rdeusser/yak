@@ -25,21 +25,23 @@ def _match_recursive_target_types(target: bxl.ConfiguredTargetNode, recursive_ta
     return False
 
 def _normalize_include_exclude_pattern(pattern):
-    if pattern.startswith("//"):
-        pattern = "fbsource" + pattern
-    elif "//" not in pattern:
-        pattern = "fbsource//" + pattern
-    return pattern.removesuffix("...")
+    return pattern.removeprefix("//").removesuffix("...")
+
+def _pattern_matches(raw_target_str: str, pattern: str) -> bool:
+    # A pattern without a cell, such as `//foo/...` or `foo/bar`, matches targets in any cell.
+    if "//" not in pattern:
+        raw_target_str = raw_target_str.split("//", 1)[1]
+    return raw_target_str.startswith(pattern)
 
 def _match_include_exclude_patterns(target: bxl.ConfiguredTargetNode, exclude_patterns, include_patterns, bxl_ctx):
     raw_target_str = str(target.label.raw_target())
     for pattern in exclude_patterns:
-        if raw_target_str.startswith(pattern):
+        if _pattern_matches(raw_target_str, pattern):
             log_debug("Target filtered out for matching target_exclude_pattern: target={}, pattern={}", target.label.raw_target(), pattern, bxl_ctx = bxl_ctx)
             return False
     if include_patterns:
         for pattern in include_patterns:
-            if raw_target_str.startswith(pattern):
+            if _pattern_matches(raw_target_str, pattern):
                 return True
         log_debug("Target filtered out for not matching target_include_pattern: target={}", target.label.raw_target(), bxl_ctx = bxl_ctx)
         return False
@@ -64,21 +66,13 @@ def _main(bxl_ctx):
     Then we can use a dynamic function to continue the generation progress.
 
     References:
-    https://buck2.build/docs/api/bxl/bxl.ConfiguredTargetNode/#bxlconfiguredtargetnoderesolved_attrs_eager
-    https://fb.workplace.com/groups/buck2dev/permalink/3745100652444646/
-    https://buck2.build/docs/developers/dynamic_output/#dynamic-output
+    https://rdeusser.github.io/buck2/docs/api/bxl/bxl.ConfiguredTargetNode/#bxlconfiguredtargetnoderesolved_attrs_eager
+    https://rdeusser.github.io/buck2/docs/rule_authors/dynamic_dependencies/
     """
     actions = bxl_ctx.bxl_actions().actions
     targets = []  # list[ConfiguredTargetNode]. Configured target list from command line after target pattern expansion.
     explicit_targets = {}  # dict[TargetLabel, True]. Explicit target list from command line, i.e., not from target pattern expansion.
     for ulabel in bxl_ctx.cli_args.target:
-        # Add explicit cell name when it's omitted as otherwise BXL will use cell name of BXL script, i.e., prelude.
-        if bxl_ctx.cli_args.fbsource and (":" in ulabel or "..." in ulabel):
-            if "//" not in ulabel:
-                ulabel = "fbsource//" + ulabel
-            elif ulabel.startswith("//"):
-                ulabel = "fbsource" + ulabel
-
         # Target label or alias.
         is_explicit_target = ((":" in ulabel) and (not ulabel.endswith(":"))) or ((":" not in ulabel) and ("/" not in ulabel))
 
@@ -185,7 +179,7 @@ def _main(bxl_ctx):
 
     # This lambda function gets executed after attrs are written into the json files and then loads them back to get resolved macro values.
     # Params:
-    # ctx, artifacts, outputs: required params by a dynamic output lambda function(see https://buck2.build/docs/rule_authors/dynamic_dependencies/)
+    # ctx, artifacts, outputs: required params by a dynamic output lambda function(see https://rdeusser.github.io/buck2/docs/rule_authors/dynamic_dependencies/)
     # cli_args: bxl_ctx.cli_args, this is not available inside the lambda function so we have to pass them in as param
     # buck_root: bxl_ctx.buck_root(), same as above
     def gen_vcxproj_files(
@@ -275,10 +269,6 @@ main = bxl_main(
             default = [],
             doc = "Extra options passed to buck build command of generated project(s) build settings. Escape `-` with `\\-`.",
         ),
-        "fbsource": cli_args.bool(
-            default = False,
-            doc = "Whether to turn on fbsource specific behaviors.",
-        ),
         "immediate_buck_options": cli_args.list(
             cli_args.string(),
             default = [],
@@ -290,7 +280,6 @@ main = bxl_main(
         ),
         "mode_files": cli_args.list(
             cli_args.string(),
-            default = ["fbsource//arvr/mode/win/dev"],
             doc = "List of mode files to generate projects for.",
         ),
         "mode_hashes": cli_args.option(
@@ -319,13 +308,13 @@ main = bxl_main(
             cli_args.string(),
             doc = "Buck target(s) to generate project files for. Takes in buck target label and/or pattern.",
         ),
-        # Not using target_expr() here as it can get extremely slow when expanding massive pattern like xplat/...
+        # Not using target_expr() here as it can get extremely slow when expanding a massive pattern.
         "target_exclude_pattern": cli_args.list(
             cli_args.string(),
             default = [],
             doc = "Buck target label, pattern or path to exclude in generation.",
         ),
-        # Not using target_expr() here as it can get extremely slow when expanding massive pattern like xplat/...
+        # Not using target_expr() here as it can get extremely slow when expanding a massive pattern.
         "target_include_pattern": cli_args.list(
             cli_args.string(),
             default = [],

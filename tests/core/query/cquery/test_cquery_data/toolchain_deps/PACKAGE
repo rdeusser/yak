@@ -1,0 +1,2 @@
+# The tests depend on the toolchains in another package.
+package(visibility = ["PUBLIC"])

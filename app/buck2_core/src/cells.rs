@@ -297,8 +297,8 @@ impl CellResolver {
     }
 
     /// Get a `CellName` from a path by finding the best matching cell path that
-    /// is a prefix of the current path relative to the project root. e.g. `fbcode/foo/bar` matches
-    /// cell path `fbcode`.
+    /// is a prefix of the current path relative to the project root. e.g. `other/foo/bar` matches
+    /// cell path `other`.
     pub fn find<P: AsRef<ProjectRelativePath> + ?Sized>(&self, path: &P) -> CellName {
         *self
             .0

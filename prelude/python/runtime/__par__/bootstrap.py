@@ -6,8 +6,6 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-# pyre-strict
-
 from __future__ import annotations
 
 import os
@@ -66,7 +64,6 @@ def run_as_main(
     if not main_function:
         import runpy
 
-        # pyre-fixme[16]: Module `runpy` has no attribute `_run_module_as_main`.
         runpy._run_module_as_main(main_module, alter_argv=False)
         return
 

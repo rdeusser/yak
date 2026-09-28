@@ -52,12 +52,6 @@ probe = rule(
     cfg = constraint_overrides.transition,
 )
 
-python_probe = rule(
-    impl = _probe_impl,
-    attrs = dict(constraint_overrides.attributes, selected = attrs.list(attrs.string()), opt_by_default_enabled = attrs.bool(default = False)),
-    cfg = constraint_overrides.python_transition,
-)
-
 def _group_impl(ctx):
     return [DefaultInfo(sub_targets = {key: [DefaultInfo(), dep[ConstraintValueInfo]] for key, dep in ctx.attrs.entries.items()})]
 

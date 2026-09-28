@@ -115,22 +115,22 @@ def _make_cc_shim(ctx: AnalysisContext, name: str, cmd: cmd_args) -> cmd_args:
 
     For a cmd like this:
 
-        buck-out/v2/art/fbcode/tools/build/buck/wrappers/__fbcc__/0cdd64957fa390c4/fbcc \
+        buck-out/v2/art/root/tools/build/__cc_wrapper__/0cdd64957fa390c4/cc_wrapper \
         -resource-dir \
-        fbcode/third-party-buck/platform010/build/llvm-fb/21/lib/clang/stable \
-        -Bfbcode/third-party-buck/platform010/build/binutils/x86_64-facebook-linux/bin
+        third-party/toolchains/build/llvm/21/lib/clang/stable \
+        -Bthird-party/toolchains/build/binutils/x86_64-pc-linux-gnu/bin
 
     we use `absolute_prefix` to insert a recognizable marker `${..}/` in front
     of every argument that is a path. The markers are later substituted with an
     appropriate value after learning the buildscript-selected working directory.
 
         python3 \
-        fbcode/buck2/prelude/rust/tools/from_any_dir.py \
-        --cwd=/re_cwd/buck-out/v2/art/fbsource/eef091ffd45259ca/third-party/rust/vendor/gmp-mpfr-sys/__1-build-script-run__/cwd \
-        ${..}/buck-out/v2/art/fbcode/tools/build/buck/wrappers/__fbcc__/0cdd64957fa390c4/fbcc \
+        prelude/rust/tools/from_any_dir.py \
+        --cwd=/re_cwd/buck-out/v2/art/root/eef091ffd45259ca/third-party/rust/vendor/gmp-mpfr-sys/__1-build-script-run__/cwd \
+        ${..}/buck-out/v2/art/root/tools/build/__cc_wrapper__/0cdd64957fa390c4/cc_wrapper \
         -resource-dir \
-        ${..}/fbcode/third-party-buck/platform010/build/llvm-fb/21/lib/clang/stable \
-        -B${..}/fbcode/third-party-buck/platform010/build/binutils/x86_64-facebook-linux/bin
+        ${..}/third-party/toolchains/build/llvm/21/lib/clang/stable \
+        -B${..}/third-party/toolchains/build/binutils/x86_64-pc-linux-gnu/bin
 
     There are 4 categories of paths which are relative to different locations.
 

@@ -25,9 +25,9 @@ def _simple_test_impl(ctx):
     return [
         DefaultInfo(out),
         ExternalRunnerTestInfo(
-            command = ["fbpython", "-c", script],
+            command = ["python3", "-c", script],
             use_project_relative_paths = True,
-            type = "lionhead",
+            type = "custom",
             supports_test_execution_caching = ctx.attrs.supports_test_execution_caching,
             env = env,
         ),

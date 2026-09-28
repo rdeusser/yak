@@ -1,0 +1,3 @@
+enforce_visibility_intersection()
+
+package(visibility = ["root//capped/child/..."])

@@ -1,8 +1,5 @@
-load("@fbcode_macros//build_defs:python_library.bzl", fbcode_python_library = "python_library")
 load("@prelude//utils:source_listing.bzl", "source_listing")
 load(":test_rules.bzl", "build_mode_alias")
-
-oncall("pyre")
 
 source_listing()
 
@@ -81,7 +78,7 @@ alias(
 python_library(
     name = "alias_lib",
     srcs = ["alias.py"],
-    # @lint-ignore BUCKLINT tests Python type checking sourcedb functionality with base_module
+    # Tests the Python type checking sourcedb with a `base_module`.
     base_module = "",
 )
 
@@ -131,12 +128,13 @@ python_library(
 
 # Test targets for Triton source DB filtering.
 
-fbcode_python_library(
+python_library(
     name = "triton_test_py",
     srcs = ["triton_kernel.py"],
-    # Real triton_kernel rules generate a *_py python_library with cpp_deps.
-    # The source DB should stub it to avoid materializing expensive AOT output.
-    cpp_deps = [":triton_test"],
+    # Real triton_kernel rules generate a *_py python_library that depends on
+    # the generated library. The source DB should stub it to avoid
+    # materializing expensive AOT output.
+    deps = [":triton_test"],
 )
 
 python_library(

@@ -22,7 +22,6 @@ PythonInternalToolsInfo = provider(
         "make_py_package_modules": RunInfo,
         "make_source_db": RunInfo,
         "make_source_db_no_deps": RunInfo,
-        "run_lpar_main": Artifact,
         # A filegroup that gets added to all python executables
         "runtime_library": Dependency,
         "type_check_result_to_validation": RunInfo,
@@ -42,7 +41,6 @@ def _impl(ctx: AnalysisContext) -> list[Provider]:
             make_py_package_inplace = ctx.attrs.make_py_package_inplace[RunInfo],
             make_py_package_manifest_module = ctx.attrs.make_py_package_manifest_module[RunInfo],
             make_py_package_modules = ctx.attrs.make_py_package_modules[RunInfo],
-            run_lpar_main = ctx.attrs.run_lpar_main,
             runtime_library = ctx.attrs.runtime_library,
             type_check_result_to_validation = ctx.attrs.type_check_result_to_validation[RunInfo],
         ),
@@ -60,7 +58,6 @@ python_internal_tools = rule(
         "make_py_package_modules": attrs.exec_dep(default = "prelude//python/tools:make_py_package_modules", providers = [RunInfo]),
         "make_source_db": attrs.exec_dep(default = "prelude//python/tools:make_source_db", providers = [RunInfo]),
         "make_source_db_no_deps": attrs.exec_dep(default = "prelude//python/tools:make_source_db_no_deps", providers = [RunInfo]),
-        "run_lpar_main": attrs.source(default = "prelude//python/tools/make_par:__run_lpar_main__.py"),
         "runtime_library": attrs.dep(default = "prelude//python/runtime:bootstrap_files"),
         "type_check_result_to_validation": attrs.exec_dep(default = "prelude//python/tools:type_check_result_to_validation", providers = [RunInfo]),
     },

@@ -24,7 +24,6 @@ use buck2_client_ctx::daemon::client::StdoutPartialResultHandler;
 use buck2_client_ctx::events_ctx::EventsCtx;
 use buck2_client_ctx::exit_result::ExitResult;
 use buck2_client_ctx::streaming::StreamingCommand;
-use buck2_core::if_else_opensource;
 
 use crate::commands::query::common::CommonQueryOptions;
 
@@ -44,10 +43,7 @@ branches of `select()` dictionaries will be treated as dependencies.
 
 Run `buck2 docs uquery` or
 ",
-        if_else_opensource!(
-            "https://buck2.build/docs/users/query/uquery/",
-            "https://www.internalfb.com/intern/staticdocs/buck2/docs/users/query/uquery/",
-        ),
+        "https://rdeusser.github.io/buck2/docs/users/query/uquery/",
         r#"
 for more documentation about the functions available in uquery
 expressions.

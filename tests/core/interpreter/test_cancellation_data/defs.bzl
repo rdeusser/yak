@@ -6,8 +6,6 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-# @nolint
-
 def spin():
     for i in range(2147483647):
         for j in range(2147483647):

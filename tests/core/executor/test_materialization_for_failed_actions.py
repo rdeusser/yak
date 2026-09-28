@@ -6,16 +6,14 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-# pyre-strict
-
-
 import re
 from pathlib import Path
 
-from buck2.tests.e2e_util.api.buck import Buck
-from buck2.tests.e2e_util.asserts import expect_failure
-from buck2.tests.e2e_util.buck_workspace import buck_test
-from buck2.tests.e2e_util.helper.utils import filter_events, json_get, random_string
+import pytest
+from e2e_util.api.buck import Buck
+from e2e_util.asserts import expect_failure
+from e2e_util.buck_workspace import buck_test
+from e2e_util.helper.utils import filter_events, json_get, random_string
 
 HASH = r"[0-9a-fA-F]{16}"
 
@@ -61,6 +59,7 @@ async def check_materialize_inputs_for_failed_actions(buck: Buck) -> None:
         raise AssertionError("Did not find relevant MaterializeFailedInputs span")
 
 
+@pytest.mark.remote_execution
 @buck_test(data_dir="materialize_inputs_for_failed_actions")
 async def test_materialize_inputs_for_failed_actions(buck: Buck) -> None:
     await expect_failure(
@@ -76,6 +75,7 @@ async def test_materialize_inputs_for_failed_actions(buck: Buck) -> None:
     await check_materialize_inputs_for_failed_actions(buck)
 
 
+@pytest.mark.remote_execution
 @buck_test(data_dir="materialize_inputs_for_failed_actions")
 async def test_materialize_inputs_for_failed_actions_content_hash(buck: Buck) -> None:
     await expect_failure(
@@ -127,6 +127,7 @@ async def check_materialized_outputs_for_failed_action(buck: Buck) -> None:
     assert re.search(HASH, out2), "Expected hash in output path"
 
 
+@pytest.mark.remote_execution
 @buck_test(skip_for_os=["windows"], data_dir="materialize_outputs_for_failed_actions")
 async def test_materialize_outputs_for_failed_actions(buck: Buck) -> None:
     await expect_failure(
@@ -139,6 +140,7 @@ async def test_materialize_outputs_for_failed_actions(buck: Buck) -> None:
     await check_materialized_outputs_for_failed_action(buck)
 
 
+@pytest.mark.remote_execution
 @buck_test(skip_for_os=["windows"], data_dir="materialize_outputs_for_failed_actions")
 async def test_materialize_outputs_for_failed_actions_content_hash(buck: Buck) -> None:
     await expect_failure(
@@ -195,6 +197,7 @@ async def check_materialized_outputs_defined_by_run_action(buck: Buck) -> None:
     assert re.search(HASH, out), "Expected hash in output path"
 
 
+@pytest.mark.remote_execution
 @buck_test(skip_for_os=["windows"], data_dir="materialize_outputs_for_failed_actions")
 async def test_materialize_outputs_defined_by_run_action(buck: Buck) -> None:
     await expect_failure(
@@ -207,6 +210,7 @@ async def test_materialize_outputs_defined_by_run_action(buck: Buck) -> None:
     await check_materialized_outputs_defined_by_run_action(buck)
 
 
+@pytest.mark.remote_execution
 @buck_test(skip_for_os=["windows"], data_dir="materialize_outputs_for_failed_actions")
 async def test_materialize_outputs_defined_by_run_action_content_hash(
     buck: Buck,

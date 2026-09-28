@@ -6,19 +6,20 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-# pyre-strict
-
-
 import json
-import subprocess
 import time
-from pathlib import Path
 
-from buck2.tests.e2e_util.api.buck import Buck
-from buck2.tests.e2e_util.api.buck_result import ExitCodeV2
-from buck2.tests.e2e_util.asserts import expect_failure
-from buck2.tests.e2e_util.buck_workspace import buck_test
-from buck2.tests.e2e_util.helper.utils import filter_events, read_what_ran
+import pytest
+from e2e_util.api.buck import Buck
+from e2e_util.api.buck_result import ExitCodeV2
+from e2e_util.asserts import expect_failure
+from e2e_util.buck_workspace import buck_test
+from e2e_util.helper.utils import (
+    configure_served_file,
+    filter_events,
+    read_what_ran,
+    serve_file,
+)
 
 
 async def is_eligible_for_action_dedup(buck: Buck) -> bool:
@@ -109,6 +110,7 @@ async def test_write_json_with_content_based_path(buck: Buck) -> None:
     )
 
 
+@pytest.mark.remote_execution
 @buck_test()
 async def test_run_remote_with_content_based_path(buck: Buck) -> None:
     target = "root//:run_remote_with_content_based_path"
@@ -156,6 +158,7 @@ async def test_run_remote_with_content_based_path(buck: Buck) -> None:
     assert actual1 == actual2
 
 
+@pytest.mark.remote_execution
 @buck_test()
 async def test_identical_dep_file_hit_with_content_based_path(buck: Buck) -> None:
     target = "root//:run_remote_with_content_based_path"
@@ -196,6 +199,7 @@ async def test_symlink_with_content_based_path(buck: Buck) -> None:
     )
 
 
+@pytest.mark.remote_execution
 @buck_test()
 async def test_symlink_and_copy_with_content_based_path(buck: Buck) -> None:
     target = "root//:symlink_and_copy_with_content_based_path"
@@ -246,6 +250,7 @@ async def test_assembled_dir_with_content_based_path(buck: Buck) -> None:
         assert (out / name).is_symlink()
 
 
+@pytest.mark.remote_execution
 @buck_test()
 async def test_cas_artifact_with_content_based_path(buck: Buck) -> None:
     await build_target_with_different_platforms_and_verify_output_paths_are_identical(
@@ -255,88 +260,23 @@ async def test_cas_artifact_with_content_based_path(buck: Buck) -> None:
 
 @buck_test()
 async def test_download_with_content_based_path(buck: Buck) -> None:
-    await build_target_with_different_platforms_and_verify_output_paths_are_identical(
-        buck, "root//:download_with_content_based_path"
-    )
+    async with serve_file(b"downloaded with a content-based path\n") as served:
+        configure_served_file(buck, served)
+        await build_target_with_different_platforms_and_verify_output_paths_are_identical(
+            buck, "root//:download_with_content_based_path"
+        )
 
 
 @buck_test()
 async def test_download_with_content_based_path_and_no_metadata(buck: Buck) -> None:
-    await expect_failure(
-        buck.build(
-            "root//:download_with_content_based_path_and_no_metadata",
-        ),
-        stderr_regex=r"Downloads using content-based path .* must supply metadata \(usually in the form of a sha1\)!",
-    )
-
-
-def hg_init(cwd: Path) -> None:
-    subprocess.run(["hg", "init"], check=True, cwd=cwd)
-    hg_config_reponame(cwd)
-
-
-def hg_config_reponame(cwd: Path) -> None:
-    subprocess.run(
-        ["hg", "config", "remotefilelog.reponame", "--local", "no-repo"],
-        check=True,
-        cwd=cwd,
-    )
-
-
-@buck_test()
-async def test_offline_cas_artifact_with_content_based_path(buck: Buck) -> None:
-    hg_init(cwd=buck.cwd)
-
-    await buck.debug("trace-io", "enable")
-    target = "root//:empty_cas_artifact_with_content_based_path"
-    await buck.build(
-        target,
-        "--target-platforms",
-        "root//:p_default",
-        "--show-output",
-    )
-
-    await buck.debug("trace-io", "export-manifest")
-    await buck.kill()
-
-    await buck.build(
-        target,
-        "--target-platforms",
-        "root//:p_default",
-        "--show-output",
-        "-c",
-        "buck2.use_network_action_output_cache=true",
-        "--no-remote-cache",
-        "--local-only",
-    )
-
-
-@buck_test()
-async def test_offline_download_with_content_based_path(buck: Buck) -> None:
-    hg_init(cwd=buck.cwd)
-
-    await buck.debug("trace-io", "enable")
-    target = "root//:download_with_content_based_path"
-    await buck.build(
-        target,
-        "--target-platforms",
-        "root//:p_default",
-        "--show-output",
-    )
-
-    await buck.debug("trace-io", "export-manifest")
-    await buck.kill()
-
-    await buck.build(
-        target,
-        "--target-platforms",
-        "root//:p_default",
-        "--show-output",
-        "-c",
-        "buck2.use_network_action_output_cache=true",
-        "--no-remote-cache",
-        "--local-only",
-    )
+    async with serve_file(b"downloaded with a content-based path\n") as served:
+        configure_served_file(buck, served)
+        await expect_failure(
+            buck.build(
+                "root//:download_with_content_based_path_and_no_metadata",
+            ),
+            stderr_regex=r"Downloads using content-based path .* must supply metadata \(usually in the form of a sha1\)!",
+        )
 
 
 @buck_test()
@@ -366,6 +306,7 @@ async def test_dynamic_new_with_content_based_path(buck: Buck) -> None:
     )
 
 
+@pytest.mark.remote_execution
 @buck_test()
 async def test_projection_with_content_based_path(buck: Buck) -> None:
     await build_target_with_different_platforms_and_verify_output_paths_are_identical(
@@ -428,6 +369,7 @@ async def test_sets_inconsistent_params(buck: Buck) -> None:
     )
 
 
+@pytest.mark.remote_execution
 @buck_test()
 async def test_local_action_outputs_have_configuration_path_symlinks(
     buck: Buck,
@@ -450,6 +392,7 @@ async def test_local_action_outputs_have_configuration_path_symlinks(
     assert len(run_local_action_symlink_materialized) == 1
 
 
+@pytest.mark.remote_execution
 @buck_test()
 async def test_local_action_inputs_have_configuration_path_symlinks(
     buck: Buck,
@@ -472,6 +415,7 @@ async def test_local_action_inputs_have_configuration_path_symlinks(
     assert len(run_remote_output_symlink_materialized) == 1
 
 
+@pytest.mark.remote_execution
 @buck_test()
 async def test_output_symlink_is_updated(buck: Buck) -> None:
     target = "root//:run_remote_with_content_based_path"
@@ -511,6 +455,7 @@ async def test_argsfile_with_incorrectly_declared_output(buck: Buck) -> None:
     )
 
 
+@pytest.mark.remote_execution
 @buck_test()
 async def test_run_action_with_incremental_metadata(buck: Buck) -> None:
     target = "root//:incremental_action"
@@ -587,6 +532,7 @@ async def test_pass_cbp_promise_artifact_to_anon_target(
     )
 
 
+@pytest.mark.remote_execution
 @buck_test()
 async def test_run_with_anon_non_cbp_dep_eligible_for_dedupe(buck: Buck) -> None:
     await buck.build(
@@ -597,12 +543,13 @@ async def test_run_with_anon_non_cbp_dep_eligible_for_dedupe(buck: Buck) -> None
     assert await is_eligible_for_action_dedup(buck) == ELIGIBLE_FOR_DEDUPE
 
 
+@pytest.mark.remote_execution
 @buck_test()
 async def test_run_with_symlink_to_non_content_based_input_eligible_for_dedupe_bug(
     buck: Buck,
 ) -> None:
-    # TODO(T276504188): This test documents a BUG and asserts the buggy
-    # behavior, so it must be updated once the task is fixed.
+    # TODO: This test documents a BUG and asserts the buggy behavior, so it
+    # must be updated once the bug is fixed.
     #
     # The `run_with_symlink_to_non_cbp_input` target's consuming `run` action
     # depends on a symlink whose own path is content-based, but which points at
@@ -617,7 +564,7 @@ async def test_run_with_symlink_to_non_content_based_input_eligible_for_dedupe_b
     # artifact's own path and never follows a symlink to its target, so it
     # misses the configuration-based target.
     #
-    # When T276504188 is fixed, the consuming `run` action should instead be
+    # When the bug is fixed, the consuming `run` action should instead be
     # reported as INELIGIBLE_INPUT and this assertion must be flipped.
     await buck.build(
         "root//:run_with_symlink_to_non_cbp_input",
@@ -630,6 +577,7 @@ async def test_run_with_symlink_to_non_content_based_input_eligible_for_dedupe_b
     assert await is_eligible_for_action_dedup(buck) == ELIGIBLE_FOR_DEDUPE
 
 
+@pytest.mark.remote_execution
 @buck_test()
 async def test_not_eligible_for_dedupe(buck: Buck) -> None:
     await buck.build(
@@ -711,6 +659,7 @@ async def test_expect_eligible_for_dedupe_ineligible_output(buck: Buck) -> None:
     )
 
 
+@pytest.mark.remote_execution
 @buck_test()
 async def test_execution_platform_returns_unknown_eligibility(buck: Buck) -> None:
     # When an action's owner is configured for an execution platform (i.e. via
@@ -736,6 +685,7 @@ async def test_execution_platform_returns_unknown_eligibility(buck: Buck) -> Non
     assert eligible_for_dedupe_events.count(EXECUTION_PLATFORM_UNKNOWN_ELIGIBILITY) == 1
 
 
+@pytest.mark.remote_execution
 @buck_test()
 async def test_failing_run_with_run_info(buck: Buck) -> None:
     failure = await expect_failure(

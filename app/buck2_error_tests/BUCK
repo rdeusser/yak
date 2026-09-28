@@ -1,17 +1,15 @@
-load("@fbcode_macros//build_defs:native_rules.bzl", "buck_filegroup")
-load("@fbsource//tools/build_defs:rust_unittest.bzl", "rust_unittest")
+load("//build_defs:rust.bzl", "rust_test")
 
-oncall("build_infra")
-
-buck_filegroup(
+filegroup(
     name = "tests",
     srcs = glob([
         "src/**/*.golden",
         "src/**",
     ]),
+    visibility = ["PUBLIC"],
 )
 
-rust_unittest(
+rust_test(
     name = "buck2_error_tests",
     srcs = glob(["src/**/*.rs"]),
     env = {
@@ -20,9 +18,9 @@ rust_unittest(
         "CARGO_MANIFEST_DIR": "$(location :tests)",
     },
     deps = [
-        "fbsource//third-party/rust:anyhow",
-        "//buck2/app/buck2_error:buck2_error",
-        "//buck2/app/buck2_util:buck2_util",
-        "//buck2/starlark-rust/starlark:starlark",
+        "//app/buck2_error:buck2_error",
+        "//app/buck2_util:buck2_util",
+        "//starlark-rust/starlark:starlark",
+        "//third-party/rust:anyhow",
     ],
 )

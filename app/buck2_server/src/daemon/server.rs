@@ -27,9 +27,6 @@ use allocative::Allocative;
 use async_trait::async_trait;
 use buck2_build_api::configure_dice::configure_dice_for_buck;
 use buck2_build_api::spawner::BuckSpawner;
-use buck2_certs::validate::CertState;
-use buck2_certs::validate::check_cert_state;
-use buck2_certs::validate::validate_certs;
 use buck2_cli_proto::daemon_api_server::*;
 use buck2_cli_proto::*;
 use buck2_common::buckd_connection::BUCK_AUTH_TOKEN_HEADER;
@@ -41,7 +38,6 @@ use buck2_common::io::trace::TracingIoProvider;
 use buck2_common::legacy_configs::configs::LegacyBuckConfig;
 use buck2_common::memory;
 use buck2_common::sqlite::sqlite_db::SqliteIdentity;
-use buck2_common::tenting::TentingAclProvider;
 use buck2_core::buck2_env;
 use buck2_core::error::SoftErrorContext;
 use buck2_core::fs::project::ProjectRoot;
@@ -278,7 +274,6 @@ impl RepoStateInitPreferences {
         io: Arc<dyn IoProvider>,
         digest_config: DigestConfig,
         root_config: &LegacyBuckConfig,
-        tenting_acl_provider: Option<Arc<dyn TentingAclProvider>>,
         dice_state_path: &Path,
     ) -> buck2_error::Result<Arc<Dice>> {
         // `hydration` is `Some` when paging is enabled (via `enable_paging` or
@@ -289,7 +284,6 @@ impl RepoStateInitPreferences {
             digest_config,
             Some(root_config),
             self.detect_cycles,
-            tenting_acl_provider,
             hydration.map(|_| dice_state_path),
             hydration.map_or_else(Default::default, |h| h.pagable_storage_backend),
         )
@@ -332,8 +326,6 @@ pub(crate) struct BuckdServerData {
     daemon_shutdown: DaemonShutdown,
     daemon_state: Arc<DaemonState>,
     #[allocative(skip)]
-    cert_state: CertState,
-    #[allocative(skip)]
     inactivity_config: DaemonInactivityConfig,
     #[allocative(skip)]
     command_channel: UnboundedSender<()>,
@@ -353,7 +345,6 @@ pub struct BuckdServer(Arc<BuckdServerData>);
 impl BuckdServer {
     #[tracing::instrument(name = "daemon_listener", skip_all)]
     pub async fn run(
-        fb: fbinit::FacebookInit,
         log_reload_handle: Arc<dyn LogConfigurationReloadHandle>,
         paths: InvocationPaths,
         init_ctx: BuckdServerInitPreferences,
@@ -402,9 +393,6 @@ impl BuckdServer {
             None
         };
 
-        let cert_state = CertState::new().await;
-        certs_validation_background_job(cert_state.dupe()).await;
-
         let inactivity_config = DaemonInactivityConfig::try_new(
             init_ctx.daemon_startup_config.daemon_idle_timeout_s,
             init_ctx.started_for_clean_stale,
@@ -412,7 +400,6 @@ impl BuckdServer {
 
         let daemon_state = Arc::new(
             DaemonState::new(
-                fb,
                 paths,
                 init_ctx,
                 &rt,
@@ -442,7 +429,6 @@ impl BuckdServer {
             start_instant: Instant::now(),
             daemon_shutdown: DaemonShutdown { shutdown_channel },
             daemon_state,
-            cert_state,
             inactivity_config: inactivity_config.clone(),
             command_channel,
             log_reload_handle,
@@ -585,7 +571,7 @@ impl BuckdServer {
 
         let daemon_state = self.0.daemon_state.dupe();
         let trace_id = client_ctx.trace_id.parse()?;
-        let (events, dispatch) = daemon_state.prepare_events(trace_id).await?;
+        let (events, dispatch) = daemon_state.prepare_events(trace_id);
         let dispatch = dispatch.with_soft_error_context(soft_error_context);
         let ActiveCommand {
             guard,
@@ -624,12 +610,6 @@ impl BuckdServer {
             min_re_download_bytes_threshold: system_warning_config.min_re_download_bytes_threshold,
             avg_re_download_bytes_per_sec_threshold: system_warning_config
                 .avg_re_download_bytes_per_sec_threshold,
-            optin_vpn_check_targets_regex: system_warning_config
-                .optin_vpn_check_targets_regex
-                .clone(),
-            enable_stable_revision_check: system_warning_config.enable_stable_revision_check,
-            enable_health_check_process_isolation: system_warning_config
-                .enable_health_check_process_isolation,
             daemon_cgroup_path: {
                 #[cfg(unix)]
                 {
@@ -678,7 +658,6 @@ impl BuckdServer {
         let snapshot_collector =
             SnapshotCollector::new(data.dupe(), repo.dupe(), self.0.rt.clone());
         dispatch.instant_event(Box::new(snapshot_collector.create_snapshot().await));
-        let cert_state = self.0.cert_state.dupe();
 
         let repo_root = repo.paths.project_root().root().to_buf();
         // Spawn an async task to collect expensive info
@@ -726,7 +705,6 @@ impl BuckdServer {
                             client_ctx,
                             profiling_manager,
                             req.build_options(),
-                            cert_state.dupe(),
                             snapshot_collector,
                             cancellations,
                             command_start,
@@ -753,15 +731,7 @@ impl BuckdServer {
                     drop(version_control_revision_collector);
                     #[cfg(unix)]
                     drop(memory_reporter);
-                    match result {
-                        Ok(_) => dispatch.command_result(result_to_command_result(result)),
-                        Err(e) => match check_cert_state(cert_state).await {
-                            Some(err) => dispatch.command_result(error_to_command_result(
-                                err.context(format!("{e:?}")),
-                            )),
-                            _ => dispatch.command_result(error_to_command_result(e)),
-                        },
-                    }
+                    dispatch.command_result(result_to_command_result(result));
                 }
                 .boxed()
             },
@@ -795,10 +765,7 @@ impl BuckdServer {
 
         match self.run_streaming_fallible(req, opts, func).await {
             Ok(resp) => Ok(resp),
-            Err(e) => match check_cert_state(self.0.cert_state.dupe()).await {
-                Some(err) => Ok(error_to_response_stream(err.context(format!("{e:?}")))),
-                _ => Ok(error_to_response_stream(e)),
-            },
+            Err(e) => Ok(error_to_response_stream(e)),
         }
     }
 
@@ -986,7 +953,7 @@ where
     let (output_send, output_recv) = tokio::sync::mpsc::unbounded_channel();
 
     // We run the event consumer on new non-tokio thread to avoid the consumer task from getting stuck behind
-    // another tokio task in its lifo task slot. See T96012305 and https://github.com/tokio-rs/tokio/issues/4323 for more
+    // another tokio task in its lifo task slot. See https://github.com/tokio-rs/tokio/issues/4323 for more
     // information.
     let merge_task = thread_spawn("pump-events", move || {
         pump_events(events, state, output_send);
@@ -1159,7 +1126,6 @@ impl DaemonApi for BuckdServer {
             daemon_constraints.extra = Some(extra_constraints);
 
             let valid_working_directory = daemon_state.validate_cwd().is_ok();
-            let valid_buck_out_mount = daemon_state.validate_buck_out_mount(&repo).is_ok();
 
             let io_provider = repo.io.name().to_owned();
 
@@ -1180,10 +1146,8 @@ impl DaemonApi for BuckdServer {
                     ForkserverAccess::Client(f) => Some(f.pid()),
                     ForkserverAccess::None => None,
                 },
-                supports_vpnless: Some(daemon_state.data().http_client.supports_vpnless()),
                 http2: Some(daemon_state.data().http_client.http2()),
                 valid_working_directory: Some(valid_working_directory),
-                valid_buck_out_mount: Some(valid_buck_out_mount),
                 io_provider: Some(io_provider),
                 active_commands: crate::active_commands::active_commands_snapshot(),
                 allprocs_cgroup_path: {
@@ -1628,7 +1592,7 @@ impl DaemonApi for BuckdServer {
                 .trace_id
                 .parse()
                 .map_err(buck2_error::Error::from)?;
-            let (event_source, dispatcher) = self.0.daemon_state.prepare_events(trace_id).await?;
+            let (event_source, dispatcher) = self.0.daemon_state.prepare_events(trace_id);
             let dispatcher = dispatcher.with_soft_error_context(soft_error_context);
             let active_command = ActiveCommand::new(&dispatcher, client_ctx.sanitized_argv.clone());
             let repo = self
@@ -1981,114 +1945,6 @@ async fn inactivity_timeout(
         "inactivity timeout elapsed ({:?}), shutting down server",
         duration
     );
-}
-
-async fn certs_validation_background_job(cert_state: CertState) {
-    tokio::task::spawn(async move {
-        const CERTS_VALIDATION_INTERVAL: u64 = 60 * 60; // 1 hour
-        loop {
-            tokio::time::sleep(Duration::from_secs(CERTS_VALIDATION_INTERVAL)).await;
-            let result = validate_certs().await;
-            let mut valid = cert_state.state.lock().await;
-
-            *valid = result.is_ok();
-        }
-    });
-}
-
-#[cfg(fbcode_build)]
-pub(crate) mod eden_health {
-    use std::time::Duration;
-
-    use buck2_core::fs::project::ProjectRoot;
-    use buck2_core::soft_error;
-    use buck2_eden::connection::EdenConnectionManager;
-    use buck2_eden::connection::EdenDaemonIdentity;
-    use buck2_eden::error::EdenDaemonRestarted;
-    use buck2_eden::error::ErrorFromHangingMount;
-    use buck2_eden::semaphore;
-    use buck2_error::buck2_error;
-
-    pub(crate) async fn edenfs_health_check(fb: fbinit::FacebookInit, root: ProjectRoot) {
-        tokio::task::spawn(async move {
-            const HEALTH_CHECK_INTERVAL: u64 = 60 * 10; // 10 minutes
-            tracing::trace!(
-                "spawned EdenFS health check that runs every {} seconds",
-                HEALTH_CHECK_INTERVAL
-            );
-            // The Eden daemon identity from the previous iteration. An identity change means
-            // Eden restarted underneath this daemon, invalidating cached state and file
-            // handles. This catches restarts on any daemon with an Eden repo, including ones
-            // whose I/O provider doesn't go through Eden's Thrift interface.
-            let mut last_identity: Option<EdenDaemonIdentity> = None;
-            loop {
-                tokio::time::sleep(Duration::from_secs(HEALTH_CHECK_INTERVAL)).await;
-                match EdenConnectionManager::new(fb, &root, Some(semaphore::buck2_default())) {
-                    Ok(Some(conn)) => {
-                        let info = conn
-                            .with_eden(|eden| {
-                                tracing::trace!("running getDaemonInfo() on EdenFS service");
-                                eden.getDaemonInfo()
-                            })
-                            .await;
-                        match info {
-                            Ok(info) => {
-                                tracing::debug!("check determined EdenFS is not hanging");
-                                let identity = EdenDaemonIdentity::from_daemon_info(&info);
-                                if let Some(last) = &last_identity {
-                                    if !last.is_same_daemon(&identity) {
-                                        soft_error!(
-                                            "eden_restart_detected",
-                                            EdenDaemonRestarted {
-                                                old_pid: last.pid(),
-                                                old_start_time: last.start_time(),
-                                                new_pid: identity.pid(),
-                                                new_start_time: identity.start_time(),
-                                            }
-                                            .into()
-                                        )
-                                        .ok();
-                                    }
-                                }
-                                last_identity = Some(identity);
-                            }
-                            Err(e) if e.is_caused_by_hanging_mount() => {
-                                tracing::error!(
-                                    "check hit an EdenFS error caused by a hanging mount: {:#}",
-                                    e
-                                );
-                                soft_error!(
-                                    "eden_thrift_health_check_failed",
-                                    buck2_error!(buck2_error::ErrorTag::Input, "check failed with: {:#}", e),
-                                    quiet: true
-                                )
-                                .ok();
-                            }
-                            Err(e) => {
-                                tracing::debug!("check failed with a non-hanging error: {:#}", e);
-                            }
-                        }
-                    }
-                    // Only occurs if the .eden dir doesn't exist (indicative of an unmounted mount).
-                    // Ignore this case since it's not related to a hanging Eden daemon.
-                    Ok(None) => {
-                        tracing::debug!("failed to run check: .eden dir does not exist");
-                    }
-                    // Can occur for a number of reasons, including IO into the Eden mount failing.
-                    // This _could_ signal a hanging mount, so we'll report a possible hang.
-                    Err(e) => {
-                        tracing::error!("check failed to create an EdenFS client: {:#}", e);
-                        soft_error!(
-                            "eden_thrift_client_creation_failed",
-                            buck2_error!(buck2_error::ErrorTag::Input, "client creation failed with: {:#}", e),
-                            quiet: true
-                        )
-                        .ok();
-                    }
-                }
-            }
-        });
-    }
 }
 
 /// No-op set of command options.

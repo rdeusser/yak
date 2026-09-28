@@ -27,7 +27,6 @@ load("@prelude//utils:expect.bzl", "expect")
 # Forward whichever happen to be present so they stay reachable through the
 # apk_genrule wrapper.
 _OPTIONAL_NATIVE_LIB_SUBTARGETS = [
-    "gatorade_phase_evidence",
     "native_merge_debug",
     "relinked_libs",
     "relinked_libs_manifest",
@@ -47,7 +46,7 @@ def apk_genrule_impl(ctx: AnalysisContext) -> list[Provider]:
     input_android_aab_subtargets = None
     input_preprocessed_java_classes_info = None
     if ctx.attrs.apk != None:
-        # TODO(T104150125) The underlying APK should not have exopackage enabled
+        # TODO: The underlying APK should not have exopackage enabled
         input_android_apk_info = ctx.attrs.apk[AndroidApkInfo]
         expect(input_android_apk_info != None, "'apk' attribute must be an Android APK!")
         input_apk = input_android_apk_info.apk

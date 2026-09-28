@@ -16,7 +16,7 @@
 extern char** environ;
 
 static BOOL IsInsideRemoteExecutionWorker(void) {
-  // TODO: Remove dependence on ACTION_DIGEST, once D41872225 lands
+  // TODO: Remove dependence on ACTION_DIGEST.
   return getenv("INSIDE_RE_WORKER") != NULL || getenv("ACTION_DIGEST") != NULL;
 }
 

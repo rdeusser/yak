@@ -521,10 +521,6 @@ impl<Env: QueryEnvironment> DefaultQueryFunctionsModule<Env> {
     /// This function won't be implemented in the future, because buck2 query core does not support returning both files and targets from a single function.
     ///
     /// In buck1 it returns targets and files referenced by the given attribute in the given targets.
-    ///
-    /// <FbInternalOnly>
-    /// For more context see discussion in T126638795.
-    /// </FbInternalOnly>
     async fn labels(&self, attr: String, targets: TargetSet<Env::Target>) -> QueryFuncResult<Env> {
         self.implementation.labels(&attr, &targets)
     }
@@ -556,11 +552,10 @@ impl<Env: QueryEnvironment> DefaultQueryFunctionsModule<Env> {
     ///
     /// For example:
     /// ```text
-    /// $ buck2 uquery 'targets_in_buildfile(buildfile(//buck2:buck2))'
+    /// $ buck2 uquery 'targets_in_buildfile(buildfile(//app:main))'
     ///
-    /// //buck2:buck2
-    /// //buck2:buck2_bundle
-    /// //buck2:symlinked_buck2_and_tpx
+    /// //app:lib
+    /// //app:main
     /// ```
     async fn targets_in_buildfile(&self, env: &Env, files: FileSet) -> QueryFuncResult<Env> {
         Ok(self

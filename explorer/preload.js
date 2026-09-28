@@ -17,7 +17,7 @@ contextBridge.exposeInMainWorld('api', {
 
     // Run buck2 <action>
     status: () => ipcRenderer.invoke('buck2-status'),
-    targets: (target, host, mode) => ipcRenderer.invoke('buck2-targets', target, host, mode),
-    attributes: (target, host, mode) => ipcRenderer.invoke('buck2-attributes', target, host, mode),
-    providers: (target, host, mode) => ipcRenderer.invoke('buck2-providers', target, host, mode),
+    targets: (target, host) => ipcRenderer.invoke('buck2-targets', target, host),
+    attributes: (target, host) => ipcRenderer.invoke('buck2-attributes', target, host),
+    providers: (target, host) => ipcRenderer.invoke('buck2-providers', target, host),
 });

@@ -20,29 +20,8 @@ load(
     "traverse_shared_library_info",
 )
 load("@prelude//test:inject_test_run_info.bzl", "inject_test_run_info")
-load("@prelude//tests:test_listing.bzl", "TestListingInfo")
 load("@prelude//utils:argfile.bzl", "at_argfile")
 load("@prelude//utils:expect.bzl", "expect")
-
-ANDROID_EMULATOR_ABI_LABEL_PREFIX = "tpx-re-config::"
-DEFAULT_ANDROID_SUBPLATFORM = "android-30"
-DEFAULT_ANDROID_PLATFORM = "android-emulator"
-DEFAULT_ANDROID_INSTRUMENTATION_TESTS_USE_CASE = "instrumentation-tests"
-RIOT_USE_CASES = [
-    "foundation-diff",
-    "horizon-experiences-diff",
-    "horizon-os-codemod-diff",
-    "horizon-os-diff",
-    "horizon-os-human-lease",
-    "horizon-os-other",
-    "vr-diff",
-    "wearables-diff",
-    "wearables-human-lease",
-    "wearables-other",
-]
-SUPPORTED_POOLS = ["EUREKA_POOL", "HOLLYWOOD_POOL", "STAGE_DELPHI_POOL", "PANTHER_POOL", "SEACLIFF_POOL"]
-SUPPORTED_PLATFORMS = ["riot", "android-emulator", "rl-emulator"]
-SUPPORTED_USE_CASES = RIOT_USE_CASES + [DEFAULT_ANDROID_INSTRUMENTATION_TESTS_USE_CASE]
 
 def android_instrumentation_test_impl(ctx: AnalysisContext):
     android_toolchain = ctx.attrs._android_toolchain[AndroidToolchainInfo]
@@ -169,27 +148,11 @@ def android_instrumentation_test_impl(ctx: AnalysisContext):
             apk_exopackage_info.secondary_dex_directory,
         ])
 
-    listing_info = ctx.attrs._android_toolchain[TestListingInfo]
-
-    list_tests = listing_info.list_tests
-    if list_tests != None and "tpx:supports_static_listing=true" in ctx.attrs.labels and "tpx:supports_static_listing=false" not in ctx.attrs.labels:
-        list_tests_command = cmd_args([
-            list_tests[RunInfo],
-            "list-tests",
-            "--sources-file",
-            ctx.actions.write("source_files.txt", ctx.attrs._test_srcs, with_inputs = True, has_content_based_path = False),
-        ])
-        env["TPX_LIST_TESTS_COMMAND"] = list_tests_command
-
-    labels = ctx.attrs.labels
-    if "tpx:supports-test-result-output-spec" not in labels:
-        labels.append("tpx:supports-test-result-output-spec")
-
     test_info = ExternalRunnerTestInfo(
         type = "android_instrumentation",
         command = cmd,
         env = env,
-        labels = labels,
+        labels = ctx.attrs.labels,
         contacts = ctx.attrs.contacts,
         run_from_project_root = True,
         use_project_relative_paths = True,
@@ -213,125 +176,21 @@ def android_instrumentation_test_impl(ctx: AnalysisContext):
     ] + classmap_source_info
 
 def _compute_executor_overrides(ctx: AnalysisContext, instrumentation_test_can_run_locally: bool) -> dict[str, CommandExecutorConfig]:
-    remote_execution_properties = {
-        "platform": _compute_emulator_platform(ctx.attrs.labels or []),
-        "subplatform": _compute_emulator_subplatform(ctx.attrs.labels or []),
-    }
-
-    re_emulator_abi = _compute_emulator_abi(ctx.attrs.labels or [])
-    if re_emulator_abi != None:
-        remote_execution_properties["abi"] = re_emulator_abi
-
-    default_executor_override = CommandExecutorConfig(
-        local_enabled = instrumentation_test_can_run_locally,
-        remote_enabled = True,
-        remote_execution_properties = remote_execution_properties,
-        remote_execution_use_case = _compute_re_use_case(ctx.attrs.labels or []),
+    # A test executor requests one of these overrides by name for a test stage.
+    re_caps = ctx.attrs.re_caps or {}
+    re_use_case = ctx.attrs.re_use_case or {}
+    expect(
+        sorted(re_caps.keys()) == sorted(re_use_case.keys()),
+        "`re_caps` and `re_use_case` must name the same executor overrides, got [{}] and [{}]",
+        ", ".join(re_caps.keys()),
+        ", ".join(re_use_case.keys()),
     )
-    dynamic_listing_executor_override = default_executor_override
-    test_execution_executor_override = default_executor_override
-
-    if ctx.attrs.re_caps and ctx.attrs.re_use_case:
-        if "dynamic-listing" in ctx.attrs.re_caps and "dynamic-listing" in ctx.attrs.re_use_case:
-            _validate_executor_override_re_config(ctx.attrs.re_caps["dynamic-listing"], ctx.attrs.re_use_case["dynamic-listing"])
-            dynamic_listing_executor_override = CommandExecutorConfig(
-                local_enabled = instrumentation_test_can_run_locally,
-                remote_enabled = True,
-                remote_execution_properties = ctx.attrs.re_caps["dynamic-listing"],
-                remote_execution_use_case = ctx.attrs.re_use_case["dynamic-listing"],
-                meta_internal_extra_params = ctx.attrs.meta_internal_extra_params,
-            )
-        if "test-execution" in ctx.attrs.re_caps and "test-execution" in ctx.attrs.re_use_case:
-            _validate_executor_override_re_config(ctx.attrs.re_caps["test-execution"], ctx.attrs.re_use_case["test-execution"])
-            test_execution_executor_override = CommandExecutorConfig(
-                local_enabled = instrumentation_test_can_run_locally,
-                remote_enabled = True,
-                remote_execution_properties = ctx.attrs.re_caps["test-execution"],
-                remote_execution_use_case = ctx.attrs.re_use_case["test-execution"],
-                meta_internal_extra_params = ctx.attrs.meta_internal_extra_params,
-            )
-
     return {
-        "android-emulator": default_executor_override,
-        "dynamic-listing": dynamic_listing_executor_override,
-        "static-listing": CommandExecutorConfig(
-            ## This was set to True as some point and it was causing listing to happen locally,
-            ## which is one of the contributing factors to S504068.
+        name: CommandExecutorConfig(
             local_enabled = instrumentation_test_can_run_locally,
             remote_enabled = True,
-            remote_execution_properties = {
-                "platform": "linux-remote-execution",
-            },
-            remote_execution_use_case = "buck2-default",
-        ),
-        "test-execution": test_execution_executor_override,
+            remote_execution_properties = capabilities,
+            remote_execution_use_case = re_use_case[name],
+        )
+        for name, capabilities in re_caps.items()
     }
-
-def _compute_emulator_abi(labels: list[str]):
-    emulator_abi_labels = [label for label in labels if label.startswith(ANDROID_EMULATOR_ABI_LABEL_PREFIX)]
-    expect(
-        len(emulator_abi_labels) <= 1,
-        "multiple '{}' labels were found:[{}], there must be only one!".format(ANDROID_EMULATOR_ABI_LABEL_PREFIX, ", ".join(emulator_abi_labels)),
-    )
-    if len(emulator_abi_labels) == 0:
-        return None
-    else:  # len(emulator_abi_labels) == 1:
-        return emulator_abi_labels[0].replace(ANDROID_EMULATOR_ABI_LABEL_PREFIX, "")
-
-# replicating the logic in https://fburl.com/code/1fqowxu4 to match buck1's behavior
-def _compute_emulator_subplatform(labels: list[str]) -> str:
-    emulator_subplatform_labels = [label for label in labels if label.startswith("re_emulator_")]
-    expect(
-        len(emulator_subplatform_labels) <= 1,
-        "multiple 're_emulator_' labels were found:[{}], there must be only one!".format(", ".join(emulator_subplatform_labels)),
-    )
-    if len(emulator_subplatform_labels) == 0:
-        return DEFAULT_ANDROID_SUBPLATFORM
-    else:  # len(emulator_subplatform_labels) == 1:
-        return emulator_subplatform_labels[0].replace("re_emulator_", "")
-
-def _compute_emulator_platform(labels: list[str]) -> str:
-    emulator_platform_labels = [label for label in labels if label.startswith("re_platform_")]
-    expect(
-        len(emulator_platform_labels) <= 1,
-        "multiple 're_platform_' labels were found:[{}], there must be only one!".format(", ".join(emulator_platform_labels)),
-    )
-    if len(emulator_platform_labels) == 0:
-        subplatform = _compute_emulator_subplatform(labels)
-        if "aarch64" in subplatform:
-            return "android-emulator-aarch64"
-        if subplatform == "android-33-google-arm64":
-            return "android-emulator-mac"
-        return DEFAULT_ANDROID_PLATFORM
-    else:  # len(emulator_platform_labels) == 1:
-        return emulator_platform_labels[0].replace("re_platform_", "")
-
-def _compute_re_use_case(labels: list[str]) -> str:
-    re_use_case_labels = [label for label in labels if label.startswith("re_opts_use_case=")]
-    expect(len(re_use_case_labels) <= 1, "multiple 're_opts_use_case' labels were found:[{}], there must be only one!".format(", ".join(re_use_case_labels)))
-    if len(re_use_case_labels) == 0:
-        return DEFAULT_ANDROID_INSTRUMENTATION_TESTS_USE_CASE
-    else:  # len(re_use_case_labels) == 1:
-        return re_use_case_labels[0].replace("re_opts_use_case=", "")
-
-def _validate_executor_override_re_config(re_caps: dict[str, str], re_use_case: str):
-    expect(
-        re_use_case in SUPPORTED_USE_CASES,
-        "Unexpected {} use case found, value is expected to be on of the following: {}",
-        re_use_case,
-        ", ".join(SUPPORTED_USE_CASES),
-    )
-    if "pool" in re_caps:
-        expect(
-            re_caps["pool"] in SUPPORTED_POOLS,
-            "Unexpected {} pool found, value is expected to be on of the following: {}",
-            re_caps["pool"],
-            ", ".join(SUPPORTED_POOLS),
-        )
-    if "platform" in re_caps:
-        expect(
-            re_caps["platform"] in SUPPORTED_PLATFORMS,
-            "Unexpected {} platform found, value is expected to be on of the following: {}",
-            re_caps["platform"],
-            ", ".join(SUPPORTED_PLATFORMS),
-        )

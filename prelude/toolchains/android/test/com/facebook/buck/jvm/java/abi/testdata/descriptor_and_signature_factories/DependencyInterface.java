@@ -8,6 +8,6 @@
  * above-listed licenses.
  */
 
-package com.facebook.foo;
+package com.example.foo;
 
 public interface DependencyInterface<T> {}

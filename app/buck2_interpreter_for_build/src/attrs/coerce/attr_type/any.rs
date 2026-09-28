@@ -69,7 +69,7 @@ fn to_literal(value: Value, ctx: &dyn AttrCoercionContext) -> buck2_error::Resul
         soft_error!(
             "coerce_to_any",
             AnyError::CannotCoerce(value.get_type(), value.to_repr()).into(),
-            error_on_oss: true
+            hard_error: true
         )?;
         Ok(CoercedAttr::String(StringLiteral(
             ctx.intern_str(&value.to_str()),

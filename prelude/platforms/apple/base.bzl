@@ -6,11 +6,10 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-load("@prelude//:is_buck2.bzl", "is_buck2") # @oss-enable
 load(
     "@prelude//platforms/apple:build_mode.bzl",
     "APPLE_BUILD_MODES",
-      "CONSTRAINT_PACKAGE", # @oss-enable
+    "CONSTRAINT_PACKAGE",
     "get_build_mode",
 )
 load(
@@ -21,11 +20,9 @@ load(
     "mac_platforms",
     "watch_platforms",
 )
-# @oss-disable[end= ]: load("@prelude//platforms/apple/meta_only:build_mode.bzl", _get_build_mode_constraints_map = "get_build_mode_constraints_map")
 
-def get_build_mode_constraints_map(use_whatsapp_build_modes):
-    return {build_mode: ["{}:{}".format(CONSTRAINT_PACKAGE, build_mode)] for build_mode in APPLE_BUILD_MODES} # @oss-enable
-    # @oss-disable[end= ]: return _get_build_mode_constraints_map(use_whatsapp_build_modes)
+def get_build_mode_constraints_map():
+    return {build_mode: ["{}:{}".format(CONSTRAINT_PACKAGE, build_mode)] for build_mode in APPLE_BUILD_MODES}
 
 _MOBILE_PLATFORMS = [
     appletv_platforms.APPLETVOS_ARM64,
@@ -50,12 +47,12 @@ _MAC_PLATFORMS = [
 
 # TODO: Drop the platform_rule when we're not longer attempting to support buck1.
 def apple_generated_platforms(
-    name, constraint_values, deps, platform_rule, platform = None, supported_build_modes = APPLE_BUILD_MODES, use_whatsapp_build_modes = False
+    name, constraint_values, deps, platform_rule, platform = None, supported_build_modes = APPLE_BUILD_MODES
 ):
     # By convention, the cxx.default_platform is typically the same as the platform being defined.
     # This is not the case for all watch platforms, so provide an override.
     platform = platform if platform else name
-    build_mode_constraints_map = get_build_mode_constraints_map(use_whatsapp_build_modes)
+    build_mode_constraints_map = get_build_mode_constraints_map()
     if is_mobile_platform(platform) or is_buck2_mac_platform(platform):
         for build_mode in supported_build_modes:
             platform_rule(
@@ -80,8 +77,7 @@ def apple_build_mode_backed_platform(name, platform, build_mode = None):
     return _get_generated_name(name, platform, build_mode)
 
 def is_mobile_platform(platform):
-    # These builds modes are primarily used in mobile code. MacOS builds in fbcode/arvr use different
-    # modes to represent dev/opt variants.
+    # These build modes are primarily used in mobile code.
     return platform in _MOBILE_PLATFORMS
 
 def is_buck2_mac_platform(platform):

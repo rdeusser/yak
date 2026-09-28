@@ -16,7 +16,7 @@ def _failing_output(ctx, name):
 
 def _passing_test_info():
     return ExternalRunnerTestInfo(
-        command = ["fbpython", "-c", "import sys; sys.exit(0)"],
+        command = ["python3", "-c", "import sys; sys.exit(0)"],
         type = "custom",
     )
 

@@ -73,7 +73,7 @@ def _parse_args():
         help="START:END range of command arguments to run from an aggregate command args file",
     )
 
-    # TODO(T121096376) remove this hack
+    # TODO: remove this hack
     parser.add_argument(
         "--command-args-file-extra-data-fixup-hack",
         type=bool,

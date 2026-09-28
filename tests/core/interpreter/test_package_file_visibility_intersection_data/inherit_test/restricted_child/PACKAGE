@@ -1,0 +1,5 @@
+# With `inherit = True`, the default `visibility` below is the union of the
+# parent's list and this one, but the cap gains only this list.
+enforce_visibility_intersection()
+
+package(inherit = True, visibility = ["root//inherit_test/restricted_child/inside/..."])

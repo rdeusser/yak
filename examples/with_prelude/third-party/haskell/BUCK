@@ -1,5 +1,3 @@
-oncall("build_infra")
-
 _SUPPORTED = host_info().os.is_linux or host_info().os.is_macos
 
 config_setting(

@@ -44,7 +44,7 @@ impl fmt::Display for TestSessionOptions {
 pub struct TestSession {
     /// The next ConfiguredTargetHandle that will be assigned.
     next_id: AtomicU64,
-    /// A mapping of ConfiguredTargetHandle (which Tpx can use with) to the underlying provider in
+    /// A mapping of ConfiguredTargetHandle (which the test executor uses) to the underlying provider in
     /// Buck2.
     labels: BuckDashMap<ConfiguredTargetHandle, ConfiguredProvidersLabel>,
     /// Options overriding the behavior of tests executed in this session. This is primarily

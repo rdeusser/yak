@@ -1,88 +1,63 @@
-This page contains generic debugging advice for developers of Buck2; this advice is descriptive
-(based on what people usually do today) not prescriptive (you're welcome to come up with your own
-ideas).
+# Debugging
 
-## Normal logic bugs
+This page describes how contributors usually debug Buck2. It is descriptive, so use another approach where it works better.
 
-We usually debug normal logic bugs by looking at the code, writing finer grained tests, or standard
-`println!` debugging.
+## Logic bugs
 
-Use of a traditional debugger is not common, but it probably works using standard tools in OSS<FbInternalOnly>,
-internally see [debuggers_internally](./debuggers_internally.fb.md) if you want to try</FbInternalOnly>.
+Most logic bugs are found by reading the code, writing finer-grained tests, or adding `println!` calls. A traditional debugger works with the standard tools but is rarely used.
 
-Buck2 has many commands to retrieve information about the build, particularly `buck2 log`, `buck2
-audit` and `buck2 debug`, which can be helpful.
+`buck2 log`, `buck2 audit`, and `buck2 debug` report what a build did.
 
-## Running builds
+## Running local changes
 
-`./buck2.py <command>` builds buck2 from source and runs `<command>` using that buck2. The command
-is run in a different isolation dir, to prevent the command from stepping on your existing buck
-daemon. This means large builds will get no cache hits and be very slow.
+[basics.md](./basics.md) shows how to build `target/debug/buck2` and run it in a test project with its own isolation directory.
 
-Alternatively, `buck2 build @fbcode//mode/opt fbcode//buck2:buck2 --out /tmp/buck2` to build buck2
-on its own. Then, use `/tmp/buck2` to run builds in a *different* checkout of fbsource from the one
-you're editing code in.
+`./buck2.py <command>` builds `//:buck2_bundle` with the `buck2` on `PATH` and runs `<command>` with the result. It needs the Buck build of this repository, which in turn needs a `buck2` on `PATH` built from this repository ([basics.md](./basics.md)). The command runs in the isolation directory `v2.self`, which keeps it away from your existing daemon, but large builds get no cache hits there and run slowly.
 
-## Logging
+## Event logs
 
-buck2 emits most of its logs in a structured form that is best interacted with via `buck2 logs`
-commands.
+Every command writes an event log to `buck-out/<isolation dir>/log/`. The `buck2 log` subcommands read the last invocation's log unless told otherwise:
 
-We additionally have some tracing logging, though it's sparse and not in very widespread use. Use
-the `BUCK_LOG` environment variable to enable trace logging. Requires daemon restart:
+```bash
+# Commands the last invocation ran, and how to rerun each one
+buck2 log what-ran
+# Commands that failed
+buck2 log what-failed
+# The slowest chain of actions
+buck2 log critical-path
+# The whole log as JSON
+buck2 log show
+# The path of the log file
+buck2 log path
+```
+
+[what-ran.md](./what-ran.md) explains the `what-ran` output.
+
+## Daemon state
+
+The daemon keeps `buckd.info` (endpoint and pid), `buckd.pid`, `buckd.stdout`, and `buckd.stderr` in `~/.buck/buckd/<project root>/<isolation dir>/`. The daemon writes panics and its tracing output to `buckd.stderr`. A daemon that exits with an error writes a JSON error report to `buckd.error.log`, which the client reads to explain a failed start.
+
+```bash
+# Daemon pid and state
+buck2 status
+# Stop the daemon
+buck2 kill
+```
+
+## Tracing
+
+Buck2 also emits sparse `tracing` output. `BUCK_LOG` sets the filter, using the [`EnvFilter` syntax](https://docs.rs/tracing-subscriber/0.3/tracing_subscriber/filter/struct.EnvFilter.html). The daemon reads `BUCK_LOG` only when it starts, so restart it to change the filter:
 
 ```bash
 buck2 kill
 BUCK_LOG=module_name=trace buck2 <command>
-# Example
+# Examples
 BUCK_LOG=starlark=trace buck2 uquery cell//path/to:target
 BUCK_LOG=buck2_execute_impl::materializers=trace buck2 build cell//path/to:target
 ```
 
-Or use `./buck2.py` instead of `buck2` to run local changes
+The client prints its own tracing output to the terminal, and the daemon writes its output to `buckd.stderr`. With `--no-buckd`, the daemon runs inside the client process and its output also goes to the terminal.
 
-See
-[tracing-subscriber docs](https://docs.rs/tracing-subscriber/0.2.17/tracing_subscriber/filter/struct.EnvFilter.html)
-for filter syntax.
+## Tests
 
-<FbInternalOnly>
-
-### Investigating configuration transitions
-
-If you're trying to work out where a transition happens within a dependency
-chain, you may find the following script useful:
-
-```sh
-scripts/torozco/parse_deps
-```
-
-## Making a change to Buck2 Tpx
-
-Buck2 invokes Tpx when running tests. If you're changing Tpx, you can build your
-own Tpx and then have Buck2 use it, as follows:
-
-```bash
-# Build Tpx
-buck2 build @fbcode//mode/opt fbcode//buck2/buck2_tpx_cli:buck2_tpx_cli --out /tmp/tpx
-
-# Use Tpx
-buck2 test -c test.v2_test_executor=/tmp/tpx
-```
-
-Alternatively, you can build buck and tpx in one go with `fbcode/buck2/buck2.py` and use it like buck:
-
-```sh
-fbcode/buck2/buck2.py test ...
-```
-
-To get access to Tpx's stderr and stdout if you are print-debugging, you need to also get Buck2 to have the right log level for it:
-
-```sh
-BUCK_LOG=buck2_test=debug buck2 test
-```
-
-Remember that you need a daemon restart to change `BUCK_LOG`.
-
-Refer to the [tpx wiki](https://www.internalfb.com/wiki/TAE/tpx/Hacking_on_Tpx/) for more details.
-
-</FbInternalOnly>
+`buck2 test` runs tests through the built-in test executor (`buck2 internal-test-runner`) unless `[test] v2_test_executor` names another executable. `buck2_test` logs each line the executor prints to stdout or stderr at `debug` level, so `BUCK_LOG=buck2_test=debug` shows them while you print-debug a test executor.

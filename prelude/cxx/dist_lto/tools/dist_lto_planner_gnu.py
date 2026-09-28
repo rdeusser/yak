@@ -92,8 +92,8 @@ def _write_args(argsfile: TextIO, args: List[str]) -> None:
 
 
 def _enable_core_dumps() -> None:
-    # The index step runs the system linker, which -- unlike Meta binaries --
-    # installs no userspace crash handler, so a crash only leaves a core dump if
+    # The index step runs the system linker, which installs no userspace
+    # crash handler, so a crash only leaves a core dump if
     # the kernel writes one, and the kernel writes nothing while the RLIMIT_CORE
     # soft limit is 0. buck2 sets no per-action rlimits, so raise the soft limit
     # to the inherited hard limit here (best effort: a no-op when the hard limit
@@ -392,7 +392,7 @@ def main(argv):
     # The files suffixed with `.imports` and `.thinlto.bc` DO exist in the directory under `args.index`.
     index = {}
     index_files_set = set()
-    # TODO(T130322878): since we call linker wrapper twice (in index and in final_link), to avoid these libs get
+    # TODO: since we call linker wrapper twice (in index and in final_link), to avoid these libs get
     # added twice we remove them from the index file for now.
     KNOWN_REMOVABLE_DEPS_SUFFIX = [
         "glibc/lib/crt1.o",
@@ -425,8 +425,8 @@ def main(argv):
             sort_keys=True,
         )
 
-    # Append all search path flags (e.g -Lfbcode/third-party-buck/platform010/build/glibc/lib) from argsfile to final_index
-    # this workaround is to make dist_lto compatible with link_group. see T136415235 for more info
+    # Append all search path flags (e.g -Lthird-party/toolchains/build/glibc/lib) from argsfile to final_index
+    # this workaround is to make dist_lto compatible with link_group.
     argsfile = _get_argsfile(args)
     lib_search_path = _extract_lib_search_path(argsfile)
 

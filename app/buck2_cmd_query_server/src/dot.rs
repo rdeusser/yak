@@ -15,8 +15,8 @@
 // TODO(cjhopman): while the `dot` crate is probably too opinionated, `tabbycat` looks nice and is
 // lower level so gives a lot of control (including control over ordering of node/edge statements).
 // It looks like we could use that, but it mostly would just handle the actual writing of the
-// data in the right format and maybe escaping. It's not been imported to tp2 so we implement it
-// ourselves for now.
+// data in the right format and maybe escaping. It is not a dependency of this repository, so we
+// implement it ourselves for now.
 
 use std::collections::hash_map::Entry::Occupied;
 use std::collections::hash_map::Entry::Vacant;

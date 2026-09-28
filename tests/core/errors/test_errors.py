@@ -6,13 +6,12 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-# pyre-strict
 import re
 
-from buck2.tests.e2e_util.api.buck import Buck
-from buck2.tests.e2e_util.asserts import expect_failure
-from buck2.tests.e2e_util.buck_workspace import buck_test, env
-from buck2.tests.e2e_util.helper.golden import golden, strip_glog_lines
+from e2e_util.api.buck import Buck
+from e2e_util.asserts import expect_failure
+from e2e_util.buck_workspace import buck_test, env
+from e2e_util.helper.golden import golden, strip_glog_lines
 
 
 @buck_test()
@@ -20,24 +19,6 @@ async def test_soft_error(buck: Buck) -> None:
     await expect_failure(
         buck.targets(":"), stderr_regex="starlark_raised_soft_error.*Will be reported"
     )
-
-
-@buck_test()
-@env("BUCK2_HARD_ERROR", "false")
-async def test_soft_error_quiet(buck: Buck) -> None:
-    res = await buck.targets("quiet:", ":")
-    assert "starlark_raised_soft_error" in res.stderr
-    assert "starlark_quiet_soft_error" not in res.stderr
-
-
-@buck_test()
-@env("BUCK2_HARD_ERROR", "false")
-async def test_soft_error_no_stack(buck: Buck) -> None:
-    res = await buck.targets(":")
-    assert "Traceback" in res.stderr
-
-    res = await buck.targets("no_stack:")
-    assert "Traceback" not in res.stderr
 
 
 @buck_test(

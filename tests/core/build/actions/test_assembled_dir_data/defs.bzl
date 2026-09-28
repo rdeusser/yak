@@ -49,7 +49,7 @@ def _consumed_impl(ctx):
 
     out = ctx.actions.declare_output("out.txt")
     ctx.actions.run(
-        cmd_args(["fbpython", script, dir, out.as_output()]),
+        cmd_args(["python3", script, dir, out.as_output()]),
         category = "consume",
     )
 

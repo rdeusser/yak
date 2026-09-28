@@ -117,7 +117,7 @@ def _allocate_memory_impl(ctx) -> list[Provider]:
         output = ctx.actions.declare_output("output{}.txt".format(i), has_content_based_path = False)
         each_action_memory_mb = ctx.attrs.each_action_memory_mb
 
-        cmd = cmd_args(["fbpython", "-c", SCRIPT, each_action_memory_mb, str(ctx.attrs.sleep), output.as_output()])
+        cmd = cmd_args(["python3", "-c", SCRIPT, each_action_memory_mb, str(ctx.attrs.sleep), output.as_output()])
         ctx.actions.run(cmd, category = "allocate_memory", identifier = str(i), prefer_local = prefer_local)
 
         outputs.append(output)

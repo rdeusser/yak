@@ -90,9 +90,6 @@ impl Encoding {
 }
 
 pub(crate) const KNOWN_ENCODINGS: &[Encoding] = &[
-    // Don't forget to update these lists when this is updated:
-    // * https://fburl.com/code/zgdxtryb
-    // * https://fburl.com/code/antguytj
     Encoding::JSON_GZIP,
     Encoding::JSON,
     Encoding::JSON_ZSTD,

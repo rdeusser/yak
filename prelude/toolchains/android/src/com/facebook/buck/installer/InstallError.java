@@ -58,7 +58,8 @@ public class InstallError {
                     }))
             .orElse(InstallErrorCategory.UNKNOWN);
     return com.facebook.buck.install.model.ErrorDetail.newBuilder()
-        // TODO(T213306104) Add a wiki link to guide users on troubleshooting installation errors.
+        // TODO: Add a documentation link that guides users through troubleshooting installation
+        // errors.
         .setMessage(message)
         .addAllTags(tags.stream().map(InstallErrorTag::getName).collect(Collectors.toSet()))
         // Report highest priority category: Infra, then Environment, then User

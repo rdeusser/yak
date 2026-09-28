@@ -8,7 +8,6 @@
 %%% % @format
 -module(extract_from_otp).
 -compile(warn_missing_spec_all).
--author("loscher@meta.com").
 -moduledoc """
 Take parts of the OTP a release is built from, and introspect the versions it ships
 

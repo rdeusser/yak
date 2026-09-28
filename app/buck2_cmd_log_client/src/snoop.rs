@@ -392,7 +392,6 @@ async fn snoop_one(
         timekeeper,
         &header,
         superconsole_config,
-        None,
     );
 
     // Without a superconsole there is no canvas to carry the banner; print it the

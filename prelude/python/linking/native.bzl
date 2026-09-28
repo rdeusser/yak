@@ -480,11 +480,11 @@ def process_native_linking(
     extra_artifacts["static_extension_finder.py"] = ctx.attrs.static_extension_finder
 
     # The native executable runs from `runtime/bin/<binary>` inside the packaged
-    # PAR (e.g. the xar mount). build::ExternalResourceManager reads
-    # `<exe>.resources.json` next to it, but transitive C++ resources are bundled
-    # at the PAR root under `__cxx_resources__/`. Emit a manifest next to the
-    # inner binary mapping each resource to its `__cxx_resources__/` location so
-    # getResourcePath resolves at runtime in a packaged (xar/standalone) context.
+    # PAR. build::ExternalResourceManager reads `<exe>.resources.json` next to
+    # it, but transitive C++ resources are bundled at the PAR root under
+    # `__cxx_resources__/`. Emit a manifest next to the inner binary mapping
+    # each resource to its `__cxx_resources__/` location so getResourcePath
+    # resolves at runtime in a standalone package.
     # (The inplace case is covered separately by forwarding runtime_files.)
     cxx_resource_names = []
     for label_resources in gather_resources(ctx.label, deps = deps).values():

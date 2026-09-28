@@ -36,8 +36,6 @@ go_binary = prelude_rule(
          and dependencies. The files supplied are expected to be in the main package, implicitly.
     """,
     examples = """
-        For more examples, check out our [integration tests](https://github.com/facebook/buck/tree/dev/test/com/facebook/buck/features/go/testdata).
-
         ```
         go_binary(
           name='greet',
@@ -134,8 +132,6 @@ go_exported_library = prelude_rule(
          and dependencies. This is done via `-buildmode` flag and "//export" annotations in the code.
     """,
     examples = """
-        For more examples, check out our [integration tests](https://github.com/facebook/buck/tree/dev/test/com/facebook/buck/features/go/testdata).
-
         ```
         go_exported_library(
             name = "shared",
@@ -228,8 +224,6 @@ go_library = prelude_rule(
          and dependencies.
     """,
     examples = """
-        For more examples, check out our [integration tests](https://github.com/facebook/buck/tree/dev/test/com/facebook/buck/features/go/testdata).
-
         ```
         go_library(
           name='greeting',
@@ -281,8 +275,6 @@ go_test = prelude_rule(
          files, they won't be available when your test runs.
     """,
     examples = """
-        For more examples, check out our [integration tests](https://github.com/facebook/buck/tree/dev/test/com/facebook/buck/features/go/testdata).
-
         ```
         go_library(
           name='greeting',

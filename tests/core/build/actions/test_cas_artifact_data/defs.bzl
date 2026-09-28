@@ -10,8 +10,9 @@ def _cas_artifact_out_of_range_expiration_impl(ctx):
     out = ctx.actions.declare_output("out", has_content_based_path = False)
     ctx.actions.cas_artifact(
         out.as_output(),
-        # sha1 of the empty file; the digest is parsed before the timestamp so it must be valid
-        "da39a3ee5e6b4b0d3255bfef95601890afd80709:0",
+        # SHA-256 of the empty file, which matches the default digest algorithm.
+        # buck2 parses the digest before the timestamp, so it must be valid.
+        "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855:0",
         "buck2-testing",
         expires_after_timestamp = 1 << 62,
     )

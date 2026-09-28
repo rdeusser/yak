@@ -21,7 +21,6 @@ buckconfig_backed_modifiers(
             property = "enable_buckconfig_backed",
             value = True,
             modifiers = ["//cfg:buckconfig_backed[enabled]"],
-            oncall = "build_infra",
         ),
     ],
     pre_cli = [],

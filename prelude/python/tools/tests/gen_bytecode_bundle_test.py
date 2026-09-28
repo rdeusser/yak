@@ -6,8 +6,6 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-# pyre-strict
-
 from __future__ import annotations
 
 import json
@@ -146,12 +144,9 @@ class BuildTest(BundleTestBase):
     def test_index_is_keyed_by_path_not_by_module_name(self) -> None:
         # `pkg.py` and `pkg/__init__.py` are the same module name and both
         # stay, because the finder - not the packer - is what decides which one
-        # an import resolves to. The top-level `__init__.py` is one
-        # rust_make_par synthesizes for a namespace directory; whether it is
-        # importable at all is likewise not the packer's business.
+        # an import resolves to. A top-level `__init__.py` stays too, because
+        # whether it is importable is likewise not the packer's business.
         paths = ["top.py", "__init__.py", "pkg.py", "pkg/__init__.py", "pkg/mod.py"]
-        # pyre-fixme[6]: For 2nd argument expected `Dict[str, str]` but got
-        #  `Dict[str, Literal['VALUE = 1']]`.
         bundle = self._bundle(self._library("lib", dict.fromkeys(paths, "VALUE = 1")))
 
         self.assertEqual(set(bundle.index), set(paths))
@@ -205,7 +200,7 @@ class BuildTest(BundleTestBase):
         library = self._library(
             "lib",
             {"pkg/mod.py": "VALUE = 42"},
-            pyc_field="buck-out/v2/gen/fbcode/output_artifacts/aaaaaaaaaaaaaaaa/x",
+            pyc_field="buck-out/v2/gen/root/output_artifacts/aaaaaaaaaaaaaaaa/x",
         )
 
         self.assertEqual(self._bundle(library).run("pkg/mod.py")["VALUE"], 42)

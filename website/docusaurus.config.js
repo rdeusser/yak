@@ -8,12 +8,7 @@
  * above-listed licenses.
  */
 
-// This comment is to silence the naive linter (https://fburl.com/code/6hotojag) which simply checks for
-// the existence of "docusaurus-plugin-internaldocs-fb/internal" string which is defined in ./config_impl.ts
-
-
-// Our internal doc builder requires a `.js` file to exist, so have this and keep the actual
-// implementation in `.ts`
+// Docusaurus loads this file, and `config_impl.ts` holds the configuration.
 
 const { config } = require('./config_impl.ts');
 

@@ -259,7 +259,7 @@ def create_compile_cmds(
     for src in impl_params.srcs:
         srcs_with_flags.append(src)
 
-    # Some targets have .cpp files in their `headers` lists, see D46195628
+    # Some targets have .cpp files in their `headers` lists.
     # todo: should this be prohibited or expanded to allow all source extensions?
     artifact_extensions = HeaderExtension.values() + [".cpp"]
     all_headers = flatten([x.headers for x in own_preprocessors])
@@ -275,7 +275,7 @@ def create_compile_cmds(
     if len(srcs_with_flags) == 0:
         return CxxCompileCommandOutput()
 
-    # TODO(T110378129): Buck v1 validates *all* headers used by a compilation
+    # TODO: Buck v1 validates *all* headers used by a compilation
     # at compile time, but that doing that here/eagerly might be expensive (but
     # we should figure out something).
     _validate_target_headers(target_label, own_preprocessors)
@@ -680,7 +680,6 @@ def _compile_single_cxx(
             base_compile_cmd_override = _get_compile_base(
                 toolchain,
                 toolchain.cuda_compiler_info,
-                use_wrapper = False,
                 compiler_override = compiler_for_dryrun,
             )
 
@@ -1159,7 +1158,7 @@ def _cxx_dynamic_compile(
 
     return [EMPTY_DEFAULT_INFO]
 
-# https://buck2.build/docs/api/build/AnalysisActions/#analysisactionsdynamic_output_new
+# https://rdeusser.github.io/buck2/docs/api/build/AnalysisActions/#analysisactionsdynamic_output_new
 # Dynamic actions factory for batch CXX compilation
 _dynamic_compile_rule = dynamic_actions(
     impl = _cxx_dynamic_compile,
@@ -1529,7 +1528,7 @@ def _create_precompile_cmd(
     import_stub = actions.write(
         import_name,
         """
-#ifdef FACEBOOK_CPP_HEADER_UNIT
+#ifdef PRELUDE_CPP_HEADER_UNIT
 export
 #endif
 import \"{}\";
@@ -1589,12 +1588,12 @@ module "{}" {{
     args.extend(["-Xclang", "-fmodule-file-home-is-cwd"])
 
     # check_args: same setup but -fsyntax-only instead of --precompile, and
-    # without -DFACEBOOK_CPP_HEADER_UNIT=1 (the `export` keyword in import
+    # without -DPRELUDE_CPP_HEADER_UNIT=1 (the `export` keyword in import
     # stubs is only valid inside module purview set up by --precompile).
     check_args = list(args)
 
     args.extend(["-Xclang", cmd_args(input_header, format = "-fmodules-embed-file={}")])
-    args.extend(["-DFACEBOOK_CPP_HEADER_UNIT=1", "--precompile", input_header])
+    args.extend(["-DPRELUDE_CPP_HEADER_UNIT=1", "--precompile", input_header])
 
     check_args.extend(["-fsyntax-only", input_header])
 
@@ -1633,7 +1632,7 @@ def _precompile_single_cxx(
     )
 
     # Build actual header units
-    # TODO(nml): We don't meaningfully support dep files. See T225373444.
+    # TODO(nml): We don't meaningfully support dep files.
     cmd = cmd_args(cxx_cmd.base_compile_cmd)
     if cxx_cmd.header_units_argsfile:
         cmd.add(cxx_cmd.header_units_argsfile.cmd_form)
@@ -1661,7 +1660,7 @@ def _precompile_single_cxx(
 
     # Diagnostics: run -fsyntax-only variant for [check] subtarget.
     # This is cheaper than --precompile because it skips module serialization.
-    # We must remove -DFACEBOOK_CPP_HEADER_UNIT=1 because that macro gates
+    # We must remove -DPRELUDE_CPP_HEADER_UNIT=1 because that macro gates
     # `export` keywords in import stubs, which are only valid inside module
     # purview (set up by --precompile but not -fsyntax-only).
     diagnostics = None
@@ -1678,7 +1677,7 @@ def _precompile_single_cxx(
             check_cmd.add(src_compile_cmd.extra_argsfile.cmd_form)
         check_cmd.add(cxx_cmd.argsfile.cmd_form)
 
-        # Add all precompile args except --precompile and -DFACEBOOK_CPP_HEADER_UNIT=1
+        # Add all precompile args except --precompile and -DPRELUDE_CPP_HEADER_UNIT=1
         check_cmd.add(src_compile_cmd.check_args)
         actions.run(
             [
@@ -1736,7 +1735,7 @@ def precompile_cxx(
         return []
 
     def mk_base_cmd():
-        base_compile_cmd = _get_compile_base(toolchain, compiler_info, use_wrapper = True)
+        base_compile_cmd = _get_compile_base(toolchain, compiler_info)
         ext = CxxExtension(".cpp")
         headers_tag = actions.artifact_tag()  # Currently ignored
         argsfile = _mk_argsfiles(
@@ -1908,7 +1907,7 @@ def _get_category(ext: CxxExtension) -> str:
         # This should be unreachable as long as we handle all enum values
         fail("Unknown extension: " + ext.value)
 
-def _get_compile_base(toolchain: CxxToolchainInfo, compiler_info: typing.Any, use_wrapper, compiler_override = None) -> cmd_args:
+def _get_compile_base(toolchain: CxxToolchainInfo, compiler_info: typing.Any, compiler_override = None) -> cmd_args:
     """
     Given a compiler info returned by _get_compiler_info, form the base compile args.
 
@@ -1919,7 +1918,7 @@ def _get_compile_base(toolchain: CxxToolchainInfo, compiler_info: typing.Any, us
     if compiler_override != None:
         compiler = compiler_override
     else:
-        compiler = compiler_info.compiler_with_wrapper if compiler_info.compiler_with_wrapper and use_wrapper else compiler_info.compiler
+        compiler = compiler_info.compiler
 
     if toolchain.remap_cwd and compiler_info.compiler_type in ["clang", "clang_windows", "clang_cl", "gcc"]:
         return cmd_args(toolchain.internal_tools.remap_cwd, compiler)
@@ -1933,7 +1932,7 @@ def _dep_file_type(ext: CxxExtension) -> [DepFileType, None]:
     if ext.value in (".s", ".S", ".asm"):
         return None
     elif ext.value == ".hip":
-        # TODO (T118797886): HipCompilerInfo doesn't have dep files processor.
+        # TODO: HipCompilerInfo doesn't have dep files processor.
         # Should it?
         return None
     elif ext.value == ".bc":
@@ -2460,7 +2459,7 @@ def _mk_header_units_argsfile(
     ])
 
     # TODO(nml): Tag args with headers_tag.tag_artifacts() once -MD -MF reports correct
-    # usage of PCMs. See T225373444 and _mk_header_units_argsfile() below.
+    # usage of PCMs. See _mk_header_units_argsfile() below.
     projection_name = "header_unit_stubs_args" if stub else "header_units_args"
     args.add(preprocessor.set.project_as_args(projection_name))
     file_args = cmd_args(args, quote = "shell")
@@ -2508,7 +2507,7 @@ def _generate_base_compile_command(
     """
     compiler_info = _get_compiler_info(toolchain, ext)
 
-    base_compile_cmd = _get_compile_base(toolchain, compiler_info, impl_params.use_fbcc_rust_wrapper)
+    base_compile_cmd = _get_compile_base(toolchain, compiler_info)
     category = _get_category(ext)
 
     headers_dep_files = None

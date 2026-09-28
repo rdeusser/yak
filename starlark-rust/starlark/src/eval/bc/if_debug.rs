@@ -37,7 +37,7 @@ use dupe::Dupe;
 /// * behavior does not depend on whether debugging assertions enabled or not
 #[derive(Debug, Default, Copy, Clone, Dupe)]
 // In release build this structure is DST,
-// so gazebo suggests implementing `Dupe` for any `<T>`. T102920913.
+// so gazebo suggests implementing `Dupe` for any `<T>`.
 pub(crate) struct IfDebug<T> {
     #[cfg(debug_assertions)]
     value: T,

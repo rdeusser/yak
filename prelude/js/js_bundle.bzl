@@ -84,8 +84,7 @@ def _build_js_bundle(
         "sourceMapPath": source_map.as_output(),
     }
 
-    # On Android, ask Metro to write the `assets/` subtree (from js_library targets using
-    # `_asset_dest_path_resolver = "generic"`) to a sibling directory, which we can keep out of assets_dir and aapt processing
+    # On Android, ask Metro to write the `assets/` subtree to a sibling directory, which we can keep out of assets_dir and aapt processing
     generic_assets = None
     if ctx.attrs._platform == "android":
         generic_assets = ctx.actions.declare_output("{}/generic_assets".format(base_dir), dir = True, has_content_based_path = False)

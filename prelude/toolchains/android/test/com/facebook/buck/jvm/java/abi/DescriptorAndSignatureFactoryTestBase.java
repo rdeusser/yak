@@ -133,7 +133,7 @@ public class DescriptorAndSignatureFactoryTestBase {
       Function<ClassNode, String> classNodeExpectedValueGetter,
       Function<Element, String> elementActualValueGetter)
       throws IOException {
-    TypeElement fooElement = elements.getTypeElement("com.facebook.foo.Foo");
+    TypeElement fooElement = elements.getTypeElement("com.example.foo.Foo");
     findErrors(
         fooElement,
         fieldNodeExpectedValueGetter,

@@ -301,7 +301,6 @@ impl<'v, V: EnumVariant> StarlarkValue<'v> for EnumTypeGen<'v, V> {
     type Canonical = FrozenEnumType<'v>;
 
     // TODO(nga): replace `Color("RED")` with `Color.RED`.
-    //   https://www.internalfb.com/tasks/?t=183515013
     fn invoke(
         &self,
         _me: Value<'v>,

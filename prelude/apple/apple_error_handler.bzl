@@ -6,33 +6,19 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-# @oss-disable[end= ]: load(
-    # @oss-disable[end= ]: "@prelude//apple/meta_only:apple_extra_error_categories.bzl",
-    # @oss-disable[end= ]: "APPLE_CXX_FLAG_MESSAGES",
-    # @oss-disable[end= ]: "APPLE_CXX_MESSAGE_CATEGORIES",
-    # @oss-disable[end= ]: "APPLE_CXX_STDERR_CATEGORIES",
-    # @oss-disable[end= ]: "APPLE_META_STDERR_ERROR_CATEGORIES",
-    # @oss-disable[end= ]: "SWIFT_CATEGORY_REMEDIATION",
-    # @oss-disable[end= ]: "SWIFT_STDERR_CATEGORIES",
-# @oss-disable[end= ]: )
 load("@prelude//apple/swift:swift_toolchain.bzl", "get_swift_toolchain_info")
 load("@prelude//cxx:cxx_context.bzl", "get_cxx_toolchain_info")
 load("@prelude//error_handler:error_enricher_types.bzl", "ErrorEnricher")
 
-APPLE_CXX_FLAG_MESSAGES = {} # @oss-enable
-APPLE_CXX_MESSAGE_CATEGORIES = [] # @oss-enable
-APPLE_CXX_STDERR_CATEGORIES = [] # @oss-enable
-APPLE_META_STDERR_ERROR_CATEGORIES = [] # @oss-enable
-SWIFT_CATEGORY_REMEDIATION = {} # @oss-enable
-SWIFT_STDERR_CATEGORIES = [] # @oss-enable
+APPLE_CXX_FLAG_MESSAGES = {}
+APPLE_CXX_MESSAGE_CATEGORIES = []
+APPLE_CXX_STDERR_CATEGORIES = []
+SWIFT_CATEGORY_REMEDIATION = {}
+SWIFT_STDERR_CATEGORIES = []
 
 _APPLE_STDERR_ERROR_CATEGORIES = [
-    # STOP! @oss-disable
-    # If you work at Meta, you probably want to include things in APPLE_META_STDERR_ERROR_CATEGORIES   @oss-disable
-    # so you can include a link to an internal resource (wiki, task, etc)                              @oss-disable
-    # I would only add additional categories here if you think someone in open-source would benefit    @oss-disable
     # codesigning issues
-    ErrorEnricher(matcher = "codesignprovisioningerror", category = "code_sign_error"), # @oss-enable
+    ErrorEnricher(matcher = "codesignprovisioningerror", category = "code_sign_error"),
     ErrorEnricher(matcher = "the timestamp service is not available", category = "code_sign_error"),
     # compilation issues
     ErrorEnricher(matcher = "failed to emit precompiled module", category = "pcm_compilation_failure"),
@@ -100,7 +86,6 @@ def apple_build_error_handler(ctx: ActionErrorCtx) -> list[ActionSubError]:
 
     lowercase_stderr = ctx.stderr.lower()
     _add_category_strings(ctx, lowercase_stderr, errors, _APPLE_STDERR_ERROR_CATEGORIES)
-    _add_category_strings(ctx, lowercase_stderr, errors, APPLE_META_STDERR_ERROR_CATEGORIES)
 
     return errors
 
@@ -192,7 +177,7 @@ def swift_error_handler(ctx: ActionErrorCtx) -> list[ActionSubError]:
             # SendableClosureCaptures@https://docs.swift.org/compiler/documentation/diagnostics/sendable-closure-captures
             category = error_json.get("category", "")
             if "@" in category:
-                # Convert to markdown links for phabricator
+                # Convert to markdown links
                 components = error_json["category"].split("@")
                 message += " [{}]({})".format(components[0], components[1])
                 subcategory = components[0].lower()

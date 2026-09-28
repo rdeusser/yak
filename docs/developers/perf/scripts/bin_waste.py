@@ -205,8 +205,8 @@ def print_report(je, rows, top):
         "live/nonfull = mean live objects pinning each partially-empty slab.\n"
         "  low  => few survivors hold dead slabs open: typed arena / lifetime pool wins.\n"
         "  high => slabs genuinely full: segregate the transients in this bin instead.\n"
-        "Next: attribute a bin's waste to allocation sites with the sampling +\n"
-        "experimental.utilization.batch_query pipeline (see mem_frag/)."
+        "Next: attribute a bin's waste to allocation sites\n"
+        "(see docs/developers/perf/memory_fragmentation.md)."
     )
 
 

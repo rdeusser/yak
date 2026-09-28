@@ -420,7 +420,7 @@ async fn path_artifact_value(
             at,
             to: RawSymlink::Relative(target, target_rel),
         } => {
-            // TODO (T126181780): This should have a limit on recursion.
+            // TODO: This should have a limit on recursion.
             let target_artifact_value = path_artifact_value(ctx, target.dupe(), label).await?;
             let root_cell = ctx.get_cell_resolver().await?.root_cell();
             let use_correct_source_symlink_reading = ctx

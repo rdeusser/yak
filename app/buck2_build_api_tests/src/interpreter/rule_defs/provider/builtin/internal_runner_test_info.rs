@@ -77,7 +77,7 @@ mod tests {
                 command = ["my_test_binary"],
                 env = {"FOO": "bar"},
                 labels = ["slow", "integration"],
-                contacts = ["oncall+my_team@xmail.facebook.com"],
+                contacts = ["my_team@example.com"],
                 use_project_relative_paths = True,
                 run_from_project_root = False,
             )

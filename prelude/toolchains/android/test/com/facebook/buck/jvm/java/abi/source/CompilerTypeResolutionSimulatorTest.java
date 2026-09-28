@@ -52,32 +52,32 @@ public class CompilerTypeResolutionSimulatorTest extends CompilerTreeApiTest {
     withClasspath(SimulatorTestSources.GRAND_INTERFACE);
     withClasspath(SimulatorTestSources.INTERFACE2);
 
-    ruleInfo.addElementOwner("com.facebook.subclass.Subclass", "//com/facebook/subclass:subclass");
+    ruleInfo.addElementOwner("com.example.subclass.Subclass", "//com/example/subclass:subclass");
     ruleInfo.addElementOwner(
-        "com.facebook.superclass.Super", "//com/facebook/superclass:superclass");
+        "com.example.superclass.Super", "//com/example/superclass:superclass");
     ruleInfo.addElementOwner(
-        "com.facebook.grandsuper.GrandSuper", "//com/facebook/grandsuper:grandsuper");
-    ruleInfo.addElementOwner("com.facebook.iface1.Interface1", "//com/facebook/iface1:iface1");
+        "com.example.grandsuper.GrandSuper", "//com/example/grandsuper:grandsuper");
+    ruleInfo.addElementOwner("com.example.iface1.Interface1", "//com/example/iface1:iface1");
     ruleInfo.addElementOwner(
-        "com.facebook.grandinterface.GrandInterface",
-        "//com/facebook/grandinterface:grandinterface");
-    ruleInfo.addElementOwner("com.facebook.iface2.Interface2", "//com/facebook/iface2:iface2");
-    ruleInfo.addElementOwner("com.facebook.subclass.Subclass", "//com/facebook/subclass:subclass");
+        "com.example.grandinterface.GrandInterface",
+        "//com/example/grandinterface:grandinterface");
+    ruleInfo.addElementOwner("com.example.iface2.Interface2", "//com/example/iface2:iface2");
+    ruleInfo.addElementOwner("com.example.subclass.Subclass", "//com/example/subclass:subclass");
 
-    ruleInfo.addAvailableRule("//com/facebook/superclass:superclass");
-    ruleInfo.addAvailableRule("//com/facebook/iface1:iface1");
-    ruleInfo.addAvailableRule("//com/facebook/iface2:iface2");
-    ruleInfo.addAvailableRule("//com/facebook/grandinterface:grandinterface");
+    ruleInfo.addAvailableRule("//com/example/superclass:superclass");
+    ruleInfo.addAvailableRule("//com/example/iface1:iface1");
+    ruleInfo.addAvailableRule("//com/example/iface2:iface2");
+    ruleInfo.addAvailableRule("//com/example/grandinterface:grandinterface");
 
     switch (kind) {
       case RESOLVED_TYPE:
-        ruleInfo.addAvailableRule("//com/facebook/subclass:subclass");
-        ruleInfo.addAvailableRule("//com/facebook/grandsuper:grandsuper");
+        ruleInfo.addAvailableRule("//com/example/subclass:subclass");
+        ruleInfo.addAvailableRule("//com/example/grandsuper:grandsuper");
         break;
       case ERROR_TYPE:
         break;
       case CRASH:
-        ruleInfo.addAvailableRule("//com/facebook/subclass:subclass");
+        ruleInfo.addAvailableRule("//com/example/subclass:subclass");
         break;
     }
   }
@@ -96,13 +96,13 @@ public class CompilerTypeResolutionSimulatorTest extends CompilerTreeApiTest {
         Joiner.on('\n')
             .join(
                 "public class Foo {",
-                "  com.facebook.subclass.Subclass.GrandSuperMember field;",
+                "  com.example.subclass.Subclass.GrandSuperMember field;",
                 "}"));
 
     ResolvedType result = resolveField();
 
     assertSame(
-        elements.getTypeElement("com.facebook.grandsuper.GrandSuper.GrandSuperMember"),
+        elements.getTypeElement("com.example.grandsuper.GrandSuper.GrandSuperMember"),
         result.type);
     assertEquals(kind, result.kind);
 
@@ -110,11 +110,11 @@ public class CompilerTypeResolutionSimulatorTest extends CompilerTreeApiTest {
       assertThat(
           result.missingDependencies,
           Matchers.containsInAnyOrder(
-              "//com/facebook/subclass:subclass", "//com/facebook/grandsuper:grandsuper"));
+              "//com/example/subclass:subclass", "//com/example/grandsuper:grandsuper"));
     } else if (kind == ResolvedTypeKind.CRASH) {
       assertThat(
           result.missingDependencies,
-          Matchers.containsInAnyOrder("//com/facebook/grandsuper:grandsuper"));
+          Matchers.containsInAnyOrder("//com/example/grandsuper:grandsuper"));
     }
   }
 
@@ -132,13 +132,13 @@ public class CompilerTypeResolutionSimulatorTest extends CompilerTreeApiTest {
                 "public class Foo {",
                 "  Other.GrandSuperMember field;",
                 "}",
-                "class Other extends com.facebook.subclass.Subclass {",
+                "class Other extends com.example.subclass.Subclass {",
                 "}"));
 
     ResolvedType result = resolveField();
 
     assertSame(
-        elements.getTypeElement("com.facebook.grandsuper.GrandSuper.GrandSuperMember"),
+        elements.getTypeElement("com.example.grandsuper.GrandSuper.GrandSuperMember"),
         result.type);
     assertEquals(kind, result.kind);
 
@@ -146,11 +146,11 @@ public class CompilerTypeResolutionSimulatorTest extends CompilerTreeApiTest {
       assertThat(
           result.missingDependencies,
           Matchers.containsInAnyOrder(
-              "//com/facebook/subclass:subclass", "//com/facebook/grandsuper:grandsuper"));
+              "//com/example/subclass:subclass", "//com/example/grandsuper:grandsuper"));
     } else if (kind == ResolvedTypeKind.CRASH) {
       assertThat(
           result.missingDependencies,
-          Matchers.containsInAnyOrder("//com/facebook/grandsuper:grandsuper"));
+          Matchers.containsInAnyOrder("//com/example/grandsuper:grandsuper"));
     }
   }
 

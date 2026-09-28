@@ -1,5 +1,3 @@
-oncall("build_infra")
-
 java_library(
     name = "java_lib",
     srcs = ["HelloWorld.java"],

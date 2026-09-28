@@ -217,7 +217,7 @@ def my_binary_impl(ctx: AnalysisContext):
 - **Use manual collection:** Only for simple cases or when learning Buck2 basics
 
 For complete details, see the Buck2 documentation on transitive sets
-(https://buck2.build/docs/rule_authors/transitive_sets/).
+(`website/docs/rule_authors/transitive_sets.md` in the Buck2 repository).
 
 ---
 
@@ -454,8 +454,8 @@ my_rule(
     name = "app",
     srcs = ["main.cpp"],
     flags = select({
-        "ovr_config//os:linux": ["-DLINUX"],
-        "ovr_config//os:macos": ["-DMACOS"],
+        "prelude//os:linux": ["-DLINUX"],
+        "prelude//os:macos": ["-DMACOS"],
         "DEFAULT": [],
     }),
 )

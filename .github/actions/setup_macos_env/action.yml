@@ -21,10 +21,13 @@ runs:
     run: uv tool install conan==1.*
     shell: bash
   - uses: "./.github/actions/print_versions"
+  # The prelude's Go tools need Go 1.23 or later (`os.CopyFS` in
+  # `prelude/go/tools/copy_goroot.go`), and its Go rules follow Go 1.26
+  # (`prelude/go/package_builder.bzl`).
   - uses: actions/setup-go@v5
     with:
       cache: false
-      go-version: '~1.22.0'
+      go-version: '~1.26.0'
   - uses: haskell-actions/setup@v2
     with:
       ghc-version: '9.10.1'

@@ -267,9 +267,6 @@ async fn build_action_inner(
     let mut dep_file_key = None;
     let mut eligible_for_full_hybrid = None;
 
-    let mut buck2_revision = None;
-    let mut buck2_build_time = None;
-    let mut hostname = None;
     let mut input_files_bytes = None;
     let mut scheduling_mode = None;
     let mut incremental_kind = None;
@@ -281,15 +278,6 @@ async fn build_action_inner(
             action_result = Ok(outputs);
             execution_kind = Some(meta.execution_kind.as_enum());
             dep_file_db_writes_queued = meta.dep_file_db_writes_queued;
-            if matches!(
-                meta.execution_kind.as_enum(),
-                buck2_data::ActionExecutionKind::Local
-                    | buck2_data::ActionExecutionKind::LocalWorker
-                    | buck2_data::ActionExecutionKind::LocalDepFile
-                    | buck2_data::ActionExecutionKind::LocalActionCache
-            ) {
-                hostname = buck2_events::metadata::hostname();
-            }
             wall_time = Some(meta.timing.wall_time);
             error = None;
             input_files_bytes = meta.input_files_bytes;
@@ -320,12 +308,6 @@ async fn build_action_inner(
                 .last()
                 .map(|r| r.timing.time_span.duration());
             output_size = 0;
-            // We define the below fields only in the instance of an action error
-            // so as to reduce Scribe traffic and log it in buck2_action_errors
-            buck2_revision = buck2_build_info::revision().map(|s| s.to_owned());
-            buck2_build_time = buck2_build_info::time_iso8601().map(|s| s.to_owned());
-            hostname = buck2_events::metadata::hostname();
-
             let last_command = commands.last().cloned();
 
             let outputs = match &e {
@@ -454,9 +436,6 @@ async fn build_action_inner(
             dep_file_key: dep_file_key.map(|d| d.to_string()),
             dep_file_db_writes_queued: Some(dep_file_db_writes_queued),
             eligible_for_full_hybrid,
-            buck2_revision,
-            buck2_build_time,
-            hostname,
             error_diagnostics,
             input_files_bytes,
             invalidation_info,
@@ -747,7 +726,6 @@ async fn command_execution_report_to_proto(
     buck2_data::CommandExecution {
         details: Some(details),
         status: Some(status),
-        inline_environment_metadata: Some(report.inline_environment_metadata),
     }
 }
 

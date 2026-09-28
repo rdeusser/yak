@@ -286,8 +286,7 @@ async fn spawn_worker(
         let socket_path = &socket_path;
 
         let connect = retrying(initial_delay, max_delay, timeout, move || {
-            // TODO(ctolliday) T153604304
-            // add handshake over grpc before returning a handle, to make sure the worker is responding
+            // TODO(ctolliday): add handshake over grpc before returning a handle, to make sure the worker is responding
             get_channel_uds(socket_path, false)
         });
 
@@ -914,7 +913,7 @@ mod worker_handle_tests {
     use super::tests::start_server;
 
     /// A worker that accepts the request and then never answers — the shape that
-    /// pins a buck2 command for the whole of its Sandcastle step.
+    /// pins a buck2 command for the whole of its CI step.
     struct HangingWorker;
 
     #[tonic::async_trait]
@@ -1013,7 +1012,7 @@ mod worker_handle_tests {
     async fn test_exec_cmd_times_out_when_worker_never_responds() {
         // `timeout_s` is only advisory to the worker, so buck2 has to enforce it
         // too — otherwise a worker that never replies (e.g. one blocked acquiring
-        // a device) outlives every timeout in the stack, including the tpx
+        // a device) outlives every timeout in the stack, including the test executor's
         // listing timeout that should have ended the command minutes earlier.
         let (client, _server) = start_server(HangingWorker).await;
         let (handle, _child_alive) = worker_handle(client);

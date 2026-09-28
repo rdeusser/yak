@@ -1,7 +1,4 @@
-load("@fbcode_macros//build_defs:python.bzl", "python_library")
 load("defs.bzl", "demo", "worker")
-
-oncall("build_infra")
 
 python_binary(
     name = "one_shot",
@@ -25,7 +22,8 @@ worker(
 
 [demo(name = "demo-" + str(i)) for i in range(4)]
 
-# Type checking target for Python scripts
+# Type checks the scripts through the `[typecheck]` sub-target, which exists only when the Python
+# toolchain sets `type_checker`. This example's toolchain does not set it.
 python_library(
     name = "scripts-typing",
     srcs = [

@@ -31,12 +31,11 @@ load(
     "RuntimeDependencyHandling",
     "ShlibInterfacesMode",
 )
-load("@prelude//cxx:cxx_utility.bzl", "cxx_attrs_get_allow_cache_upload", "cxx_attrs_use_fbcc_rust_wrapper")
+load("@prelude//cxx:cxx_utility.bzl", "cxx_attrs_get_allow_cache_upload")
 load(
     "@prelude//cxx:link_groups_types.bzl",
     "LinkGroupInfo",  # @unused Used as a type
 )
-# @oss-disable[end= ]: load("@prelude//cxx/meta_only:linker_outputs.bzl", "get_extra_linker_output_flags", "get_extra_linker_outputs")
 load("@prelude//graphql:graphql.bzl", "graphql_providers")
 load("@prelude//linking:execution_preference.bzl", "LinkExecutionPreference")
 load(
@@ -263,7 +262,6 @@ def cxx_library_generate(ctx: AnalysisContext, rule_type: str) -> list[Provider]
         export_header_unit_filter = ctx.attrs.export_header_unit_filter,
         error_handler = get_cxx_toolchain_info(ctx).cxx_error_handler,
         extra_dwp_flags = ctx.attrs.extra_dwp_flags,
-        use_fbcc_rust_wrapper = cxx_attrs_use_fbcc_rust_wrapper(ctx.attrs),
         allow_cache_upload = cxx_attrs_get_allow_cache_upload(ctx.attrs, get_cxx_toolchain_info(ctx).cxx_compiler_info.allow_cache_upload),
         precompiled_header = ctx.attrs.precompiled_header,
         prefix_header = ctx.attrs.prefix_header,
@@ -273,8 +271,6 @@ def cxx_library_generate(ctx: AnalysisContext, rule_type: str) -> list[Provider]
         coverage_profile_list = ctx.attrs.coverage_profile_list[DefaultInfo].default_outputs[0] if ctx.attrs.coverage_profile_list else None,
         separate_debug_info = ctx.attrs.separate_debug_info,
         cuda_compile_style = CudaCompileStyle(ctx.attrs.cuda_compile_style),
-        # @oss-disable[end= ]: extra_linker_outputs_factory = get_extra_linker_outputs,
-        # @oss-disable[end= ]: extra_linker_outputs_flags_factory = get_extra_linker_output_flags,
         supports_stripping = ctx.attrs.supports_stripping,
         expect_eligible_for_dedupe = getattr(ctx.attrs, "expect_eligible_for_dedupe", False),
     )
@@ -344,7 +340,6 @@ def cxx_binary_impl(ctx: AnalysisContext) -> list[Provider]:
         else get_cxx_toolchain_info(ctx).runtime_dependency_handling,
         error_handler = get_cxx_toolchain_info(ctx).cxx_error_handler,
         extra_dwp_flags = ctx.attrs.extra_dwp_flags,
-        use_fbcc_rust_wrapper = cxx_attrs_use_fbcc_rust_wrapper(ctx.attrs),
         allow_cache_upload = cxx_attrs_get_allow_cache_upload(ctx.attrs, get_cxx_toolchain_info(ctx).cxx_compiler_info.allow_cache_upload),
         precompiled_header = ctx.attrs.precompiled_header,
         prefix_header = ctx.attrs.prefix_header,
@@ -355,8 +350,6 @@ def cxx_binary_impl(ctx: AnalysisContext) -> list[Provider]:
         separate_debug_info = ctx.attrs.separate_debug_info,
         cuda_compile_style = CudaCompileStyle(ctx.attrs.cuda_compile_style),
         link_preference = LinkPreference(ctx.attrs.link_preference),
-        # @oss-disable[end= ]: extra_linker_outputs_factory = get_extra_linker_outputs,
-        # @oss-disable[end= ]: extra_linker_outputs_flags_factory = get_extra_linker_output_flags,
     )
     output = cxx_executable(ctx, params)
 
@@ -532,12 +525,12 @@ def _create_prebuilt_library_outputs(
                     if lib:
                         shlink_args = []
 
-                        # TODO(T110378143): Support post link flags properly.
+                        # TODO: Support post link flags properly.
                         shlink_args.extend(linker_flags.exported_flags)
                         shlink_args.extend(linker_flags.flags)
                         shlink_args.extend(get_link_whole_args(linker_type, [lib]))
 
-                        # TODO(T110378118): As per v1, we always link against "shared"
+                        # TODO: As per v1, we always link against "shared"
                         # dependencies when building a shaerd library.
                         shared_link_args = get_link_args_for_strategy(
                             ctx.actions,
@@ -840,7 +833,7 @@ def _create_prebuilt_library_providers(
         ),
     )
 
-    # TODO(T107163344) this shouldn't be in prebuilt_cxx_library itself, use overlays to remove it.
+    # TODO: this shouldn't be in prebuilt_cxx_library itself, use overlays to remove it.
     providers.append(merge_android_packageable_info(ctx.label, ctx.actions, first_order_deps + exported_first_order_deps))
 
     apple_resource_graph = create_resource_graph(
@@ -1036,7 +1029,7 @@ def cxx_test_impl(ctx: AnalysisContext) -> list[Provider]:
         link_strategy,
     )
 
-    # TODO(T110378115): have the runinfo contain the correct test running args
+    # TODO: have the runinfo contain the correct test running args
     params = CxxRuleConstructorParams(
         rule_type = "cxx_test",
         generate_sub_targets = CxxRuleSubTargetParams(xcode_data = xcode_data_enabled()),
@@ -1056,7 +1049,6 @@ def cxx_test_impl(ctx: AnalysisContext) -> list[Provider]:
         else get_cxx_toolchain_info(ctx).runtime_dependency_handling,
         error_handler = get_cxx_toolchain_info(ctx).cxx_error_handler,
         extra_dwp_flags = ctx.attrs.extra_dwp_flags,
-        use_fbcc_rust_wrapper = cxx_attrs_use_fbcc_rust_wrapper(ctx.attrs),
         allow_cache_upload = cxx_attrs_get_allow_cache_upload(ctx.attrs, get_cxx_toolchain_info(ctx).cxx_compiler_info.allow_cache_upload),
         precompiled_header = ctx.attrs.precompiled_header,
         prefix_header = ctx.attrs.prefix_header,
@@ -1098,7 +1090,7 @@ def cxx_test_impl(ctx: AnalysisContext) -> list[Provider]:
                 default_executor = re_executors.default_executor,
                 executor_overrides = re_executors.executor_overrides,
                 # We implicitly make this test via the project root, instead of
-                # the cell root (e.g. fbcode root). `network_access` is carried on
+                # the cell root. `network_access` is carried on
                 # the executor config (see `get_re_executors_from_props`).
                 run_from_project_root = ("buck2_run_from_project_root" in (ctx.attrs.labels or []) or re_executors.run_from_project_root),
                 use_project_relative_paths = re_executors.use_project_relative_paths,

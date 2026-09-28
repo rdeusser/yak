@@ -6,17 +6,15 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-# pyre-strict
-
-
 import fileinput
 import os
 from pathlib import Path
 
-from buck2.tests.e2e_util.api.buck import Buck
-from buck2.tests.e2e_util.asserts import expect_failure
-from buck2.tests.e2e_util.buck_workspace import buck_test
-from buck2.tests.e2e_util.helper.utils import random_string
+import pytest
+from e2e_util.api.buck import Buck
+from e2e_util.asserts import expect_failure
+from e2e_util.buck_workspace import buck_test
+from e2e_util.helper.utils import random_string
 
 
 @buck_test(data_dir="modify")
@@ -57,7 +55,7 @@ async def test_modify_genrule_notify(buck: Buck) -> None:
 
 @buck_test(data_dir="modify")
 async def test_modify_directory(buck: Buck) -> None:
-    # Test for the bug reported in T99593442
+    # Checks that a build notices a directory that was deleted along with its file.
     os.mkdir(buck.cwd / "a_dir")
     with open(buck.cwd / "a_dir" / "test.txt", "w") as file:
         file.write("test")
@@ -69,6 +67,7 @@ async def test_modify_directory(buck: Buck) -> None:
     await buck.build("//:writer")
 
 
+@pytest.mark.remote_execution
 @buck_test(data_dir="modify_file_during_build")
 async def test_modify_file_during_build(buck: Buck) -> None:
     # We need to write some random stuff to the file first so that Buck will
@@ -83,6 +82,7 @@ async def test_modify_file_during_build(buck: Buck) -> None:
     )
 
 
+@pytest.mark.remote_execution
 @buck_test(data_dir="modify_file_during_build")
 async def test_file_notify(buck: Buck) -> None:
     # We need to write some random stuff to the file first so that Buck will

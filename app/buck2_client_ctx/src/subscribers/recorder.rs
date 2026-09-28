@@ -45,9 +45,7 @@ use buck2_error::buck2_error;
 use buck2_error::classify::ERROR_TAG_UNCLASSIFIED;
 use buck2_error::classify::ErrorLike;
 use buck2_error::classify::source_area;
-use buck2_error::internal_error;
 use buck2_error::source_location::SourceLocation;
-use buck2_event_log::ttl::manifold_event_log_ttl;
 use buck2_event_observer::action_stats;
 use buck2_event_observer::cache_hit_rate::total_cache_hit_rate;
 use buck2_event_observer::last_command_execution_kind;
@@ -55,9 +53,6 @@ use buck2_event_observer::last_command_execution_kind::LastCommandExecutionKind;
 use buck2_event_observer::last_command_execution_kind::get_last_command_execution_time;
 use buck2_events::BuckEvent;
 use buck2_events::daemon_id::DaemonId;
-use buck2_events::metadata;
-use buck2_events::sink::remote::ScribeConfig;
-use buck2_events::sink::remote::new_remote_event_sink_if_enabled;
 use buck2_fs::error::IoResultExt;
 use buck2_fs::fs_util;
 use buck2_fs::paths::abs_path::AbsPathBuf;
@@ -74,9 +69,7 @@ use gazebo::prelude::VecExt;
 use gazebo::variants::VariantName;
 use itertools::Itertools;
 use termwiz::istty::IsTty;
-use tokio::sync::mpsc::Receiver;
 
-use crate::agent_context::AgentContextEntry;
 use crate::client_ctx::ClientCommandContext;
 use crate::client_metadata::ClientMetadata;
 use crate::common::CommonBuildConfigurationOptions;
@@ -119,8 +112,6 @@ pub struct InvocationRecorder {
     command_end: Option<buck2_data::CommandEnd>,
     command_duration: Option<prost_types::Duration>,
     re_session_id: Option<String>,
-    re_experiment_name: Option<String>,
-    persistent_cache_mode: Option<String>,
     critical_path_duration: Option<Duration>,
     critical_path_page_in: Option<Duration>,
     tags: Vec<String>,
@@ -150,9 +141,7 @@ pub struct InvocationRecorder {
     dep_file_upload_count: u64,
     dep_file_upload_attempt_count: u64,
     parsed_target_patterns: Option<buck2_data::ParsedTargetPatterns>,
-    filesystem: Option<String>,
     watchman_version: Option<String>,
-    eden_version: Option<String>,
     test_info: Option<String>,
     eligible_for_full_hybrid: bool,
     max_event_client_delay: Option<Duration>,
@@ -185,11 +174,6 @@ pub struct InvocationRecorder {
     file_watcher_stats: Option<buck2_data::FileWatcherStats>,
     file_watcher_duration: Option<Duration>,
     time_to_last_action_execution_end: Option<Duration>,
-    initial_sink_success_count: Option<u64>,
-    initial_sink_failure_count: Option<u64>,
-    initial_sink_dropped_count: Option<u64>,
-    initial_sink_bytes_written: Option<u64>,
-    sink_max_buffer_depth: u64,
     soft_error_categories: BuckMutSet<SoftError>,
     concurrent_command_blocking_duration: Option<Duration>,
     metadata: IntentionallyStdHashMap<String, String>,
@@ -207,33 +191,14 @@ pub struct InvocationRecorder {
     bxl_ensure_artifacts_duration: Option<prost_types::Duration>,
     install_duration: Option<prost_types::Duration>,
     install_device_metadata: Vec<buck2_data::DeviceMetadata>,
-    installer_log_url: Option<String>,
-    installer_name: Option<String>,
     initial_re_upload_bytes: Option<u64>,
     initial_re_download_bytes: Option<u64>,
-    initial_zdb_download_queries: Option<u64>,
-    initial_zdb_download_bytes: Option<u64>,
-    initial_zdb_upload_queries: Option<u64>,
-    initial_zdb_upload_bytes: Option<u64>,
-    initial_zgateway_download_queries: Option<u64>,
-    initial_zgateway_download_bytes: Option<u64>,
-    initial_zgateway_upload_queries: Option<u64>,
-    initial_zgateway_upload_bytes: Option<u64>,
-    initial_manifold_download_queries: Option<u64>,
-    initial_manifold_download_bytes: Option<u64>,
-    initial_manifold_upload_queries: Option<u64>,
-    initial_manifold_upload_bytes: Option<u64>,
-    initial_hedwig_download_queries: Option<u64>,
-    initial_hedwig_download_bytes: Option<u64>,
-    initial_hedwig_upload_queries: Option<u64>,
-    initial_hedwig_upload_bytes: Option<u64>,
     concurrent_command_ids: BuckMutSet<String>,
     daemon_connection_failure: bool,
     /// Daemon started by this command.
     daemon_was_started: Option<buck2_data::DaemonWasStartedReason>,
     should_restart: bool,
     client_metadata: Vec<buck2_data::ClientMetadata>,
-    agent_context: Vec<buck2_data::AgentContextEntry>,
     command_errors: Vec<ErrorReport>,
     exit_code: Option<u32>,
     exit_result_name: Option<String>,
@@ -264,8 +229,6 @@ pub struct InvocationRecorder {
     materialization_files: u64,
     previous_uuid_with_mismatched_config: Option<String>,
     file_watcher: Option<String>,
-    health_check_tags_receiver: Option<Receiver<Vec<String>>>,
-    health_check_tags: BuckMutSet<String>,
     exec_time_ms: u64,
     initial_local_cache_hits_files_from_memory_cache: Option<i64>,
     initial_local_cache_hits_files_from_filesystem_cache: Option<i64>,
@@ -308,11 +271,9 @@ pub struct InvocationRecorder {
     initial_io_hardlink_count: Option<u32>,
     initial_io_mkdir_count: Option<u32>,
     initial_io_readdir_count: Option<u32>,
-    initial_io_readdir_eden_count: Option<u32>,
     initial_io_rmdir_count: Option<u32>,
     initial_io_rmdir_all_count: Option<u32>,
     initial_io_stat_count: Option<u32>,
-    initial_io_stat_eden_count: Option<u32>,
     initial_io_chmod_count: Option<u32>,
     initial_io_readlink_count: Option<u32>,
     initial_io_remove_count: Option<u32>,
@@ -320,7 +281,6 @@ pub struct InvocationRecorder {
     initial_io_read_count: Option<u32>,
     initial_io_write_count: Option<u32>,
     initial_io_canonicalize_count: Option<u32>,
-    initial_io_eden_settle_count: Option<u32>,
     repo_path: Option<String>,
 }
 
@@ -350,8 +310,6 @@ impl InvocationRecorder {
             command_end: None,
             command_duration: None,
             re_session_id: None,
-            re_experiment_name: None,
-            persistent_cache_mode: None,
             critical_path_duration: None,
             critical_path_page_in: None,
             tags: vec![],
@@ -380,9 +338,7 @@ impl InvocationRecorder {
             dep_file_upload_count: 0,
             dep_file_upload_attempt_count: 0,
             parsed_target_patterns: None,
-            filesystem: None,
             watchman_version: None,
-            eden_version: None,
             test_info: None,
             eligible_for_full_hybrid: false,
             max_event_client_delay: None,
@@ -412,11 +368,6 @@ impl InvocationRecorder {
             file_watcher_stats: None,
             file_watcher_duration: None,
             time_to_last_action_execution_end: None,
-            initial_sink_success_count: None,
-            initial_sink_failure_count: None,
-            initial_sink_dropped_count: None,
-            initial_sink_bytes_written: None,
-            sink_max_buffer_depth: 0,
             soft_error_categories: BuckMutSet::default(),
             concurrent_command_blocking_duration: None,
             // Use a null daemon_id here initially - if we later get metadata back from the daemon,
@@ -436,32 +387,13 @@ impl InvocationRecorder {
             bxl_ensure_artifacts_duration: None,
             install_duration: None,
             install_device_metadata: Vec::new(),
-            installer_log_url: None,
-            installer_name: None,
             initial_re_upload_bytes: None,
             initial_re_download_bytes: None,
-            initial_zdb_download_queries: None,
-            initial_zdb_download_bytes: None,
-            initial_zdb_upload_queries: None,
-            initial_zdb_upload_bytes: None,
-            initial_zgateway_download_queries: None,
-            initial_zgateway_download_bytes: None,
-            initial_zgateway_upload_queries: None,
-            initial_zgateway_upload_bytes: None,
-            initial_manifold_download_queries: None,
-            initial_manifold_download_bytes: None,
-            initial_manifold_upload_queries: None,
-            initial_manifold_upload_bytes: None,
-            initial_hedwig_download_queries: None,
-            initial_hedwig_download_bytes: None,
-            initial_hedwig_upload_queries: None,
-            initial_hedwig_upload_bytes: None,
             concurrent_command_ids: BuckMutSet::default(),
             daemon_connection_failure: false,
             daemon_was_started: None,
             should_restart: false,
             client_metadata: Vec::new(),
-            agent_context: Vec::new(),
             command_errors: Vec::new(),
             exit_code: None,
             exit_result_name: None,
@@ -499,8 +431,6 @@ impl InvocationRecorder {
             materialization_files: 0,
             previous_uuid_with_mismatched_config: None,
             file_watcher: None,
-            health_check_tags_receiver: None,
-            health_check_tags: BuckMutSet::default(),
             exec_time_ms: 0,
             initial_local_cache_hits_files_from_memory_cache: None,
             initial_local_cache_hits_files_from_filesystem_cache: None,
@@ -531,11 +461,9 @@ impl InvocationRecorder {
             initial_io_hardlink_count: None,
             initial_io_mkdir_count: None,
             initial_io_readdir_count: None,
-            initial_io_readdir_eden_count: None,
             initial_io_rmdir_count: None,
             initial_io_rmdir_all_count: None,
             initial_io_stat_count: None,
-            initial_io_stat_eden_count: None,
             initial_io_chmod_count: None,
             initial_io_readlink_count: None,
             initial_io_remove_count: None,
@@ -543,7 +471,6 @@ impl InvocationRecorder {
             initial_io_read_count: None,
             initial_io_write_count: None,
             initial_io_canonicalize_count: None,
-            initial_io_eden_settle_count: None,
             repo_path: None,
         }
     }
@@ -572,12 +499,6 @@ impl InvocationRecorder {
             );
         }
 
-        self.agent_context = ctx
-            .agent_context
-            .iter()
-            .map(AgentContextEntry::to_proto)
-            .collect();
-
         self.command_name = Some(command_name);
     }
 
@@ -589,7 +510,6 @@ impl InvocationRecorder {
         build_config_opts: Option<&CommonBuildConfigurationOptions>,
         representative_config_flags: Vec<String>,
         log_size_counter_bytes: Option<Arc<AtomicU64>>,
-        health_check_tags_receiver: Option<Receiver<Vec<String>>>,
         paths: Option<&InvocationPaths>,
     ) {
         let write_to_path = event_log_opts
@@ -597,23 +517,6 @@ impl InvocationRecorder {
             .as_ref()
             .map(|path| path.resolve(&ctx.working_dir));
 
-        let filesystem;
-        #[cfg(fbcode_build)]
-        {
-            let is_eden = paths.is_some_and(|paths| {
-                let root = std::path::Path::to_owned(paths.project_root().root().to_buf().as_ref());
-                detect_eden::is_eden(root).unwrap_or(false)
-            });
-            if is_eden {
-                filesystem = "eden".to_owned();
-            } else {
-                filesystem = "default".to_owned();
-            }
-        }
-        #[cfg(not(fbcode_build))]
-        {
-            filesystem = "default".to_owned();
-        }
         let build_count = paths.and_then(|p| match BuildCountManager::new(p.build_count_dir()) {
             Ok(manager) => Some(manager),
             Err(e) => {
@@ -626,9 +529,7 @@ impl InvocationRecorder {
         self.representative_config_flags = representative_config_flags;
         self.write_to_path = write_to_path;
         self.build_count_manager = build_count;
-        self.filesystem = Some(filesystem);
         self.compressed_event_log_size_bytes = log_size_counter_bytes;
-        self.health_check_tags_receiver = health_check_tags_receiver;
         self.preemptible = build_config_opts.and_then(|opts| opts.preemptible);
         self.repo_path = paths.map(|p| p.project_root().root().to_string());
     }
@@ -720,12 +621,8 @@ impl InvocationRecorder {
                     } else {
                         error
                     }
-                } else if error.has_tag(ErrorTag::ServerSigterm) {
-                    error.context("buckd killed by SIGTERM")
                 } else {
-                    // Scribe sink truncates messages, but here we can do it better:
-                    // - truncate even if total message is not large enough
-                    // - truncate stderr, but keep the error message
+                    // Truncate the daemon's stderr but keep the error message whole.
                     let server_stderr = truncate_stderr(&self.server_stderr);
                     error.context(format!("buckd stderr:\n{server_stderr}"))
                 };
@@ -739,33 +636,10 @@ impl InvocationRecorder {
         errors.into_map(process_error_report)
     }
 
-    fn create_record_event(&mut self) -> BuckEvent {
-        let mut sink_success_count = None;
-        let mut sink_failure_count = None;
-        let mut sink_dropped_count = None;
-        let mut sink_bytes_written = None;
+    /// Writes the invocation record as JSON to `path`, for `--unstable-write-invocation-record`.
+    fn write_invocation_record(&mut self, path: &AbsPathBuf) {
         let mut re_upload_bytes = None;
         let mut re_download_bytes = None;
-
-        let mut zdb_download_queries = None;
-        let mut zdb_download_bytes = None;
-        let mut zdb_upload_queries = None;
-        let mut zdb_upload_bytes = None;
-
-        let mut zgateway_download_queries = None;
-        let mut zgateway_download_bytes = None;
-        let mut zgateway_upload_queries = None;
-        let mut zgateway_upload_bytes = None;
-
-        let mut manifold_download_queries = None;
-        let mut manifold_download_bytes = None;
-        let mut manifold_upload_queries = None;
-        let mut manifold_upload_bytes = None;
-
-        let mut hedwig_download_queries = None;
-        let mut hedwig_download_bytes = None;
-        let mut hedwig_upload_queries = None;
-        let mut hedwig_upload_bytes = None;
 
         let mut local_cache_hits_files = None;
         let mut local_cache_hits_bytes = None;
@@ -782,11 +656,9 @@ impl InvocationRecorder {
         let mut io_hardlink_count = None;
         let mut io_mkdir_count = None;
         let mut io_readdir_count = None;
-        let mut io_readdir_eden_count = None;
         let mut io_rmdir_count = None;
         let mut io_rmdir_all_count = None;
         let mut io_stat_count = None;
-        let mut io_stat_eden_count = None;
         let mut io_chmod_count = None;
         let mut io_readlink_count = None;
         let mut io_remove_count = None;
@@ -794,7 +666,6 @@ impl InvocationRecorder {
         let mut io_read_count = None;
         let mut io_write_count = None;
         let mut io_canonicalize_count = None;
-        let mut io_eden_settle_count = None;
 
         let mut page_in_count = None;
         let mut page_in_fetch_us = None;
@@ -815,16 +686,6 @@ impl InvocationRecorder {
         }
 
         if let Some(snapshot) = &self.last_snapshot {
-            sink_success_count =
-                calculate_diff_if_some(&snapshot.sink_successes, &self.initial_sink_success_count);
-            sink_failure_count =
-                calculate_diff_if_some(&snapshot.sink_failures, &self.initial_sink_failure_count);
-            sink_dropped_count =
-                calculate_diff_if_some(&snapshot.sink_dropped, &self.initial_sink_dropped_count);
-            sink_bytes_written = calculate_diff_if_some(
-                &snapshot.sink_bytes_written,
-                &self.initial_sink_bytes_written,
-            );
             re_upload_bytes = calculate_diff_if_some(
                 &Some(snapshot.re_upload_bytes),
                 &self.initial_re_upload_bytes,
@@ -832,70 +693,6 @@ impl InvocationRecorder {
             re_download_bytes = calculate_diff_if_some(
                 &Some(snapshot.re_download_bytes),
                 &self.initial_re_download_bytes,
-            );
-            zdb_download_queries = calculate_diff_if_some(
-                &Some(snapshot.zdb_download_queries),
-                &self.initial_zdb_download_queries,
-            );
-            zdb_download_bytes = calculate_diff_if_some(
-                &Some(snapshot.zdb_download_bytes),
-                &self.initial_zdb_download_bytes,
-            );
-            zdb_upload_queries = calculate_diff_if_some(
-                &Some(snapshot.zdb_upload_queries),
-                &self.initial_zdb_upload_queries,
-            );
-            zdb_upload_bytes = calculate_diff_if_some(
-                &Some(snapshot.zdb_upload_bytes),
-                &self.initial_zdb_upload_bytes,
-            );
-            zgateway_download_queries = calculate_diff_if_some(
-                &Some(snapshot.zgateway_download_queries),
-                &self.initial_zgateway_download_queries,
-            );
-            zgateway_download_bytes = calculate_diff_if_some(
-                &Some(snapshot.zgateway_download_bytes),
-                &self.initial_zgateway_download_bytes,
-            );
-            zgateway_upload_queries = calculate_diff_if_some(
-                &Some(snapshot.zgateway_upload_queries),
-                &self.initial_zgateway_upload_queries,
-            );
-            zgateway_upload_bytes = calculate_diff_if_some(
-                &Some(snapshot.zgateway_upload_bytes),
-                &self.initial_zgateway_upload_bytes,
-            );
-            manifold_download_queries = calculate_diff_if_some(
-                &Some(snapshot.manifold_download_queries),
-                &self.initial_manifold_download_queries,
-            );
-            manifold_download_bytes = calculate_diff_if_some(
-                &Some(snapshot.manifold_download_bytes),
-                &self.initial_manifold_download_bytes,
-            );
-            manifold_upload_queries = calculate_diff_if_some(
-                &Some(snapshot.manifold_upload_queries),
-                &self.initial_manifold_upload_queries,
-            );
-            manifold_upload_bytes = calculate_diff_if_some(
-                &Some(snapshot.manifold_upload_bytes),
-                &self.initial_manifold_upload_bytes,
-            );
-            hedwig_download_queries = calculate_diff_if_some(
-                &Some(snapshot.hedwig_download_queries),
-                &self.initial_hedwig_download_queries,
-            );
-            hedwig_download_bytes = calculate_diff_if_some(
-                &Some(snapshot.hedwig_download_bytes),
-                &self.initial_hedwig_download_bytes,
-            );
-            hedwig_upload_queries = calculate_diff_if_some(
-                &Some(snapshot.hedwig_upload_queries),
-                &self.initial_hedwig_upload_queries,
-            );
-            hedwig_upload_bytes = calculate_diff_if_some(
-                &Some(snapshot.hedwig_upload_bytes),
-                &self.initial_hedwig_upload_bytes,
             );
 
             local_cache_hits_files = calculate_diff_if_some(
@@ -950,10 +747,6 @@ impl InvocationRecorder {
                 calculate_diff_if_some(&snapshot.io_mkdir_count, &self.initial_io_mkdir_count);
             io_readdir_count =
                 calculate_diff_if_some(&snapshot.io_readdir_count, &self.initial_io_readdir_count);
-            io_readdir_eden_count = calculate_diff_if_some(
-                &snapshot.io_readdir_eden_count,
-                &self.initial_io_readdir_eden_count,
-            );
             io_rmdir_count =
                 calculate_diff_if_some(&snapshot.io_rmdir_count, &self.initial_io_rmdir_count);
             io_rmdir_all_count = calculate_diff_if_some(
@@ -962,10 +755,6 @@ impl InvocationRecorder {
             );
             io_stat_count =
                 calculate_diff_if_some(&snapshot.io_stat_count, &self.initial_io_stat_count);
-            io_stat_eden_count = calculate_diff_if_some(
-                &snapshot.io_stat_eden_count,
-                &self.initial_io_stat_eden_count,
-            );
             io_chmod_count =
                 calculate_diff_if_some(&snapshot.io_chmod_count, &self.initial_io_chmod_count);
             io_readlink_count = calculate_diff_if_some(
@@ -983,10 +772,6 @@ impl InvocationRecorder {
             io_canonicalize_count = calculate_diff_if_some(
                 &snapshot.io_canonicalize_count,
                 &self.initial_io_canonicalize_count,
-            );
-            io_eden_settle_count = calculate_diff_if_some(
-                &snapshot.io_eden_settle_count,
-                &self.initial_io_eden_settle_count,
             );
 
             // We show memory/disk warnings in the console but we can't emit a tag event there due to having no access to dispatcher.
@@ -1011,8 +796,6 @@ impl InvocationRecorder {
             ) {
                 self.tags.push("slow_network_speed_ui_only".to_owned());
             }
-            self.try_read_health_check_tags(); // Empty the queue so far.
-            self.tags.extend(self.health_check_tags.iter().cloned());
         }
 
         let mut metadata = Self::default_metadata();
@@ -1048,8 +831,6 @@ impl InvocationRecorder {
                         .and_then(duration_as_millis)
                 }),
             re_session_id: self.re_session_id.take().unwrap_or_default(),
-            re_experiment_name: self.re_experiment_name.take().unwrap_or_default(),
-            persistent_cache_mode: self.persistent_cache_mode.clone(),
             cli_args: self.cli_args.clone(),
             representative_config_flags: self.representative_config_flags.clone(),
             critical_path_duration: self.critical_path_duration.and_then(|x| x.try_into().ok()),
@@ -1081,9 +862,7 @@ impl InvocationRecorder {
             dep_file_upload_count: self.dep_file_upload_count,
             dep_file_upload_attempt_count: self.dep_file_upload_attempt_count,
             parsed_target_patterns: self.parsed_target_patterns.take(),
-            filesystem: self.filesystem.take().unwrap_or("default".to_owned()),
             watchman_version: self.watchman_version.take(),
-            eden_version: self.eden_version.take(),
             test_info: self.test_info.take(),
             eligible_for_full_hybrid: Some(self.eligible_for_full_hybrid),
             max_event_client_delay_ms: self.max_event_client_delay.and_then(duration_as_millis),
@@ -1145,11 +924,6 @@ impl InvocationRecorder {
             dep_file_db_fetch_duration_us: Some(self.dep_file_db_fetch_duration_us),
             dep_file_db_hits: Some(self.dep_file_db_hits),
             dep_file_db_writes_queued: Some(self.dep_file_db_writes_queued),
-            sink_success_count,
-            sink_failure_count,
-            sink_dropped_count,
-            sink_bytes_written,
-            sink_max_buffer_depth: Some(self.sink_max_buffer_depth),
             soft_error_categories: std::mem::take(&mut self.soft_error_categories)
                 .into_iter()
                 .collect(),
@@ -1184,7 +958,6 @@ impl InvocationRecorder {
             daemon_was_started: self.daemon_was_started.map(|t| t as i32),
             should_restart: Some(self.should_restart),
             client_metadata: std::mem::take(&mut self.client_metadata),
-            agent_context: std::mem::take(&mut self.agent_context),
             errors,
             target_rule_type_names: unique_and_sorted(
                 std::mem::take(&mut self.target_rule_type_names).into_iter(),
@@ -1204,30 +977,11 @@ impl InvocationRecorder {
             re_avg_upload_speed: self.re_avg_upload_speed.avg_per_second(),
             install_duration: self.install_duration.take(),
             install_device_metadata: std::mem::take(&mut self.install_device_metadata),
-            installer_log_url: self.installer_log_url.take(),
-            installer_name: self.installer_name.take(),
             peak_process_memory_bytes: self.peak_process_memory_bytes.take(),
-            event_log_manifold_ttl_s: manifold_event_log_ttl().ok().map(|t| t.as_secs()),
             total_disk_space_bytes: self.system_info.total_disk_space_bytes.take(),
             peak_used_disk_space_bytes: self.peak_used_disk_space_bytes.take(),
             peak_normalized_system_load1: self.peak_normalized_system_load1.take(),
             peak_normalized_system_load5: self.peak_normalized_system_load5.take(),
-            zdb_download_queries,
-            zdb_download_bytes,
-            zdb_upload_queries,
-            zdb_upload_bytes,
-            zgateway_download_queries,
-            zgateway_download_bytes,
-            zgateway_upload_queries,
-            zgateway_upload_bytes,
-            manifold_download_queries,
-            manifold_download_bytes,
-            manifold_upload_queries,
-            manifold_upload_bytes,
-            hedwig_download_queries,
-            hedwig_download_bytes,
-            hedwig_upload_queries,
-            hedwig_upload_bytes,
             active_networks_kinds: std::mem::take(&mut self.active_networks_kinds)
                 .into_iter()
                 .collect(),
@@ -1292,11 +1046,9 @@ impl InvocationRecorder {
             io_hardlink_count,
             io_mkdir_count,
             io_readdir_count,
-            io_readdir_eden_count,
             io_rmdir_count,
             io_rmdir_all_count,
             io_stat_count,
-            io_stat_eden_count,
             io_chmod_count,
             io_readlink_count,
             io_remove_count,
@@ -1304,7 +1056,6 @@ impl InvocationRecorder {
             io_read_count,
             io_write_count,
             io_canonicalize_count,
-            io_eden_settle_count,
             page_in_count,
             page_in_fetch_us,
             page_in_deser_us,
@@ -1384,54 +1135,34 @@ impl InvocationRecorder {
             .into(),
         );
 
-        if let Some(path) = &self.write_to_path {
-            let res = (|| {
-                let out = fs_util::create_file(path)
-                    // input path from --unstable-write-invocation-record
-                    .categorize_input()
-                    .buck_error_context("Error opening")?;
-                let mut out = std::io::BufWriter::new(out);
-                serde_json::to_writer(&mut out, event.event())
-                    .buck_error_context("Error writing")?;
-                out.flush().buck_error_context("Error flushing")?;
-                buck2_error::Ok(())
-            })();
+        let res = (|| {
+            let out = fs_util::create_file(path)
+                // input path from --unstable-write-invocation-record
+                .categorize_input()
+                .buck_error_context("Error opening")?;
+            let mut out = std::io::BufWriter::new(out);
+            serde_json::to_writer(&mut out, event.event()).buck_error_context("Error writing")?;
+            out.flush().buck_error_context("Error flushing")?;
+            buck2_error::Ok(())
+        })();
 
-            if let Err(e) = &res {
-                tracing::warn!(
-                    "Failed to write InvocationRecord to `{}`: {:#}",
-                    path.as_path().display(),
-                    e
-                );
-            }
-        }
-        event
-    }
-
-    fn try_read_health_check_tags(&mut self) {
-        // The sender may have sent multiple tag messages since the recorder and health checker don't necessarily run at the same frequency.
-        // We should not make assumptions about order of sender/receiver drop since the health checker is a BuckEvent subscriber as well.
-
-        // We do have the slight chance that health_check_client reports something after the recorder is dropped.
-        // Presently, since the health checks run at every snapshot, the likelihood of missing tags should be low.
-        // If we want to ensure that all reports are flushed, we might need to implement an end-of-messages marker.
-        if let Some(tags_receiver) = self.health_check_tags_receiver.as_mut() {
-            while let Ok(tags) = tags_receiver.try_recv() {
-                self.health_check_tags.extend(tags);
-            }
+        if let Err(e) = &res {
+            tracing::warn!(
+                "Failed to write InvocationRecord to `{}`: {:#}",
+                path.as_path().display(),
+                e
+            );
         }
     }
 
-    // Collects client-side state and data, suitable for telemetry.
-    // NOTE: If data is visible from the daemon, put it in cli::metadata::collect()
+    // Client-side state the daemon cannot observe, such as whether stderr is a terminal.
     fn default_metadata() -> buck2_data::TypedMetadata {
         let mut ints = IntentionallyStdHashMap::new();
         ints.insert("is_tty".to_owned(), std::io::stderr().is_tty() as i64);
-        let mut strings = IntentionallyStdHashMap::new();
-        if let Some(agent_identity) = metadata::agent_identity_from_env() {
-            strings.insert("client_agent_identity_from_env".to_owned(), agent_identity);
+        buck2_data::TypedMetadata {
+            ints,
+            strings: IntentionallyStdHashMap::new(),
         }
-        buck2_data::TypedMetadata { ints, strings }
     }
 
     fn handle_command_start(
@@ -1775,8 +1506,6 @@ impl InvocationRecorder {
         _event: &BuckEvent,
     ) -> buck2_error::Result<()> {
         self.re_session_id = Some(session.session_id.clone());
-        self.re_experiment_name = Some(session.experiment_name.clone());
-        self.persistent_cache_mode = session.persistent_cache_mode.clone();
         Ok(())
     }
 
@@ -1824,8 +1553,6 @@ impl InvocationRecorder {
     ) -> buck2_error::Result<()> {
         self.install_duration = install_finished.duration;
         self.install_device_metadata = install_finished.device_metadata.clone();
-        self.installer_log_url = install_finished.log_url.clone();
-        self.installer_name = install_finished.installer_name.clone();
         Ok(())
     }
 
@@ -1969,16 +1696,6 @@ impl InvocationRecorder {
         Ok(())
     }
 
-    fn handle_io_provider_info(
-        &mut self,
-        io_provider_info: &buck2_data::IoProviderInfo,
-    ) -> buck2_error::Result<()> {
-        if let Some(eden_version) = &io_provider_info.eden_version {
-            self.eden_version = Some(eden_version.to_owned())
-        }
-        Ok(())
-    }
-
     fn handle_tag(&mut self, tag: &buck2_data::TagEvent) -> buck2_error::Result<()> {
         self.tags.extend(tag.tags.iter().cloned());
         Ok(())
@@ -2034,77 +1751,12 @@ impl InvocationRecorder {
         } else {
             self.last_snapshot = Some(update.clone());
         }
-        if self.initial_sink_success_count.is_none() {
-            self.initial_sink_success_count = update.sink_successes;
-        }
-        if self.initial_sink_failure_count.is_none() {
-            self.initial_sink_failure_count = update.sink_failures;
-        }
-        if self.initial_sink_dropped_count.is_none() {
-            self.initial_sink_dropped_count = update.sink_dropped;
-        }
-        if self.initial_sink_bytes_written.is_none() {
-            self.initial_sink_bytes_written = update.sink_bytes_written;
-        }
-        self.sink_max_buffer_depth = max(self.sink_max_buffer_depth, update.sink_buffer_depth());
 
         if self.initial_re_upload_bytes.is_none() {
             self.initial_re_upload_bytes = Some(update.re_upload_bytes);
         }
         if self.initial_re_download_bytes.is_none() {
             self.initial_re_download_bytes = Some(update.re_download_bytes);
-        }
-
-        if self.initial_zdb_download_queries.is_none() {
-            self.initial_zdb_download_queries = Some(update.zdb_download_queries);
-        }
-        if self.initial_zdb_download_bytes.is_none() {
-            self.initial_zdb_download_bytes = Some(update.zdb_download_bytes);
-        }
-        if self.initial_zdb_upload_queries.is_none() {
-            self.initial_zdb_upload_queries = Some(update.zdb_upload_queries);
-        }
-        if self.initial_zdb_upload_bytes.is_none() {
-            self.initial_zdb_upload_bytes = Some(update.zdb_upload_bytes);
-        }
-
-        if self.initial_zgateway_download_queries.is_none() {
-            self.initial_zgateway_download_queries = Some(update.zgateway_download_queries);
-        }
-        if self.initial_zgateway_download_bytes.is_none() {
-            self.initial_zgateway_download_bytes = Some(update.zgateway_download_bytes);
-        }
-        if self.initial_zgateway_upload_queries.is_none() {
-            self.initial_zgateway_upload_queries = Some(update.zgateway_upload_queries);
-        }
-        if self.initial_zgateway_upload_bytes.is_none() {
-            self.initial_zgateway_upload_bytes = Some(update.zgateway_upload_bytes);
-        }
-
-        if self.initial_manifold_download_queries.is_none() {
-            self.initial_manifold_download_queries = Some(update.manifold_download_queries);
-        }
-        if self.initial_manifold_download_bytes.is_none() {
-            self.initial_manifold_download_bytes = Some(update.manifold_download_bytes);
-        }
-        if self.initial_manifold_upload_queries.is_none() {
-            self.initial_manifold_upload_queries = Some(update.manifold_upload_queries);
-        }
-        if self.initial_manifold_upload_bytes.is_none() {
-            self.initial_manifold_upload_bytes = Some(update.manifold_upload_bytes);
-        }
-
-        if self.initial_hedwig_download_queries.is_none() {
-            self.initial_hedwig_download_queries = Some(update.hedwig_download_queries);
-        }
-        if self.initial_hedwig_download_bytes.is_none() {
-            self.initial_hedwig_download_bytes = Some(update.hedwig_download_bytes);
-        }
-        if self.initial_hedwig_upload_queries.is_none() {
-            self.initial_hedwig_upload_queries = Some(update.hedwig_upload_queries);
-        }
-        if self.initial_hedwig_upload_bytes.is_none() {
-            self.initial_hedwig_upload_bytes = Some(update.hedwig_upload_bytes);
         }
 
         if self.initial_local_cache_hits_files.is_none() {
@@ -2162,9 +1814,6 @@ impl InvocationRecorder {
         if self.initial_io_readdir_count.is_none() {
             self.initial_io_readdir_count = update.io_readdir_count;
         }
-        if self.initial_io_readdir_eden_count.is_none() {
-            self.initial_io_readdir_eden_count = update.io_readdir_eden_count;
-        }
         if self.initial_io_rmdir_count.is_none() {
             self.initial_io_rmdir_count = update.io_rmdir_count;
         }
@@ -2173,9 +1822,6 @@ impl InvocationRecorder {
         }
         if self.initial_io_stat_count.is_none() {
             self.initial_io_stat_count = update.io_stat_count;
-        }
-        if self.initial_io_stat_eden_count.is_none() {
-            self.initial_io_stat_eden_count = update.io_stat_eden_count;
         }
         if self.initial_io_chmod_count.is_none() {
             self.initial_io_chmod_count = update.io_chmod_count;
@@ -2197,9 +1843,6 @@ impl InvocationRecorder {
         }
         if self.initial_io_canonicalize_count.is_none() {
             self.initial_io_canonicalize_count = update.io_canonicalize_count;
-        }
-        if self.initial_io_eden_settle_count.is_none() {
-            self.initial_io_eden_settle_count = update.io_eden_settle_count;
         }
 
         for s in self.re_max_download_speeds.iter_mut() {
@@ -2275,8 +1918,6 @@ impl InvocationRecorder {
                 self.active_networks_kinds.insert(stat.network_kind);
             }
         }
-        self.try_read_health_check_tags();
-
         Ok(())
     }
 
@@ -2287,7 +1928,6 @@ impl InvocationRecorder {
         _event: &BuckEvent,
     ) -> buck2_error::Result<()> {
         // We might receive this event twice, so ... deal with it by merging the two.
-        // See: https://fb.workplace.com/groups/buck2dev/permalink/3396726613948720/
         self.file_watcher_stats =
             merge_file_watcher_stats(self.file_watcher_stats.take(), file_watcher.stats.clone());
         if let Some(duration) = duration.copied().and_then(|x| Duration::try_from(x).ok()) {
@@ -2295,13 +1935,6 @@ impl InvocationRecorder {
         }
         if let Some(stats) = &file_watcher.stats {
             self.watchman_version = stats.watchman_version.to_owned();
-        }
-        if let Some(eden_version) = file_watcher
-            .stats
-            .as_ref()
-            .and_then(|s| s.eden_version.clone())
-        {
-            self.eden_version = Some(eden_version);
         }
         Ok(())
     }
@@ -2526,9 +2159,6 @@ impl InvocationRecorder {
                         self.handle_snapshot(result, event)
                     }
                     buck2_data::instant_event::Data::TagEvent(tag) => self.handle_tag(tag),
-                    buck2_data::instant_event::Data::IoProviderInfo(io_provider_info) => {
-                        self.handle_io_provider_info(io_provider_info)
-                    }
                     buck2_data::instant_event::Data::TargetPatterns(tag) => {
                         self.handle_parsed_target_patterns(tag)
                     }
@@ -2602,8 +2232,7 @@ fn process_error_report(error: buck2_data::ErrorReport) -> buck2_data::Processed
     let best_tag = error.best_tag();
     let best_tag = best_tag
         .map_or(
-            // If we don't have tags on the errors,
-            // we still want to add a tag to Scuba column.
+            // An error without tags still reports a best tag.
             ERROR_TAG_UNCLASSIFIED,
             |tag| tag.as_str_name(),
         )
@@ -2729,26 +2358,10 @@ impl EventSubscriber for InvocationRecorder {
     }
 
     async fn finalize(mut self: Box<Self>) -> buck2_error::Result<()> {
-        // Can't set this before the daemon forks.
-        // Typically initialized already unless the command failed early.
-        let fb = buck2_common::fbinit::get_or_init_fbcode_globals();
-        let event = self.create_record_event();
-        if let Some(scribe_sink) = new_remote_event_sink_if_enabled(
-            fb,
-            ScribeConfig {
-                buffer_size: 1,
-                retry_backoff: Duration::from_millis(500),
-                retry_attempts: 5,
-                message_batch_size: None,
-                thrift_timeout: Duration::from_secs(2),
-            },
-        )? {
-            tracing::info!("Recording invocation to Scribe: {:?}", &event);
-            scribe_sink.send_now(event).await
-        } else {
-            tracing::info!("Invocation record is not sent to Scribe: {:?}", &event);
-            Err(internal_error!("Scribe sink not enabled"))
+        if let Some(path) = self.write_to_path.take() {
+            self.write_invocation_record(&path);
         }
+        Ok(())
     }
 
     fn as_error_observer(&self) -> Option<&dyn ErrorObserver> {
@@ -2814,7 +2427,6 @@ fn merge_file_watcher_stats(
     a.events.extend(b.events);
     a.incomplete_events_reason = a.incomplete_events_reason.or(b.incomplete_events_reason);
     a.watchman_version = a.watchman_version.or(b.watchman_version);
-    a.eden_version = a.eden_version.or(b.eden_version);
     Some(a)
 }
 

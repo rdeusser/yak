@@ -6,12 +6,10 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-# pyre-strict
-
 from pathlib import Path
 
-from buck2.tests.e2e_util.api.buck import Buck
-from buck2.tests.e2e_util.buck_workspace import buck_test
+from e2e_util.api.buck import Buck
+from e2e_util.buck_workspace import buck_test
 
 
 @buck_test(
@@ -62,7 +60,7 @@ async def test_audit_config_cell_json(buck: Buck) -> None:
     assert out_json.get("test.is_root") is None
 
 
-@buck_test(setup_eden=True)
+@buck_test()
 async def test_audit_config_all_cells(buck: Buck) -> None:
     out = await buck.audit_config(
         "--all-cells",

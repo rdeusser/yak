@@ -478,7 +478,7 @@ def cxx_executable(ctx: AnalysisContext, impl_params: CxxRuleConstructorParams, 
     if not link_group_mappings:
         # We cannot support deriving link execution preference off the included links, as we've already
         # lost the information on what is in the link.
-        # TODO(T152860998): Derive link_execution_preference based upon the included links
+        # TODO: Derive link_execution_preference based upon the included links
         link_execution_preference = get_resolved_cxx_binary_link_execution_preference(ctx, [], impl_params.force_full_hybrid_if_capable)
 
         dep_links = apple_build_link_args_with_deduped_flags(
@@ -584,7 +584,7 @@ def cxx_executable(ctx: AnalysisContext, impl_params: CxxRuleConstructorParams, 
             transformation_spec_context = transformation_spec_context,
         )
 
-        # TODO(T110378098): Similar to shared libraries, we need to identify all the possible
+        # TODO: Similar to shared libraries, we need to identify all the possible
         # scenarios for which we need to propagate up link info and simplify this logic. For now
         # base which links to use based on whether link groups are defined.
         labels_to_links = get_filtered_labels_to_links_map(
@@ -844,7 +844,7 @@ def cxx_executable(ctx: AnalysisContext, impl_params: CxxRuleConstructorParams, 
         )
         sub_targets[XCODE_DATA_SUB_TARGET] = xcode_data_default_info
 
-    # Info about dynamic-linked libraries for fbpkg integration:
+    # Info about dynamic-linked libraries, for tools that package a binary with its shared libraries:
     # - the symlink dir that's part of RPATH
     # - sub-sub-targets that reference shared library dependencies and their respective dwp
     # - [shared-libraries] - a json map that references the above rules.

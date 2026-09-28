@@ -608,9 +608,9 @@ fn test_source_missing() {
         let value = heap.alloc(vec!["foo/bar.cpp"]);
         let attr = AttrType::list(AttrType::source(false));
 
-        // FIXME: T85510500 Enable this test properly once we can error out on missing files
+        // FIXME: Enable this test properly once we can error out on missing files
         match attr.coerce(AttrIsConfigurable::Yes, &coercion_ctx(), value) {
-            Ok(_) => eprintln!("Todo, turn this into an error once T85510500 is fixed"),
+            Ok(_) => eprintln!("Todo, turn this into an error once missing files are errors"),
             Err(e) => {
                 let s = format!("{e:#}");
                 assert!(

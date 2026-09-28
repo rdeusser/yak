@@ -44,7 +44,6 @@ impl HelpEnvCommand {
             .filter(|x| match x.applicability {
                 Applicability::All => true,
                 Applicability::Testing => self.self_testing,
-                Applicability::Internal => !buck2_core::is_open_source(),
             })
             .collect();
         env_info.sort();

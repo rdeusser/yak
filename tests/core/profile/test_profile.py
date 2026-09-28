@@ -6,19 +6,17 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-# pyre-strict
-
 import os
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
 import pytest
-from buck2.tests.e2e_util.api.buck import Buck
-from buck2.tests.e2e_util.api.buck_result import BuckException, BuckResult
-from buck2.tests.e2e_util.api.process import Process
-from buck2.tests.e2e_util.asserts import expect_failure
-from buck2.tests.e2e_util.buck_workspace import buck_test
-from buck2.tests.e2e_util.helper.golden import golden
+from e2e_util.api.buck import Buck
+from e2e_util.api.buck_result import BuckException, BuckResult
+from e2e_util.api.process import Process
+from e2e_util.asserts import expect_failure
+from e2e_util.buck_workspace import buck_test
+from e2e_util.helper.golden import golden
 
 
 PROFILERS = [
@@ -287,7 +285,7 @@ async def test_profile_bxl_without_actions(
     await assert_flame_outputs(command, file_path, profiler)
 
 
-@buck_test(setup_eden=True)
+@buck_test()
 async def test_profile_no_buckd(
     buck: Buck,
     tmp_path: Path,

@@ -1,4 +1,4 @@
-#!/usr/bin/env fbpython
+#!/usr/bin/env python3
 # Copyright (c) Meta Platforms, Inc. and affiliates.
 #
 # This source code is dual-licensed under either the MIT license found in the
@@ -92,7 +92,7 @@ def _escape_arg(arg):
     return arg
 
 
-def gen_mode_configs(bxl_path, mode_files, fbsource, debug, subprocess_cwd=None):
+def gen_mode_configs(bxl_path, mode_files, debug, subprocess_cwd=None):
     mode_config_paths = []
     default_mode_file = mode_files[0]
     for mode_file in mode_files:
@@ -108,8 +108,6 @@ def gen_mode_configs(bxl_path, mode_files, fbsource, debug, subprocess_cwd=None)
             "--",
             "--mode_name",
             mode_file,
-            "--fbsource",
-            str(fbsource).lower(),
         ]
         if debug:
             print("Running BXL command:", " ".join(bxl_cmds))
@@ -140,15 +138,12 @@ def main(
     target_include_patterns,
     solution_name,
     startup_target,
-    fbsource,
     bxl_path,
     sample_target,
     debug,
     subprocess_cwd=None,
 ):
-    mode_configs = gen_mode_configs(
-        bxl_path, mode_files, fbsource, debug, subprocess_cwd
-    )
+    mode_configs = gen_mode_configs(bxl_path, mode_files, debug, subprocess_cwd)
 
     explicit_targets = [target for target in targets if is_explicit_target(target)]
     mode_hashes = get_mode_hashes(
@@ -197,7 +192,6 @@ def main(
     if startup_target:
         bxl_cmds += ["--startup_target", startup_target]
     bxl_cmds += ["--output", "json"]
-    bxl_cmds += ["--fbsource", str(fbsource).lower()]
     if debug:
         bxl_cmds += ["--log_level", "0"]
         print("Running BXL command:", " ".join(bxl_cmds))
@@ -265,16 +259,16 @@ if __name__ == "__main__":
 Individual specified targets are preferred over target patterns as the latter will usually pull in unused targets which
 could potentially slow down project generation and project loading significantly. Examples:
     1. Single fully-specified target:
-        //arvr/projects/pcsdk:OVRServer
+        root//app:server
         (Only fully-specified targets are guaranteed to be able to link to the debugger)
     2. target alias:
-        ovrserver
+        server
     3. '...' target pattern (CAUTION: Using '...' in targets is not properly supported and may lead to incorrect behavior. Please consider
 using explicit targets instead. It also might bring in massive targets with recursive dependencies and result in very slow solution
 generating and loading):
-        //arvr/projects/mixedreality/...
+        root//app/...
     4. Combinations of above:
-        ovrserver //arvr/projects/pcsdk:OVRServer
+        server root//app:server
     """,
         nargs="*",
         type=str,
@@ -340,12 +334,6 @@ generating and loading):
         help="buck target to be set as the default startup project",
     )
     parser.add_argument(
-        "--fbsource",
-        action="store_true",
-        help="whether to turn on fbsource specific behaviors",
-        default=False,
-    )
-    parser.add_argument(
         "--bxl_path",
         action="store",
         help="path of BXL script",
@@ -383,7 +371,6 @@ generating and loading):
         target_include_patterns=args.target_include_patterns,
         solution_name=args.solution_name,
         startup_target=args.startup_target,
-        fbsource=args.fbsource,
         bxl_path=args.bxl_path,
         sample_target=args.sample_target,
         debug=args.debug,

@@ -6,8 +6,6 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-# pyre-strict
-
 """
 Materializing an artifact must not leave content from a previous layout
 underneath it. These tests move a target's artifact boundaries between two
@@ -22,9 +20,9 @@ the second build has only persisted state to work from.
 from pathlib import Path
 from typing import List
 
-from buck2.tests.e2e_util.api.buck import Buck
-from buck2.tests.e2e_util.buck_workspace import buck_test
-from buck2.tests.e2e_util.helper.utils import replace_in_file
+from e2e_util.api.buck import Buck
+from e2e_util.buck_workspace import buck_test
+from e2e_util.helper.utils import replace_in_file
 
 
 def use_second_layout(buck: Buck, name: str) -> None:

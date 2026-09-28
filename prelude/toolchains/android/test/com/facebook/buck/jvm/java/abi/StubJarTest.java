@@ -162,8 +162,7 @@ public class StubJarTest {
     }
 
     if (testingMode.equals(MODE_SOURCE_BASED)) {
-      // TODO T94515328
-      // Kotlin Metadata is different in Source and Jar -based modes (xi=48)
+      // TODO: Kotlin Metadata is different in Source and Jar -based modes (xi=48)
       return;
     }
 
@@ -279,8 +278,7 @@ public class StubJarTest {
     }
 
     if (testingMode.equals(MODE_SOURCE_BASED)) {
-      // TODO T94515328
-      // Kotlin Metadata is different in Source and Jar -based modes (xi=48)
+      // TODO: Kotlin Metadata is different in Source and Jar -based modes (xi=48)
       return;
     }
 
@@ -364,8 +362,7 @@ public class StubJarTest {
     }
 
     if (testingMode.equals(MODE_SOURCE_BASED)) {
-      // TODO T94515328
-      // Kotlin Metadata is different in Source and Jar -based modes (xi=48)
+      // TODO: Kotlin Metadata is different in Source and Jar -based modes (xi=48)
       return;
     }
 
@@ -450,8 +447,7 @@ public class StubJarTest {
     }
 
     if (testingMode.equals(MODE_SOURCE_BASED)) {
-      // TODO T94515328
-      // Kotlin Metadata is different in Source and Jar -based modes (xi=48)
+      // TODO: Kotlin Metadata is different in Source and Jar -based modes (xi=48)
       return;
     }
 
@@ -530,8 +526,7 @@ public class StubJarTest {
     }
 
     if (testingMode.equals(MODE_SOURCE_BASED)) {
-      // TODO T94515328
-      // Kotlin Metadata is different in Source and Jar -based modes (xi=48)
+      // TODO: Kotlin Metadata is different in Source and Jar -based modes (xi=48)
       return;
     }
 
@@ -654,8 +649,7 @@ public class StubJarTest {
     }
 
     if (testingMode.equals(MODE_SOURCE_BASED)) {
-      // TODO T94515328
-      // Kotlin Metadata is difference in Source and Jar -based modes (xi=48)
+      // TODO: Kotlin Metadata is difference in Source and Jar -based modes (xi=48)
       return;
     }
 
@@ -755,8 +749,7 @@ public class StubJarTest {
     }
 
     if (testingMode.equals(MODE_SOURCE_BASED)) {
-      // TODO T94515328
-      // Kotlin Metadata is difference in Source and Jar -based modes (xi=48)
+      // TODO: Kotlin Metadata is difference in Source and Jar -based modes (xi=48)
       return;
     }
 
@@ -967,8 +960,7 @@ public class StubJarTest {
     }
 
     if (testingMode.equals(MODE_SOURCE_BASED)) {
-      // TODO T94515328
-      // Kotlin Metadata is different in Source and Jar -based modes (xi=48)
+      // TODO: Kotlin Metadata is different in Source and Jar -based modes (xi=48)
       return;
     }
 
@@ -1162,8 +1154,7 @@ public class StubJarTest {
     }
 
     if (testingMode.equals(MODE_SOURCE_BASED)) {
-      // TODO T94515328
-      // Kotlin Metadata is different in Source and Jar -based modes (xi=48)
+      // TODO: Kotlin Metadata is different in Source and Jar -based modes (xi=48)
       return;
     }
 
@@ -1226,8 +1217,7 @@ public class StubJarTest {
     }
 
     if (testingMode.equals(MODE_SOURCE_BASED)) {
-      // TODO T94515328
-      // Kotlin Metadata is different in Source and Jar -based modes (xi=48)
+      // TODO: Kotlin Metadata is different in Source and Jar -based modes (xi=48)
       return;
     }
 
@@ -1362,7 +1352,7 @@ public class StubJarTest {
     }
 
     if (testingMode.equals(MODE_SOURCE_BASED)) {
-      // TODO T53836707 the methods in the synthetic class are wrongly stripped, preventing
+      // TODO: the methods in the synthetic class are wrongly stripped, preventing
       //  compilation
       return;
     }
@@ -1548,7 +1538,7 @@ public class StubJarTest {
     }
 
     if (testingMode.equals(MODE_SOURCE_BASED)) {
-      // TODO T53836707 the methods in the synthetic class are wrongly stripped, preventing
+      // TODO: the methods in the synthetic class are wrongly stripped, preventing
       //  compilation
       return;
     }
@@ -1787,7 +1777,7 @@ public class StubJarTest {
     }
 
     if (testingMode.equals(MODE_SOURCE_BASED)) {
-      // TODO T53836707 the methods in the synthetic class are wrongly stripped, preventing
+      // TODO: the methods in the synthetic class are wrongly stripped, preventing
       //  compilation
       return;
     }
@@ -1956,7 +1946,7 @@ public class StubJarTest {
     }
 
     if (testingMode.equals(MODE_SOURCE_BASED)) {
-      // TODO T53836707 the methods in the synthetic class are wrongly stripped, preventing
+      // TODO: the methods in the synthetic class are wrongly stripped, preventing
       //  compilation
       return;
     }
@@ -2171,7 +2161,7 @@ public class StubJarTest {
     }
 
     if (testingMode.equals(MODE_SOURCE_BASED)) {
-      // TODO T53836707 the methods in the synthetic class are wrongly stripped, preventing
+      // TODO: the methods in the synthetic class are wrongly stripped, preventing
       //  compilation
       return;
     }
@@ -7549,7 +7539,7 @@ public class StubJarTest {
     }
 
     if (testingMode.equals(MODE_SOURCE_BASED)) {
-      // TODO T53836707 the methods in the synthetic class are wrongly stripped, preventing
+      // TODO: the methods in the synthetic class are wrongly stripped, preventing
       //  compilation
       return;
     }

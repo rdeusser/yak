@@ -6,7 +6,6 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-load("@prelude//:is_full_meta_repo.bzl", "is_full_meta_repo")
 load("@prelude//cxx:compile.bzl", "compiler_info_with_toolchain_argsfiles")
 load(
     "@prelude//cxx:cxx_toolchain_types.bzl",
@@ -280,7 +279,6 @@ def cxx_toolchain_impl(ctx):
         cuda_dep_tracking_mode = DepTrackingMode(ctx.attrs.cuda_dep_tracking_mode),
         cvtres_compiler_info = cvtres_info,
         cxx_compiler_info = cxx_info,
-        dumpbin_toolchain_path = ctx.attrs._dumpbin_toolchain_path[DefaultInfo].default_outputs[0] if ctx.attrs._dumpbin_toolchain_path else None,
         gcno_files = value_or(ctx.attrs.gcno_files, False),
         header_mode = _get_header_mode(ctx),
         headers_as_raw_headers_mode = HeadersAsRawHeadersMode(ctx.attrs.headers_as_raw_headers_mode) if ctx.attrs.headers_as_raw_headers_mode != None else None,
@@ -306,7 +304,7 @@ def cxx_toolchain_impl(ctx):
         split_debug_mode = SplitDebugMode(ctx.attrs.split_debug_mode),
         strip_flags_info = strip_flags_info,
         minimum_os_version = ctx.attrs.minimum_os_version,
-        # TODO(T138705365): Turn on dep files by default
+        # TODO: Turn on dep files by default
         use_dep_files = value_or(ctx.attrs.use_dep_files, _get_default_use_dep_files(platform_name)),
         default_deps = ctx.attrs.default_deps,
         target_stats_tools = ctx.attrs.target_stats_tools[TargetStatsToolsInfo] if ctx.attrs.target_stats_tools else None,
@@ -394,27 +392,6 @@ def cxx_toolchain_extra_attributes(is_toolchain_rule):
         "thin_lto_premerger_enabled": attrs.bool(default = False),
         "use_archiver_flags": attrs.bool(default = True),
         "use_dep_files": attrs.option(attrs.bool(), default = None),
-        # TODO(scottcao): Figure out a slightly better way to integrate this. In theory, this is only needed for clang toolchain.
-        # If we were using msvc, we should be able to use dumpbin directly.
-        "_dumpbin_toolchain_path": attrs.default_only(
-            attrs.option(
-                dep_type(providers = [DefaultInfo]),
-                default = select({
-                    "DEFAULT": None,
-                    "ovr_config//os:windows": select({
-                        # Unfortunately, it seems like an unresolved select when resolve exec platforms causes the whole resolution
-                        # to fail, so I need a DEFAULT here when some target without cpu constraint tries to configure against the
-                        # windows exec platform.
-                        "DEFAULT": None,
-                        # FIXME: prelude// should be standalone (not refer to fbsource//)
-                        "ovr_config//cpu:x86_32": "fbsource//third-party/toolchains/visual_studio:cl_x86_and_tools",
-                        "ovr_config//cpu:x86_64": "fbsource//third-party/toolchains/visual_studio:cl_x64_and_tools",
-                    }),
-                })
-                if is_full_meta_repo()
-                else None,
-            )
-        ),
         "_msvc_hermetic_exec": attrs.default_only(dep_type(providers = [RunInfo], default = "prelude//windows/tools:msvc_hermetic_exec")),
     } | cxx_toolchain_allow_cache_upload_args()
 

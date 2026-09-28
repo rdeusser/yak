@@ -43,9 +43,6 @@ use buck2_cli_proto::InstallResponse;
 use buck2_common::client_utils::get_channel_tcp;
 use buck2_common::client_utils::retrying;
 use buck2_common::file_ops::metadata::FileDigest;
-use buck2_common::manifold::Bucket;
-use buck2_common::manifold::ManifoldClient;
-use buck2_common::manifold::Ttl;
 use buck2_common::pattern::parse_from_cli::parse_patterns_with_modifiers_from_cli_args;
 use buck2_common::pattern::resolve::ResolveTargetPatterns;
 use buck2_core::buck2_env;
@@ -441,7 +438,6 @@ struct InstallResult {
     installer_ready: Instant,
     installer_finished: Instant,
     device_metadata: Arc<Mutex<Vec<DeviceMetadata>>>,
-    installer_name: Option<String>,
     result: buck2_error::Result<()>,
 }
 
@@ -450,7 +446,6 @@ struct ConnectedInstaller<'a> {
     artifact_fs: &'a ArtifactFs,
     install_request_data: &'a InstallRequestData,
     device_metadata: Arc<Mutex<Vec<DeviceMetadata>>>,
-    installer_name: Option<String>,
     installer_ready: Instant,
     timeout: Duration,
     send_timeout: Duration,
@@ -515,7 +510,6 @@ impl<'a> ConnectedInstaller<'a> {
             artifact_fs,
             install_request_data,
             device_metadata: Arc::new(Mutex::new(Vec::new())),
-            installer_name: None,
             installer_ready: Instant::now(),
             timeout,
             send_timeout,
@@ -545,7 +539,6 @@ impl<'a> ConnectedInstaller<'a> {
             installer_ready: self.installer_ready,
             installer_finished: Instant::now(),
             device_metadata: self.device_metadata,
-            installer_name: self.installer_name,
             result,
         }
     }
@@ -578,14 +571,6 @@ impl<'a> ConnectedInstaller<'a> {
                     .into());
                 }
             };
-
-            // Before the checks below, which return: an installer that answered and named itself
-            // is worth recording even when what it answered is rejected. One installer serves
-            // every target of an install, so they all name the same one; empty from an installer
-            // built before it reported a name.
-            if self.installer_name.is_none() && !install_info_response.installer_name.is_empty() {
-                self.installer_name = Some(install_info_response.installer_name.clone());
-            }
 
             if install_info_response.install_id != install_id {
                 self.send_shutdown_command().await?;
@@ -834,13 +819,12 @@ async fn handle_install_request(
         )
         .await;
 
-    let (install_duration, device_metadata, installer_name, mut result) = match compute_result {
+    let (install_duration, device_metadata, mut result) = match compute_result {
         Ok((artifacts_ready, install_result)) => {
             let InstallResult {
                 installer_ready,
                 installer_finished,
                 device_metadata,
-                installer_name,
                 result,
             } = install_result;
 
@@ -862,51 +846,18 @@ async fn handle_install_request(
             let build_finished = std::cmp::max(installer_ready, artifacts_ready);
             let install_duration = installer_finished - build_finished;
 
-            (
-                Some(install_duration),
-                device_metadata,
-                installer_name,
-                result,
-            )
+            (Some(install_duration), device_metadata, result)
         }
-        Err(e) => (None, Vec::new(), None, Err(e)),
+        Err(e) => (None, Vec::new(), Err(e)),
     };
 
-    let mut log_url = None;
-    let log_location = match upload_installer_logs(&log_path).await {
-        Ok(url) => {
-            log_url = Some(url.clone());
-            url
-        }
-        Err(err) => {
-            let _unused = soft_error!("installer_log_upload_failed", err.clone());
-            log_path.to_string()
-        }
-    };
-
-    result = result.map_err(|err| append_installer_context(err, &stderr_log_path, &log_location));
+    result = result.map_err(|err| append_installer_context(err, &stderr_log_path, &log_path));
 
     get_dispatcher().instant_event(buck2_data::InstallFinished {
         duration: install_duration.and_then(|d| d.try_into().ok()),
         device_metadata,
-        log_url,
-        installer_name,
     });
     result
-}
-
-async fn upload_installer_logs(log_path: &AbsNormPathBuf) -> buck2_error::Result<String> {
-    let manifold = ManifoldClient::new().await?;
-    let trace_id: &str = &get_dispatcher().trace_id().to_string();
-    let manifold_filename = format!("flat/{trace_id}.log");
-    manifold
-        .upload_file(
-            log_path,
-            manifold_filename,
-            Bucket::INSTALLER_LOGS,
-            Ttl::from_days(14),
-        )
-        .await
 }
 
 async fn build_launch_installer(
@@ -1000,7 +951,7 @@ async fn build_launch_installer(
 fn append_installer_context(
     err: buck2_error::Error,
     stderr_log_path: &AbsNormPathBuf,
-    log_location: &str,
+    log_path: &AbsNormPathBuf,
 ) -> buck2_error::Error {
     const MAX_STDERR_BYTES: usize = 16384;
     let stderr_context = match std::fs::File::open(stderr_log_path.as_path()) {
@@ -1029,7 +980,7 @@ fn append_installer_context(
     if let Some(stderr) = stderr_context {
         context_parts.push(stderr);
     }
-    context_parts.push(format!("See installer logs at: {log_location}"));
+    context_parts.push(format!("See installer logs at: {log_path}"));
 
     err.context(context_parts.join("\n"))
 }

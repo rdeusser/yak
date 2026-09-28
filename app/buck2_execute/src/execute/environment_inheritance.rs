@@ -13,10 +13,7 @@ use std::sync::OnceLock;
 
 use dupe::Dupe;
 
-#[cfg(fbcode_build)]
-const ENV_ALLOW_LIST: &[&str] = test_env_allowlist::LEGACY_TESTPILOT_ALLOW_LIST;
-
-#[cfg(all(unix, not(fbcode_build)))]
+#[cfg(unix)]
 const ENV_ALLOW_LIST: &[&str] = &[
     "PATH",
     "USER",
@@ -29,7 +26,7 @@ const ENV_ALLOW_LIST: &[&str] = &[
 
 // The standard (built-in) variables.
 // https://ss64.com/nt/syntax-variables.html
-#[cfg(all(windows, not(fbcode_build)))]
+#[cfg(windows)]
 const ENV_ALLOW_LIST: &[&str] = &[
     "ALLUSERSPROFILE",
     "APPDATA",

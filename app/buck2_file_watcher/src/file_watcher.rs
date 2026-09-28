@@ -19,8 +19,6 @@ use buck2_core::buck2_env;
 use buck2_core::cells::CellResolver;
 use buck2_core::cells::name::CellName;
 use buck2_core::fs::project::ProjectRoot;
-#[cfg(fbcode_build)]
-use buck2_core::soft_error;
 use buck2_error::BuckErrorContext;
 use buck2_error::ErrorTag;
 use buck2_error::buck2_error;
@@ -28,8 +26,6 @@ use buck2_hash::StdBuckHashMap;
 use dice::DiceTransactionUpdater;
 
 use crate::dep_files::DepFileCache;
-#[cfg(fbcode_build)]
-use crate::edenfs::interface::EdenFsFileWatcher;
 use crate::fs_hash_crawler::FsHashCrawler;
 use crate::mergebase::Mergebase;
 use crate::notify::NotifyFileWatcher;
@@ -68,7 +64,6 @@ impl dyn FileWatcher {
     /// Create a new FileWatcher. Note that this is not async, since it's called during daemon
     /// startup and shouldn't be doing any work that could warrant suspending.
     pub fn new(
-        fb: fbinit::FacebookInit,
         project_root: &ProjectRoot,
         root_config: &LegacyBuckConfig,
         cells: CellResolver,
@@ -84,17 +79,7 @@ impl dyn FileWatcher {
             ));
         }
 
-        #[cfg(fbcode_build)]
-        let default = if detect_eden::is_eden(project_root.root().to_path_buf())? {
-            "edenfs"
-        } else {
-            "watchman"
-        };
-
-        #[cfg(not(fbcode_build))]
         let default = "notify";
-
-        let _allow_unused = fb;
 
         let watcher_conf = root_config
             .get(BuckconfigKeyRef {
@@ -102,30 +87,6 @@ impl dyn FileWatcher {
                 property: "file_watcher",
             })
             .unwrap_or(default);
-
-        let watcher_conf = if let "edenfs" = watcher_conf {
-            #[cfg(fbcode_build)]
-            match EdenFsFileWatcher::new(
-                fb,
-                project_root,
-                root_config,
-                cells.clone(),
-                ignore_specs.clone(),
-                dep_file_cache.clone(),
-            ) {
-                Ok(edenfs) => return Ok(Arc::new(edenfs)),
-                Err(e) if e.has_tag(ErrorTag::IoNotConnected) => {
-                    soft_error!("edenfs_watcher_creation_failure", e)?;
-                    // fallback to watchman if failed to create edenfs watcher
-                    "watchman"
-                }
-                Err(e) => return Err(e),
-            }
-            #[cfg(not(fbcode_build))]
-            default
-        } else {
-            watcher_conf
-        };
 
         match watcher_conf {
             "watchman" => Ok(Arc::new(

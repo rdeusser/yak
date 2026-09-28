@@ -6,13 +6,11 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-# pyre-strict
-
 import json
 import typing
 
-from buck2.tests.e2e_util.api.buck import Buck
-from buck2.tests.e2e_util.buck_workspace import buck_test
+from e2e_util.api.buck import Buck
+from e2e_util.buck_workspace import buck_test
 
 
 @buck_test(skip_for_os=["darwin", "windows"], disable_daemon_cgroup=False)
@@ -39,8 +37,3 @@ async def test_if_available_fallback_no_user_session(buck: Buck) -> None:
     status_data = json.loads(status_result.stdout)
     snapshot: dict[str, typing.Any] = status_data["snapshot"]
     assert snapshot["allprocs_cgroup"] is None
-
-
-# Placeholder for tests to be listed successfully on non-Linux platforms.
-async def test_noop() -> None:
-    pass

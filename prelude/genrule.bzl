@@ -8,11 +8,9 @@
 
 # Implementation of the `genrule` build rule.
 
-load("@prelude//:cache_mode.bzl", "CacheModeInfo")
 load("@prelude//:genrule_local_labels.bzl", "genrule_labels_require_local")
 load("@prelude//:genrule_prefer_local_labels.bzl", "genrule_labels_prefer_local")
 load("@prelude//:genrule_toolchain.bzl", "GenruleToolchainInfo")
-load("@prelude//:is_full_meta_repo.bzl", "is_full_meta_repo")
 load("@prelude//android:build_only_native_code.bzl", "is_build_only_native_code")
 load("@prelude//os_lookup:defs.bzl", "Os", "OsLookup")
 load("@prelude//utils:expect.bzl", "expect")
@@ -27,25 +25,13 @@ GENRULE_OUT_DIR = "out"
 _BUILD_ROOT_LABELS = set([
     # The buck2 test suite
     "buck2_test_build_root",
-    "antlir_macros",
     "rust_bindgen",
     "haskell_hsc",
-    "cql_cxx_genrule",
     "clang-module",
     "cuda_build_root",
     "bundle_pch_genrule",  # Compiles C++, and so need to run from build root
-    "lpm_package",
     "haskell_dll",
-    "fnlc_build",
-    "udf_sql",
-    "redex_genrule",  # T148016945
-    "pxl",  # T151533831
-    "app_modules_genrule",  # produces JSON containing file paths that are read from the root dir.
-    "android_langpack_strings",  # produces JSON containing file paths that are read from the root dir.
     "windows_long_path_issue",  # Windows: relative path length exceeds PATH_MAX, program cannot access file
-    "flowtype_ota_safety_target",  # produces JSON containing file paths that are project-relative
-    "ctrlr_setting_paths",
-    "llvm_buck_genrule",
 ])
 
 # In Buck1 the SRCS environment variable is only set if the substring SRCS is on the command line.
@@ -82,9 +68,6 @@ def _ignore_artifacts(ctx: AnalysisContext) -> bool:
 def _requires_no_srcs_environment(ctx: AnalysisContext) -> bool:
     return _NO_SRCS_ENVIRONMENT_LABEL in ctx.attrs.labels
 
-# We don't want to use cache mode in open source because the config keys that drive it aren't wired up
-_USE_CACHE_MODE = is_full_meta_repo()
-
 # Extra attributes required by every genrule based on genrule_impl
 def genrule_attributes() -> dict[str, Attr]:
     attributes = {
@@ -93,7 +76,6 @@ def genrule_attributes() -> dict[str, Attr]:
         "metadata_env_var": attrs.option(attrs.string(), default = None),
         "metadata_path": attrs.option(attrs.string(), default = None),
         "no_outputs_cleanup": attrs.bool(default = False),
-        "remote_execution_dependencies": attrs.list(attrs.dict(key = attrs.string(), value = attrs.string()), default = []),
         "repo_relative_root": attrs.bool(
             default = False,
             doc = """
@@ -106,16 +88,7 @@ def genrule_attributes() -> dict[str, Attr]:
         "_genrule_toolchain": attrs.default_only(attrs.toolchain_dep(default = "toolchains//:genrule", providers = [GenruleToolchainInfo])),
     }
 
-    if _USE_CACHE_MODE and not read_root_config("fb", "cache_mode") == None:
-        attributes["_cache_mode"] = attrs.dep(default = read_root_config("fb", "cache_mode"))
-
     return attributes
-
-def _get_cache_mode(ctx: AnalysisContext) -> CacheModeInfo:
-    if _USE_CACHE_MODE:
-        return ctx.attrs._cache_mode[CacheModeInfo]
-    else:
-        return CacheModeInfo(allow_cache_uploads = False, cache_bust_genrules = False)
 
 def genrule_impl(ctx: AnalysisContext) -> list[Provider]:
     # Directories:
@@ -285,7 +258,6 @@ def process_genrule(
 
     if type(ctx.attrs.srcs) == type([]):
         # FIXME: We should always use the short_path, but currently that is sometimes blank.
-        # See fbcode//buck2/tests/targets/rules/genrule:genrule-dot-input for a test that exposes it.
         symlinks = {src.short_path: src for src in ctx.attrs.srcs}
 
         if len(symlinks) != len(ctx.attrs.srcs):
@@ -331,12 +303,6 @@ def process_genrule(
     if prefer_local:
         env_vars["__BUCK2_PREFER_LOCAL_CACHE_BUSTER"] = ""
 
-    # For now, when uploads are enabled, be safe and avoid sharing cache hits.
-    cache_bust = _get_cache_mode(ctx).cache_bust_genrules
-
-    if cacheable and cache_bust:
-        env_vars["__BUCK2_ALLOW_CACHE_UPLOADS_CACHE_BUSTER"] = ""
-
     if _requires_no_srcs_environment(ctx):
         env_vars.pop("SRCS")
 
@@ -355,7 +321,7 @@ def process_genrule(
         script_extension = "bat"
     else:
         script = [
-            # Use a somewhat unique exit code so this can get retried on RE (T99656531).
+            # Use a somewhat unique exit code so this can get retried on RE.
             cmd_args(out_prepare, format = "mkdir -p {} || exit 99"),
             cmd_args("export TMP=${TMPDIR:-/tmp}"),
         ]
@@ -439,8 +405,6 @@ def process_genrule(
         metadata_args["metadata_env_var"] = ctx.attrs.metadata_env_var
     if ctx.attrs.metadata_path:
         metadata_args["metadata_path"] = ctx.attrs.metadata_path
-    if ctx.attrs.remote_execution_dependencies:
-        metadata_args["remote_execution_dependencies"] = ctx.attrs.remote_execution_dependencies
 
     if genrule_error_handler == None:
         error_handler_category = getattr(ctx.attrs, "error_handler_category", None)

@@ -29,10 +29,9 @@ def configure_env(env: dict[str, str], labels: list[str]) -> ConfiguredEnv:
         )
         altered_env[_ASAN_OPTIONS] = _inject_env(env, _ASAN_OPTIONS, _DISABLE_LEAK_DETECTION, lambda x: x + "," + _DISABLE_LEAK_DETECTION)
 
-    # We should only return env fields that we altering here. The primary reason for this is unability
-    # to expand buck macroses (e.g. $(exe //some:target)) in the env field inside bxl. So we delegate that
-    # responsibility to `tpx` that gives us unwrapped and untouched env and then `fdb` merges these two,
-    # preferring results from this bxl. That keeps macro expansion working correctly.
+    # Return only the variables changed here, because BXL cannot expand macros such as
+    # `$(exe //some:target)` in `env`. The caller takes the test's environment with macros
+    # expanded from the test runner and applies these values over it.
     return ConfiguredEnv(env = altered_env, messages = messages)
 
 def _inject_env(env: dict[str, str], key: str, value: str, merge: typing.Callable[[str], str]) -> str:

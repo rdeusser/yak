@@ -114,7 +114,7 @@ class BasePerTestCoverageRunListenerTest {
 
     val longName =
         "handleClick_calls_the_action_when_the_thing_is_in_the_right_state " +
-            "(com.facebook.${"verylongpackagesegment.".repeat(8)}SomeVeryLongImplementationTest)"
+            "(com.example.${"verylongpackagesegment.".repeat(8)}SomeVeryLongImplementationTest)"
     listener.dumpForTest(longName, longName)
     listener.close()
 

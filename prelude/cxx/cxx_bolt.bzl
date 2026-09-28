@@ -6,8 +6,8 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-# BOLT (Binary Optimization Layout Tool) is a post link profile guided optimizer used for
-# performance-critical services in fbcode: https://www.internalfb.com/intern/wiki/HHVM-BOLT/
+# BOLT (Binary Optimization Layout Tool) is a post link profile guided optimizer:
+# https://github.com/llvm/llvm-project/tree/main/bolt
 
 load(
     "@prelude//:artifact_tset.bzl",

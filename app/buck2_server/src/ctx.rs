@@ -35,7 +35,6 @@ use buck2_build_api::keep_going::HasKeepGoing;
 use buck2_build_api::materialize::HasMaterializationQueueTracker;
 use buck2_build_signals::env::CriticalPathBackendName;
 use buck2_build_signals::env::HasCriticalPathBackend;
-use buck2_certs::validate::CertState;
 use buck2_cli_proto::ClientContext;
 use buck2_cli_proto::CommonBuildOptions;
 use buck2_cli_proto::ConfigOverride;
@@ -50,7 +49,6 @@ use buck2_common::dice::cycles::PairDiceCycleDetector;
 use buck2_common::file_ops::io::initialize_read_dir_cache;
 use buck2_common::http::SetHttpClient;
 use buck2_common::io::trace::TracingIoProvider;
-use buck2_common::legacy_configs::agent_context::AgentContextSchema;
 use buck2_common::legacy_configs::cells::BuckConfigBasedCells;
 use buck2_common::legacy_configs::configs::LegacyBuckConfig;
 use buck2_common::legacy_configs::dice::HasInjectedLegacyConfigs;
@@ -59,7 +57,6 @@ use buck2_common::legacy_configs::key::BuckconfigKeyRef;
 use buck2_configured::cycle::ConfiguredGraphCycleDescriptor;
 use buck2_core::execution_types::executor_config::CommandExecutorConfig;
 use buck2_core::execution_types::executor_config::RemoteExecutorUseCase;
-use buck2_core::facebook_only;
 use buck2_core::fs::project::ProjectRoot;
 use buck2_core::fs::project_rel_path::ProjectRelativePath;
 use buck2_core::fs::project_rel_path::ProjectRelativePathBuf;
@@ -73,7 +70,6 @@ use buck2_directory::directory::dashmap_directory_interner::DashMapDirectoryInte
 use buck2_events::dispatch::EventDispatcher;
 use buck2_events::dispatch::with_dispatcher_async;
 use buck2_events::metadata;
-use buck2_events::schedule_type::SandcastleScheduleType;
 use buck2_execute::dep_file_state::SetDepFileStore;
 use buck2_execute::execute::blocking::SetBlockingExecutor;
 use buck2_execute::knobs::ExecutorGlobalKnobs;
@@ -141,8 +137,6 @@ use host_sharing::HostSharingStrategy;
 use tracing::warn;
 
 use crate::active_commands::ActiveCommandDropGuard;
-use crate::agent_context_validation::validate_agent_context;
-use crate::agent_host_guard::check_agent_host_guard;
 use crate::daemon::common::CommandExecutorFactory;
 use crate::daemon::common::get_default_executor_config;
 use crate::daemon::state::DaemonStateData;
@@ -181,8 +175,6 @@ fn parse_concurrency(requested: u32) -> Option<usize> {
 /// BaseCommandContext provides access to the global daemon state and information specific to a command (like the
 /// EventDispatcher). Most commands use a ServerCommandContext which has more command/client-specific information.
 pub struct BaseServerCommandContext {
-    /// An fbinit token for using things that require fbinit. fbinit is initialized on daemon startup.
-    pub _fb: fbinit::FacebookInit,
     /// The event dispatcher for this command context.
     pub events: EventDispatcher,
     /// State for the repo this command is operating on, resolved once when the context is built.
@@ -250,9 +242,6 @@ pub struct ServerCommandContext<'a> {
     /// (see [`ServerCommandContext::finalize`]).
     paging_manager: PagingManager,
 
-    /// The current state of the certificate. This is used to detect errors due to invalid certs.
-    cert_state: CertState,
-
     /// Daemon uuid passed in from the client side to detect nested invocation.
     pub(crate) daemon_uuid_from_client: Option<String>,
 
@@ -261,9 +250,6 @@ pub struct ServerCommandContext<'a> {
 
     /// Sanitized argument vector from the CLI from the client side.
     pub(crate) sanitized_argv: Vec<String>,
-
-    /// Agent context key=value pairs from --agent-context.
-    pub(crate) agent_context: Vec<buck2_data::AgentContextEntry>,
 
     cancellations: &'a CancellationContext,
 
@@ -280,7 +266,6 @@ impl<'a> ServerCommandContext<'a> {
         client_context: &ClientContext,
         starlark_profiling_manager: StarlarkProfilingManager,
         build_options: Option<&CommonBuildOptions>,
-        cert_state: CertState,
         snapshot_collector: SnapshotCollector,
         cancellations: &'a CancellationContext,
         command_start: Instant,
@@ -306,20 +291,9 @@ impl<'a> ServerCommandContext<'a> {
         impl ReConnectionObserver for Observer {
             fn session_created(&self, client: &RemoteExecutionClient) {
                 let session_id = client.get_session_id();
-                let experiment_name = match client.get_experiment_name() {
-                    Ok(Some(exp)) => exp,
-                    Ok(None) => "".to_owned(),
-                    Err(e) => {
-                        tracing::debug!("Failed to access RE experiment name: {:#}", e);
-                        "<ffi error>".to_owned()
-                    }
-                };
-
                 self.events
                     .instant_event(buck2_data::RemoteExecutionSessionCreated {
                         session_id: session_id.to_owned(),
-                        experiment_name,
-                        persistent_cache_mode: client.get_persistent_cache_mode(),
                     })
             }
         }
@@ -383,7 +357,6 @@ impl<'a> ServerCommandContext<'a> {
             oncall,
             client_id_from_client_metadata,
             _re_connection_handle: re_connection_handle,
-            cert_state,
             starlark_profiling_manager,
             buck_out_dir,
             isolation_prefix,
@@ -397,7 +370,6 @@ impl<'a> ServerCommandContext<'a> {
             daemon_uuid_from_client: client_context.daemon_uuid.clone(),
             command_name: client_context.command_name.clone(),
             sanitized_argv: client_context.sanitized_argv.clone(),
-            agent_context: client_context.agent_context.clone(),
             debugger_handle,
             cancellations,
             preemptible: client_context.preemptible(),
@@ -545,8 +517,7 @@ impl<'a> ServerCommandContext<'a> {
         }
 
         self.starlark_profiling_manager
-            .finalize(&self.base_context.events)
-            .await?;
+            .finalize(&self.base_context.events)?;
 
         // The heartbeat guard's last snapshot; reused to gate idle page-out on disk
         // headroom without a fresh stat.
@@ -704,23 +675,6 @@ impl DiceUpdater for DiceCommandUpdater<'_, '_> {
             .cmd_ctx
             .load_new_configs(&mut existing_state.ctx())
             .await?;
-
-        // Validate agent context against buckconfig schema if entries were provided.
-        if !self.cmd_ctx.agent_context.is_empty() {
-            let schema = AgentContextSchema::from_config(&cells_and_configs.root_config);
-            validate_agent_context(
-                &schema,
-                self.cmd_ctx.client_id_from_client_metadata.as_deref(),
-                &self.cmd_ctx.agent_context,
-            )?;
-        }
-
-        check_agent_host_guard(
-            &cells_and_configs.root_config,
-            &self.cmd_ctx.base_context.daemon,
-            self.cmd_ctx.base_context.repo.paths.project_root(),
-            self.cmd_ctx.isolation_prefix.as_str(),
-        )?;
 
         existing_state
             .ctx()
@@ -1110,9 +1064,6 @@ impl DiceCommandUpdater<'_, '_> {
 struct ConfigMetadataHolder(IntentionallyStdHashMap<String, String>);
 
 fn collect_config_metadata_into(config: &LegacyBuckConfig, data: &mut UserComputationData) {
-    // Facebook only: metadata collection for Scribe writes
-    facebook_only();
-
     fn add_config(
         map: &mut IntentionallyStdHashMap<String, String>,
         cfg: &LegacyBuckConfig,
@@ -1122,18 +1073,6 @@ fn collect_config_metadata_into(config: &LegacyBuckConfig, data: &mut UserComput
         if let Some(value) = cfg.get(key) {
             map.insert(field_name.to_owned(), value.to_owned());
         }
-    }
-
-    fn extract_scuba_defaults(
-        config: &LegacyBuckConfig,
-    ) -> Option<serde_json::Map<String, serde_json::Value>> {
-        let config = config.get(BuckconfigKeyRef {
-            section: "scuba",
-            property: "defaults",
-        })?;
-        let unescaped_config = shlex::split(config)?.join("");
-        let sample_json: serde_json::Value = serde_json::from_str(&unescaped_config).ok()?;
-        sample_json.get("normals")?.as_object().cloned()
     }
 
     let mut metadata = IntentionallyStdHashMap::new();
@@ -1147,32 +1086,6 @@ fn collect_config_metadata_into(config: &LegacyBuckConfig, data: &mut UserComput
         },
         "repository",
     );
-
-    // Buck1 honors a configuration field, `scuba.defaults`, by drawing values from the configuration value and
-    // inserting them verbatim into Scuba samples. Buck2 doesn't write to Scuba in the same way that Buck1
-    // does, but metadata in this function indirectly makes its way to Scuba, so it makes sense to respect at
-    // least some of the data within it.
-    //
-    // The configuration field is expected to be the canonical JSON representation for a Scuba sample, which is
-    // to say something like this:
-    // ```
-    // {
-    //   "normals": { "key": "value" },
-    //   "ints": { "key": 0 },
-    // }
-    // ```
-    //
-    // TODO(swgillespie) - This only covers the normals since Buck2's event protocol only allows for string
-    // metadata. Depending on what sort of things we're missing by dropping int default columns, we might want
-    // to consider adding support to the protocol for integer metadata.
-
-    if let Some(normals_obj) = extract_scuba_defaults(config) {
-        for (key, value) in normals_obj.iter() {
-            if let Some(value) = value.as_str() {
-                metadata.insert(key.clone(), value.to_owned());
-            }
-        }
-    }
 
     // TODO(pbergen): Remove this when we desupport client.id in config.
     add_config(
@@ -1199,21 +1112,14 @@ fn collect_config_metadata_into(config: &LegacyBuckConfig, data: &mut UserComput
                 "Setting `client.id` via config (`-c|--config client.id={}`) is deprecated \
                  because it invalidates the DICE graph which causes performance loss. \
                  Please migrate to `--client-metadata=id={}` instead. \
-                 This will become a hard error in a future Buck2 release. \
-                 For more information, see: https://internalfb.com/intern/staticdocs/buck2/docs/rule_authors/client_metadata/",
+                 This will become a hard error in a future Buck2 release.",
                 client_id,
                 client_id
             ),
             quiet: false,
-            deprecation: true,
-            error_on_oss: true,
-        ).ok();
-    }
-
-    if let Ok(schedule_type) = SandcastleScheduleType::new() {
-        if let Some(schedule_type_str) = schedule_type.as_str() {
-            metadata.insert("schedule_type".to_owned(), schedule_type_str.to_owned());
-        }
+            hard_error: true,
+        )
+        .ok();
     }
 
     data.data.set(ConfigMetadataHolder(metadata));
@@ -1242,10 +1148,6 @@ impl ServerCommandContextTrait for ServerCommandContext<'_> {
 
     fn isolation_prefix(&self) -> &FileName {
         &self.isolation_prefix
-    }
-
-    fn cert_state(&self) -> CertState {
-        self.cert_state.dupe()
     }
 
     fn project_root(&self) -> &ProjectRoot {
@@ -1316,12 +1218,6 @@ impl ServerCommandContextTrait for ServerCommandContext<'_> {
     async fn request_metadata(
         &self,
     ) -> buck2_error::Result<IntentionallyStdHashMap<String, String>> {
-        // Facebook only: metadata collection for Scribe writes
-        facebook_only();
-
-        #[cfg(fbcode_build)]
-        let mut metadata = metadata::collect(&self.base_context.daemon.daemon_id);
-        #[cfg(not(fbcode_build))]
         let mut metadata = metadata::collect_with_extras(
             &self.base_context.daemon.daemon_id,
             &self.base_context.repo.buckconfig_metadata,
@@ -1341,10 +1237,6 @@ impl ServerCommandContextTrait for ServerCommandContext<'_> {
             );
         }
 
-        if let Some(agent_identity) = buck2_events::metadata::agent_identity_from_env() {
-            metadata.insert("daemon_agent_identity_from_env".to_owned(), agent_identity);
-        }
-
         if let Some(oncall) = &self.oncall {
             metadata.insert("oncall".to_owned(), oncall.clone());
         }
@@ -1352,15 +1244,6 @@ impl ServerCommandContextTrait for ServerCommandContext<'_> {
         if let Some(client_id_from_client_metadata) = &self.client_id_from_client_metadata {
             metadata.insert("client".to_owned(), client_id_from_client_metadata.clone());
         }
-
-        metadata.insert(
-            "vpnless".to_owned(),
-            self.base_context
-                .daemon
-                .http_client
-                .supports_vpnless()
-                .to_string(),
-        );
 
         metadata.insert(
             "http_versions".to_owned(),

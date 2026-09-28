@@ -140,7 +140,7 @@ mod tests {
     #[test]
     fn test_external_symlink_json() {
         let path = ForwardRelativePathBuf::unchecked_new("test.txt".into());
-        let target = PathBuf::from("/mnt/gvfs");
+        let target = PathBuf::from("/opt/vendor");
         let remaining =
             ForwardRelativePathBuf::new("test.txt".into()).expect("failed to make remaining path");
         let metadata = ArtifactMetadataJson {
@@ -153,7 +153,7 @@ mod tests {
         let json = serde_json::to_string(&metadata).expect("failed to serialize");
         assert_eq!(
             json,
-            r#"{"path":"test.txt","kind":"external_symlink","target":"/mnt/gvfs","remaining_path":"test.txt"}"#,
+            r#"{"path":"test.txt","kind":"external_symlink","target":"/opt/vendor","remaining_path":"test.txt"}"#,
         );
     }
 }

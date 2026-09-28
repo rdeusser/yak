@@ -7,8 +7,6 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-# pyre-strict
-
 """
 Create a bootstrapper pex for inplace python binaries
 
@@ -190,7 +188,7 @@ def launcher(python: str, output_dir: Path) -> str:
         # `/usr/bin/env` to look up on `$PATH`. Both work directly in a `#!` line.
         #
         # TODO(nmj): Remove this hack. So, if arg0 in your shebang is a bash script
-        #                 (like /usr/local/fbcode/platform007/bin/python3.7 on macs is)
+        #                 (like some interpreter wrappers on macs are)
         #                 OSX just sort of ignores it and tries to run your thing with
         #                 the current shell. So, we hack in /usr/bin/env in the front
         #                 for now, and let it do the lifting. OSX: Bringing you the best

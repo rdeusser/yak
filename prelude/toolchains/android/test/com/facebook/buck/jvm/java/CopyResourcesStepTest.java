@@ -27,22 +27,22 @@ public class CopyResourcesStepTest {
   public void testAddResourceCommandsWithBuildFileParentOfSrcDirectory() {
     // Files:
     // android/java/BUCK
-    // android/java/src/com/facebook/base/data.json
-    // android/java/src/com/facebook/common/util/data.json
+    // android/java/src/com/example/base/data.json
+    // android/java/src/com/example/common/util/data.json
 
     RelPath configuredBuckOut = RelPath.get("buck-out/v2");
     RelPath target =
         configuredBuckOut.resolveRel(
-            "android/java/lib__resources__classes/com/facebook/common/util/data.json");
+            "android/java/lib__resources__classes/com/example/common/util/data.json");
     RelPath target1 =
         configuredBuckOut.resolveRel(
-            "android/java/lib__resources__classes/com/facebook/base/data.json");
+            "android/java/lib__resources__classes/com/example/base/data.json");
 
     ImmutableMap<RelPath, RelPath> resourceMap =
         ImmutableMap.of(
-            RelPath.get("android/java/src/com/facebook/base/data.json"),
+            RelPath.get("android/java/src/com/example/base/data.json"),
             target1,
-            RelPath.get("android/java/src/com/facebook/common/util/data.json"),
+            RelPath.get("android/java/src/com/example/common/util/data.json"),
             target);
     ImmutableList<IsolatedStep> steps = CopyResourcesStep.of(resourceMap);
 
@@ -50,10 +50,10 @@ public class CopyResourcesStepTest {
         ImmutableList.of(
             new MkdirIsolatedStep(target1.getParent()),
             new SymlinkIsolatedStep(
-                RelPath.get("android/java/src/com/facebook/base/data.json"), target1),
+                RelPath.get("android/java/src/com/example/base/data.json"), target1),
             new MkdirIsolatedStep(target.getParent()),
             new SymlinkIsolatedStep(
-                RelPath.get("android/java/src/com/facebook/common/util/data.json"), target));
+                RelPath.get("android/java/src/com/example/common/util/data.json"), target));
     assertEquals(expected, steps);
   }
 
@@ -61,22 +61,22 @@ public class CopyResourcesStepTest {
   public void testAddResourceCommandsWithBuildFileParentOfJavaPackage() {
     // Files:
     // android/java/src/BUCK
-    // android/java/src/com/facebook/base/data.json
-    // android/java/src/com/facebook/common/util/data.json
+    // android/java/src/com/example/base/data.json
+    // android/java/src/com/example/common/util/data.json
 
     RelPath configuredBuckOut = RelPath.get("buck-out/v2");
     RelPath target =
         configuredBuckOut.resolveRel(
-            "android/java/src/lib__resources__classes/com/facebook/common/util/data.json");
+            "android/java/src/lib__resources__classes/com/example/common/util/data.json");
     RelPath target1 =
         configuredBuckOut.resolveRel(
-            "android/java/src/lib__resources__classes/com/facebook/base/data.json");
+            "android/java/src/lib__resources__classes/com/example/base/data.json");
 
     ImmutableMap<RelPath, RelPath> resourceMap =
         ImmutableMap.of(
-            RelPath.get("android/java/src/com/facebook/base/data.json"),
+            RelPath.get("android/java/src/com/example/base/data.json"),
             target1,
-            RelPath.get("android/java/src/com/facebook/common/util/data.json"),
+            RelPath.get("android/java/src/com/example/common/util/data.json"),
             target);
     ImmutableList<IsolatedStep> steps = CopyResourcesStep.of(resourceMap);
 
@@ -84,35 +84,35 @@ public class CopyResourcesStepTest {
         ImmutableList.of(
             new MkdirIsolatedStep(target1.getParent()),
             new SymlinkIsolatedStep(
-                RelPath.get("android/java/src/com/facebook/base/data.json"), target1),
+                RelPath.get("android/java/src/com/example/base/data.json"), target1),
             new MkdirIsolatedStep(target.getParent()),
             new SymlinkIsolatedStep(
-                RelPath.get("android/java/src/com/facebook/common/util/data.json"), target));
+                RelPath.get("android/java/src/com/example/common/util/data.json"), target));
     assertEquals(expected, steps);
   }
 
   @Test
   public void testAddResourceCommandsWithBuildFileInJavaPackage() {
     // Files:
-    // android/java/src/com/facebook/BUCK
-    // android/java/src/com/facebook/base/data.json
-    // android/java/src/com/facebook/common/util/data.json
+    // android/java/src/com/example/BUCK
+    // android/java/src/com/example/base/data.json
+    // android/java/src/com/example/common/util/data.json
 
     RelPath configuredBuckOut = RelPath.get("buck-out/v2");
     RelPath target =
         configuredBuckOut.resolveRel(
-            "android/java/src/com/facebook/lib__resources__classes/"
-                + "com/facebook/common/util/data.json");
+            "android/java/src/com/example/lib__resources__classes/"
+                + "com/example/common/util/data.json");
     RelPath target1 =
         configuredBuckOut.resolveRel(
-            "android/java/src/com/facebook/lib__resources__classes/"
-                + "com/facebook/base/data.json");
+            "android/java/src/com/example/lib__resources__classes/"
+                + "com/example/base/data.json");
 
     ImmutableMap<RelPath, RelPath> resourceMap =
         ImmutableMap.of(
-            RelPath.get("android/java/src/com/facebook/base/data.json"),
+            RelPath.get("android/java/src/com/example/base/data.json"),
             target1,
-            RelPath.get("android/java/src/com/facebook/common/util/data.json"),
+            RelPath.get("android/java/src/com/example/common/util/data.json"),
             target);
     ImmutableList<IsolatedStep> steps = CopyResourcesStep.of(resourceMap);
 
@@ -120,10 +120,10 @@ public class CopyResourcesStepTest {
         ImmutableList.of(
             new MkdirIsolatedStep(target1.getParent()),
             new SymlinkIsolatedStep(
-                RelPath.get("android/java/src/com/facebook/base/data.json"), target1),
+                RelPath.get("android/java/src/com/example/base/data.json"), target1),
             new MkdirIsolatedStep(target.getParent()),
             new SymlinkIsolatedStep(
-                RelPath.get("android/java/src/com/facebook/common/util/data.json"), target));
+                RelPath.get("android/java/src/com/example/common/util/data.json"), target));
     assertEquals(expected, steps);
   }
 }

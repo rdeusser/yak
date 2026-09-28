@@ -65,7 +65,7 @@ def _link_deps(link_infos: dict[Label, LinkableNode], deps: list[Label], link_st
     """
     Return transitive deps required to link dynamically against the given deps.
     This will following through deps of statically linked inputs and exported
-    deps of everything else (see https://fburl.com/diffusion/rartsbkw from v1).
+    deps of everything else (as v1 did).
     """
 
     def find_deps(node: Label):
@@ -427,7 +427,7 @@ def _impl(ctx: AnalysisContext) -> list[Provider]:
         #  * https://packaging.python.org/en/latest/specifications/recording-installed-packages/#the-dist-info-directory
         #  * https://packaging.python.org/en/latest/specifications/name-normalization/
         #
-        # Equivalent to fbcode/buck2/prelude/python/tools/wheel.py#normalize_name()
+        # Equivalent to prelude/python/tools/wheel.py#normalize_name()
         # but need to do it here since we need to set output path
 
         # PEP503 name normalization
@@ -534,7 +534,7 @@ def _impl(ctx: AnalysisContext) -> list[Provider]:
 
 python_wheel = rule(
     impl = _impl,
-    cfg = constraint_overrides.python_transition,
+    cfg = constraint_overrides.transition,
     attrs = dict(
         dist = attrs.option(attrs.string(), default = None),
         version = attrs.string(default = "1.0.0"),
@@ -579,7 +579,6 @@ python_wheel = rule(
         _create_link_tree = attrs.default_only(attrs.exec_dep(default = "prelude//python/tools:create_link_tree")),
         _cxx_toolchain = toolchains_common.cxx(),
         _python_toolchain = toolchains_common.python(),
-        opt_by_default_enabled = attrs.bool(default = False),
     )
     | constraint_overrides.attributes,
 )

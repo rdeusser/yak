@@ -28,10 +28,9 @@ message DaemonProcessInfo {
 
 // Controls whether we will use a given daemon or not.
 message DaemonConstraints {
-  reserved 3, 6;
+  reserved 2, 3, 6;
 
   string version = 1;
-  optional string user_version = 2;
   string daemon_id = 4;
 
   // This is optional because the daemon might not actually have started
@@ -71,15 +70,15 @@ message StatusResponse {
   reserved 4;
   reserved 5;
   reserved 6;
+  reserved 12;
+  reserved 15;
   buck.data.Snapshot snapshot = 7;
   DaemonConstraints daemon_constraints = 8;
   string project_root = 9;
   string isolation_dir = 10;
   optional uint32 forkserver_pid = 11;
-  optional bool supports_vpnless = 12;
   optional bool http2 = 13;
   optional bool valid_working_directory = 14;
-  optional bool valid_buck_out_mount = 15;
   optional string io_provider = 16;
   optional TokioRuntimeMetrics tokio_runtime_metrics = 17;
   optional string allprocs_cgroup_path = 18;
@@ -127,7 +126,7 @@ message TenantIdentity {
 }
 
 message ClientContext {
-  reserved 5, 21;
+  reserved 5, 21, 27;
   // `AbsNormPath`.
   string working_dir = 1;
   repeated ConfigOverride config_overrides = 3;
@@ -198,9 +197,6 @@ message ClientContext {
   /// Options for starlark profiling via --profile-patterns and related
   /// arguments.
   optional ProfilePatternOptions profile_pattern_opts = 25;
-
-  // Agent context key=value pairs passed via --agent-context.
-  repeated buck.data.AgentContextEntry agent_context = 27;
 
   // Stable address of the repository state selected by this client.
   optional TenantIdentity tenant_identity = 28;
@@ -313,7 +309,7 @@ enum QueryOutputFormat {
   DOT = 2;
   DOT_COMPACT = 3;
   STARLARK = 4;
-  HTML = 5;
+  reserved 5;
 }
 
 message AqueryRequest {

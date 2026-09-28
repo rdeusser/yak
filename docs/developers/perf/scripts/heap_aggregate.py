@@ -136,9 +136,8 @@ def find_demangler():
     candidates = [
         os.environ.get("RUSTFILT"),
         "rustfilt",
-        # fbsource location:
-        os.path.expanduser("~/fbsource/third-party/rust/tools/rustfilt"),
-        os.path.expanduser("~/fbsource2/third-party/rust/tools/rustfilt"),
+        # Where `cargo install rustfilt` puts it when ~/.cargo/bin is not on PATH.
+        os.path.expanduser("~/.cargo/bin/rustfilt"),
     ]
     for c in candidates:
         if c and (os.path.isfile(c) or shutil.which(c)):

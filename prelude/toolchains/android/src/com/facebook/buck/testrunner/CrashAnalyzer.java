@@ -63,9 +63,8 @@ public class CrashAnalyzer {
         // "signal 11 (SIGSEGV)") or a "Segmentation fault" report. The bare "SIGSEGV" token was
         // intentionally removed: it matches any log line that merely mentions the word, e.g. the
         // benign MessageExecutionMonitor warning "...risk of ART nterp stack-walk SIGSEGV..."
-        // (added
-        // by D109574690, fires ~hundreds of times per run), which produced false "native crash"
-        // verdicts. Real SIGSEGV crashes always carry "signal 11", so coverage is unaffected.
+        // (fires hundreds of times per run), which produced false "native crash" verdicts. Real
+        // SIGSEGV crashes always carry "signal 11", so coverage is unaffected.
         Pattern.compile("(?i)Fatal signal 11|signal 11|segmentation fault"),
         "SIGSEGV signal detected (native crash)",
         true),
@@ -146,8 +145,8 @@ public class CrashAnalyzer {
    * lines that previously produced false "crash detected" verdicts on every run:
    *
    * <pre>
-   *   E QPLProvider: java.lang.IllegalStateException: No QPL instance provided
-   *   D CoverageInit: java.lang.ClassNotFoundException: com.facebook.coverage.e2e.CoverageSetup
+   *   E PerfLoggerProvider: java.lang.IllegalStateException: No logger instance provided
+   *   D CoverageInit: java.lang.ClassNotFoundException: com.example.coverage.CoverageSetup
    * </pre>
    *
    * The check is on the matched line itself, which works for both brief ("E/AndroidRuntime(pid):")

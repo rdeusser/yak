@@ -1,16 +1,11 @@
----
-oncalls: ['build_infra']
----
-
 # JS Dependencies
 
-buck2 contains six independent JS packages. They do not share a package manager, a manifest key,
-or a lockfile format, so a dependency bump — typically a transitive CVE — has to be applied per
-package rather than once.
+buck2 contains four independent JS packages. Each has its own manifest and lockfile, so a
+dependency bump — typically a transitive CVE — has to be applied per package rather than once.
 
 ## The packages
 
-Paths are relative to `fbcode/buck2`.
+Paths are relative to the repository root.
 
 | Package | Pin with | Lockfile |
 |---|---|---|
@@ -18,8 +13,6 @@ Paths are relative to `fbcode/buck2`.
 | `explorer` | `overrides` | `package-lock.json` |
 | `starlark-rust/vscode` | `overrides` | `package-lock.json` |
 | `starlark-rust/vscode/client` | `overrides` | `package-lock.json` |
-| `app/buck2_explain/js` | `resolutions` | `yarn.lock` |
-| `app/buck2_explain/output_format_js` | `resolutions` | `yarn.lock` |
 
 `website` is both an npm and a yarn package. Its two lockfiles are independent and do drift — they
 have held different resolved versions of the same dependency. Add the floor to both keys, regenerate

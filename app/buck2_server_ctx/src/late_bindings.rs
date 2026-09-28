@@ -15,8 +15,6 @@ use buck2_cli_proto::new_generic::DebugEvalRequest;
 use buck2_cli_proto::new_generic::DebugEvalResponse;
 use buck2_cli_proto::new_generic::ExpandExternalCellsRequest;
 use buck2_cli_proto::new_generic::ExpandExternalCellsResponse;
-use buck2_cli_proto::new_generic::ExplainRequest;
-use buck2_cli_proto::new_generic::ExplainResponse;
 use buck2_util::late_binding::LateBinding;
 
 use crate::ctx::ServerCommandContextTrait;
@@ -48,12 +46,6 @@ pub trait OtherServerCommands: Send + Sync + 'static {
         ctx: &dyn ServerCommandContextTrait,
         req: DebugEvalRequest,
     ) -> buck2_error::Result<DebugEvalResponse>;
-    async fn explain(
-        &self,
-        ctx: &dyn ServerCommandContextTrait,
-        partial_result_dispatcher: PartialResultDispatcher<NoPartialResult>,
-        req: ExplainRequest,
-    ) -> buck2_error::Result<ExplainResponse>;
     async fn expand_external_cells(
         &self,
         ctx: &dyn ServerCommandContextTrait,

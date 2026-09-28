@@ -1,7 +1,5 @@
 load("//:test_utils.bzl", "assert_output")
 
-oncall("whatsapp_build_infra")
-
 erlang_application(
     name = "hello_world",
     srcs = ["src/hello_world.erl"],

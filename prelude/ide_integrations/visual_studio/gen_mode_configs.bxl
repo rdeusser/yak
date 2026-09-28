@@ -70,7 +70,7 @@ def _get_path(target: str, bxl_ctx):
     absolute_path = _get_provider_output_path(providers[DefaultInfo], bxl_ctx)
     return absolute_path
 
-def _produce_proj_artifact_with_async_cxx_toolchain(bxl_ctx, actions, fbsource: bool, output_artifact: Artifact, root: str) -> None:
+def _produce_proj_artifact_with_async_cxx_toolchain(bxl_ctx, actions, output_artifact: Artifact, root: str) -> None:
     """Reads the cxx_toolchain's flags with `actions.dynamic_output` before continuing to produce the final output project artifact.
 
     The cxx_toolchain's flags cannot be directly read because they are type `cmd_args`.
@@ -116,7 +116,7 @@ def _produce_proj_artifact_with_async_cxx_toolchain(bxl_ctx, actions, fbsource: 
         actions = ctx.bxl_actions().actions
         hidden_artifacts = cxxflags_macro_artifacts + cxxppflags_macro_artifacts + ldflags_macro_artifacts
         _produce_proj_artifact(
-            ctx, actions, fbsource, cxx_toolchain_flags, outputs[output_artifact], root = root, platform = platform, hidden_artifacts = hidden_artifacts
+            ctx, actions, cxx_toolchain_flags, outputs[output_artifact], root = root, platform = platform, hidden_artifacts = hidden_artifacts
         )
 
     dyn_artifacts = [
@@ -131,20 +131,18 @@ def _produce_proj_artifact_with_async_cxx_toolchain(bxl_ctx, actions, fbsource: 
 def _main(bxl_ctx):
     actions = bxl_ctx.bxl_actions().actions
 
-    # Capture `fbsource` and `root` because those attributes on `bxl_ctx` are not avaliable on the dynamic_output's ctx and `bxl_ctx` cannot be captured.
-    fbsource = bxl_ctx.cli_args.fbsource
+    # Capture `root` because it is not available on the dynamic_output's ctx and `bxl_ctx` cannot be captured.
     root = bxl_ctx.root()
 
     output_artifact = actions.declare_output(get_mode_config_path(bxl_ctx.cli_args.mode_name), has_content_based_path = False)
 
-    _produce_proj_artifact_with_async_cxx_toolchain(bxl_ctx, actions, fbsource, output_artifact, root = root)
+    _produce_proj_artifact_with_async_cxx_toolchain(bxl_ctx, actions, output_artifact, root = root)
 
     bxl_ctx.output.print(bxl_ctx.output.ensure(output_artifact).abs_path())
 
 def _produce_proj_artifact(
     bxl_ctx,
     actions,
-    fbsource: bool,
     cxx_toolchain_flags: _CxxToolchainFlags,
     output_artifact: Artifact,
     root: str,
@@ -166,10 +164,6 @@ def _produce_proj_artifact(
 
     compiler_settings_content = gen_compiler_settings(compiler_settings)
     linker_settings_content = gen_linker_settings(linker_settings)
-
-    toolchains_props = ""
-    if fbsource and platform != CLANG:
-        toolchains_props = '        <Import Project="$(RepoRoot)\\third-party\\toolchains\\visual_studio\\toolchain.props"/>'
 
     absolutize_path_exe = _get_path(ABSOLUTIZE_PATH_EXE, bxl_ctx)
     vs_buck_build_props_path = _get_path(VS_BUCK_BUILD_PROPS, bxl_ctx)
@@ -193,7 +187,6 @@ def _produce_proj_artifact(
         """    <ImportGroup Label="PropertySheets">""",
         """        <Import Project="$(VCTargetsPath)\\Microsoft.Cpp.props" />""",
         """        <Import Condition="exists('$(UserRootDir)\\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" Project="$(UserRootDir)\\Microsoft.Cpp.$(Platform).user.props"/>""",
-        toolchains_props,
         """    </ImportGroup>""",
         """    <ItemDefinitionGroup>""",
         compiler_settings_content,
@@ -213,10 +206,6 @@ def _produce_proj_artifact(
 main = bxl_main(
     impl = _main,
     cli_args = {
-        "fbsource": cli_args.bool(
-            default = False,
-            doc = "Whether to turn on fbsource specific behaviors.",
-        ),
         "mode_name": cli_args.string(
             doc = "Single mode file to generate projects for.",
         ),

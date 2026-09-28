@@ -6,15 +6,13 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-# pyre-strict
-
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
 from typing import Optional
 
-from buck2.tests.e2e_util.api.buck import Buck
-from buck2.tests.e2e_util.helper.utils import filter_events
+from e2e_util.api.buck import Buck
+from e2e_util.helper.utils import filter_events
 
 
 class FileWatcherProvider(Enum):
@@ -58,7 +56,7 @@ class FileWatcherEvent:
 
 
 #
-# Example FileWatcher.stats - see https://fburl.com/code/pphlekfn:
+# Example FileWatcher.stats (`FileWatcherStats` in app/buck2_data/data.proto):
 #   "FileWatcher": {
 #     "stats": {
 #       "fresh_instance": false,
@@ -70,7 +68,7 @@ class FileWatcherEvent:
 #         {
 #           "event": 1,
 #           "kind": 0,
-#           "path": "fbcode//buck2/tests/core/io/test_watchman.py"
+#           "path": "root//files/abc"
 #         }
 #       ],
 #       "incomplete_events_reason": null,

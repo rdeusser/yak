@@ -21,7 +21,6 @@ static PLATFORM_REGEX_SET: OnceLock<RegexSet> = OnceLock::new();
 
 fn is_platform_flavor(flavor: &str) -> bool {
     let regex_set = PLATFORM_REGEX_SET.get_or_init(|| {
-        // copied from https://fburl.com/code/sgxwq68n and modified for our needs
         RegexSet::new([
             r"^android-.*$",
             r"^(linux-.*|platform[0-9]{3}-(clang|clang-12|gcc)(-nosan)?(-split-dwarf)?)$",
@@ -29,8 +28,7 @@ fn is_platform_flavor(flavor: &str) -> bool {
             // Too broad pattern, so ignoring it
             // "^(default|host)$"
             r"^windows-x86_64$",
-            //  an original data has the following pattern: FBOBJC_REGEX = "^(macosx|iphone|watch|appletv|osmeta-).*$"
-            // we use modified version w/o macosx prefix already checked in the pattern above
+            // Apple platforms other than macOS, which the pattern above matches.
             r"^(iphone|watch|appletv|osmeta-).*$",
         ])
         .unwrap()
@@ -57,9 +55,8 @@ pub fn map_flavors(flavors: &str, full_target: &str) -> buck2_error::Result<Prov
         soft_error!(
             "platform_flavor",
             buck2_error::buck2_error!(buck2_error::ErrorTag::Input, "Platform flavor found in target: {}", full_target),
-            deprecation: true,
             quiet: true,
-            error_on_oss: true
+            hard_error: true
         )?;
         flavors_parts.remove(index);
     }
@@ -75,7 +72,7 @@ pub fn map_flavors(flavors: &str, full_target: &str) -> buck2_error::Result<Prov
                     return Ok(ProvidersName::Default);
                 }
 
-                // android_binary intermediate/secondary outputs. See https://fburl.com/diffusion/jd3cmnfw
+                // android_binary intermediate/secondary outputs.
                 ["package_string_assets"] => "package_string_assets".to_owned(),
                 ["aapt2_link"] => "aapt2_link".to_owned(),
                 ["unstripped_native_libraries"] => "unstripped_native_libraries".to_owned(),
@@ -97,11 +94,11 @@ pub fn map_flavors(flavors: &str, full_target: &str) -> buck2_error::Result<Prov
                 ["check"] => "check".to_owned(),
 
                 // FIXME(ndmitchell): Most users shouldn't be using strip-debug.
-                // We currently can't handle strip-debug, and it's a dependency of Eden,
-                // so just ignore it for now. D27984137 aims to add it back properly.
+                // We currently can't handle strip-debug, so just ignore it for now.
                 ["strip-debug"] => return Ok(ProvidersName::Default),
 
-                // Used in JEX builder script (https://fburl.com/code/2w2gjkey)
+                // The shared library of a library target, such as the `shared` subtarget of
+                // `rust_library`.
                 ["shared"] => "shared".to_owned(),
 
                 // Used by Nullsafe for (android|java)_libraries

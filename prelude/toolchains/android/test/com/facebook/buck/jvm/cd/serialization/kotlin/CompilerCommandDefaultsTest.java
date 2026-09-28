@@ -92,7 +92,7 @@ public class CompilerCommandDefaultsTest {
   }
 
   @Test
-  public void kotlinParametersUseExactAbiTerminationMessage() {
+  public void kotlinParametersUseJavacDefaults() {
     var model =
         com.facebook.buck.cd.model.kotlin.KotlinExtraParams.newBuilder()
             .setStandardLibraryClassPath("stdlib.jar")
@@ -103,10 +103,7 @@ public class CompilerCommandDefaultsTest {
 
     var parameters = KotlinExtraParamsSerializer.deserialize(javaOptions(), model);
 
-    assertEquals(
-        Optional.of(
-            "exception: java.lang.RuntimeException: Terminating compilation. We're done with ABI."),
-        parameters.getKosabiJvmAbiGenEarlyTerminationMessagePrefix());
+    assertEquals("2.2", parameters.getLanguageVersion().getValue());
     assertTrue(parameters.getResolvedJavacOptions().getDebug());
   }
 

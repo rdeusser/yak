@@ -8,7 +8,6 @@
 
 load("@prelude//android:android_toolchain.bzl", "AndroidPlatformInfo", "AndroidToolchainInfo")
 load("@prelude//target_stats:target_stats_tools.bzl", "TargetStatsToolsInfo")
-load("@prelude//tests:test_listing.bzl", "TestListingInfo")
 
 def _android_sdk_tools_impl(ctx):
     sub_targets = {}
@@ -107,7 +106,6 @@ def system_android_toolchain(name, android_sdk_tools_target, jdk_system_image, *
     kwargs["filter_prebuilt_native_library_dir"] = "prelude//android/tools:filter_prebuilt_native_library_dir"
     kwargs["filter_resources"] = "prelude//toolchains/android/src/com/facebook/buck/android/resources/filter:filter_resources_binary"
     kwargs["framework_aidl_file"] = "{}[framework.aidl]".format(android_sdk_tools_target)
-    # @oss-disable[end= ]: kwargs["gatorade_mergemap_tool"] = "prelude//android/tools/meta_only:gatorade_mergemap_tool"
     kwargs["generate_build_config"] = "prelude//toolchains/android/src/com/facebook/buck/android/build_config:generate_build_config_binary"
     kwargs["generate_manifest"] = "prelude//toolchains/android/src/com/facebook/buck/android/manifest:generate_manifest_binary"
     kwargs["sort_pre_dexed_files"] = "prelude//android/tools:sort_pre_dexed_files"
@@ -160,9 +158,6 @@ def system_android_toolchain_rule_impl(ctx):
         AndroidPlatformInfo(
             name = ctx.attrs.name,
         ),
-        TestListingInfo(
-            list_tests = ctx.attrs.list_tests,
-        ),
         AndroidToolchainInfo(
             target_stats_tools = ctx.attrs.target_stats_tools[TargetStatsToolsInfo] if ctx.attrs.target_stats_tools else None,
             aapt2 = ctx.attrs.aapt2[RunInfo],
@@ -189,7 +184,6 @@ def system_android_toolchain_rule_impl(ctx):
             filter_prebuilt_native_library_dir = ctx.attrs.filter_prebuilt_native_library_dir,
             filter_resources = ctx.attrs.filter_resources,
             framework_aidl_file = ctx.attrs.framework_aidl_file,
-            # @oss-disable[end= ]: gatorade_mergemap_tool = ctx.attrs.gatorade_mergemap_tool[RunInfo],
             generate_build_config = ctx.attrs.generate_build_config,
             generate_manifest = ctx.attrs.generate_manifest,
             installer = ctx.attrs.installer,
@@ -250,7 +244,6 @@ system_android_toolchain_rule = rule(
         "filter_prebuilt_native_library_dir": attrs.dep(providers = [RunInfo]),
         "filter_resources": attrs.dep(providers = [RunInfo]),
         "framework_aidl_file": attrs.source(),
-        # @oss-disable[end= ]: "gatorade_mergemap_tool": attrs.dep(providers = [RunInfo]),
         "generate_build_config": attrs.dep(providers = [RunInfo]),
         "generate_manifest": attrs.dep(providers = [RunInfo]),
         "installer": attrs.label(),
@@ -260,7 +253,6 @@ system_android_toolchain_rule = rule(
         "jar_splitter_command": attrs.dep(providers = [RunInfo]),
         "jdk_system_image": attrs.source(),
         "jni_onload_check": attrs.option(attrs.dep(providers = [RunInfo]), default = None),
-        "list_tests": attrs.option(attrs.dep(providers = [RunInfo]), default = None),
         "manifest_utils": attrs.dep(providers = [RunInfo]),
         "merge_android_resource_sources": attrs.dep(providers = [RunInfo]),
         "merge_android_resources": attrs.dep(providers = [RunInfo]),

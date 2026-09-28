@@ -1,0 +1,8 @@
+# Adds a second term to the cap. `root//outside/...` is in this list but not
+# in the parent's, so the cap still refuses it.
+enforce_within_view_intersection()
+
+package(within_view = [
+    "root//intersect/child/...",
+    "root//outside/...",
+])

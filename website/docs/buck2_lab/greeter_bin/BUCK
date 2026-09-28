@@ -1,0 +1,8 @@
+rust_binary(
+    name = "main",
+    srcs = ["src/main.rs"],
+    deps = [
+        "//website/docs/buck2_lab/greeter_lib:library",
+        "//website/docs/buck2_lab/logging_lib:logging_lib",
+    ],
+)

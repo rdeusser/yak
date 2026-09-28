@@ -6,8 +6,6 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-# pyre-strict
-
 from dataclasses import dataclass
 
 MH_MAGIC = 0xFEEDFACE

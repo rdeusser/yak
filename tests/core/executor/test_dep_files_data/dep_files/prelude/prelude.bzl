@@ -132,7 +132,7 @@ def _simple_dep_file_impl(ctx):
     tag = ctx.actions.artifact_tag()
     args = cmd_args(
         [
-            "fbpython",
+            "python3",
             script,
             out.as_output(),
             tag.tag_artifacts(dep_file.as_output()),
@@ -253,7 +253,7 @@ def _canonical_json_dep_file_impl(ctx):
         ],
         has_content_based_path = content_paths,
     )
-    args = cmd_args("fbpython", script)
+    args = cmd_args("python3", script)
     if ctx.attrs.placement == "command_line":
         args.add(fingerprints[0])
     else:
@@ -341,7 +341,7 @@ def _shared_dir_dep_file_impl(ctx):
     tag = ctx.actions.artifact_tag()
     args = cmd_args(
         [
-            "fbpython",
+            "python3",
             script,
             out.as_output(),
             tag.tag_artifacts(dep_file.as_output()),
@@ -379,7 +379,7 @@ def _dep_file_with_preceding_actions_impl(ctx):
     for i in range(num_preceding):
         dummy_out = ctx.actions.declare_output("dummy_{}".format(i))
         ctx.actions.run(
-            cmd_args(["fbpython", dummy_script, dummy_out.as_output()]),
+            cmd_args(["python3", dummy_script, dummy_out.as_output()]),
             category = "dummy",
             identifier = str(i),
         )
@@ -406,7 +406,7 @@ def _dep_file_with_preceding_actions_impl(ctx):
     tag = ctx.actions.artifact_tag()
     args = cmd_args(
         [
-            "fbpython",
+            "python3",
             script,
             out.as_output(),
             tag.tag_artifacts(dep_file.as_output()),
@@ -456,7 +456,7 @@ def _dir_output_dep_file_impl(ctx):
     tag = ctx.actions.artifact_tag()
     args = cmd_args(
         [
-            "fbpython",
+            "python3",
             script,
             out_dir.as_output(),
             tag.tag_artifacts(dep_file.as_output()),

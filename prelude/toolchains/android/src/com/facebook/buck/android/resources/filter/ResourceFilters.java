@@ -153,8 +153,6 @@ public class ResourceFilters {
    * {@code drawable-hdpi, drawable-mdpi, drawable-xhdpi, drawable-hdpi-ro}, for a target of {@code
    * mdpi}, we'll be keeping {@code drawable-mdpi, drawable-hdpi-ro}.
    *
-   * <p>This method is based on {@code D621945}.
-   *
    * @param candidates list of paths to image files
    * @param targetDensities densities we want to keep
    * @return set of files to remove

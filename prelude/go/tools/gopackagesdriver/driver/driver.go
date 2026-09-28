@@ -17,9 +17,7 @@ import (
 	"io"
 	"log/slog"
 	"os"
-	"runtime/debug"
 	"strings"
-	"time"
 
 	"golang.org/x/tools/go/packages"
 )
@@ -138,43 +136,8 @@ func readDriverRequest() (*packages.DriverRequest, error) {
 	return &req, nil
 }
 
-// RunOptions holds configuration options for the driver
-type RunOptions struct {
-	telemetry Telemetry
-}
-
-// Option is a functional option for configuring RunOptions
-type Option func(*RunOptions)
-
-// WithTelemetry sets the telemetry implementation
-func WithTelemetry(t Telemetry) Option {
-	return func(opts *RunOptions) {
-		opts.telemetry = t
-	}
-}
-
 // Run parses the command line arguments and stdin, then runs buck2 and `go list` and writes results to stdout
-func Run(ctx context.Context, opts ...Option) error {
-	options := &RunOptions{
-		telemetry: &NoopTelemetry{},
-	}
-	for _, opt := range opts {
-		opt(options)
-	}
-
-	telemetry := options.telemetry
-	defer func() {
-		if r := recover(); r != nil {
-			telemetry.LogEvent(ctx, &PanicEvent{
-				PanicValue: r,
-				Stack:      debug.Stack(),
-			})
-			panic(r)
-		}
-	}()
-
-	start := time.Now()
-
+func Run(ctx context.Context) error {
 	// This must be cleared or we could forkbomb ourselves
 	// because we will call GoListDriver inside.
 	os.Setenv(envVarPkgDriver, "off")
@@ -212,20 +175,7 @@ func Run(ctx context.Context, opts ...Option) error {
 	slog.Info("running with args", "cwd", cwd, "project", platform.ProjectDir(), "args", os.Args)
 	slog.Debug("running with env", "env", os.Environ())
 
-	var resp *packages.DriverResponse
-
-	defer func() {
-		telemetry.LogEvent(ctx, &RequestFinishedEvent{
-			Duration: time.Since(start),
-			BuckRoot: platform.ProjectDir(),
-			Request:  req,
-			Patterns: targets,
-			Response: resp,
-			Error:    err,
-		})
-	}()
-
-	resp, err = query(ctx, req, bucker, platform, targets)
+	resp, err := query(ctx, req, bucker, platform, targets)
 	if err != nil {
 		return err
 	}

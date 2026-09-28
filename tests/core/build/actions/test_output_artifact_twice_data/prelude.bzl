@@ -11,7 +11,7 @@ def _test_output_artifact_twice_same(ctx: AnalysisContext) -> list[Provider]:
     a = ctx.actions.declare_output("uuuuuu", has_content_based_path = False)
     ctx.actions.run(
         [
-            "fbpython",
+            "python3",
             "-c",
             """
 import sys
@@ -38,7 +38,7 @@ def _test_output_artifact_twice_with_projection(ctx: AnalysisContext) -> list[Pr
     b = a.project("rel")
     ctx.actions.run(
         [
-            "fbpython",
+            "python3",
             "-c",
             r"""
 import sys

@@ -11,7 +11,6 @@
 pub mod action_identity;
 pub mod client;
 pub mod convert;
-pub mod digest_sampler;
 pub mod error;
 pub mod invocation_re_settings;
 pub mod manager;

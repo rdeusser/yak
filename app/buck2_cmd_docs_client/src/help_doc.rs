@@ -150,7 +150,7 @@ The `buck2 install` command builds an installable target, typically a mobile app
 The `InstallInfo` provider is used to make targets installable, it specifies an installer implementation (e.g. Android or Apple installer) and a set of files to install. For example (from `buck2 audit providers`):
 ```python
 InstallInfo(
-    installer = buck//src/com/facebook/buck/installer/apple:apple_installer,
+    installer = root//tools/installer:apple_installer,
     files = {
         \"app_bundle;\": <build artifact HelloWorldBundle.app>,
         \"options\": <build artifact install_apple_data.json>

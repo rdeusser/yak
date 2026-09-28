@@ -374,7 +374,7 @@ pub fn register_select(globals: &mut GlobalsBuilder) {
     fn select_map<'v>(
         #[starlark(require = pos)] d: Value<'v>,
         #[starlark(require = pos)] func: Value<'v>,
-        // TODO(T245559941): change the default to recurse=true
+        // TODO: change the default to recurse=true
         #[starlark(require = named, default = false)] recurse: bool,
         eval: &mut Evaluator<'v, '_, '_>,
     ) -> starlark::Result<Value<'v>> {

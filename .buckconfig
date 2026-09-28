@@ -1,24 +1,29 @@
 [cells]
-gh_facebook_buck2 = .
-gh_facebook_buck2_shims_meta = shim
+root = .
+prelude = prelude
+toolchains = toolchains
 
 [cell_aliases]
-root = gh_facebook_buck2
+config = prelude
 
-[oss]
-internal_cell = fbcode
-stripped_root_dirs = buck2
+[external_cells]
+prelude = bundled
+
+[buildfile]
+# `third-party/rust/BUCK.missing` stands in for `third-party/rust/BUCK` and
+# explains how to generate it with `reindeer buckify`.
+name = BUCK,BUCK.missing
+
+[build]
+execution_platforms = prelude//platforms:default
+
+[parser]
+target_platform_detector_spec = target:root//...->prelude//platforms:default
 
 [project]
 ignore = \
-    app/buck2_explain, \
-    app_dep_graph_rules, \
     examples, \
-    integrations/rust-project/tests, \
     tests, \
     .jj, \
     .git, \
     target
-
-[rust]
-default_edition = 2024

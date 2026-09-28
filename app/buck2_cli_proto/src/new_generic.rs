@@ -21,7 +21,6 @@ use crate::TargetCfg;
 pub enum NewGenericRequest {
     Materialize(MaterializeRequest),
     DebugEval(DebugEvalRequest),
-    Explain(ExplainRequest),
     ExpandExternalCells(ExpandExternalCellsRequest),
     Complete(CompleteRequest),
     Docs(DocsRequest),
@@ -31,7 +30,6 @@ pub enum NewGenericRequest {
 pub enum NewGenericResponse {
     Materialize(MaterializeResponse),
     DebugEval(DebugEvalResponse),
-    Explain(ExplainResponse),
     ExpandExternalCells(ExpandExternalCellsResponse),
     Complete(CompleteResponse),
     Docs(DocsResponse),
@@ -53,21 +51,6 @@ pub struct DebugEvalRequest {
 
 #[derive(Serialize, Deserialize)]
 pub struct DebugEvalResponse {}
-
-#[derive(Serialize, Deserialize)]
-pub struct ExplainRequest {
-    pub output: Option<AbsPathBuf>,
-    pub target: String,
-    pub fbs_dump: Option<AbsPathBuf>,
-    pub manifold_path: Option<String>,
-    pub log_path: AbsPathBuf,
-    // build options
-    pub target_universe: Vec<String>,
-    pub target_cfg: TargetCfg,
-}
-
-#[derive(Serialize, Deserialize)]
-pub struct ExplainResponse {}
 
 #[derive(Serialize, Deserialize)]
 pub enum ExpandExternalCellsRequest {
@@ -115,7 +98,6 @@ pub struct DocsStarlarkBuiltinsRequest {
 pub enum DocsRequest {
     Starlark(DocsStarlarkRequest),
     StarlarkBuiltins(DocsStarlarkBuiltinsRequest),
-    Agent,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -124,6 +106,4 @@ pub enum DocsResponse {
     NoOutput,
     /// JSON documentation to print on stdout.
     Json(String),
-    /// Plain-text documentation to print on stdout.
-    Text(String),
 }

@@ -10,12 +10,8 @@ permissions:
   contents: read
 
 jobs:
-  # Runner labels are repository (owner) specific, so the Meta larger runners
-  # (4-core-ubuntu, windows-8-core) don't exist on forks and jobs requesting
-  # them would sit queued forever waiting for a runner that isn't available.
-  # Fall back to the standard GitHub-hosted runners there.
   linux-build-and-test:
-    runs-on: ${{ github.repository_owner == 'facebook' && '4-core-ubuntu' || 'ubuntu-latest' }}
+    runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v6
     - uses: ./.github/actions/setup_linux_env
@@ -35,7 +31,7 @@ jobs:
     - uses: ./.github/actions/build_debug
     - uses: ./.github/actions/run_test_py
   windows-build-and-test:
-    runs-on: ${{ github.repository_owner == 'facebook' && 'windows-8-core' || 'windows-latest' }}
+    runs-on: windows-latest
     steps:
     - uses: actions/checkout@v6
     - uses: ./.github/actions/setup_windows_env

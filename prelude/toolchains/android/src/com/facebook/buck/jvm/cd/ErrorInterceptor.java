@@ -11,7 +11,6 @@
 package com.facebook.buck.jvm.cd;
 
 import com.facebook.infer.annotation.Nullsafe;
-import java.io.File;
 import java.io.PrintStream;
 import java.util.Objects;
 import java.util.function.Function;
@@ -243,45 +242,6 @@ public class ErrorInterceptor extends PrintStream {
     }
   }
 
-  // Creates a clickable hyperlink in the terminal using OSC 8 escape sequences.
-  // Supports both VS Code and Android Studio links based on ANDROID_EDITOR environment variable.
-  private static String createHyperlink(String file, int line, String text) {
-    // Keep in sync with fbcode/buck2/prelude/java/tools/utils.py
-    boolean isVsCode =
-        "vscode".equals(System.getenv("TERM_PROGRAM"))
-            || "od".equals(System.getenv("FBVSCODE_REMOTE_ENV_NAME"));
-
-    boolean isHyperlinkDisabled =
-        new File(System.getProperty("user.home") + "/.disable_buck_jvm_path_hyperlink").exists();
-
-    if (isVsCode || isHyperlinkDisabled) {
-      return text;
-    }
-
-    String OSC = "\033]";
-    String ST = "\033\\";
-    String uri;
-
-    boolean isJetBrains =
-        System.getenv("ANDROID_EDITOR") != null
-            || new File(
-                    System.getProperty("user.home")
-                        + "/.jetbrains-fb/.buck_path_hyperlink_uses_jetbrains")
-                .isFile();
-
-    if (isJetBrains) {
-      uri = "fb-ide-opener://open/?ide=intellij&filepath=/fbsource/" + file + "&line=" + line;
-    } else {
-      uri =
-          "https://www.internalfb.com/intern/nuclide/open/arc/?project=fbsource&paths[0]="
-              + file
-              + "&lines[0]="
-              + line;
-    }
-
-    return OSC + "8;;" + uri + ST + text + OSC + "8;;" + ST;
-  }
-
   private static FileType determineFileType(String exception) {
     for (FileType type : FileType.values()) {
       Pattern filePattern = type.getFilePattern();
@@ -354,11 +314,8 @@ public class ErrorInterceptor extends PrintStream {
   }
 
   private static String highlightJavaFile(Matcher match) {
-    String file = Objects.requireNonNull(match.group(1));
-    int line = Integer.parseInt(Objects.requireNonNull(match.group(2)));
-
     return GREEN
-        + createHyperlink(file, line, file)
+        + match.group(1)
         + RESET
         + ":"
         + MAGENTA
@@ -368,11 +325,8 @@ public class ErrorInterceptor extends PrintStream {
   }
 
   private static String highlightKotlinFile(Matcher match) {
-    String file = Objects.requireNonNull(match.group(1));
-    int line = Integer.parseInt(Objects.requireNonNull(match.group(2)));
-
     return GREEN
-        + createHyperlink(file, line, file)
+        + match.group(1)
         + RESET
         + ":"
         + MAGENTA

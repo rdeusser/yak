@@ -35,8 +35,7 @@ where
 ///    not set.
 ///  - `converter=<expr>` - a function to use as an alternative to the `FromStr::from_str`
 ///    conversion. Must have signature `fn(&str) -> Result<Ty, E>`
-///  - `applicability=<internal|testing>` - to indicate that the variable is not used in OSS or only
-///    for self-testing of buck2
+///  - `applicability=testing` - to indicate that the variable is only for self-testing of buck2
 ///
 /// The macro expands to an expression of type `buck2_error::Result<Type>` if a default is set, and
 /// `buck2_error::Result<Option<Type>` otherwise.
@@ -132,12 +131,6 @@ pub macro buck2_env_name($var:expr) {{
 
 #[allow(unused_macros)]
 macro parse2 {
-    (
-        $already_parsed:tt,
-        applicability=internal$(,)?
-    ) => {
-        $crate::env::__macro_refs::expand!($already_parsed, applicability=$crate::env::registry::Applicability::Internal,)
-    },
     (
         $already_parsed:tt,
         applicability=testing$(,)?

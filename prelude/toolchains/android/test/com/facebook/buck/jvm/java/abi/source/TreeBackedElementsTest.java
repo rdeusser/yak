@@ -29,48 +29,48 @@ import org.junit.runners.Parameterized;
 public class TreeBackedElementsTest extends CompilerTreeApiParameterizedTest {
   @Test
   public void testGetBinaryNameTopLevelClass() throws IOException {
-    compile(Joiner.on('\n').join("package com.facebook.foo;", "class Foo { }"));
+    compile(Joiner.on('\n').join("package com.example.foo;", "class Foo { }"));
 
     assertEquals(
-        "com.facebook.foo.Foo",
-        elements.getBinaryName(elements.getTypeElement("com.facebook.foo.Foo")).toString());
+        "com.example.foo.Foo",
+        elements.getBinaryName(elements.getTypeElement("com.example.foo.Foo")).toString());
   }
 
   @Test
   public void testGetBinaryNameInnerClass() throws IOException {
     compile(
-        Joiner.on('\n').join("package com.facebook.foo;", "class Foo {", "  class Inner {}", "}"));
+        Joiner.on('\n').join("package com.example.foo;", "class Foo {", "  class Inner {}", "}"));
 
     assertEquals(
-        "com.facebook.foo.Foo$Inner",
-        elements.getBinaryName(elements.getTypeElement("com.facebook.foo.Foo.Inner")).toString());
+        "com.example.foo.Foo$Inner",
+        elements.getBinaryName(elements.getTypeElement("com.example.foo.Foo.Inner")).toString());
   }
 
   @Test
   public void testGetDocComment() throws IOException {
     compile(
         Joiner.on('\n')
-            .join("package com.facebook.foo;", "/** I am a doc comment. */", "class Foo { }"));
+            .join("package com.example.foo;", "/** I am a doc comment. */", "class Foo { }"));
 
     assertEquals(
         "I am a doc comment. ",
-        elements.getDocComment(elements.getTypeElement("com.facebook.foo.Foo")));
+        elements.getDocComment(elements.getTypeElement("com.example.foo.Foo")));
   }
 
   @Test
   public void testIsDeprecated() throws IOException {
-    compile(Joiner.on('\n').join("package com.facebook.foo;", "@Deprecated", "class Foo { }"));
+    compile(Joiner.on('\n').join("package com.example.foo;", "@Deprecated", "class Foo { }"));
 
-    assertTrue(elements.isDeprecated(elements.getTypeElement("com.facebook.foo.Foo")));
+    assertTrue(elements.isDeprecated(elements.getTypeElement("com.example.foo.Foo")));
   }
 
   @Test
   public void testGetPackageOf() throws IOException {
-    compile(Joiner.on('\n').join("package com.facebook.foo;", "@Deprecated", "class Foo { }"));
+    compile(Joiner.on('\n').join("package com.example.foo;", "@Deprecated", "class Foo { }"));
 
     assertSame(
-        elements.getPackageElement("com.facebook.foo"),
-        elements.getPackageOf(elements.getTypeElement("com.facebook.foo.Foo")));
+        elements.getPackageElement("com.example.foo"),
+        elements.getPackageOf(elements.getTypeElement("com.example.foo.Foo")));
   }
 
   @Test
@@ -78,7 +78,7 @@ public class TreeBackedElementsTest extends CompilerTreeApiParameterizedTest {
     compile(
         Joiner.on('\n')
             .join(
-                "package com.facebook.foo;",
+                "package com.example.foo;",
                 "@Anno(a=4)",
                 "class Foo { }",
                 "@interface Anno {",
@@ -86,8 +86,8 @@ public class TreeBackedElementsTest extends CompilerTreeApiParameterizedTest {
                 "  int b() default 2;",
                 "}"));
 
-    TypeElement fooType = elements.getTypeElement("com.facebook.foo.Foo");
-    TypeElement annotationType = elements.getTypeElement("com.facebook.foo.Anno");
+    TypeElement fooType = elements.getTypeElement("com.example.foo.Foo");
+    TypeElement annotationType = elements.getTypeElement("com.example.foo.Anno");
 
     ExecutableElement aParam = findMethod("a", annotationType);
     ExecutableElement bParam = findMethod("b", annotationType);

@@ -6,17 +6,15 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-# pyre-strict
-
-
 import os
 import random
 import string
 from pathlib import Path
 
-from buck2.tests.e2e_util.api.buck import Buck
-from buck2.tests.e2e_util.asserts import expect_failure
-from buck2.tests.e2e_util.buck_workspace import buck_test
+import pytest
+from e2e_util.api.buck import Buck
+from e2e_util.asserts import expect_failure
+from e2e_util.buck_workspace import buck_test
 
 
 @buck_test(write_invocation_record=True)
@@ -48,6 +46,7 @@ async def test_bxl_exec_platform_dynamic_output(buck: Buck) -> None:
     assert errors[0]["category"] == "USER"
 
 
+@pytest.mark.remote_execution
 @buck_test()
 async def test_bxl_execution_platforms(buck: Buck) -> None:
     result = await buck.bxl(

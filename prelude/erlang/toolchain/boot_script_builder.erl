@@ -7,7 +7,6 @@
 
 %% @format
 -module(boot_script_builder).
--author("loscher@fb.com").
 -moduledoc """
 Build the release resource file, and boot scripts from a given spec file. The spec file format
 is defined in erlang_release.bzl

@@ -6,19 +6,20 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-# pyre-strict
+import shutil
+
+import pytest
+from core.common.io.file_watcher_tests import run_aba_test
+from e2e_util.api.buck import Buck
+from e2e_util.buck_workspace import buck_test
+
+# The daemon finds the Watchman server by running the `watchman` program on
+# PATH.
+pytestmark = pytest.mark.skipif(
+    shutil.which("watchman") is None, reason="needs Watchman"
+)
 
 
-from buck2.tests.core.common.io.file_watcher_tests import run_aba_test
-from buck2.tests.e2e_util.api.buck import Buck
-from buck2.tests.e2e_util.buck_workspace import buck_test
-
-
-@buck_test(setup_eden=False)
-async def test_watchman_aba_no_eden(buck: Buck) -> None:
-    await run_aba_test(buck)
-
-
-@buck_test(setup_eden=True)
-async def test_watchman_aba_eden(buck: Buck) -> None:
+@buck_test()
+async def test_watchman_aba(buck: Buck) -> None:
     await run_aba_test(buck)

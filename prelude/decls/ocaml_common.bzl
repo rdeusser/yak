@@ -29,8 +29,6 @@ def _srcs_arg():
             default = None,
             doc = """
     The set of source files to be compiled by this rule. It supports \\*.ml, \\*.mli, \\*.mly, \\*.mll, and \\*.c files.
-     (see  [this test](https://github.com/facebook/buck/tree/dev/test/com/facebook/buck/features/ocaml/testdata/ocaml/clib/BUCK.fixture)  as C interop example and
-      [this test](https://github.com/facebook/buck/tree/dev/test/com/facebook/buck/features/ocaml/testdata/ocaml/calc/BUCK.fixture)  as parser and lexer example).
 """,
         ),
     }
@@ -42,7 +40,7 @@ def _compiler_flags_arg():
             default = [],
             doc = """
     The set of additional compiler flags to pass to ocaml compiler. It supports
-     specifying ppx (see [for example](https://github.com/facebook/buck/tree/dev/test/com/facebook/buck/features/ocaml/testdata/compiler_flag_macros/BUCK.fixture)).
+     specifying ppx.
 """,
         ),
     }

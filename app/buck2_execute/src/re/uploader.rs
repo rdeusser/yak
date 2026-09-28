@@ -93,13 +93,8 @@ impl Uploader {
         Vec<InlinedBlobWithDigest>,
         BuckMutSet<&'a TrackedCasDigest<FileDigestKind>>,
     )> {
-        // RE mentions they usually take 5-10 minutes of leeway so we mirror this here.
         let now = Timestamp::now();
-        let ttl_wanted = if buck2_core::is_open_source() {
-            1
-        } else {
-            600i64
-        };
+        let ttl_wanted: i64 = 1;
         let ttl_deadline = now + SignedDuration::from_secs(ttl_wanted);
 
         // See if anything needs uploading
@@ -336,7 +331,6 @@ impl Uploader {
                                             info.origin.as_display_for_not_found(),
                                         ),
                                         daemon_in_memory_state_is_corrupted: true,
-                                        action_cache_is_corrupted: info.origin.guaranteed_by_action_cache()
                                     )?;
 
                                     return Err(buck2_error::buck2_error!(
@@ -465,19 +459,6 @@ impl Uploader {
         Ok(stats)
     }
 }
-
-#[cfg(fbcode_build)] // Relies on fbcode future sizes
-buck2_util::size_assert::words_of_async_fn_future!(
-    Uploader::upload,
-    (_, _, _, _, _, _, _, _, _, _),
-    ~327
-);
-#[cfg(fbcode_build)] // Relies on fbcode future sizes
-buck2_util::size_assert::words_of_async_fn_future!(
-    Uploader::find_missing,
-    (_, _, _, _, _, _, _),
-    ~260
-);
 
 fn should_error_for_missing_digest(info: &CasDownloadInfo) -> bool {
     // RE sometimes reports things that exist as missing. We don't fully understand why at this

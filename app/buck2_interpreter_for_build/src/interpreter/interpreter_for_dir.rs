@@ -85,10 +85,10 @@ struct StarlarkTabsError(OwnedStarlarkPath);
 #[derive(Debug, buck2_error::Error)]
 enum StarlarkPeakMemoryError {
     #[error(
-        "Starlark peak memory usage for {0} is {1} which exceeds the limit {2}! Please reduce memory usage to prevent OOMs. See {3} for debugging tips."
+        "Starlark peak memory usage for {0} is {1} which exceeds the limit {2}! Please reduce memory usage to prevent OOMs. See https://rdeusser.github.io/buck2/docs/users/faq/starlark_peak_mem for debugging tips."
     )]
     #[buck2(input)]
-    ExceedsThreshold(BuildFilePath, HumanizedBytes, HumanizedBytes, String),
+    ExceedsThreshold(BuildFilePath, HumanizedBytes, HumanizedBytes),
 }
 
 /// A ParseData includes the parsed AST and a list of the imported files.
@@ -132,13 +132,6 @@ impl ParseData {
     }
 }
 
-pub fn get_starlark_warning_link() -> &'static str {
-    if buck2_core::is_open_source() {
-        "https://buck2.build/docs/users/faq/starlark_peak_mem"
-    } else {
-        "https://fburl.com/starlark_peak_mem_warning"
-    }
-}
 /// Interpreter for build files.
 ///
 /// The Interpreter is responsible for parsing files to an AST and then
@@ -215,7 +208,7 @@ impl LoadResolver for InterpreterLoadResolver {
             }
         }
 
-        // If you load the same .bzl file twice via different aliases (e.g. fbcode//buck2/prelude/foo.bzl and prelude.bzl)
+        // If you load the same .bzl file twice via different aliases (e.g. root//prelude/foo.bzl and prelude//foo.bzl)
         // then anything doing pointer equality (t-sets, provider identities) will go wrong.
         let project_path = self
             .config
@@ -739,7 +732,6 @@ impl InterpreterForDir {
                     build_file.to_owned(),
                     HumanizedBytes::fixed_width(starlark_peak_allocated_bytes),
                     HumanizedBytes::fixed_width(starlark_mem_limit),
-                    get_starlark_warning_link().to_owned(),
                 )
                 .into())
             } else {

@@ -98,8 +98,8 @@ def _simple_test_impl(ctx):
     return [
         DefaultInfo(),
         ExternalRunnerTestInfo(
-            command = ["fbpython", "-c", script],
-            type = "lionhead",
+            command = ["python3", "-c", script],
+            type = "custom",
             env = {"seed": ctx.attrs.seed},
         ),
     ]

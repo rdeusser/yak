@@ -1,4 +1,4 @@
-# This file is @generated, regenerate by re-running test with `-- --env BUCK2_UPDATE_GOLDEN=1` appended to the test command
+# This file is @generated, regenerate by rerunning the test with `BUCK2_UPDATE_GOLDEN=1` set
 
 {
   "root//:test (<unspecified>)": {
@@ -10,7 +10,7 @@
     "identifier": "dep",
     "contents": "",
     "absolute": "false",
-    "buck.executor_configuration": "RemoteEnabled + executor hybrid + remote cache enabled + cache upload disabled + remote dep file cache disabled",
+    "buck.executor_configuration": "Local + use persistent workers true",
     "buck.all_outputs_are_content_based": "false",
     "buck.all_inputs_are_eligible_for_dedupe": "true"
   },
@@ -18,7 +18,7 @@
     "kind": "copy",
     "category": "copy",
     "identifier": "other_default",
-    "buck.executor_configuration": "RemoteEnabled + executor hybrid + remote cache enabled + cache upload disabled + remote dep file cache disabled",
+    "buck.executor_configuration": "Local + use persistent workers true",
     "buck.all_outputs_are_content_based": "false",
     "buck.all_inputs_are_eligible_for_dedupe": "false",
     "buck.all_ineligible_for_dedup_inputs": "`(root//:test (<unspecified>))/dep`, action: (target: `root//:test (<unspecified>)`, id: `0`)"
@@ -27,7 +27,7 @@
     "kind": "copy",
     "category": "copy",
     "identifier": "default",
-    "buck.executor_configuration": "RemoteEnabled + executor hybrid + remote cache enabled + cache upload disabled + remote dep file cache disabled",
+    "buck.executor_configuration": "Local + use persistent workers true",
     "buck.all_outputs_are_content_based": "false",
     "buck.all_inputs_are_eligible_for_dedupe": "false",
     "buck.all_ineligible_for_dedup_inputs": "`(root//:test (<unspecified>))/dep`, action: (target: `root//:test (<unspecified>)`, id: `0`)"

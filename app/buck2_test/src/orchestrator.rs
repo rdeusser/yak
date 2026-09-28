@@ -65,9 +65,7 @@ use buck2_core::execution_types::executor_config::CommandExecutorConfig;
 use buck2_core::execution_types::executor_config::CommandGenerationOptions;
 use buck2_core::execution_types::executor_config::Executor;
 use buck2_core::execution_types::executor_config::LocalExecutorOptions;
-use buck2_core::execution_types::executor_config::MetaInternalExtraParams;
 use buck2_core::execution_types::executor_config::PathSeparatorKind;
-use buck2_core::execution_types::executor_config::RemoteExecutorCustomImage;
 use buck2_core::fs::artifact_path_resolver::ArtifactFs;
 use buck2_core::fs::buck_out_path::BuckOutTestPath;
 use buck2_core::fs::project_rel_path::ProjectRelativePathBuf;
@@ -424,13 +422,12 @@ impl<'a> BuckTestOrchestrator<'a> {
 
     /// Whether to exempt this action from network isolation when it runs locally.
     ///
-    /// Static listing's enumeration tool (gtest-list-tests, coral, ...) is a DotSlash
-    /// stub that needs the network to resolve. On RE it can still resolve, because RE
-    /// has a DotSlash that works under the allowed isolation modes, so the listing
-    /// action inherits the normal executor policy and needs no override. Locally the
-    /// forkserver would put a restricted policy in a network namespace where the stub
-    /// can't resolve, so the local listing action must run without isolation. Has no
-    /// effect on remote execution.
+    /// A test with the `static-listing` label lists its tests with a separate enumeration
+    /// tool, such as `gtest-list-tests`. That tool is not test code, and it can need the
+    /// network, as a DotSlash stub does to fetch its binary. Locally the forkserver would
+    /// run a restricted policy in a network namespace that blocks the tool, so the local
+    /// listing action runs without isolation. Remote execution keeps the executor's normal
+    /// policy.
     fn disable_local_network_isolation(stage: &TestStage, test_info: &OwnedTestInfo) -> bool {
         matches!(stage, TestStage::Listing { .. }) && test_info.has_static_listing_label()
     }
@@ -533,7 +530,7 @@ impl<'a> BuckTestOrchestrator<'a> {
             output_map.insert(result.0, Output::RemoteObject(result.1));
         }
 
-        // Request materialization in case this ran on RE. Eventually Tpx should be able to
+        // Request materialization in case this ran on RE. Eventually the test executor should be able to
         // understand remote outputs but currently we don't have this.
         self.dice
             .per_transaction_data()
@@ -676,8 +673,6 @@ impl<'a> BuckTestOrchestrator<'a> {
             Some(executor_preference),
             required_resources,
             worker,
-            test_executor.re_dynamic_image(),
-            test_executor.meta_internal_extra_params(),
             disable_local_network_isolation,
         )
         .boxed()
@@ -1100,8 +1095,6 @@ impl TestOrchestrator for BuckTestOrchestrator<'_> {
             None,
             vec![],
             worker,
-            test_executor.re_dynamic_image(),
-            test_executor.meta_internal_extra_params(),
             disable_local_network_isolation,
         )
         .await?;
@@ -1241,7 +1234,7 @@ impl BuckTestOrchestrator<'_> {
 
         // For test execution, we currently do not do any cache queries
 
-        let prepared_action = match executor.prepare_action(&request, digest_config, false) {
+        let prepared_action = match executor.prepare_action(&request, digest_config) {
             Ok(prepared_action) => prepared_action,
             Err(e) => return Err(ExecuteError::Error(e)),
         };
@@ -1597,7 +1590,7 @@ impl BuckTestOrchestrator<'_> {
         // Gate on [test].use_internal_runner, matching the runner
         // selection in command.rs::test_target(). Without this check
         // the orchestrator could resolve fields from the Internal
-        // provider while TPX was set up with the External one.
+        // provider while the test executor was set up with the External one.
         let internal: Option<OwnedInternalRunnerTestInfo> =
             providers.builtin_provider_value::<InternalRunnerTestInfo>();
         if let Some(internal) = internal {
@@ -1720,7 +1713,7 @@ impl BuckTestOrchestrator<'_> {
             };
 
             let inputs = expander.get_inputs()?;
-            // We already built these before reaching out to tpx, so these should already be ready.
+            // We already built these before reaching out to the test executor, so these should already be ready.
             let ensured_inputs =
                 KeepGoing::try_compute_join_all(dice, inputs, async |dice, input| {
                     let artifact_group_value = dice.ensure_artifact_group(&input).await?;
@@ -1769,8 +1762,6 @@ impl BuckTestOrchestrator<'_> {
         executor_preference: Option<ExecutorPreference>,
         required_local_resources: Vec<LocalResourceState>,
         worker: Option<WorkerSpec>,
-        re_dynamic_image: Option<RemoteExecutorCustomImage>,
-        meta_internal_extra_params: Arc<MetaInternalExtraParams>,
         disable_local_network_isolation: bool,
     ) -> buck2_error::Result<CommandExecutionRequest> {
         let inputs = ensured_inputs
@@ -1778,8 +1769,6 @@ impl BuckTestOrchestrator<'_> {
             .map(|(_, v)| CommandExecutionInput::Artifact(Box::new(v)))
             .collect_vec();
 
-        // NOTE: This looks a bit awkward, that's because fbcode's rustfmt and ours slightly
-        // disagree about format here...
         let outputs = declared_outputs
             .into_iter()
             .map(|(path, create)| CommandExecutionOutput::TestPath { path, create })
@@ -1811,8 +1800,6 @@ impl BuckTestOrchestrator<'_> {
             .with_local_environment_inheritance(EnvironmentInheritance::test_allowlist())
             .with_disable_miniperf(!has_resource_control)
             .with_worker(worker)
-            .with_remote_execution_custom_image(re_dynamic_image)
-            .with_meta_internal_extra_params(meta_internal_extra_params)
             .with_required_local_resources(required_local_resources)?
             .with_disable_local_network_isolation(disable_local_network_isolation)
             .with_is_test();
@@ -1988,8 +1975,7 @@ impl BuckTestOrchestrator<'_> {
         let local_resource_target = LocalResourceTarget {
             target: &context.target,
         };
-        let prepared_action =
-            executor.prepare_action(&context.execution_request, digest_config, false)?;
+        let prepared_action = executor.prepare_action(&context.execution_request, digest_config)?;
         let prepared_command = PreparedCommand {
             target: &local_resource_target as _,
             request: &context.execution_request,
@@ -2549,22 +2535,6 @@ impl TestExecutor {
 
     pub fn executor(&self) -> &CommandExecutor {
         &self.test_executor
-    }
-
-    pub fn re_dynamic_image(&self) -> Option<RemoteExecutorCustomImage> {
-        if let Executor::RemoteEnabled(options) = &self.executor_config.executor {
-            options.custom_image.clone().map(|image| *image)
-        } else {
-            None
-        }
-    }
-
-    pub fn meta_internal_extra_params(&self) -> Arc<MetaInternalExtraParams> {
-        if let Executor::RemoteEnabled(options) = &self.executor_config.executor {
-            options.meta_internal_extra_params.clone()
-        } else {
-            MetaInternalExtraParams::default_arc()
-        }
     }
 }
 

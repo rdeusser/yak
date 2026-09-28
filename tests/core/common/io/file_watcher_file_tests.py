@@ -6,30 +6,25 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-# pyre-strict
-
-
 import os
 import sys
 
-from buck2.tests.core.common.io.file_watcher import (
+from core.common.io.file_watcher import (
     FileWatcherEvent,
     FileWatcherEventType,
     FileWatcherKind,
     FileWatcherProvider,
     get_file_watcher_events,
 )
-from buck2.tests.core.common.io.file_watcher_tests import (
-    FileSystemType,
+from core.common.io.file_watcher_tests import (
     setup_file_watcher_test,
     verify_results,
 )
-from buck2.tests.e2e_util.api.buck import Buck
+from e2e_util.api.buck import Buck
 
 
 async def run_create_file_test(
     buck: Buck,
-    file_system_type: FileSystemType,
     file_watcher_provider: FileWatcherProvider,
 ) -> None:
     await setup_file_watcher_test(buck)
@@ -50,7 +45,6 @@ async def run_create_file_test(
 
 async def run_modify_file_test(
     buck: Buck,
-    file_system_type: FileSystemType,
     file_watcher_provider: FileWatcherProvider,
 ) -> None:
     await setup_file_watcher_test(buck)
@@ -87,7 +81,6 @@ async def run_modify_file_test(
 
 async def run_remove_file_test(
     buck: Buck,
-    file_system_type: FileSystemType,
     file_watcher_provider: FileWatcherProvider,
 ) -> None:
     await setup_file_watcher_test(buck)
@@ -107,7 +100,6 @@ async def run_remove_file_test(
 
 async def run_rename_file_test(
     buck: Buck,
-    file_system_type: FileSystemType,
     file_watcher_provider: FileWatcherProvider,
 ) -> None:
     await setup_file_watcher_test(buck)
@@ -132,7 +124,6 @@ async def run_rename_file_test(
 
 async def run_replace_file_test(
     buck: Buck,
-    file_system_type: FileSystemType,
     file_watcher_provider: FileWatcherProvider,
 ) -> None:
     await setup_file_watcher_test(buck)
@@ -150,7 +141,6 @@ async def run_replace_file_test(
     os.rename(fromPath, toPath)
 
     if file_watcher_provider in [
-        FileWatcherProvider.EDEN_FS,
         FileWatcherProvider.WATCHMAN,
         FileWatcherProvider.RUST_NOTIFY,
     ]:

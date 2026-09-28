@@ -26,7 +26,7 @@ def set_reindeer_platforms(platforms) -> None:
 
         set_reindeer_platforms(select({
             "DEFAULT": DEFAULT_REINDEER_PLATFORMS,  # (optional)
-            "ovr_config//cpu:arm32-embedded-fpu": "thumbv7em-none-eabihf",
+            "//platforms:arm32-embedded-fpu": "thumbv7em-none-eabihf",
         }))
     """
 

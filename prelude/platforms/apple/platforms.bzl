@@ -11,7 +11,6 @@ load("@prelude//platforms/apple:base.bzl", "apple_build_mode_backed_platform", "
 load(
     "@prelude//platforms/apple:build_mode.bzl",
     "APPLE_BUILD_MODES",
-    "REMAPPED_BUILD_MODES",
     "get_build_mode",
     "get_build_mode_debug",
 )
@@ -55,15 +54,12 @@ _SUPPORTED_WATCHOS_PLATFORMS = [
     watch_platforms.WATCHSIMULATOR_X86_64,
 ]
 
-_ANALYSIS_CONSTRAINTS = ["ovr_config//bitcode/constraints:bitcode_mode[bitcode]"]
 _DEFAULT_ANALYSIS_IOS_PLATFORM = ios_platforms.IPHONEOS_ARM64
 _DEFAULT_ANALYSIS_MACOS_PLATFORM = mac_platforms.MACOS_X86_64
 _DEFAULT_ANALYSIS_WATCHOS_PLATFORM = watch_platforms.WATCHOS_ARM64
 _DEFAULT_ANALYSIS_APPLETVOS_PLATFORM = appletv_platforms.APPLETVOS_ARM64
 
 DEFAULT_SUPPORTED_CXX_PLATFORMS = _SUPPORTED_IOS_PLATFORMS
-
-INVERSE_REMAPPED_BUILD_MODES = {v: k for k, v in REMAPPED_BUILD_MODES.items()}
 
 def apple_target_platforms(
     base_name: str,
@@ -75,7 +71,6 @@ def apple_target_platforms(
     build_mode_constraint_values = None,  # Must be a map of a supported build mode to a list of constraint values
     generate_base_platform = True,  # Whether to generate a base platform
     add_config_based_platforms = True,  # Whether to add the configured cxx platform family when it is otherwise unsupported
-    use_whatsapp_build_modes = False,
     supported_cxx_platforms = DEFAULT_SUPPORTED_CXX_PLATFORMS,  # Cxx platforms to generate platforms for
     supported_build_modes = APPLE_BUILD_MODES,
 ) -> None:  # Build modes to generate platforms for
@@ -111,7 +106,7 @@ def apple_target_platforms(
     _validate_build_mode_constraint_values(base_name, build_mode_constraint_values, supported_build_modes)
 
     # Define the generated platforms
-    build_mode_constraints_map = get_build_mode_constraints_map(use_whatsapp_build_modes)
+    build_mode_constraints_map = get_build_mode_constraints_map()
     for platform in supported_cxx_platforms:
         platform_dep = _get_base_target_platform_for_platform(platform)
         cxx_platform_constraints = cxx_platforms_constraint_values.get(platform, [])
@@ -153,19 +148,15 @@ def apple_target_platforms(
 
         platform_rule(
             name = base_name + "-analysis",
-            constraint_values = constraint_values + analysis_platform_build_mode_constraints + _ANALYSIS_CONSTRAINTS,
+            constraint_values = constraint_values + analysis_platform_build_mode_constraints,
             visibility = ["PUBLIC"],
             deps = deps + [analysis_platform_dep],
         )
 
-def config_backed_apple_target_platform(target_platform = None, platform = None, build_mode = None, supported_build_modes = None) -> str | None:
+def config_backed_apple_target_platform(target_platform = None, platform = None, build_mode = None) -> str | None:
     platform = _get_default_platform() if platform == None else platform
 
     build_mode = get_build_mode() if build_mode == None else build_mode
-    supported_build_modes = APPLE_BUILD_MODES if supported_build_modes == None else supported_build_modes
-    if build_mode not in supported_build_modes:
-        # If build_mode is an unsupported build mode, attempt to map it to a supported one using the inverse map
-        build_mode = INVERSE_REMAPPED_BUILD_MODES.get(build_mode, build_mode)
 
     if target_platform == None:
         return get_default_target_platform_for_platform(platform)

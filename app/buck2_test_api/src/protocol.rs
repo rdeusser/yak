@@ -115,8 +115,8 @@ pub trait TestOrchestrator: Send + Sync {
 
     /// Upload a local file to CAS and return its digest.
     ///
-    /// This is called by tpx to upload local test artifacts to CAS instead of
-    /// Everstore. Buck2 handles the actual CAS upload using its RE client.
+    /// The test executor calls this to upload local test artifacts to CAS. Buck2 handles the
+    /// actual CAS upload using its RE client.
     async fn upload_to_cas(
         &self,
         local_path: String,

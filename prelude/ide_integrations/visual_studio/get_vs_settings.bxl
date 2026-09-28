@@ -13,7 +13,6 @@ load("get_linker_settings.bxl", "get_exported_linker_settings", "get_linker_sett
 load(
     "utils.bxl",
     "dedupe_by_value",
-    "dirname",
     "flatten_lists",
     "gen_guid",
     "get_output_path",
@@ -24,7 +23,6 @@ load(
     "log_warn",
     "merge",
     "suffix",
-    "translate_content_based_path",
 )
 
 def _get_application_type_and_platform(mode_file):
@@ -49,7 +47,6 @@ def _get_all_header_files(attrs: dict):
 
 # Buck target can have same file declared in both headers and srcs and buck will work without any problem,
 # while VS will error out: The item "xxx" already exists under the filter "".
-# e.g., fbsource//xplat/QNNPACK:operators
 def _get_headers_and_sources(attrs):
     headers_dict = {h: True for h in _get_all_header_files(attrs)}
     sources_dict = attrs["srcs"]
@@ -76,7 +73,7 @@ def _get_debug_settings(target: bxl.ConfiguredTargetNode, attrs: dict, attrs_laz
         DEBUG_PWD: "",
         DEBUG_ENV: {key: ";".join(value_list) for (key, value_list) in attrs["env"].items()},
         # When dependency is referenced in [exe] subtarget form, PDB is not automatically materialized and debugging will not be able to load symbols nor stop at breakpoints.
-        # See T197712426 and D56372580. Add additional full buck targets to force buck to build/materialize PDBs to make debugging work.
+        # Add additional full buck targets to force buck to build/materialize PDBs to make debugging work.
         ADDITIONAL_TARGETS: [],
         # Unescape option prefix.
         EXTRA_BUCK_OPTIONS: [_unescape_arg(o) for o in cli_args.extra_buck_options],
@@ -89,38 +86,6 @@ def _get_debug_settings(target: bxl.ConfiguredTargetNode, attrs: dict, attrs_laz
         actual_target_label = attrs_lazy.get("actual").label.configured_target()
         actual_target_debug_settings = vs_settings_dict[actual_target_label][BY_MODES][default_mode_file]
         debug_settings = {key: actual_target_debug_settings[key] for key in debug_settings}
-    elif attrs["buck_type"] == "command_alias" and target.label.name.endswith("_oxx_runner"):
-        # Replicate oxx_runner as it invokes base binary via child process which Visual Studio cannot debug into. https://fburl.com/code/i1pkehjo
-        base_binary_target = bxl_ctx.configured_targets(
-            target.label.cell + "//" + target.label.package + ":" + target.label.name.removesuffix("_oxx_runner"),
-            modifiers = bxl_ctx.modifiers,
-        )
-        if base_binary_target.label in vs_settings_dict:
-            debug_settings[DEBUG_CMD] = vs_settings_dict[base_binary_target.label][BY_MODES][default_mode_file][DEBUG_CMD]
-            debug_settings[ADDITIONAL_TARGETS] += [base_binary_target.label.raw_target()]
-        else:
-            log_warn("Failed to infer debug settings for command_alias target ({}).", target.label)
-        oxx_runner_path = []
-        for key, value in debug_settings[DEBUG_ENV].items():
-            if key == "BUCK_EXTRA_LIB_SEARCH_PATH_COUNT" or not key.startswith("BUCK_EXTRA_LIB_SEARCH_PATH_"):
-                continue
-            for path in value.split(";"):
-                if suffix(path) in ["dll", "pdb"]:
-                    path = dirname(path, separator = "\\")
-                if path:
-                    oxx_runner_path.append(path)
-        if oxx_runner_path:
-            debug_settings[DEBUG_ENV].setdefault("PATH", "%PATH%")
-            debug_settings[DEBUG_ENV]["PATH"] = ";".join(oxx_runner_path) + ";" + debug_settings[DEBUG_ENV]["PATH"]
-    elif attrs["buck_type"] == "command_alias" and attrs["exe"] == "fbsource//arvr/tools/buck:launcher":
-        # Replicate launcher behavior as it launches binary via child process which Visual Studio cannot debug into. https://fburl.com/code/sb7e6zi7
-        exe_path = debug_settings[DEBUG_ARGS][0]
-
-        # Infer config based path as content based path varies after local changes.
-        exe_path = translate_content_based_path(exe_path, target.label, cli_args)
-        debug_settings[DEBUG_CMD] = "$(RepoRoot)\\" + exe_path
-        debug_settings[DEBUG_PWD] = "$(RepoRoot)\\" + dirname(exe_path, separator = "\\")
-        debug_settings[DEBUG_ARGS].pop(0)
     elif attrs["buck_type"] == "command_alias" and attrs["exe"]:
         # Replicate generic command_alias as buck launches exe binary via child process which Visual Studio cannot debug into.
         exe_target = bxl_ctx.configured_targets(attrs["exe"], modifiers = bxl_ctx.modifiers)
@@ -133,11 +98,6 @@ def _get_debug_settings(target: bxl.ConfiguredTargetNode, attrs: dict, attrs_laz
     elif attrs["buck_type"] == "cxx_test" and "BUCK_BASE_BINARY" in attrs["env"]:
         test_binary_path = attrs["env"]["BUCK_BASE_BINARY"][0]
         debug_settings[DEBUG_CMD] = test_binary_path
-    elif attrs["buck_type"] == "cxx_test" and "AVATAR_LAUNCHER_TARGET" in attrs["env"]:
-        # Replicate Avatar launcher script https://fburl.com/code/wylf2zjx
-        test_binary_path = attrs["env"]["AVATAR_LAUNCHER_TARGET"][0]
-        debug_settings[DEBUG_CMD] = test_binary_path
-        debug_settings[DEBUG_PWD] = dirname(test_binary_path, separator = "\\")
 
     return debug_settings
 
@@ -212,12 +172,10 @@ def get_vs_settings(target: bxl.ConfiguredTargetNode, toolchain, attrs: dict, vs
     if attrs_lazy.get("reexport_all_header_dependencies"):
         # Turn all normal dependencies to exported dependencies so that dependents on this target can find headers of transitive dependencies.
         # Might bring in additional exported dependencies, but does the job.
-        # e.g., fbsource//arvr/projects/hsr/libraries/common/tooling/code_gen:idl_serializer
         exported_deps.extend(deps)
         deps = []
 
-    # NB: Some rules (e.g., xplugins_binary_direct_deps in
-    # tools/build_defs/xplugins/rules/binary_direct_deps.bzl) define `deps` as
+    # NB: Some rules define `deps` as
     # `attrs.list(attrs.label())` rather than `attrs.list(attrs.dep())`. In that
     # case, items in `deps`/`exported_deps` are already `Label`s instead of
     # `Dependency` objects (which have `.label`). Normalize both shapes here.
@@ -307,7 +265,7 @@ main = bxl_main(
         "extra_buck_options": cli_args.list(cli_args.string(), default = []),
         "immediate_buck_options": cli_args.list(cli_args.string(), default = []),
         "log_level": cli_args.int(default = 30),
-        "mode_files": cli_args.list(cli_args.string(), default = ["fbsource//arvr/mode/win/dev"]),
+        "mode_files": cli_args.list(cli_args.string()),
         "mode_hashes": cli_args.option(cli_args.json()),  # mode => configuration hash.
         "target": cli_args.target_label(),
     },

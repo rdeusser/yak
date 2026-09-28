@@ -14,7 +14,6 @@ mod diagnostics;
 mod path;
 mod progress;
 mod project_json;
-mod scuba;
 mod sysroot;
 mod target;
 
@@ -83,15 +82,8 @@ enum Command {
         #[clap(long = "stdout", conflicts_with = "out")]
         stdout: bool,
 
-        /// Use a `rustup`-managed sysroot instead of a `.buckconfig`-managed sysroot.
-        ///
-        /// This option requires the presence of `rustc` in the `$PATH`, as rust-project
-        /// will run `rustc --print sysroot` and ignore any other `sysroot` configuration.
-        #[clap(long, conflicts_with = "sysroot")]
-        prefer_rustup_managed_toolchain: bool,
-
-        /// The directory containing the Rust source code, including std.
-        /// Default value is determined based on platform.
+        /// The sysroot to use. Defaults to the output of `rustc --print=sysroot`, which requires
+        /// `rustc` in `$PATH`.
         #[clap(short = 's', long)]
         sysroot: Option<PathBuf>,
 
@@ -129,13 +121,6 @@ enum Command {
     ///
     /// This is meant to be called by rust-analyzer directly.
     DevelopJson {
-        // FIXME XXX: remove this after everything in fbcode is migrated off
-        // of buckconfig implicitly.
-        #[cfg(fbcode_build)]
-        #[clap(long, default_value = "buckconfig")]
-        sysroot_mode: SysrootMode,
-
-        #[cfg(not(fbcode_build))]
         #[clap(long, default_value = "rustc")]
         sysroot_mode: SysrootMode,
 
@@ -181,17 +166,15 @@ enum Command {
     },
 }
 
-/// The 'develop-json' command needs to have 3 modes:
-/// 1. Static `.buckconfig` setting
+/// SysrootMode is how the 'develop-json' command finds the sysroot:
+/// 1. Use `rustc --print=sysroot` ("rustup mode")
 /// 2. Absolute path setting
-/// 3. Use `rustc --print=sysroot` ("rustup mode")
-/// 4. Run a command and take the output from stdout
+/// 3. Run a command and take the output from stdout
 #[derive(PartialEq, Clone, Debug, Deserialize)]
 enum SysrootMode {
     Rustc,
     Command(Vec<String>),
     FullPath(PathBuf),
-    BuckConfig,
 }
 
 impl FromStr for SysrootMode {
@@ -200,8 +183,6 @@ impl FromStr for SysrootMode {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         if s == "rustc" {
             Ok(SysrootMode::Rustc)
-        } else if s == "buckconfig" {
-            Ok(SysrootMode::BuckConfig)
         } else if s.starts_with("path:") {
             let s = s.trim_start_matches("path:");
             Ok(SysrootMode::FullPath(PathBuf::from(s)))
@@ -282,12 +263,6 @@ fn file_from_command(command: &Command) -> Option<&Path> {
 }
 
 fn main() -> Result<(), anyhow::Error> {
-    #[cfg(fbcode_build)]
-    {
-        // SAFETY: This is as safe as using fbinit::main but with slightly less conditional compilation.
-        unsafe { fbinit::perform_init() };
-    }
-
     let opt = Opt::parse();
 
     let filter = EnvFilter::builder()
@@ -316,10 +291,9 @@ fn main() -> Result<(), anyhow::Error> {
             tracing::subscriber::set_global_default(subscriber)?;
 
             let (develop, input, out) = cli::Develop::from_command(c, project_root);
-            match develop.run(input.clone(), out) {
+            match develop.run(input, out) {
                 Ok(_) => Ok(()),
                 Err(e) => {
-                    crate::scuba::log_develop_error(&e, input, false);
                     tracing::error!(
                         error = <anyhow::Error as AsRef<
                             dyn std::error::Error + Send + Sync + 'static,
@@ -337,10 +311,9 @@ fn main() -> Result<(), anyhow::Error> {
             tracing::subscriber::set_global_default(subscriber)?;
 
             let (develop, input, out) = cli::Develop::from_command(c, project_root);
-            match develop.run(input.clone(), out) {
+            match develop.run(input, out) {
                 Ok(_) => Ok(()),
                 Err(e) => {
-                    crate::scuba::log_develop_error(&e, input, true);
                     tracing::error!(
                         error = <anyhow::Error as AsRef<
                             dyn std::error::Error + Send + Sync + 'static,
@@ -370,55 +343,22 @@ fn main() -> Result<(), anyhow::Error> {
 
             let buck = Buck::new(buck2_command, mode, project_root);
 
-            cli::Check::new(buck, use_clippy, saved_file.clone())
-                .run()
-                .inspect_err(|e| crate::scuba::log_check_error(e, &saved_file, use_clippy))
+            cli::Check::new(buck, use_clippy, saved_file).run()
         }
     }
 }
 
-#[cfg(not(unix))]
 fn build_info() -> String {
-    "No build info available.".to_owned()
-}
-
-#[cfg(unix)]
-fn build_info() -> String {
-    match fb_build_info_from_elf() {
-        Ok(s) => s,
-        Err(_) => "No build info available.".to_owned(),
-    }
-}
-
-#[cfg(unix)]
-fn fb_build_info_from_elf() -> Result<String, anyhow::Error> {
-    let bin_path = std::env::current_exe()?;
-    let bin_bytes = std::fs::read(&bin_path)?;
-
-    let elf_file = elf::ElfBytes::<elf::endian::AnyEndian>::minimal_parse(&bin_bytes)?;
-    let elf_section = elf_file
-        .section_header_by_name("fb_build_info")?
-        .ok_or(anyhow::anyhow!("no header"))?;
-
-    let (section_bytes, _) = elf_file.section_data(&elf_section)?;
-    let section_cstr = std::ffi::CStr::from_bytes_with_nul(section_bytes)?;
-
-    let build_info: serde_json::Value = serde_json::from_str(section_cstr.to_str()?)?;
-    let revision = build_info["revision"].as_str().unwrap_or("(unknown)");
-    let build_time = build_info["time"].as_str().unwrap_or("(unknown)");
-
-    Ok(format!("revision: {revision}, build time: {build_time}"))
+    format!(
+        "rust-project {}",
+        option_env!("CARGO_PKG_VERSION").unwrap_or("(unknown version)")
+    )
 }
 
 #[test]
 fn test_parse_use_clippy() {
     assert!(matches!(
-        Opt::try_parse_from([
-            "rust-project",
-            "check",
-            "--use-clippy=true",
-            "fbcode/foo.rs",
-        ]),
+        Opt::try_parse_from(["rust-project", "check", "--use-clippy=true", "src/foo.rs",]),
         Ok(Opt {
             command: Some(Command::Check {
                 use_clippy: true,
@@ -429,12 +369,7 @@ fn test_parse_use_clippy() {
     ));
 
     assert!(matches!(
-        Opt::try_parse_from([
-            "rust-project",
-            "check",
-            "--use-clippy=false",
-            "fbcode/foo.rs",
-        ]),
+        Opt::try_parse_from(["rust-project", "check", "--use-clippy=false", "src/foo.rs",]),
         Ok(Opt {
             command: Some(Command::Check {
                 use_clippy: false,
@@ -443,71 +378,4 @@ fn test_parse_use_clippy() {
             ..
         })
     ));
-}
-
-#[cfg(fbcode_build)]
-#[test]
-fn json_args_pass() {
-    let args = JsonArguments::Path(PathBuf::from("buck2/integrations/rust-project/src/main.rs"));
-    let expected = Opt {
-        command: Some(Command::DevelopJson {
-            args,
-            sysroot_mode: SysrootMode::BuckConfig,
-            client: None,
-            buck2_command: None,
-            max_extra_targets: Some(50),
-            mode: None,
-            rustc_target: None,
-        }),
-        version: false,
-    };
-    let actual = Opt::try_parse_from([
-        "rust-project",
-        "develop-json",
-        "{\"path\":\"buck2/integrations/rust-project/src/main.rs\"}",
-    ])
-    .expect("Unable to parse args");
-    assert_eq!(actual, expected);
-
-    let args = JsonArguments::Label("//buck2/integrations/rust-project:rust-project".to_owned());
-    let expected = Opt {
-        command: Some(Command::DevelopJson {
-            args,
-            sysroot_mode: SysrootMode::BuckConfig,
-            client: None,
-            buck2_command: None,
-            max_extra_targets: Some(50),
-            mode: None,
-            rustc_target: None,
-        }),
-        version: false,
-    };
-    let actual = Opt::try_parse_from([
-        "rust-project",
-        "develop-json",
-        "{\"label\":\"//buck2/integrations/rust-project:rust-project\"}",
-    ])
-    .expect("Unable to parse args");
-    assert_eq!(actual, expected);
-
-    let args = JsonArguments::Buildfile(PathBuf::from("buck2/integrations/rust-project/BUCK"));
-    let expected = Opt {
-        command: Some(Command::DevelopJson {
-            args,
-            sysroot_mode: SysrootMode::BuckConfig,
-            client: None,
-            buck2_command: None,
-            max_extra_targets: Some(50),
-            mode: None,
-            rustc_target: None,
-        }),
-        version: false,
-    };
-    let actual = Opt::try_parse_from([
-        "rust-project",
-        "develop-json",
-        "{\"buildfile\":\"buck2/integrations/rust-project/BUCK\"}",
-    ])
-    .expect("Unable to parse args");
-    assert_eq!(actual, expected);
 }

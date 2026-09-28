@@ -6,14 +6,11 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-# pyre-strict
-
-
 import typing
 
-from buck2.tests.e2e_util.api.buck import Buck
-from buck2.tests.e2e_util.api.buck_result import BuckResult
-from buck2.tests.e2e_util.buck_workspace import buck_test
+from e2e_util.api.buck import Buck
+from e2e_util.api.buck_result import BuckResult
+from e2e_util.buck_workspace import buck_test
 
 
 def check_rule_type_names(
@@ -40,7 +37,7 @@ async def test_test_all_in_target(buck: Buck) -> None:
     res = await buck.test("//:")
     # Includes `not_a_test` because the recorder receives a
     # `TargetRuleTypeName` event for every CLI-resolved top-level target,
-    # not only the ones that resolve to a test rule (T269576064).
+    # not only the ones that resolve to a test rule.
     check_rule_type_names(res, ["not_a_test", "one", "two"])
 
 

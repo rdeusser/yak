@@ -16,7 +16,7 @@ from enum import auto, Enum
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Tuple
 
-from buck2.tests.e2e_util.api.result import Result
+from e2e_util.api.result import Result
 
 
 class ExitCode(Enum):

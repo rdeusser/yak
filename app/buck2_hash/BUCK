@@ -1,14 +1,12 @@
-load("@fbsource//tools/build_defs:rust_library.bzl", "rust_library")
-
-oncall("build_infra")
+load("//build_defs:rust.bzl", "rust_library")
 
 rust_library(
     name = "buck2_hash",
     srcs = glob(["src/**/*.rs"]),
     deps = [
-        "fbsource//third-party/rust:dashmap",
-        "fbsource//third-party/rust:fxhash",
-        "fbsource//third-party/rust:indexmap",
-        "//buck2/gazebo/dupe:dupe",
+        "//gazebo/dupe:dupe",
+        "//third-party/rust:dashmap",
+        "//third-party/rust:fxhash",
+        "//third-party/rust:indexmap",
     ],
 )

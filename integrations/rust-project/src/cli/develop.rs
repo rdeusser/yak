@@ -22,13 +22,11 @@ use super::Input;
 use crate::Command;
 use crate::buck;
 use crate::buck::Buck;
-use crate::buck::select_mode;
 use crate::buck::to_project_json;
 use crate::path::safe_canonicalize;
 use crate::project_json::ProjectJson;
 use crate::project_json::Sysroot;
 use crate::sysroot::SysrootConfig;
-use crate::sysroot::resolve_buckconfig_sysroot;
 use crate::sysroot::resolve_rustup_sysroot;
 use crate::target::Target;
 
@@ -64,7 +62,6 @@ impl Develop {
             targets,
             out,
             stdout,
-            prefer_rustup_managed_toolchain,
             sysroot,
             pretty,
             mode,
@@ -82,15 +79,11 @@ impl Develop {
                 Output::Path(out)
             };
 
-            let sysroot = if prefer_rustup_managed_toolchain {
-                SysrootConfig::Rustup
-            } else if let Some(sysroot) = sysroot {
-                SysrootConfig::Sysroot(sysroot)
-            } else {
-                SysrootConfig::BuckConfig
+            let sysroot = match sysroot {
+                Some(sysroot) => SysrootConfig::Sysroot(sysroot),
+                None => SysrootConfig::Rustup,
             };
 
-            let mode = select_mode(mode.as_deref());
             let buck = buck::Buck::new(buck2_command.clone(), mode, project_root.clone());
 
             let develop = Develop {
@@ -131,7 +124,6 @@ impl Develop {
             let out = Output::Stdout;
 
             let sysroot = match sysroot_mode {
-                crate::SysrootMode::BuckConfig => SysrootConfig::BuckConfig,
                 crate::SysrootMode::Rustc => SysrootConfig::Rustup,
                 crate::SysrootMode::FullPath(path) => SysrootConfig::Sysroot(path),
                 crate::SysrootMode::Command(cmd_args) => {
@@ -143,7 +135,6 @@ impl Develop {
                 }
             };
 
-            let mode = select_mode(mode.as_deref());
             let buck = buck::Buck::new(buck2_command.clone(), mode, project_root);
 
             let develop = Develop {
@@ -188,7 +179,6 @@ pub(crate) struct DiscoverProjectFinished {
 
 impl Develop {
     pub(crate) fn run(self, input: Input, cfg: OutputCfg) -> Result<(), anyhow::Error> {
-        let start = std::time::Instant::now();
         let input = match input {
             Input::Targets(targets) => Input::Targets(targets),
             Input::Files(files) => {
@@ -245,9 +235,6 @@ impl Develop {
             for (buildfile, targets) in targets {
                 let project = self.run_inner(targets)?;
 
-                // we have to log before we write the output, because rust-analyzer will kill us after the write
-                crate::scuba::log_develop(start.elapsed(), input.clone(), self.invoked_by_ra);
-
                 let out = DiscoverProjectFinished {
                     buildfile,
                     project,
@@ -262,7 +249,6 @@ impl Develop {
             targets.dedup();
 
             let project = self.run_inner(targets)?;
-            crate::scuba::log_develop(start.elapsed(), input, self.invoked_by_ra);
 
             if cfg.pretty {
                 serde_json::to_writer_pretty(&mut writer, &project)?;
@@ -294,12 +280,7 @@ impl Develop {
             SysrootConfig::Sysroot(path) => Sysroot {
                 sysroot: safe_canonicalize(&expand_tilde(path)?),
                 sysroot_src: None,
-                sysroot_project: None,
             },
-            SysrootConfig::BuckConfig => {
-                let project_root = buck.resolve_project_root()?;
-                resolve_buckconfig_sysroot(buck, &project_root, &targets)?
-            }
             SysrootConfig::Rustup => resolve_rustup_sysroot()?,
         };
 
@@ -314,10 +295,7 @@ impl Develop {
         let first_party_extra_cfgs = &["test".to_owned()];
 
         // FIXME(JakobDegen): This should be set via a configuration mechanism of some kind.
-        #[cfg(not(fbcode_build))]
         let global_extra_cfgs: &[String] = &[];
-        #[cfg(fbcode_build)]
-        let global_extra_cfgs = &["fbcode_build".to_owned()];
 
         develop_with_sysroot(
             buck,
@@ -358,7 +336,7 @@ fn expand_tilde(path: &Path) -> Result<PathBuf, anyhow::Error> {
     }
 }
 
-pub(crate) fn develop_with_sysroot(
+fn develop_with_sysroot(
     buck: &Buck,
     targets: Vec<Target>,
     sysroot: Sysroot,

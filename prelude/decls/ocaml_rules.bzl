@@ -23,8 +23,6 @@ ocaml_binary = prelude_rule(
          Note: Buck is currently tested with 4.X OCaml series.
     """,
     examples = """
-        For more examples, check out our [integration tests](https://github.com/facebook/buck/tree/dev/test/com/facebook/buck/features/ocaml/testdata/).
-
         ```
         ocaml_binary(
           name='greet',
@@ -93,8 +91,6 @@ ocaml_library = prelude_rule(
          Note: Buck is currently tested with 4.X OCaml series.
     """,
     examples = """
-        For more examples, check out our [integration tests](https://github.com/facebook/buck/tree/dev/test/com/facebook/buck/features/ocaml/testdata/).
-
         ```
         ocaml_library(
           name='greeting',

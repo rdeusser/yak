@@ -1,7 +1,5 @@
 load("@prelude//configurations:constraint_alias.bzl", "constraint_with_aliases")
 
-oncall("build_infra")
-
 constraint_with_aliases(
     name = "configuration",
     aliases = {

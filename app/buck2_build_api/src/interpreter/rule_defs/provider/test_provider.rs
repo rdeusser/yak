@@ -10,7 +10,6 @@
 
 use std::sync::Arc;
 
-use buck2_common::tenting::TentingStatus;
 use buck2_core::cells::name::CellName;
 use buck2_test_api::data::ConfiguredTarget;
 use buck2_test_api::data::ExternalRunnerSpec;
@@ -39,13 +38,12 @@ pub trait TestProvider<'v> {
         target: ConfiguredTarget,
         executor: Arc<dyn TestExecutor + 'exec>,
         working_dir_cell: CellName,
-        tenting_acl_names: TentingStatus,
     ) -> BoxFuture<'exec, buck2_error::Result<()>>;
 }
 
 /// Build an `ExternalRunnerSpec` from the common test provider fields.
 /// Used by both `ExternalRunnerTestInfo` and `InternalRunnerTestInfo`
-/// to dispatch to the external test executor (TPX).
+/// to dispatch to the external test executor.
 pub fn build_external_runner_spec<'a>(
     command: impl Iterator<Item = TestCommandMember<'a>>,
     env_keys: impl Iterator<Item = &'a str>,
@@ -54,7 +52,6 @@ pub fn build_external_runner_spec<'a>(
     contacts: impl Iterator<Item = &'a str>,
     target: ConfiguredTarget,
     working_dir_cell: CellName,
-    tenting_status: &TentingStatus,
 ) -> ExternalRunnerSpec {
     let mut handle_index = 0;
 
@@ -62,8 +59,8 @@ pub fn build_external_runner_spec<'a>(
         .map(|c| match c {
             TestCommandMember::Literal(l) => ExternalRunnerSpecValue::Verbatim(l.to_owned()),
             TestCommandMember::Arglike(_) => {
-                // We assign indices to handles, which Tpx can use to reference them later.
-                // We don't count literals in here since Tpx won't use handles to
+                // We assign indices to handles, which the test executor can use to reference them
+                // later. We don't count literals in here since the test executor won't use handles to
                 // communicate those (it would just use a literal instead).
                 let handle = ExternalRunnerSpecValue::ArgHandle(handle_index.into());
                 handle_index += 1;
@@ -81,21 +78,7 @@ pub fn build_external_runner_spec<'a>(
         })
         .collect();
     let package_oncall = target.package_oncall.clone();
-    let mut labels: Vec<String> = labels.map(|l| l.to_owned()).collect();
-    // Single JSON-array label, carried verbatim through TPX -> RR -> WWW. The three
-    // wire states let WWW tell "not tented" from "not reported":
-    //   Tented -> ["acl",..]    NotTented -> []    Unknown -> no label
-    match tenting_status {
-        TentingStatus::Tented(acl_names) => {
-            if let Ok(json) = serde_json::to_string(acl_names) {
-                labels.push(format!("tpx_test_config::tenting_acl_names={}", json));
-            }
-        }
-        TentingStatus::NotTented => {
-            labels.push("tpx_test_config::tenting_acl_names=[]".to_owned());
-        }
-        TentingStatus::Unknown => {}
-    }
+    let labels: Vec<String> = labels.map(|l| l.to_owned()).collect();
     let contacts: Vec<String> = contacts.map(|l| l.to_owned()).collect();
     let oncall = contacts
         .iter()
@@ -133,7 +116,6 @@ impl<'v> TestProvider<'v> for ExternalRunnerTestInfo<'v> {
         target: ConfiguredTarget,
         executor: Arc<dyn TestExecutor + 'exec>,
         working_dir_cell: CellName,
-        tenting_acl_names: TentingStatus,
     ) -> BoxFuture<'exec, buck2_error::Result<()>> {
         let spec = build_external_runner_spec(
             self.command(),
@@ -143,7 +125,6 @@ impl<'v> TestProvider<'v> for ExternalRunnerTestInfo<'v> {
             self.contacts(),
             target,
             working_dir_cell,
-            &tenting_acl_names,
         );
         async move { executor.external_runner_spec(spec).await }.boxed()
     }
@@ -161,7 +142,7 @@ impl<'v> TestProvider<'v> for InternalRunnerTestInfo<'v> {
         InternalRunnerTestInfo::labels(self).collect()
     }
 
-    // NOTE: This dispatch() sends the spec to the external test runner (TPX).
+    // NOTE: This dispatch() sends the spec to the external test executor.
     // In practice, test_target() in command.rs intercepts InternalRunnerTestInfo
     // before dispatch() is called, routing it to the in-process runner instead.
     // This impl exists so InternalRunnerTestInfo satisfies the TestProvider
@@ -171,7 +152,6 @@ impl<'v> TestProvider<'v> for InternalRunnerTestInfo<'v> {
         target: ConfiguredTarget,
         executor: Arc<dyn TestExecutor + 'exec>,
         working_dir_cell: CellName,
-        tenting_acl_names: TentingStatus,
     ) -> BoxFuture<'exec, buck2_error::Result<()>> {
         let spec = build_external_runner_spec(
             self.command(),
@@ -181,7 +161,6 @@ impl<'v> TestProvider<'v> for InternalRunnerTestInfo<'v> {
             self.contacts(),
             target,
             working_dir_cell,
-            &tenting_acl_names,
         );
         async move { executor.external_runner_spec(spec).await }.boxed()
     }

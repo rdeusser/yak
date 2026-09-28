@@ -6,25 +6,21 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-# pyre-strict
-
-
 from pathlib import Path
 
-from buck2.tests.core.common.io.file_watcher import (
+from core.common.io.file_watcher import (
     FileWatcherEvent,
     FileWatcherEventType,
     FileWatcherKind,
     FileWatcherProvider,
     get_file_watcher_events,
 )
-from buck2.tests.core.common.io.file_watcher_tests import (
-    FileSystemType,
+from core.common.io.file_watcher_tests import (
     setup_file_watcher_test,
     verify_results,
 )
-from buck2.tests.core.common.io.utils import get_files
-from buck2.tests.e2e_util.api.buck import Buck
+from core.common.io.utils import get_files
+from e2e_util.api.buck import Buck
 
 
 def symlink_file_type(file_watcher_provider: FileWatcherProvider) -> FileWatcherKind:
@@ -38,7 +34,6 @@ def symlink_file_type(file_watcher_provider: FileWatcherProvider) -> FileWatcher
 
 async def run_create_symlink_test(
     buck: Buck,
-    file_system_type: FileSystemType,
     file_watcher_provider: FileWatcherProvider,
 ) -> None:
     await setup_file_watcher_test(buck)
@@ -64,7 +59,6 @@ async def run_create_symlink_test(
 
 async def run_replace_file_with_symlink_test(
     buck: Buck,
-    file_system_type: FileSystemType,
     file_watcher_provider: FileWatcherProvider,
 ) -> None:
     await setup_file_watcher_test(buck)
@@ -106,7 +100,6 @@ async def run_replace_file_with_symlink_test(
 
 async def run_change_symlink_target_test(
     buck: Buck,
-    file_system_type: FileSystemType,
     file_watcher_provider: FileWatcherProvider,
 ) -> None:
     await setup_file_watcher_test(buck)

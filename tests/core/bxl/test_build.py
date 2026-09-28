@@ -6,16 +6,14 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-# pyre-strict
-
-
 import json
 import os
 from pathlib import Path
 
-from buck2.tests.e2e_util.api.buck import Buck
-from buck2.tests.e2e_util.buck_workspace import buck_test
-from buck2.tests.e2e_util.helper.utils import replace_hash
+import pytest
+from e2e_util.api.buck import Buck
+from e2e_util.buck_workspace import buck_test
+from e2e_util.helper.utils import replace_hash
 
 
 @buck_test()
@@ -101,6 +99,7 @@ async def test_bxl_build_order(buck: Buck) -> None:
     await buck.bxl("//build_artifacts_order/check.bxl:check")
 
 
+@pytest.mark.remote_execution
 @buck_test()
 async def test_bxl_build_no_materialization(buck: Buck) -> None:
     result = await buck.bxl(

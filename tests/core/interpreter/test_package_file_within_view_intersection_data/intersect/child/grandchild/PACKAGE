@@ -1,0 +1,8 @@
+# Adds a third term to the cap.
+enforce_within_view_intersection()
+
+package(within_view = [
+    "root//intersect/child/grandchild/...",
+    "root//intersect/child/lib:",
+    "root//outside/...",
+])

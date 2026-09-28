@@ -8,19 +8,7 @@
  * above-listed licenses.
  */
 
-// Copied from fbcode/buck2/install_proto/install.proto
-// (https://fburl.com/code/y9zjtzvn)
-
-//----------------------------------------------
-//  Generate command
-//----------------------------------------------
-//
-// When modifying this file, please run the following generate command,
-// and include generated code in your commit
-//
-// xplat/toolchains/android/sdk/tools/protobuf/gen.py
-//
-//-----------------------
+// The Buck2 side of this protocol is app/buck2_install_proto/install.proto.
 
 syntax = "proto3";
 
@@ -46,10 +34,7 @@ message InstallInfoRequest {
 
 message InstallResponse {
   string install_id = 1;
-  // Names the installer implementation, e.g. `android`. Reported at the
-  // handshake rather than alongside a device, so an install that reaches the
-  // installer says which one ran it even when it resolves no device.
-  string installer_name = 2;
+  reserved 2;
 }
 
 message FileReadyRequest {
@@ -64,7 +49,7 @@ message FileResponse {
   string name = 2;
   string path = 3;
   ErrorDetail error_detail = 4;
-  // Connected device metadata to be logged to scuba.
+  // Connected device metadata, which Buck2 records in its event log.
   // Should be sent once per device per install command,
   // not per FileReadyRequest.
   // Returned here in case the installer needs information

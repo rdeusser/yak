@@ -12,7 +12,7 @@ use buck2_execute::re::error::RemoteExecutionError;
 use remote_execution::TCode;
 use remote_execution::TStatus;
 
-#[cfg_attr(not(fbcode_build), allow(dead_code))]
+#[allow(dead_code)]
 pub(crate) trait REErrorWithCodeAndMessage {
     fn message(&self) -> &str;
     fn code(&self) -> &TCode;
@@ -38,39 +38,9 @@ impl REErrorWithCodeAndMessage for TStatus {
     }
 }
 
-pub(crate) fn is_storage_resource_exhausted<T: REErrorWithCodeAndMessage>(err: &T) -> bool {
-    #[cfg(fbcode_build)]
-    {
-        use std::sync::LazyLock;
-
-        use regex::Regex;
-
-        fn regex() -> &'static Regex {
-            // Taken from https://fburl.com/code/7n3qg2jj
-            static RE: LazyLock<Regex> =
-                LazyLock::new(|| Regex::new(r"^.*has exceeded quota.*DemandControl.*$").unwrap());
-            &RE
-        }
-
-        if *err.code() != TCode::RESOURCE_EXHAUSTED {
-            return false;
-        }
-        let message = err.message();
-        if message.contains("CAS resource exhausted") {
-            return true;
-        }
-        if message.contains("Use case throttling") {
-            return true;
-        }
-        if regex().is_match(message) {
-            return true;
-        }
-        false
-    }
-
-    #[cfg(not(fbcode_build))]
-    {
-        let _ignored = err;
-        false
-    }
+/// is_storage_resource_exhausted reports whether an RE error means CAS storage is exhausted, which
+/// the hybrid executor does not retry locally. The Remote Execution API uses `RESOURCE_EXHAUSTED`
+/// for storage and for other exhausted quotas alike, so no error is classified this way.
+pub(crate) fn is_storage_resource_exhausted<T: REErrorWithCodeAndMessage>(_err: &T) -> bool {
+    false
 }

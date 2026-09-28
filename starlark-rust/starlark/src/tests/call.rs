@@ -279,7 +279,7 @@ g(x=1, y=2)
 }
 
 // This test relies on stack behavior which does not hold when
-// ASAN is enabled. See D47571173 for more context.
+// ASAN is enabled.
 #[cfg_attr(rust_nightly, cfg(not(sanitize = "address")))]
 #[test]
 fn test_frame_size() {

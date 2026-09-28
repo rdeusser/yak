@@ -158,11 +158,6 @@ def add_args_for_signing_context_selection(
         help="Regex to disambiguate multiple matching profiles, evaluated against provisioning profile filename.",
     )
     parser.add_argument(
-        "--verify-entitlements",
-        action="store_true",
-        help="Verify that the entitlements match the provisioning profile.",
-    )
-    parser.add_argument(
         "--no-check-certificates",
         action="store_true",
         required=False,
@@ -222,7 +217,6 @@ def signing_context_and_selected_identity_from_args(
                     should_use_fast_provisioning_profile_parsing=args.fast_provisioning_profile_parsing,
                     strict_provisioning_profile_search=args.strict_provisioning_profile_search,
                     provisioning_profile_filter=args.provisioning_profile_filter,
-                    should_verify_entitlements=args.verify_entitlements,
                     no_check_certificates=args.no_check_certificates,
                 )
             else:
@@ -248,7 +242,6 @@ def signing_context_and_selected_identity_from_args(
                 should_use_fast_provisioning_profile_parsing=args.fast_provisioning_profile_parsing,
                 strict_provisioning_profile_search=args.strict_provisioning_profile_search,
                 provisioning_profile_filter=args.provisioning_profile_filter,
-                should_verify_entitlements=args.verify_entitlements,
                 no_check_certificates=args.no_check_certificates,
             )
             selected_identity_argument = (

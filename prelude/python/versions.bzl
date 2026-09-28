@@ -91,7 +91,7 @@ def _versioned_library_impl(ctx: AnalysisContext) -> list[Provider]:
 
 versioned_library = rule(
     doc = """
-        Represents multiple versions of the same library. This is a less flexible option than simply using [`select()`](https://buck2.build/docs/rule_authors/configurations/) in `deps` attributes of targets, and setting the right constraints on the build to allow [select resolution](https://buck2.build/docs/rule_authors/configurations_by_example/) to resolve the desired version.
+        Represents multiple versions of the same library. This is a less flexible option than simply using [`select()`](https://rdeusser.github.io/buck2/docs/rule_authors/configurations/) in `deps` attributes of targets, and setting the right constraints on the build to allow [select resolution](https://rdeusser.github.io/buck2/docs/concepts/configurations/) to resolve the desired version.
 
         Most notably, `versioned_library` can only be used with rules that specifically support it, unlike `select()`s which work with every rule.
     """,

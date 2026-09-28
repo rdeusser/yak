@@ -223,14 +223,13 @@ def cxx_gnu_dist_link(
     split_debug_mode = cxx_toolchain.split_debug_mode
 
     PREPEND_ARCHIVE_NAMES = [
-        # T130644072: If linked with `--whole-archive`, Clang builtins must be at the
+        # If linked with `--whole-archive`, Clang builtins must be at the
         # front of the argument list to avoid conflicts with identically-named Rust
         # symbols from the `compiler_builtins` crate.
         #
         # Once linking of C++ binaries starts to use `rlib`s, this may no longer be
         # necessary, because our Rust `rlib`s won't need to contain copies of
-        # `compiler_builtins` to begin with, unlike our Rust `.a`s which presently do
-        # (T130789782).
+        # `compiler_builtins` to begin with, unlike our Rust `.a`s which presently do.
         "clang_rt.builtins",
     ]
 
@@ -537,7 +536,7 @@ def cxx_gnu_dist_link(
                 force_full_hybrid_if_capable = link_action_execution_properties.full_hybrid,
             )
 
-        # TODO(T117513091) - dynamic_output does not allow for an empty list of dynamic inputs. If we have no archives
+        # TODO - dynamic_output does not allow for an empty list of dynamic inputs. If we have no archives
         # to process, we will have no dynamic inputs, and the plan action can be non-dynamic.
         #
         # However, buck2 disallows `dynamic_output` with a empty input list. We also can't call our `plan` function

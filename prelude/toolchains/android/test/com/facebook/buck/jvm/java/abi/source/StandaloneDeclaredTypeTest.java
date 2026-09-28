@@ -25,11 +25,11 @@ import org.junit.runners.Parameterized;
 public class StandaloneDeclaredTypeTest extends CompilerTreeApiParameterizedTest {
   @Test
   public void testToStringNoGenerics() throws IOException {
-    compile(Joiner.on('\n').join("package com.facebook.foo;", "class Foo { }"));
+    compile(Joiner.on('\n').join("package com.example.foo;", "class Foo { }"));
 
-    DeclaredType fooType = (DeclaredType) elements.getTypeElement("com.facebook.foo.Foo").asType();
+    DeclaredType fooType = (DeclaredType) elements.getTypeElement("com.example.foo.Foo").asType();
 
-    assertEquals("com.facebook.foo.Foo", fooType.toString());
+    assertEquals("com.example.foo.Foo", fooType.toString());
   }
 
   @Test

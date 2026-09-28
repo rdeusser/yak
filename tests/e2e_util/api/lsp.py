@@ -193,7 +193,6 @@ class LspClient(contextlib.AbstractAsyncContextManager):
         req_id = await self.send_request("initialize", request)
         response = await self.receive_response(req_id)
 
-        # pyrefly: ignore [unsupported-operation]
         assert "definitionProvider" in response["capabilities"]
         assert "textDocumentSync" in response["capabilities"]
         await self.send_notification("initialized", {})

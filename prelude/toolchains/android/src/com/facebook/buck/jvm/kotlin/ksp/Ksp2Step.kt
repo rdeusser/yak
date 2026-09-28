@@ -14,12 +14,9 @@ import com.facebook.buck.core.build.execution.context.IsolatedExecutionContext
 import com.facebook.buck.core.filesystems.AbsPath
 import com.facebook.buck.core.filesystems.RelPath
 import com.facebook.buck.core.util.log.Logger
-import com.facebook.buck.io.file.GlobPatternMatcher
 import com.facebook.buck.jvm.cd.command.kotlin.LanguageVersion
 import com.facebook.buck.jvm.core.BuildTargetValue
 import com.facebook.buck.jvm.java.CompilerOutputPaths
-import com.facebook.buck.jvm.kotlin.cd.analytics.KotlinCDAnalytics
-import com.facebook.buck.jvm.kotlin.cd.analytics.KotlinCDLoggingContext
 import com.facebook.buck.jvm.kotlin.ksp.incremental.Ksp2Mode
 import com.facebook.buck.jvm.kotlin.util.getExpandedSourcePaths
 import com.facebook.buck.step.StepExecutionResult
@@ -63,11 +60,8 @@ class Ksp2Step(
     private val languageVersion: LanguageVersion,
     private val jvmDefaultMode: String,
     private val javaBinary: Optional<String>,
-    private val kotlinCDAnalytics: KotlinCDAnalytics,
     private val ksp2Mode: Ksp2Mode,
 ) : IsolatedStep {
-
-  private val noOpDetector = Ksp2NoOpDetector()
 
   @Throws(IOException::class, InterruptedException::class)
   override fun executeIsolatedStep(context: IsolatedExecutionContext): StepExecutionResult {
@@ -83,27 +77,6 @@ class Ksp2Step(
             durationMs,
             sourceFilePaths.size,
         )
-        kotlinCDAnalytics.log(
-            KotlinCDLoggingContext(languageVersion, ksp2Mode, durationMs).apply {
-              addExtras(
-                  this@Ksp2Step::class.java.simpleName,
-                  "Ksp2 step duration: $durationMs ms",
-              )
-              val counts = noOpDetector.countsByProcessor
-              if (
-                  shouldRecordProcessorCounts(
-                      exitCode == KotlinSymbolProcessing.ExitCode.OK,
-                      counts.isNotEmpty(),
-                      ksp2Mode,
-                  )
-              ) {
-                addExtras(
-                    PROCESSOR_OUTPUT_EXTRAS_KEY,
-                    counts.entries.joinToString(",") { "${it.key}=${it.value}" },
-                )
-              }
-            },
-        )
         return when (exitCode) {
           KotlinSymbolProcessing.ExitCode.OK -> StepExecutionResults.SUCCESS
           KotlinSymbolProcessing.ExitCode.PROCESSING_ERROR ->
@@ -116,7 +89,7 @@ class Ksp2Step(
         return StepExecutionResult(
             StepExecutionResults.ERROR_EXIT_CODE,
             Optional.of(
-                "${stderr.getContentsAsString(StandardCharsets.UTF_8)}\n${e.stackTraceToString()}For URLClassLoader LinkError similar to P1626402598, try adding affected class to FilteringClassLoader's allowlist. See D63143327",
+                "${stderr.getContentsAsString(StandardCharsets.UTF_8)}\n${e.stackTraceToString()}For a URLClassLoader LinkageError, try adding the affected class to FilteringClassLoader's allowlist.",
             ),
         )
       } catch (e: Throwable) {
@@ -157,9 +130,6 @@ class Ksp2Step(
     val sourceFilePathsExpanded = getExpandedSourcePathsOrThrow(
         ruleCellRoot = context.ruleCellRoot,
         kotlinSourceFilePaths = sourceFilePaths,
-        ignoredPathMatcher =
-            if (invokingRule.isSourceOnlyAbi) GlobPatternMatcher.of("**/kosabi_stub.android.**.kt")
-            else null,
         workingDirectory = Optional.of(outputPaths.workingDirectory.getPath()),
         invokingRule = invokingRule,
         logger = logger,
@@ -236,7 +206,7 @@ class Ksp2Step(
     )
     // Run!
     val kotlinSymbolProcessing =
-        KotlinSymbolProcessing(kspConfig, noOpDetector.wrap(processorProviders), logger)
+        KotlinSymbolProcessing(kspConfig, processorProviders, logger)
     return kotlinSymbolProcessing.execute()
   }
 
@@ -278,16 +248,12 @@ class Ksp2Step(
   private fun getExpandedSourcePathsOrThrow(
       ruleCellRoot: AbsPath,
       kotlinSourceFilePaths: ImmutableSortedSet<RelPath>,
-      ignoredPathMatcher: GlobPatternMatcher?,
       workingDirectory: Optional<Path>,
       invokingRule: BuildTargetValue,
       logger: BuckKsp2Logger,
   ) =
       try {
-        getExpandedSourcePaths(ruleCellRoot, kotlinSourceFilePaths, workingDirectory).filterNot {
-            path: Path ->
-          ignoredPathMatcher?.matches(path) ?: false
-        }
+        getExpandedSourcePaths(ruleCellRoot, kotlinSourceFilePaths, workingDirectory)
       } catch (exception: IOException) {
         logger.exception(exception)
         throw RuntimeException(
@@ -297,19 +263,6 @@ class Ksp2Step(
 
   companion object {
     private val LOG: Logger = Logger.get(Ksp2Step::class.java)
-
-    private const val PROCESSOR_OUTPUT_EXTRAS_KEY = "ksp2_processor_generated_files"
-
-    /**
-     * Telemetry records only successful non-incremental runs that produced counts: an aborted run
-     * leaves never-ran processors reading zero, and in an incremental round a zero mixes genuine
-     * no-ops with legitimately idle processors.
-     */
-    fun shouldRecordProcessorCounts(
-        succeeded: Boolean,
-        hasCounts: Boolean,
-        ksp2Mode: Ksp2Mode,
-    ): Boolean = succeeded && hasCounts && ksp2Mode is Ksp2Mode.NonIncremental
 
     private val jdkHomeCache = java.util.concurrent.ConcurrentHashMap<String, File>()
     private val JAVA_HOME_REGEX = Regex("""java\.home\s*=\s*(.+)""")

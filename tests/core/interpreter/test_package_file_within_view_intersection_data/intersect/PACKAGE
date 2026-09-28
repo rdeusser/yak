@@ -1,0 +1,5 @@
+# Opts this subtree in to capping `within_view`. Every target below can depend
+# only on targets under `root//intersect/...`, whatever its own `within_view`.
+enforce_within_view_intersection()
+
+package(within_view = ["root//intersect/..."])

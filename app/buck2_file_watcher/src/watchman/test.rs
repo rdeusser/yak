@@ -181,13 +181,8 @@ async fn spawn_watchman(watchman_dir: &Path) -> buck2_error::Result<WatchmanInst
 }
 
 #[tokio::test]
+#[ignore = "requires the watchman binary"]
 async fn test_syncable_query() -> buck2_error::Result<()> {
-    // This test doesn't work unless Watchman is working, so let's
-    // over-approximate that as fbcode_build for now.
-    if !cfg!(fbcode_build) {
-        return Ok(());
-    }
-
     let tempdir = tempfile::tempdir()?;
 
     // NOTE: This isn't async (and so is tempfile), but this is all tests.

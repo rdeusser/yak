@@ -1,0 +1,3 @@
+# Opts in without calling `package()`, so the inherited default `within_view`
+# and the inherited cap stay as they are.
+enforce_within_view_intersection()

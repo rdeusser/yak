@@ -6,8 +6,6 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-# pyre-strict
-
 """
 Tests for final materialization performance, focusing on the no-op case
 where artifacts are already materialized.
@@ -24,8 +22,8 @@ import json
 import time
 import typing
 
-from buck2.tests.e2e_util.api.buck import Buck
-from buck2.tests.e2e_util.buck_workspace import buck_test
+from e2e_util.api.buck import Buck
+from e2e_util.buck_workspace import buck_test
 
 
 async def get_materialization_duration_from_critical_path(

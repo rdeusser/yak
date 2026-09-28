@@ -99,7 +99,6 @@ impl ForkserverClient {
                 "forkserver_exit",
                 err.as_ref().dupe(),
                 quiet: true,
-                task: false,
                 daemon_in_memory_state_is_corrupted: true,
             ));
         }

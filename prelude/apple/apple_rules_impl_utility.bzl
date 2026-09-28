@@ -10,7 +10,7 @@ load("@prelude//:attrs_validators.bzl", "validation_common")
 load("@prelude//apple:apple_bundle_types.bzl", "AppleBundleResourceInfo", "AppleBundleTypeAttributeType")
 load("@prelude//apple:apple_code_signing_types.bzl", "CodeSignConfiguration", "CodeSignType")
 load("@prelude//apple:apple_common.bzl", "apple_common")
-load("@prelude//apple:apple_test_device_types.bzl", "AppleTestDeviceType")
+load("@prelude//apple:apple_provisioning_profile_sources.bzl", "AppleProvisioningProfileSourcesInfo")
 load("@prelude//apple:apple_toolchain_types.bzl", "AppleToolchainInfo")
 load("@prelude//apple:resource_groups.bzl", "RESOURCE_GROUP_MAP_ATTR")
 load("@prelude//apple/swift:swift_incremental_support.bzl", "SwiftCompilationMode")
@@ -41,55 +41,15 @@ def get_enable_library_evolution():
     return attrs.bool(
         default = select({
             "DEFAULT": False,
-            "config//features/apple:swift_library_evolution_enabled": True,
+            "prelude//apple/constraints:swift_library_evolution[enabled]": True,
         })
     )
 
 def _strict_provisioning_profile_search_default_attr():
-    default_value = read_root_config("apple", "strict_provisioning_profile_search", "true").lower() == "true"
-    return attrs.bool(
-        default = select({
-            "DEFAULT": default_value,
-            "config//features/apple:strict_provisioning_profile_search_enabled": True,
-        })
-    )
-
-def _fast_adhoc_signing_enabled_default_attr():
-    return attrs.bool(
-        default = select({
-            "DEFAULT": True,
-            "config//features/apple:fast_adhoc_signing_disabled": False,
-            "config//features/apple:fast_adhoc_signing_enabled": True,
-        })
-    )
+    return attrs.bool(default = read_root_config("apple", "strict_provisioning_profile_search", "true").lower() == "true")
 
 def _skip_adhoc_resigning_scrubbed_frameworks_default_attr():
-    default_value = read_root_config("apple", "skip_adhoc_resigning_scrubbed_frameworks", "").lower() == "true"
-    return attrs.bool(
-        default = select({
-            "DEFAULT": default_value,
-            "config//features/apple/constraints:skip_adhoc_resigning_scrubbed_frameworks_disabled": False,
-            "config//features/apple/constraints:skip_adhoc_resigning_scrubbed_frameworks_enabled": True,
-        })
-    )
-
-def _versioned_macos_bundle_default_value():
-    return select({
-        "DEFAULT": False,
-        "config//features/apple/constraints:versioned_macos_bundle_false": False,
-        "config//features/apple/constraints:versioned_macos_bundle_true": True,
-    })
-
-def _include_build_info_file_default_value():
-    return select({
-        "DEFAULT": select({
-            "DEFAULT": read_root_config("apple", "include_build_info_file", "false").lower() == "true",
-            # Unless explicitly requested, production builds (aka App Store/Developer ID) do not include internal build info file
-            "config//build_mode/apple/constraints:build_mode[production]": False,
-        }),
-        "config//features/apple/constraints:include_build_info_file[disabled]": False,
-        "config//features/apple/constraints:include_build_info_file[enabled]": True,
-    })
+    return attrs.bool(default = read_root_config("apple", "skip_adhoc_resigning_scrubbed_frameworks", "").lower() == "true")
 
 APPLE_ARCHIVE_OBJECTS_LOCALLY_OVERRIDE_ATTR_NAME = "_archive_objects_locally_override"
 APPLE_USE_ENTITLEMENTS_WHEN_ADHOC_CODE_SIGNING_CONFIG_OVERRIDE_ATTR_NAME = "_use_entitlements_when_adhoc_code_signing"
@@ -142,20 +102,13 @@ def _apple_bundle_like_common_attrs():
         # Target-level attribute always takes precedence over buckconfigs.
         "code_signing_configuration": attrs.option(attrs.enum(CodeSignConfiguration.values()), default = None),
         "codesign_type": attrs.option(attrs.enum(CodeSignType.values()), default = None),
-        "entitlements_verification_check_enabled": attrs.bool(
-            default = select({
-                "DEFAULT": read_bool("apple", "entitlements_verification_check_enabled", default = True, root_cell = True),
-                "config//features/apple:entitlements_verification_check_disabled": False,
-                "config//features/apple:entitlements_verification_check_enabled": True,
-            })
-        ),
         "fast_adhoc_signing_enabled": attrs.option(attrs.bool(), default = None),
-        "include_build_info_file": attrs.bool(default = _include_build_info_file_default_value()),
+        "include_build_info_file": attrs.bool(default = read_root_config("apple", "include_build_info_file", "false").lower() == "true"),
         "include_build_info_file_in_bundles_with_extensions": attrs.list(attrs.string(), default = ["app"]),
         "provisioning_profile_filter": attrs.option(attrs.string(), default = None),
         "skip_adhoc_resigning_scrubbed_frameworks": attrs.option(attrs.bool(), default = None),
         "strict_provisioning_profile_search": attrs.option(attrs.bool(), default = None),
-        "versioned_macos_bundle": attrs.bool(default = _versioned_macos_bundle_default_value()),
+        "versioned_macos_bundle": attrs.bool(default = False),
         "_apple_xctoolchain": get_apple_xctoolchain_attr(),
         "_apple_xctoolchain_bundle_id": get_apple_xctoolchain_bundle_id_attr(),
         "_bundling_cache_buster": attrs.option(attrs.string(), default = None),
@@ -166,13 +119,12 @@ def _apple_bundle_like_common_attrs():
         "_codesign_identities_command_override": attrs.option(attrs.exec_dep(providers = [RunInfo]), default = None),
         "_codesign_type": attrs.option(attrs.enum(CodeSignType.values()), default = None),
         "_compile_resources_locally_override": attrs.option(attrs.bool(), default = None),
-        "_fast_adhoc_signing_enabled_default": _fast_adhoc_signing_enabled_default_attr(),
-        "_fast_adhoc_signing_probe_enabled": attrs.bool(default = False),
+        "_fast_adhoc_signing_enabled_default": attrs.bool(default = True),
         "_fast_provisioning_profile_parsing_enabled": attrs.bool(default = False),
         "_incremental_bundling_enabled": attrs.bool(default = False),
         "_no_check_certificates": attrs.bool(default = False),
         "_profile_bundling_enabled": attrs.bool(default = False),
-        "_provisioning_profile_sources": attrs.dep(default = "fbsource//xplat/buck2/platform/apple:provisioning_profile_sources"),
+        "_provisioning_profile_sources": attrs.option(attrs.dep(providers = [AppleProvisioningProfileSourcesInfo]), default = None),
         "_resource_bundle": attrs.option(attrs.dep(providers = [AppleBundleResourceInfo]), default = None),
         "_skip_adhoc_resigning_scrubbed_frameworks_default": _skip_adhoc_resigning_scrubbed_frameworks_default_attr(),
         "_skip_adhoc_resigning_scrubbed_frameworks_override": attrs.option(attrs.bool(), default = None),
@@ -212,13 +164,11 @@ def apple_test_extra_attrs():
         "swift_compilation_mode": attrs.enum(SwiftCompilationMode.values(), default = "wmo"),
         "swift_package_name": attrs.option(attrs.string(), default = None),
         "swift_testing": attrs.bool(default = False),
-        "test_device_type": attrs.enum(AppleTestDeviceType.values(), default = "default"),
         "test_re_capabilities": attrs.option(
             attrs.dict(key = attrs.string(), value = attrs.string(), sorted = False),
             default = None,
             doc = """
             An optional dictionary with the RE capabilities for the test execution.
-            Overrides a default selection mechanism.
         """,
         ),
         "test_re_use_case": attrs.option(
@@ -226,23 +176,14 @@ def apple_test_extra_attrs():
             default = None,
             doc = """
             An optional name of the RE use case for the test execution.
-            Overrides a default selection mechanism.
         """,
         ),
         "_enable_library_evolution": get_enable_library_evolution(),
-        "_ipad_simulator": attrs.transition_dep(
-            cfg = clear_platform_transition, default = "fbsource//xplat/buck2/platform/apple:ipad_simulator", providers = [LocalResourceInfo]
-        ),
-        "_iphone_booted_simulator": attrs.transition_dep(
-            cfg = clear_platform_transition, default = "fbsource//xplat/buck2/platform/apple:iphone_booted_simulator", providers = [LocalResourceInfo]
-        ),
-        "_iphone_unbooted_simulator": attrs.transition_dep(
-            cfg = clear_platform_transition, default = "fbsource//xplat/buck2/platform/apple:iphone_unbooted_simulator", providers = [LocalResourceInfo]
-        ),
+        "_ipad_simulator": attrs.option(attrs.transition_dep(cfg = clear_platform_transition, providers = [LocalResourceInfo]), default = None),
+        "_iphone_booted_simulator": attrs.option(attrs.transition_dep(cfg = clear_platform_transition, providers = [LocalResourceInfo]), default = None),
+        "_iphone_unbooted_simulator": attrs.option(attrs.transition_dep(cfg = clear_platform_transition, providers = [LocalResourceInfo]), default = None),
         "_swift_enable_testing": attrs.default_only(attrs.bool(default = True)),
-        "_watch_simulator": attrs.transition_dep(
-            cfg = clear_platform_transition, default = "fbsource//xplat/buck2/platform/apple:watch_simulator", providers = [LocalResourceInfo]
-        ),
+        "_watch_simulator": attrs.option(attrs.transition_dep(cfg = clear_platform_transition, providers = [LocalResourceInfo]), default = None),
     } | validation_common.attrs_validators_arg()
     attribs.update(apple_common.apple_toolchain_arg())
     attribs.update(apple_common.minimum_os_version_arg())
@@ -280,7 +221,7 @@ def _embed_xctest_frameworks_default_value():
         "DEFAULT": False,
         # Xcode copies XCTest frameworks to test host apps, required when the
         # selected Xcode version != Xcode version used to build an app under test
-        "config//marker/apple/constraints:embed_xctest_frameworks[enabled]": True,
+        "prelude//apple/constraints:embed_xctest_frameworks[enabled]": True,
     })
 
 def apple_bundle_extra_attrs():

@@ -797,11 +797,11 @@ mod tests {
     fn test_relative_loads_sort_last() {
         let source = indoc! {r#"
             load(":SOCKETS.bzl", "SOCKET_A")
-            load("@fbsource//tools:defs.bzl", "tool")
+            load("@repo//tools:defs.bzl", "tool")
             load("//lib:lib.bzl", "lib_func")
         "#};
         let expected = indoc! {r#"
-            load("@fbsource//tools:defs.bzl", "tool")
+            load("@repo//tools:defs.bzl", "tool")
             load("//lib:lib.bzl", "lib_func")
             load(":SOCKETS.bzl", "SOCKET_A")
         "#};
@@ -931,13 +931,13 @@ mod tests {
             load("@repo//foo/bar:DEFS.bzl", "foo")
             load("@repo//tools/apple/plugins:plugin_defs.bzl", "plugin")
             load("@repo//tools/apple:lib.bzl", "lib")
-            load("@repo//xplat/foundation:DEFS.bzl", "foundation")
+            load("@repo//vendor/foundation:DEFS.bzl", "foundation")
         "#};
         let expected = indoc! {r#"
             load("@repo//foo/bar:DEFS.bzl", "foo")
             load("@repo//tools/apple:lib.bzl", "lib")
             load("@repo//tools/apple/plugins:plugin_defs.bzl", "plugin")
-            load("@repo//xplat/foundation:DEFS.bzl", "foundation")
+            load("@repo//vendor/foundation:DEFS.bzl", "foundation")
         "#};
         assert_eq!(run(source), expected);
     }
@@ -961,7 +961,7 @@ mod tests {
             load("@repo//foo/bar:DEFS.bzl", "foo")
             load("@repo//tools/apple:lib.bzl", "lib")
             load("@repo//tools/apple/plugins:plugin_defs.bzl", "plugin")
-            load("@repo//xplat/foundation:DEFS.bzl", "foundation")
+            load("@repo//vendor/foundation:DEFS.bzl", "foundation")
         "#};
         assert_eq!(run(source), source);
     }
@@ -1210,7 +1210,7 @@ mod tests {
             # License
 
             load("//z:z.bzl", "z")
-            load("@fbsource//a:a.bzl", "a")
+            load("@repo//a:a.bzl", "a")
 
             x = a() + z()
         "#};
@@ -1219,7 +1219,7 @@ mod tests {
 
             # License
 
-            load("@fbsource//a:a.bzl", "a")
+            load("@repo//a:a.bzl", "a")
             load("//z:z.bzl", "z")
 
             x = a() + z()
@@ -1237,7 +1237,7 @@ mod tests {
             # Comment for z
             load("//z:z.bzl", "z")
             # Comment for a
-            load("@fbsource//a:a.bzl", "a")
+            load("@repo//a:a.bzl", "a")
 
             x = a() + z()
         "#};
@@ -1247,7 +1247,7 @@ mod tests {
             # License
 
             # Comment for a
-            load("@fbsource//a:a.bzl", "a")
+            load("@repo//a:a.bzl", "a")
             # Comment for z
             load("//z:z.bzl", "z")
 
@@ -1264,7 +1264,7 @@ mod tests {
             # License
 
             # Comment for a
-            load("@fbsource//a:a.bzl", "a")
+            load("@repo//a:a.bzl", "a")
             # Stray comment for z
 
 
@@ -1277,7 +1277,7 @@ mod tests {
 
             # Comment for b
 
-            load("@fbsource//b:b.bzl", "b")
+            load("@repo//b:b.bzl", "b")
 
             x = a() + b() + z()
         "#};
@@ -1287,13 +1287,13 @@ mod tests {
             # License
 
             # Comment for a
-            load("@fbsource//a:a.bzl", "a")
+            load("@repo//a:a.bzl", "a")
             # Stray comment for b
 
 
             # Comment for b
 
-            load("@fbsource//b:b.bzl", "b")
+            load("@repo//b:b.bzl", "b")
             # Stray comment for z
 
 

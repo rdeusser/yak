@@ -112,7 +112,8 @@ abstract class BasePerTestCoverageRunListener(
       val execFile = File(outputDir, fileName)
       FileOutputStream(execFile).use { fos -> fos.write(execData) }
 
-      // Hand-rolled JSON to avoid a jackson-core dep that would duplicate fbandroid's on the APK.
+      // Hand-rolled JSON because a jackson-core dependency would duplicate the app's own copy in
+      // the test APK.
       val jsonLine =
           "{\"test_name\":\"${escapeJsonString(testName)}\"," +
               "\"exec_file\":\"${escapeJsonString(fileName)}\"}"

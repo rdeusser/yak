@@ -477,7 +477,6 @@ mod tests {
         // Proper automated test is possible but hard to maintain.
         // The best option is to print the flame graph and check resulting image.
         // println!("{}", _flame_graph);
-        // At the moment of writing it looks like this: https://www.internalfb.com/intern/px/p/2Gb33
 
         // Alternatively, we can set up golden test.
     }

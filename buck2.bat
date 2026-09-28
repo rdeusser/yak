@@ -7,4 +7,4 @@
 @REM above-listed licenses.
 
 @echo off
-fbpython "%~dp0buck2.py" %*
+python "%~dp0buck2.py" %*

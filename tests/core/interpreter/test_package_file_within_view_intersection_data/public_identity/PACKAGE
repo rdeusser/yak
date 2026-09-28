@@ -1,0 +1,4 @@
+# A PUBLIC term leaves the cap unrestricted.
+enforce_within_view_intersection()
+
+package(within_view = ["PUBLIC"])

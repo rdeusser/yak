@@ -6,9 +6,7 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-# pyre-strict
-
-from buck2.tests.e2e_util.api.buck import Buck
+from e2e_util.api.buck import Buck
 
 
 async def get_cfg(buck: Buck, *args: str) -> str:

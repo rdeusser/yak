@@ -12,7 +12,6 @@ use buck2_client_ctx::client_ctx::ClientCommandContext;
 use buck2_client_ctx::common::BuckArgMatches;
 use buck2_client_ctx::events_ctx::EventsCtx;
 use buck2_client_ctx::exit_result::ExitResult;
-use buck2_error::ErrorTag;
 use clap::Parser;
 use tokio::runtime::Runtime;
 
@@ -37,28 +36,18 @@ impl InternalTestRunnerCommand {
     ) -> ExitResult {
         events_ctx.log_invocation_record = false;
 
-        // Internal test runner should only be used in the open source version of Buck2.
-        if buck2_core::is_open_source()
-            || std::env::var("BUCK2_ALLOW_INTERNAL_TEST_RUNNER_DO_NOT_USE").is_ok()
-        {
-            let runtime = Runtime::new().expect("Failed to create Tokio runtime");
-            runtime
-                .block_on(async move {
-                    #[cfg(unix)]
-                    {
-                        self.unix_runner.run().await
-                    }
-                    #[cfg(not(unix))]
-                    {
-                        self.tcp_runner.run().await
-                    }
-                })
-                .into()
-        } else {
-            buck2_error::buck2_error!(
-                ErrorTag::Input,
-                "Cannot use internal test runner. Config value must be provided for test.v2_test_executor."
-            ).into()
-        }
+        let runtime = Runtime::new().expect("Failed to create Tokio runtime");
+        runtime
+            .block_on(async move {
+                #[cfg(unix)]
+                {
+                    self.unix_runner.run().await
+                }
+                #[cfg(not(unix))]
+                {
+                    self.tcp_runner.run().await
+                }
+            })
+            .into()
     }
 }

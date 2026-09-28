@@ -71,12 +71,12 @@ def _tar_strip_prefix_flags(strip_prefix: [str, None]) -> list[str]:
         return ["--strip-components=" + str(count), strip_prefix]
     return []
 
-# buck-out on Windows on eden is a symlink. bsdtar which ships with Windows will
-# not extract files when the cwd contains a path segment that is a symlink (as
-# a side effect of or excessively cautious against wild writes to the system).
-# Powershell lets us 'dereference' that symlink to get the physical path to the
-# output folder we tell tar to unpack into while preserving security, instead of
-# passing -P.
+# buck-out on Windows can be a symlink, for example on a virtual file system.
+# bsdtar which ships with Windows will not extract files when the cwd contains a
+# path segment that is a symlink (as a side effect of or excessively cautious
+# against wild writes to the system). Powershell lets us 'dereference' that
+# symlink to get the physical path to the output folder we tell tar to unpack
+# into while preserving security, instead of passing -P.
 def _windows_unpack_ps1(out: OutputArtifact, archive: Artifact, ext_type: str, strip_prefix: [str, None], exclude_flags: list) -> list:
     tar = '"$env:SystemRoot\\System32\\tar.exe"'
     quoted_archive = cmd_args(archive, format = "'{}'")

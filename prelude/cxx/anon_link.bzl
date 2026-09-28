@@ -39,7 +39,7 @@ load(
 # flat streams (flags and artifacts) that both sides walk in the same traversal
 # order. Encoding each linkable as nested attr tuples instead costs the daemon
 # ~1KiB of coerced-attr nodes per linkable, which dominates buck2 memory on
-# large link-group graphs (measured ~1GiB retained on a 14-target fbcode dev
+# large link-group graphs (measured ~1GiB retained on a 14-target dev
 # cohort); the artifacts must remain real `attrs.source()` values for input
 # tracking, but everything else can live in the string.
 #

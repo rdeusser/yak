@@ -46,7 +46,7 @@ def _check_all_exists(ctx: AnalysisContext) -> list[Provider]:
     check = ctx.actions.declare_output("check", has_content_based_path = False)
     ctx.actions.run(
         [
-            "fbpython",
+            "python3",
             "-c",
             ";".join([
                 "import sys, os",
@@ -76,13 +76,13 @@ def _check_dropped_artifacts(ctx: AnalysisContext) -> list[Provider]:
     check = ctx.actions.declare_output("check", has_content_based_path = False)
     ctx.actions.run(
         [
-            "fbpython",
+            "python3",
             "-c",
             ";".join([
                 # Verify the existing behavior where the named file exists,
                 # and the declared artifact of the named file exists, but
                 # the artifact of the artifact does NOT exist
-                # TODO(T227006457) - revisit this behavior to be more intuitive
+                # TODO: revisit this behavior to be more intuitive
                 "import os, sys",
                 "third, second, first = sys.argv[1:]",
                 "assert os.path.exists(third)",

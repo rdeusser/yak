@@ -100,10 +100,7 @@ def _write_final_ghci_script(
     srcs = " ".join(
         [
             paths.normalize(
-                paths.join(
-                    paths.relativize(str(ctx.label.path), "fbcode"),
-                    s,
-                ),
+                paths.join(ctx.label.package, s),
             )
             for s in ctx.attrs.srcs
         ],
@@ -499,8 +496,8 @@ def _build_preload_deps_root(ctx: AnalysisContext, haskell_toolchain: HaskellToo
             for soname, shared_lib in with_unique_str_sonames(shlib).items():
                 preload_symlinks[soname] = shared_lib.lib.output
 
-        # TODO(T150785851): build or get SO for direct preload_deps
-        # TODO(T150785851): find out why the only SOs missing are the ones from
+        # TODO: build or get SO for direct preload_deps
+        # TODO: find out why the only SOs missing are the ones from
         # the preload_deps themselves, even though the ones from their deps are
         # already there.
         if LinkableRootInfo in preload_dep:
@@ -568,7 +565,7 @@ def _first_order_haskell_deps(ctx: AnalysisContext, enable_profiling: bool) -> l
 def _write_start_ghci(ctx: AnalysisContext, script_file: Artifact, enable_profiling: bool):
     start_cmd = cmd_args()
 
-    # Reason for unsetting `LD_PRELOAD` env var obtained from D6255224:
+    # Reason for unsetting `LD_PRELOAD` env var:
     # "Certain libraries (like allocators) cannot be loaded after the process
     # has started. When needing to use these libraries, send them to a
     # user-supplied script for handling them appropriately. Running the real

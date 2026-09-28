@@ -8,16 +8,7 @@
 
 # Implementation of the OCaml build rules.
 
-# IMPORTANT: Don't land your change without running these tests!
-# ```
-# buck2 build --num-threads 4 $(buck2 uquery "kind('ocaml_binary', 'fbcode//hphp/...')")
-# ```
-#
-# If you are really, really keen, this command builds all hack, not just the
-# OCaml binaries.
-# ```
-# buck2 build --num-threads 4 fbcode//hphp/hack/...
-# ```
+# Test changes against the OCaml targets in `examples/with_prelude/ocaml`.
 
 # To avoid name collisions (where '/' designates the build output
 # directory root):
@@ -280,8 +271,7 @@ def _compiler_cmd(ctx: AnalysisContext, compiler: cmd_args, cc: cmd_args) -> cmd
     # safe-string) are enabled and marked as fatal by this.
     cmd.add(ctx.attrs.compiler_flags)
 
-    # Now, add in `COMMON_OCAML_WARNING_FLAGS` (defined by
-    # 'fbcode/tools/build/buck/gen_modes.py') e.g.
+    # Now, add in the toolchain's warning flags, e.g.
     # -4-29-35-41-42-44-45-48-50 to selective disable warnings.
     attr_warnings = ctx.attrs.warnings_flags if ctx.attrs.warnings_flags != None else ""
     cmd.add("-w", ocaml_toolchain.warnings_flags + attr_warnings)
@@ -364,7 +354,7 @@ def _depends(ctx: AnalysisContext, srcs: list[Artifact], build_mode: BuildMode) 
 
     dep_output_filename = "ocamldep_" + build_mode.value + ".mk"
     dep_output = ctx.actions.declare_output(dep_output_filename, has_content_based_path = False)
-    dep_cmdline = cmd_args([ocamldep, "-native"])  # Yes, always native (see D36426635 for details).
+    dep_cmdline = cmd_args([ocamldep, "-native"])  # Yes, always native.
 
     # We are writing the command into a file for later execution. Each flag
     # needs enclosing in quotes (since it's possible that some flags contain
@@ -997,8 +987,7 @@ def ocaml_shared_impl(ctx: AnalysisContext) -> list[Provider]:
 
     # 'ocamlopt.opt' with '-cc' fails to propagate '-shared' (and potentially
     # other required flags - see the darwin "dylib" specific block below) to the
-    # linker. See https://www.internalfb.com/phabricator/paste/view/P596226070.
-    # This is a workaround.
+    # linker. This is a workaround.
     shared_args = ["-shared"]
     if host_info().os.is_macos:
         shared_args.extend(["-flat_namespace", "-undefined suppress", "-Wl,-no_compact_unwind"])

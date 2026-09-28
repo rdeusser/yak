@@ -6,13 +6,11 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-# pyre-strict
-
-
-from buck2.tests.e2e_util.api.buck import Buck
-from buck2.tests.e2e_util.api.buck_result import BuckResult
-from buck2.tests.e2e_util.buck_workspace import buck_test
-from buck2.tests.e2e_util.helper.utils import filter_events, random_string
+import pytest
+from e2e_util.api.buck import Buck
+from e2e_util.api.buck_result import BuckResult
+from e2e_util.buck_workspace import buck_test
+from e2e_util.helper.utils import filter_events, random_string
 
 
 # Incremental actions use the output of previous actions, mimic this behavior by
@@ -86,6 +84,7 @@ async def incremental_action_from_remote_action_helper(
     assert result.stdout == "foo bar"
 
 
+@pytest.mark.remote_execution
 @buck_test()
 async def test_incremental_action_from_remote_action(buck: Buck) -> None:
     await incremental_action_from_remote_action_helper(
@@ -93,6 +92,7 @@ async def test_incremental_action_from_remote_action(buck: Buck) -> None:
     )
 
 
+@pytest.mark.remote_execution
 @buck_test()
 async def test_incremental_action_from_remote_action_with_content_based_path(
     buck: Buck,
@@ -137,6 +137,7 @@ async def incremental_action_with_non_incremental_remote_action_inbetween_helper
     assert result.stdout == "foo bar"
 
 
+@pytest.mark.remote_execution
 @buck_test()
 async def test_incremental_action_with_non_incremental_remote_action_inbetween(
     buck: Buck,
@@ -146,6 +147,7 @@ async def test_incremental_action_with_non_incremental_remote_action_inbetween(
     )
 
 
+@pytest.mark.remote_execution
 @buck_test()
 async def test_incremental_action_with_non_incremental_remote_action_inbetween_with_content_based_path(
     buck: Buck,
@@ -238,11 +240,13 @@ async def basic_incremental_action_cached_helper(
     assert result.stdout == "foo bar"
 
 
+@pytest.mark.remote_execution
 @buck_test()
 async def test_basic_incremental_action_cached(buck: Buck) -> None:
     await basic_incremental_action_cached_helper(buck, use_content_based_path=False)
 
 
+@pytest.mark.remote_execution
 @buck_test()
 async def test_basic_incremental_action_cached_with_content_based_path(
     buck: Buck,
@@ -296,6 +300,7 @@ async def basic_incremental_action_after_cache_hit_helper(
     assert result.stdout == "foo bar"
 
 
+@pytest.mark.remote_execution
 @buck_test()
 async def test_basic_incremental_action_after_cache_hit(buck: Buck) -> None:
     await basic_incremental_action_after_cache_hit_helper(
@@ -303,6 +308,7 @@ async def test_basic_incremental_action_after_cache_hit(buck: Buck) -> None:
     )
 
 
+@pytest.mark.remote_execution
 @buck_test()
 async def test_basic_incremental_action_after_cache_hit_with_content_based_path(
     buck: Buck,
@@ -533,6 +539,7 @@ async def unmaterialized_incremental_action_not_persist_between_daemon_restart_h
     assert result.stdout == "foo"
 
 
+@pytest.mark.remote_execution
 @buck_test()
 async def test_unmaterialized_incremental_action_not_persist_between_daemon_restart(
     buck: Buck,
@@ -542,6 +549,7 @@ async def test_unmaterialized_incremental_action_not_persist_between_daemon_rest
     )
 
 
+@pytest.mark.remote_execution
 @buck_test()
 async def test_unmaterialized_incremental_action_not_persist_between_daemon_restart_with_content_based_path(
     buck: Buck,

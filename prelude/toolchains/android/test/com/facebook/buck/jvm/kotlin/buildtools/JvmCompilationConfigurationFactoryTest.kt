@@ -54,7 +54,7 @@ internal class JvmCompilationConfigurationFactoryTest {
         .thenReturn(classpathSnapshotBasedIncrementalJvmCompilationConfiguration)
 
     jvmCompilationConfigurationFactory =
-        JvmCompilationConfigurationFactory(compilationService, mock())
+        JvmCompilationConfigurationFactory(compilationService)
   }
 
   @Test

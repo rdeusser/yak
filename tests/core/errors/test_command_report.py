@@ -6,18 +6,15 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-# pyre-strict
-
-
 import asyncio
 import json
 from pathlib import Path
 
-from buck2.tests.e2e_util.api.buck import Buck
-from buck2.tests.e2e_util.api.buck_result import ExitCodeV2
-from buck2.tests.e2e_util.asserts import expect_failure
-from buck2.tests.e2e_util.buck_workspace import buck_test, env
-from buck2.tests.e2e_util.helper.golden import golden
+from e2e_util.api.buck import Buck
+from e2e_util.api.buck_result import ExitCodeV2
+from e2e_util.asserts import expect_failure
+from e2e_util.buck_workspace import buck_test, env
+from e2e_util.helper.golden import golden
 
 
 def command_report_test(name: str, command: list[str]) -> None:
@@ -140,18 +137,14 @@ async def test_command_report_post_build_client_error(
 
 
 @buck_test()
-async def test_cleanup_timeout(buck: Buck, tmp_path: Path) -> None:
+async def test_no_finalizing_errors(buck: Buck, tmp_path: Path) -> None:
     report = tmp_path / "command_report.json"
     await buck.targets("--command-report-path", str(report), ":")
 
     with open(report) as f:
         report = json.loads(f.read())
 
-    # test commands have scribe logging disabled, which is reported as a finalizing error
-    finalizing_errors = report["finalizing_error_messages"]
-    assert len(finalizing_errors) == 1
-    assert "'invocation recorder' failed to finalize" in finalizing_errors[0]
-    assert "Scribe sink not enabled" in finalizing_errors[0]
+    assert report["finalizing_error_messages"] == []
 
 
 # Should match behavior of command report test in buck wrapper

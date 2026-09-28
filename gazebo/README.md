@@ -35,21 +35,7 @@ source to Gazebo itself) and `gazebo_derive` (which contains support for
 `gazebo`, but `gazebo_derive` is a required transitive dependency if you are
 sourcing the library from GitHub.
 
-## Learn More
-
-You can learn more about Gazebo in
-[this introductory video](https://www.youtube.com/watch?v=pQJkx9HL_04), or from
-the following blog posts:
-
-- [Rust Nibbles - Gazebo: Prelude](https://developers.facebook.com/blog/post/2021/06/29/rust-nibbles-gazebo-prelude/)
-- [Rust Nibbles - Gazebo: Dupe](https://developers.facebook.com/blog/post/2021/07/06/rust-nibbles-gazebo-dupe/)
-- [Rust Nibbles - Gazebo: Variants](https://developers.facebook.com/blog/post/2021/07/13/rust-nibbles-gazebo-variants)
-- [Rust Nibbles - Gazebo: AnyLifetime](https://developers.facebook.com/blog/post/2021/07/20/rust-nibbles-gazebo-any-lifetime/)
-- [Rust Nibbles - Gazebo: Comparisons](https://developers.facebook.com/blog/post/2021/07/27/rust-nibbles-gazebo-comparisons/)
-- [Rust Nibbles - Gazebo: Casts and Transmute](https://developers.facebook.com/blog/post/2021/08/03/rust-nibbles-gazebo-casts-transmute/)
-- [Rust Nibbles - Gazebo: The rest of the tent](https://developers.facebook.com/blog/post/2021/08/10/rust-nibbles-gazebo-rest-of-tent/)
-
 ## License
 
 Gazebo is both MIT and Apache License, Version 2.0 licensed, as found in the
-[LICENSE-MIT](LICENSE-MIT) and [LICENSE-APACHE](LICENSE-APACHE) files.
+[LICENSE-MIT](../LICENSE-MIT) and [LICENSE-APACHE](../LICENSE-APACHE) files.

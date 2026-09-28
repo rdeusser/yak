@@ -7,8 +7,6 @@ load(
 )
 load("@prelude//toolchains/go:go_toolchain.bzl", "go_distr", "go_toolchain")
 
-oncall("golang")
-
 system_python_bootstrap_toolchain(
     name = "python_bootstrap",
     visibility = ["PUBLIC"],

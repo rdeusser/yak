@@ -490,16 +490,7 @@ impl CasDigestData {
             DigestAlgorithm::Sha256 => DigesterVariant::Sha256(Sha256::new()),
             DigestAlgorithm::Blake3 => DigesterVariant::Blake3(Box::new(blake3::Hasher::new())),
             DigestAlgorithm::Blake3Keyed => {
-                #[cfg(fbcode_build)]
-                {
-                    DigesterVariant::Blake3Keyed(Box::new(blake3::Hasher::new_keyed(
-                        blake3_constants::BLAKE3_HASH_KEY,
-                    )))
-                }
-                #[cfg(not(fbcode_build))]
-                {
-                    panic!("Blake3Keyed is not supported in the open source build")
-                }
+                panic!("Blake3Keyed is not supported")
             }
             DigestAlgorithm::Blake3KeyedTest => {
                 static TEST_KEY: [u8; 32] = [0; 32];
@@ -664,7 +655,7 @@ impl<Kind: CasDigestKind> CasDigest<Kind> {
     ) -> buck2_error::Result<Self> {
         let mut digester = Self::digester_for_algorithm(algorithm);
 
-        // Buffer size chosen based on benchmarks at D26176645
+        // Buffer size chosen based on benchmarks
         // Also optimal for Blake3's SIMD implementation.
         let mut buffer = [0; 16 * 1024];
         loop {

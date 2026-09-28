@@ -5,8 +5,6 @@
 # License, Version 2.0 found in the LICENSE-APACHE file in the root directory
 # of this source tree.
 
-# @nolint
-
 def _impl(platform, refs):
     _ignore = (platform, refs)
     pass

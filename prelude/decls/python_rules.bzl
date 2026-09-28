@@ -90,7 +90,6 @@ def _python_executable_attrs():
             `string`s, or a further `string`-keyed dictionary.""",
             ),
             "native_link_strategy": attrs.option(attrs.enum(NativeLinkStrategy.values()), default = None),
-            "opt_by_default_enabled": attrs.bool(default = False),
             "optimize_for_action_throughput": attrs.bool(default = False),
             "package_split_dwarf_dwp": attrs.bool(default = False),
             "par_style": attrs.option(attrs.string(), default = None),
@@ -119,8 +118,6 @@ def _python_executable_attrs():
             ),  # TODO(dcssiva) Delete this when we change the default analysis method to use anon targets
             "use_lifeguard_incremental": attrs.bool(default = False),
             "use_oss_python": attrs.bool(default = False),
-            "use_rust_make_par": attrs.bool(default = False),  # TODO(rishiarora) Delete this when we change the default build style
-            "use_rust_make_par_optimizations": attrs.bool(default = False),
             "_build_info": BUILD_INFO_ATTR,
             "_create_manifest_for_source_dir": _create_manifest_for_source_dir(),
             "_cxx_hacks": attrs.default_only(attrs.dep(default = "prelude//cxx/tools:cxx_hacks")),
@@ -143,7 +140,7 @@ def _python_test_attrs():
     test_attrs = _python_executable_attrs()
     test_attrs["_test_main"] = attrs.source(default = "prelude//python/tools:__test_main__.py")
     test_attrs["implicit_test_library"] = attrs.option(attrs.dep(providers = [PythonLibraryInfo]), default = None)
-    test_attrs["safer_lazy_imports"] = attrs.bool(default = False)  # TODO(T240038931) When enabling lazy imports by default, remove this line
+    test_attrs["safer_lazy_imports"] = attrs.bool(default = False)  # TODO: When enabling lazy imports by default, remove this line
     test_attrs["supports_test_execution_caching"] = attrs.bool(default = False)
     test_attrs.update(re_test_common.test_args())
     return test_attrs
@@ -181,7 +178,7 @@ def _typing_arg():
 """,
         ),
         # NOTE(grievejia): Setting default to True here may have non-trivial impact on build memory
-        # usage (see S395002)
+        # usage.
         "typing": attrs.bool(
             default = False,
             doc = """
@@ -511,7 +508,7 @@ python_binary = prelude_rule(
         | _python_binary_attrs()
         | validation_common.attrs_validators_arg()
     ),
-    cfg = constraint_overrides.python_transition,
+    cfg = constraint_overrides.transition,
 )
 
 python_library = prelude_rule(
@@ -700,7 +697,7 @@ python_test = prelude_rule(
         | _python_test_attrs()
         | validation_common.attrs_validators_arg()
     ),
-    cfg = constraint_overrides.python_transition,
+    cfg = constraint_overrides.transition,
 )
 
 python_test_runner = prelude_rule(

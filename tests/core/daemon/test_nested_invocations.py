@@ -10,9 +10,9 @@
 import typing
 from pathlib import Path
 
-from buck2.tests.e2e_util.api.buck import Buck
-from buck2.tests.e2e_util.asserts import expect_failure
-from buck2.tests.e2e_util.buck_workspace import buck_test
+from e2e_util.api.buck import Buck
+from e2e_util.asserts import expect_failure
+from e2e_util.buck_workspace import buck_test
 
 
 def nested_buck2_args(buck: Buck) -> typing.List[str]:
@@ -22,10 +22,13 @@ def nested_buck2_args(buck: Buck) -> typing.List[str]:
     ]
 
 
-@buck_test(allow_soft_errors=True)
+# A nested invocation fails even when it shares the daemon state, because
+# `nested_invocation_same_dice_state` is a hard error.
+@buck_test()
 async def test_same_state(buck: Buck) -> None:
-    await buck.build(
-        "root//:nested_normal", *nested_buck2_args(buck), env={"SANDCASTLE_ID": ""}
+    await expect_failure(
+        buck.build("root//:nested_normal", *nested_buck2_args(buck)),
+        stderr_regex="Recursive invocation of Buck, which is discouraged, but will probably work \\(using the same state\\)",
     )
 
 
@@ -42,27 +45,6 @@ async def test_different_state_error(buck: Buck, tmp_path: Path) -> None:
             "--event-log",
             str(log),
             *nested_buck2_args(buck),
-            env={"SANDCASTLE_ID": ""},
-        ),
-        stderr_regex="Failed to build 'root//:nested_normal",
-    )
-    res = await buck.log("what-ran", "--failed", "--show-std-err", str(log))
-    assert "Recursive invocation of Buck, with a different state" in res.stdout
-
-
-@buck_test(allow_soft_errors=True)
-async def test_different_user_version_and_state(buck: Buck, tmp_path: Path) -> None:
-    log = tmp_path / "logfile.json-lines"
-    await expect_failure(
-        buck.build(
-            "-c",
-            "some.config=Val",
-            "root//:nested_normal",
-            "--event-log",
-            str(log),
-            *nested_buck2_args(buck),
-            # Set a `SANDCASTLE_ID`; this affects the daemon constraints
-            env={"SANDCASTLE_ID": "12345"},
         ),
         stderr_regex="Failed to build 'root//:nested_normal",
     )

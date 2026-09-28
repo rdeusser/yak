@@ -4,8 +4,6 @@ load("@prelude//toolchains/cxx/clang:tools.bzl", "path_clang_tools")
 load("@prelude//toolchains/msvc:tools.bzl", "find_msvc_tools")
 load("@root//buck2_utils/platforms:defs.bzl", "is_remote_enabled")
 
-oncall("build_infra")
-
 find_msvc_tools(
     name = "msvc_tools",
     target_compatible_with = ["config//os:windows"],

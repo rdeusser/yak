@@ -283,7 +283,7 @@ impl ExecutorError {
         test_statuses: &buck2_cli_proto::test_response::TestStatuses,
     ) -> Option<Self> {
         let status_error = TestStatusError::new(test_statuses);
-        // exit codes from tpx::outcome::RunVerdict
+        // Exit codes of the test executor protocol. `buck2_test_runner` exits with 0 or 32.
         match exit_code {
             0 => None,
             1 => Some(Self::InternalError),

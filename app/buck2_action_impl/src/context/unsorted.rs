@@ -90,7 +90,7 @@ pub(crate) fn analysis_actions_methods_unsorted(builder: &mut MethodsBuilder) {
         ))
     }
 
-    /// Creates a new transitive set. For details, see https://buck2.build/docs/rule_authors/transitive_sets/.
+    /// Creates a new transitive set. For details, see https://rdeusser.github.io/buck2/docs/rule_authors/transitive_sets/.
     fn tset<'v>(
         this: &AnalysisActions<'v>,
         #[starlark(require = pos)] definition: FrozenValueTyped<

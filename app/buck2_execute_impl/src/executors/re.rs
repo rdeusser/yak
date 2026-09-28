@@ -13,10 +13,6 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use async_trait::async_trait;
-use buck2_core::execution_types::executor_config::MetaInternalExtraParams;
-use buck2_core::execution_types::executor_config::ReGangWorker;
-use buck2_core::execution_types::executor_config::RemoteExecutorDependency;
-use buck2_core::execution_types::revision::LazyVcsRevision;
 use buck2_core::fs::artifact_path_resolver::ArtifactFs;
 use buck2_core::fs::project::ProjectRoot;
 use buck2_core::fs::project_rel_path::ProjectRelativePath;
@@ -56,7 +52,6 @@ use buck2_util::time_span::TimeSpan;
 use dice_futures::cancellation::CancellationContext;
 use dupe::Dupe;
 use futures::FutureExt;
-use itertools::Either;
 use remote_execution as RE;
 use remote_execution::TCode;
 use remote_execution::TCodeReasonGroup;
@@ -79,7 +74,6 @@ pub enum RemoteExecutorError {
 pub struct ReExecutor {
     pub artifact_fs: ArtifactFs,
     pub project_fs: ProjectRoot,
-    pub revision: Arc<LazyVcsRevision>,
     pub materializer: Arc<dyn Materializer>,
     pub incremental_db_state: Arc<IncrementalDbState>,
     pub re_client: ManagedRemoteExecutionClient,
@@ -92,8 +86,6 @@ pub struct ReExecutor {
     pub paranoid: Option<ParanoidDownloader>,
     pub materialize_failed_inputs: bool,
     pub materialize_failed_outputs: bool,
-    pub dependencies: Vec<RemoteExecutorDependency>,
-    pub gang_workers: Vec<ReGangWorker>,
     pub deduplicate_get_digests_ttl_calls: bool,
     pub output_trees_download_config: OutputTreesDownloadConfig,
     pub priority: Option<i32>,
@@ -162,7 +154,7 @@ impl ReExecutor {
         ControlFlow::Continue(manager)
     }
 
-    async fn re_execute<'a>(
+    async fn re_execute(
         &self,
         mut manager: CommandExecutionManager,
         identity: &ReActionIdentity<'_>,
@@ -170,9 +162,6 @@ impl ReExecutor {
         action_digest: &ActionDigest,
         digest_config: DigestConfig,
         platform: &RE::Platform,
-        dependencies: impl IntoIterator<Item = &'a RemoteExecutorDependency>,
-        re_gang_workers: &[buck2_core::execution_types::executor_config::ReGangWorker],
-        meta_internal_extra_params: &MetaInternalExtraParams,
         worker_tool_action_digest: Option<ActionDigest>,
     ) -> ControlFlow<CommandExecutionResult, (CommandExecutionManager, ExecuteResponseWithQueueStats)>
     {
@@ -187,8 +176,6 @@ impl ReExecutor {
         let execute_response_fut = self.re_client.execute(
             action_digest.dupe(),
             platform,
-            dependencies,
-            re_gang_workers,
             identity,
             &mut manager,
             self.skip_cache_read,
@@ -196,7 +183,6 @@ impl ReExecutor {
             self.re_max_queue_time,
             self.re_resource_units,
             &self.knobs,
-            meta_internal_extra_params,
             worker_tool_action_digest,
             self.priority,
         );
@@ -375,8 +361,6 @@ impl PreparedCommandExecutor for ReExecutor {
                 PreparedAction {
                     action_and_blobs,
                     platform,
-                    remote_execution_dependencies,
-                    re_gang_workers,
                     worker_tool_init_action,
                     network_access: _,
                 },
@@ -436,37 +420,6 @@ impl PreparedCommandExecutor for ReExecutor {
 
         let execution_time = TimeSpan::start_now();
 
-        let re_gang_workers: Vec<_> = self
-            .gang_workers
-            .iter()
-            .chain(re_gang_workers.iter())
-            .cloned()
-            .collect();
-        let remote_execution_dependencies = self
-            .dependencies
-            .iter()
-            .chain(remote_execution_dependencies.iter());
-        // Avoid starting a VCS subprocess unless interpolation requires it. `re_execute` borrows
-        // its dependencies, so keep any interpolated clones alive until that call completes.
-        let resolved_remote_execution_dependencies = if remote_execution_dependencies
-            .clone()
-            .any(RemoteExecutorDependency::requires_revision)
-        {
-            let revision = self.revision.get().await;
-            Some(
-                remote_execution_dependencies
-                    .clone()
-                    .map(|dependency| dependency.with_revision(revision))
-                    .collect::<Vec<_>>(),
-            )
-        } else {
-            None
-        };
-        let remote_execution_dependencies = match &resolved_remote_execution_dependencies {
-            Some(dependencies) => Either::Left(dependencies.iter()),
-            None => Either::Right(remote_execution_dependencies),
-        };
-
         let (manager, response) = self
             .re_execute(
                 manager,
@@ -475,9 +428,6 @@ impl PreparedCommandExecutor for ReExecutor {
                 &action_and_blobs.action,
                 *digest_config,
                 platform,
-                remote_execution_dependencies,
-                &re_gang_workers,
-                command.request.meta_internal_extra_params(),
                 worker_tool_action_digest,
             )
             .await?;
@@ -561,38 +511,12 @@ fn as_missing_outputs_error(err: &remote_execution::TStatus) -> Option<&str> {
     }
 }
 
-fn is_timeout_error(err: &remote_execution::TStatus) -> bool {
-    #[cfg(fbcode_build)]
-    {
-        // Not ideal, but DEADLINE_EXCEEDED will show up if you e.g. timeout connecting to RE, so we
-        // need to actually match on the message :(
-        err.code == TCode::DEADLINE_EXCEEDED && err.message.contains("Execution timed out")
-    }
-
-    #[cfg(not(fbcode_build))]
-    {
-        // Not obvious what this looks like in the GRPC API.
-        let _ignored = err;
-        false
-    }
+fn is_timeout_error(_err: &remote_execution::TStatus) -> bool {
+    // Not obvious what this looks like in the GRPC API.
+    false
 }
 
 fn is_re_queue_full(e: &buck2_error::Error) -> bool {
-    #[cfg(all(fbcode_build, target_os = "linux"))]
-    let enabled = justknobs::eval(
-        "buck2/remote_execution:re_queue_full_as_cancelled",
-        None,
-        None,
-    )
-    .unwrap_or(false);
-
-    #[cfg(not(all(fbcode_build, target_os = "linux")))]
-    let enabled = true;
-
-    if !enabled {
-        return false;
-    }
-
     e.find_typed_context::<RemoteExecutionError>()
         .is_some_and(|re_err| re_err.group == TCodeReasonGroup::USER_QUEUE_FULL)
 }

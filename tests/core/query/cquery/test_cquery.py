@@ -6,17 +6,14 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-# pyre-strict
-
-
 import json
 import re
 from pathlib import Path
 
-from buck2.tests.e2e_util.api.buck import Buck
-from buck2.tests.e2e_util.asserts import expect_failure
-from buck2.tests.e2e_util.buck_workspace import buck_test
-from buck2.tests.e2e_util.helper.golden import golden_replace_cfg_hash
+from e2e_util.api.buck import Buck
+from e2e_util.asserts import expect_failure
+from e2e_util.buck_workspace import buck_test
+from e2e_util.helper.golden import golden_replace_cfg_hash
 
 """
 Generally we test for basic functionality of things working here and do
@@ -252,12 +249,8 @@ async def test_testsof(buck: Buck) -> None:
 
 
 # DICE currently may re-evaluate dead nodes ignoring errors, but it cannot ignore panics.
-# The disabling of execution platforms through a buckconfig ended up causing a panic
-# that was the root cause of non-deterministic buck2 failures on 10% of fbcode TD in S303188.
-#
-# TODO(scottcao): Disabling execution platforms is a hack that we need to get rid of
-# because it's not how buck2 should be used. Get rid of this test case once fbcode TD
-# stops disabling execution platforms
+# Disabling execution platforms through a buckconfig used to cause such a panic,
+# which made builds fail at random.
 @buck_test(data_dir="toolchain_deps")
 async def test_disabling_of_execution_platforms(buck: Buck) -> None:
     # Run these commands 10x such that a stress run of 10 on continuous CI would run these commands 100x.

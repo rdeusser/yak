@@ -23,7 +23,7 @@ from .incremental_utils import (
 )
 
 try:
-    from contextlib import chdir  # pyre-ignore[21], Python 3.11+
+    from contextlib import chdir  # Python 3.11+
 except ImportError:
     from contextlib import contextmanager
 

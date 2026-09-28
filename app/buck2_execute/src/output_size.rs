@@ -241,7 +241,7 @@ mod tests {
         let target1 = "target1"; // 7 bytes
         let target2 = "target2"; // 7 bytes
         let target3 = "../target3"; // 10 bytes
-        let external_target = "/mnt/gvfs/path"; // 14 bytes
+        let external_target = "/opt/local/lib"; // 14 bytes
 
         insert_symlink(
             &mut builder,

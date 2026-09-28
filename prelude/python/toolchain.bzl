@@ -65,12 +65,10 @@ PythonToolchainInfo = provider(
         "wheel_linker_flags": provider_field(ArgLike, default = []),
         # site-packages-relative rpaths to embed into libs/bins in the wheel
         "wheel_rpaths": provider_field(ArgLike, default = []),
-        "gen_lpar_bootstrap": provider_field(Dependency | None, default = None),
         "package_style": provider_field(str | None, default = None),  # Should be `PackageStyle`.
         "strip_libpar": provider_field(str | None, default = None),  # Should be `StripLibparStrategy`.
         "native_library_runtime_paths": provider_field(ArgLike, default = []),
         "native_library_env_var": provider_field(ArgLike | None, default = None),
-        "make_py_package_live": provider_field(Dependency | None, default = None),
         "make_py_package_standalone": provider_field(ArgLike | None, default = None),
         "pex_extension": provider_field(str, default = ".par"),
         # An optional executable for per-target type checking. It is invoked as
@@ -99,7 +97,6 @@ PythonToolchainInfo = provider(
         "run_prefix": provider_field(ArgLike, default = []),
         "python_error_handler": provider_field(typing.Callable | None, default = None),
         "lazy_imports_analyzer": provider_field(RunInfo | None, default = None),
-        "manifest_module_entries": provider_field(dict[str, list[str] | dict[str, typing.Any]] | None, default = None),
         "preload_deps": provider_field(list[Dependency], default = []),
     },
 )

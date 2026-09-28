@@ -83,8 +83,7 @@ impl CommonAttributeArgs {
             soft_error!(
                 "output_attributes",
                 ArgErrors::OutputAttributesDeprecated.into(),
-                deprecation: true,
-                error_on_oss: true,
+                hard_error: true,
             )?;
         }
 

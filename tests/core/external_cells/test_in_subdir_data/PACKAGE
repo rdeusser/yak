@@ -1,0 +1,2 @@
+# The `test_bundled_cell` tree file adds 2 to this value.
+write_package_value("tree.value", 4)

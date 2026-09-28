@@ -18,22 +18,8 @@ GOLDEN_DIRECTORY = "fixtures/"
 def _prepend_header(content: str) -> str:
     return (
         f"# This file is {'@'}generated, "
-        f"regenerate by re-running test with `-- --env BUCK2_UPDATE_GOLDEN=1` appended to the test command\n\n{content}"
+        f"regenerate by rerunning the test with `BUCK2_UPDATE_GOLDEN=1` set\n\n{content}"
     )
-
-
-def _remove_ci_labels(content: str) -> str:
-    # this label is only added for CI jobs, causing inconsistenty between local test and ci test.
-    # Examples:
-    #  "ci:overwrite",
-    #  "ci:diff:linux:@fbcode//mode/dev-lg",
-    #  "ci:continuous:linux:@fbcode//mode/dev-lg",
-    new_content = []
-    for line in content.splitlines():
-        if "ci:" in line:
-            continue
-        new_content.append(line)
-    return "\n".join(new_content)
 
 
 def _normalize_newlines(content: str) -> str:
@@ -122,7 +108,7 @@ def golden(*, output: str, rel_path: str) -> None:
     with open(path_in_src, "r", encoding="utf-8") as f:
         expected = f.read()
 
-    if _remove_ci_labels(expected) != _remove_ci_labels(output):
+    if expected != output:
         unified_diff = _unified_diff(
             left=expected,
             right=output,
@@ -132,7 +118,7 @@ def golden(*, output: str, rel_path: str) -> None:
         raise AssertionError(
             f"Expected golden file to match actual\n"
             f"\n\n{unified_diff}\n\n"
-            "Re-run test with `-- --env BUCK2_UPDATE_GOLDEN=1` appended to the test command to regenerate the files"
+            "Rerun the test with `BUCK2_UPDATE_GOLDEN=1` set to regenerate the files"
         )
 
 
@@ -165,24 +151,18 @@ def sanitize_hashes(s: str) -> str:
     # characters... and that's hard to fix because we don't allow changes to
     # change action digests.
     s = re.sub(r"\b[0-9a-f]{12,16}\b", "<HASH>", s)
-    # And action digests
-    return re.sub(r"\b[0-9a-f]{40}:[0-9]{1,3}\b", "<DIGEST>", s)
+    # And action digests, in SHA-1 or SHA-256 form
+    return re.sub(r"\b(?:[0-9a-f]{40}|[0-9a-f]{64}):[0-9]+\b", "<DIGEST>", s)
 
 
-# C++ libraries linked into buck2 (and the tools it spawns) can emit glog-format
-# lines such as `I0623 15:40:41.926481 128942 Hash.cpp:327] tiHash seed: ...ull`
-# to stderr during process init. Their timestamps, PIDs, and source locations
+# C++ libraries in the tools that buck2 spawns can emit glog-format lines such as
+# `I0623 15:40:41.926481 128942 Hash.cpp:327] tiHash seed: ...ull` to stderr
+# during process init. Their timestamps, PIDs, and source locations
 # vary between runs, so they leak non-deterministically into captured stderr and
 # must be dropped before comparing against goldens. The marker may be indented
 # (e.g. when nested inside an embedded daemon stderr block), so we match it
 # anywhere in the line.
 _GLOG_LINE_RE = re.compile(r".*[WIEF]\d{4} \d{2}:\d{2}:\d{2}\.\d{6}.*\n?")
-# Some fbcode binaries have this removed option baked into their allocator
-# configuration, so the warning cannot be suppressed through MALLOC_CONF.
-_JEMALLOC_INVALID_CONF_RE = re.compile(
-    r"^[ \t]*<jemalloc>: Invalid conf pair: experimental_infallible_new:true\n?",
-    flags=re.MULTILINE,
-)
 
 
 def strip_glog_lines(s: str) -> str:
@@ -192,12 +172,8 @@ def strip_glog_lines(s: str) -> str:
     return _GLOG_LINE_RE.sub("", s)
 
 
-def strip_jemalloc_invalid_conf(s: str) -> str:
-    return _JEMALLOC_INVALID_CONF_RE.sub("", s)
-
-
 def sanitize_stderr(s: str) -> str:
-    s = strip_jemalloc_invalid_conf(strip_glog_lines(s))
+    s = strip_glog_lines(s)
     # Remove all timestamps
     s = re.sub(r"\[.{29}\]", "[<TIMESTAMP>]", s)
     # Remove all UUIDs
@@ -246,14 +222,10 @@ def sanitize_daemon_stderr(s: str) -> str:
     s = re.sub(r"Endpoint: tcp:\d+", "Endpoint: tcp:<PORT>", s)
     # Sanitize version strings
     s = re.sub(r"Version: \S+", "Version: <VERSION>", s)
-    # Sanitize scratch paths
-    s = re.sub(r"/data/users/\S+", "<SCRATCH_PATH>", s)
     # Sanitize timed out duration
     s = re.sub(r"timed out after [\d.]+s", "timed out after <DURATION>", s)
     # Strip lines with env override logging (these vary by environment)
     s = re.sub(r"^.*Env override found.*\n", "", s, flags=re.MULTILINE)
-    # BPFJailer is only used on hosts where the jail is available.
-    s = re.sub(r"^.*Exited BPFJailer jail.*\n", "", s, flags=re.MULTILINE)
     # Strip trailing whitespace on each line
     s = re.sub(r" +$", "", s, flags=re.MULTILINE)
     return sanitize_stderr(s)
@@ -318,18 +290,6 @@ def sanitize_build_report_error(s: str) -> str:
 
 
 def sanitize_build_report(report: dict) -> None:
-    def sanitize_value(value: object) -> object:
-        if isinstance(value, str):
-            return strip_jemalloc_invalid_conf(value)
-        if isinstance(value, list):
-            return [sanitize_value(item) for item in value]
-        if isinstance(value, dict):
-            return {key: sanitize_value(item) for key, item in value.items()}
-        return value
-
-    for key, value in report.items():
-        report[key] = sanitize_value(value)
-
     del report["trace_id"]
     del report["project_root"]
 

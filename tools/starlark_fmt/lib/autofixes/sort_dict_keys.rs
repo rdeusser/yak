@@ -625,8 +625,8 @@ mod tests {
     fn test_leading_underscore_key_stays_after_uppercase_key() {
         let source = indoc! {r#"
             A = {
-                "B": "fbcode/buck2/**",
-                "_A": "fbcode/antlir/**",
+                "B": "project/buck2/**",
+                "_A": "project/antlir/**",
             }
         "#};
         assert_eq!(run(source), source);
@@ -641,13 +641,13 @@ mod tests {
     #[test]
     fn test_mixed_inline_multiline_dict_sorts_before_formatting() {
         let source = indoc! {r#"
-            x = select({"DEFAULT": [], "ovr_config//os:windows": [
+            x = select({"DEFAULT": [], "config//os:windows": [
                 "-DUNICODE",
                 "-D_UNICODE",
             ]})
         "#};
         let expected = indoc! {r#"
-            x = select({"DEFAULT": [], "ovr_config//os:windows": [
+            x = select({"DEFAULT": [], "config//os:windows": [
                 "-DUNICODE",
                 "-D_UNICODE",
             ]})
@@ -910,16 +910,16 @@ mod tests {
                         {
                             "name": "fake1",
                             "include_globs": [
-                                "fbcode/fake1/**",
+                                "project/fake1/**",
                             ],
                             "exclude_globs": [
-                                "fbcode/fake1/exclude/**",
+                                "project/fake1/exclude/**",
                             ],
                         },
                         {
                             "name": "fake2",
                             "include_globs": [
-                                "fbcode/fake2",
+                                "project/fake2",
                             ],
                             "exclude_globs": [
                             ],
@@ -1070,7 +1070,7 @@ mod tests {
         let source = indoc! {r#"
             data = {
                 "DEFAULT": [],
-                "ovr_config//os:windows": [],
+                "config//os:windows": [],
             }
         "#};
         assert_eq!(run(source), source);
@@ -1081,7 +1081,7 @@ mod tests {
         let source = indoc! {r#"
             copts = select({
                 "DEFAULT": [],
-                "ovr_config//os:windows": [],
+                "config//os:windows": [],
             })
         "#};
         assert_eq!(run(source), source);
@@ -1194,14 +1194,14 @@ mod tests {
         // value and no trailing comma on the relocated entry.
         let source = indoc! {r#"
             exec_compatible_with = select({
-                "ovr_config//cpu/constraints:arm64": ["ovr_config//cpu/constraints:arm64"],
+                "config//cpu/constraints:arm64": ["config//cpu/constraints:arm64"],
                 "DEFAULT": None
             })
         "#};
         let expected = indoc! {r#"
             exec_compatible_with = select({
                 "DEFAULT": None,
-                "ovr_config//cpu/constraints:arm64": ["ovr_config//cpu/constraints:arm64"],
+                "config//cpu/constraints:arm64": ["config//cpu/constraints:arm64"],
             })
         "#};
         assert_eq!(run(source), expected);

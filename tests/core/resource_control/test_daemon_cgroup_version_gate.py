@@ -6,13 +6,11 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-# pyre-strict
-
 import json
 import typing
 
-from buck2.tests.e2e_util.api.buck import Buck
-from buck2.tests.e2e_util.buck_workspace import buck_test
+from e2e_util.api.buck import Buck
+from e2e_util.buck_workspace import buck_test
 
 
 @buck_test(skip_for_os=["darwin", "windows"], disable_daemon_cgroup=False)
@@ -83,11 +81,6 @@ async def test_version_gate_not_set_status_off(buck: Buck) -> None:
 
     snapshot = await start_daemon_and_get_snapshot(buck)
     assert snapshot["allprocs_cgroup"] is None
-
-
-# Placeholder for tests to be listed successfully on non-Linux platforms.
-async def test_noop() -> None:
-    pass
 
 
 async def start_daemon_and_get_snapshot(buck: Buck) -> dict[str, typing.Any]:

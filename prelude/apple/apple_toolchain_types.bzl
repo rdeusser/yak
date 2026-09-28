@@ -27,8 +27,8 @@ AppleToolchainInfo = provider(
         "dwarfdump": provider_field(RunInfo | None, default = None),
         "extra_linker_outputs": provider_field(list[str]),
         "ibtool": provider_field(RunInfo),
-        "installer": provider_field(Label),
-        "installer_tool": provider_field(RunInfo),
+        "installer": provider_field(Label | None, default = None),
+        "installer_tool": provider_field(RunInfo | None, default = None),
         "libtool": provider_field(RunInfo),
         "lipo": provider_field(RunInfo),
         "mapc": provider_field(RunInfo | None, default = None),
@@ -43,7 +43,7 @@ AppleToolchainInfo = provider(
         # SDK name to be passed to tools (e.g. actool), equivalent to ApplePlatform::getExternalName() in v1.
         "sdk_name": provider_field(str),
         "sdk_path": provider_field(str | Artifact),
-        # TODO(T124581557) Make it non-optional once there is no "selected xcode" toolchain
+        # TODO Make it non-optional once there is no "selected xcode" toolchain
         "sdk_version": provider_field(str | None, default = None),
         "xcode_build_version": provider_field(str | None, default = None),
         "xcode_version": provider_field(str),
@@ -73,7 +73,6 @@ AppleToolsInfo = provider(
         "xcframework_maker": provider_field(RunInfo),
         "static_archive_linker": provider_field(RunInfo),
         "spm_packager": provider_field(RunInfo),
-        "bundle_telemetry_logger": provider_field(RunInfo | None, default = None),
         "swiftmodule_change_analysis": provider_field(RunInfo | None, default = None),
     },
 )

@@ -119,12 +119,12 @@ mod tests {
             [
                 StarlarkHashValue::new(""),
                 StarlarkHashValue::new("hello"),
-                StarlarkHashValue::new("fbcode//some/package/path:some_rule_name_12345"),
+                StarlarkHashValue::new("root//some/package/path:some_rule_name_12345"),
             ],
             [
                 StarlarkHashValue::new_unchecked(4037386314),
                 StarlarkHashValue::new_unchecked(2146119937),
-                StarlarkHashValue::new_unchecked(2842163668),
+                StarlarkHashValue::new_unchecked(586850045),
             ],
             "the hash function changed; persisted pagable data embedding \
              `StarlarkHashValue` must be versioned or invalidated"

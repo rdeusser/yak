@@ -1,0 +1,2 @@
+# This PACKAGE file does not call package(), so the targets under it keep the
+# visibility that ../PACKAGE sets.

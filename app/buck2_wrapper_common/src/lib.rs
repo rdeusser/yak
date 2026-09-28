@@ -21,7 +21,6 @@ use std::time::Duration;
 use std::time::Instant;
 
 use buck2_hash::BuckMutSet;
-use is_buck2::WhoIsAsking;
 use sysinfo::ProcessRefreshKind;
 use sysinfo::ProcessesToUpdate;
 use sysinfo::System;
@@ -32,7 +31,7 @@ use crate::pid::Pid;
 
 mod cleanall;
 pub mod invocation_id;
-pub mod is_buck2;
+mod is_buck2;
 pub mod kill;
 pub mod pid;
 mod process;
@@ -58,7 +57,6 @@ pub const CLEAN_STALE_HELP: &str =
     "Delete artifacts from buck-out using the configured clean-stale policy";
 pub const EXPERIMENTS_FILENAME: &str = "experiments_from_buck_start";
 pub const DOT_BUCKCONFIG_D: &str = ".buckconfig.d";
-pub const SETTINGS_ROLLOUTS_FILENAME: &str = ".bucksettings.rollouts";
 
 /// Returns the home directory used for Buck2 state.
 pub fn buck2_home_dir() -> Option<PathBuf> {
@@ -183,7 +181,7 @@ fn get_all_tgids_linux() -> Option<BuckMutSet<sysinfo::Pid>> {
 ///
 /// Working directories are only collected when `collect_cwd` is set, as sysinfo has to read
 /// them per-process.
-fn find_buck2_processes(who_is_asking: WhoIsAsking, collect_cwd: bool) -> Vec<ProcessInfo> {
+fn find_buck2_processes(collect_cwd: bool) -> Vec<ProcessInfo> {
     let mut system = System::new();
     let linux_tgids =
         get_all_tgids_linux().map(|pids| pids.into_iter().collect::<Vec<sysinfo::Pid>>());
@@ -213,7 +211,7 @@ fn find_buck2_processes(who_is_asking: WhoIsAsking, collect_cwd: bool) -> Vec<Pr
         let Some(exe) = process.exe() else {
             continue;
         };
-        if is_buck2_exe(exe, who_is_asking) && !current_parents.contains(sys_pid) {
+        if is_buck2_exe(exe) && !current_parents.contains(sys_pid) {
             let Ok(pid) = Pid::from_u32(sys_pid.as_u32()) else {
                 continue;
             };
@@ -265,8 +263,8 @@ fn find_buck2_processes(who_is_asking: WhoIsAsking, collect_cwd: bool) -> Vec<Pr
 /// Kills all running Buck2 processes matching `filter`, except this process's hierarchy.
 /// Processes the filter cannot attribute are reported and left alone. Returns whether it
 /// succeeded without errors.
-pub fn killall(who_is_asking: WhoIsAsking, filter: &KillallFilter, write: impl Fn(String)) -> bool {
-    let found = find_buck2_processes(who_is_asking, filter.project_root.is_some());
+pub fn killall(filter: &KillallFilter, write: impl Fn(String)) -> bool {
+    let found = find_buck2_processes(filter.project_root.is_some());
     let found_any = !found.is_empty();
 
     let mut buck2_processes = Vec::new();
@@ -534,7 +532,7 @@ mod tests {
         let child_pid = child.id();
         let _guard = ChildGuard { child, temp_dir };
 
-        let processes = find_buck2_processes(WhoIsAsking::Buck2, true);
+        let processes = find_buck2_processes(true);
         let child_process = processes
             .iter()
             .find(|process| process.pid.to_u32() == child_pid)

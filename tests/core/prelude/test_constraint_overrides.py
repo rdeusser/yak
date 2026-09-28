@@ -6,14 +6,11 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-# pyre-strict
-
 import json
-from pathlib import Path
 
-from buck2.tests.e2e_util.api.buck import Buck
-from buck2.tests.e2e_util.asserts import expect_failure
-from buck2.tests.e2e_util.buck_workspace import buck_test
+from e2e_util.api.buck import Buck
+from e2e_util.asserts import expect_failure
+from e2e_util.buck_workspace import buck_test
 
 REGISTRIES = ["", "prelude//:constraint_override_registry", "root//:registry"]
 
@@ -95,78 +92,3 @@ async def test_legacy_constraint_override_private_visibility(buck: Buck) -> None
         ),
         stderr_regex="not visible",
     )
-
-
-def _write_python_constraints(root: Path) -> None:
-    packages = {
-        "os/constraints": """setting(name = "os")
-value(name = "linux", setting = ":os")""",
-        "build_mode/constraints": """setting(name = "mode")
-value(name = "dev", setting = ":mode")
-value(name = "opt", setting = ":mode")
-setting(name = "link")
-value(name = "static", setting = ":link")
-group(name = "default_link_style", entries = {"static": ":static"})
-setting(name = "info")
-value(name = "full", setting = ":info")
-group(name = "fbcode-build-info-mode", entries = {"full": ":full"})
-setting(name = "debug")
-value(name = "supported", setting = ":debug")
-group(name = "native-debugging", entries = {"supported": ":supported"})""",
-        "build_mode": """setting(name = "sanitizer")
-value(name = "no-san", setting = ":sanitizer")
-value(name = "asan-ubsan-dev", setting = ":sanitizer")
-group(name = "sanitizer_type", entries = {"no-san": ":no-san", "asan-ubsan-dev": ":asan-ubsan-dev"})""",
-        "platform/execution/constraints": """setting(name = "execution")
-value(name = "execution-platform-transitioned", setting = ":execution")""",
-        "build_mode/default_opt_cxx": """setting(name = "opt_cxx")
-value(name = "enabled", setting = ":opt_cxx")""",
-    }
-    for package, definitions in packages.items():
-        path = root / "configuration" / package / "BUCK"
-        path.parent.mkdir(parents=True, exist_ok=True)
-        definitions = definitions.replace(")\n", ', visibility = ["PUBLIC"])\n')
-        if definitions.endswith(")"):
-            definitions = definitions[:-1] + ', visibility = ["PUBLIC"])'
-        path.write_text(
-            'load("@root//:defs.bzl", "setting", "value", "group")\n'
-            + definitions
-            + "\n"
-        )
-
-
-@buck_test()
-async def test_python_constraint_override_registry(buck: Buck) -> None:
-    _write_python_constraints(buck.cwd)
-    config = buck.cwd / ".buckconfig"
-    config.write_text(
-        config.read_text()
-        .replace("  prelude = prelude", "  prelude = prelude\n  config = configuration")
-        .replace("ovr_config = prelude", "ovr_config = config")
-    )
-    targets = buck.cwd / "TARGETS.fixture"
-    with targets.open("a") as output:
-        output.write("""
-load(":defs.bzl", "python_probe")
-platform(name = "python_dev", values = ["config//os/constraints:linux", "config//build_mode/constraints:dev", "config//build_mode:sanitizer_type[no-san]"], visibility = ["PUBLIC"])
-python_selection = select({"config//build_mode/constraints:dev": ["dev"], "config//build_mode/constraints:opt": ["opt"], "DEFAULT": ["unknown"]})
-python_probe(name = "python_unchanged", selected = python_selection)
-python_probe(name = "python_opt", selected = python_selection, opt_by_default_enabled = True)
-""")
-    # @oss-disable[end= ]: expected_opt = ["opt"]
-    expected_opt = ["dev"] # @oss-enable
-    for registry in REGISTRIES:
-        result = await buck.build(
-            "root//:python_unchanged",
-            "root//:python_opt",
-            "--target-platforms",
-            "root//:python_dev",
-            "-c",
-            f"buck2.constraint_override_registry={registry}",
-        )
-        for name, expected in [
-            ("python_unchanged", ["dev"]),
-            ("python_opt", expected_opt),
-        ]:
-            output = result.get_build_report().output_for_target(f"root//:{name}")
-            assert json.loads(output.read_text()) == expected

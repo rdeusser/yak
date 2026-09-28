@@ -104,7 +104,7 @@ struct AndroidInstallOptions {
     #[clap(
         short,
         long,
-        help = "Android activity to launch e.g. com.facebook/.LoginActivity. Implies -r. Here for compatibility with buck1 - it is automatically forwarded to the installer"
+        help = "Android activity to launch e.g. com.example/.LoginActivity. Implies -r. Here for compatibility with buck1 - it is automatically forwarded to the installer"
     )]
     activity: Option<String>,
 

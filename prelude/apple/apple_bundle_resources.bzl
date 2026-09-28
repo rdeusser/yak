@@ -153,7 +153,6 @@ def get_apple_bundle_resource_part_list(ctx: AnalysisContext) -> AppleBundleReso
         signing_context_parts = first_level_signing_context_parts,
     )
 
-# Same logic as in v1, see `buck_client/src/com/facebook/buck/apple/ApplePkgInfo.java`
 def _create_pkg_info_if_needed(ctx: AnalysisContext) -> list[AppleBundlePart]:
     extension = get_extension_attr(ctx)
     if extension == "xpc" or extension == "qlgenerator":
@@ -471,8 +470,8 @@ def _run_ibtool(
     command_for_identifier: str,
     output_is_dir: bool,
 ) -> None:
-    # TODO(T110378103): detect and add minimum deployment target automatically
-    # TODO(T110378113): add support for ibtool modules (turned on by `ibtool_module_flag` field of `apple_bundle` rule)
+    # TODO: detect and add minimum deployment target automatically
+    # TODO: add support for ibtool modules (turned on by `ibtool_module_flag` field of `apple_bundle` rule)
 
     # Equivalent of `AppleProcessResources::BASE_IBTOOL_FLAGS` from v1
     base_flags = ["--output-format", "human-readable-text", "--notices", "--warnings", "--errors"]
@@ -493,7 +492,6 @@ def _run_ibtool(
 
     # Sandboxing and fs isolation on RE machines results in Xcode tools failing
     # when those are working in freshly created directories in buck-out.
-    # See https://fb.workplace.com/groups/1042353022615812/permalink/1872164996301273/
     # As a workaround create a directory in tmp, use it for Xcode tools, then
     # copy the result to buck-out.
     script_lines = [

@@ -35,8 +35,8 @@ pub enum SectionEncoding {
     Raw,
     /// The section holds the payload as a single zstd frame.
     ///
-    /// Raw zstd rather than Managed Compression: this must decode with no
-    /// configuration or network access, and outside Meta.
+    /// Plain zstd, so the payload decodes with no configuration or network
+    /// access.
     Zstd,
 }
 

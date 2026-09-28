@@ -70,7 +70,7 @@ def _generate_script(
             # The format of the directory tree is different in v1 and v2. We
             # should unify the two, but prior to doing this we should also
             # identify what the right format is. For now, this variable lets
-            # callees disambiguate (see D28960177 for more context).
+            # callees disambiguate.
             "export BUCK_SH_BINARY_VERSION_UNSTABLE=2",
             cmd_args('export BUCK_PROJECT_ROOT="$__SCRIPT_DIR/', resources_dir, '"', delimiter = ""),
             # Normalize backslashes to forward slashes for the Windows-host /

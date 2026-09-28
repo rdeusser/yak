@@ -228,20 +228,20 @@ fn read_config_and_report_deprecated<'d>(
     let msg = config.lookup(ctx, key)?;
     if let Some(msg) = msg {
         // soft error category can only contain ascii lowercese characters
-        let section = transform_logview_category(key.section);
-        let prop = transform_logview_category(key.property);
+        let section = sanitize_category_part(key.section);
+        let prop = sanitize_category_part(key.property);
 
         soft_error!(
             format!("deprecated_config_{section}_{prop}").as_str(),
             DeprecatedConfigError(property, msg).into(),
             quiet: true,
-            error_on_oss: true
+            hard_error: true
         )?;
     }
     Ok(result)
 }
 
-fn transform_logview_category(s: &str) -> String {
+fn sanitize_category_part(s: &str) -> String {
     s.chars()
         .filter(|c| c.is_ascii_lowercase() || *c == '_')
         .collect::<String>()

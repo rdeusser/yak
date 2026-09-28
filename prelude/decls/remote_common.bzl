@@ -43,14 +43,6 @@ def _urls_arg():
      a new URL is not used. Supported protocols are "http", "https", and "mvn".
 """,
         ),
-        "vpnless_urls": attrs.list(
-            attrs.string(),
-            default = [],
-            doc = """
-    Additional URLs from which this resource can be downloaded when
-     off VPN. Meta-internal only.
-""",
-        ),
     }
 
 def _unarchive_args():

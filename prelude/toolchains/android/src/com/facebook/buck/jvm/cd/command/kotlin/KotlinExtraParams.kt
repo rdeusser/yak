@@ -25,15 +25,12 @@ data class KotlinExtraParams(
     val annotationProcessingClassPath: AbsPath,
     val extraKotlincArguments: ImmutableList<String>,
     val kotlinCompilerPlugins: ImmutableMap<AbsPath, ImmutableMap<String, String>>,
-    val kosabiPluginOptions: ImmutableMap<String, AbsPath>,
-    val kosabiJvmAbiGenEarlyTerminationMessagePrefix: Optional<String>,
     val friendPaths: ImmutableSortedSet<AbsPath>,
     val kotlinHomeLibraries: ImmutableList<AbsPath>,
     val resolvedJavacOptions: ResolvedJavacOptions,
     val jvmTarget: Optional<String>,
     val shouldUseJvmAbiGen: Boolean,
     val jvmAbiGenPlugin: Optional<AbsPath>,
-    val shouldVerifySourceOnlyAbiConstraints: Boolean,
     val depTrackerPlugin: Optional<AbsPath>,
     val shouldKotlincRunIncrementally: Boolean,
     val incrementalStateDir: Optional<AbsPath>,
@@ -41,7 +38,6 @@ data class KotlinExtraParams(
     private val languageVersionString: String,
     val kotlinClassesDir: AbsPath,
     val javaBinary: Optional<String>,
-    val applicabilityClasspath: ImmutableList<AbsPath> = ImmutableList.of(),
 ) : CompileToJarStepFactory.ExtraParams {
 
   val shouldActionRunIncrementally: Boolean =

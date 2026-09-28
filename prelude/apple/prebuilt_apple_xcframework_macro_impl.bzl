@@ -10,7 +10,7 @@ load("@prelude//apple:arch.bzl", "AppleArch")
 load("@prelude//utils:glob_defs.bzl", "subdir_glob")
 load("@prelude//utils:selects.bzl", "selects")
 
-def _generate_framework_and_dsym_select_maps(prebuilt_xcframework_args, platform_filter, default_arch, default_target_platform, genrule):
+def _generate_framework_and_dsym_select_maps(prebuilt_xcframework_args, platform_filter, default_arch, genrule):
     """
     Generate genrules for frameworks and dsyms, and return select maps for the attributes.
     Returns a tuple of (framework_select_map, dsym_select_map) where each maps config conditions to targets/artifacts.
@@ -32,20 +32,19 @@ def _generate_framework_and_dsym_select_maps(prebuilt_xcframework_args, platform
                 name = assemble_name,
                 bash = bash_cmd,
                 out = framework_name + ".framework",
-                default_target_platform = default_target_platform,
                 has_content_based_path = True,
             )
 
             dsym_artifacts = selects.apply(
                 framework_platforms_to_dsym_filenames,
-                partial(_generate_dsym_artifacts, name, platform["folder"], xcframework, default_target_platform, genrule),
+                partial(_generate_dsym_artifacts, name, platform["folder"], xcframework, genrule),
             )
 
             for arch in platform["archs"]:
                 if arch not in ["arm64", "arm64e", "x86_64"]:
                     fail("Unsupported " + platform["platform"] + " arch: " + arch)
 
-                config_key = "ovr_config//cpu:" + arch
+                config_key = "config//cpu:" + arch
                 framework_select_map[config_key] = ":" + assemble_name
                 dsym_select_map[config_key] = dsym_artifacts
 
@@ -59,20 +58,19 @@ def _generate_framework_and_dsym_select_maps(prebuilt_xcframework_args, platform
 
     return (framework_select_map, dsym_select_map)
 
-def _generate_dsym_artifacts(name, platform_folder, xcframework, default_target_platform, genrule, framework_platforms_to_dsym_filenames):
+def _generate_dsym_artifacts(name, platform_folder, xcframework, genrule, framework_platforms_to_dsym_filenames):
     return [
-        _generate_dsym_artifact(name, platform_folder, xcframework, default_target_platform, dsym_filename, genrule)
+        _generate_dsym_artifact(name, platform_folder, xcframework, dsym_filename, genrule)
         for dsym_filename in framework_platforms_to_dsym_filenames.get(platform_folder, [])
     ]
 
-def _generate_dsym_artifact(name, platform_folder, xcframework, default_target_platform, dsym_filename, genrule):
+def _generate_dsym_artifact(name, platform_folder, xcframework, dsym_filename, genrule):
     bash_cmd_dsyms = "mkdir $OUT && cp -R $(location {})/{}/dSYMs/{}/* $OUT/".format(xcframework, platform_folder, dsym_filename)
     dsym_name = "{}-{}-dsym".format(name, platform_folder)
     genrule(
         name = dsym_name,
         bash = bash_cmd_dsyms,
         out = dsym_filename,
-        default_target_platform = default_target_platform,
         has_content_based_path = True,
     )
     return ":" + dsym_name
@@ -82,7 +80,6 @@ def _generate_iphonesimulator_select_maps(prebuilt_xcframework_args, **kwargs):
         prebuilt_xcframework_args = prebuilt_xcframework_args,
         platform_filter = lambda platform: platform["platform"] == "ios" and platform["isSimulator"] and not platform["isCatalyst"],
         default_arch = AppleArch("arm64"),
-        default_target_platform = "ovr_config//platform/iphoneos:iphonesimulator-arm64",
         **kwargs,
     )
 
@@ -91,7 +88,6 @@ def _generate_iphone_select_maps(prebuilt_xcframework_args, **kwargs):
         prebuilt_xcframework_args = prebuilt_xcframework_args,
         platform_filter = lambda platform: platform["platform"] == "ios" and not platform["isSimulator"] and not platform["isCatalyst"],
         default_arch = None,
-        default_target_platform = "ovr_config//platform/iphoneos:iphoneos-arm64",
         **kwargs,
     )
 
@@ -100,7 +96,6 @@ def _generate_mac_select_maps(prebuilt_xcframework_args, **kwargs):
         prebuilt_xcframework_args = prebuilt_xcframework_args,
         platform_filter = lambda platform: platform["platform"] == "macos",
         default_arch = None,
-        default_target_platform = "ovr_config//platform/macos:arm64-fbsource",
         **kwargs,
     )
 
@@ -109,7 +104,6 @@ def _generate_maccatalyst_select_maps(prebuilt_xcframework_args, **kwargs):
         prebuilt_xcframework_args = prebuilt_xcframework_args,
         platform_filter = lambda platform: platform["platform"] == "ios" and not platform["isSimulator"] and platform["isCatalyst"],
         default_arch = None,
-        default_target_platform = "ovr_config//platform/macos:arm64-catalyst",
         **kwargs,
     )
 
@@ -180,18 +174,18 @@ def prebuilt_apple_xcframework_macro_impl(
     if default_framework_map == None:
         fail("No valid platforms found in xcframework")
 
-    # Build combined maps for iphonesimulator+maccatalyst (used for ovr_config//os:iphoneos and iphonesimulator SDK)
+    # Build combined maps for iphonesimulator+maccatalyst (used for config//os:iphoneos and iphonesimulator SDK)
     iphonesimulator_and_maccatalyst_framework_map = iphonesimulator_framework_map
     iphonesimulator_and_maccatalyst_dsym_map = iphonesimulator_dsym_map
     if len(maccatalyst_framework_map) > 0:
         if len(iphonesimulator_framework_map) > 0:
             iphonesimulator_and_maccatalyst_framework_map = {
                 "DEFAULT": select(iphonesimulator_framework_map),
-                "ovr_config//runtime/constraints:maccatalyst": select(maccatalyst_framework_map),
+                "config//runtime/constraints:maccatalyst": select(maccatalyst_framework_map),
             }
             iphonesimulator_and_maccatalyst_dsym_map = {
                 "DEFAULT": select(iphonesimulator_dsym_map),
-                "ovr_config//runtime/constraints:maccatalyst": select(maccatalyst_dsym_map),
+                "config//runtime/constraints:maccatalyst": select(maccatalyst_dsym_map),
             }
         else:
             iphonesimulator_and_maccatalyst_framework_map = maccatalyst_framework_map
@@ -204,11 +198,11 @@ def prebuilt_apple_xcframework_macro_impl(
         if len(iphone_framework_map) > 0:
             iphone_and_maccatalyst_framework_map = {
                 "DEFAULT": select(iphone_framework_map),
-                "ovr_config//runtime/constraints:maccatalyst": select(maccatalyst_framework_map),
+                "config//runtime/constraints:maccatalyst": select(maccatalyst_framework_map),
             }
             iphone_and_maccatalyst_dsym_map = {
                 "DEFAULT": select(iphone_dsym_map),
-                "ovr_config//runtime/constraints:maccatalyst": select(maccatalyst_dsym_map),
+                "config//runtime/constraints:maccatalyst": select(maccatalyst_dsym_map),
             }
         else:
             iphone_and_maccatalyst_framework_map = maccatalyst_framework_map
@@ -219,18 +213,18 @@ def prebuilt_apple_xcframework_macro_impl(
     dsym_select_map = {"DEFAULT": select(default_dsym_map)}
 
     if len(iphonesimulator_and_maccatalyst_framework_map) > 0:
-        framework_select_map["ovr_config//os:iphoneos"] = select(iphonesimulator_and_maccatalyst_framework_map)
-        framework_select_map["ovr_config//os/sdk/apple:iphonesimulator"] = select(iphonesimulator_and_maccatalyst_framework_map)
-        dsym_select_map["ovr_config//os:iphoneos"] = select(iphonesimulator_and_maccatalyst_dsym_map)
-        dsym_select_map["ovr_config//os/sdk/apple:iphonesimulator"] = select(iphonesimulator_and_maccatalyst_dsym_map)
+        framework_select_map["config//os:iphoneos"] = select(iphonesimulator_and_maccatalyst_framework_map)
+        framework_select_map["config//os/sdk/apple/constraints:iphonesimulator"] = select(iphonesimulator_and_maccatalyst_framework_map)
+        dsym_select_map["config//os:iphoneos"] = select(iphonesimulator_and_maccatalyst_dsym_map)
+        dsym_select_map["config//os/sdk/apple/constraints:iphonesimulator"] = select(iphonesimulator_and_maccatalyst_dsym_map)
 
     if len(iphone_and_maccatalyst_framework_map) > 0:
-        framework_select_map["ovr_config//os/sdk/apple:iphoneos"] = select(iphone_and_maccatalyst_framework_map)
-        dsym_select_map["ovr_config//os/sdk/apple:iphoneos"] = select(iphone_and_maccatalyst_dsym_map)
+        framework_select_map["config//os/sdk/apple/constraints:iphoneos"] = select(iphone_and_maccatalyst_framework_map)
+        dsym_select_map["config//os/sdk/apple/constraints:iphoneos"] = select(iphone_and_maccatalyst_dsym_map)
 
     if len(mac_framework_map) > 0:
-        framework_select_map["ovr_config//os:macos"] = select(mac_framework_map)
-        dsym_select_map["ovr_config//os:macos"] = select(mac_dsym_map)
+        framework_select_map["config//os:macos"] = select(mac_framework_map)
+        dsym_select_map["config//os:macos"] = select(mac_dsym_map)
 
     # Create a single prebuilt_apple_framework with select() for framework and dsyms
     prebuilt_apple_framework_rule(

@@ -10,7 +10,7 @@ def _impl(ctx):
     return [
         DefaultInfo(),
         ExternalRunnerTestInfo(
-            command = ["fbpython", "-c", ctx.attrs.script],
+            command = ["python3", "-c", ctx.attrs.script],
             type = "custom",
         ),
     ]

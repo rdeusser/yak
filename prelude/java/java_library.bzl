@@ -40,7 +40,6 @@ load("@prelude//java/utils:java_more_utils.bzl", "get_path_separator_for_exec_os
 load(
     "@prelude//java/utils:java_utils.bzl",
     "CustomJdkInfo",  # @unused Used as a type,
-    "build_bootclasspath",
     "declare_prefixed_name",
     "derive_javac",
     "get_abi_generation_mode",
@@ -220,8 +219,7 @@ def _append_javac_params(
             additional_classpath_entries_list = custom_jdk_info.bootclasspath
             shared_javac_args.add("--system", custom_jdk_info.system_image)
     else:
-        custom_bootclasspath = custom_jdk_info.bootclasspath if custom_jdk_info else []
-        bootclasspath_list = build_bootclasspath(custom_bootclasspath, source_level, java_toolchain)
+        bootclasspath_list = custom_jdk_info.bootclasspath if custom_jdk_info else []
         if bootclasspath_list:
             cmd.add(
                 _process_classpath(
@@ -597,7 +595,7 @@ def _check_exported_deps(exported_deps: list[Dependency], attr_name: str):
             "{} has 'may_not_be_exported' label and should not be present in {}.".format(exported_dep.label.raw_target(), attr_name),
         )
 
-# TODO(T145137403) remove need for this
+# TODO: remove need for this
 def _skip_java_library_dep_checks(ctx: AnalysisContext) -> bool:
     return "skip_buck2_java_library_dep_checks" in ctx.attrs.labels
 
@@ -633,7 +631,7 @@ def java_library_impl(ctx: AnalysisContext) -> list[Provider]:
     """
     packaging_deps = ctx.attrs.deps + ctx.attrs.exported_deps + ctx.attrs.runtime_deps
 
-    # TODO(T107163344) this shouldn't be in java_library itself, use overlays to remove it.
+    # TODO: this shouldn't be in java_library itself, use overlays to remove it.
     android_packageable_info = merge_android_packageable_info(ctx.label, ctx.actions, packaging_deps)
     if ctx.attrs._build_only_native_code:
         shared_library_info, cxx_resource_info, linkable_graph = create_native_providers(ctx, ctx.label, packaging_deps)

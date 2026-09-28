@@ -25,7 +25,7 @@ def _nondeterministic_impl(ctx):
     out = ctx.actions.declare_output("out.txt", has_content_based_path = False)
     ctx.actions.run(
         cmd_args(
-            "fbpython",
+            "python3",
             "-c",
             'import uuid,sys; open(sys.argv[2],"w").write(uuid.uuid4().hex + "\\n" + open(sys.argv[1]).read())',
             ctx.attrs.src,

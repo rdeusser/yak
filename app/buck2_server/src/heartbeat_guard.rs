@@ -30,7 +30,7 @@ pub(crate) struct HeartbeatGuard {
 
 const STALL_THRESHOLD: Duration = Duration::from_secs(120);
 
-const RAGE_HINT: &str = "If the command hangs, run `buck2 rage` before killing the daemon, so the report includes a thread dump.";
+const THREAD_DUMP_HINT: &str = "If the command hangs, run `buck2 debug thread-dump` before killing the daemon to record what its threads are doing.";
 
 fn check_slow_snapshot(elapsed: Duration, consecutive_slow: &mut u32) {
     // Slow snapshots are generally a sign of DICE core thread queue being backed up.
@@ -46,7 +46,7 @@ fn check_slow_snapshot(elapsed: Duration, consecutive_slow: &mut u32) {
                     "Snapshot collection exceeded 1s for {} consecutive snapshots (last: {:.1}s). It's likely that the DICE core thread is stalled. {}",
                     *consecutive_slow,
                     elapsed.as_secs_f64(),
-                    RAGE_HINT
+                    THREAD_DUMP_HINT
                 ),
                 quiet: false
             )
@@ -67,7 +67,7 @@ fn report_stalled_snapshot() {
             buck2_error::ErrorTag::Tier0,
             "Snapshot collection has not completed in {}s. It's likely that the DICE core thread is stalled. {}",
             STALL_THRESHOLD.as_secs(),
-            RAGE_HINT
+            THREAD_DUMP_HINT
         ),
         quiet: false
     )

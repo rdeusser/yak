@@ -62,8 +62,7 @@ use crate::legacy_configs::path::ProjectConfigSource;
 pub struct ExternalBuckconfigData {
     // The result of parsing the buckconfigs coming from either global (e.g. /etc/buckconfig.d) or
     // user (e.g. ~/.buckconfig.d or $home_dir/.buckconfig.local) files/dirs outside of the repo
-    // The order matters here and reflects the same order these are processed in buck, see
-    // https://fburl.com/code/8ue78p1j
+    // The order matters here and reflects the same order these are processed in buck.
     external_path_configs: Vec<ExternalPathBuckconfigData>,
     // The result of parsing the buckconfigs coming from command line args (e.g. --config or --config-file)
     args: Vec<ResolvedLegacyConfigArg>,
@@ -348,7 +347,7 @@ impl BuckConfigBasedCells {
         let mut cell_definitions = Vec::new();
 
         // `cells` is preferred over `repositories` since it's more clear, however it's unlikely
-        // that we'll ever remove `repositories` since that's probably unnecessary breakage in OSS.
+        // that we'll ever remove `repositories` since that would break existing projects.
         //
         // Note that `cells` is buck2-only
         let repositories = root_config

@@ -6,15 +6,15 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-# pyre-strict
-
-
 import os
 from typing import Any, Dict
 
-from buck2.tests.e2e_util.api.buck import Buck
-from buck2.tests.e2e_util.buck_workspace import buck_test
-from buck2.tests.e2e_util.helper.utils import filter_events, random_string
+import pytest
+from e2e_util.api.buck import Buck
+from e2e_util.buck_workspace import buck_test
+from e2e_util.helper.utils import filter_events, random_string
+
+pytestmark = pytest.mark.needs_binary("USE_SOME_MEMORY_BIN")
 
 
 # `memory_peak` is derived from the action cgroup's `memory.current`, which includes page
@@ -115,9 +115,3 @@ async def test_memory_reporting_in_test(buck: Buck) -> None:
     memory_peak = details["metadata"]["execution_stats"]["memory_peak"]
     assert memory_peak > _MEMORY_PEAK_MIN
     assert memory_peak < _MEMORY_PEAK_MAX
-
-
-@buck_test()
-def test_nop(buck: Buck) -> None:
-    # Pytest gets upset if we have no windows or mac tests in this file
-    pass

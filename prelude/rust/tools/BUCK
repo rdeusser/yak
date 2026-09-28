@@ -7,8 +7,6 @@ load(
     "linkable_symbol_supports_no_std",
 )
 
-oncall("build_infra")
-
 source_listing()
 
 prelude = native

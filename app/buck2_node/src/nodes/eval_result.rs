@@ -53,8 +53,7 @@ pub fn is_generated_target(node: TargetNodeRef) -> bool {
 }
 
 #[derive(Debug, buck2_error::Error)]
-// WARN: CI uses this message to filter targets
-// If you change this message, please also update https://fburl.com/code/z0azzcc3
+// Tests under `tests/core` match this message.
 #[error(
     "Unknown target `{target}` from package `{package}`.\n\
 Did you mean one of the {num_targets} targets in {buildfile_path}?{similar_targets}{all_targets}"

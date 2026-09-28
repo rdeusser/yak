@@ -1453,15 +1453,11 @@ pub async fn materialize_inputs(
         match res {
             Ok(()) => {}
             Err(MaterializationError::NotFound { source }) => {
-                let corrupted = source.info.origin.guaranteed_by_action_cache();
-
                 return Err(tag_error!(
                     "cas_missing_fatal",
                     MaterializationError::NotFound { source }.into(),
                     quiet: true,
-                    task: false,
                     daemon_in_memory_state_is_corrupted: true,
-                    action_cache_is_corrupted: corrupted
                 ));
             }
             Err(e) => {
@@ -1515,7 +1511,6 @@ async fn check_inputs(
                                     "missing_local_inputs",
                                     fs_util::symlink_metadata(&abs_path).categorize_internal().buck_error_context("Missing input"),
                                     quiet: true,
-                                    task: false,
                                     daemon_materializer_state_is_corrupted: true
                                 );
                             }
@@ -1881,38 +1876,7 @@ mod tests {
         Ok(())
     }
 
-    #[cfg(fbcode_build)]
-    #[tokio::test]
-    async fn test_exec_cmd_timeout() -> buck2_error::Result<()> {
-        let (executor, _, _tmpdir) = test_executor()?;
-
-        let interpreter = if cfg!(windows) { "powershell" } else { "sh" };
-        let command = if cfg!(windows) {
-            "Start-Sleep -Seconds 2"
-        } else {
-            "sleep 2"
-        };
-        let CommandResult { status, .. } = executor
-            .exec(
-                interpreter,
-                ["-c", command],
-                &BuckMutMap::<String, String>::default(),
-                ProjectRelativePath::empty(),
-                Some(Duration::from_secs(1)),
-                None,
-                NoopLivelinessObserver::create(),
-                false,
-                None,
-                futures::stream::pending(),
-                None,
-            )
-            .await?;
-        assert_matches!(status, GatherOutputStatus::TimedOut ( duration ) if duration == Duration::from_secs(1));
-
-        Ok(())
-    }
-
-    #[cfg(unix)] // TODO: something similar on Windows: T123279320
+    #[cfg(unix)] // TODO: something similar on Windows
     #[tokio::test]
     async fn test_exec_cmd_environment_filtering() -> buck2_error::Result<()> {
         use buck2_execute::execute::environment_inheritance::EnvironmentInheritance;

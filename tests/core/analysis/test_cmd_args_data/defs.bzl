@@ -11,7 +11,7 @@ def _output_artifact_in_relative_to(ctx):
     output = ctx.actions.declare_output("myout", has_content_based_path = False)
 
     c = cmd_args(
-        "fbpython",
+        "python3",
         "-c",
         cmd_args(
             "import sys",

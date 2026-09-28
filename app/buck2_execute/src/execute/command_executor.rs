@@ -16,10 +16,6 @@ use buck2_common::file_ops::metadata::TrackedFileDigest;
 use buck2_core::execution_types::executor_config::CommandGenerationOptions;
 use buck2_core::execution_types::executor_config::ExecutorNetworkAccess;
 use buck2_core::execution_types::executor_config::OutputPathsBehavior;
-use buck2_core::execution_types::executor_config::ReGangWorker;
-use buck2_core::execution_types::executor_config::RemoteExecutorCafFbpkg;
-use buck2_core::execution_types::executor_config::RemoteExecutorCustomImage;
-use buck2_core::execution_types::executor_config::RemoteExecutorDependency;
 use buck2_core::fs::artifact_path_resolver::ArtifactFs;
 use buck2_core::fs::project_rel_path::ProjectRelativePath;
 use buck2_core::fs::project_rel_path::ProjectRelativePathBuf;
@@ -194,7 +190,6 @@ impl CommandExecutor {
         &self,
         request: &CommandExecutionRequest,
         digest_config: DigestConfig,
-        re_outputs_required: bool,
     ) -> buck2_error::Result<PreparedAction> {
         executor_stage(buck2_data::PrepareAction {}, || {
             let input_digest = request.paths().input_directory().fingerprint();
@@ -247,17 +242,7 @@ impl CommandExecutor {
                 self.0.options.output_paths_behavior,
                 network_access,
                 request.unique_input_inodes(),
-                request.remote_execution_dependencies(),
-                request.re_gang_workers(),
-                request.remote_execution_custom_image(),
-                &request
-                    .meta_internal_extra_params()
-                    .remote_execution_caf_fbpkgs,
                 request.remote_worker(),
-                re_outputs_required,
-                request
-                    .meta_internal_extra_params()
-                    .allow_unsandboxed_action_cache_uploads,
             )?;
 
             buck2_error::Ok(action)
@@ -279,13 +264,7 @@ fn re_create_action(
     output_paths_behavior: OutputPathsBehavior,
     network_access: Option<ExecutorNetworkAccess>,
     unique_input_inodes: bool,
-    remote_execution_dependencies: &Vec<RemoteExecutorDependency>,
-    re_gang_workers: &Vec<ReGangWorker>,
-    remote_execution_custom_image: &Option<RemoteExecutorCustomImage>,
-    remote_execution_caf_fbpkgs: &[RemoteExecutorCafFbpkg],
     worker: &Option<RemoteWorkerSpec>,
-    re_outputs_required: bool,
-    allow_unsandboxed_action_cache_uploads: bool,
 ) -> buck2_error::Result<PreparedAction> {
     let (worker_tool_init_action, command_args) = if let Some(worker) = worker {
         let mut action_and_blobs = ActionDigestAndBlobsBuilder::new(digest_config);
@@ -317,8 +296,6 @@ fn re_create_action(
             do_not_cache,
             ..Default::default()
         };
-        #[cfg(fbcode_build)]
-        set_action_network_access(&mut action, network_access);
         let action_and_blobs = action_and_blobs.build(&action);
         (Some(action_and_blobs), args)
     } else {
@@ -371,26 +348,15 @@ fn re_create_action(
             }
         }
         OutputPathsBehavior::OutputPaths => {
-            #[cfg(fbcode_build)]
-            {
-                return Err(buck2_error!(
-                    buck2_error::ErrorTag::Input,
-                    "output_paths is not supported in fbcode_build"
-                ));
-            }
-
-            #[cfg(not(fbcode_build))]
-            {
-                for (output, _output_type) in outputs {
-                    command.output_paths.push(output.as_str().to_owned());
-                }
+            for (output, _output_type) in outputs {
+                command.output_paths.push(output.as_str().to_owned());
             }
         }
     }
 
     let mut action_and_blobs = ActionDigestAndBlobsBuilder::new(digest_config);
 
-    let mut action = RE::Action {
+    let action = RE::Action {
         input_root_digest: Some(input_digest.to_grpc()),
         command_digest: Some(action_and_blobs.add_command(&command).to_grpc()),
         timeout: timeout
@@ -398,78 +364,11 @@ fn re_create_action(
             .transpose()
             .buck_error_context("Cannot convert timeout to GRPC")?,
         do_not_cache,
-        #[cfg(fbcode_build)]
-        allow_unsandboxed_action_cache_uploads,
-        #[cfg(fbcode_build)]
-        worker_tool_action_digest: worker_tool_init_action.clone().map(|a| a.action.to_grpc()),
         ..Default::default()
     };
 
-    #[cfg(fbcode_build)]
-    if let Some(custom_image) = remote_execution_custom_image {
-        action.caf_image_fbpkg = Some(RE::CafImageFbpkg {
-            id: Some(RE::CafFbpkgIdentifier {
-                name: custom_image.identifier.name.clone(),
-                uuid: custom_image.identifier.uuid.clone(),
-                ..Default::default()
-            }),
-            drop_host_mount_globs: custom_image.drop_host_mount_globs.clone(),
-            ..Default::default()
-        });
-    }
-
-    #[cfg(not(fbcode_build))]
-    {
-        let _unused = remote_execution_custom_image;
-    }
-
-    #[cfg(fbcode_build)]
-    {
-        action.caf_fbpkgs = remote_execution_caf_fbpkgs
-            .iter()
-            .map(|caf_fbpkg| RE::CafFbpkg {
-                id: Some(RE::CafFbpkgIdentifier {
-                    name: caf_fbpkg.name.clone(),
-                    uuid: caf_fbpkg.uuid.clone(),
-                    ..Default::default()
-                }),
-                ..Default::default()
-            })
-            .collect();
-    }
-
-    #[cfg(not(fbcode_build))]
-    {
-        let _unused = remote_execution_caf_fbpkgs;
-    }
-
-    if unique_input_inodes {
-        #[cfg(fbcode_build)]
-        {
-            action.copy_policy_resolver = RE::CopyPolicyResolver::SingleHardLinking.into();
-        }
-    }
-
-    #[cfg(fbcode_build)]
-    set_action_network_access(&mut action, network_access);
-
-    #[cfg(fbcode_build)]
-    {
-        action.respect_exec_bit = true;
-    }
-
-    #[cfg(fbcode_build)]
-    {
-        action.outputs_required = re_outputs_required;
-    }
-
-    #[cfg(not(fbcode_build))]
-    {
-        let _unused = &mut action;
-        let _unused = re_outputs_required;
-        let _unused = allow_unsandboxed_action_cache_uploads;
-        let _unused = network_access;
-    }
+    // The Remote Execution API has no field for unique input inodes.
+    let _ = unique_input_inodes;
 
     let action_and_blobs = action_and_blobs.build(&action);
 
@@ -479,28 +378,7 @@ fn re_create_action(
         platform: command
             .platform
             .expect("We did put a platform a few lines up"),
-        remote_execution_dependencies: remote_execution_dependencies.to_owned(),
-        re_gang_workers: re_gang_workers.to_owned(),
         worker_tool_init_action,
         network_access: network_access.map(NetworkAccess::from),
     })
-}
-
-#[cfg(fbcode_build)]
-fn set_action_network_access(
-    action: &mut RE::Action,
-    network_access: Option<ExecutorNetworkAccess>,
-) {
-    let Some(network_access) = network_access else {
-        return;
-    };
-
-    action.network_isolation = match network_access {
-        ExecutorNetworkAccess::All => RE::NetworkIsolationType::None,
-        ExecutorNetworkAccess::None | ExecutorNetworkAccess::Strict => {
-            RE::NetworkIsolationType::NetworkStrict
-        }
-        ExecutorNetworkAccess::Loopback => RE::NetworkIsolationType::Loopback,
-        ExecutorNetworkAccess::Private => RE::NetworkIsolationType::Private,
-    } as i32;
 }

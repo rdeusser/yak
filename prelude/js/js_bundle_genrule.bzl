@@ -6,10 +6,8 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-load("@prelude//:cache_mode.bzl", "CacheModeInfo")
 load("@prelude//:genrule_local_labels.bzl", "genrule_labels_require_local")
 load("@prelude//:genrule_prefer_local_labels.bzl", "genrule_labels_prefer_local")
-load("@prelude//:is_full_meta_repo.bzl", "is_full_meta_repo")
 load("@prelude//android:android_providers.bzl", "AndroidResourceInfo", "merge_android_packageable_info")
 load("@prelude//js:js_providers.bzl", "JsBundleInfo")
 load("@prelude//js:js_utils.bzl", "TRANSFORM_PROFILES", "get_apple_resource_providers_for_js_bundle", "get_bundle_name")
@@ -26,15 +24,6 @@ _WINDOWS_ENV_SUBSTITUTIONS = [
     (regex("\\$(SRCS\\b|\\{SRCS\\})"), "%SRCS%"),
     (regex("\\$(TMP\\b|\\{TMP\\})"), "%TMP%"),
 ]
-
-# We don't want to use cache mode in open source because the config keys that drive it aren't wired up
-_USE_CACHE_MODE = is_full_meta_repo()
-
-def _get_cache_mode(ctx: AnalysisContext) -> CacheModeInfo:
-    if _USE_CACHE_MODE:
-        return ctx.attrs._cache_mode[CacheModeInfo]
-    else:
-        return CacheModeInfo(allow_cache_uploads = False, cache_bust_genrules = False)
 
 def _run_genrule(ctx: AnalysisContext, out_name: str, extra_env_vars: dict, identifier: str) -> Artifact:
     local_only = genrule_labels_require_local(ctx.attrs.labels)
@@ -119,10 +108,6 @@ def _run_genrule(ctx: AnalysisContext, out_name: str, extra_env_vars: dict, iden
     if prefer_local:
         env_vars["__BUCK2_PREFER_LOCAL_CACHE_BUSTER"] = ""
 
-    # For now, when uploads are enabled, be safe and avoid sharing cache hits.
-    if cacheable and _get_cache_mode(ctx).cache_bust_genrules:
-        env_vars["__BUCK2_ALLOW_CACHE_UPLOADS_CACHE_BUSTER"] = ""
-
     for key, value in extra_env_vars.items():
         env_vars[key] = value
 
@@ -188,8 +173,6 @@ def _run_genrule(ctx: AnalysisContext, out_name: str, extra_env_vars: dict, iden
         metadata_args["metadata_env_var"] = ctx.attrs.metadata_env_var
     if ctx.attrs.metadata_path:
         metadata_args["metadata_path"] = ctx.attrs.metadata_path
-    if ctx.attrs.remote_execution_dependencies:
-        metadata_args["remote_execution_dependencies"] = ctx.attrs.remote_execution_dependencies
 
     # As of 09/2021, all genrule types were legal snake case if their dashes and periods were replaced with underscores.
     category = "genrule_" + ctx.attrs.type.replace("-", "_").replace(".", "_")

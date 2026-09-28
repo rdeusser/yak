@@ -1,0 +1,35 @@
+load("@prelude//utils:source_listing.bzl", "source_listing")
+
+source_listing()
+
+# Transitions in prelude//apple set these constraints and the Apple rules select on them.
+
+constraint(
+    name = "embed_xctest_frameworks",
+    default = "disabled",
+    values = [
+        "disabled",
+        "enabled",
+    ],
+    visibility = ["PUBLIC"],
+)
+
+constraint(
+    name = "swift_enable_testing",
+    default = "disabled",
+    values = [
+        "disabled",
+        "enabled",
+    ],
+    visibility = ["PUBLIC"],
+)
+
+constraint(
+    name = "swift_library_evolution",
+    default = "disabled",
+    values = [
+        "disabled",
+        "enabled",
+    ],
+    visibility = ["PUBLIC"],
+)

@@ -44,9 +44,9 @@ public class CrashAnalyzerTest {
         "E/AndroidRuntime(12345): FATAL EXCEPTION: main\n"
             + "E/AndroidRuntime(12345): java.lang.OutOfMemoryError: Failed to allocate 100MB\n"
             + "E/AndroidRuntime(12345): \tat"
-            + " com.facebook.example.SomeClass.method(SomeClass.java:42)\n"
+            + " com.example.SomeClass.method(SomeClass.java:42)\n"
             + "E/AndroidRuntime(12345): \tat"
-            + " com.facebook.example.MainActivity.onCreate(MainActivity.java:123)\n";
+            + " com.example.MainActivity.onCreate(MainActivity.java:123)\n";
 
     crashAnalyzer.analyzeCrashInformation(logcatOutput);
 
@@ -57,7 +57,7 @@ public class CrashAnalyzerTest {
     assertTrue(
         "Should include OOM crash line",
         errorOutput.contains("java.lang.OutOfMemoryError: Failed to allocate 100MB"));
-    assertTrue("Should include stack trace", errorOutput.contains("at com.facebook.example"));
+    assertTrue("Should include stack trace", errorOutput.contains("at com.example"));
   }
 
   @Test
@@ -77,7 +77,7 @@ public class CrashAnalyzerTest {
   @Test
   public void testNoDetectionForNormalLogcat() {
     String logcatOutput =
-        "I/ActivityManager(1234): Start proc com.facebook.example\n"
+        "I/ActivityManager(1234): Start proc com.example\n"
             + "D/MainActivity(5678): onCreate called\n"
             + "I/TestRunner(9012): Test passed successfully\n";
 
@@ -135,7 +135,7 @@ public class CrashAnalyzerTest {
   public void testOutputContainsEndMarker() {
     String logcatOutput =
         "E/AndroidRuntime(12345): java.lang.OutOfMemoryError: Test error\n"
-            + "E/AndroidRuntime(12345): \tat com.facebook.example.Test.method(Test.java:1)\n";
+            + "E/AndroidRuntime(12345): \tat com.example.Test.method(Test.java:1)\n";
 
     crashAnalyzer.analyzeCrashInformation(logcatOutput);
 
@@ -181,11 +181,11 @@ public class CrashAnalyzerTest {
   public void testDetectsOOMWithLongStackTrace() {
     String logcatOutput =
         "E/AndroidRuntime(12345): java.lang.OutOfMemoryError: Failed to allocate\n"
-            + "E/AndroidRuntime(12345): \tat com.facebook.example.Class1.method1(Class1.java:10)\n"
-            + "E/AndroidRuntime(12345): \tat com.facebook.example.Class2.method2(Class2.java:20)\n"
-            + "E/AndroidRuntime(12345): \tat com.facebook.example.Class3.method3(Class3.java:30)\n"
-            + "E/AndroidRuntime(12345): \tat com.facebook.example.Class4.method4(Class4.java:40)\n"
-            + "E/AndroidRuntime(12345): \tat com.facebook.example.Class5.method5(Class5.java:50)\n";
+            + "E/AndroidRuntime(12345): \tat com.example.Class1.method1(Class1.java:10)\n"
+            + "E/AndroidRuntime(12345): \tat com.example.Class2.method2(Class2.java:20)\n"
+            + "E/AndroidRuntime(12345): \tat com.example.Class3.method3(Class3.java:30)\n"
+            + "E/AndroidRuntime(12345): \tat com.example.Class4.method4(Class4.java:40)\n"
+            + "E/AndroidRuntime(12345): \tat com.example.Class5.method5(Class5.java:50)\n";
 
     crashAnalyzer.analyzeCrashInformation(logcatOutput);
 
@@ -193,7 +193,7 @@ public class CrashAnalyzerTest {
     assertTrue(
         "Should detect OOM with long stack trace", errorOutput.contains("Failed to allocate"));
     assertTrue(
-        "Should extract at least one stack frame", errorOutput.contains("at com.facebook.example"));
+        "Should extract at least one stack frame", errorOutput.contains("at com.example"));
   }
 
   @Test
@@ -201,7 +201,7 @@ public class CrashAnalyzerTest {
     String logcatOutput =
         "W/System.err(12345): java.io.IOException: File not found\n"
             + "W/System.err(12345): \tat"
-            + " com.facebook.example.FileReader.read(FileReader.java:42)\n";
+            + " com.example.FileReader.read(FileReader.java:42)\n";
 
     crashAnalyzer.analyzeCrashInformation(logcatOutput);
 
@@ -246,9 +246,9 @@ public class CrashAnalyzerTest {
         "E/AndroidRuntime(12345): FATAL EXCEPTION: main\n"
             + "E/AndroidRuntime(12345): java.lang.StackOverflowError\n"
             + "E/AndroidRuntime(12345): \tat"
-            + " com.facebook.example.RecursiveClass.recursiveMethod(RecursiveClass.java:42)\n"
+            + " com.example.RecursiveClass.recursiveMethod(RecursiveClass.java:42)\n"
             + "E/AndroidRuntime(12345): \tat"
-            + " com.facebook.example.RecursiveClass.recursiveMethod(RecursiveClass.java:42)\n";
+            + " com.example.RecursiveClass.recursiveMethod(RecursiveClass.java:42)\n";
 
     crashAnalyzer.analyzeCrashInformation(logcatOutput);
 
@@ -341,11 +341,11 @@ public class CrashAnalyzerTest {
   public void testStackOverflowWithDeepStackTrace() {
     String logcatOutput =
         "E/AndroidRuntime(12345): java.lang.StackOverflowError\n"
-            + "E/AndroidRuntime(12345): \tat com.facebook.example.A.method(A.java:10)\n"
-            + "E/AndroidRuntime(12345): \tat com.facebook.example.B.method(B.java:20)\n"
-            + "E/AndroidRuntime(12345): \tat com.facebook.example.C.method(C.java:30)\n"
-            + "E/AndroidRuntime(12345): \tat com.facebook.example.A.method(A.java:10)\n"
-            + "E/AndroidRuntime(12345): \tat com.facebook.example.B.method(B.java:20)\n";
+            + "E/AndroidRuntime(12345): \tat com.example.A.method(A.java:10)\n"
+            + "E/AndroidRuntime(12345): \tat com.example.B.method(B.java:20)\n"
+            + "E/AndroidRuntime(12345): \tat com.example.C.method(C.java:30)\n"
+            + "E/AndroidRuntime(12345): \tat com.example.A.method(A.java:10)\n"
+            + "E/AndroidRuntime(12345): \tat com.example.B.method(B.java:20)\n";
 
     crashAnalyzer.analyzeCrashInformation(logcatOutput);
 
@@ -354,7 +354,7 @@ public class CrashAnalyzerTest {
         "Should detect StackOverflowError with deep stack trace",
         errorOutput.contains("Stack overflow error detected"));
     assertTrue(
-        "Should extract at least one stack frame", errorOutput.contains("at com.facebook.example"));
+        "Should extract at least one stack frame", errorOutput.contains("at com.example"));
   }
 
   @Test
@@ -363,9 +363,9 @@ public class CrashAnalyzerTest {
         "E/AndroidRuntime(12345): FATAL EXCEPTION: main\n"
             + "E/AndroidRuntime(12345): java.lang.NullPointerException\n"
             + "E/AndroidRuntime(12345): \tat"
-            + " com.facebook.example.MyClass.handleObject(MyClass.java:50)\n"
+            + " com.example.MyClass.handleObject(MyClass.java:50)\n"
             + "E/AndroidRuntime(12345): \tat"
-            + " com.facebook.example.MainActivity.onCreate(MainActivity.java:123)\n";
+            + " com.example.MainActivity.onCreate(MainActivity.java:123)\n";
 
     crashAnalyzer.analyzeCrashInformation(logcatOutput);
 
@@ -386,7 +386,7 @@ public class CrashAnalyzerTest {
     String logcatOutput =
         "E/AndroidRuntime(67890): java.lang.NullPointerException: Attempt to invoke virtual"
             + " method 'java.lang.String.toString()' on a null object reference\n"
-            + "E/AndroidRuntime(67890): \tat com.facebook.example.Utils.process(Utils.java:100)\n";
+            + "E/AndroidRuntime(67890): \tat com.example.Utils.process(Utils.java:100)\n";
 
     crashAnalyzer.analyzeCrashInformation(logcatOutput);
 
@@ -470,9 +470,9 @@ public class CrashAnalyzerTest {
     String logcatOutput =
         "E/AndroidRuntime(12345): java.lang.NullPointerException\n"
             + "E/AndroidRuntime(12345): \tat"
-            + " com.facebook.example.MyKotlinClass.doSomething(MyKotlinClass.kt:42)\n"
+            + " com.example.MyKotlinClass.doSomething(MyKotlinClass.kt:42)\n"
             + "E/AndroidRuntime(12345): \tat"
-            + " com.facebook.example.MyKotlinClass$lambda$0(MyKotlinClass.kt:50)\n";
+            + " com.example.MyKotlinClass$lambda$0(MyKotlinClass.kt:50)\n";
 
     crashAnalyzer.analyzeCrashInformation(logcatOutput);
 
@@ -506,9 +506,9 @@ public class CrashAnalyzerTest {
             + "E/AndroidRuntime(12345): java.lang.ArrayIndexOutOfBoundsException: length=5;"
             + " index=10\n"
             + "E/AndroidRuntime(12345): \tat"
-            + " com.facebook.example.ArrayProcessor.process(ArrayProcessor.java:50)\n"
+            + " com.example.ArrayProcessor.process(ArrayProcessor.java:50)\n"
             + "E/AndroidRuntime(12345): \tat"
-            + " com.facebook.example.MainActivity.onCreate(MainActivity.java:123)\n";
+            + " com.example.MainActivity.onCreate(MainActivity.java:123)\n";
 
     crashAnalyzer.analyzeCrashInformation(logcatOutput);
 
@@ -620,9 +620,9 @@ public class CrashAnalyzerTest {
     String logcatOutput =
         "E/AndroidRuntime(12345): java.lang.IndexOutOfBoundsException\n"
             + "E/AndroidRuntime(12345): \tat"
-            + " com.facebook.example.MyKotlinList.getItem(MyKotlinList.kt:42)\n"
+            + " com.example.MyKotlinList.getItem(MyKotlinList.kt:42)\n"
             + "E/AndroidRuntime(12345): \tat"
-            + " com.facebook.example.MyKotlinList$process$1.invoke(MyKotlinList.kt:50)\n";
+            + " com.example.MyKotlinList$process$1.invoke(MyKotlinList.kt:50)\n";
 
     crashAnalyzer.analyzeCrashInformation(logcatOutput);
 
@@ -654,7 +654,7 @@ public class CrashAnalyzerTest {
     String logcatOutput =
         "E/AndroidRuntime(12345): java.lang.ArrayIndexOutOfBoundsException: length=5; index=-1\n"
             + "E/AndroidRuntime(12345): \tat"
-            + " com.facebook.example.ArrayHandler.get(ArrayHandler.java:10)\n";
+            + " com.example.ArrayHandler.get(ArrayHandler.java:10)\n";
 
     crashAnalyzer.analyzeCrashInformation(logcatOutput);
 
@@ -671,9 +671,9 @@ public class CrashAnalyzerTest {
         "E/AndroidRuntime(12345): FATAL EXCEPTION: main\n"
             + "E/AndroidRuntime(12345): java.lang.IllegalStateException: Test illegal state crash\n"
             + "E/AndroidRuntime(12345): \tat"
-            + " com.facebook.example.StateManager.doAction(StateManager.java:50)\n"
+            + " com.example.StateManager.doAction(StateManager.java:50)\n"
             + "E/AndroidRuntime(12345): \tat"
-            + " com.facebook.example.MainActivity.onCreate(MainActivity.java:123)\n";
+            + " com.example.MainActivity.onCreate(MainActivity.java:123)\n";
 
     crashAnalyzer.analyzeCrashInformation(logcatOutput);
 
@@ -787,7 +787,7 @@ public class CrashAnalyzerTest {
     String logcatOutput =
         "E/AndroidRuntime(12345): java.lang.IllegalStateException: Coroutine state error\n"
             + "E/AndroidRuntime(12345): \tat"
-            + " com.facebook.example.MyCoroutine.execute(MyCoroutine.kt:42)\n"
+            + " com.example.MyCoroutine.execute(MyCoroutine.kt:42)\n"
             + "E/AndroidRuntime(12345): \tat"
             + " kotlinx.coroutines.CoroutineScope.launch(CoroutineScope.kt:50)\n";
 
@@ -854,7 +854,7 @@ public class CrashAnalyzerTest {
   @Test
   public void testDetectsSIGABRTSignal() {
     String logcatOutput =
-        "F/libc(12345): Fatal signal 6 (SIGABRT), code -6 in tid 12345 (com.facebook.app)\n"
+        "F/libc(12345): Fatal signal 6 (SIGABRT), code -6 in tid 12345 (com.example.app)\n"
             + "I/DEBUG(1234): *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** ***\n"
             + "I/DEBUG(1234): Build fingerprint: 'google/sdk_gphone64_x86_64/generic_x86_64:11'\n"
             + "I/DEBUG(1234): backtrace:\n"
@@ -936,7 +936,7 @@ public class CrashAnalyzerTest {
             + "I/DEBUG(1234):     #00 pc 00001234  /system/lib64/libc.so (abort+123)\n"
             + "I/DEBUG(1234):     #01 pc 00005678  /system/lib64/libc.so (raise+45)\n"
             + "I/DEBUG(1234):     #02 pc 00009abc "
-            + " /data/app/com.facebook.app/lib/x86_64/libnative.so\n";
+            + " /data/app/com.example.app/lib/x86_64/libnative.so\n";
 
     crashAnalyzer.analyzeCrashInformation(logcatOutput);
 
@@ -953,7 +953,7 @@ public class CrashAnalyzerTest {
         "F/libc(12345): Fatal signal 6 (SIGABRT), code -6 in tid 12345\n"
             + "I/DEBUG(1234): backtrace:\n"
             + "I/DEBUG(1234):     #00 pc 00001234"
-            + "  /data/app/com.facebook.app/lib/arm64/libnative.so\n";
+            + "  /data/app/com.example.app/lib/arm64/libnative.so\n";
 
     crashAnalyzer.analyzeCrashInformation(logcatOutput);
 
@@ -1067,7 +1067,7 @@ public class CrashAnalyzerTest {
             + "I/DEBUG(1234): Build fingerprint: 'google/sdk_gphone64_x86_64/generic_x86_64:11'\n"
             + "I/DEBUG(1234): backtrace:\n"
             + "I/DEBUG(1234):     #00 pc 00001234 "
-            + " /data/app/com.facebook.app/lib/arm64/libnative.so\n";
+            + " /data/app/com.example.app/lib/arm64/libnative.so\n";
 
     crashAnalyzer.analyzeCrashInformation(logcatOutput);
 
@@ -1133,7 +1133,7 @@ public class CrashAnalyzerTest {
         "F/libc(12345): Segmentation fault\n"
             + "I/DEBUG(1234): backtrace:\n"
             + "I/DEBUG(1234):     #00 pc 00001234 "
-            + " /data/app/com.facebook.app/lib/arm64/libnative.so\n";
+            + " /data/app/com.example.app/lib/arm64/libnative.so\n";
 
     crashAnalyzer.analyzeCrashInformation(logcatOutput);
 
@@ -1147,11 +1147,11 @@ public class CrashAnalyzerTest {
 
   @Test
   public void testDoesNotFalsePositiveOnMqdSigsegvWarning() {
-    // Regression: the benign MessageExecutionMonitor warning (added by D109574690) mentions the
-    // word "SIGSEGV" and fires hundreds of times per run, but is NOT a native crash. It must not be
-    // detected as one (previously the bare "SIGSEGV" alternative matched it and marked runs Fatal).
+    // Regression: the benign MessageExecutionMonitor warning mentions the word "SIGSEGV" and fires
+    // hundreds of times per run, but is NOT a native crash. It must not be detected as one
+    // (previously the bare "SIGSEGV" alternative matched it and marked runs Fatal).
     String logcatOutput =
-        "I/ActivityManager(1234): Start proc com.facebook.example\n"
+        "I/ActivityManager(1234): Start proc com.example\n"
             + "W/MessageExecutionMonitor(4618): Skipping getStackTrace: target thread state"
             + " RUNNABLE, MQD callback delayed by 0 ms; risk of ART nterp stack-walk SIGSEGV /"
             + " suspension timeout\n"
@@ -1169,26 +1169,25 @@ public class CrashAnalyzerTest {
   }
 
   @Test
-  public void testDoesNotFalsePositiveOnQplIllegalStateWarning() {
-    // Regression: QPLProvider logs a caught IllegalStateException ("No QPL instance provided") at
-    // error level under its own tag on many runs. It is not an uncaught crash and must not be
+  public void testDoesNotFalsePositiveOnCaughtIllegalStateWarning() {
+    // Regression: PerfLoggerProvider logs a caught IllegalStateException ("No logger instance
+    // provided") at error level under its own tag. It is not an uncaught crash and must not be
     // detected as one (previously the bare java.lang.IllegalStateException match flagged it).
     String logcatOutput =
-        "07-15 15:16:17.261 20137 20205 I ActivityManager: Start proc com.oculus.assistant\n"
-            + "07-15 15:16:17.261 20137 20205 E QPLProvider: java.lang.IllegalStateException: No"
-            + " QPL instance provided\n"
-            + "07-15 15:16:17.261 20137 20205 E QPLProvider: \tat"
-            + " com.facebook.quicklog.QuickPerformanceLoggerProvider.getQPLInstance(Unknown"
-            + " Source:8)\n";
+        "07-15 15:16:17.261 20137 20205 I ActivityManager: Start proc com.example.app\n"
+            + "07-15 15:16:17.261 20137 20205 E PerfLoggerProvider:"
+            + " java.lang.IllegalStateException: No logger instance provided\n"
+            + "07-15 15:16:17.261 20137 20205 E PerfLoggerProvider: \tat"
+            + " com.example.perf.PerfLoggerProvider.getInstance(Unknown Source:8)\n";
 
     crashAnalyzer.analyzeCrashInformation(logcatOutput);
 
     String errorOutput = errContent.toString();
     assertFalse(
-        "Caught QPLProvider IllegalStateException must not be detected as a crash",
+        "Caught PerfLoggerProvider IllegalStateException must not be detected as a crash",
         errorOutput.contains("Illegal state exception detected"));
     assertTrue(
-        "Should report no crashes for the benign QPL warning",
+        "Should report no crashes for the benign PerfLoggerProvider warning",
         errorOutput.contains("No crashes detected"));
   }
 
@@ -1200,7 +1199,7 @@ public class CrashAnalyzerTest {
     // the bare java.lang.ClassNotFoundException match flagged it).
     String logcatOutput =
         "07-15 15:16:15.868 19867 19867 D CoverageInit: java.lang.ClassNotFoundException:"
-            + " com.facebook.coverage.e2e.CoverageSetup\n"
+            + " com.example.coverage.CoverageSetup\n"
             + "07-15 15:16:15.868 19867 19867 D CoverageInit: \tat"
             + " java.lang.Class.classForName(Native Method)\n";
 
@@ -1222,8 +1221,8 @@ public class CrashAnalyzerTest {
             + " 12345\n"
             + "I/DEBUG(1234): backtrace:\n"
             + "I/DEBUG(1234):     #00 pc 00001234 "
-            + " /data/app/com.facebook.app/lib/arm64/libnative.so"
-            + " (Java_com_facebook_native_crash+42)\n";
+            + " /data/app/com.example.app/lib/arm64/libnative.so"
+            + " (Java_com_example_native_crash+42)\n";
 
     crashAnalyzer.analyzeCrashInformation(logcatOutput);
 
@@ -1257,9 +1256,9 @@ public class CrashAnalyzerTest {
         "F/libc(12345): Fatal signal 11 (SIGSEGV), code 1 in tid 12345\n"
             + "I/DEBUG(1234): backtrace:\n"
             + "I/DEBUG(1234):     #00 pc 00001234 "
-            + " /data/app/com.facebook.app/lib/arm64/libnative.so (nativeMethod+100)\n"
+            + " /data/app/com.example.app/lib/arm64/libnative.so (nativeMethod+100)\n"
             + "I/DEBUG(1234):     #01 pc 00005678 "
-            + " /data/app/com.facebook.app/lib/arm64/libnative.so (callNative+45)\n"
+            + " /data/app/com.example.app/lib/arm64/libnative.so (callNative+45)\n"
             + "I/DEBUG(1234):     #02 pc 00009abc  /system/lib64/libart.so\n";
 
     crashAnalyzer.analyzeCrashInformation(logcatOutput);
@@ -1277,7 +1276,7 @@ public class CrashAnalyzerTest {
         "F/libc(12345): Fatal signal 11 (SIGSEGV), code 1 in tid 12345\n"
             + "I/DEBUG(1234): backtrace:\n"
             + "I/DEBUG(1234):     #00 pc 00001234"
-            + "  /data/app/com.facebook.app/lib/arm64/libfacebook.so\n";
+            + "  /data/app/com.example.app/lib/arm64/libexample.so\n";
 
     crashAnalyzer.analyzeCrashInformation(logcatOutput);
 
@@ -1285,7 +1284,7 @@ public class CrashAnalyzerTest {
     assertTrue(
         "Should detect SIGSEGV with native library",
         errorOutput.contains("SIGSEGV signal detected (native crash)"));
-    assertTrue("Should include native library", errorOutput.contains("libfacebook.so"));
+    assertTrue("Should include native library", errorOutput.contains("libexample.so"));
   }
 
   @Test
@@ -1395,7 +1394,7 @@ public class CrashAnalyzerTest {
             + "I/DEBUG(1234): backtrace:\n"
             + "I/DEBUG(1234):     #00 pc 00012345  /system/lib64/libc.so (strcmp+256)\n"
             + "I/DEBUG(1234):     #01 pc 00067890 "
-            + " /data/app/com.facebook.app/lib/arm64/libnative.so (processString+128)\n";
+            + " /data/app/com.example.app/lib/arm64/libnative.so (processString+128)\n";
 
     crashAnalyzer.analyzeCrashInformation(logcatOutput);
 
@@ -1430,8 +1429,8 @@ public class CrashAnalyzerTest {
         "F/libc(12345): Fatal signal 11 (SIGSEGV), code 1 (SEGV_MAPERR), fault addr 0x0\n"
             + "I/DEBUG(1234): backtrace:\n"
             + "I/DEBUG(1234):     #00 pc 00001234 "
-            + " /data/app/com.facebook.app/lib/arm64/libnative.so"
-            + " (Java_com_facebook_jni_NativeClass_nativeMethod+100)\n"
+            + " /data/app/com.example.app/lib/arm64/libnative.so"
+            + " (Java_com_example_jni_NativeClass_nativeMethod+100)\n"
             + "I/DEBUG(1234):     #01 pc 00005678  /system/lib64/libart.so"
             + " (art_quick_generic_jni_trampoline+152)\n";
 
@@ -1441,7 +1440,7 @@ public class CrashAnalyzerTest {
     assertTrue(
         "Should detect SIGSEGV in JNI call",
         errorOutput.contains("SIGSEGV signal detected (native crash)"));
-    assertTrue("Should include JNI method name", errorOutput.contains("Java_com_facebook_jni"));
+    assertTrue("Should include JNI method name", errorOutput.contains("Java_com_example_jni"));
   }
 
   @Test
@@ -1467,7 +1466,7 @@ public class CrashAnalyzerTest {
             + "I/DEBUG(1234): Build fingerprint: 'google/sdk_gphone64_x86_64/generic_x86_64:11'\n"
             + "I/DEBUG(1234): backtrace:\n"
             + "I/DEBUG(1234):     #00 pc 00001234 "
-            + " /data/app/com.facebook.app/lib/arm64/libnative.so\n";
+            + " /data/app/com.example.app/lib/arm64/libnative.so\n";
 
     crashAnalyzer.analyzeCrashInformation(logcatOutput);
 
@@ -1534,7 +1533,7 @@ public class CrashAnalyzerTest {
         "F/libc(12345): Illegal instruction\n"
             + "I/DEBUG(1234): backtrace:\n"
             + "I/DEBUG(1234):     #00 pc 00001234 "
-            + " /data/app/com.facebook.app/lib/arm64/libnative.so\n";
+            + " /data/app/com.example.app/lib/arm64/libnative.so\n";
 
     crashAnalyzer.analyzeCrashInformation(logcatOutput);
 
@@ -1553,7 +1552,7 @@ public class CrashAnalyzerTest {
             + " tid 12345\n"
             + "I/DEBUG(1234): backtrace:\n"
             + "I/DEBUG(1234):     #00 pc 00001234"
-            + "  /data/app/com.facebook.app/lib/arm64/libnative.so\n";
+            + "  /data/app/com.example.app/lib/arm64/libnative.so\n";
 
     crashAnalyzer.analyzeCrashInformation(logcatOutput);
 
@@ -1587,9 +1586,9 @@ public class CrashAnalyzerTest {
         "F/libc(12345): Fatal signal 4 (SIGILL), code 1 in tid 12345\n"
             + "I/DEBUG(1234): backtrace:\n"
             + "I/DEBUG(1234):     #00 pc 00001234 "
-            + " /data/app/com.facebook.app/lib/arm64/libnative.so (executeCode+100)\n"
+            + " /data/app/com.example.app/lib/arm64/libnative.so (executeCode+100)\n"
             + "I/DEBUG(1234):     #01 pc 00005678 "
-            + " /data/app/com.facebook.app/lib/arm64/libnative.so (runFunction+45)\n"
+            + " /data/app/com.example.app/lib/arm64/libnative.so (runFunction+45)\n"
             + "I/DEBUG(1234):     #02 pc 00009abc  /system/lib64/libart.so\n";
 
     crashAnalyzer.analyzeCrashInformation(logcatOutput);
@@ -1607,7 +1606,7 @@ public class CrashAnalyzerTest {
         "F/libc(12345): Fatal signal 4 (SIGILL), code 1 in tid 12345\n"
             + "I/DEBUG(1234): backtrace:\n"
             + "I/DEBUG(1234):     #00 pc 00001234"
-            + "  /data/app/com.facebook.app/lib/arm64/libfacebook.so\n";
+            + "  /data/app/com.example.app/lib/arm64/libexample.so\n";
 
     crashAnalyzer.analyzeCrashInformation(logcatOutput);
 
@@ -1615,7 +1614,7 @@ public class CrashAnalyzerTest {
     assertTrue(
         "Should detect SIGILL with native library",
         errorOutput.contains("SIGILL signal detected (illegal instruction)"));
-    assertTrue("Should include native library", errorOutput.contains("libfacebook.so"));
+    assertTrue("Should include native library", errorOutput.contains("libexample.so"));
   }
 
   @Test
@@ -1730,7 +1729,7 @@ public class CrashAnalyzerTest {
             + "I/DEBUG(1234): backtrace:\n"
             + "I/DEBUG(1234):     #00 pc 00012345  /system/lib64/libc.so (someFunction+256)\n"
             + "I/DEBUG(1234):     #01 pc 00067890 "
-            + " /data/app/com.facebook.app/lib/arm64/libnative.so (executeInstruction+128)\n";
+            + " /data/app/com.example.app/lib/arm64/libnative.so (executeInstruction+128)\n";
 
     crashAnalyzer.analyzeCrashInformation(logcatOutput);
 
@@ -1747,8 +1746,8 @@ public class CrashAnalyzerTest {
         "F/libc(12345): Fatal signal 4 (SIGILL), code 1 (ILL_ILLOPC), fault addr 0x1234\n"
             + "I/DEBUG(1234): backtrace:\n"
             + "I/DEBUG(1234):     #00 pc 00001234 "
-            + " /data/app/com.facebook.app/lib/arm64/libnative.so"
-            + " (Java_com_facebook_jni_NativeClass_executeNative+100)\n"
+            + " /data/app/com.example.app/lib/arm64/libnative.so"
+            + " (Java_com_example_jni_NativeClass_executeNative+100)\n"
             + "I/DEBUG(1234):     #01 pc 00005678  /system/lib64/libart.so"
             + " (art_quick_generic_jni_trampoline+152)\n";
 
@@ -1758,7 +1757,7 @@ public class CrashAnalyzerTest {
     assertTrue(
         "Should detect SIGILL in JNI call",
         errorOutput.contains("SIGILL signal detected (illegal instruction)"));
-    assertTrue("Should include JNI method name", errorOutput.contains("Java_com_facebook_jni"));
+    assertTrue("Should include JNI method name", errorOutput.contains("Java_com_example_jni"));
   }
 
   @Test
@@ -1816,7 +1815,7 @@ public class CrashAnalyzerTest {
             + "I/DEBUG(1234): Build fingerprint: 'google/sdk_gphone64_x86_64/generic_x86_64:11'\n"
             + "I/DEBUG(1234): backtrace:\n"
             + "I/DEBUG(1234):     #00 pc 00001234 "
-            + " /data/app/com.facebook.app/lib/arm64/libnative.so\n";
+            + " /data/app/com.example.app/lib/arm64/libnative.so\n";
 
     crashAnalyzer.analyzeCrashInformation(logcatOutput);
 
@@ -1883,7 +1882,7 @@ public class CrashAnalyzerTest {
         "F/libc(12345): Floating point exception\n"
             + "I/DEBUG(1234): backtrace:\n"
             + "I/DEBUG(1234):     #00 pc 00001234 "
-            + " /data/app/com.facebook.app/lib/arm64/libnative.so\n";
+            + " /data/app/com.example.app/lib/arm64/libnative.so\n";
 
     crashAnalyzer.analyzeCrashInformation(logcatOutput);
 
@@ -1903,7 +1902,7 @@ public class CrashAnalyzerTest {
             + " tid 12345\n"
             + "I/DEBUG(1234): backtrace:\n"
             + "I/DEBUG(1234):     #00 pc 00001234"
-            + "  /data/app/com.facebook.app/lib/arm64/libnative.so\n";
+            + "  /data/app/com.example.app/lib/arm64/libnative.so\n";
 
     crashAnalyzer.analyzeCrashInformation(logcatOutput);
 
@@ -1985,9 +1984,9 @@ public class CrashAnalyzerTest {
         "F/libc(12345): Fatal signal 8 (SIGFPE), code 1 in tid 12345\n"
             + "I/DEBUG(1234): backtrace:\n"
             + "I/DEBUG(1234):     #00 pc 00001234 "
-            + " /data/app/com.facebook.app/lib/arm64/libnative.so (divideNumbers+100)\n"
+            + " /data/app/com.example.app/lib/arm64/libnative.so (divideNumbers+100)\n"
             + "I/DEBUG(1234):     #01 pc 00005678 "
-            + " /data/app/com.facebook.app/lib/arm64/libnative.so (calculate+45)\n"
+            + " /data/app/com.example.app/lib/arm64/libnative.so (calculate+45)\n"
             + "I/DEBUG(1234):     #02 pc 00009abc  /system/lib64/libart.so\n";
 
     crashAnalyzer.analyzeCrashInformation(logcatOutput);
@@ -2091,8 +2090,8 @@ public class CrashAnalyzerTest {
         "F/libc(12345): Fatal signal 8 (SIGFPE), code 1 (FPE_INTDIV), fault addr 0x1234\n"
             + "I/DEBUG(1234): backtrace:\n"
             + "I/DEBUG(1234):     #00 pc 00001234 "
-            + " /data/app/com.facebook.app/lib/arm64/libnative.so"
-            + " (Java_com_facebook_jni_NativeClass_divide+100)\n"
+            + " /data/app/com.example.app/lib/arm64/libnative.so"
+            + " (Java_com_example_jni_NativeClass_divide+100)\n"
             + "I/DEBUG(1234):     #01 pc 00005678  /system/lib64/libart.so"
             + " (art_quick_generic_jni_trampoline+152)\n";
 
@@ -2102,7 +2101,7 @@ public class CrashAnalyzerTest {
     assertTrue(
         "Should detect SIGFPE in JNI call",
         errorOutput.contains("SIGFPE signal detected (floating point exception)"));
-    assertTrue("Should include JNI method name", errorOutput.contains("Java_com_facebook_jni"));
+    assertTrue("Should include JNI method name", errorOutput.contains("Java_com_example_jni"));
   }
 
   @Test
@@ -2176,7 +2175,7 @@ public class CrashAnalyzerTest {
             + "I/DEBUG(1234): Build fingerprint: 'google/sdk_gphone64_x86_64/generic_x86_64:11'\n"
             + "I/DEBUG(1234): backtrace:\n"
             + "I/DEBUG(1234):     #00 pc 00001234 "
-            + " /data/app/com.facebook.app/lib/arm64/libnative.so\n";
+            + " /data/app/com.example.app/lib/arm64/libnative.so\n";
 
     crashAnalyzer.analyzeCrashInformation(logcatOutput);
 
@@ -2241,7 +2240,7 @@ public class CrashAnalyzerTest {
         "F/libc(12345): Bus error\n"
             + "I/DEBUG(1234): backtrace:\n"
             + "I/DEBUG(1234):     #00 pc 00001234 "
-            + " /data/app/com.facebook.app/lib/arm64/libnative.so\n";
+            + " /data/app/com.example.app/lib/arm64/libnative.so\n";
 
     crashAnalyzer.analyzeCrashInformation(logcatOutput);
 
@@ -2259,7 +2258,7 @@ public class CrashAnalyzerTest {
             + " 12345\n"
             + "I/DEBUG(1234): backtrace:\n"
             + "I/DEBUG(1234):     #00 pc 00001234"
-            + "  /data/app/com.facebook.app/lib/arm64/libnative.so\n";
+            + "  /data/app/com.example.app/lib/arm64/libnative.so\n";
 
     crashAnalyzer.analyzeCrashInformation(logcatOutput);
 
@@ -2309,9 +2308,9 @@ public class CrashAnalyzerTest {
         "F/libc(12345): Fatal signal 7 (SIGBUS), code 1 in tid 12345\n"
             + "I/DEBUG(1234): backtrace:\n"
             + "I/DEBUG(1234):     #00 pc 00001234 "
-            + " /data/app/com.facebook.app/lib/arm64/libnative.so (accessMemory+100)\n"
+            + " /data/app/com.example.app/lib/arm64/libnative.so (accessMemory+100)\n"
             + "I/DEBUG(1234):     #01 pc 00005678 "
-            + " /data/app/com.facebook.app/lib/arm64/libnative.so (processData+45)\n"
+            + " /data/app/com.example.app/lib/arm64/libnative.so (processData+45)\n"
             + "I/DEBUG(1234):     #02 pc 00009abc  /system/lib64/libart.so\n";
 
     crashAnalyzer.analyzeCrashInformation(logcatOutput);
@@ -2329,7 +2328,7 @@ public class CrashAnalyzerTest {
         "F/libc(12345): Fatal signal 7 (SIGBUS), code 1 in tid 12345\n"
             + "I/DEBUG(1234): backtrace:\n"
             + "I/DEBUG(1234):     #00 pc 00001234"
-            + "  /data/app/com.facebook.app/lib/arm64/libfacebook.so\n";
+            + "  /data/app/com.example.app/lib/arm64/libexample.so\n";
 
     crashAnalyzer.analyzeCrashInformation(logcatOutput);
 
@@ -2337,7 +2336,7 @@ public class CrashAnalyzerTest {
     assertTrue(
         "Should detect SIGBUS with native library",
         errorOutput.contains("SIGBUS signal detected (bus error)"));
-    assertTrue("Should include native library", errorOutput.contains("libfacebook.so"));
+    assertTrue("Should include native library", errorOutput.contains("libexample.so"));
   }
 
   @Test
@@ -2452,7 +2451,7 @@ public class CrashAnalyzerTest {
             + "I/DEBUG(1234): backtrace:\n"
             + "I/DEBUG(1234):     #00 pc 00012345  /system/lib64/libc.so (memcpy+256)\n"
             + "I/DEBUG(1234):     #01 pc 00067890 "
-            + " /data/app/com.facebook.app/lib/arm64/libnative.so (copyData+128)\n";
+            + " /data/app/com.example.app/lib/arm64/libnative.so (copyData+128)\n";
 
     crashAnalyzer.analyzeCrashInformation(logcatOutput);
 
@@ -2469,8 +2468,8 @@ public class CrashAnalyzerTest {
         "F/libc(12345): Fatal signal 7 (SIGBUS), code 1 (BUS_ADRALN), fault addr 0x1234\n"
             + "I/DEBUG(1234): backtrace:\n"
             + "I/DEBUG(1234):     #00 pc 00001234 "
-            + " /data/app/com.facebook.app/lib/arm64/libnative.so"
-            + " (Java_com_facebook_jni_NativeClass_readMemory+100)\n"
+            + " /data/app/com.example.app/lib/arm64/libnative.so"
+            + " (Java_com_example_jni_NativeClass_readMemory+100)\n"
             + "I/DEBUG(1234):     #01 pc 00005678  /system/lib64/libart.so"
             + " (art_quick_generic_jni_trampoline+152)\n";
 
@@ -2480,7 +2479,7 @@ public class CrashAnalyzerTest {
     assertTrue(
         "Should detect SIGBUS in JNI call",
         errorOutput.contains("SIGBUS signal detected (bus error)"));
-    assertTrue("Should include JNI method name", errorOutput.contains("Java_com_facebook_jni"));
+    assertTrue("Should include JNI method name", errorOutput.contains("Java_com_example_jni"));
   }
 
   @Test
@@ -2520,7 +2519,7 @@ public class CrashAnalyzerTest {
         "F/libc(12345): Fatal signal 7 (SIGBUS), code 1 (BUS_ADRALN), fault addr 0x12345679\n"
             + "I/DEBUG(1234): backtrace:\n"
             + "I/DEBUG(1234):     #00 pc 00001234 "
-            + " /data/app/com.facebook.app/lib/arm64/libnative.so (readInt+42)\n";
+            + " /data/app/com.example.app/lib/arm64/libnative.so (readInt+42)\n";
 
     crashAnalyzer.analyzeCrashInformation(logcatOutput);
 
@@ -2662,7 +2661,7 @@ public class CrashAnalyzerTest {
             + "E/AndroidRuntime(12345): \tat"
             + " java.lang.Class.forName(Native Method)\n"
             + "E/AndroidRuntime(12345): \tat"
-            + " com.facebook.example.PluginLoader.load(PluginLoader.java:50)\n";
+            + " com.example.PluginLoader.load(PluginLoader.java:50)\n";
 
     crashAnalyzer.analyzeCrashInformation(logcatOutput);
 
@@ -2731,13 +2730,13 @@ public class CrashAnalyzerTest {
   @Test
   public void testClassNotFoundExceptionFromClassForName() {
     String logcatOutput =
-        "E/AndroidRuntime(12345): java.lang.ClassNotFoundException: com.facebook.TestClass\n"
+        "E/AndroidRuntime(12345): java.lang.ClassNotFoundException: com.example.TestClass\n"
             + "E/AndroidRuntime(12345): \tat"
             + " java.lang.Class.classForName(Native Method)\n"
             + "E/AndroidRuntime(12345): \tat"
             + " java.lang.Class.forName(Class.java:453)\n"
             + "E/AndroidRuntime(12345): \tat"
-            + " com.facebook.example.Loader.loadClass(Loader.java:100)\n";
+            + " com.example.Loader.loadClass(Loader.java:100)\n";
 
     crashAnalyzer.analyzeCrashInformation(logcatOutput);
 
@@ -2752,7 +2751,7 @@ public class CrashAnalyzerTest {
   public void testClassNotFoundExceptionWithPackageName() {
     String logcatOutput =
         "E/AndroidRuntime(12345): java.lang.ClassNotFoundException:"
-            + " com.facebook.app.plugins.example.MyPlugin\n"
+            + " com.example.app.plugins.example.MyPlugin\n"
             + "E/AndroidRuntime(12345): \tat"
             + " dalvik.system.BaseDexClassLoader.findClass(BaseDexClassLoader.java:207)\n";
 
@@ -2762,7 +2761,7 @@ public class CrashAnalyzerTest {
     assertTrue(
         "Should detect ClassNotFoundException with long package name",
         errorOutput.contains("Class not found exception detected"));
-    assertTrue("Should include package name", errorOutput.contains("com.facebook.app.plugins"));
+    assertTrue("Should include package name", errorOutput.contains("com.example.app.plugins"));
   }
 
   @Test
@@ -2770,7 +2769,7 @@ public class CrashAnalyzerTest {
     String logcatOutput =
         "E/AndroidRuntime(12345): java.lang.ClassNotFoundException: Didn't find class"
             + " \"com.example.Test\" on path: DexPathList[[zip file"
-            + " \"/data/app/com.facebook.app.apk\"]]\n"
+            + " \"/data/app/com.example.app.apk\"]]\n"
             + "E/AndroidRuntime(12345): \tat"
             + " dalvik.system.BaseDexClassLoader.findClass(BaseDexClassLoader.java:207)\n";
 
@@ -2786,7 +2785,7 @@ public class CrashAnalyzerTest {
   @Test
   public void testClassNotFoundExceptionInTestRunner() {
     String logcatOutput =
-        "E/TestRunner(12345): java.lang.ClassNotFoundException: com.facebook.test.MyTestClass\n"
+        "E/TestRunner(12345): java.lang.ClassNotFoundException: com.example.test.MyTestClass\n"
             + "E/TestRunner(12345): \tat java.lang.Class.classForName(Native Method)\n"
             + "E/TestRunner(12345): \tat"
             + " android.test.InstrumentationTestRunner.getTargetContext(InstrumentationTestRunner.java:123)\n";
@@ -2860,7 +2859,7 @@ public class CrashAnalyzerTest {
   public void testClassNotFoundExceptionWithReflection() {
     String logcatOutput =
         "E/AndroidRuntime(12345): java.lang.ClassNotFoundException:"
-            + " com.facebook.reflect.ReflectionTarget\n"
+            + " com.example.reflect.ReflectionTarget\n"
             + "E/AndroidRuntime(12345): \tat"
             + " java.lang.Class.classForName(Native Method)\n"
             + "E/AndroidRuntime(12345): \tat"
@@ -2868,7 +2867,7 @@ public class CrashAnalyzerTest {
             + "E/AndroidRuntime(12345): \tat"
             + " java.lang.Class.forName(Class.java:378)\n"
             + "E/AndroidRuntime(12345): \tat"
-            + " com.facebook.reflection.Reflector.instantiate(Reflector.java:42)\n";
+            + " com.example.reflection.Reflector.instantiate(Reflector.java:42)\n";
 
     crashAnalyzer.analyzeCrashInformation(logcatOutput);
 
@@ -2883,7 +2882,7 @@ public class CrashAnalyzerTest {
   public void testClassNotFoundExceptionInServiceLoader() {
     String logcatOutput =
         "E/AndroidRuntime(12345): java.lang.ClassNotFoundException:"
-            + " com.facebook.service.MyService\n"
+            + " com.example.service.MyService\n"
             + "E/AndroidRuntime(12345): \tat"
             + " dalvik.system.BaseDexClassLoader.findClass(BaseDexClassLoader.java:207)\n"
             + "E/AndroidRuntime(12345): \tat"

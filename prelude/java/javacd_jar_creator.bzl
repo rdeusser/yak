@@ -33,7 +33,6 @@ load(
 load(
     "@prelude//java/utils:java_utils.bzl",
     "CustomJdkInfo",  # @unused Used as a type
-    "build_bootclasspath",
 )
 load(
     "@prelude//jvm:cd_jar_creator_util.bzl",
@@ -88,8 +87,7 @@ def create_jar_artifact_javacd(
     actions = ctx.actions
     resources_map = get_resources_map(java_toolchain, label.package, resources, resources_root)
 
-    custom_bootclasspath = custom_jdk_info.bootclasspath if custom_jdk_info else []
-    bootclasspath_entries = build_bootclasspath(custom_bootclasspath, source_level, java_toolchain)
+    bootclasspath_entries = custom_jdk_info.bootclasspath if custom_jdk_info else []
     abi_generation_mode = get_abi_generation_mode(abi_generation_mode, java_toolchain, srcs, annotation_processor_properties)
 
     uses_content_based_paths = java_toolchain.uses_content_based_paths

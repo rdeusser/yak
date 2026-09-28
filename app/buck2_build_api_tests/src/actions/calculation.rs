@@ -511,12 +511,12 @@ async fn test_ensure_artifact_external_symlink() -> buck2_error::Result<()> {
     buck2_certs::certs::maybe_setup_cryptography();
     let path = CellPath::new(
         CellName::testing_new("cell"),
-        CellRelativePathBuf::unchecked_new("proj/to_gvfs/include".to_owned()),
+        CellRelativePathBuf::unchecked_new("proj/to_vendor/include".to_owned()),
     );
-    let source_artifact = create_test_source_artifact("cell//proj/to_gvfs", "include");
+    let source_artifact = create_test_source_artifact("cell//proj/to_vendor", "include");
     let symlink = Arc::new(
         ExternalSymlink::new(
-            PathBuf::from("/mnt/gvfs"),
+            PathBuf::from("/opt/vendor"),
             ForwardRelativePathBuf::new("include".to_owned()).unwrap(),
         )
         .unwrap(),
@@ -580,9 +580,6 @@ async fn test_command_details_omission() {
         },
         exit_code: Some(1),
         additional_message: None,
-        inline_environment_metadata: buck2_data::InlineCommandExecutionEnvironmentMetadata {
-            sandcastle_instance_id: Some(123),
-        },
     };
 
     let proto = command_details(&report, false).await;

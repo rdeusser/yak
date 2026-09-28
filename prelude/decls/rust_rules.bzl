@@ -123,8 +123,6 @@ rust_binary = prelude_rule(
         Note: Buck is currently tested with (and therefore supports) version 1.32.0 of Rust.
     """,
     examples = """
-        For more examples, check out our [integration tests](https://github.com/facebook/buck/tree/dev/test/com/facebook/buck/rust/testdata/).
-
         ```
         rust_binary(
           name='greet',
@@ -195,8 +193,6 @@ rust_library = prelude_rule(
         Note: Buck is currently tested with (and therefore supports) version 1.32.0 of Rust.
     """,
     examples = """
-        For more examples, check out our [integration tests](https://github.com/facebook/buck/tree/dev/test/com/facebook/buck/rust/testdata/).
-
         ```
         rust_library(
           name='greeting',
@@ -221,8 +217,8 @@ rust_library = prelude_rule(
         | rust_common.features_arg()
         | rust_common.rustc_flags_arg()
         |
-        # linker_flags weren't supported for rust_library in Buck v1 but the
-        # fbcode macros pass them anyway. They're typically empty since the
+        # linker_flags weren't supported for rust_library in Buck v1 but some
+        # macros pass them anyway. They're typically empty since the
         # config-level flags don't get injected, but it doesn't hurt to accept
         # them and it simplifies the implementation of Rust rules since they
         # don't have to know whether we're building a rust_binary or a
@@ -279,8 +275,6 @@ rust_test = prelude_rule(
         Note: Buck is currently tested with (and therefore supports) version 1.32.0 of Rust.
     """,
     examples = """
-        For more examples, check out our [integration tests](https://github.com/facebook/buck/tree/dev/test/com/facebook/buck/rust/testdata/).
-
         ```
         rust_test(
           name='greet',

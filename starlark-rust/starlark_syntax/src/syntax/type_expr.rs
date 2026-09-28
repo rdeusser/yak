@@ -220,8 +220,7 @@ impl<'a, P: AstPayload> TypeExprUnpackP<'a, P> {
             }
             ExprP::Lambda(..) => err("lambda"),
             ExprP::Literal(AstLiteral::String(_)) => {
-                // TODO(nga): eventually this should be allowed for self-referential types:
-                //   https://www.internalfb.com/tasks/?t=184482361
+                // TODO(nga): eventually this should be allowed for self-referential types.
                 err("string literal")
             }
             ExprP::Literal(AstLiteral::Int(_)) => err("int"),

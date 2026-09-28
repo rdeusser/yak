@@ -6,12 +6,9 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-# pyre-strict
-
-
-from buck2.tests.e2e_util.api.buck import Buck
-from buck2.tests.e2e_util.asserts import expect_failure
-from buck2.tests.e2e_util.buck_workspace import buck_test
+from e2e_util.api.buck import Buck
+from e2e_util.asserts import expect_failure
+from e2e_util.buck_workspace import buck_test
 
 
 @buck_test(skip_for_os=["windows", "darwin"], disable_daemon_cgroup=False)
@@ -49,9 +46,3 @@ async def test_network_isolated_without_cgroups(buck: Buck) -> None:
             "--no-remote-cache",
         ),
     )
-
-
-@buck_test()
-def test_nop(buck: Buck) -> None:
-    # Pytest gets upset if we have no windows or mac tests in this file
-    pass

@@ -1,0 +1,3 @@
+# `unhidden` sets no visibility of its own, so it takes this default. `hidden`
+# sets an empty list, which keeps it private to this package.
+package(visibility = ["PUBLIC"])

@@ -14,7 +14,6 @@ use std::path::PathBuf;
 use async_trait::async_trait;
 use buck2_cli_proto::BuildRequest;
 use buck2_cli_proto::BuildTarget;
-use buck2_cli_proto::TargetCfg;
 use buck2_cli_proto::build_request::BuildProviders;
 use buck2_cli_proto::build_request::ResponseOptions;
 use buck2_cli_proto::build_request::build_providers;
@@ -163,18 +162,6 @@ impl BuildCommand {
             return build_providers::Action::BuildIfAvailable;
         }
         build_providers::Action::Skip
-    }
-
-    pub(crate) fn patterns(&self) -> &Vec<String> {
-        &self.patterns
-    }
-
-    pub(crate) fn target_universe(&self) -> &Vec<String> {
-        &self.target_cfg.target_universe
-    }
-
-    pub(crate) fn target_cfg(&self) -> TargetCfg {
-        self.target_cfg.target_cfg.target_cfg().clone()
     }
 }
 
@@ -384,14 +371,7 @@ pub(crate) fn print_buck_ui(
     used_superconsole: bool,
 ) -> buck2_error::Result<()> {
     if used_superconsole {
-        if cfg!(fbcode_build) {
-            console.print_stderr(&format!(
-                "Buck UI: https://www.internalfb.com/buck2/{}",
-                ctx.trace_id
-            ))?;
-        } else {
-            console.print_stderr(&format!("Build ID: {}", ctx.trace_id))?;
-        }
+        console.print_stderr(&format!("Build ID: {}", ctx.trace_id))?;
     }
     Ok(())
 }

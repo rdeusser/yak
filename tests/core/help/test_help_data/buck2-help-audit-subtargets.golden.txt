@@ -1,4 +1,4 @@
-# This file is @generated, regenerate by re-running test with `-- --env BUCK2_UPDATE_GOLDEN=1` appended to the test command
+# This file is @generated, regenerate by rerunning the test with `BUCK2_UPDATE_GOLDEN=1` set
 
 Print all subtargets
 
@@ -115,9 +115,9 @@ Starlark Options:
           Some examples identifiers: analysis/cell//buck2/app/buck2_action_impl:buck2_action_impl
           (cfg:linux-x86_64#27ac5723e0c99706) load/cell//build_defs/json.bzl
           load/prelude//playground/test.bxl load/cell//build_defs/json.bzl@other_cell
-          load_buildfile/fbcode//third-party-buck/platform010/build/ncurses
-          load_packagefile/fbcode//cli/rust/cli_delegate anon_analysis/anon//:_anon_link_rule (anon:
-          766183dc9b6f680a) (fbcode//buck2/platform/execution:linux-x86_64#08961b14cfb182aa)
+          load_buildfile/cell//third-party/ncurses load_packagefile/cell//cli/rust/cli_delegate
+          anon_analysis/anon//:_anon_link_rule (anon: 766183dc9b6f680a)
+          (cell//platform/execution:linux-x86_64#08961b14cfb182aa)
           bxl/prelude//playground/test.bxl:playground
 
           You can pass `--profile-patterns=.*` to enable no-op profiling for everything
@@ -229,18 +229,11 @@ Universal Options:
           [default: 1]
 
       --oncall <ONCALL>
-          The oncall executing this command
+          The team that owns this command. Buck2 records it in the event log
 
       --client-metadata <CLIENT_METADATA>
-          Metadata key-value pairs to inject into Buck2's logging. Client metadata must be of the
-          form `key=value`, where `key` is a snake_case identifier, and will be sent to backend
-          datasets
+          Metadata key-value pairs to record in the event log. Client metadata must be of the form
+          `key=value`, where `key` is a snake_case identifier
 
       --setting <SECTION.KEY=VALUE>
           Override a Buck setting using `section.key=value`
-
-      --agent-context <AGENT_CONTEXT>
-          Agent context key=value pairs for telemetry. Used by AI agents to pass structured
-          metadata. Schema is defined via buckconfig. Entries can be comma-separated or passed as
-          separate flags. Examples: --agent-context intent=fix,attempt=2,prior_error=missing_target
-          --agent-context intent=build --agent-context attempt=1

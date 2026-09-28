@@ -6,27 +6,18 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-# pyre-strict
-
-
 import json
-import os
 import platform
 import random
 import string
-import subprocess
 from pathlib import Path
 
 import pytest
-from buck2.tests.e2e_util.api.buck import Buck
-from buck2.tests.e2e_util.api.buck_result import BuckException
-from buck2.tests.e2e_util.asserts import expect_failure
-from buck2.tests.e2e_util.buck_workspace import buck_test
-from buck2.tests.e2e_util.helper.utils import (
-    get_buck2_re_use_case,
-    json_get,
-    read_what_ran,
-)
+from e2e_util.api.buck import Buck
+from e2e_util.api.buck_result import BuckException
+from e2e_util.asserts import expect_failure
+from e2e_util.buck_workspace import buck_test
+from e2e_util.helper.utils import json_get, read_what_ran
 
 
 @buck_test(data_dir="anon_exec_deps")
@@ -66,7 +57,6 @@ def read_all_outputs(buck: Buck, report: str) -> list[str]:
 
     with open(buck.cwd / report) as f:
         report = json.load(f)
-        # pyrefly: ignore [bad-index]
         for _target, state in report["results"].items():
             ret.extend(state["outputs"].get("DEFAULT", []))
             ret.extend(state["other_outputs"].get("DEFAULT", []))
@@ -132,37 +122,6 @@ async def test_projected_artifacts(buck: Buck, target: str) -> None:
     await buck.build(target)
 
 
-@buck_test(data_dir="upload_all_actions")
-async def test_upload_all_actions(buck: Buck) -> None:
-    with open(buck.cwd / "src", "w") as src:
-        src.write(random_string())
-
-    # This action includes `src` and is forced to run locally. This means RE
-    # can never have seen it (and we'll check that later by asserting there is
-    # only 1 cache query, excluding local actions).
-    await buck.build("//:cp", "--upload-all-actions")
-
-    what_ran = await read_what_ran(
-        buck, "--emit-cache-queries", "--skip-local-executions"
-    )
-    assert len(what_ran) == 1
-
-    # Now, download the action. This will succeed only if we uploaded it.
-    digest = what_ran[0]["reproducer"]["details"]["digest"]
-    use_case = await get_buck2_re_use_case(buck)
-    subprocess.check_call(
-        [
-            "dotslash",
-            os.environ["RECLI"],
-            "--use-case",
-            use_case,
-            "cas",
-            "download-action",
-            digest,
-        ]
-    )
-
-
 @buck_test(data_dir="buckroot")
 async def test_buckroot(buck: Buck) -> None:
     # Test that .buckroot files work
@@ -182,14 +141,17 @@ async def test_cell_deletion(buck: Buck) -> None:
     await buck.targets(":")
 
 
+@pytest.mark.xfail(
+    reason="the fs_hash_crawler file watcher that tests use fails the command on a file name that contains a backslash",
+    strict=True,
+)
 @buck_test(
     data_dir="invalid_file_invalidation",
     skip_for_os=["windows"],
-    setup_eden=True,
 )
 async def test_invalid_file_invalidation(buck: Buck) -> None:
     """
-    This is a regression test for T136963408.
+    Checks that files and directories with invalid names do not break later builds.
     """
 
     await buck.build(":root")
@@ -335,7 +297,7 @@ async def test_keep_going(buck: Buck) -> None:
 
 @buck_test(data_dir="cleanup")
 async def test_cleanup(buck: Buck) -> None:
-    # Test for T85589819 - broken cleanup
+    # Checks that buck2 cleans up outputs whose parent directories became files.
     target_pattern = "//:cleanup"
     result = await buck.build(target_pattern)
     output = result.get_build_report().output_for_target(target_pattern)
@@ -355,6 +317,7 @@ async def test_cleanup(buck: Buck) -> None:
     await buck.build(target_pattern)
 
 
+@pytest.mark.remote_execution
 @buck_test(data_dir="log_action_keys")
 async def test_log_action_keys(buck: Buck) -> None:
     async def read_action_keys() -> list[tuple[str, str]]:

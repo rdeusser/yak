@@ -876,7 +876,7 @@ def rust_compile(
             emit_op.output,
             identifier = "{}/__{}_{}_dwp".format(common_args.subdir, common_args.tempfile, emit.value),
             category_suffix = "rust",
-            # TODO(T110378142): Ideally, referenced objects are a list of
+            # TODO: Ideally, referenced objects are a list of
             # artifacts, but currently we don't track them properly.  So, we
             # just pass in the full link line and extract all inputs from that,
             # which is a bit of an overspecification.
@@ -1377,7 +1377,7 @@ def _compute_common_args(
         # libraries but keeping it separate for binaries. We have not been able
         # to use `-Csplit-debuginfo=packed` because it runs into an error "unit
         # referenced by executable was not found" when dealing with chains of
-        # dependencies from Rust -> C++ -> Rust (T147665047).
+        # dependencies from Rust -> C++ -> Rust.
         SplitDebugMode("single"): ["-Csplit-debuginfo=unpacked"],
         SplitDebugMode("split"): ["-Csplit-debuginfo=unpacked"],
     }[compile_ctx.cxx_toolchain_info.split_debug_mode or SplitDebugMode("none")]
@@ -1769,8 +1769,8 @@ def _rustc_invoke(
     plain_env.update(more_plain_env)
     path_env.update(more_path_env)
 
-    # `nightly_features` grants the rules use of unstable functionality. Both
-    # internally and in OSS the compiler is typically a stable-channel build,
+    # `nightly_features` grants the rules use of unstable functionality. The
+    # compiler is typically a stable-channel build,
     # where that functionality must be unlocked by setting `RUSTC_BOOTSTRAP=1`;
     # on an actual nightly compiler the variable is harmless. This must be
     # uniform across all invocations for a crate: rustc includes the variable
@@ -2198,7 +2198,7 @@ def rust_link_binary(
             "-Wl,--as-needed",
             # lld deduplicates `.debug_str` only at `-O1`, and rustc always
             # passes this for links it drives, overriding toolchains that link
-            # at `-O0` for speed (fbcode's opt-lg). Without the deduplication,
+            # at `-O0` for speed. Without the deduplication,
             # very large binaries overflow the 32-bit `.debug_str` offsets in
             # `.debug_names`.
             "-Wl,-O1",
@@ -2240,8 +2240,8 @@ def rust_link_binary(
             binary_links = [LinkArgs(flags = binary_link_args)] if binary_link_args else [],
             links = links,
             link_execution_preference = link_execution_preference,
-            # The link is local only so the fbcode linker wrapper can stamp
-            # build info from the repo (D115067153); dwp needs no repo and is
+            # The link can be local only so a linker wrapper can stamp build
+            # info from the repository. dwp needs no repository and is
             # memory-hungry enough that pinning it to the link's host thrashes
             # small workers. Let it schedule anywhere, matching the
             # rustc-linked path, which runs dwp with no preference.

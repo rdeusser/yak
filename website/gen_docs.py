@@ -7,8 +7,6 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-# pyre-strict
-
 """
 Generate API documentation for the website.
 """
@@ -20,6 +18,10 @@ import subprocess
 import tempfile
 from pathlib import Path
 from typing import List
+
+# The Docusaurus content directory, relative to the repository root, which
+# `main` changes to before generating.
+DOCS_DIR: Path = Path("website") / "docs"
 
 
 def read_file(path: Path) -> str:
@@ -39,7 +41,7 @@ def setup_gen_dir(path: Path) -> None:
         """
 This directory contains generated files.
 
-Re-generate by running `fbcode/buck2/website/gen_docs.py`.
+Re-generate by running `website/gen_docs.py`.
 """
     )
 
@@ -57,7 +59,7 @@ def buck_command(args: argparse.Namespace) -> str:
 
 def generate_prelude_rules_docs(buck: str) -> None:
     with tempfile.TemporaryDirectory() as tmp:
-        base_dir = Path("docs") / "prelude" / "rules"
+        base_dir = DOCS_DIR / "prelude" / "rules"
         setup_gen_dir(base_dir)
         # Actually generate the docs
         print("Running Buck...")
@@ -88,7 +90,7 @@ def generate_prelude_rules_docs(buck: str) -> None:
 
 def generate_api_docs(buck: str) -> None:
     with tempfile.TemporaryDirectory() as tmp:
-        base_dir = Path("docs") / "api"
+        base_dir = DOCS_DIR / "api"
         setup_gen_dir(base_dir)
         subprocess.run(
             buck + " docs starlark-builtins --output-dir " + tmp,
@@ -105,7 +107,7 @@ def generate_api_docs(buck: str) -> None:
 
 def generate_bxl_utils_api_docs(buck: str) -> None:
     with tempfile.TemporaryDirectory() as tmp:
-        base_dir = Path("docs") / "api" / "bxl_utils"
+        base_dir = DOCS_DIR / "api" / "bxl_utils"
         setup_gen_dir(base_dir)
         bxl_utils_foler = Path("prelude") / "bxl"
         bxl_utils_file_prefix = "prelude//bxl"
@@ -204,7 +206,7 @@ For common options available across multiple commands, see [Common Options](./co
 
 
 def generate_help_docs(buck: str) -> None:
-    base_dir = Path("docs") / "users" / "commands"
+    base_dir = DOCS_DIR / "users" / "commands"
     setup_gen_dir(base_dir)
 
     cmd = buck + " --help"
@@ -225,7 +227,7 @@ def generate_help_docs(buck: str) -> None:
 
 
 def generate_query_docs(buck: str) -> None:
-    base_dir = Path("docs") / "users" / "query"
+    base_dir = DOCS_DIR / "users" / "query"
     setup_gen_dir(base_dir)
 
     for x in ["uquery", "cquery", "aquery"]:
@@ -239,8 +241,7 @@ def generate_query_docs(buck: str) -> None:
             + f"title: {x.title()} Environment\n"
             + "toc_max_heading_level: 4\n"
             + "---\n"
-            + "\nimport useBaseUrl from '@docusaurus/useBaseUrl';"
-            + "\nimport { FbInternalOnly } from 'docusaurus-plugin-internaldocs-fb/internal';\n\n"
+            + "\nimport useBaseUrl from '@docusaurus/useBaseUrl';\n\n"
             + res.stdout.decode(),
         )
 
@@ -272,7 +273,7 @@ def main() -> None:
 
     # Clear the docs folder first so that if we change the names of any
     # objects, we'll remove old docs
-    for x in Path("docs").rglob("*.generated.md"):
+    for x in DOCS_DIR.rglob("*.generated.md"):
         os.remove(x)
 
     buck = buck_command(args)

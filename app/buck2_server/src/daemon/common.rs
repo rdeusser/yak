@@ -9,7 +9,6 @@
  */
 
 use std::sync::Arc;
-use std::sync::OnceLock;
 
 use buck2_build_api::actions::execute::dice_data::CommandExecutorResponse;
 use buck2_build_api::actions::execute::dice_data::HasCommandExecutor;
@@ -22,16 +21,10 @@ use buck2_core::execution_types::executor_config::CommandGenerationOptions;
 use buck2_core::execution_types::executor_config::Executor;
 use buck2_core::execution_types::executor_config::HybridExecutionLevel;
 use buck2_core::execution_types::executor_config::LocalExecutorOptions;
-use buck2_core::execution_types::executor_config::MetaInternalExtraParams;
 use buck2_core::execution_types::executor_config::PathSeparatorKind;
-use buck2_core::execution_types::executor_config::ReGangWorker;
-use buck2_core::execution_types::executor_config::RePlatformFields;
 use buck2_core::execution_types::executor_config::RemoteEnabledExecutor;
-use buck2_core::execution_types::executor_config::RemoteEnabledExecutorOptions;
-use buck2_core::execution_types::executor_config::RemoteExecutorDependency;
 use buck2_core::execution_types::executor_config::RemoteExecutorOptions;
 use buck2_core::execution_types::executor_config::RemoteExecutorUseCase;
-use buck2_core::execution_types::revision::LazyVcsRevision;
 use buck2_core::fs::artifact_path_resolver::ArtifactFs;
 use buck2_core::fs::project::ProjectRoot;
 use buck2_events::daemon_id::DaemonId;
@@ -85,7 +78,6 @@ pub struct CommandExecutorFactory {
     skip_cache_read: bool,
     skip_cache_write: bool,
     project_root: ProjectRoot,
-    revision: Arc<LazyVcsRevision>,
     worker_pool: Arc<WorkerPool>,
     paranoid: Option<ParanoidDownloader>,
     materialize_failed_inputs: bool,
@@ -127,7 +119,6 @@ impl CommandExecutorFactory {
         daemon_id: DaemonId,
     ) -> Self {
         let cache_upload_permission_checker = Arc::new(ActionCacheUploadPermissionChecker::new());
-        let revision = Arc::new(LazyVcsRevision::new(project_root.root().to_owned()));
 
         Self {
             re_connection,
@@ -142,7 +133,6 @@ impl CommandExecutorFactory {
             skip_cache_read,
             skip_cache_write,
             project_root,
-            revision,
             worker_pool,
             paranoid,
             materialize_failed_inputs,
@@ -171,8 +161,6 @@ impl CommandExecutorFactory {
 #[derive(buck2_error::Error, Debug)]
 #[buck2(input)]
 enum ExecutorCompatibilityError {
-    #[error("The desired execution strategy (`{0:?}`) is incompatible with the local executor")]
-    LocalIncompatible(ExecutionStrategy),
     #[error(
         "The desired execution strategy (`{0:?}`) is incompatible with the executor config that was selected: {1:?}"
     )]
@@ -209,37 +197,14 @@ impl HasCommandExecutor for CommandExecutorFactory {
             )
         };
 
-        if !buck2_core::is_open_source() && !cfg!(fbcode_build) {
-            static WARN: OnceLock<()> = OnceLock::new();
-            WARN.get_or_init(|| {
-                tracing::warn!("Cargo build detected: disabling remote execution and caching!")
-            });
-
-            if self.strategy.ban_local() {
-                return Err(ExecutorCompatibilityError::LocalIncompatible(self.strategy).into());
-            }
-
-            return Ok(CommandExecutorResponse {
-                executor: Arc::new(local_executor_new(&LocalExecutorOptions::default())),
-                platform: Default::default(),
-                action_cache_checker: Arc::new(NoOpCommandOptionalExecutor {}),
-                remote_dep_file_cache_checker: Arc::new(NoOpCommandOptionalExecutor {}),
-                cache_uploader: Arc::new(NoOpCacheUploader {}),
-                output_trees_download_config: self.output_trees_download_config.dupe(),
-            });
-        }
-
         let remote_executor_new = |options: &RemoteExecutorOptions,
                                    re_use_case: &RemoteExecutorUseCase,
                                    re_action_key: &Option<String>,
                                    remote_cache_enabled: bool,
-                                   dependencies: &[RemoteExecutorDependency],
-                                   gang_workers: &[ReGangWorker],
                                    priority: Option<i32>| {
             ReExecutor {
                 artifact_fs: artifact_fs.dupe(),
                 project_fs: self.project_root.clone(),
-                revision: self.revision.dupe(),
                 materializer: self.materializer.dupe(),
                 incremental_db_state: self.incremental_db_state.dupe(),
                 re_client: self.get_prepared_re_client(*re_use_case),
@@ -252,8 +217,6 @@ impl HasCommandExecutor for CommandExecutorFactory {
                 paranoid: self.paranoid.dupe(),
                 materialize_failed_inputs: self.materialize_failed_inputs,
                 materialize_failed_outputs: self.materialize_failed_outputs,
-                dependencies: dependencies.to_vec(),
-                gang_workers: gang_workers.to_vec(),
                 deduplicate_get_digests_ttl_calls: self.deduplicate_get_digests_ttl_calls,
                 output_trees_download_config: self.output_trees_download_config.dupe(),
                 priority,
@@ -354,8 +317,6 @@ impl HasCommandExecutor for CommandExecutorFactory {
                                 &remote_options.re_use_case,
                                 &remote_options.re_action_key,
                                 remote_options.remote_cache_enabled,
-                                &remote_options.dependencies,
-                                &remote_options.gang_workers,
                                 remote_options.priority,
                             )))
                         }
@@ -373,8 +334,6 @@ impl HasCommandExecutor for CommandExecutorFactory {
                                 &remote_options.re_use_case,
                                 &remote_options.re_action_key,
                                 remote_options.remote_cache_enabled,
-                                &remote_options.dependencies,
-                                &remote_options.gang_workers,
                                 remote_options.priority,
                             );
                             let executor_preference = self.strategy.hybrid_preference();
@@ -507,64 +466,14 @@ impl ExecutionStrategyExt for ExecutionStrategy {
 
 /// This is used when execution platforms are not configured.
 pub fn get_default_executor_config(host_platform: HostPlatformOverride) -> CommandExecutorConfig {
-    let executor = if buck2_core::is_open_source() {
-        Executor::Local(LocalExecutorOptions::default())
-    } else {
-        Executor::RemoteEnabled(RemoteEnabledExecutorOptions {
-            executor: RemoteEnabledExecutor::Hybrid {
-                local: LocalExecutorOptions::default(),
-                remote: RemoteExecutorOptions::default(),
-                level: HybridExecutionLevel::Limited,
-            },
-            re_properties: get_default_re_properties(host_platform),
-            re_use_case: RemoteExecutorUseCase::buck2_default(),
-            re_action_key: None,
-            cache_upload_behavior: CacheUploadBehavior::Disabled,
-            remote_cache_enabled: true,
-            remote_dep_file_cache_enabled: false,
-            dependencies: vec![],
-            gang_workers: vec![],
-            custom_image: None,
-            meta_internal_extra_params: MetaInternalExtraParams::default_arc(),
-            priority: None,
-        })
-    };
-
     CommandExecutorConfig {
-        executor,
+        executor: Executor::Local(LocalExecutorOptions::default()),
         options: CommandGenerationOptions {
             path_separator: get_default_path_separator(host_platform),
             output_paths_behavior: Default::default(),
             use_bazel_protocol_remote_persistent_workers: false,
             network_access: None,
         },
-    }
-}
-
-fn get_default_re_properties(host_platform: HostPlatformOverride) -> RePlatformFields {
-    let linux = &[("platform", "linux-remote-execution")];
-    let macos = &[("platform", "mac"), ("subplatform", "any")];
-    let windows = &[("platform", "windows")];
-
-    let props = match host_platform {
-        HostPlatformOverride::Linux => linux.as_slice(),
-        HostPlatformOverride::MacOs => macos.as_slice(),
-        HostPlatformOverride::Windows => windows.as_slice(),
-        HostPlatformOverride::DefaultPlatform => match std::env::consts::OS {
-            "linux" => linux.as_slice(),
-            "macos" => macos.as_slice(),
-            "windows" => windows.as_slice(),
-            v => unimplemented!("no support yet for operating system `{}`", v),
-        },
-    };
-
-    RePlatformFields {
-        properties: Arc::new(
-            props
-                .iter()
-                .map(|(k, v)| ((*k).to_owned(), (*v).to_owned()))
-                .collect(),
-        ),
     }
 }
 

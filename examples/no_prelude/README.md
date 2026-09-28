@@ -1,18 +1,18 @@
 ## No-prelude example
 
-This is an example project that does not rely on
-https://github.com/facebook/buck2-prelude. Instead the prelude cell points to a
-`prelude` directory with an empty `prelude.bzl` file, like so:
+This example project defines all of its rules and toolchains itself. Its
+`.buckconfig` has no `prelude` cell:
 
 ```
 #.buckconfig
 [cells]
 root = .
-prelude = prelude
+toolchains = toolchains
 ```
 
-All rules and toolchains are defined manually within each of the subdirectories.
-(e.g. `cpp/rules.bzl`, `cpp/toolchain.bzl`)
+Each language directory holds its rules in `rules.bzl` (for example
+`cpp/rules.bzl`). The `toolchains` cell holds the toolchains (for example
+`toolchains/cpp_toolchain.bzl`).
 
 ## Sample commands
 

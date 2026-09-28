@@ -18,9 +18,7 @@ use futures::StreamExt;
 use futures::TryStreamExt;
 use futures::stream::BoxStream;
 use http::Method;
-use http::Uri;
 use http::request::Builder;
-use http::uri::Scheme;
 use http_body_util::BodyExt;
 use http_body_util::Full;
 use hyper::Request;
@@ -36,7 +34,6 @@ use crate::redirect::PendingRequest;
 use crate::redirect::RedirectEngine;
 use crate::stats::CountingStream;
 use crate::stats::HttpNetworkStats;
-use crate::x2p::X2PAgentError;
 
 mod builder;
 pub use builder::HttpClientBuilder;
@@ -49,7 +46,6 @@ pub struct HttpClient {
     #[allocative(skip)]
     inner: Arc<dyn RequestClient>,
     max_redirects: Option<usize>,
-    supports_vpnless: bool,
     http2: bool,
     stats: HttpNetworkStats,
     // tokio::sync::Semaphore doesn't impl Allocative
@@ -117,19 +113,11 @@ impl HttpClient {
 
     async fn send_request_impl(
         &self,
-        mut request: Request<Bytes>,
+        request: Request<Bytes>,
     ) -> Result<Response<BoxStream<'_, hyper::Result<Bytes>>>, HttpError> {
         let uri = request.uri().to_string();
         let now = tokio::time::Instant::now();
 
-        // x2p requires scheme to be http since it handles all TLS.
-        if self.supports_vpnless() {
-            tracing::debug!(
-                "http: request: changing scheme for '{}' to http for vpnless",
-                request.uri()
-            );
-            change_scheme_to_http(&mut request)?;
-        }
         let semaphore_guard = match self.concurrent_requests_budget.as_ref() {
             Some(sem) => Some(
                 sem.acquire()
@@ -184,14 +172,6 @@ impl HttpClient {
         };
 
         if !resp.status().is_success() {
-            // Handle x2p errors as indicated by headers.
-            if let Some(x2p_err) = X2PAgentError::from_headers(&uri, resp.headers()) {
-                return Err(HttpError::X2P {
-                    uri: uri.to_string(),
-                    source: x2p_err,
-                });
-            }
-
             let status = resp.status();
             let text = read_truncated_error_response(resp).await;
             return Err(HttpError::Status {
@@ -206,13 +186,6 @@ impl HttpClient {
 
     pub fn stats(&self) -> &HttpNetworkStats {
         &self.stats
-    }
-
-    /// Whether this client supports vpnless operation. When set, will make requests
-    /// to the `vpnless_url` attribute in the `download_file` action rather than the
-    /// normal `url` attribute.
-    pub fn supports_vpnless(&self) -> bool {
-        self.supports_vpnless
     }
 
     pub fn http2(&self) -> bool {
@@ -262,20 +235,6 @@ pub async fn to_bytes(body: BoxStream<'_, hyper::Result<Bytes>>) -> buck2_error:
     Ok(buf.into())
 }
 
-/// x2pagent proxies only speak plain HTTP, so we need to mutate requests prior
-/// to sending them off.
-fn change_scheme_to_http(request: &mut Request<Bytes>) -> Result<(), HttpError> {
-    let uri = request.uri().clone();
-    let uri_for_error = uri.clone();
-    let mut parts = uri.into_parts();
-    parts.scheme = Some(Scheme::HTTP);
-    *request.uri_mut() = Uri::from_parts(parts).map_err(|e| HttpError::InvalidUriParts {
-        uri: uri_for_error.to_string(),
-        source: e,
-    })?;
-    Ok(())
-}
-
 /// Helper function to check if any error in the chain of errors produced by
 /// hyper is due to a timeout.
 fn is_hyper_error_due_to_timeout(e: &hyper_util::client::legacy::Error) -> bool {
@@ -302,39 +261,6 @@ mod tests {
     use httptest::responders;
 
     use super::*;
-
-    #[test]
-    fn test_change_scheme_to_http_succeeds() -> buck2_error::Result<()> {
-        buck2_certs::certs::maybe_setup_cryptography();
-        let mut request = Request::builder()
-            .method(Method::GET)
-            .uri("https://some.site/foo")
-            .body(Bytes::new())?;
-        change_scheme_to_http(&mut request)?;
-
-        assert_eq!(
-            Scheme::HTTP,
-            *request
-                .uri()
-                .scheme()
-                .expect("should have scheme after mutating request")
-        );
-        Ok(())
-    }
-
-    #[test]
-    fn test_change_scheme_to_http_no_effect() -> buck2_error::Result<()> {
-        buck2_certs::certs::maybe_setup_cryptography();
-        let uri: Uri = "http://some.site/foo".try_into()?;
-        let mut request = Request::builder()
-            .method(Method::GET)
-            .uri(uri.clone())
-            .body(Bytes::new())?;
-        change_scheme_to_http(&mut request)?;
-
-        assert_eq!(&uri, request.uri());
-        Ok(())
-    }
 
     #[tokio::test]
     async fn test_simple_get_success() -> buck2_error::Result<()> {
@@ -620,201 +546,6 @@ mod tests {
         Ok(())
     }
 
-    #[cfg(unix)]
-    mod unix {
-        use std::path::PathBuf;
-
-        use http_body_util::BodyExt;
-        use hyper::body::Incoming;
-        use hyper_util::rt::TokioExecutor;
-        use hyper_util::rt::TokioIo;
-
-        use super::*;
-
-        /// Conceptually similar to crate::http::tests::ProxyServer, but sets up a
-        /// local unix domain socket instead.
-        pub struct UnixSocketProxyServer {
-            pub socket: PathBuf,
-            // Need to hold a ref so when Drop runs on Self we cancel the task.
-            #[allow(dead_code)]
-            handle: tokio::task::JoinHandle<()>,
-            // Need to hold ref so socket doesn't get removed.
-            #[allow(dead_code)]
-            tempdir: tempfile::TempDir,
-        }
-
-        impl UnixSocketProxyServer {
-            pub async fn new() -> buck2_error::Result<Self> {
-                let tempdir = tempfile::tempdir()?;
-                let socket = tempdir.path().join("test-uds.sock");
-
-                let handler_func = |mut req: Request<Incoming>| async move {
-                    let client = hyper_util::client::legacy::Client::builder(TokioExecutor::new());
-                    req.headers_mut().insert(
-                        http::header::VIA,
-                        http::HeaderValue::from_static("testing-proxy-server"),
-                    );
-
-                    let forwarded_body = http_body_util::Full::new(
-                        req.body_mut()
-                            .collect()
-                            .await
-                            .expect("Couldn't get all bytes from incoming request")
-                            .to_bytes(),
-                    );
-                    println!("Proxying request: {req:?}");
-                    client
-                        .build_http()
-                        // Use 'map' here to preserve headers from original request
-                        // even though we already accessed the effective body above
-                        .request(req.map(|_| forwarded_body))
-                        .await
-                };
-
-                let listener = tokio::net::UnixListener::bind(&socket)
-                    .buck_error_context("binding to unix socket")?;
-                let handle = tokio::task::spawn(async move {
-                    loop {
-                        let (stream, _) =
-                            listener.accept().await.expect("Couldn't accept connection");
-                        let io = TokioIo::new(stream);
-                        let svc_fn = hyper::service::service_fn(handler_func);
-
-                        hyper_util::server::conn::auto::Builder::new(TokioExecutor::new())
-                            .serve_connection(io, svc_fn)
-                            .await
-                            .expect("Expected to serve connection")
-                    }
-                });
-
-                Ok(Self {
-                    socket,
-                    handle,
-                    tempdir,
-                })
-            }
-        }
-    }
-
-    #[cfg(unix)]
-    #[tokio::test]
-    async fn test_proxies_through_unix_socket_when_set() -> buck2_error::Result<()> {
-        buck2_certs::certs::maybe_setup_cryptography();
-        let proxy_server = unix::UnixSocketProxyServer::new().await?;
-
-        let test_server = httptest::Server::run();
-        let url = test_server.url("/foo");
-        let host = url.authority().unwrap().to_string();
-        test_server.expect(
-            Expectation::matching(all_of![
-                request::method_path("GET", "/foo"),
-                request::headers(contains(("via", "testing-proxy-server"))),
-                request::headers(contains(("host", host))),
-            ])
-            .times(1)
-            .respond_with(responders::status_code(200)),
-        );
-
-        let client = HttpClientBuilder::https_with_system_roots()
-            .await?
-            .with_x2p_proxy(hyper_http_proxy::Proxy::new(
-                hyper_http_proxy::Intercept::Http,
-                hyperlocal::Uri::new(proxy_server.socket, "/").into(),
-            ))
-            .build();
-        let resp = client.get(&url.to_string()).await?;
-        assert_eq!(200, resp.status().as_u16());
-
-        Ok(())
-    }
-
-    #[tokio::test]
-    async fn test_x2p_error_response_is_forbidden_host() -> buck2_error::Result<()> {
-        buck2_certs::certs::maybe_setup_cryptography();
-        let test_server = httptest::Server::run();
-        let url = test_server.url("/foo");
-        test_server.expect(
-            Expectation::matching(all_of![request::method_path("GET", "/foo")])
-                .times(1)
-                .respond_with(
-                    responders::status_code(400)
-                        .append_header("x-x2pagentd-error-type", "FORBIDDEN_HOST")
-                        .append_header("x-x2pagentd-error-msg", "Nope"),
-                ),
-        );
-
-        let client = HttpClientBuilder::https_with_system_roots().await?.build();
-        let result = client.get(&url.to_string()).await;
-        assert!(result.is_err());
-        assert!(matches!(
-            result,
-            Err(HttpError::X2P {
-                source: X2PAgentError::ForbiddenHost { .. },
-                ..
-            })
-        ));
-
-        Ok(())
-    }
-
-    #[tokio::test]
-    async fn test_x2p_error_response_is_access_denied() -> buck2_error::Result<()> {
-        buck2_certs::certs::maybe_setup_cryptography();
-        let test_server = httptest::Server::run();
-        let url = test_server.url("/foo");
-        test_server.expect(
-            Expectation::matching(all_of![request::method_path("GET", "/foo")])
-                .times(1)
-                .respond_with(
-                    responders::status_code(400)
-                        .append_header("x-fb-validated-x2pauth-decision", "deny")
-                        .append_header("x-x2pagentd-error-msg", "Nope"),
-                ),
-        );
-
-        let client = HttpClientBuilder::https_with_system_roots().await?.build();
-        let result = client.get(&url.to_string()).await;
-        assert!(result.is_err());
-        assert!(matches!(
-            result,
-            Err(HttpError::X2P {
-                source: X2PAgentError::AccessDenied { .. },
-                ..
-            }),
-        ));
-
-        Ok(())
-    }
-
-    #[tokio::test]
-    async fn test_x2p_error_response_is_generic_error() -> buck2_error::Result<()> {
-        buck2_certs::certs::maybe_setup_cryptography();
-
-        let test_server = httptest::Server::run();
-        let url = test_server.url("/foo");
-        test_server.expect(
-            Expectation::matching(all_of![request::method_path("GET", "/foo")])
-                .times(1)
-                .respond_with(
-                    responders::status_code(400)
-                        .append_header("x-x2pagentd-error-msg", "Something else happened"),
-                ),
-        );
-
-        let client = HttpClientBuilder::https_with_system_roots().await?.build();
-        let result = client.get(&url.to_string()).await;
-        assert!(result.is_err());
-        assert!(matches!(
-            result,
-            Err(HttpError::X2P {
-                source: X2PAgentError::Error(..),
-                ..
-            }),
-        ));
-
-        Ok(())
-    }
-
     #[tokio::test]
     async fn test_concurrency_limit() -> buck2_error::Result<()> {
         buck2_certs::certs::maybe_setup_cryptography();
@@ -872,244 +603,4 @@ mod tests {
     }
 }
 
-// TODO(skarlage, T160529958): Debug why these tests fail on CircleCI
-#[cfg(all(test, fbcode_build))]
-mod proxy_tests {
-    use std::net::ToSocketAddrs;
-    use std::time::Duration;
-
-    use buck2_error::BuckErrorContext;
-    use bytes::Bytes;
-    use http::Method;
-    use httptest::Expectation;
-    use httptest::matchers::*;
-    use httptest::responders;
-    use hyper::Request;
-    use hyper::body::Incoming;
-    use hyper_http_proxy::Intercept;
-    use hyper_http_proxy::Proxy;
-    use hyper_util::client::legacy::Client;
-    use hyper_util::rt::TokioExecutor;
-    use hyper_util::rt::TokioIo;
-    use tokio::net::TcpListener;
-    use tokio::task::JoinHandle;
-
-    use super::*;
-    use crate::HttpError;
-    use crate::proxy::DefaultSchemeUri;
-
-    const HEADER_SLEEP_DURATION_MS: &str = "x-buck2-test-proxy-sleep-duration-ms";
-
-    /// Barebones proxy server implementation that simply forwards requests onto
-    /// the destination server.
-    struct ProxyServer {
-        addr: std::net::SocketAddr,
-        // Need to hold a ref to the task so when Drop runs on Self we cancel
-        // the task.
-        #[allow(dead_code)]
-        handle: tokio::task::JoinHandle<()>,
-    }
-
-    impl ProxyServer {
-        async fn new() -> buck2_error::Result<Self> {
-            let proxy_server_addr = "[::1]:0".to_socket_addrs().unwrap().next().unwrap();
-            let listener = TcpListener::bind(proxy_server_addr)
-                .await
-                .buck_error_context("failed to bind to local address")?;
-            let proxy_server_addr = listener.local_addr()?;
-
-            let handle: JoinHandle<()> = tokio::task::spawn(async move {
-                println!("started proxy server");
-                loop {
-                    let (stream, _) = listener.accept().await.expect("Couldn't accept connection");
-                    let io = TokioIo::new(stream);
-
-                    let svc_fn =
-                        hyper::service::service_fn(|mut req: Request<Incoming>| async move {
-                            // Sleep if requested to simulate slow reads.
-                            if let Some(s) = req.headers().get(HEADER_SLEEP_DURATION_MS) {
-                                let sleep_duration =
-                                    Duration::from_millis(s.to_str().unwrap().parse().unwrap());
-                                tokio::time::sleep(sleep_duration).await;
-                            }
-
-                            let client = Client::builder(TokioExecutor::new()).build_http();
-                            req.headers_mut().insert(
-                                http::header::VIA,
-                                http::HeaderValue::from_static("testing-proxy-server"),
-                            );
-                            println!("Proxying request: {req:?}");
-                            client.request(req).await
-                        });
-
-                    hyper_util::server::conn::auto::Builder::new(TokioExecutor::new())
-                        .serve_connection(io, svc_fn)
-                        .await
-                        .expect("Expected to serve connection");
-                }
-            });
-
-            Ok(Self {
-                addr: proxy_server_addr,
-                handle,
-            })
-        }
-
-        fn uri(&self) -> buck2_error::Result<http::Uri> {
-            http::Uri::builder()
-                .scheme("http")
-                .authority(self.addr.to_string().as_str())
-                .path_and_query("/")
-                .build()
-                .buck_error_context("failed to build proxy server URI")
-        }
-    }
-
-    #[tokio::test]
-    async fn test_uses_http_proxy() -> buck2_error::Result<()> {
-        buck2_certs::certs::maybe_setup_cryptography();
-        let test_server = httptest::Server::run();
-        test_server.expect(
-            Expectation::matching(all_of![
-                request::method_path("GET", "/foo"),
-                request::headers(contains(("via", "testing-proxy-server")))
-            ])
-            .times(1)
-            .respond_with(responders::status_code(200)),
-        );
-
-        let proxy_server = ProxyServer::new().await?;
-        println!("proxy_server uri: {}", proxy_server.uri()?);
-
-        let client = HttpClientBuilder::https_with_system_roots()
-            .await?
-            .with_proxy(Proxy::new(Intercept::Http, proxy_server.uri()?))
-            .build();
-        let resp = client.get(&test_server.url_str("/foo")).await?;
-        assert_eq!(200, resp.status().as_u16());
-
-        Ok(())
-    }
-
-    #[tokio::test]
-    async fn test_uses_http_proxy_with_no_scheme_in_proxy_uri() -> buck2_error::Result<()> {
-        buck2_certs::certs::maybe_setup_cryptography();
-        let test_server = httptest::Server::run();
-        test_server.expect(
-            Expectation::matching(all_of![
-                request::method_path("GET", "/foo"),
-                request::headers(contains(("via", "testing-proxy-server")))
-            ])
-            .times(1)
-            .respond_with(responders::status_code(200)),
-        );
-
-        let proxy_server = ProxyServer::new().await?;
-
-        let authority = proxy_server.uri()?.authority().unwrap().clone();
-        let proxy_uri = format!("{}:{}", authority.host(), authority.port().unwrap());
-        println!("proxy_uri: {proxy_uri}");
-        let client = HttpClientBuilder::https_with_system_roots()
-            .await?
-            .with_proxy(Proxy::new(
-                Intercept::Http,
-                DefaultSchemeUri(proxy_uri.try_into()?).into(),
-            ))
-            .build();
-        let resp = client.get(&test_server.url_str("/foo")).await?;
-        assert_eq!(200, resp.status().as_u16());
-
-        Ok(())
-    }
-
-    #[tokio::test]
-    async fn test_does_not_proxy_when_no_proxy_matches() -> buck2_error::Result<()> {
-        buck2_certs::certs::maybe_setup_cryptography();
-        let test_server = httptest::Server::run();
-        test_server.expect(
-            Expectation::matching(all_of![request::method_path("GET", "/foo")])
-                .times(1)
-                .respond_with(responders::status_code(200)),
-        );
-
-        let proxy_server = ProxyServer::new().await?;
-        println!("proxy_server uri: {}", proxy_server.uri()?);
-
-        let test_server_host = test_server
-            .url("/")
-            .authority()
-            .unwrap()
-            .clone()
-            .host()
-            .to_owned();
-        let no_proxy = crate::proxy::NoProxy::new(http::uri::Scheme::HTTP, test_server_host);
-
-        // Don't proxy connections to test_server.
-        let client = HttpClientBuilder::https_with_system_roots()
-            .await?
-            .with_proxy(Proxy::new(
-                no_proxy.into_proxy_intercept(),
-                proxy_server.uri()?,
-            ))
-            .build();
-        let resp = client.get(&test_server.url_str("/foo")).await?;
-        assert_eq!(200, resp.status().as_u16());
-
-        Ok(())
-    }
-
-    #[tokio::test]
-    async fn test_proxies_when_no_proxy_does_not_match() -> buck2_error::Result<()> {
-        buck2_certs::certs::maybe_setup_cryptography();
-        let test_server = httptest::Server::run();
-        test_server.expect(
-            Expectation::matching(all_of![
-                request::method_path("GET", "/foo"),
-                request::headers(contains(("via", "testing-proxy-server")))
-            ])
-            .times(1)
-            .respond_with(responders::status_code(200)),
-        );
-
-        let proxy_server = ProxyServer::new().await?;
-        println!("proxy_server uri: {}", proxy_server.uri()?);
-
-        // Don't proxy HTTPS connections to *.foobar.com
-        let no_proxy = crate::proxy::NoProxy::new(http::uri::Scheme::HTTP, ".foobar.com");
-
-        let client = HttpClientBuilder::https_with_system_roots()
-            .await?
-            .with_proxy(Proxy::new(
-                no_proxy.into_proxy_intercept(),
-                proxy_server.uri()?,
-            ))
-            .build();
-        let resp = client.get(&test_server.url_str("/foo")).await?;
-        assert_eq!(200, resp.status().as_u16());
-
-        Ok(())
-    }
-
-    // Use proxy server harness to test slow connections.
-    #[tokio::test]
-    async fn test_timeout() -> buck2_error::Result<()> {
-        buck2_certs::certs::maybe_setup_cryptography();
-        let test_server = httptest::Server::run();
-        let proxy_server = ProxyServer::new().await?;
-
-        let client = HttpClientBuilder::https_with_system_roots()
-            .await?
-            .with_proxy(Proxy::new(Intercept::Http, proxy_server.uri()?))
-            .with_read_timeout(Some(Duration::from_millis(10)))
-            .build();
-
-        let req = Request::builder()
-            .uri(test_server.url_str("/foo"))
-            .header(HEADER_SLEEP_DURATION_MS, "200")
-            .method(Method::GET)
-            .body(Bytes::new())?;
-        let res = client.request(req).await;
-        assert!(matches!(res, Err(HttpError::Timeout { .. })));
-        Ok(())
-    }
-}
+// TODO(skarlage): Debug why these tests fail on CircleCI

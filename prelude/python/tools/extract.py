@@ -7,8 +7,6 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-# pyre-strict
-
 """Prepare an archive or existing directory for a prebuilt Python library.
 
 Archives are extracted into ``--output``. Existing directories are inspected in

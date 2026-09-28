@@ -16,10 +16,9 @@ gotchas and sampling math; this page is the workflow on top.
   way to get fresh DICE between iterations; lean into it rather than
   fighting it.
 - For statistical confidence (which you usually need — see
-  [benchmarking.md](benchmarking.md)), size the regression with an `abtest`
-  run: `--daemon-lifecycle=fresh` records the daemon's peak RSS and
-  post-purge jemalloc stats for every sample. The local sequence below is
-  for attribution, not detection.
+  [benchmarking.md](benchmarking.md)), size the regression with many
+  samples, each with a fresh daemon, before attributing it. The local
+  sequence below is for attribution, not detection.
 
 ## Single-iteration sequence per binary
 

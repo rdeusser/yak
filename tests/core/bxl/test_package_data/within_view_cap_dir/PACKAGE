@@ -1,0 +1,3 @@
+enforce_within_view_intersection()
+
+package(within_view = ["root//within_view_cap_dir/..."])

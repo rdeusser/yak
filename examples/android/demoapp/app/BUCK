@@ -1,5 +1,3 @@
-oncall("build_infra")
-
 keystore(
     name = "debug",
     properties = "debug.keystore.properties",
@@ -18,13 +16,13 @@ android_binary(
     use_split_dex = True,
     deps = [
         ":res",
-        "//app/src/main/java/com/facebook/demoapp/ui:ui",
+        "//app/src/main/java/com/example/demoapp/ui:ui",
     ],
 )
 
 android_resource(
     name = "res",
-    package = "com.facebook.demoapp",
+    package = "com.example.demoapp",
     res = "src/main/res",
     visibility = ["PUBLIC"],
 )
@@ -38,7 +36,7 @@ robolectric_test(
     deps = [
         "//app/libs/junit/junit:junit",
         "//app/libs/org/robolectric/robolectric:robolectric",
-        "//app/src/main/java/com/facebook/demoapp/model:model",
+        "//app/src/main/java/com/example/demoapp/model:model",
     ],
 )
 
@@ -47,7 +45,7 @@ android_library(
     srcs = glob(["src/androidTest/**/*.kt"]),
     language = "KOTLIN",
     deps = [
-        "//app/src/main/java/com/facebook/demoapp/ui:ui",
+        "//app/src/main/java/com/example/demoapp/ui:ui",
     ],
 )
 

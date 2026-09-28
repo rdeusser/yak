@@ -110,16 +110,9 @@ def run(
         sys.exit(1)
 
 
-def check_no_changes(git: bool):
-    status_cmd = []
-    diff_cmd = []
-    if git:
-        status_cmd = ["git", "status", "--porcelain"]
-        diff_cmd = ["git", "diff"]
-
-    else:
-        status_cmd = ["hg", "status", "-mard"]
-        diff_cmd = ["hg", "diff", "--pager=none"]
+def check_no_changes():
+    status_cmd = ["git", "status", "--porcelain"]
+    diff_cmd = ["git", "diff"]
 
     status = run(status_cmd, capture_output=True)
     if status.stdout.strip():
@@ -195,12 +188,6 @@ def main() -> None:
         help="Whether to run CI workflow",
     )
     parser.add_argument(
-        "--git",
-        action="store_true",
-        default=False,
-        help="Use `git` to check repo state, the script defaults to `hg`",
-    )
-    parser.add_argument(
         "--lint-only",
         action="store_true",
         default=False,
@@ -268,7 +255,7 @@ def main() -> None:
 
     # On CI, check to make sure our test doesn't overwrite existing files
     if args.ci:
-        check_no_changes(args.git)
+        check_no_changes()
 
 
 if __name__ == "__main__":

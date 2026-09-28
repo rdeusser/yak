@@ -120,10 +120,7 @@ public class InstallerService extends InstallerGrpc.InstallerImplBase {
           fileNames.stream()
               .collect(Collectors.toMap(Function.identity(), ignore -> Optional.empty())));
     }
-    return InstallResponse.newBuilder()
-        .setInstallId(installId.getValue())
-        .setInstallerName(installer.name())
-        .build();
+    return InstallResponse.newBuilder().setInstallId(installId.getValue()).build();
   }
 
   @Override

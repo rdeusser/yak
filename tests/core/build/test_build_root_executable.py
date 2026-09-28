@@ -6,11 +6,9 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-# pyre-strict
-
-
-from buck2.tests.e2e_util.api.buck import Buck
-from buck2.tests.e2e_util.buck_workspace import buck_test
+import pytest
+from e2e_util.api.buck import Buck
+from e2e_util.buck_workspace import buck_test
 
 """
 Test that when we render paths relative to the repo root, we prefix them with a
@@ -24,6 +22,7 @@ async def test_build_root_executable_local(buck: Buck) -> None:
     await buck.build(":top", "--local-only")
 
 
+@pytest.mark.remote_execution
 @buck_test()
 async def test_build_root_executable_remote(buck: Buck) -> None:
     await buck.build(":top", "--remote-only")

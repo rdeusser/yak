@@ -90,6 +90,6 @@ def foo_buildable(**kwargs):
 def genrule_select() -> Select:
     return select({
         "DEFAULT": "foo",
-        "ovr_config//os:macos": "bar",
-        "ovr_config//os:windows": "foobar",
+        "prelude//os:macos": "bar",
+        "prelude//os:windows": "foobar",
     })

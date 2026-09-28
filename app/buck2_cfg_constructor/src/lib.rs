@@ -116,7 +116,7 @@ async fn eval_pre_constraint_analysis<'v, 'a>(
         };
         let configuring_exec_dep = eval.heap().alloc(configuring_exec_dep);
 
-        // TODO: should eventually accept cli modifiers and target modifiers (T163570597)
+        // TODO: should eventually accept cli modifiers and target modifiers
         let pre_constraint_analysis_args = vec![
             ("legacy_platform", legacy_platform),
             ("package_modifiers", package_cfg_modifiers),

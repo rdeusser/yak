@@ -14,7 +14,6 @@
 #![feature(try_trait_v2_residual)]
 #![feature(used_with_arg)]
 
-pub mod agent_context;
 pub mod argfiles;
 pub mod client_cpu_tracker;
 pub mod client_ctx;
@@ -44,5 +43,4 @@ pub mod subscribers;
 pub mod thread_dump;
 pub mod ticker;
 pub mod tokio_runtime_setup;
-pub mod upload_re_logs;
 pub mod version;

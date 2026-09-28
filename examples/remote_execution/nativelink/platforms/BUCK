@@ -1,5 +1,3 @@
 load(":defs.bzl", "platforms")
 
-oncall("build_infra")
-
 platforms(name = "platforms")

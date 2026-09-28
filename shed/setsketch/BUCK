@@ -1,19 +1,13 @@
-load("@fbsource//tools/build_defs:rust_binary.bzl", "rust_binary")
-load("@fbsource//tools/build_defs:rust_library.bzl", "rust_library")
-
-oncall("build_infra")
+load("//build_defs:rust.bzl", "rust_binary", "rust_library")
 
 rust_library(
     name = "setsketch",
     srcs = glob(["src/**/*.rs"]),
-    test_deps = [
-        "fbsource//third-party/rust:fnv",
-    ],
     deps = [
-        "fbsource//third-party/rust:base64",
-        "fbsource//third-party/rust:rand",
-        "fbsource//third-party/rust:rand_distr",
-        "fbsource//third-party/rust:rand_xoshiro",
+        "//third-party/rust:base64",
+        "//third-party/rust:rand",
+        "//third-party/rust:rand_distr",
+        "//third-party/rust:rand_xoshiro",
     ],
 )
 
@@ -22,7 +16,7 @@ rust_binary(
     srcs = ["bin/sketch_size.rs"],
     crate_root = "bin/sketch_size.rs",
     deps = [
-        "fbsource//third-party/rust:anyhow",
         ":setsketch",
+        "//third-party/rust:anyhow",
     ],
 )

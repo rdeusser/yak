@@ -117,7 +117,7 @@ where
 /// A label is used to represent a configured target.
 #[starlark_module]
 fn configured_label_methods(builder: &mut MethodsBuilder) {
-    /// For the label `fbcode//buck2/hello:world (ovr_config//platform/linux:x86_64-fbcode-46b26edb4b80a905)` this gives back `buck2/hello`
+    /// For the label `root//foo/hello:world (root//platforms:linux#46b26edb4b80a905)` this gives back `foo/hello`
     #[starlark(attribute)]
     fn package<'v>(
         this: &'v StarlarkConfiguredProvidersLabel,
@@ -126,7 +126,7 @@ fn configured_label_methods(builder: &mut MethodsBuilder) {
         Ok(heap.alloc_str_intern(this.label.target().pkg().cell_relative_path().as_str()))
     }
 
-    /// For the label `fbcode//buck2/hello:world (ovr_config//platform/linux:x86_64-fbcode-46b26edb4b80a905)` this gives back `world`
+    /// For the label `root//foo/hello:world (root//platforms:linux#46b26edb4b80a905)` this gives back `world`
     #[starlark(attribute)]
     fn name<'v>(this: &'v StarlarkConfiguredProvidersLabel) -> starlark::Result<&'v str> {
         Ok(this.label.target().name().as_str())
@@ -152,13 +152,13 @@ fn configured_label_methods(builder: &mut MethodsBuilder) {
         })
     }
 
-    /// For the label `fbcode//buck2/hello:world (ovr_config//platform/linux:x86_64-fbcode-46b26edb4b80a905)` this gives back `fbcode//buck2/hello`
+    /// For the label `root//foo/hello:world (root//platforms:linux#46b26edb4b80a905)` this gives back `root//foo/hello`
     #[starlark(attribute)]
     fn path<'v>(this: &StarlarkConfiguredProvidersLabel) -> starlark::Result<StarlarkCellPath> {
         Ok(StarlarkCellPath(this.label.target().pkg().to_cell_path()))
     }
 
-    /// For the label `fbcode//buck2/hello:world (ovr_config//platform/linux:x86_64-fbcode-46b26edb4b80a905)` this gives back `fbcode`
+    /// For the label `root//foo/hello:world (root//platforms:linux#46b26edb4b80a905)` this gives back `root`
     #[starlark(attribute)]
     fn cell<'v>(this: &'v StarlarkConfiguredProvidersLabel) -> starlark::Result<&'v str> {
         Ok(this.label.target().pkg().cell_name().as_str())
@@ -188,7 +188,7 @@ fn configured_label_methods(builder: &mut MethodsBuilder) {
         Ok(StarlarkProjectRoot)
     }
 
-    /// For the label `fbcode//buck2/hello:world (ovr_config//platform/linux:x86_64-fbcode-46b26edb4b80a905)` this returns the unconfigured underlying target label (`fbcode//buck2/hello:world`)
+    /// For the label `root//foo/hello:world (root//platforms:linux#46b26edb4b80a905)` this returns the unconfigured underlying target label (`root//foo/hello:world`)
     fn raw_target(
         this: &StarlarkConfiguredProvidersLabel,
     ) -> starlark::Result<StarlarkTargetLabel> {
@@ -324,7 +324,7 @@ fn label_methods(builder: &mut MethodsBuilder) {
     }
 }
 
-// TODO(nga): remove the `Label` alias. (T264813434)
+// TODO(nga): remove the `Label` alias.
 #[starlark_module]
 #[starlark_types(
     StarlarkConfiguredProvidersLabel as Label,

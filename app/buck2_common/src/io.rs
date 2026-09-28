@@ -23,21 +23,6 @@ use crate::file_ops::metadata::RawDirEntry;
 use crate::file_ops::metadata::RawPathMetadata;
 use crate::ignores::file_ignores::FileIgnoreReason;
 
-pub enum ReadDirOutcome {
-    Entries(Vec<RawDirEntry>),
-    /// ACL-restricted path on an Eden repo -- treat as empty directory.
-    EdenPermissionDenied,
-}
-
-impl ReadDirOutcome {
-    pub fn into_entries(self) -> Vec<RawDirEntry> {
-        match self {
-            Self::Entries(entries) => entries,
-            Self::EdenPermissionDenied => vec![],
-        }
-    }
-}
-
 #[derive(Debug, Allocative, buck2_error::Error)]
 #[buck2(tag = Input)]
 pub enum ReadDirError {
@@ -77,7 +62,7 @@ pub trait IoProvider: Allocative + Send + Sync {
     async fn read_dir_impl(
         &self,
         path: ProjectRelativePathBuf,
-    ) -> buck2_error::Result<ReadDirOutcome>;
+    ) -> buck2_error::Result<Vec<RawDirEntry>>;
 
     async fn read_path_metadata_if_exists_impl(
         &self,
@@ -90,22 +75,9 @@ pub trait IoProvider: Allocative + Send + Sync {
 
     fn name(&self) -> &'static str;
 
-    /// Returns the Eden version of the underlying system of the IoProvider, if available.
-    async fn eden_version(&self) -> buck2_error::Result<Option<String>>;
-
-    /// Verify that the Eden daemon backing this I/O provider has not restarted since the
-    /// provider was created. A restart invalidates cached state and file handles, so commands
-    /// should fail fast rather than silently hang on them. Providers that don't cache state
-    /// against an Eden daemon have nothing to verify.
-    async fn verify_eden_identity(&self) -> buck2_error::Result<()> {
-        Ok(())
-    }
-
     fn project_root(&self) -> &ProjectRoot;
 
     fn as_any(&self) -> &dyn std::any::Any;
-
-    fn is_eden_repo(&self) -> bool;
 }
 
 impl dyn IoProvider + '_ {
@@ -121,7 +93,7 @@ impl dyn IoProvider + '_ {
     pub async fn read_dir(
         &self,
         path: ProjectRelativePathBuf,
-    ) -> buck2_error::Result<ReadDirOutcome> {
+    ) -> buck2_error::Result<Vec<RawDirEntry>> {
         self.read_dir_impl(path).await.tag(ErrorTag::IoSource)
     }
 

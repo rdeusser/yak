@@ -6,13 +6,16 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-# pyre-strict
-
 import csv
 import json
 
-from buck2.tests.e2e_util.api.buck import Buck
-from buck2.tests.e2e_util.buck_workspace import buck_test
+import pytest
+from e2e_util.api.buck import Buck
+from e2e_util.buck_workspace import buck_test
+
+# buck2 records a materialization when it downloads an output from a Remote
+# Execution backend. An output that a local action wrote needs none.
+pytestmark = pytest.mark.remote_execution
 
 
 @buck_test()

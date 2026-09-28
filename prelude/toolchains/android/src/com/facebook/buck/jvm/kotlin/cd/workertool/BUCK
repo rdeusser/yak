@@ -1,8 +1,5 @@
-load("@prelude//:is_full_meta_repo.bzl", "is_full_meta_repo")
 load("@prelude//toolchains/android/tools:build_rules.bzl", "buck_java_binary", "buck_java_library")
 load("@prelude//utils:source_listing.bzl", "source_listing")
-
-oncall("android_devxx")
 
 source_listing()
 
@@ -11,21 +8,6 @@ buck_java_library(
     srcs = [
         "KotlinCDCommand.java",
     ],
-    visibility = [
-        "prelude//toolchains/android/meta_only/src/com/facebook/buck/jvm/remote_worker/...",
-    ],
-    runtime_deps = select({
-        "DEFAULT": [
-            "prelude//toolchains/android/meta_only/src/com/facebook/buck/jvm/kotlin/cd/logger/scribe:scribe",
-        ]
-        if is_full_meta_repo()
-        else [
-            "prelude//toolchains/android/src/com/facebook/buck/jvm/kotlin/cd/analytics/logger/noop:noop",
-        ],
-        "config//os/constraints:windows": [
-            "prelude//toolchains/android/src/com/facebook/buck/jvm/kotlin/cd/analytics/logger/noop:noop",
-        ],
-    }),
     deps = [
         "prelude//toolchains/android/src/com/facebook/buck/cd/resources/proto:kotlincd-model",
         "prelude//toolchains/android/src/com/facebook/buck/core/filesystems:filesystems",
@@ -37,8 +19,6 @@ buck_java_library(
         "prelude//toolchains/android/src/com/facebook/buck/jvm/java:support",
         "prelude//toolchains/android/src/com/facebook/buck/jvm/java/abi:abi",
         "prelude//toolchains/android/src/com/facebook/buck/jvm/kotlin:steps",
-        "prelude//toolchains/android/src/com/facebook/buck/jvm/kotlin/cd/analytics:analytics",
-        "prelude//toolchains/android/src/com/facebook/buck/jvm/kotlin/cd/analytics/logger:logger",
         "prelude//toolchains/android/src/com/facebook/buck/jvm/kotlin/cd/workertool/postexecutors:postexecutors",
         "prelude//toolchains/android/third-party:args4j",
         "prelude//toolchains/android/third-party:guava",

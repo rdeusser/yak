@@ -89,8 +89,7 @@ def cxx_inherited_link_info(first_order_deps: list[Dependency]) -> list[MergedLi
     """
 
     # We filter out nones because some non-cxx rule without such providers could be a dependency, for example
-    # cxx_binary "fbcode//one_world/cli/util/process_wrapper:process_wrapper" depends on
-    # python_library "fbcode//third-party-buck/$platform/build/glibc:__project__"
+    # a cxx_binary that depends on a python_library.
     return filter_and_map_idx(MergedLinkInfo, first_order_deps)
 
 # Linker flags
@@ -131,8 +130,7 @@ def cxx_attr_resources(ctx: AnalysisContext) -> dict[str, ArtifactOutputs]:
     if resources_attr:
         # Resource keys prefix with `header_namespace`. Unset (None) falls
         # back to package; explicit "" means "no prefix" UNLESS `raw_headers`
-        # is also set, which signals the xplat macros (`_unified_cxx_library`
-        # / `_fbcode_cpp_common_wrapper`) clobbered `header_namespace=""` to
+        # is also set, which signals that a macro layer clobbered `header_namespace=""` to
         # suppress #include namespace mangling — fall back to package in that
         # case so consumers (e.g. `kBuckPrefix + "manifest.json"`) keep
         # working. Idempotent: keys already prefixed (by ACME, snapshots) are

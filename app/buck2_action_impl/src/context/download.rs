@@ -46,13 +46,10 @@ pub(crate) fn analysis_actions_methods_download(methods: &mut MethodsBuilder) {
     /// Downloads a URL to an output (filename as string or output artifact). The file at the URL
     /// must have the given sha1 or the command will fail. The optional parameter is_executable
     /// indicates whether the resulting file should be marked with executable permissions.
-    /// (Meta-internal) The optional parameter vpnless_url indicates a url from which this resource
-    /// can be downloaded off VPN; this has the same restrictions as `url` above.
     fn download_file<'v>(
         this: &AnalysisActions<'v>,
         #[starlark(require = pos)] output: OutputArtifactArg<'v>,
         #[starlark(require = pos)] url: &str,
-        #[starlark(require = named, default = NoneOr::None)] vpnless_url: NoneOr<&str>,
         #[starlark(require = named, default = NoneOr::None)] sha1: NoneOr<&str>,
         #[starlark(require = named, default = NoneOr::None)] sha256: NoneOr<&str>,
         #[starlark(require = named, default = NoneOr::None)] size_bytes: NoneOr<u64>,
@@ -76,7 +73,6 @@ pub(crate) fn analysis_actions_methods_download(methods: &mut MethodsBuilder) {
                 checksum,
                 size_bytes.into_option(),
                 Arc::from(url),
-                vpnless_url.into_option().map(Arc::from),
                 is_executable,
             ),
             None,
@@ -88,17 +84,17 @@ pub(crate) fn analysis_actions_methods_download(methods: &mut MethodsBuilder) {
 
     /// Downloads a CAS artifact to an output
     ///
-    /// * `digest`: must look like `SHA1:SIZE`
+    /// * `digest`: must look like `HASH:SIZE`, hashed with the configured digest algorithm
     /// * `use_case`: your RE use case
     /// * `expires_after_timestamp`: must be a UNIX timestamp. Your digest's TTL must exceed this
     ///   timestamp. Your build will break once the digest expires, so make sure the expiry is long
     ///   enough (preferably, in years).
     /// * `is_executable`: indicates the resulting file should be marked with executable
     ///   permissions
-    /// * `is_tree`: digest must point to a blob of type
-    ///   [RE.Tree](https://fburl.com/code/95rqgju0)
-    /// * `is_directory`: digest must point to a blob of type
-    ///   [RE.Directory](https://fburl.com/code/4eg40nnp)
+    /// * `is_tree`: digest must point to a serialized `Tree` message of the
+    ///   [Remote Execution API](https://github.com/bazelbuild/remote-apis/blob/main/build/bazel/remote/execution/v2/remote_execution.proto)
+    /// * `is_directory`: digest must point to a serialized `Directory` message of the Remote
+    ///   Execution API
     fn cas_artifact<'v>(
         this: &AnalysisActions<'v>,
         #[starlark(require = pos)] output: OutputArtifactArg<'v>,

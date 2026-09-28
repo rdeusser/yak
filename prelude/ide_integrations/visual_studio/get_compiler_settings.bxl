@@ -34,30 +34,18 @@ def _get_exported_additional_include_directories(target: bxl.ConfiguredTargetNod
         if header_namespace != None:
             if name == path:
                 # Assuming exported_header is a list and no customized export name specified.
-                # e.g.,
-                # header: arvr/projects/xrtech/resources/FaceTracker/models:FaceWaveBinaryResources  https://fburl.com/code/ee9ewpv7
-                # usage: arvr/projects/facetracking/FaceWave:OVRLipSyncCommon  https://fburl.com/code/76zx2fmw
                 name = header_namespace + "/" + basename(name)
             else:
-                # e.g.,
-                # header: xplat/ocean/impl/ocean/base:base  https://fburl.com/code/uiyr5ay9
-                # usage: xplat/ocean/impl/ocean/math:math  https://fburl.com/code/ebtcvn44
                 name = header_namespace + "/" + name
         name = normcase(name)
 
         # If file path is in generated buck-out, the file will be either not available or more correct form buck-headers exists.
         if "buck-out" not in path and path.endswith(name):
-            # e.g.,
-            # header: xplat/ocean/impl/ocean/base:base  https://fburl.com/code/uiyr5ay9
-            # usage: xplat/ocean/impl/ocean/math:math  https://fburl.com/code/ebtcvn44
             include_dir = path.removesuffix(name)
             if include_dir:
                 dirs.append(include_dir)
         else:
             # Header tree created by buck. This is the most correct form but depends on previous local build to materialize.
-            # e.g.,
-            # header: xplat/third-party/yajl:yajl  https://fburl.com/code/xqzlvuot
-            # usage: xplat/mobileconfig/FBMobileConfigCore:FBMobileConfigCore  https://fburl.com/code/p4qw1cx3
             argsfiles_output_path = get_argsfiles_output_path(target, bxl_ctx)
             if argsfiles_output_path:
                 dirs.append(dirname(argsfiles_output_path) + "/buck-headers")

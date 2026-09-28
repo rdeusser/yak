@@ -23,7 +23,7 @@ def _impl(ctx: AnalysisContext) -> list[Provider]:
         # negation in a select for a target_compatible_with attribute.
         #     target_compatible_with = select({
         #         "DEFAULT": [],
-        #         "config//build_mode/constraints:tsan": ["prelude//:none"],
+        #         "config//os:windows": ["prelude//:none"],
         #     })
         ConfigurationInfo(
             constraints = {label: value},

@@ -8,7 +8,7 @@
  * above-listed licenses.
  */
 
-use buck2_core::error::validate_logview_category;
+use buck2_core::error::validate_category_name;
 use buck2_core::soft_error;
 use starlark::environment::GlobalsBuilder;
 use starlark::eval::Evaluator;
@@ -39,17 +39,15 @@ fn validate_category(category: &str) -> starlark::Result<()> {
         );
     }
 
-    validate_logview_category(category).map_err(starlark::Error::from)?;
+    validate_category_name(category).map_err(starlark::Error::from)?;
 
     Ok(())
 }
 
 #[starlark_module]
 pub(crate) fn register_soft_error(builder: &mut GlobalsBuilder) {
-    /// Produce an error that will become a hard error at some point in the future, but
-    /// for now is a warning which is logged to the server.
-    /// In the open source version of Buck2 this function always results in an error
-    /// (deprecation soft errors are promoted to hard errors in OSS builds).
+    /// Produce an error identified by a stable category. The error is recorded in the event
+    /// log and printed (unless `quiet = True`), and then raised, so evaluation fails.
     ///
     /// Called passing a stable key (must be `snake_case` and start with `starlark_`,
     /// used for consistent reporting) and an arbitrary message (used for debugging).
@@ -86,7 +84,7 @@ pub(crate) fn register_soft_error(builder: &mut GlobalsBuilder) {
             .into()
         };
 
-        soft_error!(category, err, quiet: quiet.unwrap_or_default(), error_on_oss: true)?;
+        soft_error!(category, err, quiet: quiet.unwrap_or_default(), hard_error: true)?;
         Ok(NoneType)
     }
 

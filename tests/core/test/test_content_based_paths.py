@@ -6,11 +6,8 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-# pyre-strict
-
-
-from buck2.tests.e2e_util.api.buck import Buck
-from buck2.tests.e2e_util.buck_workspace import buck_test, env
+from e2e_util.api.buck import Buck
+from e2e_util.buck_workspace import buck_test
 
 
 @buck_test()
@@ -19,7 +16,6 @@ async def test_run_test_with_content_based_path(buck: Buck) -> None:
 
 
 @buck_test()
-@env("BUCK2_ALLOW_INTERNAL_TEST_RUNNER_DO_NOT_USE", "1")
 async def test_platform_resolution(buck: Buck) -> None:
     await buck.test(
         ":local_resources_test",

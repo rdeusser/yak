@@ -4,14 +4,13 @@
     "extensionKind": [
         "workspace"
     ],
-    "author": "Facebook",
     "license": "Apache2",
     "version": "1.0.0",
     "repository": {
         "type": "git",
-        "url": "https://github.com/facebook/starlark-rust"
+        "url": "https://github.com/rdeusser/buck2"
     },
-    "publisher": "facebook",
+    "publisher": "buck2",
     "categories": [],
     "keywords": [
         "multi-root ready"

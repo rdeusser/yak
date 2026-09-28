@@ -13,7 +13,6 @@ use std::path::Path;
 use std::process::Stdio;
 
 use buck2_error::BuckErrorContext as _;
-use buck2_events::metadata::username;
 use buck2_util::process::async_background_command;
 use futures::future::Either;
 use tokio::net::TcpListener;
@@ -28,7 +27,7 @@ const BUCK2_TEST_EXECUTOR_USER_ENV_VAR: &str = "BUCK2_TEST_EXECUTOR_USER";
 pub(crate) async fn spawn(
     executable: &Path,
     args: Vec<String>,
-    tpx_args: Vec<String>,
+    executor_args: Vec<String>,
 ) -> buck2_error::Result<(ExecutorFuture, TcpStream, TcpStream)> {
     // Use TCPStream via TCPListener with accept to establish a duplex connection. We set up the
     // listeners, our client connects to both, and that gets us two duplex streams.
@@ -46,10 +45,11 @@ pub(crate) async fn spawn(
         .arg("--orchestrator-addr")
         .arg(orchestrator_addr)
         .arg("--")
-        .args(tpx_args);
+        .args(executor_args);
 
-    // Pass the actual username from Buck2 client to the executor.
-    if let Ok(Some(user)) = username() {
+    // This executor also serves Windows, where `USERNAME` names the user.
+    let user_var = if cfg!(windows) { "USERNAME" } else { "USER" };
+    if let Some(user) = std::env::var_os(user_var) {
         command.env(BUCK2_TEST_EXECUTOR_USER_ENV_VAR, user);
     }
 

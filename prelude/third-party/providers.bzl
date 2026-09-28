@@ -22,8 +22,7 @@ ThirdPartyBuild = record(
 )
 
 # Work-around for buck2 bug causing "transitive values must be of the same
-# transitive set type" errors:
-# https://fb.prod.workplace.com/groups/buck2users/posts/3637287806527574/
+# transitive set type" errors.
 ThirdPartyBuildTSet = transitive_set()
 ThirdPartyBuildInfo = provider(
     fields = {

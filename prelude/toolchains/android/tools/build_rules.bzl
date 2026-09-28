@@ -8,11 +8,7 @@
 
 """Module containing java macros."""
 
-load("@prelude//:is_full_meta_repo.bzl", "is_full_meta_repo")
 load("@prelude//:native.bzl", "native")
-# @oss-disable[end= ]: load("@prelude//android/meta_only:android_build_tools_cas_artifact.bzl", "android_build_tools_cas_artifact")
-load("@prelude//toolchains/android/tools/build_rules:fb_native.bzl", "fb_native")
-load("@prelude//toolchains/android/tools/build_rules:utils.bzl", "add_os_labels")
 load("@prelude//utils:selects.bzl", "selects")
 
 SIGNED_JAR_BLOCKLIST = [
@@ -38,8 +34,6 @@ OPEN_JDK_COMPILER_ARGS = [
     "--add-opens=jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED",
 ]
 
-_RUN_AS_BUNDLE_LABEL = "run_as_bundle"
-
 _FDB_DEBUG_LABEL = "fdb:target:android"
 
 def _maybe_add_java_version(**kwargs):
@@ -50,7 +44,7 @@ def _maybe_add_java_version(**kwargs):
 def _add_labels(**kwargs):
     if "labels" not in kwargs:
         kwargs["labels"] = []
-    kwargs["labels"] += ["wrapped_with_buck_java_rules", "pfh:Infra"]
+    kwargs["labels"] += ["wrapped_with_buck_java_rules"]
     return kwargs
 
 def _set_buck2_java_toolchain(**kwargs):
@@ -79,9 +73,6 @@ def _set_versioned_java_srcs(**kwargs):
         return kwargs
     java_version = select({
         "DEFAULT": native.read_config("java", "buck2_java_version", "21"),
-        # @oss-disable[end= ]: "fbsource//third-party/toolchains/jdk:constraint-value-version-11": "11",
-        # @oss-disable[end= ]: "fbsource//third-party/toolchains/jdk:constraint-value-version-17": "17",
-        # @oss-disable[end= ]: "fbsource//third-party/toolchains/jdk:constraint-value-version-21": "21",
     })
     versioned_srcs = selects.apply(
         java_version,
@@ -103,7 +94,7 @@ def buck_kotlin_library(name, **kwargs):
     kwargs = _set_buck2_kotlin_toolchain(**kwargs)
     kwargs = _set_buck2_dex_toolchain(**kwargs)
     kwargs = _add_kotlin_deps(**kwargs)
-    return fb_native.kotlin_library(name = name, **kwargs)
+    return native.kotlin_library(name = name, **kwargs)
 
 def buck_java_library(name, **kwargs):
     kwargs = _add_labels(**kwargs)
@@ -111,7 +102,7 @@ def buck_java_library(name, **kwargs):
     kwargs = _set_buck2_java_toolchain(**kwargs)
     kwargs = _set_buck2_dex_toolchain(**kwargs)
     kwargs = _set_versioned_java_srcs(**kwargs)
-    return fb_native.java_library(name = name, **kwargs)
+    return native.java_library(name = name, **kwargs)
 
 def buck_java_binary(name, **kwargs):
     kwargs = _add_labels(**kwargs)
@@ -122,7 +113,7 @@ def buck_java_binary(name, **kwargs):
     # https://stackoverflow.com/a/16535804/5208808
     java_args += ["-XX:-MaxFDLimit", "-Xss2m"]
     kwargs["java_args_for_run_info"] = java_args
-    return fb_native.java_binary(name = name, **kwargs)
+    return native.java_binary(name = name, **kwargs)
 
 def _toolchain_prebuilt_jar(name, **kwargs):
     kwargs = _add_labels(**kwargs)
@@ -131,18 +122,18 @@ def _toolchain_prebuilt_jar(name, **kwargs):
         kwargs["_prebuilt_jar_toolchain"] = "toolchains//:prebuilt_jar_bootstrap_no_snapshot"
     else:
         kwargs["_prebuilt_jar_toolchain"] = "toolchains//:prebuilt_jar_bootstrap"
-    return fb_native.prebuilt_jar(name = name, **kwargs)
+    return native.prebuilt_jar(name = name, **kwargs)
 
-def _oss_remote_file_with_wrapper(name, ext, url, sha1, **kwargs):
+def _remote_file_with_wrapper(name, ext, url, sha1, **kwargs):
     remote_file_target_name = name + "_" + ext
     if ext == "jar":
         _toolchain_prebuilt_jar(name = name, binary_jar = ":" + remote_file_target_name, **kwargs)
     elif ext == "aar":
-        fb_native.android_prebuilt_aar(name = name, aar = ":" + remote_file_target_name, **kwargs)
+        native.android_prebuilt_aar(name = name, aar = ":" + remote_file_target_name, **kwargs)
     elif ext == "exe":
-        fb_native.alias(name = name, actual = ":" + remote_file_target_name, **kwargs)
+        native.alias(name = name, actual = ":" + remote_file_target_name, **kwargs)
 
-    fb_native.remote_file(
+    native.remote_file(
         name = remote_file_target_name,
         out = name + "." + ext,
         sha1 = sha1,
@@ -150,35 +141,17 @@ def _oss_remote_file_with_wrapper(name, ext, url, sha1, **kwargs):
         type = "executable" if ext == "exe" else "data",
     )
 
-def _buck_remote_file_with_wrapper(
-    name,
-    ext,
-    url,
-    sha1,
-    # @oss-disable[end= ]: internal_alias,
-    **kwargs,
-):
-    if not is_full_meta_repo():
-        return _oss_remote_file_with_wrapper(name, ext, url, sha1, **kwargs)
-    # @oss-disable[end= ]: else:
-        # @oss-disable: # deps are managed by Artificer internally - only relevant for OSS builds.
-        # @oss-disable[end= ]: kwargs.pop("deps", None)
-        # @oss-disable[end= ]: return native.alias(name = name, actual = internal_alias, **kwargs)
-        fail() # @oss-enable
-
 def third_party_jar(
     name,
     url,
     sha1,
-    # @oss-disable[end= ]: internal_alias,
     **kwargs,
 ):
-    return _buck_remote_file_with_wrapper(
+    return _remote_file_with_wrapper(
         name,
         "jar",
         url,
         sha1,
-        # @oss-disable[end= ]: internal_alias,
         **kwargs,
     )
 
@@ -186,15 +159,13 @@ def third_party_aar(
     name,
     url,
     sha1,
-    # @oss-disable[end= ]: internal_alias,
     **kwargs,
 ):
-    return _buck_remote_file_with_wrapper(
+    return _remote_file_with_wrapper(
         name,
         "aar",
         url,
         sha1,
-        # @oss-disable[end= ]: internal_alias,
         **kwargs,
     )
 
@@ -202,15 +173,13 @@ def third_party_exe(
     name,
     url,
     sha1,
-    # @oss-disable[end= ]: internal_alias,
     **kwargs,
 ):
-    return _buck_remote_file_with_wrapper(
+    return _remote_file_with_wrapper(
         name,
         "exe",
         url,
         sha1,
-        # @oss-disable[end= ]: internal_alias,
         **kwargs,
     )
 
@@ -222,16 +191,13 @@ def _shallow_dict_copy_without_key(table, key_to_omit):
     return {key: table[key] for key in table if key != key_to_omit}
 
 def buck_kotlin_test(**kwargs):
-    extra_labels = [_RUN_AS_BUNDLE_LABEL, _FDB_DEBUG_LABEL]
-
     kwargs = _add_labels(**kwargs)
-    kwargs = add_os_labels(**kwargs)
-    kwargs["labels"] += extra_labels
+    kwargs["labels"] += [_FDB_DEBUG_LABEL]
 
     kwargs = _add_kotlin_deps(**kwargs)
     kwargs = _maybe_add_java_version(**kwargs)
 
-    fb_native.kotlin_test(**kwargs)
+    native.kotlin_test(**kwargs)
 
 def buck_java_test(name, vm_args = None, run_test_separately = False, **kwargs):
     """java_test wrapper that provides sensible defaults for buck tests.
@@ -243,12 +209,7 @@ def buck_java_test(name, vm_args = None, run_test_separately = False, **kwargs):
       **kwargs: kwargs
     """
 
-    extra_labels = [_RUN_AS_BUNDLE_LABEL, _FDB_DEBUG_LABEL]
-
-    # Windows command line is short and running a bundle with many tests can cause problems
-    # We fix this by running bundles of max 100 tests
-    if native.host_info().os.is_windows:
-        extra_labels.append("tpx:experimental-shard-size-for-bundle=100")
+    extra_labels = [_FDB_DEBUG_LABEL]
 
     if run_test_separately:
         extra_labels.append("serialize")
@@ -267,10 +228,9 @@ def buck_java_test(name, vm_args = None, run_test_separately = False, **kwargs):
 
     kwargs = _maybe_add_java_version(**kwargs)
     kwargs = _add_labels(**kwargs)
-    kwargs = add_os_labels(**kwargs)
     kwargs["labels"] += extra_labels
 
-    fb_native.java_test(
+    native.java_test(
         name = name,
         deps = deps
         + [
@@ -329,14 +289,5 @@ def standard_java_test(name, run_test_separately = False, vm_args = None, labels
             **kwargs,
         )
 
-def buck_prebuilt_artifact(
-    # @oss-disable[end= ]: cas_digest,
-    oss_url = None,
-    oss_sha1 = None,
-    **kwargs,
-):
-    if (not is_full_meta_repo()) and oss_url:
-        return fb_native.remote_file(sha1 = oss_sha1, url = oss_url, **kwargs)
-    # @oss-disable[end= ]: else:
-        # @oss-disable[end= ]: return android_build_tools_cas_artifact(digest = cas_digest, **kwargs)
-        fail() # @oss-enable
+def buck_prebuilt_artifact(url, sha1, **kwargs):
+    return native.remote_file(sha1 = sha1, url = url, **kwargs)

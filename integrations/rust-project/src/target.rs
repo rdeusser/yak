@@ -91,11 +91,10 @@ pub(crate) struct MacroOutput {
 }
 /// The kind of a Rust target, as reported by the `resolve_deps.bxl` prelude script.
 ///
-/// This binary is shipped as a pinned prebuilt (via DotSlash) that is versioned
-/// independently of the prelude BXL it invokes, so a given binary may run against
-/// an older or newer prelude. Accept both the semantic kind names (`bin`/`lib`/`test`)
-/// emitted by newer preludes and the legacy fully-qualified rule types emitted by
-/// older ones.
+/// A rust-project binary can come from a different revision than the prelude BXL it
+/// invokes, so a given binary may run against an older or newer prelude. Accept both the
+/// semantic kind names (`bin`/`lib`/`test`) emitted by newer preludes and the legacy
+/// fully-qualified rule types emitted by older ones.
 #[derive(Debug, Clone, Deserialize, PartialEq, Eq)]
 pub(crate) enum Kind {
     #[serde(rename = "bin", alias = "prelude//rules.bzl:rust_binary")]
@@ -109,11 +108,11 @@ pub(crate) enum Kind {
 #[derive(Debug, Clone, Deserialize, PartialEq, Eq)]
 pub(crate) struct TargetInfo {
     pub(crate) name: String,
-    /// The target identifier, e.g. `fbcode//buck2/integrations/rust-project:rust-project`.
+    /// The target identifier, e.g. `root//integrations/rust-project:rust-project`.
     ///
-    /// See also <https://buck2.build/docs/concepts/labels/>
+    /// See also <https://rdeusser.github.io/buck2/docs/concepts/labels/>
     pub(crate) label: String,
-    /// A list of tags, e.g. ["xplat", "split-dwarf"]
+    /// A list of tags, e.g. ["generated", "split-dwarf"]
     ///
     /// This is generic metadata about the target.
     pub(crate) labels: Vec<String>,
@@ -246,7 +245,7 @@ impl TargetInfo {
     /// <https://github.com/rust-lang/rust-analyzer/blob/a8e2add5c74cf4c3b14335eb02afe91061da0e92/crates/load-cargo/src/lib.rs#L308-L309>
     pub(crate) fn is_workspace_member(&self) -> bool {
         // Buck workspaces define a set of buck projects that you typically edit
-        // together, e.g. foo-lib and its corresponding foo-bin, see D48096435.
+        // together, e.g. foo-lib and its corresponding foo-bin.
         //
         // We definitely want watch all these files for changes. Arguably in a
         // monorepo we could watch everything except vendored files, but there
@@ -269,12 +268,11 @@ impl TargetInfo {
 
     /// Is this a reindeer-vendored third-party crate?
     ///
-    /// Reindeer buckifies vendored crates under a fixed set of package roots,
-    /// authoritatively defined by `_assert_is_allowed_third_party_root` in
-    /// `fbsource//tools/build_defs/third_party:rust_third_party.bzl` (the
-    /// `rust_third_party` macros fail the build outside these roots).
+    /// Crates count as vendored when they live under the package roots
+    /// `third-party/rust`, `third-party/rust/top`, or `third-party/rust/vendor/`
+    /// of any cell.
     pub(crate) fn is_reindeer_third_party(&self) -> bool {
-        // Strip the cell (e.g. `fbsource//`) and the target name (`:foo`) to get
+        // Strip the cell (e.g. `root//`) and the target name (`:foo`) to get
         // the buck package path.
         let package = self
             .label
@@ -285,7 +283,6 @@ impl TargetInfo {
         package == "third-party/rust"
             || package == "third-party/rust/top"
             || package.starts_with("third-party/rust/vendor/")
-            || package.starts_with("xplat/rust/toolchain/sysroot")
     }
 }
 
@@ -429,20 +426,16 @@ mod tests {
             rustc_flags: vec![],
         };
 
-        assert!(with_label("fbsource//third-party/rust/vendor/tokio:1").is_reindeer_third_party());
-        assert!(with_label("fbsource//third-party/rust:tokio").is_reindeer_third_party());
-        assert!(with_label("fbsource//third-party/rust/top:rustc").is_reindeer_third_party());
-        assert!(
-            with_label("fbsource//xplat/rust/toolchain/sysroot:core").is_reindeer_third_party()
-        );
+        assert!(with_label("root//third-party/rust/vendor/tokio:1").is_reindeer_third_party());
+        assert!(with_label("root//third-party/rust:tokio").is_reindeer_third_party());
+        assert!(with_label("root//third-party/rust/top:rustc").is_reindeer_third_party());
 
         assert!(
-            !with_label("fbcode//buck2/integrations/rust-project:rust-project")
-                .is_reindeer_third_party()
+            !with_label("root//integrations/rust-project:rust-project").is_reindeer_third_party()
         );
         // A first-party crate that merely lives under a similarly-named path is
         // not a reindeer root.
-        assert!(!with_label("fbcode//third-party/rust-tools/foo:foo").is_reindeer_third_party());
+        assert!(!with_label("root//third-party/rust-tools/foo:foo").is_reindeer_third_party());
     }
 
     #[test]

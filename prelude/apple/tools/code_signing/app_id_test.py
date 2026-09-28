@@ -50,7 +50,7 @@ class TestAppId(unittest.TestCase):
                             <dict>
                                 <key>keychain-access-groups</key>
                                 <array>
-                                    <string>com.facebook.CommonTestHost</string>
+                                    <string>com.example.CommonTestHost</string>
                                 </array>p
                             </dict>
                             </plist>"""
@@ -58,7 +58,7 @@ class TestAppId(unittest.TestCase):
         invalid_entitlement = plistlib.loads(invalid_file)
         with self.assertRaisesRegex(
             RuntimeError,
-            "Error when parsing the entitlements for the app ID: Malformed app ID string: 'com.facebook.CommonTestHost'. "
+            "Error when parsing the entitlements for the app ID: Malformed app ID string: 'com.example.CommonTestHost'. "
             "We expected a prefix of a ten-character alphanumeric sequence and a Bundle ID which may be a fully-qualified name or a wildcard ending in '*'.",
         ):
             AppId.infer_from_entitlements(invalid_entitlement)

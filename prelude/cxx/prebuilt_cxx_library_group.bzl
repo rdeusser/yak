@@ -101,7 +101,7 @@ def _parse_macro(arg: str) -> [(str, str), None]:
     the argument passed to the macro.
     """
 
-    # TODO(T110378124): This is obviously not ideal and longer-term we should
+    # TODO: This is obviously not ideal and longer-term we should
     # probably come up with a better UI for this rule or properly support these
     # macros.
 
@@ -248,9 +248,8 @@ def _get_shared_link_infos(ctx: AnalysisContext, shared_libs: dict[str, Artifact
 
 # The `prebuilt_cxx_library_group` rule is meant to provide fine user control for
 # how a group libraries of libraries are added to the link line and was added for
-# `fbcode//third-party-buck/platform009/build/IntelComposerXE:mkl_lp64_iomp`, which
-# includes libraries with dep cycles, and so must be linked together with flags
-# like `--start-group`/`--end-group`.
+# Intel MKL (`mkl_lp64_iomp`), which includes libraries with dep cycles, and so must
+# be linked together with flags like `--start-group`/`--end-group`.
 #
 # The link arguments for the various link styles are specified by pair of string
 # arguments with macros referencing a collection of libraries:

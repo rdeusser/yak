@@ -1,8 +1,5 @@
 load("@prelude//toolchains/android/tools:build_rules.bzl", "buck_java_binary", "buck_java_library", "buck_kotlin_library")
-load("@prelude//toolchains/android/tools/build_rules:fb_native.bzl", "fb_native")
 load("@prelude//utils:source_listing.bzl", "source_listing")
-
-oncall("android_devxx")
 
 source_listing()
 
@@ -14,10 +11,8 @@ buck_java_library(
         "TestResult.java",
         "TestXmlEscaper.java",
     ],
-    # @oss-disable[end= ]: source = "8",
-    # @oss-disable[end= ]: target = "8",
-    source = "11", # @oss-enable
-    target = "11", # @oss-enable
+    source = "11",
+    target = "11",
     tests = [
         "prelude//toolchains/android/test/com/facebook/buck/testrunner:junit_runner_test",
         "prelude//toolchains/android/test/com/facebook/buck/testrunner:testrunner",
@@ -40,10 +35,8 @@ buck_kotlin_library(
         "ThreadDumpUtils.kt",
         "TpxTimeoutBufferManager.kt",
     ],
-    # @oss-disable[end= ]: source = "8",
-    # @oss-disable[end= ]: target = "8",
-    source = "11", # @oss-enable
-    target = "11", # @oss-enable
+    source = "11",
+    target = "11",
     tests = [
         "prelude//toolchains/android/test/com/facebook/buck/testrunner:tpx_timeout_buffer_manager_test",
     ],
@@ -55,17 +48,16 @@ buck_kotlin_library(
     ],
 )
 
-fb_native.kotlin_library(
+kotlin_library(
     name = "per_test_coverage_base",
     srcs = [
         "BasePerTestCoverageRunListener.kt",
         "PerTestCoverageExtension.kt",
         "PerTestCoverageExtensionManager.kt",
     ],
-    # Uses fb_native.kotlin_library (not buck_kotlin_library) with kotlin-stdlib in provided_deps:
-    # both consumers (prelude :junit, fbandroid :instrumentation) already package kotlin-stdlib at
-    # different Buck target paths, and shipping ours too breaks Android APK D8 dexing with
-    # duplicate types. Keep the bootstrap Kotlin toolchain in sync with buck_kotlin_library so tests
+    # Uses kotlin_library (not buck_kotlin_library) with kotlin-stdlib in provided_deps: its
+    # consumers already package kotlin-stdlib, and shipping ours too breaks Android APK D8 dexing
+    # with duplicate types. Keep the bootstrap Kotlin toolchain in sync with buck_kotlin_library so tests
     # that override the Java compiler mode don't analyze this target with mismatched Kotlin/Java
     # compiler modes. The source also hand-rolls JSON instead of using jackson-core for the same
     # reason.
@@ -73,17 +65,12 @@ fb_native.kotlin_library(
     provided_deps = [
         "prelude//toolchains/android/third-party:kotlin-stdlib",
     ],
-    # @oss-disable[end= ]: source = "8",
-    # @oss-disable[end= ]: target = "8",
-    source = "11", # @oss-enable
-    target = "11", # @oss-enable
+    source = "11",
+    target = "11",
     tests = [
         "prelude//toolchains/android/test/com/facebook/buck/testrunner:per_test_coverage_base_test",
     ],
     visibility = [
-        "fbsource//fbandroid/java/com/facebook/testing/instrumentation/...",
-        "fbsource//fbandroid/java/com/facebook/testing/robolectric/resourceusage:resourceusage",
-        "fbsource//fbandroid/javatests/com/facebook/testing/instrumentation/...",
         "prelude//toolchains/android/src/com/facebook/buck/testrunner:junit",
         "prelude//toolchains/android/test/com/facebook/buck/testrunner:per_test_coverage_base_test",
         "prelude//toolchains/android/test/com/facebook/buck/testrunner:per_test_coverage_listener_test",
@@ -116,10 +103,8 @@ buck_kotlin_library(
     ],
     resources = glob(["META-INF/**/*"]),
     resources_root = ".",
-    # @oss-disable[end= ]: source = "8",
-    # @oss-disable[end= ]: target = "8",
-    source = "11", # @oss-enable
-    target = "11", # @oss-enable
+    source = "11",
+    target = "11",
     tests = [
         "prelude//toolchains/android/test/com/facebook/buck/testrunner:junit_runner_test",
         "prelude//toolchains/android/test/com/facebook/buck/testrunner:per_test_coverage_listener_test",
@@ -174,15 +159,12 @@ buck_kotlin_library(
         "reportlayer/VideoRecordingReportLayer.java",
     ],
     required_for_source_only_abi = True,
-    # @oss-disable[end= ]: source = "8",
-    # @oss-disable[end= ]: target = "8",
-    source = "11", # @oss-enable
-    target = "11", # @oss-enable
+    source = "11",
+    target = "11",
     tests = [
         "prelude//toolchains/android/test/com/facebook/buck/testrunner:testrunner",
     ],
     visibility = [
-        "fbsource//fbandroid/instrumentation_tests/com/meta/instrumentation/host/...",
         "prelude//toolchains/android/test/com/facebook/buck/testrunner:testrunner",
     ],
     deps = [
@@ -203,10 +185,8 @@ buck_java_library(
         "RunShellCommand.java",
     ],
     required_for_source_only_abi = True,
-    # @oss-disable[end= ]: source = "8",
-    # @oss-disable[end= ]: target = "8",
-    source = "11", # @oss-enable
-    target = "11", # @oss-enable
+    source = "11",
+    target = "11",
     visibility = [
         "prelude//toolchains/android/test/com/facebook/buck/testrunner:testrunner",
     ],
@@ -221,10 +201,8 @@ buck_java_library(
         "TestNGMain.java",
         "TestNGRunner.java",
     ],
-    # @oss-disable[end= ]: source = "8",
-    # @oss-disable[end= ]: target = "8",
-    source = "11", # @oss-enable
-    target = "11", # @oss-enable
+    source = "11",
+    target = "11",
     visibility = [],
     deps = [
         "prelude//toolchains/android/src/com/facebook/buck/test/result/type:type",
@@ -269,7 +247,7 @@ buck_java_binary(
 # Strip out classes we don't want automatically added to the classpath for
 # tests, leaving just the extra buck classes.
 # This version is for vanilla Java tests.
-fb_native.zip_file(
+zip_file(
     name = "testrunner-bin-fixed",
     out = "testrunner-bin-fixed.jar",
     entries_to_exclude = [
@@ -286,7 +264,7 @@ fb_native.zip_file(
 # Strip out classes we don't want automatically added to the classpath for
 # tests, leaving just the extra buck classes.
 # This version includes Android instrumentation support.
-fb_native.zip_file(
+zip_file(
     name = "testrunner-bin-android-fixed",
     out = "testrunner-bin-android-fixed.jar",
     entries_to_exclude = [

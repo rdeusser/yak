@@ -75,31 +75,12 @@ use crate::startup_deadline::StartupDeadline;
 use crate::subscribers::classify_server_stderr::classify_server_stderr;
 use crate::subscribers::stdout_stderr_forwarder::StdoutStderrForwarder;
 
-#[cfg(all(fbcode_build, target_os = "linux"))]
-mod linux_unsandbox;
-
-#[cfg(all(fbcode_build, target_os = "linux"))]
-use self::linux_unsandbox::get_unix_daemon_and_args;
-
-#[cfg(fbcode_build)]
-const HTTP_PROXY_ENV_VARS: [&str; 6] = [
-    "HTTP_PROXY",
-    "http_proxy",
-    "HTTPS_PROXY",
-    "https_proxy",
-    "NO_PROXY",
-    "no_proxy",
-];
-
 /// The client side matcher for DaemonConstraints.
 #[derive(Clone, Debug)]
 pub struct DaemonConstraintsRequest {
     /// The version of buck2.
     version: String,
-    /// Sandcastle id.
-    user_version: Option<String>,
     desired_trace_io_state: DesiredTraceIoState,
-    nested_invocation_daemon_uuid: Option<String>,
     pub reject_daemon: Option<String>,
     pub reject_materializer_state: Option<String>,
     pub daemon_startup_config: DaemonStartupConfig,
@@ -109,8 +90,6 @@ pub struct DaemonConstraintsRequest {
 pub(crate) enum ConstraintUnsatisfiedReason {
     #[display("Version mismatch")]
     Version,
-    #[display("User version mismatch")]
-    UserVersion,
     #[display("Startup config mismatch")]
     StartupConfig,
     #[display("Reject daemon id")]
@@ -126,9 +105,6 @@ impl ConstraintUnsatisfiedReason {
         match self {
             ConstraintUnsatisfiedReason::Version => {
                 buck2_data::DaemonWasStartedReason::ConstraintMismatchVersion
-            }
-            ConstraintUnsatisfiedReason::UserVersion => {
-                buck2_data::DaemonWasStartedReason::ConstraintMismatchUserVersion
             }
             ConstraintUnsatisfiedReason::StartupConfig => {
                 buck2_data::DaemonWasStartedReason::ConstraintMismatchStartupConfig
@@ -153,9 +129,7 @@ impl DaemonConstraintsRequest {
     ) -> buck2_error::Result<Self> {
         Ok(Self {
             version: daemon_constraints::version()?,
-            user_version: daemon_constraints::user_version()?,
             desired_trace_io_state,
-            nested_invocation_daemon_uuid: get_possibly_nested_invocation_daemon_uuid(),
             reject_daemon: None,
             reject_materializer_state: None,
             daemon_startup_config: immediate_config.daemon_startup_config()?.clone(),
@@ -172,12 +146,6 @@ impl DaemonConstraintsRequest {
     ) -> Result<(), ConstraintUnsatisfiedReason> {
         if self.version != daemon.version {
             return Err(ConstraintUnsatisfiedReason::Version);
-        }
-
-        if !is_nested_invocation(self.nested_invocation_daemon_uuid.as_ref(), daemon)
-            && self.user_version != daemon.user_version
-        {
-            return Err(ConstraintUnsatisfiedReason::UserVersion);
         }
 
         let server_daemon_startup_config = daemon.daemon_startup_config.as_ref().and_then(|c| {
@@ -250,44 +218,6 @@ pub enum BuckdConnectOptions {
 pub struct BuckdConnectDaemonOptions {
     pub(crate) constraints: DaemonConstraintsRequest,
     pub(crate) daemon_startup_mode: DaemonStartupMode,
-    /// Start the daemon by asking the installed Buck wrapper to re-exec it
-    /// outside of the AI sandbox.
-    ///
-    /// The normal Unix daemon startup path runs the daemon executable directly:
-    ///
-    /// ```text
-    /// <daemon-exe> --isolation-dir <dir> daemon ...
-    /// ```
-    ///
-    /// When this is set and the current process certificate has an `agent.id`
-    /// identity attribute, Buck preserves the normal daemon argv, but prefixes
-    /// it with the wrapper command and the canonical daemon executable:
-    ///
-    /// ```text
-    /// /usr/local/bin/buck unsandbox-daemon <daemon-exe> --isolation-dir <dir> daemon ...
-    /// ```
-    ///
-    /// This _only_ works if the wrapper is installed at `/usr/local/bin/buck`,
-    /// as the BPFJailer policy only allows executables with that path the
-    /// ability to exit the jail. Wrappers that support the `unsandbox-daemon`
-    /// are installed setuid-root, and must be from a release build on or after
-    /// 20260630.
-    ///
-    /// The wrapper owns the privileged/sandbox-specific part of the flow: it
-    /// validates that the requested executable is the Buck daemon associated
-    /// with the caller, escapes the AI sandbox where supported, and then execs
-    /// the daemon executable with the original daemon argv. From this client's
-    /// point of view, the spawned process still follows the ordinary Unix Buck
-    /// daemon startup contract: it forks, the launcher exits, and this code
-    /// waits for that launcher process before connecting to the daemon socket,
-    /// it just takes longer.
-    ///
-    /// This must remain a daemon-start-only path. The wrapper command is
-    /// intentionally constructed only around Buck's normal `daemon` argv, so
-    /// enabling this option should not create a general mechanism for
-    /// unsandboxing arbitrary Buck commands or user-provided executables.
-    #[cfg(all(fbcode_build, target_os = "linux"))]
-    pub(crate) allow_daemon_start_unsandboxed_via_wrapper: bool,
 }
 
 async fn get_channel(
@@ -350,7 +280,6 @@ struct ExecutableAndArgs<'a> {
     args: Vec<Cow<'a, str>>,
 }
 
-#[cfg(not(all(fbcode_build, target_os = "linux")))]
 async fn get_unix_daemon_and_args<'a>(
     _options: &BuckdConnectDaemonOptions,
     args: Vec<&'a str>,
@@ -416,7 +345,7 @@ impl<'a> BuckdLifecycle<'a> {
         // TODO(nga): We create too many backtraces during `attrs.source()` coercion. Can be
         //   reproduced with this command:
         //   ```
-        //   buck2 --isolation-dir=xx audit providers fbcode//buck2:buck2 --quiet
+        //   buck2 --isolation-dir=xx audit providers root//:buck2 --quiet
         //   ```
         //   Which regresses from 15s to 80s when `RUST_LIB_BACKTRACE` is set. So we disable
         //   backtraces in the daemon unless the user has explicitly asked for them. We
@@ -432,20 +361,6 @@ impl<'a> BuckdLifecycle<'a> {
             // Disable restarter for the actual daemon command, even if it was forced, otherwise we
             // restart the daemon when it exits.
             daemon_env_vars.push((OsStr::new("FORCE_WANT_RESTART"), OsString::from("false")));
-        }
-
-        #[cfg(fbcode_build)]
-        if !constraints
-            .daemon_startup_config
-            .http
-            .proxy_env_allowlist
-            .is_empty()
-        {
-            daemon_env_vars.extend(
-                HTTP_PROXY_ENV_VARS
-                    .into_iter()
-                    .filter_map(|name| env::var_os(name).map(|value| (OsStr::new(name), value))),
-            );
         }
 
         if cfg!(unix) {
@@ -796,7 +711,6 @@ fn explain_failed_to_connect_reason(reason: buck2_data::DaemonWasStartedReason) 
     match reason {
         DaemonWasStartedReason::UnknownReason => "Unknown reason",
         DaemonWasStartedReason::ConstraintMismatchVersion => "Version mismatch",
-        DaemonWasStartedReason::ConstraintMismatchUserVersion => "User version mismatch",
         DaemonWasStartedReason::ConstraintMismatchStartupConfig => "Startup config mismatch",
         DaemonWasStartedReason::ConstraintRejectDaemonId => "Reject daemon id",
         DaemonWasStartedReason::ConstraintMismatchTraceIo => "Trace IO mismatch",
@@ -1439,7 +1353,6 @@ mod tests {
     fn constraints(trace_io_enabled: bool) -> buck2_cli_proto::DaemonConstraints {
         buck2_cli_proto::DaemonConstraints {
             version: "version".to_owned(),
-            user_version: Some("test".to_owned()),
             daemon_id: "foo".to_owned(),
             extra: Some(buck2_cli_proto::ExtraDaemonConstraints {
                 trace_io_enabled,
@@ -1454,9 +1367,7 @@ mod tests {
     fn request(desired_trace_io_state: DesiredTraceIoState) -> DaemonConstraintsRequest {
         DaemonConstraintsRequest {
             version: "version".to_owned(),
-            user_version: Some("test".to_owned()),
             desired_trace_io_state,
-            nested_invocation_daemon_uuid: None,
             reject_daemon: None,
             reject_materializer_state: None,
             daemon_startup_config: DaemonStartupConfig::testing_empty(),
@@ -1497,17 +1408,14 @@ mod tests {
     fn test_reject_daemon() {
         let mut req = DaemonConstraintsRequest {
             version: "foo".to_owned(),
-            user_version: None,
             desired_trace_io_state: DesiredTraceIoState::Existing,
             reject_daemon: None,
-            nested_invocation_daemon_uuid: None,
             reject_materializer_state: None,
             daemon_startup_config: DaemonStartupConfig::testing_empty(),
         };
 
         let daemon = buck2_cli_proto::DaemonConstraints {
             version: "foo".to_owned(),
-            user_version: None,
             daemon_id: "ddd".to_owned(),
             extra: None,
             daemon_startup_config: Some(
@@ -1526,17 +1434,14 @@ mod tests {
     fn test_reject_materializer_state() {
         let mut req = DaemonConstraintsRequest {
             version: "foo".to_owned(),
-            user_version: None,
             desired_trace_io_state: DesiredTraceIoState::Existing,
             reject_daemon: None,
-            nested_invocation_daemon_uuid: None,
             reject_materializer_state: None,
             daemon_startup_config: DaemonStartupConfig::testing_empty(),
         };
 
         let daemon = buck2_cli_proto::DaemonConstraints {
             version: "foo".to_owned(),
-            user_version: None,
             daemon_id: "ddd".to_owned(),
             extra: Some(buck2_cli_proto::ExtraDaemonConstraints {
                 trace_io_enabled: false,
@@ -1558,17 +1463,14 @@ mod tests {
     fn test_daemon_buster() {
         let mut req = DaemonConstraintsRequest {
             version: "foo".to_owned(),
-            user_version: None,
             desired_trace_io_state: DesiredTraceIoState::Existing,
             reject_daemon: None,
-            nested_invocation_daemon_uuid: None,
             reject_materializer_state: None,
             daemon_startup_config: DaemonStartupConfig::testing_empty(),
         };
 
         let daemon = buck2_cli_proto::DaemonConstraints {
             version: "foo".to_owned(),
-            user_version: None,
             daemon_id: "ddd".to_owned(),
             extra: Some(buck2_cli_proto::ExtraDaemonConstraints {
                 trace_io_enabled: false,
@@ -1672,36 +1574,5 @@ mod tests {
             .to_string(),
             "Daemon process info from /tmp/buckd/buckd.info:\n    daemon dir: /tmp/buckd\n    status: unavailable: failed to load buckd.info (internal error)"
         );
-    }
-
-    #[test]
-    fn test_constraints_nested_invocation_diff_user_version() {
-        let mut req = DaemonConstraintsRequest {
-            version: "foo".to_owned(),
-            user_version: Some("fake_version_1".to_owned()),
-            desired_trace_io_state: DesiredTraceIoState::Existing,
-            nested_invocation_daemon_uuid: None,
-            reject_daemon: None,
-            reject_materializer_state: None,
-            daemon_startup_config: DaemonStartupConfig::testing_empty(),
-        };
-
-        let daemon = buck2_cli_proto::DaemonConstraints {
-            version: "foo".to_owned(),
-            user_version: Some("fake_version_2".to_owned()),
-            daemon_id: "ddd".to_owned(),
-            extra: Some(buck2_cli_proto::ExtraDaemonConstraints {
-                trace_io_enabled: false,
-                materializer_state_identity: Some("mmm".to_owned()),
-            }),
-            daemon_startup_config: Some(
-                serde_json::to_string(&DaemonStartupConfig::testing_empty()).unwrap(),
-            ),
-        };
-
-        assert!(req.satisfied(&daemon).is_err());
-
-        req.nested_invocation_daemon_uuid = Some("ddd".to_owned());
-        assert!(req.satisfied(&daemon).is_ok());
     }
 }

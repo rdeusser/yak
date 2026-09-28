@@ -6,17 +6,14 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-# pyre-strict
-
-
 import json
 import re
 from pathlib import Path
 
 import pytest
-from buck2.tests.e2e_util.api.buck import Buck
-from buck2.tests.e2e_util.buck_workspace import buck_test
-from buck2.tests.e2e_util.helper.golden import golden
+from e2e_util.api.buck import Buck
+from e2e_util.buck_workspace import buck_test
+from e2e_util.helper.golden import golden
 
 
 def _replace_timestamp(s: str) -> str:
@@ -123,9 +120,3 @@ async def test_user_event_log_with_log_show_user_compatibility(
         output=results,
         rel_path="instant_event.golden.json",
     )
-
-
-# Placeholder for tests to be listed successfully on Windows.
-@buck_test()
-async def test_noop(buck: Buck) -> None:
-    return

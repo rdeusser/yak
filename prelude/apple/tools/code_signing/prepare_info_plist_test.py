@@ -32,7 +32,7 @@ class Test(unittest.TestCase):
                 },
             )
             info_plist = {
-                "CFBundleIdentifier": "com.facebook.test",
+                "CFBundleIdentifier": "com.example.test",
                 "CFBundlePackageType": "APPL",
             }
             info_plist_path, info_plist_metadata = _write_info_plist(
@@ -45,14 +45,14 @@ class Test(unittest.TestCase):
                 self.assertEqual(
                     plistlib.load(result_file),
                     {
-                        "CFBundleIdentifier": "com.facebook.test",
+                        "CFBundleIdentifier": "com.example.test",
                         "CFBundlePackageType": "APPL",
-                        "ApplicationIdentifier": "ABCDEFGHIJ.com.facebook.test",
+                        "ApplicationIdentifier": "ABCDEFGHIJ.com.example.test",
                     },
                 )
             # Same but for watchOS Info.plist
             info_plist = {
-                "CFBundleIdentifier": "com.facebook.test",
+                "CFBundleIdentifier": "com.example.test",
                 "CFBundlePackageType": "APPL",
                 "WKApplication": True,
             }

@@ -6,8 +6,6 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-# pyre-strict
-
 import argparse
 import os
 import shutil
@@ -53,9 +51,7 @@ def _package_ipa_contents(
 
         # Apple requires all executable files in an `.ipa` to be _writable_, otherwise App Store validation fails with:
         #   "Asset validation failed (90711) Invalid executable permissions. The executable $X does not have its writable bit set."
-        # Furthermore, there's additional internal infra that needs certain files to be writable.
-        #
-        # In normal development outside Meta, all files in an .ipa will be user writable, so let's just the sensible thing
+        # In normal development, all files in an .ipa will be user writable, so let's just the sensible thing
         # and mirror behavior which Apple expects, so we're future-proof.
         make_dir_recursively_writable(str(processed_package_dir_path))
 

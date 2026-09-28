@@ -15,7 +15,6 @@ use std::time::Duration;
 use buck2_build_signals::env::WaitingCategory;
 use buck2_build_signals::env::WaitingData;
 use buck2_common::liveliness_observer::LivelinessObserver;
-use buck2_core::buck2_env;
 use buck2_events::dispatch::EventDispatcher;
 use buck2_hash::BuckIndexMap;
 use buck2_util::time_span::TimeSpan;
@@ -174,7 +173,6 @@ impl CommandExecutionManagerLike for CommandExecutionManager {
                 std_streams,
                 exit_code,
                 additional_message,
-                inline_environment_metadata: inline_environment_metadata(),
             },
             rejected_execution: None,
             cache_upload_result: buck2_data::UploadResult::DidNotUploadUnspecified,
@@ -269,7 +267,6 @@ impl CommandExecutionManagerLike for CommandExecutionManagerWithClaim {
                 std_streams,
                 exit_code,
                 additional_message,
-                inline_environment_metadata: inline_environment_metadata(),
             },
             rejected_execution: None,
             cache_upload_result: buck2_data::UploadResult::DidNotUploadUnspecified,
@@ -416,14 +413,5 @@ where
             CommandExecutionMetadata::empty(TimeSpan::empty_now()),
             None,
         )
-    }
-}
-
-fn inline_environment_metadata() -> buck2_data::InlineCommandExecutionEnvironmentMetadata {
-    buck2_data::InlineCommandExecutionEnvironmentMetadata {
-        sandcastle_instance_id:
-            buck2_env!("SANDCASTLE_INSTANCE_ID", type = u64, applicability = internal)
-                .ok()
-                .flatten(),
     }
 }

@@ -20,10 +20,6 @@ def _normal_impl(ctx):
     )
     ctx.actions.run(
         cmd,
-        # Unset the user version. Actions will only sometimes do this, tests always will
-        #
-        # Unfortunately, no good way to ask for it to be unset, so we do this instead
-        env = {"SANDCASTLE_ID": ""},
         local_only = True,
         category = "run",
     )
@@ -46,7 +42,7 @@ subprocess.run([buck_path, "debug", "trace-io", "enable"])
     )
     ctx.actions.run(
         [
-            "fbpython",
+            "python3",
             script,
             ctx.attrs.buck2_path,
             trace_out.as_output(),

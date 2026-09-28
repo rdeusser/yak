@@ -76,7 +76,7 @@ impl ConfiguredGraphQueryEnvironmentDelegate for AnalysisConfiguredGraphQueryDel
             template_name: StaticStr,
             // Use `ConfiguredTargetLabel` instead of `ConfiguredGraphNodeRef` here because `ConfiguredGraphNodeRef`
             // only computes Hash and PartialEq based on the label. If we use `ConfiguredGraphNodeRef` directly we
-            // may cache stale ConfiguredTargetNodes and end up with a bug like T133069783.
+            // may cache stale ConfiguredTargetNodes.
             targets: Arc<Vec<ConfiguredTargetLabel>>,
         }
 

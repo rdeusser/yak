@@ -14,12 +14,6 @@ load(
     "@prelude//apple:modularization_dependency_graph.bzl",
     "create_modularization_dep_graph_subtargets_and_provider",
 )
-# @oss-disable[end= ]: load(
-    # @oss-disable[end= ]: "@prelude//apple/meta_only:linker_outputs.bzl",
-    # @oss-disable[end= ]: "extra_distributed_thin_lto_opt_outputs_merger",
-    # @oss-disable[end= ]: "get_extra_linker_output_flags",
-    # @oss-disable[end= ]: "get_extra_linker_outputs",
-# @oss-disable[end= ]: )
 load(
     "@prelude//apple/swift:swift_compilation.bzl",
     "compile_swift",
@@ -355,8 +349,7 @@ def _get_extra_linker_outputs(
     ctx: AnalysisContext, extra_linker_output_category: ExtraLinkerOutputCategory = ExtraLinkerOutputCategory("produced-during-local-link")
 ) -> ExtraLinkerOutputs:
     _ = ctx  # buildifier: disable=unused-variable
-    # @oss-disable[end= ]: return get_extra_linker_outputs(ctx, extra_linker_output_category)
-    return ExtraLinkerOutputs() # @oss-enable
+    return ExtraLinkerOutputs()
 
 def _get_extra_linker_outputs_flags(
     ctx: AnalysisContext,
@@ -364,12 +357,10 @@ def _get_extra_linker_outputs_flags(
     extra_linker_output_category: ExtraLinkerOutputCategory = ExtraLinkerOutputCategory("produced-during-local-link"),
 ) -> list[ArgLike]:
     _ = ctx  # buildifier: disable=unused-variable
-    # @oss-disable[end= ]: return get_extra_linker_output_flags(ctx, outputs, extra_linker_output_category)
-    return [] # @oss-enable
+    return []
 
 def _extra_distributed_thin_lto_opt_outputs_merger(ctx: AnalysisContext, outputs_to_bind: dict[str, Artifact], outputs_to_merge: list[dict[str, Artifact]]):
-    # @oss-disable[end= ]: return extra_distributed_thin_lto_opt_outputs_merger(ctx, outputs_to_bind, outputs_to_merge)
-    return # @oss-enable
+    return
 
 def _filter_swift_srcs(ctx: AnalysisContext) -> (list[CxxSrcWithFlags], list[CxxSrcWithFlags]):
     cxx_srcs = []

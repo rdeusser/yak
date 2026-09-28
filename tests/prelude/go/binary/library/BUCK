@@ -1,9 +1,0 @@
-oncall("golang")
-
-prelude = native
-
-prelude.go_library(
-    name = "lib",
-    srcs = ["lib.go"],
-    visibility = ["PUBLIC"],
-)

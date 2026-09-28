@@ -37,7 +37,6 @@ impl IoError {
             source: e.into(),
             context: Vec::new(),
             tags: Vec::new(),
-            is_eden: false,
             is_input_path: None,
             not_found_tag: None,
         }
@@ -51,16 +50,13 @@ impl IoError {
         Self::internal(buck2_error::Error::from(e))
     }
 
-    /// Set operation and is_eden based on provided path.
+    /// Set operation based on provided path.
     pub fn new_with_path<T: Into<IoErrorSource>, P: AsRef<AbsPath>>(
         op: &str,
         path: P,
         e: T,
     ) -> Self {
-        let path = path.as_ref();
-        IoError::new(e)
-            .context(format!("{}({})", op, path.display()))
-            .check_eden(path)
+        IoError::new(e).context(format!("{}({})", op, path.as_ref().display()))
     }
 
     pub fn context(mut self, op: impl Into<String>) -> Self {
@@ -70,21 +66,6 @@ impl IoError {
 
     pub fn tag(mut self, tag: ErrorTag) -> Self {
         self.tags.push(tag);
-        self
-    }
-
-    /// Set the is_eden flag if provided path is on an eden fs
-    #[cfg(fbcode_build)]
-    pub fn check_eden(mut self, path: &AbsPath) -> Self {
-        self.is_eden |= path
-            .parent()
-            .and_then(|p| detect_eden::is_eden(p.to_path_buf()).ok())
-            .unwrap_or(false);
-        self
-    }
-
-    #[cfg(not(fbcode_build))]
-    pub fn check_eden(self, _path: &AbsPath) -> Self {
         self
     }
 
@@ -103,18 +84,6 @@ impl IoError {
         let mut tags = vec![ErrorTag::IoSystem];
 
         if let IoErrorSource::Io(e) = &self.source {
-            if self.is_eden {
-                tags.push(ErrorTag::IoEden);
-                match e.kind() {
-                    io::ErrorKind::NotFound => tags.push(ErrorTag::IoEdenFileNotFound),
-                    io::ErrorKind::TimedOut => {
-                        // Eden timeouts are most likely caused by network issues.
-                        // TODO check network health to be sure.
-                        tags.push(ErrorTag::Environment);
-                    }
-                    _ => {}
-                }
-            }
             if e.kind() == io::ErrorKind::NotFound {
                 tags.extend(self.not_found_tag);
             }
@@ -177,7 +146,6 @@ pub struct IoError {
     pub(crate) source: IoErrorSource,
     pub(crate) context: Vec<String>,
     pub(crate) tags: Vec<ErrorTag>,
-    pub(crate) is_eden: bool,
     pub(crate) is_input_path: Option<bool>,
     pub(crate) not_found_tag: Option<ErrorTag>,
 }

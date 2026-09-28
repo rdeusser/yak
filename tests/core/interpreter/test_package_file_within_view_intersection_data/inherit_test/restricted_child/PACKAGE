@@ -1,0 +1,5 @@
+# With `inherit = True`, the default `within_view` below is the union of the
+# parent's list and this one, but the cap gains only this list.
+enforce_within_view_intersection()
+
+package(inherit = True, within_view = ["root//inherit_test/restricted_child/..."])

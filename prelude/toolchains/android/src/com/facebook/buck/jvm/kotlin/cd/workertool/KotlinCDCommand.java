@@ -14,9 +14,7 @@ import com.facebook.buck.cd.model.kotlin.Metadata;
 import com.facebook.buck.core.filesystems.AbsPath;
 import com.facebook.buck.core.filesystems.RelPath;
 import com.facebook.buck.core.util.log.Logger;
-import com.facebook.buck.io.file.FileExtensionMatcher;
 import com.facebook.buck.io.file.MostFiles;
-import com.facebook.buck.io.file.PathMatcher;
 import com.facebook.buck.jvm.cd.AbiDirWriter;
 import com.facebook.buck.jvm.cd.BuildCommandStepsBuilder;
 import com.facebook.buck.jvm.cd.DepFileUtils;
@@ -26,9 +24,6 @@ import com.facebook.buck.jvm.cd.command.kotlin.BuildKotlinCommand;
 import com.facebook.buck.jvm.cd.serialization.kotlin.ActionMetadataSerializer;
 import com.facebook.buck.jvm.java.ActionMetadata;
 import com.facebook.buck.jvm.kotlin.KotlinStepsBuilder;
-import com.facebook.buck.jvm.kotlin.cd.analytics.KotlinCDAnalytics;
-import com.facebook.buck.jvm.kotlin.cd.analytics.logger.KotlinCDLogger;
-import com.facebook.buck.jvm.kotlin.cd.analytics.logger.KotlinCDLoggerAnalytics;
 import com.facebook.buck.jvm.kotlin.cd.workertool.postexecutors.ClassAbiWriter;
 import com.facebook.buck.jvm.kotlin.cd.workertool.postexecutors.ClassAbiWriterFactory;
 import com.facebook.buck.jvm.kotlin.cd.workertool.postexecutors.PreviousStateWriter;
@@ -38,7 +33,6 @@ import com.facebook.buck.jvm.kotlin.cd.workertool.postexecutors.SkippedCompilati
 import com.facebook.buck.util.zip.ZipScrubber;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSortedSet;
 import com.google.protobuf.util.JsonFormat;
 import java.io.File;
 import java.io.FileReader;
@@ -66,8 +60,6 @@ import org.kohsuke.args4j.Option;
 public class KotlinCDCommand implements JvmCDCommand {
 
   private static final String ACTION_META_DATA_FILE = "action_metadata.json";
-  private static final PathMatcher KT_PATH_MATCHER = FileExtensionMatcher.of("kt");
-  private static final PathMatcher JAVA_PATH_MATCHER = FileExtensionMatcher.of("java");
 
   @Option(name = "--action-id", required = true)
   protected String actionId;
@@ -80,9 +72,6 @@ public class KotlinCDCommand implements JvmCDCommand {
 
   @Option(name = "--logging-level")
   private int loggingLevel = 0;
-
-  private final String buildUuid;
-  private final String executionPlatform;
 
   private final KotlinStepsBuilder stepsBuilder;
   private final BuildKotlinCommand buildKotlinCommand;
@@ -115,9 +104,6 @@ public class KotlinCDCommand implements JvmCDCommand {
         BuildKotlinCommand.Companion.fromProto(
             proto.getBuildCommand(), Optional.ofNullable(buckScratchPath));
     this.postBuildParams = PostBuildParams.Companion.fromProto(proto.getPostBuildParams());
-    this.buildUuid = env.get("BUCK_BUILD_ID");
-    this.executionPlatform = env.get("INSIDE_RE_WORKER") != null ? "remote_execution" : "local";
-    KotlinCDAnalytics kotlinCDAnalytics = initKotlinCDAnalytics();
     cleanupOldPostBuildOutputs();
 
     // Capture pre-compilation timestamps for tracking which files skip compilation.
@@ -134,9 +120,7 @@ public class KotlinCDCommand implements JvmCDCommand {
                 .map(absPath -> absPath.getPath())
                 .orElse(null));
 
-    this.stepsBuilder =
-        new KotlinStepsBuilder(
-            this.buildKotlinCommand, generateActionMetadata(), kotlinCDAnalytics);
+    this.stepsBuilder = new KotlinStepsBuilder(this.buildKotlinCommand, generateActionMetadata());
   }
 
   private Optional<Path> initCurrentActionMetadataPath(ImmutableMap<String, String> env) {
@@ -190,30 +174,6 @@ public class KotlinCDCommand implements JvmCDCommand {
     }
 
     return metadatabuilder.build();
-  }
-
-  private KotlinCDAnalytics initKotlinCDAnalytics() {
-    ImmutableSortedSet<RelPath> sources = buildKotlinCommand.getBaseJarCommand().getJavaSrcs();
-    long numKotlinFiles = countSourceFiles(sources, KT_PATH_MATCHER);
-    long numJavaFiles = countSourceFiles(sources, JAVA_PATH_MATCHER);
-    String[] parts = actionId.split("[\\[\\]]");
-    String target = parts[0];
-    String subtarget = parts.length > 1 ? parts[1] : "library";
-
-    return new KotlinCDLoggerAnalytics(
-        KotlinCDLogger.loadImplementation(),
-        buildUuid,
-        target,
-        subtarget,
-        executionPlatform,
-        numJavaFiles,
-        numKotlinFiles,
-        buildKotlinCommand.getKotlinExtraParams().getShouldKotlincRunIncrementally());
-  }
-
-  private static long countSourceFiles(
-      ImmutableSortedSet<RelPath> sources, PathMatcher pathMatcher) {
-    return sources.stream().filter(pathMatcher::matches).count();
   }
 
   private void cleanupOldPostBuildOutputs() throws IOException {

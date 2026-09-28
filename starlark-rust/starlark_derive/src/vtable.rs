@@ -338,8 +338,7 @@ impl Gen {
 }
 
 /// Generates the `StarlarkValueVTable` and friends.
-/// At the moment of writing this macro generated: P499428269,
-/// output of `cargo expand -p starlark --lib values::traits`.
+/// `cargo expand -p starlark --lib values::traits` shows its output.
 pub(crate) fn starlark_internal_vtable(
     _attr: proc_macro::TokenStream,
     input: proc_macro::TokenStream,

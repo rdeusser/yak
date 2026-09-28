@@ -245,7 +245,6 @@ fn configured_attr_to_value<'v>(
             heap.alloc_dict(map)
         }
         ConfiguredAttr::ConfigurationDep(c) => {
-            // TODO(T198210718)
             heap.alloc(StarlarkTargetLabel::new(c.target().dupe()))
         }
         ConfiguredAttr::PluginDep(d, _) => heap.alloc(StarlarkTargetLabel::new(d.dupe())),

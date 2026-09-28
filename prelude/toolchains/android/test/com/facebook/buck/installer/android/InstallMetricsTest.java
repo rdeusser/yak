@@ -39,7 +39,7 @@ public class InstallMetricsTest {
     artifacts.recordFileArrival("native_library_exopackage_info_directory", T0 + 1_000L);
     artifacts.recordFileArrival("secondary_dex_exopackage_info_metadata", T0 + 4_000L);
     // Any name the installer does not recognise is the apk.
-    artifacts.recordFileArrival("fbandroid_arm64_exo-native", T0 + 3_000L);
+    artifacts.recordFileArrival("app_arm64_exo-native", T0 + 3_000L);
 
     timings.recordPush("native_library", 0L, 8_000L);
     timings.recordPush("resources", 8_000L, 9_500L);

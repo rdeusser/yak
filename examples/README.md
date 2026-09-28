@@ -9,8 +9,8 @@ Examples taking advantage of the prelude to create toolchain-independent build
 definitions in cpp and python. Includes as an example a usecase for building and
 using c-extension-backed python libraries.
 
-Note: to take advantage of these examples you must symlink the prelude into this
-folder.
+The project uses the prelude bundled with the `buck2` binary, which its
+`.buckconfig` selects with `[external_cells] prelude = bundled`.
 
 ## no_prelude
 

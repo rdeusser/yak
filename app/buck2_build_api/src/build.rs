@@ -666,8 +666,7 @@ async fn build_configured_label_inner(
     }
 
     if !opts.skippable && outputs.is_empty() {
-        let docs = "https://buck2.build/docs/users/faq/common_issues/#why-does-my-target-not-have-any-outputs"; // @oss-enable
-        // @oss-disable: let docs = "https://www.internalfb.com/intern/staticdocs/buck2/docs/users/faq/common_issues/#why-does-my-target-not-have-any-outputs";
+        let docs = "https://rdeusser.github.io/buck2/docs/users/faq/common_issues/#why-does-my-target-not-have-any-outputs";
         console_message(format!(
             "Target {} does not have any outputs. This means the rule did not define any outputs. See {} for more information",
             providers_label.target(),

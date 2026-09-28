@@ -270,19 +270,19 @@ java_library = prelude_rule(
         # individual file that may have additional dependencies, so it is
         # compiled by a separate rule.
         java_library(
-          name = 'messenger',
-          srcs = glob(['**/*.java'], excludes = ['MessengerModule.java']),
+          name = 'app',
+          srcs = glob(['**/*.java'], excludes = ['AppModule.java']),
           deps = [
-            '//src/com/facebook/base:base',
+            '//src/com/example/base:base',
             '//third_party/guava:guava',
           ],
         )
 
         java_library(
-          name = 'MessengerModule',
-          srcs = ['MessengerModule.java'],
+          name = 'AppModule',
+          srcs = ['AppModule.java'],
           deps = [
-            '//src/com/facebook/base:base',
+            '//src/com/example/base:base',
             '//src/com/google/inject:inject',
             '//third_party/guava:guava',
             '//third_party/jsr-330:jsr-330',
@@ -295,8 +295,8 @@ java_library = prelude_rule(
           name = 'testutil',
           srcs = glob(['tests/**/*.java'], excludes = 'tests/**/*Test.java'),
           deps = [
-            ':lib-fb4a',
-            '//java/com/facebook/base:base',
+            ':lib-app',
+            '//java/com/example/base:base',
           ],
         )
         ```

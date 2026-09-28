@@ -22,7 +22,7 @@ def _run_rel_action(ctx: AnalysisContext) -> list[Provider]:
     b = a.project("rel")
     ctx.actions.run(
         cmd_args(
-            "fbpython",
+            "python3",
             "-c",
             """
 import sys

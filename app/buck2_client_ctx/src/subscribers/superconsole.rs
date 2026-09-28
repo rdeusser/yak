@@ -31,7 +31,6 @@ use buck2_event_observer::verbosity::Verbosity;
 use buck2_event_observer::what_ran::command_to_string;
 use buck2_event_observer::what_ran::worker_command_as_fallback_to_string;
 use buck2_events::BuckEvent;
-use buck2_health_check::report::DisplayReport;
 use buck2_wrapper_common::invocation_id::TraceId;
 use gazebo::prelude::*;
 use strum::IntoEnumIterator;
@@ -48,7 +47,6 @@ use superconsole::style::Color;
 use superconsole::style::ContentStyle;
 use superconsole::style::StyledContent;
 use superconsole::style::Stylize;
-use tokio::sync::mpsc::Receiver;
 
 use crate::console_interaction_stream::ConsoleInteraction;
 use crate::console_interaction_stream::ConsoleKey;
@@ -79,7 +77,6 @@ mod debugger;
 pub(crate) mod dice;
 mod header;
 pub(crate) mod io;
-mod message_renderer;
 mod re;
 pub mod session_info;
 pub(crate) mod system_warning;
@@ -391,7 +388,6 @@ pub struct SuperConsoleState {
     /// This contains the SpanTracker, which is why it's part of the SuperConsoleState.
     simple_console: SimpleConsole<DebugEventObserverExtra>,
     config: SuperConsoleConfig,
-    active_warnings: Option<Vec<DisplayReport>>,
 }
 
 impl SuperConsoleState {
@@ -549,17 +545,13 @@ impl Component for BuckRootComponent<'_> {
             .as_ref()
             .map(|s| &s.1);
         let system_info = self.state.simple_console.observer.system_info();
-        let health_check_reports = self.state.active_warnings.as_ref();
-        {
-            draw.draw(
-                &SystemWarningComponent {
-                    last_snapshot,
-                    system_info,
-                    health_check_reports,
-                },
-                mode,
-            )?;
-        }
+        draw.draw(
+            &SystemWarningComponent {
+                last_snapshot,
+                system_info,
+            },
+            mode,
+        )?;
 
         draw.draw(
             &SessionInfoComponent {
@@ -643,7 +635,6 @@ impl StatefulSuperConsole {
         timekeeper: Timekeeper,
         stream: Option<Box<dyn Write + Send + 'static + Sync>>,
         config: SuperConsoleConfig,
-        health_check_reports_receiver: Option<Receiver<Vec<DisplayReport>>>,
     ) -> buck2_error::Result<Self> {
         let mut builder = Self::console_builder();
         if let Some(stream) = stream {
@@ -657,7 +648,6 @@ impl StatefulSuperConsole {
             expect_spans,
             timekeeper,
             config,
-            health_check_reports_receiver,
         )
     }
 
@@ -669,19 +659,11 @@ impl StatefulSuperConsole {
         expect_spans: bool,
         timekeeper: Timekeeper,
         config: SuperConsoleConfig,
-        health_check_reports_receiver: Option<Receiver<Vec<DisplayReport>>>,
     ) -> buck2_error::Result<Self> {
         let header = format!("Command {command_name}");
         Ok(Self::Running(StatefulSuperConsoleImpl {
             header,
-            state: SuperConsoleState::new(
-                timekeeper,
-                trace_id,
-                verbosity,
-                expect_spans,
-                config,
-                health_check_reports_receiver,
-            )?,
+            state: SuperConsoleState::new(timekeeper, trace_id, verbosity, expect_spans, config)?,
             super_console,
             verbosity,
             games_overlay: GamesOverlay::new(),
@@ -768,18 +750,11 @@ impl SuperConsoleState {
         verbosity: Verbosity,
         expect_spans: bool,
         config: SuperConsoleConfig,
-        health_check_reports_receiver: Option<Receiver<Vec<DisplayReport>>>,
     ) -> buck2_error::Result<SuperConsoleState> {
         Ok(SuperConsoleState {
             timekeeper,
-            simple_console: SimpleConsole::with_tty(
-                trace_id,
-                verbosity,
-                expect_spans,
-                health_check_reports_receiver,
-            ),
+            simple_console: SimpleConsole::with_tty(trace_id, verbosity, expect_spans),
             config,
-            active_warnings: None,
         })
     }
 
@@ -1402,18 +1377,8 @@ impl StatefulSuperConsoleImpl {
         }
     }
 
-    fn try_update_active_warnings(&mut self) {
-        let reports = self
-            .state
-            .simple_console
-            .try_recv_health_check_display_reports();
-        if reports.is_some() {
-            self.state.active_warnings = reports;
-        }
-    }
     async fn tick(&mut self, tick: &Tick) -> buck2_error::Result<()> {
         self.state.timekeeper.tick(*tick);
-        self.try_update_active_warnings();
 
         // Tick games when active.
         if self.games_overlay.active {
@@ -1627,14 +1592,8 @@ fn lines_for_command_details(
                 ))]));
             }
             Some(Command::RemoteCommand(remote_command)) => {
-                let help_message = if buck2_core::is_open_source() {
-                    format!("Remote action digest: `{}`", remote_command.action_digest)
-                } else {
-                    format!(
-                        "Reproduce locally: `frecli cas download-action {}`",
-                        remote_command.action_digest
-                    )
-                };
+                let help_message =
+                    format!("Remote action digest: `{}`", remote_command.action_digest);
 
                 lines.push(Line::from_iter([Span::new_styled_lossy(
                     help_message.with(Color::DarkRed),
@@ -1769,7 +1728,6 @@ mod tests {
             ),
             None,
             Default::default(),
-            None,
         )
         .unwrap();
 
@@ -1843,7 +1801,6 @@ mod tests {
                 EventTimestamp(SystemTime::now().into()),
             ),
             Default::default(),
-            None,
         )?;
 
         console
@@ -1874,8 +1831,6 @@ mod tests {
                     data: Some(
                         buck2_data::RemoteExecutionSessionCreated {
                             session_id: "reSessionID-123".to_owned(),
-                            experiment_name: "".to_owned(),
-                            persistent_cache_mode: None,
                         }
                         .into(),
                     ),
@@ -1918,11 +1873,7 @@ mod tests {
         };
 
         // Verify we have the right output on intermediate frames
-        if cfg!(fbcode_build) {
-            assert_frame_contains(&frame, "Buck UI:");
-        } else {
-            assert_frame_contains(&frame, "Build ID:");
-        }
+        assert_frame_contains(&frame, "Build ID:");
         assert_frame_contains(&frame, "Loading targets");
 
         console
@@ -1953,7 +1904,7 @@ mod tests {
         }
         .draw_unchecked(
             Dimensions {
-                // Enough to print everything on one line (we need 109 in fbcode and 110 in OSS)
+                // Enough to print everything on one line
                 width: 110,
                 height: 1,
             },
@@ -2010,8 +1961,6 @@ mod tests {
         let mut re_state = ReState::new();
         re_state.add_re_session(&buck2_data::RemoteExecutionSessionCreated {
             session_id: "reSessionID-123".to_owned(),
-            experiment_name: "".to_owned(),
-            persistent_cache_mode: None,
         });
         re_state.update(&buck2_data::Snapshot::default());
 
@@ -2044,11 +1993,7 @@ mod tests {
             )?
             .fmt_for_test()
             .to_string();
-        let expected_network = if cfg!(fbcode_build) {
-            "Network: up    10MiB 1.0MiB/s\n         down 1.5GiB 154MiB/s"
-        } else {
-            "Network:  up    10MiB 1.0MiB/s\n          down 1.5GiB 154MiB/s"
-        };
+        let expected_network = "Network:  up    10MiB 1.0MiB/s\n          down 1.5GiB 154MiB/s";
         assert!(
             normal.contains(expected_network),
             "unexpected render:\n{normal}"
@@ -2064,11 +2009,7 @@ mod tests {
             )?
             .fmt_for_test()
             .to_string();
-        let expected_network = if cfg!(fbcode_build) {
-            "Network: up 10MiB  down 1.5GiB"
-        } else {
-            "Network:  up 10MiB  down 1.5GiB"
-        };
+        let expected_network = "Network:  up 10MiB  down 1.5GiB";
         assert!(
             final_render.contains(expected_network),
             "unexpected render:\n{final_render}"
@@ -2093,7 +2034,6 @@ mod tests {
                 EventTimestamp(SystemTime::now().into()),
             ),
             Default::default(),
-            None,
         )?;
 
         console.handle_tailer_stderr("some stderr output").await?;

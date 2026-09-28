@@ -10,20 +10,12 @@
 
 package com.facebook.buck.jvm.kotlin.buildtools
 
-import org.jetbrains.kotlin.buildtools.api.KotlinLogger // @oss-enable
 import com.facebook.buck.core.util.log.Logger
-import com.facebook.buck.jvm.kotlin.cd.analytics.KotlinCDLoggingContext
-// @oss-disable: import com.facebook.kotlin.compilercompat.KotlinLoggerCompat
 import java.io.PrintStream
 import java.util.logging.Level
+import org.jetbrains.kotlin.buildtools.api.KotlinLogger
 
-internal class BuckKotlinLogger(
-    private val stdErr: PrintStream,
-    private val loggingContext: KotlinCDLoggingContext,
-)
-: KotlinLogger // @oss-enable
-// @oss-disable: : KotlinLoggerCompat()
-{
+internal class BuckKotlinLogger(private val stdErr: PrintStream) : KotlinLogger {
 
   override val isDebugEnabled: Boolean
     get() = LOG.isDebugEnabled
@@ -40,13 +32,6 @@ internal class BuckKotlinLogger(
   }
 
   override fun info(msg: String) {
-    if (msg.startsWith("Non-incremental compilation will be performed")) {
-      loggingContext.addExtras(BuckKotlinLogger::class.java.simpleName, msg)
-    }
-    if (msg.startsWith("KOTLIN_BUILD_METRIC|")) {
-      loggingContext.addExtras("BuildMetrics", msg.removePrefix("KOTLIN_BUILD_METRIC|"))
-    }
-
     if (!LOG.isLoggable(Level.INFO)) return
     LOG.info(msg)
   }
@@ -61,13 +46,11 @@ internal class BuckKotlinLogger(
     stdErr.println(msg)
   }
 
-  // OSS-only: the internal `KotlinLoggerCompat` supertype lacks this Kotlin 2.2
-  // overload on some toolchain configurations.
-    override fun warn(msg: String, throwable: Throwable?) { // @oss-enable
-      if (!LOG.isLoggable(Level.WARNING)) return // @oss-enable
-      stdErr.println(msg) // @oss-enable
-      throwable?.printStackTrace(stdErr) // @oss-enable
-    } // @oss-enable
+  override fun warn(msg: String, throwable: Throwable?) {
+    if (!LOG.isLoggable(Level.WARNING)) return
+    stdErr.println(msg)
+    throwable?.printStackTrace(stdErr)
+  }
 
   companion object {
     private val LOG: Logger = Logger.get(BuckKotlinLogger::class.java)

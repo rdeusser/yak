@@ -6,17 +6,14 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-# pyre-strict
-
-
 import json
 import typing
 from dataclasses import dataclass
 
-from buck2.tests.e2e_util.api.buck import Buck
-from buck2.tests.e2e_util.buck_workspace import buck_test
-from buck2.tests.e2e_util.helper.golden import golden
-from buck2.tests.e2e_util.helper.utils import filter_events
+from e2e_util.api.buck import Buck
+from e2e_util.buck_workspace import buck_test
+from e2e_util.helper.golden import golden
+from e2e_util.helper.utils import filter_events
 
 
 @dataclass
@@ -263,7 +260,6 @@ async def test_critical_path_metadata(buck: Buck) -> None:
 
     build_graph_info = build_graph_info[0]
     assert build_graph_info
-    assert "username" in build_graph_info["metadata"]
     assert build_graph_info["metadata"]["client"] == "myclient"
     assert build_graph_info["metadata"]["oncall"] == "myoncall"
 
@@ -382,11 +378,12 @@ async def test_critical_path_test_entries(buck: Buck) -> None:
 
     critical_path_actions = await critical_path_helper(buck)
 
-    # Should have exactly 1 TestListing.
+    # The built-in test runner does not list tests before it runs them, so the
+    # critical path has no TestListing entry.
     test_listing_actions = [
         action for action in critical_path_actions if "TestListing" in action["entry"]
     ]
-    assert len(test_listing_actions) == 1
+    assert len(test_listing_actions) == 0
 
     # Assert there is 1 TestExecution with the correct data.
     test_execution_actions = [
@@ -395,9 +392,9 @@ async def test_critical_path_test_entries(buck: Buck) -> None:
 
     assert len(test_execution_actions) == 1
     test_execution_action = test_execution_actions[0]
+    # The built-in test runner names the suite after the target name alone.
     assert (
-        test_execution_action["entry"]["TestExecution"]["suite"]
-        == "root//:long_running_test"
+        test_execution_action["entry"]["TestExecution"]["suite"] == "long_running_test"
     )
     assert test_execution_action["duration_us"] > 100000  # 100ms
 

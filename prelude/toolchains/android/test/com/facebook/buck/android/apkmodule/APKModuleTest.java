@@ -89,22 +89,22 @@ public class APKModuleTest {
   public void testAPKModuleGraphSimple() {
     ImmutableSet.Builder<ExternalTargetNode> nodeBuilder = ImmutableSet.builder();
     ExternalBuildTarget commonLibraryTarget =
-        new ExternalBuildTarget("//src/com/facebook/test-common-library:test-common-library");
+        new ExternalBuildTarget("//src/com/example/test-common-library:test-common-library");
     nodeBuilder.add(new ExternalTargetNode(commonLibraryTarget));
 
     ExternalBuildTarget javaLibraryTarget =
-        new ExternalBuildTarget("//src/com/facebook/test-java-library:test-java-library");
+        new ExternalBuildTarget("//src/com/example/test-java-library:test-java-library");
     nodeBuilder.add(new ExternalTargetNode(javaLibraryTarget, Set.of(commonLibraryTarget)));
 
     ExternalBuildTarget androidLibraryTarget =
-        new ExternalBuildTarget("//src/com/facebook/test-android-library:test-android-library");
+        new ExternalBuildTarget("//src/com/example/test-android-library:test-android-library");
     nodeBuilder.add(new ExternalTargetNode(androidLibraryTarget, Set.of(commonLibraryTarget)));
 
     ExternalBuildTarget keystoreTarget = new ExternalBuildTarget("//:keystore");
     nodeBuilder.add(new ExternalTargetNode(keystoreTarget));
 
     ExternalBuildTarget androidBinaryTarget =
-        new ExternalBuildTarget("//src/com/facebook/test-android-binary:test-android-binary");
+        new ExternalBuildTarget("//src/com/example/test-android-binary:test-android-binary");
     nodeBuilder.add(
         new ExternalTargetNode(
             androidBinaryTarget,

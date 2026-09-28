@@ -1,9 +1,5 @@
 # A component-based framework for building Rust Text-based User Interfaces (TUIs)
 
-There are several copies of this repo on GitHub,
-[facebookincubator/superconsole](https://github.com/facebookincubator/superconsole)
-is the canonical one.
-
 The superconsole framework provides a powerful line based abstraction over text
 based rendering to the terminal. It also provides basic building blocks like
 line manipulation, and a higher level of composable components. A base set of
@@ -56,7 +52,7 @@ pub fn main() -> anyhow::Result<()> {
 }
 ```
 
-See the [CONTRIBUTING](CONTRIBUTING.md) file for how to help out.
+See the [CONTRIBUTING](../CONTRIBUTING.md) file for how to help out.
 
 ## License
 

@@ -205,7 +205,6 @@ load(
 )
 load(
     ":cxx_types.bzl",
-    "CxxLibraryInfo",
     "CxxRuleConstructorParams",  # @unused Used as a type
 )
 load(":diagnostics.bzl", "check_sub_target")
@@ -475,7 +474,7 @@ def cxx_library_parameterized(ctx: AnalysisContext, impl_params: CxxRuleConstruc
             clanguage = pch_clanguage,
         )
 
-    # TODO(T110378095) right now we implement reexport of exported_* flags manually, we should improve/automate that in the macro layer
+    # TODO: right now we implement reexport of exported_* flags manually, we should improve/automate that in the macro layer
 
     # Gather preprocessor inputs.
     (own_non_exported_preprocessor_info, test_preprocessor_infos) = cxx_private_preprocessor_info(
@@ -495,7 +494,7 @@ def cxx_library_parameterized(ctx: AnalysisContext, impl_params: CxxRuleConstruc
     own_exported_preprocessors = [own_exported_preprocessor_info]
 
     # Add framework search paths to exported preprocessors if frameworks attribute is set.
-    # This is needed for the apple_library -> cxx_library swap in fb_xplat_cxx_library.
+    # This lets a cxx_library stand in for an apple_library that sets `frameworks`.
     frameworks = getattr(ctx.attrs, "frameworks", [])
     if frameworks:
         framework_search_paths_flags = get_framework_search_path_flags(ctx)
@@ -1253,8 +1252,7 @@ def cxx_library_parameterized(ctx: AnalysisContext, impl_params: CxxRuleConstruc
     if impl_params.generate_providers.template_placeholders:
         templ_vars = {}
 
-        # Some rules, e.g. fbcode//thrift/lib/cpp:thrift-core-module
-        # define preprocessor flags as things like: -DTHRIFT_PLATFORM_CONFIG=<thrift/facebook/PlatformConfig.h>
+        # Some rules define preprocessor flags as things like: -DPLATFORM_CONFIG=<lib/PlatformConfig.h>
         # and unless they get quoted, they break shell syntax.
         cxx_compiler_info = get_cxx_toolchain_info(ctx).cxx_compiler_info
         cxx_preprocessor_flags = cmd_args(
@@ -1294,7 +1292,7 @@ def cxx_library_parameterized(ctx: AnalysisContext, impl_params: CxxRuleConstruc
             args.append(unpack_link_args(link_args))
             templ_vars[name] = cmd_args(args)
 
-        # TODO(T110378127): To implement `$(ldflags-shared ...)` properly, we'd need
+        # TODO: To implement `$(ldflags-shared ...)` properly, we'd need
         # to setup a symink tree rule for all transitive shared libs.  Since this
         # currently would be pretty costly (O(N^2)?), and since it's not that
         # commonly used anyway, just use `static-pic` instead.  Longer-term, once
@@ -1314,7 +1312,7 @@ def cxx_library_parameterized(ctx: AnalysisContext, impl_params: CxxRuleConstruc
     if impl_params.generate_providers.java_global_code_info:
         providers.append(propagate_global_code_info(ctx, ctx.attrs.deps + getattr(ctx.attrs, "exported_deps", [])))
 
-    # TODO(T107163344) this shouldn't be in cxx_library itself, use overlays to remove it.
+    # TODO: this shouldn't be in cxx_library itself, use overlays to remove it.
     if impl_params.generate_providers.android_packageable_info:
         providers.append(merge_android_packageable_info(ctx.label, ctx.actions, deps_all_non_exported_first))
 
@@ -1458,14 +1456,6 @@ def cxx_library_parameterized(ctx: AnalysisContext, impl_params: CxxRuleConstruc
                 diagnostics = filter(None, [all_diagnostics]) + impl_params.extra_transitive_diagnostics,
                 deps = deps_all_exported_first,
             )
-        )
-
-    if getattr(ctx.attrs, "_meta_apple_library_validation_enabled", False):
-        providers.append(
-            CxxLibraryInfo(
-                target = ctx.label,
-                labels = ctx.attrs.labels,
-            ),
         )
 
     providers.extend(additional_providers)
@@ -2102,7 +2092,7 @@ def _get_shared_library_links(
     """
     Returns LinkArgs with the content to link, and a link group map json output if applicable.
 
-    TODO(T110378116): Omnibus linking always creates shared libraries by linking
+    TODO: Omnibus linking always creates shared libraries by linking
     against shared dependencies. This is not true for link groups and possibly
     other forms of shared libraries. Ideally we consolidate this logic and
     propagate up only the expected links. Until we determine the comprehensive
@@ -2120,7 +2110,7 @@ def _get_shared_library_links(
 
         # We cannot support deriving link execution preference off the included links, as we've already
         # lost the information on what is in the link.
-        # TODO(T152860998): Derive link_execution_preference based upon the included links
+        # TODO: Derive link_execution_preference based upon the included links
         # Not all rules calling `cxx_library_parameterized` have `link_execution_preference`. Notably `cxx_python_extension`.
         link_execution_preference = (
             get_link_execution_preference(ctx, []) if hasattr(ctx.attrs, "link_execution_preference") else LinkExecutionPreference("any")

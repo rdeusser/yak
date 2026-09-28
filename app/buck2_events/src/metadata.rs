@@ -8,23 +8,18 @@
  * above-listed licenses.
  */
 
-//! Metadata collection, for telemetry purposes.
+//! Facts about the running binary and host that events and on-disk state record.
 use std::env;
 use std::sync::OnceLock;
 
-use buck2_core::ci::ci_identifiers;
-use buck2_core::facebook_only;
 use buck2_hash::IntentionallyStdHashMap;
-use buck2_wrapper_common::BUCK2_WRAPPER_ENV_VAR;
 
 use crate::daemon_id::DaemonId;
 
-/// Collects metadata from the current binary and environment, merged with any extras, suitable for telemetry purposes.
+/// `collect_with_extras` returns the result of `collect` merged with `extras`.
 ///
-/// Extras are user-supplied (e.g. from the `[buck2_metadata]` buckconfig section) and so are only
-/// applied for keys not already populated by `collect`, ensuring user config cannot shadow trusted
-/// telemetry fields such as `hostname`, `username` or `daemon_uuid`.
-#[cfg(not(fbcode_build))]
+/// `extras` come from the `[buck2_metadata]` buckconfig section. They only fill keys that `collect`
+/// leaves empty, so configuration cannot replace fields such as `hostname` or `daemon_uuid`.
 pub fn collect_with_extras(
     daemon: &DaemonId,
     extras: &IntentionallyStdHashMap<String, String>,
@@ -36,118 +31,35 @@ pub fn collect_with_extras(
     map
 }
 
-/// Collects metadata from the current binary and environment and writes it as map, suitable for telemetry purposes.
+/// `collect` returns the daemon id, the host name, the operating system and its version, the CPU
+/// architecture, and the buck2 revision when the binary was built with one.
 pub fn collect(daemon: &DaemonId) -> IntentionallyStdHashMap<String, String> {
-    facebook_only();
-    fn add_env_var(
-        map: &mut IntentionallyStdHashMap<String, String>,
-        key: &'static str,
-        var: &'static str,
-    ) {
-        if let Ok(data) = env::var(var) {
-            map.insert(key.to_owned(), data);
-        }
-    }
-
     let mut map = IntentionallyStdHashMap::new();
-
-    let info = system_info();
-    if let Some(hostname) = info.hostname {
+    map.insert("daemon_uuid".to_owned(), daemon.to_string());
+    if let Some(hostname) = hostname() {
         map.insert("hostname".to_owned(), hostname);
     }
-    if let Some(username) = info.username {
-        map.insert("username".to_owned(), username);
+    map.insert("os".to_owned(), os_type().to_owned());
+    if let Some(version) = os_version() {
+        map.insert("os_version".to_owned(), version);
     }
-    if let Some(system_fingerprint) = info.system_fingerprint {
-        map.insert("system_fingerprint".to_owned(), system_fingerprint);
-    }
-    map.insert("arch".to_owned(), info.arch);
-
+    map.insert("arch".to_owned(), env::consts::ARCH.to_owned());
     if let Some(rev) = buck2_build_info::revision() {
         map.insert("buck2_revision".to_owned(), rev.to_owned());
     }
-
-    if let Some(time) = buck2_build_info::time_iso8601() {
-        map.insert("buck2_build_time".to_owned(), time.to_owned());
-    }
-
-    if let Some(ts) = buck2_build_info::release_timestamp() {
-        map.insert("buck2_release_timestamp".to_owned(), ts.to_owned());
-    }
-
-    if is_proc_translated::is_proc_translated() {
-        map.insert("rosetta".to_owned(), "1".to_owned());
-    }
-
-    if let Some(ces_id) = ces_id() {
-        map.insert("ces_id".to_owned(), ces_id);
-    }
-
-    if let Some(devx_session_id) = devx_session_id() {
-        map.insert("devx_session_id".to_owned(), devx_session_id);
-    }
-
-    // Global trace ID
-    map.insert("daemon_uuid".to_owned(), daemon.to_string());
-
-    map.insert("os".to_owned(), info.os);
-    if let Some(version) = info.os_version {
-        map.insert("os_version".to_owned(), version);
-    }
-
-    if let Some(environment) = environment() {
-        map.insert("environment".to_owned(), environment);
-    }
-
-    add_env_var(&mut map, "launched_via_wrapper", BUCK2_WRAPPER_ENV_VAR);
-    add_env_var(&mut map, "fbpackage_name", "FBPACKAGE_PACKAGE_NAME");
-    add_env_var(&mut map, "fbpackage_version", "FBPACKAGE_PACKAGE_VERSION");
-    add_env_var(&mut map, "fbpackage_release", "FBPACKAGE_PACKAGE_RELEASE");
-
-    if let Ok(ci_identifiers) = ci_identifiers() {
-        for (ci_name, ci_value) in ci_identifiers {
-            if let Some(ci_value) = ci_value {
-                map.insert(ci_name.to_owned(), ci_value.to_owned());
-            }
-        }
-    }
-
     map
 }
 
-pub struct SystemInfo {
-    pub username: Option<String>,
-    pub hostname: Option<String>,
-    pub os: String,
-    pub os_version: Option<String>,
-    pub system_fingerprint: Option<String>,
-    pub arch: String,
-}
-
-pub fn system_info() -> SystemInfo {
-    let hostname = hostname();
-    let username = username().ok().flatten();
-
-    SystemInfo {
-        hostname,
-        username,
-        os: os_type(),
-        os_version: os_version(),
-        system_fingerprint: system_fingerprint(),
-        arch: env::consts::ARCH.to_owned(),
-    }
-}
-
 /// The operating system - "linux" "darwin" "windows" etc.
-fn os_type() -> String {
+fn os_type() -> &'static str {
     if cfg!(target_os = "linux") {
-        "linux".to_owned()
+        "linux"
     } else if cfg!(target_os = "macos") {
-        "darwin".to_owned()
+        "darwin"
     } else if cfg!(target_os = "windows") {
-        "windows".to_owned()
+        "windows"
     } else {
-        "unknown".to_owned()
+        "unknown"
     }
 }
 
@@ -172,95 +84,6 @@ pub fn hostname() -> Option<String> {
     .clone()
 }
 
-pub fn ces_id() -> Option<String> {
-    #[cfg(fbcode_build)]
-    {
-        use cross_env_session_id::CrossEnvironmentSessionId;
-
-        CrossEnvironmentSessionId::get()
-    }
-    #[cfg(not(fbcode_build))]
-    {
-        None
-    }
-}
-
-pub fn devx_session_id() -> Option<String> {
-    #[cfg(fbcode_build)]
-    {
-        use devx_session_id::DevXSessionId;
-
-        DevXSessionId::get()
-    }
-    #[cfg(not(fbcode_build))]
-    {
-        None
-    }
-}
-
-pub fn environment() -> Option<String> {
-    #[cfg(fbcode_build)]
-    {
-        use hostcaps::get_env;
-
-        Some(get_env().to_string().to_lowercase())
-    }
-    #[cfg(not(fbcode_build))]
-    {
-        None
-    }
-}
-
-pub fn username() -> buck2_error::Result<Option<String>> {
-    #[cfg(fbcode_build)]
-    {
-        use buck2_error::conversion::from_any_with_tag;
-        Ok(Some(user::current_username().map_err(|e| {
-            from_any_with_tag(e, buck2_error::ErrorTag::InvalidUsername)
-        })?))
-    }
-    #[cfg(not(fbcode_build))]
-    {
-        Ok::<Option<String>, buck2_error::Error>(None)
-    }
-}
-
-/// The AI agent driving this process, as the launcher that started it declared in
-/// `BUCK2_CLIENT_METADATA`. `None` when no launcher set one.
-///
-/// Read straight from the environment rather than from the parsed `client_metadata`:
-/// that vec merges in every `--client-metadata` argument, so its `id` is whatever
-/// wrapper ran buck2 last, not the agent the wrapper is running under.
-pub fn agent_identity_from_env() -> Option<String> {
-    agent_id_in(&env::var("BUCK2_CLIENT_METADATA").ok()?)
-}
-
-/// The last non-empty `id` of a comma-separated `key=value` client-metadata string.
-/// Keys and values are trimmed, and an entry whose value is empty does not shadow an
-/// earlier one that names an agent.
-fn agent_id_in(metadata: &str) -> Option<String> {
-    metadata
-        .split(',')
-        .filter_map(|pair| pair.split_once('='))
-        .filter(|(key, _)| key.trim() == "id")
-        .map(|(_, value)| value.trim())
-        .rfind(|value| !value.is_empty())
-        .map(str::to_owned)
-}
-
-pub fn system_fingerprint() -> Option<String> {
-    #[cfg(fbcode_build)]
-    {
-        use devserver_fingerprint::SystemFingerprintReader;
-        let sfr = SystemFingerprintReader::get().ok()?;
-        sfr.fingerprint().map(|s| s.to_owned())
-    }
-    #[cfg(not(fbcode_build))]
-    {
-        None
-    }
-}
-
 #[cfg(all(test, target_os = "windows"))]
 mod tests {
     use super::*;
@@ -279,90 +102,40 @@ mod tests {
 }
 
 #[cfg(test)]
-mod agent_id_tests {
+mod collect_tests {
     use super::*;
 
-    fn agent_id(metadata: &str) -> Option<String> {
-        agent_id_in(metadata)
+    #[test]
+    fn collect_records_only_local_fields() {
+        let daemon = DaemonId::new();
+        let data = collect(&daemon);
+        assert_eq!(data["daemon_uuid"], daemon.to_string());
+        assert_eq!(data["arch"], env::consts::ARCH);
+        let local_fields = [
+            "daemon_uuid",
+            "hostname",
+            "os",
+            "os_version",
+            "arch",
+            "buck2_revision",
+        ];
+        for key in data.keys() {
+            assert!(
+                local_fields.contains(&key.as_str()),
+                "unexpected metadata key `{key}`"
+            );
+        }
     }
 
     #[test]
-    fn reads_the_id_a_launcher_writes() {
-        assert_eq!(agent_id("id=claude_code"), Some("claude_code".to_owned()));
-        assert_eq!(
-            agent_id("id=claude_code,invocation_id=inv,session_id=sess"),
-            Some("claude_code".to_owned()),
-        );
-    }
-
-    #[test]
-    fn keeps_the_warmup_variant_distinct_from_the_agent() {
-        // The launcher suffixes only this variable, so warmup must not collapse
-        // into `claude_code` -- it is the larger share of buck2 traffic.
-        assert_eq!(
-            agent_id("id=claude_code_warmup,invocation_id=inv"),
-            Some("claude_code_warmup".to_owned()),
-        );
-    }
-
-    #[test]
-    fn finds_the_id_in_any_position() {
-        assert_eq!(
-            agent_id("invocation_id=inv,id=codex"),
-            Some("codex".to_owned()),
-        );
-    }
-
-    #[test]
-    fn a_duplicate_id_resolves_to_the_last() {
-        assert_eq!(agent_id("id=first,id=last"), Some("last".to_owned()));
-    }
-
-    #[test]
-    fn an_empty_id_does_not_shadow_an_earlier_one() {
-        assert_eq!(
-            agent_id("id=claude_code,id="),
-            Some("claude_code".to_owned())
-        );
-        assert_eq!(
-            agent_id("id=claude_code,id=   "),
-            Some("claude_code".to_owned()),
-        );
-    }
-
-    #[test]
-    fn keys_and_values_are_trimmed() {
-        assert_eq!(agent_id("id= claude_code "), Some("claude_code".to_owned()));
-        assert_eq!(
-            agent_id("invocation_id=inv, id =claude_code"),
-            Some("claude_code".to_owned()),
-        );
-    }
-
-    #[test]
-    fn a_key_that_merely_ends_in_id_is_not_the_id() {
-        assert_eq!(agent_id("invocation_id=inv"), None);
-        assert_eq!(agent_id("session_id=sess"), None);
-        assert_eq!(agent_id("parent_id=outer"), None);
-    }
-
-    #[test]
-    fn names_no_agent_without_a_usable_id() {
-        assert_eq!(agent_id(""), None);
-        assert_eq!(agent_id("id="), None);
-        assert_eq!(agent_id("no_equals_sign"), None);
-    }
-
-    #[test]
-    fn a_value_may_contain_the_separator() {
-        assert_eq!(agent_id("id=a=b"), Some("a=b".to_owned()));
-    }
-
-    #[test]
-    fn a_padded_key_still_names_the_id() {
-        assert_eq!(
-            agent_id("invocation_id=inv, id=claude_code"),
-            Some("claude_code".to_owned()),
-        );
+    fn extras_do_not_replace_collected_fields() {
+        let daemon = DaemonId::new();
+        let extras = IntentionallyStdHashMap::from([
+            ("daemon_uuid".to_owned(), "from-config".to_owned()),
+            ("team".to_owned(), "build".to_owned()),
+        ]);
+        let data = collect_with_extras(&daemon, &extras);
+        assert_eq!(data["daemon_uuid"], daemon.to_string());
+        assert_eq!(data["team"], "build");
     }
 }

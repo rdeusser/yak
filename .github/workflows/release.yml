@@ -12,7 +12,6 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       buck2_version: ${{ steps.define_version_info.outputs.buck2_version }}
-      release_timestamp: ${{ steps.define_version_info.outputs.release_timestamp }}
       tag: ${{ steps.define_version_info.outputs.tag }}
     steps:
       - name: Define version info
@@ -22,7 +21,6 @@ jobs:
           tag=$(date -u +%Y-%m-%d-%H.%M.%S)
 
           echo "tag=$tag" >> "$GITHUB_OUTPUT"
-          echo "release_timestamp=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_OUTPUT"
           echo "buck2_version=$tag-${{ github.sha }}" >> "$GITHUB_OUTPUT"
       - name: Display version info
         run: |
@@ -36,7 +34,6 @@ jobs:
     uses: ./.github/workflows/build_buck2.yml
     with:
       buck2_version: ${{ needs.set_version_info.outputs.buck2_version }}
-      release_timestamp: ${{ needs.set_version_info.outputs.release_timestamp }}
 
   release:
     name: Release the new tag

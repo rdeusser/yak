@@ -39,21 +39,16 @@ use buck2_common::tenant::TenantKey;
 use buck2_common::tenant::TenantSpec;
 use buck2_core::buck2_env;
 use buck2_core::cells::name::CellName;
-use buck2_core::facebook_only;
 use buck2_core::fs::project::ProjectRoot;
 use buck2_core::fs::project_rel_path::ProjectRelativePathBuf;
-use buck2_core::is_open_source;
 use buck2_core::rollout_percentage::RolloutPercentage;
 use buck2_core::soft_error;
 use buck2_core::tag_result;
 use buck2_error::BuckErrorContext;
 use buck2_error::ErrorTag;
 use buck2_error::buck2_error;
-use buck2_events::EventSinkWithStats;
 use buck2_events::daemon_id::DaemonId;
 use buck2_events::dispatch::EventDispatcher;
-use buck2_events::sink::remote;
-use buck2_events::sink::tee::TeeSink;
 use buck2_events::source::ChannelEventSource;
 use buck2_execute::dep_file_state::DepFileStore;
 use buck2_execute::digest_config::DigestConfig;
@@ -91,11 +86,9 @@ use buck2_server_ctx::concurrency::ConcurrencyHandler;
 use buck2_server_ctx::ctx::LockedPreviousCommandData;
 use buck2_wrapper_common::invocation_id::TraceId;
 use dupe::Dupe;
-use fbinit::FacebookInit;
 use gazebo::prelude::*;
 use gazebo::variants::VariantName;
 use host_sharing::NamedSemaphores;
-use remote::ScribeConfig;
 use tokio::runtime::Handle;
 use tokio::sync::Mutex;
 use tokio::sync::OnceCell;
@@ -111,19 +104,14 @@ use crate::daemon::disk_state::maybe_initialize_incremental_sqlite_db;
 use crate::daemon::disk_state::maybe_initialize_materializer_sqlite_db;
 use crate::daemon::forkserver::maybe_launch_forkserver;
 use crate::daemon::io_provider::create_io_provider;
-use crate::daemon::panic::DaemonStatePanicDiceDump;
 use crate::daemon::server::BuckdServerInitPreferences;
 use crate::daemon::server::RepoStateInitPreferences;
-use crate::daemon::tenting_provider::create_tenting_acl_provider;
 use crate::paging::PageOutThresholds;
 use crate::snapshot::DepFileDbSizeSampler;
 
 /// For a buckd process there is a single DaemonState created at startup and never destroyed.
 #[derive(Allocative)]
 pub struct DaemonState {
-    #[allocative(skip)]
-    fb: fbinit::FacebookInit,
-
     /// This holds the main data shared across different commands.
     pub(crate) data: Arc<DaemonStateData>,
 
@@ -223,15 +211,6 @@ pub struct RepoState {
     /// Config used to display system warnings
     pub system_warning_config: SystemWarningConfig,
 
-    /// Whether to verify on each command that the Eden daemon backing this repo's `io` has not
-    /// restarted underneath us. A restart invalidates cached state and file handles, so affected
-    /// commands fail fast instead of hanging (`buck2.detect_eden_restart`).
-    ///
-    /// Repo-scoped because the identity baseline it checks against is captured per `io`, from the
-    /// Eden socket named by this repo's checkout. Repos on one machine normally share an Eden
-    /// daemon, so the answer is usually the same for all of them, but nothing requires that.
-    pub detect_eden_restart: bool,
-
     /// Whether a finishing command schedules a background sweep of the local-action
     /// scratch dirs (`buck-out/<iso>/tmp*`) once the daemon is idle
     /// (`buck2.clean_scratch_on_idle`). The sweep runs through this repo's `materializer`.
@@ -243,7 +222,6 @@ pub struct RepoState {
 }
 
 struct RepoStateInit<'a> {
-    fb: FacebookInit,
     paths: TenantPaths,
     init_ctx: &'a RepoStateInitPreferences,
     legacy_cells: &'a BuckConfigBasedCells,
@@ -255,7 +233,6 @@ struct RepoStateInit<'a> {
 
 struct DaemonSharedServices<'a> {
     blocking_executor_factory: &'a BlockingExecutorFactory,
-    scribe_sink: Option<&'a Arc<dyn EventSinkWithStats>>,
     http_client: &'a HttpClient,
     memory_tracker: Option<&'a MemoryTrackerHandle>,
     daemon_id: &'a DaemonId,
@@ -263,8 +240,6 @@ struct DaemonSharedServices<'a> {
 
 #[derive(Allocative)]
 struct RepoStateFactory {
-    #[allocative(skip)]
-    fb: FacebookInit,
     init_ctx: RepoStateInitPreferences,
     #[allocative(skip)]
     final_artifact_materialization: FinalArtifactMaterialization,
@@ -303,7 +278,6 @@ impl RepoStateFactory {
         shared: DaemonSharedServices<'_>,
     ) -> buck2_error::Result<Arc<RepoState>> {
         RepoState::create(RepoStateInit {
-            fb: self.fb,
             paths,
             init_ctx: &self.init_ctx,
             legacy_cells,
@@ -319,7 +293,6 @@ impl RepoStateFactory {
 impl RepoState {
     async fn create(init: RepoStateInit<'_>) -> buck2_error::Result<Arc<Self>> {
         let RepoStateInit {
-            fb,
             paths,
             init_ctx,
             legacy_cells,
@@ -334,13 +307,8 @@ impl RepoState {
         let default_digest_algorithm =
             buck2_env!("BUCK_DEFAULT_DIGEST_ALGORITHM", type=DigestAlgorithmFamily)?;
 
-        let default_digest_algorithm = default_digest_algorithm.unwrap_or_else(|| {
-            if is_open_source() {
-                DigestAlgorithmFamily::Sha256
-            } else {
-                DigestAlgorithmFamily::Sha1
-            }
-        });
+        let default_digest_algorithm =
+            default_digest_algorithm.unwrap_or(DigestAlgorithmFamily::Sha256);
 
         let digest_algorithms = init_ctx
             .daemon_startup_config
@@ -462,23 +430,13 @@ impl RepoState {
             }
         };
 
-        let use_eden_thrift_read = root_config
-            .parse(BuckconfigKeyRef {
-                section: "buck2",
-                property: "use_eden_thrift_read",
-            })?
-            .unwrap_or(cfg!(any(target_os = "macos", target_os = "windows")));
-
         tracing::info!("Creating materializer...");
         let (io, _, (materializer_db, materializer_state), incremental_db_state, dep_file_db) =
             futures::future::try_join5(
                 create_io_provider(
-                    fb,
                     fs.dupe(),
-                    root_config,
                     digest_config.cas_digest_config(),
                     init_ctx.enable_trace_io,
-                    use_eden_thrift_read,
                 ),
                 (blocking_executor.dupe() as Arc<dyn BlockingExecutor>).execute_io_inline(|| {
                     // Using `execute_io_inline` is just out of convenience.
@@ -541,26 +499,8 @@ impl RepoState {
         let incremental_db_state = Arc::new(incremental_db_state);
         let materializer_state_identity = materializer_db.as_ref().map(|d| d.identity().clone());
 
-        let re_client_manager = Arc::new(ReConnectionManager::new(
-            fb,
-            false,
-            10,
-            static_metadata.dupe(),
-            Some(paths.re_logs_dir()),
-            paths.buck_out_path(),
-            init_ctx.daemon_startup_config.paranoid,
-        ));
-        // Used only to dispatch events to scribe that are not associated with a specific command
-        // (ex. materializer clean up events).
-        let daemon_dispatcher = if let Some(sink) = shared.scribe_sink {
-            EventDispatcher::new(
-                TraceId::null(),
-                shared.daemon_id.dupe(),
-                sink.dupe().to_event_sync(),
-            )
-        } else {
-            EventDispatcher::null()
-        };
+        let re_client_manager =
+            Arc::new(ReConnectionManager::new(false, 10, static_metadata.dupe()));
         let materializer = Self::create_materializer(
             io.project_root().dupe(),
             digest_config,
@@ -571,11 +511,10 @@ impl RepoState {
             materializer_db,
             materializer_state,
             shared.http_client.dupe(),
-            daemon_dispatcher,
+            // Events the materializer emits outside any command (such as background cleanup) have
+            // no client to reach.
+            EventDispatcher::null(),
         )?;
-
-        tracing::info!("Creating tenting ACL provider...");
-        let tenting_acl_provider = create_tenting_acl_provider(fb, paths.project_root());
 
         tracing::info!("Constructing DICE...");
         let dice = init_ctx
@@ -583,7 +522,6 @@ impl RepoState {
                 io.dupe(),
                 digest_config,
                 root_config,
-                tenting_acl_provider,
                 paths.dice_state_path().as_ref(),
             )
             .await?;
@@ -592,7 +530,6 @@ impl RepoState {
 
         tracing::info!("Creating file watcher...");
         let file_watcher = <dyn FileWatcher>::new(
-            fb,
             paths.project_root(),
             root_config,
             cells.dupe(),
@@ -612,13 +549,6 @@ impl RepoState {
             .parse(BuckconfigKeyRef {
                 section: "buck2",
                 property: "use_network_action_output_cache",
-            })?
-            .unwrap_or(false);
-
-        let detect_eden_restart = root_config
-            .parse(BuckconfigKeyRef {
-                section: "buck2",
-                property: "detect_eden_restart",
             })?
             .unwrap_or(false);
 
@@ -662,13 +592,7 @@ impl RepoState {
             ),
             format!("paranoid:{}", paranoid.is_some()),
             format!("remote-dep-files:{}", remote_dep_files_enabled),
-            #[cfg(fbcode_build)]
-            format!(
-                "respect-file-symlinks:{}",
-                static_metadata.respect_file_symlinks
-            ),
             "disable-eager-write-dispatch-v2:true".to_owned(),
-            format!("use-eden-thrift-read:{}", use_eden_thrift_read),
             format!("memory_tracker-enabled:{}", shared.memory_tracker.is_some()),
             format!("action-freezing-enabled:{}", action_freezing_enabled),
             format!("has-cgroup:{}", shared.memory_tracker.is_some()),
@@ -701,7 +625,6 @@ impl RepoState {
             buckconfig_metadata: parse_buckconfig_metadata(root_config),
             tags,
             system_warning_config: SystemWarningConfig::from_config(root_config)?,
-            detect_eden_restart,
             clean_scratch_on_idle: root_config
                 .parse::<RolloutPercentage>(BuckconfigKeyRef {
                     section: "buck2",
@@ -711,21 +634,6 @@ impl RepoState {
                 .roll(),
             page_out_on_idle,
         });
-
-        #[cfg(fbcode_build)]
-        {
-            let root_path = std::path::PathBuf::from(repo.paths.project_root().root().as_os_str());
-            if !buck2_env!("BUCK2_DISABLE_EDEN_HEALTH_CHECK", bool)?
-                && detect_eden::is_eden(root_path).unwrap_or(false)
-            {
-                tracing::trace!("EdenFS root detected; starting health check job");
-                crate::daemon::server::eden_health::edenfs_health_check(
-                    fb,
-                    repo.paths.project_root().dupe(),
-                )
-                .await;
-            }
-        }
 
         Ok(repo)
     }
@@ -929,9 +837,6 @@ pub struct DaemonStateData {
 
     pub(crate) forkserver: ForkserverAccess,
 
-    #[allocative(skip)]
-    pub scribe_sink: Option<Arc<dyn EventSinkWithStats>>,
-
     pub start_time: Instant,
 
     /// Http client used for materializer and RunAction implementations.
@@ -963,7 +868,6 @@ impl DaemonStateData {
     fn repo_shared_services(&self) -> DaemonSharedServices<'_> {
         DaemonSharedServices {
             blocking_executor_factory: &self.blocking_executor_factory,
-            scribe_sink: self.scribe_sink.as_ref(),
             http_client: &self.http_client,
             memory_tracker: self.memory_tracker.as_ref(),
             daemon_id: &self.daemon_id,
@@ -1012,25 +916,10 @@ impl DaemonStateData {
     pub fn initial_repo(&self) -> Arc<RepoState> {
         self.tenants.initial_repo()
     }
-
-    pub fn dice_dump(&self, path: &Path, format: DiceDumpFormat) -> buck2_error::Result<()> {
-        crate::daemon::dice_dump::dice_dump(
-            self.initial_repo().dice_manager.unsafe_dice(),
-            path,
-            format,
-        )
-    }
-}
-
-impl DaemonStatePanicDiceDump for DaemonStateData {
-    fn dice_dump(&self, path: &Path, format: DiceDumpFormat) -> buck2_error::Result<()> {
-        self.dice_dump(path, format)
-    }
 }
 
 impl DaemonState {
     pub(crate) async fn new(
-        fb: fbinit::FacebookInit,
         paths: InvocationPaths,
         init_ctx: BuckdServerInitPreferences,
         rt: &Handle,
@@ -1040,7 +929,6 @@ impl DaemonState {
         daemon_id: DaemonId,
     ) -> Result<Self, buck2_error::Error> {
         let data = Self::init_data(
-            fb,
             paths,
             init_ctx,
             rt,
@@ -1054,12 +942,9 @@ impl DaemonState {
                 .tag([ErrorTag::DaemonStateInitFailed])
         })?;
 
-        crate::daemon::panic::initialize(data.dupe());
-
         tracing::info!("Daemon state is ready.");
 
         let state = DaemonState {
-            fb,
             data,
             working_directory,
         };
@@ -1069,7 +954,6 @@ impl DaemonState {
     // Creates the initial DaemonStateData.
     // Starts up the watchman query.
     async fn init_data(
-        fb: fbinit::FacebookInit,
         paths: InvocationPaths,
         init_ctx: BuckdServerInitPreferences,
         rt: &Handle,
@@ -1107,43 +991,6 @@ impl DaemonState {
                 .parse_single_cell(cells.root_cell(), &fs)
                 .await?;
 
-            let buffer_size = root_config
-                .parse(BuckconfigKeyRef {
-                    section: "buck2",
-                    property: "event_log_buffer_size",
-                })?
-                .unwrap_or(10000);
-            let retry_backoff = Duration::from_millis(
-                root_config
-                    .parse(BuckconfigKeyRef {
-                        section: "buck2",
-                        property: "event_log_retry_backoff_duration_ms",
-                    })?
-                    .unwrap_or(500),
-            );
-            let retry_attempts = root_config
-                .parse(BuckconfigKeyRef {
-                    section: "buck2",
-                    property: "event_log_retry_attempts",
-                })?
-                .unwrap_or(5);
-            let message_batch_size = root_config.parse(BuckconfigKeyRef {
-                section: "buck2",
-                property: "event_log_message_batch_size",
-            })?;
-            tracing::info!("Initializing scribe sink...");
-            let scribe_sink = Self::init_scribe_sink(
-                fb,
-                ScribeConfig {
-                    buffer_size,
-                    retry_backoff,
-                    retry_attempts,
-                    message_batch_size,
-                    thrift_timeout: Duration::from_secs(1),
-                },
-            )
-            .buck_error_context("failed to init scribe sink")?;
-
             let blocking_executor_factory = Arc::new(BlockingExecutorFactory::create()?);
 
             let http_client = http_client_from_startup_config(&init_ctx.daemon_startup_config)
@@ -1173,7 +1020,6 @@ impl DaemonState {
 
             let (init_ctx, daemon_originating_cgroup) = init_ctx.split();
             let repo_state_factory = RepoStateFactory {
-                fb,
                 init_ctx,
                 final_artifact_materialization,
                 runtime: repo_state_rt,
@@ -1185,7 +1031,6 @@ impl DaemonState {
                     root_config,
                     DaemonSharedServices {
                         blocking_executor_factory: &blocking_executor_factory,
-                        scribe_sink: scribe_sink.as_ref(),
                         http_client: &http_client,
                         memory_tracker: memory_tracker.as_ref(),
                         daemon_id: &daemon_id,
@@ -1205,7 +1050,6 @@ impl DaemonState {
                 repo_state_factory,
                 blocking_executor_factory,
                 forkserver,
-                scribe_sink,
                 start_time: std::time::Instant::now(),
                 http_client,
                 spawner: Arc::new(BuckSpawner::new(daemon_state_data_rt)),
@@ -1220,35 +1064,12 @@ impl DaemonState {
         rt.spawn(init_fut.instrument(daemon_listener_span)).await?
     }
 
-    fn init_scribe_sink(
-        fb: FacebookInit,
-        config: ScribeConfig,
-    ) -> buck2_error::Result<Option<Arc<dyn EventSinkWithStats>>> {
-        facebook_only();
-        remote::new_remote_event_sink_if_enabled(fb, config)
-            .map(|maybe_scribe| maybe_scribe.map(|scribe| Arc::new(scribe) as _))
-    }
-
     /// Prepares an event stream for a request by bootstrapping an event source and EventDispatcher pair. The given
-    /// EventDispatcher will log to the returned EventSource and (optionally) to Scribe if enabled via buckconfig.
-    pub async fn prepare_events(
-        &self,
-        trace_id: TraceId,
-    ) -> buck2_error::Result<(ChannelEventSource, EventDispatcher)> {
-        // facebook only: logging events to Scribe.
-        facebook_only();
+    /// EventDispatcher will log to the returned EventSource.
+    pub fn prepare_events(&self, trace_id: TraceId) -> (ChannelEventSource, EventDispatcher) {
         let (events, sink) = buck2_events::create_source_sink_pair();
-        let data = self.data();
-        let dispatcher = if let Some(scribe_sink) = data.scribe_sink.dupe() {
-            EventDispatcher::new(
-                trace_id,
-                self.data.daemon_id.dupe(),
-                TeeSink::new(scribe_sink.to_event_sync(), sink),
-            )
-        } else {
-            EventDispatcher::new(trace_id, self.data.daemon_id.dupe(), sink)
-        };
-        Ok((events, dispatcher))
+        let dispatcher = EventDispatcher::new(trace_id, self.data.daemon_id.dupe(), sink);
+        (events, dispatcher)
     }
 
     /// Prepares a ServerCommandContext for processing a complex command (that accesses the dice computation graph, for example).
@@ -1267,45 +1088,23 @@ impl DaemonState {
         });
 
         tag_result!(
-            "eden_not_connected",
+            "working_dir_not_connected",
             check_working_dir::check_working_dir(),
             quiet: true,
             daemon_in_memory_state_is_corrupted: true,
-            task: false
         )?;
 
         self.validate_cwd()
             .buck_error_context("Error validating working directory")?;
 
-        self.validate_buck_out_mount(&repo)
-            .buck_error_context("Error validating buck-out mount")?;
-
         dispatcher.instant_event(buck2_data::TagEvent {
             tags: repo.tags.clone(),
         });
 
-        // Sync any FS changes and invalidate DICE state if necessary.  Get the Eden
-        // version of the underlying system in parallel if available, and fail fast if the
-        // Eden daemon restarted underneath us (which leaves cached state and file handles
-        // stale and would otherwise surface as a silent hang).
-        let verify_eden_identity = async {
-            if repo.detect_eden_restart {
-                repo.io.verify_eden_identity().await
-            } else {
-                Ok(())
-            }
-        };
-        let (_, eden_version, ()) = futures::future::try_join3(
-            repo.io.settle(),
-            repo.io.eden_version(),
-            verify_eden_identity,
-        )
-        .await?;
-
-        dispatcher.instant_event(buck2_data::IoProviderInfo { eden_version });
+        // Sync any FS changes and invalidate DICE state if necessary.
+        repo.io.settle().await?;
 
         Ok(BaseServerCommandContext {
-            _fb: self.fb,
             events: dispatcher,
             repo,
             daemon: data.dupe(),
@@ -1336,65 +1135,7 @@ impl DaemonState {
             res,
             quiet: true,
             daemon_in_memory_state_is_corrupted: true,
-            task: false
         )?;
-
-        Ok(())
-    }
-
-    pub fn validate_buck_out_mount(&self, repo: &RepoState) -> buck2_error::Result<()> {
-        #[cfg(fbcode_build)]
-        {
-            use buck2_core::soft_error;
-            use buck2_fs::error::IoResultExt;
-            use buck2_fs::fs_util;
-
-            let project_root = repo.paths.project_root().root();
-            if !detect_eden::is_eden(project_root.to_path_buf())? {
-                return Ok(());
-            }
-
-            let buck_out_root = project_root.join(TenantPaths::buck_out_dir_prefix());
-
-            if let Some(buck_out_root_meta) = fs_util::symlink_metadata_if_exists(buck_out_root)? {
-                // If buck-out is a symlink, we'll be happy with that.
-                if buck_out_root_meta.is_symlink() {
-                    return Ok(());
-                }
-
-                // If we are on UNIX, then buck-out could also be on a different device from the repo.
-                // We don't check which kind of device, we just assume it's not mounted completely
-                // wrong.
-                #[cfg(unix)]
-                {
-                    use std::os::unix::fs::MetadataExt;
-
-                    let project_device = fs_util::symlink_metadata(project_root)
-                        .categorize_internal()?
-                        .dev();
-                    let buck_out_device = buck_out_root_meta.dev();
-
-                    if project_device != buck_out_device {
-                        return Ok(());
-                    }
-                }
-            }
-
-            soft_error!(
-                "eden_buck_out",
-                buck2_error::buck2_error!(
-                    buck2_error::ErrorTag::Environment,
-                    "Buck is running in an Eden repository, but `buck-out` is not redirected. \
-                     This will likely lead to failed or slow builds. \
-                     To remediate, run `eden redirect fixup`."
-                ),
-                quiet:false
-            )?;
-        }
-        #[cfg(not(fbcode_build))]
-        {
-            let _repo = repo;
-        }
 
         Ok(())
     }
@@ -1406,21 +1147,12 @@ fn convert_algorithm_kind(kind: DigestAlgorithmFamily) -> buck2_error::Result<Di
         DigestAlgorithmFamily::Sha256 => DigestAlgorithm::Sha256,
         DigestAlgorithmFamily::Blake3 => DigestAlgorithm::Blake3,
         DigestAlgorithmFamily::Blake3Keyed => {
-            #[cfg(fbcode_build)]
-            {
-                DigestAlgorithm::Blake3Keyed
-            }
-
-            #[cfg(not(fbcode_build))]
-            {
-                // We probably should just add it as a separate buckconfig, there is
-                // zero reason not to.
-                return Err(buck2_error::buck2_error!(
-                    buck2_error::ErrorTag::Input,
-                    "{} is not supported in the open source build",
-                    kind
-                ));
-            }
+            // Keyed BLAKE3 needs a key, and no buckconfig provides one yet.
+            return Err(buck2_error::buck2_error!(
+                buck2_error::ErrorTag::Input,
+                "{} is not supported",
+                kind
+            ));
         }
     })
 }
@@ -1434,15 +1166,7 @@ const DEFAULT_READ_TIMEOUT_MS: u64 = 10000;
 async fn http_client_from_startup_config(
     config: &DaemonStartupConfig,
 ) -> buck2_error::Result<HttpClientBuilder> {
-    let mut builder = if is_open_source() {
-        HttpClientBuilder::oss().await?
-    } else {
-        HttpClientBuilder::internal().await?
-    };
-    #[cfg(fbcode_build)]
-    builder
-        .with_internal_proxy_from_env(&config.http.proxy_env_allowlist)
-        .await?;
+    let mut builder = HttpClientBuilder::oss().await?;
     builder.with_max_redirects(config.http.max_redirects.unwrap_or(DEFAULT_MAX_REDIRECTS));
     builder.with_http2(config.http.http2);
     builder.with_max_concurrent_requests(config.http.max_concurrent_requests);
@@ -1606,15 +1330,11 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_from_startup_config_defaults_internal() -> buck2_error::Result<()> {
+    async fn test_from_startup_config_defaults() -> buck2_error::Result<()> {
         buck2_certs::certs::maybe_setup_cryptography();
         let builder =
             http_client_from_startup_config(&DaemonStartupConfig::testing_empty()).await?;
         assert_eq!(DEFAULT_MAX_REDIRECTS, builder.max_redirects().unwrap());
-        assert_eq!(
-            builder.supports_vpnless(),
-            buck2_certs::certs::supports_vpnless()
-        );
         assert_eq!(
             Some(Duration::from_millis(DEFAULT_CONNECT_TIMEOUT_MS)),
             builder.connect_timeout()

@@ -165,8 +165,6 @@ impl ReDirectorySerializer {
                         digest: Some(d.as_fingerprinted_dyn().fingerprint().to_grpc()),
                     });
                 }
-                // OSS vs internal divergence.
-                #[allow(clippy::needless_update)]
                 DirectoryEntry::Leaf(ActionDirectoryMember::File(f)) => {
                     files.push(RE::FileNode {
                         name: name.as_str().into(),
@@ -175,8 +173,6 @@ impl ReDirectorySerializer {
                         ..Default::default()
                     });
                 }
-                // OSS vs internal divergence.
-                #[allow(clippy::needless_update)]
                 DirectoryEntry::Leaf(ActionDirectoryMember::Symlink(s)) => {
                     let target = if let Some(renamer) = directory_renamer {
                         let mut target = RelativePathBuf::with_capacity(s.target().as_str().len());
@@ -197,8 +193,6 @@ impl ReDirectorySerializer {
                         ..Default::default()
                     });
                 }
-                // OSS vs internal divergence.
-                #[allow(clippy::needless_update)]
                 DirectoryEntry::Leaf(ActionDirectoryMember::ExternalSymlink(s)) => {
                     symlinks.push(RE::SymlinkNode {
                         name: name.as_str().into(),
@@ -225,8 +219,6 @@ impl ReDirectorySerializer {
         });
         symlinks.sort_by(|a, b| a.name.cmp(&b.name));
 
-        // OSS vs internal divergence.
-        #[allow(clippy::needless_update)]
         RE::Directory {
             files,
             directories,
@@ -1004,7 +996,7 @@ mod tests {
         // |-d6/
         // | |-s4 -> f4
         // | |-f4
-        // | |-e1 -> /mnt/gvfs
+        // | |-e1 -> /opt/vendor
         // |-f5
 
         for file in &["f1", "d1/d2/d4/f2", "d1/d2/d5/f3", "d6/f4", "f5"] {
@@ -1020,7 +1012,7 @@ mod tests {
             ("d1/d2/d3/s2", "../d4"),
             ("d1/d2/d3/s3", "../d5/../../../f1"),
             ("d6/s4", "f4"),
-            ("d6/e1", "/mnt/gvfs"),
+            ("d6/e1", "/opt/vendor"),
         ] {
             insert_symlink(
                 &mut builder,
@@ -1239,13 +1231,11 @@ mod tests {
         Ok(())
     }
 
-    /// Ensure that we serialize trees the same way RE does. The expected hash was obtained by
-    /// running:
+    /// Ensure that we serialize trees the same way RE does. The expected hash is the digest of
+    /// the output directory that an RE server produced for this command:
     ///
     /// ```sh
-    /// buck2 run fbcode//remote_execution/rust/recli:recli -- \
-    ///     exec command --out-dir test -- sh -c \
-    ///     'mkdir -p test/a/aa test/a/aaa test/b/bb test/d && touch test/a/aa/f test/a/aaa/f test/b/bb/f test/d/f'
+    /// sh -c 'mkdir -p test/a/aa test/a/aaa test/b/bb test/d && touch test/a/aa/f test/a/aaa/f test/b/bb/f test/d/f'
     /// ```
     #[test]
     fn test_re_tree_compatibility() -> buck2_error::Result<()> {
@@ -1314,7 +1304,7 @@ mod tests {
 
         let mut builder = ActionDirectoryBuilder::empty_non_exhaustive();
         let sym = Arc::new(ExternalSymlink::new(
-            PathBuf::from("/mnt/gvfs/openssl/lib"),
+            PathBuf::from("/opt/vendor/openssl/lib"),
             ForwardRelativePathBuf::default(),
         )?);
         insert_entry(
@@ -1333,7 +1323,7 @@ mod tests {
             sym.target_str(),
             "Serializer must round-trip target_str verbatim",
         );
-        assert_eq!(re_dir.symlinks[0].target, "/mnt/gvfs/openssl/lib");
+        assert_eq!(re_dir.symlinks[0].target, "/opt/vendor/openssl/lib");
         Ok(())
     }
 
@@ -1353,12 +1343,12 @@ mod tests {
 
         let mut builder = ActionDirectoryBuilder::empty_non_exhaustive();
         let sym = Arc::new(ExternalSymlink::new(
-            PathBuf::from(r"\mnt\gvfs\openssl\lib"),
+            PathBuf::from(r"\opt\vendor\openssl\lib"),
             ForwardRelativePathBuf::default(),
         )?);
         // Sanity-check the precondition: on non-Windows the constructor is
         // a no-op so the stored target retains its backslashes.
-        assert_eq!(sym.target_str(), r"\mnt\gvfs\openssl\lib");
+        assert_eq!(sym.target_str(), r"\opt\vendor\openssl\lib");
 
         insert_entry(
             &mut builder,
@@ -1371,7 +1361,7 @@ mod tests {
 
         assert_eq!(re_dir.symlinks.len(), 1);
         assert_eq!(
-            re_dir.symlinks[0].target, r"\mnt\gvfs\openssl\lib",
+            re_dir.symlinks[0].target, r"\opt\vendor\openssl\lib",
             "Serializer is a passthrough; the only fix site is the constructor",
         );
         Ok(())

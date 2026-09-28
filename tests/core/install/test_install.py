@@ -6,17 +6,23 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-# pyre-strict
-
 import os
 import shutil
 from os.path import exists, islink
 from pathlib import Path
 
-from buck2.tests.e2e_util.api.buck import Buck
-from buck2.tests.e2e_util.asserts import expect_failure
-from buck2.tests.e2e_util.buck_workspace import buck_test, env
-from buck2.tests.e2e_util.helper.utils import read_timestamps
+import pytest
+from e2e_util.api.buck import Buck
+from e2e_util.asserts import expect_failure
+from e2e_util.buck_workspace import buck_test, env
+from e2e_util.helper.utils import read_timestamps
+
+pytestmark = pytest.mark.needs_binary(
+    "INSTALLER_BIN",
+    "FORWARDED_PARAMS_INSTALLER_BIN",
+    "EXTRA_ARGS_VALIDATOR_BIN",
+    "EARLY_EXIT_INSTALLER_BIN",
+)
 
 
 def _setup_sandbox(buck: Buck) -> None:

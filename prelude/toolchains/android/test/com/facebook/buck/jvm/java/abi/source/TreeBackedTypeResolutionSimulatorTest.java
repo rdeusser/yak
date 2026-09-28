@@ -53,23 +53,23 @@ public class TreeBackedTypeResolutionSimulatorTest extends CompilerTreeApiTest {
         Joiner.on('\n')
             .join(
                 "public class Foo {",
-                "  com.facebook.subclass.Subclass.GrandSuperMember field;",
+                "  com.example.subclass.Subclass.GrandSuperMember field;",
                 "}"));
 
     assertResolutionResults(
         "com",
         null,
-        "com.facebook",
+        "com.example",
         null,
-        "com.facebook.subclass",
+        "com.example.subclass",
         "Source-only ABI generation requires that this type be referred to by its canonical name.\n"
             + "To fix: \n"
             + "Use \"grandsuper\" here instead of \"subclass\".\n",
-        "com.facebook.subclass.Subclass",
+        "com.example.subclass.Subclass",
         "Source-only ABI generation requires that this type be referred to by its canonical name.\n"
             + "To fix: \n"
             + "Use \"GrandSuper\" here instead of \"Subclass\".\n",
-        "com.facebook.subclass.Subclass.GrandSuperMember",
+        "com.example.subclass.Subclass.GrandSuperMember",
         null);
   }
 
@@ -172,7 +172,7 @@ public class TreeBackedTypeResolutionSimulatorTest extends CompilerTreeApiTest {
     compile(
         Joiner.on('\n')
             .join(
-                "import com.facebook.grandsuper.*;",
+                "import com.example.grandsuper.*;",
                 "public class Foo {",
                 "  GrandSuper field;",
                 "}"));
@@ -182,7 +182,7 @@ public class TreeBackedTypeResolutionSimulatorTest extends CompilerTreeApiTest {
         "Source-only ABI generation requires that this type be explicitly imported (star imports"
             + " are not accepted).\n"
             + "To fix: \n"
-            + "Add an import for \"com.facebook.grandsuper.GrandSuper\"\n");
+            + "Add an import for \"com.example.grandsuper.GrandSuper\"\n");
   }
 
   @Test
@@ -192,7 +192,7 @@ public class TreeBackedTypeResolutionSimulatorTest extends CompilerTreeApiTest {
     compile(
         Joiner.on('\n')
             .join(
-                "import static com.facebook.grandsuper.GrandSuper.*;",
+                "import static com.example.grandsuper.GrandSuper.*;",
                 "public class Foo {",
                 "  GrandSuperMember field;",
                 "}"));
@@ -202,7 +202,7 @@ public class TreeBackedTypeResolutionSimulatorTest extends CompilerTreeApiTest {
         "Source-only ABI generation requires that this type be explicitly imported (star imports"
             + " are not accepted).\n"
             + "To fix: \n"
-            + "Add an import for \"com.facebook.grandsuper.GrandSuper.GrandSuperMember\"\n");
+            + "Add an import for \"com.example.grandsuper.GrandSuper.GrandSuperMember\"\n");
   }
 
   @Test
@@ -212,7 +212,7 @@ public class TreeBackedTypeResolutionSimulatorTest extends CompilerTreeApiTest {
     compile(
         Joiner.on('\n')
             .join(
-                "import static com.facebook.grandsuper.GrandSuper.GrandSuperMember;",
+                "import static com.example.grandsuper.GrandSuper.GrandSuperMember;",
                 "public class Foo {",
                 "  GrandSuperMember field;",
                 "}"));
@@ -228,7 +228,7 @@ public class TreeBackedTypeResolutionSimulatorTest extends CompilerTreeApiTest {
     compile(
         Joiner.on('\n')
             .join(
-                "import static com.facebook.superclass.Super.*;",
+                "import static com.example.superclass.Super.*;",
                 "public class Foo {",
                 "  GrandSuperMember field;",
                 "}"));
@@ -248,7 +248,7 @@ public class TreeBackedTypeResolutionSimulatorTest extends CompilerTreeApiTest {
     compile(
         Joiner.on('\n')
             .join(
-                "import com.facebook.subclass.Subclass;",
+                "import com.example.subclass.Subclass;",
                 "public class Foo extends Subclass{",
                 "  GrandSuperMember field;",
                 "}"));
@@ -257,7 +257,7 @@ public class TreeBackedTypeResolutionSimulatorTest extends CompilerTreeApiTest {
         "GrandSuperMember",
         "Source-only ABI generation requires that this member type reference be more explicit.\n"
             + "To fix: \n"
-            + "Add an import for \"com.facebook.grandsuper.GrandSuper\"\n"
+            + "Add an import for \"com.example.grandsuper.GrandSuper\"\n"
             + "Use \"GrandSuper.GrandSuperMember\" here instead of \"GrandSuperMember\".\n");
   }
 
@@ -273,7 +273,7 @@ public class TreeBackedTypeResolutionSimulatorTest extends CompilerTreeApiTest {
     compile(
         Joiner.on('\n')
             .join(
-                "import static com.facebook.subclass.Subclass.GrandSuperMember;",
+                "import static com.example.subclass.Subclass.GrandSuperMember;",
                 "public class Foo {",
                 "  GrandSuperMember field;",
                 "}"));

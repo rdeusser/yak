@@ -6,8 +6,6 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-# pyre-strict
-
 from __future__ import annotations
 
 import os
@@ -15,15 +13,12 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 
 import pytest
-from buck2.tests.e2e_util.api.buck import Buck
-from buck2.tests.e2e_util.api.buck_result import BuckResult
-from buck2.tests.e2e_util.buck_workspace import buck_test, env
-from buck2.tests.e2e_util.helper.utils import filter_events
+from e2e_util.api.buck import Buck
+from e2e_util.api.buck_result import BuckResult
+from e2e_util.buck_workspace import buck_test, env
+from e2e_util.helper.utils import filter_events
 
-
-# To not fail listing on Mac or Windows
-def test_dummy() -> None:
-    pass
+pytestmark = pytest.mark.needs_binary("USE_SOME_MEMORY_BIN")
 
 
 def _configure(buck: Buck, kill_and_retry: bool) -> None:

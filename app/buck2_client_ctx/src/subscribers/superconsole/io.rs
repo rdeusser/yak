@@ -75,10 +75,8 @@ pub fn io_in_flight_non_zero_counters(
                 IoCounterKey::Hardlink => snapshot.io_in_flight_hardlink,
                 IoCounterKey::MkDir => snapshot.io_in_flight_mk_dir,
                 IoCounterKey::ReadDir => snapshot.io_in_flight_read_dir,
-                IoCounterKey::ReadDirEden => snapshot.io_in_flight_read_dir_eden,
                 IoCounterKey::RmDir => snapshot.io_in_flight_rm_dir,
                 IoCounterKey::RmDirAll => snapshot.io_in_flight_rm_dir_all,
-                IoCounterKey::StatEden => snapshot.io_in_flight_stat_eden,
                 IoCounterKey::Chmod => snapshot.io_in_flight_chmod,
                 IoCounterKey::ReadLink => snapshot.io_in_flight_read_link,
                 IoCounterKey::Remove => snapshot.io_in_flight_remove,
@@ -86,7 +84,6 @@ pub fn io_in_flight_non_zero_counters(
                 IoCounterKey::Read => snapshot.io_in_flight_read,
                 IoCounterKey::Write => snapshot.io_in_flight_write,
                 IoCounterKey::Canonicalize => snapshot.io_in_flight_canonicalize,
-                IoCounterKey::EdenSettle => snapshot.io_in_flight_eden_settle,
             };
             (*key, value)
         })

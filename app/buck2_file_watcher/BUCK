@@ -1,70 +1,29 @@
-load("@fbsource//tools/build_defs:rust_library.bzl", "rust_library")
-
-oncall("build_infra")
+load("//build_defs:rust.bzl", "rust_library")
 
 rust_library(
     name = "buck2_file_watcher",
     srcs = glob(["src/**/*.rs"]),
-    autocargo = {
-        "cargo_toml_config": {
-            "extra_buck_dependencies": {
-                "dependencies": [
-                    (None, "//common/rust/shed/detect_eden:detect_eden"),
-                    (None, "//common/rust/shed/fbinit:fbinit"),
-                    (None, "//eden/fs/service:thrift-rust"),
-                    (None, "//watchman/rust/watchman_client:watchman_client"),
-                    "fbsource//third-party/rust:fbinit",
-                    "fbsource//third-party/rust:watchman_client",
-                ],
-            },
-        },
-    },
-    named_deps = {
-        # @oss-disable[end= ]: "edenfs": "//eden/fs/service:thrift-rust",
-    },
-    test_deps = [
-        "fbsource//third-party/rust:tempfile",
-    ] + select({
-        "DEFAULT": [],
-        "ovr_config//os:linux": [
-            "fbsource//third-party/rust:assert_matches",
-            "//buck2/app/buck2_util:buck2_util",
-            "//buck2/gazebo/gazebo:gazebo",
-        ],
-        "ovr_config//os:macos": [
-            "fbsource//third-party/rust:assert_matches",
-            "//buck2/app/buck2_util:buck2_util",
-            "//buck2/gazebo/gazebo:gazebo",
-        ],
-    }),
     deps = [
-        "fbsource//third-party/rust:async-trait",
-        "fbsource//third-party/rust:blake3",
-        "fbsource//third-party/rust:compact_str",
-        "fbsource//third-party/rust:futures",
-        "fbsource//third-party/rust:hex",
-        "fbsource//third-party/rust:notify",
-        "fbsource//third-party/rust:regex",
-        "fbsource//third-party/rust:serde",
-        "fbsource//third-party/rust:tokio",
-        "fbsource//third-party/rust:tracing",
-        "fbsource//third-party/rust:uuid",
-        "//buck2/allocative/allocative:allocative",
-        "//buck2/app/buck2_certs:buck2_certs",
-        "//buck2/app/buck2_common:buck2_common",
-        "//buck2/app/buck2_core:buck2_core",
-        "//buck2/app/buck2_data:buck2_data",
-        "//buck2/app/buck2_eden:buck2_eden",
-        "//buck2/app/buck2_error:buck2_error",
-        "//buck2/app/buck2_events:buck2_events",
-        "//buck2/app/buck2_fs:buck2_fs",
-        "//buck2/app/buck2_hash:buck2_hash",
-        "//buck2/app/buck2_util:buck2_util",
-        "//buck2/dice/dice:dice",
-        "//buck2/gazebo/dupe:dupe",
-        "//buck2/starlark-rust/starlark_map:starlark_map",
-        # @oss-disable[end= ]: "//common/rust/shed/detect_eden:detect_eden",
-        "//common/rust/shed/fbinit:fbinit",
-        "//watchman/rust/watchman_client:watchman_client",
+        "//allocative/allocative:allocative",
+        "//app/buck2_common:buck2_common",
+        "//app/buck2_core:buck2_core",
+        "//app/buck2_data:buck2_data",
+        "//app/buck2_error:buck2_error",
+        "//app/buck2_events:buck2_events",
+        "//app/buck2_fs:buck2_fs",
+        "//app/buck2_hash:buck2_hash",
+        "//app/buck2_util:buck2_util",
+        "//dice/dice:dice",
+        "//gazebo/dupe:dupe",
+        "//starlark-rust/starlark_map:starlark_map",
+        "//third-party/rust:async-trait",
+        "//third-party/rust:blake3",
+        "//third-party/rust:compact_str",
+        "//third-party/rust:futures",
+        "//third-party/rust:notify",
+        "//third-party/rust:serde",
+        "//third-party/rust:tokio",
+        "//third-party/rust:tracing",
+        "//third-party/rust:watchman_client",
     ],
 )

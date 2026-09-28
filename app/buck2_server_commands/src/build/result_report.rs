@@ -21,8 +21,6 @@ use buck2_build_api::build::ProviderArtifacts;
 use buck2_build_api::interpreter::rule_defs::cmd_args::ArtifactPathMapper;
 use buck2_build_api::interpreter::rule_defs::cmd_args::CommandLineArgLike;
 use buck2_build_api::interpreter::rule_defs::cmd_args::CommandLineBuilder;
-use buck2_certs::validate::CertState;
-use buck2_certs::validate::check_cert_state;
 use buck2_core::configuration::compatibility::MaybeCompatible;
 use buck2_core::content_hash::ContentBasedPathHash;
 use buck2_core::execution_types::executor_config::PathSeparatorKind;
@@ -65,9 +63,8 @@ pub(crate) struct BuildTargetsAndErrors {
 }
 
 impl<'a> ResultReporter<'a> {
-    pub(crate) async fn convert(
+    pub(crate) fn convert(
         artifact_fs: &'a ArtifactFs,
-        cert_state: CertState,
         options: ResultReporterOptions,
         build_result: &BuildTargetResult,
     ) -> buck2_error::Result<BuildTargetsAndErrors> {
@@ -95,7 +92,7 @@ impl<'a> ResultReporter<'a> {
             out.collect_result(k, v, build_result.configured_to_pattern_modifiers.get(k))?;
         }
 
-        let mut error_list = if let Some(e) = non_action_errors.pop() {
+        let error_list = if let Some(e) = non_action_errors.pop() {
             // FIXME(JakobDegen): We'd like to return more than one error here, but we have
             // to get better at error deduplication first
             vec![e]
@@ -103,12 +100,6 @@ impl<'a> ResultReporter<'a> {
             // FIXME: Only one non-action error or all action errors is returned currently
             action_errors
         };
-
-        if !error_list.is_empty() {
-            if let Some(e) = check_cert_state(cert_state).await {
-                error_list.push(e);
-            }
-        }
 
         Ok(BuildTargetsAndErrors {
             build_targets: out.results,

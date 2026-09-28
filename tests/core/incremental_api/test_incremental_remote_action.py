@@ -6,16 +6,14 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-# pyre-strict
-
-
 from __future__ import annotations
 
 import json
 
-from buck2.tests.e2e_util.api.buck import Buck
-from buck2.tests.e2e_util.buck_workspace import buck_test
-from buck2.tests.e2e_util.helper.utils import random_string
+import pytest
+from e2e_util.api.buck import Buck
+from e2e_util.buck_workspace import buck_test
+from e2e_util.helper.utils import random_string
 
 
 @buck_test()
@@ -50,6 +48,7 @@ async def test_incremental_dir_not_materialized(buck: Buck) -> None:
     assert result.stdout == "1"
 
 
+@pytest.mark.remote_execution
 @buck_test()
 async def test_remote_cache_is_used(buck: Buck) -> None:
     seed = random_string()

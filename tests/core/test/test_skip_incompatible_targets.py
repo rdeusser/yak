@@ -1,4 +1,3 @@
-#!/usr/bin/env fbpython
 # Copyright (c) Meta Platforms, Inc. and affiliates.
 #
 # This source code is dual-licensed under either the MIT license found in the
@@ -7,18 +6,12 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-# pyre-strict
-
-
-from buck2.tests.e2e_util.api.buck import Buck
-from buck2.tests.e2e_util.asserts import expect_failure
-from buck2.tests.e2e_util.buck_workspace import buck_test, env
+from e2e_util.api.buck import Buck
+from e2e_util.asserts import expect_failure
+from e2e_util.buck_workspace import buck_test
 
 
 @buck_test()
-@env(
-    "BUCK2_ALLOW_INTERNAL_TEST_RUNNER_DO_NOT_USE", "1"
-)  # needed to avoid failure on missing buck2-tpx in buck-out
 async def test_test_skip_incompatible_targets(buck: Buck) -> None:
     targetA = "root//:compatible-with-A"
     targetB = "root//:compatible-with-B"

@@ -1,0 +1,3 @@
+# Sets a PUBLIC default without opting in, so the cap from
+# `root//intersect/PACKAGE` still applies.
+package(visibility = ["PUBLIC"])

@@ -23,7 +23,7 @@ run_action(
 
 declared_cas_artifact(
     name = "declared_file",
-    digest = "da39a3ee5e6b4b0d3255bfef95601890afd80709:0",
+    digest = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855:0",
     use_case = "buck2-testing",
 )
 
