@@ -7,6 +7,7 @@
 # above-listed licenses.
 
 import asyncio
+from pathlib import Path
 from typing import Optional
 
 import pytest
@@ -15,6 +16,36 @@ from e2e_util.api.yak_result import YakException, BuildResult
 from e2e_util.api.process import Process
 from e2e_util.asserts import expect_failure
 from e2e_util.yak_workspace import yak_test
+
+
+async def wait_for_action_start(
+    task: asyncio.Task[tuple[Optional[int], str]], event_log: Path
+) -> None:
+    async def wait() -> None:
+        while True:
+            if task.done():
+                try:
+                    exit_code, stderr = task.result()
+                except Exception as error:
+                    raise AssertionError(
+                        "Build failed before starting an action"
+                    ) from error
+                raise AssertionError(
+                    f"Build exited before starting an action ({exit_code=}): {stderr}"
+                )
+            try:
+                if '"ActionExecution"' in event_log.read_text():
+                    return
+            except FileNotFoundError:
+                pass
+            await asyncio.sleep(0.1)
+
+    try:
+        await asyncio.wait_for(wait(), timeout=30)
+    except TimeoutError as error:
+        raise AssertionError(
+            f"Timed out waiting for an ActionExecution event in {event_log}"
+        ) from error
 
 
 @yak_test()
@@ -170,7 +201,7 @@ async def test_exit_when_preemptible_on_different_state(
 @yak_test()
 @pytest.mark.parametrize("same_state", [True, False])
 async def test_exit_when_not_idle_does_not_start_when_daemon_busy(
-    yak: Yak, same_state: bool
+    yak: Yak, same_state: bool, tmp_path: Path
 ) -> None:
     """Test that an incoming command with --exit-when=notidle does not start if there's another command running."""
 
@@ -181,18 +212,18 @@ async def test_exit_when_not_idle_does_not_start_when_daemon_busy(
         result = await expect_failure(p)
         return (result.process.returncode, result.stderr)
 
+    event_log = tmp_path / "first.json-lines"
     a = yak.build(
         "-c",
         "foo.bar=1",
         ":long_running_target",
         "--local-only",
         "--no-remote-cache",
+        "--event-log",
+        str(event_log),
     )
-    # Start the first command
     task_a = asyncio.create_task(process(a))
-
-    # Wait a short time to ensure the first command has started
-    await asyncio.sleep(0.5)
+    await wait_for_action_start(task_a, event_log)
 
     b = yak.build(
         "-c",
@@ -224,7 +255,7 @@ async def test_exit_when_not_idle_does_not_start_when_daemon_busy(
 @yak_test()
 @pytest.mark.parametrize("same_state", [True, False])
 async def test_exit_when_not_idle_does_not_gets_preempted(
-    yak: Yak, same_state: bool
+    yak: Yak, same_state: bool, tmp_path: Path
 ) -> None:
     """Test that a running command with --exit-when=notidle continues running even with an incoming command."""
 
@@ -235,6 +266,7 @@ async def test_exit_when_not_idle_does_not_gets_preempted(
         result = await expect_failure(p)
         return (result.process.returncode, result.stderr)
 
+    event_log = tmp_path / "first.json-lines"
     a = yak.build(
         "-c",
         "foo.bar=1",
@@ -242,12 +274,11 @@ async def test_exit_when_not_idle_does_not_gets_preempted(
         ":long_running_target",
         "--local-only",
         "--no-remote-cache",
+        "--event-log",
+        str(event_log),
     )
-    # Start the first command
     task_a = asyncio.create_task(process(a))
-
-    # Wait a short time to ensure the first command has started
-    await asyncio.sleep(0.5)
+    await wait_for_action_start(task_a, event_log)
 
     # Start another command without the flag (default is --preemptible=never)
     b = yak.build(
@@ -273,7 +304,7 @@ async def test_exit_when_not_idle_does_not_gets_preempted(
 @yak_test()
 @pytest.mark.parametrize("same_state", [True, False])
 async def test_preemptible_exit_when_not_idle_gets_preempted(
-    yak: Yak, same_state: bool
+    yak: Yak, same_state: bool, tmp_path: Path
 ) -> None:
     """Test that a running command with --exit-when=notidle and --preemptible gets preempted with an incoming command."""
 
@@ -284,6 +315,7 @@ async def test_preemptible_exit_when_not_idle_gets_preempted(
         result = await expect_failure(p)
         return (result.process.returncode, result.stderr)
 
+    event_log = tmp_path / "first.json-lines"
     a = yak.build(
         "-c",
         "foo.bar=1",
@@ -292,12 +324,11 @@ async def test_preemptible_exit_when_not_idle_gets_preempted(
         ":long_running_target",
         "--local-only",
         "--no-remote-cache",
+        "--event-log",
+        str(event_log),
     )
-    # Start the first command
     task_a = asyncio.create_task(process(a))
-
-    # Wait a short time to ensure the first command has started
-    await asyncio.sleep(0.5)
+    await wait_for_action_start(task_a, event_log)
 
     # Start another command without the flag (default is --preemptible=never)
     b = yak.build(
@@ -329,7 +360,7 @@ async def test_preemptible_exit_when_not_idle_gets_preempted(
 @yak_test()
 @pytest.mark.parametrize("same_state", [True, False])
 async def test_multiple_exit_when_not_idle_commands(
-    yak: Yak, same_state: bool
+    yak: Yak, same_state: bool, tmp_path: Path
 ) -> None:
     """
     Test that a running command with --exit-when=notidle does NOT get preempted by an incoming command that
@@ -343,6 +374,7 @@ async def test_multiple_exit_when_not_idle_commands(
         result = await expect_failure(p)
         return (result.process.returncode, result.stderr)
 
+    event_log = tmp_path / "first.json-lines"
     a = yak.build(
         "-c",
         "foo.bar=1",
@@ -350,12 +382,11 @@ async def test_multiple_exit_when_not_idle_commands(
         ":long_running_target",
         "--local-only",
         "--no-remote-cache",
+        "--event-log",
+        str(event_log),
     )
-    # Start the first command
     task_a = asyncio.create_task(process(a))
-
-    # Wait a short time to ensure the first command has started
-    await asyncio.sleep(0.5)
+    await wait_for_action_start(task_a, event_log)
 
     b = yak.build(
         "-c",
@@ -404,33 +435,31 @@ async def test_exit_when_not_idle_after_command_exits(
         "--local-only",
         "--no-remote-cache",
     )
-    # Start the first command
+    # Wait for the first command to actually finish. A fixed delay here made this test observe an
+    # active command under load even though it intends to test the state after command exit.
     task_a = asyncio.create_task(process(a))
+    await asyncio.wait_for(task_a, timeout=10)
 
-    # Wait a short time to ensure the first command has finished
-    await asyncio.sleep(2)
+    for _attempt in range(100):
+        try:
+            result_b = await yak.build(
+                "-c",
+                "foo.bar=1" if same_state else "foo.bar=2",
+                "--exit-when=notidle",
+                ":short_running_target",
+                "--local-only",
+                "--no-remote-cache",
+            )
+            break
+        except YakException as error:
+            if error.process.returncode != 4 or "daemon is busy" not in error.stderr:
+                raise
+            await asyncio.sleep(0.1)
+    else:
+        raise AssertionError("Concurrency state did not become idle after command exit")
 
-    b = yak.build(
-        "-c",
-        "foo.bar=1" if same_state else "foo.bar=2",
-        "--exit-when=notidle",
-        ":short_running_target",
-        "--local-only",
-        "--no-remote-cache",
-    )
-    task_b = asyncio.create_task(process(b))
-
-    done, pending = await asyncio.wait(
-        [task_a, task_b],
-        timeout=10,
-        return_when=asyncio.ALL_COMPLETED,
-    )
-
-    assert len(done) == 2
-    assert len(pending) == 0
-
-    # these are sets, so can't index them.
-    for task in done:
-        exit_code, stderr = task.result()
-        assert "daemon is busy" not in stderr
-        assert exit_code == 0
+    exit_code_a, stderr_a = task_a.result()
+    assert "daemon is busy" not in stderr_a
+    assert exit_code_a == 0
+    assert "daemon is busy" not in result_b.stderr
+    assert result_b.process.returncode == 0
