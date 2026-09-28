@@ -44,7 +44,7 @@ pub(crate) async fn hydration_command(
     partial_result_dispatcher: PartialResultDispatcher<NoPartialResult>,
     req: yak_cli_proto::HydrationRequest,
 ) -> yak_error::Result<yak_cli_proto::HydrationResponse> {
-    let dice = ctx.base_context.repo.dice_manager.unsafe_dice().dupe();
+    let dice = ctx.base_context.tenant.dice_manager.unsafe_dice().dupe();
     let subcommand = HydrationSubcommand::try_from(req.subcommand)?;
     run_server_command(
         HydrationServerCommand {

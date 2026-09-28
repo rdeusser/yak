@@ -32,7 +32,7 @@ use yak_util::system_stats::UnixSystemStats;
 
 use crate::cpu_usage_collector::CpuUsageCollector;
 use crate::daemon::state::DaemonStateData;
-use crate::daemon::state::RepoState;
+use crate::daemon::state::TenantState;
 use crate::jemalloc_stats::get_allocator_stats;
 use crate::net_io::NetworkKind;
 use crate::net_io::SystemNetworkIoCollector;
@@ -106,7 +106,7 @@ impl TokioMetricsState {
 #[derive(Clone)]
 pub struct SnapshotCollector {
     daemon: Arc<DaemonStateData>,
-    repo: Arc<RepoState>,
+    tenant: Arc<TenantState>,
     net_io_collector: SystemNetworkIoCollector,
     yak_out_path: Arc<AbsNormPathBuf>,
     cpu_usage_collector: Option<CpuUsageCollector>,
@@ -187,13 +187,13 @@ impl Drop for DepFileDbSizeSampler {
 impl SnapshotCollector {
     pub fn new(
         daemon: Arc<DaemonStateData>,
-        repo: Arc<RepoState>,
+        tenant: Arc<TenantState>,
         runtime: tokio::runtime::Handle,
     ) -> SnapshotCollector {
-        let yak_out_path = repo.paths.yak_out_path();
+        let yak_out_path = tenant.repo.paths.yak_out_path();
         SnapshotCollector {
             daemon,
-            repo,
+            tenant,
             net_io_collector: SystemNetworkIoCollector::new(),
             yak_out_path: yak_out_path.into(),
             cpu_usage_collector: CpuUsageCollector::new().ok(),
@@ -224,6 +224,7 @@ impl SnapshotCollector {
     /// superconsole, and sizing the database can block for as long as a cold disk takes.
     fn add_dep_file_db_size(&self, snapshot: &mut yak_data::Snapshot) {
         let Some(size) = self
+            .tenant
             .repo
             .persisted_dep_file_cache
             .as_ref()
@@ -239,6 +240,7 @@ impl SnapshotCollector {
         snapshot.blocking_executor_io_queue_size =
             self.daemon.blocking_executor_factory.queue_size() as u64;
         if let Some(store) = self
+            .tenant
             .repo
             .persisted_dep_file_cache
             .as_ref()
@@ -374,7 +376,7 @@ impl SnapshotCollector {
         }
 
         // Nothing we can do if we get an error, unfortunately.
-        if let Err(e) = inner(snapshot, &self.repo.re_client_manager) {
+        if let Err(e) = inner(snapshot, &self.tenant.repo.re_client_manager) {
             tracing::debug!("Error collecting network stats: {:#}", e);
         }
     }
@@ -384,13 +386,13 @@ impl SnapshotCollector {
     }
 
     fn add_dice_metrics(&self, snapshot: &mut yak_data::Snapshot) {
-        let metrics = self.repo.dice_manager.unsafe_dice().metrics();
+        let metrics = self.tenant.dice_manager.unsafe_dice().metrics();
         snapshot.dice_key_count = metrics.key_count as u64;
         snapshot.dice_active_transaction_count = metrics.active_transaction_count;
     }
 
     fn add_materializer_metrics(&self, snapshot: &mut yak_data::Snapshot) {
-        self.repo.materializer.add_snapshot_stats(snapshot);
+        self.tenant.repo.materializer.add_snapshot_stats(snapshot);
     }
 
     fn add_net_io_metrics(&self, snapshot: &mut yak_data::Snapshot) {

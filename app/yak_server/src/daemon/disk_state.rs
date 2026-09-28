@@ -38,7 +38,7 @@ use yak_fs::paths::abs_norm_path::AbsNormPath;
 use yak_fs::paths::file_name::FileName;
 use yak_hash::IntentionallyStdHashMap;
 
-use crate::daemon::server::RepoStateInitPreferences;
+use crate::daemon::server::TenantStateInitPreferences;
 
 #[derive(Allocative)]
 pub struct DiskStateOptions {
@@ -102,7 +102,7 @@ pub(crate) async fn maybe_initialize_materializer_sqlite_db(
     root_config: &LegacyYakConfig,
     deferred_materializer_configs: &DeferredMaterializerConfigs,
     digest_config: DigestConfig,
-    init_ctx: &RepoStateInitPreferences,
+    init_ctx: &TenantStateInitPreferences,
     daemon_id: &DaemonId,
 ) -> yak_error::Result<(Option<MaterializerStateSqliteDb>, Option<MaterializerState>)> {
     if !options.sqlite_materializer_state {
