@@ -24,7 +24,6 @@ rust_library(
         "//gazebo/dupe:dupe",
         "//gazebo/gazebo:gazebo",
         "//third-party/rust:async-trait",
-        "//third-party/rust:const_format",
         "//third-party/rust:futures",
         "//third-party/rust:pin-project",
         "//third-party/rust:tonic",

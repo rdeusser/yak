@@ -40,6 +40,7 @@ Removes the code, configuration, and service clients that only Meta's internal b
 - The CI metadata variables that tagged events for analytics (`SANDCASTLE`, `SANDCASTLE_ALIAS`, `SANDCASTLE_ID`, `SANDCASTLE_INSTANCE_ID`, `SANDCASTLE_JOB_INFO`, `SANDCASTLE_SCHEDULE_TYPE`, `SANDCASTLE_TYPE`, `SCHEDULE_TYPE`, `SKYCASTLE_WORKFLOW_ALIAS`, `SKYCASTLE_WORKFLOW_RUN_ID`) are no longer read.
 - `BUCK2_ACTION_DIGEST_TRACE_LG_SAMPLE_RATE`, `BUCK2_DICE_DUMP_ON_PANIC`, `BUCK2_DUMP_FBS`, `BUCK2_IGNORE_VERSION_EXTRACTION_FAILURE`, and `BUCK2_TEST_DAEMON_ORIGINATING_CGROUP` are removed.
 - The `BUCK2_TEST_EXECUTOR_USE_TCP` environment variable replaces `BUCK2_TEST_TPX_USE_TCP`.
+- The daemon no longer reads `~/.buckconfig.d/experiments_from_buck_start`, in which Meta's wrapper listed Gatekeeper experiments. Commands no longer log a `TagEvent` of its `[experiments]` keys.
 
 ### Remote Execution
 

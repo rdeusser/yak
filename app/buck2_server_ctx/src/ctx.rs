@@ -47,7 +47,6 @@ use crate::concurrency::CommandEvents;
 use crate::concurrency::CommandTransactionObserver;
 use crate::concurrency::ConcurrencyHandler;
 use crate::concurrency::DiceUpdater;
-use crate::experiment_util::get_experiment_tags;
 use crate::stderr_output_guard::StderrOutputGuard;
 
 #[derive(Allocative, Debug)]
@@ -130,7 +129,7 @@ impl CommandEvents for DispatcherEvents {
 }
 
 /// Emits the buckconfig-derived telemetry for a command: the comparison against the previous
-/// command's config, the experiment tags, and the config values themselves.
+/// command's config and the config values themselves.
 /// Concurrent equivalent-state commands update previous-command telemetry in observer completion
 /// order, so the stored UUID is a comparison anchor rather than a strict admission predecessor.
 struct BuckconfigTelemetry<'a> {
@@ -175,9 +174,6 @@ impl CommandTransactionObserver for BuckconfigTelemetry<'_> {
                 self.trace_id.dupe(),
             );
 
-        self.events.instant_event(buck2_data::TagEvent {
-            tags: get_experiment_tags(&current_external_and_local_configs),
-        });
         self.events
             .instant_event(buck2_data::BuckconfigInputValues {
                 components: current_external_and_local_configs,

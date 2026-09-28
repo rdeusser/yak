@@ -98,6 +98,9 @@ The owner's criteria (2026-09-27):
     - The aapt test data under `prelude/toolchains/android/test/com/facebook/buck/android/aapt/testdata/` is deleted, because no test or rule read it.
     - The `CrashAnalyzer` examples and the `CrashAnalyzerTest` inputs use `com.example` names in place of Meta apps and libraries (Oculus, QPL, `libfacebook.so`).
     - In a project that vendors the prelude, `buck2 build` of the changed Kotlin, Java, and test runner packages succeeds. The JUnit reports of the Kotlin, test runner, and aapt test targets show 379 passes and no failures when the test JVM runs with `-Dnet.bytebuddy.experimental=true` (tech-debt tracker, "JVM tests fail in their JUnit reports").
+  - The daemon no longer reads `~/.buckconfig.d/experiments_from_buck_start`, which Meta's `buck_start` wrapper wrote with Gatekeeper experiments (2026-09-28). `const_format`, which only that code used, is gone from the manifests and `Cargo.lock`.
+  - The unit tests of `buck2_client` and `buck2_client_ctx` no longer use the `fb//` cell, the `metaguest` home directory, the header of Meta's generated mode files, or a Tupperware cgroup path.
+  - On Linux, `cargo build --bin=buck2`, `cargo fmt --check`, and `python3 test.py buck2_client buck2_client_ctx buck2_server_ctx buck2_wrapper_common` pass. The integration tests give 1726 passed, 230 skipped, and 3 expected failures, as before.
   - Remaining: `cargo build --bin=buck2`, `python3 test.py`, the integration tests, and `buck2 build //:buck2` on macOS.
 
 ## Surprises & Discoveries

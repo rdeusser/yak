@@ -103,32 +103,32 @@ mod tests {
                 None,
                 #[cfg(not(windows))]
                 "\
-                fb//third-party/rust:syn buck-out/third-party/rust/syn.rlib\n\
-                fb//third-party/rust:serde_derive \n\
+                root//third-party/rust:syn buck-out/third-party/rust/syn.rlib\n\
+                root//third-party/rust:serde_derive \n\
                 ",
                 #[cfg(windows)]
                 "\
-                fb//third-party/rust:syn buck-out\\third-party\\rust\\syn.rlib\n\
-                fb//third-party/rust:serde_derive \n\
+                root//third-party/rust:syn buck-out\\third-party\\rust\\syn.rlib\n\
+                root//third-party/rust:serde_derive \n\
                 ",
             ),
             (
                 PrintOutputsFormat::Plain,
                 Some(
                     #[cfg(not(windows))]
-                    "/home/metaguest",
+                    "/home/user",
                     #[cfg(windows)]
-                    "C:\\metaguest",
+                    "C:\\user",
                 ),
                 #[cfg(not(windows))]
                 "\
-                fb//third-party/rust:syn /home/metaguest/buck-out/third-party/rust/syn.rlib\n\
-                fb//third-party/rust:serde_derive \n\
+                root//third-party/rust:syn /home/user/buck-out/third-party/rust/syn.rlib\n\
+                root//third-party/rust:serde_derive \n\
                 ",
                 #[cfg(windows)]
                 "\
-                fb//third-party/rust:syn C:\\metaguest\\buck-out\\third-party\\rust\\syn.rlib\n\
-                fb//third-party/rust:serde_derive \n\
+                root//third-party/rust:syn C:\\user\\buck-out\\third-party\\rust\\syn.rlib\n\
+                root//third-party/rust:serde_derive \n\
                 ",
             ),
             (
@@ -150,11 +150,11 @@ mod tests {
                 None,
                 #[cfg(not(windows))]
                 "\
-                {\"fb//third-party/rust:syn\":\"buck-out/third-party/rust/syn.rlib\",\"fb//third-party/rust:serde_derive\":\"\"}\n\
+                {\"root//third-party/rust:syn\":\"buck-out/third-party/rust/syn.rlib\",\"root//third-party/rust:serde_derive\":\"\"}\n\
                 ",
                 #[cfg(windows)]
                 "\
-                {\"fb//third-party/rust:syn\":\"buck-out\\\\third-party\\\\rust\\\\syn.rlib\",\"fb//third-party/rust:serde_derive\":\"\"}\n\
+                {\"root//third-party/rust:syn\":\"buck-out\\\\third-party\\\\rust\\\\syn.rlib\",\"root//third-party/rust:serde_derive\":\"\"}\n\
                 ",
             ),
         ] {
@@ -162,10 +162,10 @@ mod tests {
             let root_path = root_path.map(PathBuf::from);
             let mut print = PrintOutputs::new(&mut out, root_path, format)?;
             print.output(
-                "fb//third-party/rust:syn",
+                "root//third-party/rust:syn",
                 Some("buck-out/third-party/rust/syn.rlib"),
             )?;
-            print.output("fb//third-party/rust:serde_derive", None)?;
+            print.output("root//third-party/rust:serde_derive", None)?;
             print.finish()?;
             assert_eq!(str::from_utf8(&out).unwrap(), expected);
         }

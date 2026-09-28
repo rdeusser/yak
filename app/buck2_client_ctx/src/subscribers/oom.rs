@@ -421,17 +421,17 @@ mod tests {
         let matcher = Buck2CgroupMatcher::new(daemon);
 
         assert!(matcher.killed_cgroup_contains_daemon(
-            "workload.slice/workload-tw.slice/task/user.slice/user-29230.slice/user@29230.service/buck2.slice"
+            "workload.slice/workload-container.slice/task/user.slice/user-29230.slice/user@29230.service/buck2.slice"
         ));
         assert!(matcher.killed_cgroup_contains_daemon(
-            "workload.slice/workload-tw.slice/task/user.slice/user-29230.slice/user@29230.service/buck2.slice/buck2_daemon.scope/daemon"
+            "workload.slice/workload-container.slice/task/user.slice/user-29230.slice/user@29230.service/buck2.slice/buck2_daemon.scope/daemon"
         ));
         assert!(!matcher.killed_cgroup_contains_daemon("unrelated.slice/task"));
         assert!(!matcher.killed_cgroup_contains_daemon(
-            "workload.slice/workload-tw.slice/sometask/user.slice/user-29230.slice/user@29230.service/buck2.slice"
+            "workload.slice/workload-container.slice/sometask/user.slice/user-29230.slice/user@29230.service/buck2.slice"
         ));
         assert!(!matcher.killed_cgroup_contains_daemon(
-            "workload.slice/workload-tw.slice/system.slice/some-other.service"
+            "workload.slice/workload-container.slice/system.slice/some-other.service"
         ));
     }
 

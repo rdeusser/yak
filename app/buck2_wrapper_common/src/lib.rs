@@ -55,7 +55,6 @@ const BUCK2_TEST_HOME_DIR_ENV_VAR: &str = "BUCK2_TEST_HOME_DIR";
 pub const DEFAULT_ISOLATION_DIR: &str = "v2";
 pub const CLEAN_STALE_HELP: &str =
     "Delete artifacts from buck-out using the configured clean-stale policy";
-pub const EXPERIMENTS_FILENAME: &str = "experiments_from_buck_start";
 pub const DOT_BUCKCONFIG_D: &str = ".buckconfig.d";
 
 /// Returns the home directory used for Buck2 state.
