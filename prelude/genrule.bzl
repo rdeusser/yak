@@ -8,8 +8,8 @@
 
 # Implementation of the `genrule` build rule.
 
-load("@prelude//:genrule_local_labels.bzl", "genrule_labels_require_local")
-load("@prelude//:genrule_prefer_local_labels.bzl", "genrule_labels_prefer_local")
+load("@prelude//:genrule_local_labels.bzl", "resolved_genrule_labels_require_local")
+load("@prelude//:genrule_prefer_local_labels.bzl", "resolved_genrule_labels_prefer_local")
 load("@prelude//:genrule_toolchain.bzl", "GenruleToolchainInfo")
 load("@prelude//os_lookup:defs.bzl", "Os", "OsLookup")
 load("@prelude//utils:expect.bzl", "expect")
@@ -46,10 +46,10 @@ def _requires_build_root(ctx: AnalysisContext) -> bool:
     return False
 
 def _requires_local(ctx: AnalysisContext) -> bool:
-    return genrule_labels_require_local(ctx.attrs.labels)
+    return resolved_genrule_labels_require_local(ctx.attrs.labels)
 
 def _prefers_local(ctx: AnalysisContext) -> bool:
-    return genrule_labels_prefer_local(ctx.attrs.labels)
+    return resolved_genrule_labels_prefer_local(ctx.attrs.labels)
 
 def _ignore_artifacts(ctx: AnalysisContext) -> bool:
     return "yak_ignore_artifacts" in ctx.attrs.labels
