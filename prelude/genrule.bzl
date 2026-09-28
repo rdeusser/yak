@@ -257,14 +257,17 @@ def process_genrule(
         delimiter = " "
 
     # Setup environment variables.
-    srcs = cmd_args(delimiter = delimiter)
-    for symlink in symlinks:
-        srcs.add(cmd_args(srcs_artifact, format = path_sep.join([".", "{}", symlink.replace("/", path_sep)])))
+    no_srcs_environment = _requires_no_srcs_environment(ctx)
     env_vars = {
         "OUT": out_env.as_output(),
         "SRCDIR": cmd_args(srcs_artifact, format = path_sep.join([".", "{}"])),
-        "SRCS": srcs,
-    } | {k: cmd_args(v) for k, v in getattr(ctx.attrs, "env", {}).items()}
+    }
+    if not no_srcs_environment:
+        srcs = cmd_args(delimiter = delimiter)
+        for symlink in symlinks:
+            srcs.add(cmd_args(srcs_artifact, format = path_sep.join([".", "{}", symlink.replace("/", path_sep)])))
+        env_vars["SRCS"] = srcs
+    env_vars |= {k: cmd_args(v) for k, v in getattr(ctx.attrs, "env", {}).items()}
 
     # RE will cache successful actions that don't produce the desired outptuts,
     # so if that happens and _then_ we add a local-only label, we'll get a
@@ -277,9 +280,6 @@ def process_genrule(
     # see comment above
     if prefer_local:
         env_vars["__YAK_PREFER_LOCAL_CACHE_BUSTER"] = ""
-
-    if _requires_no_srcs_environment(ctx):
-        env_vars.pop("SRCS")
 
     for key, value in extra_env_vars.items():
         env_vars[key] = value
