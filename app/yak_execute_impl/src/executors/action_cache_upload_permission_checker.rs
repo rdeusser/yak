@@ -12,6 +12,7 @@ use std::hash::Hash;
 use std::sync::Arc;
 
 use dupe::Dupe;
+use futures::FutureExt;
 use remote_execution::TCode;
 use yak_core::async_once_cell::AsyncOnceCell;
 use yak_core::execution_types::executor_config::RePlatformFields;
@@ -108,11 +109,12 @@ impl ActionCacheUploadPermissionChecker {
         let cache_value = self.cache_value(re_client.use_case, platform);
         cache_value
             .has_permission_to_upload_to_cache
-            .get_or_try_init(self.do_has_permission_to_upload_to_cache(
-                re_client,
-                platform,
-                digest_config,
-            ))
+            .get_or_try_init(async move {
+                // Boxed so that the calling/containing future only needs room for the Box pointer, not the entire future.
+                self.do_has_permission_to_upload_to_cache(re_client, platform, digest_config)
+                    .boxed()
+                    .await
+            })
             .await
             .cloned()
             .yak_error_context("Upload for permission check")
