@@ -72,8 +72,10 @@ async def test_attr_coercion(yak: Yak) -> None:
         stderr_regex="evaluating build file: `root//attr_coercion:YAK.fixture",
     )
     error = res.invocation_record().single_error()
-    # Just make sure there's some kind of error metadata
-    assert "StarlarkError::Value::" in error["source_location"]
+    assert "StarlarkError::RuntimeType::" in error["source_location"]
+    assert "STARLARK_VALUE" in error["tags"]
+    assert "STARLARK_RUNTIME_TYPE_ERROR" in error["tags"]
+    assert error["category_key"].endswith("starlark_runtime_type_error=VALUE_UNPACK")
 
 
 @yak_test(write_invocation_record=True)

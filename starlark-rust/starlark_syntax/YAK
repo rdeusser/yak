@@ -38,6 +38,7 @@ rust_library(
         "//third-party/rust:memchr",
         "//third-party/rust:num-bigint",
         "//third-party/rust:num-traits",
+        "//third-party/rust:strum",
         "//third-party/rust:thiserror",
     ],
 )
