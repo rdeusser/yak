@@ -363,7 +363,7 @@ sha1 = "0.10.7"
 sha2 = "0.10.6"
 shlex = "2.0.1"
 similar = { version = "3.2.0", features = ["bytes", "inline", "unicode"] }
-siphasher = "1.0.3"
+siphasher = "1.0.4"
 sled = "0.34.7"
 smallvec = { version = "1.16.1", features = ["const_generics", "impl_bincode", "serde", "specialization", "union", "write"] }
 sorted_vector_map = "0.2.1"
