@@ -19,6 +19,7 @@ use yak_common::pattern::parse_from_cli::parse_patterns_with_modifiers_from_cli_
 use yak_core::pattern::pattern_type::TargetPatternExtra;
 use yak_error::YakErrorOptionContext;
 use yak_node::load_patterns::MissingTargetBehavior;
+use yak_node::nodes::configured::ConfiguredTargetNode;
 use yak_server_ctx::ctx::ServerCommandContextTrait;
 use yak_server_ctx::global_cfg_options::global_cfg_options_from_client_context;
 use yak_server_ctx::partial_result_dispatcher::NoPartialResult;
@@ -26,6 +27,8 @@ use yak_server_ctx::partial_result_dispatcher::PartialResultDispatcher;
 use yak_server_ctx::template::ServerCommandTemplate;
 use yak_server_ctx::template::run_server_command;
 
+use crate::configured_target_hash::ConfiguredTargetHashOptions;
+use crate::configured_target_hash::ConfiguredTargetHashes;
 use crate::targets::fmt::ConfiguredOutputHandler;
 use crate::targets::fmt::create_configured_formatter;
 
@@ -93,6 +96,23 @@ impl ServerCommandTemplate for ConfiguredTargetsServerCommand {
         )
         .await?;
 
+        let hashes = if self.req.show_target_hash {
+            Some(ConfiguredTargetHashes::compute(
+                &result.compatible_targets,
+                &ConfiguredTargetHashOptions {
+                    recursive: self.req.target_hash_recursive,
+                    use_fast_hash: !self.req.target_hash_use_strong_hash,
+                },
+            )?)
+        } else {
+            None
+        };
+
+        let target_hash_for_node = |node: &ConfiguredTargetNode| match &hashes {
+            Some(hashes) => hashes.get(node.label()).map(Some),
+            None => Ok(None),
+        };
+
         let mut serialized_targets_output = String::new();
         let mut stderr_output = String::new();
 
@@ -143,7 +163,11 @@ impl ServerCommandTemplate for ConfiguredTargetsServerCommand {
                             formatter.separator(&mut serialized_targets_output);
                         }
                         needs_separator = true;
-                        formatter.target(node, &mut serialized_targets_output)?;
+                        formatter.target(
+                            node,
+                            target_hash_for_node(node)?,
+                            &mut serialized_targets_output,
+                        )?;
                     }
                 }
 
@@ -152,6 +176,7 @@ impl ServerCommandTemplate for ConfiguredTargetsServerCommand {
             ConfiguredOutputHandler::JsonReport(json_report_formatter) => {
                 json_report_formatter.format_report(
                     &result,
+                    target_hash_for_node,
                     &mut serialized_targets_output,
                     &mut stderr_output,
                 )?;

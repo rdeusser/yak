@@ -17,6 +17,7 @@ use yak_server_ctx::late_bindings::TargetsServerCommands;
 use yak_server_ctx::partial_result_dispatcher::NoPartialResult;
 use yak_server_ctx::partial_result_dispatcher::PartialResultDispatcher;
 
+pub(crate) mod configured_target_hash;
 pub mod ctargets;
 pub(crate) mod json;
 pub mod target_hash;

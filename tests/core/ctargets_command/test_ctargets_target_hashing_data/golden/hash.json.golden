@@ -1,0 +1,17 @@
+# This file is @generated, regenerate by re-running test with `-- --env YAK_UPDATE_GOLDEN=1` appended to the test command
+
+[
+  {
+    "yak.target":"root//:parent",
+    "yak.type":"root//defs.bzl:dummy",
+    "yak.deps":["root//:dep (cfg:<empty>#<HASH>)"],
+    "yak.inputs":[],
+    "yak.target_hash":"<TARGET_HASH>",
+    "yak.package":"root//",
+    "name":"parent",
+    "default_target_platform":"root//:platform",
+    "visibility":[],
+    "within_view":["PUBLIC"],
+    "deps":["root//:dep (cfg:<empty>#<HASH>)"]
+  }
+]

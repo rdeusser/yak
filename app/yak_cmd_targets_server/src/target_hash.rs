@@ -52,7 +52,11 @@ use yak_query::query::traversal::async_depth_first_postorder_traversal;
 #[display("{:032x}", _0)]
 pub struct YakTargetHash(pub u128);
 
-trait YakTargetHasher: Hasher + Send + 'static {
+pub(crate) trait YakTargetHasher: Hasher + Send + 'static {
+    fn new() -> Self
+    where
+        Self: Sized;
+
     fn finish_u128(&mut self) -> YakTargetHash;
 }
 
@@ -62,13 +66,23 @@ trait YakTargetHasher: Hasher + Send + 'static {
 /// to blake3 and so there's likely little opportunity remaining for a faster hash function
 /// to capture anyway.
 impl YakTargetHasher for siphasher::sip128::SipHasher24 {
+    fn new() -> Self {
+        SipHasher24::new()
+    }
+
     fn finish_u128(&mut self) -> YakTargetHash {
         YakTargetHash(self.finish128().as_u128())
     }
 }
 
 /// We use blake3 as our "strong" hash.
-struct Blake3Adapter(blake3::Hasher);
+pub(crate) struct Blake3Adapter(blake3::Hasher);
+
+impl Blake3Adapter {
+    pub(crate) fn finalize(&self) -> blake3::Hash {
+        self.0.finalize()
+    }
+}
 
 // This `Hasher` impl only provides `write` and `finish` (not the full set of
 // `write_*` forwarding methods). That is acceptable here because blake3 is a
@@ -89,6 +103,10 @@ impl Hasher for Blake3Adapter {
 }
 
 impl YakTargetHasher for Blake3Adapter {
+    fn new() -> Self {
+        Self(blake3::Hasher::new())
+    }
+
     fn finish_u128(&mut self) -> YakTargetHash {
         let hash = blake3::Hasher::finalize(&self.0);
         let bytes = hash.as_bytes();

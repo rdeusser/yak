@@ -8,8 +8,27 @@
 
 import json
 
+import pytest
 from e2e_util.api.yak import Yak
 from e2e_util.yak_workspace import yak_test
+
+
+@pytest.mark.parametrize("hash_function", ["fast", "strong"])
+@pytest.mark.parametrize("recursive", ["false", "true"])
+@yak_test()
+async def test_hash_function_preserves_128_bit_length(
+    yak: Yak, hash_function: str, recursive: str
+) -> None:
+    result = await yak.targets(
+        ":foo_dep",
+        "--show-unconfigured-target-hash",
+        "--json",
+        f"--target-hash-function={hash_function}",
+        f"--target-hash-recursive={recursive}",
+    )
+    output = json.loads(result.stdout)
+    assert len(output) == 1, output
+    assert len(output[0]["yak.target_hash"]) == 32
 
 
 @yak_test()
