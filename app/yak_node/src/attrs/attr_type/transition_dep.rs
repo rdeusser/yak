@@ -10,11 +10,13 @@
 
 use std::fmt;
 use std::fmt::Display;
+use std::hash::Hasher;
 use std::sync::Arc;
 
 use allocative::Allocative;
 use dupe::Dupe;
 use pagable::Pagable;
+use strong_hash::StrongHash;
 use yak_core::configuration::transition::id::TransitionId;
 use yak_core::provider::label::ConfiguredProvidersLabel;
 use yak_core::provider::label::ProvidersLabel;
@@ -23,6 +25,7 @@ use crate::attrs::attr_type::configuration_dep::ConfigurationDepKind;
 use crate::attrs::configuration_context::AttrConfigurationContext;
 use crate::attrs::configured_attr::ConfiguredAttr;
 use crate::attrs::configured_traversal::ConfiguredAttrTraversal;
+use crate::attrs::strong_hash_without_config::StrongHashWithoutConfig;
 use crate::attrs::traversal::CoercedAttrTraversal;
 use crate::provider_id_set::ProviderIdSet;
 
@@ -68,6 +71,17 @@ impl TransitionDepAttrType {
 pub struct ConfiguredTransitionDep {
     pub dep: ConfiguredProvidersLabel,
     pub required_providers: ProviderIdSet,
+}
+
+impl StrongHashWithoutConfig for ConfiguredTransitionDep {
+    fn strong_hash_without_config<H: Hasher>(&self, state: &mut H) {
+        let Self {
+            dep,
+            required_providers,
+        } = self;
+        dep.strong_hash_without_config(state);
+        required_providers.strong_hash(state);
+    }
 }
 
 impl Display for ConfiguredTransitionDep {

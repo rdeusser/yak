@@ -11,6 +11,7 @@
 use allocative::Allocative;
 use dupe::Dupe;
 use pagable::Pagable;
+use strong_hash::StrongHash;
 use yak_error::internal_error;
 use yak_util::arc_str::ThinArcStr;
 
@@ -29,6 +30,7 @@ use crate::target::name::TargetNameRef;
     Eq,
     PartialEq,
     Hash,
+    StrongHash,
     Allocative,
     Pagable,
     derive_more::Display
