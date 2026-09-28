@@ -12,6 +12,7 @@ use std::io::Write;
 
 use async_trait::async_trait;
 use dice::DiceTransaction;
+use dupe::Dupe;
 use yak_build_api::configure_targets::load_compatible_patterns_with_modifiers;
 use yak_cli_proto::ConfiguredTargetsRequest;
 use yak_cli_proto::ConfiguredTargetsResponse;
@@ -88,7 +89,7 @@ impl ServerCommandTemplate for ConfiguredTargetsServerCommand {
 
         let keep_going = self.req.keep_going;
 
-        let result = load_compatible_patterns_with_modifiers(
+        let mut result = load_compatible_patterns_with_modifiers(
             &mut ctx.ctx(),
             parsed_patterns_with_modifiers,
             &global_cfg_options,
@@ -96,6 +97,12 @@ impl ServerCommandTemplate for ConfiguredTargetsServerCommand {
             keep_going,
         )
         .await?;
+
+        result.compatible_targets = result
+            .compatible_targets
+            .iter()
+            .map(|node| node.unwrap_forward().dupe())
+            .collect();
 
         let hashes = if self.req.show_target_hash {
             let require_hash_change_deps = parse_patterns_from_cli_args::<TargetPatternExtra>(
@@ -170,18 +177,15 @@ impl ServerCommandTemplate for ConfiguredTargetsServerCommand {
 
                 // Format compatible targets
                 for node in &result.compatible_targets {
-                    let nodes = std::iter::once(node).chain(node.forward_target());
-                    for node in nodes {
-                        if needs_separator {
-                            formatter.separator(&mut serialized_targets_output);
-                        }
-                        needs_separator = true;
-                        formatter.target(
-                            node,
-                            target_hash_for_node(node)?,
-                            &mut serialized_targets_output,
-                        )?;
+                    if needs_separator {
+                        formatter.separator(&mut serialized_targets_output);
                     }
+                    needs_separator = true;
+                    formatter.target(
+                        node,
+                        target_hash_for_node(node)?,
+                        &mut serialized_targets_output,
+                    )?;
                 }
 
                 formatter.end(&mut serialized_targets_output);

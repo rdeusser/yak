@@ -88,6 +88,59 @@ async def test_hash_ignores_configuration_but_tracks_configured_attrs(
     )
 
 
+@pytest.mark.parametrize("output_format", ["text", "json", "json-report"])
+@yak_test()
+async def test_hash_deduplicates_targets_after_transition(
+    yak: Yak, output_format: str
+) -> None:
+    args = [] if output_format == "text" else [f"--{output_format}"]
+    result = await yak.ctargets(
+        "root//:transitioned?root//:linux",
+        "root//:transitioned?root//:macos",
+        "--show-target-hash",
+        *args,
+    )
+    if output_format == "text":
+        [line] = result.stdout.splitlines()
+        assert line.startswith("root//:transitioned (")
+        assert _HASH_REGEX.fullmatch(line.rsplit(" ", 1)[1])
+        return
+
+    targets = json.loads(result.stdout)
+    if output_format == "json-report":
+        targets = targets["compatible_targets"]
+    [target] = targets
+    assert target["yak.target"] == "root//:transitioned"
+    assert target["yak.type"] == "root//defs.bzl:transitioned"
+    assert _HASH_REGEX.fullmatch(target["yak.target_hash"])
+
+
+@pytest.mark.parametrize("hash_function", ["fast", "strong"])
+@pytest.mark.parametrize("recursive", [False, True])
+@yak_test()
+async def test_hash_ignores_forward_dependency_nodes(
+    yak: Yak, hash_function: str, recursive: bool
+) -> None:
+    target = "root//:transition_parent"
+    with_forward_dep = f"{target}?root//:linux"
+    args = [f"--target-hash-function={hash_function}"]
+    if recursive:
+        args.append("--target-hash-recursive")
+
+    baseline = await _target_hash(yak, target, *args)
+    assert baseline == await _target_hash(yak, with_forward_dep, *args)
+
+    changed_args = (*args, "-c", "test.transitioned_value=after")
+    changed = await _target_hash(yak, target, *changed_args)
+    assert (baseline != changed) == recursive
+    assert changed == await _target_hash(yak, with_forward_dep, *changed_args)
+
+    forced_args = (*args, "--require-hash-change-deps", "root//:transitioned")
+    forced = await _target_hash(yak, target, *forced_args)
+    assert baseline != forced
+    assert forced == await _target_hash(yak, with_forward_dep, *forced_args)
+
+
 @yak_test()
 async def test_hash_is_available_in_all_output_formats(yak: Yak) -> None:
     target = "root//:same?root//:linux"
