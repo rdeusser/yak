@@ -19,7 +19,7 @@ use buck2_fs::paths::file_name::FileName;
 
 use crate::invocation_roots::home_buck_dir;
 
-/// `~/.buck/tmp` after old files removed.
+/// `~/.yak/tmp` after old files removed.
 ///
 /// We use this directory when we need tmp dir with short file names (to connect to unix socket).
 pub fn home_buck_tmp_dir() -> buck2_error::Result<&'static AbsNormPath> {

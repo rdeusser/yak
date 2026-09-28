@@ -16,11 +16,11 @@ from e2e_util.helper.golden import golden
 
 def _normalize(s: str) -> str:
     s = re.sub(
-        r"buck2 [a-z0-9]{16,64} (<build-id>|<exe-hash>)",
-        "buck2 <version> <version-source>",
+        r"yak [a-z0-9]{16,64} (<build-id>|<exe-hash>)",
+        "yak <version> <version-source>",
         s,
     )
-    s = re.sub(r"buck2\.exe", "buck2", s)
+    s = re.sub(r"yak\.exe", "yak", s)
     return "\n".join([x.rstrip() for x in s.splitlines()]) + "\n"
 
 

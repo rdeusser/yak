@@ -107,7 +107,7 @@ pub(crate) async fn maybe_initialize_materializer_sqlite_db(
 ) -> buck2_error::Result<(Option<MaterializerStateSqliteDb>, Option<MaterializerState>)> {
     if !options.sqlite_materializer_state {
         // When sqlite materializer state is disabled, we should always delete the materializer state db.
-        // Otherwise, artifacts in buck-out will diverge from the state stored in db.
+        // Otherwise, artifacts in yak-out will diverge from the state stored in db.
         io_executor
             .execute_io_inline(|| {
                 fs_util::remove_all(paths.materializer_state_path())
@@ -311,18 +311,18 @@ pub(crate) async fn maybe_initialize_dep_file_sqlite_db(
 }
 
 // Once we start storing disk state in the cache directory, we need to make sure
-// buck2 always deletes the cache directory if the cache is disabled.
-// Otherwise, buck-out state can diverge from the state of on-disk cache when
-// cache is disabled, causing buck2 to use stale cache when reading from the
+// yak always deletes the cache directory if the cache is disabled.
+// Otherwise, yak-out state can diverge from the state of on-disk cache when
+// cache is disabled, causing yak to use stale cache when reading from the
 // cache is re-enabled. One way this can happen is that someone can build on
-// an older revision with a buck2 that doesn't understand the cache directory
-// in between 2 builds on newer revisions with buck2 that reads from the cache
+// an older revision with a yak that doesn't understand the cache directory
+// in between 2 builds on newer revisions with yak that reads from the cache
 // (for ex., as a part of a bisect), then the state can become stale.
 // There are 2 (not foolproof) mitigations planned:
-// 1) Read from the logs what the last buck2 invocation was and check that the
-// last buck2 supported on-disk state. If not, delete the disk state.
+// 1) Read from the logs what the last yak invocation was and check that the
+// last yak supported on-disk state. If not, delete the disk state.
 // 2) Start always deleting the cache directory now until we add support for disk
-// state in buck2.
+// state in yak.
 // The following implements mitigation #2 by always deleting disk state.
 
 /// Recursively deletes all elements under `cache_dir_path`, except for known dirs
@@ -370,7 +370,7 @@ mod tests {
     fn test_delete_all_from_cache_dir() {
         let fs_temp = ProjectRootTemp::new().unwrap();
         let fs = fs_temp.path();
-        let cache_dir_path = fs.resolve(ProjectRelativePath::unchecked_new("buck-out/v2/cache"));
+        let cache_dir_path = fs.resolve(ProjectRelativePath::unchecked_new("yak-out/v2/cache"));
         let materializer_state_db = cache_dir_path.join(ForwardRelativePath::unchecked_new(
             "materializer_state/db.sqlite",
         ));
@@ -394,7 +394,7 @@ mod tests {
     fn test_delete_from_cache_dir_with_known_dirs() {
         let fs_temp = ProjectRootTemp::new().unwrap();
         let fs = fs_temp.path();
-        let cache_dir_path = fs.resolve(ProjectRelativePath::unchecked_new("buck-out/v2/cache"));
+        let cache_dir_path = fs.resolve(ProjectRelativePath::unchecked_new("yak-out/v2/cache"));
         let materializer_state_db = cache_dir_path.join(ForwardRelativePath::unchecked_new(
             "materializer_state/db.sqlite",
         ));

@@ -2,7 +2,31 @@
 
 ## Unreleased
 
-Removes the code, configuration, and service clients that only Meta's internal build used.
+Removes the code, configuration, and service clients that only Meta's internal build used, and renames the tool to yak.
+
+### Renamed to yak
+
+- The binary is `yak`, and `cargo build --bin=yak` builds it.
+- yak reads build files named `YAK`.
+- `[buildfile] name` lists the exact build file names to read. The `name_v2` key and the `.v2` variant of each name are gone.
+- The project configuration files are `.yakconfig`, `.yakconfig.local`, and `.yakconfig.d/`.
+- The global configuration is in `/etc/yakconfig` and `/etc/yakconfig.d/`, or in `C:\ProgramData\yakconfig` and `C:\ProgramData\yakconfig.d` on Windows.
+- A `.yakroot` file marks the project root.
+- The settings files are `.yaksettings.toml` and `.yaksettings.local.toml`.
+- Build output goes to `yak-out`.
+- The reserved directory in `yak-out` is `._yak`. Tools keep scratch files in `yak-out/._yak/tmp`, and `--isolation-dir` rejects names that start with `._yak`.
+- The daemon keeps its state in `~/.yak/yakd/`, in files named `yakd.info`, `yakd.pid`, and so on.
+- The alternative package file name is `YAK_TREE` in place of `BUCK_TREE`.
+- yak reads none of the old names. A project renames its `BUCK`, `.buckconfig`, and `.buckroot` files, or sets `[buildfile] name = BUCK` in `.yakconfig` to keep its build files.
+- For a crate whose target is incompatible with the host, `prelude//rust/rust-analyzer/resolve_deps.bxl` reports the directory of its build file as the source folder. It removed only a `/TARGETS` or `/BUCK` file name before. It also joined the cell's name to the project root in place of the cell's path.
+- The daemon runs in the systemd slice `yak.slice` as the unit `yak-daemon.<project>.<isolation dir>.<id>`.
+- The daemon's process title is `yakd[<project>]`.
+- `yak killall` and `yak clean --stale` look for processes named `yak` and `yak-daemon`.
+- The client-only build looks for the daemon binary `yak-daemon` next to the client.
+- Shell completions register for `yak` and no longer for a `buck` command.
+- Remote Execution requests name the tool `yak`.
+- The release assets are named `yak-<target triple>`.
+- Wheels that `python_wheel` builds name `yak` as their generator in the `WHEEL` file.
 
 ### Removed commands and flags
 

@@ -11,7 +11,7 @@
 use buck2_fs::paths::abs_norm_path::AbsNormPathBuf;
 use buck2_fs::paths::file_name::FileName;
 
-/// `~/.buck/buckd/repo-path` directory.
+/// `~/.yak/yakd/repo-path` directory.
 #[derive(Debug, Clone, derive_more::Display)]
 #[display("{}", path.display())]
 pub struct DaemonDir {
@@ -19,27 +19,27 @@ pub struct DaemonDir {
 }
 
 impl DaemonDir {
-    /// Path to `buckd.info` file.
+    /// Path to `yakd.info` file.
     pub fn buckd_info(&self) -> AbsNormPathBuf {
-        self.path.join(FileName::new("buckd.info").unwrap())
+        self.path.join(FileName::new("yakd.info").unwrap())
     }
 
-    /// Path to `buckd.stdout` file.
+    /// Path to `yakd.stdout` file.
     pub fn buckd_stdout(&self) -> AbsNormPathBuf {
-        self.path.join(FileName::new("buckd.stdout").unwrap())
+        self.path.join(FileName::new("yakd.stdout").unwrap())
     }
 
-    /// Path to `buckd.stderr` file.
+    /// Path to `yakd.stderr` file.
     pub fn buckd_stderr(&self) -> AbsNormPathBuf {
-        self.path.join(FileName::new("buckd.stderr").unwrap())
+        self.path.join(FileName::new("yakd.stderr").unwrap())
     }
 
-    /// Path to `buckd.pid` file.
+    /// Path to `yakd.pid` file.
     pub fn buckd_pid(&self) -> AbsNormPathBuf {
-        self.path.join(FileName::new("buckd.pid").unwrap())
+        self.path.join(FileName::new("yakd.pid").unwrap())
     }
 
     pub fn buckd_error_log(&self) -> AbsNormPathBuf {
-        self.path.join(FileName::new("buckd.error.log").unwrap())
+        self.path.join(FileName::new("yakd.error.log").unwrap())
     }
 }

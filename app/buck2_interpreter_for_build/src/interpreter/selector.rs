@@ -425,8 +425,8 @@ pub fn register_select_internal(globals: &mut GlobalsBuilder) {
 /// # Resolution Timing
 ///
 /// `Select` objects are resolved during Buck2's **configuration phase**, which happens after
-/// BUCK file evaluation but before rule implementation. This means:
-/// - Starlark code in BUCK files and macro rules cannot see resolved values
+/// YAK file evaluation but before rule implementation. This means:
+/// - Starlark code in YAK files and macro rules cannot see resolved values
 /// - Use `select_map()` or `select_test()` for macro-level operations
 ///
 /// # Operations
@@ -554,7 +554,7 @@ pub fn register_select_internal(globals: &mut GlobalsBuilder) {
 ///
 /// Example:
 /// ```bash
-/// buck2 build //app:main --target-platforms //platforms:linux-x86_64
+/// yak build //app:main --target-platforms //platforms:linux-x86_64
 /// ```
 ///
 /// # Target Compatibility
@@ -635,7 +635,7 @@ pub fn register_select_internal(globals: &mut GlobalsBuilder) {
 ///
 /// # Working with Selects in Macros
 ///
-/// Since `select()` values aren't resolved during BUCK evaluation, use these functions:
+/// Since `select()` values aren't resolved during YAK evaluation, use these functions:
 ///
 /// - **select_map(value, func)**: Transform all possible values
 ///   ```python

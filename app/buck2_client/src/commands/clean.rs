@@ -54,7 +54,7 @@ use crate::commands::clean_stale::parse_clean_stale_args;
 
 /// Delete generated files and caches.
 ///
-/// The command also kills the buck2 daemon.
+/// The command also kills the yak daemon.
 #[derive(Debug, clap::Parser)]
 pub struct CleanCommand {
     #[clap(
@@ -87,7 +87,7 @@ struct CleanStaleOptions {
     // there is no potential confusion in behavior between `--stale` and `--stale=7d`
     #[clap(
         long = "stale",
-        help = "Delete artifacts from buck-out using the configured clean-stale
+        help = "Delete artifacts from yak-out using the configured clean-stale
 policy or a duration if specified, without killing the daemon",
         value_name = "DURATION"
     )]
@@ -99,10 +99,10 @@ policy or a duration if specified, without killing the daemon",
 
     /// Only considers tracked artifacts for cleanup.
     ///
-    /// `buck-out` can contain untracked artifacts for different reasons:
+    /// `yak-out` can contain untracked artifacts for different reasons:
     ///  - Outputs from aborted actions
     ///  - State getting deleted (e.g., new buckversion that changes the on-disk state format)
-    ///  - Writing to `buck-out` without being expected by Buck
+    ///  - Writing to `yak-out` without being expected by Buck
     #[clap(long = "tracked-only", requires = "stale")]
     tracked_only: bool,
 
@@ -240,7 +240,7 @@ impl BuckSubcommand for InnerCleanCommand {
         )
         .await?;
 
-        kill_command_impl(&lifecycle_lock, "`buck2 clean` was invoked").await?;
+        kill_command_impl(&lifecycle_lock, "`yak clean` was invoked").await?;
 
         clean(
             buck_out_dir,
@@ -279,7 +279,7 @@ async fn clean(
             fs_util::create_dir_all(&trash_dir)?;
         }
 
-        // Move buck-out to trash folder
+        // Move yak-out to trash folder
         if buck_out_dir.exists() {
             console.print_stderr(&format!(
                 "Moving {} to {}",
@@ -303,7 +303,7 @@ async fn clean(
         console.print_stderr(
             "Tip: Use Ctrl-Z to put this in the background, or run in a new terminal.",
         )?;
-        console.print_stderr("You can run other buck2 commands while this completes.")?;
+        console.print_stderr("You can run other yak commands while this completes.")?;
 
         // Delete the moved directory
         let trash_target_normalized = AbsNormPathBuf::new(trash_target.to_path_buf())?;
@@ -389,7 +389,7 @@ fn clean_buck_out_with_retry(
     let state = Arc::new(CleanProgressState::new());
 
     // Show progress using superconsole, respecting the --console option.
-    // Use the same console_builder() as other buck2 commands to ensure consistent behavior.
+    // Use the same console_builder() as other yak commands to ensure consistent behavior.
     let _progress_handle = match console_type {
         ConsoleType::None
         | ConsoleType::Simple
@@ -420,7 +420,7 @@ fn clean_buck_out_with_retry(
             return Err(e);
         }
         tracing::info!(
-            "Retrying buck-out clean: {} paths could not be removed ({} removed this pass): {:#}",
+            "Retrying yak-out clean: {} paths could not be removed ({} removed this pass): {:#}",
             outcome.failed,
             removed,
             e
@@ -466,7 +466,7 @@ impl CleanProgressState {
     fn format_message(&self) -> Line {
         let elapsed = Instant::now() - self.start_time;
         Line::sanitized(&format!(
-            "Cleaning buck-out: {} files and {} directories deleted ({}s)",
+            "Cleaning yak-out: {} files and {} directories deleted ({}s)",
             self.files_deleted(),
             self.dirs_deleted(),
             elapsed.as_secs()

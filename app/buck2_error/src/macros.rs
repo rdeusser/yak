@@ -39,7 +39,7 @@ macro_rules! buck2_error {
     };
 }
 
-/// Indicates a bug in buck2.
+/// Indicates a bug in yak.
 #[macro_export]
 macro_rules! internal_error {
     ($format:expr) => {

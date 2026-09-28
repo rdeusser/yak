@@ -31,7 +31,7 @@ async def test_exit_code_build_fail(buck: Buck) -> None:
 @buck_test()
 @env("BUCK2_TEST_FAIL_BUCKD_AUTH", "true")
 # This test case spawns a loose daemon that we can't connect to. On windows
-# this loose daemon will keep holding onto buck-out files after test case finishes
+# this loose daemon will keep holding onto yak-out files after test case finishes
 # and prevent other processes from changing them, so set a termination timeout
 # of 20 seconds so that this loose daemon gets killed before test case finishes.
 @env("BUCK2_TERMINATE_AFTER", "15")

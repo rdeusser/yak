@@ -87,7 +87,7 @@ use crate::bxl::value_as_starlark_target_label::ValueAsStarlarkTargetLabel;
 pub(crate) fn bxl_context_methods(builder: &mut MethodsBuilder) {
     /// Gets the output stream to the console via stdout. Items written to the output stream
     /// are considered to be the results of a bxl script, which will be displayed to stdout by
-    /// buck2 even when the script is cached.
+    /// yak even when the script is cached.
     ///
     /// Prints that are not result of the bxl should be printed via stderr via the stdlib `print`
     /// and `pprint`.
@@ -323,7 +323,7 @@ pub(crate) fn bxl_context_methods(builder: &mut MethodsBuilder) {
 
     /// Returns the `uqueryctx` that holds all uquery functions.
     ///
-    /// `allow_partial_graph` behaves as `buck2 uquery --allow-partial-graph`.
+    /// `allow_partial_graph` behaves as `yak uquery --allow-partial-graph`.
     ///
     /// Current limitation: package load errors while expanding recursive patterns
     /// passed directly to query methods still fail the query. For example,

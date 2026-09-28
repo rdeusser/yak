@@ -1,0 +1,14 @@
+[cells]
+  root = .
+  prelude = prelude
+
+# The prelude refers to these cells. They only need to exist.
+[cell_aliases]
+  config = prelude
+  toolchains = root
+
+[external_cells]
+  prelude = bundled
+
+[buildfile]
+  name = YAK.fixture

@@ -1,0 +1,8 @@
+[buildfile]
+name = YAK.fixture
+
+[cells]
+root = .
+
+[cell_aliases]
+prelude = root

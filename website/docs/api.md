@@ -5,7 +5,7 @@ A lot of Buck2 is driven by Starlark APIs. While there is a
 for most purposes it can be considered a subset of Python. There are three main
 places you can write Starlark in Buck2:
 
-- In `BUCK` files, where you can define the rules. The most interesting
+- In `YAK` files, where you can define the rules. The most interesting
   functions are [the rules themselves](../prelude/rules/), but you will often
   use the [builtin Starlark functions](starlark) (most of which are the same as
   in Python), and a few of the [build functions](build) (e.g. `glob`).

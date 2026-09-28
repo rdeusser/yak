@@ -187,7 +187,7 @@ impl BuckStarlarkDebuggerServer {
             Ok(v) => v,
             Err(..) => {
                 // This indicates the state thread is shutting down (or hit an internal error).
-                // That could be due to the debugger detaching from buck2. This does not indicate
+                // That could be due to the debugger detaching from yak. This does not indicate
                 // an error for other on-going buck commands, and so we'll allow starlark execution
                 // to continue as normal. In this case, the hook_id doesn't matter.
                 (HookId(u32::MAX), None)

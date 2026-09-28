@@ -18,7 +18,7 @@ from e2e_util.buck_workspace import (  # noqa F401
 
 
 def pytest_report_header(config: pytest.Config) -> str:
-    return f"buck2 binary: {buck2_binary()}"
+    return f"yak binary: {buck2_binary()}"
 
 
 def pytest_runtest_setup(item: pytest.Item) -> None:

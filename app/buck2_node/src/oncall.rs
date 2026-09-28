@@ -15,7 +15,7 @@ use dupe::Dupe;
 use pagable::Pagable;
 use strong_hash::StrongHash;
 
-/// The `oncall` annotation for a `BUCK` file.
+/// The `oncall` annotation for a `YAK` file.
 #[derive(
     Debug, Hash, StrongHash, Allocative, Eq, PartialEq, Dupe, Clone, Pagable
 )]

@@ -42,7 +42,7 @@ async def test_external_buckconfigs(buck: Buck) -> None:
         with open(buck.cwd / "src", "w") as src:
             src.write("test")
 
-        with open(buck.cwd / ".buckconfig.local", "w") as localconfig:
+        with open(buck.cwd / ".yakconfig.local", "w") as localconfig:
             localconfig.write("[local_section]\n")
             localconfig.write("local_key = local_value\n")
             localconfig.write("<file:included.bcfg>\n")
@@ -89,10 +89,10 @@ async def test_external_buckconfigs(buck: Buck) -> None:
         and not external_path_config_value["is_cli"]
     )
 
-    # Next come the values from the .buckconfig.local file, which includes another file.
+    # Next come the values from the .yakconfig.local file, which includes another file.
     local_path_configs = external_configs[1]["data"]["GlobalExternalConfigFile"]
     assert len(local_path_configs["values"]) == 2
-    assert local_path_configs["origin_path"] == ".buckconfig.local"
+    assert local_path_configs["origin_path"] == ".yakconfig.local"
     # Buck orders the values of a config file by section, so the values from
     # the included file come first.
     included_config_value = local_path_configs["values"][0]
@@ -102,7 +102,7 @@ async def test_external_buckconfigs(buck: Buck) -> None:
         and included_config_value["value"] == "included_value"
         and not included_config_value["is_cli"]
     )
-    # The second one is for the values in the .buckconfig.local file
+    # The second one is for the values in the .yakconfig.local file
     local_config_value = local_path_configs["values"][1]
     assert (
         local_config_value["section"] == "local_section"
@@ -203,8 +203,8 @@ async def test_previous_command_with_mismatched_config(
         and sanitized_argv[4] == "-c"
         and sanitized_argv[5] == "my_section.my_key=my_value"
     )
-    # Make a change to .buckconfig
-    with open(buck.cwd / ".buckconfig", "a") as buckconfig:
+    # Make a change to .yakconfig
+    with open(buck.cwd / ".yakconfig", "a") as buckconfig:
         buckconfig.write("\n[test_section]\ntest_key = test_value\n")
         await buck.build(
             "@root//mode/my_mode",
@@ -229,8 +229,8 @@ async def test_previous_command_with_mismatched_config(
     assert len(previous_invalidating_command) == 0
     assert res.invocation_record()["new_configs_used"] == 1
 
-    # Make a change to .buckconfig.local
-    with open(buck.cwd / ".buckconfig.local", "w") as localconfig:
+    # Make a change to .yakconfig.local
+    with open(buck.cwd / ".yakconfig.local", "w") as localconfig:
         localconfig.write("\n[local_section]\nlocal_key = local_value\n")
     await buck.build(
         "@root//mode/my_mode",

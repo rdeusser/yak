@@ -34,7 +34,7 @@ including [Bazel](https://bazel.build/), [Pants](https://www.pantsbuild.org/),
 Following are aspects common to Buck1 and Buck2 (and in most cases, Bazel):
 
 - **Targets that can be queried** - the build is defined as a series of targets,
-  specified in `BUCK` files, that depend on other targets. This graph of targets
+  specified in `YAK` files, that depend on other targets. This graph of targets
   can be queried to understand how they relate to each other and what the
   potential impact of a change might be.
 - **Remote execution** - the build can send actions to a set of remote servers

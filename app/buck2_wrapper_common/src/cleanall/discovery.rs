@@ -19,8 +19,8 @@ use std::path::PathBuf;
 use buck2_hash::BuckMutSet;
 use tokio::fs;
 
-use crate::BUCKD_LIFECYCLE;
 use crate::DEFAULT_ISOLATION_DIR;
+use crate::YAKD_LIFECYCLE;
 
 #[cfg(test)]
 const TEST_READ_DIR_ERROR_PATH: &str = "__buck2_test_read_dir_error__";
@@ -50,7 +50,7 @@ pub(super) struct CleanallTarget {
 async fn find_lifecycle_markers(buckd_root: &Path) -> Vec<PathBuf> {
     let mut directories = vec![buckd_root.to_owned()];
     let mut markers = Vec::new();
-    let lifecycle_filename = OsStr::new(BUCKD_LIFECYCLE);
+    let lifecycle_filename = OsStr::new(YAKD_LIFECYCLE);
 
     while let Some(directory) = directories.pop() {
         #[cfg(test)]
@@ -72,7 +72,7 @@ async fn find_lifecycle_markers(buckd_root: &Path) -> Vec<PathBuf> {
         // persistent errors and hang indefinitely.
         // Note that isolation directory names are arbitrary and
         // nested checkouts are valid, so discovery must walk
-        // buckd root down to all of its leaf dirs to find all valid
+        // yakd root down to all of its leaf dirs to find all valid
         // daemon dirs.
         while let Ok(Some(entry)) = entries.next_entry().await {
             let path = entry.path();
@@ -84,7 +84,7 @@ async fn find_lifecycle_markers(buckd_root: &Path) -> Vec<PathBuf> {
                 continue;
             }
 
-            // buckd root does not use symlinks, so only follow real directories.
+            // yakd root does not use symlinks, so only follow real directories.
             if file_type.is_dir() {
                 directories.push(path);
             }
@@ -99,7 +99,7 @@ fn decode_lifecycle_marker(
     marker: &Path,
     layout: BuckdPathLayout,
 ) -> Vec<CleanallTarget> {
-    if marker.file_name() != Some(OsStr::new(BUCKD_LIFECYCLE)) {
+    if marker.file_name() != Some(OsStr::new(YAKD_LIFECYCLE)) {
         return Vec::new();
     }
 
@@ -222,7 +222,7 @@ fn targets_from_markers(
 /// Registry entries can outlive their project roots, so callers must validate
 /// each discovered target before invoking cleanup.
 pub(super) async fn discover_cleanall_targets(buckd_root: &Path) -> Vec<CleanallTarget> {
-    // TODO(scottcao): Also run separate buck-out discovery to discover all possible cleanall targets
+    // TODO(scottcao): Also run separate yak-out discovery to discover all possible cleanall targets
     let markers = find_lifecycle_markers(buckd_root).await;
     targets_from_markers(buckd_root, markers, BuckdPathLayout::current())
 }
@@ -244,7 +244,7 @@ mod tests {
                     .expect("temporary project should be absolute"),
             )
             .join(isolation_dir)
-            .join(BUCKD_LIFECYCLE);
+            .join(YAKD_LIFECYCLE);
         fs::create_dir_all(marker.parent().expect("marker should have a parent"))
             .await
             .expect("daemon directory should be created");
@@ -256,8 +256,8 @@ mod tests {
 
     #[test]
     fn decodes_unix_lifecycle_path() {
-        let buckd_root = Path::new("/home/user/.buck/buckd");
-        let marker = buckd_root.join("data/users/user/repo/custom/buckd.lifecycle");
+        let buckd_root = Path::new("/home/user/.yak/yakd");
+        let marker = buckd_root.join("data/users/user/repo/custom/yakd.lifecycle");
 
         assert_eq!(
             decode_lifecycle_marker(buckd_root, &marker, BuckdPathLayout::Unix),
@@ -273,11 +273,11 @@ mod tests {
     fn ignores_non_utf8_isolation_dir() {
         use std::os::unix::ffi::OsStringExt;
 
-        let buckd_root = Path::new("/home/user/.buck/buckd");
+        let buckd_root = Path::new("/home/user/.yak/yakd");
         let marker = buckd_root
             .join("data/users/user/repo")
             .join(OsString::from_vec(vec![0xff]))
-            .join(BUCKD_LIFECYCLE);
+            .join(YAKD_LIFECYCLE);
 
         assert!(decode_lifecycle_marker(buckd_root, &marker, BuckdPathLayout::Unix).is_empty());
     }
@@ -289,7 +289,7 @@ mod tests {
         assert_eq!(
             decode_lifecycle_marker(
                 buckd_root,
-                &buckd_root.join("C/repo/nested/v2/buckd.lifecycle"),
+                &buckd_root.join("C/repo/nested/v2/yakd.lifecycle"),
                 BuckdPathLayout::Windows,
             ),
             vec![
@@ -306,7 +306,7 @@ mod tests {
         assert_eq!(
             decode_lifecycle_marker(
                 buckd_root,
-                &buckd_root.join("server/share/repo/v2/buckd.lifecycle"),
+                &buckd_root.join("server/share/repo/v2/yakd.lifecycle"),
                 BuckdPathLayout::Windows,
             ),
             vec![CleanallTarget {
@@ -319,7 +319,7 @@ mod tests {
     #[test]
     fn orders_and_deduplicates_cleanall_targets() {
         let buckd_root = Path::new("/registry");
-        let marker = |path: &str| buckd_root.join(path).join(BUCKD_LIFECYCLE);
+        let marker = |path: &str| buckd_root.join(path).join(YAKD_LIFECYCLE);
         let target = |project_root: &str, isolation_dir: &str| CleanallTarget {
             project_root: PathBuf::from(project_root),
             isolation_dir: isolation_dir.to_owned(),
@@ -374,7 +374,7 @@ mod tests {
                 marker
                     .parent()
                     .expect("marker should have a parent")
-                    .join("buckd.info")
+                    .join("yakd.info")
             )
             .await
             .expect("daemon directory should be readable"),
@@ -394,7 +394,7 @@ mod tests {
             .join(TEST_READ_DIR_ERROR_PATH)
             .join("project")
             .join(isolation_dir)
-            .join(BUCKD_LIFECYCLE);
+            .join(YAKD_LIFECYCLE);
         fs::create_dir_all(
             failed_marker
                 .parent()

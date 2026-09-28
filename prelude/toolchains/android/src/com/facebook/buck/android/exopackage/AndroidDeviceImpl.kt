@@ -638,7 +638,7 @@ class AndroidDeviceImpl(val serial: String, val adbUtils: AdbUtils) : AndroidDev
    * something has to resolve them; staging also renames each file to the hash-based name it takes
    * on the device. Neither needs the bytes copied, and a payload is several GB.
    *
-   * The link shares an inode with the artifact in buck-out, so nothing may modify a staged file.
+   * The link shares an inode with the artifact in yak-out, so nothing may modify a staged file.
    * The `chmod` after the push deliberately runs on the device, not here.
    */
   private fun stageForPush(source: Path, target: Path) {

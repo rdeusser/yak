@@ -30,7 +30,7 @@ pub(crate) struct HeartbeatGuard {
 
 const STALL_THRESHOLD: Duration = Duration::from_secs(120);
 
-const THREAD_DUMP_HINT: &str = "If the command hangs, run `buck2 debug thread-dump` before killing the daemon to record what its threads are doing.";
+const THREAD_DUMP_HINT: &str = "If the command hangs, run `yak debug thread-dump` before killing the daemon to record what its threads are doing.";
 
 fn check_slow_snapshot(elapsed: Duration, consecutive_slow: &mut u32) {
     // Slow snapshots are generally a sign of DICE core thread queue being backed up.

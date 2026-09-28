@@ -15,7 +15,7 @@ from e2e_util.helper.utils import filter_events
 async def test_forward_node_supports_cutoff(buck: Buck) -> None:
     await buck.targets("--show-output", "root//:main")
     # Add a file to the root directory
-    with open(buck.cwd / "TARGETS.fixture", "a") as targetsfile:
+    with open(buck.cwd / "YAK.fixture", "a") as targetsfile:
         targetsfile.write("\n# a comment\n")
     await buck.targets("--show-output", "root//:main")
 

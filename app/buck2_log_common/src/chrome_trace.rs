@@ -94,7 +94,7 @@ use futures::stream::BoxStream;
 use serde::Serialize;
 use serde_json::json;
 
-/// Generates a Chrome trace from a buck2 event log.
+/// Generates a Chrome trace from a yak event log.
 #[derive(Debug, clap::Parser)]
 pub struct ChromeTraceCommand {
     #[clap(flatten)]
@@ -1311,7 +1311,7 @@ impl ChromeTraceWriter {
                     start: event.timestamp(),
                     process_id: 0,
                     track,
-                    categories: vec!["buck2"],
+                    categories: vec!["yak"],
                     args: json!({
                         "span_id": event.span_id(),
                     }),

@@ -38,7 +38,7 @@ use crate::attrs::attr_type::any_matches::AnyMatches;
 #[derive(Debug, buck2_error::Error)]
 pub enum VisibilityError {
     #[error(
-        "`{0}` is not visible to `{1}` (run `buck2 uquery --output-attribute visibility {0}` to check the visibility)"
+        "`{0}` is not visible to `{1}` (run `yak uquery --output-attribute visibility {0}` to check the visibility)"
     )]
     #[buck2(input, tag = Visibility)]
     NotVisibleTo(TargetLabel, TargetLabel),

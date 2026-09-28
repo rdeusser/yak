@@ -1,7 +1,7 @@
 # This file is @generated, regenerate by rerunning the test with `BUCK2_UPDATE_GOLDEN=1` set
 
-[<TIMESTAMP>] Starting new buck2 daemon...
-[<TIMESTAMP>] Connected to new buck2 daemon.
+[<TIMESTAMP>] Starting new yak daemon...
+[<TIMESTAMP>] Connected to new yak daemon.
 [<TIMESTAMP>] Build ID: <UUID>
 Command failed: 
 Error evaluating expression:
@@ -10,9 +10,9 @@ Error evaluating expression:
 
 
 Caused by:
-    0: Error evaluating build file: `root//select_arm:TARGETS.fixture`
+    0: Error evaluating build file: `root//select_arm:YAK.fixture`
     1: error: checking `within_view` for attribute `deps` of `root//select_arm:c`
-         --> select_arm/TARGETS.fixture:5:1
+         --> select_arm/YAK.fixture:5:1
           |
         5 | / stub(
         6 | |     name = "c",
@@ -24,7 +24,7 @@ Caused by:
        12 | | )
           | |_^
        Traceback (most recent call last):
-         * select_arm/TARGETS.fixture:5, in <module>
+         * select_arm/YAK.fixture:5, in <module>
              stub(
        
     2: Target's effective `within_view` does not allow dependency `root//outside:t` (within_view = ["PUBLIC"]). Capped to ["root//select_arm/..."] by `enforce_within_view_intersection()` in an ancestor PACKAGE

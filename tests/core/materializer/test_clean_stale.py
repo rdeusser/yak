@@ -30,7 +30,7 @@ DOWNLOAD_CONTENT = b"downloaded by the clean stale tests\n"
 def configure_active_unmaterialization(
     buck: Buck, enabled: bool, *, scheduled: bool = True
 ) -> None:
-    config_file = buck.cwd / ".buckconfig.local"
+    config_file = buck.cwd / ".yakconfig.local"
     with open(config_file, "w") as f:
         f.write(
             f"""
@@ -50,7 +50,7 @@ clean_stale_unmaterialize_upload_enabled = {str(enabled).lower()}
 
 
 def configure_clean_stale(buck: Buck, settings: str) -> None:
-    config_file = buck.cwd / ".buckconfig.local"
+    config_file = buck.cwd / ".yakconfig.local"
     with open(config_file, "w") as f:
         f.write(f"[buck2]\n{settings}")
 
@@ -187,7 +187,7 @@ async def test_clean_stale_artifact_dir(buck: Buck) -> None:
     output_parent = output_1.parent
     while not output_parent.exists():
         output_parent = output_parent.parent
-    assert output_parent.parts[-3:] == ("buck-out", "v2", "art")
+    assert output_parent.parts[-3:] == ("yak-out", "v2", "art")
 
 
 @buck_test()
@@ -298,7 +298,7 @@ async def test_clean_stale_declared(buck: Buck) -> None:
     await buck.kill()
 
     # Drop the state. The path exists on disk.
-    shutil.rmtree(buck.cwd / "buck-out/v2/cache/materializer_state")
+    shutil.rmtree(buck.cwd / "yak-out/v2/cache/materializer_state")
 
     # Build again, start by declaring, then clean, then require locally.
     await buck.build("//declared:remote")
@@ -308,9 +308,9 @@ async def test_clean_stale_declared(buck: Buck) -> None:
 
 @buck_test()
 async def test_clean_stale_scheduled(buck: Buck) -> None:
-    # Need to write to .buckconfig instead of passing cmd line args because
+    # Need to write to .yakconfig instead of passing cmd line args because
     # the config used when creating daemon state does not include cmd line args (but maybe it should).
-    config_file = buck.cwd / ".buckconfig.local"
+    config_file = buck.cwd / ".yakconfig.local"
     with open(config_file, "w") as f:
         f.write(
             """
@@ -356,9 +356,9 @@ clean_stale_period_hours = 0.0001
 
 @buck_test(skip_for_os=["windows"])
 async def test_clean_stale_scheduled_high_disk_usage(buck: Buck) -> None:
-    # Need to write to .buckconfig instead of passing cmd line args because
+    # Need to write to .yakconfig instead of passing cmd line args because
     # the config used when creating daemon state does not include cmd line args (but maybe it should).
-    config_file = buck.cwd / ".buckconfig.local"
+    config_file = buck.cwd / ".yakconfig.local"
     with open(config_file, "w") as f:
         f.write(
             """
@@ -392,7 +392,7 @@ async def test_clean_stale_scheduled_adaptive_high_disk_usage(buck: Buck) -> Non
     # Threshold of 100.0 guarantees free disk % is always "below" it, so the
     # adaptive loop must promote retained, non-active artifacts to stale even
     # though the regular ttl (8h) would have kept them.
-    config_file = buck.cwd / ".buckconfig.local"
+    config_file = buck.cwd / ".yakconfig.local"
     with open(config_file, "w") as f:
         f.write(
             """
@@ -421,7 +421,7 @@ clean_stale_low_disk_adaptive_min_ttl_hours = 0
 async def test_clean_stale_scheduled_adaptive_threshold_not_tripped(buck: Buck) -> None:
     # Threshold of 0.0 guarantees free disk % is always above it, so the
     # adaptive loop must never engage and the retained artifact survives.
-    config_file = buck.cwd / ".buckconfig.local"
+    config_file = buck.cwd / ".yakconfig.local"
     with open(config_file, "w") as f:
         f.write(
             """
@@ -453,7 +453,7 @@ async def test_clean_stale_scheduled_adaptive_min_ttl_protects_recent(
     # Threshold of 100.0 always trips adaptive promotion, but the freshly
     # built artifact is well within the 24h adaptive min-TTL floor — it must
     # survive even though disk pressure persists.
-    config_file = buck.cwd / ".buckconfig.local"
+    config_file = buck.cwd / ".yakconfig.local"
     with open(config_file, "w") as f:
         f.write(
             """
@@ -549,7 +549,7 @@ async def test_adaptive_unmaterializes_active_remote_intermediate(
     )
 
 
-# buck2 unmaterializes a locally built artifact only after it uploads the
+# yak unmaterializes a locally built artifact only after it uploads the
 # artifact to the Remote Execution CAS.
 @pytest.mark.remote_execution
 @buck_test(skip_for_os=["windows"])
@@ -590,7 +590,7 @@ async def test_adaptive_unmaterialization_fails_for_modified_local_intermediate(
     replace_in_file(
         'content = "HELLO"',
         f'content = "{original}"',
-        file=buck.cwd / "TARGETS.fixture",
+        file=buck.cwd / "YAK.fixture",
     )
     result = await buck.build(
         "root//:consume_local", "--local-only", "--no-remote-cache"
@@ -609,7 +609,7 @@ async def test_adaptive_unmaterialization_fails_for_modified_local_intermediate(
     assert artifact.read_text(encoding="utf-8") == "EDITED"
 
 
-# buck2 unmaterializes a locally built artifact only after it uploads the
+# yak unmaterializes a locally built artifact only after it uploads the
 # artifact to the Remote Execution CAS.
 @pytest.mark.remote_execution
 @buck_test(skip_for_os=["windows"])
@@ -637,7 +637,7 @@ async def test_adaptive_unmaterializes_active_local_copy_intermediate(
     )
 
 
-# buck2 unmaterializes a locally built artifact only after it uploads the
+# yak unmaterializes a locally built artifact only after it uploads the
 # artifact to the Remote Execution CAS.
 @pytest.mark.remote_execution
 @buck_test(skip_for_os=["windows"])
@@ -708,20 +708,20 @@ async def test_adaptive_does_not_unmaterialize_when_disabled(buck: Buck) -> None
 
 @buck_test(skip_for_os=["windows", "darwin"])
 async def test_clean_scratch_on_idle(buck: Buck) -> None:
-    """Scratch (buck-out/<iso>/tmp) is swept once the daemon goes idle."""
-    with open(buck.cwd / ".buckconfig.local", "w") as f:
+    """Scratch (yak-out/<iso>/tmp) is swept once the daemon goes idle."""
+    with open(buck.cwd / ".yakconfig.local", "w") as f:
         f.write("[buck2]\nclean_scratch_on_idle = true\n")
 
     # Dead scratch from past actions: deleted regardless of age.
     dead = (
-        buck.cwd / "buck-out" / "v2" / "tmp" / "root" / "aaaa" / "cat" / "dead_action"
+        buck.cwd / "yak-out" / "v2" / "tmp" / "root" / "aaaa" / "cat" / "dead_action"
     )
     dead.mkdir(parents=True)
     (dead / "junk").write_text("x" * 16)
 
     # A sibling scratch root the sweep cannot read: skipped, never deleted.
     # (Kept out of `tmp/root` so its failed deletion cannot shadow `dead`'s.)
-    unreadable = buck.cwd / "buck-out" / "v2" / "tmp" / "unreadable"
+    unreadable = buck.cwd / "yak-out" / "v2" / "tmp" / "unreadable"
     unreadable.mkdir()
     (unreadable / "junk").write_text("y")
     unreadable.chmod(0o000)

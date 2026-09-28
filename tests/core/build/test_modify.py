@@ -23,8 +23,8 @@ async def test_modify_genrule(buck: Buck) -> None:
     output = result.get_build_report().output_for_target("root//:writer")
     assert Path(output).read_text() == "HELLO\n"
 
-    # Change "HELLO" in TARGETS to "GOODBYE"
-    with fileinput.input(buck.cwd / "TARGETS.fixture", inplace=True) as f:
+    # Change "HELLO" in YAK.fixture to "GOODBYE"
+    with fileinput.input(buck.cwd / "YAK.fixture", inplace=True) as f:
         for line in f:
             print(line.replace("HELLO", "GOODBYE"), end="")
 
@@ -47,7 +47,7 @@ async def test_modify_src(buck: Buck) -> None:
 
 @buck_test(data_dir="modify")
 async def test_modify_genrule_notify(buck: Buck) -> None:
-    with open(buck.cwd / ".buckconfig", "a") as buckconfig:
+    with open(buck.cwd / ".yakconfig", "a") as buckconfig:
         buckconfig.write("\n[buck2]\nfile_watcher = notify")
     await buck.kill()  # Ensure the config gets picked up
     await test_modify_genrule(buck)

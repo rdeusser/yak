@@ -60,13 +60,13 @@ defer_write_actions = true
 This mechanism is recommended if you're using the On-disk State, since it means
 Buck can omit writes entirely if the same content is already on disk.
 
-## `buck2 clean --stale`
+## `yak clean --stale`
 
 The deferred materializer can be configured to continuously delete stale
 artifacts, that haven't been recently accessed, or untracked artifacts, that
-exist in buck-out but not in the materalizer state.
+exist in yak-out but not in the materalizer state.
 
-Unlike `buck2 clean` this does not fully wipe buck-out but it should not
+Unlike `yak clean` this does not fully wipe yak-out but it should not
 negatively impact build performance if you are building and rebasing regularly.
 
 Enabling this requires enabling [on-disk state](#on-disk-state) and
@@ -93,7 +93,7 @@ clean_stale_start_offset_hours = 12
 - `clean_stale_period_hours` determines how frequently to schedule recurring
   clean events.
 - `clean_stale_artifact_ttl_hours` determines how long artifacts should be kept
-  in buck-out before cleaning them.
+  in yak-out before cleaning them.
 - `clean_stale_dry_run` (default false) reports what would be cleaned without
   deleting it.
 - `clean_stale_low_disk_threshold` (percent of total disk free, e.g. `10.0`)
@@ -102,7 +102,7 @@ clean_stale_start_offset_hours = 12
 - `clean_stale_low_disk_artifact_ttl_hours` (default 48) sets a shorter fixed
   TTL to use while free disk is at or below the threshold.
 - `clean_stale_low_disk_adaptive_enabled` (default false) replaces the fixed
-  shorter TTL with adaptive cleaning: buck2 keeps promoting the oldest retained
+  shorter TTL with adaptive cleaning: yak keeps promoting the oldest retained
   artifacts to stale until projected free disk rises back above the threshold,
   while protecting any artifact younger than
   `clean_stale_low_disk_adaptive_min_ttl_hours` (default 12).
@@ -128,7 +128,7 @@ to materialize artifacts, the clean will be interrupted and not run again until
 after the next scheduled period, but it should be able to make gradual progress
 and prevent long term accumulation of artifacts.
 
-If needed, a clean can be manually triggered by calling `buck2 clean --stale`.
+If needed, a clean can be manually triggered by calling `yak clean --stale`.
 With no cleanup-policy flags, the command uses the configured artifact TTL,
 dry-run setting, and fixed or adaptive low-disk policy. These settings apply to
 manual cleanup even when `clean_stale_enabled` is false; that setting only

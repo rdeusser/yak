@@ -2,9 +2,9 @@
 
 Delete generated files and caches.
 
-The command also kills the buck2 daemon.
+The command also kills the yak daemon.
 
-Usage: buck2 clean [OPTIONS]
+Usage: yak clean [OPTIONS]
 
 Options:
       --dry-run
@@ -21,15 +21,15 @@ Options:
 
 Clean Stale Options:
       --stale [<DURATION>]
-          Delete artifacts from buck-out using the configured clean-stale
+          Delete artifacts from yak-out using the configured clean-stale
           policy or a duration if specified, without killing the daemon
 
       --tracked-only
           Only considers tracked artifacts for cleanup.
 
-          `buck-out` can contain untracked artifacts for different reasons: - Outputs from aborted
+          `yak-out` can contain untracked artifacts for different reasons: - Outputs from aborted
           actions - State getting deleted (e.g., new buckversion that changes the on-disk state
-          format) - Writing to `buck-out` without being expected by Buck
+          format) - Writing to `yak-out` without being expected by Buck
 
       --adaptive-low-disk-threshold <PERCENT>
           Enable adaptive low-disk promotion: after the regular stale scan, promote retained,
@@ -77,11 +77,11 @@ Buckconfig Options:
           Used to configure when this command could be preempted by another command for the same
           isolation dir.
 
-          Normally, when you run two commands - from different terminals, say - buck2 will attempt
-          to run them in parallel. However, if the two commands are based on different state, that
-          is they either have different configs or different filesystem states, buck2 cannot run
-          them in parallel. The default behavior in this case is to block the second command until
-          the first completes.
+          Normally, when you run two commands - from different terminals, say - yak will attempt to
+          run them in parallel. However, if the two commands are based on different state, that is
+          they either have different configs or different filesystem states, yak cannot run them in
+          parallel. The default behavior in this case is to block the second command until the first
+          completes.
 
           Possible values:
           - never:            (default) When another command starts that cannot run in parallel with
@@ -180,7 +180,7 @@ Console Options:
           Accepts a comma-separated list of superconsole components to add. Possible values are:
 
           dice - shows information about evaluated dice nodes debugevents - shows information about
-          the flow of events from buckd
+          the flow of events from yakd
 
           These components can be turned on/off interactively. Press 'h' for help when superconsole
           is active.
@@ -209,13 +209,12 @@ Event Log Options:
 
       --command-report-path <PATH>
           Write the command report to this path. A command report is always written to
-          `buck-out/v2/<uuid>/command_report` even without this flag
+          `yak-out/v2/<uuid>/command_report` even without this flag
 
 Universal Options:
       --isolation-dir <ISOLATION_DIR>
-          The name of the directory that Buck2 creates within buck-out for writing outputs and
-          daemon information. If one is not provided, Buck2 creates a directory with the default
-          name.
+          The name of the directory that Buck2 creates within yak-out for writing outputs and daemon
+          information. If one is not provided, Buck2 creates a directory with the default name.
 
           Instances of Buck2 share a daemon if and only if their isolation directory is identical.
           The isolation directory also influences the output paths provided by Buck2, and as a

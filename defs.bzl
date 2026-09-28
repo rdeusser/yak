@@ -9,16 +9,16 @@
 load("@prelude//decls:common.bzl", "buck")
 load("@prelude//os_lookup:defs.bzl", "Os", "OsLookup")
 
-def _buck2_bundle_impl(ctx: AnalysisContext) -> list[Provider]:
+def _yak_bundle_impl(ctx: AnalysisContext) -> list[Provider]:
     """
-    Puts the client binary (`buck2`) and the daemon binary (`buck2-daemon`)
+    Puts the client binary (`yak`) and the daemon binary (`yak-daemon`)
     in one directory, where the client-only build looks for the daemon.
     """
     target_is_windows = ctx.attrs._target_os_type[OsLookup].os == Os("windows")
 
     binary_extension = ".exe" if target_is_windows else ""
-    buck2_binary = "buck2" + binary_extension
-    buck2_daemon_binary = "buck2-daemon" + binary_extension
+    buck2_binary = "yak" + binary_extension
+    buck2_daemon_binary = "yak-daemon" + binary_extension
 
     copied_dir = {}
     materialisations = []
@@ -33,10 +33,10 @@ def _buck2_bundle_impl(ctx: AnalysisContext) -> list[Provider]:
 
     out = ctx.actions.copied_dir("out", copied_dir, has_content_based_path = False)
 
-    return [DefaultInfo(out, other_outputs = materialisations), RunInfo(cmd_args(out.project("buck2" + binary_extension), hidden = materialisations))]
+    return [DefaultInfo(out, other_outputs = materialisations), RunInfo(cmd_args(out.project("yak" + binary_extension), hidden = materialisations))]
 
-buck2_bundle = rule(
-    impl = _buck2_bundle_impl,
+yak_bundle = rule(
+    impl = _yak_bundle_impl,
     attrs = {
         "buck2": attrs.dep(),
         "buck2_client": attrs.dep(),

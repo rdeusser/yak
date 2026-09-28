@@ -133,7 +133,7 @@ mod tests {
     fn build_input(source: &str) -> AutofixInput<'_> {
         AutofixInput {
             source,
-            path: Path::new("TARGETS"),
+            path: Path::new("YAK"),
         }
     }
 
@@ -256,14 +256,14 @@ x = z_func() + a_func()
         let error = apply_autofixes(
             &AutofixInput {
                 source,
-                path: Path::new("foo/TARGETS"),
+                path: Path::new("foo/YAK"),
             },
             &config,
         )
         .expect_err("unmatched inline sort key should fail");
 
         assert!(
-            format!("{error:#}").contains("foo/TARGETS:3:21-32"),
+            format!("{error:#}").contains("foo/YAK:3:21-32"),
             "unexpected error: {error:#}"
         );
     }
@@ -283,7 +283,7 @@ x = z_func() + a_func()
         let result = apply_autofixes(
             &AutofixInput {
                 source,
-                path: Path::new("foo/TARGETS"),
+                path: Path::new("foo/YAK"),
             },
             &config,
         )

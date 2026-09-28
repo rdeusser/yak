@@ -170,7 +170,7 @@ async def test_lsp_exits_when_daemon_times_out(buck: Buck) -> None:
     status = await buck.status()
     pid = json.loads(status.stdout)["process_info"]["pid"]
     daemon_dir = await buck.get_daemon_dir()
-    daemon_stderr = daemon_dir / "buckd.stderr"
+    daemon_stderr = daemon_dir / "yakd.stderr"
 
     lsp = await buck.lsp()
     try:
@@ -194,7 +194,7 @@ async def test_lsp_exits_when_daemon_times_out(buck: Buck) -> None:
 async def test_lsp_daemon_inactivity_shutdown_recovers_with_different_version(
     buck: Buck,
 ) -> None:
-    # `buckd.info` outlives the daemon, and a version mismatch in it is what sends the
+    # `yakd.info` outlives the daemon, and a version mismatch in it is what sends the
     # client down the connect-to-the-existing-daemon path. That used to cost the full
     # `BUCKD_STARTUP_TIMEOUT`, because the daemon accepted the connection and then
     # never answered it. Now there is nothing listening and the client replaces it.
@@ -202,8 +202,8 @@ async def test_lsp_daemon_inactivity_shutdown_recovers_with_different_version(
     status = await buck.status()
     original_pid = json.loads(status.stdout)["process_info"]["pid"]
     daemon_dir = await buck.get_daemon_dir()
-    daemon_stderr = daemon_dir / "buckd.stderr"
-    daemon_info = daemon_dir / "buckd.info"
+    daemon_stderr = daemon_dir / "yakd.stderr"
+    daemon_info = daemon_dir / "yakd.info"
 
     lsp = await buck.lsp()
     try:
@@ -254,7 +254,7 @@ async def test_lsp_exits_when_daemon_disappears(buck: Buck) -> None:
 async def test_lsp_requests_keep_daemon_alive(buck: Buck) -> None:
     async with await buck.lsp() as lsp:
         await lsp.init_connection()
-        daemon_info = await buck.get_daemon_dir() / "buckd.info"
+        daemon_info = await buck.get_daemon_dir() / "yakd.info"
         pid = json.loads(daemon_info.read_text())["pid"]
 
         for _ in range(6):
@@ -298,8 +298,8 @@ async def test_lints_on_open(buck: Buck) -> None:
 
 @buck_test()
 async def test_goto_definition(buck: Buck) -> None:
-    src_targets_path = Path("dir/TARGETS.fixture")
-    dest_targets_path = Path("cell/sub/TARGETS.fixture")
+    src_targets_path = Path("dir/YAK.fixture")
+    dest_targets_path = Path("cell/sub/YAK.fixture")
     dest_bzl_path = Path("cell/sub/defs.bzl")
 
     src_targets = fixture(buck, src_targets_path)
@@ -391,7 +391,7 @@ async def test_returns_file_contents_for_starlark_types(buck: Buck) -> None:
         assert res["contents"] is None
 
         with pytest.raises(LSPResponseError):
-            await lsp.file_contents((lsp.cwd / ".buckconfig").as_uri())
+            await lsp.file_contents((lsp.cwd / ".yakconfig").as_uri())
 
 
 @buck_test()

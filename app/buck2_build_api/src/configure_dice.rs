@@ -75,10 +75,10 @@ pub async fn configure_dice_for_buck(
     dice.set_detailed_aggregated_metrics_handle(DetailedAggregatedMetricsHandle::new());
 
     // Opt-in pagable storage, enabling `Dice::page_out()` to serialize node
-    // values to disk (backend chosen by `pagable_storage_backend`) via `buck2
+    // values to disk (backend chosen by `pagable_storage_backend`) via `yak
     // debug hydration`. `dice_state_path` is `Some` when
     // `buck2_hydration.enable_paging` is set (its value is the default path,
-    // under buck-out). The `BUCK2_DICE_DB_PATH` override (used by benchmarks)
+    // under yak-out). The `BUCK2_DICE_DB_PATH` override (used by benchmarks)
     // takes precedence and picks the path.
     let db_path: Option<PathBuf> = match std::env::var_os("BUCK2_DICE_DB_PATH") {
         Some(path) => Some(PathBuf::from(path)),

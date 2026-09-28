@@ -25,7 +25,7 @@ For all following tutorial, we assume you are in
 [`examples/bxl_tutorial`](https://github.com/rdeusser/buck2/tree/main/examples/bxl_tutorial)
 folder.
 
-This folder contains a buck2 [project](../../concepts/glossary/#project) with
+This folder contains a yak [project](../../concepts/glossary/#project) with
 several targets. These targets form this dependency graph:
 
 <img src={useBaseUrl('/img/bxl_tutorial/target_dependencies_graph.png')}
@@ -38,7 +38,7 @@ define a function that receives arguments from the CLI and how to run it.
 
 First, let's create a file named `hello_world.bxl` and open it.
 
-Then, we define a bxl function which can be called by `buck2 bxl`:
+Then, we define a bxl function which can be called by `yak bxl`:
 
 ```python
 main = bxl_main(
@@ -53,11 +53,11 @@ main = bxl_main(
 2. `cli_args` we can define the arguments here
 
 Lets run the bxl script to give it a try. The command is in the format
-`buck2 bxl [file_path_to_bxl_file]:[bxl_main_function_name]`. For this case it
+`yak bxl [file_path_to_bxl_file]:[bxl_main_function_name]`. For this case it
 looks like this:
 
 ```
-buck2 bxl hello_world.bxl:main
+yak bxl hello_world.bxl:main
 ```
 
 As expected, we get this error:
@@ -87,7 +87,7 @@ main = bxl_main(
 )
 ```
 
-Now if we run `buck2 bxl hello_world.bxl:main`, we will see the `Hello world!`
+Now if we run `yak bxl hello_world.bxl:main`, we will see the `Hello world!`
 in the console.
 
 For this, function `_main` must be defined to accept the argument `ctx` with
@@ -114,10 +114,10 @@ main = bxl_main(
 We can call bxl like this:
 
 ```shell
-buck2 bxl hello_world.bxl:main -- --project-name buck2
+yak bxl hello_world.bxl:main -- --project-name yak
 ```
 
-We will see `Hello buck2!` in the console.
+We will see `Hello yak!` in the console.
 
 ## Part 1:
 
@@ -156,7 +156,7 @@ main = bxl_main(
 We use this command to run our script:
 
 ```shell
-buck2 bxl generate_index.bxl:main -- --target //:bin
+yak bxl generate_index.bxl:main -- --target //:bin
 ```
 
 We need to get all the deps of this target, we do that using the
@@ -310,18 +310,18 @@ ctx.output.print(ensured_index_db)
 Running the script will show us where our file was created:
 
 ```
-buck-out/v2/gen-bxl/root/78ceb8c295d0ab4e/part3.bxl/__main__e0c0381aecee358a__/index.txt
+yak-out/v2/gen-bxl/root/78ceb8c295d0ab4e/part3.bxl/__main__e0c0381aecee358a__/index.txt
 ```
 
 We open this file and to see all the index paths:
 
 ```
-buck-out/v2/gen/root/6dd044292ff31ae1/__a__/a.index
-buck-out/v2/gen/root/6dd044292ff31ae1/__b__/b.index
-buck-out/v2/gen/root/6dd044292ff31ae1/__bin__/bin.index
-buck-out/v2/gen/root/6dd044292ff31ae1/__c__/c.index
-buck-out/v2/gen/root/6dd044292ff31ae1/__d__/d.index
-buck-out/v2/gen/root/6dd044292ff31ae1/__e__/e.index
+yak-out/v2/gen/root/6dd044292ff31ae1/__a__/a.index
+yak-out/v2/gen/root/6dd044292ff31ae1/__b__/b.index
+yak-out/v2/gen/root/6dd044292ff31ae1/__bin__/bin.index
+yak-out/v2/gen/root/6dd044292ff31ae1/__c__/c.index
+yak-out/v2/gen/root/6dd044292ff31ae1/__d__/d.index
+yak-out/v2/gen/root/6dd044292ff31ae1/__e__/e.index
 ```
 
 It shows all the index path, but if we check the content of the index, it will

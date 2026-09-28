@@ -48,7 +48,7 @@ def _base_module_arg():
             doc = """
     The package in which the specified source files and resources should reside in their final
      location in the top-level binary. If unset, Buck uses the project-relative directory
-     that contains the BUCK file.
+     that contains the YAK file.
 """,
         ),
     }
@@ -61,7 +61,7 @@ def _linker_flags_arg():
             doc = """
     Additional linker flags that should be applied to any linking which is specific to this rule.
      Note that whether these flags are used is dependent on the native link strategy selected in
-     `.buckconfig` and currently applies only to the merged `.buckconfig`;
+     `.yakconfig` and currently applies only to the merged `.yakconfig`;
      the `separate` link strategy pulls in shared libraries that are linked in the
      context of the rules that own them, such as `cxx_library()`.
 """,
@@ -74,7 +74,7 @@ def _package_style_arg():
             attrs.enum(PythonBuckConfigPackageStyle),
             default = None,
             doc = """
-    Used to override the global packaging style that is set in `[`.buckconfig`
+    Used to override the global packaging style that is set in `[`.yakconfig`
     ]`.
 """,
         ),
@@ -100,7 +100,7 @@ def _exclude_deps_from_merged_linking_arg():
         "exclude_deps_from_merged_linking": attrs.bool(
             default = False,
             doc = """
-    When linking the top-level binary with a `merged` ``.buckconfig``,
+    When linking the top-level binary with a `merged` ``.yakconfig``,
      do not merge or re-link any native transitive deps of this library. This is useful if
      this library wraps prebuilt native extensions which cannot be re-linked as part of
      library merging.
@@ -113,7 +113,7 @@ def _deduplicate_merged_link_roots():
         "deduplicate_merged_link_roots": attrs.bool(
             default = True,
             doc = """
-    When linking multiple top-level binaries with the `merged` ``.buckconfig``,
+    When linking multiple top-level binaries with the `merged` ``.yakconfig``,
      coalesce root link rules which are identical across independent merged links.
 """,
         ),

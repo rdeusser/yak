@@ -69,12 +69,12 @@ async def serve_file(content: bytes) -> typing.AsyncIterator[ServedFile]:
 
 
 def configure_served_file(buck: Buck, served: ServedFile) -> None:
-    """Appends the URL and checksums of `served` to the project's .buckconfig.
+    """Appends the URL and checksums of `served` to the project's .yakconfig.
 
     Test data reads them as `test.download_url`, `test.download_sha1`, and
     `test.download_sha256`.
     """
-    with open(buck.cwd / ".buckconfig", "a") as f:
+    with open(buck.cwd / ".yakconfig", "a") as f:
         f.write(
             "\n[test]\n"
             f"  download_url = {served.url}\n"

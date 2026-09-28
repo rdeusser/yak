@@ -235,7 +235,7 @@ impl FileOps for TestFileOps {
     }
 
     async fn buildfiles<'a>(&self, _cell: CellName) -> buck2_error::Result<Arc<[FileNameBuf]>> {
-        Ok(Arc::from_iter([FileNameBuf::unchecked_new("BUCK")]))
+        Ok(Arc::from_iter([FileNameBuf::unchecked_new("YAK")]))
     }
 }
 

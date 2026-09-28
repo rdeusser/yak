@@ -138,7 +138,7 @@ pub(crate) fn to_project_json(
             trace!(?target, ?dylib, "target is a proc macro");
         }
 
-        // corresponds to the BUCK/TARGETS file of a target.
+        // corresponds to the build file of a target.
         let build_file = project_root.join(info.project_relative_buildfile.clone());
 
         // We don't need to push the source folder as rust-analyzer by default will use the root-module parent().
@@ -170,7 +170,7 @@ pub(crate) fn to_project_json(
         }
 
         // We want to include all the directories from srcs, because sometimes the source files on
-        // disk aren't in the same layout as buck-out. In this situation, the root_module directory
+        // disk aren't in the same layout as yak-out. In this situation, the root_module directory
         // isn't sufficient to find all files in the module tree.
         //
         // You could construct a pathological case using mapped_srcs that means we miss
@@ -483,13 +483,13 @@ impl Buck {
         tracing::info!(?project_root, "Project root was set");
 
         Buck {
-            command: command.unwrap_or_else(|| "buck2".into()),
+            command: command.unwrap_or_else(|| "yak".into()),
             mode,
             project_root,
         }
     }
 
-    /// Invoke `buck2` with the given subcommands.
+    /// Invoke `yak` with the given subcommands.
     ///
     /// Care should be taken to ensure that buck is invoked with the same set
     /// options and configuration to avoid invalidating caches.
@@ -501,11 +501,11 @@ impl Buck {
         let mut cmd = self.command_without_config(subcommands);
         cmd.args([
             "-c=rust.rust_project_build=true",
-            // Buck owner() queries stop at the innermost BUCK file unless
+            // Buck owner() queries stop at the innermost YAK file unless
             // package_boundary_exceptions is set.
             //
-            // This is arguably a bug in buck, because it's possible for a parent BUCK
-            // file to own a file in a subdirectory that has its own BUCK file.
+            // This is arguably a bug in buck, because it's possible for a parent YAK
+            // file to own a file in a subdirectory that has its own YAK file.
             //
             // Buck probably didn't intend to allow this pattern: it doesn't work when you
             // use `srcs = glob()`, but it does work for srcs with explicit paths.
@@ -515,7 +515,7 @@ impl Buck {
             //
             // However, due to the confusion with srcs, we can end up with owner() not
             // finding the target even when the package is not opted-out. Instead, opt-out
-            // all packages for this query, so owner() always looks at parent BUCK files
+            // all packages for this query, so owner() always looks at parent YAK files
             // and finds the relevant target.
             "-c=project.package_boundary_exceptions=.",
         ]);
@@ -535,7 +535,7 @@ impl Buck {
         let mut cmd = Command::new(&self.command);
 
         // rust-analyzer invokes the check-on-save command with `RUST_BACKTRACE=short`
-        // set. Unfortunately, buck2 doesn't handle that well and becomes extremely
+        // set. Unfortunately, yak doesn't handle that well and becomes extremely
         // slow when the daemon is started with backtrace variables set. Until that is
         // fixed, just unset them here.
         cmd.env_remove("RUST_BACKTRACE")
@@ -1105,7 +1105,7 @@ fn merge_tests_no_cycles() {
             features: vec![],
             env: FxHashMap::default(),
             source_folder: PathBuf::from("/tmp"),
-            project_relative_buildfile: PathBuf::from("foo/BUCK"),
+            project_relative_buildfile: PathBuf::from("foo/YAK"),
             in_workspace: false,
             rustc_flags: vec![],
         },
@@ -1131,7 +1131,7 @@ fn merge_tests_no_cycles() {
             features: vec![],
             env: FxHashMap::default(),
             source_folder: PathBuf::from("/tmp"),
-            project_relative_buildfile: PathBuf::from("foo-unittest/BUCK"),
+            project_relative_buildfile: PathBuf::from("foo-unittest/YAK"),
             in_workspace: false,
             rustc_flags: vec![],
         },
@@ -1169,7 +1169,7 @@ fn merge_target_multiple_tests_no_cycles() {
             features: vec![],
             env: FxHashMap::default(),
             source_folder: PathBuf::from("/tmp"),
-            project_relative_buildfile: PathBuf::from("foo/BUCK"),
+            project_relative_buildfile: PathBuf::from("foo/YAK"),
             in_workspace: false,
             rustc_flags: vec![],
         },
@@ -1198,7 +1198,7 @@ fn merge_target_multiple_tests_no_cycles() {
             features: vec![],
             env: FxHashMap::default(),
             source_folder: PathBuf::from("/tmp"),
-            project_relative_buildfile: PathBuf::from("foo/BUCK"),
+            project_relative_buildfile: PathBuf::from("foo/YAK"),
             in_workspace: false,
             rustc_flags: vec![],
         },
@@ -1227,7 +1227,7 @@ fn merge_target_multiple_tests_no_cycles() {
             features: vec![],
             env: FxHashMap::default(),
             source_folder: PathBuf::from("/tmp"),
-            project_relative_buildfile: PathBuf::from("foo_test/BUCK"),
+            project_relative_buildfile: PathBuf::from("foo_test/YAK"),
             in_workspace: false,
             rustc_flags: vec![],
         },
@@ -1253,7 +1253,7 @@ fn merge_target_multiple_tests_no_cycles() {
             features: vec![],
             env: FxHashMap::default(),
             source_folder: PathBuf::from("/tmp"),
-            project_relative_buildfile: PathBuf::from("foo/BUCK"),
+            project_relative_buildfile: PathBuf::from("foo/YAK"),
             in_workspace: false,
             rustc_flags: vec![],
         },
@@ -1299,7 +1299,7 @@ fn integration_tests_preserved() {
             features: vec![],
             env: FxHashMap::default(),
             source_folder: PathBuf::from("/tmp"),
-            project_relative_buildfile: PathBuf::from("foo/BUCK"),
+            project_relative_buildfile: PathBuf::from("foo/YAK"),
             in_workspace: false,
             rustc_flags: vec![],
         },
@@ -1325,7 +1325,7 @@ fn integration_tests_preserved() {
             features: vec![],
             env: FxHashMap::default(),
             source_folder: PathBuf::from("/tmp"),
-            project_relative_buildfile: PathBuf::from("foo/BUCK"),
+            project_relative_buildfile: PathBuf::from("foo/YAK"),
             in_workspace: false,
             rustc_flags: vec![],
         },
@@ -1355,7 +1355,7 @@ fn test_cfg_scoped_to_first_party() {
         features: vec![],
         env: FxHashMap::default(),
         source_folder: PathBuf::from("/tmp"),
-        project_relative_buildfile: PathBuf::from("foo/BUCK"),
+        project_relative_buildfile: PathBuf::from("foo/YAK"),
         in_workspace: false,
         rustc_flags: vec![],
     };
@@ -1406,7 +1406,7 @@ fn named_deps_underscores() {
             features: vec![],
             env: FxHashMap::default(),
             source_folder: PathBuf::from("/tmp"),
-            project_relative_buildfile: PathBuf::from("bar/BUCK"),
+            project_relative_buildfile: PathBuf::from("bar/YAK"),
             in_workspace: false,
             rustc_flags: vec![],
         },
@@ -1433,7 +1433,7 @@ fn named_deps_underscores() {
         features: vec![],
         env: FxHashMap::default(),
         source_folder: PathBuf::from("/tmp"),
-        project_relative_buildfile: PathBuf::from("foo/BUCK"),
+        project_relative_buildfile: PathBuf::from("foo/YAK"),
         in_workspace: false,
         rustc_flags: vec![],
     };

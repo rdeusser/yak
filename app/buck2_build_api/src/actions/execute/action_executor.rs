@@ -178,7 +178,7 @@ pub enum ActionExecutionKind {
         scheduling_mode: Option<SchedulingMode>,
         incremental_kind: buck2_data::IncrementalKind,
     },
-    /// This action is simple and executed inline within buck2 (e.g. write, symlink_dir)
+    /// This action is simple and executed inline within yak (e.g. write, symlink_dir)
     #[display("simple")]
     Simple,
     /// This action logically executed, but didn't do all the work.

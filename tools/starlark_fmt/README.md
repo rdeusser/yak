@@ -1,6 +1,6 @@
 # starlark_fmt
 
-An opinionated formatter for Starlark / BUCK files. Drop-in replacement for
+An opinionated formatter for Starlark / YAK files. Drop-in replacement for
 buildifier with additional autofix capabilities.
 
 ## What It Does

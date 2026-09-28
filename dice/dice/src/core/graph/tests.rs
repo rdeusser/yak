@@ -463,7 +463,7 @@ fn counts(resident: usize, paged_out: usize, candidates: usize) -> PagableNodeCo
     }
 }
 
-/// A computed key whose values are asserted (`changed_to` on a `Key`, which buck2 does for its
+/// A computed key whose values are asserted (`changed_to` on a `Key`, which yak does for its
 /// pageable starlark roots) pages like one that was computed, and keeps its values across `take`.
 #[test]
 fn asserted_values_of_computed_keys_page_out() {

@@ -21,7 +21,7 @@ use tokio::time::Instant;
 use tonic::transport::Channel;
 use tonic::transport::Endpoint;
 
-pub static UDS_DAEMON_FILENAME: &str = "buckd.uds";
+pub static UDS_DAEMON_FILENAME: &str = "yakd.uds";
 
 #[cfg(unix)]
 pub async fn get_channel_uds(

@@ -157,11 +157,11 @@ pub(crate) fn analysis_actions_methods_run(methods: &mut MethodsBuilder) {
     ///   filtering. Include fingerprints for nested files explicitly; they are not
     ///   discovered through command arguments.
     /// * `allow_offline_output_cache`: enables caching of this action's outputs for offline builds (default: `false`)
-    ///     * When `true`, action outputs are cached during trace builds (via `buck2 debug trace-io`)
+    ///     * When `true`, action outputs are cached during trace builds (via `yak debug trace-io`)
     ///       and restored during offline builds without re-executing the action
     ///     * Intended for actions that read from the network (e.g., downloads, remote artifact fetches)
     ///       which cannot execute in offline build environments where network access is restricted
-    ///     * During trace builds: outputs are copied to `buck-out/offline-cache/` after successful execution
+    ///     * During trace builds: outputs are copied to `yak-out/offline-cache/` after successful execution
     ///     * During offline builds: if all outputs exist in offline cache, they are restored without
     ///       running the action; otherwise the action executes normally (graceful fallback)
     ///     * Requires `buck2.use_network_action_output_cache=true` config to take effect

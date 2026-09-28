@@ -17,7 +17,7 @@ from e2e_util.api.buck import Buck
 from e2e_util.api.buck_result import BuildResult
 from e2e_util.buck_workspace import buck_test, env
 
-# The fixture's `.buckconfig` sets two `DaemonStartupConfig`s:
+# The fixture's `.yakconfig` sets two `DaemonStartupConfig`s:
 # `buck2_hydration.enable_paging` (pagable DICE storage on disk) and
 # `buck2_hydration.page_out_on_idle` (page the graph out when the daemon goes idle).
 
@@ -102,12 +102,12 @@ def _target_output(result: BuildResult, target: str) -> str:
 
 
 def _disable_idle_page_out(buck: Buck) -> None:
-    # Through the settings layer: the fixture's `.buckconfig` sets
+    # Through the settings layer: the fixture's `.yakconfig` sets
     # `page_out_on_idle = true` as a project config, which outranks the external
     # config `extra_buck_config` writes - but settings outrank both, and
     # `page_out_on_idle` only falls back to buckconfig when settings leave it
     # unset. `enable_paging` stays unset here so the fixture still provides it.
-    (buck.get_settings_home_dir() / ".bucksettings.local.toml").write_text(
+    (buck.get_settings_home_dir() / ".yaksettings.local.toml").write_text(
         "[hydration]\npage_out_on_idle = false\n"
     )
 
@@ -128,7 +128,7 @@ async def _wait_for_page_out_idle(buck: Buck) -> int:
 
 @buck_test(data_dir="paging", write_invocation_record=True)
 async def test_incremental_build_after_page_out(buck: Buck) -> None:
-    # Incremental builds must stay correct after an explicit `buck2 debug
+    # Incremental builds must stay correct after an explicit `yak debug
     # hydration page-out`, relying on on-demand page-in during the build. Page-in
     # is measured per command via `page_in_count` in the invocation record.
     #
@@ -136,7 +136,7 @@ async def test_incremental_build_after_page_out(buck: Buck) -> None:
     # storage. Garbage-collecting them is future work (reference counting).
     #
     # Pagable storage is set up by `buck2_hydration.enable_paging = true` in the
-    # fixture `.buckconfig` (a `DaemonStartupConfig`).
+    # fixture `.yakconfig` (a `DaemonStartupConfig`).
     (buck.cwd / "src.txt").write_text("content-0\n")
     assert _output(await _build(buck)) == "content-0\n"
 

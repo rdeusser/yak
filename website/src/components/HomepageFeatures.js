@@ -30,7 +30,7 @@ const FeatureList = [
     description: (
       <>
         Buck2 rules are hermetic by default. Missing dependencies are errors.
-        These restrictions apply to both the user-written <code>BUCK</code> files and the language rules.
+        These restrictions apply to both the user-written <code>YAK</code> files and the language rules.
         Buck2 gives the right result more reliably.
       </>
     ),

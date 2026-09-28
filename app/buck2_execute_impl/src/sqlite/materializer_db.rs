@@ -33,7 +33,7 @@ use crate::sqlite::tables::materializer_state_table::MaterializerStateSqliteTabl
 /// PLEASE bump this version if you are making a breaking change to the
 /// materializer state sqlite db schema! If you forget to bump this version,
 /// then you can fix forward by bumping the `buck2.sqlite_materializer_state_version`
-/// buckconfig in the project root's .buckconfig.
+/// buckconfig in the project root's .yakconfig.
 pub const MATERIALIZER_DB_SCHEMA_VERSION: u64 = 9;
 
 #[derive(Debug)]
@@ -85,7 +85,7 @@ impl SqliteDb for MaterializerStateSqliteDb {
 impl MaterializerStateSqliteDb {
     /// Given path to the sqlite DB, attempts to read `MaterializerState` from the DB. If we encounter
     /// any failure along the way, such as if the DB path does not exist, the sqlite read fails,
-    /// or the DB has a different set of versions than the versions this buck2 expects, we
+    /// or the DB has a different set of versions than the versions this yak expects, we
     /// throw away the existing DB and initialize a new DB. Returns (1) the connected sqlite DB and
     /// (2) the `MaterializerState` if loading was successful or the load error.
     /// The `Result<MaterializerState>` captures any failure encountered when attempting to load
@@ -176,7 +176,7 @@ pub(crate) fn testing_materializer_state_sqlite_db(
 )> {
     MaterializerStateSqliteDb::initialize_materializer_sqlite_db(
         fs.resolve(ProjectRelativePath::unchecked_new(
-            "buck-out/v2/cache/materializer_state",
+            "yak-out/v2/cache/materializer_state",
         )),
         versions,
         metadata,

@@ -25,7 +25,7 @@ def create_compilation_database_entry(directory, buildfile_folder, argsfiles, ac
     # it as an actual list, so we have to employ this unfortunate hack of stripping the brackets,
     # splitting on comma operator, and then stripping spaces from each entry to make an actual
     # list.  Hopefully this doesn't fail in any weird edge cases, but it seems to be the best we
-    # can do until buck2 upstream actually stores a Starlark list as the value of this attribute.
+    # can do until yak upstream actually stores a Starlark list as the value of this attribute.
     cmd = action.attrs.cmd.value()
     cmd = cmd.strip("[]").split(",")
     cmd = list(map(lambda x: x.strip(), cmd))
@@ -39,7 +39,7 @@ def create_compilation_database_entry(directory, buildfile_folder, argsfiles, ac
     identifier = paths.basename(argsfile.replace("\\", "/"))
 
     # Get the path of the source file relative to the project root by appending the identifier
-    # to the directory of the BUCK file.
+    # to the directory of the YAK file.
     project_rel_path = paths.join(buildfile_folder, action.attrs.identifier.value())
 
     # Using the previously computed list of argfiles referenced by this target, find the one
@@ -67,8 +67,8 @@ def gen_compilation_database_impl(ctx):
         target_actions = list(aquery.all_actions(target.label))
 
         # The individual compilation actions only identify the source files relative to where
-        # the BUCK file is.  So to build a path relative to the root of the project, we need
-        # to get the BUCK file path and append the source file path to it.
+        # the YAK file is.  So to build a path relative to the root of the project, we need
+        # to get the YAK file path and append the source file path to it.
         buildfile_path = ctx.fs.project_rel_path(target.buildfile_path)
         buildfile_folder = paths.dirname(buildfile_path)
 
@@ -77,7 +77,7 @@ def gen_compilation_database_impl(ctx):
         #    1. It has compilations
         #    2. It writes an argsfile.
         #
-        # The second requirement is necessary because the argsfile is where buck2 includes
+        # The second requirement is necessary because the argsfile is where yak includes
         # important command line arguments such as preprocessor definitions and include
         # paths.  If both conditions are not satisfied, we should skip this target because
         # either it doesn't have source files anyway, or we don't understand how to write

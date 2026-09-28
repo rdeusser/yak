@@ -269,7 +269,7 @@ class TargetsResult(BuckResult):
 
     def get_target_to_build_output(self) -> Dict[str, str]:
         """
-        Returns a dict of the target and its output file in buck-out
+        Returns a dict of the target and its output file in yak-out
         """
         target_to_output = {}
         assert (
@@ -295,8 +295,8 @@ class BuildResult(BuckResult):
 
     def get_target_to_build_output(self) -> Dict[str, str]:
         """
-        Returns a dict of the build target and file created in buck-out
-        Prints to build target followed by path to buck-out file to stdout
+        Returns a dict of the build target and file created in yak-out
+        Prints to build target followed by path to yak-out file to stdout
         """
         target_to_output = {}
         assert (
@@ -337,7 +337,7 @@ class BuildResult(BuckResult):
         Returns a dictionary of action key to number of cache misses.
         Populates this dictionary by going through stdout looking for logs of compute calls.
 
-        Currently, there is no unique identifier for the action in buck2, so the action key
+        Currently, there is no unique identifier for the action in yak, so the action key
         is just a tuple of configured target name and analysis id.
         """
         action_to_cache_miss_count: Dict[str, int] = defaultdict(int)

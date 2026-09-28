@@ -161,11 +161,11 @@ pub struct SqliteTables<T: SqliteTable> {
     pub domain_table: T,
     /// Table for holding any metadata used to check version match. When loading
     /// from an existing db, we check if the versions from this table match the
-    /// versions this buck2 binary expects. If the versions don't match, we throw
+    /// versions this yak binary expects. If the versions don't match, we throw
     /// away the entire db and initialize a new one. If versions do match, then
     /// we try to read all state from the domain table.
     pub versions_table: KeyValueSqliteTable,
-    /// Table for logging metadata associated with the buck2 that created the db.
+    /// Table for logging metadata associated with the yak that created the db.
     pub created_by_table: KeyValueSqliteTable,
 }
 

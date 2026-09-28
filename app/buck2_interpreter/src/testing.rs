@@ -12,7 +12,7 @@ use pagable::Pagable;
 use starlark::values::FrozenHeapName;
 use strong_hash::StrongHash;
 
-/// Testing sentinel for buck2 test code.
+/// Testing sentinel for yak test code.
 /// Used as `FrozenHeapName::User(Box::new(Buck2TestHeapName))`.
 #[derive(Clone, derive_more::Display, Debug, Hash, StrongHash, Pagable)]
 #[pagable::pagable_typetag(starlark::values::UserHeapName)]

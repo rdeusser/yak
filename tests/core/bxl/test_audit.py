@@ -25,7 +25,7 @@ async def test_bxl_audit_output(buck: Buck) -> None:
         buck.bxl(
             "//audit.bxl:audit_output_invalid_path",
         ),
-        stderr_regex="Malformed buck-out path",
+        stderr_regex="Malformed yak-out path",
     )
 
 

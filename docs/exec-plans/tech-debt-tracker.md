@@ -7,20 +7,21 @@ Counts and results are from 2026-09-26 unless an entry gives another date. Comma
 
 ### The Buck build fails on macOS
 
-On macOS, `target/debug/buck2 build //:buck2` fails at `//third-party/rust:objc2-0.6`.
+On macOS, `target/debug/yak build //:yak` fails at `//third-party/rust:objc2-0.6`.
 `objc2` 0.6.4 reads `CARGO_PKG_VERSION` at compile time, and `third-party/rust/fixups/objc2/fixups.toml` does not exist, so the rule that `reindeer` generates does not set the variable.
 `reindeer buckify` also warns that eight other crates have build scripts but no fixups (`alloca`, `bindgen`, `clang-sys`, `constant_time_eq`, `icu_locale_fallback_data`, `icu_segmenter_data`, `psm`, `stacker`).
 
 The macOS failure is from 2026-09-27, when the third-party definitions still lived in `shim/third-party/rust`. The build stopped at that failure, so later failures are unknown.
-On Linux on 2026-09-28, `./bootstrap/reindeer --third-party-dir third-party/rust buckify` followed by `target/debug/buck2 build //:buck2` succeeded.
+On Linux on 2026-09-28, after the rename to yak, `./bootstrap/reindeer --third-party-dir third-party/rust buckify` followed by `target/debug/yak build //:yak` succeeded.
 
-Remove this entry when `buck2 build //:buck2` succeeds on macOS after a fresh `buckify`.
+Remove this entry when `yak build //:yak` succeeds on macOS after a fresh `buckify`.
 
 ### The integration tests have not passed in CI
 
 `.github/workflows/integration-tests.yml` runs `pytest tests` on Linux against a debug build, and no run of it has completed.
 On 2026-09-28, the whole suite ran on Linux under Python 3.12 as a user other than root, with `ps` and `lldb` installed and the daemon in a cgroup below the root of its cgroup namespace.
 That run gave 1726 passed, 230 skipped, 3 expected failures, and no other failures.
+After the rename to yak, the same setup gave 1763 passed, 190 skipped, and 3 expected failures, with `BUCK2_COMPLETION_VERIFY` set so the completion tests ran.
 The skipped tests need a Remote Execution backend, cgroup delegation, helper binaries, Go, or Watchman. The repository has no Remote Execution backend to test against.
 A separate run with Go 1.26, `clang`, and `lld` passed the 30 tests in `tests/prelude/test_prelude_rules.py`, which include the 19 Go tests.
 Whether the GitHub runner puts the daemon in a cgroup below the root of its cgroup namespace is unverified.
@@ -29,7 +30,7 @@ Remove this entry when the workflow passes.
 
 ### The crate dependency rules run only in the Buck build
 
-`//app_dep_graph_rules:test_buck2_dep_graph` checks the rules in `app_dep_graph_rules/rules.bzl` during analysis, and `buck2 build //app_dep_graph_rules:test_buck2_dep_graph` succeeded on Linux on 2026-09-28.
+`//app_dep_graph_rules:test_buck2_dep_graph` checks the rules in `app_dep_graph_rules/rules.bzl` during analysis, and `yak build //app_dep_graph_rules:test_buck2_dep_graph` succeeded on Linux on 2026-09-28.
 CI runs no Buck build, so a change that breaks a rule passes CI.
 
 Remove this entry when CI runs the check.
@@ -54,13 +55,13 @@ Remove this entry when each build reads lint levels from one source, or when a c
 
 `[patch.crates-io]` in `Cargo.toml` patches `bindgen`, which no crate in the Cargo workspace uses.
 
-`cargo build --bin=buck2` prints ``patch `bindgen v0.72.1 (...)` was not used in the crate graph``.
+`cargo build --bin=yak` prints ``patch `bindgen v0.72.1 (...)` was not used in the crate graph``.
 
 Remove this entry when the warning no longer appears.
 
-### `buck2 build //...` fails in third-party crates
+### `yak build //...` fails in third-party crates
 
-`//...` includes every crate that `reindeer buckify` generates in `third-party/rust/BUCK`, and some of them fail to build on Linux.
+`//...` includes every crate that `reindeer buckify` generates in `third-party/rust/YAK`, and some of them fail to build on Linux.
 On 2026-09-28, `buck2 build //third-party/... --keep-going` failed in 10 targets:
 
 - The eight `protoc-bin-vendored` platform crates read `CARGO_MANIFEST_DIR` at compile time, and they have no fixups.
@@ -70,13 +71,14 @@ On 2026-09-28, `buck2 build //third-party/... --keep-going` failed in 10 targets
 `--keep-going` skips the crates that depend on these targets, and those crates can fail too.
 On Linux, `buck2 build` of the 265 targets outside `third-party/rust/` fails only in the two targets that the next entry describes, so none of those targets needs these crates. The Buck build takes `protoc` from `third-party/proto/`.
 
-Remove this entry when `buck2 build //...` succeeds, or when the documentation names the target pattern that the Buck build supports.
+Remove this entry when `yak build //...` succeeds, or when the documentation names the target pattern that the Buck build supports.
 
 ### `//shed/completion_verify` needs `dnf`
 
 `download_rpm` in `shed/rpm_download/packages.bzl` runs `dnf download` and `rpm2archive`, so `//shed/completion_verify/packages:zsh` and `//shed/completion_verify/packages:fish` build only where those tools exist, such as on Fedora.
 On Linux, `//shed/completion_verify:completion_verify` takes both packages as resources.
 The completion tests need the binary through `BUCK2_COMPLETION_VERIFY`, and they skip without it (`tests/README.md`).
+On Linux on 2026-09-28, a `completion_verify` built with Cargo from `shed/completion_verify/src/` ran them. Its `completion_verify.resources.json` pointed at directories that link the Debian `fish` and `zsh` into the layout of the RPMs.
 
 Remove this entry when the completion packages build without `dnf`.
 
@@ -86,6 +88,16 @@ Remove this entry when the completion packages build without `dnf`.
 The test needs `MINIPERF` and `THREE_BILLION_INSTRUCTIONS` in its environment and the `anyhow`, `bincode`, `tempfile`, and `buck2_miniperf_proto` crates. Meta's `rust_library` macro made a test target from `test_deps` and `test_env`, and the macros in this repository never did.
 
 Remove this entry when a Buck or Cargo target runs the test.
+
+### `test_perf_thread_instruction_counter` fails where perf events are denied
+
+`per_thread_instruction_counter::tests::test_perf_thread_instruction_counter` in `app/buck2_util/src/per_thread_instruction_counter.rs` unwraps the result of `PerThreadInstructionCounter::init()`.
+Where the host denies `perf_event_open`, `init()` returns `Operation not permitted`, and the test panics.
+The test returns early when `GITHUB_ACTIONS` is set, because it fails with permission denied on GitHub's runners.
+The build file interpreter continues without the counter when `init()` fails (`app/buck2_interpreter_for_build/src/interpreter/interpreter_for_dir.rs`).
+On Linux on 2026-09-28, the test failed this way in a container, which stopped `python3 test.py`.
+
+Remove this entry when the test skips or passes wherever `perf_event_open` is denied.
 
 ### The documentation site build is unverified
 
@@ -105,41 +117,42 @@ Remove this entry when the site has a search box.
 `prelude//toolchains/android/src/com/facebook/buck/android/aapt:merge_android_resource_sources` and `prelude//toolchains/android/src/com/facebook/buck/android/proguard:translator` fail to compile, and `prelude//toolchains/android/third-party:manifest-merger_jar` fails to download version 31.7.3.
 All three fail the same way at `903bfd7a61`.
 
-Remove this entry when `buck2 build prelude//toolchains/android/...` succeeds in a project that vendors the prelude.
+Remove this entry when `yak build prelude//toolchains/android/...` succeeds in a project that vendors the prelude.
 
 ### JVM tests fail in their JUnit reports
 
-`buck2 test` reports these failures as passes (see "`buck2 test` reports failing JVM tests as passing").
+`yak test` reports these failures as passes (see "`yak test` reports failing JVM tests as passing").
 Results are from 2026-09-28 at `903bfd7a61`.
 
-- `prelude/toolchains/android/third-party/BUCK` pins Byte Buddy 1.15.10, which Mockito 5.20.0 uses to mock classes, and ASM 9.7. Neither reads Java 26 class files. Under a Java 26 JDK, the tests that mock classes fail with `Java 26 (70) is not supported by the current version of Byte Buddy`, and 26 tests in `ClassReferenceTrackerTest` fail with `Unsupported class file major version 70`.
+- `prelude/toolchains/android/third-party/YAK` pins Byte Buddy 1.15.10, which Mockito 5.20.0 uses to mock classes, and ASM 9.7. Neither reads Java 26 class files. Under a Java 26 JDK, the tests that mock classes fail with `Java 26 (70) is not supported by the current version of Byte Buddy`, and 26 tests in `ClassReferenceTrackerTest` fail with `Unsupported class file major version 70`.
 - The tests under `prelude//toolchains/android/test/com/facebook/buck/jvm/kotlin/...` that mock classes pass when the test JVM runs with `-Dnet.bytebuddy.experimental=true`.
-- Six tests in `StubJarTest` fail with `NoClassDefFoundError: org/apache/commons/io/input/CountingInputStream`, and the third-party `BUCK` file defines no Commons IO jar.
+- Six tests in `StubJarTest` fail with `NoClassDefFoundError: org/apache/commons/io/input/CountingInputStream`, and the third-party `YAK` file defines no Commons IO jar.
 - Two tests in `DescriptorFactoryTest` and two in `SignatureFactoryTest` fail with an `InvocationTargetException` whose cause is unexamined.
 
-Remove this entry when the JUnit reports of `buck2 test prelude//toolchains/android/test/...` show no failures.
+Remove this entry when the JUnit reports of `yak test prelude//toolchains/android/test/...` show no failures.
 
 ### Examples that fail to load or build
 
 - `examples/toolchains/cxx_zig_toolchain` fails to build with `error: unable to parse command line parameters: NestedResponseFile`. Zig 0.11.0 rejects the nested response files that the prelude's compile argument file uses. `.github/workflows/build-and-examples.yml` sets `continue-on-error` for it.
-- In `examples/android/demoapp`, `buck2 cquery 'deps(//app/...)'` fails at `prelude//toolchains/android/tools/protobuf:gen-grpc` because the target is configured for the `unspecified_exec` platform.
-- In `examples/with_prelude`, `buck2 targets //...` fails in `root//third-party/haskell:rts` while coercing `cxx_header_dirs`.
-- In `examples/bxl_tutorial`, `buck2 targets //...` fails while evaluating `prelude//erlang/erlang_otp_application.bzl`, because the project defines no `toolchains` cell.
-- `examples/with_prelude/android` is a separate project and also part of `examples/with_prelude`'s root cell, so a `buck-out` that the nested project leaves is loaded by the parent's `//...`.
+- In `examples/android/demoapp`, `yak cquery 'deps(//app/...)'` fails at `prelude//toolchains/android/tools/protobuf:gen-grpc` because the target is configured for the `unspecified_exec` platform.
+- In `examples/with_prelude`, `yak targets //...` fails in `root//third-party/haskell:rts` while coercing `cxx_header_dirs`.
+- In `examples/bxl_tutorial`, `yak targets //...` fails while evaluating `prelude//erlang/erlang_otp_application.bzl`, because the project defines no `toolchains` cell.
+- `examples/with_prelude/android` is a separate project and also part of `examples/with_prelude`'s root cell, so a `yak-out` that the nested project leaves is loaded by the parent's `//...`.
+- `examples/no_prelude/toolchains/go_toolchain.bzl` downloads the `linux-amd64` Go on every Linux host, so `yak build //...` in `examples/no_prelude` fails at `root//go:main` on Linux on ARM. It failed the same way before the rename to yak.
 
-All five fail the same way at `903bfd7a61`.
+The first five fail the same way at `903bfd7a61`.
 
 Remove each item when its command succeeds.
 
 ## Defects
 
-### `buck2 test` reports failing JVM tests as passing
+### `yak test` reports failing JVM tests as passing
 
 `BaseRunner.runAndExit` in `prelude/toolchains/android/src/com/facebook/buck/testrunner/BaseRunner.java` exits 0 whatever the outcome of the tests, and it records failures only in its report.
 The built-in test runner decides a test's result from its exit code, so a `java_test` whose test methods fail is reported as a pass.
 Meta's Tpx test runner read the report instead, and `TestResultsOutputSender` still writes the Tpx result protocol when Tpx's environment variable is set.
 
-Remove this entry when a `java_test` with a failing assertion fails under `buck2 test`.
+Remove this entry when a `java_test` with a failing assertion fails under `yak test`.
 
 ### `apple_test` cannot run under the built-in test runner
 
@@ -171,7 +184,7 @@ When daemon initialization fails, the client waits for the whole startup timeout
 
 Remove this entry when the client reports an initialization failure as soon as the daemon exits.
 
-### `buck2 install` seemingly leaves the installer running after a failed build
+### `yak install` seemingly leaves the installer running after a failed build
 
 The installer starts in the `try_compute2` call in `app/buck2_server_commands/src/install.rs`, and nothing stops it when the build side fails, such as on a validation failure.
 
@@ -186,15 +199,16 @@ Remove this entry when those tests pass without the markers.
 
 ### Local actions outlive a killed daemon
 
-`buck2 kill` leaves the daemon's running local actions behind on macOS and Linux.
+`yak kill` leaves the daemon's running local actions behind on macOS and Linux.
 Runs of `tests/core/daemon/test_concurrency.py` and `tests/core/daemon/test_daemon.py` left `python3` processes from test actions running on both systems, 42 of them on macOS.
+On Linux on 2026-09-28, `tests/core/daemon/test_concurrency.py` left 13 such processes before the rename to yak, and the whole suite left 13 after it.
 
 Remove this entry when killing the daemon stops its local actions.
 
 ### Apple rules select on configuration the prelude does not define
 
 The Apple rules select on `config//os/sdk/apple/constraints:*`, `config//version:*`, `config//runtime/constraints:maccatalyst`, `config//runtime/constraints:runtime`, `config//cpu/constraints:universal`, and `config//cpu/constraints:universal-enabled`.
-`buck2 init` aliases `config` to `prelude`, and the prelude has no `os/sdk/apple/constraints` or `version` package, and its `runtime/constraints` and `cpu/constraints` packages lack those targets.
+`yak init` aliases `config` to `prelude`, and the prelude has no `os/sdk/apple/constraints` or `version` package, and its `runtime/constraints` and `cpu/constraints` packages lack those targets.
 `CONSTRAINT_PACKAGE` in `prelude/platforms/apple/build_mode.bzl` names `prelude//platforms/apple/constraints`, which does not exist, and `APPLE_PLATFORMS_MAP` in `prelude/platforms/apple/platforms_map.bzl` is empty.
 All of these are missing at `903bfd7a61` too.
 
@@ -260,6 +274,6 @@ Remove this entry when the tools detect remote execution in a way other backends
 ### `gen_bytecode_bundle.py`
 
 `prelude/python/tools/gen_bytecode_bundle.py` writes bytecode bundles for a `__par__.bytecode_bundle` loader, which `prelude/python/runtime/__par__/` does not contain.
-`prelude/python/tools/BUCK` exports the script and gives it to the `tool_tests` target, and only `prelude/python/tools/tests/gen_bytecode_bundle_test.py` uses it.
+`prelude/python/tools/YAK` exports the script and gives it to the `tool_tests` target, and only `prelude/python/tools/tests/gen_bytecode_bundle_test.py` uses it.
 
 Remove this entry when the script and its test are deleted, or a rule runs the script.

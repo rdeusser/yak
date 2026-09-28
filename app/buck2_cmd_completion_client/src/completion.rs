@@ -15,7 +15,7 @@ use clap::Command;
 use clap::ValueEnum;
 use clap_complete::generate;
 
-// This file is the entry point for the target-completing delegate for buck2
+// This file is the entry point for the target-completing delegate for yak
 // command line completions. Its completion commands are called from shell
 // scripts which perform the actual completion logic. These shell scripts
 // ignore non-zero return values and allow stderr to pass through to the
@@ -37,10 +37,10 @@ enum Shell {
 ///
 /// For a one-time setup, run the one of the following commands appropriate for the shell you're
 /// using:
-/// - `source <(buck2 completion bash)`
-/// - `source <(buck2 completion zsh)`
-/// - `source (buck2 completion fish | psub)`
-/// - `buck2 completion powershell | Out-String | Invoke-Expression`
+/// - `source <(yak completion bash)`
+/// - `source <(yak completion zsh)`
+/// - `source (yak completion fish | psub)`
+/// - `yak completion powershell | Out-String | Invoke-Expression`
 pub struct CompletionCommand {
     #[clap(
         value_enum,

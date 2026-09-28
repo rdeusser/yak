@@ -7,7 +7,7 @@ title: Build Rule
 
 A _build rule_ is a procedure for producing output files from a set of input
 files in the context of a specified build configuration. Build rules are
-specified in [build files](build_file.md)—typically named BUCK.
+specified in [build files](build_file.md)—typically named YAK.
 
 > **Note:** A build rule must explicitly specify, in its arguments, all of its
 > required inputs in order for Buck2 to be able to build the rule's output in a
@@ -43,9 +43,9 @@ To support specifying these files:
 
 In Buck2, source files are organized within _packages_:
 
-- A **package** is defined by a BUCK file and includes:
-  - The directory containing that BUCK file
-  - All subdirectories that don't themselves contain BUCK files
+- A **package** is defined by a YAK file and includes:
+  - The directory containing that YAK file
+  - All subdirectories that don't themselves contain YAK files
 - For more details on packages, see the [Key Concepts](key_concepts.md) topic
 
 #### Package Access Rules
@@ -53,7 +53,7 @@ In Buck2, source files are organized within _packages_:
 Buck2 enforces these rules regarding source file access:
 
 1. **Basic Rule**: A build rule can only use source files from its own package
-   - A rule in a BUCK file cannot specify source files from outside its package
+   - A rule in a YAK file cannot specify source files from outside its package
 
 2. **Header File Exception**: A rule can access header files from another
    package if:

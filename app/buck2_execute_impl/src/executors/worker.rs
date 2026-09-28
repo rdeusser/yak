@@ -199,7 +199,7 @@ fn spawn_via_forkserver(
 
         // Socket is created by worker so won't exist if initialization fails.
         if fs_util::try_exists(&socket_path)? {
-            // TODO(ctolliday) delete directory (after logs are moved to buck-out)
+            // TODO(ctolliday) delete directory (after logs are moved to yak-out)
             fs_util::remove_file(&socket_path).categorize_internal()?;
         }
         res
@@ -245,7 +245,7 @@ async fn spawn_worker(
             worker_dir
         )));
     }
-    // TODO(ctolliday) put these in buck-out/<iso>/workers and only use /tmp dir for sockets
+    // TODO(ctolliday) put these in yak-out/<iso>/workers and only use /tmp dir for sockets
     let std_redirects = StdRedirectPaths {
         stdout: worker_dir.join(FileName::unchecked_new("stdout")),
         stderr: worker_dir.join(FileName::unchecked_new("stderr")),
@@ -608,11 +608,11 @@ fn env_entries(_env: &[(OsString, OsString)]) -> Vec<EnvironmentEntry> {
     unreachable!("worker should not exist off unix")
 }
 
-/// How long buck2 waits past a command's timeout before enforcing it itself.
+/// How long yak waits past a command's timeout before enforcing it itself.
 ///
 /// The worker receives the timeout unchanged and is expected to enforce it:
 /// killing the command, collecting its stderr and answering with
-/// `timed_out_after_s`. That response is the better diagnostic, so buck2's own
+/// `timed_out_after_s`. That response is the better diagnostic, so yak's own
 /// backstop deliberately comes second and only fires when the worker does not
 /// answer at all. Short because it only has to cover a kill and a reply, not
 /// the command itself.
@@ -913,7 +913,7 @@ mod worker_handle_tests {
     use super::tests::start_server;
 
     /// A worker that accepts the request and then never answers — the shape that
-    /// pins a buck2 command for the whole of its CI step.
+    /// pins a yak command for the whole of its CI step.
     struct HangingWorker;
 
     #[tonic::async_trait]
@@ -961,7 +961,7 @@ mod worker_handle_tests {
     async fn test_exec_cmd_returns_cancelled_when_liveliness_expires() {
         // `--overall-timeout` firing (or any cancellation) must get the command
         // back. Without the liveliness arm this call never returns and the whole
-        // buck2 command hangs until its caller SIGKILLs it.
+        // yak command hangs until its caller SIGKILLs it.
         let (client, _server) = start_server(HangingWorker).await;
         let (handle, _child_alive) = worker_handle(client);
 
@@ -1010,7 +1010,7 @@ mod worker_handle_tests {
 
     #[tokio::test(start_paused = true)]
     async fn test_exec_cmd_times_out_when_worker_never_responds() {
-        // `timeout_s` is only advisory to the worker, so buck2 has to enforce it
+        // `timeout_s` is only advisory to the worker, so yak has to enforce it
         // too — otherwise a worker that never replies (e.g. one blocked acquiring
         // a device) outlives every timeout in the stack, including the test executor's
         // listing timeout that should have ended the command minutes earlier.
@@ -1064,9 +1064,9 @@ mod worker_handle_tests {
 
     #[tokio::test]
     async fn test_exec_cmd_sends_the_worker_the_configured_timeout() {
-        // The worker enforces the timeout it is given, and buck2's backstop only
+        // The worker enforces the timeout it is given, and yak's backstop only
         // covers the case where it does not answer at all. So the worker has to see
-        // the configured value exactly -- buck2 buys itself room by waiting longer,
+        // the configured value exactly -- yak buys itself room by waiting longer,
         // not by asking for less.
         let seen_timeout_s = Arc::new(AtomicU64::new(0));
         let (client, _server) = start_server(TimeoutRecordingWorker {

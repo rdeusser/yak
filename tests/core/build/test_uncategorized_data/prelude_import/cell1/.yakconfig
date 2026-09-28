@@ -1,0 +1,5 @@
+[buildfile]
+name=YAK.fixture
+
+[test]
+config = cell1

@@ -8,7 +8,7 @@
  * above-listed licenses.
  */
 
-//! Measure DICE per-key memory cost. Just `buck2 run` it and read the
+//! Measure DICE per-key memory cost. Just `yak run` it and read the
 //! report at the bottom. By default the output is a compact progress list
 //! plus the final report; set `MEMORY_BY_KEY_VERBOSE=1` in the environment
 //! to also dump the per-shadow / per-copy measurement traces underneath

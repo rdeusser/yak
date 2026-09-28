@@ -7,7 +7,7 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-# Run a buck2 command in the background, poll the daemon's VmRSS every
+# Run a yak command in the background, poll the daemon's VmRSS every
 # few seconds, and trigger `debug heap-dump` whenever a new high-water
 # mark is reached. The last dump approximates the peak heap profile.
 # After the command exits, sleep briefly and take a final "retained"

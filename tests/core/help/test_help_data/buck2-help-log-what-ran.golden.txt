@@ -19,10 +19,10 @@ To reproduce an action that ran on RE, download the action and its inputs by dig
 for your remote execution service. The digest is of the form `hash:size`.
 
 To reproduce an action that ran locally, make sure your working directory is the project root (if
-unsure, use `buck2 root --kind project` to find it), then run the command. The command is already
+unsure, use `yak root --kind project` to find it), then run the command. The command is already
 shell-quoted.
 
-Usage: buck2 log what-ran [OPTIONS] [PATH]
+Usage: yak log what-ran [OPTIONS] [PATH]
 
 Arguments:
   [PATH]
@@ -73,8 +73,8 @@ Options:
           Show only commands that failed
 
       --incomplete
-          Show only commands that were not completed. That is command were running if buck2 process
-          was killed, or command currently running if buck2 is running build now
+          Show only commands that were not completed. That is command were running if yak process
+          was killed, or command currently running if yak is running build now
 
       --show-std-err
           Show also std_err from commands that are run. If the command fails before completing, we
@@ -90,9 +90,8 @@ Options:
 
 Universal Options:
       --isolation-dir <ISOLATION_DIR>
-          The name of the directory that Buck2 creates within buck-out for writing outputs and
-          daemon information. If one is not provided, Buck2 creates a directory with the default
-          name.
+          The name of the directory that Buck2 creates within yak-out for writing outputs and daemon
+          information. If one is not provided, Buck2 creates a directory with the default name.
 
           Instances of Buck2 share a daemon if and only if their isolation directory is identical.
           The isolation directory also influences the output paths provided by Buck2, and as a

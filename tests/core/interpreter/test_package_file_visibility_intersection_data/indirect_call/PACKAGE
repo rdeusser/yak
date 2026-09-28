@@ -1,5 +1,5 @@
 # `enforce_visibility_intersection()` has to be called from the PACKAGE file
-# itself. `setup_cap` calls it from a `.bzl` file, which buck2 rejects with an
+# itself. `setup_cap` calls it from a `.bzl` file, which yak rejects with an
 # error that points at the call in `helper.bzl`.
 
 load(":helper.bzl", "setup_cap")

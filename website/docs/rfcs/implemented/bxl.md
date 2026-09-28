@@ -7,9 +7,9 @@ sequence of operations that introspect, build, and extend the build graph.
 
 These are essentially custom buck operations, defined in Starlark, that still
 follow the constraints of Buck2, which will enable the same level of
-incrementality and caching as native buck2 operations. Furthermore, bxl will
+incrementality and caching as native yak operations. Furthermore, bxl will
 have subscriptions enabled in the future, where based on the incrementality
-tracking, buck2 can provide "updated" bxl executions when its known that its
+tracking, yak can provide "updated" bxl executions when its known that its
 dependencies change, and even when generated sources need to be regenerated.
 
 The following proposes a basic set of bxl api and building blocks that are
@@ -49,10 +49,10 @@ to output the project file. Project generation also performs directory listings
 that buck2’s dice already performs and caches (I think, need to confirm). Bxl
 poses the interesting possibility that we can expose a limited set of IO
 operations that are tracked by dice so bxl can access the same cached file
-operations as rest of buck2. Android project generation currently doesn’t write
-project files to buck-out, which prevents it from using buck2 actions. It will
+operations as rest of yak. Android project generation currently doesn’t write
+project files to yak-out, which prevents it from using yak actions. It will
 have to rely on an external script to process the graph information printed by
-buck and write the actual project files. If it moves to `buck-out` based, then
+buck and write the actual project files. If it moves to `yak-out` based, then
 it can take advantage of creating actions directly using the graph information
 processed, and potentially take advantage of incremental actions api to avoid
 writing the entire graph on each subsequent update.
@@ -63,7 +63,7 @@ iOS is currently being implemented as a series of queries that are aggregated by
 an external python script, that then invokes builds of subtargets. The same can
 be achieved in bxl, but with the entire sequence being cacheable and
 subscribable so that when the graph is updated, or even when generated files
-need updating, buck2 can automatically push the updates. However, it is
+need updating, yak can automatically push the updates. However, it is
 uncertain whether xcode itself can make use of push updates.
 
 ### Visual Studio Project
@@ -78,7 +78,7 @@ move project generation directly into bxl.
 ## Goals
 
 From the above use cases, BXL should offer a simple Starlark API that allows
-easy introspection of the buck2 graph at unconfigured, configured, providers,
+easy introspection of the yak graph at unconfigured, configured, providers,
 and actions stage, maintaining incremental behaviour of the BXL evaluation
 itself.
 
@@ -117,10 +117,10 @@ func2 = bxl_main(
 
 ```
 
-To invoke buck2 for that bxl, we can have the command line as follows.
+To invoke yak for that bxl, we can have the command line as follows.
 
 ```shell
-buck2 bxl sample.bxl::func1 -- --arg1 foo bar baz
+yak bxl sample.bxl::func1 -- --arg1 foo bar baz
 ```
 
 For bxl functions to read the arguments, a similar api to rule attrs is used
@@ -204,7 +204,7 @@ for t in targets:
 
 All computations requested by a bxl function will be treated as inputs. So if a
 bxl function calls uquery, then uses the result to do a cquery, and then a
-build, if buck2 detects that any of the recorded calls to uquery, cquery, and
+build, if yak detects that any of the recorded calls to uquery, cquery, and
 build changes, the entire bxl will be reran, with no early cutoff. The
 computations itself will still be cached via DICE, so no major performance
 issues are expected. However, in the event that a bxl function is

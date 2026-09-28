@@ -6,7 +6,7 @@ repository.workspace = true
 license.workspace = true
 
 [[bin]]
-name = "buck2"
+name = "yak"
 path = "bin/buck2.rs"
 test = false
 

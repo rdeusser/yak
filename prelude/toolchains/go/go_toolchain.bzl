@@ -13,7 +13,7 @@ def _go_toolchain_impl(ctx):
     # That's a breaking change, so we'll need to notify oss users.
     go_distr = ctx.attrs.go_distr[GoDistrInfo]
 
-    # `buck2 run` executes the `go` subtarget on the invoking machine, so it is
+    # `yak run` executes the `go` subtarget on the invoking machine, so it is
     # only offered where the target-configured pair exists; the exec-configured
     # pair is built for wherever build actions run.
     sub_targets = {}
@@ -88,7 +88,7 @@ _go_toolchain = rule(
         "pkg_analyzer": attrs.exec_dep(providers = [RunInfo], default = "prelude//go/tools:pkg_analyzer"),
         "race": attrs.bool(default = False),
         # Target-configured duals of `go_distr` and `go_wrapper` for the `go`
-        # subtarget, which `buck2 run` executes on the invoking machine rather
+        # subtarget, which `yak run` executes on the invoking machine rather
         # than on the execution platform.
         "run_go_distr": attrs.option(attrs.dep(providers = [GoDistrInfo])),
         "run_go_wrapper": attrs.option(attrs.dep(providers = [RunInfo])),
@@ -101,7 +101,7 @@ def go_toolchain(go_distr, go_wrapper = "prelude//go/tools:go_wrapper", run_go =
     Go toolchain backed by a `go_distr`.
 
     Build actions use `go_distr` and `go_wrapper` configured for the execution
-    platform. The `go` subtarget (`buck2 run <toolchain>[go] -- ...`) runs on
+    platform. The `go` subtarget (`yak run <toolchain>[go] -- ...`) runs on
     the invoking machine, so it uses them configured for the target platform.
     `run_go` (a bool or a `select` of bools) opts target platforms out of the
     subtarget, for a `go_distr` that is not compatible with every target

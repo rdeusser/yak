@@ -217,7 +217,7 @@ pub struct ServerCommandContext<'a> {
     _re_connection_handle: ReConnectionHandle,
 
     /// Starlark profiler instrumentation requested throughout the duration of this command. Usually associated with
-    /// the `buck2 profile` command.
+    /// the `yak profile` command.
     pub starlark_profiling_manager: StarlarkProfilingManager,
 
     debugger_handle: Option<BuckStarlarkDebuggerHandle>,

@@ -1,6 +1,6 @@
 # Package-local values
 
-This RFC proposes to extend buck2 Starlark with package-local values.
+This RFC proposes to extend yak Starlark with package-local values.
 
 ## Why
 
@@ -30,7 +30,7 @@ Proposed per-package properties can replace `get_modes` mechanism.
 
 ### `PACKAGE` files
 
-Before evaluating `BUCK` file, buck2 will evaluate all `PACKAGE` files in the
+Before evaluating `YAK` file, yak will evaluate all `PACKAGE` files in the
 same directory and all parent directories. Absent `PACKAGE` files are treated as
 empty files.
 
@@ -42,10 +42,10 @@ requested) should fail with Starlark call stack.
 
 Each `PACKAGE` file is evaluated at most once (like `bzl` file).
 
-`PACKAGE` files may load arbitrary `bzl` files. `BUCK`-specific functions called
+`PACKAGE` files may load arbitrary `bzl` files. `YAK`-specific functions called
 in `bzl` files (like rule functions) are available, but calling functions from
 `PACKAGE` files is an error. This way, `bzl` files are evaluated only once
-regardless of whether they are loaded from `PACKAGE` or `BUCK` file.
+regardless of whether they are loaded from `PACKAGE` or `YAK` file.
 
 ### API
 
@@ -74,17 +74,17 @@ Written values are frozen when `PACKAGE` file evaluation is finished.
 
 Note `write_package_value` symbol exists in `bzl` globals, and it can be called
 from `bzl` file in context of `PACKAGE` evaluation, but calling
-`write_package_file` is an error on context of `BUCK` evaluation.
+`write_package_file` is an error on context of `YAK` evaluation.
 
-Modifying `PACKAGE` file logically invalidates the `BUCK` file of this package,
-and all `PACKAGE` and `BUCK` files of subpackages. However, `BUCK` file
+Modifying `PACKAGE` file logically invalidates the `YAK` file of this package,
+and all `PACKAGE` and `YAK` files of subpackages. However, `YAK` file
 evaluation may track which package-local values were accessed and only
-invalidate `BUCK` files which were potentially affected (similarly to how we do
+invalidate `YAK` files which were potentially affected (similarly to how we do
 it with buckconfigs, with individual properties being projection keys).
 
-#### `BUCK` file API
+#### `YAK` file API
 
-`BUCK` files (and `bzl` files included from `BUCK` files) have a global
+`YAK` files (and `bzl` files included from `YAK` files) have a global
 function:
 
 ```python
@@ -100,7 +100,7 @@ This function is available in `bzl` files, but attempt to call this function in
 context of `PACKAGE` file evaluation results in an error. This restriction can
 be lifted in the future.
 
-Per-package values are **not** accessible as global symbols in `BUCK` files. We
+Per-package values are **not** accessible as global symbols in `YAK` files. We
 may reconsider it in the future.
 
 ### `read_config`

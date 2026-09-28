@@ -149,7 +149,7 @@ fn label_methods(builder: &mut MethodsBuilder) {
     /// Sample usage:
     /// ```text
     /// def _impl_sub_target(ctx):
-    ///     owners = ctx.uquery().owner("bin/TARGETS.fixture")
+    ///     owners = ctx.uquery().owner("bin/YAK.fixture")
     ///     for owner in owners:
     ///         unconfigured_label = owner.label
     ///         ctx.output.print(unconfigured_label.with_sub_target())
@@ -283,7 +283,7 @@ fn configured_label_methods(builder: &mut MethodsBuilder) {
     /// Sample usage:
     /// ```text
     /// def _impl_sub_target(ctx):
-    ///     owners = ctx.cquery().owner("bin/TARGETS.fixture")
+    ///     owners = ctx.cquery().owner("bin/YAK.fixture")
     ///     for owner in owners:
     ///         configured_label = owner.label
     ///         ctx.output.print(configured_label.with_sub_target())

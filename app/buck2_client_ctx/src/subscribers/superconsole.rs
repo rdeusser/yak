@@ -186,7 +186,7 @@ fn make_game(idx: usize) -> (Box<dyn games::games::Game>, &'static str) {
 
 /// State machine for parsing multi-byte escape sequences from raw chars.
 ///
-/// Because the buck2 integration receives characters one at a time via
+/// Because the yak integration receives characters one at a time via
 /// `SuperConsoleToggle::key()`, we can't do async timeouts like `control_reader`.
 /// Instead we track how many ticks have elapsed since we entered `SawEscape` and
 /// let the tick loop call `flush()` to emit a bare Escape after a short delay.
@@ -408,12 +408,12 @@ pub struct SuperConsoleConfig {
     /// Two lines for root events with single child event.
     pub two_lines: bool,
     pub max_lines: usize,
-    /// Extra line(s) rendered at the very top of the canvas, e.g. `buck2 log snoop`'s
+    /// Extra line(s) rendered at the very top of the canvas, e.g. `yak log snoop`'s
     /// `Snooping <trace>: <argv>` banner. Part of the canvas so that erasing or
     /// redrawing the console replaces it too.
     pub banner: Option<String>,
     /// Do not emit "File changed:" notifications above the canvas. Used by viewers
-    /// like `buck2 log snoop` where they would pile up as scrollback across
+    /// like `yak log snoop` where they would pile up as scrollback across
     /// invocation switches.
     pub hide_file_watcher_events: bool,
 }
@@ -444,7 +444,7 @@ struct BuckRootComponent<'s> {
 
 /// Adapter that wraps a `Component<Error = anyhow::Error>` to produce
 /// `buck2_error::Error`, allowing games components to be used in the
-/// buck2 render tree.
+/// yak render tree.
 struct AnyhowComponentAdapter<'a, C: ?Sized>(&'a C);
 
 impl<C: superconsole::Component<Error = anyhow::Error> + ?Sized> Component
@@ -1582,7 +1582,7 @@ fn lines_for_command_details(
                     match truncate(command) {
                         None => Cow::Borrowed(command),
                         Some(short) => Cow::Owned(format!(
-                            "{short} (run `buck2 log what-failed` to get the full command)"
+                            "{short} (run `yak log what-failed` to get the full command)"
                         )),
                     }
                 };
@@ -1611,7 +1611,7 @@ fn lines_for_command_details(
                     match truncate(command) {
                         None => Cow::Borrowed(command),
                         Some(short) => Cow::Owned(format!(
-                            "{short} (run `buck2 log what-failed` to get the full command)"
+                            "{short} (run `yak log what-failed` to get the full command)"
                         )),
                     }
                 };
@@ -1629,7 +1629,7 @@ fn lines_for_command_details(
                     match truncate(command) {
                         None => Cow::Borrowed(command),
                         Some(short) => Cow::Owned(format!(
-                            "{short} (run `buck2 log what-failed` to get the full command)"
+                            "{short} (run `yak log what-failed` to get the full command)"
                         )),
                     }
                 };

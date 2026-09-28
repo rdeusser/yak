@@ -27,7 +27,7 @@ use buck2_client_ctx::streaming::StreamingCommand;
 /// `mallctl prof.dump`. It is a profile of currently allocated memory,
 /// not profile of allocations.
 ///
-/// To use this command, restart buckd with env variable `MALLOC_CONF=prof:true,prof_final:false`.
+/// To use this command, restart yakd with env variable `MALLOC_CONF=prof:true,prof_final:false`.
 #[derive(Debug, clap::Parser)]
 pub struct HeapDumpCommand {
     /// The path to write the heap dump to.

@@ -88,7 +88,7 @@ asynchronous stream of events may cause inconsistent uploads and thus incorrect
 results.
 
 Bazel implements both options. A third option could be to use async but provide
-a `buck2 flush events` subcommand that waits until all the existing events have
+a `yak flush events` subcommand that waits until all the existing events have
 been sent, retried if necessary and returns success or failure depending on the
 outcome of the upload of events.
 
@@ -98,13 +98,13 @@ well.
 ### Using bazel's events or creating custom new ones?
 
 As previously mentioned, were we to adopt BES, then there'd still be an open
-question: should buck2 reuse Bazel's events or should we create new ones? There
+question: should yak reuse Bazel's events or should we create new ones? There
 are
 [some generalization efforts](https://github.com/bazelbuild/remote-apis/issues/318)
 happening at the moment, however Bazel and Buck2 share lots of similarities.
 Enough that all events are almost perfectly applicable to Buck2, though less
 useful at times, like with command line options. On the other hand, a new set of
-events would perfectly describe a buck2 build, but would be prone to more issues
+events would perfectly describe a yak build, but would be prone to more issues
 initially and would require a bigger investment upfront in terms of design and
 development. Alternatively, we could start with a smaller subset of Bazel events
 that are equivalent in Buck2 and then proceed to add the additional events
@@ -147,7 +147,7 @@ make it possible for the user to provide it when invoking the CLI and/or print
 it visibly in the logs).
 
 Once this is done, I suggest we look into async uploads and add a
-`buck2 flush events` command to wait for all events (or those of a specific
+`yak flush events` command to wait for all events (or those of a specific
 invocation) to be flushed out.
 
 ### Approaches

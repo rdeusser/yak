@@ -286,7 +286,7 @@ fn lazy_uquery_methods(builder: &mut MethodsBuilder) {
     ///
     /// Example:
     /// ```python
-    /// res = ctx.lazy.uquery().rbuildfiles("bin/TARGETS", "bin/defs.bzl").catch().resolve()
+    /// res = ctx.lazy.uquery().rbuildfiles("bin/YAK", "bin/defs.bzl").catch().resolve()
     /// ```
     fn rbuildfiles<'v>(
         #[starlark(this)] this: &'v StarlarkLazyUqueryCtx,
@@ -303,7 +303,7 @@ fn lazy_uquery_methods(builder: &mut MethodsBuilder) {
     ///
     /// Example:
     /// ```python
-    /// res = ctx.lazy.uquery().owner("bin/TARGETS.fixture").catch().resolve()
+    /// res = ctx.lazy.uquery().owner("bin/YAK.fixture").catch().resolve()
     /// res = ctx.lazy.uquery().owner(["bin/TARGET", "bin/kind"]).catch().resolve()
     /// ```
     fn owner<'v>(
@@ -319,8 +319,8 @@ fn lazy_uquery_methods(builder: &mut MethodsBuilder) {
     ///
     /// Example:
     /// ```python
-    /// res = ctx.lazy.uquery().targets_in_buildfile("bin/TARGETS.fixture").catch().resolve()
-    /// res = ctx.lazy.uquery().targets_in_buildfile(["bin/TARGETS", "lib/TARGETS"]).catch().resolve()
+    /// res = ctx.lazy.uquery().targets_in_buildfile("bin/YAK.fixture").catch().resolve()
+    /// res = ctx.lazy.uquery().targets_in_buildfile(["bin/YAK", "lib/YAK"]).catch().resolve()
     /// ```
     fn targets_in_buildfile<'v>(
         #[starlark(this)] this: &'v StarlarkLazyUqueryCtx,

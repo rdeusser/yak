@@ -29,7 +29,7 @@ pub(crate) fn register_module_natives(globals: &mut GlobalsBuilder) {
         Ok(ModuleInternals::from_context(eval, "rule_exists")?.target_exists(name))
     }
 
-    /// Called in a `BUCK` file to declare the oncall contact details for
+    /// Called in a `YAK` file to declare the oncall contact details for
     /// all the targets defined. Must be called at most once, before any targets
     /// have been declared. Errors if called from a `.bzl` file.
     fn oncall(
@@ -41,7 +41,7 @@ pub(crate) fn register_module_natives(globals: &mut GlobalsBuilder) {
         Ok(NoneType)
     }
 
-    /// Called in a `BUCK` file to retrieve the previously set `oncall`, or `None` if none has been set.
+    /// Called in a `YAK` file to retrieve the previously set `oncall`, or `None` if none has been set.
     /// It is an error to call `oncall` after calling this function.
     fn read_oncall<'v>(
         eval: &mut Evaluator<'v, '_, '_>,

@@ -15,18 +15,18 @@ fn get() -> Option<u64> {
     buck2_core::buck2_env!("BUCK2_SELF_TEST_TIMEOUT_S", type=u64, applicability=testing).unwrap()
 }
 
-/// If running in a self-test of buck2, returns a duration greater than the timeout of the test.
+/// If running in a self-test of yak, returns a duration greater than the timeout of the test.
 ///
-/// This should be used to ensure that buck2 properly cleans itself up in case the test does not
+/// This should be used to ensure that yak properly cleans itself up in case the test does not
 /// shut down cleanly.
 pub fn until_post_test_shutdown() -> Option<Duration> {
     get().map(|s| Duration::from_secs(s + 30))
 }
 
-/// If running in a self-test of buck2, may adjust timeouts downward.
+/// If running in a self-test of yak, may adjust timeouts downward.
 ///
-/// Many operations in buck2 either do not have timeouts or have timeouts that exceed the top-level
-/// timeout for a test of buck2 itself. As a result, if these operations hang, it results in
+/// Many operations in yak either do not have timeouts or have timeouts that exceed the top-level
+/// timeout for a test of yak itself. As a result, if these operations hang, it results in
 /// hard-to-debug test hangs, instead of error messages indicating what is hanging. Passing an
 /// appropriate timeout through this function mitigates that by ensuring fine-grained timeouts fire
 /// before global timeouts.

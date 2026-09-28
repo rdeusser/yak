@@ -1,7 +1,0 @@
-[buildfile]
-name=TARGETS.fixture
-
-[repositories]
-root = .
-nested = nested
-prelude = prelude

@@ -701,7 +701,7 @@ def generate_install_data(ctx: AnalysisContext, plist_path: str, populate_rule_s
         "fullyQualifiedName": ctx.label,
         "info_plist": plist_path,
         "platform_name": get_apple_sdk_name(ctx),
-        ## TODO: read from .buckconfig
+        ## TODO: read from .yakconfig
         # We require the user to have run `xcode-select` and `/var/db/xcode_select_link` to symlink
         # to the selected Xcode. e.g: `/Applications/Xcode_14.2.app/Contents/Developer`
         "xcode_developer_path": "/var/db/xcode_select_link",

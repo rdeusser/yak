@@ -426,10 +426,10 @@ python_binary = prelude_rule(
         dependencies.
     """,
     examples = """
-        Build an executable from the Python files in the BUCK directory.
+        Build an executable from the Python files in the YAK directory.
 
         ```
-        # BUCK
+        # YAK
 
         python_binary(
           name = 'tailer',
@@ -459,7 +459,7 @@ python_binary = prelude_rule(
                 doc = """
                 The package in which the main module should reside in its final
                  location in the binary. If unset, Buck uses the project-relative directory
-                 that contains the BUCK file.
+                 that contains the YAK file.
             """,
             ),
             "main": attrs.option(
@@ -521,7 +521,7 @@ python_library = prelude_rule(
         Include Python source files and resource files.
 
         ```
-        # BUCK
+        # YAK
 
         # A rule that includes a single Python file.
         python_library(

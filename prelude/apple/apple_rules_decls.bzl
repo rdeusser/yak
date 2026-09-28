@@ -254,8 +254,8 @@ apple_binary = prelude_rule(
         Buck enables you to override components of the Apple toolchain with
         alternate tools, either from the Xcode search paths or from directories
         that you specify.
-        See `.buckconfig`
-        and `.buckconfig`
+        See `.yakconfig`
+        and `.yakconfig`
         for more information.
     """,
     examples = """
@@ -570,8 +570,8 @@ apple_library = prelude_rule(
         Buck enables you to override components of the Apple toolchain with
         alternate tools, either from the Xcode search paths or from directories
         that you specify.
-        See `.buckconfig`
-        and `.buckconfig`
+        See `.yakconfig`
+        and `.yakconfig`
         for more information.
     """,
     examples = """
@@ -808,8 +808,8 @@ apple_package = prelude_rule(
         an `apple_bundle()` rule and compresses it in
         an IPA (iOS App Store Package) file.
 
-        This rule can be customized using the config options `.buckconfig`
-        and `.buckconfig`
+        This rule can be customized using the config options `.yakconfig`
+        and `.yakconfig`
         .
     """,
     examples = """

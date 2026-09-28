@@ -51,8 +51,8 @@ regular Buck2:
   - With BXL, you can just call the BXL script once in a subprocess, potentially
     reducing the amount of code you need to write in your program. For example,
     if you need to call cquery and build several times, you can put that all
-    within a single BXL script and run `buck2 bxl` once, rather than running
-    `buck2 cquery` and `buck2 build` several times.
+    within a single BXL script and run `yak bxl` once, rather than running
+    `yak cquery` and `yak build` several times.
 - **Reduce/eliminate the need to manually parse Buck2 output format within your
   program, and any bugs that may come with manual parsing**.
   - Some languages are more verbose than others when it comes to string parsing.

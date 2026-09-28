@@ -45,7 +45,7 @@ The following is an example of exposing custom aliases for build constraints. We
 create a `build_mode` constraint with 2 values (`debug` and `release`), which
 would most likely be `select`ed in a toolchain definition.
 
-`BUCK`:
+`YAK`:
 
 ```python
 constraint_setting(name = "build_mode")
@@ -85,6 +85,6 @@ constraint, we can build it in debug and release mode from the command line
 using the `-m`/`--modifier` flag:
 
 ```sh
-buck2 build :my_target -m debug
-buck2 build :my_target -m release
+yak build :my_target -m debug
+yak build :my_target -m release
 ```

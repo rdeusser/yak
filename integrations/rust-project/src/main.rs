@@ -95,7 +95,7 @@ enum Command {
         #[clap(long)]
         check_cycles: bool,
 
-        /// Command used to run `buck2`. Defaults to `"buck2"`.
+        /// Command used to run `yak`. Defaults to `"yak"`.
         #[clap(long)]
         buck2_command: Option<String>,
 
@@ -132,7 +132,7 @@ enum Command {
         #[clap(short = 'm', long)]
         mode: Option<String>,
 
-        /// Command used to run `buck2`. Defaults to `"buck2"`.
+        /// Command used to run `yak`. Defaults to `"yak"`.
         #[clap(long)]
         buck2_command: Option<String>,
 
@@ -157,7 +157,7 @@ enum Command {
         #[clap(long)]
         client: Option<String>,
 
-        /// Command used to run `buck2`. Defaults to `"buck2"`.
+        /// Command used to run `yak`. Defaults to `"yak"`.
         #[clap(long)]
         buck2_command: Option<String>,
 
@@ -204,7 +204,7 @@ impl FromStr for SysrootMode {
 enum JsonArguments {
     /// Path to a Rust source file.
     Path(PathBuf),
-    /// Path to BUCK file.
+    /// Path to YAK file.
     Buildfile(PathBuf),
     /// A named buck target.
     Label(String),

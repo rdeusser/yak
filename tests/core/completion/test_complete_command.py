@@ -34,7 +34,7 @@ def flagfile_complete_test(
 ) -> None:
     async def impl(buck: Buck) -> None:
         # Pass the partial as a single `--flagfile=<value>` token (the form the shell
-        # wrappers use). Passing it as two tokens would let buck2's own argfile
+        # wrappers use). Passing it as two tokens would let yak's own argfile
         # expansion try to read a partial `@...` value as a real flagfile.
         res = await buck.complete(f"--flagfile={input}", rel_cwd=Path(cwd))
         assert res.stdout.splitlines() == expected

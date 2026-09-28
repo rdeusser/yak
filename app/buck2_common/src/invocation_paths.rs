@@ -9,7 +9,7 @@
  */
 
 //!
-//! Defines utilities to obtain the basic paths for buck2 client and the daemon.
+//! Defines utilities to obtain the basic paths for yak client and the daemon.
 
 use std::borrow::Cow;
 
@@ -35,8 +35,8 @@ pub struct InvocationPaths {
     /// same project root.
     ///
     /// The legacy per-repo daemon metadata directory is post-fixed with the isolation prefix
-    /// (i.e `$HOME/.buck/buckd/<projectroot>/<isolationdir>`).
-    /// The buck-out is `<projectroot>/buck-out/<isolationdir>/`
+    /// (i.e `$HOME/.yak/yakd/<projectroot>/<isolationdir>`).
+    /// The yak-out is `<projectroot>/yak-out/<isolationdir>/`
     ///
     /// Any on-disk state from the daemon (including build outputs and similar) should only
     /// be written or read from directories that include this component.
@@ -82,7 +82,7 @@ impl TenantPaths {
 
     /// Top-level directory name under the project root used for Buck outputs.
     pub fn buck_out_dir_prefix() -> &'static ProjectRelativePath {
-        ProjectRelativePath::unchecked_new("buck-out")
+        ProjectRelativePath::unchecked_new("yak-out")
     }
 
     /// Project-relative output directory for this tenant.
@@ -252,7 +252,7 @@ impl InvocationPaths {
     }
 
     /// Subdirectory of `cache_dir` holding event logs downloaded from remote storage
-    /// by `buck2 log` commands, and their in-flight `.tmp` staging files. Kept apart
+    /// by `yak log` commands, and their in-flight `.tmp` staging files. Kept apart
     /// from `log_dir` so downloads never appear in local log listings, and apart from
     /// the action scratch dirs, which are cleaned by liveness.
     ///
@@ -275,7 +275,7 @@ impl InvocationPaths {
     }
 
     /// This is used by the forkserver to write the miniperf wrapper binary (if used), as well as
-    /// temporary files used by miniperf. We put this in buck-out because that directory gets
+    /// temporary files used by miniperf. We put this in yak-out because that directory gets
     /// allowlisted for execution (because we write lots of tools there).
     pub fn forkserver_state_dir(&self) -> AbsNormPathBuf {
         self.buck_out_path()
@@ -310,7 +310,7 @@ impl InvocationPaths {
 
     /// Trash directory for background clean operations.
     /// Files moved here can be deleted asynchronously without blocking the main clean operation.
-    /// This points to buck-out/._buck2/trash which is used as the trash directory.
+    /// This points to yak-out/._yak/trash which is used as the trash directory.
     pub fn trash_dir(&self) -> AbsNormPathBuf {
         self.roots
             .project_root
@@ -321,15 +321,15 @@ impl InvocationPaths {
     }
 }
 
-/// Top-level names under `buck-out` share a namespace with isolation dirs. Names starting with
-/// this prefix are reserved for buck2's own bookkeeping (e.g. `trash_dir`) and are rejected as
+/// Top-level names under `yak-out` share a namespace with isolation dirs. Names starting with
+/// this prefix are reserved for yak's own bookkeeping (e.g. `trash_dir`) and are rejected as
 /// `--isolation-dir` values so the two can never collide.
 ///
-/// One entry is set aside for tools other than buck2: `buck-out/._buck2/tmp` is scratch space
-/// for tooling (e.g. compiler wrappers invoked outside of a buck2 action) that needs a temp
-/// location under buck-out. Buck2 never stores its own state there, and `clean --all` deletes
+/// One entry is set aside for tools other than yak: `yak-out/._yak/tmp` is scratch space
+/// for tooling (e.g. compiler wrappers invoked outside of a yak action) that needs a temp
+/// location under yak-out. yak never stores its own state there, and `clean --all` deletes
 /// it like any other reserved entry, so contents must be disposable.
-pub const RESERVED_BUCK_OUT_PREFIX: &str = "._buck2";
+pub const RESERVED_BUCK_OUT_PREFIX: &str = "._yak";
 
 #[cfg(test)]
 mod tests {
@@ -364,9 +364,9 @@ mod tests {
         };
 
         let expected_path = if cfg!(windows) {
-            ".buck\\buckd\\C\\my\\project\\isolation"
+            ".yak\\yakd\\C\\my\\project\\isolation"
         } else {
-            ".buck/buckd/my/project/isolation"
+            ".yak/yakd/my/project/isolation"
         };
         assert_eq!(
             paths.daemon_dir().unwrap().path.as_os_str(),
@@ -390,37 +390,37 @@ mod tests {
 
         assert_eq!(
             paths.buck_out_dir(),
-            ProjectRelativePathBuf::unchecked_new("buck-out/isolation".to_owned())
+            ProjectRelativePathBuf::unchecked_new("yak-out/isolation".to_owned())
         );
         let expected_path = if cfg!(windows) {
-            "C:\\my\\project\\buck-out\\isolation"
+            "C:\\my\\project\\yak-out\\isolation"
         } else {
-            "/my/project/buck-out/isolation"
+            "/my/project/yak-out/isolation"
         };
         assert_eq!(paths.buck_out_path().as_os_str(), OsStr::new(expected_path));
 
         let expected_path = if cfg!(windows) {
-            "C:\\my\\project\\buck-out\\isolation\\log"
+            "C:\\my\\project\\yak-out\\isolation\\log"
         } else {
-            "/my/project/buck-out/isolation/log"
+            "/my/project/yak-out/isolation/log"
         };
         assert_eq!(paths.log_dir().as_os_str(), OsStr::new(expected_path));
         let expected_path = if cfg!(windows) {
-            "C:\\my\\project\\buck-out\\isolation\\dice_dump"
+            "C:\\my\\project\\yak-out\\isolation\\dice_dump"
         } else {
-            "/my/project/buck-out/isolation/dice_dump"
+            "/my/project/yak-out/isolation/dice_dump"
         };
         assert_eq!(paths.dice_dump_dir().as_os_str(), OsStr::new(expected_path));
 
         assert_eq!(
             paths.cache_dir(),
-            ProjectRelativePathBuf::unchecked_new("buck-out/isolation/cache".to_owned())
+            ProjectRelativePathBuf::unchecked_new("yak-out/isolation/cache".to_owned())
         );
 
         let expected_path = if cfg!(windows) {
-            "C:\\my\\project\\buck-out\\isolation\\cache\\materializer_state"
+            "C:\\my\\project\\yak-out\\isolation\\cache\\materializer_state"
         } else {
-            "/my/project/buck-out/isolation/cache/materializer_state"
+            "/my/project/yak-out/isolation/cache/materializer_state"
         };
         assert_eq!(
             paths.materializer_state_path().as_os_str(),

@@ -52,7 +52,7 @@ LinkOptions = record(
     # A function/lambda which will generate the strip args using the ctx.
     strip_args_factory = [typing.Callable, None],
     import_library = Artifact | None,
-    # `None` expresses no preference, leaving the choice to buck2
+    # `None` expresses no preference, leaving the choice to yak
     allow_cache_upload = [bool, None],
     cxx_toolchain = [CxxToolchainInfo, None],
     # Force callers to use link_options() or merge_link_options() to create.

@@ -29,7 +29,7 @@ pub fn check_working_dir() -> buck2_error::Result<()> {
     if err.kind() == io::ErrorKind::NotConnected {
         let err = "The file system holding Buck2's working directory disconnected, which happens \
             when a FUSE daemon exits uncleanly. This error is unrecoverable and you should restart \
-            Buck using `buck2 killall`.";
+            Buck using `yak killall`.";
         return Err(buck2_error::buck2_error!(
             buck2_error::ErrorTag::Environment,
             "{}",

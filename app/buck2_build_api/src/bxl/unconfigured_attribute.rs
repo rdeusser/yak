@@ -108,7 +108,7 @@ fn coerced_attr_methods(builder: &mut MethodsBuilder) {
     /// Sample usage:
     /// ```python
     /// def _impl_type(ctx):
-    ///     node = ctx.uquery().owner("bin/TARGETS")[0]
+    ///     node = ctx.uquery().owner("bin/YAK")[0]
     ///     ctx.output.print(node.attrs.name.type)
     /// ```
     // FIXME(JakobDegen): Strings as types are mostly dead, users should be getting the value and
@@ -124,7 +124,7 @@ fn coerced_attr_methods(builder: &mut MethodsBuilder) {
     /// Sample usage:
     /// ```python
     /// def _impl_value(ctx):
-    ///     node = ctx.uquery().owner("bin/TARGETS")[0]
+    ///     node = ctx.uquery().owner("bin/YAK")[0]
     ///     ctx.output.print(node.attrs.name.value())
     /// ```
     fn value<'v>(this: &StarlarkCoercedAttr, heap: Heap<'v>) -> starlark::Result<Value<'v>> {

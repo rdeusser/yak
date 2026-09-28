@@ -50,11 +50,11 @@ def buck_command(args: argparse.Namespace) -> str:
     if args.buck2:
         return args.buck2
     elif args.prod:
-        return "buck2"
+        return "yak"
     elif args.cargo:
-        return "cargo run --bin=buck2 --"
+        return "cargo run --bin=yak --"
     else:
-        return "./buck2.py"
+        return "./yak.py"
 
 
 def generate_prelude_rules_docs(buck: str) -> None:
@@ -182,7 +182,7 @@ def generate_help_docs_index_page(buck: str, subcommands: List[str]) -> str:
     titile = """\
 ---
 id: index
-title: buck2 commands
+title: yak commands
 ---
 """
     common_options_section = """\
@@ -195,7 +195,7 @@ For common options available across multiple commands, see [Common Options](./co
         "|---------------|------------------------------|",
     ]
     for sub in subcommands:
-        full_cmd = f"`buck2 {sub}`"
+        full_cmd = f"`yak {sub}`"
         cmd_with_link = f"[{full_cmd}](./{sub})"
         short_help = generate_subcommand_short_help(buck, [sub])
         # Escape any pipe characters in the help text
@@ -252,7 +252,7 @@ def main() -> None:
         "--prod",
         action="store_true",
         default=False,
-        help="Whether to use the production `buck2` binary",
+        help="Whether to use the production `yak` binary",
     )
     parser.add_argument(
         "--cargo",
@@ -267,7 +267,7 @@ def main() -> None:
     )
     args = parser.parse_args()
 
-    # Change to buck2 directory
+    # Change to yak directory
     buck2_dir = Path(__file__).absolute().parent.parent
     os.chdir(str(buck2_dir))
 

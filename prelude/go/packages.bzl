@@ -139,7 +139,7 @@ def make_compile_importcfg(
         provided_pkgs.add(name_)
 
     if len(provided_pkgs) != len(required_pkgs):
-        message = "cannot find package(s) when building '{}' (is your BUCK target missing deps?)\n".format(pkg_import_path)
+        message = "cannot find package(s) when building '{}' (is your YAK target missing deps?)\n".format(pkg_import_path)
         for imp in required_pkgs.difference(provided_pkgs):
             message += "  - " + imp + "\n"
 

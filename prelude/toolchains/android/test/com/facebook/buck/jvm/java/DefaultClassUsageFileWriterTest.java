@@ -35,7 +35,7 @@ public class DefaultClassUsageFileWriterTest {
 
   @Test
   public void fileReadOrderDoesntAffectClassesUsedOutput() throws IOException {
-    RelPath configuredBuckOut = RelPath.get("buck-out/v2");
+    RelPath configuredBuckOut = RelPath.get("yak-out/v2");
     AbsPath testJarPath = tmp.getRoot().resolve("test.jar");
     AbsPath testTwoJarPath = tmp.getRoot().resolve("test2.jar");
 

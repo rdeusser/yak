@@ -94,7 +94,7 @@ pub(crate) fn daemon_lower_priority(
 ///
 /// When a program is launched from command line, at least from iTerm2,
 /// macOS seems to think it is interactive, so it gives it high priority.
-/// buck2 daemon spawns processes like compilers which do not really need high priority.
+/// yak daemon spawns processes like compilers which do not really need high priority.
 /// When compilers run with high priority, they starve other processes.
 /// Practically it results in very large ping and VPN disconnects on my machine.
 ///

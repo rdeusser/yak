@@ -97,10 +97,10 @@ impl NotifyFileData {
             // It's not documented though.
             let path = root.relativize(AbsNormPath::new(&path)?)?;
 
-            // We ignore the buck-out prefix, as those are uninteresting events caused by us.
-            // We also ignore other buck-out directories, as if you have two isolation dirs running at once, they are not interesting.
+            // We ignore the yak-out prefix, as those are uninteresting events caused by us.
+            // We also ignore other yak-out directories, as if you have two isolation dirs running at once, they are not interesting.
             // We do this in the notify-watcher, rather than a generic layer, as watchman users should configure
-            // to ignore buck-out, to reduce the number of events, rather than hiding them later.
+            // to ignore yak-out, to reduce the number of events, rather than hiding them later.
             if path.starts_with(InvocationPaths::buck_out_dir_prefix()) {
                 // We don't want to event add them as ignored events, since they are super common
                 // and very boring

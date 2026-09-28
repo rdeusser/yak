@@ -5,7 +5,7 @@ title: Benefits When Compared to Buck1
 
 ## Benefits for end users
 
-> _"`buck2 build SOME_TARGET_I_ALREADY_BUILT_BEFORE` is basically instantaneous
+> _"`yak build SOME_TARGET_I_ALREADY_BUILT_BEFORE` is basically instantaneous
 > and is a super delightful experience. 🙂"_ - End user experience
 
 For people who use Buck on a daily basis (such as using Buck build as part of
@@ -32,7 +32,7 @@ benefits:
     some capacity at the same time.
 - **Correctness** - in Buck2, rules are hermetic by default. Missing
   dependencies are errors. These restrictions apply to both the user-written
-  `BUCK` files and the language rules.
+  `YAK` files and the language rules.
   - During the process of migrating to Buck2, a huge number of missing
     dependencies have been fixed. However, during the same process, several
     Buck1 issues were identified that are not going to be fixed in Buck1 (such

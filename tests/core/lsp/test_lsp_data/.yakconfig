@@ -1,0 +1,7 @@
+[buildfile]
+name=YAK.fixture
+
+[repositories]
+root = .
+cell = cell
+prelude = prelude

@@ -46,9 +46,9 @@ func main() {
 		os.Exit(1)
 	}
 
-	slog.Info("Rendering BUCK files")
+	slog.Info("Rendering YAK files")
 	if err := lib.RenderBuckFiles(cfg, thirdPartyDir, result.BuckTargets); err != nil {
-		slog.Error("Error rendering BUCK files", "err", err)
+		slog.Error("Error rendering YAK files", "err", err)
 		os.Exit(1)
 	}
 }

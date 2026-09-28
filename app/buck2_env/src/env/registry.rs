@@ -13,7 +13,7 @@ use dupe::Dupe;
 #[derive(Debug, PartialEq, Eq, Ord, PartialOrd, Copy, Clone, Dupe)]
 pub enum Applicability {
     All,
-    /// Only used in self-tests of buck2
+    /// Only used in self-tests of yak
     Testing,
 }
 

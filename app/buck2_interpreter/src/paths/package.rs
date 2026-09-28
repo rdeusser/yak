@@ -19,7 +19,7 @@ use pagable::Pagable;
 /// Represents the path to a PACKAGE file.
 ///
 /// Each package can define local configuration
-/// by providing a PACKAGE file. This file is evaluated prior to the BUCK file and
+/// by providing a PACKAGE file. This file is evaluated prior to the YAK file and
 /// can specify per-package values accessible via Starlark.
 ///
 /// Example of a valid PACKAGE file path: `root//path/to/PACKAGE`
@@ -44,7 +44,7 @@ pub struct PackageFilePath {
 impl PackageFilePath {
     pub fn package_file_names() -> impl Iterator<Item = &'static FileName> {
         [
-            FileName::unchecked_new("BUCK_TREE"),
+            FileName::unchecked_new("YAK_TREE"),
             FileName::unchecked_new("PACKAGE"),
         ]
         .into_iter()

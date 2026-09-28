@@ -157,7 +157,7 @@ pub struct CommonEventLogOptions {
     pub(crate) unstable_write_invocation_record: Option<PathArg>,
 
     /// Write the command report to this path. A command report is always
-    /// written to `buck-out/v2/<uuid>/command_report` even without this flag.
+    /// written to `yak-out/v2/<uuid>/command_report` even without this flag.
     #[clap(long, value_name = "PATH")]
     pub(crate) command_report_path: Option<PathArg>,
 }
@@ -233,9 +233,9 @@ pub struct CommonBuildConfigurationOptions {
 
     /// Used to configure when this command could be preempted by another command for the same isolation dir.
     ///
-    /// Normally, when you run two commands - from different terminals, say - buck2 will attempt
+    /// Normally, when you run two commands - from different terminals, say - yak will attempt
     /// to run them in parallel. However, if the two commands are based on different state, that
-    /// is they either have different configs or different filesystem states, buck2 cannot run them
+    /// is they either have different configs or different filesystem states, yak cannot run them
     /// in parallel. The default behavior in this case is to block the second command until the
     /// first completes.
     #[clap(long, ignore_case = true, value_enum)]
@@ -404,7 +404,7 @@ pub struct CommonStarlarkOptions {
     #[clap(long = "stack")]
     pub target_call_stacks: bool,
 
-    /// If there are targets with duplicate names in `BUCK` file,
+    /// If there are targets with duplicate names in `YAK` file,
     /// skip all the duplicates but the first one.
     /// This is a hack for TD. Do not use this option.
     #[clap(long, hide = true)]

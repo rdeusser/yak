@@ -18,7 +18,7 @@ load("@prelude//utils:expect.bzl", "expect")
 
 def _target_build_file_path(target):
     package = target.package + "/" if target.package else ""
-    return target.cell + "/" + package + "BUCK"
+    return target.cell + "/" + package + "YAK"
 
 def robolectric_test_impl(ctx: AnalysisContext) -> list[Provider]:
     if ctx.attrs._build_only_native_code:

@@ -417,7 +417,7 @@ cython_toolchain_rule = prelude_rule(
         A toolchain rule that provides the Cython compiler configuration.
 
         Python version-based compiler selection is handled via select() on
-        the "compiler" attribute in the toolchain BUCK definition.
+        the "compiler" attribute in the toolchain YAK definition.
     """,
     is_toolchain_rule = True,
     attrs = {

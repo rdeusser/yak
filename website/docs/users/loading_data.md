@@ -3,7 +3,7 @@ id: loading_data
 title: Loading Data in Starlark
 ---
 
-You can load static data from within `BUCK` or `.bzl` files, as long as that
+You can load static data from within `YAK` or `.bzl` files, as long as that
 static data is stored in a JSON or TOML file in a package.
 
 ```python

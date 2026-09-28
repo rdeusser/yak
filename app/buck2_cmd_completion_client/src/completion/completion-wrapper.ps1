@@ -24,7 +24,7 @@ using namespace System.Management.Automation.Language
 $BuckCompleter = {
     param($wordToComplete, $commandAst, $cursorPosition)
 
-    $completeBin = if ($env:_BUCK_COMPLETE_BIN) { $env:_BUCK_COMPLETE_BIN } else { 'buck2' }
+    $completeBin = if ($env:_BUCK_COMPLETE_BIN) { $env:_BUCK_COMPLETE_BIN } else { 'yak' }
     $targetSubcommands = @('build', 'ctargets', 'install', 'run', 'targets', 'test', 'utargets')
 
     $elements = $commandAst.CommandElements
@@ -79,4 +79,4 @@ $BuckCompleter = {
     }
 }.GetNewClosure()
 
-Register-ArgumentCompleter -Native -CommandName 'buck', 'buck2' -ScriptBlock $BuckCompleter
+Register-ArgumentCompleter -Native -CommandName 'yak' -ScriptBlock $BuckCompleter

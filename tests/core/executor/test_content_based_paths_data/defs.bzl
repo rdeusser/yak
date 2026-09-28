@@ -19,7 +19,7 @@
 # build with "No such file or directory".
 #
 # The fixture defines a single shared producer target and a consumer rule
-# that exercises the output; TARGETS.fixture instantiates many consumers
+# that exercises the output; YAK.fixture instantiates many consumers
 # under different platforms so the producer is re-analyzed once per
 # configuration.
 
@@ -310,12 +310,12 @@ cas_artifact_with_content_based_path = rule(
 
 def _download_with_content_based_path_impl(ctx: AnalysisContext):
     if ctx.attrs.defer_download:
-        # The SHA-256 checksum matches the default digest algorithm, so buck2
+        # The SHA-256 checksum matches the default digest algorithm, so yak
         # can defer the download.
         sha1 = None
         sha256 = ctx.attrs.sha256
     else:
-        # buck2 cannot defer a download that has only a SHA-1 checksum, which
+        # yak cannot defer a download that has only a SHA-1 checksum, which
         # takes the "non-deferrable" code path.
         sha1 = ctx.attrs.sha1
         sha256 = None

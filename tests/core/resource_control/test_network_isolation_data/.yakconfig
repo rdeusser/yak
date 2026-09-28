@@ -1,0 +1,8 @@
+[cells]
+  root = .
+
+[buildfile]
+  name = YAK.fixture
+
+[buck2_resource_control]
+  status = required

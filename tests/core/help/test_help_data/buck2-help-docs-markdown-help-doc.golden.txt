@@ -1,12 +1,12 @@
 # This file is @generated, regenerate by rerunning the test with `BUCK2_UPDATE_GOLDEN=1` set
 
-Print out the buck2 subcommand markdown docs
+Print out the yak subcommand markdown docs
 
-Usage: buck2 docs markdown-help-doc [OPTIONS] <SUB_COMMAND>
+Usage: yak docs markdown-help-doc [OPTIONS] <SUB_COMMAND>
 
 Arguments:
   <SUB_COMMAND>
-          The buck2 sub command we want to generate the markdown doc
+          The yak sub command we want to generate the markdown doc
 
 Options:
   -h, --help
@@ -14,9 +14,8 @@ Options:
 
 Universal Options:
       --isolation-dir <ISOLATION_DIR>
-          The name of the directory that Buck2 creates within buck-out for writing outputs and
-          daemon information. If one is not provided, Buck2 creates a directory with the default
-          name.
+          The name of the directory that Buck2 creates within yak-out for writing outputs and daemon
+          information. If one is not provided, Buck2 creates a directory with the default name.
 
           Instances of Buck2 share a daemon if and only if their isolation directory is identical.
           The isolation directory also influences the output paths provided by Buck2, and as a

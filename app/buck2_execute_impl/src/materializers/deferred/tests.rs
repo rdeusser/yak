@@ -303,7 +303,7 @@ mod state_machine {
                 read_dir_barriers: None,
                 clean_barriers: None,
                 digest_config: DigestConfig::testing_default(),
-                buck_out_path: make_path("buck-out/v2"),
+                buck_out_path: make_path("yak-out/v2"),
                 fs,
             }
         }
@@ -1586,7 +1586,7 @@ mod state_machine {
         }).await
     }
 
-    const SAMPLE_BUCK_OUT_PATH: &str = "buck-out/v2/art/foo/bar";
+    const SAMPLE_BUCK_OUT_PATH: &str = "yak-out/v2/art/foo/bar";
 
     #[tokio::test]
     async fn test_clean_stale() -> buck2_error::Result<()> {
@@ -1732,8 +1732,8 @@ mod state_machine {
     async fn test_clean_stale_keeps_going_after_scan_error() -> buck2_error::Result<()> {
         ignore_stack_overflow_checks_for_future(async {
             let project_root = temp_root();
-            let failed_dir = project_root.resolve(make_path("buck-out/v2/gen"));
-            let cleanable_dir = project_root.resolve(make_path("buck-out/v2/art/cleanable"));
+            let failed_dir = project_root.resolve(make_path("yak-out/v2/gen"));
+            let cleanable_dir = project_root.resolve(make_path("yak-out/v2/art/cleanable"));
             fs_util::create_dir_all(&failed_dir)?;
             fs_util::create_dir_all(&cleanable_dir)?;
 
@@ -1784,8 +1784,8 @@ mod state_machine {
     async fn test_clean_stale_keeps_going_after_delete_error() -> buck2_error::Result<()> {
         ignore_stack_overflow_checks_for_future(async {
             let project_root = temp_root();
-            let first_dir = project_root.resolve(make_path("buck-out/v2/art/first"));
-            let second_dir = project_root.resolve(make_path("buck-out/v2/art/second"));
+            let first_dir = project_root.resolve(make_path("yak-out/v2/art/first"));
+            let second_dir = project_root.resolve(make_path("yak-out/v2/art/second"));
             fs_util::create_dir_all(&first_dir)?;
             fs_util::create_dir_all(&second_dir)?;
 
@@ -1853,9 +1853,9 @@ mod state_machine {
             let (dm, _) = make_materializer(io, None).await;
 
             // An untracked artifact containing a directory the scan cannot read.
-            let untracked_dir = project_root.resolve(make_path("buck-out/v2/art/foo/untracked"));
+            let untracked_dir = project_root.resolve(make_path("yak-out/v2/art/foo/untracked"));
             let unreadable_dir =
-                project_root.resolve(make_path("buck-out/v2/art/foo/untracked/unreadable"));
+                project_root.resolve(make_path("yak-out/v2/art/foo/untracked/unreadable"));
             fs_util::create_dir(&untracked_dir)?;
             fs_util::create_dir(&unreadable_dir)?;
             fs_util::set_permissions(&unreadable_dir, std::fs::Permissions::from_mode(0o000))?;
@@ -1863,9 +1863,9 @@ mod state_machine {
             // A second untracked artifact whose directory can be listed but not
             // traversed (readable, not executable), so its entries cannot be
             // statted.
-            let listable_dir = project_root.resolve(make_path("buck-out/v2/art/foo/untracked2"));
+            let listable_dir = project_root.resolve(make_path("yak-out/v2/art/foo/untracked2"));
             let listable_file =
-                project_root.resolve(make_path("buck-out/v2/art/foo/untracked2/file"));
+                project_root.resolve(make_path("yak-out/v2/art/foo/untracked2/file"));
             fs_util::create_dir(&listable_dir)?;
             fs_util::write(&listable_file, b"x")?;
             fs_util::set_permissions(&listable_dir, std::fs::Permissions::from_mode(0o444))?;
@@ -1930,21 +1930,20 @@ mod state_machine {
             let (dm, _) = make_materializer(io.dupe(), None).await;
 
             // Dead scratch is deleted regardless of age.
-            let dead = project_root.resolve(make_path("buck-out/v2/tmp/dead"));
-            let dead_file = project_root.resolve(make_path("buck-out/v2/tmp/dead/junk"));
+            let dead = project_root.resolve(make_path("yak-out/v2/tmp/dead"));
+            let dead_file = project_root.resolve(make_path("yak-out/v2/tmp/dead/junk"));
             fs_util::create_dir_all(&dead)?;
             fs_util::write(&dead_file, b"xxxx")?;
 
             // Unknown-age scratch (permission denied) is skipped, never deleted.
-            let unreadable = project_root.resolve(make_path("buck-out/v2/tmp/unreadable"));
-            let unreadable_file =
-                project_root.resolve(make_path("buck-out/v2/tmp/unreadable/junk"));
+            let unreadable = project_root.resolve(make_path("yak-out/v2/tmp/unreadable"));
+            let unreadable_file = project_root.resolve(make_path("yak-out/v2/tmp/unreadable/junk"));
             fs_util::create_dir(&unreadable)?;
             fs_util::write(&unreadable_file, b"x")?;
             fs_util::set_permissions(&unreadable, std::fs::Permissions::from_mode(0o000))?;
 
-            let listable = project_root.resolve(make_path("buck-out/v2/tmp/listable"));
-            let listable_file = project_root.resolve(make_path("buck-out/v2/tmp/listable/junk"));
+            let listable = project_root.resolve(make_path("yak-out/v2/tmp/listable"));
+            let listable_file = project_root.resolve(make_path("yak-out/v2/tmp/listable/junk"));
             fs_util::create_dir(&listable)?;
             fs_util::write(&listable_file, b"x")?;
             fs_util::set_permissions(&listable, std::fs::Permissions::from_mode(0o444))?;
@@ -1952,7 +1951,7 @@ mod state_machine {
             #[cfg(not(target_os = "macos"))]
             let invalid_name = {
                 // macOS filesystems reject invalid UTF-8 file names.
-                let scratch_root = project_root.resolve(make_path("buck-out/v2/tmp"));
+                let scratch_root = project_root.resolve(make_path("yak-out/v2/tmp"));
                 let invalid_name = scratch_root
                     .as_abs_path()
                     .join(OsString::from_vec(vec![0xff]));
@@ -2024,7 +2023,7 @@ mod state_machine {
             );
             let (dm, _) = make_materializer(io, None).await;
 
-            // Interrupt while scanning buck-out
+            // Interrupt while scanning yak-out
             let dm = Arc::new(dm);
             let dm_dup = dm.dupe();
             let fut = dm_dup.clean_stale_artifacts(CleanStaleArtifactsArgs {

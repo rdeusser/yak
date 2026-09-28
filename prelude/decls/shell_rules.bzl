@@ -20,7 +20,7 @@ sh_binary = prelude_rule(
         This sh\\_binary() just cats a sample data file back at the user.
 
         ```
-        # $REPO/BUCK
+        # $REPO/YAK
         sh_binary(
             name = "script",
             main = "script.sh",
@@ -72,7 +72,7 @@ sh_binary = prelude_rule(
                  not assume the directory's location.
 
                  The resources are also made available in a tree structure that mirrors
-                 their locations in the source and `buck-out` trees. The
+                 their locations in the source and `yak-out` trees. The
                  environment variable `$BUCK_PROJECT_ROOT` specifies a directory
                  that contains all the resources, laid out in their locations relative to
                  the original buck project root.
@@ -114,7 +114,7 @@ sh_test = prelude_rule(
         This sh\\_test() fails if a string does not match a value.
 
         ```
-        # $REPO/BUCK
+        # $REPO/YAK
         sh_test(
             name = "script_pass",
             test = "script.sh",
@@ -210,7 +210,7 @@ sh_test = prelude_rule(
                 attrs.string(),
                 default = None,
                 doc = """
-                If provided, this will be sent to any configured `.buckconfig`
+                If provided, this will be sent to any configured `.yakconfig`
             """,
             ),
         }

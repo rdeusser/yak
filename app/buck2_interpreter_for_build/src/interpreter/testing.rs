@@ -333,7 +333,7 @@ impl Tester {
     }
 
     pub fn build_file_path() -> BuildFilePath {
-        BuildFilePath::testing_new("root//some/package:BUCK")
+        BuildFilePath::testing_new("root//some/package:YAK")
     }
 
     /// Run a starlark test with a basic environment. See

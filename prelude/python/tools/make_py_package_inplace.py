@@ -195,7 +195,7 @@ def launcher(python: str, output_dir: Path) -> str:
         #                 of 1980s BSD in 2021...
         return f"/usr/bin/env {python}"
 
-    # The interpreter is a build artifact, so buck2 handed us a path relative to the
+    # The interpreter is a build artifact, so yak handed us a path relative to the
     # project root. A `#!` line can't carry one, because the kernel resolves it against
     # the caller's cwd, so defer to a shell that resolves it against the bootstrapper.
     relative_python = os.path.relpath(python, output_dir)

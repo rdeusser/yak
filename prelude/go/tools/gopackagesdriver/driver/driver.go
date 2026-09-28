@@ -136,7 +136,7 @@ func readDriverRequest() (*packages.DriverRequest, error) {
 	return &req, nil
 }
 
-// Run parses the command line arguments and stdin, then runs buck2 and `go list` and writes results to stdout
+// Run parses the command line arguments and stdin, then runs yak and `go list` and writes results to stdout
 func Run(ctx context.Context) error {
 	// This must be cleared or we could forkbomb ourselves
 	// because we will call GoListDriver inside.

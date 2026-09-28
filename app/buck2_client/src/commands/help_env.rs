@@ -19,10 +19,10 @@ use buck2_core::env::registry::ENV_INFO;
 use buck2_core::env::registry::EnvInfoEntry;
 use buck2_error::internal_error;
 
-/// Print help for environment variables used by buck2.
+/// Print help for environment variables used by yak.
 #[derive(Debug, clap::Parser)]
 pub struct HelpEnvCommand {
-    /// Also print those environment variables that are only used for buck2 integration tests.
+    /// Also print those environment variables that are only used for yak integration tests.
     ///
     /// These are all unstable and not meant to be used by most users.
     #[clap(long)]

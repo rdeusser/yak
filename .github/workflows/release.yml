@@ -1,4 +1,4 @@
-name: Manually release `buck2`
+name: Manually release `yak`
 
 on:
   workflow_dispatch:
@@ -28,7 +28,7 @@ jobs:
           echo "buck2_version: ${{ steps.define_version_info.outputs.buck2_version }}"
 
   build:
-    name: Build `buck2`
+    name: Build `yak`
     needs:
       - set_version_info
     uses: ./.github/workflows/build_buck2.yml

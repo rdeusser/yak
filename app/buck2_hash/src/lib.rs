@@ -8,10 +8,10 @@
  * above-listed licenses.
  */
 
-//! Hash function abstractions for buck2.
+//! Hash function abstractions for yak.
 //!
 //! This crate provides a level of indirection for hash function implementations
-//! used throughout buck2. The default hasher used by Rust's `HashMap` is
+//! used throughout yak. The default hasher used by Rust's `HashMap` is
 //! optimized for security rather than speed. For internal hash maps where
 //! security is not a concern, using this crate's hasher provides better
 //! performance.
@@ -51,7 +51,7 @@ use std::hash::Hasher;
 use dupe::Dupe;
 use fxhash::FxHasher64;
 
-/// A hasher for buck2 internal use.
+/// A hasher for yak internal use.
 ///
 /// This hasher is optimized for speed rather than security, making it suitable
 /// for internal hash maps where hash-flooding attacks are not a concern.
@@ -140,14 +140,14 @@ impl BuildHasher for BuckHasherBuilder {
 
 /// A [`HashMap`](std::collections::HashMap) using [`BuckHasherBuilder`].
 ///
-/// The default map for buck2 code: mutable, with no guarantee about iteration order. The
+/// The default map for yak code: mutable, with no guarantee about iteration order. The
 /// hasher is faster than the standard library's, which is optimized against hash flooding -
-/// not a concern for buck2's internal maps.
+/// not a concern for yak's internal maps.
 pub type BuckMutMap<K, V> = std::collections::HashMap<K, V, BuckHasherBuilder>;
 
 /// A [`HashSet`](std::collections::HashSet) using [`BuckHasherBuilder`].
 ///
-/// The set counterpart of [`BuckMutMap`], and the default set for buck2 code.
+/// The set counterpart of [`BuckMutMap`], and the default set for yak code.
 pub type BuckMutSet<K> = std::collections::HashSet<K, BuckHasherBuilder>;
 
 /// An [`IndexMap`](indexmap::IndexMap) using the default hasher.
@@ -228,7 +228,7 @@ macro_rules! buck_indexset {
 
 /// A [`DashMap`](dashmap::DashMap) using [`BuckHasherBuilder`].
 ///
-/// The concurrent map for buck2 code. Construct it with `default()`; `DashMap::new()` exists
+/// The concurrent map for yak code. Construct it with `default()`; `DashMap::new()` exists
 /// only for the standard library's hasher.
 pub type BuckDashMap<K, V, S = BuckHasherBuilder> = dashmap::DashMap<K, V, S>;
 
@@ -244,11 +244,11 @@ pub type BuckDashSet<K, S = BuckHasherBuilder> = dashmap::DashSet<K, S>;
 /// materializer tree - that are waiting on the immutable map type from the retained-maps
 /// plan. Once those are converted this alias goes away. Anywhere else, the map is either
 /// transient, and wants [`BuckMutMap`], or forced to be a concrete `HashMap` by something
-/// outside buck2, and wants [`IntentionallyStdHashMap`].
+/// outside yak, and wants [`IntentionallyStdHashMap`].
 pub type StdBuckHashMap<K, V> = std::collections::HashMap<K, V>;
 
 /// A [`HashMap`](std::collections::HashMap) that intentionally uses the standard library's
-/// default `RandomState` hasher rather than buck2's performance-optimized hasher.
+/// default `RandomState` hasher rather than yak's performance-optimized hasher.
 ///
 /// Use this at API boundaries where the concrete type `HashMap<K, V>` is required —
 /// for example, protobuf-generated struct fields, third-party crate APIs, or rusqlite
@@ -256,7 +256,7 @@ pub type StdBuckHashMap<K, V> = std::collections::HashMap<K, V>;
 pub type IntentionallyStdHashMap<K, V> = std::collections::HashMap<K, V>;
 
 /// A [`HashSet`](std::collections::HashSet) that intentionally uses the standard library's
-/// default `RandomState` hasher rather than buck2's performance-optimized hasher.
+/// default `RandomState` hasher rather than yak's performance-optimized hasher.
 ///
 /// Use this at API boundaries where the concrete type `HashSet<K>` is required —
 /// for example, starlark's `ast.lint()` API which expects `&HashSet<String>`.

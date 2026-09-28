@@ -15,7 +15,7 @@ contextBridge.exposeInMainWorld('api', {
     current_buck_dir: () => ipcRenderer.invoke('current-buck-dir'),
     select_buck_dir: () => ipcRenderer.invoke('select-buck-dir'),
 
-    // Run buck2 <action>
+    // Run yak <action>
     status: () => ipcRenderer.invoke('buck2-status'),
     targets: (target, host) => ipcRenderer.invoke('buck2-targets', target, host),
     attributes: (target, host) => ipcRenderer.invoke('buck2-attributes', target, host),

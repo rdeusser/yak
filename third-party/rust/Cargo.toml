@@ -7,7 +7,7 @@
 # above-listed licenses.
 
 # The third-party crates of the Buck build of this repository.
-# `reindeer buckify` generates `BUCK` in this directory from this file, and
+# `reindeer buckify` generates `YAK` in this directory from this file, and
 # the Cargo build does not read it. `website/docs/about/bootstrapping.md`
 # shows the steps.
 

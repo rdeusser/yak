@@ -24,9 +24,9 @@ use of DICE’s existing incrementality support.
 
 ## What’s the difference between `ctx.output.print()` and `print()`?
 
-- `ctx.output.print()` writes items to stdout by buck2 even when the script is
+- `ctx.output.print()` writes items to stdout by yak even when the script is
   cached. Items written to the output stream are considered to be the results of
-  a BXL script, which will be displayed to stdout by buck2 even when the script
+  a BXL script, which will be displayed to stdout by yak even when the script
   is cached.
 - `print()` is offered by Starlark via the stdlib. This prints anything you want
   but won’t be provided to stdout at the end of a BXL script. These can be used

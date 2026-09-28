@@ -8,7 +8,7 @@
 # above-listed licenses.
 
 """
-A simple wrapper around a distributed thinlto index command to fit into buck2's
+A simple wrapper around a distributed thinlto index command to fit into yak's
 distributed thinlto build.
 
 This reads in a couple of things:
@@ -95,7 +95,7 @@ def _enable_core_dumps() -> None:
     # The index step runs the system linker, which installs no userspace
     # crash handler, so a crash only leaves a core dump if
     # the kernel writes one, and the kernel writes nothing while the RLIMIT_CORE
-    # soft limit is 0. buck2 sets no per-action rlimits, so raise the soft limit
+    # soft limit is 0. yak sets no per-action rlimits, so raise the soft limit
     # to the inherited hard limit here (best effort: a no-op when the hard limit
     # is itself 0, which needs a host/container-level change instead).
     try:
@@ -168,9 +168,9 @@ def main(argv):
     #       "linkables": [
     #          {
     #             "type": "bitcode",
-    #             "path": "buck-out/v2/art/spongebob/Gary.cpp.o",
-    #             "output": "buck-out/v2/art/spongebob/Gary.cpp.o.thinlto.bc",
-    #             "plan_output": "buck-out/v2/art/spongebob/Gary.cpp.o.opt.plan",
+    #             "path": "yak-out/v2/art/spongebob/Gary.cpp.o",
+    #             "output": "yak-out/v2/art/spongebob/Gary.cpp.o.thinlto.bc",
+    #             "plan_output": "yak-out/v2/art/spongebob/Gary.cpp.o.opt.plan",
     #             "idx": 0
     #          },
     #          ...

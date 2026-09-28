@@ -41,7 +41,7 @@ cell_root() ->
 
 -spec root(Type :: cell | project) -> file:filename_all().
 root(Type) ->
-    case run_command(no_stderr([~"buck2", ~"root", ~"--kind", atom_to_binary(Type)]), [{at_root, false}]) of
+    case run_command(no_stderr([~"yak", ~"root", ~"--kind", atom_to_binary(Type)]), [{at_root, false}]) of
         {ok, Output} ->
             Dir = unicode_characters_to_binary(string:trim(Output)),
             case filelib:is_dir(Dir, prim_file) of
@@ -76,7 +76,7 @@ rebuild_modules(Modules) ->
 buck2_build_targets(Targets) ->
     case
         run_command([
-            ~"buck2",
+            ~"yak",
             ~"build",
             ~"--reuse-current-config",
             ~"--console=super",
@@ -106,7 +106,7 @@ buck2_query(Query, Args) ->
 buck2_query(Query, BuckArgs, Args) ->
     run_command(
         no_stderr([
-            ~"buck2",
+            ~"yak",
             ~"uquery",
             ~"--reuse-current-config",
             get_buck2_args_from_env(),
@@ -180,7 +180,7 @@ port_loop(Port, StdOut) ->
 get_additional_paths(Path) ->
     case
         run_command([
-            ~"buck2",
+            ~"yak",
             ~"bxl",
             ~"--reuse-current-config",
             ~"--console=super",

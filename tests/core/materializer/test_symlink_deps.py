@@ -71,7 +71,7 @@ async def test_restarted_daemon_materializes_symlink_and_its_target(buck: Buck) 
 
 @buck_test(skip_for_os=["windows"])
 async def test_symlinked_dir_to_source_file(buck: Buck) -> None:
-    # Nothing in buck-out covers a source file, so there is no artifact for the
+    # Nothing in yak-out covers a source file, so there is no artifact for the
     # materializer to chase; the symlink resolves because the source is already
     # where it points.
     assert await read_through(buck, "root//:check_dir_to_source") == "SOURCE"

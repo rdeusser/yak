@@ -255,7 +255,7 @@ impl<'v> StarlarkValue<'v> for AllPlugins {}
 ///     uses_plugins = [RustProcMacroPlugin],
 /// )
 ///
-/// # TARGETS file:
+/// # YAK file:
 /// rust_proc_macro_alias(name = "my_derive", actual = ":my_derive_impl")
 /// rust_library(name = "lib", deps = [":my_derive"])
 /// rust_binary(name = "bin", deps = [":lib"])

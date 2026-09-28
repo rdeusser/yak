@@ -144,7 +144,7 @@ impl DiceEventListener for CapturingListener {
     }
 }
 
-/// A failed page-in reports a `HydrationFailed` event (which buck2 maps to a
+/// A failed page-in reports a `HydrationFailed` event (which yak maps to a
 /// `soft_error`), so the failure is visible in telemetry rather than lost.
 #[tokio::test]
 async fn failed_hydrate_reports_a_hydration_failed_event() -> anyhow::Result<()> {

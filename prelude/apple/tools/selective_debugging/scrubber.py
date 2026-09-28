@@ -22,9 +22,9 @@ from .utils import MachOException
 
 
 FAKE_PATH = b"fake/path"
-# buck-out/isolation_dir/gen/project_cell/{hash}/....
+# yak-out/isolation_dir/gen/project_cell/{hash}/....
 NUM_OF_COMPONENTS_IN_BUCK2_OUTPUT_PATH_BEFORE_PROJECT_PATH = 5
-# buck-out/isolation_dir/gen/project_cell//X/Y/__name__/{hash}/....
+# yak-out/isolation_dir/gen/project_cell//X/Y/__name__/{hash}/....
 NUM_OF_COMPONENTS_IN_BUCK2_OUTPUT_PATH_BEFORE_PROJECT_PATH_WITH_CONTENT_BASED_PATH = 4
 
 
@@ -45,28 +45,28 @@ def load_focused_targets_output_paths(json_file_path: str) -> set[str]:
         for target in data["targets"]:
             _, package_and_name = target.split("//")
             package, name = package_and_name.split(":")
-            # This assumes the output path created by buck2, which if
+            # This assumes the output path created by yak, which if
             # modified, would break this logic.
             output_directory = f"{package}/__{name}__"
             output_paths.add(output_directory)
     return output_paths
 
 
-# This function converts buck-out/isolation_dir/gen/project_cell/{hash}/X/Y/__name__/libFoo.a
+# This function converts yak-out/isolation_dir/gen/project_cell/{hash}/X/Y/__name__/libFoo.a
 # into X/Y/__name__ to match the focus target output path created by load_focused_targets_output_paths
 # Visible for testing
 def _get_target_output_path_from_debug_file_path(
     debug_target_path: str,
 ) -> str:
-    # This function assumes the debug file path created by buck2 in one of the following formats:
+    # This function assumes the debug file path created by yak in one of the following formats:
     # Without content based path:
-    # buck-out/isolation_dir/gen/project_cell/{hash}/.../__name__/libFoo.a
-    # buck-out/isolation_dir/gen/project_cell/{hash}/.../__name__/__objects__/bar.o
-    # buck-out/isolation_dir/gen/project_cell/{hash}/.../__name__/swift_object_file.swift.o
+    # yak-out/isolation_dir/gen/project_cell/{hash}/.../__name__/libFoo.a
+    # yak-out/isolation_dir/gen/project_cell/{hash}/.../__name__/__objects__/bar.o
+    # yak-out/isolation_dir/gen/project_cell/{hash}/.../__name__/swift_object_file.swift.o
     # With content based path:
-    # buck-out/isolation_dir/gen/project_cell/.../__name__/{hash}/libFoo.a
-    # buck-out/isolation_dir/gen/project_cell/.../__name__/__objects__/{hash}/bar.o
-    # buck-out/isolation_dir/gen/project_cell/.../__name__/{hash}/swift_object_file.swift.o
+    # yak-out/isolation_dir/gen/project_cell/.../__name__/{hash}/libFoo.a
+    # yak-out/isolation_dir/gen/project_cell/.../__name__/__objects__/{hash}/bar.o
+    # yak-out/isolation_dir/gen/project_cell/.../__name__/{hash}/swift_object_file.swift.o
     parts = debug_target_path.split("/")
 
     # We are doing the traverse in reverse order because this way we'll find the first
@@ -112,7 +112,7 @@ def should_scrub_with_focused_targets_output_paths(
     else:
         debug_target_path = debug_file_path
 
-    if debug_file_path.startswith("buck-out/"):
+    if debug_file_path.startswith("yak-out/"):
         target_output_path, target_output_content_based_path = (
             _get_target_output_path_from_debug_file_path(debug_target_path)
         )

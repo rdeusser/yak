@@ -1,4 +1,4 @@
-.buckconfig.local
+.yakconfig.local
 .direnv
 .envrc.private
 prelude

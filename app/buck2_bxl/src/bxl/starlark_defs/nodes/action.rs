@@ -83,7 +83,7 @@ fn action_methods(builder: &mut MethodsBuilder) {
     /// Sample usage:
     /// ```python
     /// def _impl_action(ctx):
-    ///     action = ctx.audit().output("buck-out/path/to/__target__/artifact", "your_target_platform")
+    ///     action = ctx.audit().output("yak-out/path/to/__target__/artifact", "your_target_platform")
     ///     ctx.output.print(action.owner())
     /// ```
     fn owner<'v>(this: StarlarkAction) -> starlark::Result<StarlarkConfiguredTargetLabel> {

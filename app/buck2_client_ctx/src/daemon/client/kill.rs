@@ -44,7 +44,7 @@ pub async fn kill_command_impl(
         Ok(p) => p,
         Err(e) => {
             tracing::debug!("No BuckdProcessInfo: {:#}", e);
-            crate::eprintln!("no buckd server running")?;
+            crate::eprintln!("no yakd server running")?;
             return Ok(());
         }
     };
@@ -56,12 +56,12 @@ pub async fn kill_command_impl(
 
     let pid = match buckd {
         Ok(Ok(mut buckd)) => {
-            crate::eprintln!("killing buckd server")?;
+            crate::eprintln!("killing yakd server")?;
             Some(buckd.kill(reason).await?)
         }
         Ok(Err(e)) => {
             // No time out: we just errored out. This is likely indicative that there is no
-            // buckd (i.e. our connection got rejected), so let's check for this and then
+            // yakd (i.e. our connection got rejected), so let's check for this and then
             // provide some information.
             let e = e;
 
@@ -70,11 +70,11 @@ pub async fn kill_command_impl(
             if e.has_tag(ErrorTag::ServerTransportError) {
                 // OK, looks like the server
                 tracing::debug!("Connect failed with a Tonic error: {:#}", e);
-                crate::eprintln!("no buckd server running")?;
+                crate::eprintln!("no yakd server running")?;
             } else {
                 crate::eprintln!(
                     "unexpected error connecting to Buck2: {:#} \
-                            (no buckd server running?)",
+                            (no yakd server running?)",
                     e
                 )?;
             }
@@ -91,7 +91,7 @@ pub async fn kill_command_impl(
             //
             // This means the socket is probably open. We can reasonably got and kill this
             // process if both the PID and the port exist.
-            crate::eprintln!("killing unresponsive buckd server")?;
+            crate::eprintln!("killing unresponsive yakd server")?;
             process.hard_kill().await?;
             Some(process.pid()?)
         }
@@ -131,7 +131,7 @@ pub(crate) async fn kill(
                     }
                     if Instant::now() - time_req_sent > GRACEFUL_SHUTDOWN_TIMEOUT {
                         crate::eprintln!(
-                            "Timed out waiting for graceful shutdown of buck2 daemon pid {}",
+                            "Timed out waiting for graceful shutdown of yak daemon pid {}",
                             pid
                         )?;
                         break;
@@ -142,7 +142,7 @@ pub(crate) async fn kill(
                     // The kill request can fail if the server is in a bad state and we cannot
                     // authenticate to it.
                     crate::eprintln!(
-                        "Error requesting graceful shutdown of buck2 daemon pid {}: {}",
+                        "Error requesting graceful shutdown of yak daemon pid {}: {}",
                         pid,
                         e
                     )?;
@@ -152,7 +152,7 @@ pub(crate) async fn kill(
         Err(e) => {
             let _assert_type: tokio::time::error::Elapsed = e;
             crate::eprintln!(
-                "Timed out requesting graceful shutdown of buck2 daemon pid {}",
+                "Timed out requesting graceful shutdown of yak daemon pid {}",
                 pid
             )?;
         }

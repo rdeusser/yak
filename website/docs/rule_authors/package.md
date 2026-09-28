@@ -7,9 +7,9 @@ title: PACKAGE Files
 Starlark rules/macros. It supports things like per-directory properties, reading
 parent `PACKAGE` values (`read_parent_package_value()`), writing `PACKAGE`
 values (`write_package_value()`), loading helper `bzl` files, and you can also
-inspect `PACKAGE` values via `buck2 audit package-values`.
+inspect `PACKAGE` values via `yak audit package-values`.
 
-Before evaluating `BUCK` file, buck2 will evaluate all `PACKAGE` files in the
+Before evaluating `YAK` file, yak will evaluate all `PACKAGE` files in the
 same directory and all parent directories. Absent `PACKAGE` files are treated as
 empty files.
 
@@ -21,10 +21,10 @@ requested) should fail with Starlark call stack.
 
 Each `PACKAGE` file is evaluated at most once (like `bzl` files).
 
-`PACKAGE` files may load arbitrary `bzl` files. `BUCK`-specific functions called
+`PACKAGE` files may load arbitrary `bzl` files. `YAK`-specific functions called
 in `bzl` files (like rule functions) are available, but calling functions from
 `PACKAGE` files is an error. This way, `bzl` files are evaluated only once
-regardless of whether they are loaded from `PACKAGE` or `BUCK` file.
+regardless of whether they are loaded from `PACKAGE` or `YAK` file.
 
 ## APIs
 
@@ -56,12 +56,12 @@ Written values are frozen when `PACKAGE` file evaluation is finished.
 
 Note `write_package_value` symbol exists in `bzl` globals, and it can be called
 from `bzl` file in context of `PACKAGE` evaluation, but calling
-`write_package_file` is an error on context of `BUCK` evaluation.
+`write_package_file` is an error on context of `YAK` evaluation.
 
-Modifying `PACKAGE` file logically invalidates the `BUCK` file of this
-directory, and all `PACKAGE` and `BUCK` files of sub-`PACKAGE`s. However, `BUCK`
+Modifying `PACKAGE` file logically invalidates the `YAK` file of this
+directory, and all `PACKAGE` and `YAK` files of sub-`PACKAGE`s. However, `YAK`
 file evaluation may track which `PACKAGE`-local values were accessed and only
-invalidate `BUCK` files which were potentially affected (similarly to how we do
+invalidate `YAK` files which were potentially affected (similarly to how we do
 it with buckconfigs).
 
 #### [`read_parent_package_value`](../../api/build#read_parent_package_value)
@@ -135,7 +135,7 @@ Calling `enforce_visibility_intersection()` without a non-`None`
 unchanged, so a directory can opt into enforcement without further narrowing
 what its parents already allow.
 
-The propagated cap can be inspected via `buck2 audit package-values`. When a
+The propagated cap can be inspected via `yak audit package-values`. When a
 visibility check fails because of the cap, the error reports the cap that
 blocked it.
 
@@ -178,7 +178,7 @@ with the parent's as usual; the cap is independent of `inherit` and always
 intersects, so an `inherit=True` child whose own list is disjoint from the
 parent's cap yields a cap that no cross-package dependency satisfies.
 
-The propagated cap can be inspected via `buck2 audit package-values`. Inside an
+The propagated cap can be inspected via `yak audit package-values`. Inside an
 opted-in subtree, a refused dependency is reported together with both the
 target's own `within_view` and the cap, since widening the target's own list
 alone cannot get past the cap.
@@ -187,7 +187,7 @@ alone cannot get past the cap.
 
 `PACKAGE` files are able to call `read_config` to read buckconfigs.
 
-### `BUCK`-specific API
+### `YAK`-specific API
 
 #### [`read_package_value`](../../api/build#read_package_value)
 
@@ -197,8 +197,8 @@ def read_package_value(
 ): ...
 ```
 
-This global API is only available in `BUCK` files, or `bzl` files included in
-`BUCK` files.
+This global API is only available in `YAK` files, or `bzl` files included in
+`YAK` files.
 
 This function returns the nearest `name` value registered per `PACKAGE`, or
 `None` is such value does not exist.

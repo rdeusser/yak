@@ -3,21 +3,21 @@ id: buck_hanging
 title: Why is Buck2 hanging?
 ---
 
-Let's look at how to troubleshoot when buck2 hangs, i.e. it just sits there
+Let's look at how to troubleshoot when yak hangs, i.e. it just sits there
 saying "Jobs: In progress: 0, ..." but it’s not finishing...
 
-When buck2 hangs, there are two possibilities: It’s either hanging doing
+When yak hangs, there are two possibilities: It’s either hanging doing
 _something_, or it’s hanging doing _nothing_. The first thing you should do is
 figure out which of those is happening. That’s because the tools to debug either
 of those are _very_ different! We will mainly focus on the first in this case.
 
-To figure out which hang you have on your hands, just look at how much CPU buck2
+To figure out which hang you have on your hands, just look at how much CPU yak
 is using when the hang occurs using your favorite activity monitor (e.g. `top`,
-`htop`). Remember that you can find the buck2 daemon’s PID using `buck2 status`.
+`htop`). Remember that you can find the yak daemon’s PID using `yak status`.
 Ideally, break the utilization down by threads (in top, that’s `top -Hp $PID`).
 
 If any thread is using 100% CPU for some period of time, then you probably have
-a busy hang (buck2 is doing “something”) which are usually easier to debug.
+a busy hang (yak is doing “something”) which are usually easier to debug.
 
 ## How to debug a “busy” hang
 
@@ -55,7 +55,7 @@ Let's consider an example user report with the following stack trace:
 
 At this point, you can look at the code, and note that there is no span around
 the output symlink creation function (`create_unhashed_outputs`). This suggests
-you’ve found your culprit: there is indeed a buck2 bug and we’re spending ages
+you’ve found your culprit: there is indeed a yak bug and we’re spending ages
 creating unhashed output symlinks, and since you need a span to get any console
 feedback, the console says nothing is happening.
 
@@ -70,8 +70,8 @@ breakage, investigate what caused the issue.
 
 ## How to debug a “doing nothing” hang
 
-**Cycle in dependencies**: If buck2 seems to be doing nothing (e.g. CPU usage is
+**Cycle in dependencies**: If yak seems to be doing nothing (e.g. CPU usage is
 0%), one of the reasons could be a cycle in your dependencies, which may cause
-buck2 to hang (buck2 does implement a form of cycle detection, but it
+yak to hang (yak does implement a form of cycle detection, but it
 unfortunately has false negatives). You can confirm this by running buck1, which
 will report cycles properly.

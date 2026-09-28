@@ -20,30 +20,30 @@ Buck2 has a number of fundamental concepts:
   build rule. It can be thought of as a URI for the build rule within the Buck2
   project.
 - A [**_build file_**](build_rule.md) defines one or more build rules. In Buck2,
-  build files are typically named `BUCK`. A `BUCK` file is analogous to the
+  build files are typically named `YAK`. A `YAK` file is analogous to the
   `Makefile` used by the Make utility. In your project, you will usually have a
-  separate `BUCK` file for each buildable unit of software—such as a binary or
-  library. For large projects, you could have hundreds of `BUCK` files.
+  separate `YAK` file for each buildable unit of software—such as a binary or
+  library. For large projects, you could have hundreds of `YAK` files.
 
 ### Packages
 
 A Buck2 **_package_** is defined by:
 
-- A Buck2 build file (a `BUCK` file) that marks the root of the package
-- All files in the same directory as this `BUCK` file
+- A Buck2 build file (a `YAK` file) that marks the root of the package
+- All files in the same directory as this `YAK` file
 - All files in subdirectories, _unless_ those subdirectories contain their own
-  `BUCK` files
+  `YAK` files
 
-In other words, Buck2 packages are hierarchical and non-overlapping: Each `BUCK`
+In other words, Buck2 packages are hierarchical and non-overlapping: Each `YAK`
 file creates a new package boundary. A package does not include subdirectories
-that contain their own `BUCK` files. Those subdirectories with `BUCK` files
+that contain their own `YAK` files. Those subdirectories with `YAK` files
 become roots of their own separate packages.
 
-For example, in the following diagram, the BUCK file in directory `app-dir-1`
+For example, in the following diagram, the YAK file in directory `app-dir-1`
 defines that directory as the root of a package—which is labeled **Package A**
 in the diagram. The directory `app-dir-2` is part of Package A because it is a
-subdirectory of `app-dir-1`, but does not itself contain a BUCK file. Now,
-consider directory `app-dir-3`. Because `app-dir-3` contains a BUCK file it is
+subdirectory of `app-dir-1`, but does not itself contain a YAK file. Now,
+consider directory `app-dir-3`. Because `app-dir-3` contains a YAK file it is
 the root of a new package (**Package B**). Although `app-dir-3` is a
 subdirectory of `app-dir-1`, it is _not_ part of Package A.
 
@@ -54,7 +54,7 @@ subdirectory of `app-dir-1`, it is _not_ part of Package A.
 A Buck2 **_cell_** is:
 
 - A directory tree containing one or more Buck2 packages
-- Configured by a [**`.buckconfig`**](buckconfig.md) file at **its root**
+- Configured by a [**`.yakconfig`**](buckconfig.md) file at **its root**
   ```
   [cells]
   cell_name = path_to_cell
@@ -62,23 +62,23 @@ A Buck2 **_cell_** is:
   ```
 - Often (but not necessarily) corresponding to a repository
 
-Note that although the cell root should contain a `.buckconfig`, the presence of
-a `.buckconfig` file doesn't in itself define a cell. Rather, _the cells
+Note that although the cell root should contain a `.yakconfig`, the presence of
+a `.yakconfig` file doesn't in itself define a cell. Rather, _the cells
 involved in a build are defined at the time Buck2 is invoked_; they are
-specified in the `.buckconfig` for the Buck2 _project_ (see below).
+specified in the `.yakconfig` for the Buck2 _project_ (see below).
 
 ### Projects
 
 A Buck2 **_project_** is:
 
 - The entry point for Buck2 builds
-- Defined by the `.buckconfig` file in the directory where Buck2 is invoked (or
+- Defined by the `.yakconfig` file in the directory where Buck2 is invoked (or
   in the nearest ancestor directory),
 - The container that specifies which cells are part of the build
 
-**_How cells and projects relate._** The project's `.buckconfig` specifies all
+**_How cells and projects relate._** The project's `.yakconfig` specifies all
 cells in the [cells](buckconfig.md#cells) section. The directory containing the
-project's `.buckconfig` is automatically considered a cell. While not required,
+project's `.yakconfig` is automatically considered a cell. While not required,
 it's good practice to explicitly list the project cell in the configuration.
 
 ### Buck2's dependency graph

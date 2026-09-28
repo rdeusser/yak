@@ -39,10 +39,10 @@ The Modifier API introduces a unified way to specify build settings on a target 
 
 A configuration is a collection of `constraint_value` targets. Each individual constraint value is keyed by a `constraint_setting` (commonly referred to as just constraint), so there can only be one constraint value of a constraint in a configuration.
 
-For example, the following BUCK file defines `prelude//constraints/os:_` as a constraint setting with constraint values `prelude//constraints/os:linux`, `prelude//constraints/os:macos`, and `prelude//constraints/os:windows`.
+For example, the following YAK file defines `prelude//constraints/os:_` as a constraint setting with constraint values `prelude//constraints/os:linux`, `prelude//constraints/os:macos`, and `prelude//constraints/os:windows`.
 
 ```python
-# prelude//constraints/os/BUCK
+# prelude//constraints/os/YAK
 
 constraint_setting(name = "os")
 
@@ -126,7 +126,7 @@ target, or cli level.
 
 ### Per-PACKAGE Modifier
 
-In a `PACKAGE` or `BUCK_TREE` file, modifiers can be specified using the `set_cfg_modifiers` function and would apply to all targets covered under that PACKAGE or BUCK_TREE file. For example, modifiers specified in `repo//PACKAGE` would apply to any target under `repo//…`. Modifiers specified in `repo/foo/PACKAGE` would apply to any target under `repo//foo/…` (for resolution order, see "Modifier Resolution" section).
+In a `PACKAGE` or `YAK_TREE` file, modifiers can be specified using the `set_cfg_modifiers` function and would apply to all targets covered under that PACKAGE or YAK_TREE file. For example, modifiers specified in `repo//PACKAGE` would apply to any target under `repo//…`. Modifiers specified in `repo/foo/PACKAGE` would apply to any target under `repo//foo/…` (for resolution order, see "Modifier Resolution" section).
 
 The `set_cfg_modifiers` function takes as input a list of modifiers. The following is an example that sets modifiers for OS and compiler settings for all targets in the repo.
 
@@ -147,7 +147,7 @@ set_cfg_modifiers(cfg_modifiers = [
 On a target, modifiers can be specified on the `modifiers` attribute. For example, the following specifies modifiers for `repo//foo:bar`.
 
 ```python
-# repo/foo/BUCK
+# repo/foo/YAK
 
 python_binary(
   name = "bar",
@@ -162,7 +162,7 @@ python_binary(
 Note that for legacy reasons, we also support modifiers defined on the `metadata` attribute via “buck.cfg_modifiers” key.
 
 ```python
-# repo/foo/BUCK
+# repo/foo/YAK
 
 python_binary(
   name = "bar",
@@ -180,7 +180,7 @@ python_binary(
 
 We recommend using per-PACKAGE modifiers over per-target modifiers when possible for a couple reasons.
 
-*Per-target modifiers may require changing or debugging complicated bzl files* whereas *per-PACKAGE modifiers do not.* While all native buck rules like `cxx_binary` and `genrule` support per-target modifiers, oftentimes you will find that a “rule” you are using in a BUCK file may not support modifiers. This is because you are most likely using a macro that wraps the native rules. Using modifiers in a new macro will require plumbing the `metadata` or `modifiers` attribute down many layers of macro until it reaches the native rule, and many users often *get this wrong*, leading to hard-to-debug scenarios where certain generated targets are missing modifiers or some modifiers get unintentionally overwritten by someone else. Per-PACKAGE modifiers don’t have this problem.
+*Per-target modifiers may require changing or debugging complicated bzl files* whereas *per-PACKAGE modifiers do not.* While all native buck rules like `cxx_binary` and `genrule` support per-target modifiers, oftentimes you will find that a “rule” you are using in a YAK file may not support modifiers. This is because you are most likely using a macro that wraps the native rules. Using modifiers in a new macro will require plumbing the `metadata` or `modifiers` attribute down many layers of macro until it reaches the native rule, and many users often *get this wrong*, leading to hard-to-debug scenarios where certain generated targets are missing modifiers or some modifiers get unintentionally overwritten by someone else. Per-PACKAGE modifiers don’t have this problem.
 
 *Per-PACKAGE modifiers enforce that modifiers are consistently applied across the entire project. *While people usually know to apply modifiers to binaries, they often forget to apply them to library/test targets. This could cause unintentional behavior differences when building libraries or tests. Even when there is no behavior difference, this will still cause an increase in configured target graph size. An increase in graph size will increase buck daemon memory usage and make it more likely for builds to OOM.
 
@@ -188,9 +188,9 @@ We recommend using per-PACKAGE modifiers over per-target modifiers when possible
 
 ### Input Modifier
 
-On the command line, modifiers are specified as `buck2 build <target>?<modifiers separated by plus signs>`. For example, `buck2 build repo//foo:bar?prelude//constraints/sanitizer:asan` applies asan modifier on the command line. `buck2 build repo//foo:bar?prelude//constraints/os:linux+prelude//constraints/sanitizer:asan` will apply linux and asan modifiers.
+On the command line, modifiers are specified as `yak build <target>?<modifiers separated by plus signs>`. For example, `yak build repo//foo:bar?prelude//constraints/sanitizer:asan` applies asan modifier on the command line. `yak build repo//foo:bar?prelude//constraints/os:linux+prelude//constraints/sanitizer:asan` will apply linux and asan modifiers.
 
-To make constraints easier to type, alias strings can be specified for modifier targets and used on the command line. `buck2 build repo//foo:bar?asan` is valid provided the following aliases are specified.
+To make constraints easier to type, alias strings can be specified for modifier targets and used on the command line. `yak build repo//foo:bar?asan` is valid provided the following aliases are specified.
 
 ```python
 ALIASES = struct(
@@ -200,21 +200,21 @@ ALIASES = struct(
 # ALIASES are registered in a global starlark function call
 ```
 
-Modifiers can be specified for any target pattern, so `buck2 build repo//foo/...?asan` and `buck2 build repo//foo:?asan` are both valid.
+Modifiers can be specified for any target pattern, so `yak build repo//foo/...?asan` and `yak build repo//foo:?asan` are both valid.
 
-When specifying a subtarget and modifier with `?`, subtarget should go before the modifier, ex. `buck2 build repo//foo:bar[comp-db]?asan`.
+When specifying a subtarget and modifier with `?`, subtarget should go before the modifier, ex. `yak build repo//foo:bar[comp-db]?asan`.
 
-To specify modifiers to a list of target patterns on the command line, you can use the `--modifier` or `-m` flag. For example, `buck2 build repo//foo:bar repo//foo:baz -m release` is equivalent to `buck2 build repo//foo:bar?release //foo:baz?release`.
+To specify modifiers to a list of target patterns on the command line, you can use the `--modifier` or `-m` flag. For example, `yak build repo//foo:bar repo//foo:baz -m release` is equivalent to `yak build repo//foo:bar?release //foo:baz?release`.
 
 `--modifier` flag can be specified multiple times to add multiple modifier, so
 
-`buck2 build --modifier=linux --modifier=release repo//foo:bar` is equivalent to `buck2 build repo//foo:bar?linux+release`.
+`yak build --modifier=linux --modifier=release repo//foo:bar` is equivalent to `yak build repo//foo:bar?linux+release`.
 
 It is prohibited to specify both `--modifier` flag and `?` in a target pattern. This restriction can be lifted in the future if there is a need.
 
-When two modifiers of the same constraint setting are specified, then the later one overrides the earlier one. For example, `buck2 build repo//foo:bar?dev+release` is equivalent to
+When two modifiers of the same constraint setting are specified, then the later one overrides the earlier one. For example, `yak build repo//foo:bar?dev+release` is equivalent to
 
-`buck2 build repo//foo:bar?release`.
+`yak build repo//foo:bar?release`.
 
 On command line, a `config_setting` target can be specified as a collection of
 
@@ -243,7 +243,7 @@ set_cfg_modifiers(cfg_modifiers = [
 
 set_cfg_modifiers(cfg_modifiers = ["cfg//os:macos"])
 
-# repo/foo/BUCK
+# repo/foo/YAK
 
 python_binary(
   name = "bar",
@@ -303,7 +303,7 @@ Target platform (`--target-platforms` flag or `default_target_platform` attribut
 
 Because many layers of modifiers can be applied before obtaining a final configuration, it is important that modifier resolution is easy to debug and understand. Here are some ways that modifier resolution can be interpreted.
 
-1. *`buck2 audit modifiers`** command*. There will be a `buck2 audit modifiers` command to show all PACKAGE, target, and required modifiers for a target. It can also show configuration changes from the modifier resolution process if requested by the user.
+1. *`yak audit modifiers`** command*. There will be a `yak audit modifiers` command to show all PACKAGE, target, and required modifiers for a target. It can also show configuration changes from the modifier resolution process if requested by the user.
 2. *Starlark print or debugger support*. The modifier resolution process will be implemented in Starlark in the prelude. This means that any user can use any of the existing ways to debug starlark (ex. print statements, Starlark debugger in VSCode) to debug the resolution process.
 
 ## How configuration modifiers differ from transitions

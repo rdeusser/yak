@@ -8,7 +8,7 @@
  * above-listed licenses.
  */
 
-//! Categories and identifiers for actions run by buck2.
+//! Categories and identifiers for actions run by yak.
 //!
 //! A category is a snake case identifier that identifies a family of actions that are related in some way but differ
 //! in their inputs. The canonical example of this is the category `cxx_compile`; conceptually, this represents the

@@ -21,11 +21,11 @@ use buck2_client_ctx::startup_deadline::StartupDeadline;
 
 /// Kill the buck daemon.
 ///
-/// Note there's also `buck2 killall` and `buck2 clean`.
+/// Note there's also `yak killall` and `yak clean`.
 ///
-/// `buck2 killall` kills all the buck2 processes on the machine.
+/// `yak killall` kills all the yak processes on the machine.
 ///
-/// `buck2 clean` kills the buck2 daemon and also deletes the buck2 state files.
+/// `yak clean` kills the yak daemon and also deletes the yak state files.
 #[derive(Debug, clap::Parser)]
 pub struct KillCommand {
     #[clap(flatten)]

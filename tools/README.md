@@ -1,9 +1,9 @@
 # buck2/tools
 
-Standalone developer tools that may be useful. They live in the buck2 repo but are not part of the
-buck2 binary itself.
+Standalone developer tools that may be useful. They live in the yak repo but are not part of the
+yak binary itself.
 
 ## Tools
 
 - [`starlark_fmt`](starlark_fmt/README.md) — a formatter for
-  Starlark / BUCK files (a buildifier replacement).
+  Starlark / YAK files (a buildifier replacement).

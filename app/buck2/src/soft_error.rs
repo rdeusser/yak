@@ -8,7 +8,7 @@
  * above-listed licenses.
  */
 
-//! Routes soft errors to the event stream of the command that raised them. The buck2 CLI and
+//! Routes soft errors to the event stream of the command that raised them. The yak CLI and
 //! daemon share this handler.
 
 use std::sync::Arc;

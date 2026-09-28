@@ -56,7 +56,7 @@ public class JavacStepTest {
   public void setUp() {
     target = "//foo:bar";
     buildTargetValue = new BuildTargetValue(Type.LIBRARY, target);
-    configuredBuckOut = RelPath.get("buck-out/v2");
+    configuredBuckOut = RelPath.get("yak-out/v2");
     compilerParameters =
         new CompilerParameters(
             ImmutableSortedSet.of(),

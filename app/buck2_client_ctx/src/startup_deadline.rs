@@ -17,7 +17,7 @@ use buck2_common::client_utils::retrying;
 use buck2_error::BuckErrorContext;
 use buck2_error::BuckErrorOptionContext;
 
-/// Utility to time out properly with context during buck2 client startup.
+/// Utility to time out properly with context during yak client startup.
 ///
 /// The problem is this. Consider three stacked operations: `A -> B -> C`.
 /// And we need to apply timeout to the whole operation.

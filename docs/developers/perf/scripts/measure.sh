@@ -25,8 +25,8 @@
 #   <OUT_DIR>/<tag>_warmup.txt       client stderr from the warmup build
 #   <OUT_DIR>/<tag>_measure.txt      client stderr from the measurement build (with /usr/bin/time -v)
 #   <OUT_DIR>/<tag>_rss.txt          /proc/<pid>/status excerpt for the daemon
-#   <OUT_DIR>/<tag>_stats.json       buck2 debug allocator-stats
-#   <OUT_DIR>/<tag>_heap.prof        buck2 debug heap-dump
+#   <OUT_DIR>/<tag>_stats.json       yak debug allocator-stats
+#   <OUT_DIR>/<tag>_heap.prof        yak debug heap-dump
 
 set -u
 OUT_DIR=${OUT_DIR:-/tmp}

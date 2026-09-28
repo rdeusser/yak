@@ -12,12 +12,12 @@ techniques. Treat it as a default and a starting point.
 
 ## The process model
 
-A `buck2` invocation is split between two processes:
+A `yak` invocation is split between two processes:
 
 - **Client**: the binary you actually invoke. Parses CLI args, talks gRPC to
   the daemon, prints the streamed events to your terminal, and exits when
   the command finishes.
-- **Daemon (`buckd`)**: a long-lived process that holds the DICE graph,
+- **Daemon (`yakd`)**: a long-lived process that holds the DICE graph,
   caches, executor connections, etc. All real work happens here.
 
 Implications for measurement:
@@ -25,7 +25,7 @@ Implications for measurement:
 - `/usr/bin/time` on the client tells you almost nothing — the client is a
   thin gRPC shim. To measure CPU/RSS of the actual work, look at the
   daemon process.
-- The daemon survives between invocations. Two consecutive `buck2 build` commands share DICE state,
+- The daemon survives between invocations. Two consecutive `yak build` commands share DICE state,
   allocators, file watchers, etc. State carries across commands until the daemon is killed or
   restarted by version skew.
 - `--no-buckd` runs everything in one process. When possible this is preferred as it's less noisy,
@@ -34,7 +34,7 @@ Implications for measurement:
 ## Avoiding daemon conflicts
 
 Any one checkout can only have one daemon running at a time. If an existing daemon is running and
-a new command is issued using a different version/build of buck2, the existing daemon is killed.
+a new command is issued using a different version/build of yak, the existing daemon is killed.
 
  - Use `git worktree add` to create additional checkouts
  - If making changes to buck itself, don't run benchmarks in the same checkouts, it will make your
@@ -61,9 +61,9 @@ sizes, comparing two binaries) see [benchmarking.md](benchmarking.md).
 
 Choosing the right workload means higher SNR and faster results. *Typically:*
 
- - `buck2 cquery :target` to measure load (mostly), source file IO, and configuration.
- - `buck2 audit providers :target --quiet` to additionally measure analysis.
- - `buck2 build :target` to also measure execution.
+ - `yak cquery :target` to measure load (mostly), source file IO, and configuration.
+ - `yak audit providers :target --quiet` to additionally measure analysis.
+ - `yak build :target` to also measure execution.
    - This is the most complete picture.
    - Invoke with `-M none` unless specifically measuring materialization.
    - Ensure you get 100% cache hits. One build with `--remote-only` will generally populate anything
@@ -77,18 +77,18 @@ you're doing.
 
 ## Daemon management
 
-Cargo builds of buck2 use jemalloc as the allocator on Linux and macOS and mimalloc on Windows. The
+Cargo builds of yak use jemalloc as the allocator on Linux and macOS and mimalloc on Windows. The
 `release-symbols` profile in `Cargo.toml` adds debug symbols to a release build.
 
 ```sh
 # Start a daemon if not yet started
-buck2 server
+yak server
 # Stats about the daemon process, including pid at `.process_info.pid`
-buck2 status
+yak status
 # Show jemalloc stats
-buck2 debug allocator-stats
+yak debug allocator-stats
 # Kill a daemon
-buck2 kill
+yak kill
 ```
 
 ## Where to go next

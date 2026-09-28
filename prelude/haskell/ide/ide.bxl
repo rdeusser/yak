@@ -16,7 +16,7 @@ load("@prelude//linking:link_info.bzl", "LinkStyle")
 # The solution includes:
 # - flags (and materializing any artifacts used by the flags)
 # - source files
-# - external dependencies whose changes will cause a reload (e.g. TARGETS files)
+# - external dependencies whose changes will cause a reload (e.g. YAK files)
 
 # There are only 3 rule types that we need to support
 # - haskell_binary

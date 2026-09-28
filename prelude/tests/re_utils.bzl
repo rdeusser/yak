@@ -54,7 +54,7 @@ def _get_re_arg(ctx: AnalysisContext) -> ReArg:
     if _force_local_re_tests() or not hasattr(ctx.attrs, "remote_execution"):
         # This path is also taken when the attribute is missing entirely.
         # `-c tests.disable_re_tests=true` lets users run tests locally, for example
-        # `buck2 test --local-only -c tests.disable_re_tests=true //path/to:test`.
+        # `yak test --local-only -c tests.disable_re_tests=true //path/to:test`.
         return ReArg(re_props = None)
 
     if ctx.attrs.remote_execution != None:

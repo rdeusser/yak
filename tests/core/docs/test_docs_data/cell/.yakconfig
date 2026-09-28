@@ -1,0 +1,11 @@
+[buildfile]
+name=YAK.fixture
+
+[project]
+ignore=ignored
+
+[repositories]
+cell = .
+root = ..
+special = ../special
+config = ../config

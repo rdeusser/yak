@@ -54,7 +54,7 @@ use crate::schedule_termination::maybe_schedule_termination;
 #[derive(Debug, buck2_error::Error)]
 #[buck2(tag = Tier0)]
 enum DaemonError {
-    #[error("The buckd pid file at `{}` had a mismatched pid, expected `{1}`, got `{2}`", _0.display())]
+    #[error("The yakd pid file at `{}` had a mismatched pid, expected `{1}`, got `{2}`", _0.display())]
     PidFileMismatch(PathBuf, u32, u32),
 }
 
@@ -186,11 +186,11 @@ fn verify_buck_out_dir(paths: &InvocationPaths) -> buck2_error::Result<()> {
 
     fs_util::create_dir_all(path.clone()).map_err(|e| {
         e.tag([ErrorTag::InvalidBuckOut]).context(format!(
-            "Failed to create buck-out directory `{}`. \
+            "Failed to create yak-out directory `{}`. \
              The path or a parent directory may be on a stale mount, \
              be a broken symlink, a file, or the project root may no longer be \
              accessible. \
-             Try running `buck2 kill` and re-run your command.",
+             Try running `yak kill` and re-run your command.",
             path,
         ))
     })?;
@@ -345,10 +345,10 @@ impl DaemonCommand {
         // https://github.com/jemalloc/jemalloc/blob/dev/TUNING.md#notable-runtime-options-for-performance-tuning
         memory::enable_background_threads()?;
 
-        // Unfortunately, buck-out doesn't really have a well-defined place/time at which it creates
-        // the buck-out dir, instead just creating it whenever it first wants to write something to
+        // Unfortunately, yak-out doesn't really have a well-defined place/time at which it creates
+        // the yak-out dir, instead just creating it whenever it first wants to write something to
         // it. We don't want to create it unconditionally on all commands as there are lots of
-        // client commands (help, log, etc.) that should not require a buck-out just to be able to
+        // client commands (help, log, etc.) that should not require a yak-out just to be able to
         // run. However, at the point at which we're starting a daemon it does seem sensible to now
         // ensure that it always exists, primarily so that we can put a file into it to mark it as a
         // cachedir.
@@ -497,7 +497,7 @@ impl DaemonCommand {
     }
 
     /// We start a dedicated thread to periodically check that the files in the daemon
-    /// dir still reflect that we are the current buckd and verify that when you connect
+    /// dir still reflect that we are the current yakd and verify that when you connect
     /// to the server it is our server. Also checks that the project root is still
     /// accessible.
     /// It gets a dedicated thread so that if somehow the main runtime gets all jammed up,
@@ -695,7 +695,7 @@ mod tests {
 
         // NOTE: This disables the forkserver since it uses the current
         // executable and that's not gonna be available in a test like this.
-        let buckconfig = ProjectRelativePath::unchecked_new(".buckconfig");
+        let buckconfig = ProjectRelativePath::unchecked_new(".yakconfig");
         project_root
             .path()
             .write_file(

@@ -8,7 +8,7 @@
  * above-listed licenses.
  */
 
-//! Common core components of buck2
+//! Common core components of yak
 
 #![feature(map_try_insert)]
 #![feature(used_with_arg)]

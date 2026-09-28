@@ -8,7 +8,7 @@
 
 # `native` is fine to use in the prelude for v2
 
-# This is buck2's shim import. Any public symbols here will be available within
+# This is yak's shim import. Any public symbols here will be available within
 # **all** interpreted files.
 
 load("@prelude//:paths.bzl", "paths")

@@ -191,7 +191,7 @@ pub enum ArtifactMaterializationStage {
         /// We can throw away most of the entry and just keep some metadata used to
         /// check if materialized artifact matches declared artifact.
         metadata: ArtifactMetadata,
-        /// Used to clean older artifacts from buck-out.
+        /// Used to clean older artifacts from yak-out.
         last_access_time: Timestamp,
         /// How to recreate this artifact after discarding its local contents.
         rematerialization_method: Option<Arc<ArtifactRematerializationMethod>>,

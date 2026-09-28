@@ -167,7 +167,7 @@ pub(crate) struct ConfiguredBuildReportEntry {
     /// A sketch of peak memory usage during analysis for this target
     #[serde(skip_serializing_if = "Option::is_none")]
     peak_analysis_memory_sketch: Option<String>,
-    /// A sketch of peak memory usage during BUCK file loading across transitive packages
+    /// A sketch of peak memory usage during YAK file loading across transitive packages
     #[serde(skip_serializing_if = "Option::is_none")]
     peak_load_memory_sketch: Option<String>,
     /// A sketch of the action graph for this target
@@ -659,7 +659,7 @@ impl<'a> BuildReportCollector<'a> {
             failures: self.failures,
             project_root: project_root.root().to_owned(),
             // In buck1 we may truncate build report for a large number of targets.
-            // Setting this to false since we don't currently truncate buck2's build report.
+            // Setting this to false since we don't currently truncate yak's build report.
             truncated: false,
             strings: self.strings,
             build_metrics: detailed_metrics

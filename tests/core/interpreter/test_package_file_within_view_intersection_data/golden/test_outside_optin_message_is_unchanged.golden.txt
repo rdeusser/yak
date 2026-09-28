@@ -1,7 +1,7 @@
 # This file is @generated, regenerate by rerunning the test with `BUCK2_UPDATE_GOLDEN=1` set
 
-[<TIMESTAMP>] Starting new buck2 daemon...
-[<TIMESTAMP>] Connected to new buck2 daemon.
+[<TIMESTAMP>] Starting new yak daemon...
+[<TIMESTAMP>] Connected to new yak daemon.
 [<TIMESTAMP>] Build ID: <UUID>
 Command failed: 
 Error evaluating expression:
@@ -10,9 +10,9 @@ Error evaluating expression:
 
 
 Caused by:
-    0: Error evaluating build file: `root//no_optin/bad:TARGETS.fixture`
+    0: Error evaluating build file: `root//no_optin/bad:YAK.fixture`
     1: error: checking `within_view` for attribute `deps` of `root//no_optin/bad:c`
-        --> no_optin/bad/TARGETS.fixture:1:1
+        --> no_optin/bad/YAK.fixture:1:1
          |
        1 | / stub(
        2 | |     name = "c",
@@ -20,7 +20,7 @@ Caused by:
        4 | | )
          | |_^
        Traceback (most recent call last):
-         * no_optin/bad/TARGETS.fixture:1, in <module>
+         * no_optin/bad/YAK.fixture:1, in <module>
              stub(
        
     2: Target's `within_view` attribute does not allow dependency `root//outside:t`. Allowed dependencies:

@@ -24,7 +24,7 @@ use buck2_client_ctx::exit_result::ExitResult;
 use buck2_client_ctx::streaming::StreamingCommand;
 use buck2_error::BuckErrorContext;
 
-/// Subcommands for `buck2 debug hydration`.
+/// Subcommands for `yak debug hydration`.
 #[derive(Debug, clap::Parser)]
 pub enum HydrationCommand {
     /// Page out DICE values to storage.

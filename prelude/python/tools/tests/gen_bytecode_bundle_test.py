@@ -166,7 +166,7 @@ class BuildTest(BundleTestBase):
 
     def test_bundle_is_byte_identical_regardless_of_input_order(self) -> None:
         # The blob is a cached build artifact, so it may not depend on the
-        # order buck2 lists the libraries in, nor on the order `compile.py`
+        # order yak lists the libraries in, nor on the order `compile.py`
         # happened to write entries within one.
         modules = {
             "a.py": "VALUE = 1",
@@ -200,7 +200,7 @@ class BuildTest(BundleTestBase):
         library = self._library(
             "lib",
             {"pkg/mod.py": "VALUE = 42"},
-            pyc_field="buck-out/v2/gen/root/output_artifacts/aaaaaaaaaaaaaaaa/x",
+            pyc_field="yak-out/v2/gen/root/output_artifacts/aaaaaaaaaaaaaaaa/x",
         )
 
         self.assertEqual(self._bundle(library).run("pkg/mod.py")["VALUE"], 42)

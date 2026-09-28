@@ -255,15 +255,15 @@ pub struct BuckOutPathResolver {
 }
 
 impl BuckOutPathResolver {
-    /// creates a 'BuckOutPathResolver' that will resolve outputs to the provided buck-out root.
-    /// If not set, buck_out defaults to "buck-out/v2"
+    /// creates a 'BuckOutPathResolver' that will resolve outputs to the provided yak-out root.
+    /// If not set, buck_out defaults to "yak-out/v2"
     pub fn new(buck_out_v2: ProjectRelativePathBuf) -> Self {
         BuckOutPathResolver {
             buck_out_v2: Arc::new(buck_out_v2),
         }
     }
 
-    /// Returns the buck-out root.
+    /// Returns the yak-out root.
     pub fn root(&self) -> &ProjectRelativePath {
         &self.buck_out_v2
     }
@@ -515,7 +515,7 @@ mod tests {
             CellRootPathBuf::new(ProjectRelativePathBuf::unchecked_new("bar-cell".into())),
         );
         let buck_out_path_resolver = BuckOutPathResolver::new(
-            ProjectRelativePathBuf::unchecked_new("base/buck-out/v2".into()),
+            ProjectRelativePathBuf::unchecked_new("base/yak-out/v2".into()),
         );
         let artifact_fs = ArtifactFs::new(
             cell_resolver,
@@ -553,7 +553,7 @@ mod tests {
     #[test]
     fn buck_output_path_resolves() -> buck2_error::Result<()> {
         let path_resolver = BuckOutPathResolver::new(ProjectRelativePathBuf::unchecked_new(
-            "base/buck-out/v2".into(),
+            "base/yak-out/v2".into(),
         ));
 
         let pkg = PackageLabel::new(
@@ -574,7 +574,7 @@ mod tests {
         )?;
 
         let expected_gen_path = Regex::new(
-            "base/buck-out/v2/art/foo/[0-9a-f]{16}/baz-package/__target-name__/faz.file",
+            "base/yak-out/v2/art/foo/[0-9a-f]{16}/baz-package/__target-name__/faz.file",
         )?;
         assert!(
             expected_gen_path.is_match(resolved_gen_path.as_str()),
@@ -591,7 +591,7 @@ mod tests {
         )?;
 
         let expected_gen_content_based_path = Regex::new(
-            "base/buck-out/v2/art/foo/baz-package/__target-name__/0000000000000000/faz.file",
+            "base/yak-out/v2/art/foo/baz-package/__target-name__/0000000000000000/faz.file",
         )?;
         assert!(
             expected_gen_content_based_path.is_match(resolved_gen_content_based_path.as_str()),
@@ -610,7 +610,7 @@ mod tests {
         )?;
 
         let expected_scratch_path =
-            Regex::new("base/buck-out/v2/tmp/foo/[0-9a-f]{16}/category/blah.file")?;
+            Regex::new("base/yak-out/v2/tmp/foo/[0-9a-f]{16}/category/blah.file")?;
         assert!(
             expected_scratch_path.is_match(resolved_scratch_path.as_str()),
             "{expected_scratch_path}.is_match({resolved_scratch_path})"
@@ -621,7 +621,7 @@ mod tests {
     #[test]
     fn buck_target_output_path_resolves() -> buck2_error::Result<()> {
         let path_resolver =
-            BuckOutPathResolver::new(ProjectRelativePathBuf::unchecked_new("buck-out".into()));
+            BuckOutPathResolver::new(ProjectRelativePathBuf::unchecked_new("yak-out".into()));
 
         let pkg = PackageLabel::new(
             CellName::testing_new("foo"),
@@ -641,7 +641,7 @@ mod tests {
         )?;
 
         let expected_gen_path: Regex =
-            Regex::new("buck-out/art/foo/[0-9a-f]{16}/baz-package/__target-name__/quux")?;
+            Regex::new("yak-out/art/foo/[0-9a-f]{16}/baz-package/__target-name__/quux")?;
         assert!(
             expected_gen_path.is_match(resolved_gen_path.as_str()),
             "{expected_gen_path}.is_match({resolved_gen_path})"
@@ -658,7 +658,7 @@ mod tests {
         let resolved_gen_path = path_resolver.resolve_gen(&path, None)?;
 
         let expected_gen_path = Regex::new(
-            "buck-out/art/foo/[0-9a-f]{16}/baz-package/__target-name__/__action___17__/quux",
+            "yak-out/art/foo/[0-9a-f]{16}/baz-package/__target-name__/__action___17__/quux",
         )?;
         assert!(
             expected_gen_path.is_match(resolved_gen_path.as_str()),
@@ -679,7 +679,7 @@ mod tests {
         )?;
 
         let expected_gen_content_based_path = Regex::new(
-            "buck-out/art/foo/baz-package/__target-name__/__action___17__/0000000000000000/quux",
+            "yak-out/art/foo/baz-package/__target-name__/__action___17__/0000000000000000/quux",
         )?;
         assert!(
             expected_gen_content_based_path.is_match(resolved_gen_content_based_path.as_str()),
@@ -703,7 +703,7 @@ mod tests {
         )?;
 
         let expected_scratch_path =
-            Regex::new("buck-out/tmp/foo/[0-9a-f]{16}/category/_buck_[0-9a-f]{16}")?;
+            Regex::new("yak-out/tmp/foo/[0-9a-f]{16}/category/_buck_[0-9a-f]{16}")?;
         assert!(
             expected_scratch_path.is_match(resolved_scratch_path.as_str()),
             "{expected_scratch_path}.is_match({resolved_scratch_path})"
@@ -766,7 +766,7 @@ mod tests {
     #[test]
     fn test_scratch_path_is_unique() {
         let path_resolver = BuckOutPathResolver::new(ProjectRelativePathBuf::unchecked_new(
-            "base/buck-out/v2".into(),
+            "base/yak-out/v2".into(),
         ));
         let pkg = PackageLabel::new(
             CellName::testing_new("foo"),
@@ -813,7 +813,7 @@ mod tests {
     #[test]
     fn test_resolve_test_discovery() -> buck2_error::Result<()> {
         let path_resolver =
-            BuckOutPathResolver::new(ProjectRelativePathBuf::unchecked_new("buck-out".into()));
+            BuckOutPathResolver::new(ProjectRelativePathBuf::unchecked_new("yak-out".into()));
 
         let pkg = PackageLabel::new(
             CellName::testing_new("foo"),
@@ -824,7 +824,7 @@ mod tests {
         let providers = ProvidersName::Default.push(ProviderName::new_unchecked("bar/baz".into()));
         let providers_label = ConfiguredProvidersLabel::new(cfg_target, providers);
         let result = path_resolver.resolve_test_discovery(&providers_label)?;
-        let expected_result = Regex::new("buck-out/test/discovery/foo/[0-9a-f]{16}/bar\\+baz")?;
+        let expected_result = Regex::new("yak-out/test/discovery/foo/[0-9a-f]{16}/bar\\+baz")?;
         assert!(expected_result.is_match(result.as_str()));
         Ok(())
     }
@@ -832,7 +832,7 @@ mod tests {
     #[test]
     fn test_resolve_test_execution() -> buck2_error::Result<()> {
         let path_resolver =
-            BuckOutPathResolver::new(ProjectRelativePathBuf::unchecked_new("buck-out".into()));
+            BuckOutPathResolver::new(ProjectRelativePathBuf::unchecked_new("yak-out".into()));
 
         let pkg = PackageLabel::new(
             CellName::testing_new("foo"),
@@ -845,7 +845,7 @@ mod tests {
         let extra_path = ForwardRelativePath::unchecked_new("extra_info_hash");
         let result = path_resolver.resolve_test_execution(&providers_label, extra_path)?;
         let expected_result =
-            Regex::new("buck-out/test/execution/foo/[0-9a-f]{16}/extra_info_hash/bar\\+baz")?;
+            Regex::new("yak-out/test/execution/foo/[0-9a-f]{16}/extra_info_hash/bar\\+baz")?;
         assert!(expected_result.is_match(result.as_str()));
         Ok(())
     }

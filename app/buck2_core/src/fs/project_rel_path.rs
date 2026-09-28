@@ -40,16 +40,16 @@
 //!     AbsNormPathBuf::from("C:\\open\\project\\".into())?
 //! };
 //! let some_path = if cfg!(not(windows)) {
-//!     AbsNormPath::new("/usr/local/project/buck/BUCK")?
+//!     AbsNormPath::new("/usr/local/project/buck/YAK")?
 //! } else {
-//!     AbsNormPath::new("c:/open/project/buck/BUCK")?
+//!     AbsNormPath::new("c:/open/project/buck/YAK")?
 //! };
 //!
 //! let fs = ProjectRoot::new_unchecked(root);
 //! let project_rel = fs.relativize(some_path)?;
 //!
 //! assert_eq!(
-//!     Cow::Borrowed(ProjectRelativePath::new("buck/BUCK")?),
+//!     Cow::Borrowed(ProjectRelativePath::new("buck/YAK")?),
 //!     project_rel
 //! );
 //! assert_eq!(some_path.to_buf(), fs.resolve(project_rel.as_ref()));

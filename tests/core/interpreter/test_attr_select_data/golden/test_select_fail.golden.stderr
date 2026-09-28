@@ -35,7 +35,7 @@ $ buck uquery root//:foo -v0 --output-format=json -B
 {
   "root//:foo": {
     "buck.type": "error_rule",
-    "buck.package": "root//:TARGETS.fixture",
+    "buck.package": "root//:YAK.fixture",
     "name": "foo",
     "default_target_platform": null,
     "target_compatible_with": [],
@@ -82,9 +82,9 @@ Error evaluating expression:
 
 
 Caused by:
-    0: Error evaluating build file: `root//:TARGETS.fixture`
+    0: Error evaluating build file: `root//:YAK.fixture`
     1: error: Error coercing attribute `data` of `root//:foo2`
-         --> TARGETS.fixture:50:1
+         --> YAK.fixture:50:1
           |
        50 | / error_rule(
        51 | |     name = "foo2",
@@ -92,7 +92,7 @@ Caused by:
        53 | | )
           | |_^
        Traceback (most recent call last):
-         * TARGETS.fixture:50, in <module>
+         * YAK.fixture:50, in <module>
              error_rule(
        
     2: Error coercing attribute `data` of type `attrs.string()`

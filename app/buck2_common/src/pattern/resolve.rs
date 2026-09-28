@@ -439,15 +439,15 @@ mod tests {
             let tester = TestPatternResolver::new(
                 &[("root", ""), ("child", "child/cell")],
                 &[
-                    ("BUCK"),
-                    ("other/BUCK"),
-                    ("other/a/bit/deeper/BUCK"),
-                    ("other/a/bit/deeper/and/deeper/BUCK"),
-                    ("some/thing/dir/a/BUCK"),
-                    ("some/thing/dir/a/b/BUCK"),
-                    ("some/thing/extra/BUCK"),
-                    ("child/cell/BUCK"),
-                    ("child/cell/foo/BUCK"),
+                    ("YAK"),
+                    ("other/YAK"),
+                    ("other/a/bit/deeper/YAK"),
+                    ("other/a/bit/deeper/and/deeper/YAK"),
+                    ("some/thing/dir/a/YAK"),
+                    ("some/thing/dir/a/b/YAK"),
+                    ("some/thing/extra/YAK"),
+                    ("child/cell/YAK"),
+                    ("child/cell/foo/YAK"),
                 ],
             )
             .unwrap();
@@ -624,15 +624,15 @@ mod tests {
             let tester = TestPatternResolver::new(
                 &[("root", ""), ("child", "child/cell")],
                 &[
-                    ("BUCK"),
-                    ("other/BUCK"),
-                    ("other/a/bit/deeper/BUCK"),
-                    ("other/a/bit/deeper/and/deeper/BUCK"),
-                    ("some/thing/dir/a/BUCK"),
-                    ("some/thing/dir/a/b/BUCK"),
-                    ("some/thing/extra/BUCK"),
-                    ("child/cell/BUCK"),
-                    ("child/cell/foo/BUCK"),
+                    ("YAK"),
+                    ("other/YAK"),
+                    ("other/a/bit/deeper/YAK"),
+                    ("other/a/bit/deeper/and/deeper/YAK"),
+                    ("some/thing/dir/a/YAK"),
+                    ("some/thing/dir/a/b/YAK"),
+                    ("some/thing/extra/YAK"),
+                    ("child/cell/YAK"),
+                    ("child/cell/foo/YAK"),
                 ],
             )
             .unwrap();

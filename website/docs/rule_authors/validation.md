@@ -10,8 +10,8 @@ writes a JSON document signalling success; otherwise the build fails.
 
 ## When validations run
 
-A validation attached to target `//A:a` runs whenever a `buck2 build` or
-`buck2 test` request resolves a graph that contains `//A:a` as a transitive
+A validation attached to target `//A:a` runs whenever a `yak build` or
+`yak test` request resolves a graph that contains `//A:a` as a transitive
 dependency. Validations execute in parallel with the rest of the build —
 they only need to finish before Buck2 reports the requested target complete.
 
@@ -97,7 +97,7 @@ Optional validations are skipped by default. Users opt in per-name on the
 CLI:
 
 ```shell
-buck2 build //A:a --enable-optional-validations slow_lint
+yak build //A:a --enable-optional-validations slow_lint
 ```
 
 Use this for expensive or noisy checks you don't want to gate every build on.

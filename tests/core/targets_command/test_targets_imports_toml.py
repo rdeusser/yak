@@ -28,7 +28,7 @@ async def test_imports_toml(buck: Buck) -> None:
         file = x["buck.file"]
         imports = x["buck.imports"]
 
-        if file == "root//TARGETS.fixture":
+        if file == "root//YAK.fixture":
             assert "root//uses_toml.bzl" in imports
             found_targets = True
         elif file == "root//uses_toml.bzl":
@@ -38,6 +38,6 @@ async def test_imports_toml(buck: Buck) -> None:
             assert imports == []
             found_toml = True
 
-    assert found_targets, "TARGETS.fixture imports should be reported"
+    assert found_targets, "YAK.fixture imports should be reported"
     assert found_bzl, "uses_toml.bzl imports (including data.toml) should be reported"
     assert found_toml, "data.toml should appear as an import with empty sub-imports"

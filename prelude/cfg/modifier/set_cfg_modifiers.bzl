@@ -29,7 +29,7 @@ def set_cfg_modifiers(cfg_modifiers: list[Modifier] | None = None, extra_cfg_mod
     # We want to enforce that `set_cfg_modifiers` is only invokable from a PACKAGE file and not a bzl file
     frame1 = call_stack_frame(1)
     if not _is_buck_tree_file(frame1.module_path):
-        fail("set_cfg_modifiers is only allowed to be used from a PACKAGE or BUCK_TREE file, not a bzl file.")
+        fail("set_cfg_modifiers is only allowed to be used from a PACKAGE or YAK_TREE file, not a bzl file.")
 
     cfg_modifiers = cfg_modifiers or []
     extra_cfg_modifiers_per_rule = extra_cfg_modifiers_per_rule or {}
@@ -59,4 +59,4 @@ def _get_package_path() -> str:
     return "{}//{}/PACKAGE".format(get_cell_name(), get_base_path())
 
 def _is_buck_tree_file(path: str) -> bool:
-    return path.endswith(("/PACKAGE", "/BUCK_TREE")) or path in ("PACKAGE", "BUCK_TREE")
+    return path.endswith(("/PACKAGE", "/YAK_TREE")) or path in ("PACKAGE", "YAK_TREE")

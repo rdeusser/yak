@@ -42,9 +42,9 @@ with a mapped_srcs in your Rust target is that your slow genrule does not have
 to get built when you're doing typecheck-only builds of the Rust code. That
 applies to all of the following situations:
 
-  - `arc rust-check` a.k.a. `buck2 build :whoa[check]`
+  - `arc rust-check` a.k.a. `yak build :whoa[check]`
 
-  - documentation builds: `buck2 build :whoa[doc]`
+  - documentation builds: `yak build :whoa[doc]`
 
   - all building performed by IDE
 """

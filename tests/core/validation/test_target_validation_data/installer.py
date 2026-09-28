@@ -30,7 +30,7 @@ def main() -> None:
     print(f"Installer: Binding to port {address[1]}")
     sock.bind(address)
     sock.listen(1)
-    # buck2 starts the installer while it builds and validates the target, and
+    # yak starts the installer while it builds and validates the target, and
     # it leaves the installer running when validation fails. The timeout ends
     # the process then.
     sock.settimeout(60)

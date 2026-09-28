@@ -13,7 +13,7 @@ use async_trait::async_trait;
 use crate::subscribers::subscriber::EventSubscriber;
 
 /// The only purpose of this subscriber is to print out stderr/stdout
-/// during buckd connection bootstrapping.
+/// during yakd connection bootstrapping.
 pub struct StdoutStderrForwarder;
 
 #[async_trait]

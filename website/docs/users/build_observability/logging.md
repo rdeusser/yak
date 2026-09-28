@@ -4,7 +4,7 @@ title: Logging
 ---
 
 Buck2 produces detailed event logs for each invocation, which follow a schema
-outlined in `app/buck2_data/data.proto` in the buck2 parent directory. The event
+outlined in `app/buck2_data/data.proto` in the yak parent directory. The event
 logs that Buck2 produces automatically are always in protobuf zstd-compressed
 format (see [Viewing the event log](#viewing-the-event-log) for more details).
 
@@ -122,26 +122,26 @@ and DICE metrics.
 
 ## Viewing the event log
 
-Event logs can be accessed using commands under `buck2 log show`, which outputs
-the event logs in JSONL format. You can run `buck2 log show --help` to see all
+Event logs can be accessed using commands under `yak log show`, which outputs
+the event logs in JSONL format. You can run `yak log show --help` to see all
 available options. Some useful commands:
 
 - Show the logs for the most recent Buck2 command:
 
 ```sh
-buck2 log show
+yak log show
 ```
 
 - Show the logs for a specific Buck2 command, given the command's UUID:
 
 ```sh
-buck2 log show --trace-id <UUID>
+yak log show --trace-id <UUID>
 ```
 
 - Show the logs for a recent Buck2 command:
 
 ```sh
-buck2 log show --recent <NUMBER>
+yak log show --recent <NUMBER>
 ```
 
 The JSON schema is derived from the protobuf types, and the log itself could be
@@ -150,7 +150,7 @@ things. For example, this jq script shows the max event delay between a snapshot
 event creation on the daemon side, and when the client receives it.
 
 ```sh
-buck2 log show | jq -s '
+yak log show | jq -s '
   map(
     .Event.data.Instant.data.Snapshot.this_event_client_delay_ms
       | select(. != null)

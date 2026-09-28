@@ -27,9 +27,9 @@ use buck2_fs::fs_util;
 use buck2_fs::paths::abs_path::AbsPath;
 use buck2_util::process::background_command;
 
-/// Initializes a buck2 project at the provided path.
+/// Initializes a yak project at the provided path.
 #[derive(Debug, clap::Parser)]
-#[clap(name = "init", about = "Initialize a buck2 project")]
+#[clap(name = "init", about = "Initialize a yak project")]
 pub struct InitCommand {
     /// The path to initialize the project in. The folder does not need to exist.
     #[clap(default_value = ".")]
@@ -123,7 +123,7 @@ fn exec_impl(
 }
 
 fn initialize_buckconfig(repo_root: &AbsPath, prelude: bool, git: bool) -> buck2_error::Result<()> {
-    let mut buckconfig = std::fs::File::create(repo_root.join(".buckconfig"))?;
+    let mut buckconfig = std::fs::File::create(repo_root.join(".yakconfig"))?;
     writeln!(buckconfig, "[cells]")?;
     writeln!(buckconfig, "  root = .")?;
 
@@ -137,7 +137,7 @@ fn initialize_buckconfig(repo_root: &AbsPath, prelude: bool, git: bool) -> buck2
         writeln!(buckconfig)?;
         writeln!(
             buckconfig,
-            "# Uses a copy of the prelude bundled with the buck2 binary. You can alternatively delete this"
+            "# Uses a copy of the prelude bundled with the yak binary. You can alternatively delete this"
         )?;
         writeln!(
             buckconfig,
@@ -171,7 +171,7 @@ fn initialize_buckconfig(repo_root: &AbsPath, prelude: bool, git: bool) -> buck2
 
 fn initialize_toolchains_buck(repo_root: &AbsPath) -> buck2_error::Result<()> {
     std::fs::write(
-        repo_root.join("BUCK"),
+        repo_root.join("YAK"),
         r#"
 load("@prelude//toolchains:demo.bzl", "system_demo_toolchains")
 
@@ -185,7 +185,7 @@ system_demo_toolchains()
 }
 
 fn initialize_root_buck(repo_root: &AbsPath, prelude: bool) -> buck2_error::Result<()> {
-    let mut buck = std::fs::File::create(repo_root.join("BUCK"))?;
+    let mut buck = std::fs::File::create(repo_root.join("YAK"))?;
 
     if prelude {
         writeln!(
@@ -205,15 +205,15 @@ fn initialize_root_buck(repo_root: &AbsPath, prelude: bool) -> buck2_error::Resu
 
 fn set_up_gitignore(repo_root: &AbsPath) -> buck2_error::Result<()> {
     let gitignore = repo_root.join(".gitignore");
-    // If .gitignore is empty or doesn't exist, add in buck-out
+    // If .gitignore is empty or doesn't exist, add in yak-out
     if !gitignore.exists() || fs_util::metadata(&gitignore).categorize_internal()?.len() == 0 {
-        fs_util::write(gitignore, "/buck-out\n").categorize_internal()?;
+        fs_util::write(gitignore, "/yak-out\n").categorize_internal()?;
     }
     Ok(())
 }
 
 fn set_up_buckroot(repo_root: &AbsPath) -> buck2_error::Result<()> {
-    fs_util::write(repo_root.join(".buckroot"), "").categorize_internal()?;
+    fs_util::write(repo_root.join(".yakroot"), "").categorize_internal()?;
     Ok(())
 }
 
@@ -235,10 +235,10 @@ fn set_up_project(repo_root: &AbsPath, git: bool, prelude: bool) -> buck2_error:
         set_up_gitignore(repo_root)?;
     }
 
-    // If the project already contains a .buckconfig, leave it alone
-    if repo_root.join(".buckconfig").exists() {
+    // If the project already contains a .yakconfig, leave it alone
+    if repo_root.join(".yakconfig").exists() {
         buck2_client_ctx::println!(
-            ".buckconfig already exists, not overwriting and not generating toolchains"
+            ".yakconfig already exists, not overwriting and not generating toolchains"
         )?;
         return Ok(());
     }
@@ -251,7 +251,7 @@ fn set_up_project(repo_root: &AbsPath, git: bool, prelude: bool) -> buck2_error:
             initialize_toolchains_buck(&toolchains)?;
         }
     }
-    if !repo_root.join("BUCK").exists() {
+    if !repo_root.join("YAK").exists() {
         initialize_root_buck(repo_root, prelude)?;
     }
     Ok(())
@@ -276,10 +276,10 @@ mod tests {
 
         // no git, with prelude
         set_up_project(tempdir_path, false, true)?;
-        assert!(tempdir_path.join(".buckconfig").exists());
+        assert!(tempdir_path.join(".yakconfig").exists());
         assert!(tempdir_path.join("toolchains").exists());
-        assert!(tempdir_path.join("toolchains/BUCK").exists());
-        assert!(tempdir_path.join("BUCK").exists());
+        assert!(tempdir_path.join("toolchains/YAK").exists());
+        assert!(tempdir_path.join("YAK").exists());
         Ok(())
     }
 
@@ -295,17 +295,17 @@ mod tests {
         let gitignore_path = tempdir_path.join(".gitignore");
         assert!(gitignore_path.exists());
         let actual = fs_util::read_to_string(&gitignore_path)?;
-        let expected = "/buck-out\n";
+        let expected = "/yak-out\n";
         assert_eq!(actual, expected);
 
-        // If an empty .buckconfig exists (this is the case we would hit after running `git init`), add `buck-out`
+        // If an empty .yakconfig exists (this is the case we would hit after running `git init`), add `yak-out`
         fs_util::write(&gitignore_path, "")?;
         set_up_gitignore(tempdir_path)?;
         assert!(gitignore_path.exists());
         let actual = fs_util::read_to_string(&gitignore_path)?;
         assert_eq!(actual, expected);
 
-        // If a non-empty.buckconfig exists, don't touch it
+        // If a non-empty.yakconfig exists, don't touch it
         fs_util::write(&gitignore_path, "foo\nbar\n")?;
         set_up_gitignore(tempdir_path)?;
         assert!(gitignore_path.exists());
@@ -322,7 +322,7 @@ mod tests {
         let tempdir_path = AbsPath::new(tempdir_path)?;
         fs_util::create_dir_all(tempdir_path)?;
 
-        let buckconfig_path = tempdir_path.join(".buckconfig");
+        let buckconfig_path = tempdir_path.join(".yakconfig");
         initialize_buckconfig(tempdir_path, true, true)?;
         let actual_buckconfig = fs_util::read_to_string(buckconfig_path)?;
         let expected_buckconfig = "[cells]
@@ -333,7 +333,7 @@ mod tests {
 [cell_aliases]
   config = prelude
 
-# Uses a copy of the prelude bundled with the buck2 binary. You can alternatively delete this
+# Uses a copy of the prelude bundled with the yak binary. You can alternatively delete this
 # section and vendor a copy of the prelude to the `prelude` directory of your project.
 [external_cells]
   prelude = bundled
@@ -360,7 +360,7 @@ mod tests {
         let tempdir_path = AbsPath::new(tempdir_path)?;
         fs_util::create_dir_all(tempdir_path)?;
 
-        let buckconfig_path = tempdir_path.join(".buckconfig");
+        let buckconfig_path = tempdir_path.join(".yakconfig");
         initialize_buckconfig(tempdir_path, false, false)?;
         let actual_buckconfig = fs_util::read_to_string(buckconfig_path)?;
         let expected_buckconfig = "[cells]
@@ -378,7 +378,7 @@ mod tests {
         let tempdir_path = AbsPath::new(tempdir_path)?;
         fs_util::create_dir_all(tempdir_path)?;
 
-        let buck_path = tempdir_path.join("BUCK");
+        let buck_path = tempdir_path.join("YAK");
         initialize_root_buck(tempdir_path, true)?;
         let actual_buck = fs_util::read_to_string(buck_path)?;
         let expected_buck = "# A list of available rules and their signatures can be found here: https://rdeusser.github.io/buck2/docs/prelude/globals/

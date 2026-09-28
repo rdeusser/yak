@@ -25,16 +25,16 @@ use crate::commands::status::process_status;
 #[derive(Debug, clap::Parser)]
 #[clap(
     about = "Start, query, and control the http server",
-    long_about = "Start, query, and control the buck2 server, a long-lived process, spanning buck2 command line invocations.
+    long_about = "Start, query, and control the yak server, a long-lived process, spanning yak command line invocations.
 Using this command can ensure the daemon is running.
 
-To stop a specific server, use `buck2 kill` and add `--isolation-dir` for a specific instance.
-To stop all instances, use `buck2 killall`."
+To stop a specific server, use `yak kill` and add `--isolation-dir` for a specific instance.
+To stop all instances, use `yak killall`."
 )]
 pub struct ServerCommand {
     #[clap(
         long,
-        help = "Print buckd status as JSON after ensuring the server is running."
+        help = "Print yakd status as JSON after ensuring the server is running."
     )]
     status: bool,
     #[clap(
@@ -64,7 +64,7 @@ impl StreamingCommand for ServerCommand {
             let json_status = process_status(status)?;
             buck2_client_ctx::println!("{}", serde_json::to_string_pretty(&json_status)?)?;
         } else {
-            buck2_client_ctx::println!("buckd.endpoint={}", status.process_info.unwrap().endpoint)?;
+            buck2_client_ctx::println!("yakd.endpoint={}", status.process_info.unwrap().endpoint)?;
         }
         ExitResult::success()
     }

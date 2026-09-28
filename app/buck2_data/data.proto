@@ -311,11 +311,11 @@ message InstantEvent {
     // attached.
     DebugAdapterSnapshot debug_adapter_snapshot = 27;
 
-    // This is notionally reading from .buckconfig at startup, but since that's
+    // This is notionally reading from .yakconfig at startup, but since that's
     // done by the daemon, it needs to come through this way.
     RestartConfiguration restart_configuration = 28;
 
-    // Unexpected file found in buck-out/<isolation_dir>/gen during a
+    // Unexpected file found in yak-out/<isolation_dir>/gen during a
     // clean --stale run, not found in materializer state
     UntrackedFile untracked_file = 29;
 
@@ -430,17 +430,17 @@ message ConfigValue {
   optional string cell = 4;
   // whether config is provided by the command line (either single arg or config
   // flag). Set to false for values coming from external buckconfigs (e.g.
-  // /etc/buckconfig.d or $home_dir/.buckconfig.local)
+  // /etc/yakconfig.d or $home_dir/.yakconfig.local)
   bool is_cli = 5;
 }
 
 message ConfigFile {
   oneof data {
-    // If the config file is project relative (except .buckconfig.local), the
+    // If the config file is project relative (except .yakconfig.local), the
     // path of the file. We only store the path, not actual values of
     // project-relative buckconfigs because they are huge/costly to store
     string project_relative_path = 1;
-    // If the config file is external or project-relative .buckconfig.local, we
+    // If the config file is external or project-relative .yakconfig.local, we
     // store all the config values in a list along with the path the file is
     // originating from
     GlobalExternalConfig global_external_config = 2;
@@ -533,7 +533,7 @@ enum PageOutStarted {
   PAGE_OUT_STARTED_DISABLED = 2;
   // Nothing to page out (no pagable candidates).
   PAGE_OUT_STARTED_NOTHING_TO_PAGE_OUT = 3;
-  // Not enough free disk to write paged-out values to `buck-out`.
+  // Not enough free disk to write paged-out values to `yak-out`.
   PAGE_OUT_STARTED_INSUFFICIENT_DISK_HEADROOM = 4;
   // Free disk couldn't be determined (total or used disk unavailable).
   PAGE_OUT_STARTED_FREE_DISK_UNKNOWN = 5;
@@ -944,12 +944,12 @@ message ResourceControlEvent {
   google.protobuf.Timestamp time_event_generated = 4;
   google.protobuf.Timestamp time_collected = 50;
 
-  // Memory information regarding buck2.slice cgroup
+  // Memory information regarding yak.slice cgroup
   uint64 allprocs_memory_current = 6;
   uint64 allprocs_memory_pressure = 7;
   uint64 allprocs_memory_swap_current = 12;
 
-  // Memory information regarding the buck2 daemon cgroup
+  // Memory information regarding the yak daemon cgroup
   uint64 daemon_memory_current = 17;
   uint64 daemon_swap_current = 18;
 
@@ -1019,7 +1019,7 @@ message TargetCfg {
 }
 
 // Rule type name for one CLI-resolved top-level target, emitted once per
-// target by commands that know the target node early (e.g. `buck2 test`'s
+// target by commands that know the target node early (e.g. `yak test`'s
 // pattern interpretation step). The invocation recorder accumulates these
 // into `InvocationRecord.target_rule_type_names`.
 message TargetRuleTypeName {
@@ -1030,15 +1030,15 @@ message TargetRuleTypeName {
 message Snapshot {
   reserved 102, 105 to 108, 111, 120, 400 to 403, 410 to 413, 420 to 423,
       430 to 433, 1201 to 1208, 1106, 1110, 1118, 1124, 1128, 1136;
-  // Resident set size in bytes of the buck2 daemon.
+  // Resident set size in bytes of the yak daemon.
   // Does not include subprocesses (e.g. local actions).
   optional uint64 buck2_rss = 11;
-  // Maximum resident set size in bytes of the buck2 daemon.
+  // Maximum resident set size in bytes of the yak daemon.
   // Does not include subprocesses (e.g. local actions).
   uint64 buck2_max_rss = 1;
-  // User CPU time of buck2 daemon, not including subprocesses.
+  // User CPU time of yak daemon, not including subprocesses.
   uint64 buck2_user_cpu_us = 2;
-  // System CPU time of buck2 daemon, not including subprocesses.
+  // System CPU time of yak daemon, not including subprocesses.
   uint64 buck2_system_cpu_us = 3;
   // Queue size of the blocking executor.
   uint64 blocking_executor_io_queue_size = 4;
@@ -1108,7 +1108,7 @@ message Snapshot {
   optional uint32 io_write_count = 1134;
   optional uint32 io_canonicalize_count = 1135;
 
-  // Time passed since buck2 daemon was started
+  // Time passed since yak daemon was started
   uint64 daemon_uptime_s = 7;
 
   // https://jemalloc.net/jemalloc.3.html
@@ -1217,7 +1217,7 @@ message Snapshot {
   // Client average user + system CPU time since last snapshot processed.
   optional uint32 client_cpu_percents = 2002;
 
-  // Memory usage of the buck2 daemon's slice from cgroup (if available)
+  // Memory usage of the yak daemon's slice from cgroup (if available)
   optional UnixCgroupMemoryStats allprocs_cgroup = 2003;
   // Memory usage of the forkserver daemon's slice from cgroup (if available)
   optional UnixCgroupMemoryStats forkserver_actions_cgroup = 2004;
@@ -1734,14 +1734,14 @@ message LoadBuildFileEnd {
   string module_id = 1;
   string cell = 2;
   optional string error = 3;
-  // Peak allocated memory in starlark mutable heap during evaluation of BUCK
+  // Peak allocated memory in starlark mutable heap during evaluation of YAK
   // file.
   optional uint64 starlark_peak_allocated_bytes = 4;
-  // Number of CPU instructions during evaluation of BUCK file.
+  // Number of CPU instructions during evaluation of YAK file.
   optional uint64 cpu_instruction_count = 5;
   // Number of targets
   optional uint64 target_count = 6;
-  // Number of Starlark ticks during evaluation of BUCK file.
+  // Number of Starlark ticks during evaluation of YAK file.
   optional uint64 starlark_tick_count = 7;
 }
 
@@ -1786,7 +1786,7 @@ enum ActionKind {
   CAS_ARTIFACT = 7;
 }
 
-// The kinds of ways an action can be executed by buck2.
+// The kinds of ways an action can be executed by yak.
 enum ActionExecutionKind {
   ACTION_EXECUTION_KIND_NOT_SET = 0;
   // This action was executed locally.
@@ -1795,7 +1795,7 @@ enum ActionExecutionKind {
   ACTION_EXECUTION_KIND_REMOTE = 2;
   // This action was served via a remote execution service's action cache.
   ACTION_EXECUTION_KIND_ACTION_CACHE = 3;
-  // This action was served inline within buck2 due to its simplicity (e.g.
+  // This action was served inline within yak due to its simplicity (e.g.
   // write, symlink, etc.
   ACTION_EXECUTION_KIND_SIMPLE = 4;
   // reserving 5 for deprecated ACTION_EXECUTION_KIND_SKIPPED
@@ -2196,7 +2196,7 @@ message ActionSubError {
   // These should be finer grain error categorizations provided by the rule
   // authors, and tend to be language specific. These should not be any kind of
   // shared concepts among all errors for all languages/rules. For example,
-  // timeouts and infra errors should not go here - buck2 tries to categorize
+  // timeouts and infra errors should not go here - yak tries to categorize
   // these types of errors automatically. An example of a finer grain error
   // category may be the error code for rustc outputs.
 
@@ -2764,7 +2764,7 @@ message TagEvent {
 
 // Unambiguous provider patterns that this command is requesting be brought
 // up-to-date. These patterns are not exactly the same as the patterns
-// directly provided to the buck2 command-line; rather, these patterns have
+// directly provided to the yak command-line; rather, these patterns have
 // been disambiguated using the client's working directory and cell
 // configuration.
 message ParsedTargetPatterns {
@@ -2776,7 +2776,7 @@ message TypedMetadata {
   map<string, string> strings = 2;
 }
 
-// Why current command started buckd.
+// Why current command started yakd.
 enum DaemonWasStartedReason {
   reserved 2;
 
@@ -2791,7 +2791,7 @@ enum DaemonWasStartedReason {
   TIMEOUT_CALCULATION_ERROR = 13;
   NO_BUCKD_INFO = 14;
   COULD_NOT_LOAD_BUCKD_INFO = 15;
-  // `buckd.info` exists, but buckd is not running.
+  // `yakd.info` exists, but yakd is not running.
   NO_DAEMON_PROCESS = 16;
 }
 
@@ -3019,7 +3019,7 @@ message InvocationRecord {
   optional uint64 wrapper_start_time = 246;
   uint64 exec_time_ms = 248;
 
-  // Exit code that should have been returned by the buck2 client process,
+  // Exit code that should have been returned by the yak client process,
   // unless it failed after finalizing logging.
   // This will be missing for run commands where the command succeeds in
   // buck and the RunInfo binary starts executing.
@@ -3414,7 +3414,7 @@ message ErrorReport {
 
 // Identical to `ErrorReport`, but with the tags converted to strings.
 // This makes it easy to change those enums without having to worry about uses
-// of this protobuf definition outside of buck2. Currently used in the
+// of this protobuf definition outside of yak. Currently used in the
 // invocation record and nowhere else.
 message ProcessedErrorReport {
   reserved 1, 2;

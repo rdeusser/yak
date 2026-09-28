@@ -467,17 +467,17 @@ mod tests {
     -> buck2_error::Result<()> {
         let root_config = parse(
             &[(
-                "root/.buckconfig",
+                "root/.yakconfig",
                 "[cell_scope]\nkey = root-value\n[root_scope]\nkey = root-value\n",
             )],
-            "root/.buckconfig",
+            "root/.yakconfig",
         )?;
         let target_config = parse(
             &[(
-                "cell/.buckconfig",
+                "cell/.yakconfig",
                 "[cell_scope]\nkey = target-value\n[root_scope]\nkey = target-value\n",
             )],
-            "cell/.buckconfig",
+            "cell/.yakconfig",
         )?;
 
         let root_cell = CellName::testing_new("root");

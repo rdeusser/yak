@@ -199,11 +199,11 @@ mod tests {
         let mut mapping = SmallMap::new();
         mapping.insert(
             ForwardRelativePathBuf::unchecked_new("foo".to_owned()),
-            ProjectRelativePathBuf::unchecked_new("buck-out/content_hash/foo".to_owned()),
+            ProjectRelativePathBuf::unchecked_new("yak-out/content_hash/foo".to_owned()),
         );
         mapping.insert(
             ForwardRelativePathBuf::unchecked_new("bar".to_owned()),
-            ProjectRelativePathBuf::unchecked_new("buck-out/content_hash/bar".to_owned()),
+            ProjectRelativePathBuf::unchecked_new("yak-out/content_hash/bar".to_owned()),
         );
         let incremental_path_map = IncrementalPathMap::new(mapping);
 
@@ -230,11 +230,11 @@ mod tests {
         let mut mapping1 = SmallMap::new();
         mapping1.insert(
             ForwardRelativePathBuf::unchecked_new("foo".to_owned()),
-            ProjectRelativePathBuf::unchecked_new("buck-out/content_hash/foo".to_owned()),
+            ProjectRelativePathBuf::unchecked_new("yak-out/content_hash/foo".to_owned()),
         );
         mapping1.insert(
             ForwardRelativePathBuf::unchecked_new("bar".to_owned()),
-            ProjectRelativePathBuf::unchecked_new("buck-out/content_hash/bar".to_owned()),
+            ProjectRelativePathBuf::unchecked_new("yak-out/content_hash/bar".to_owned()),
         );
         let incremental_path_map1 = IncrementalPathMap::new(mapping1);
 
@@ -243,7 +243,7 @@ mod tests {
         let mut mapping2 = SmallMap::new();
         mapping2.insert(
             ForwardRelativePathBuf::unchecked_new("baz".to_owned()),
-            ProjectRelativePathBuf::unchecked_new("buck-out/content_hash/baz".to_owned()),
+            ProjectRelativePathBuf::unchecked_new("yak-out/content_hash/baz".to_owned()),
         );
         let incremental_path_map2 = IncrementalPathMap::new(mapping2);
 
@@ -266,7 +266,7 @@ mod tests {
 
         let (short_path, content_path) = state2.iter().next().unwrap();
         assert_eq!(short_path.as_str(), "baz");
-        assert_eq!(content_path.as_str(), "buck-out/content_hash/baz");
+        assert_eq!(content_path.as_str(), "yak-out/content_hash/baz");
 
         Ok(())
     }
@@ -284,14 +284,14 @@ mod tests {
         let mut mapping1 = SmallMap::new();
         mapping1.insert(
             ForwardRelativePathBuf::unchecked_new("keep".to_owned()),
-            ProjectRelativePathBuf::unchecked_new("buck-out/content_hash/keep".to_owned()),
+            ProjectRelativePathBuf::unchecked_new("yak-out/content_hash/keep".to_owned()),
         );
         let incremental_path_map1 = IncrementalPathMap::new(mapping1);
 
         let mut mapping2 = SmallMap::new();
         mapping2.insert(
             ForwardRelativePathBuf::unchecked_new("delete".to_owned()),
-            ProjectRelativePathBuf::unchecked_new("buck-out/content_hash/delete".to_owned()),
+            ProjectRelativePathBuf::unchecked_new("yak-out/content_hash/delete".to_owned()),
         );
         let incremental_path_map2 = IncrementalPathMap::new(mapping2);
 
@@ -321,11 +321,11 @@ mod tests {
         let mut mapping = SmallMap::new();
         mapping.insert(
             ForwardRelativePathBuf::unchecked_new("foo".to_owned()),
-            ProjectRelativePathBuf::unchecked_new("buck-out/content_path/foo".to_owned()),
+            ProjectRelativePathBuf::unchecked_new("yak-out/content_path/foo".to_owned()),
         );
         mapping.insert(
             ForwardRelativePathBuf::unchecked_new("bar".to_owned()),
-            ProjectRelativePathBuf::unchecked_new("buck-out/content_path/bar".to_owned()),
+            ProjectRelativePathBuf::unchecked_new("yak-out/content_path/bar".to_owned()),
         );
         let incremental_path_map = IncrementalPathMap::new(mapping);
 
@@ -341,7 +341,7 @@ mod tests {
         let mut mapping = SmallMap::new();
         mapping.insert(
             ForwardRelativePathBuf::unchecked_new("baz".to_owned()),
-            ProjectRelativePathBuf::unchecked_new("buck-out/content_path/baz".to_owned()),
+            ProjectRelativePathBuf::unchecked_new("yak-out/content_path/baz".to_owned()),
         );
         let incremental_path_map2 = IncrementalPathMap::new(mapping);
         entries.extend(convert_incremental_state_to_sqlite_entries(
@@ -361,6 +361,6 @@ mod tests {
 
         let (short_path, content_path) = state.iter().next().unwrap();
         assert_eq!(short_path.as_str(), "baz");
-        assert_eq!(content_path.as_str(), "buck-out/content_path/baz");
+        assert_eq!(content_path.as_str(), "yak-out/content_path/baz");
     }
 }

@@ -10,17 +10,17 @@
 
 #![allow(rustdoc::private_intra_doc_links)]
 
-//! Provides the (daemon-side) support for buck2's starlark debugging.
+//! Provides the (daemon-side) support for yak's starlark debugging.
 //!
 //! Components of the debugger:
 //!
-//! [BuckStarlarkDebuggerServer] is the main way that the core of buck2 integrates
+//! [BuckStarlarkDebuggerServer] is the main way that the core of yak integrates
 //! the starlark debugger. This provides the hooks to wrap a Starlark evaluation and
 //! enable the debugger (and handle communication between that starlark evaluation
 //! and the debugger server/state)
 //!
 //! [BuckStarlarkDebuggerHandle] is a "handle" the to the debugger server. One of these
-//! will be created for each buck2 command and put in the dice per-transaction data. Code
+//! will be created for each yak command and put in the dice per-transaction data. Code
 //! that needs to do starlark evaluation can then use this to setup their Evaluator
 //! appropriately (though this is really just an implementation detail hidden in the
 //! helper [buck2_interpreter::factory::StarlarkEvaluatorProvider]).

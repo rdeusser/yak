@@ -178,11 +178,11 @@ If include patterns are present, regardless of whether exclude patterns are pres
     /// Test executor is expected to have `--env` flag to pass environment variables.
     /// Can be used like this:
     ///
-    /// buck2 test //foo:bar -- --env PRIVATE_KEY=123
+    /// yak test //foo:bar -- --env PRIVATE_KEY=123
     #[clap(name = "TEST_EXECUTOR_ARGS", raw = true)]
     test_executor_args: Vec<String>,
 
-    /// Also build DefaultInfo provider, which is what `buck2 build` builds.
+    /// Also build DefaultInfo provider, which is what `yak build` builds.
     ///
     /// This overrides the `buck2.test_builds_targets` buckconfig.
     #[clap(long, group = "default-info")]
@@ -194,7 +194,7 @@ If include patterns are present, regardless of whether exclude patterns are pres
     #[clap(long, group = "default-info")]
     skip_default_info: bool,
 
-    /// Also build RunInfo provider, which builds artifacts needed for `buck2 run`.
+    /// Also build RunInfo provider, which builds artifacts needed for `yak run`.
     ///
     /// This overrides the `buck2.test_builds_targets` buckconfig.
     #[clap(long, group = "run-info")]
@@ -381,7 +381,7 @@ impl StreamingCommand for TestCommand {
                     &mut message,
                     "hint: The following requested labels look like target patterns: {sus}\n\
                     hint: Try putting them before --include/--exclude.\n\
-                    hint: For example: buck2 test //foo --include mylabel",
+                    hint: For example: yak test //foo --include mylabel",
                     sus = suspicious_labels
                         .iter()
                         .map(|s| format!("'{}'", s))

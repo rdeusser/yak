@@ -292,7 +292,7 @@ mod tests {
 
         let bzl = config.sort_flags(Path::new("foo.bzl"));
         assert!(bzl.list_args && bzl.kwargs);
-        let build = config.sort_flags(Path::new("BUCK"));
+        let build = config.sort_flags(Path::new("YAK"));
         assert!(build.list_args && build.kwargs);
     }
 
@@ -317,9 +317,9 @@ mod tests {
         assert!(!nested.list_args);
         assert!(!nested.kwargs);
         // BUILD-like files are unaffected and keep sorting enabled.
-        let build = config.sort_flags(Path::new("BUCK"));
+        let build = config.sort_flags(Path::new("YAK"));
         assert!(build.list_args);
-        assert!(config.sort_flags(Path::new("TARGETS")).kwargs);
+        assert!(config.sort_flags(Path::new("BUILD")).kwargs);
     }
 
     #[test]

@@ -19,7 +19,7 @@ async def test_if_available_fallback_no_user_session(buck: Buck) -> None:
     user session bus, the daemon should start successfully without cgroups
     instead of failing with DAEMON_STARTUP_FAILED."""
 
-    with open(buck.cwd / ".buckconfig", "a") as buckconfig:
+    with open(buck.cwd / ".yakconfig", "a") as buckconfig:
         buckconfig.write("[buck2_resource_control]\n")
         buckconfig.write("status = if_available\n")
 

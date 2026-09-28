@@ -1,0 +1,13 @@
+[buildfile]
+name=YAK.test
+
+[repositories]
+root = .
+prelude = prelude
+
+[cell_aliases]
+config = prelude
+toolchains = prelude
+
+[external_cells]
+prelude = bundled

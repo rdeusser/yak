@@ -106,7 +106,7 @@ pub(crate) struct Crate {
 ///
 /// ```json
 /// "target_spec": {
-///     "manifest_file": "/home/user/project/integrations/rust-project/BUCK",
+///     "manifest_file": "/home/user/project/integrations/rust-project/YAK",
 ///     "target_label": "root//integrations/rust-project:rust-project",
 ///     "target_kind": "bin",
 ///     "runnables": {
@@ -135,7 +135,7 @@ pub(crate) struct Crate {
 #[derive(Serialize, Deserialize, Debug, Default, Clone, PartialEq, Eq)]
 pub(crate) struct Build {
     pub(crate) label: Target,
-    /// `build_file` corresponds to the `BUCK`/`TARGETS` file.
+    /// `build_file` corresponds to the build file, such as `YAK`.
     pub(crate) build_file: PathBuf,
     pub(crate) target_kind: TargetKind,
 }

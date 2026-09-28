@@ -19,10 +19,10 @@ use crate::interpreter::build_context::BuildContext;
 
 #[starlark_module]
 pub(crate) fn register_read_config(globals: &mut GlobalsBuilder) {
-    /// Read a configuration value from the .buckconfig for the current
-    /// cell of the `BUCK` file that started evaluation of this code.
+    /// Read a configuration value from the .yakconfig for the current
+    /// cell of the `YAK` file that started evaluation of this code.
     ///
-    /// As an example, if the current cell's .buckconfig contains:
+    /// As an example, if the current cell's .yakconfig contains:
     ///
     /// ```toml
     /// [package_options]
@@ -37,7 +37,7 @@ pub(crate) fn register_read_config(globals: &mut GlobalsBuilder) {
     /// read_config("package_options", "linker", "a_default") == "a_default"
     /// ```
     ///
-    /// In general the use of `.buckconfig` is discouraged in favour of `select`,
+    /// In general the use of `.yakconfig` is discouraged in favour of `select`,
     /// but it can still be useful.
     #[starlark(speculative_exec_safe)]
     fn read_config<'v>(
@@ -53,8 +53,8 @@ pub(crate) fn register_read_config(globals: &mut GlobalsBuilder) {
         }
     }
 
-    /// Like `read_config` but the project root `.buckconfig` is always consulted,
-    /// regardless of the cell of the originating `BUCK` file.
+    /// Like `read_config` but the project root `.yakconfig` is always consulted,
+    /// regardless of the cell of the originating `YAK` file.
     #[starlark(speculative_exec_safe)]
     fn read_root_config<'v>(
         #[starlark(require = pos)] section: StringValue,

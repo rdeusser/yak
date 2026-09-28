@@ -207,7 +207,7 @@ impl std::fmt::Display for GatherPackageListingError {
             path `root//foo/target/x` is a file, not a directory
 
          package `root//foo/target/x/y/lmnop:` does not exist
-             missing `TARGETS` file (also missing alternatives `TARGETS.v2`, `BUCK`, `BUCK.v2`)
+             missing `YAK` file (also missing alternatives `BUILD`)
 
          error loading package `root//foo/target/x/y/lmnop:`
               ... # just display the buck2_error for now
@@ -232,14 +232,9 @@ impl std::fmt::Display for GatherPackageListingError {
                 candidates,
                 package,
             } => {
-                if let Some(primary_candidate) =
-                    candidates.iter().find(|v| v.extension() != Some("v2"))
-                {
-                    let alternatives: Vec<_> = candidates
-                        .iter()
-                        .filter(|v| *v != primary_candidate)
-                        .map(|v| format!("`{v}`"))
-                        .collect();
+                if let Some((primary_candidate, alternatives)) = candidates.split_first() {
+                    let alternatives: Vec<_> =
+                        alternatives.iter().map(|v| format!("`{v}`")).collect();
 
                     let message = if alternatives.is_empty() {
                         format!("    missing `{}` file", primary_candidate)

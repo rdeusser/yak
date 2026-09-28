@@ -8,7 +8,7 @@
  * above-listed licenses.
  */
 
-//! Shared computation for buck2 action-parallelism (concurrency distribution).
+//! Shared computation for yak action-parallelism (concurrency distribution).
 //!
 //! Given the action-execution events of a single build invocation, this computes
 //! the distribution of how many actions were *executing* concurrently over the
@@ -98,7 +98,7 @@ pub fn extract_interval(end: &buck2_data::ActionExecutionEnd) -> Option<ActionIn
 }
 
 /// Convert a proto `seconds` + `nanos` pair to microseconds. Integer division by
-/// 1_000 does not lose precision: all buck2 timestamps have microsecond precision.
+/// 1_000 does not lose precision: all yak timestamps have microsecond precision.
 fn to_us(seconds: i64, nanos: i32) -> Option<i64> {
     seconds
         .checked_mul(1_000_000)?

@@ -24,7 +24,7 @@ import java.util.logging.Level;
  * <p>This provides a simple executable that can run any of the javacd actions.
  */
 public class JavaCDMain {
-  private static final String LOG_PATH = "buck-out/v2/javacd";
+  private static final String LOG_PATH = "yak-out/v2/javacd";
 
   /** Main entrypoint of JavaCD worker tool. */
   public static void main(String[] args) throws IOException {

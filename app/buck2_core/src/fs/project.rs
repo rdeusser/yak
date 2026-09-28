@@ -124,16 +124,16 @@ impl ProjectRoot {
     ///     let fs = ProjectRoot::new_unchecked(root);
     ///
     ///     assert_eq!(
-    ///         AbsNormPathBuf::from("/usr/local/project/buck/BUCK".into())?,
-    ///         fs.resolve(ProjectRelativePath::new("buck/BUCK")?)
+    ///         AbsNormPathBuf::from("/usr/local/project/buck/YAK".into())?,
+    ///         fs.resolve(ProjectRelativePath::new("buck/YAK")?)
     ///     );
     /// } else {
     ///     let root = AbsNormPathBuf::from("c:/open/project/".into())?;
     ///     let fs = ProjectRoot::new_unchecked(root);
     ///
     ///     assert_eq!(
-    ///         AbsNormPathBuf::from("c:/open/project/buck/BUCK".into())?,
-    ///         fs.resolve(ProjectRelativePath::new("buck/BUCK")?)
+    ///         AbsNormPathBuf::from("c:/open/project/buck/YAK".into())?,
+    ///         fs.resolve(ProjectRelativePath::new("buck/YAK")?)
     ///     );
     /// }
     ///
@@ -161,8 +161,8 @@ impl ProjectRoot {
     /// let fs = ProjectRoot::new_unchecked(root);
     ///
     /// assert_eq!(
-    ///     PathBuf::from("buck/BUCK"),
-    ///     fs.as_relative_path(ProjectRelativePath::new("buck/BUCK")?)
+    ///     PathBuf::from("buck/YAK"),
+    ///     fs.as_relative_path(ProjectRelativePath::new("buck/YAK")?)
     /// );
     ///
     /// # buck2_error::Ok(())

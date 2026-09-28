@@ -80,17 +80,17 @@ async def test_executable_fail_to_build(buck: Buck) -> None:
     )
 
 
-# `run_args_without_separator` is a hard error, so buck2 fails a `run` whose
+# `run_args_without_separator` is a hard error, so yak fails a `run` whose
 # arguments contain no `--`.
 @buck_test()
 async def test_run_args_without_separator(buck: Buck) -> None:
     await expect_failure(
         buck.run("root//:echo_args", "my_arg"),
-        stderr_regex="`buck2 run` will require a `--` separator before target arguments",
+        stderr_regex="`yak run` will require a `--` separator before target arguments",
     )
     await expect_failure(
         buck.run("root//:echo_args", "val", "--long"),
-        stderr_regex="`buck2 run` will require a `--` separator before target arguments",
+        stderr_regex="`yak run` will require a `--` separator before target arguments",
     )
 
 

@@ -10,15 +10,15 @@ yarn install
 
 ## Generated content
 
-`gen_docs.py` runs `buck2` to write the Starlark API reference, the prelude rule pages, the command reference, and the query function pages into `docs/`. Git ignores its output. Rerun it to see changes to generated content.
+`gen_docs.py` runs `yak` to write the Starlark API reference, the prelude rule pages, the command reference, and the query function pages into `docs/`. Git ignores its output. Rerun it to see changes to generated content.
 
 ```shell
-# Use the buck2 on PATH
+# Use the yak on PATH
 yarn generate
-# Build buck2 from source with ./buck2.py, which needs the Buck build of this repository
-# and a buck2 on PATH built from this repository
+# Build yak from source with ./yak.py, which needs the Buck build of this repository
+# and a yak on PATH built from this repository
 yarn generate_local
-# Build buck2 from source with Cargo
+# Build yak from source with Cargo
 ./gen_docs.py --cargo
 ```
 
@@ -32,7 +32,7 @@ This command starts a development server at `http://localhost:3000/buck2/`. It r
 
 ## Production build
 
-`yarn build` generates the reference pages and writes the static site to `build/`. `yarn serve` serves `build/` locally. `yarn build_cargo` and `yarn build_prebuilt` do the same with a Cargo build of `buck2` or with the binary that `BUCK2_BIN` names.
+`yarn build` generates the reference pages and writes the static site to `build/`. `yarn serve` serves `build/` locally. `yarn build_cargo` and `yarn build_prebuilt` do the same with a Cargo build of `yak` or with the binary that `BUCK2_BIN` names.
 
 ## Deployment
 

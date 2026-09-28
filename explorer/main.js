@@ -23,7 +23,7 @@ if (isDev) {
 // The main window which is the UI
 let mainWindow;
 
-// The directory all buck2 commands are run from. It starts at the home
+// The directory all yak commands are run from. It starts at the home
 // directory until the user selects a project.
 let buckDir = app.getPath('home');
 
@@ -62,9 +62,9 @@ async function runCommand(args, host) {
 
     console.log("Start: " + args.join(" "));
     // When run as an Application the root directory will be `/` and there will be nothing on the $PATH.
-    // That means `buck2` won't run, and even if we point directly at `buck2`, then `dotslash` will be missing.
+    // That means `yak` won't run, and even if we point directly at `yak`, then `dotslash` will be missing.
     // Therefore we run all shells with `--login` using `exec -- $@` to escape the arguments.
-    const { stdout } = await execFile("sh", ["--login", "-c", 'exec -- "$@"', "--", "buck2"].concat(args), {
+    const { stdout } = await execFile("sh", ["--login", "-c", 'exec -- "$@"', "--", "yak"].concat(args), {
         maxBuffer: buffer,
         cwd: buckDir,
     });

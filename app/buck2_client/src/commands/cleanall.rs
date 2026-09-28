@@ -36,7 +36,7 @@ impl BuckSubcommand for CleanallCommand {
         _events_ctx: &mut EventsCtx,
     ) -> ExitResult {
         if !self.stale {
-            return ExitResult::bail("`buck2 cleanall` without `--stale` is not implemented yet");
+            return ExitResult::bail("`yak cleanall` without `--stale` is not implemented yet");
         }
 
         match buck2_wrapper_common::cleanall_stale().await {

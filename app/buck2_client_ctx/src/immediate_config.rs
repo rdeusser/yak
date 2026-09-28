@@ -48,9 +48,9 @@ struct ImmediateConfigContextData {
 }
 
 impl ImmediateConfigContextData {
-    /// Performs a parse of the root `.buckconfig` for the cell _only_ without following includes
+    /// Performs a parse of the root `.yakconfig` for the cell _only_ without following includes
     /// and without parsing any configs for any referenced cells. This means this function might return
-    /// an empty mapping if the root `.buckconfig` does not contain the cell definitions.
+    /// an empty mapping if the root `.yakconfig` does not contain the cell definitions.
     fn parse(roots: InvocationRoots) -> buck2_error::Result<Self> {
         let paranoid_info_path = roots.paranoid_info_path()?;
         // This function is non-reentrant, and blocking for a bit should be ok
@@ -246,7 +246,7 @@ mod tests {
     fn test_set_setting_arg_layers() -> buck2_error::Result<()> {
         let tempdir = tempfile::tempdir()?;
         let root = AbsPath::new(tempdir.path())?;
-        fs_util::write(root.join(".buckconfig"), "[cells]\nroot = .")?;
+        fs_util::write(root.join(".yakconfig"), "[cells]\nroot = .")?;
         let cwd = working_dir(root)?;
         let context = ImmediateConfigContext::new(&cwd);
 
@@ -267,7 +267,7 @@ mod tests {
     fn test_setting_arg_layers_applied() -> buck2_error::Result<()> {
         let tempdir = tempfile::tempdir()?;
         let root = AbsPath::new(tempdir.path())?;
-        fs_util::write(root.join(".buckconfig"), "[cells]\nroot = .")?;
+        fs_util::write(root.join(".yakconfig"), "[cells]\nroot = .")?;
         let cwd = working_dir(root)?;
         let context = ImmediateConfigContext::new(&cwd);
 

@@ -1,0 +1,13 @@
+[buildfile]
+name=YAK.fixture
+
+[repositories]
+root = .
+prelude = prelude
+
+[cell_aliases]
+toolchains = prelude
+config = prelude
+
+[external_cells]
+prelude = bundled

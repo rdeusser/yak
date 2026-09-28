@@ -1,15 +1,15 @@
-## Build buck2 with Cargo
+## Build yak with Cargo
 
-From buck2 project root, run the following to build buck2 with cargo
+From yak project root, run the following to build yak with cargo
 
 ```sh
 cargo install --path=app/buck2 --root=/tmp
-export BUCK2="/tmp/bin/buck2"
+export BUCK2="/tmp/bin/yak"
 ```
 
-## Run `buck2 init --git`
+## Run `yak init --git`
 
-Run `buck2 init` to initialize the prelude directory.
+Run `yak init` to initialize the prelude directory.
 
 Now all targets aside from OCaml related ones are ready to be built.
 

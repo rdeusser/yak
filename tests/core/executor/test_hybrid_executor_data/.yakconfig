@@ -1,0 +1,11 @@
+[buildfile]
+name=YAK.fixture
+
+[project]
+ignore=ignored
+
+[repositories]
+root = .
+
+[build]
+  execution_platforms = root//platforms:platforms

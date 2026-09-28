@@ -22,11 +22,11 @@ The isolation directory serves as a fundamental boundary that:
 
 ### Physical Structure
 
-The isolation directory exists as a subdirectory within the `buck-out` folder:
+The isolation directory exists as a subdirectory within the `yak-out` folder:
 
 ```
 project_root/
-└── buck-out/
+└── yak-out/
     ├── v2/            # Default isolation directory
     │   ├── artifacts/
     │   ├── cache/
@@ -39,7 +39,7 @@ project_root/
 ```
 
 By default, Buck2 uses an isolation directory named `v2`, creating all build
-outputs and metadata within `$PROJECT_ROOT/buck-out/v2`.
+outputs and metadata within `$PROJECT_ROOT/yak-out/v2`.
 
 ### Important Characteristics
 
@@ -74,7 +74,7 @@ isolation directory without interfering with manually triggered builds.
 
 ```sh
 # Running LSP in its own isolation directory
-$ buck2 --isolation-dir lsp lsp
+$ yak --isolation-dir lsp lsp
 ```
 
 ### 2. Recursive Invocations
@@ -84,10 +84,10 @@ isolation directories prevents deadlocks and conflicts.
 
 ```sh
 # Initial build
-$ buck2 build //some:target
+$ yak build //some:target
 
 # Within this build, Buck2 might make another call using a different isolation dir
-$ buck2 --isolation-dir recursive_dir //dependency:target
+$ yak --isolation-dir recursive_dir //dependency:target
 ```
 
 ### 3. Parallel Workflows
@@ -96,10 +96,10 @@ When you need to run multiple independent build tasks simultaneously:
 
 ```sh
 # Building the application in one terminal
-$ buck2 build //app:binary
+$ yak build //app:binary
 
 # Running tests in another terminal simultaneously
-$ buck2 --isolation-dir test_dir test //app:tests
+$ yak --isolation-dir test_dir test //app:tests
 ```
 
 ## How to Set the Isolation Directory
@@ -109,17 +109,17 @@ There are two ways to specify which isolation directory to use:
 ### 1. Command Line Argument
 
 ```sh
-$ buck2 --isolation-dir DIRECTORY_NAME COMMAND [ARGS]
+$ yak --isolation-dir DIRECTORY_NAME COMMAND [ARGS]
 ```
 
 **Important**: The `--isolation-dir` argument must always appear immediately
-after `buck2`. For example, `buck2 build --isolation-dir v2 target` is not
+after `yak`. For example, `yak build --isolation-dir v2 target` is not
 valid.
 
 ### 2. Environment Variable
 
 ```sh
-$ BUCK_ISOLATION_DIR=DIRECTORY_NAME buck2 COMMAND [ARGS]
+$ BUCK_ISOLATION_DIR=DIRECTORY_NAME yak COMMAND [ARGS]
 ```
 
 If not specified, the default isolation directory name is `v2`.
@@ -129,15 +129,15 @@ If not specified, the default isolation directory name is `v2`.
 Most Buck2 commands only operate within their specified isolation directory. For
 example:
 
-- `buck2 build` only builds using the specified isolation directory
-- `buck2 clean` only cleans the specified isolation directory
-- `buck2 kill` only kills the daemon associated with the specified isolation
+- `yak build` only builds using the specified isolation directory
+- `yak clean` only cleans the specified isolation directory
+- `yak kill` only kills the daemon associated with the specified isolation
   directory
 
-There are exceptions, such as `buck2 killall`, which by default affects all
+There are exceptions, such as `yak killall`, which by default affects all
 Buck2 processes regardless of their isolation directories. Passing
-`--in-isolation-dir` to `buck2 killall` restricts it to processes using that
-isolation directory, and `buck2 killall --repo` restricts it to processes
+`--in-isolation-dir` to `yak killall` restricts it to processes using that
+isolation directory, and `yak killall --repo` restricts it to processes
 running in the current repository.
 
 ## Example Use Cases
@@ -146,26 +146,26 @@ running in the current repository.
 
 ```sh
 # Using the default isolation directory
-$ buck2 build //app:binary
-$ buck2 run //app:binary
+$ yak build //app:binary
+$ yak run //app:binary
 ```
 
 ### Running Background Analysis Services
 
 ```sh
 # Start a language server in a dedicated isolation directory
-$ buck2 --isolation-dir ide lsp &
+$ yak --isolation-dir ide lsp &
 
 # Continue with regular builds in the default isolation directory
-$ buck2 build //app:binary
+$ yak build //app:binary
 ```
 
 ### Comparing Different Build Configurations
 
 ```sh
 # Build with one set of configurations
-$ buck2 --isolation-dir config1 build //app:binary
+$ yak --isolation-dir config1 build //app:binary
 
 # Build with different configurations in a separate isolation directory
-$ buck2 --isolation-dir config2 build //app:binary
+$ yak --isolation-dir config2 build //app:binary
 ```

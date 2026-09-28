@@ -7,7 +7,7 @@
 # above-listed licenses.
 
 def _artifact_test_impl(ctx):
-    source = "artifact_test/TARGETS.fixture"
+    source = "artifact_test/YAK.fixture"
     uquery_owners = ctx.uquery().owner(source)
     target_universe = ctx.target_universe(uquery_owners).target_set()
     owner = ctx.cquery().owner(source, target_universe)[0]

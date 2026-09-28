@@ -31,7 +31,7 @@ use walkdir::WalkDir;
 pub struct StatusCommand {
     #[clap(long, help = "Whether to include a state snapshot in the output.")]
     snapshot: bool,
-    #[clap(long, help = "Enable printing status for all running buckd")]
+    #[clap(long, help = "Enable printing status for all running yakd")]
     all: bool,
     #[clap(long, help = "Enable printing metrics from the Tokio runtime")]
     include_tokio_runtime_metrics: bool,
@@ -90,7 +90,7 @@ impl StatusCommand {
                 .await
                 {
                     Err(_) => {
-                        buck2_client_ctx::eprintln!("no buckd running")?;
+                        buck2_client_ctx::eprintln!("no yakd running")?;
                         // Should this be an error?
                     }
                     Ok(mut client) => {

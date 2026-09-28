@@ -7,20 +7,20 @@
 # above-listed licenses.
 
 _LOAD_FILES = [
-    "load/TARGETS.fixture",
+    "load/YAK.fixture",
     "load/a.bzl",
     "load/a.json",
 ]
 
 _TRANSITIVE_LOAD_FILES = [
-    "transitive_load/TARGETS.fixture",
+    "transitive_load/YAK.fixture",
     "transitive_load/b.bzl",
     "transitive_load/c.bzl",
     "transitive_load/c.json",
 ]
 
 _RBUILDFILES_C_BZL = [
-    "transitive_load/TARGETS.fixture",
+    "transitive_load/YAK.fixture",
     "transitive_load/b.bzl",
     "transitive_load/c.bzl",
 ]
@@ -41,11 +41,11 @@ uquery_allbuildfiles = bxl_main(
 )
 
 def _uquery_rbuildfiles_impl(ctx: bxl.Context):
-    res = ctx.uquery().rbuildfiles("transitive_load/TARGETS.fixture", "transitive_load/c.bzl")
+    res = ctx.uquery().rbuildfiles("transitive_load/YAK.fixture", "transitive_load/c.bzl")
     asserts.equals(_RBUILDFILES_C_BZL, _paths(res))
 
-    res = ctx.uquery().rbuildfiles("transitive_load/TARGETS.fixture", "transitive_load/TARGETS.fixture")
-    asserts.equals(["transitive_load/TARGETS.fixture"], _paths(res))
+    res = ctx.uquery().rbuildfiles("transitive_load/YAK.fixture", "transitive_load/YAK.fixture")
+    asserts.equals(["transitive_load/YAK.fixture"], _paths(res))
 
 uquery_rbuildfiles = bxl_main(
     impl = _uquery_rbuildfiles_impl,
@@ -67,11 +67,11 @@ cquery_allbuildfiles = bxl_main(
 )
 
 def _cquery_rbuildfiles_impl(ctx: bxl.Context):
-    res = ctx.cquery().rbuildfiles("transitive_load/TARGETS.fixture", "transitive_load/c.bzl")
+    res = ctx.cquery().rbuildfiles("transitive_load/YAK.fixture", "transitive_load/c.bzl")
     asserts.equals(_RBUILDFILES_C_BZL, _paths(res))
 
-    res = ctx.cquery().rbuildfiles("transitive_load/TARGETS.fixture", "transitive_load/TARGETS.fixture")
-    asserts.equals(["transitive_load/TARGETS.fixture"], _paths(res))
+    res = ctx.cquery().rbuildfiles("transitive_load/YAK.fixture", "transitive_load/YAK.fixture")
+    asserts.equals(["transitive_load/YAK.fixture"], _paths(res))
 
 cquery_rbuildfiles = bxl_main(
     impl = _cquery_rbuildfiles_impl,
@@ -91,11 +91,11 @@ lazy_uquery_allbuildfiles = bxl_main(
 )
 
 def _lazy_uquery_rbuildfiles_impl(ctx: bxl.Context):
-    res = ctx.lazy.uquery().rbuildfiles("transitive_load/TARGETS.fixture", "transitive_load/c.bzl").resolve()
+    res = ctx.lazy.uquery().rbuildfiles("transitive_load/YAK.fixture", "transitive_load/c.bzl").resolve()
     asserts.equals(_RBUILDFILES_C_BZL, _paths(res))
 
-    res = ctx.lazy.uquery().rbuildfiles("transitive_load/TARGETS.fixture", "transitive_load/TARGETS.fixture").resolve()
-    asserts.equals(["transitive_load/TARGETS.fixture"], _paths(res))
+    res = ctx.lazy.uquery().rbuildfiles("transitive_load/YAK.fixture", "transitive_load/YAK.fixture").resolve()
+    asserts.equals(["transitive_load/YAK.fixture"], _paths(res))
 
 lazy_uquery_rbuildfiles = bxl_main(
     impl = _lazy_uquery_rbuildfiles_impl,

@@ -8,7 +8,7 @@
  * above-listed licenses.
  */
 
-//! buck2's [`TypeIdDomain`]s (providers, transitive sets). Kept in buck2 rather
+//! yak's [`TypeIdDomain`]s (providers, transitive sets). Kept in yak rather
 //! than starlark-rust, which is buck2-agnostic and only knows its own
 //! `record`/`enum` domains.
 

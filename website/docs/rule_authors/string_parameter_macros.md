@@ -38,7 +38,7 @@ filegroup(
 ```
 
 The target being referenced must expose a `DefaultInfo` (i.e. it must be
-`buck2 build`able).
+`yak build`able).
 
 ## `$(location_exec //path/to:target)`
 
@@ -49,13 +49,13 @@ can be useful when using `genrule` to wrap another build system with
 buck.
 
 The target being referenced must expose a `DefaultInfo` (i.e. it must be
-`buck2 build`able).
+`yak build`able).
 
 ## `$(source relative/path/to/source)`
 
 Expands to the location of the specified source. The difference with using
 `$(location path/to:export_file_target)` is that the path points to the file in
-the source tree, rather than a copy or symlink in `buck-out`.
+the source tree, rather than a copy or symlink in `yak-out`.
 
 For example:
 
@@ -84,7 +84,7 @@ target platform, use `$(exe_target my_dependency)` instead, which will stick to
 the same platform as the target.
 
 The target being referenced must expose a `RunInfo` (i.e. it must be
-`buck2 run`able).
+`yak run`able).
 
 ## `$(exe_target //path/to:target)`
 
@@ -109,7 +109,7 @@ sh_test(
 ```
 
 The target being referenced must expose a `RunInfo` (i.e. it must be
-`buck2 run`able).
+`yak run`able).
 
 ## `$(query_targets queryfunction(//path/to:target))`
 
@@ -254,7 +254,7 @@ following query functions:
   separated, so arguments which contain white space must be quoted.
 - **Are nested quotes allowed?** A single level of nested quotes is allowed,
   such as `"My name is 'Buck'."` or `'My name is "Buck".'`. Note that when you
-  use a macro in a BUCK file, you must ensure that quotes are properly escaped,
+  use a macro in a YAK file, you must ensure that quotes are properly escaped,
   so that the shell command that uses the macro forms a proper string.
 
 ## Extended Backus-Naur form

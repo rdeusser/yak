@@ -82,17 +82,17 @@ fn parse_isolation_dir(s: &str) -> buck2_error::Result<FileNameBuf> {
     if s.starts_with(RESERVED_BUCK_OUT_PREFIX) {
         return Err(buck2_error::buck2_error!(
             buck2_error::ErrorTag::Input,
-            "Isolation dir names starting with `{RESERVED_BUCK_OUT_PREFIX}` are reserved for buck2's internal use"
+            "Isolation dir names starting with `{RESERVED_BUCK_OUT_PREFIX}` are reserved for yak's internal use"
         ));
     }
     FileNameBuf::try_from(s.to_owned()).buck_error_context("isolation dir must be a directory name")
 }
 
-/// Options of `buck2` command, before subcommand.
+/// Options of `yak` command, before subcommand.
 #[derive(Clone, Debug, clap::Parser)]
 #[clap(next_help_heading = "Universal Options")]
 struct BeforeSubcommandOptions {
-    /// The name of the directory that Buck2 creates within buck-out for writing outputs and daemon
+    /// The name of the directory that Buck2 creates within yak-out for writing outputs and daemon
     /// information. If one is not provided, Buck2 creates a directory with the default name.
     ///
     /// Instances of Buck2 share a daemon if and only if their isolation directory is identical.
@@ -150,13 +150,13 @@ struct BeforeSubcommandOptions {
     /// Do not launch a daemon process, run buck server in client process.
     ///
     /// Note even when running in no-buckd mode, it still writes state files.
-    /// In particular, this command effectively kills buckd process
+    /// In particular, this command effectively kills yakd process
     /// running with the same isolation directory.
     ///
     /// This is an unsupported option used only for development work.
     #[clap(env("BUCK2_NO_BUCKD"), long, global(true), hide(true))]
-    // Env var is BUCK2_NO_BUCKD instead of NO_BUCKD env var from buck1 because no buckd
-    // is not supported for production work for buck2 and lots of places already set
+    // Env var is BUCK2_NO_BUCKD instead of NO_BUCKD env var from buck1 because no yakd
+    // is not supported for production work for yak and lots of places already set
     // NO_BUCKD=1 for buck1.
     no_buckd: bool,
 }
@@ -171,7 +171,7 @@ fn help() -> &'static str {
 
 #[derive(Debug, clap::Parser)]
 #[clap(
-    name = "buck2",
+    name = "yak",
     about(Some(help())),
     version(BuckVersion::get_version_for_clap()),
     styles = cli_style::get_styles(),
@@ -225,8 +225,8 @@ pub fn exec(process: ProcessContext<'_>) -> ExitResult {
         Ok(matches) => matches,
         Err(e) => {
             // Print colorized output, ExitResult::report will not colorize.
-            // `ClientIoError` so that a closed stdout exits quietly instead of as a buck2 failure,
-            // e.g. `buck2 build --help | head`.
+            // `ClientIoError` so that a closed stdout exits quietly instead of as a yak failure,
+            // e.g. `yak build --help | head`.
             e.print().map_err(ClientIoError::from)?;
             return if e.exit_code() == 0 {
                 ExitResult::success()
@@ -313,7 +313,7 @@ pub(crate) enum CommandKind {
     Aquery(AqueryCommand),
     Build(BuildCommand),
     Bxl(BxlCommand),
-    // TODO(nga): implement `buck2 help-buckconfig` too
+    // TODO(nga): implement `yak help-buckconfig` too
     HelpEnv(HelpEnvCommand),
     Test(TestCommand),
     Cquery(CqueryCommand),
@@ -488,7 +488,7 @@ impl CommandKind {
             CommandKind::Root(cmd) => cmd.exec(matches, command_ctx).into(),
             CommandKind::Query(cmd) => {
                 buck2_client_ctx::eprintln!(
-                    "WARNING: \"buck2 query\" is an alias for \"buck2 uquery\". Consider using \"buck2 cquery\" or \"buck2 uquery\" explicitly."
+                    "WARNING: \"yak query\" is an alias for \"yak uquery\". Consider using \"yak cquery\" or \"yak uquery\" explicitly."
                 )?;
                 command_ctx.exec(cmd, matches, events_ctx)
             }

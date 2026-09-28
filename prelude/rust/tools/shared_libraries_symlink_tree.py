@@ -21,8 +21,8 @@
 #         (
 #             True,
 #             "libthird-party_rust_vendor_anyhow_1.0.100.so",
-#             "buck-out/v2/gen/root/577ba3460b84e891/third-party/rust/vendor/anyhow/__1.0.100__/DPHL/libthird-party_rust_vendor_anyhow_1.0.100.so",
-#             "buck-out/v2/gen/root/577ba3460b84e891/third-party/rust/vendor/anyhow/__1.0.100__/DPHL/libthird-party_rust_vendor_anyhow_1.0.100.so.dwp",
+#             "yak-out/v2/gen/root/577ba3460b84e891/third-party/rust/vendor/anyhow/__1.0.100__/DPHL/libthird-party_rust_vendor_anyhow_1.0.100.so",
+#             "yak-out/v2/gen/root/577ba3460b84e891/third-party/rust/vendor/anyhow/__1.0.100__/DPHL/libthird-party_rust_vendor_anyhow_1.0.100.so.dwp",
 #         ),
 #         ....
 #     ],
@@ -38,7 +38,7 @@
 #
 # Constructs symlink tree /tmp/my_tree
 # ```
-# libthird-party_rust_vendor_anyhow_1.0.100.so -> buck-out/v2/gen/root/577ba3460b84e891/third-party/rust/vendor/anyhow/__1.0.100__/DPHL/libthird-party_rust_vendor_anyhow_1.0.100.so
+# libthird-party_rust_vendor_anyhow_1.0.100.so -> yak-out/v2/gen/root/577ba3460b84e891/third-party/rust/vendor/anyhow/__1.0.100__/DPHL/libthird-party_rust_vendor_anyhow_1.0.100.so
 # ...
 # ```
 

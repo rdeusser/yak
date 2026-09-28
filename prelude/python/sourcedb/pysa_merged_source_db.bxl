@@ -125,7 +125,7 @@ def _run(ctx: bxl.Context) -> None:
 run = bxl_main(
     doc = """Produce a merged type check config for multiple Python Buck targets.
 
-    Usage: buck2 bxl prelude//python/sourcedb/pysa_merged_source_db.bxl:run -- --target root//foo/...
+    Usage: yak bxl prelude//python/sourcedb/pysa_merged_source_db.bxl:run -- --target root//foo/...
     """,
     impl = _run,
     cli_args = {

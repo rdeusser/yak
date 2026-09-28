@@ -1,4 +1,4 @@
-# `buck2 audit visibility` command
+# `yak audit visibility` command
 
 ## Context
 
@@ -18,11 +18,11 @@ although visibility in its current form is likely not fit for enforcing such
 boundaries. Visibility has also been used to allow only certain targets to
 depend on the targets in a shared scripts directory.
 
-For perf reasons, buck2 doesn't always enforce visibility. Instead, it only
+For perf reasons, yak doesn't always enforce visibility. Instead, it only
 enforces visibility on construction of the configured target graph. Visibility
 checking is expensive memory-wise because it requires tracking all deps at each
 node. When constructing configured target graph, this cost is already paid for
-when buck2 checks transitive target compatibility. When constructing the
+when yak checks transitive target compatibility. When constructing the
 unconfigured target graph, however, this is costly, so we avoid checking
 visibility there. (Note that buck does not allow you to specify selects in
 visibility attributes.)
@@ -50,9 +50,9 @@ reasons:
 ## Proposed Solution: `audit visibility` command
 
 It's clear that we need a way to check visibility on the unconfigured target
-graph, but we don't want `buck2 uquery` and `buck2 targets` to regress in memory
+graph, but we don't want `yak uquery` and `yak targets` to regress in memory
 use. To get the best of both worlds, I propose adding a separate command to
-buck2, `buck2 audit visibility`, that will check visibility on the unconfigured
+yak, `yak audit visibility`, that will check visibility on the unconfigured
 target graph. Instead of checking on construction of the unconfigured target
 graph, this command will check after construction, which will avoid any memory
 regression. The tradeoff is that the visibility checking won't be cached, and
@@ -60,7 +60,7 @@ rerunning `audit visibility` will rerun visibility checking on each invocation.
 
 ## Usage and Invocation
 
-`buck2 audit visibility` command will take in a list of target patterns as well
+`yak audit visibility` command will take in a list of target patterns as well
 as common build args like config flags and mode files as args. It will construct
 the unconfigured target graph based on the **transitive deps** of those targets
 and check that this graph has valid visibility. Checking transitive deps matches
@@ -71,12 +71,12 @@ For example, an invocation to check visibility on the transitive closure of the
 `apps` directory can be
 
 ```shell
-buck2 audit visibility root//apps/...
+yak audit visibility root//apps/...
 ```
 
 It cannot be used to check that a target has a valid visibility with respect to
 targets outside of the transitive closure of its deps. For example,
-`buck2 audit visibility root//starlark-rust/starlark:starlark` will just
+`yak audit visibility root//starlark-rust/starlark:starlark` will just
 check that all transitive deps of `starlark` target (including `starlark`
 target) have valid visibility with respect to each other. It will not check that
 any targets that depend on `starlark` respect `starlark` target's visibility

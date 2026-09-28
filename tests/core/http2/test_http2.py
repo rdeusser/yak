@@ -23,7 +23,7 @@ async def test_http2_enabled(buck: Buck) -> None:
     assert status["http2"] is True, "http2 is enabled by default"
 
     # Insert necessary buckconfig to pick up http2 configuration.
-    with open(f"{buck.cwd}/.buckconfig", "a") as buckconfig:
+    with open(f"{buck.cwd}/.yakconfig", "a") as buckconfig:
         buckconfig.writelines(["[http]\n", "http2 = false\n"])
 
     # Get a daemon to start

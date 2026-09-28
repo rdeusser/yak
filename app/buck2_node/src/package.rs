@@ -23,7 +23,7 @@ use crate::visibility::VisibilityPatternList;
 /// at the moment of writing.)
 #[derive(Debug, Hash, Allocative, Eq, PartialEq, Pagable)]
 pub struct Package {
-    /// The build file which defined this target, e.g. `root//foo/bar/BUCK`
+    /// The build file which defined this target, e.g. `root//foo/bar/YAK`
     pub buildfile_path: Arc<BuildFilePath>,
     /// The oncall attribute, if set
     pub oncall: Option<Oncall>,

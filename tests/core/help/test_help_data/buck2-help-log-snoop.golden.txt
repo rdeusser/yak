@@ -15,7 +15,7 @@ available, otherwise among the retained event logs, which includes recently fini
 daemon's view of what is running: it waits for a command to start when nothing is running, and keeps
 picking up whatever command runs next after the current one ends, until interrupted.
 
-Usage: buck2 log snoop [OPTIONS] [PATH]
+Usage: yak log snoop [OPTIONS] [PATH]
 
 Arguments:
   [PATH]
@@ -58,7 +58,7 @@ Console Options:
           Accepts a comma-separated list of superconsole components to add. Possible values are:
 
           dice - shows information about evaluated dice nodes debugevents - shows information about
-          the flow of events from buckd
+          the flow of events from yakd
 
           These components can be turned on/off interactively. Press 'h' for help when superconsole
           is active.
@@ -76,9 +76,8 @@ Console Options:
 
 Universal Options:
       --isolation-dir <ISOLATION_DIR>
-          The name of the directory that Buck2 creates within buck-out for writing outputs and
-          daemon information. If one is not provided, Buck2 creates a directory with the default
-          name.
+          The name of the directory that Buck2 creates within yak-out for writing outputs and daemon
+          information. If one is not provided, Buck2 creates a directory with the default name.
 
           Instances of Buck2 share a daemon if and only if their isolation directory is identical.
           The isolation directory also influences the output paths provided by Buck2, and as a

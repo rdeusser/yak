@@ -6,7 +6,7 @@ title: Test Execution
 Test execution in Buck2 is a collaboration with a separate test runner process.
 
 Buck2 ships with a built-in test runner, which runs as
-`buck2 internal-test-runner`. It receives the commands defined by
+`yak internal-test-runner`. It receives the commands defined by
 `ExternalRunnerTestInfo` and runs them. Exit code zero means the test passed,
 and any other exit code means it failed.
 
@@ -35,7 +35,7 @@ In Buck2, rules interact with the test runner via a provider called
 
 ## Anatomy of a test run
 
-When a user runs `buck2 test $targets`:
+When a user runs `yak test $targets`:
 
 - Buck2 identifies all matching targets that have an `ExternalRunnerTestInfo`.
 - Buck2 builds all the artifacts referenced by those targets (this will likely
@@ -93,7 +93,7 @@ should set in their `ExternalRunnerTestInfo` if they should be run on RE:
   from the project root (their `cwd` will be the project root, which is
   the same as all build commands). If `false`, it'll be the cell root.
 
-Note that passing `--unstable-allow-all-tests-on-re` to `buck2 test` will
+Note that passing `--unstable-allow-all-tests-on-re` to `yak test` will
 override those fields and set them to `true`, since they are a pre-requisite to
 run on RE. In contrast, passing `--unstable-allow-compatible-tests-on-re` will
 only allow tests that already set both those fields to `true` to execute on RE.
@@ -207,8 +207,8 @@ cacheable or not, and Buck2 caches the result of a cacheable listing at two
 levels:
 
 1. The daemon keeps the result in its DICE computation graph. If you run
-   `buck2 test` on the same target again without changes, Buck2 skips the
-   listing, so it does not appear in `buck2 log what-ran` output.
+   `yak test` on the same target again without changes, Buck2 skips the
+   listing, so it does not appear in `yak log what-ran` output.
 2. Buck2 looks the listing command up in the remote action cache before it runs
    the command, and uploads the result after running it, so the result survives
    a daemon restart. The `CommandExecutorConfig` that runs the listing controls

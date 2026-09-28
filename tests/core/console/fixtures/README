@@ -1,5 +1,5 @@
-These files are event logs that `test_console.py` replays with `buck2 log replay`
-and reads with `buck2 log what-ran`. They only need regenerating when the event
+These files are event logs that `test_console.py` replays with `yak log replay`
+and reads with `yak log what-ran`. They only need regenerating when the event
 log format or the daemon and client protocol changes.
 
 `my_genrule0.proto` records a build of one action whose result came from a
@@ -18,13 +18,13 @@ CommandExecutorConfig(
 ```
 
 `//path/to:my_genrule0` runs one `ctx.actions.run` with
-`allow_cache_upload = True`. The first build uploads the result, `buck2 clean`
+`allow_cache_upload = True`. The first build uploads the result, `yak clean`
 deletes it locally, and the second build takes it from the cache:
 
 ```
-buck2 build //path/to:my_genrule0
-buck2 clean
-buck2 build //path/to:my_genrule0 --event-log my_genrule0.proto
+yak build //path/to:my_genrule0
+yak clean
+yak build //path/to:my_genrule0 --event-log my_genrule0.proto
 ```
 
 The console prints byte counts only from snapshots taken before the command
@@ -35,7 +35,7 @@ to the cache connection for the second build, for example with
 localhost.
 
 Then update the action digest that `test_whatran` and `test_whatran_no_repo`
-expect. `buck2 log what-ran my_genrule0.proto` prints it as the last column of
+expect. `yak log what-ran my_genrule0.proto` prints it as the last column of
 the `cache` line.
 
 `my_genrule1.proto` records a local build that follows a change to `dir1/file1`

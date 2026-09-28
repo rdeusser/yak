@@ -24,7 +24,7 @@ import java.util.logging.Level;
  * <p>This provides a simple executable that can run any of the kotlincd actions.
  */
 public class KotlinCDMain {
-  private static final String LOG_PATH = "buck-out/v2/kotlincd";
+  private static final String LOG_PATH = "yak-out/v2/kotlincd";
 
   /** Main entrypoint of KotlinCD worker tool. */
   public static void main(String[] args) throws IOException {

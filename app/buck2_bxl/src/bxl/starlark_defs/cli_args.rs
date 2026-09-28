@@ -898,7 +898,7 @@ pub(crate) fn cli_args_module(registry: &mut GlobalsBuilder) {
     ///
     /// CLI usage:
     /// ```text
-    /// buck2 bxl //my.bxl:target -- --name foo
+    /// yak bxl //my.bxl:target -- --name foo
     /// ```
     fn string<'v>(
         default: Option<Value<'v>>,
@@ -923,8 +923,8 @@ pub(crate) fn cli_args_module(registry: &mut GlobalsBuilder) {
     /// Multiple values can be passed either as space-separated values after a single flag,
     /// or by repeating the flag. Both styles produce the same result and can be mixed:
     /// ```text
-    /// buck2 bxl //my.bxl:target -- --numbers 1 2 3
-    /// buck2 bxl //my.bxl:target -- --numbers 1 --numbers 2 --numbers 3
+    /// yak bxl //my.bxl:target -- --numbers 1 2 3
+    /// yak bxl //my.bxl:target -- --numbers 1 --numbers 2 --numbers 3
     /// ```
     ///
     /// Both invocations above yield `[1, 2, 3]` in `ctx.cli_args.numbers`.
@@ -953,7 +953,7 @@ pub(crate) fn cli_args_module(registry: &mut GlobalsBuilder) {
     ///
     /// CLI usage:
     /// ```text
-    /// buck2 bxl //my.bxl:target -- --verbose true
+    /// yak bxl //my.bxl:target -- --verbose true
     /// ```
     fn bool<'v>(
         #[starlark(default = false)] default: Value<'v>,
@@ -976,7 +976,7 @@ pub(crate) fn cli_args_module(registry: &mut GlobalsBuilder) {
     ///
     /// CLI usage:
     /// ```text
-    /// buck2 bxl //my.bxl:target -- --count 42
+    /// yak bxl //my.bxl:target -- --count 42
     /// ```
     fn int<'v>(
         default: Option<Value<'v>>,
@@ -999,7 +999,7 @@ pub(crate) fn cli_args_module(registry: &mut GlobalsBuilder) {
     ///
     /// CLI usage:
     /// ```text
-    /// buck2 bxl //my.bxl:target -- --threshold 3.14
+    /// yak bxl //my.bxl:target -- --threshold 3.14
     /// ```
     fn float<'v>(
         default: Option<Value<'v>>,
@@ -1023,7 +1023,7 @@ pub(crate) fn cli_args_module(registry: &mut GlobalsBuilder) {
     ///
     /// CLI usage (omitting the flag yields `None` in bxl):
     /// ```text
-    /// buck2 bxl //my.bxl:target -- --message "hello"
+    /// yak bxl //my.bxl:target -- --message "hello"
     /// ```
     fn option<'v>(
         inner: &CliArgs,
@@ -1049,7 +1049,7 @@ pub(crate) fn cli_args_module(registry: &mut GlobalsBuilder) {
     ///
     /// CLI usage:
     /// ```text
-    /// buck2 bxl //my.bxl:target -- --mode debug
+    /// yak bxl //my.bxl:target -- --mode debug
     /// ```
     fn r#enum<'v>(
         #[starlark(require = pos)] variants: UnpackListOrTuple<String>,
@@ -1083,7 +1083,7 @@ pub(crate) fn cli_args_module(registry: &mut GlobalsBuilder) {
     ///
     /// CLI usage:
     /// ```text
-    /// buck2 bxl //my.bxl:target -- --target cell//package:rule
+    /// yak bxl //my.bxl:target -- --target cell//package:rule
     /// ```
     fn target_label<'v>(
         #[starlark(default = "")] doc: &str,
@@ -1106,7 +1106,7 @@ pub(crate) fn cli_args_module(registry: &mut GlobalsBuilder) {
     ///
     /// CLI usage:
     /// ```text
-    /// buck2 bxl //my.bxl:target -- --target cell//package:rule?cell//config:platform
+    /// yak bxl //my.bxl:target -- --target cell//package:rule?cell//config:platform
     /// ```
     fn configured_target_label<'v>(
         #[starlark(default = "")] doc: &str,
@@ -1135,7 +1135,7 @@ pub(crate) fn cli_args_module(registry: &mut GlobalsBuilder) {
     ///
     /// CLI usage:
     /// ```text
-    /// buck2 bxl //my.bxl:target -- --provider cell//package:rule[subtarget]
+    /// yak bxl //my.bxl:target -- --provider cell//package:rule[subtarget]
     /// ```
     fn sub_target<'v>(
         #[starlark(default = "")] doc: &str,
@@ -1158,7 +1158,7 @@ pub(crate) fn cli_args_module(registry: &mut GlobalsBuilder) {
     ///
     /// CLI usage (accepts patterns like `cell//foo:bar`, `cell//foo:`, or `cell//foo/...`):
     /// ```text
-    /// buck2 bxl //my.bxl:target -- --targets cell//package/...
+    /// yak bxl //my.bxl:target -- --targets cell//package/...
     /// ```
     fn target_expr<'v>(
         #[starlark(default = "")] doc: &str,
@@ -1182,7 +1182,7 @@ pub(crate) fn cli_args_module(registry: &mut GlobalsBuilder) {
     ///
     /// CLI usage (accepts patterns like `cell//foo:bar`, `cell//foo:`, or `cell//foo/...`):
     /// ```text
-    /// buck2 bxl //my.bxl:target -- --targets cell//package:rule?cell//config:platform
+    /// yak bxl //my.bxl:target -- --targets cell//package:rule?cell//config:platform
     /// ```
     fn configured_target_expr<'v>(
         #[starlark(default = "")] doc: &str,
@@ -1210,7 +1210,7 @@ pub(crate) fn cli_args_module(registry: &mut GlobalsBuilder) {
     ///
     /// CLI usage:
     /// ```text
-    /// buck2 bxl //my.bxl:target -- --targets cell//package:rule[subtarget]
+    /// yak bxl //my.bxl:target -- --targets cell//package:rule[subtarget]
     /// ```
     fn sub_target_expr<'v>(
         #[starlark(default = "")] doc: &str,
@@ -1239,7 +1239,7 @@ pub(crate) fn cli_args_module(registry: &mut GlobalsBuilder) {
     ///
     /// CLI usage:
     /// ```text
-    /// buck2 bxl //my.bxl:target -- --config '{"key": "value", "count": 3}'
+    /// yak bxl //my.bxl:target -- --config '{"key": "value", "count": 3}'
     /// ```
     fn json<'v>(
         #[starlark(default = "")] doc: &str,
@@ -1262,7 +1262,7 @@ pub(crate) fn cli_args_module(registry: &mut GlobalsBuilder) {
     ///
     /// CLI usage:
     /// ```text
-    /// buck2 bxl //my.bxl:target -- --config path/to/config.json
+    /// yak bxl //my.bxl:target -- --config path/to/config.json
     /// ```
     fn json_file<'v>(
         #[starlark(default = "")] doc: &str,

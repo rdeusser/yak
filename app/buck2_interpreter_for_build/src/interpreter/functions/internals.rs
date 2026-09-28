@@ -24,7 +24,7 @@ struct BuckFail(String);
 /// stable.
 #[starlark_module]
 pub(crate) fn register_internals(builder: &mut GlobalsBuilder) {
-    /// `fail()` but implemented using a buck2 error type instead of starlark's, for testing
+    /// `fail()` but implemented using a yak error type instead of starlark's, for testing
     /// purposes.
     fn buck2_fail<'v>(msg: &str, _eval: &mut Evaluator<'v, '_, '_>) -> starlark::Result<NoneType> {
         Err(buck2_error::Error::from(BuckFail(msg.to_owned())).into())

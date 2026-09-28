@@ -1,0 +1,12 @@
+[buildfile]
+    name = YAK.fixture
+
+[cells]
+  root = .
+  nano_prelude = nano_prelude
+
+[cell_aliases]
+  prelude = nano_prelude
+
+[external_cells]
+  nano_prelude = bundled

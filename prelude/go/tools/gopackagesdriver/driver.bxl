@@ -49,7 +49,7 @@ PackageError = record(
 #
 # It can't be used on it's own, it need a thin go-wrapper that
 # - parses input args
-# - invokes `buck2 bxl prelude//go/tools/gopackagesdriver:driver.bxl:driver`
+# - invokes `yak bxl prelude//go/tools/gopackagesdriver:driver.bxl:driver`
 # - fixes output, i.e RE paths in cgo files
 # - handles standard library packages
 #
@@ -288,7 +288,7 @@ def _cquery(ctx: bxl.Context, query: str, targets: bxl.UnconfiguredTargetSet) ->
 def _to_protocol_error(error: bxl.Error, expected_target: bxl.ConfiguredTargetNode) -> PackageError:
     msg = error.message
 
-    # HACK: Parse errors manually until buck2 provides a structured error API.
+    # HACK: Parse errors manually until yak provides a structured error API.
 
     # Extract valuable part of an action failure message
     if msg.startswith("Action failed:"):

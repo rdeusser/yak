@@ -64,7 +64,7 @@ fn extract_from_outputs<S: AsRef<str>>(
     Ok(Vec::new())
 }
 
-/// Accepts an output like `% buck2 targets` or `% buck2\ntargets   test` and returns
+/// Accepts an output like `% yak targets` or `% yak\ntargets   test` and returns
 /// the possible completions
 fn extract_from_single_output(input: &str, raw_out: &str) -> Option<Vec<String>> {
     if let Some((_, rest)) = raw_out.split_once('\n') {
@@ -167,7 +167,7 @@ struct CompletionVerify {
     #[clap(long, value_name = "DIR")]
     tempdir: Option<String>,
     /// The command we complete
-    #[clap(long, value_name = "COMMAND", default_value = "buck2")]
+    #[clap(long, value_name = "COMMAND", default_value = "yak")]
     name: String,
     /// The shell to test with
     shell: Shell,
@@ -261,11 +261,11 @@ compdef _impl find
 
     #[test]
     fn test_extract_from_single_output_with_redrawn_prompt() {
-        let input = "buck2 abcdefghijkl";
+        let input = "yak abcdefghijkl";
         let output = "\
-% buck2 abcdefghijkl
-% buck2 abcdefghijkl
-% buck2 abcdefghijkl0
+% yak abcdefghijkl
+% yak abcdefghijkl
+% yak abcdefghijkl0
 abcdefghijkl0  abcdefghijkl1
 ";
 
@@ -296,11 +296,11 @@ abcdefghijkl0  abcdefghijkl1
     fn test_long_completion() {
         let arg1 = "abcdefghijkl0";
         let arg2 = "abcdefghijkl1";
-        let script: &str = &format!("complete -c buck2 -a '{arg1} {arg2}'");
+        let script: &str = &format!("complete -c yak -a '{arg1} {arg2}'");
 
         if cfg!(target_os = "linux") {
             check_shell_available(Shell::Fish);
-            let actual = run("buck2", script, "buck2 abcdefghijkl", &None, Shell::Fish).unwrap();
+            let actual = run("yak", script, "yak abcdefghijkl", &None, Shell::Fish).unwrap();
             assert_eq!(
                 actual,
                 vec![arg1.to_owned(), arg2.to_owned()],

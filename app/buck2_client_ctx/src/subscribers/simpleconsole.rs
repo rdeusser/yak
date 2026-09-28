@@ -47,7 +47,7 @@ use crate::subscribers::system_warning::low_disk_space_msg;
 use crate::subscribers::system_warning::system_memory_exceeded_msg;
 use crate::ticker::Tick;
 
-/// buck2 daemon info is printed to stderr if there are no other updates available
+/// yak daemon info is printed to stderr if there are no other updates available
 /// within this duration.
 const KEEPALIVE_TIME_LIMIT: Duration = Duration::from_secs(7);
 
@@ -684,7 +684,7 @@ where
                 None => {
                     if self.expect_spans {
                         echo!(
-                            "Waiting on buck2 daemon {}...",
+                            "Waiting on yak daemon {}...",
                             self.observer.session_info().trace_id
                         )?;
                     }

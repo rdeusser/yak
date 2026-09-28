@@ -480,7 +480,7 @@ pub fn display_event(
                 truncate(&cmd.cmd_args, 200),
             ))),
             Data::DiceSynchronizeSection(..) => {
-                Ok(EventDisplay::bare("Synchronizing buck2 internal state"))
+                Ok(EventDisplay::bare("Synchronizing yak internal state"))
             }
             Data::DiceCleanup(..) => Ok(EventDisplay::bare("Cleaning up graph state")),
             Data::ExclusiveCommandWait(buck2_data::ExclusiveCommandWaitStart { command_name }) => {

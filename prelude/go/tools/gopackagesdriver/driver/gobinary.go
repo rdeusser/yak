@@ -30,7 +30,7 @@ func getGoBinary() (string, func(), error) {
 	scriptContent := fmt.Sprintf(`#!/usr/bin/env bash
 # remove the current directory from the path to avoid infinite recursion on system_go_toolchain
 export PATH=${PATH//$(dirname "$0"):/}
-exec buck2 run %s 'toolchains//:go[go]' -- "$@"
+exec yak run %s 'toolchains//:go[go]' -- "$@"
 `, strings.Join(buckOpts, " "))
 
 	goBinaryPath := filepath.Join(tmpDir, "go")

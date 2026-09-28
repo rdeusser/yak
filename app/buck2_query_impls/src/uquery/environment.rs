@@ -364,7 +364,7 @@ impl QueryEnvironment for UqueryEnvironment<'_> {
             let package_label = resolver.get_enclosing_package(path.as_ref()).await?;
             let listing = resolver.resolve(package_label.dupe()).await?;
 
-            // the listing's buildfile is relative to the package (the BUCK/TARGETS file).
+            // the listing's buildfile is relative to the package (the build file).
             // this makes it actually relative to the cell.
             let buildfile = package_label.as_cell_path().join(listing.buildfile());
             if buildfile != *path {

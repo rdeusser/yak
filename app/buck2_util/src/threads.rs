@@ -52,7 +52,7 @@ pub fn available_parallelism_fresh() -> usize {
     std::thread::available_parallelism().map_or(1, |v| v.get())
 }
 
-/// Default stack size for buck2.
+/// Default stack size for yak.
 ///
 /// We want to be independent of possible future changes to the default stack size in Rust.
 pub(crate) const THREAD_DEFAULT_STACK_SIZE: usize = {

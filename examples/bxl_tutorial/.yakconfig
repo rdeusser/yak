@@ -1,0 +1,10 @@
+[buildfile]
+name=YAK.fixture
+
+[repositories]
+root = .
+prelude = prelude
+config = config
+
+[build]
+  execution_platforms = root//platforms:platforms

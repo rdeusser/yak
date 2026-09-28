@@ -2,10 +2,10 @@
 
 Perform lower level queries
 
-Usage: buck2 audit [OPTIONS] <COMMAND>
+Usage: yak audit [OPTIONS] <COMMAND>
 
 Commands:
-  cell                           Query information about the [cells] list in .buckconfig.
+  cell                           Query information about the [cells] list in .yakconfig.
   file-package                   Map file paths to fully qualified package names.
   classpath                      Prints out a target's classpaths if it has one.
                                      This command is deprecated and currently available for
@@ -29,7 +29,7 @@ Commands:
                                  support BXL, test, scratch, or anon artifacts. If the configuration
                                  hash of the output path does not match the current platform
                                  configuration, the unconfigured target label will be returned.
-  parse                          Parses the buck-out path into parts that may be useful (ex: config
+  parse                          Parses the yak-out path into parts that may be useful (ex: config
                                  hash, file path to artifact).
   package-values                 Inspect package values, visibility, within_view, visibility_cap and
                                  within_view_cap
@@ -41,9 +41,8 @@ Options:
 
 Universal Options:
       --isolation-dir <ISOLATION_DIR>
-          The name of the directory that Buck2 creates within buck-out for writing outputs and
-          daemon information. If one is not provided, Buck2 creates a directory with the default
-          name.
+          The name of the directory that Buck2 creates within yak-out for writing outputs and daemon
+          information. If one is not provided, Buck2 creates a directory with the default name.
 
           Instances of Buck2 share a daemon if and only if their isolation directory is identical.
           The isolation directory also influences the output paths provided by Buck2, and as a

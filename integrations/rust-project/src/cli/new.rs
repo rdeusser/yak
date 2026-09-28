@@ -62,13 +62,13 @@ impl New {
 
         info!(?path);
 
-        // create the `BUCK` file
-        let buildfile_path = path.join("BUCK");
+        // create the `YAK` file
+        let buildfile_path = path.join("YAK");
         let mut buildfile =
-            fs::File::create(buildfile_path).context("Unable to create `BUCK` file")?;
+            fs::File::create(buildfile_path).context("Unable to create `YAK` file")?;
         buildfile
             .write_all(target.render().as_bytes())
-            .context("Unable to write generated template to `BUCK` file")?;
+            .context("Unable to write generated template to `YAK` file")?;
 
         // create src dir
         let src_dur = path.join(Path::new("src"));

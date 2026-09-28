@@ -1,7 +1,7 @@
 # This file is @generated, regenerate by rerunning the test with `BUCK2_UPDATE_GOLDEN=1` set
 
-[<TIMESTAMP>] Starting new buck2 daemon...
-[<TIMESTAMP>] Connected to new buck2 daemon.
+[<TIMESTAMP>] Starting new yak daemon...
+[<TIMESTAMP>] Connected to new yak daemon.
 [<TIMESTAMP>] Build ID: <UUID>
 BUILD FAILED
 Error running dynamic analysis for `prelude//:analysis_failure (<unspecified>)`

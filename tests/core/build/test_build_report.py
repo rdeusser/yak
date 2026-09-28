@@ -55,7 +55,7 @@ def build_report_test(name: str, command: list[str]) -> None:
         _sanitize_timing_fields(report)
 
         # Build report errors can change based on minor test changes such as
-        # 1. Adding a target in TARGETS.fixture
+        # 1. Adding a target in YAK.fixture
         # 2. Line number changing due to code moving around
         # Sanitize so that we only check the important bits of the error message
         golden(
@@ -264,7 +264,7 @@ def streaming_build_report_test(name: str, command: list[str]) -> None:
         _sanitize_timing_fields(report)
 
         # Build report errors can change based on minor test changes such as
-        # 1. Adding a target in TARGETS.fixture
+        # 1. Adding a target in YAK.fixture
         # 2. Line number changing due to code moving around
         # Sanitize so that we only check the important bits of the error message
         golden(

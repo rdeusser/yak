@@ -14,7 +14,7 @@ use std::path::Path;
 use std::path::PathBuf;
 use std::sync::OnceLock;
 
-/// is_buck2_exe reports whether `path` names a buck2 executable (`buck2`, `buck2-daemon`, or the
+/// is_buck2_exe reports whether `path` names a yak executable (`yak`, `yak-daemon`, or the
 /// executable of the current process).
 pub(crate) fn is_buck2_exe(path: &Path) -> bool {
     let Some(file_stem) = path.file_stem() else {
@@ -22,10 +22,10 @@ pub(crate) fn is_buck2_exe(path: &Path) -> bool {
     };
     // On linux when the running executable is deleted or unlinked the string ' (deleted)' is appended to symlinked file in /proc/<pid>/exe
     if [
-        OsStr::new("buck2"),
-        OsStr::new("buck2 (deleted)"),
-        OsStr::new("buck2-daemon"),
-        OsStr::new("buck2-daemon (deleted)"),
+        OsStr::new("yak"),
+        OsStr::new("yak (deleted)"),
+        OsStr::new("yak-daemon"),
+        OsStr::new("yak-daemon (deleted)"),
     ]
     .contains(&file_stem)
     {
@@ -49,9 +49,9 @@ mod tests {
     #[test]
     fn test_is_buck2_exe() {
         let (fake_buck, other_path) = if cfg!(windows) {
-            ("C:\\dir\\buck2.exe", "C:\\dir\\other.exe")
+            ("C:\\dir\\yak.exe", "C:\\dir\\other.exe")
         } else {
-            ("/dir/buck2", "/dir/other")
+            ("/dir/yak", "/dir/other")
         };
 
         assert!(is_buck2_exe(Path::new(fake_buck)));

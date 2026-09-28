@@ -13,9 +13,9 @@ Traceback (most recent call last):
 
 
 Caused by:
-    0: Error evaluating build file: `root//attr_coercion:TARGETS.fixture`
+    0: Error evaluating build file: `root//attr_coercion:YAK.fixture`
     1: error: Error coercing attribute `x` of `root//attr_coercion:int_rule`
-        --> attr_coercion/TARGETS.fixture:3:1
+        --> attr_coercion/YAK.fixture:3:1
          |
        3 | / int_rule(
        4 | |     name = "int_rule",
@@ -23,7 +23,7 @@ Caused by:
        6 | | )
          | |_^
        Traceback (most recent call last):
-         * attr_coercion/TARGETS.fixture:3, in <module>
+         * attr_coercion/YAK.fixture:3, in <module>
              int_rule(
        
     2: Error coercing attribute `x` of type `attrs.int()`

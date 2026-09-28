@@ -136,7 +136,7 @@ static DEFAULT_KILL_TIMEOUT: Duration = Duration::from_millis(500);
 ///
 /// Only reached if a client still holds a connection open, since `shutdown_deadline` already
 /// covers the drain and the `dice.wait_for_idle()` after it. Just the return and the exit logs
-/// can still be outstanding, so this is small - and it adds directly to how long `buck2 kill`
+/// can still be outstanding, so this is small - and it adds directly to how long `yak kill`
 /// takes when the drain cannot finish.
 static SHUTDOWN_WATCHDOG_GRACE: Duration = Duration::from_secs(1);
 
@@ -370,7 +370,7 @@ impl BuckdServer {
 
         let tenant_paths = paths.tenant_paths();
 
-        // Create buck-out and potentially chdir to there.
+        // Create yak-out and potentially chdir to there.
         fs_util::create_dir_all(tenant_paths.buck_out_path())
             .tag(ErrorTag::InvalidBuckOut)
             .buck_error_context("Error creating buck_out_path")?;
@@ -589,7 +589,7 @@ impl BuckdServer {
         let data = daemon_state.data();
         let repo = data.repo_for_client_context(client_ctx).await?;
 
-        // The total disk space on `buck-out`, effectively fixed for the daemon's life.
+        // The total disk space on `yak-out`, effectively fixed for the daemon's life.
         // Captured here alongside `SystemInfo` and handed to this command's
         // `PagingManager`, which pairs it with the command-end snapshot's used-disk
         // reading to gate idle page-out without a second disk stat.
@@ -792,7 +792,7 @@ impl BuckdServer {
     fn check_if_accepting_requests(&self) -> Result<(), Status> {
         if self.0.stop_accepting_requests.load(Ordering::Relaxed) {
             Err(Status::failed_precondition(
-                "Failed to run command, `buckd` is shutting down soon!",
+                "Failed to run command, `yakd` is shutting down soon!",
             ))
         } else {
             Ok(())
@@ -1888,7 +1888,7 @@ fn server_shutdown_signal(
 /// Guarantee that a daemon which has announced its shutdown actually exits.
 ///
 /// The graceful path waits for in-flight gRPC connections to drain, and a long lived streaming
-/// command such as `buck2 lsp` holds one open for as long as its client lives - the inactivity
+/// command such as `yak lsp` holds one open for as long as its client lives - the inactivity
 /// timer is only reset when a command *starts*, so it can fire underneath one. While the daemon
 /// waits, its listener still accepts connections that are never answered, which is worse for
 /// clients than being dead: a refused connection costs them milliseconds, an unanswered one costs
@@ -1912,7 +1912,7 @@ fn spawn_shutdown_watchdog(in_process: bool, deadline: tokio::time::Instant) {
     thread_spawn("buck2-shutdown-watchdog", move || {
         thread::sleep(deadline.saturating_duration_since(std::time::Instant::now()));
 
-        // Clients read `buckd.stderr` to explain why the daemon went away, so make sure the
+        // Clients read `yakd.stderr` to explain why the daemon went away, so make sure the
         // reason is on disk before we go.
         tracing::warn!("Shutdown deadline exceeded, exiting");
         let _ignored = io::stderr().flush();

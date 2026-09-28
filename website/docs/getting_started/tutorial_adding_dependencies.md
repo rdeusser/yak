@@ -43,7 +43,7 @@ Your project should be like this
 ```
 buck2_lab
 ├── greeter_bin
-│   ├── BUCK
+│   ├── YAK
 │   └── src
 │       └── main.rs
 └── greeter_lib
@@ -67,8 +67,8 @@ pub fn greet(name: &str) -> String {
 This is a simple public function greet that takes a name and returns a greeting
 message.
 
-2. Define the library's BUCK file: In the `greeter_lib` directory (i.e.,
-   `greeter_lib/`), create a `BUCK` file. Add the following content:
+2. Define the library's YAK file: In the `greeter_lib` directory (i.e.,
+   `greeter_lib/`), create a `YAK` file. Add the following content:
 
 ```python
 rust_library(
@@ -94,7 +94,7 @@ folder
 
 ```bash
 cd greeter_lib
-buck2 build :library --show-full-output
+yak build :library --show-full-output
 ```
 
 You will see an output like this:
@@ -128,10 +128,10 @@ fn main() {
 
 ```
 
-2. Update the binary's BUCK file:
+2. Update the binary's YAK file:
 
-In the `greeter_bin` directory (i.e., `buck2_lab/greeter_bin/BUCK`), update the
-BUCK file.
+In the `greeter_bin` directory (i.e., `buck2_lab/greeter_bin/YAK`), update the
+YAK file.
 
 ```python
 rust_binary(
@@ -142,7 +142,7 @@ rust_binary(
 )
 ```
 
-You can also use `buck2 targets :` command in `greeter_lib` folder to get the
+You can also use `yak targets :` command in `greeter_lib` folder to get the
 full target name of the library.
 
 - `deps = ["root//buck2_lab/greeter_lib:library"]`: This is the crucial new
@@ -157,7 +157,7 @@ Now, let's build and run our binary application, with dependencies
 1. Run the binary:
 
 ```bash
-buck2 run root//buck2_lab/greeter_bin:main
+yak run root//buck2_lab/greeter_bin:main
 ```
 
 2. Expected output:
@@ -167,7 +167,7 @@ You should see the following output:
 ```
 ...
 BUILD SUCCEEDED - starting your binary
-Hello, buck2!
+Hello, yak!
 ```
 
 ## Step 6: Adding a logging dependency to our application
@@ -181,9 +181,9 @@ and copy the folder into `buck2_lab` folder.
 
 Our first step is to make our existing greeter_lib use this new logging_lib.
 
-1. Update `greeter_lib/BUCK`:
+1. Update `greeter_lib/YAK`:
 
-Now, modify `buck2_lab/greeter_lib/BUCK` to declare a dependency on
+Now, modify `buck2_lab/greeter_lib/YAK` to declare a dependency on
 `logging_lib`.
 
 ```python
@@ -243,7 +243,7 @@ Let's try to run `main`:
 1. Attempt to run the binary:
 
 ```bash
-buck2 run root//buck2_lab/greeter_bin:main
+yak run root//buck2_lab/greeter_bin:main
 ```
 
 2. Expected Outcome: Build Failure!
@@ -277,7 +277,7 @@ This means that `logging_lib` cannot be found in our `main` binary.
 ### Why did this fail?
 
 - `greeter_bin/src/main.rs` directly calls `logging_lib::info()`.
-- However, `greeter_bin/BUCK` only lists `greeter_lib:library` as a direct
+- However, `greeter_bin/YAK` only lists `greeter_lib:library` as a direct
   dependency.
 - Even though `greeter_lib:library` depends on `logging_lib`, this dependency is
   not automatically "passed through" (transitive) or made directly available to
@@ -291,7 +291,7 @@ This means that `logging_lib` cannot be found in our `main` binary.
 To fix this, we need to tell Buck2 that `greeter_bin` also has a direct
 dependency on `logging_lib`.
 
-1. Update `greeter_bin/BUCK`:
+1. Update `greeter_bin/YAK`:
 
 ```python
 rust_binary(
@@ -307,7 +307,7 @@ rust_binary(
 2. Run the binary:
 
 ```bash
-buck2 run root//buck2_lab/greeter_bin:main
+yak run root//buck2_lab/greeter_bin:main
 ```
 
 You should see the output like this:

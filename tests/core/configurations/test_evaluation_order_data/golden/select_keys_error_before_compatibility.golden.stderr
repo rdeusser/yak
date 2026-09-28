@@ -10,7 +10,7 @@ Caused by:
     3: Error looking up configured node root//:doesnotexit (<unbound>)
     4: looking up unconfigured target node `root//:doesnotexit`
     5: Unknown target `doesnotexit` from package `root//`.
-       Did you mean one of the 33 targets in root//:TARGETS.fixture?
+       Did you mean one of the 33 targets in root//:YAK.fixture?
        
        Available targets (showing 25 of 33):
          root//:animal
@@ -40,6 +40,6 @@ Caused by:
          root//:with_broken_dtp
        
        To see all 33 targets, run:
-         buck2 uquery --reuse-current-config root//:
+         yak uquery --reuse-current-config root//:
        
        

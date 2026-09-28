@@ -265,7 +265,7 @@ impl<'d> DiceComputations<'d> {
                 .into_iter()
                 .map(|v| move |ctx: &'a mut DiceComputations<'d>| mapper(ctx, v)),
         );
-        // We embed the `unconstrained` here because buck2 has always benefitted from this
+        // We embed the `unconstrained` here because yak has always benefitted from this
         tokio::task::unconstrained(dice_futures::join::join_all(futs))
     }
 

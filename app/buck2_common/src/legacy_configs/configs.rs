@@ -417,7 +417,7 @@ pub mod testing {
             &mut self,
             _path: &ConfigPath,
         ) -> buck2_error::Result<Vec<ConfigDirEntry>> {
-            // This is only used for listing files in `buckconfig.d` directories, which we can just
+            // This is only used for listing files in `yakconfig.d` directories, which we can just
             // say are always empty in tests
             Ok(Vec::new())
         }
@@ -808,7 +808,7 @@ pub(crate) mod tests {
         let config = parse_with_config_args(
             &[
                 (
-                    ".buckconfig",
+                    ".yakconfig",
                     indoc!(
                         r#"
                             [cells]
@@ -829,7 +829,7 @@ pub(crate) mod tests {
                     ),
                 ),
             ],
-            ".buckconfig",
+            ".yakconfig",
             &config_args,
         )?;
 

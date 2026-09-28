@@ -1,5 +1,5 @@
 # This file is @generated, regenerate by rerunning the test with `BUCK2_UPDATE_GOLDEN=1` set
 
-buck-out/v2/art/root/<HASH>/__download_deferred__/download	materialized (ts=<TIMESTAMP>, size=36)
-buck-out/v2/art/root/<HASH>/__download_deferred__/download	declared: http download (http://127.0.0.1:<PORT>/download declared by root//:download_deferred (<unspecified>)) (cleaning)
-buck-out/v2/art/root/<HASH>/__download_deferred__/download	materialized (ts=<TIMESTAMP>, size=36)
+yak-out/v2/art/root/<HASH>/__download_deferred__/download	materialized (ts=<TIMESTAMP>, size=36)
+yak-out/v2/art/root/<HASH>/__download_deferred__/download	declared: http download (http://127.0.0.1:<PORT>/download declared by root//:download_deferred (<unspecified>)) (cleaning)
+yak-out/v2/art/root/<HASH>/__download_deferred__/download	materialized (ts=<TIMESTAMP>, size=36)

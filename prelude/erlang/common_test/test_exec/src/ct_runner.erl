@@ -434,7 +434,7 @@ cookie() ->
 -spec project_root() -> file:filename().
 project_root() ->
     {ok, CWD} = prim_file:get_cwd(),
-    Command = "buck2 root --kind=project",
+    Command = "yak root --kind=project",
     Dir = string:trim(os:cmd(Command)),
     ?LOG_INFO(#{command => Command, result => Dir, cwd => CWD}),
     case filelib:is_dir(Dir, ?raw_file_access) of

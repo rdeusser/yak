@@ -8,7 +8,7 @@
  * above-listed licenses.
  */
 
-//! Code shared between `buck2_wrapper` and `buck2`.
+//! Code shared between `buck2_wrapper` and `yak`.
 //!
 //! Careful! The wrapper is not released as part of the regular buck version bumps,
 //! meaning code changes here are not "atomically" updated.
@@ -47,15 +47,15 @@ pub use process::background_command;
 pub const BUCK2_WRAPPER_ENV_VAR: &str = "BUCK2_WRAPPER";
 pub const BUCK_WRAPPER_UUID_ENV_VAR: &str = "BUCK_WRAPPER_UUID";
 pub const BUCK_WRAPPER_START_TIME_ENV_VAR: &str = "BUCK_WRAPPER_START_TIME";
-pub const BUCKD_LIFECYCLE: &str = "buckd.lifecycle";
+pub const YAKD_LIFECYCLE: &str = "yakd.lifecycle";
 const BUCK2_TEST_HOME_DIR_ENV_VAR: &str = "BUCK2_TEST_HOME_DIR";
-/// Default buck2 isolation dir. Must match the `--isolation-dir` clap
+/// Default yak isolation dir. Must match the `--isolation-dir` clap
 /// `default_value` in `app/buck2/src/lib.rs`; the default-isolation golden test
 /// (`denied.golden.stderr`) catches drift.
 pub const DEFAULT_ISOLATION_DIR: &str = "v2";
 pub const CLEAN_STALE_HELP: &str =
-    "Delete artifacts from buck-out using the configured clean-stale policy";
-pub const DOT_BUCKCONFIG_D: &str = ".buckconfig.d";
+    "Delete artifacts from yak-out using the configured clean-stale policy";
+pub const DOT_YAKCONFIG_D: &str = ".yakconfig.d";
 
 /// Returns the home directory used for Buck2 state.
 pub fn buck2_home_dir() -> Option<PathBuf> {
@@ -72,7 +72,7 @@ struct ProcessInfo {
     cwd: Option<PathBuf>,
 }
 
-/// Restricts which buck2 processes [`killall`] targets. The default value matches every process.
+/// Restricts which yak processes [`killall`] targets. The default value matches every process.
 ///
 /// Both criteria are best-effort: they rely on information read from each candidate process
 /// (command line and working directory). Processes for which that information is unavailable
@@ -119,9 +119,9 @@ impl KillallFilter {
     }
 }
 
-/// Extract the isolation dir from a buck2 process's command line.
+/// Extract the isolation dir from a yak process's command line.
 ///
-/// buck2 daemons, forkservers and clients are launched with the global
+/// yak daemons, forkservers and clients are launched with the global
 /// `--isolation-dir <name>` flag (see `buck2_client_ctx::daemon::client::connect`),
 /// accepting both the `--isolation-dir <name>` and `--isolation-dir=<name>` forms.
 /// Returns `None` when the flag is absent (e.g. the isolation dir was supplied via
@@ -176,7 +176,7 @@ fn get_all_tgids_linux() -> Option<BuckMutSet<sysinfo::Pid>> {
     Some(all_tgids)
 }
 
-/// Find all buck2 processes in the system.
+/// Find all yak processes in the system.
 ///
 /// Working directories are only collected when `collect_cwd` is set, as sysinfo has to read
 /// them per-process.
@@ -282,9 +282,9 @@ pub fn killall(filter: &KillallFilter, write: impl Fn(String)) -> bool {
 
     if buck2_processes.is_empty() {
         if found_any {
-            write("No buck2 processes matched the requested filter".to_owned());
+            write("No yak processes matched the requested filter".to_owned());
         } else {
-            write("No buck2 processes found".to_owned());
+            write("No yak processes found".to_owned());
         }
         return true;
     }
@@ -382,15 +382,15 @@ mod tests {
     fn test_parse_isolation_dir() {
         for (args, expected) in [
             (
-                &["buck2", "--isolation-dir", "custom", "daemon"][..],
+                &["yak", "--isolation-dir", "custom", "daemon"][..],
                 Some("custom"),
             ),
             (
-                &["buck2", "--isolation-dir=custom", "daemon"][..],
+                &["yak", "--isolation-dir=custom", "daemon"][..],
                 Some("custom"),
             ),
-            (&["buck2", "daemon"][..], None),
-            (&["buck2", "--isolation-dir"][..], None),
+            (&["yak", "daemon"][..], None),
+            (&["yak", "--isolation-dir"][..], None),
         ] {
             let args = args.iter().map(|arg| (*arg).to_owned()).collect::<Vec<_>>();
             assert_eq!(expected.map(str::to_owned), parse_isolation_dir(&args));
@@ -401,7 +401,7 @@ mod tests {
     fn test_killall_filter_classify() {
         let process = |isolation_dir: Option<&str>, cwd: Option<&str>| ProcessInfo {
             pid: Pid::from_u32(1).expect("1 should be a valid pid"),
-            name: "buck2".to_owned(),
+            name: "yak".to_owned(),
             isolation_dir: isolation_dir.map(str::to_owned),
             cwd: cwd.map(PathBuf::from),
         };
@@ -503,8 +503,8 @@ mod tests {
             nonce,
         ));
         fs::create_dir(&temp_dir).expect("temporary test directory should be created");
-        let fake_buck2 = temp_dir.join("buck2");
-        fs::copy("/bin/sh", &fake_buck2).expect("test buck2 executable should be copied");
+        let fake_buck2 = temp_dir.join("yak");
+        fs::copy("/bin/sh", &fake_buck2).expect("test yak executable should be copied");
 
         // Under OSS `cargo test` (all tests share one process, unlike buck's
         // per-test process isolation) a sibling test's `fork` can inherit the
@@ -524,10 +524,10 @@ mod tests {
                 Err(e) if e.raw_os_error() == Some(nix::libc::ETXTBSY) => {
                     thread::sleep(Duration::from_millis(10));
                 }
-                Err(e) => panic!("fake buck2 process should start: {e:?}"),
+                Err(e) => panic!("fake yak process should start: {e:?}"),
             }
         }
-        let child = child.expect("fake buck2 process should start before ETXTBSY window closes");
+        let child = child.expect("fake yak process should start before ETXTBSY window closes");
         let child_pid = child.id();
         let _guard = ChildGuard { child, temp_dir };
 
@@ -535,7 +535,7 @@ mod tests {
         let child_process = processes
             .iter()
             .find(|process| process.pid.to_u32() == child_pid)
-            .expect("scan should find the fake buck2 child process");
+            .expect("scan should find the fake yak child process");
         assert_eq!(
             Some("process-scan-test"),
             child_process.isolation_dir.as_deref(),

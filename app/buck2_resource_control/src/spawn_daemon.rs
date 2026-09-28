@@ -64,7 +64,7 @@ const SYSTEMD_RUN_SCOPE_ARGS: &[&str] = &[
     "--quiet",
     "--collect",
     "--property=Delegate=yes",
-    "--slice=buck2",
+    "--slice=yak",
 ];
 
 enum DaemonSpawner {
@@ -105,7 +105,7 @@ async fn get_daemon_spawner(init: &ResourceControlInit) -> buck2_error::Result<D
 
 /// Generates the command to spawn a daemon process, wrapped as appropriate for the resource control setup.
 ///
-/// Returns the command, followed by a list of additional flags to pass to `buck2 daemon`.
+/// Returns the command, followed by a list of additional flags to pass to `yak daemon`.
 pub async fn create_daemon_spawn_command(
     config: &ResourceControlConfig,
     program: impl AsRef<OsStr>,
@@ -337,7 +337,7 @@ mod tests {
     fn test_validate_systemd_run_cgroup_visible() {
         assert!(
             validate_systemd_run_cgroup(
-                b"0::/user.slice/user-1000.slice/user@1000.service/buck2.slice/run.scope\n"
+                b"0::/user.slice/user-1000.slice/user@1000.service/yak.slice/run.scope\n"
             )
             .is_ok()
         );
@@ -347,7 +347,7 @@ mod tests {
     #[test]
     fn test_validate_systemd_run_cgroup_hidden_parent() {
         assert!(matches!(
-            validate_systemd_run_cgroup(b"0::/../../buck2.slice/run.scope\n").unwrap_err(),
+            validate_systemd_run_cgroup(b"0::/../../yak.slice/run.scope\n").unwrap_err(),
             SystemdNotAvailableReason::SystemdRunUserProbeInvalidCgroup { .. }
         ));
     }

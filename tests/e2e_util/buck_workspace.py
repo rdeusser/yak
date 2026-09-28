@@ -61,7 +61,7 @@ def buck2_binary() -> Path:
     configured = os.environ.get(BUCK2_BINARY_ENV_VAR)
     if configured:
         return Path(configured).resolve()
-    exe = "buck2.exe" if platform.system() == "Windows" else "buck2"
+    exe = "yak.exe" if platform.system() == "Windows" else "yak"
     return TESTS_DIR.parent / "target" / "debug" / exe
 
 
@@ -83,12 +83,12 @@ async def buck_fixture(  # noqa C901 : "too complex"
     binary = buck2_binary()
     if not binary.is_file():
         raise Exception(
-            f"buck2 binary `{binary}` does not exist. Build it with "
-            f"`cargo build --bin=buck2` or set {BUCK2_BINARY_ENV_VAR}."
+            f"yak binary `{binary}` does not exist. Build it with "
+            f"`cargo build --bin=yak` or set {BUCK2_BINARY_ENV_VAR}."
         )
 
     # Remove variables that describe the outer pytest run, so a Python test that
-    # buck2 runs inside the test project does not inherit them.
+    # yak runs inside the test project does not inherit them.
     env: Dict[str, str] = {
         key: value for key, value in os.environ.items() if not key.startswith("PYTEST_")
     }
@@ -129,7 +129,7 @@ async def buck_fixture(  # noqa C901 : "too complex"
     base_dir = Path(tempfile.mkdtemp())
     keep_temp = os.environ.get("BUCK_E2E_KEEP_TEMP") == "1"
 
-    # Keep the daemon directories (`~/.buck/buckd`) of the test inside its
+    # Keep the daemon directories (`~/.yak/yakd`) of the test inside its
     # temporary directory.
     home_dir = base_dir / "home"
     home_dir.mkdir()
@@ -157,7 +157,7 @@ async def buck_fixture(  # noqa C901 : "too complex"
                 # Use the FS Events watcher, which is more reliable than the default.
                 json.dump(
                     {
-                        "ignore_dirs": ["buck-out", ".git", ".hg"],
+                        "ignore_dirs": ["yak-out", ".git", ".hg"],
                         "fsevents_watch_files": True,
                         "prefer_split_fsevents_watcher": False,
                     },
@@ -229,7 +229,7 @@ def _copytree(src: Path, dst: Path) -> None:
     """Copies all files and directories from src into dst"""
     dst.mkdir(parents=True, exist_ok=True)
     for item in os.listdir(src):
-        if item == "buck-out":
+        if item == "yak-out":
             continue
         s = src / item
         d = dst / item
@@ -273,7 +273,7 @@ def buck_test(
             A optional dict of extra buck config to add to the test.
             The key is the section name, the value is a dict of key value pairs.
         skip_final_kill:
-            Don't run a `buck2 kill` or `buck2 clean` at the end of the test
+            Don't run a `yak kill` or `yak clean` at the end of the test
         disable_daemon_cgroup:
             False lets the daemon move itself into a cgroup with
             `systemd-run --user`, and marks the test `cgroups`.

@@ -79,9 +79,9 @@ def _generate_script(
             # In buck1, the paths for resources that are outputs of rules have
             # different paths in BUCK_PROJECT_ROOT and
             # BUCK_DEFAULT_RUNTIME_RESOURCES, but we use the same paths. buck1's
-            # BUCK_PROJECT_ROOT paths would use the actual buck-out path rather
+            # BUCK_PROJECT_ROOT paths would use the actual yak-out path rather
             # than something derived from the target and so to use that people
-            # would need to hardcode buck-out paths into their scripts. For repo
+            # would need to hardcode yak-out paths into their scripts. For repo
             # sources, the paths are the same for both.
             'export BUCK_DEFAULT_RUNTIME_RESOURCES="$BUCK_PROJECT_ROOT"',
             'exec "$BUCK_PROJECT_ROOT/{}" "$@"'.format(main_link),

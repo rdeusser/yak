@@ -1,23 +1,23 @@
 # This file is @generated, regenerate by rerunning the test with `BUCK2_UPDATE_GOLDEN=1` set
 
-Kill all buck2 processes on the machine
+Kill all yak processes on the machine
 
-By default this kills every buck2 process regardless of repository or isolation dir.
+By default this kills every yak process regardless of repository or isolation dir.
 Passing `--in-isolation-dir` narrows the kill to processes using that isolation dir, and
 `--repo` narrows it to processes running in the current repository. Processes that
 cannot be checked against the requested filter are skipped and reported.
 
-Usage: buck2 killall [OPTIONS]
+Usage: yak killall [OPTIONS]
 
 Options:
       --in-isolation-dir <ISOLATION_DIR>
-          Only kill buck2 processes using this isolation dir.
+          Only kill yak processes using this isolation dir.
 
           Unlike the global `--isolation-dir` flag, this does not default to `v2`; when omitted,
           processes of every isolation dir are killed.
 
       --repo
-          Only kill buck2 processes running in the current repository (project root)
+          Only kill yak processes running in the current repository (project root)
 
   -h, --help
           Print help (see a summary with '-h')
@@ -35,13 +35,12 @@ Event Log Options:
 
       --command-report-path <PATH>
           Write the command report to this path. A command report is always written to
-          `buck-out/v2/<uuid>/command_report` even without this flag
+          `yak-out/v2/<uuid>/command_report` even without this flag
 
 Universal Options:
       --isolation-dir <ISOLATION_DIR>
-          The name of the directory that Buck2 creates within buck-out for writing outputs and
-          daemon information. If one is not provided, Buck2 creates a directory with the default
-          name.
+          The name of the directory that Buck2 creates within yak-out for writing outputs and daemon
+          information. If one is not provided, Buck2 creates a directory with the default name.
 
           Instances of Buck2 share a daemon if and only if their isolation directory is identical.
           The isolation directory also influences the output paths provided by Buck2, and as a

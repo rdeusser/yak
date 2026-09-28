@@ -19,7 +19,7 @@ Caused by:
        
     2: looking up unconfigured target node `root//deps_collapsed:missing`
     3: Unknown target `missing` from package `root//deps_collapsed`.
-       Did you mean one of the 12 targets in root//deps_collapsed:TARGETS.fixture?
+       Did you mean one of the 12 targets in root//deps_collapsed:YAK.fixture?
        Maybe you meant one of these similar targets?
          root//deps_collapsed:mid1
          root//deps_collapsed:mid2

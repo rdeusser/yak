@@ -72,10 +72,10 @@ async def test_materialize_source_directly(buck: Buck) -> None:
 @buck_test()
 async def test_expand_external_cell(buck: Buck) -> None:
     await buck.expand_external_cell("test_bundled_cell")
-    assert (buck.cwd / "test_bundled_cell" / ".buckconfig").exists()
+    assert (buck.cwd / "test_bundled_cell" / ".yakconfig").exists()
 
     # Remove the external cell declaration
-    (buck.cwd / ".buckconfig_no_external").replace(buck.cwd / ".buckconfig")
+    (buck.cwd / ".yakconfig_no_external").replace(buck.cwd / ".yakconfig")
     (buck.cwd / "test_bundled_cell" / "dir" / "src.txt").write_text("foobar3\n")
 
     result = await buck.build_without_report(

@@ -11,7 +11,7 @@
 //! Mechanism for dispatching events. Where the rubber meets the road, for producers of events.
 //!
 //! The [`EventDispatcher`] is a type-erased, dupe-able container for a [`crate::EventSink`]. It is intended to be
-//! liberally duplicated and passed around to the depths of buck2 so that consumers can insert events into it.
+//! liberally duplicated and passed around to the depths of yak so that consumers can insert events into it.
 
 use std::cell::Cell;
 use std::cell::UnsafeCell;

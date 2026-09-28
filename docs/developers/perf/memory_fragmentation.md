@@ -32,7 +32,7 @@ active), essentially **all** of it small-bin slab waste.
 counters and ranks size classes by `active - allocated`:
 
 ```sh
-buck2 debug allocator-stats -o J > stats.json   # -o J: do NOT suppress bin stats
+yak debug allocator-stats -o J > stats.json   # -o J: do NOT suppress bin stats
 scripts/bin_waste.py stats.json
 # or: scripts/bin_waste.py --daemon
 ```
@@ -76,13 +76,13 @@ slab stay unattributed.
 
 ## Known results
 
-On a daemon after a `cquery` over buck2's own graph, about 1.2 GiB of small-bin
+On a daemon after a `cquery` over yak's own graph, about 1.2 GiB of small-bin
 waste came almost entirely from `TargetNode` construction during loading and
 attribute coercion. The attributed sites were coerced deps
 (`ThinBoxSlice<TargetLabel>`, `Vec2<ProvidersLabel, …>`), `CoercedAttr::coerce`,
 `AttrValues`, the `Arc<HeaderSlice<[CoercedAttr]>>` and target-label `Arc`s,
 `TargetNode::new`, and `ArcStrInterner`. These long-lived graph nodes are allocated amid the
-transient churn of evaluating each `BUCK` file, which makes them a candidate for
+transient churn of evaluating each `YAK` file, which makes them a candidate for
 a per-package arena freed when the package's targets are invalidated.
 
 In the 192-byte class, the class with the most waste, 32% of pages held

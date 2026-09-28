@@ -1,13 +1,13 @@
 # Integration tests
 
-These pytest tests run a `buck2` binary against small projects and check its output, its event logs, and the files it writes.
+These pytest tests run a `yak` binary against small projects and check its output, its event logs, and the files it writes.
 
 ## Layout
 
 | Path | Contents |
 | --- | --- |
-| `core/` | Tests of buck2 itself, grouped by the behavior they check. `core/README.md` has guidelines for writing them. |
-| `e2e/` | Tests that combine buck2 with the prelude and other integrations. |
+| `core/` | Tests of yak itself, grouped by the behavior they check. `core/README.md` has guidelines for writing them. |
+| `e2e/` | Tests that combine yak with the prelude and other integrations. |
 | `prelude/` | Tests of prelude rules. |
 | `select_type_params/`, `tools/` | Tests of smaller pieces. |
 | `e2e_util/` | The harness. It holds the `buck` fixture, the `Buck` command wrapper, assertions, golden file helpers, and `nano_prelude`. |
@@ -16,10 +16,10 @@ These pytest tests run a `buck2` binary against small projects and check its out
 
 ## Running the tests
 
-The tests need Python 3.12 or later and a debug build of buck2. Run these commands from the repository root:
+The tests need Python 3.12 or later and a debug build of yak. Run these commands from the repository root:
 
 ```sh
-cargo build --bin=buck2
+cargo build --bin=yak
 python3 -m venv tests/.venv
 tests/.venv/bin/pip install -r tests/requirements.txt
 tests/.venv/bin/python -m pytest tests -n auto
@@ -32,7 +32,7 @@ tests/.venv/bin/python -m pytest tests/core/build/test_out_flag.py
 tests/.venv/bin/python -m pytest "tests/core/build/test_out_flag.py::test_out_single_default_output"
 ```
 
-The tests run `target/debug/buck2`. Set `BUCK2_BINARY` to an absolute path to test another binary.
+The tests run `target/debug/yak`. Set `BUCK2_BINARY` to an absolute path to test another binary.
 
 These tests fail when a program or condition they rely on is missing:
 
@@ -50,11 +50,11 @@ Some tests need resources that a developer machine usually lacks. They carry a m
 
 | Marker | Needs | Runs when |
 | --- | --- | --- |
-| `remote_execution` | A Remote Execution backend. | `BUCK2_TEST_RE_CONFIG` names a buckconfig file with the backend's `[buck2_re_client]` settings. The harness appends the file to every test project's `.buckconfig`. |
+| `remote_execution` | A Remote Execution backend. | `BUCK2_TEST_RE_CONFIG` names a buckconfig file with the backend's `[buck2_re_client]` settings. The harness appends the file to every test project's `.yakconfig`. |
 | `cgroups` | Linux with a systemd user session that delegates cgroups, because the daemon moves itself into a cgroup with `systemd-run --user`. `@buck_test(disable_daemon_cgroup=False)` adds this marker. | `BUCK2_TEST_CGROUPS=1` is set. |
 | `needs_binary` | Helper programs named by environment variables. | Every variable that the marker names is set. |
 
-This repository has no Remote Execution backend to test against, so the `remote_execution` tests are unverified. Some of them build a project that declares no execution platforms, and buck2 does not run the actions of such a project remotely even when a backend is configured. Those projects need a remote-enabled execution platform before their tests can pass.
+This repository has no Remote Execution backend to test against, so the `remote_execution` tests are unverified. Some of them build a project that declares no execution platforms, and yak does not run the actions of such a project remotely even when a backend is configured. Those projects need a remote-enabled execution platform before their tests can pass.
 
 The helper programs:
 
@@ -64,7 +64,7 @@ The helper programs:
 | `SKETCH_SIZE_BIN` | `shed/setsketch` | `cargo build -p setsketch --bin sketch_size` |
 | `USE_SOME_MEMORY_BIN` | `shed/cgroups/use_some_memory` | It has a Buck target but no Cargo target. |
 | `BUCK2_COMPLETION_VERIFY` | `shed/completion_verify` | It has a Buck target but no Cargo target. |
-| `INSTALLER_BIN`, `FORWARDED_PARAMS_INSTALLER_BIN`, `EXTRA_ARGS_VALIDATOR_BIN`, `EARLY_EXIT_INSTALLER_BIN` | Installers for the `buck2 install` tests. | Their sources are not in this repository. |
+| `INSTALLER_BIN`, `FORWARDED_PARAMS_INSTALLER_BIN`, `EXTRA_ARGS_VALIDATOR_BIN`, `EARLY_EXIT_INSTALLER_BIN` | Installers for the `yak install` tests. | Their sources are not in this repository. |
 
 The Watchman tests in `core/io/` skip when `watchman` is not on `PATH`. The Go tests in `prelude/` skip when `go` is not on `PATH`.
 
@@ -98,9 +98,9 @@ async def test_build_writes_output(buck: Buck) -> None:
 
 `@buck_test()` copies the data directory into the temporary project, and `data_dir="name"` copies only its subdirectory `name`. Its other arguments add buckconfig values, allow soft errors, and skip operating systems. The docstring of `buck_test` in `e2e_util/buck_workspace.py` lists them.
 
-The data directories name their build files `TARGETS.fixture` through `[buildfile] name` in the project's `.buckconfig`. That name keeps this repository's own Buck build from reading them. `PACKAGE` files keep their usual name.
+The data directories name their build files `YAK.fixture` through `[buildfile] name` in the project's `.yakconfig`. That name keeps this repository's own Buck build from reading them. `PACKAGE` files keep their usual name.
 
-A project uses `nano_prelude` with this `.buckconfig`:
+A project uses `nano_prelude` with this `.yakconfig`:
 
 ```ini
 [cells]
@@ -114,7 +114,7 @@ A project uses `nano_prelude` with this `.buckconfig`:
   nano_prelude = bundled
 
 [buildfile]
-  name = TARGETS.fixture
+  name = YAK.fixture
 ```
 
-A project that needs the real prelude uses `prelude = bundled` under `[external_cells]` instead. The binary embeds the prelude from `prelude/`, so a prelude change reaches these tests only after `cargo build --bin=buck2`.
+A project that needs the real prelude uses `prelude = bundled` under `[external_cells]` instead. The binary embeds the prelude from `prelude/`, so a prelude change reaches these tests only after `cargo build --bin=yak`.

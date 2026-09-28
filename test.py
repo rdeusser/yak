@@ -230,7 +230,7 @@ def main() -> None:
     )
     args = parser.parse_args()
 
-    # Change to buck2 directory
+    # Change to yak directory
     buck2_dir = Path(__file__).parent.absolute()
     os.chdir(str(buck2_dir))
 

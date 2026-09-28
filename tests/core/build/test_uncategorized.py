@@ -124,7 +124,7 @@ async def test_projected_artifacts(buck: Buck, target: str) -> None:
 
 @buck_test(data_dir="buckroot")
 async def test_buckroot(buck: Buck) -> None:
-    # Test that .buckroot files work
+    # Test that .yakroot files work
     await buck.build(":inner", rel_cwd=Path("rooted/cell"))
 
 
@@ -297,7 +297,7 @@ async def test_keep_going(buck: Buck) -> None:
 
 @buck_test(data_dir="cleanup")
 async def test_cleanup(buck: Buck) -> None:
-    # Checks that buck2 cleans up outputs whose parent directories became files.
+    # Checks that yak cleans up outputs whose parent directories became files.
     target_pattern = "//:cleanup"
     result = await buck.build(target_pattern)
     output = result.get_build_report().output_for_target(target_pattern)

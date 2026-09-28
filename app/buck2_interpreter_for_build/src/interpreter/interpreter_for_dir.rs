@@ -148,7 +148,7 @@ pub(crate) struct InterpreterForDir {
     /// When true, rule function creates a node with no attributes.
     /// (Which won't work correctly, but useful for profiling of starlark).
     ignore_attrs_for_profiling: bool,
-    /// Implicit imports. These are only used for build files (e.g. `BUCK`),
+    /// Implicit imports. These are only used for build files (e.g. `YAK`),
     /// not for `bzl` or other files, because we only have implicit imports for build files.
     implicit_import_paths: Arc<ImplicitImportPaths>,
     /// Enable relative imports for the current dir

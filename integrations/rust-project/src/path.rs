@@ -29,20 +29,20 @@ pub(crate) fn safe_canonicalize(path: &Path) -> PathBuf {
 pub(crate) fn canonicalize_to_vcs_path(path: &Path, project_root: &Path) -> PathBuf {
     let canonical_path = safe_canonicalize(path);
 
-    // Buck builds Rust code by creating symlinks in buck-out/ to the
+    // Buck builds Rust code by creating symlinks in yak-out/ to the
     // files in VCS (e.g. hg, git). This is what rustc sees, but we
-    // don't want rust-analyzer to see the files in buck-out. We want
+    // don't want rust-analyzer to see the files in yak-out. We want
     // rust-analyzer to see the files in their original location, so
     // go-to-def takes the user to `my-project/src/foo.rs` not
-    // `buck-out/abc123/my-project/foo.rs`.
+    // `yak-out/abc123/my-project/foo.rs`.
     //
     // For generated files, there is no file in VCS. The symlink in
-    // buck-out just points to the build output that generated the
+    // yak-out just points to the build output that generated the
     // file. The build output directory may not be a valid crate
     // directory.
     //
     // ```text
-    // $ ls -l ~/project/buck-out/.rust-analyzer/gen/abc123/my_project/__foo_type_defs-rust__/__srcs/
+    // $ ls -l ~/project/yak-out/.rust-analyzer/gen/abc123/my_project/__foo_type_defs-rust__/__srcs/
     // consts.rs -> ../../__foo_type_defs-rust-foo_type_defs.thrift__/out/gen-rust/consts.rs
     // docs.md -> ../../__foo_type_defs-rust-crate__/out/types.md
     // lib.rs -> ../../__foo_type_defs-rust-foo_type_defs.thrift__/out/gen-rust/types.rs
@@ -51,12 +51,12 @@ pub(crate) fn canonicalize_to_vcs_path(path: &Path, project_root: &Path) -> Path
     //
     // In this example, expanding the symlink to the root module
     // (lib.rs) would mean that we'd use
-    // ~/project/buck-out/.rust-analyzer/gen/abc123/my_project/__foo_type_defs-rust-foo_type_defs.thrift__/out/gen-rust/
+    // ~/project/yak-out/.rust-analyzer/gen/abc123/my_project/__foo_type_defs-rust-foo_type_defs.thrift__/out/gen-rust/
     // as the crate root, which does not contain a lib.rs file.
     if let Ok(rel) = canonical_path.strip_prefix(project_root) {
         // The file was generated, use the original path, don't expand
         // symlinks.
-        if rel.starts_with("buck-out") {
+        if rel.starts_with("yak-out") {
             return path.to_owned();
         }
     }

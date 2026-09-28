@@ -71,7 +71,7 @@ fn type_name_to_path(type_name: &str) -> String {
     let path = if let Some(path) = path.strip_prefix("allocative::") {
         path
     } else {
-        // In buck2 test crate has suffix `_unittest`.
+        // In yak test crate has suffix `_unittest`.
         path.strip_prefix("allocative_unittest::").unwrap()
     };
     path.replace("::tests::", "_").replace("::", "/")

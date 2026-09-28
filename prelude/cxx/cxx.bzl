@@ -389,17 +389,17 @@ def cxx_binary_impl(ctx: AnalysisContext) -> list[Provider]:
     )
 
     # When an executable is the output of a build, also materialize all the
-    # unpacked external debuginfo that goes with it. This makes `buck2 build
-    # :main` equivalent to `buck2 build :main :main[debuginfo]`.
+    # unpacked external debuginfo that goes with it. This makes `yak build
+    # :main` equivalent to `yak build :main :main[debuginfo]`.
     #
     # This is wasted work if we are building an executable together with its dwp
-    # subtarget (`buck2 build :main :main[dwp]`) in which case a large number of
+    # subtarget (`yak build :main :main[dwp]`) in which case a large number of
     # unpacked debuginfo files can end up being materialized redundantly. LLDB
     # will ignore them and obtain debuginfo via the single packed debuginfo file
     # instead.
     #
     # But materializing unpacked debuginfo is usually the right tradeoff
-    # because it means the output of `buck2 build :main` is always immediately
+    # because it means the output of `yak build :main` is always immediately
     # usable in a debugger. Toolchains whose debugging workflow materializes
     # debuginfo on demand instead (via the `[debuginfo]` or `[dwp]`
     # sub-targets) can opt out with `materialize_external_debug_info = False`.

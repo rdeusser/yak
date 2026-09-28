@@ -15,11 +15,11 @@ from e2e_util.buck_workspace import buck_test
 @buck_test()
 async def test_package_file_alt_name(buck: Buck) -> None:
     output = await buck.build("//:")
-    assert "AAA from BUCK_TREE" in output.stderr
+    assert "AAA from YAK_TREE" in output.stderr
     assert "AAA from PACKAGE" not in output.stderr
 
-    os.unlink(buck.cwd / "BUCK_TREE")
+    os.unlink(buck.cwd / "YAK_TREE")
 
     output = await buck.build("//:")
-    assert "AAA from BUCK_TREE" not in output.stderr
+    assert "AAA from YAK_TREE" not in output.stderr
     assert "AAA from PACKAGE" in output.stderr

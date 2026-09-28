@@ -10,7 +10,7 @@ edit the files directly in the repo and see those edits reflected in your build.
 Note that this creates a point-in-time snapshot. The files in the repo will not be updated if you eg
 change the git commit of the cell in the future.
 
-Usage: buck2 expand-external-cell [OPTIONS] [CELLS]...
+Usage: yak expand-external-cell [OPTIONS] [CELLS]...
 
 Arguments:
   [CELLS]...
@@ -25,9 +25,8 @@ Options:
 
 Universal Options:
       --isolation-dir <ISOLATION_DIR>
-          The name of the directory that Buck2 creates within buck-out for writing outputs and
-          daemon information. If one is not provided, Buck2 creates a directory with the default
-          name.
+          The name of the directory that Buck2 creates within yak-out for writing outputs and daemon
+          information. If one is not provided, Buck2 creates a directory with the default name.
 
           Instances of Buck2 share a daemon if and only if their isolation directory is identical.
           The isolation directory also influences the output paths provided by Buck2, and as a

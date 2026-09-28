@@ -30,7 +30,7 @@ def use_second_layout(buck: Buck, name: str) -> None:
     replace_in_file(
         f'variant = "{name}_1"',
         f'variant = "{name}_2"',
-        buck.cwd / "TARGETS.fixture",
+        buck.cwd / "YAK.fixture",
     )
 
 

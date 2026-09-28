@@ -76,7 +76,7 @@ across all tests pointing to the same configured target label containing
 `LocalResourceInfo` provider (normally that means pool is shared for tests
 requiring same resource type). A resource is acquired (with potential queuing)
 from that pool prior single test is executed and is returned back to the pool
-when test finished execution. After `buck2 test` command is finished, cleanup is
+when test finished execution. After `yak test` command is finished, cleanup is
 performed when SIGTERM is sent to each process holding a pool of resources.
 
 ## Example Usage

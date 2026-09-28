@@ -28,7 +28,7 @@ pub(crate) enum OverrideSource {
 /// Classifies a setting's source for policy validation.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(super) enum SettingSource {
-    /// Repo-root `.bucksettings.toml`
+    /// Repo-root `.yaksettings.toml`
     Base,
     Override(OverrideSource),
 }

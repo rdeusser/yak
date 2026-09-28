@@ -18,7 +18,7 @@ How the daemon is managed around each sample decides which metric answers which 
 
 | Question                                 | Daemon lifecycle                          | Metric                    |
 |------------------------------------------|-------------------------------------------|---------------------------|
-| "How long does buck2 take?"              | any (`--no-buckd` has the least variance) | Wall time                 |
+| "How long does yak take?"              | any (`--no-buckd` has the least variance) | Wall time                 |
 | "How much memory at peak?"               | a fresh daemon for each sample            | Daemon `VmHWM` (peak RSS) |
 | "Peak of a single `--no-buckd` process?" | `--no-buckd`                              | Max RSS of the process    |
 | "How much does the daemon retain?"       | a fresh daemon for each sample            | jemalloc `allocated`      |
@@ -29,7 +29,7 @@ How the daemon is managed around each sample decides which metric answers which 
   ([basics.md](basics.md#the-process-model)), so read the daemon's numbers.
 - With a reused daemon, `VmHWM` is the peak since the daemon started, not per sample.
 - [`scripts/measure.sh`](scripts/measure.sh) takes one sample with a fresh daemon and records the
-  daemon's `VmHWM`, `buck2 debug allocator-stats`, and a heap profile.
+  daemon's `VmHWM`, `yak debug allocator-stats`, and a heap profile.
 
 ## Per-iteration variance
 

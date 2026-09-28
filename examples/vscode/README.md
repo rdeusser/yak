@@ -7,5 +7,5 @@ command.
 
 ## Setup
 
-Run `buck2 init --git`. Open this folder in Visual Studio Code and install the
+Run `yak init --git`. Open this folder in Visual Studio Code and install the
 recommended extensions.

@@ -209,7 +209,7 @@ impl TargetNodeData {
                 // raises on its own are two `internal_error!` invariant checks: a tuple whose
                 // arity disagrees with its type (the coercer builds tuples by zipping against
                 // that type and rejects longer ones, so it cannot construct a mismatched one),
-                // and a missing package (we pass `Some`). Either would be a buck2 bug, and
+                // and a missing package (we pass `Some`). Either would be a yak bug, and
                 // panicking is the only option here because the callers cannot surface an
                 // error. `OnceLock` does not poison, so the cell stays empty and a later
                 // access retries.
@@ -221,7 +221,7 @@ impl TargetNodeData {
     }
 
     /// Cap inherited from `enforce_visibility_intersection()`. `Public` = no cap.
-    /// Stored on `Package` (per build file), so all targets in the same BUCK
+    /// Stored on `Package` (per build file), so all targets in the same YAK
     /// file share the same cap allocation.
     pub fn visibility_cap(&self) -> &VisibilityPatternList {
         &self.package.visibility_cap
@@ -803,7 +803,7 @@ pub mod testing {
 
             let buildfile_path = Arc::new(BuildFilePath::new(
                 label.pkg().dupe(),
-                FileNameBuf::unchecked_new("BUCK"),
+                FileNameBuf::unchecked_new("YAK"),
             ));
             TargetNode::new(
                 Arc::new(Rule {

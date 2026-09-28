@@ -1,0 +1,9 @@
+[buildfile]
+name=YAK.fixture
+
+[repositories]
+root = .
+prelude = .
+
+[buck2]
+materializations = deferred

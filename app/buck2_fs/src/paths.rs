@@ -9,7 +9,7 @@
  */
 
 //!
-//! The paths module for buck2.
+//! The paths module for yak.
 //!
 //! Introduces 'ForwardRelativePath', 'ForwardRelativePathBuf', 'AbsPath', and
 //! 'AbsPathBuf', which are equivalents of 'Path' and 'PathBuf'.

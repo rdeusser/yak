@@ -2,7 +2,7 @@
 
 Outputs high level statistics about the build
 
-Usage: buck2 log summary [OPTIONS] [PATH]
+Usage: yak log summary [OPTIONS] [PATH]
 
 Arguments:
   [PATH]
@@ -26,9 +26,8 @@ Options:
 
 Universal Options:
       --isolation-dir <ISOLATION_DIR>
-          The name of the directory that Buck2 creates within buck-out for writing outputs and
-          daemon information. If one is not provided, Buck2 creates a directory with the default
-          name.
+          The name of the directory that Buck2 creates within yak-out for writing outputs and daemon
+          information. If one is not provided, Buck2 creates a directory with the default name.
 
           Instances of Buck2 share a daemon if and only if their isolation directory is identical.
           The isolation directory also influences the output paths provided by Buck2, and as a

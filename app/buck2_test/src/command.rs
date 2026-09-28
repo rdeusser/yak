@@ -1869,18 +1869,18 @@ fn post_process_test_executor(s: &str) -> buck2_error::Result<PathBuf> {
                 std::env::current_exe().buck_error_context("Cannot get Buck2 executable")?,
             )?;
             // On Linux, /proc/self/exe appends " (deleted)" to the path when the
-            // binary has been removed from disk (e.g. after a buck2 upgrade).
+            // binary has been removed from disk (e.g. after a yak upgrade).
             if exe.as_path().to_string_lossy().ends_with(" (deleted)") {
                 return Err(buck2_error::buck2_error!(
                     ErrorTag::BuckdExeDeleted,
-                    "The buck2 daemon's binary has been deleted from disk. \
-                     Run `buck2 kill` to restart the daemon with the current binary."
+                    "The yak daemon's binary has been deleted from disk. \
+                     Run `yak kill` to restart the daemon with the current binary."
                 ));
             }
             let exe = fs_util::canonicalize(&exe)
                 .categorize_tagged(ErrorTag::BuckdExeDeleted)
                 .buck_error_context(
-                    "Failed to canonicalize path to Buck2 executable. Try running `buck2 kill`.",
+                    "Failed to canonicalize path to Buck2 executable. Try running `yak kill`.",
                 )?;
 
             let exe = exe.as_abs_path();

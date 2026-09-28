@@ -10,9 +10,9 @@
 
 //! Handles command concurrency.
 //!
-//! `buck2` supports limited concurrency for commands.
+//! `yak` supports limited concurrency for commands.
 //! If there are no buckconfig changes, nor file changes, then commands can be allowed to execute
-//! concurrently. Otherwise, `buck2` will block waiting for other commands to finish.
+//! concurrently. Otherwise, `yak` will block waiting for other commands to finish.
 
 use std::collections::VecDeque;
 use std::fmt;
@@ -780,7 +780,7 @@ impl ConcurrencyHandler {
                                                 Self::BLOCKED_COMMAND_WARNING_INTERVAL;
                                             events.console_warning(format!(
                                                 "This command has been waiting for {} for another command to finish: [{}] (trace ID: {}). \
-                                                 If that command is not making progress, restarting the buck2 daemon with `buck2 kill` will unblock both",
+                                                 If that command is not making progress, restarting the yak daemon with `yak kill` will unblock both",
                                                 format_elapsed(waited),
                                                 display_command,
                                                 trace_id,
@@ -921,7 +921,7 @@ impl ConcurrencyHandler {
 
 fn format_command(argv: &[String]) -> String {
     let mut iter = argv.iter();
-    // Skip the executable path so the displayed command consistently starts with `buck2`.
+    // Skip the executable path so the displayed command consistently starts with `yak`.
     iter.next();
 
     truncate(&format!("buck2 {}", iter.join(" ")), 500)
@@ -1526,7 +1526,7 @@ mod tests {
         fn command_with(preempt: Option<oneshot::Sender<()>>) -> CommandData {
             CommandData {
                 trace_id: TraceId::new(),
-                display_command: "buck2".to_owned(),
+                display_command: "yak".to_owned(),
                 preemption_setting: PreemptibleWhen::Never,
                 preempt,
             }
@@ -1757,7 +1757,7 @@ mod tests {
         fn a_command() -> CommandData {
             CommandData {
                 trace_id: TraceId::new(),
-                display_command: "buck2".to_owned(),
+                display_command: "yak".to_owned(),
                 preemption_setting: PreemptibleWhen::Never,
                 preempt: None,
             }
@@ -1819,7 +1819,7 @@ mod tests {
             let (tx, _rx) = oneshot::channel();
             CommandData {
                 trace_id: TraceId::new(),
-                display_command: "buck2".to_owned(),
+                display_command: "yak".to_owned(),
                 preemption_setting: setting,
                 preempt: Some(tx),
             }

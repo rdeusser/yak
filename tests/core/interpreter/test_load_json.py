@@ -14,7 +14,7 @@ from e2e_util.buck_workspace import buck_test
 
 
 def extract_test_output(stderr: str) -> dict[str, Any]:
-    """Extract the DATA_LOAD_TEST_OUTPUT dict from buck2 stderr."""
+    """Extract the DATA_LOAD_TEST_OUTPUT dict from yak stderr."""
     marker = "DATA_LOAD_TEST_OUTPUT: "
     for line in stderr.splitlines():
         idx = line.find(marker)

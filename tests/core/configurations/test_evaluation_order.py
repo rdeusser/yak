@@ -39,7 +39,7 @@ async def test_evaluation_order(buck: Buck) -> None:
         if t == "default_target_platform_no_error_if_global_override":
             extra_flags = ["--target-platforms", "root//:p-cat"]
         await buck.ctargets(":" + t, *extra_flags)
-    # buck2 fails a target whose dependency is incompatible
+    # yak fails a target whose dependency is incompatible
     # (`dep_only_incompatible_version_two` is a hard error). It checks that
     # compatibility before it resolves the select in the other dependency, so
     # the error names the incompatibility.

@@ -444,7 +444,7 @@ fn uquery_methods(builder: &mut MethodsBuilder) {
     /// Sample usage:
     /// ```python
     /// def _owner_impl(ctx):
-    ///     owner = ctx.uquery().owner("bin/TARGETS.fixture")
+    ///     owner = ctx.uquery().owner("bin/YAK.fixture")
     ///     ctx.output.print(owner)
     /// ```
     fn owner<'v>(
@@ -473,7 +473,7 @@ fn uquery_methods(builder: &mut MethodsBuilder) {
     /// Usage:
     /// ```python
     /// def _targets_in_buildfile_impl(ctx):
-    ///     targets = ctx.uquery().targets_in_buildfile("bin/TARGETS.fixture")
+    ///     targets = ctx.uquery().targets_in_buildfile("bin/YAK.fixture")
     ///     ctx.output.print(targets)
     /// ```
     ///
@@ -534,7 +534,7 @@ fn uquery_methods(builder: &mut MethodsBuilder) {
     /// Sample usage:
     /// ```python
     /// def _impl_rbuildfiles(ctx):
-    ///     result = ctx.uquery().rbuildfiles("bin/TARGETS", "bin/defs.bzl")
+    ///     result = ctx.uquery().rbuildfiles("bin/YAK", "bin/defs.bzl")
     ///     ctx.output.print(result)
     /// ```
     fn rbuildfiles<'v>(

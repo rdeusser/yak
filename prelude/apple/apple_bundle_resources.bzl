@@ -491,9 +491,9 @@ def _run_ibtool(
     ibtool_command.append(cmd_args(raw_file, format = '"$EXEC_ROOT"/{}'))
 
     # Sandboxing and fs isolation on RE machines results in Xcode tools failing
-    # when those are working in freshly created directories in buck-out.
+    # when those are working in freshly created directories in yak-out.
     # As a workaround create a directory in tmp, use it for Xcode tools, then
-    # copy the result to buck-out.
+    # copy the result to yak-out.
     script_lines = [
         cmd_args("set -euo pipefail"),
         cmd_args('EXEC_ROOT="$PWD"'),

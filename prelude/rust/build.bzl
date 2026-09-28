@@ -943,7 +943,7 @@ def rust_compile(
 # Third element of returned tuple is a mapping from crate names back to target
 # label, needed for applying autofixes for rustc's unused_crate_dependencies
 # lint by tracing Rust crate names in the compiler diagnostic back to which
-# dependency entry in the BUCK file needs to be removed.
+# dependency entry in the YAK file needs to be removed.
 #
 # The `compile_ctx` may be omitted if there are no dependencies with dynamic
 # crate names.
@@ -1851,7 +1851,7 @@ def _rustc_invoke(
     if incremental_enabled:
         # Incremental compilation should not publish any action output to a shared cache:
         # 1. the incremental compilation state is not useful for any other user. unfortunately,
-        #    there is no mechanism in buck2 that allows for uploading part of an action output
+        #    there is no mechanism in yak that allows for uploading part of an action output
         #    and not another.
         # 2. even if there were, the rlib is not byte-for-byte reproducible
         #    under `-Cincremental`, even if the source binary is unchanged, because of

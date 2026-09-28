@@ -7,7 +7,7 @@ Error evaluating expression:
 
 
 Caused by:
-    0: From load at bzl_default/TARGETS.fixture:1
+    0: From load at bzl_default/YAK.fixture:1
     1: Error evaluating module: `root//bzl_default/defs.bzl`
     2: error: Error coercing attribute default
          --> bzl_default/defs.bzl:12:16

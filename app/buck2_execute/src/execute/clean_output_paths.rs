@@ -106,7 +106,7 @@ pub fn cleanup_path(fs: &ProjectRoot, path: &ProjectRelativePath) -> buck2_error
                 //
                 // On non-Unix we don't have this optimization. Recursing all the way up
                 // until we find the first dir (or file to delete) is fine. There will
-                // eventually be *a* directory (at buck-out, then another one at the empty
+                // eventually be *a* directory (at yak-out, then another one at the empty
                 // directory, which is our cwd, and should exist by now).
                 tracing::trace!(path = %path, "skip (ENOENT)");
                 return Ok(());

@@ -718,7 +718,7 @@ pub enum Operation {
     EnqueueStep(Var, Vec<ComputationStep>),
     /// Mark the *computed* `EvalVar(var)` dirty at a new ctx via
     /// `changed(vec![EvalVar { key: var, .. }])`. This is the same shape as
-    /// buck2's file-watcher-driven invalidation: force the next touch of a
+    /// yak's file-watcher-driven invalidation: force the next touch of a
     /// computed key to re-run its `compute`, letting dice's downstream cutoff
     /// determine whether dependents actually change. Equations are unchanged;
     /// expected values are unchanged. Dice rejects `changed()` on an

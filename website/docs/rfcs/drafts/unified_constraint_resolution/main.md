@@ -7,7 +7,7 @@ Sometimes the value of one constraint should depend on the values of others. Thi
 Let's consider the NCCL (NVIDIA Collective Communication Library) version constraint defined below as an example. Suppose a repository supports multiple versions of NCCL, but only the latest version has good sanitizer support, so any sanitizer build should always use the latest NCCL version regardless of what NCCL version was originally set.
 
 ```python
-# cfg//nccl/BUCK file
+# cfg//nccl/YAK file
 
 constraint(
   name = "version",
@@ -15,7 +15,7 @@ constraint(
   default = "stable",
 )
 
-# cfg//BUCK file
+# cfg//YAK file
 
 constraint(
   name = "sanitizer",
@@ -46,7 +46,7 @@ There are three such attrs:
 To solve the example NCCL problem, we can define an `invariant` field on the NCCL version constraint as follows.
 
 ```python
-# cfg//nccl/BUCK file
+# cfg//nccl/YAK file
 
 constraint(
   name = "version",
@@ -72,7 +72,7 @@ A constraint's invariant may depend on resolving other constraints' invariants. 
 The above example can be simplified with the use of `DEFAULT` in `select`.
 
 ```python
-# cfg//nccl/BUCK file
+# cfg//nccl/YAK file
 
 constraint(
   name = "version",
@@ -90,7 +90,7 @@ constraint(
 Suppose we want to make latest on sanitizer builds only the default behavior, as opposed to required behavior. This is supported by specifying the same select on the `default` field instead of the `invariant` field.
 
 ```python
-# cfg//nccl/BUCK file
+# cfg//nccl/YAK file
 
 constraint(
   name = "version",
@@ -111,7 +111,7 @@ Note that we intend for a configuration that uses the default value to be identi
 Suppose NCCL only works on linux. The cleanest way to encode that is via the `compatibility` attr.
 
 ```python
-# cfg//nccl/BUCK file
+# cfg//nccl/YAK file
 
 constraint(
   name = "version",
@@ -129,7 +129,7 @@ This lets users concentrate incompatibilities between constraints at a single lo
 The previously mentioned policy of requiring latest on sanitizer can also be encoded in compatibility.
 
 ```python
-# cfg//nccl/BUCK file
+# cfg//nccl/YAK file
 
 constraint(
   name = "version",
@@ -168,7 +168,7 @@ Suppose we want to add multiple "policies" for how sanitizer enablement affects 
 One way to encode this policy is to add an additional constraint that is used in the invariant of the NCCL version.
 
 ```python
-# cfg//nccl/BUCK file
+# cfg//nccl/YAK file
 
 constraint(
   name = "sanitizer_policy",
@@ -196,7 +196,7 @@ Unfortunately, the above definition leaks the definition of sanitizer policy to 
 This is where a sub-constraint is useful. A sub-constraint adds an extra input dimension used to resolve a constraint. It is a convenience feature to quickly declare that extra dimension, and it also naturally limits the visibility of the sub-constraint to the parent constraint.
 
 ```python
-# cfg//nccl/BUCK file
+# cfg//nccl/YAK file
 
 constraint(
   name = "version",
@@ -234,7 +234,7 @@ One UX problem with conditional constraint is that it requires all logic to live
 To avoid this, we will introduce a `constraint_impl` rule that lets you factor a chunk of conditional logic into its own target and reference it from `invariant`. For example, cpp optimization level could look like:
 
 ```python
-# cfg//cpp/BUCK
+# cfg//cpp/YAK
 
 constraint(
   name = "opt_level",
@@ -250,7 +250,7 @@ constraint(
   }),
 )
 
-# root//project_foo/cfg/BUCK
+# root//project_foo/cfg/YAK
 
 constraint_impl(
   name = "opt_level",

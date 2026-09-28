@@ -110,7 +110,7 @@ def _target_sdk_version():
             default = None,
             doc = """
     The minimum OS version that the library target should support, overriding the minimum set in
-     `.buckconfig`. When set, Buck will automatically add flags to both Objective-C and
+     `.yakconfig`. When set, Buck will automatically add flags to both Objective-C and
      Swift compilation that will allow the use of the new APIs without guarding code inside availability
      checks.
 """,
@@ -257,7 +257,7 @@ def _apple_installer_arg():
             attrs.exec_dep(providers = [RunInfo]),
             default = None,
             doc = """
-    The tool that `buck2 install` runs to install an `apple_bundle()` built with this
+    The tool that `yak install` runs to install an `apple_bundle()` built with this
      toolchain. Without it, bundles cannot be installed.
 """,
         ),

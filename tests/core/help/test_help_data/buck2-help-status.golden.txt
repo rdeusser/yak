@@ -2,14 +2,14 @@
 
 Buckd status
 
-Usage: buck2 status [OPTIONS]
+Usage: yak status [OPTIONS]
 
 Options:
       --snapshot
           Whether to include a state snapshot in the output.
 
       --all
-          Enable printing status for all running buckd
+          Enable printing status for all running yakd
 
       --include-tokio-runtime-metrics
           Enable printing metrics from the Tokio runtime
@@ -19,9 +19,8 @@ Options:
 
 Universal Options:
       --isolation-dir <ISOLATION_DIR>
-          The name of the directory that Buck2 creates within buck-out for writing outputs and
-          daemon information. If one is not provided, Buck2 creates a directory with the default
-          name.
+          The name of the directory that Buck2 creates within yak-out for writing outputs and daemon
+          information. If one is not provided, Buck2 creates a directory with the default name.
 
           Instances of Buck2 share a daemon if and only if their isolation directory is identical.
           The isolation directory also influences the output paths provided by Buck2, and as a

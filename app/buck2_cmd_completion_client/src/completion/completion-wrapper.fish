@@ -11,7 +11,7 @@
 # %INSERT_OPTION_COMPLETION%
 # clap_complete generated content ENDS
 
-function __buck2_subcommand
+function __yak_subcommand
     for w in $argv[2..]
         switch $w
         case --
@@ -28,27 +28,27 @@ function __buck2_subcommand
     return 1
 end
 
-function __buck2_takes_target
+function __yak_takes_target
     set -l cmd (commandline --current-process --tokenize --cut-at-cursor)
     if contains -- -- $cmd[..-1]
         return 1
     end
-    set -l subcommand (__buck2_subcommand $cmd)
+    set -l subcommand (__yak_subcommand $cmd)
     test -n $subcommand || return
 
     contains $subcommand build ctargets install run targets test utargets
     return $status
 end
 
-function __buck2_add_target_completions
+function __yak_add_target_completions
     set -l cur (commandline --current-token)
 
     string match --quiet -- '-*' $cur && return
 
-    buck2 complete --target="$cur" 2>/dev/null
+    yak complete --target="$cur" 2>/dev/null
 end
 
-function __buck2_needs_flagfile
+function __yak_needs_flagfile
     set -l cur (commandline --current-token)
     string match --quiet -- '@*' $cur && return 0
 
@@ -59,11 +59,10 @@ function __buck2_needs_flagfile
     return 1
 end
 
-function __buck2_add_flagfile_completions
+function __yak_add_flagfile_completions
     set -l cur (commandline --current-token)
-    buck2 complete --flagfile="$cur" 2>/dev/null
+    yak complete --flagfile="$cur" 2>/dev/null
 end
 
-complete -c buck2 -n '__buck2_needs_flagfile' -f -a '(__buck2_add_flagfile_completions)'
-complete -c buck2 -n '__buck2_takes_target' -f -a '(__buck2_add_target_completions)'
-complete -c buck -w buck2
+complete -c yak -n '__yak_needs_flagfile' -f -a '(__yak_add_flagfile_completions)'
+complete -c yak -n '__yak_takes_target' -f -a '(__yak_add_target_completions)'

@@ -12,7 +12,7 @@ use buck2_client_ctx::client_ctx::ClientCommandContext;
 use buck2_client_ctx::common::BuckArgMatches;
 use buck2_client_ctx::exit_result::ExitResult;
 
-/// Print buck2 daemon directory (`~/.buckd/xxx`).
+/// Print yak daemon directory (`~/.yak/yakd/xxx`).
 #[derive(Debug, clap::Parser)]
 pub struct DaemonDirCommand {}
 

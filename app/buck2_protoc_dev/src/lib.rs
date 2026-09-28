@@ -52,7 +52,7 @@ unsafe fn set_var(
 unsafe fn maybe_set_protoc() {
     #[cfg(not(buck_build))]
     {
-        // `cargo build` of `buck2` does not require external `protoc` dependency
+        // `cargo build` of `yak` does not require external `protoc` dependency
         // because it uses prebuilt bundled `protoc` binary from `protoc-bin-vendored` crate.
         // However, prebuilt `protoc` binaries do not work in NixOS builds, see
         // https://github.com/facebook/buck2/issues/65

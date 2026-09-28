@@ -14,7 +14,7 @@ This is the first solution most people jump to, since sanitizer is usually enabl
 Conditional modifiers are in theory the modifier feature designed to solve this problem. The feature itself is straightforward. You define a conditional modifier as follows:
 
 ```python
-# cfg//nccl/BUCK file
+# cfg//nccl/YAK file
 
 conditional_modifier(
   name = "latest_when_sanitized",
@@ -119,7 +119,7 @@ Unfortunately, this approach hits the same fundamental problem as conditional mo
 None of the above solutions can fully solve the nccl/sanitizer problem. There is one existing solution that does. Suppose an alias is used so that users always depend on the correct nccl library version.
 
 ```python
-# third-party/nccl/BUCK
+# third-party/nccl/YAK
 
 alias(
   name = "nccl",
@@ -133,7 +133,7 @@ alias(
 The alias can be updated to select on sanitizer first and use latest when sanitizer is enabled.
 
 ```python
-# third-party/nccl/BUCK
+# third-party/nccl/YAK
 
 alias(
   name = "nccl",

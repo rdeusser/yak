@@ -90,4 +90,4 @@ impl<'v> Heap<'v> {
 
 // The fixtures deliberately model one Starlark-visible type with multiple
 // frozen Rust representations sharing a single canonical type, the shape
-// runtime-selected freezing exists for (see buck2's `cmd_args`).
+// runtime-selected freezing exists for (see yak's `cmd_args`).

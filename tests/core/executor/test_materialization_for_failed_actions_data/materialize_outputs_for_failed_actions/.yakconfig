@@ -1,0 +1,8 @@
+[buildfile]
+name=YAK.fixture
+
+[project]
+ignore=ignored
+
+[repositories]
+root = .

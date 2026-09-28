@@ -14,7 +14,7 @@ already have a `Buildbarn` deployment you can use that instead.
 
 `Buildbarn` runs all actions in a completely bare environment by default, and
 relies on the build client to specify the `$PATH` and other environment
-variables in the REAPI action message. As `buck2` does not send a default
+variables in the REAPI action message. As `yak` does not send a default
 `$PATH` build will fail with errors about missing executables.
 
 Add the environment variables to the worker config you want - normally either
@@ -75,7 +75,7 @@ Instance name                                    Platform properties            
 More information is available in the
 [repo](https://github.com/buildbarn/bb-deployments).
 
-## Relevant configs in .buckconfig
+## Relevant configs in .yakconfig
 
 Configure the `Buildbarn` endpoint as follows:
 

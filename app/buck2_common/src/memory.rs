@@ -8,7 +8,7 @@
  * above-listed licenses.
  */
 
-//! Utilities for interacting with the jemalloc heap used by buck2.
+//! Utilities for interacting with the jemalloc heap used by yak.
 //!
 //! In order to make use of jemalloc's heap dump or profiling utilities, you must set the MALLOC_CONF environment
 //! variable to a suitable value prior to launching the daemon, such as:

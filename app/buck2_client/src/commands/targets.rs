@@ -296,13 +296,13 @@ impl StreamingCommand for TargetsCommand {
         let target_hash_use_fast_hash = match self.target_hash_function {
             TargetHashFunction::Sha1 | TargetHashFunction::Sha256 => {
                 buck2_client_ctx::eprintln!(
-                    "buck2 only supports \"fast\" and \"strong\" target hash functions. Using the \"strong\" hash."
+                    "yak only supports \"fast\" and \"strong\" target hash functions. Using the \"strong\" hash."
                 )?;
                 false
             }
             TargetHashFunction::Murmur_Hash3 => {
                 buck2_client_ctx::eprintln!(
-                    "buck2 only supports \"fast\" and \"strong\" target hash functions. Using the \"fast\" hash."
+                    "yak only supports \"fast\" and \"strong\" target hash functions. Using the \"fast\" hash."
                 )?;
                 true
             }

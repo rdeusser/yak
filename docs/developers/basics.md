@@ -9,8 +9,8 @@ This file is optimized for both humans and LLMs and must be kept short. Detailed
 The commands in this file run from the repository root, except where a block changes directory. `rust-toolchain.toml` pins a nightly toolchain, which `rustup` installs on first use.
 
 ```bash
-# Build the debug binary at target/debug/buck2
-cargo build --bin=buck2
+# Build the debug binary at target/debug/yak
+cargo build --bin=yak
 ```
 
 Cargo builds compile the protobuf definitions with the `protoc` binary from the `protoc-bin-vendored` crate. Set `BUCK2_BUILD_PROTOC` and `BUCK2_BUILD_PROTOC_INCLUDE` to use another `protoc`, which NixOS requires. `flake.nix` sets both in its development shell.
@@ -19,21 +19,21 @@ To try a change, run the built binary in a test project such as `examples/no_pre
 
 ```bash
 cd examples/no_prelude
-../../target/debug/buck2 --isolation-dir dev build //rust:main
-../../target/debug/buck2 --isolation-dir dev kill
+../../target/debug/yak --isolation-dir dev build //rust:main
+../../target/debug/yak --isolation-dir dev kill
 ```
 
-The repository can also build itself with Buck2. The Buck build loads the prelude bundled in the `buck2` binary (`[external_cells] prelude = bundled` in `.buckconfig`), so it needs a binary built from this repository. `bootstrap/reindeer` generates the Buck rules for the third-party crates and needs `dotslash` on `PATH` (see `website/docs/about/bootstrapping.md`):
+The repository can also build itself with Buck2. The Buck build loads the prelude bundled in the `yak` binary (`[external_cells] prelude = bundled` in `.yakconfig`), so it needs a binary built from this repository. `bootstrap/reindeer` generates the Buck rules for the third-party crates and needs `dotslash` on `PATH` (see `website/docs/about/bootstrapping.md`):
 
 ```bash
-cargo build --bin=buck2
+cargo build --bin=yak
 ./bootstrap/reindeer --third-party-dir third-party/rust buckify
-target/debug/buck2 build //:buck2
+target/debug/yak build //:yak
 ```
 
-`reindeer` writes `third-party/rust/BUCK` and `third-party/rust/Cargo.lock`, and Git ignores both. Until `third-party/rust/BUCK` exists, any command that loads the `third-party/rust` package fails with the `reindeer` command to run. The Buck build succeeds on Linux but fails on macOS, as [the tech-debt tracker](../exec-plans/tech-debt-tracker.md) records.
+`reindeer` writes `third-party/rust/YAK` and `third-party/rust/Cargo.lock`, and Git ignores both. Until `third-party/rust/YAK` exists, any command that loads the `third-party/rust` package fails with the `reindeer` command to run. The Buck build succeeds on Linux but fails on macOS, as [the tech-debt tracker](../exec-plans/tech-debt-tracker.md) records.
 
-On Windows, the build uses clang-cl when `-c cxx.windows_compiler_type=clang` is on the command line. The `toolchains` cell has no `.buckconfig` of its own, so the setting has no effect in the repository's `.buckconfig`.
+On Windows, the build uses clang-cl when `-c cxx.windows_compiler_type=clang` is on the command line. The `toolchains` cell has no `.yakconfig` of its own, so the setting has no effect in the repository's `.yakconfig`.
 
 ## Validation
 
@@ -50,7 +50,7 @@ python3 test.py --test-only buck2_core
 cargo fmt --all
 ```
 
-CI (`.github/workflows/build-and-test.yml`) runs `cargo build --bin=buck2` and then `python3 test.py --ci` on Linux, macOS, and Windows. With `--ci`, `test.py` also fails when the run leaves changes in the Git working tree. CI does not check formatting.
+CI (`.github/workflows/build-and-test.yml`) runs `cargo build --bin=yak` and then `python3 test.py --ci` on Linux, macOS, and Windows. With `--ci`, `test.py` also fails when the run leaves changes in the Git working tree. CI does not check formatting.
 
 Clippy's lint levels live in `[workspace.lints]` in `Cargo.toml`, and `clippy.toml` bans panicking datetime and duration APIs. Plain `cargo clippy` applies both, and `test.py` adds `--deny=warnings`. Eight crates copy the whole lint table into their own `Cargo.toml` to add a `check-cfg` entry (`app/buck2`, `app/buck2_daemon`, `allocative/allocative`, `shed/mini_vec`, and `starlark`, `starlark_syntax`, `starlark_map`, and `starlark_lsp` under `starlark-rust/`), so a change to a lint level updates those copies too.
 
@@ -63,7 +63,7 @@ Golden tests compare output with checked-in files whose names contain `.golden`.
 - `ALLOCATIVE_REGENERATE_TESTS=1` for `allocative/`.
 - `BUCK2_UPDATE_GOLDEN=1` for the integration tests under `tests/`. The update accepts whatever the binary prints, so review each golden file diff.
 
-The integration tests under `tests/` run `target/debug/buck2` against small projects with pytest. `tests/README.md` gives the commands, the markers that skip tests that need Remote Execution, cgroups, or helper programs, and the golden file workflow. `tests/core/README.md` gives the guidelines for writing them.
+The integration tests under `tests/` run `target/debug/yak` against small projects with pytest. `tests/README.md` gives the commands, the markers that skip tests that need Remote Execution, cgroups, or helper programs, and the golden file workflow. `tests/core/README.md` gives the guidelines for writing them.
 
 ## Coding conventions
 
@@ -129,16 +129,16 @@ knobs.
 
 `facebook/buck2` builds inside Meta's internal repository, and its code marks what only that build uses (`#[cfg(fbcode_build)]` branches, `@oss-disable` and `@oss-enable` comments, `is_open_source()` checks, and `fbcode//` or `fbsource//` labels). This repository has none of these markers. A change ported from upstream keeps the open-source side of each marker and drops the rest.
 
-Upstream `BUCK` files load macros from Meta's cells and name crates by their path inside Meta's repository. A ported `BUCK` file loads `//build_defs:rust.bzl` or `//build_defs:proto.bzl`, names third-party crates `//third-party/rust:<crate>` in place of `fbsource//third-party/rust:<crate>`, and names crates of this repository `//<path>:<crate>` in place of `//buck2/<path>:<crate>`.
+Upstream `BUCK` files load macros from Meta's cells and name crates by their path inside Meta's repository. A ported build file is named `YAK`, loads `//build_defs:rust.bzl` or `//build_defs:proto.bzl`, names third-party crates `//third-party/rust:<crate>` in place of `fbsource//third-party/rust:<crate>`, and names crates of this repository `//<path>:<crate>` in place of `//buck2/<path>:<crate>`.
 
 ## Rust dependencies
 
-Each crate has a `Cargo.toml` and a `BUCK` file, and a dependency change updates both:
+Each crate has a `Cargo.toml` and a `YAK` file, and a dependency change updates both:
 
 1. Add the version to `[workspace.dependencies]` in the root `Cargo.toml` if it is new, and name it in the crate's `Cargo.toml` with `workspace = true`.
-2. Add the same dependency to the crate's `BUCK` file. Third-party crates are named `//third-party/rust:<crate>`, and crates in this repository are named `//<path>:<crate>` (for example `//app/buck2_core:buck2_core`).
+2. Add the same dependency to the crate's `YAK` file. Third-party crates are named `//third-party/rust:<crate>`, and crates in this repository are named `//<path>:<crate>` (for example `//app/buck2_core:buck2_core`).
 3. For a new third-party crate, also add it to `third-party/rust/Cargo.toml`, which the Buck build reads through `reindeer`. A crate with a build script, or one that reads Cargo environment variables at compile time, also needs `third-party/rust/fixups/<crate>/fixups.toml`. `reindeer buckify` fails when a fixup configures a build script that the resolved crate versions no longer have, so a dependency change that drops or upgrades a crate can require editing or deleting its fixup.
-4. Check the dependency against the crate dependency rules in `ARCHITECTURE.md`. `target/debug/buck2 build //app_dep_graph_rules:test_buck2_dep_graph` fails when a dependency breaks one.
+4. Check the dependency against the crate dependency rules in `ARCHITECTURE.md`. `target/debug/yak build //app_dep_graph_rules:test_buck2_dep_graph` fails when a dependency breaks one.
 
 ## Debugging and performance
 

@@ -35,7 +35,7 @@ The action graph consists of all the declared actions for a build,
 with dependencies when one action consumes the outputs of another
 action.
 
-Run `buck2 docs aquery` or
+Run `yak docs aquery` or
 "#,
         "https://rdeusser.github.io/buck2/docs/users/query/aquery/",
         r#"
@@ -46,11 +46,11 @@ Examples:
 
 Print the action producing a target's default output
 
-`buck2 aquery //java/com/example/app:amazing`
+`yak aquery //java/com/example/app:amazing`
 
 List all the commands for run actions for building a target
 
-`buck2 aquery 'kind(run, deps("//java/com/example/app:amazing+more"))' --output-attribute=cmd`
+`yak aquery 'kind(run, deps("//java/com/example/app:amazing+more"))' --output-attribute=cmd`
 
 Dynamic outputs (`ctx.actions.dynamic_output`):
 
@@ -65,7 +65,7 @@ return incorrect results or otherwise behave unexpectedly.
     name = "aquery",
     about = "Perform queries on the action graph (experimental)",
     long_about = help(),
-    after_help = "Run `buck2 docs aquery` for detailed information about query functions such as allbuildfiles, allpaths, attrfilter, and more.",
+    after_help = "Run `yak docs aquery` for detailed information about query functions such as allbuildfiles, allpaths, attrfilter, and more.",
     after_long_help = "",
     verbatim_doc_comment,
 )]

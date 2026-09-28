@@ -442,7 +442,7 @@ async def test_dep_file_hit_persisted_across_restart(buck: Buck) -> None:
         "-c",
         "test.dummy_config=dummy1",
     ]
-    # First build populates both buck-out and the persisted dep-file cache.
+    # First build populates both yak-out and the persisted dep-file cache.
     await buck.build(*args)
     # Killing the daemon drops the in-memory dep-file cache; the sqlite db and outputs persist.
     await buck.kill()
@@ -1045,7 +1045,7 @@ async def test_re_dep_file_uploads_different_key(buck: Buck) -> None:
     target = "root//:dep_files"
     untagged_file1 = buck.cwd / "untagged.1"
     assert untagged_file1.exists()
-    targets_file = buck.cwd / "TARGETS.fixture"
+    targets_file = buck.cwd / "YAK.fixture"
     assert targets_file.exists()
 
     target = [

@@ -237,7 +237,7 @@ Attribute resolution is handled differently from normal code:
 - The `name` attribute is a reserved attribute. It is an implicit attribute when
   defining a rule for an anon target, but can be optionally set when creating an
   anon target. If present, it must be a syntactically valid target, but could
-  refer to a cell/package that does not exist. If not present, buck2 will
+  refer to a cell/package that does not exist. If not present, yak will
   generate a name for the target automatically.
 
 ### `name` attribute example
@@ -304,7 +304,7 @@ package and both list it, or it gets export_file'd), then that file is compiled
 just once:
 
 ```python
-## BUCK ##############
+## YAK ##############
 @load(":silly.bzl", "silly_binary")
 
 silly_binary(

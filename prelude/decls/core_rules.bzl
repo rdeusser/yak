@@ -600,7 +600,7 @@ export_file = prelude_rule(
                 default = None,
                 doc = """
                 How files are referenced internally in buck.
-                 If set to 'copy', then a full copy will be made into the new location in buck-out.
+                 If set to 'copy', then a full copy will be made into the new location in yak-out.
                  If set to 'reference', the original file will be used by internal build rules in-place.
                  However, this mode does not work across repositories or if the 'out' property is set.
                  For read-only operations, 'reference' can be more performant.
@@ -922,7 +922,7 @@ http_archive = prelude_rule(
         An `http_archive()` rule is used to download and extract archives
         from the Internet to be used as dependencies for other rules. These rules are
         downloaded by running `fetch`, or can be downloaded as part of
-        `build` by setting `.buckconfig`
+        `build` by setting `.yakconfig`
     """,
     examples = """
         Using `http_archive()`, third party packages can be downloaded from
@@ -977,7 +977,7 @@ http_file = prelude_rule(
         dependencies for other rules. This rule only downloads single files, and can
         optionally make them executable (see `http_file()executable`)
         These rules are downloaded by running `fetch`, or can
-        be downloaded as part of `build` by setting `.buckconfig`
+        be downloaded as part of `build` by setting `.yakconfig`
     """,
     examples = """
         Using `http_file()`, third party packages can be downloaded from
@@ -1096,7 +1096,7 @@ remote_file = prelude_rule(
         A `remote_file()` rule is used to download files from the Internet to be used as
         dependencies for other rules. These rules are downloaded by running `fetch`, or can
         be downloaded as part of `build`. See the note there about the
-         `.buckconfig` setting to configure that.
+         `.yakconfig` setting to configure that.
     """,
     examples = """
         Here's an example of a `remote_file()` using an `https` URL.
@@ -1226,28 +1226,28 @@ test_suite = prelude_rule(
         This test\\_suite() sets up two different sets of tests to run, 'all' tests and 'slow' tests. Note that `all_tests` can depend on `slow_tests`, and all three tests are run.
 
         ```
-        # instrumentation_tests/BUCK:
+        # instrumentation_tests/YAK:
         sh_test(
             name = "instrumentation_tests",
             test = "instrumentation_tests.sh",
             visibility = ["PUBLIC"],
         )
 
-        # integration_tests/BUCK:
+        # integration_tests/YAK:
         sh_test(
             name = "integration_tests",
             test = "integration_tests.sh",
             visibility = ["PUBLIC"],
         )
 
-        # unit_tests/BUCK:
+        # unit_tests/YAK:
         sh_test(
             name = "unit_tests",
             test = "unit_tests.sh",
             visibility = ["PUBLIC"],
         )
 
-        # BUCK:
+        # YAK:
         test_suite(
             name = "slow_tests",
             tests = [
@@ -1573,7 +1573,7 @@ zip_file = prelude_rule(
             glob(['dir/**/*']) +
             [
               # Imagine this generates the output
-              # "buck-out/gen/foo/hello.txt". This output will
+              # "yak-out/gen/foo/hello.txt". This output will
               # be found in the zip at "hello.txt"
               '//some/other:target',
 

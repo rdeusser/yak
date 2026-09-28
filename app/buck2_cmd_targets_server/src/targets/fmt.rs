@@ -496,7 +496,7 @@ impl Stats {
         if self.errors == 0 {
             return None;
         }
-        // Simpler error so that we don't print long errors twice (when exiting buck2)
+        // Simpler error so that we don't print long errors twice (when exiting yak)
         let package_str = if self.errors == 1 {
             "package"
         } else {

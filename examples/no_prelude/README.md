@@ -1,10 +1,10 @@
 ## No-prelude example
 
 This example project defines all of its rules and toolchains itself. Its
-`.buckconfig` has no `prelude` cell:
+`.yakconfig` has no `prelude` cell:
 
 ```
-#.buckconfig
+#.yakconfig
 [cells]
 root = .
 toolchains = toolchains
@@ -20,9 +20,9 @@ Install Buck2, cd into a project, and run
 
 ```bash
 # List all targets
-buck2 targets //...
+yak targets //...
 # Build all targets
-buck2 build //...
+yak build //...
 # Run C++ hello_world main
-buck2 run //cpp/hello_world:main
+yak run //cpp/hello_world:main
 ```

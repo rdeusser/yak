@@ -200,7 +200,7 @@ fn cells() -> CellsData {
     let BuckConfigBasedCells { cell_resolver, .. } =
         futures::executor::block_on(BuckConfigBasedCells::testing_parse_with_file_ops(
             &mut TestConfigParserFileOps::new(&[(
-                ".buckconfig",
+                ".yakconfig",
                 indoc!(
                     r#"
                     [cells]
@@ -229,7 +229,7 @@ fn cells() -> CellsData {
 #[test]
 fn test_find_imports() {
     let tester = Tester::with_cells(cells()).unwrap();
-    let path = BuildFilePath::testing_new("cell1//config/foo:BUCK");
+    let path = BuildFilePath::testing_new("cell1//config/foo:YAK");
     let parse_result = tester.parse(
         StarlarkPath::BuildFile(&path),
         indoc!(
@@ -310,7 +310,7 @@ fn test_root_import() {
         )
         .unwrap();
 
-    let build_path = BuildFilePath::testing_new("root//some/package:BUCK");
+    let build_path = BuildFilePath::testing_new("root//some/package:YAK");
     let eval_result = tester
         .eval_build_file(
             &build_path,
@@ -349,7 +349,7 @@ fn prelude_is_included() -> buck2_error::Result<()> {
 
     // The prelude should be included in build files, and in .bzl files that are not in the
     // prelude's package
-    let build_file = BuildFilePath::testing_new("root//prelude:TARGETS.v2");
+    let build_file = BuildFilePath::testing_new("root//prelude:YAK");
     assert!(
         tester
             .eval_build_file_with_loaded_modules(
@@ -407,7 +407,7 @@ fn test_package_import() -> buck2_error::Result<()> {
         ),
     )?;
 
-    let build_path = BuildFilePath::testing_new("root//src/package:BUCK");
+    let build_path = BuildFilePath::testing_new("root//src/package:YAK");
     let eval_result = tester.eval_build_file(
         &build_path,
         indoc!(

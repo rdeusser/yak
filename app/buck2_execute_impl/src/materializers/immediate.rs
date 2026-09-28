@@ -109,11 +109,11 @@ mod path_lock {
     mod tests {
         use super::*;
 
-        /// A buck-out path shaped like the ones the materializer actually writes:
+        /// A yak-out path shaped like the ones the materializer actually writes:
         /// long, sharing a prefix, differing late.
         fn out_path(i: usize) -> ProjectRelativePathBuf {
             ProjectRelativePathBuf::try_from(format!(
-                "buck-out/v2/gen/root/cfg0123456789abcdef/__target_{i}__/argsfile.json"
+                "yak-out/v2/gen/root/cfg0123456789abcdef/__target_{i}__/argsfile.json"
             ))
             .unwrap()
         }

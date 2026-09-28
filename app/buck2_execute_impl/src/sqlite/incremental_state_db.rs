@@ -36,7 +36,7 @@ use crate::sqlite::tables::incremental_state_table::IncrementalStateSqliteTable;
 ///
 /// If you forget to bump this version,
 /// then you can fix forward by bumping the `buck2.sqlite_incremental_state_version`
-/// buckconfig in the project root's .buckconfig.
+/// buckconfig in the project root's .yakconfig.
 pub const INCREMENTAL_DB_SCHEMA_VERSION: u64 = 0;
 
 pub(crate) type IncrementalState = BuckDashMap<String, Arc<IncrementalPathMap>>;
@@ -156,7 +156,7 @@ impl SqliteDb for IncrementalStateSqliteDb {
 impl IncrementalStateSqliteDb {
     /// Given path to the sqlite DB, attempts to read `IncrementalState` from the DB. If we encounter
     /// any failure along the way, such as if the DB path does not exist, the sqlite read fails,
-    /// or the DB has a different set of versions than the versions this buck2 expects, we
+    /// or the DB has a different set of versions than the versions this yak expects, we
     /// throw away the existing DB and initialize a new DB. Returns (1) the connected sqlite DB and
     /// (2) the `IncrementalState` if loading was successful or the load error.
     pub async fn initialize(
@@ -246,7 +246,7 @@ pub(crate) fn testing_incremental_state_sqlite_db(
 ) -> buck2_error::Result<IncrementalDbState> {
     IncrementalStateSqliteDb::initialize_incremental_sqlite_db(
         fs.resolve(ProjectRelativePath::unchecked_new(
-            "buck-out/v2/cache/incremental_state",
+            "yak-out/v2/cache/incremental_state",
         )),
         versions,
         metadata,
@@ -291,7 +291,7 @@ mod tests {
             buck2_fs::paths::forward_rel_path::ForwardRelativePathBuf::unchecked_new(
                 "test_file".to_owned(),
             ),
-            ProjectRelativePathBuf::unchecked_new("buck-out/content_hash/test_file".to_owned()),
+            ProjectRelativePathBuf::unchecked_new("yak-out/content_hash/test_file".to_owned()),
         );
         let incremental_path_map = IncrementalPathMap::new(mapping);
         let metadatas = testing_metadatas();

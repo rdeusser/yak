@@ -28,7 +28,7 @@ async def test_imports_json(buck: Buck) -> None:
         file = x["buck.file"]
         imports = x["buck.imports"]
 
-        if file == "root//TARGETS.fixture":
+        if file == "root//YAK.fixture":
             assert "root//uses_json.bzl" in imports
             found_targets = True
         elif file == "root//uses_json.bzl":
@@ -38,6 +38,6 @@ async def test_imports_json(buck: Buck) -> None:
             assert imports == []
             found_json = True
 
-    assert found_targets, "TARGETS.fixture imports should be reported"
+    assert found_targets, "YAK.fixture imports should be reported"
     assert found_bzl, "uses_json.bzl imports (including data.json) should be reported"
     assert found_json, "data.json should appear as an import with empty sub-imports"

@@ -91,7 +91,7 @@ impl QueryFrontend for QueryFrontendImpl {
                     //   similarly to what we do for `build` command.
                     //   Something like this should work:
                     //   ```
-                    //   buck2 cquery --target-universe android//:binary 'deps("some//:lib (<arm32>)")'
+                    //   yak cquery --target-universe android//:binary 'deps("some//:lib (<arm32>)")'
                     //   ```
                     eval_cquery(
                         dice_query_delegate,

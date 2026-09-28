@@ -123,7 +123,7 @@ async def test_uquery_none(buck: Buck) -> None:
 @buck_test(data_dir="bxl_simple")
 async def test_uquery_inputs(buck: Buck) -> None:
     result = await buck.uquery("""inputs(set(root//bin:the_binary //lib:file1))""")
-    assert result.stdout == "bin/TARGETS.fixture\n"
+    assert result.stdout == "bin/YAK.fixture\n"
 
     result = await buck.uquery("""inputs(set())""")
     assert result.stdout == ""
@@ -137,7 +137,7 @@ async def test_uquery_union(buck: Buck) -> None:
     result = await buck.uquery(
         """buildfile(root//bin:the_binary) + inputs(deps(root//lib:lib1))"""
     )
-    assert result.stdout == "bin/TARGETS.fixture\nlib/TARGETS.fixture\n"
+    assert result.stdout == "bin/YAK.fixture\nlib/YAK.fixture\n"
 
     result = await buck.uquery("""'root//bin:the_binary' + set(root//data:data)""")
     assert result.stdout == "root//bin:the_binary\nroot//data:data\n"
@@ -145,7 +145,7 @@ async def test_uquery_union(buck: Buck) -> None:
 
 @buck_test(data_dir="bxl_simple")
 async def test_uquery_owner(buck: Buck) -> None:
-    result = await buck.uquery("""owner(bin/TARGETS.fixture)""")
+    result = await buck.uquery("""owner(bin/YAK.fixture)""")
     assert result.stdout == "root//bin:the_binary\n"
 
     result = await buck.uquery("""owner(data/buck/build/data.file)""")
@@ -157,7 +157,7 @@ async def test_uquery_owner(buck: Buck) -> None:
     assert result.stdout == ""
 
     # there's a buildfile here, but no target owns the file
-    result = await buck.uquery("""owner(.buckconfig)""")
+    result = await buck.uquery("""owner(.yakconfig)""")
     assert "No owner" in result.stderr
     assert result.stdout == ""
 
@@ -166,7 +166,7 @@ async def test_uquery_owner(buck: Buck) -> None:
     )
     assert result.stdout == "root//data:data\n"
 
-    result = await buck.uquery("""owner(root//bin/TARGETS.fixture)""")
+    result = await buck.uquery("""owner(root//bin/YAK.fixture)""")
     assert result.stdout == "root//bin:the_binary\n"
 
 
@@ -180,20 +180,20 @@ async def test_query_owner_with_explicit_package_boundary_violation(buck: Buck) 
 @buck_test(data_dir="bxl_simple", allow_soft_errors=True)
 async def test_uquery_buildfile(buck: Buck) -> None:
     result = await buck.uquery("""buildfile(root//bin:the_binary)""")
-    assert result.stdout == "bin/TARGETS.fixture\n"
+    assert result.stdout == "bin/YAK.fixture\n"
 
     result = await buck.uquery("""buildfile(root//bin: + root//data:)""")
-    assert result.stdout == "bin/TARGETS.fixture\ndata/TARGETS.fixture\n"
+    assert result.stdout == "bin/YAK.fixture\ndata/YAK.fixture\n"
 
     result = await buck.uquery(
         """buildfile(owner(../data/buck/build/data.file))""", rel_cwd=Path("special")
     )
-    assert result.stdout == "data/TARGETS.fixture\n"
+    assert result.stdout == "data/YAK.fixture\n"
 
 
 @buck_test(data_dir="bxl_simple")
 async def test_uquery_targets_in_buildfile(buck: Buck) -> None:
-    result = await buck.uquery("""targets_in_buildfile(bin/TARGETS.fixture)""")
+    result = await buck.uquery("""targets_in_buildfile(bin/YAK.fixture)""")
     assert (
         result.stdout
         == "\n".join(
@@ -318,9 +318,9 @@ async def test_query_filter(buck: Buck) -> None:
         == "root//bin:the_binary_with_dir_srcs (root//platforms:platform1#<HASH>)\n"
     )
     out = await buck.uquery("filter('fixture$', inputs(root//bin:the_binary))")
-    assert out.stdout == "bin/TARGETS.fixture\n"
+    assert out.stdout == "bin/YAK.fixture\n"
     out = await buck.cquery("filter('fixture$', inputs(root//bin:the_binary))")
-    assert out.stdout == "bin/TARGETS.fixture\n"
+    assert out.stdout == "bin/YAK.fixture\n"
 
 
 @buck_test(data_dir="bxl_simple")
@@ -364,17 +364,17 @@ async def test_attributes(buck: Buck) -> None:
                 "root//:foo_toolchain",
                 "root//:bin",
             ],
-            "buck.package": "root//bin:TARGETS.fixture",
+            "buck.package": "root//bin:YAK.fixture",
             "buck.tree_modifiers": ["cfg//os:linux"],
             "buck.type": "_foo_binary",
             "buck.configuration_deps": ["root//bin:my_platform", "root//bin:my_config"],
             "buck.oncall": None,
             "deps": ["root//lib:lib1", "root//lib:lib2", "root//lib:lib3"],
-            "srcs": ["root//bin/TARGETS.fixture"],
+            "srcs": ["root//bin/YAK.fixture"],
         },
         "root//lib:file1": {
             "buck.deps": [],
-            "buck.package": "root//lib:TARGETS.fixture",
+            "buck.package": "root//lib:YAK.fixture",
             "buck.tree_modifiers": ["cfg//os:linux"],
             "buck.type": "_foo_genrule",
             "buck.configuration_deps": ["root//platforms:platform1"],
@@ -453,17 +453,17 @@ async def test_multi_uquery(buck: Buck) -> None:
     assert out.stdout == "root//bin:the_binary\nroot//lib:file1\n"
 
     result = await buck.uquery(
-        "owner(%s)", "bin/TARGETS.fixture", "data/buck/build/data.file"
+        "owner(%s)", "bin/YAK.fixture", "data/buck/build/data.file"
     )
     assert result.stdout == "root//bin:the_binary\nroot//data:data\n"
 
     result = await buck.uquery(
-        "--json", "owner(%s)", "bin/TARGETS.fixture", "data/buck/build/data.file"
+        "--json", "owner(%s)", "bin/YAK.fixture", "data/buck/build/data.file"
     )
     json_out = json.loads(result.stdout)
 
     assert json_out == {
-        "bin/TARGETS.fixture": ["root//bin:the_binary"],
+        "bin/YAK.fixture": ["root//bin:the_binary"],
         "data/buck/build/data.file": ["root//data:data"],
     }
 
@@ -472,7 +472,7 @@ async def test_multi_uquery(buck: Buck) -> None:
         "--json",
         "--output-attribute=name",
         "owner(%s)",
-        "bin/TARGETS.fixture",
+        "bin/YAK.fixture",
         "data/buck/build/data.file",
     )
     json_out = json.loads(result.stdout)
@@ -617,7 +617,7 @@ async def test_uquery_rdeps(buck: Buck) -> None:
 @buck_test(data_dir="bxl_simple")
 async def test_query_attrfilter_special_attribute(buck: Buck) -> None:
     out = await buck.uquery(
-        "attrfilter(buck.package, 'root//bin:TARGETS.fixture',root//bin:the_binary)"
+        "attrfilter(buck.package, 'root//bin:YAK.fixture',root//bin:the_binary)"
     )
     assert out.stdout.strip() == "root//bin:the_binary"
 

@@ -66,7 +66,7 @@ pub enum DebugCommand {
     AllocatorStats(AllocatorStatsCommand),
     /// Dump the DICE graph to a file and saves it to disk.
     DiceDump(DiceDumpCommand),
-    /// Prints the hash of the buck2 binary
+    /// Prints the hash of the yak binary
     InternalVersion(InternalVersionCommand),
     /// Renders an event-log to a Chrome trace file for inspection with a browser.
     ChromeTrace(ChromeTraceCommand),
@@ -78,9 +78,9 @@ pub enum DebugCommand {
     Materialize(MaterializeCommand),
     /// Validates that Buck2 and disk agree on the state of files.
     FileStatus(FileStatusCommand),
-    /// Prints buck2 daemon directory (`~/.buckd/xxx`).
+    /// Prints yak daemon directory (`~/.yakd/xxx`).
     DaemonDir(DaemonDirCommand),
-    /// Prints buck2 executable (this executable) path.
+    /// Prints yak executable (this executable) path.
     Exe(ExeCommand),
     Allocative(AllocativeCommand),
     SetLogFilter(SetLogFilterCommand),

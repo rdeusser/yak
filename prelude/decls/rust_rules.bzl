@@ -75,7 +75,7 @@ _RUST_EXECUTABLE_ATTRIBUTES = {
     ),
     "enable_distributed_thinlto": attrs.bool(default = False),
     "extra_dwp_flags": attrs.list(attrs.string(), default = []),
-    # Opt the final executable output into content-based (immutable) buck-out
+    # Opt the final executable output into content-based (immutable) yak-out
     # pathing (default off). A bare static binary becomes a content-based exe.
     # A binary with adjacent files (`resources` and/or a shared-lib tree)
     # ships as a content-addressed `assembled_dir` dist bundle instead (exe

@@ -40,7 +40,7 @@ pub enum StarlarkCommand {
     DebugAttach(StarlarkDebugAttachCommand),
 }
 
-// Used for subcommands that follow `buck2 audit`'s "opaque" pattern where the command object is serialized
+// Used for subcommands that follow `yak audit`'s "opaque" pattern where the command object is serialized
 // to the daemon and deserialized there and has a `server_execute()` on the Command object itself (as opposed
 // to using structured endpoints in the daemon protocol).
 #[derive(Debug, clap::Subcommand, serde::Serialize, serde::Deserialize)]
@@ -81,7 +81,7 @@ pub struct StarlarkCommandCommonOptions {
 impl StreamingCommand for StarlarkSubcommand {
     const COMMAND_NAME: &'static str = "starlark";
 
-    /// Starlark subcommands are all implemented as a generic request to the buckd server that will deserialize the command object.
+    /// Starlark subcommands are all implemented as a generic request to the yakd server that will deserialize the command object.
     async fn exec_impl(
         self,
         buckd: &mut BuckdClientConnector,

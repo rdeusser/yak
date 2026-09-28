@@ -112,7 +112,7 @@ pub(crate) fn transform_format(
 }
 
 #[derive(Debug, clap::Subcommand)]
-#[clap(about = "Commands for interacting with buck2 logs")]
+#[clap(about = "Commands for interacting with yak logs")]
 pub enum LogCommand {
     #[clap(alias = "whatran")]
     WhatRan(what_ran::WhatRanCommand),

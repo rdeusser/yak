@@ -97,28 +97,28 @@ func TestCgoPathRewrites(t *testing.T) {
 			pkg: &packages.Package{
 				ID:              "cgo",
 				GoFiles:         []string{"/repo/plain.go", "/repo/cgo_file.go"},
-				CompiledGoFiles: []string{"/buck-out/cgo_gen/cgo_file.cgo1.go"},
+				CompiledGoFiles: []string{"/yak-out/cgo_gen/cgo_file.cgo1.go"},
 			},
 			want: map[string]string{
-				"/buck-out/cgo_gen/cgo_file.cgo1.go": "/repo/cgo_file.go",
+				"/yak-out/cgo_gen/cgo_file.cgo1.go": "/repo/cgo_file.go",
 			},
 		},
 		{
 			name: "generated SWIG source",
 			pkg: &packages.Package{
 				ID:              "swig",
-				GoFiles:         []string{"/buck-out/swig/out/swig_lib.go"},
-				CompiledGoFiles: []string{"/buck-out/cgo_gen/swig_lib.cgo1.go"},
+				GoFiles:         []string{"/yak-out/swig/out/swig_lib.go"},
+				CompiledGoFiles: []string{"/yak-out/cgo_gen/swig_lib.cgo1.go"},
 			},
 			want: map[string]string{
-				"/buck-out/cgo_gen/swig_lib.cgo1.go": "/buck-out/swig/out/swig_lib.go",
+				"/yak-out/cgo_gen/swig_lib.cgo1.go": "/yak-out/swig/out/swig_lib.go",
 			},
 		},
 		{
 			name: "ignore CGo types file",
 			pkg: &packages.Package{
 				ID:              "cgo",
-				CompiledGoFiles: []string{"/buck-out/cgo_gen/_cgo_gotypes.go"},
+				CompiledGoFiles: []string{"/yak-out/cgo_gen/_cgo_gotypes.go"},
 			},
 		},
 		{
@@ -126,7 +126,7 @@ func TestCgoPathRewrites(t *testing.T) {
 			pkg: &packages.Package{
 				ID:              "cgo",
 				GoFiles:         []string{"/repo/other.go"},
-				CompiledGoFiles: []string{"/buck-out/cgo_gen/cgo_file.cgo1.go"},
+				CompiledGoFiles: []string{"/yak-out/cgo_gen/cgo_file.cgo1.go"},
 			},
 			wantErr: "found 0",
 		},
@@ -135,7 +135,7 @@ func TestCgoPathRewrites(t *testing.T) {
 			pkg: &packages.Package{
 				ID:              "cgo",
 				GoFiles:         []string{"/repo/one/cgo_file.go", "/repo/two/cgo_file.go"},
-				CompiledGoFiles: []string{"/buck-out/cgo_gen/cgo_file.cgo1.go"},
+				CompiledGoFiles: []string{"/yak-out/cgo_gen/cgo_file.cgo1.go"},
 			},
 			wantErr: "found 2",
 		},
@@ -144,7 +144,7 @@ func TestCgoPathRewrites(t *testing.T) {
 			pkg: &packages.Package{
 				ID:              "cgo",
 				GoFiles:         []string{"cgo_file.go"},
-				CompiledGoFiles: []string{"/buck-out/cgo_gen/cgo_file.cgo1.go"},
+				CompiledGoFiles: []string{"/yak-out/cgo_gen/cgo_file.cgo1.go"},
 			},
 			wantErr: "is not absolute",
 		},
@@ -201,14 +201,14 @@ func TestRetriveActionErrors(t *testing.T) {
 	buckStderr := []byte(`[2024-09-12T07:57:42.799-07:00] Build ID: 86f93efa-c28e-4a34-94a8-129da2fc5336
 [2024-09-12T07:57:42.880-07:00] Action failed: root//greeting:greeting (prelude//platforms:default#0b9c1ba57ab15e90) (go_compile greeting)
 [2024-09-12T07:57:42.880-07:00] Local command returned non-zero exit code 2
-[2024-09-12T07:57:42.880-07:00] Local command: env -- 'BUCK_SCRATCH_PATH=buck-out/v2/tmp/root/638f78105dd4e4ee/go_compile/greeting' 'CGO_ENABLED=1' 'GOARCH=amd64' 'GOOS=linux' buck-out/v2/gen/prelude/a32dc125c1d570bc/go_bootstrap/tools/__go_go_wrapper__/go_go_wrapper --go go -- -p greeting -o buck-out/v2/gen/root/0b9c1ba57ab15e90/greeting/__greeting__/__action___0__/go_compile_out.a
+[2024-09-12T07:57:42.880-07:00] Local command: env -- 'BUCK_SCRATCH_PATH=yak-out/v2/tmp/root/638f78105dd4e4ee/go_compile/greeting' 'CGO_ENABLED=1' 'GOARCH=amd64' 'GOOS=linux' yak-out/v2/gen/prelude/a32dc125c1d570bc/go_bootstrap/tools/__go_go_wrapper__/go_go_wrapper --go go -- -p greeting -o yak-out/v2/gen/root/0b9c1ba57ab15e90/greeting/__greeting__/__action___0__/go_compile_out.a
 [2024-09-12T07:57:42.880-07:00] Stdout:
 greeting/greeting.go:8:18: syntax error: unexpected name get, expected (
 greeting/greeting.go:10:1: syntax error: unexpected } after top level declaration
 [2024-09-12T07:57:42.880-07:00] Stderr:
 Error running command: exit status 2
 
-/home/user/project/buck-out/v2/gen-bxl/prelude/6788fe67763f3975/go/tools/gopackagesdriver/driver.bxl/__driver__e0355e856f017750__/dynamic_out.json
+/home/user/project/yak-out/v2/gen-bxl/prelude/6788fe67763f3975/go/tools/gopackagesdriver/driver.bxl/__driver__e0355e856f017750__/dynamic_out.json
 [2024-09-12T07:57:42.882-07:00] Cache hits: 0%
 [2024-09-12T07:57:42.882-07:00] Commands: 1 (cached: 0, remote: 0, local: 1)
 [2024-09-12T07:57:42.882-07:00] Network: Up: 0B  Down: 0B
@@ -217,7 +217,7 @@ Error running command: exit status 2
 [2024-09-12T07:57:42.886-07:00] The following actions failed during the execution of this command:
 [2024-09-12T07:57:42.886-07:00] Action failed: root//greeting:greeting (prelude//platforms:default#0b9c1ba57ab15e90) (go_compile greeting)
 [2024-09-12T07:57:42.886-07:00] Local command returned non-zero exit code 2
-[2024-09-12T07:57:42.886-07:00] Local command: env -- 'BUCK_SCRATCH_PATH=buck-out/v2/tmp/root/638f78105dd4e4ee/go_compile/greeting' 'CGO_ENABLED=1' 'GOARCH=amd64' 'GOOS=linux' buck-out/v2/gen/prelude/a32dc125c1d570bc/go_bootstrap/tools/__go_go_wrapper__/go_go_wrapper --go go -- -p greeting -o buck-out/v2/gen/root/0b9c1ba57ab15e90/greeting/__greeting__/__action___0__/go_compile_out.a
+[2024-09-12T07:57:42.886-07:00] Local command: env -- 'BUCK_SCRATCH_PATH=yak-out/v2/tmp/root/638f78105dd4e4ee/go_compile/greeting' 'CGO_ENABLED=1' 'GOARCH=amd64' 'GOOS=linux' yak-out/v2/gen/prelude/a32dc125c1d570bc/go_bootstrap/tools/__go_go_wrapper__/go_go_wrapper --go go -- -p greeting -o yak-out/v2/gen/root/0b9c1ba57ab15e90/greeting/__greeting__/__action___0__/go_compile_out.a
 [2024-09-12T07:57:42.886-07:00] Stdout:
 greeting/greeting.go:8:18: syntax error: unexpected name get, expected (
 greeting/greeting.go:10:1: syntax error: unexpected } after top level declaration

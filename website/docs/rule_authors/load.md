@@ -22,7 +22,7 @@ The primary use cases for `load()` include:
 
 The `load()` function can be used in:
 
-- `BUCK` files (build files)
+- `YAK` files (build files)
 - `PACKAGE` files (package configuration)
 - Other `.bzl` files (creating libraries of build code)
 
@@ -67,7 +67,7 @@ COMPILER_FLAGS = [
 ]
 ```
 
-You can load these constants in a `BUCK` file:
+You can load these constants in a `YAK` file:
 
 ```python
 load("//core:defs.bzl", "COMPILER_FLAGS")

@@ -107,7 +107,7 @@ public class KotlincStepTest {
             RelPath.get("workingDirectory"),
             Optional.empty()),
         trackClassUsage,
-        RelPath.get("buck-out/v2"),
+        RelPath.get("yak-out/v2"),
         depTracker,
         KotlincMode.NonIncremental.INSTANCE,
         new LanguageVersion("2.1"));

@@ -169,8 +169,8 @@ mod tests {
         use prost::Message;
 
         let invocation = buck2_data::Invocation {
-            command_line_args: vec!["buck2".to_owned()],
-            expanded_command_line_args: vec!["buck2".to_owned()],
+            command_line_args: vec!["yak".to_owned()],
+            expanded_command_line_args: vec!["yak".to_owned()],
             working_dir: "/tmp".to_owned(),
             trace_id: Some(TraceId::null().to_string()),
             start_time: None,

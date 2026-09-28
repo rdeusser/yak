@@ -8,7 +8,7 @@
  * above-listed licenses.
  */
 
-//! The `buck2 debug hydration` command: manually page DICE node values out to
+//! The `yak debug hydration` command: manually page DICE node values out to
 //! disk, page them back in, or report paging status.
 //!
 //! The paging mechanism these subcommands drive — page-out itself, the

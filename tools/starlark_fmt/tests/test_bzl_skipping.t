@@ -77,15 +77,15 @@ Test: .bzl files DO sort explicit keep-sorted list expressions
       ]
 
 Test: BUILD files DO get list args sorted
-  $ cat <<'EOF' > TARGETS
+  $ cat <<'EOF' > YAK
   > my_rule(
   >     name = "example",
   >     deps = [":z", ":a", ":m"],
   > )
   > EOF
-  $ starlark-fmt-cfg TARGETS
-   INFO process_file: TARGETS: formatted
-  $ cat TARGETS
+  $ starlark-fmt-cfg YAK
+   INFO process_file: YAK: formatted
+  $ cat YAK
   my_rule(
       name = "example",
       deps = [":a", ":m", ":z"],

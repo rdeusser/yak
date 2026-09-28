@@ -47,9 +47,9 @@ enum CleanStaleOutcome {
 
 impl CleanallTarget {
     fn command(&self) -> Command {
-        // Invoking buck2 in subprocess so that different repos with different buck2 releases
-        // use corresponding buck2 client and daemon that match their releases.
-        let mut command = async_background_command("buck2");
+        // Invoking yak in subprocess so that different repos with different yak releases
+        // use corresponding yak client and daemon that match their releases.
+        let mut command = async_background_command("yak");
         command
             .kill_on_drop(true)
             .stdout(Stdio::piped())
@@ -61,15 +61,15 @@ impl CleanallTarget {
         command
     }
 
-    /// Whether `buck-out/<isolation-dir>` still exists.
+    /// Whether `yak-out/<isolation-dir>` still exists.
     ///
     /// Callers check before spawning to avoid unnecessary spawns, and re-check
-    /// after any clean-stale failure: `buck-out` can be removed concurrently
+    /// after any clean-stale failure: `yak-out` can be removed concurrently
     /// while clean-stale is running, in which case the failure is mapped to
     /// `TargetRemoved` instead of being reported.
     async fn is_valid(&self) -> bool {
         // Treat any I/O error as also invalid instead of propagating the error
-        fs::try_exists(self.project_root.join("buck-out").join(&self.isolation_dir))
+        fs::try_exists(self.project_root.join("yak-out").join(&self.isolation_dir))
             .await
             .unwrap_or(false)
     }
@@ -77,7 +77,7 @@ impl CleanallTarget {
     async fn clean_stale(self) -> buck2_error::Result<CleanStaleOutcome> {
         match self.clean_stale_inner().await {
             Err(error) => {
-                // `buck-out` may have been removed concurrently (see `is_valid`).
+                // `yak-out` may have been removed concurrently (see `is_valid`).
                 if !self.is_valid().await {
                     return Ok(CleanStaleOutcome::TargetRemoved);
                 }
@@ -90,14 +90,14 @@ impl CleanallTarget {
     async fn clean_stale_inner(&self) -> buck2_error::Result<CleanStaleOutcome> {
         let child = self.command().spawn().with_buck_error_context(|| {
             format!(
-                "Failed to start `buck2 --isolation-dir {} clean --stale` in `{}`",
+                "Failed to start `yak --isolation-dir {} clean --stale` in `{}`",
                 self.isolation_dir,
                 self.project_root.display(),
             )
         })?;
         let child_output = child.wait_with_output().await.with_buck_error_context(|| {
             format!(
-                "Failed to wait for `buck2 --isolation-dir {} clean --stale` in `{}`",
+                "Failed to wait for `yak --isolation-dir {} clean --stale` in `{}`",
                 self.isolation_dir,
                 self.project_root.display(),
             )
@@ -189,7 +189,7 @@ impl fmt::Display for CleanallErrors {
 #[buck2(tag = Environment)]
 enum CleanallError {
     #[error(
-        "`buck2 --isolation-dir {isolation_dir} clean --stale` failed in `{}` with status {status}\n{output}",
+        "`yak --isolation-dir {isolation_dir} clean --stale` failed in `{}` with status {status}\n{output}",
         project_root.display()
     )]
     CleanFailed {
@@ -226,14 +226,14 @@ async fn run_stale_clean_commands(targets: Vec<CleanallTarget>) -> Vec<buck2_err
     errors
 }
 
-/// Runs `buck2 clean --stale` for every persisted Buck2 project and isolation directory.
+/// Runs `yak clean --stale` for every persisted Buck2 project and isolation directory.
 ///
 /// Returns every child-process failure after all clean commands finish.
 pub async fn cleanall_stale() -> buck2_error::Result<()> {
     let Some(home) = crate::buck2_home_dir() else {
         return Err(CleanallError::HomeDirectoryNotFound.into());
     };
-    let buckd_root = home.join(".buck").join("buckd");
+    let buckd_root = home.join(".yak").join("yakd");
     let targets = discover_cleanall_targets(&buckd_root).await;
     let errors = run_stale_clean_commands(targets).await;
 
@@ -259,7 +259,7 @@ mod tests {
     #[cfg(unix)]
     const EXPECTED_CLEANALL_ERRORS: &str = concat!(
         "Failed to clean stale Buck2 state:\n",
-        "- `buck2 --isolation-dir v2 clean --stale` failed in `/project` with status exit status: 42\n",
+        "- `yak --isolation-dir v2 clean --stale` failed in `/project` with status exit status: 42\n",
         "  [/project:v2] stdout:\n",
         "  [/project:v2] clean stdout\n",
         "  [/project:v2] second stdout line\n",
@@ -270,7 +270,7 @@ mod tests {
     #[cfg(windows)]
     const EXPECTED_CLEANALL_ERRORS: &str = concat!(
         "Failed to clean stale Buck2 state:\n",
-        "- `buck2 --isolation-dir v2 clean --stale` failed in `/project` with status exit code: 42\n",
+        "- `yak --isolation-dir v2 clean --stale` failed in `/project` with status exit code: 42\n",
         "  [/project:v2] stdout:\n",
         "  [/project:v2] clean stdout\n",
         "  [/project:v2] second stdout line\n",
@@ -320,7 +320,7 @@ mod tests {
         let command = target.command();
         let command = command.as_std();
 
-        assert_eq!(command.get_program(), OsStr::new("buck2"));
+        assert_eq!(command.get_program(), OsStr::new("yak"));
         assert_eq!(command.get_current_dir(), Some(Path::new("/project")));
         assert_eq!(
             command.get_args().collect::<Vec<_>>(),
@@ -338,14 +338,14 @@ mod tests {
 
         assert!(
             !target(temp.path().to_owned(), "v2").is_valid().await,
-            "missing buck-out path should be invalid"
+            "missing yak-out path should be invalid"
         );
-        fs::create_dir_all(temp.path().join("buck-out").join("v2"))
+        fs::create_dir_all(temp.path().join("yak-out").join("v2"))
             .await
-            .expect("buck-out path should be created");
+            .expect("yak-out path should be created");
         assert!(
             target(temp.path().to_owned(), "v2").is_valid().await,
-            "existing buck-out path should be valid"
+            "existing yak-out path should be valid"
         );
         assert!(
             !target(temp.path().to_owned(), "other").is_valid().await,
@@ -353,7 +353,7 @@ mod tests {
         );
         assert!(
             !target(PathBuf::from("\0"), "v2").is_valid().await,
-            "buck-out path check errors should be invalid"
+            "yak-out path check errors should be invalid"
         );
     }
 
@@ -361,9 +361,9 @@ mod tests {
     async fn ignores_project_root_removed_before_spawn() {
         let temp = tempfile::tempdir().expect("temporary directory should be created");
         let project_root = temp.path().join("project");
-        fs::create_dir_all(project_root.join("buck-out").join("v2"))
+        fs::create_dir_all(project_root.join("yak-out").join("v2"))
             .await
-            .expect("buck-out path should be created");
+            .expect("yak-out path should be created");
         let target = CleanallTarget {
             project_root: project_root.clone(),
             isolation_dir: String::from("v2"),

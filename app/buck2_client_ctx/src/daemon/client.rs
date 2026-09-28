@@ -26,7 +26,7 @@ use buck2_fs::error::IoResultExt;
 use buck2_fs::fs_util;
 use buck2_fs::paths::abs_norm_path::AbsNormPathBuf;
 use buck2_fs::paths::file_name::FileName;
-use buck2_wrapper_common::BUCKD_LIFECYCLE;
+use buck2_wrapper_common::YAKD_LIFECYCLE;
 use futures::Stream;
 use futures::StreamExt;
 use futures::TryStreamExt;
@@ -54,12 +54,12 @@ use crate::startup_deadline::StartupDeadline;
 #[derive(Debug, buck2_error::Error)]
 #[buck2(tag = Environment)]
 enum LifecycleError {
-    #[error("Missing `{}` file in `{}` directory", BUCKD_LIFECYCLE, _0.display())]
+    #[error("Missing `{}` file in `{}` directory", YAKD_LIFECYCLE, _0.display())]
     MissingLifecycle(AbsNormPathBuf),
 }
 
-/// We need to make sure that all calls to the daemon in buckd flush the tailers after completion.
-/// The connector wraps all buckd calls with flushing.
+/// We need to make sure that all calls to the daemon in yakd flush the tailers after completion.
+/// The connector wraps all yakd calls with flushing.
 pub struct BuckdClientConnector {
     client: BuckdClient,
     pub(crate) daemon_pid: i64,
@@ -86,7 +86,7 @@ pub struct BuckdLifecycleLock {
 
 #[derive(Debug, buck2_error::Error)]
 #[buck2(tag = BuckdLifecycleLock)]
-#[error("Error locking buckd.lifecycle: {error:#}")]
+#[error("Error locking yakd.lifecycle: {error:#}")]
 pub struct LifecycleLockError {
     #[source]
     error: buck2_error::Error,
@@ -104,12 +104,12 @@ impl BuckdLifecycleLock {
             deadline: StartupDeadline,
         ) -> buck2_error::Result<BuckdLifecycleLock> {
             create_dir_all(&daemon_dir.path)?;
-            let lifecycle_path = daemon_dir.path.as_path().join(BUCKD_LIFECYCLE);
+            let lifecycle_path = daemon_dir.path.as_path().join(YAKD_LIFECYCLE);
             let file = File::create(lifecycle_path)?;
             let fileref = &file;
             deadline
                 .retrying(
-                    "locking buckd lifecycle",
+                    "locking yakd lifecycle",
                     Duration::from_millis(5),
                     Duration::from_millis(100),
                     // Contention (`WouldBlock`) must surface as an error here so the
@@ -129,7 +129,7 @@ impl BuckdLifecycleLock {
             .map_err(|e| LifecycleLockError { error: e })
     }
 
-    /// Remove everything except `buckd.lifecycle` file which is the lock file.
+    /// Remove everything except `yakd.lifecycle` file which is the lock file.
     /// If `keep_prev` is true, backup previous daemon logs to `prev` dir for debugging.
     pub fn clean_daemon_dir(&self, keep_prev: bool) -> buck2_error::Result<()> {
         let prev_daemon_dir = self
@@ -146,7 +146,7 @@ impl BuckdLifecycleLock {
         let mut seen_lifecycle = false;
         for p in fs_util::read_dir(&self.daemon_dir.path).categorize_internal()? {
             let p = p?;
-            if p.file_name() == BUCKD_LIFECYCLE {
+            if p.file_name() == YAKD_LIFECYCLE {
                 seen_lifecycle = true;
                 continue;
             }
@@ -177,7 +177,7 @@ impl Drop for BuckdLifecycleLock {
     fn drop(&mut self) {
         self.lock_file
             .unlock()
-            .expect("Unexpected failure to unlock buckd.lifecycle file.")
+            .expect("Unexpected failure to unlock yakd.lifecycle file.")
     }
 }
 

@@ -31,7 +31,7 @@ def _base_module_arg():
             doc = """
     The package for which the given specified sources and resources should reside in their final
      location in the top-level binary. If unset, the project relative directory that houses the
-     BUCK file is used.
+     YAK file is used.
 """,
         ),
     }

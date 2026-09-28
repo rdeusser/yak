@@ -62,7 +62,7 @@ async fn build_response_with_trace(
     context: &ServerCommandContext<'_>,
     provider: &TracingIoProvider,
 ) -> buck2_error::Result<buck2_cli_proto::TraceIoResponse> {
-    // Materialize buck-out paths so they can be archived.
+    // Materialize yak-out paths so they can be archived.
     let buck_out_entries: Vec<_> = provider.trace().buck_out_entries();
     context
         .materializer()
@@ -71,7 +71,7 @@ async fn build_response_with_trace(
             MaterializationPurpose::IntermediateOnly,
         )
         .await
-        .buck_error_context("Error materializing buck-out paths for trace")?;
+        .buck_error_context("Error materializing yak-out paths for trace")?;
 
     let mut entries = provider.trace().project_entries();
     entries.extend(buck_out_entries);

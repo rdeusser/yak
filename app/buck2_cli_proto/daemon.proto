@@ -280,7 +280,7 @@ message TargetsShowOutputsResponse {
   repeated TargetPaths targets_paths = 1;
 }
 
-// `buck2 ctargets` command
+// `yak ctargets` command
 message ConfiguredTargetsRequest {
   reserved 2, 10;
 
@@ -525,7 +525,7 @@ message BuildRequest {
   // user failure.
   optional google.protobuf.Duration timeout = 12;
 
-  // Set by `buck2 run` when extra args are passed without `--` separator.
+  // Set by `yak run` when extra args are passed without `--` separator.
   bool run_args_missing_separator = 13;
 }
 
@@ -1130,9 +1130,9 @@ service DaemonApi {
   rpc TraceIo(TraceIoRequest) returns (stream MultiCommandProgress);
 }
 
-// This struct is written to `~/.buck/paranoid.info` by `buck2 paranoid
+// This struct is written to `~/.yak/paranoid.info` by `yak paranoid
 // enabled`, it's used to control whether we are currently enabling paranoid
-// mode on this machine. Read `buck2 help debug paranoid` for more details.
+// mode on this machine. Read `yak help debug paranoid` for more details.
 message ParanoidInfo {
   // Paranoid is enabled until this time.
   google.protobuf.Timestamp expires_at = 1;

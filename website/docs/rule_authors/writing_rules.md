@@ -20,7 +20,7 @@ Buck2 are mostly compatible with Buck1 and should be written in the same way.
 
 ## Workflow by example
 
-The built-in Buck2 rules are stored in the `prelude` folder in the buck2 repo.
+The built-in Buck2 rules are stored in the `prelude` folder in the yak repo.
 To add a rule for a language, say `pascal`:
 
 1. Look at
@@ -37,10 +37,10 @@ To add a rule for a language, say `pascal`:
        return [DefaultInfo()]
    ```
 
-3. Create a package, for example `tests/pascal`, with a `BUCK` file and
+3. Create a package, for example `tests/pascal`, with a `YAK` file and
    whatever source files and test targets you need to test your project.
 
-4. Test your code with `buck2 build //tests/pascal:`. The targets should build
+4. Test your code with `yak build //tests/pascal:`. The targets should build
    with no actual output produced.
 
 5. Now implement the rules (see the rest of this page).
@@ -49,7 +49,7 @@ To add a rule for a language, say `pascal`:
 
 Before merging a change, it's important that all your Starlark is warning free
 (if you don't want to set up Buck2 for local development, test it in CI).
-`buck2 starlark lint <files>` reports the warnings in the named files.
+`yak starlark lint <files>` reports the warnings in the named files.
 
 :::
 
@@ -99,7 +99,7 @@ most important fields are `ctx.attrs`, which picks up the attributes declared by
 the rule, and `ctx.actions`, which lets you create new actions to actually do
 something.
 
-The output of any actions performed will be materialized in `buck-out`. However,
+The output of any actions performed will be materialized in `yak-out`. However,
 only the defined outputs of providers are available for dependent rules to
 consume and only the actions necessary to produce those outputs being consumed
 will be run. By default, the `default_output` of the `DefaultInfo` provider is
@@ -114,7 +114,7 @@ either `RunInfo` (because they are executable) or some custom provider (because
 they are incorporated into something that is ultimately executable).
 
 The `DefaultInfo` provider has a field `default_output`, which is the file that
-will be built when someone executes a `buck2 build` on this particular target,
+will be built when someone executes a `yak build` on this particular target,
 and the file that will be used when someone runs `$(location target)` or uses it
 as a source file (such as `srcs = [":my_target"]`.)
 
@@ -250,17 +250,14 @@ isolation, outside of Buck2.
 ## Debugging
 
 The functions `fail`, `print` and `pprint` are your friends. To get started, a
-`buck2 build //tests/pascal:` builds everything or
-`buck2 run //tests/pascal:my_binary` runs a specific binary that returns a
+`yak build //tests/pascal:` builds everything or
+`yak run //tests/pascal:my_binary` runs a specific binary that returns a
 `RunInfo`.
 
 ## Testing Rules
 
 A common way to test is to use `genrule` to cause the produced binary to run and
-assert some properties from it. If your rule is in Buck1 and Buck2, use a
-`BUCK` file so you can test with both. If your tests are incompatible with Buck1
-(such as if it is a new rule), use `BUCK.v2`, which will only be seen by Buck2
-and won't cause errors with Buck1.
+assert some properties from it.
 
 ## New rules
 

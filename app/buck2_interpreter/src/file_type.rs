@@ -22,7 +22,7 @@ pub enum StarlarkFileType {
     Toml,
 }
 
-/// What type of file are we parsing - a `.bzl` file, `.bxl` file, or a `BUCK`/`TARGETS` file.
+/// What type of file are we parsing - a `.bzl` file, `.bxl` file, or a `YAK` file.
 impl StarlarkFileType {
     pub fn dialect(&self, disable_starlark_types: bool) -> Dialect {
         let buck_dialect: Dialect = Dialect {

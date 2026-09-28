@@ -1,0 +1,4 @@
+[repositories]
+    root = ..
+[buildfile]
+    name = YAK.fixture

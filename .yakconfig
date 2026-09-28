@@ -1,0 +1,29 @@
+[cells]
+root = .
+prelude = prelude
+toolchains = toolchains
+
+[cell_aliases]
+config = prelude
+
+[external_cells]
+prelude = bundled
+
+[buildfile]
+# `third-party/rust/YAK.missing` stands in for `third-party/rust/YAK` and
+# explains how to generate it with `reindeer buckify`.
+name = YAK,YAK.missing
+
+[build]
+execution_platforms = prelude//platforms:default
+
+[parser]
+target_platform_detector_spec = target:root//...->prelude//platforms:default
+
+[project]
+ignore = \
+    examples, \
+    tests, \
+    .jj, \
+    .git, \
+    target

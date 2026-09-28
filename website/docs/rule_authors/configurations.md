@@ -59,7 +59,7 @@ There are three main concepts to understand about execution platforms:
 
 ### Execution platforms
 
-The simplest execution platform setup is the one `buck2 init` uses. This
+The simplest execution platform setup is the one `yak init` uses. This
 setup gathers constraints from the host machine Buck is running on.
 
 ```ini
@@ -104,7 +104,7 @@ The process for fully specifying your own execution platforms is:
    that will run there. So often you will tell it you want all build
    tools to be built themselves in release mode, so your builds are
    faster.
-2. Configure the `build.execution_platforms` value in your `.buckconfig`
+2. Configure the `build.execution_platforms` value in your `.yakconfig`
    to point to this target:
 
     ```ini

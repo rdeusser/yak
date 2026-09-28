@@ -57,10 +57,10 @@ your team.
 - [Buck2 GitHub actions installer](https://github.com/dtolnay/install-buck2) -
   script to make GitHub CI with Buck2 easier.
 - [Reindeer](https://github.com/facebookincubator/reindeer) - a set of tools for
-  importing Rust crates from crates.io, git repos etc and generating a BUCK file
+  importing Rust crates from crates.io, git repos etc and generating a YAK file
   for using them.
 - [ocaml-scripts](https://github.com/facebook/ocaml-scripts) - scripts to
-  generate a BUCK file enabling the use of OCaml packages from an OPAM switch.
+  generate a YAK file enabling the use of OCaml packages from an OPAM switch.
 - [Buckle](https://github.com/benbrittain/buckle) - a launcher for Buck2 on a
   per-project basis. Enables a project or team to do seamless upgrades of their
   build system tooling.

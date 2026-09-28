@@ -5,17 +5,17 @@ title: Bootstrapping Buck2
 
 # Bootstrapping Buck2
 
-Buck2 can be built with `cargo` or `buck2`. The Buck build of the source
-repository needs a `buck2` binary built from the same source, so build one with
+Buck2 can be built with `cargo` or `yak`. The Buck build of the source
+repository needs a `yak` binary built from the same source, so build one with
 `cargo` first:
 
 ```sh
-cargo build --bin=buck2
+cargo build --bin=yak
 ```
 
 For dependencies on Rust crates from [crates.io](https://crates.io), we use
 [reindeer](https://github.com/facebookincubator/reindeer) to automatically
-generate `BUCK` files. The source repository includes a
+generate `YAK` files. The source repository includes a
 [DotSlash](https://dotslash-cli.com) file that runs `reindeer`.
 
 Note that the resulting binary will be compiled without optimisations or
@@ -35,8 +35,8 @@ cd buck2/
 ./bootstrap/reindeer --third-party-dir third-party/rust buckify
 ```
 
-Build a copy of `buck2` with `buck2`:
+Build a copy of `yak` with `yak`:
 
 ```sh
-target/debug/buck2 build //:buck2
+target/debug/yak build //:yak
 ```

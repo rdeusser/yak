@@ -932,7 +932,7 @@ impl DeferredMaterializerAccessor<NoDiskIoHandler> {
         Self::new_no_disk(
             fs,
             DigestConfig::testing_default(),
-            ProjectRelativePathBuf::unchecked_new("buck-out/v2".to_owned()),
+            ProjectRelativePathBuf::unchecked_new("yak-out/v2".to_owned()),
             DeferredMaterializerConfigs {
                 materialize_final_artifacts: true,
                 defer_write_actions: true,

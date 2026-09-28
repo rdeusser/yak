@@ -1,6 +1,6 @@
 # This file is @generated, regenerate by rerunning the test with `BUCK2_UPDATE_GOLDEN=1` set
 
-[<TIMESTAMP>] Starting new buck2 daemon...
+[<TIMESTAMP>] Starting new yak daemon...
 Command failed: Failed to connect to buck daemon.
     Daemon process info from <BUCKD_INFO>
     daemon dir: <DAEMON_DIR>
@@ -9,8 +9,8 @@ Command failed: Failed to connect to buck daemon.
     version: <VERSION>
     pid present on system: yes
 
-    Try running `buck2 kill` and your command afterwards.
-    Alternatively, try running `rm -rf ~/.buck/buckd` and your command afterwards
+    Try running `yak kill` and your command afterwards.
+    Alternatively, try running `rm -rf ~/.yak/yakd` and your command afterwards
 
 Caused by:
     0: Error connecting to the daemon, daemon stderr follows:
@@ -33,4 +33,4 @@ Caused by:
        <DAEMON_TIMESTAMP>  INFO daemon_listener: buck2_server::daemon::server: Starting server
 
     1: establishing connection to Buck daemon or start a daemon
-    2: starting new buck2 daemon for reason: No buckd.info timed out after <DURATION>
+    2: starting new yak daemon for reason: No yakd.info timed out after <DURATION>

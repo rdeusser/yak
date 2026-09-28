@@ -12,11 +12,11 @@
 # %INSERT_OPTION_COMPLETION%
 # clap_complete generated content ENDS
 
-complete -r buck2
+complete -r yak
 
-_BUCK_COMPLETE_BIN="${_BUCK_COMPLETE_BIN:-buck2}"
+_BUCK_COMPLETE_BIN="${_BUCK_COMPLETE_BIN:-yak}"
 
-__buck2_takes_target()
+__yak_takes_target()
 {
     case "$1" in
     build|ctargets|install|run|targets|test|utargets)
@@ -28,7 +28,7 @@ __buck2_takes_target()
     esac
 }
 
-__buck2_subcommand()
+__yak_subcommand()
 {
     local subcommand=
     for w in "${COMP_WORDS[@]:1:$COMP_CWORD - 1}"; do
@@ -51,7 +51,7 @@ __buck2_subcommand()
     fi
 }
 
-__buck2_add_target_completions()
+__yak_add_target_completions()
 {
     local completions=()
     while read -r; do
@@ -64,7 +64,7 @@ __buck2_add_target_completions()
     COMPREPLY=("${completions[@]}")
 }
 
-__buck2_add_flagfile_completions()
+__yak_add_flagfile_completions()
 {
     local completions=()
     while read -r; do
@@ -73,7 +73,7 @@ __buck2_add_flagfile_completions()
     COMPREPLY=("${completions[@]}")
 }
 
-__buck2_completions_queued()
+__yak_completions_queued()
 {
     if [[ ${#COMPREPLY[@]} -eq 0 ]]; then
         return 255
@@ -84,7 +84,7 @@ __buck2_completions_queued()
     fi
 }
 
-__buck2_fix()
+__yak_fix()
 {
     local cur="${COMP_WORDS[COMP_CWORD]}"
     local prev="${COMP_WORDS[COMP_CWORD-1]}"
@@ -93,7 +93,7 @@ __buck2_fix()
     # Flagfile / mode-file completion: an `@file` argument or the value of
     # `--flagfile`/`--config-file`.
     if [[ $cur == @* || $prev == --flagfile || $prev == --config-file ]]; then
-        __buck2_add_flagfile_completions "$cur"
+        __yak_add_flagfile_completions "$cur"
         return
     fi
 
@@ -111,30 +111,28 @@ __buck2_fix()
         fi
     fi
 
-    if __buck2_takes_target "$(__buck2_subcommand)"; then
+    if __yak_takes_target "$(__yak_subcommand)"; then
         if [[ $cur =~ ^- ]]; then
-            _buck2 "$@"
+            _yak "$@"
         else
             # The auto-generated completions have what is arguably a bug resulting where they don't
             # correctly fix up `$cur` in the way we do above to deal with colons. As a result, skip
             # flag completions if there's a colon in the current word - that wasn't going to be
             # useful anyway.
             if [[ ! $cur == *:* ]]; then
-                _buck2 "$@"
+                _yak "$@"
             fi
-            if ! __buck2_completions_queued; then
-                __buck2_add_target_completions "$cur"
+            if ! __yak_completions_queued; then
+                __yak_add_target_completions "$cur"
             fi
         fi
     else
-        _buck2 "$@"
+        _yak "$@"
     fi
 }
 
 if [[ "${BASH_VERSINFO[0]}" -eq 4 && "${BASH_VERSINFO[1]}" -ge 4 || "${BASH_VERSINFO[0]}" -gt 4 ]]; then
-    complete -F __buck2_fix -o nosort -o bashdefault -o default -o nospace buck
-    complete -F __buck2_fix -o nosort -o bashdefault -o default -o nospace buck2
+    complete -F __yak_fix -o nosort -o bashdefault -o default -o nospace yak
 else
-    complete -F __buck2_fix -o bashdefault -o default -o nospace buck
-    complete -F __buck2_fix -o bashdefault -o default -o nospace buck2
+    complete -F __yak_fix -o bashdefault -o default -o nospace yak
 fi

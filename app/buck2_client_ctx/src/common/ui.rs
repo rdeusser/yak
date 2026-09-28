@@ -186,7 +186,7 @@ pub struct CommonConsoleOptions {
     /// Accepts a comma-separated list of superconsole components to add. Possible values are:
     ///
     ///   dice - shows information about evaluated dice nodes
-    ///   debugevents - shows information about the flow of events from buckd
+    ///   debugevents - shows information about the flow of events from yakd
     ///
     /// These components can be turned on/off interactively.
     /// Press 'h' for help when superconsole is active.

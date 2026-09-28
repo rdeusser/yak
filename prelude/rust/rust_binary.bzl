@@ -342,7 +342,7 @@ def _rust_binary_common(
     # `assembled_dir` bundle (see `_create_content_based_dist`). A binary with
     # adjacent files -- resources and/or a shared-lib tree -- goes in a bundle,
     # and its exe must stay config-based: a content-based exe sits at a deep
-    # content-hash path, so the linker bakes a long buck-out-relative `$ORIGIN`
+    # content-hash path, so the linker bakes a long yak-out-relative `$ORIGIN`
     # RPATH that no longer points at the shlib tree once the exe is copied into
     # the bundle. A config-based exe is a direct sibling of the tree, yielding a
     # clean `$ORIGIN/<tree>` RPATH that survives co-location; the bundle dir
@@ -365,7 +365,7 @@ def _rust_binary_common(
     # path or as another target's resource (e.g. clio's `:web-server` embeds the
     # node) -- EXCEPT when it needs a shlib tree at startup. A content-based exe
     # sits at a deep content-hash path, so the linker bakes a long
-    # buck-out-relative `$ORIGIN` RPATH that no longer points at the tree once
+    # yak-out-relative `$ORIGIN` RPATH that no longer points at the tree once
     # the exe is copied into the bundle. Dynamic binaries therefore use a
     # config-based exe (a direct sibling of the tree => clean `$ORIGIN/<tree>`
     # RPATH that survives co-location) and get content-addressing from the

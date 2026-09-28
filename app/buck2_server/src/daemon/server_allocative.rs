@@ -124,7 +124,7 @@ pub(crate) async fn spawn_allocative(
         // TODO(nga): Emit some progress.
         dispatcher.console_message("Visiting global roots...".to_owned());
         graph.visit_global_roots();
-        dispatcher.console_message("Visiting buckd...".to_owned());
+        dispatcher.console_message("Visiting yakd...".to_owned());
         graph.visit_root(&buckd_server_data);
         let fg = graph.finish();
         let flamegraph = add_deferred_materializer_profile(

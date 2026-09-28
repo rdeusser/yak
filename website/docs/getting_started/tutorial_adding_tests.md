@@ -14,7 +14,7 @@ Our goal is to learn how to define and run Rust unit tests within the Buck2.
 
 1. Create a dedicated directory for our library's tests.
 2. Write a simple unit test for the greet function in `greeter_lib`.
-3. Update `greeter_lib/BUCK` to define a test target using `rust_test`.
+3. Update `greeter_lib/YAK` to define a test target using `rust_test`.
 4. Run the tests using Buck2 and see the results.
 
 ## Prerequisites
@@ -35,7 +35,7 @@ Your `greeter_lib` structure should now look like this:
 
 ```
 greeter_lib
-├── BUCK
+├── YAK
 ├── src
 │   └── lib.rs
 └── tests
@@ -65,11 +65,11 @@ mod tests {
 }
 ```
 
-## Step 3: Updating greeter_lib/BUCK to Define the Test Target
+## Step 3: Updating greeter_lib/YAK to Define the Test Target
 
 Next, we need to tell Buck2 about our test file and how to run it.
 
-1. Edit `greeter_lib/BUCK`:
+1. Edit `greeter_lib/YAK`:
 
 ```python
 
@@ -98,18 +98,18 @@ Key additions and explanations:
 
 ## Step 4: Running Your Tests
 
-With the BUCK file updated, let's run our tests!
+With the YAK file updated, let's run our tests!
 
 1. Navigate to the `greeter_lib` directory.
-2. Run test using `buck2 test`:
+2. Run test using `yak test`:
 
 ```bash
-buck2 test :test
+yak test :test
 ```
 
-- `buck2 test` is the command to run test targets.
+- `yak test` is the command to run test targets.
 - `:test` refers to the `rust_test` target named `test` that we defined in the
-  current directory's `BUCK` file.
+  current directory's `YAK` file.
 
 3. Expected Output: You should see something like this:
 
@@ -132,7 +132,7 @@ Buck2!
 We've learned how to:
 
 - Define a test target using `rust_test` for a Rust library.
-- Execute tests using `buck2 test` command.
+- Execute tests using `yak test` command.
 
 Testing is a vital skill, and now you know how to integrate it into your Buck2
 Rust workflow. This allows you to build more robust and reliable libraries and

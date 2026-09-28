@@ -781,9 +781,9 @@ async fn handle_install_request(
                 // but when the installer tries to bind on it, someone else might bind on it.
                 // TODO: choose unused tcp port on installer side.
                 // The way communication may happen:
-                // 1. buck2 passes a temp file for a tcp port output.
+                // 1. yak passes a temp file for a tcp port output.
                 // 2. installer app choose unused tcp port and writes it into the passed file.
-                // 3. buck2 reads tcp port from file and use it to connect to the installer app. (`connect_to_installer` function)
+                // 3. yak reads tcp port from file and use it to connect to the installer app. (`connect_to_installer` function)
                 let tcp_port = get_random_tcp_port()?;
 
                 let mut installer_run_args: Vec<String> = vec![

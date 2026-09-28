@@ -415,7 +415,7 @@ public class ProjectFilesystemUtils {
     if (normalizedPath.isAbsolute()) {
       AbsPath pathAbs = AbsPath.of(normalizedPath);
       AbsPath configuredBuckOut = MorePaths.normalize(root.resolve(buckOut));
-      // If the path is in the configured buck-out, it's also part of the filesystem.
+      // If the path is in the configured yak-out, it's also part of the filesystem.
       if (pathAbs.startsWith(configuredBuckOut) || pathAbs.startsWith(root)) {
         return Optional.of(MorePaths.relativize(root.getPath(), normalizedPath));
       } else {

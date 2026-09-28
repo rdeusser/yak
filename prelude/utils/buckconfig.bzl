@@ -6,7 +6,7 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-"""Provides macros for working with .buckconfig."""
+"""Provides macros for working with .yakconfig."""
 
 load(":expect.bzl", "expect")
 load(":lazy.bzl", "lazy")
@@ -150,7 +150,7 @@ _read_config = read_config_with_logging if LOG_BUCKCONFIGS else read_config
 _read_root_config = read_root_config_with_logging if LOG_BUCKCONFIGS else read_root_config
 
 def read(section: str, field: str, default: str | Select | None = None, root_cell: bool = False, logging: bool = True) -> str | Select | None:
-    """Read a `string` from `.buckconfig`."""
+    """Read a `string` from `.yakconfig`."""
     if logging:
         read_config_func = _read_root_config if root_cell else _read_config
     else:
@@ -163,7 +163,7 @@ read_string = read
 def read_choice(
     section: str, field: str, choices: typing.Iterable, default: str | Select | None = None, required: bool = True, root_cell: bool = False
 ) -> str | None:
-    """Read a string from `.buckconfig` that must be one `choices`."""
+    """Read a string from `.yakconfig` that must be one `choices`."""
 
     val = read(section, field, root_cell = root_cell)
     if val != None:
@@ -183,7 +183,7 @@ def read_choice(
 def read_bool(
     section: str, field: str, default: bool | Select | None = None, required: bool = True, root_cell: bool = False, logging: bool = True
 ) -> bool | Select | None:
-    """Read a `boolean` from `.buckconfig`."""
+    """Read a `boolean` from `.yakconfig`."""
 
     # Treat the empty string as "unset".  This allows the user to "override" a
     # previous setting by "clearing" it out.
@@ -212,7 +212,7 @@ def read_bool(
         fail("`{}:{}`: no value set".format(section, field))
 
 def read_int(section: str, field: str, default: int | Select | None = None, required: bool = True, root_cell: bool = False) -> int | Select | None:
-    """Read an `int` from `.buckconfig`."""
+    """Read an `int` from `.yakconfig`."""
 
     val = read(section, field, root_cell = root_cell)
     if val != None:
@@ -232,7 +232,7 @@ def read_int(section: str, field: str, default: int | Select | None = None, requ
 def read_list(
     section: str, field: str, delimiter: str | None = ",", default: typing.Iterable | Select | None = None, required: bool = True, root_cell = False
 ) -> typing.Iterable | Select | None:
-    """Read a `list` from `.buckconfig`."""
+    """Read a `list` from `.yakconfig`."""
     val = read(section, field, root_cell = root_cell)
     if val != None:
         quotes = ["\\", '"', "'"]

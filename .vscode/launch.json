@@ -7,11 +7,11 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug buck2",
+            "name": "Debug yak",
             "cargo": {
                 "args": [
                     "build",
-                    "--bin=buck2",
+                    "--bin=yak",
                     "--package=buck2"
                 ],
                 "env": {
@@ -20,20 +20,20 @@
                     "CARGO_PROFILE_DEV_DEBUG": "true"
                 },
                 "filter": {
-                    "name": "buck2",
+                    "name": "yak",
                     "kind": "bin"
                 }
             },
             "args": [
                 "build",
-                "//:buck2"
+                "//:yak"
             ],
             "cwd": "${workspaceFolder}"
         },
         {
             "type": "lldb",
             "request": "attach",
-            "name": "Debug buck2d",
+            "name": "Debug yakd",
             "cwd": "${workspaceFolder}",
             "pid": "${command:pickMyProcess}",
         },

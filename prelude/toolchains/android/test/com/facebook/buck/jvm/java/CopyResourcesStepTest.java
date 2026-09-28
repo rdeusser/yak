@@ -30,7 +30,7 @@ public class CopyResourcesStepTest {
     // android/java/src/com/example/base/data.json
     // android/java/src/com/example/common/util/data.json
 
-    RelPath configuredBuckOut = RelPath.get("buck-out/v2");
+    RelPath configuredBuckOut = RelPath.get("yak-out/v2");
     RelPath target =
         configuredBuckOut.resolveRel(
             "android/java/lib__resources__classes/com/example/common/util/data.json");
@@ -64,7 +64,7 @@ public class CopyResourcesStepTest {
     // android/java/src/com/example/base/data.json
     // android/java/src/com/example/common/util/data.json
 
-    RelPath configuredBuckOut = RelPath.get("buck-out/v2");
+    RelPath configuredBuckOut = RelPath.get("yak-out/v2");
     RelPath target =
         configuredBuckOut.resolveRel(
             "android/java/src/lib__resources__classes/com/example/common/util/data.json");
@@ -98,7 +98,7 @@ public class CopyResourcesStepTest {
     // android/java/src/com/example/base/data.json
     // android/java/src/com/example/common/util/data.json
 
-    RelPath configuredBuckOut = RelPath.get("buck-out/v2");
+    RelPath configuredBuckOut = RelPath.get("yak-out/v2");
     RelPath target =
         configuredBuckOut.resolveRel(
             "android/java/src/com/example/lib__resources__classes/"

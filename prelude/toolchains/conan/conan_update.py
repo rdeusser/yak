@@ -14,10 +14,10 @@ import subprocess
 
 
 def find_root():
-    """Find the repository root using `buck2 root`."""
-    # TODO[AH] This assumes that buck2 is in PATH when executing the script via `buck2 run`.
-    #   Consider making the name/path `buck2` configurable via an environment variable.
-    return subprocess.check_output(["buck2", "root"], text=True).strip()
+    """Find the repository root using `yak root`."""
+    # TODO[AH] This assumes that yak is in PATH when executing the script via `yak run`.
+    #   Consider making the name/path `yak` configurable via an environment variable.
+    return subprocess.check_output(["yak", "root"], text=True).strip()
 
 
 def write_lockfile(lockfile, lockfile_out):
@@ -28,7 +28,7 @@ def write_lockfile(lockfile, lockfile_out):
 def write_targets(update_label, lock_generate, conan_generate, targets_out):
     header = """\
 # {at}generated
-# Update using `buck2 run {update_label}`
+# Update using `yak run {update_label}`
 
 load(
     "@prelude//toolchains/conan:defs.bzl",

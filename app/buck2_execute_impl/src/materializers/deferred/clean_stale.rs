@@ -654,7 +654,7 @@ impl CleanStaleArtifactsCommand {
                     )
                 })?;
 
-            // Entries in the db should have been found in buck-out, return error and skip cleaning untracked artifacts.
+            // Entries in the db should have been found in yak-out, return error and skip cleaning untracked artifacts.
             if !materializer_state.is_empty() {
                 let state_error = CleanStaleError {
                     db_size: materializer_state.len(),

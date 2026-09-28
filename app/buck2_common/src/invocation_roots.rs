@@ -30,7 +30,7 @@ use crate::invocation_paths_result::InvocationPathsResult;
 #[derive(Debug, buck2_error::Error)]
 enum BuckCliError {
     #[error(
-        "Couldn't find a buck project root for directory `{}`. Expected to find a .buckconfig file.", _0.path().display()
+        "Couldn't find a project root for directory `{}`. Expected to find a .yakconfig file.", _0.path().display()
     )]
     #[buck2(tag = NoBuckRoot)]
     NoBuckRoot(AbsWorkingDir),
@@ -44,7 +44,7 @@ pub struct InvocationRoots {
 
 impl InvocationRoots {
     pub fn common_buckd_dir(&self) -> buck2_error::Result<AbsNormPathBuf> {
-        Ok(home_buck_dir()?.join(FileName::unchecked_new("buckd")))
+        Ok(home_buck_dir()?.join(FileName::unchecked_new("yakd")))
     }
 
     pub fn paranoid_info_path(&self) -> buck2_error::Result<AbsPathBuf> {
@@ -63,19 +63,19 @@ impl InvocationRoots {
 /// Finds the project root.
 ///
 /// This uses a rather liberal definition of "roots". It traverses the directory and its parents
-/// looking for all .buckconfig files and the furthest one (with the shortest path) will be detected
+/// looking for all .yakconfig files and the furthest one (with the shortest path) will be detected
 /// as the "project root".
 ///
-/// We also look for .buckroot files, and if we find one of them, we don't traverse further upwards.
-/// The contents of the .buckroot file is entirely ignored.
+/// We also look for .yakroot files, and if we find one of them, we don't traverse further upwards.
+/// The contents of the .yakroot file is entirely ignored.
 fn get_roots(from: &AbsWorkingDir) -> buck2_error::Result<Option<InvocationRoots>> {
     let mut project_root = None;
 
     let home_dir = dirs::home_dir();
     for curr in from.path().ancestors() {
-        if fs_util::try_exists(curr.join(FileName::unchecked_new(".buckconfig")))? {
+        if fs_util::try_exists(curr.join(FileName::unchecked_new(".yakconfig")))? {
             // Do not allow /home/{unixname}, /home or / to be a cell,
-            // and /home/{unixname}/.buckconfig is used for config override
+            // and /home/{unixname}/.yakconfig is used for config override
             if let Some(home_dir_path) = &home_dir {
                 if home_dir_path == curr.as_path() {
                     break;
@@ -84,7 +84,7 @@ fn get_roots(from: &AbsWorkingDir) -> buck2_error::Result<Option<InvocationRoots
             project_root = Some(curr.to_owned());
         }
 
-        if fs_util::try_exists(curr.join(FileName::unchecked_new(".buckroot")))? {
+        if fs_util::try_exists(curr.join(FileName::unchecked_new(".yakroot")))? {
             break;
         }
     }
@@ -123,8 +123,8 @@ pub fn get_invocation_paths_result(
     }
 }
 
-/// `~/.buck`.
-/// TODO(cjhopman): We currently place all buckd info into a directory owned by the user.
+/// `~/.yak`.
+/// TODO(cjhopman): We currently place all yakd info into a directory owned by the user.
 /// This is broken when multiple users try to share the same checkout.
 ///
 /// **This is different than the behavior of buck1.**
@@ -135,19 +135,19 @@ pub fn get_invocation_paths_result(
 ///
 /// There's a couple ways we could resolve this:
 ///
-/// 1. Use a shared .buckd information directory and have the client verify the identity of
+/// 1. Use a shared .yakd information directory and have the client verify the identity of
 ///    the server before doing anything with it. If the identity is different, kill it and
 ///    start a new one.
 ///
-/// 2. Keep user-owned .buckd directory, use some other mechanism to move ownership of
-///    output directories between different buckd instances.
+/// 2. Keep user-owned .yakd directory, use some other mechanism to move ownership of
+///    output directories between different yakd instances.
 pub(crate) fn home_buck_dir() -> buck2_error::Result<&'static AbsNormPath> {
     fn find_dir() -> buck2_error::Result<AbsNormPathBuf> {
         let home = buck2_wrapper_common::buck2_home_dir()
             .internal_error("Expected a HOME directory to be available")?;
         let home =
             AbsNormPathBuf::new(home).buck_error_context("Expected an absolute HOME directory")?;
-        Ok(home.join(FileName::new(".buck")?))
+        Ok(home.join(FileName::new(".yak")?))
     }
 
     static DIR: LazyLock<buck2_error::Result<AbsNormPathBuf>> = LazyLock::new(find_dir);

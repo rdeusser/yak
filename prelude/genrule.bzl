@@ -23,7 +23,7 @@ GENRULE_OUT_DIR = "out"
 # rule implementations in v2, rather then using `genrule`s.
 # TODO: Roll out root based genrules everywhere and flip the default to get rid of this logic.
 _BUILD_ROOT_LABELS = set([
-    # The buck2 test suite
+    # The yak test suite
     "buck2_test_build_root",
     "rust_bindgen",
     "haskell_hsc",
@@ -79,7 +79,7 @@ def genrule_attributes() -> dict[str, Attr]:
         "repo_relative_root": attrs.bool(
             default = False,
             doc = """
-            If true, the genrule will be executed from the project root, instead of in the genrule location in buck-out.
+            If true, the genrule will be executed from the project root, instead of in the genrule location in yak-out.
             Helps with long paths issues on windows with deeply nested directories, which will usually have long relative paths as inputs.
             Should eventually default to true.
         """,

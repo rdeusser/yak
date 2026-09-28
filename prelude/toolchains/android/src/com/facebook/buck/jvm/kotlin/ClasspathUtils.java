@@ -96,10 +96,10 @@ public class ClasspathUtils {
 
   public static boolean assertValidClasspathsPattern(AbsPath absPath) {
     String path = absPath.toString();
-    if (!(path.endsWith(".jar") || path.endsWith(".zip") || path.contains("buck-out/"))) {
+    if (!(path.endsWith(".jar") || path.endsWith(".zip") || path.contains("yak-out/"))) {
       throw new AssertionError(
           String.format(
-              "classpath %s is not supported, only jar, zip file or a directory inside `buck-out/`"
+              "classpath %s is not supported, only jar, zip file or a directory inside `yak-out/`"
                   + " are allowed",
               path));
     }

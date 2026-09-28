@@ -249,13 +249,13 @@ pub struct InvocationRecorder {
     action_intervals: Vec<ActionInterval>,
     // Track executor stage types by span ID to know which counter to decrement on end
     executor_stages_by_span: BuckMutMap<u64, ExecutorStageType>,
-    // Track maximum buck2 daemon anon memory usage
+    // Track maximum yak daemon anon memory usage
     memory_max_anon_allprocs: Option<u64>,
-    // Track maximum buck2 forkserver anon memory usage
+    // Track maximum yak forkserver anon memory usage
     memory_max_anon_forkserver_actions: Option<u64>,
-    // Track maximum total buck2 daemon memory usage (anon+file+kernel)
+    // Track maximum total yak daemon memory usage (anon+file+kernel)
     memory_max_total_allprocs: Option<u64>,
-    // Track maximum total buck2 forkserver memory usage (anon+file+kernel)
+    // Track maximum total yak forkserver memory usage (anon+file+kernel)
     memory_max_total_forkserver_actions: Option<u64>,
     // Track peak allprocs swap usage (bytes)
     memory_max_swap_bytes_allprocs: Option<u64>,
@@ -612,8 +612,8 @@ impl InvocationRecorder {
                 // Add stderr to GRPC connection errors if available
                 let error = classify_server_stderr(error, &self.server_stderr);
                 let error = if self.server_stderr.is_empty() {
-                    let error = error.context("buckd stderr is empty");
-                    // Likely buckd received SIGKILL, may be due to memory pressure
+                    let error = error.context("yakd stderr is empty");
+                    // Likely yakd received SIGKILL, may be due to memory pressure
                     if self.tags.iter().any(|s| s == MEMORY_PRESSURE_TAG) {
                         error
                             .context("memory pressure detected")
@@ -624,7 +624,7 @@ impl InvocationRecorder {
                 } else {
                     // Truncate the daemon's stderr but keep the error message whole.
                     let server_stderr = truncate_stderr(&self.server_stderr);
-                    error.context(format!("buckd stderr:\n{server_stderr}"))
+                    error.context(format!("yakd stderr:\n{server_stderr}"))
                 };
                 (&error).into()
             } else {
@@ -1871,7 +1871,7 @@ impl InvocationRecorder {
             self.update_peak_system_load(elapsed, unix_stats.load1, unix_stats.load5);
         }
 
-        // Track maximum buck2 daemon memory usage from cgroup
+        // Track maximum yak daemon memory usage from cgroup
         if let Some(allprocs_cgroup) = &update.allprocs_cgroup {
             self.memory_max_anon_allprocs =
                 max(self.memory_max_anon_allprocs, Some(allprocs_cgroup.anon));
@@ -1898,7 +1898,7 @@ impl InvocationRecorder {
             );
         }
 
-        // Track maximum buck2 forkserver memory usage from cgroup
+        // Track maximum yak forkserver memory usage from cgroup
         if let Some(forkserver_actions_cgroup) = &update.forkserver_actions_cgroup {
             self.memory_max_anon_forkserver_actions = max(
                 self.memory_max_anon_forkserver_actions,

@@ -154,7 +154,7 @@ impl Display for AllTargetsDisplay {
         if self.total_count > self.targets.len() {
             writeln!(
                 f,
-                "\n\nTo see all {} targets, run:\n  buck2 uquery --reuse-current-config {}:\n",
+                "\n\nTo see all {} targets, run:\n  yak uquery --reuse-current-config {}:\n",
                 self.total_count, self.package
             )?;
         }
@@ -250,7 +250,7 @@ impl MissingTargets {
 #[derive(Debug, Allocative, Pagable)]
 pub struct EvaluationResult {
     /// The buildfile path that corresponds to this result.
-    /// unlike a .bzl file, a build file (BUCK, TARGETS, etc) will only be loaded in
+    /// unlike a .bzl file, a build file (`YAK` by default) will only be loaded in
     /// its own cell, so we don't need a full ImportPath here.
     buildfile_path: Arc<BuildFilePath>,
     imports: Vec<ImportPath>,
@@ -258,7 +258,7 @@ pub struct EvaluationResult {
     targets: TargetsMap,
     #[pagable(discard = "None")]
     pub starlark_profile: Option<Arc<dyn StarlarkProfileDataAndStatsDyn>>,
-    /// Peak allocated bytes on the starlark heap during BUCK file evaluation.
+    /// Peak allocated bytes on the starlark heap during YAK file evaluation.
     pub starlark_peak_allocated_bytes: u64,
 }
 
@@ -382,9 +382,9 @@ impl EvaluationResult {
 #[derive(Debug)]
 pub struct EvaluationResultWithStats {
     pub result: EvaluationResult,
-    // Peak allocated memory in starlark mutable heap during evaluation of BUCK file
+    // Peak allocated memory in starlark mutable heap during evaluation of YAK file
     pub starlark_peak_allocated_bytes: u64,
-    /// Instruction count during evaluation of `BUCK` file.
+    /// Instruction count during evaluation of `YAK` file.
     pub cpu_instruction_count: Option<u64>,
     /// Starlark tick count (function calls + loop backedges) during evaluation.
     pub starlark_tick_count: u64,

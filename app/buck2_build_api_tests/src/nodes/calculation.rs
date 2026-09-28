@@ -124,7 +124,7 @@ async fn test_get_node() -> buck2_error::Result<()> {
     let eval_result = EvaluationResult::new(
         Arc::new(BuildFilePath::new(
             pkg.dupe(),
-            FileNameBuf::unchecked_new("BUCK"),
+            FileNameBuf::unchecked_new("YAK"),
         )),
         Vec::new(),
         SuperPackage::empty::<SuperPackageValuesImpl>()?,

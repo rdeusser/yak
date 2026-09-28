@@ -45,9 +45,9 @@ async def test_inactivity_timeout(buck: Buck) -> None:
         time.sleep(1)
         if not daemon_is_alive(pid):
             result = await buck.status()
-            assert "no buckd running" == result.stderr.splitlines()[-1]
+            assert "no yakd running" == result.stderr.splitlines()[-1]
 
-            stderr = (daemon_dir / "buckd.stderr").read_text()
+            stderr = (daemon_dir / "yakd.stderr").read_text()
             assert "inactivity timeout elapsed" in stderr
             return
 
@@ -58,8 +58,8 @@ async def test_inactivity_timeout(buck: Buck) -> None:
 async def test_server_endpoint_output(buck: Buck) -> None:
     result = await buck.server()
     stdout = result.stdout.strip()
-    assert stdout.startswith("buckd.endpoint=")
-    assert stdout.removeprefix("buckd.endpoint=")
+    assert stdout.startswith("yakd.endpoint=")
+    assert stdout.removeprefix("yakd.endpoint=")
 
 
 @buck_test()
@@ -94,7 +94,7 @@ async def test_corrupted_buckd_info(buck: Buck, corrupt: str) -> None:
     await buck.targets("//:rule")
 
     daemon_dir = await buck.get_daemon_dir()
-    with open(f"{daemon_dir}/buckd.info") as f:
+    with open(f"{daemon_dir}/yakd.info") as f:
         # Check file exists and valid.
         json.load(f)
 
@@ -102,7 +102,7 @@ async def test_corrupted_buckd_info(buck: Buck, corrupt: str) -> None:
     # around.
     await buck.kill()
 
-    with open(f"{daemon_dir}/buckd.info", "w") as f:
+    with open(f"{daemon_dir}/yakd.info", "w") as f:
         f.write(corrupt)
 
     await buck.targets("//:rule")
@@ -110,30 +110,30 @@ async def test_corrupted_buckd_info(buck: Buck, corrupt: str) -> None:
 
 @buck_test()
 async def test_recovers_when_daemon_pid_cannot_be_killed(buck: Buck) -> None:
-    # A stale buckd.info can name a pid we cannot kill (e.g. one reused by a
+    # A stale yakd.info can name a pid we cannot kill (e.g. one reused by a
     # process owned by another user). Buck must report the failed kill and start
-    # a fresh daemon rather than aborting, which used to leave buckd.info in
+    # a fresh daemon rather than aborting, which used to leave yakd.info in
     # place so every later invocation failed the same way.
     await buck.targets("//:rule")
 
     daemon_dir = await buck.get_daemon_dir()
-    with open(f"{daemon_dir}/buckd.info") as f:
+    with open(f"{daemon_dir}/yakd.info") as f:
         info = json.load(f)
 
     # Kill the daemon so its endpoint stops accepting connections, forcing the
     # next invocation down the "could not connect, killing daemon" path.
     await buck.kill()
 
-    # Point buckd.info at a pid that hard_kill_until cannot kill. An out-of-range
+    # Point yakd.info at a pid that hard_kill_until cannot kill. An out-of-range
     # pid fails the kill deterministically on every platform, standing in for the
     # reused/foreign pid from the original bug report.
     info["pid"] = 9999999999999
-    with open(f"{daemon_dir}/buckd.info", "w") as f:
+    with open(f"{daemon_dir}/yakd.info", "w") as f:
         json.dump(info, f)
 
     # Recovers by starting a new daemon; this used to fail to connect entirely.
     result = await buck.targets("//:rule")
-    assert "Failed to kill buckd" in result.stderr
+    assert "Failed to kill yakd" in result.stderr
 
 
 @buck_test()
@@ -145,10 +145,10 @@ async def test_process_title(buck: Buck) -> None:
 
     if platform.system() == "Darwin":
         out = subprocess.check_output(["ps", "-o", "comm=", str(pid)]).strip()
-        assert out.startswith(b"buck2d[")
+        assert out.startswith(b"yakd[")
     elif platform.system() == "Linux":
         out = subprocess.check_output(["ps", "-o", "cmd=", str(pid)]).strip()
-        assert out.startswith(b"buck2d[")
+        assert out.startswith(b"yakd[")
     elif platform.system() == "Windows":
         # We guarantee no value there.
         pass
@@ -222,7 +222,7 @@ async def test_status_all(buck: Buck) -> None:
         if status["process_info"]["pid"] == pid:
             return
     raise Exception(
-        f"buckd status for pid {pid} not found in {json.dumps(status_all, indent=2)}"
+        f"yakd status for pid {pid} not found in {json.dumps(status_all, indent=2)}"
     )
 
 
@@ -239,7 +239,7 @@ async def test_buck_out_is_cache_dir(buck: Buck) -> None:
     await buck.targets(":")  # Start a daemon
     root = await buck.root()
     assert (
-        (Path(root.stdout.strip()) / "buck-out" / "v2" / "CACHEDIR.TAG")
+        (Path(root.stdout.strip()) / "yak-out" / "v2" / "CACHEDIR.TAG")
         .read_text(encoding="utf-8")
         .startswith("Signature: 8a477f597d28d172789f06886806bc55")
     )
@@ -260,7 +260,7 @@ async def test_prev_daemon_dir(buck: Buck) -> None:
     new_daemon_stderr = await buck.daemon_stderr()
     killed_daemon_stderr = await buck.prev_daemon_stderr()
 
-    # check logs contain buckd pid and don't match
+    # check logs contain yakd pid and don't match
     assert extract_pid(new_daemon_stderr) != extract_pid(killed_daemon_stderr)
 
     assert "triggered shutdown: `buck kill` was invoked" in killed_daemon_stderr
@@ -270,7 +270,7 @@ async def test_prev_daemon_dir(buck: Buck) -> None:
 @env("BUCK2_TESTING_INACTIVITY_TIMEOUT", "true")
 @env("BUCKD_STARTUP_INIT_TIMEOUT", "20")
 async def test_recovers_promptly_after_inactivity_shutdown(buck: Buck) -> None:
-    # A daemon that retires on its inactivity timeout leaves buckd.info behind
+    # A daemon that retires on its inactivity timeout leaves yakd.info behind
     # naming a pid that is gone. The next invocation must notice that quickly and
     # start a fresh daemon; it used to be suspected of spending the whole startup
     # budget here, which would turn an idle daemon into a 90s CLIENT_STARTUP_TIMEOUT.
@@ -285,14 +285,14 @@ async def test_recovers_promptly_after_inactivity_shutdown(buck: Buck) -> None:
     else:
         raise AssertionError(f"Server with pid {pid} did not die in 20 seconds")
 
-    assert "inactivity timeout elapsed" in (daemon_dir / "buckd.stderr").read_text()
-    assert (daemon_dir / "buckd.info").exists(), "stale buckd.info is the point"
+    assert "inactivity timeout elapsed" in (daemon_dir / "yakd.stderr").read_text()
+    assert (daemon_dir / "yakd.info").exists(), "stale yakd.info is the point"
 
     start = time.time()
     result = await buck.targets("//:rule")
     elapsed = time.time() - start
 
-    assert "buck2 daemon is not running" in result.stderr, result.stderr
+    assert "yak daemon is not running" in result.stderr, result.stderr
     # Well inside the 20s budget. A regression into the timeout path fails the
     # command outright, so this only guards against getting slow but succeeding.
     assert elapsed < 15.0, f"took {elapsed:.2f}s to recover"
@@ -316,7 +316,7 @@ async def test_inactivity_shutdown_exits_with_a_command_in_flight(buck: Buck) ->
             time.sleep(1)
             if (
                 "inactivity timeout elapsed"
-                in (daemon_dir / "buckd.stderr").read_text()
+                in (daemon_dir / "yakd.stderr").read_text()
             ):
                 break
         else:
@@ -331,7 +331,7 @@ async def test_inactivity_shutdown_exits_with_a_command_in_flight(buck: Buck) ->
                 f"daemon {pid} announced shutdown but is still alive with a command in flight"
             )
 
-        assert "Shutdown deadline exceeded" in (daemon_dir / "buckd.stderr").read_text()
+        assert "Shutdown deadline exceeded" in (daemon_dir / "yakd.stderr").read_text()
     finally:
         # Exiting tears the stream down under the subscriber, so it reports a
         # broken connection. That is the deliberate trade: the command is

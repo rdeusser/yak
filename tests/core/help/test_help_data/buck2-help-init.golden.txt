@@ -1,8 +1,8 @@
 # This file is @generated, regenerate by rerunning the test with `BUCK2_UPDATE_GOLDEN=1` set
 
-Initialize a buck2 project
+Initialize a yak project
 
-Usage: buck2 init [OPTIONS] [PATH]
+Usage: yak init [OPTIONS] [PATH]
 
 Arguments:
   [PATH]
@@ -38,7 +38,7 @@ Console Options:
           Accepts a comma-separated list of superconsole components to add. Possible values are:
 
           dice - shows information about evaluated dice nodes debugevents - shows information about
-          the flow of events from buckd
+          the flow of events from yakd
 
           These components can be turned on/off interactively. Press 'h' for help when superconsole
           is active.
@@ -56,9 +56,8 @@ Console Options:
 
 Universal Options:
       --isolation-dir <ISOLATION_DIR>
-          The name of the directory that Buck2 creates within buck-out for writing outputs and
-          daemon information. If one is not provided, Buck2 creates a directory with the default
-          name.
+          The name of the directory that Buck2 creates within yak-out for writing outputs and daemon
+          information. If one is not provided, Buck2 creates a directory with the default name.
 
           Instances of Buck2 share a daemon if and only if their isolation directory is identical.
           The isolation directory also influences the output paths provided by Buck2, and as a

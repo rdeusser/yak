@@ -1,0 +1,8 @@
+[buildfile]
+name=YAK.fixture
+
+[repositories]
+prelude = .
+
+[buck2]
+check_starlark_peak_memory = true

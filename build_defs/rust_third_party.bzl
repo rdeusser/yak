@@ -5,7 +5,7 @@
 # License, Version 2.0 found in the LICENSE-APACHE file in the root directory
 # of this source tree.
 
-"""Rules for the targets that `reindeer buckify` generates in `third-party/rust/BUCK`."""
+"""Rules for the targets that `reindeer buckify` generates in `third-party/rust/YAK`."""
 
 load("@prelude//rust:cargo_package.bzl", "cargo", "get_reindeer_platforms")
 load("@prelude//utils:selects.bzl", "selects")

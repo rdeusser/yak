@@ -11,7 +11,7 @@ Buck2 is a build system whose core is written in Rust. Starlark, which is a
 deterministic, immutable version of Python, is used to extend the Buck2 build
 system, enabling Buck2 to be language-agnostic.
 
-The high-level flow starts with a user creating a build file (a `BUCK` file)
+The high-level flow starts with a user creating a build file (a `YAK` file)
 containing one or more targets, which is specified by the target label, its
 inputs (sources, attributes, configurations, and dependencies), and the type of
 macro or rule to use.
@@ -43,7 +43,7 @@ The Buck2 CLI runs in a client process, which sends commands to the Buck2 daemon
 via gRPC. The daemon goes through several phases after receiving a request from
 the client: **evaluation, configuration, analysis, execution, and
 materialization** (see [Execution Model](#execution-model), below). When using
-`buck2 test`, there is a final stage for **testing**. Note that these are the
+`yak test`, there is a final stage for **testing**. Note that these are the
 phases that a build goes through, but they are not always sequential.
 
 After finishing all phases, the daemon will send the response back to the client
@@ -61,13 +61,13 @@ following sub-sections.
 
 ### State 0 - Build Files
 
-Build files (commonly referred to as `BUCK` files, their default name) are the
+Build files (commonly referred to as `YAK` files, their default name) are the
 main input to Buck2 and are syntactically Python.
 
 Each build file is uniquely identified by the directory in which it's located.
 Since all build files have the same name, there cannot be two build files in the
 same directory. This is usually represented as the relative path from the root
-of the project (the directory where the .buckconfig file is).
+of the project (the directory where the .yakconfig file is).
 
 Each build file has a set of targets. These describe the things the user wants
 Buck2 to know about. Each target has a type and a set of named attributes,
@@ -161,7 +161,7 @@ If there is a cache miss, the action needs to be run either remotely or locally.
 If Buck2 decides to run the action remotely, it will first upload all of the
 action's inputs that are missing from the RE's content addressable storage. If
 Buck2 decides to run the action locally, it will first download and materialize
-in `buck-out` all of the action's inputs. These inputs might be outputs of other
+in `yak-out` all of the action's inputs. These inputs might be outputs of other
 actions and are stored in RE's content addressable storage but are missing on
 the local machine. Only after those steps will Buck2 schedule the action for
 actual execution.
@@ -171,7 +171,7 @@ process known as racing), and use the result of whichever action finishes first
 to speed up performance. This strategy is known as **hybrid execution**."
 
 Materialization of action outputs (which involves downloading and placing them
-in the correct location in `buck-out`) can be done immediately after the action
+in the correct location in `yak-out`) can be done immediately after the action
 has finished executing. Alternatively, it can be deferred until it is actually
 needed for the local execution of another action. There are various
 configurations that a user can set to control how this materialization is
@@ -181,7 +181,7 @@ handled.
 
 At this point, the build is complete.
 
-If a user ran `buck2 test`, then there is a final transformation for Buck2 to
+If a user ran `yak test`, then there is a final transformation for Buck2 to
 construct a command for the test runner to execute the actual test.
 
 ### Phase E: Execute tests

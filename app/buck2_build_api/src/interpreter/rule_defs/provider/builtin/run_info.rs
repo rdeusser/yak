@@ -40,15 +40,15 @@ use crate::interpreter::rule_defs::cmd_args::value_as::ValueAsCommandLineLike;
 /// Provider that signals a rule is runnable and defines how to execute it.
 ///
 /// `RunInfo` marks a target as executable and specifies how to run it. When a target
-/// provides `RunInfo`, it can be executed with `buck2 run <target>`. The provider wraps the
+/// provides `RunInfo`, it can be executed with `yak run <target>`. The provider wraps the
 /// command-line arguments that define the executable and its parameters.
 ///
 /// # Usage
 ///
 /// To run a target with `RunInfo`:
 /// ```bash
-/// buck2 run <target>                    # Run with the args specified in RunInfo
-/// buck2 run <target> -- [extra args]    # Pass additional args after '--' to the command
+/// yak run <target>                    # Run with the args specified in RunInfo
+/// yak run <target> -- [extra args]    # Pass additional args after '--' to the command
 /// ```
 /// ## Examples
 ///

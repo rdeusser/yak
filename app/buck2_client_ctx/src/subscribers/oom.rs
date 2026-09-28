@@ -22,7 +22,7 @@ use regex::Regex;
 
 static KERNEL_OOM_VICTIM_RE: LazyLock<Regex> = LazyLock::new(|| {
     Regex::new(
-        r"(?:Out of memory|Memory cgroup out of memory): Killed process (\d+) \(buck2(?:-daemon)?\)",
+        r"(?:Out of memory|Memory cgroup out of memory): Killed process (\d+) \(yak(?:-daemon)?\)",
     )
     .unwrap()
 });
@@ -289,7 +289,7 @@ fn hash_component(s: &str) -> u64 {
     hasher.finish()
 }
 
-/// Pre-computed view of a buck2 daemon cgroup path used to test dmesg lines
+/// Pre-computed view of a yak daemon cgroup path used to test dmesg lines
 /// against many candidate killed cgroups without re-splitting or re-hashing
 /// `buck2_cgroup` each time.
 struct Buck2CgroupMatcher<'a> {
@@ -324,16 +324,16 @@ impl<'a> Buck2CgroupMatcher<'a> {
     }
 
     /// Check whether a proper suffix of `killed`'s path with at least two
-    /// components equals a prefix of this buck2 cgroup's path components.
+    /// components equals a prefix of this yak cgroup's path components.
     /// This is the case when oomd from the physical host kills `killed`
-    /// while the buck2 daemon (or one of its ancestors) is observed inside a
+    /// while the yak daemon (or one of its ancestors) is observed inside a
     /// (possibly nested) cgroup namespace mounted under `killed`.
     ///
     /// Uses pre-computed prefix hashes of `self.components` to skip the
     /// slice-equality check on candidates whose hash does not match.
     fn prefix_matches_suffix(&self, killed: &[&str]) -> bool {
         // i must satisfy 1 <= i < n (non-empty proper suffix) and n - i <= m
-        // (suffix length cannot exceed the buck2 prefix it is compared to).
+        // (suffix length cannot exceed the yak prefix it is compared to).
         let start = killed.len().saturating_sub(self.components.len()).max(1);
         // Iterate i from largest to smallest so we can extend `killed[i..]` by
         // one component each step via `f(i) = h(killed[i]) + BASE * f(i+1)`,
@@ -368,7 +368,7 @@ fn parse_kernel_oom_victim_pid(line: &str) -> Option<i64> {
 /// Parse an oomd kill line to extract the cgroup path.
 ///
 /// Input format: `[timestamp] oomd kill: <pressure1> <pressure2> <pressure3> <cgroup_path> <size> ruleset:[...] ...`
-/// Returns the cgroup path, e.g. `user.slice/.../buck2_daemon....scope`.
+/// Returns the cgroup path, e.g. `user.slice/.../yak-daemon....scope`.
 fn parse_oomd_kill_cgroup(line: &str) -> Option<&str> {
     let caps = OOMD_KILL_RE.captures(line)?;
     Some(caps.get(1)?.as_str())
@@ -377,7 +377,7 @@ fn parse_oomd_kill_cgroup(line: &str) -> Option<&str> {
 /// Parse a systemd-oomd kill line to extract the cgroup path.
 ///
 /// Input format: `[timestamp] Killed /<cgroup_path> due to memory pressure for /<monitored_cgroup> being ...`
-/// Returns the killed cgroup path without leading `/`, e.g. `system.slice/buck2_daemon....scope`.
+/// Returns the killed cgroup path without leading `/`, e.g. `system.slice/yak-daemon....scope`.
 fn parse_systemd_oomd_kill_cgroup(line: &str) -> Option<&str> {
     let caps = SYSTEMD_OOMD_KILL_RE.captures(line)?;
     let path = caps.get(1)?.as_str();
@@ -399,36 +399,36 @@ mod tests {
 
     #[test]
     fn test_oomd_cgroup_must_contain_daemon() {
-        let daemon =
-            "user.slice/user-190155.slice/user@190155.service/buck2.slice/buck2_daemon.scope";
+        let daemon = "user.slice/user-190155.slice/user@190155.service/yak.slice/yak_daemon.scope";
         let matcher = Buck2CgroupMatcher::new(daemon);
 
         assert!(matcher.killed_cgroup_contains_daemon(daemon));
         assert!(matcher.killed_cgroup_contains_daemon(
-            "user.slice/user-190155.slice/user@190155.service/buck2.slice"
+            "user.slice/user-190155.slice/user@190155.service/yak.slice"
         ));
         assert!(!matcher.killed_cgroup_contains_daemon(
-            "user.slice/user-190155.slice/user@190155.service/buck2.slice/buck2_daemon.scope/child"
+            "user.slice/user-190155.slice/user@190155.service/yak.slice/yak_daemon.scope/child"
         ));
         assert!(!matcher.killed_cgroup_contains_daemon(
-            "user.slice/user-190155.slice/user@190155.service/buck2.slice/buck2_daemon.scope_sibling"
+            "user.slice/user-190155.slice/user@190155.service/yak.slice/yak_daemon.scope_sibling"
         ));
     }
 
     #[test]
     fn test_oomd_cgroup_namespace_prefix_contains_daemon() {
-        let daemon = "task/user.slice/user-29230.slice/user@29230.service/buck2.slice/buck2_daemon.scope/daemon";
+        let daemon =
+            "task/user.slice/user-29230.slice/user@29230.service/yak.slice/yak_daemon.scope/daemon";
         let matcher = Buck2CgroupMatcher::new(daemon);
 
         assert!(matcher.killed_cgroup_contains_daemon(
-            "workload.slice/workload-container.slice/task/user.slice/user-29230.slice/user@29230.service/buck2.slice"
+            "workload.slice/workload-container.slice/task/user.slice/user-29230.slice/user@29230.service/yak.slice"
         ));
         assert!(matcher.killed_cgroup_contains_daemon(
-            "workload.slice/workload-container.slice/task/user.slice/user-29230.slice/user@29230.service/buck2.slice/buck2_daemon.scope/daemon"
+            "workload.slice/workload-container.slice/task/user.slice/user-29230.slice/user@29230.service/yak.slice/yak_daemon.scope/daemon"
         ));
         assert!(!matcher.killed_cgroup_contains_daemon("unrelated.slice/task"));
         assert!(!matcher.killed_cgroup_contains_daemon(
-            "workload.slice/workload-container.slice/sometask/user.slice/user-29230.slice/user@29230.service/buck2.slice"
+            "workload.slice/workload-container.slice/sometask/user.slice/user-29230.slice/user@29230.service/yak.slice"
         ));
         assert!(!matcher.killed_cgroup_contains_daemon(
             "workload.slice/workload-container.slice/system.slice/some-other.service"
@@ -437,9 +437,9 @@ mod tests {
 
     #[test]
     fn test_systemd_oomd_match_returns_source() {
-        let cgroup = "user.slice/buck2.slice/buck2_daemon.scope";
+        let cgroup = "user.slice/yak.slice/yak_daemon.scope";
         let lower_bound = Duration::from_secs(100);
-        let line = "<6>[101.000000] Killed /user.slice/buck2.slice/buck2_daemon.scope due to memory pressure for /user.slice being 76.55% > 70.00%";
+        let line = "<6>[101.000000] Killed /user.slice/yak.slice/yak_daemon.scope due to memory pressure for /user.slice being 76.55% > 70.00%";
 
         assert!(matches!(
             find_matching_oom_kill(line, UNMATCHED_DAEMON_PID, Some(cgroup), lower_bound),
@@ -492,10 +492,10 @@ mod tests {
 
     #[test]
     fn test_oomd_match_is_after_lower_bound() {
-        let cgroup = "user.slice/buck2.slice/buck2_daemon.scope";
+        let cgroup = "user.slice/yak.slice/yak_daemon.scope";
         let lower_bound = Duration::from_secs(100);
-        let stale_oom = "<6>[99.999999] oomd kill: 81.28 80.05 42.78 user.slice/buck2.slice/buck2_daemon.scope 1000 ruleset:[test]";
-        let unparseable_oom = "<6>[Thu Jan 1 00:00:00 2025] oomd kill: 81.28 80.05 42.78 user.slice/buck2.slice/buck2_daemon.scope 1000 ruleset:[test]";
+        let stale_oom = "<6>[99.999999] oomd kill: 81.28 80.05 42.78 user.slice/yak.slice/yak_daemon.scope 1000 ruleset:[test]";
+        let unparseable_oom = "<6>[Thu Jan 1 00:00:00 2025] oomd kill: 81.28 80.05 42.78 user.slice/yak.slice/yak_daemon.scope 1000 ruleset:[test]";
         let unrelated_current_oom = "<6>[101.000000] oomd kill: 81.28 80.05 42.78 system.slice/unrelated.scope 1000 ruleset:[test]";
         let dmesg = format!("{stale_oom}\n{unparseable_oom}\n{unrelated_current_oom}");
 
@@ -504,7 +504,7 @@ mod tests {
             find_matching_oom_kill(&dmesg, UNMATCHED_DAEMON_PID, Some(cgroup), lower_bound)
         );
 
-        let current_oom = "<6>[100.000000] oomd kill: 81.28 80.05 42.78 user.slice/buck2.slice/buck2_daemon.scope 1000 ruleset:[test]";
+        let current_oom = "<6>[100.000000] oomd kill: 81.28 80.05 42.78 user.slice/yak.slice/yak_daemon.scope 1000 ruleset:[test]";
         assert!(matches!(
             find_matching_oom_kill(current_oom, UNMATCHED_DAEMON_PID, Some(cgroup), lower_bound),
             Some(OomEvidence::OomdCgroup { cgroup: matched, .. }) if matched == cgroup
@@ -514,11 +514,11 @@ mod tests {
     #[test]
     fn test_kernel_oom_requires_daemon_victim_pid_and_comm() {
         let lower_bound = Duration::from_secs(100);
-        let triggering_task = "<6>[100.000000] oom-kill:constraint=CONSTRAINT_MEMCG,task_memcg=/user.slice/buck2.slice/buck2_daemon.scope,task=buck2,pid=1234,uid=1000";
-        let wrong_pid_victim = "<6>[100.500000] Memory cgroup out of memory: Killed process 5678 (buck2) total-vm:1000kB";
+        let triggering_task = "<6>[100.000000] oom-kill:constraint=CONSTRAINT_MEMCG,task_memcg=/user.slice/yak.slice/yak_daemon.scope,task=yak,pid=1234,uid=1000";
+        let wrong_pid_victim = "<6>[100.500000] Memory cgroup out of memory: Killed process 5678 (yak) total-vm:1000kB";
         let wrong_comm_victim = "<6>[102.000000] Memory cgroup out of memory: Killed process 1234 (other) total-vm:1000kB";
-        let buck2_victim = "<6>[103.000000] Memory cgroup out of memory: Killed process 1234 (buck2) total-vm:1000kB";
-        let buck2_daemon_victim = "<6>[104.000000] Memory cgroup out of memory: Killed process 1234 (buck2-daemon) total-vm:1000kB";
+        let buck2_victim = "<6>[103.000000] Memory cgroup out of memory: Killed process 1234 (yak) total-vm:1000kB";
+        let buck2_daemon_victim = "<6>[104.000000] Memory cgroup out of memory: Killed process 1234 (yak-daemon) total-vm:1000kB";
 
         assert_eq!(
             None,

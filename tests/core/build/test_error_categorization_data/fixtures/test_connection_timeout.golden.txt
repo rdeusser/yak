@@ -5,7 +5,7 @@ Command failed: Failed to connect to buck daemon.
     daemon dir: <DAEMON_DIR>
     status: <missing>
 
-    Try running `rm -rf ~/.buck/buckd` and your command afterwards
+    Try running `rm -rf ~/.yak/yakd` and your command afterwards
 
 Caused by:
     0: Error connecting to the daemon, daemon stderr follows:

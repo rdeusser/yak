@@ -15,7 +15,7 @@ _cache_buster = read_config("test", "cache_buster", default = "")
 def _impl(ctx):
     usm_bin = ctx.actions.declare_output("usm.bin", has_content_based_path = False)
     ctx.actions.run(
-        # Copy the helper binary into buck-out so the action below can
+        # Copy the helper binary into yak-out so the action below can
         # run remotely
         cmd_args(
             "cp",

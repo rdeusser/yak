@@ -1,6 +1,6 @@
 ---
 id: daemon
-title: Daemon (buckd)
+title: Daemon (yakd)
 ---
 
 The first time that a Buck2 command is run, Buck2 starts a daemon process for
@@ -16,23 +16,23 @@ run multiple daemons in the same project by specifying an
 While it runs, the Buck daemon process monitors the project's file system for
 changes. The Buck daemon excludes from monitoring any subtrees of the project
 file system that are specified in the `[project].ignore` setting of
-`.buckconfig`.
+`.yakconfig`.
 
 You can see detailed information about the status of the daemon by running
-`buck2 status`.
+`yak status`.
 
 ## Killing or disabling the Buck daemon
 
-The Buck daemon process is killed if `buck2 clean` or `buck2 kill` commands are
+The Buck daemon process is killed if `yak clean` or `yak kill` commands are
 run. Note that they won't kill the daemon associated with custom isolation dirs.
 To do that, run using the `--isolation-dir` option
-(`buck2 --isolation-dir <dir> <command>`)
+(`yak --isolation-dir <dir> <command>`)
 
 The daemon is also killed when:
 
-- The `buck2 killall` command is run. By default it kills every buck2 process
+- The `yak killall` command is run. By default it kills every yak process
   on the machine. Pass `--in-isolation-dir <dir>` to kill only the processes
   that use that isolation dir, and `--repo` to kill only the processes that run
   in the current repository.
-- A command runs with a `buck2` binary of a different version than the daemon.
+- A command runs with a `yak` binary of a different version than the daemon.
   The client then restarts the daemon.

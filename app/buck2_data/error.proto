@@ -79,7 +79,7 @@ enum ErrorTag {
   CLIENT_GRPC = 4;
   CLIENT_STARTUP_TIMEOUT = 40;
   CLIENT_GRPC_STREAM = 41;
-  // Connect to buckd failed.
+  // Connect to yakd failed.
   DAEMON_CONNECT = 5;
   // Daemon is running another command.
   DAEMON_IS_BUSY = 501;
@@ -89,7 +89,7 @@ enum ErrorTag {
   DAEMON_STATE_INIT_FAILED = 503;
   DAEMON_STATUS = 504;
   DAEMON_REDIRECT = 505;
-  // The buck2 daemon's executable has been deleted from disk.
+  // The yak daemon's executable has been deleted from disk.
   BUCKD_EXE_DELETED = 506;
   DAEMON_STARTUP_FAILED = 507;
   EXIT_STATUS = 517;
@@ -125,7 +125,7 @@ enum ErrorTag {
   SERVER_JEMALLOC_ASSERT = 15;
   // Server transport errors. Eg. Channel not open
   SERVER_TRANSPORT_ERROR = 16;
-  // Internal error in buck2. This is a bug.
+  // Internal error in yak. This is a bug.
   INTERNAL_ERROR = 21;
   // Artifact projection to a path that does not exist
   PROJECT_MISSING_PATH = 22;
@@ -139,7 +139,7 @@ enum ErrorTag {
 
   // Build failed during materialization
   MATERIALIZATION_ERROR = 26;
-  // A path was missing while copying a file into buck-out during
+  // A path was missing while copying a file into yak-out during
   // materialization.
   MATERIALIZE_COPY_MISSING_FILE = 2601;
   // Could not find buck project root
@@ -173,7 +173,7 @@ enum ErrorTag {
   // artifact could not be fetched; the tool never ran.
   DOTSLASH_ERROR = 607;
 
-  // Errors during buck2 install.
+  // Errors during yak install.
   INSTALL = 200;
   INSTALL_ID_MISMATCH = 2110;
   INSTALLER_UNKNOWN = 2101;
@@ -313,7 +313,7 @@ enum ErrorTag {
   CLEAN_STALE = 280;
   // Clean stale command was interrupted
   CLEAN_INTERRUPT = 28;
-  // Errors while removing buck-out in `buck2 clean`
+  // Errors while removing yak-out in `yak clean`
   CLEAN_BUCK_OUT = 281;
 
   INVALID_ERROR_REPORT = 6002;
@@ -322,9 +322,9 @@ enum ErrorTag {
   INVALID_DIGEST = 6005;
   INVALID_DURATION = 6006;
   INVALID_ABS_PATH = 6008;
-  // Malformed buck-out path string
+  // Malformed yak-out path string
   INVALID_BUCK_OUT_PATH = 6009;
-  // Issue with buck-out dir on disk (ex. broken symlink, not a dir)
+  // Issue with yak-out dir on disk (ex. broken symlink, not a dir)
   INVALID_BUCK_OUT = 6010;
 
   // Build errors.
@@ -357,7 +357,7 @@ enum ErrorTag {
 
   CLEAN_OUTPUTS = 8017;
   COPY_OUTPUTS = 8029;
-  // Creating the unhashed (`buck-out/v2/gen`) symlink for a build output
+  // Creating the unhashed (`yak-out/v2/gen`) symlink for a build output
   UNHASHED_OUTPUT_SYMLINK = 8043;
   LOG_FILTER = 8030;
 
@@ -371,9 +371,9 @@ enum ErrorTag {
   NO_VALID_CERTS = 25;
   CERT_EXPIRED = 22001;
 
-  // Causes external to buck2, not specific to any one subsystem. Pair these
+  // Causes external to yak, not specific to any one subsystem. Pair these
   // with a tag identifying the subsystem that hit them.
-  // The directory buck2 was invoked from no longer exists
+  // The directory yak was invoked from no longer exists
   MISSING_WORKING_DIR = 23002;
 
   // Misc phases/subsystem tags
@@ -391,7 +391,7 @@ enum ErrorTag {
   // Reading the result file produced by a validation
   VALIDATION_RESULT_READ = 24000;
 
-  // `buck2 subscribe`
+  // `yak subscribe`
   // A `SubscriptionRequest` read from the client's stdin had no request set
   SUBSCRIPTION_EMPTY_REQUEST = 25000;
 
@@ -426,7 +426,7 @@ enum ErrorTag {
   E_PERM = 9101;
   E_AGAIN = 9111;
 
-  // From `buck2 debug crash`
+  // From `yak debug crash`
   CRASH_REQUESTED = 8022;
 
   // From ExitResult::bail

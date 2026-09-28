@@ -11,7 +11,7 @@ load("@prelude//android:min_sdk_version.bzl", "get_min_sdk_version_constraint_va
 load("@prelude//cfg/modifier:name.bzl", "cfg_name")
 load("@prelude//utils:expect.bzl", "expect")
 
-# Android binaries (APKs or AABs) can be built for one or more different platforms. buck2 supports
+# Android binaries (APKs or AABs) can be built for one or more different platforms. yak supports
 # building Android binaries for arm32, arm64, x86, and x86_64. The platform(s) that we are building
 # for are specified by the `cpu_filters` attribute on the binary rule.
 

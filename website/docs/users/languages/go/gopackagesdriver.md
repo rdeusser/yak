@@ -26,7 +26,7 @@ Let's see a [`golangci-lint`](https://github.com/golangci/golangci-lint)
 example:
 
 ```
-$ export GOPACKAGESDRIVER=$(buck2 build prelude//go/tools/gopackagesdriver:gopackagesdriver --show-full-simple-output)
+$ export GOPACKAGESDRIVER=$(yak build prelude//go/tools/gopackagesdriver:gopackagesdriver --show-full-simple-output)
 $ golangci-lint run foo/bar/baz.go
 $ golangci-lint run file=foo/bar/baz.go # use file= if previous command doesn't work
 $ golangci-lint run root//foo/bar:bar
@@ -46,7 +46,7 @@ Buck2. You can use the same approach for other IDEs and tools.
 
 ```sh
 #!/usr/bin/env bash
-exec buck2 run prelude//go/tools/gopackagesdriver:gopackagesdriver -- "${@}"
+exec yak run prelude//go/tools/gopackagesdriver:gopackagesdriver -- "${@}"
 ```
 
 3. Configure VSCode to use the driver.
@@ -59,11 +59,11 @@ exec buck2 run prelude//go/tools/gopackagesdriver:gopackagesdriver -- "${@}"
     "GOPACKAGESDRIVER_BUCK_ALL_PACKAGES_TARGET_EXPRS": "root//..." # (optional) index all packages on gopls startup (might be slow and unreliable)
   },
   "gopls": {
-    "build.workspaceFiles": [ # (required) to handle changes in BUCK files
-      "**/BUCK",
+    "build.workspaceFiles": [ # (required) to handle changes in YAK files
+      "**/YAK",
       "**/PACKAGE",
       "**/*.bzl",
-      "**/.buckconfig"
+      "**/.yakconfig"
     ]
   }
 }
@@ -96,8 +96,8 @@ approach.
 
 The driver is configured via environment variables:
 
-- `GOPACKAGESDRIVER_BUCK_OPTIONS` - options passed to `buck2 bxl` and
-  `buck2 run` commands.
+- `GOPACKAGESDRIVER_BUCK_OPTIONS` - options passed to `yak bxl` and
+  `yak run` commands.
 - `GOPACKAGESDRIVER_BUCK_ALL_PACKAGES_TARGET_EXPRS` - a list of target
   expressions separated by space, useful to replace `./...` query that `gopls`
   does on startup.

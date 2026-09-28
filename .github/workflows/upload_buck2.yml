@@ -1,4 +1,4 @@
-name: Build, upload, and tag `buck2`
+name: Build, upload, and tag `yak`
 
 on:
   push:
@@ -27,7 +27,7 @@ jobs:
         run: echo ${{ steps.define_version_info.outputs.buck2_version }}
 
   build:
-    name: Build `buck2`
+    name: Build `yak`
     needs:
       - set_version_info
     uses: ./.github/workflows/build_buck2.yml
@@ -128,12 +128,12 @@ jobs:
     - name: Download Buck2
       uses: actions/download-artifact@v7
       with:
-        name: buck2-x86_64-unknown-linux-gnu
+        name: yak-x86_64-unknown-linux-gnu
         path: artifacts
     - name: Decompress Buck2
       run: |
-        zstd -d artifacts/buck2-x86_64-unknown-linux-gnu.zst -o artifacts/buck2-release
-        chmod +x artifacts/buck2-release
+        zstd -d artifacts/yak-x86_64-unknown-linux-gnu.zst -o artifacts/yak-release
+        chmod +x artifacts/yak-release
     - name: Install dependencies
       run: |
         sudo apt-get install -y yarn
@@ -142,7 +142,7 @@ jobs:
       run: |
         cd website
         yarn
-        BUCK2_BIN="$GITHUB_WORKSPACE/artifacts/buck2-release" yarn build_prebuilt
+        BUCK2_BIN="$GITHUB_WORKSPACE/artifacts/yak-release" yarn build_prebuilt
     - name: Deploy
       uses: JamesIves/github-pages-deploy-action@v4
       with:

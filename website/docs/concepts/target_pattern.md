@@ -5,7 +5,7 @@ title: Target Pattern
 
 A _target pattern_ is a string that resolves to a set of
 [targets](./glossary.md#target). A target pattern can be used as arguments to
-commands, such as `buck2 build` and `buck uquery`. You can also use build target
+commands, such as `yak build` and `buck uquery`. You can also use build target
 patterns in the [visibility](./glossary.md#visibility) argument of your build
 [rules](./glossary.md#rule).
 
@@ -23,7 +23,7 @@ build file at the preceding directory path. For example, suppose that the build
 file:
 
 ```sh
-apps/myapp/BUCK
+apps/myapp/YAK
 ```
 
 defines the rules: `app_v1` and `app_v2`, then the following build target
@@ -42,8 +42,8 @@ _all build targets in build files in subdirectories_. For example, suppose that
 you have the following build files:
 
 ```bash
-apps/BUCK
-apps/myapp/BUCK
+apps/YAK
+apps/myapp/YAK
 ```
 
 then the following pattern would match all build targets in both of those files:
@@ -85,4 +85,4 @@ fully-qualified or relative build targets.
 Buck supports the ability to define _aliases_ for build targets; using aliases
 can improve brevity when specifying targets on the Buck command line.
 
-To see which aliases exist, use `buck2 audit config alias`.
+To see which aliases exist, use `yak audit config alias`.

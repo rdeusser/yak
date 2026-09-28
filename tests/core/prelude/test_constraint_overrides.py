@@ -59,7 +59,7 @@ async def test_constraint_override_registry_errors_and_invalidation(buck: Buck) 
             stderr_regex="Constraint value override not supported: alias//:blue",
         )
         await buck.build("root//:constraint", *config)
-        path = buck.cwd / "TARGETS.fixture"
+        path = buck.cwd / "YAK.fixture"
         original = path.read_text()
         try:
             path.write_text(
@@ -76,7 +76,7 @@ async def test_constraint_override_registry_errors_and_invalidation(buck: Buck) 
 
 @buck_test()
 async def test_legacy_constraint_override_private_visibility(buck: Buck) -> None:
-    path = buck.cwd / "TARGETS.fixture"
+    path = buck.cwd / "YAK.fixture"
     path.write_text(
         path.read_text().replace(
             'value(name = "blue", setting = ":color", visibility = ["PUBLIC"])',

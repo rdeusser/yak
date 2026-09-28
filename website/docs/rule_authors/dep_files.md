@@ -83,7 +83,7 @@ When writing a command that produces a dep file, you should test it! At a
 minimum, check that the inputs you expect are tagged properly.
 
 To do so, build your target, then use
-`buck2 audit dep-files TARGET CATEGORY IDENTIFIER`, which will show you the set
+`yak audit dep-files TARGET CATEGORY IDENTIFIER`, which will show you the set
 of inputs your command used and how they're tagged.
 
 ## Extra notes to the implementer
@@ -92,7 +92,7 @@ of inputs your command used and how they're tagged.
 
 Dep files only work if a previous invocation of the command is known to your
 Buck2 daemon. Dep files are dropped when the daemon restarts or when you run
-`buck2 debug flush-dep-files`.
+`yak debug flush-dep-files`.
 
 This means that, for example, if you change an unused header, then run a build
 on a fresh daemon, Buck2 will still need to execute this command in order to
@@ -120,7 +120,7 @@ stand a chance of giving a performance boost instead.
 This means that if you produce an invalid dep file, Buck2 will not report this
 until your command runs again, at which point Buck2 will report that the dep
 file is invalid and refuse to proceed (note: you can unblock yourself using
-`buck2 debug flush-dep-files`).
+`yak debug flush-dep-files`).
 
 To flush out issues during development, you can pass `--eager-dep-files` to
 Buck2 to force Buck2 to parse your dep files as they are produced.

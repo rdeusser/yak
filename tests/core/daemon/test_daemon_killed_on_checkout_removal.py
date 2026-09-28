@@ -65,7 +65,7 @@ async def test_daemon_killed_on_checkout_removal(buck: Buck) -> None:
         raise AssertionError("Server did not die in 20 seconds")
 
     # Process is dead. Verify the shutdown reason in daemon stderr.
-    stderr = (daemon_dir / "buckd.stderr").read_text()
+    stderr = (daemon_dir / "yakd.stderr").read_text()
     # Replace the project root path before general sanitization.
     # sanitize_daemon_stderr only handles /data/users/ (Linux);
     # macOS scratch paths (e.g. /var/folders/…) need explicit replacement.

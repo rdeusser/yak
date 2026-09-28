@@ -90,10 +90,10 @@ impl<'v> StarlarkAuditCtx<'v> {
 #[starlark_module]
 fn audit_methods(builder: &mut MethodsBuilder) {
     /// Returns either:
-    ///  - The `action` which created the buck-out path, if exists.
-    ///  - The `unconfigured_target_label` constructed from the buck-out path, if the configuration hashes do not match.
-    ///  - None, if the configuration hash of the buck-out path matches the one passed into this function, or the default target
-    /// configuration, but no action could be found that generated the buck-out path.
+    ///  - The `action` which created the yak-out path, if exists.
+    ///  - The `unconfigured_target_label` constructed from the yak-out path, if the configuration hashes do not match.
+    ///  - None, if the configuration hash of the yak-out path matches the one passed into this function, or the default target
+    /// configuration, but no action could be found that generated the yak-out path.
     ///
     /// Takes in an optional target platform, otherwise will use the default target platform.
     ///
@@ -101,7 +101,7 @@ fn audit_methods(builder: &mut MethodsBuilder) {
     /// ```python
     /// def _impl_audit_output(ctx):
     ///     target_platform = "foo"
-    ///     result = ctx.audit().output("buck-out/v2/art/root/some_cfg_hash/path/to/__target__/artifact", target_platform)
+    ///     result = ctx.audit().output("yak-out/v2/art/root/some_cfg_hash/path/to/__target__/artifact", target_platform)
     ///     ctx.output.print(result)
     /// ```
     fn output<'v>(
@@ -156,7 +156,7 @@ fn audit_methods(builder: &mut MethodsBuilder) {
         })?)
     }
 
-    /// Query information about the [cells] list in .buckconfig.
+    /// Query information about the [cells] list in .yakconfig.
     ///
     /// Takes the following parameters:
     /// * `aliases_to_resolve` - list of cell aliases to query. These aliases will be resolved in the root cell of the BXL script.

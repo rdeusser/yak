@@ -38,7 +38,7 @@ load(
 # The link recipe is encoded as one JSON string of pure scalars/counts plus two
 # flat streams (flags and artifacts) that both sides walk in the same traversal
 # order. Encoding each linkable as nested attr tuples instead costs the daemon
-# ~1KiB of coerced-attr nodes per linkable, which dominates buck2 memory on
+# ~1KiB of coerced-attr nodes per linkable, which dominates yak memory on
 # large link-group graphs (measured ~1GiB retained on a 14-target dev
 # cohort); the artifacts must remain real `attrs.source()` values for input
 # tracking, but everything else can live in the string.

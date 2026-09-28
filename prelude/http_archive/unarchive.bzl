@@ -71,7 +71,7 @@ def _tar_strip_prefix_flags(strip_prefix: [str, None]) -> list[str]:
         return ["--strip-components=" + str(count), strip_prefix]
     return []
 
-# buck-out on Windows can be a symlink, for example on a virtual file system.
+# yak-out on Windows can be a symlink, for example on a virtual file system.
 # bsdtar which ships with Windows will not extract files when the cwd contains a
 # path segment that is a symlink (as a side effect of or excessively cautious
 # against wild writes to the system). Powershell lets us 'dereference' that
@@ -86,8 +86,8 @@ def _windows_unpack_ps1(out: OutputArtifact, archive: Artifact, ext_type: str, s
         "$ErrorActionPreference = 'Stop'",
         cmd_args(out, format = "$out = '{}'"),
         "New-Item -ItemType Directory -Force -Path $out | Out-Null",
-        "$link = (Get-Item -LiteralPath 'buck-out').Target",
-        "if ($link) { $real = Join-Path @($link)[0] $out.Substring('buck-out'.Length).TrimStart('\\', '/') } else { $real = $out }",
+        "$link = (Get-Item -LiteralPath 'yak-out').Target",
+        "if ($link) { $real = Join-Path @($link)[0] $out.Substring('yak-out'.Length).TrimStart('\\', '/') } else { $real = $out }",
     ]
 
     if ext_type == "tar.zst":

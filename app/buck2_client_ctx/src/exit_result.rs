@@ -73,7 +73,7 @@ enum ExitResultVariant {
     Status(ExitCode),
     /// Instead of terminating normally, `exec` (or spawn on Windows)
     /// a new process with the given name and argv.
-    /// This is used to implement `buck2 run`.
+    /// This is used to implement `yak run`.
     Exec(ExecArgs),
     /// We failed (i.e. due to a Buck internal error).
     /// At this time, when execution does fail, we print out the error message to stderr.
@@ -356,7 +356,7 @@ impl ExitResultVariant {
         let mut exit_code = match self {
             Self::Status(v) => v,
             Self::Exec(args) => {
-                // Terminate by exec-ing a new process - usually because of `buck2 run`.
+                // Terminate by exec-ing a new process - usually because of `yak run`.
                 //
                 // execv does not return.
                 execv(args)
@@ -379,7 +379,7 @@ impl ExitResultVariant {
 
         // Global destructors in C++ dependencies destroy global state,
         // while running background threads rely on this state.
-        // So the result is non-reproducible crash of the buck2 client.
+        // So the result is non-reproducible crash of the yak client.
         // So let's disable global destructors.
         // Global destructors are hard (if even possible) to do safely anyway.
 
@@ -404,7 +404,7 @@ impl ExitResultVariant {
 #[error(transparent)]
 pub enum ClientIoError {
     /// A broken pipe when writing to stdout is expected if stdout is closed before the command finishes.
-    /// An easy way to trigger this is `buck2 audit config | head`
+    /// An easy way to trigger this is `yak audit config | head`
     #[buck2(tag = IoClientBrokenPipe)]
     #[buck2(environment)]
     BrokenPipe(io::Error),

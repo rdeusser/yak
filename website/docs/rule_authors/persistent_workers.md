@@ -56,7 +56,7 @@ worker = rule(
 - **`concurrency`**: Optional maximum number of concurrent commands the worker
   can handle. When `None`, Buck2 sends one command at a time.
 
-Instantiate this in your `BUCK` file:
+Instantiate this in your `YAK` file:
 
 ```python
 worker(

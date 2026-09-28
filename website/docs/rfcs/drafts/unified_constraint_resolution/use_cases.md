@@ -20,7 +20,7 @@ apple_bundle(
 `target_sdk_version_transition` (in `prelude/apple/user/target_sdk_version_transition.bzl`) reads `attrs.minimum_os_version` and writes the `target-sdk-version` constraint. The per-OS branching can move into the constraint via a sub-constraint per OS:
 
 ```python
-# cfg//apple/BUCK
+# cfg//apple/YAK
 
 constraint(
   name = "version",
@@ -62,7 +62,7 @@ A common conditional-modifier workflow is gating a new behavior behind a constra
 For example, gating the [NCCL latest-when-sanitized](main.md#invariant) conditionality behind a rollout sub-constraint looks as follows:
 
 ```python
-# cfg//nccl/BUCK file
+# cfg//nccl/YAK file
 
 constraint(
   name = "version",
@@ -98,7 +98,7 @@ With conditional constraints, `build_mode` becomes the single global knob. Each 
 Example 1: `opt_level` lets projects pick their dev mode optimization level via a sub-constraint, without affecting other constraints derived from `build_mode`.
 
 ```python
-# cfg//cpp/BUCK
+# cfg//cpp/YAK
 
 constraint(
   name = "optimization_level",
@@ -126,7 +126,7 @@ A project that wants `-O1` in dev for faster iteration sets `cfg//cpp:optimizati
 Example 2: sanitizer defaults. A repository can enable ASAN on linux dev mode by default to catch bugs. However, many projects are incompatible with ASAN, so users are welcome to override that behavior for their projects to build with no sanitizer.
 
 ```python
-# cfg//BUCK
+# cfg//YAK
 
 constraint(
   name = "sanitizer",
@@ -146,7 +146,7 @@ When the `"default"` input value is specified, users get this conditional defaul
 Alternatively, sanitizer opts projects in or out of dev-mode ASAN via a yes/no sub-constraint.
 
 ```python
-# cfg//BUCK
+# cfg//YAK
 
 constraint(
   name = "sanitizer",
@@ -180,7 +180,7 @@ Suppose a repository supports a fleet of CUDA arches (`a100`, `v100`, `p100`, `b
 The naive solution is one constraint per arch:
 
 ```python
-# cfg//cuda/BUCK file
+# cfg//cuda/YAK file
 
 constraint(
   name = "a100",
@@ -232,7 +232,7 @@ def cuda_arches(cuda_arches: dict[str, list[str]]):
       ),
     )
 
-# cfg//cuda/BUCK
+# cfg//cuda/YAK
 
 cuda_arches({
   "default": ["a100", "v100", "p100"],

@@ -338,7 +338,7 @@ async fn dir_artifact_value(
 
             let digest_config = ctx.global_data().get_digest_config();
             // A source directory listing is complete content (only ever *interpreted* under
-            // buck-out, but exhaustive is the accurate marking).
+            // yak-out, but exhaustive is the accurate marking).
             let d: DirectoryData<_, _, _> = DirectoryData::new(
                 entries,
                 digest_config.as_directory_serializer(),

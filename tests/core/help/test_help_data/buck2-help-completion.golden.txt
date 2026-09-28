@@ -4,12 +4,12 @@ Print completion configuration for shell
 
 For a one-time setup, run the one of the following commands appropriate for the shell you're
 using:
-- `source <(buck2 completion bash)`
-- `source <(buck2 completion zsh)`
-- `source (buck2 completion fish | psub)`
-- `buck2 completion powershell | Out-String | Invoke-Expression`
+- `source <(yak completion bash)`
+- `source <(yak completion zsh)`
+- `source (yak completion fish | psub)`
+- `yak completion powershell | Out-String | Invoke-Expression`
 
-Usage: buck2 completion [OPTIONS] <SHELL>
+Usage: yak completion [OPTIONS] <SHELL>
 
 Arguments:
   <SHELL>
@@ -23,9 +23,8 @@ Options:
 
 Universal Options:
       --isolation-dir <ISOLATION_DIR>
-          The name of the directory that Buck2 creates within buck-out for writing outputs and
-          daemon information. If one is not provided, Buck2 creates a directory with the default
-          name.
+          The name of the directory that Buck2 creates within yak-out for writing outputs and daemon
+          information. If one is not provided, Buck2 creates a directory with the default name.
 
           Instances of Buck2 share a daemon if and only if their isolation directory is identical.
           The isolation directory also influences the output paths provided by Buck2, and as a

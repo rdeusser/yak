@@ -68,7 +68,7 @@ impl EventSubscriber for EventLog {
     }
 
     async fn handle_tailer_stderr(&mut self, _stderr: &str) -> buck2_error::Result<()> {
-        // TODO(nga): buckd stderr is ignored here, which makes buckd crashes hard to investigate.
+        // TODO(nga): yakd stderr is ignored here, which makes yakd crashes hard to investigate.
         //   Writing the interesting parts of it (such as a crash) to the event log would help.
         Ok(())
     }

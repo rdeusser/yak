@@ -49,7 +49,7 @@ pub enum StarlarkProfilerConfiguration {
     /// No profiling.
     #[default]
     None,
-    /// Profile loading of one `BUCK`.
+    /// Profile loading of one `YAK`.
     ProfileLoading(
         ProfileMode,
         UnparsedPatternPredicate<ConfiguredProvidersPatternExtra>,
@@ -273,7 +273,7 @@ impl ProjectionKey for StarlarkProfileModeForKind {
 
 /// Global Starlark compiler instrumentation level.
 ///
-/// We profile only leaf computations (`BUCK` files or analysis),
+/// We profile only leaf computations (`YAK` files or analysis),
 /// and this key defines instrumentation of all the Starlark files,
 /// regardless of whether profiled entity depends on them or not.
 /// It's easier to implement with single global key,

@@ -261,10 +261,10 @@ rust_toolchain = rule(
 )
 ```
 
-**3. Create a toolchain target in BUCK:**
+**3. Create a toolchain target in YAK:**
 
 ```starlark
-# In //toolchains/BUCK
+# In //toolchains/YAK
 rust_toolchain(
     name = "rust",
     compiler = ":rustc_wrapper",
@@ -376,9 +376,9 @@ def compiler_impl(ctx: AnalysisContext):
     ]
 
 # Build different outputs:
-# buck2 build //:app              # Main executable
-# buck2 build //:app[debug]       # Debug symbols
-# buck2 build //:app[compdb]      # Compilation database
+# yak build //:app              # Main executable
+# yak build //:app[debug]       # Debug symbols
+# yak build //:app[compdb]      # Compilation database
 ```
 
 ---
@@ -449,7 +449,7 @@ def my_rule_impl(ctx: AnalysisContext):
 ### Pattern: Using select() in Rules
 
 ```starlark
-# In BUCK file, users can use select():
+# In YAK file, users can use select():
 my_rule(
     name = "app",
     srcs = ["main.cpp"],
@@ -509,7 +509,7 @@ my_test = rule(
 **Run the test:**
 
 ```bash
-buck2 test //:my_test
+yak test //:my_test
 ```
 
 ### Pattern: Test with Test Data

@@ -20,7 +20,7 @@ pub struct RunActionKnobs {
     /// Process dep files as they are generated.
     pub eager_dep_files: bool,
 
-    /// Whether to try reading from the action output cache (in buck-out/*/offline-cache)
+    /// Whether to try reading from the action output cache (in yak-out/*/offline-cache)
     /// for network actions (download_file, cas_artifact). Used to support offline
     /// builds.
     pub use_network_action_output_cache: bool,

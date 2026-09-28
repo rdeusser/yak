@@ -22,7 +22,7 @@ def unquote(argument):
 
 
 def is_relative_buck_out_path(argument):
-    return argument.startswith("buck-out\\")
+    return argument.startswith("yak-out\\")
 
 
 def is_library_path(argument):

@@ -3,11 +3,11 @@ id: glossary
 title: Glossary of Terms
 ---
 
-## .buckconfig
+## .yakconfig
 
 The root of your [project](#project) must contain a configuration file named
-`.buckconfig`. Before executing, Buck2 reads this file to incorporate specified
-customizations. See [.buckconfig](buckconfig.md) for more info.
+`.yakconfig`. Before executing, Buck2 reads this file to incorporate specified
+customizations. See [.yakconfig](buckconfig.md) for more info.
 
 ## Action
 
@@ -26,7 +26,7 @@ action inputs and to check for cache hits
 ## Action graph
 
 The dependency graph of all [actions](#action) belonging to a target: it can be
-queried with `buck2 aquery`.
+queried with `yak aquery`.
 
 ## Artifact
 
@@ -43,21 +43,21 @@ copts, which declare a target's source files, dependencies, and custom compiler
 options, respectively. The available attributes for a target depend on its rule
 type.
 
-## BUCK file
+## YAK file
 
-A `BUCK` file (the name is configurable, some projects use `TARGETS`) is the
+A `YAK` file (the name is configurable) is the
 main configuration file that tells Buck2 what to build, what their dependencies
-are, and how to build them. Buck2 takes a `BUCK` file as input and evaluates the
+are, and how to build them. Buck2 takes a `YAK` file as input and evaluates the
 file to declare [targets](#target), which are then used to create a graph of
 dependencies and to derive the [actions](#action) that must be completed to
-build intermediate and final software outputs. A `BUCK` file marks a directory
-and any sub-directories not containing a `BUCK` file as a [package](#package).
+build intermediate and final software outputs. A `YAK` file marks a directory
+and any sub-directories not containing a `YAK` file as a [package](#package).
 
 ## BXL
 
 BXL ([Buck eXtension Language](../../bxl)) scripts are written in
 [Starlark](#starlark) (a restricted subset of Python) and give integrators the
-ability to inspect and interact directly with the buck2 graph.
+ability to inspect and interact directly with the yak graph.
 
 BXL scripts can query the [action graph](#action-graph),
 [configured graph](#configured-graph), and
@@ -67,9 +67,9 @@ BXL scripts can query the [action graph](#action-graph),
 ## Cell
 
 Originally intended to allow for migration of repositories with different setups
-into one monorepo. The cell root always contains a [.buckconfig](#buckconfig),
-although the presence of a .buckconfig file doesn't in itself define a cell.
-Cells are specified in the .buckconfig for the Buck [project](#project).
+into one monorepo. The cell root always contains a [.yakconfig](#buckconfig),
+although the presence of a .yakconfig file doesn't in itself define a cell.
+Cells are specified in the .yakconfig for the Buck [project](#project).
 
 ## Configuration
 
@@ -113,7 +113,7 @@ library to use, etc.
 
 The Daemon process lives between invocations and is designed to allow for cache
 reuse between Buck2 invocations, which can considerably speed up builds. For
-more information, see [Daemon (buckd)](daemon.md).
+more information, see [Daemon (yakd)](daemon.md).
 
 ## Dependency
 
@@ -150,31 +150,31 @@ It's a modification of a constraint from the existing
 unified way to specify build settings on a [project](#project),
 [target](#target), and command line level. It is intended to replace
 [target platforms](#target-platform) and most use cases of
-[.buckconfigs](#buckconfig).
+[.yakconfigs](#buckconfig).
 
 ## Package
 
-A directory that contains a Buck2 [BUCK file](#buck-file) and all source files
-belonging to the same directory as the BUCK file, or any of its subdirectories
-that do not contain a BUCK file themselves.
+A directory that contains a Buck2 [YAK file](#buck-file) and all source files
+belonging to the same directory as the YAK file, or any of its subdirectories
+that do not contain a YAK file themselves.
 
 ## Prelude
 
 The prelude is a unique `.bzl` file located at `prelude//prelude.bzl`. Buck2
 implicitly loads all the symbols defined in the prelude whenever it loads a
-[`BUCK`](#buck-file) file. Symbols defined outside the prelude can be imported
+[`YAK`](#buck-file) file. Symbols defined outside the prelude can be imported
 via a `load()` statement.
 
-When you create a Buck2 project using `buck2 init --git`, it uses the prelude
-bundled with the `buck2` binary. It is viewable at
+When you create a Buck2 project using `yak init --git`, it uses the prelude
+bundled with the `yak` binary. It is viewable at
 https://github.com/rdeusser/buck2/tree/main/prelude.
 
 ## Project
 
-The Outermost directory where there is a [.buckconfig](#buckconfig): also known
-as the [root cell](#cell). The .buckconfig for the project specifies the
+The Outermost directory where there is a [.yakconfig](#buckconfig): also known
+as the [root cell](#cell). The .yakconfig for the project specifies the
 [cells](#cell) that constitute the Buck2 project. Specifically, these cells are
-specified in the '[cells]' section of the `.buckconfig`. All command invocations
+specified in the '[cells]' section of the `.yakconfig`. All command invocations
 are executed from the project root.
 
 ## Provider
@@ -207,7 +207,7 @@ declare new [actions](#action) and [artifacts](#artifact) and must return
 [providers](#provider) that can be used to pass data to its dependents or to
 Buck2 itself.
 
-Rules are instantiated in [BUCK files](#buck-file) to declare targets and set
+Rules are instantiated in [YAK files](#buck-file) to declare targets and set
 their attributes. The rule implementation is called when Buck2 needs its
 providers, which can happen when the target is built, or when one of its
 dependents is.
@@ -220,7 +220,7 @@ As an example, the `cxx_binary` rule could be used to create a C++ binary, but
 Starlark is a dialect of Python originally developed by Google for the
 [Bazel build tool](https://bazel.build/rules/language). It is the configuration
 language of the Buck2 build system and the language you use in `.bzl` and
-[`BUCK` files](#buck-file) to define and instantiate [rules](#rule).
+[`YAK` files](#buck-file) to define and instantiate [rules](#rule).
 
 The Buck2 project maintains and uses an open source
 [Starlark interpreter in Rust](https://github.com/rdeusser/buck2/tree/main/starlark-rust).
@@ -229,11 +229,11 @@ The Buck2 project maintains and uses an open source
 
 Collection of [providers](#provider) that can be accessed by name. The
 subtargets can have their own subtargets as well, which can be accessed by
-chaining them, e.g.: `buck2 build cell//foo:bar[baz][qux]`.
+chaining them, e.g.: `yak build cell//foo:bar[baz][qux]`.
 
 ## Target
 
-An object that is defined in a [BUCK file](#buck-file). Targets represent the
+An object that is defined in a [YAK file](#buck-file). Targets represent the
 buildable units of a build from the perspective of the end user. Declared by
 instantiating a [rule](#rule) with attributes. A target has
 [dependencies](#dependency), which are references to other targets.
@@ -244,20 +244,20 @@ The identifier for a [target](#target). Structured as
 `cell_alias//path/to/package:target`, where `cell_alias//` maps to a
 [cell root](#cell) path (as defined in the [./buckconfig](#buckconfig) of the
 cell this target belongs to), `path/to/package` is the [package](#package)
-directory that contains the [BUCK file](#buck-file) declaring the target
+directory that contains the [YAK file](#buck-file) declaring the target
 (relative to the mapped cell alias), and `:target` is the target's name.
 
 ## Target pattern
 
 A string that resolves to a set of [targets](#target). They can be used as
-arguments to commands such as `buck2 build` and `buck2 uquery`. They can also be
+arguments to commands such as `yak build` and `yak uquery`. They can also be
 used in the [visibility](#visibility) argument of a [rule](#rule). For more
 information, see [Target pattern](./target_pattern.md).
 
 ## Target platform
 
 Represents the [platform](#platform) that the final output is built for residing
-and executing. If buck2 is a chef, and the output is the meal, the target
+and executing. If yak is a chef, and the output is the meal, the target
 platform would be the people that eat the meal.
 
 ## Target universe
@@ -279,7 +279,7 @@ using X too. By using a transition, you can produce X to configure B instead.
 ## Unconfigured graph
 
 A graph of [targets](#target) before [configurations](#configuration) are
-applied. Can be queried via `buck2 uquery`.
+applied. Can be queried via `yak uquery`.
 
 ## Visibility
 

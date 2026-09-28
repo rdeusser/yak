@@ -43,13 +43,13 @@ const TEST_CELL: BundledCell = BundledCell {
     name: "test_bundled_cell",
     files: &[
         BundledFile {
-            path: ".buckconfig",
-            contents: include_bytes!("../test_data/.buckconfig"),
+            path: ".yakconfig",
+            contents: include_bytes!("../test_data/.yakconfig"),
             is_executable: false,
         },
         BundledFile {
-            path: "BUCK_TREE",
-            contents: include_bytes!("../test_data/BUCK_TREE"),
+            path: "YAK_TREE",
+            contents: include_bytes!("../test_data/YAK_TREE"),
             is_executable: false,
         },
         BundledFile {
@@ -68,8 +68,8 @@ const TEST_CELL: BundledCell = BundledCell {
             is_executable: true,
         },
         BundledFile {
-            path: "dir/BUCK.fixture",
-            contents: include_bytes!("../test_data/dir/BUCK.fixture"),
+            path: "dir/YAK.fixture",
+            contents: include_bytes!("../test_data/dir/YAK.fixture"),
             is_executable: false,
         },
         BundledFile {
@@ -102,7 +102,7 @@ mod tests {
         let c = super::PRELUDE;
         // Make sure there's a buckconfig
         assert!(c.files.iter().any(|file| {
-            file.path == ".buckconfig"
+            file.path == ".yakconfig"
                 && std::str::from_utf8(file.contents)
                     .unwrap()
                     .contains("prelude = .")

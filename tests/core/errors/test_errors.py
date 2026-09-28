@@ -35,7 +35,7 @@ async def test_package_listing_errors(buck: Buck) -> None:
         "//package_listing/ignored/foo/x/y/lmnop:target",
         # //package_listing/cell is a cell
         "//package_listing/cell/foo/x/y/lmnop:target",
-        # //package_listing/missing_targets_file has no TARGETS file
+        # //package_listing/missing_targets_file has no build file
         "//package_listing/missing_targets_file:target",
         # //package_listing/data.file is a file
         "//package_listing/data.file:target",

@@ -105,7 +105,7 @@ struct FieldsRef<'v, F: Fields<'v>>(F, PhantomData<Value<'v>>);
 /// This implementation exists for operations such as:
 ///
 /// ```ignore
-/// buck2 cquery :buck2 --providers
+/// yak cquery :buck2 --providers
 /// ```
 ///
 /// which must not fail if a provider contains `cmd_args`.

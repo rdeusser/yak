@@ -35,7 +35,7 @@ pub struct PackageCfgModifiersValue {
 /// resolution such keys are probed once per (exec dep × candidate platform), which made the
 /// JSON walks the dominant cost of cold configuration on graphs with thousands of candidate
 /// platforms. Treating 128-bit hash equality as value equality is the same collision tolerance
-/// buck2 accepts for content digests.
+/// yak accepts for content digests.
 impl PartialEq for PackageCfgModifiersValue {
     fn eq(&self, other: &Self) -> bool {
         self.content_hash == other.content_hash

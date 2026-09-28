@@ -109,7 +109,7 @@ use crate::daemon::server::RepoStateInitPreferences;
 use crate::paging::PageOutThresholds;
 use crate::snapshot::DepFileDbSizeSampler;
 
-/// For a buckd process there is a single DaemonState created at startup and never destroyed.
+/// For a yakd process there is a single DaemonState created at startup and never destroyed.
 #[derive(Allocative)]
 pub struct DaemonState {
     /// This holds the main data shared across different commands.
@@ -156,7 +156,7 @@ pub struct RepoState {
     /// materializations to work properly between distinct build commands.
     pub(crate) materializer: Arc<dyn Materializer>,
 
-    /// Whether to consult the offline-cache buck-out dir for network action
+    /// Whether to consult the offline-cache yak-out dir for network action
     /// outputs prior to running them. If no cached output exists, the action
     /// (download_file, cas_artifact) will execute normally.
     ///
@@ -170,7 +170,7 @@ pub struct RepoState {
     /// error.
     pub restart_daemon_on_error: bool,
 
-    /// What buck2 state to store on disk, ex. materializer state on sqlite
+    /// What yak state to store on disk, ex. materializer state on sqlite
     pub disk_state_options: DiskStateOptions,
 
     #[allocative(skip)]
@@ -212,7 +212,7 @@ pub struct RepoState {
     pub system_warning_config: SystemWarningConfig,
 
     /// Whether a finishing command schedules a background sweep of the local-action
-    /// scratch dirs (`buck-out/<iso>/tmp*`) once the daemon is idle
+    /// scratch dirs (`yak-out/<iso>/tmp*`) once the daemon is idle
     /// (`buck2.clean_scratch_on_idle`). The sweep runs through this repo's `materializer`.
     pub(crate) clean_scratch_on_idle: bool,
 
@@ -1007,7 +1007,7 @@ impl DaemonState {
             .await?;
 
             // The forkserver creates its state directory recursively, so it does not depend on
-            // the materializer creating buck-out first. One daemon-global forkserver serves every
+            // the materializer creating yak-out first. One daemon-global forkserver serves every
             // repo; requests carry an absolute cwd.
             tracing::info!("Launching forkserver...");
             let forkserver = maybe_launch_forkserver(

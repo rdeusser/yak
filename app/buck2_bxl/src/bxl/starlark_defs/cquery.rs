@@ -307,7 +307,7 @@ fn cquery_methods(builder: &mut MethodsBuilder) {
     /// Sample usage:
     /// ```python
     /// def _owner_impl(ctx):
-    ///     owner = ctx.cquery().owner("bin/TARGETS.fixture", "foo//target/universe/...")
+    ///     owner = ctx.cquery().owner("bin/YAK.fixture", "foo//target/universe/...")
     ///     ctx.output.print(owner)
     /// ```
     fn owner<'v>(
@@ -643,7 +643,7 @@ fn cquery_methods(builder: &mut MethodsBuilder) {
     /// Sample usage:
     /// ```python
     /// def _impl_rbuildfiles(ctx):
-    ///     result = ctx.cquery().rbuildfiles("bin/TARGETS", "bin/defs.bzl")
+    ///     result = ctx.cquery().rbuildfiles("bin/YAK", "bin/defs.bzl")
     ///     ctx.output.print(result)
     /// ```
     fn rbuildfiles<'v>(

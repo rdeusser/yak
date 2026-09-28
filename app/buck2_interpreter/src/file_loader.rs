@@ -111,7 +111,7 @@ impl LoadedModule {
     }
 
     /// The prelude's `native` struct, whose members are exposed as extra globals when evaluating
-    /// `BUCK` files.
+    /// `YAK` files.
     ///
     /// The result borrows this module; use [`OwnedFrozenRef::add_to_heap`] to read the members on
     /// another heap.

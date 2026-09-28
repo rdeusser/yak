@@ -596,11 +596,11 @@ mod tests {
             &*root_entries,
             &[
                 RawDirEntry {
-                    file_name: ".buckconfig".into(),
+                    file_name: ".yakconfig".into(),
                     file_type: FileType::File
                 },
                 RawDirEntry {
-                    file_name: "BUCK_TREE".into(),
+                    file_name: "YAK_TREE".into(),
                     file_type: FileType::File
                 },
                 RawDirEntry {

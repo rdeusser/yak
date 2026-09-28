@@ -7,7 +7,7 @@ replacement for `labels`.
 
 In buck1 we have `labels` builtin rule attribute, which is a list of strings.
 
-In buck2 we have `labels` attribute which is configured in prelude, it does not
+In yak we have `labels` attribute which is configured in prelude, it does not
 have special meaning.
 
 ## Context: package values
@@ -18,7 +18,7 @@ serializable as JSON.
 
 ## Context: metadata we use or we need
 
-There are several spaces where we use or need metadata to be stored in buck2
+There are several spaces where we use or need metadata to be stored in yak
 target graph.
 
 - a large monorepo uses per-package values to switch code to a new clang
@@ -27,7 +27,7 @@ target graph.
 - it is likely that per-target `metadata` attribute should be used in
   configuration factory function.
 - the CI target determinator (TD) wants to declare CI trigger jobs per-target or
-  per-package, and this logic is to be specified in `BUCK` or `PACKAGE` files —
+  per-package, and this logic is to be specified in `YAK` or `PACKAGE` files —
   as metadata
 
 ## Proposal: metadata attribute

@@ -10,9 +10,9 @@ Caused by:
        
     1: looking up unconfigured target node `root//during_load:get`
     2: Error loading targets in package `root//during_load` for target `root//during_load:get`
-    3: Error evaluating build file: `root//during_load:TARGETS.fixture`
+    3: Error evaluating build file: `root//during_load:YAK.fixture`
     4: Traceback (most recent call last):
-         * during_load/TARGETS.fixture:3, in <module>
+         * during_load/YAK.fixture:3, in <module>
              get([1, 2, 3])
        error: Index `5` is out of bound
          --> during_load/access.bzl:10:12

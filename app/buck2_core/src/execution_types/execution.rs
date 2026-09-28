@@ -152,7 +152,7 @@ pub enum ExecutionPlatformError {
     // incompatible subtrees are expected — formatting every entry was a measurable share of
     // cold configuration time. The audit command reconstructs the reasons on demand.
     #[error(
-        "No compatible execution platform; {0} candidates were skipped. Run `buck2 audit \
+        "No compatible execution platform; {0} candidates were skipped. Run `yak audit \
          execution-platform-resolution` on the target, with `--reuse-current-config` and a \
          `--target-universe` matching the failing command, to see why each was skipped"
     )]

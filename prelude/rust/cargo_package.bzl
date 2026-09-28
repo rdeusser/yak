@@ -19,7 +19,7 @@ load("@prelude//utils:type_defs.bzl", "is_dict", "is_list")
 
 def set_reindeer_platforms(platforms) -> None:
     """
-    Call from a PACKAGE or BUCK_TREE file to make the macros in this file
+    Call from a PACKAGE or YAK_TREE file to make the macros in this file
     recognize your own non-default platforms.
 
         load("@prelude//rust:cargo_package.bzl", "DEFAULT_REINDEER_PLATFORMS", "set_reindeer_platforms")

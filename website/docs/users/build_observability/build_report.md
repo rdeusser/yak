@@ -306,7 +306,7 @@ ActionSubError {
     # Name of the error category. The category should be finer grain error categorizations
     # provided by the rule authors, and tend to be language specific. These should not be
     # any kind of shared concepts among all errors for all languages/rules. For example,
-    # timeouts and infra errors should not go here - buck2 tries to categorize these types
+    # timeouts and infra errors should not go here - yak tries to categorize these types
     # of errors automatically. An example of a finer grain error category may be the error
     # code for rustc outputs.
     category: str,

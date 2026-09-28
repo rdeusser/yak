@@ -11,7 +11,7 @@
 //! DICE paging telemetry and the page-out mechanism.
 //!
 //! [`PagingManager`] collects per-command paging telemetry. The rest of this
-//! module implements page-out itself (also driven manually by `buck2 debug
+//! module implements page-out itself (also driven manually by `yak debug
 //! hydration`, see [`crate::hydration`]) and automatic page-out when the daemon
 //! goes idle.
 //!
@@ -306,7 +306,7 @@ static PAGE_OUT_FAILED: AtomicBool = AtomicBool::new(false);
 /// default it is never cleared, limiting automatic page-out to one run per daemon.
 static IDLE_PAGE_OUT_HAS_RUN: AtomicBool = AtomicBool::new(false);
 
-/// Whether a background idle page-out is running, for `buck2 debug hydration
+/// Whether a background idle page-out is running, for `yak debug hydration
 /// status`. A manual `page-out` isn't tracked: it holds the exclusive command
 /// lock, so a concurrent `status` blocks behind it and never observes it mid-run.
 pub(crate) fn page_out_in_progress() -> bool {
@@ -437,7 +437,7 @@ pub(crate) async fn spawn_page_out_on_idle(
     PageOutStarted::Started
 }
 
-/// Free disk space (bytes) on `buck-out` (where paged-out values are written),
+/// Free disk space (bytes) on `yak-out` (where paged-out values are written),
 /// derived from telemetry the command already collected rather than a fresh stat:
 /// `total` disk (captured from `SystemInfo` at command start) minus `used` disk (from
 /// the command-end `Snapshot`). `None` when either input is unavailable.
@@ -493,7 +493,7 @@ async fn page_out_on_idle(
 
 /// Page out, measuring memory and DataKey I/O around it.
 ///
-/// Shared with `buck2 debug hydration page-out` so both paths report the same
+/// Shared with `yak debug hydration page-out` so both paths report the same
 /// measurements. `cancelled` both drives the page-out and fills the summary
 /// field. The `Result` is for control flow; the failure is also in the
 /// summary's `error`.

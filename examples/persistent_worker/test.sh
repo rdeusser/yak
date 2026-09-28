@@ -10,12 +10,12 @@
 set -euo pipefail
 
 echo "::group::Local build without persistent worker" >&2
-cat >.buckconfig.local <<EOF
-<file:.buckconfig.no-workers>
+cat >.yakconfig.local <<EOF
+<file:.yakconfig.no-workers>
 EOF
-buck2 clean; buck2 build : -vstderr
+yak clean; yak build : -vstderr
 echo "# Verifying Buck2 log" >&2
-buck2 log what-ran --show-std-err --format json \
+yak log what-ran --show-std-err --format json \
   | jq -s '
       [
         .[]
@@ -36,12 +36,12 @@ buck2 log what-ran --show-std-err --format json \
 echo "::endgroup::" >&2
 
 echo "::group::Local build with persistent worker" >&2
-cat >.buckconfig.local <<EOF
-<file:.buckconfig.local-persistent-workers>
+cat >.yakconfig.local <<EOF
+<file:.yakconfig.local-persistent-workers>
 EOF
-buck2 clean; buck2 build : -vstderr
+yak clean; yak build : -vstderr
 echo "# Verifying Buck2 log" >&2
-buck2 log what-ran --show-std-err --format json \
+yak log what-ran --show-std-err --format json \
   | jq -s '
       [
         .[]
@@ -65,15 +65,15 @@ echo "::group::Remote build without persistent worker" >&2
 if [[ -z ${BUILDBUDDY_API_KEY:+x} ]]; then
   echo "::notice file=$(realpath --relative-to=../.. "${BASH_SOURCE[0]}"),line=${LINENO}::SKIPPED Missing BuildBuddy token. See examples/persistent_worker/README.md" >&2
 else
-  cat >.buckconfig.local <<EOF
-<file:.buckconfig.buildbuddy>
+  cat >.yakconfig.local <<EOF
+<file:.yakconfig.buildbuddy>
 
 [build]
 cache_silo_key=$(date +%s.%N).${GITHUB_RUN_ID-0}
 EOF
-  buck2 clean; buck2 build : -vstderr
+  yak clean; yak build : -vstderr
   echo "# Verifying Buck2 log" >&2
-  buck2 log what-ran --show-std-err --format json \
+  yak log what-ran --show-std-err --format json \
     | jq -s '
         [
           .[]
@@ -98,15 +98,15 @@ echo "::group::Remote build with persistent worker" >&2
 if [[ -z ${BUILDBUDDY_API_KEY:+x} ]]; then
   echo "::notice file=$(realpath --relative-to=../.. "${BASH_SOURCE[0]}"),line=${LINENO}::SKIPPED Missing BuildBuddy token. See examples/persistent_worker/README.md" >&2
 else
-  cat >.buckconfig.local <<EOF
-<file:.buckconfig.buildbuddy-persistent-workers>
+  cat >.yakconfig.local <<EOF
+<file:.yakconfig.buildbuddy-persistent-workers>
 
 [build]
 cache_silo_key=$(date +%s.%N).${GITHUB_RUN_ID-0}
 EOF
-  buck2 clean; buck2 build : -vstderr
+  yak clean; yak build : -vstderr
   echo "# Verifying Buck2 log" >&2
-  buck2 log what-ran --show-std-err --format json \
+  yak log what-ran --show-std-err --format json \
     | jq -s '
         [
           .[]

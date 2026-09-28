@@ -1,7 +1,0 @@
-[repositories]
-hello = hello
-root = .
-prelude = prelude
-
-[buildfile]
-name=TARGETS.fixture

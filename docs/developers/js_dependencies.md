@@ -1,6 +1,6 @@
 # JS Dependencies
 
-buck2 contains four independent JS packages. Each has its own manifest and lockfile, so a
+yak contains four independent JS packages. Each has its own manifest and lockfile, so a
 dependency bump — typically a transitive CVE — has to be applied per package rather than once.
 
 ## The packages

@@ -4,5 +4,5 @@ This example tests the `zig cc` based self-contained C/C++ toolchain. The
 Build the example from `examples/toolchains/cxx_zig_toolchain`:
 
 ```
-buck2 build //...
+yak build //...
 ```

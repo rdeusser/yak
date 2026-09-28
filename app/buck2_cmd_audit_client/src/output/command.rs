@@ -23,7 +23,7 @@ use crate::AuditSubcommand;
 pub struct AuditOutputCommand {
     #[clap(
         name = "OUTPUT_PATH",
-        help = "The buck-out path to the build artifact, starting with `buck-out` and including the configuration platform."
+        help = "The yak-out path to the build artifact, starting with `yak-out` and including the configuration platform."
     )]
     pub output_path: String,
 

@@ -68,7 +68,7 @@ class BaseJarCommand(
           JdkProvidedInMemoryJavac.createJsr199Javac(),
           ResolvedJavacOptionsSerializer.deserialize(model.resolvedJavacOptions),
           BuildTargetValueSerializer.deserialize(model.buildTargetValue),
-          RelPath.get("buck-out/v2"),
+          RelPath.get("yak-out/v2"),
           RelPathSerializer.deserialize(model.annotationsPath),
       )
     }

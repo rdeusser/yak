@@ -1,0 +1,7 @@
+[repositories]
+    root = .
+[buildfile]
+    name = YAK.fixture
+[buck2]
+    directories_to_allow_relative_paths = \
+        //foo

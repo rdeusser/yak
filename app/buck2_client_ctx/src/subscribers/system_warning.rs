@@ -26,7 +26,7 @@ pub(crate) struct LowDiskSpace {
 
 pub(crate) fn system_memory_exceeded_msg(memory_pressure: &MemoryPressureHigh) -> String {
     format!(
-        "High memory pressure: buck2 is using {} out of {}",
+        "High memory pressure: yak is using {} out of {}",
         HumanizedBytes::new(memory_pressure.process_memory),
         HumanizedBytes::new(memory_pressure.system_total_memory),
     )

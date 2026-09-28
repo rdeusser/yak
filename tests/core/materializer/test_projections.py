@@ -49,7 +49,7 @@ async def test_projection_and_whole_artifact_in_one_build(buck: Buck) -> None:
 @buck_test()
 async def test_projected_subpath_changes_between_builds(buck: Buck) -> None:
     target = "root//:moving_consumer"
-    targets_file = buck.cwd / "TARGETS.fixture"
+    targets_file = buck.cwd / "YAK.fixture"
 
     assert await read_consumer(buck, target) == "moving-a-1"
 
@@ -84,7 +84,7 @@ async def test_projection_consumed_after_daemon_restart(buck: Buck) -> None:
 
 @buck_test()
 async def test_whole_artifact_after_projection_at_newer_contents(buck: Buck) -> None:
-    targets_file = buck.cwd / "TARGETS.fixture"
+    targets_file = buck.cwd / "YAK.fixture"
     whole = "root//:interleaved_whole"
     projection = "root//:interleaved_projection"
 
@@ -104,7 +104,7 @@ async def test_whole_artifact_after_projection_at_newer_contents(buck: Buck) -> 
 @buck_test()
 async def test_projected_subpath_did_not_exist_before(buck: Buck) -> None:
     target = "root//:growing_consumer"
-    targets_file = buck.cwd / "TARGETS.fixture"
+    targets_file = buck.cwd / "YAK.fixture"
 
     assert await read_consumer(buck, target) == "growing-a"
 

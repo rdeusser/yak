@@ -18,23 +18,23 @@ use buck2_error::BuckErrorContext;
 use buck2_fs::fs_util::uncategorized as fs_util;
 use buck2_wrapper_common::KillallFilter;
 
-/// Kill all buck2 processes on the machine
+/// Kill all yak processes on the machine
 ///
-/// By default this kills every buck2 process regardless of repository or isolation dir.
+/// By default this kills every yak process regardless of repository or isolation dir.
 /// Passing `--in-isolation-dir` narrows the kill to processes using that isolation dir, and
 /// `--repo` narrows it to processes running in the current repository. Processes that
 /// cannot be checked against the requested filter are skipped and reported.
 #[derive(Debug, clap::Parser)]
 #[clap(verbatim_doc_comment)]
 pub struct KillallCommand {
-    /// Only kill buck2 processes using this isolation dir.
+    /// Only kill yak processes using this isolation dir.
     ///
     /// Unlike the global `--isolation-dir` flag, this does not default to `v2`; when
     /// omitted, processes of every isolation dir are killed.
     #[clap(long, value_name = "ISOLATION_DIR")]
     in_isolation_dir: Option<String>,
 
-    /// Only kill buck2 processes running in the current repository (project root).
+    /// Only kill yak processes running in the current repository (project root).
     #[clap(long)]
     repo: bool,
 

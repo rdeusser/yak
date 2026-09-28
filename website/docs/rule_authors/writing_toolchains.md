@@ -11,7 +11,7 @@ Toolchains are regular rules that:
 
 Toolchain rules are instantiated once in the `toolchains//` cell. The location
 of the `toolchains` cell is determined by the value of `cells.toolchains` in the
-`.buckconfig` file.
+`.yakconfig` file.
 
 Regular build rules reference those toolchain targets as
 [`toolchain_dep`](../../api/build/attrs/#toolchain_dep) attrs (often
@@ -38,7 +38,7 @@ are available:
 ### Writing a prelude-compatible toolchain
 
 People will often first encounter toolchains when they want to switch off of the
-demo toolchains that `buck2 init` uses by default. For example, one might want
+demo toolchains that `yak init` uses by default. For example, one might want
 to tweak which compiler is used, which flags are passed to it, or where it is
 fetched from.
 
@@ -127,7 +127,7 @@ foo_toolchain = rule(
 )
 ```
 
-This toolchain can then be instantiated in `toolchains//BUCK`:
+This toolchain can then be instantiated in `toolchains//YAK`:
 
 ```python
 foo_toolchain(

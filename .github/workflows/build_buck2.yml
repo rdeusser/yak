@@ -1,4 +1,4 @@
-name: Build `buck2`
+name: Build `yak`
 
 on:
   workflow_call:
@@ -68,15 +68,15 @@ jobs:
         shell: bash
         run: |
           if [ -n "${{ matrix.target.is_windows }}" ]; then
-            echo "buck2_out=target/${{ matrix.target.triple }}/release/buck2.exe" >> "$GITHUB_OUTPUT"
-            echo "buck2_zst=artifacts/buck2-${{ matrix.target.triple }}.exe.zst" >> "$GITHUB_OUTPUT"
+            echo "buck2_out=target/${{ matrix.target.triple }}/release/yak.exe" >> "$GITHUB_OUTPUT"
+            echo "buck2_zst=artifacts/yak-${{ matrix.target.triple }}.exe.zst" >> "$GITHUB_OUTPUT"
             echo "buck2_rust_project_out=target/${{ matrix.target.triple }}/release/rust-project.exe" >> "$GITHUB_OUTPUT"
             echo "buck2_rust_project_zst=artifacts/rust-project-${{ matrix.target.triple }}.exe.zst" >> "$GITHUB_OUTPUT"
             echo "starlark_fmt_out=target/${{ matrix.target.triple }}/release/starlark_fmt.exe" >> "$GITHUB_OUTPUT"
             echo "starlark_fmt_zst=artifacts/starlark_fmt-${{ matrix.target.triple }}.exe.zst" >> "$GITHUB_OUTPUT"
           else
-            echo "buck2_out=target/${{ matrix.target.triple }}/release/buck2" >> "$GITHUB_OUTPUT"
-            echo "buck2_zst=artifacts/buck2-${{ matrix.target.triple }}.zst" >> "$GITHUB_OUTPUT"
+            echo "buck2_out=target/${{ matrix.target.triple }}/release/yak" >> "$GITHUB_OUTPUT"
+            echo "buck2_zst=artifacts/yak-${{ matrix.target.triple }}.zst" >> "$GITHUB_OUTPUT"
             echo "buck2_rust_project_out=target/${{ matrix.target.triple }}/release/rust-project" >> "$GITHUB_OUTPUT"
             echo "buck2_rust_project_zst=artifacts/rust-project-${{ matrix.target.triple }}.zst" >> "$GITHUB_OUTPUT"
             echo "starlark_fmt_out=target/${{ matrix.target.triple }}/release/starlark_fmt" >> "$GITHUB_OUTPUT"
@@ -86,7 +86,7 @@ jobs:
         shell: bash
         env:
           # BUCK2 prefixed variables used within the build to stamp in a version information
-          # BUCK2_SET_EXPLICIT_VERSION will populate the buck2 --version string
+          # BUCK2_SET_EXPLICIT_VERSION will populate the yak --version string
           BUCK2_SET_EXPLICIT_VERSION: ${{ inputs.buck2_version }}
           RUSTFLAGS: "--cfg tokio_unstable -C strip=debuginfo -C codegen-units=1"
         run: |
@@ -101,7 +101,7 @@ jobs:
           else
             CARGO=cargo
           fi
-          $CARGO build --release --bin buck2 --bin rust-project --bin starlark_fmt --target ${{ matrix.target.triple }}
+          $CARGO build --release --bin yak --bin rust-project --bin starlark_fmt --target ${{ matrix.target.triple }}
       - name: Sanity check with examples/with_prelude
         if: ${{ !matrix.target.cross }}
         shell: bash
@@ -131,5 +131,5 @@ jobs:
       - name: Upload
         uses: actions/upload-artifact@v6
         with:
-          name: buck2-${{ matrix.target.triple }}
+          name: yak-${{ matrix.target.triple }}
           path: artifacts/

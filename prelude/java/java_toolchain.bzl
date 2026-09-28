@@ -85,7 +85,7 @@ def unsafe_memory_access_jvm_args(java_runtime_version: [int, None]) -> list[str
 
     protobuf-java, which carries the daemon's command protocol, calls
     sun.misc.Unsafe::arrayBaseOffset from a static initializer. JDK 24 and up print a
-    terminal-deprecation warning for that call, and it lands in the stderr buck2 reports
+    terminal-deprecation warning for that call, and it lands in the stderr yak reports
     for a failed compilation. No protobuf-java release has dropped the call, so the
     warning has to be turned off at the JVM. The option does not exist before JDK 24,
     where passing it stops the JVM from starting at all.

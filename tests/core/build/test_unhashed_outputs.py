@@ -19,7 +19,7 @@ from e2e_util.buck_workspace import buck_test
 async def test_unhashed_putputs(buck: Buck) -> None:
     await buck.build("//pack:trivial_build")
 
-    p = buck.cwd / "buck-out" / "v2" / "gen" / "root" / "pack" / "foo.txt"
+    p = buck.cwd / "yak-out" / "v2" / "gen" / "root" / "pack" / "foo.txt"
     assert p.exists()
     assert p.is_symlink()
 
@@ -28,7 +28,7 @@ async def test_unhashed_putputs(buck: Buck) -> None:
 async def test_projected_output(buck: Buck) -> None:
     await buck.build("//:projected_output")
 
-    p = buck.cwd / "buck-out" / "v2" / "gen" / "root" / "dir"
+    p = buck.cwd / "yak-out" / "v2" / "gen" / "root" / "dir"
     assert p.exists()
     assert p.is_symlink()
     assert (p / "file").is_file()
@@ -38,18 +38,18 @@ async def test_projected_output(buck: Buck) -> None:
 async def test_materializer_managed_unhashed_output(buck: Buck) -> None:
     await buck.build("//pack:trivial_build")
 
-    p = buck.cwd / "buck-out" / "v2" / "gen" / "root" / "pack" / "foo.txt"
+    p = buck.cwd / "yak-out" / "v2" / "gen" / "root" / "pack" / "foo.txt"
     assert p.is_symlink()
 
     materializer_state = await buck.audit("deferred-materializer", "list")
-    assert "buck-out/v2/gen/root/pack/foo.txt" in materializer_state.stdout
+    assert "yak-out/v2/gen/root/pack/foo.txt" in materializer_state.stdout
 
     future_time = int((datetime.now() + timedelta(weeks=7)).timestamp())
     await buck.clean(f"--keep-since-time={future_time}")
     assert p.is_symlink()
     assert p.is_file()
     materializer_state = await buck.audit("deferred-materializer", "list")
-    assert "buck-out/v2/gen/root/pack/foo.txt" in materializer_state.stdout
+    assert "yak-out/v2/gen/root/pack/foo.txt" in materializer_state.stdout
 
 
 @buck_test()
@@ -57,18 +57,18 @@ async def test_materializer_managed_unhashed_output_without_materialization(
     buck: Buck,
 ) -> None:
     await buck.build("//pack:trivial_build", "--materializations=none")
-    unhashed = buck.cwd / "buck-out" / "v2" / "gen" / "root" / "pack" / "foo.txt"
+    unhashed = buck.cwd / "yak-out" / "v2" / "gen" / "root" / "pack" / "foo.txt"
 
     assert not unhashed.is_symlink()
 
     materializer_state = await buck.audit("deferred-materializer", "list")
-    assert "buck-out/v2/gen/root/pack/foo.txt" in materializer_state.stdout
+    assert "yak-out/v2/gen/root/pack/foo.txt" in materializer_state.stdout
 
 
 @buck_test()
 async def test_build_symlink_does_not_traverse_existing_symlinks(buck: Buck) -> None:
     await buck.build("//pack:trivial_build")
-    symlink_folder = buck.cwd / "buck-out" / "v2" / "gen" / "root" / "pack"
+    symlink_folder = buck.cwd / "yak-out" / "v2" / "gen" / "root" / "pack"
 
     # Now, overwrite part of the symlink path with something we cannot traverse.
     path = symlink_folder.parent
@@ -84,10 +84,10 @@ async def test_build_symlink_does_not_traverse_existing_symlinks(buck: Buck) -> 
 @buck_test()
 async def test_conflict_with_content_based_paths(buck: Buck) -> None:
     symlink_path: Path = (
-        buck.cwd / "buck-out" / "v2" / "gen" / "root" / "conflict" / "shared_name"
+        buck.cwd / "yak-out" / "v2" / "gen" / "root" / "conflict" / "shared_name"
     )
     content_based_path: Path = (
-        buck.cwd / "buck-out" / "v2" / "art" / "root" / "conflict" / "shared_name"
+        buck.cwd / "yak-out" / "v2" / "art" / "root" / "conflict" / "shared_name"
     )
     subtarget_output: Path
     # sanity check that we're starting from a clean state

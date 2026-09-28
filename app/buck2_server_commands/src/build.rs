@@ -148,8 +148,8 @@ fn expect_build_opts(req: &buck2_cli_proto::BuildRequest) -> &CommonBuildOptions
 #[derive(buck2_error::Error, Debug)]
 #[buck2(tag = Input)]
 #[error(
-    "`buck2 run` will require a `--` separator before target arguments in the future. \
-     Please use `buck2 run <target> -- <args>` instead of `buck2 run <target> <args>`"
+    "`yak run` will require a `--` separator before target arguments in the future. \
+     Please use `yak run <target> -- <args>` instead of `yak run <target> <args>`"
 )]
 struct RunArgsMissingSeparator;
 

@@ -109,7 +109,7 @@ use crate::interpreter::rule_defs::provider::ProviderCollection;
 ///         debug_info = name + ".debug_info",
 ///     )
 ///
-/// # //subdir/BUCK
+/// # //subdir/YAK
 /// load("//:foo_binary.bzl", "foo_binary_wrapper")
 ///
 /// genrule(name = "gen_stuff", ...., default_outs = ["foo.cpp"])
@@ -139,10 +139,10 @@ use crate::interpreter::rule_defs::provider::ProviderCollection;
 pub struct DefaultInfo<'v> {
     /// A mapping of names to `ProviderCollection`s. The keys are used when resolving the
     /// `ProviderName` portion of a `ProvidersLabel` in order to access the providers for a
-    /// subtarget, such as when doing `buck2 build cell//foo:bar[baz]`. Just like any
+    /// subtarget, such as when doing `yak build cell//foo:bar[baz]`. Just like any
     /// `ProviderCollection`, this collection must include at least a `DefaultInfo` provider. The
     /// subtargets can have their own subtargets as well, which can be accessed by chaining them,
-    /// e.g.: `buck2 build cell//foo:bar[baz][qux]`.
+    /// e.g.: `yak build cell//foo:bar[baz][qux]`.
     sub_targets: ValueOfUnchecked<'v, DictType<String, ProviderCollection<'static>>>,
     /// A list of `Artifact`s that are built by default if this rule is requested
     /// explicitly (via CLI or `$(location)` etc), or depended on as as a "source"

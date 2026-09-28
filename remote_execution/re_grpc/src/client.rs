@@ -481,7 +481,7 @@ pub struct REClient {
     pool: ChannelPool,
     capabilities: RECapabilities,
     instance_name: InstanceName,
-    // buck2 calls find_missing for same blobs
+    // yak calls find_missing for same blobs
     find_missing_cache: Mutex<FindMissingCache>,
     bystream_compressor: Option<Compressor>,
     max_decoding_msg_size: usize,
@@ -1740,7 +1740,7 @@ fn with_re_metadata<T>(t: T, metadata: &RemoteExecutionMetadata) -> tonic::Reque
     let mut encoded = Vec::new();
     RequestMetadata {
         tool_details: Some(ToolDetails {
-            tool_name: "buck2".to_owned(),
+            tool_name: "yak".to_owned(),
             // TODO(#503): Pull the BuckVersion::get_unique_id() from BuckDaemon
             tool_version: "0.1.0".to_owned(),
         }),

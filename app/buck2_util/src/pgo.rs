@@ -8,9 +8,9 @@
  * above-listed licenses.
  */
 
-//! PGO (Profile Guided Optimization) support for the buck2 daemon.
+//! PGO (Profile Guided Optimization) support for the yak daemon.
 //!
-//! When buck2 is built with `-Cprofile-generate`, the LLVM profiler runtime
+//! When yak is built with `-Cprofile-generate`, the LLVM profiler runtime
 //! is linked in and profile data is written to `.profraw` files on process
 //! exit. However, the daemon's exit paths often use `libc::_exit()` or
 //! `SIGKILL`, which bypass the normal atexit handlers that flush profile data.

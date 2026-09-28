@@ -25,7 +25,7 @@ use crate::complete::path_sanitizer::SanitizedPath;
 /// includes pulled in via `--config-file`, Starlark (`.bzl` and `PACKAGE`),
 /// generators, docs, and metadata.
 const NON_FLAGFILE_EXTENSIONS: &[&str] = &[
-    "buckconfig",
+    "yakconfig",
     "inc",
     "bcfg",
     "py",
@@ -35,9 +35,9 @@ const NON_FLAGFILE_EXTENSIONS: &[&str] = &[
     "json",
     "bzl",
 ];
-const NON_FLAGFILE_NAMES: &[&str] = &["BUCK", "TARGETS", "PACKAGE"];
+const NON_FLAGFILE_NAMES: &[&str] = &["YAK", "PACKAGE"];
 
-/// Completes the argument to a buck2 flagfile, i.e. an `@cell//path/to/mode/file`
+/// Completes the argument to a yak flagfile, i.e. an `@cell//path/to/mode/file`
 /// or `--flagfile cell//path/to/mode/file` argument.
 ///
 /// Unlike target completion this never needs the daemon: flagfiles are plain
@@ -216,12 +216,11 @@ mod tests {
 
     #[test]
     fn test_is_flagfile_rejects_companions_and_build_files() {
-        assert!(!is_flagfile("BUCK"));
-        assert!(!is_flagfile("TARGETS"));
+        assert!(!is_flagfile("YAK"));
         assert!(!is_flagfile("PACKAGE"));
         assert!(!is_flagfile("modes.bzl"));
-        assert!(!is_flagfile("dev.buckconfig"));
-        assert!(!is_flagfile("common.buckconfig.inc"));
+        assert!(!is_flagfile("dev.yakconfig"));
+        assert!(!is_flagfile("common.yakconfig.inc"));
         assert!(!is_flagfile("gen-modes.py"));
         assert!(!is_flagfile("migration.md"));
         assert!(!is_flagfile(".owner"));

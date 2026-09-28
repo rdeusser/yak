@@ -154,7 +154,7 @@ mod tests {
 
     #[test]
     fn test_rust_stack_trace_hash() {
-        // from `buck2 debug crash panic`
+        // from `yak debug crash panic`
         let panic_trace = "
 stack backtrace:
    0: rust_begin_unwind

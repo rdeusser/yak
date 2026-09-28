@@ -20,19 +20,19 @@ async def _log_download_method(buck: Buck) -> Any:
 
 
 def _write_buckconfig_log_url(buck: Buck, value: str) -> None:
-    with open(buck.cwd / ".buckconfig", "a") as f:
+    with open(buck.cwd / ".yakconfig", "a") as f:
         f.write(f"\n[buck2]\nlog_url = {value}\n")
 
 
 def _write_home_local_settings(buck: Buck, settings: str) -> None:
     home = buck.get_settings_home_dir()
-    (home / ".bucksettings.local.toml").write_text(settings)
+    (home / ".yaksettings.local.toml").write_text(settings)
 
 
 @buck_test()
 async def test_settings_override_buckconfig(buck: Buck) -> None:
     _write_buckconfig_log_url(buck, "abc.com")
-    (buck.cwd / ".bucksettings.toml").write_text(
+    (buck.cwd / ".yaksettings.toml").write_text(
         '[log_download]\nlog_url = "test.com"\n'
     )
 
@@ -53,7 +53,7 @@ async def test_log_url_fallback_to_buckconfig(buck: Buck) -> None:
 
 @buck_test()
 async def test_home_local_settings_override_repo(buck: Buck) -> None:
-    (buck.cwd / ".bucksettings.toml").write_text(
+    (buck.cwd / ".yaksettings.toml").write_text(
         '[log_download]\nlog_url = "repo_root"\n'
     )
     _write_home_local_settings(buck, '[log_download]\nlog_url = "home_local"\n')
@@ -64,11 +64,11 @@ async def test_home_local_settings_override_repo(buck: Buck) -> None:
 
 @buck_test()
 async def test_repo_local_settings_override_repo_and_home_local(buck: Buck) -> None:
-    (buck.cwd / ".bucksettings.toml").write_text(
+    (buck.cwd / ".yaksettings.toml").write_text(
         '[log_download]\nlog_url = "repo_root"\n'
     )
     _write_home_local_settings(buck, '[log_download]\nlog_url = "home_local"\n')
-    (buck.cwd / ".bucksettings.local.toml").write_text(
+    (buck.cwd / ".yaksettings.local.toml").write_text(
         '[log_download]\nlog_url = "repo_local"\n'
     )
 
@@ -79,7 +79,7 @@ async def test_repo_local_settings_override_repo_and_home_local(buck: Buck) -> N
 @buck_test()
 async def test_cli_settings_override_local(buck: Buck) -> None:
     _write_home_local_settings(buck, '[log_download]\nlog_url = "home_local"\n')
-    (buck.cwd / ".bucksettings.local.toml").write_text(
+    (buck.cwd / ".yaksettings.local.toml").write_text(
         '[log_download]\nlog_url = "repo_local"\n'
     )
 

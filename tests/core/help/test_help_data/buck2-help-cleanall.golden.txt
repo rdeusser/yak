@@ -2,11 +2,11 @@
 
 Clean Buck2 state for every known project and isolation directory
 
-Usage: buck2 cleanall [OPTIONS]
+Usage: yak cleanall [OPTIONS]
 
 Options:
       --stale
-          Delete artifacts from buck-out using the configured clean-stale policy
+          Delete artifacts from yak-out using the configured clean-stale policy
 
   -h, --help
           Print help (see a summary with '-h')
@@ -24,13 +24,12 @@ Event Log Options:
 
       --command-report-path <PATH>
           Write the command report to this path. A command report is always written to
-          `buck-out/v2/<uuid>/command_report` even without this flag
+          `yak-out/v2/<uuid>/command_report` even without this flag
 
 Universal Options:
       --isolation-dir <ISOLATION_DIR>
-          The name of the directory that Buck2 creates within buck-out for writing outputs and
-          daemon information. If one is not provided, Buck2 creates a directory with the default
-          name.
+          The name of the directory that Buck2 creates within yak-out for writing outputs and daemon
+          information. If one is not provided, Buck2 creates a directory with the default name.
 
           Instances of Buck2 share a daemon if and only if their isolation directory is identical.
           The isolation directory also influences the output paths provided by Buck2, and as a

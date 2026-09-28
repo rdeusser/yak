@@ -6,12 +6,12 @@
       "digest": "foo_digest"
     },
     {
-      "source": "buck-out/bar.txt",
+      "source": "yak-out/bar.txt",
       "destination_relative_to_bundle": "Resources/bar.txt",
       "digest": "bar_digest"
     },
     {
-      "source": "buck-out/bar",
+      "source": "yak-out/bar",
       "destination_relative_to_bundle": "Resources/bar",
       "resolved_symlink": "bar.txt"
     }

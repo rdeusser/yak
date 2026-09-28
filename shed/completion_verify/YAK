@@ -1,0 +1,29 @@
+load("//build_defs:rust.bzl", "rust_binary")
+
+# Small binary to verify shell completion works correctly. Used in e2e tests of yak.
+rust_binary(
+    name = "completion_verify",
+    srcs = glob(["src/**/*.rs"]),
+    compatible_with = [
+        "prelude//os:linux",
+        "prelude//os:macos",
+    ],
+    resources = select({
+        "DEFAULT": {},
+        "prelude//os:linux": {
+            "fish": "//shed/completion_verify/packages:fish",
+            "zsh": "//shed/completion_verify/packages:zsh",
+        },
+    }),
+    deps = [
+        "//third-party/rust:buck-resources",
+        "//third-party/rust:clap",
+        "//third-party/rust:ptyprocess",
+        "//third-party/rust:tempfile",
+        "//third-party/rust:vt100",
+    ] + select({
+        "DEFAULT": [],
+        "prelude//os:linux": ["//third-party/rust:nix"],
+        "prelude//os:macos": ["//third-party/rust:nix"],
+    }),
+)

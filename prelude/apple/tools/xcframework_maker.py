@@ -124,7 +124,7 @@ def main() -> None:
 
     for framework_path in args.framework_path:
         # args are structured like this
-        # --framework_path ios-arm64 buck-out/path/to/MyPkg.framework
+        # --framework_path ios-arm64 yak-out/path/to/MyPkg.framework
 
         framework_arch = framework_path[0]
         framework_fullpath = framework_path[1]

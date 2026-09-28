@@ -72,7 +72,7 @@ pub fn read_current_cgroup() -> Option<String> {
         .map(|p| p.to_string())
 }
 
-/// Read the cgroup path of the buck2 daemon process based on its pid from the client side
+/// Read the cgroup path of the yak daemon process based on its pid from the client side
 pub fn read_cgroup_path_of_buck2_daemon(daemon_pid: i64) -> buck2_error::Result<Option<String>> {
     let path = format!("/proc/{}/cgroup", daemon_pid);
     let procfs_out = match std::fs::read_to_string(&path) {
@@ -337,17 +337,17 @@ mod tests {
     #[test]
     fn test_cgroup_info_parse() {
         let cgroup = "\
-0::/user.slice/user-532497.slice/user@532497.service/buck2.cg\n";
+0::/user.slice/user-532497.slice/user@532497.service/yak.cg\n";
         assert_eq!(
-            "/sys/fs/cgroup/user.slice/user-532497.slice/user@532497.service/buck2.cg",
+            "/sys/fs/cgroup/user.slice/user-532497.slice/user@532497.service/yak.cg",
             parse_procfs_cgroup_output(cgroup).unwrap().to_string()
         );
 
         let cgroup = "\
 5:cpuacct,cpu,cpuset:/daemons
-0::/user.slice/user-532497.slice/user@532497.service/buck2.cg\n";
+0::/user.slice/user-532497.slice/user@532497.service/yak.cg\n";
         assert_eq!(
-            "/sys/fs/cgroup/user.slice/user-532497.slice/user@532497.service/buck2.cg",
+            "/sys/fs/cgroup/user.slice/user-532497.slice/user@532497.service/yak.cg",
             parse_procfs_cgroup_output(cgroup).unwrap().to_string()
         );
     }

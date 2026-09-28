@@ -10,8 +10,8 @@ def make_content_based_dist(ctx: AnalysisContext, name: str, exe: Artifact, copi
     """
     Package a relocatable executable that depends on adjacent files into a single
     content-based directory, so it is self-contained at a content-addressed
-    buck-out path. A content change re-hashes the whole directory to a new path
-    while the old one persists -- the property that lets a long-running `buck2
+    yak-out path. A content change re-hashes the whole directory to a new path
+    while the old one persists -- the property that lets a long-running `yak
     run` binary survive concurrent rebuilds.
 
     `exe` is COPIED into the directory. Its self-relative lookups -- an `$ORIGIN`
@@ -39,7 +39,7 @@ def make_content_based_dist(ctx: AnalysisContext, name: str, exe: Artifact, copi
     of the bundle, for use as a `RunInfo` command and/or `DefaultInfo` output.
     """
     # Feature-detected (getattr, not a static reference) so this module still
-    # LOADS under a buck2 that predates `assembled_dir` -- the
+    # LOADS under a yak that predates `assembled_dir` -- the
     # static type-checker rejects unknown globals/methods at module-load time,
     # which would break every rust_binary analysis on older binaries. Reaching
     # this function without the API (i.e. actually opting a target in) is a
@@ -48,7 +48,7 @@ def make_content_based_dist(ctx: AnalysisContext, name: str, exe: Artifact, copi
     make_assembled_dir = getattr(ctx.actions, "assembled_dir", None)
     if entry_ctors == None or make_assembled_dir == None:
         fail(
-            "content-based dist bundles require a buck2 with " + "`ctx.actions.assembled_dir`; this buck2 predates it",
+            "content-based dist bundles require a yak with " + "`ctx.actions.assembled_dir`; this yak predates it",
         )
 
     exe_rel = exe.short_path

@@ -7,8 +7,8 @@ title: Build Target
 
 A _build target_ is a string that identifies a build target in your project.
 Build targets are used as arguments to Buck2 commands, such as
-[`buck2 build`](../../users/commands/build) and
-[`buck2 run`](../../users/commands/run). Build targets are also used as
+[`yak build`](../../users/commands/build) and
+[`yak run`](../../users/commands/run). Build targets are also used as
 arguments to [build rules](build_rule.md) to enable one target to reference
 another. For example, a build rule might use a build target to reference another
 target in order to specify that target as a _dependency_.
@@ -26,16 +26,16 @@ A fully-qualified build target has three components:
 1. The `cell//` prefix indicates that the subsequent path is from the _root_ of
    `cell`.
 2. The `java/com/example/share` between the `//` prefix and the colon (`:`)
-   indicates that the [build file](build_file.md) (usually named `BUCK`) is
+   indicates that the [build file](build_file.md) (usually named `YAK`) is
    located in the directory `java/com/example/share`.
 3. The `ui` after the colon (`:`) indicates the name of the build target within
    the build file. Build target names must be unique within a build file. By
    _name_ we mean, more formally, the value of the `name` argument to the build
    rule.
 
-Note that the name of the build file itself—usually BUCK—does _not_ occur in the
+Note that the name of the build file itself—usually YAK—does _not_ occur in the
 build target. All build files within a given Buck2 project must have the same
-name—defined in the `[buildfile].name` entry of `.buckconfig`. Therefore, it is
+name—defined in the `[buildfile].name` entry of `.yakconfig`. Therefore, it is
 unnecessary to include the name in the target. The full regular expression for a
 fully-qualified build target is as follows:
 
@@ -70,7 +70,7 @@ component (or _short name_) of the fully-qualified build target. The following
 snippet from a build file shows an example of using a relative path.
 
 ```python
-## Assume this target is in //java/com/example/share/BUCK#
+## Assume this target is in //java/com/example/share/YAK#
 java_binary(
   name = 'ui_jar',
   deps = [
@@ -85,12 +85,12 @@ java_binary(
 ## Command-line Pro Tips
 
 Here are some ways that you can reduce your typing when you specify build
-targets as command-line arguments to the `buck2 build` or `buck2 run` commands.
+targets as command-line arguments to the `yak build` or `yak run` commands.
 Consider the following example of a fully-qualified build target used with the
-`buck2 build` command:
+`yak build` command:
 
 ```sh
-buck2 build cell//java/com/example/share:share
+yak build cell//java/com/example/share:share
 ```
 
 Although Buck2 is always strict when parsing build targets in build files, Buck2
@@ -98,21 +98,21 @@ is flexible when parsing build targets on the command-line. Specifically, the
 leading `//` is optional on the command line, so the above could be:
 
 ```sh
-buck2 build java/com/example/share:share
+yak build java/com/example/share:share
 ```
 
 Also, if there is a forward slash before the colon, it is ignored, so this could
 also be written as:
 
 ```sh
-buck2 build java/com/example/share/:share
+yak build java/com/example/share/:share
 ```
 
 which enables you to produce the red text shown below using tab-completion,
 which dramatically reduces how much you need to type:
 
 ```sh
-buck2 build java/com/example/share/:share
+yak build java/com/example/share/:share
 ```
 
 Finally, if the final path element matches the value specified after the colon,
@@ -120,7 +120,7 @@ it can be omitted:
 
 ```sh
 # This is treated as //java/com/example/share:share.
-buck2 build java/com/example/share/
+yak build java/com/example/share/
 ```
 
 which makes the build target even easier to tab-complete. For this reason, the
@@ -133,7 +133,7 @@ command-line with less typing.
 Buck2 supports the ability to define **_aliases_ for build targets**; using
 aliases can improve brevity when specifying targets on the Buck2 command line.
 For more information, see the [`[alias]`](buckconfig.md#alias) section in the
-documentation for [`.buckconfig`](buckconfig.md). A
+documentation for [`.yakconfig`](buckconfig.md). A
 [**build target pattern**](target_pattern.md) is a string that describes a set
 of one or more build targets. For example, the pattern `//...` is used to build
 an entire project. For more information, see the **Build Target Pattern** topic.

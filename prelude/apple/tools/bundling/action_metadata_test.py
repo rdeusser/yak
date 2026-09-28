@@ -27,7 +27,7 @@ class TestActionMetadata(unittest.TestCase):
             result,
             {
                 Path("repo/foo.txt"): "foo_digest",
-                Path("buck-out/bar.txt"): "bar_digest",
+                Path("yak-out/bar.txt"): "bar_digest",
             },
         )
 

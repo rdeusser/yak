@@ -1,35 +1,35 @@
 {
     "exclude-github-release-provider": true,
     "outputs": {
-      "buck2": {
+      "yak": {
         "platforms": {
           "macos-aarch64": {
-            "regex": "^buck2-aarch64-apple-darwin.zst$",
-            "path": "buck2-aarch64-apple-darwin"
+            "regex": "^yak-aarch64-apple-darwin.zst$",
+            "path": "yak-aarch64-apple-darwin"
           },
           "windows-aarch64": {
-            "regex": "^buck2-aarch64-pc-windows-msvc.exe.zst$",
-            "path": "buck2-aarch64-pc-windows-msvc.exe"
+            "regex": "^yak-aarch64-pc-windows-msvc.exe.zst$",
+            "path": "yak-aarch64-pc-windows-msvc.exe"
           },
           "linux-aarch64": {
-            "regex": "^buck2-aarch64-unknown-linux-musl.zst$",
-            "path": "buck2-aarch64-unknown-linux-musl"
+            "regex": "^yak-aarch64-unknown-linux-musl.zst$",
+            "path": "yak-aarch64-unknown-linux-musl"
           },
           "linux-riscv64": {
-            "regex": "^buck2-riscv64gc-unknown-linux-gnu.zst$",
-            "path": "buck2-riscv64gc-unknown-linux-gnu"
+            "regex": "^yak-riscv64gc-unknown-linux-gnu.zst$",
+            "path": "yak-riscv64gc-unknown-linux-gnu"
           },
           "macos-x86_64": {
-            "regex": "^buck2-x86_64-apple-darwin.zst$",
-            "path": "buck2-x86_64-apple-darwin"
+            "regex": "^yak-x86_64-apple-darwin.zst$",
+            "path": "yak-x86_64-apple-darwin"
           },
           "windows-x86_64": {
-            "regex": "^buck2-x86_64-pc-windows-msvc.exe.zst$",
-            "path": "buck2-x86_64-pc-windows-msvc.exe"
+            "regex": "^yak-x86_64-pc-windows-msvc.exe.zst$",
+            "path": "yak-x86_64-pc-windows-msvc.exe"
           },
           "linux-x86_64": {
-            "regex": "^buck2-x86_64-unknown-linux-musl.zst$",
-            "path": "buck2-x86_64-unknown-linux-musl"
+            "regex": "^yak-x86_64-unknown-linux-musl.zst$",
+            "path": "yak-x86_64-unknown-linux-musl"
           }
         }
       },

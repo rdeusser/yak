@@ -26,5 +26,5 @@ __overridden_builtins__ = (
 load_symbols(__overridden_builtins__)
 
 # Public symbols in this file become globals everywhere except `bzl` files in prelude.
-# Additionally, members of `native` struct also become globals in `BUCK` files.
+# Additionally, members of `native` struct also become globals in `YAK` files.
 native = _native

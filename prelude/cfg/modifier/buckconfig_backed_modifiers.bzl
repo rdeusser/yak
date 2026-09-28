@@ -99,7 +99,7 @@ def buckconfig_backed_modifiers(
     having all builds specifying these buckconfigs to specify modifiers for them instead.
 
     Buckconfigs are read from `toolchains` cell in order to identify buckconfigs
-    specified in modefiles on CLI, as opposed to buckconfigs specified in .buckconfig files per cells.
+    specified in modefiles on CLI, as opposed to buckconfigs specified in .yakconfig files per cells.
 
     Each `BuckconfigBackedModifier` entry can specify `modifiers` (individual constraint value targets)
     and/or `platforms` (platform targets whose constraints are applied). At least one must be non-empty.

@@ -41,7 +41,7 @@ public class CompilerCommandDefaultsTest {
     assertEquals(AbiGenerationMode.SOURCE_ONLY, command.getAbiGenerationMode());
     assertTrue(command.getTrackClassUsage());
     assertEquals(RelPath.get("dep.jar"), command.getCompileTimeClasspathPaths().get(0));
-    assertEquals(RelPath.get("buck-out/v2"), command.getBuckOut());
+    assertEquals(RelPath.get("yak-out/v2"), command.getBuckOut());
     assertTrue(command.getResolvedJavac() instanceof ResolvedJsr199Javac);
     assertTrue(command.getResolvedJavacOptions().getDebug());
   }

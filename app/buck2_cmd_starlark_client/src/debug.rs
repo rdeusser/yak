@@ -222,8 +222,7 @@ impl StreamingCommand for StarlarkDebugAttachCommand {
                 &mut self,
                 error: &buck2_error::Error,
             ) -> buck2_error::Result<()> {
-                Ok(self
-                    .write_console(&format!("buck2 starlark-attach debugserver error: {error}"))?)
+                Ok(self.write_console(&format!("yak starlark-attach debugserver error: {error}"))?)
             }
         }
 

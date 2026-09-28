@@ -35,17 +35,17 @@ alt='justifyContent'/>
 In the targets build graph, Buck2 operates with two main perspectives on build
 targets: unconfigured and configured. You can refer
 [execution model](../../concepts/architecture.md#execution-model) to
-see these two phase in a buck2 build.
+see these two phase in a yak build.
 
 **Unconfigured** components are configuration independent representations. Think
 of them as the blueprint of your targets. For example, `//buck2:buck2` is the
-representation of `buck2`'s unconfigured target label.
+representation of `yak`'s unconfigured target label.
 
 **Configured** components, on the other hand, include all the platform-specific
 details and other configurations needed for actual building. They have the
 necessary information about how to build it for a specific platform or
 configuration. For example, `//buck2:buck2 (cfg:linux-x86_64-xxxxxx)` is the
-representation of `buck2`'s configured target label.
+representation of `yak`'s configured target label.
 
 ### Labels vs Nodes
 
@@ -63,7 +63,7 @@ what a target is, what it depends on, what attributes it has, etc.
 targets. For example, `//buck2:buck2` refers to an entire target.
 
 **Provider labels** (both configured and unconfigured) represents a specific
-part of a target. For example, `//buck2:buck2[llvm_ir]` represents `buck2`
+part of a target. For example, `//buck2:buck2[llvm_ir]` represents `yak`
 target's `llvm_ir` sub-target
 
 ## Label and Nodes Conversion

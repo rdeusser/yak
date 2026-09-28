@@ -28,13 +28,13 @@ Configure a local build without persistent workers:
 
 ```
 $ cd examples/persistent_worker
-$ echo '<file:.buckconfig.no-workers>' > .buckconfig.local
+$ echo '<file:.yakconfig.no-workers>' > .yakconfig.local
 ```
 
 Run a clean build:
 
 ```
-$ buck2 clean; buck2 build : -vstderr
+$ yak clean; yak build : -vstderr
 ...
 stderr for root//:demo-3 (demo):
 ...
@@ -48,13 +48,13 @@ Configure a local build with persistent workers:
 
 ```
 $ cd examples/persistent_worker
-$ echo '<file:.buckconfig.local-persistent-workers>' > .buckconfig.local
+$ echo '<file:.yakconfig.local-persistent-workers>' > .yakconfig.local
 ```
 
 Run a clean build:
 
 ```
-$ buck2 clean; buck2 build : -vstderr
+$ yak clean; yak build : -vstderr
 ...
 stderr for root//:demo-3 (demo):
 ...
@@ -68,13 +68,13 @@ Configure a remote build without persistent workers:
 
 ```
 $ cd examples/persistent_worker
-$ echo '<file:.buckconfig.buildbuddy>' > .buckconfig.local
+$ echo '<file:.yakconfig.buildbuddy>' > .yakconfig.local
 ```
 
 Run a clean build:
 
 ```
-$ buck2 clean; buck2 build : -vstderr
+$ yak clean; yak build : -vstderr
 ...
 stderr for root//:demo-3 (demo):
 ...
@@ -88,13 +88,13 @@ Configure a remote build with persistent workers:
 
 ```
 $ cd examples/persistent_worker
-$ echo '<file:.buckconfig.buildbuddy-persistent-workers>' > .buckconfig.local
+$ echo '<file:.yakconfig.buildbuddy-persistent-workers>' > .yakconfig.local
 ```
 
 Run a clean build:
 
 ```
-$ buck2 clean; buck2 build : -vstderr
+$ yak clean; yak build : -vstderr
 ...
 stderr for root//:demo-3 (demo):
 ...

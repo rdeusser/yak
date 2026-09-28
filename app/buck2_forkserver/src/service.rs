@@ -389,7 +389,7 @@ struct MiniperfContainer {
 }
 
 impl MiniperfContainer {
-    /// new returns `None` because Miniperf runs only from a copy embedded in the buck2 binary, and
+    /// new returns `None` because Miniperf runs only from a copy embedded in the yak binary, and
     /// this build embeds none.
     fn new(_forkserver_state_dir: &AbsNormPath) -> buck2_error::Result<Option<Self>> {
         Ok(None)

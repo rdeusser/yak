@@ -41,7 +41,7 @@ there.
 When querying the unconfigured graph, dependencies appearing in all
 branches of `select()` dictionaries will be treated as dependencies.
 
-Run `buck2 docs uquery` or
+Run `yak docs uquery` or
 ",
         "https://rdeusser.github.io/buck2/docs/users/query/uquery/",
         r#"
@@ -52,10 +52,10 @@ Examples:
 
 Print all the attributes of a target
 
-`buck2 uquery //java/com/example/app:amazing --output-all-attributes
+`yak uquery //java/com/example/app:amazing --output-all-attributes
 
 List the deps of a target (special characters in a target will require quotes):
-`buck2 uquery 'deps("//java/com/example/app:amazing+more")'`
+`yak uquery 'deps("//java/com/example/app:amazing+more")'`
 
 select() encoding:
 
@@ -73,7 +73,7 @@ When printed, values with `select()`s use a special json encoding.
     name = "uquery",
     about = "Perform queries on the unconfigured target graph",
     long_about = help(),
-    after_help = "Run `buck2 docs uquery` for detailed information about query functions such as allbuildfiles, allpaths, attrfilter, and more.",
+    after_help = "Run `yak docs uquery` for detailed information about query functions such as allbuildfiles, allpaths, attrfilter, and more.",
     after_long_help = "",
     verbatim_doc_comment,
 )]

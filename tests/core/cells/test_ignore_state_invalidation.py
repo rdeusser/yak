@@ -83,13 +83,13 @@ async def test_ignore_state_invalidation_with_re_override_in_config(buck: Buck) 
     # Default is buck2-default
     await buck.build("root//:simple")
     # Add config to switch to buck2-user
-    with open(buck.cwd / ".buckconfig.local", "w") as f:
+    with open(buck.cwd / ".yakconfig.local", "w") as f:
         f.write("[buck2_re_client]\n")
         f.write("override_use_case = buck2-user\n")
     await buck.build("root//:simple")
     await check_config_is_different(buck)
     # Add config to return to buck2-default
-    with open(buck.cwd / ".buckconfig.local", "w") as f:
+    with open(buck.cwd / ".yakconfig.local", "w") as f:
         f.write("[buck2_re_client]\n")
         f.write("override_use_case = buck2-default\n")
     await buck.build("root//:simple")

@@ -54,7 +54,7 @@ def git_commit(buck: Buck, message: str) -> str:
 
 async def setup_file_watcher_test(buck: Buck) -> None:
     git(buck, "init", "--quiet", "--initial-branch=main")
-    (buck.cwd / ".gitignore").write_text("/buck-out\n")
+    (buck.cwd / ".gitignore").write_text("/yak-out\n")
     git_commit(buck, "temp")
 
     status = git(buck, "status", "--porcelain")

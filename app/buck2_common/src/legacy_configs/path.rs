@@ -8,7 +8,7 @@
  * above-listed licenses.
  */
 
-use buck2_wrapper_common::DOT_BUCKCONFIG_D;
+use buck2_wrapper_common::DOT_YAKCONFIG_D;
 
 pub(crate) enum ExternalConfigSource {
     // Buckconfig file in the user's home directory
@@ -25,7 +25,7 @@ pub(crate) enum ExternalConfigSource {
 }
 
 pub(crate) enum ProjectConfigSource {
-    // Buckconfig file in the cell relative to project root, such as .buckconfig or .buckconfig.local
+    // Buckconfig file in the cell relative to project root, such as .yakconfig or .yakconfig.local
     CellRelativeFile(&'static str),
 
     // Buckconfig folder in the cell, assuming all files in this folder are buckconfig
@@ -38,22 +38,22 @@ pub(crate) enum ProjectConfigSource {
 /// external configs.
 pub(crate) static DEFAULT_EXTERNAL_CONFIG_SOURCES: &[ExternalConfigSource] = &[
     #[cfg(not(windows))]
-    ExternalConfigSource::GlobalFolder("/etc/buckconfig.d"),
+    ExternalConfigSource::GlobalFolder("/etc/yakconfig.d"),
     #[cfg(not(windows))]
-    ExternalConfigSource::GlobalFile("/etc/buckconfig"),
+    ExternalConfigSource::GlobalFile("/etc/yakconfig"),
     // TODO: use %PROGRAMDATA% on Windows
     #[cfg(windows)]
-    ExternalConfigSource::GlobalFolder("C:\\ProgramData\\buckconfig.d"),
+    ExternalConfigSource::GlobalFolder("C:\\ProgramData\\yakconfig.d"),
     #[cfg(windows)]
-    ExternalConfigSource::GlobalFile("C:\\ProgramData\\buckconfig"),
-    ExternalConfigSource::UserFolder(DOT_BUCKCONFIG_D),
-    ExternalConfigSource::UserFile(DOT_BUCKCONFIG_LOCAL),
+    ExternalConfigSource::GlobalFile("C:\\ProgramData\\yakconfig"),
+    ExternalConfigSource::UserFolder(DOT_YAKCONFIG_D),
+    ExternalConfigSource::UserFile(DOT_YAKCONFIG_LOCAL),
 ];
 
 pub(crate) static DEFAULT_PROJECT_CONFIG_SOURCES: &[ProjectConfigSource] = &[
-    ProjectConfigSource::CellRelativeFolder(DOT_BUCKCONFIG_D),
-    ProjectConfigSource::CellRelativeFile(".buckconfig"),
-    ProjectConfigSource::CellRelativeFile(DOT_BUCKCONFIG_LOCAL),
+    ProjectConfigSource::CellRelativeFolder(DOT_YAKCONFIG_D),
+    ProjectConfigSource::CellRelativeFile(".yakconfig"),
+    ProjectConfigSource::CellRelativeFile(DOT_YAKCONFIG_LOCAL),
 ];
 
-pub(crate) static DOT_BUCKCONFIG_LOCAL: &str = ".buckconfig.local";
+pub(crate) static DOT_YAKCONFIG_LOCAL: &str = ".yakconfig.local";

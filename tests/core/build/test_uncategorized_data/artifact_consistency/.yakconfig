@@ -1,0 +1,7 @@
+[repositories]
+root = .
+prelude = prelude
+[buck2]
+allow_eden_io = false
+[buildfile]
+name = YAK.fixture

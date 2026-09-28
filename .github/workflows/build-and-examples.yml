@@ -27,8 +27,8 @@ jobs:
     - name: Build the 'example/with_prelude' project
       run: |-
         cd examples/with_prelude
-        $RUNNER_TEMP/artifacts/buck2 build //... -v 2
-        $RUNNER_TEMP/artifacts/buck2 test //... -v 2
+        $RUNNER_TEMP/artifacts/yak build //... -v 2
+        $RUNNER_TEMP/artifacts/yak test //... -v 2
     - uses: ./.github/actions/build_example_no_prelude
     - uses: ./.github/actions/build_example_toolchain
       with:
@@ -57,8 +57,8 @@ jobs:
     - name: Build the 'example/with_prelude' project
       run: |-
         cd examples/with_prelude
-        $RUNNER_TEMP/artifacts/buck2 build //... -v 2
-        $RUNNER_TEMP/artifacts/buck2 test //... -v 2
+        $RUNNER_TEMP/artifacts/yak build //... -v 2
+        $RUNNER_TEMP/artifacts/yak test //... -v 2
     - uses: ./.github/actions/build_example_conan
     - uses: ./.github/actions/build_example_no_prelude
     - uses: ./.github/actions/build_example_toolchain
@@ -85,8 +85,8 @@ jobs:
       - name: Build example/prelude directory
         run: |-
           cd examples/with_prelude
-          & $Env:RUNNER_TEMP/artifacts/buck2 build //... -v 2
-          & $Env:RUNNER_TEMP/artifacts/buck2 test //... -v 2
+          & $Env:RUNNER_TEMP/artifacts/yak build //... -v 2
+          & $Env:RUNNER_TEMP/artifacts/yak test //... -v 2
       - uses: ./.github/actions/build_example_no_prelude
       - uses: ./.github/actions/build_example_toolchain
         with:

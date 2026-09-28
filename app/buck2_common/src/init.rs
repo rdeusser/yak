@@ -143,11 +143,11 @@ impl HttpConfig {
     Eq
 )]
 pub struct SystemWarningConfig {
-    /// A threshold that is used to determine the percent of memory buck2 uses to display memory pressure warnings.
+    /// A threshold that is used to determine the percent of memory yak uses to display memory pressure warnings.
     /// If None, we don't warn the user.
     /// The corresponding buckconfig is `buck2_system_warning.memory_pressure_threshold_percent`.
     pub memory_pressure_threshold_percent: Option<u64>,
-    /// A threshold that is used to determine remaining disk space buck2 uses to display disk space warnings.
+    /// A threshold that is used to determine remaining disk space yak uses to display disk space warnings.
     /// If None, we don't warn the user.
     /// The corresponding buckconfig is `buck2_system_warning.remaining_disk_space_threshold`.
     pub remaining_disk_space_threshold_gb: Option<u64>,
@@ -206,7 +206,7 @@ pub struct ResourceControlConfig {
     /// If resource control is enabled, buck needs to get a cgroup to run in from somewhere - this is
     /// where.
     pub init: ResourceControlInit,
-    /// Maximum allowed memory usage for all work buck2 manages.
+    /// Maximum allowed memory usage for all work yak manages.
     ///
     /// Accepts either a number of bytes or a percentage of the available resources.
     ///
@@ -228,7 +228,7 @@ pub struct ResourceControlConfig {
     ///
     /// Mainly for testing purpose.
     pub memory_max_actions: Option<String>,
-    /// Value buck2 writes to `memory.swap.max` on the actions-pool cgroup (the cgroup shared by all
+    /// Value yak writes to `memory.swap.max` on the actions-pool cgroup (the cgroup shared by all
     /// running actions); the kernel enforces it from there. Accepts a byte count or `max`.
     ///
     /// Setting it to `0` disables swap for actions, so once `memory_high_actions` /
@@ -290,7 +290,7 @@ pub enum ResourceControlStatus {
     /// The resource is controlled by `systemd` if it's available on the system, otherwise off.
     IfAvailable,
     /// The resource is controlled by `systemd`. If it is not available on the system,
-    /// buck2 errors it out and the command returns with an error exit code.
+    /// yak errors it out and the command returns with an error exit code.
     Required,
 }
 
@@ -474,7 +474,7 @@ pub enum LogDownloadMethod {
 /// Pagable DICE storage settings, present (`Some`) only when paging is enabled by
 /// the `hydration` Buck settings or their legacy `buck2_hydration` fallbacks.
 /// `page_out_on_idle` also implies paging is enabled. When present, the daemon
-/// sets up on-disk storage during construction so `buck2 debug hydration` can
+/// sets up on-disk storage during construction so `yak debug hydration` can
 /// page node values out to / in from disk. Read at startup because it gates that
 /// setup.
 #[derive(Allocative, Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]

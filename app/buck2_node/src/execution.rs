@@ -49,7 +49,7 @@ pub trait GetExecutionPlatformsImpl: 'static + Send + Sync {
     ) -> buck2_error::Result<ExecutionPlatformResolutionPartial>;
 
     /// Re-traverses the candidates for a target, collecting the outcome of every candidate
-    /// execution platform. Used by `buck2 audit execution-platform-resolution` to reconstruct
+    /// execution platform. Used by `yak audit execution-platform-resolution` to reconstruct
     /// the reasons that `NoCompatiblePlatform` deliberately does not render. The per-candidate
     /// checks are DICE-cached, so for a target whose resolution just failed this mostly reads
     /// back the failed attempt.

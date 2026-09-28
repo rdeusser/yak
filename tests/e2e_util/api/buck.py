@@ -592,7 +592,7 @@ class Buck(Executable):
         Returns a Process with BuckResult type using a process created with the
         profile command and any additional arguments
 
-        args: Arguments to pass to buck2 profile.
+        args: Arguments to pass to yak profile.
         rel_cwd: Optional Path specifying the workding directive to run
         the command relative to the root.
         env: Optional dictionary for environment variables to run command with.
@@ -800,7 +800,7 @@ class Buck(Executable):
         args = list(argv)
         invocation_record_path = None
         if self.write_invocation_record and can_write_invocation_record:
-            invocation_record_dir = cwd / "buck-out" / "tmp"
+            invocation_record_dir = cwd / "yak-out" / "tmp"
             invocation_record_dir.mkdir(parents=True, exist_ok=True)
             invocation_record_path = invocation_record_dir / (buck_build_id + ".json")
             separator_idx = args.index("--") if "--" in args else len(args)
@@ -924,11 +924,11 @@ class Buck(Executable):
 
     async def daemon_stderr(self) -> str:
         daemon_dir = await self.get_daemon_dir()
-        return (daemon_dir / "buckd.stderr").read_text()
+        return (daemon_dir / "yakd.stderr").read_text()
 
     async def prev_daemon_stderr(self) -> str:
         daemon_dir = await self.get_daemon_dir()
-        return (daemon_dir / "prev/buckd.stderr").read_text()
+        return (daemon_dir / "prev/yakd.stderr").read_text()
 
     def get_settings_home_dir(self) -> Path:
         return Path(self._env["BUCK2_TEST_SETTINGS_HOME_DIR"])

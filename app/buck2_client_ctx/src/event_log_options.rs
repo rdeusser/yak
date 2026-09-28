@@ -105,7 +105,7 @@ impl EventLogOptions {
         let log_file_name = FileNameBuf::try_from(format!(
             "{}{}",
             trace_id,
-            // TODO(nga): hardcoded default, should at least use the same default buck2 uses,
+            // TODO(nga): hardcoded default, should at least use the same default yak uses,
             //   or better enumerate all the possible suffixes.
             Encoding::PROTO_ZSTD.extensions[0]
         ))?;

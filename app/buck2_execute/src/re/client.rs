@@ -176,7 +176,7 @@ impl RemoteExecutionClient {
                 .map_err(|_| {
                     buck2_error!(
                         buck2_error::ErrorTag::ReDeadlineExceeded,
-                        "Creating the RE client did not finish within {}s. If this persists, run `buck2 kill`",
+                        "Creating the RE client did not finish within {}s. If this persists, run `yak kill`",
                         timeout_s
                     )
                 })??

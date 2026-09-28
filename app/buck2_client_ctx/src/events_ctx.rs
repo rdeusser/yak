@@ -81,7 +81,7 @@ enum BuckdCommunicationError {
     )]
     #[buck2(tag = InterruptedByDaemonShutdown)]
     InterruptedByDaemonShutdown(buck2_data::DaemonShutdown),
-    #[error("buckd communication encountered an unexpected error `{0:?}`")]
+    #[error("yakd communication encountered an unexpected error `{0:?}`")]
     #[buck2(tag = Tier0)]
     TonicError(tonic::Status),
 }
@@ -131,7 +131,7 @@ pub enum FileTailerEvent {
     Stderr(Vec<u8>),
 }
 
-/// Manages incoming event streams from the daemon for the buck2 client and
+/// Manages incoming event streams from the daemon for the yak client and
 /// forwards them to the appropriate subscribers in EventsCtx
 pub struct DaemonEventsCtx<'a> {
     pub(crate) inner: &'a mut EventsCtx,
@@ -243,7 +243,7 @@ impl<'a> DaemonEventsCtx<'a> {
             FileTailerEvent::Stdout(out) | FileTailerEvent::Stderr(out) => {
                 // Sending daemon stdout to stderr.
                 // Daemon is not supposed to write anything to stdout.
-                // But if daemon does, it should not be used as standard output of buck2.
+                // But if daemon does, it should not be used as standard output of yak.
                 self.inner.handle_tailer_stderr(&out).await
             }
         }
@@ -604,7 +604,7 @@ impl EventsCtx {
     }
 
     /// Ask subscribers to remove their interactive display from the terminal; used
-    /// when the display is being replaced rather than concluded (e.g. `buck2 log
+    /// when the display is being replaced rather than concluded (e.g. `yak log
     /// snoop` switching to another invocation).
     pub async fn erase_interactive_output(&mut self) -> buck2_error::Result<()> {
         self.try_for_each_subscriber(|s| s.erase_interactive_output())

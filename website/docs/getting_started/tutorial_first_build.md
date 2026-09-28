@@ -13,7 +13,7 @@ with Buck2.
 
 1. Set up a simple project directory.
 2. Write a "Hello, World!" program in Rust.
-3. Create a BUCK file to tell Buck2 how to build our program.
+3. Create a YAK file to tell Buck2 how to build our program.
 4. Build the Rust program using Buck2.
 5. Run our compiled program using Buck2.
 6. Briefly inspect the build targets we created.
@@ -28,14 +28,14 @@ We will only use a few basics of Rust.
 
 ## Step 1: Create a New Project
 
-First, we need to create a new buck2 project directory and set up a folder to
+First, we need to create a new yak project directory and set up a folder to
 put all our files in.
 
-1. Create a new buck2 project directory and create a new directory named
+1. Create a new yak project directory and create a new directory named
    `buck2_lab` inside it.
 
 ```bash
-buck2 init hello_world
+yak init hello_world
 
 mkdir hello_world/buck2_lab
 
@@ -81,15 +81,15 @@ This is the main function of our program. It prints "Hello world!" to the
 console. But we are not done yet, we need to tell Buck2 how to build our
 program.
 
-## Step 3: Defining the Build Target in a BUCK File
+## Step 3: Defining the Build Target in a YAK File
 
 Next, we need to tell Buck2 about our program and how to build it. We do this
-using a `BUCK` file.
+using a `YAK` file.
 
 1. In the root of your `greeter_bin` directory (not inside src), create a new
-   file named `BUCK`.
+   file named `YAK`.
 
-2. Add the following content to this BUCK file:
+2. Add the following content to this YAK file:
 
 ```python
 rust_binary(
@@ -112,24 +112,24 @@ Our project structure should look like this:
 ```
 buck2_lab
 └── greeter_bin
-    ├── BUCK
+    ├── YAK
     └── src
         └── main.rs
 ```
 
 ## Step 4: Building the Application with Buck2
 
-With our Rust code and BUCK file in place, let's build the application!
+With our Rust code and YAK file in place, let's build the application!
 
 1. Open your terminal and make sure you are in the `greeter_bin` directory.
 2. Run the following command:
 
 ```bash
-buck2 build :main --show-output
+yak build :main --show-output
 ```
 
-- `buck2 build :main` tells Buck2 to build the target named main. The `:main`
-  part means the target is defined in the BUCK file in the root of this package
+- `yak build :main` tells Buck2 to build the target named main. The `:main`
+  part means the target is defined in the YAK file in the root of this package
   (`greeter_bin`).
 - `--show-output` tells Buck2 to show the path of our built binary.
 
@@ -138,7 +138,7 @@ buck2 build :main --show-output
 ```
 ...
 BUILD SUCCEEDED
-root//buck2_lab/greeter_bin:main /.../buck2_lab/buck-out/v2/gen/root/200212f73efcd57d/buck2_lab/greeter_bin/__main__/main
+root//buck2_lab/greeter_bin:main /.../buck2_lab/yak-out/v2/gen/root/200212f73efcd57d/buck2_lab/greeter_bin/__main__/main
 ```
 
 - `BUILD SUCCEEDED` indicates that Buck2 successfully built our target.
@@ -148,18 +148,18 @@ root//buck2_lab/greeter_bin:main /.../buck2_lab/buck-out/v2/gen/root/200212f73ef
   from within its package (`greeter_bin`).
 - The full name `root//buck2_lab/greeter_bin:main` is like an absolute path,
   uniquely identifying the target within your entire project.
-- `buck-out/.../__main__/main` is the path of our binary output, relative to
+- `yak-out/.../__main__/main` is the path of our binary output, relative to
   the project root. You can use `--show-full-output` instead of `--show-output`
   to get the absolute path.
 
 ## Step 5: Running Your Application with Buck2
 
-Since our target is a runnable target, we can run it by `buck2 run`
+Since our target is a runnable target, we can run it by `yak run`
 
 1. In your terminal (still in the `greeter_bin` directory), execute:
 
 ```bash
-buck2 run :main
+yak run :main
 ```
 
 This command tells Buck2 to run the `main` target. Buck2 will build it if it
@@ -183,7 +183,7 @@ targets you've defined.
    run:
 
 ```bash
-buck2 targets :
+yak targets :
 ```
 
 2. Expected Output:
@@ -203,9 +203,9 @@ Buck2! We've walked through
 
 - Setting up the project structure.
 - Writing a simple Rust program.
-- Defining a rust_binary target in a BUCK file.
-- Using `buck2 build` to compile the code.
-- Using `buck2 run` to execute the program.
-- Using `buck2 targets` to inspect the target.
+- Defining a rust_binary target in a YAK file.
+- Using `yak build` to compile the code.
+- Using `yak run` to execute the program.
+- Using `yak targets` to inspect the target.
 
 You've taken your first concrete steps into the world of Buck2.

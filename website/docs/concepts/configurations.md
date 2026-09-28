@@ -28,7 +28,7 @@ Configuration constraints are enum-like constructs. Here is an example
 definition:
 
 ```python
-# //config/BUCK
+# //config/YAK
 
 constraint(
     name = "build_mode",
@@ -48,7 +48,7 @@ main `constraint` definition. However, this is deprecated and will be
 removed in the future.
 
 ```python
-# //somewhere/else/BUCK
+# //somewhere/else/YAK
 
 constraint_value(
     name = "release_no_debug_info",
@@ -112,7 +112,7 @@ config_setting(
 
 This setting will be satisfied if the associated buckconfig matches,
 i.e. if the user passes `build.fastmode=true` via the `-c`/`--config`
-CLI flag, or if the following is set in the cell's `.buckconfig` file:
+CLI flag, or if the following is set in the cell's `.yakconfig` file:
 
 ```ini
 [build]
@@ -178,8 +178,8 @@ that other's constraints. The "most refined" of a set is then the
 condition that refines all the others.
 
 Note that `select()` is resolved during configuration. This happens
-after the evaluation of the BUCK file is completed, and so Starlark code
-run during BUCK file evaluation does not have access to the resolved
+after the evaluation of the YAK file is completed, and so Starlark code
+run during YAK file evaluation does not have access to the resolved
 value. This can make it difficult to have macros that do extensive
 modification or inspection of attributes (which should be done in rules
 instead). However, some functions
@@ -241,7 +241,7 @@ The build configuration is determined as follows:
        configuration, it is one of the few attributes that are not
        `select`able.
     3. Else, use the default (`parser.target_platform_detector_spec` in
-       the `.buckconfig` file).
+       the `.yakconfig` file).
 2. [Configuration modifiers](./modifiers.md) are applied. Those are a
    lightweight way to add constraints on an individual basis (e.g.
    "build with the default configuration/platform, except with a
@@ -264,13 +264,13 @@ For example:
 
 ```sh
 # Build this target with the default configuration.
-buck2 build :my_target
+yak build :my_target
 # Build it with an entirely different configuration.
-buck2 build :my_target --target-platforms //my/other:platform
+yak build :my_target --target-platforms //my/other:platform
 # Build it with the default configuration, plus release mode.
-buck2 build :my_target?release
+yak build :my_target?release
 # Equivalent to the above, but applies to all targets if multiple were built.
-buck2 build :my_target -m release
+yak build :my_target -m release
 ```
 
 See the [configurations for rule authors](../rule_authors/configurations.md)
@@ -304,7 +304,7 @@ java_library(
 )
 ```
 
-When running `buck2 build //binaries:cats //binaries:dogs`, the
+When running `yak build //binaries:cats //binaries:dogs`, the
 `//binaries:cats` binary will be built in the
 `//platforms:windows-arm64-dev` configuration and the `//binaries:dogs`
 binary will be built in the `//platforms:mac-x86-dev` configuration.
@@ -319,7 +319,7 @@ Note that `//libs:common` will be built twice, once for each
 configuration.
 
 When running
-`buck2 build //binaries:cats //binaries:dogs --target-platforms //platforms:mac-x86-opt`,
+`yak build //binaries:cats //binaries:dogs --target-platforms //platforms:mac-x86-opt`,
 both `//binaries:cats` and `//binaries:dogs` will be built in the
 `//platforms:mac-x86-opt` configuration, use the same dependencies,
 which would only be built once.
@@ -331,7 +331,7 @@ configurations, output paths cannot be derived based on just targets (as
 multiple actions would map to the same outputs). For this reason, the
 target and the configuration are encoded into output paths. The
 configuration is currently represented as a hash of its values (a
-"hashed buck-out").
+"hashed yak-out").
 
 ## Target platform vs execution platform
 
@@ -347,7 +347,7 @@ builds even when building the Android app in development mode.
 
 For this reason, Buck requires both _target_ platforms and _execution_
 platforms to be defined. The execution platforms are specified via the
-`build.execution_platforms` value in `.buckconfig`.
+`build.execution_platforms` value in `.yakconfig`.
 
 ## Queries
 
@@ -357,8 +357,8 @@ Build configurations are uniquely identified by their hash, which is not
 human friendly.
 
 To determine what constraints are part of a configuration, run
-`buck2 cquery //...` sot that Buck will discover all existing
-configurations, then run `buck2 audit configurations`.
+`yak cquery //...` sot that Buck will discover all existing
+configurations, then run `yak audit configurations`.
 
 This will list all available configurations and print their composing
 contraints.
@@ -375,11 +375,11 @@ Here is a heavily trimmed version of the outputs of invoking `uquery`
 and `cquery` on `//app/buck2_core:buck2_core`.
 
 ```sh
-> buck2 uquery -A '"//app/buck2_core:buck2_core"'
+> yak uquery -A '"//app/buck2_core:buck2_core"'
 {
   "root//app/buck2_core:buck2_core": {
     "buck.type": "rust_library",
-    "buck.package": "root//app/buck2_core:BUCK",
+    "buck.package": "root//app/buck2_core:YAK",
     "name": "buck2_core",
     "visibility": [
       "PUBLIC"
@@ -414,11 +414,11 @@ and `cquery` on `//app/buck2_core:buck2_core`.
 ```
 
 ```sh
-> buck2 cquery -A '"//app/buck2_core:buck2_core"'
+> yak cquery -A '"//app/buck2_core:buck2_core"'
 {
   "root//app/buck2_core:buck2_core (prelude//platforms:default#<OMITTED>)": {
     "buck.type": "rust_library",
-    "buck.package": "root//app/buck2_core:BUCK",
+    "buck.package": "root//app/buck2_core:YAK",
     "buck.target_configuration": "prelude//platforms:default#<OMITTED>",
     "buck.execution_platform": "prelude//platforms:default",
     "name": "buck2_core",

@@ -18,7 +18,7 @@ use buck2_error::BuckErrorOptionContext;
 ///
 /// Late binding pattern is used to call code defined in the downstream crates.
 ///
-/// buck2 compilation speed is very important for us, so we try to make smaller crates
+/// yak compilation speed is very important for us, so we try to make smaller crates
 /// with as few dependencies between them as possible. So when we change one line of code,
 /// we recompile as little as possible.
 ///

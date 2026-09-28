@@ -35,7 +35,7 @@ Get Buck2 installed and ready to use on your development machine.
 ### 3. [Tutorial: Your First Buck2 Application](./tutorial_first_build.md)
 
 Build your first "Hello, World!" Rust application with Buck2. Learn the basics
-of creating BUCK files, defining targets, and building projects.
+of creating YAK files, defining targets, and building projects.
 
 ### 4. [Tutorial: Adding Dependencies](./tutorial_adding_dependencies.md)
 

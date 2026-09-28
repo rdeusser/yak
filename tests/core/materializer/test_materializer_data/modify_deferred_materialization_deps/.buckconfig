@@ -1,9 +1,0 @@
-[cells]
-  root = .
-
-[buildfile]
-  name=TARGETS.fixture
-
-[buck2]
-  materializations = deferred
-  verbose_materializer_event_log = true

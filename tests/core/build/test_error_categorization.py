@@ -69,7 +69,7 @@ async def test_bad_url(buck: Buck) -> None:
 async def test_attr_coercion(buck: Buck) -> None:
     res = await expect_failure(
         buck.build("//attr_coercion:int_rule"),
-        stderr_regex="evaluating build file: `root//attr_coercion:TARGETS.fixture",
+        stderr_regex="evaluating build file: `root//attr_coercion:YAK.fixture",
     )
     error = res.invocation_record().single_error()
     # Just make sure there's some kind of error metadata
@@ -80,7 +80,7 @@ async def test_attr_coercion(buck: Buck) -> None:
 async def test_buck2_fail(buck: Buck) -> None:
     res = await expect_failure(
         buck.build("//buck2_fail:foobar"),
-        stderr_regex="evaluating build file: `root//buck2_fail:TARGETS.fixture`",
+        stderr_regex="evaluating build file: `root//buck2_fail:YAK.fixture`",
     )
     error = res.invocation_record().single_error()
     # Just make sure that despite there being no context on the error, we still report the right
@@ -94,7 +94,7 @@ async def test_buck2_fail(buck: Buck) -> None:
 async def test_starlark_fail_error_categorization(buck: Buck) -> None:
     res = await expect_failure(
         buck.build("//starlark_fail:foobar"),
-        stderr_regex="evaluating build file: `root//starlark_fail:TARGETS.fixture`",
+        stderr_regex="evaluating build file: `root//starlark_fail:YAK.fixture`",
     )
     error = res.invocation_record().single_error()
     assert "StarlarkError::Fail::" in error["source_location"]
@@ -132,7 +132,7 @@ async def test_starlark_scope_error_categorization(buck: Buck) -> None:
 async def test_targets_error_categorization(buck: Buck) -> None:
     res = await expect_failure(
         buck.targets("//starlark_fail:foobar"),
-        stderr_regex="evaluating build file: `root//starlark_fail:TARGETS.fixture`",
+        stderr_regex="evaluating build file: `root//starlark_fail:YAK.fixture`",
     )
     error = res.invocation_record().single_error()
     assert error["tags"] == ["INPUT", "STARLARK_FAIL"]
@@ -163,7 +163,7 @@ async def test_daemon_crash(buck: Buck) -> None:
         "SERVER_PANICKED",
     ]
     assert error["tags"][4].startswith("crash")
-    assert "buckd stderr:\n" in error["message"]
+    assert "yakd stderr:\n" in error["message"]
     assert "panicked at" in error["message"]
 
     assert error["best_tag"] == "SERVER_PANICKED"
@@ -214,7 +214,7 @@ async def test_daemon_abort(buck: Buck) -> None:
     # The client recognizes a SIGABRT from the signal handler message in the
     # daemon's stderr. The daemon installs no such handler, so the client
     # reports a lost connection.
-    assert "buckd stderr is empty" in error["message"]
+    assert "yakd stderr is empty" in error["message"]
     assert error["category_key"] == "DAEMON_DISCONNECT"
 
 
@@ -222,9 +222,9 @@ async def wait_for_daemon_pid(buck: Buck) -> int:
     for _ in range(10):
         time.sleep(1)
         status = await buck.status()
-        if status.stderr != "no buckd running":
+        if status.stderr != "no yakd running":
             return json.loads(status.stdout)["process_info"]["pid"]
-    raise Exception("Failed to find buckd pid")
+    raise Exception("Failed to find yakd pid")
 
 
 def read_daemon_cgroup(pid: int) -> str:
@@ -345,7 +345,7 @@ async def test_kernel_oom_victim_pid_marks_daemon_crash_as_oom(
     daemon_pid = await wait_for_daemon_pid(buck)
     dmesg_env, dmesg_called = fake_dmesg_env(
         tmp_path,
-        f"<6>[{current_dmesg_timestamp()}] Memory cgroup out of memory: Killed process {daemon_pid} (buck2) total-vm:1000kB\n",
+        f"<6>[{current_dmesg_timestamp()}] Memory cgroup out of memory: Killed process {daemon_pid} (yak) total-vm:1000kB\n",
     )
 
     res = await expect_failure(buck.debug("crash", "panic", env=dmesg_env))
@@ -366,7 +366,7 @@ async def test_kernel_oom_for_other_pid_does_not_mask_daemon_crash(
     other_pid = await wait_for_daemon_pid(buck) + 1
     dmesg_env, dmesg_called = fake_dmesg_env(
         tmp_path,
-        f"<6>[{current_dmesg_timestamp()}] Memory cgroup out of memory: Killed process {other_pid} (buck2) total-vm:1000kB\n",
+        f"<6>[{current_dmesg_timestamp()}] Memory cgroup out of memory: Killed process {other_pid} (yak) total-vm:1000kB\n",
     )
 
     res = await expect_failure(buck.debug("crash", "panic", env=dmesg_env))
@@ -436,7 +436,7 @@ async def test_download_failure(buck: Buck) -> None:
     assert error["category"] == "INFRA"
     assert error["category_key"] == "RE_NOT_FOUND:DIGEST_NOT_FOUND"
     assert (
-        "Your build requires materializing an artifact that has expired in the RE CAS and Buck does not have it. This likely happened because your Buck daemon has been online for a long time. This error is currently unrecoverable. To proceed, you should restart Buck using `buck2 killall`."
+        "Your build requires materializing an artifact that has expired in the RE CAS and Buck does not have it. This likely happened because your Buck daemon has been online for a long time. This error is currently unrecoverable. To proceed, you should restart Buck using `yak killall`."
         in res.stderr
     )
 
@@ -583,7 +583,7 @@ async def test_init_data_timeout(buck: Buck) -> None:
 )
 async def test_nix_errno(buck: Buck) -> None:
     await buck.build(":run_action", "--show-output")
-    shutil.rmtree(buck.cwd / "buck-out/v2")
+    shutil.rmtree(buck.cwd / "yak-out/v2")
 
     res = await expect_failure(
         buck.targets(":"),

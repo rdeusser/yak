@@ -361,7 +361,7 @@ fn main() -> anyhow::Result<ExitCode> {
 mod tests {
     use super::*;
 
-    /// Bounded, fixed-seed fuzz that runs on every `buck2 test` invocation.
+    /// Bounded, fixed-seed fuzz that runs on every `yak test` invocation.
     #[test]
     fn ci_quick_fuzz() {
         // The known-buggy scenarios remain gated so this smoke test stays

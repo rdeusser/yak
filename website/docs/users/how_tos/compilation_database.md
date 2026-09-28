@@ -15,7 +15,7 @@ You can generate compilation databases for consumption by tools such as clangd
 and clang-tidy by running the following BXL script:
 
 ```sh
-buck2 bxl prelude//cxx/tools/compilation_database.bxl:generate -- --targets ...
+yak bxl prelude//cxx/tools/compilation_database.bxl:generate -- --targets ...
 ```
 
 The script will generate a compilation database for all source and header inputs
@@ -28,7 +28,7 @@ when the file being linted has several entries.
 It is common to symlink the resulting data at the root of the repository:
 
 ```sh
-ln -sf $(buck2 bxl prelude//cxx/tools/compilation_database.bxl:generate -- --targets ...) $(git rev-parse --show-toplevel)
+ln -sf $(yak bxl prelude//cxx/tools/compilation_database.bxl:generate -- --targets ...) $(git rev-parse --show-toplevel)
 ```
 
 Since the path to the script is rather long, consider setting up an alias in
@@ -43,15 +43,15 @@ gen = generate
 ```
 
 ```sh
-ln -sf $(buck2 bxl comp_db.bxl:gen -- --targets ...) $(git rev-parse --show-toplevel)
+ln -sf $(yak bxl comp_db.bxl:gen -- --targets ...) $(git rev-parse --show-toplevel)
 ```
 
-## Tools jumping to `buck-out`
+## Tools jumping to `yak-out`
 
 You may notice that your tools (e.g. clangd's Go To Definition feature)
-jump to symlinks into `buck-out`, rather than into the source tree.
+jump to symlinks into `yak-out`, rather than into the source tree.
 
-This is often problematic, because `buck-out` is not under source
+This is often problematic, because `yak-out` is not under source
 control (so all VCS-related editor tools fail), and text editors
 typically handle those symlinks poorly (e.g. VS Code will keep separate
 tabs for the symlink and the source header, and Vim will reuse an

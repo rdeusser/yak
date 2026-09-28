@@ -346,7 +346,7 @@ fn configured_target_node_value_methods(builder: &mut MethodsBuilder) {
     /// Gets the attribute from the configured target node.
     /// If the attribute is unset, returns the default value.
     /// If the attribute is not defined by the rule, returns `None`.
-    /// It will not return special attribute (attribute that start with 'buck.' in `buck2 cquery -A` command).
+    /// It will not return special attribute (attribute that start with 'buck.' in `yak cquery -A` command).
     ///
     /// Sample usage:
     /// ```python
@@ -414,7 +414,7 @@ fn configured_target_node_value_methods(builder: &mut MethodsBuilder) {
     /// Sample usage:
     /// ```python
     /// def _impl_attrs_eager(ctx):
-    ///     node = ctx.cquery().owner("cell//path/to/TARGETS")[0]
+    ///     node = ctx.cquery().owner("cell//path/to/YAK")[0]
     ///     attrs = node.attrs_eager() # cache once
     ///     ctx.output.print(attrs)
     ///     # do more stuff with attrs
@@ -460,7 +460,7 @@ fn configured_target_node_value_methods(builder: &mut MethodsBuilder) {
     /// Sample usage:
     /// ```python
     /// def _impl_attrs_lazy(ctx):
-    ///     node = ctx.cquery().owner("cell//path/to/TARGETS")[0]
+    ///     node = ctx.cquery().owner("cell//path/to/YAK")[0]
     ///     attrs = node.attrs_lazy() # cache once
     ///     ctx.output.print(attrs.get("some_attributes").value())
     ///     ctx.output.print(attrs.get("some_attribute").label)
@@ -488,7 +488,7 @@ fn configured_target_node_value_methods(builder: &mut MethodsBuilder) {
     /// Sample usage:
     /// ```python
     /// def _impl_resolved_attrs_lazy(ctx):
-    ///     node = ctx.cquery().owner("cell//path/to/TARGETS")[0]
+    ///     node = ctx.cquery().owner("cell//path/to/YAK")[0]
     ///     attrs = node.resolved_attrs_lazy(ctx) # cache once
     ///     ctx.output.print(attrs.get("some_attributes").value())
     ///     ctx.output.print(attrs.get("some_attribute").label)
@@ -517,7 +517,7 @@ fn configured_target_node_value_methods(builder: &mut MethodsBuilder) {
     /// Sample usage:
     /// ```python
     /// def _impl_resolved_attrs_eager(ctx):
-    ///     node = ctx.cquery().owner("cell//path/to/TARGETS")[0]
+    ///     node = ctx.cquery().owner("cell//path/to/YAK")[0]
     ///     attrs = node.resolved_attrs_eager(ctx) # cache once
     ///     ctx.output.print(attrs)
     ///     # do more stuff with attrs
@@ -846,7 +846,7 @@ fn configured_attr_methods(builder: &mut MethodsBuilder) {
     /// Sample usage:
     /// ```python
     /// def _impl_type(ctx):
-    ///     node = ctx.cquery().owner("bin/TARGETS")[0]
+    ///     node = ctx.cquery().owner("bin/YAK")[0]
     ///     attrs = node.attrs_eager()
     ///     ctx.output.print(attrs.name.type)
     /// ```
@@ -865,7 +865,7 @@ fn configured_attr_methods(builder: &mut MethodsBuilder) {
     /// Sample usage:
     /// ```python
     /// def _impl_value(ctx):
-    ///     node = ctx.cquery().owner("bin/TARGETS")[0]
+    ///     node = ctx.cquery().owner("bin/YAK")[0]
     ///     attrs = node.attrs_eager()
     ///     ctx.output.print(attrs.name.value())
     /// ```
@@ -956,7 +956,7 @@ fn lazy_attrs_methods(builder: &mut MethodsBuilder) {
     ///
     /// ```python
     /// def _impl_attrs_lazy(ctx):
-    ///     node = ctx.cquery().owner("cell//path/to/TARGETS")[0]
+    ///     node = ctx.cquery().owner("cell//path/to/YAK")[0]
     ///     attrs = node.attrs_lazy() # cache once
     ///     ctx.output.print(attrs.get("some_attributes").value())
     ///     ctx.output.print(attrs.get("some_attribute").label)
@@ -1069,7 +1069,7 @@ fn lazy_resolved_attrs_methods(builder: &mut MethodsBuilder) {
     ///
     /// ```python
     /// def _impl_resolved_attrs_lazy(ctx):
-    ///     node = ctx.cquery().owner("cell//path/to/TARGETS")[0]
+    ///     node = ctx.cquery().owner("cell//path/to/YAK")[0]
     ///     attrs = node.resolved_attrs_lazy(ctx) # cache once
     ///     ctx.output.print(attrs.get("some_attribute").value())
     ///     ctx.output.print(attrs.get("some_attribute").label)

@@ -15,7 +15,7 @@ use buck2_core::execution_types::executor_config::RemoteExecutorUseCase;
 use dice::UserComputationData;
 use dupe::Dupe;
 
-/// The RE use case a buck2 invocation talks to the CAS as on its own behalf, unless
+/// The RE use case a yak invocation talks to the CAS as on its own behalf, unless
 /// overridden.
 pub const DEFAULT_RE_USE_CASE_KEY: BuckconfigKeyRef<'static> = BuckconfigKeyRef {
     section: "build",
@@ -28,7 +28,7 @@ pub const RE_USE_CASE_OVERRIDE_KEY: BuckconfigKeyRef<'static> = BuckconfigKeyRef
     property: "override_use_case",
 };
 
-/// How a buck2 invocation talks to the CAS on its own behalf, which is everything except an
+/// How a yak invocation talks to the CAS on its own behalf, which is everything except an
 /// action's RE request and the uploads that feed it: those run under the action's executor
 /// configuration.
 #[derive(Clone, Copy, Dupe, Debug, Allocative)]
@@ -42,7 +42,7 @@ pub struct InvocationReSettings {
 }
 
 /// The invocation's own RE use case as configured: [`RE_USE_CASE_OVERRIDE_KEY`] if set, else
-/// [`DEFAULT_RE_USE_CASE_KEY`], else buck2's default.
+/// [`DEFAULT_RE_USE_CASE_KEY`], else yak's default.
 pub fn invocation_re_use_case(
     mut config: impl LegacyBuckConfigView,
 ) -> buck2_error::Result<RemoteExecutorUseCase> {

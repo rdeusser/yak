@@ -59,9 +59,9 @@ def compile_apple_core_data(ctx: AnalysisContext, specs: list[AppleCoreDataSpec]
         tool_commands.append(tool_command)
 
     # Sandboxing and fs isolation on RE machines results in Xcode tools failing
-    # when those are working in freshly created directories in buck-out.
+    # when those are working in freshly created directories in yak-out.
     # As a workaround create a directory in tmp, use it for Xcode tools, then
-    # copy the result to buck-out.
+    # copy the result to yak-out.
     wrapper_script, _ = ctx.actions.write(
         "tool_wrapper.sh",
         [

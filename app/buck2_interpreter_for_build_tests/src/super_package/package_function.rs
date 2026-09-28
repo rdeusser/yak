@@ -38,7 +38,7 @@ package(
 "#,
     );
     fs.write_file(
-        "juxtaposition/BUCK",
+        "juxtaposition/YAK",
         r#"
 load("//:rules.bzl", "simple")
 simple(name = "a")
@@ -73,7 +73,7 @@ package(
 "#,
     );
     fs.write_file(
-        "juxtaposition/BUCK",
+        "juxtaposition/YAK",
         r#"
 load("//:rules.bzl", "simple")
 simple(name = "a")
@@ -125,7 +125,7 @@ package(
 "#,
     );
     fs.write_file(
-        "juxtaposition/BUCK",
+        "juxtaposition/YAK",
         r#"
 load("//:rules.bzl", "simple")
 simple(name = "a")
@@ -190,7 +190,7 @@ package(
 "#,
     );
     fs.write_file(
-        "juxtaposition/BUCK",
+        "juxtaposition/YAK",
         r#"
 load("//:rules.bzl", "simple")
 simple(name = "a")
@@ -247,7 +247,7 @@ async fn test_target_name_glob_in_buck_visibility() {
     // `target_name_glob` directly on a rule's `visibility` exercises the
     // attribute coercer path, distinct from the `package()` PACKAGE parser.
     fs.write_file(
-        "juxtaposition/BUCK",
+        "juxtaposition/YAK",
         r#"
 load("//:rules.bzl", "simple")
 simple(
@@ -300,7 +300,7 @@ async fn test_package_visibility_rejects_non_str() {
     // `package()` must reject it rather than silently accepting it.
     fs.write_file("juxtaposition/PACKAGE", "package(visibility = [42])\n");
     fs.write_file(
-        "juxtaposition/BUCK",
+        "juxtaposition/YAK",
         r#"
 load("//:rules.bzl", "simple")
 simple(name = "a")
@@ -337,7 +337,7 @@ package(
 "#,
     );
     fs.write_file(
-        "juxtaposition/BUCK",
+        "juxtaposition/YAK",
         r#"
 load("//:rules.bzl", "simple")
 simple(name = "a")
@@ -381,7 +381,7 @@ package(
 "#,
     );
     fs.write_file(
-        "juxtaposition/BUCK",
+        "juxtaposition/YAK",
         r#"
 load("//:rules.bzl", "simple")
 simple(name = "a")
@@ -424,7 +424,7 @@ package(
 "#,
     );
     fs.write_file(
-        "juxtaposition/BUCK",
+        "juxtaposition/YAK",
         r#"
 load("//:rules.bzl", "simple")
 simple(name = "a")

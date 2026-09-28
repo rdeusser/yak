@@ -134,7 +134,7 @@ pub(crate) struct TargetInfo {
     pub(crate) deps: Vec<Target>,
     #[serde(rename = "tests")]
     pub(crate) test_deps: Vec<Target>,
-    // Optional set of renamed crates. in buck2, these are not unified with
+    // Optional set of renamed crates. in yak, these are not unified with
     // `buck.direct_dependencies` and are instead a separate entry.
     #[serde(deserialize_with = "deserialize_named_deps")]
     pub(crate) named_deps: FxHashMap<String, Target>,
@@ -390,7 +390,7 @@ mod tests {
             features: vec!["foo_feature".to_owned()],
             env: FxHashMap::default(),
             source_folder: PathBuf::from("/tmp"),
-            project_relative_buildfile: PathBuf::from("bar/BUCK"),
+            project_relative_buildfile: PathBuf::from("bar/YAK"),
             in_workspace: false,
             rustc_flags: vec!["--cfg=foo_cfg".to_owned(), "--other".to_owned()],
         };
@@ -421,7 +421,7 @@ mod tests {
             features: vec![],
             env: FxHashMap::default(),
             source_folder: PathBuf::from("/tmp"),
-            project_relative_buildfile: PathBuf::from("foo/BUCK"),
+            project_relative_buildfile: PathBuf::from("foo/YAK"),
             in_workspace: false,
             rustc_flags: vec![],
         };
@@ -458,7 +458,7 @@ mod tests {
             features: vec![],
             env: FxHashMap::default(),
             source_folder: PathBuf::from("/tmp"),
-            project_relative_buildfile: PathBuf::from("third-party/BUCK"),
+            project_relative_buildfile: PathBuf::from("third-party/YAK"),
             in_workspace: false,
             rustc_flags: vec![],
         };
@@ -485,7 +485,7 @@ mod tests {
             features: vec![],
             env: FxHashMap::default(),
             source_folder: PathBuf::from("/tmp"),
-            project_relative_buildfile: PathBuf::from("third-party/BUCK"),
+            project_relative_buildfile: PathBuf::from("third-party/YAK"),
             in_workspace: false,
             rustc_flags: vec![],
         };
@@ -512,7 +512,7 @@ mod tests {
             features: vec![],
             env: FxHashMap::default(),
             source_folder: PathBuf::from("/tmp"),
-            project_relative_buildfile: PathBuf::from("third-party/BUCK"),
+            project_relative_buildfile: PathBuf::from("third-party/YAK"),
             in_workspace: false,
             rustc_flags: vec![],
         };
@@ -539,7 +539,7 @@ mod tests {
             features: vec![],
             env: FxHashMap::default(),
             source_folder: PathBuf::from("/tmp"),
-            project_relative_buildfile: PathBuf::from("foo/BUCK"),
+            project_relative_buildfile: PathBuf::from("foo/YAK"),
             in_workspace: false,
             rustc_flags: vec![],
         };

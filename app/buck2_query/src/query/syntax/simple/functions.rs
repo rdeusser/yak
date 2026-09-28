@@ -186,20 +186,20 @@ impl<Env: QueryEnvironment> DefaultQueryFunctionsModule<Env> {
     ///
     /// For example:
     /// ```text
-    /// $ buck2 uquery "allpaths('//foo:bar', '//foo/bar/lib:baz')"
+    /// $ yak uquery "allpaths('//foo:bar', '//foo/bar/lib:baz')"
     /// ```
     /// returns the dependency graph rooted at the target node `//foo:bar`, including all target nodes that transitively depend on `//foo/bar/lib:baz`.
     ///
     /// Arguments *from* and *to* can themselves be expressions, for example:
     /// ```text
-    /// $ buck2 uquery "allpaths(kind(java_library, '//...'), '//foo:bar')"
+    /// $ yak uquery "allpaths(kind(java_library, '//...'), '//foo:bar')"
     /// ```
     /// shows all the paths between any target with rule type `java_library` in the repository and the target `//foo:bar`.
     ///
     /// We recommend using it with the `--output-format=dot` parameter to generate a [Graphviz](https://graphviz.org/) [DOT](https://graphviz.org/doc/info/lang.html) file that can then be rendered as an image.
     ///
     /// ```text
-    /// $ buck2 uquery "allpaths(//buck2:buck2, //buck2/app/buck2_validation:buck2_validation)" --output-format=dot > result.dot
+    /// $ yak uquery "allpaths(//buck2:buck2, //buck2/app/buck2_validation:buck2_validation)" --output-format=dot > result.dot
     /// $ dot -Tpng result.dot -o image.png
     /// ```
     /// produces the following image:
@@ -236,7 +236,7 @@ impl<Env: QueryEnvironment> DefaultQueryFunctionsModule<Env> {
     /// For example:
     ///
     /// ```text
-    /// $ buck2 uquery 'somepath(//buck2:buck2, //buck2/app/buck2_node:buck2_node)'
+    /// $ yak uquery 'somepath(//buck2:buck2, //buck2/app/buck2_node:buck2_node)'
     ///
     /// //buck2:buck2
     /// //buck2/app/buck2:buck2-bin
@@ -274,7 +274,7 @@ impl<Env: QueryEnvironment> DefaultQueryFunctionsModule<Env> {
     ///
     /// For example:
     /// ```text
-    /// $ buck2 uquery "attrfilter(deps, '//buck2/app/buck2_validation:buck2_validation', '//...')"
+    /// $ yak uquery "attrfilter(deps, '//buck2/app/buck2_validation:buck2_validation', '//...')"
     ///
     /// //buck2/app/buck2:buck2-bin
     /// //buck2/app/buck2_server:buck2_server
@@ -304,7 +304,7 @@ impl<Env: QueryEnvironment> DefaultQueryFunctionsModule<Env> {
     ///
     /// For example:
     /// ```text
-    /// $ buck2 uquery "nattrfilter(deps, '//foo:bar', '//...')"
+    /// $ yak uquery "nattrfilter(deps, '//foo:bar', '//...')"
     /// ```
     /// returns targets that don't contain `//foo:bar` target in their `deps` attribute.
     async fn nattrfilter(
@@ -325,7 +325,7 @@ impl<Env: QueryEnvironment> DefaultQueryFunctionsModule<Env> {
     ///
     /// For example:
     /// ```text
-    /// $ buck2 uquery "attrregexfilter(deps, '.+validation$', '//...')"
+    /// $ yak uquery "attrregexfilter(deps, '.+validation$', '//...')"
     ///
     /// //buck2/app/buck2:buck2-bin
     /// //buck2/app/buck2_server:buck2_server
@@ -350,21 +350,21 @@ impl<Env: QueryEnvironment> DefaultQueryFunctionsModule<Env> {
     ///
     /// For example:
     /// ```text
-    /// $ buck2 uquery 'buildfile(//buck2:buck2)'
+    /// $ yak uquery 'buildfile(//buck2:buck2)'
     ///
-    /// buck2/BUCK
+    /// buck2/YAK
     /// ```
     ///
     /// In order to find the build file associated with a source file, combine the owner operator with buildfile.
     /// Examples:
     /// ```text
-    /// $ buck2 uquery "buildfile(//buck2/app/buck2_action_impl_tests:buck2_action_impl_tests)"
+    /// $ yak uquery "buildfile(//buck2/app/buck2_action_impl_tests:buck2_action_impl_tests)"
     /// ```
     /// and
     /// ```text
-    /// $ buck2 uquery "buildfile(owner(app/buck2_action_impl_tests/src/context.rs))"
+    /// $ yak uquery "buildfile(owner(app/buck2_action_impl_tests/src/context.rs))"
     /// ```
-    /// both return `buck2/app/buck2_action_impl_tests/TARGETS`.
+    /// both return `buck2/app/buck2_action_impl_tests/YAK`.
     async fn buildfile(&self, targets: TargetSet<Env::Target>) -> QueryFuncResult<Env> {
         Ok(self.implementation.buildfile(&targets).into())
     }
@@ -375,10 +375,10 @@ impl<Env: QueryEnvironment> DefaultQueryFunctionsModule<Env> {
     ///
     /// For example:
     /// ```text
-    /// $ buck2 uquery "rbuildfiles(//buck2/BUCK, //buck2/defs.bzl)"
+    /// $ yak uquery "rbuildfiles(//buck2/YAK, //buck2/defs.bzl)"
     ///
     /// buck2/defs.bzl
-    /// buck2/BUCK
+    /// buck2/YAK
     /// ```
     async fn rbuildfiles(
         &self,
@@ -401,9 +401,9 @@ impl<Env: QueryEnvironment> DefaultQueryFunctionsModule<Env> {
     ///
     /// For example:
     /// ```text
-    /// $ buck2 uquery 'allbuildfiles(//foo:bar)'
+    /// $ yak uquery 'allbuildfiles(//foo:bar)'
     ///
-    /// foo/BUCK
+    /// foo/YAK
     /// foo/defs_dependent_on_utils.bzl
     /// baz/utils.bzl
     /// ```
@@ -439,7 +439,7 @@ impl<Env: QueryEnvironment> DefaultQueryFunctionsModule<Env> {
     /// For example following uquery:
     ///
     /// ```text
-    /// $ buck2 uquery "deps(//buck2:buck2, 1)"
+    /// $ yak uquery "deps(//buck2:buck2, 1)"
     /// ```
     /// returns all targets that `//buck2:buck2` depends on directly.
     async fn deps(
@@ -470,7 +470,7 @@ impl<Env: QueryEnvironment> DefaultQueryFunctionsModule<Env> {
     ///
     /// For example:
     /// ```text
-    /// $ buck2 uquery "filter(validation$, //buck2/app/...)"
+    /// $ yak uquery "filter(validation$, //buck2/app/...)"
     ///
     /// //buck2/app/buck2_validation:buck2_validation
     /// ```
@@ -496,7 +496,7 @@ impl<Env: QueryEnvironment> DefaultQueryFunctionsModule<Env> {
     ///
     /// For example:
     /// ```text
-    /// $ buck2 uquery "inputs(//buck2/dice/...)"
+    /// $ yak uquery "inputs(//buck2/dice/...)"
     /// ```
     /// returns the direct inputs for the `//buck2/dice/...` targets.
     async fn inputs(&self, targets: TargetSet<Env::Target>) -> QueryFuncResult<Env> {
@@ -509,7 +509,7 @@ impl<Env: QueryEnvironment> DefaultQueryFunctionsModule<Env> {
     ///
     /// For example:
     /// ```text
-    /// $ buck2 query "kind('java.*', deps('//foo:bar'))"
+    /// $ yak query "kind('java.*', deps('//foo:bar'))"
     /// ```
     /// This command returns targets matching rule type `java.*` (e.g., `java_library`, `java_binary`) in the transitive dependencies of `//foo:bar`.
     async fn kind(&self, regex: String, targets: TargetSet<Env::Target>) -> QueryFuncResult<Env> {
@@ -518,7 +518,7 @@ impl<Env: QueryEnvironment> DefaultQueryFunctionsModule<Env> {
 
     /// Not implemented.
     ///
-    /// This function won't be implemented in the future, because buck2 query core does not support returning both files and targets from a single function.
+    /// This function won't be implemented in the future, because yak query core does not support returning both files and targets from a single function.
     ///
     /// In buck1 it returns targets and files referenced by the given attribute in the given targets.
     async fn labels(&self, attr: String, targets: TargetSet<Env::Target>) -> QueryFuncResult<Env> {
@@ -535,7 +535,7 @@ impl<Env: QueryEnvironment> DefaultQueryFunctionsModule<Env> {
     ///
     /// For example:
     /// ```text
-    /// $ buck2 uquery "owner('app/buck2/src/lib.rs')"
+    /// $ yak uquery "owner('app/buck2/src/lib.rs')"
     ///
     /// //buck2/app/buck2:buck2-unittest
     /// //buck2/app/buck2:buck2
@@ -552,7 +552,7 @@ impl<Env: QueryEnvironment> DefaultQueryFunctionsModule<Env> {
     ///
     /// For example:
     /// ```text
-    /// $ buck2 uquery 'targets_in_buildfile(buildfile(//app:main))'
+    /// $ yak uquery 'targets_in_buildfile(buildfile(//app:main))'
     ///
     /// //app:lib
     /// //app:main
@@ -576,7 +576,7 @@ impl<Env: QueryEnvironment> DefaultQueryFunctionsModule<Env> {
     /// For example following uquery:
     ///
     /// ```text
-    /// $ buck2 uquery "rdeps(//buck2/..., //buck2/dice/dice:dice, 1)"
+    /// $ yak uquery "rdeps(//buck2/..., //buck2/dice/dice:dice, 1)"
     /// ```
     /// returns all targets under `//buck2/...` that depend on `//buck2/dice/dice:dice`.
     async fn rdeps(
@@ -607,7 +607,7 @@ impl<Env: QueryEnvironment> DefaultQueryFunctionsModule<Env> {
     ///
     /// For example:
     /// ```text
-    /// $ buck2 uquery "testsof(set(//buck2/dice/dice:dice //buck2/app/buck2:buck2))"
+    /// $ yak uquery "testsof(set(//buck2/dice/dice:dice //buck2/app/buck2:buck2))"
     ///
     /// //buck2/dice/dice:dice-unittest
     /// //buck2/app/buck2:buck2-unittest
@@ -619,7 +619,7 @@ impl<Env: QueryEnvironment> DefaultQueryFunctionsModule<Env> {
     ///
     /// For example:
     /// ```text
-    /// $ buck2 uquery "testsof(deps(//buck2/app/buck2:buck2))"
+    /// $ yak uquery "testsof(deps(//buck2/app/buck2:buck2))"
     /// ```
     /// first finds the transitive closure of `//buck2/app/buck2:buck2`,
     /// and then lists all the tests associated with the targets in this transitive closure.
@@ -637,7 +637,7 @@ impl<Env: QueryEnvironment> DefaultQueryFunctionsModule<Env> {
     /// See `deps()` for more information on how filter expressions work.
     ///
     /// Example:
-    /// `buck2 cquery "deps('//foo:bar', 1, first_order_deps())"` is equivalent to `buck2 cquery "deps('//foo:bar', 1)"`
+    /// `yak cquery "deps('//foo:bar', 1, first_order_deps())"` is equivalent to `yak cquery "deps('//foo:bar', 1)"`
     async fn first_order_deps(&self) -> QueryFuncResult<Env> {
         Err(QueryError::NotAvailableInContext("first_order_deps"))
     }
@@ -647,7 +647,7 @@ impl<Env: QueryEnvironment> DefaultQueryFunctionsModule<Env> {
     /// like compiler used as a part of the build.
     ///
     /// Example:
-    /// `buck2 cquery "deps('//foo:bar', 1, target_deps())"`
+    /// `yak cquery "deps('//foo:bar', 1, target_deps())"`
     async fn target_deps(&self) -> QueryFuncResult<Env> {
         Err(QueryError::NotAvailableInContext("target_deps"))
     }
@@ -656,7 +656,7 @@ impl<Env: QueryEnvironment> DefaultQueryFunctionsModule<Env> {
     /// Returns the output of deps function for execution dependencies (build time dependencies), ex. compiler used as a part of the build.
     ///
     /// Example:
-    /// `buck2 cquery "deps('//foo:bar', 1, exec_deps())"`
+    /// `yak cquery "deps('//foo:bar', 1, exec_deps())"`
     async fn exec_deps(&self) -> QueryFuncResult<Env> {
         Err(QueryError::NotAvailableInContext("exec_deps"))
     }
@@ -665,7 +665,7 @@ impl<Env: QueryEnvironment> DefaultQueryFunctionsModule<Env> {
     /// Returns the output of deps function for configuration dependencies (that appear as conditions in selects).
     ///
     /// Example:
-    /// `buck2 cquery "deps('//foo:bar', 1, configuration_deps())"`
+    /// `yak cquery "deps('//foo:bar', 1, configuration_deps())"`
     async fn configuration_deps(&self) -> QueryFuncResult<Env> {
         Err(QueryError::NotAvailableInContext("configuration_deps"))
     }
@@ -674,7 +674,7 @@ impl<Env: QueryEnvironment> DefaultQueryFunctionsModule<Env> {
     /// Returns the output of deps function for toolchain dependencies.
     ///
     /// Example:
-    /// `buck2 cquery "deps('//foo:bar', 1, toolchain_deps())"`
+    /// `yak cquery "deps('//foo:bar', 1, toolchain_deps())"`
     async fn toolchain_deps(&self) -> QueryFuncResult<Env> {
         Err(QueryError::NotAvailableInContext("configuration_deps"))
     }
@@ -686,8 +686,8 @@ impl<Env: QueryEnvironment> DefaultQueryFunctionsModule<Env> {
     /// resolves to the value of the expression it encloses.
     ///
     /// Example:
-    /// `buck2 aquery "deps('//foo:bar') intersect deps('//baz:lib')"` is the same as
-    /// `buck2 aquery "deps('//foo:bar') ^ deps('//baz:lib')"`
+    /// `yak aquery "deps('//foo:bar') intersect deps('//baz:lib')"` is the same as
+    /// `yak aquery "deps('//foo:bar') ^ deps('//baz:lib')"`
     /// Both return the targets that appear in the transitive closure of `//foo:bar` and `//baz:lib`.
     #[binary_op(BinaryOp::Intersect)]
     async fn intersect(
@@ -707,8 +707,8 @@ impl<Env: QueryEnvironment> DefaultQueryFunctionsModule<Env> {
     /// resolves to the value of the expression it encloses.
     ///
     /// Example:
-    /// `buck2 aquery "deps('//foo:bar') except deps('//baz:lib')"` is the same as
-    /// `buck2 aquery "deps('//foo:bar') - deps('//baz:lib')"`
+    /// `yak aquery "deps('//foo:bar') except deps('//baz:lib')"` is the same as
+    /// `yak aquery "deps('//foo:bar') - deps('//baz:lib')"`
     /// Both return the targets that `//foo:bar` depends on and that `//baz:lib` does NOT depend on.
     #[binary_op(BinaryOp::Except)]
     async fn except(
@@ -728,8 +728,8 @@ impl<Env: QueryEnvironment> DefaultQueryFunctionsModule<Env> {
     /// resolves to the value of the expression it encloses.
     ///
     /// Example:
-    /// `buck2 aquery "deps('//foo:bar') union deps('//baz:lib')"` is the same as
-    /// `buck2 aquery "deps('//foo:bar') + deps('//baz:lib')"`
+    /// `yak aquery "deps('//foo:bar') union deps('//baz:lib')"` is the same as
+    /// `yak aquery "deps('//foo:bar') + deps('//baz:lib')"`
     /// Both return the aggregation of the targets that `//foo:bar` and `//baz:lib` depend on.
     #[binary_op(BinaryOp::Union)]
     async fn union(

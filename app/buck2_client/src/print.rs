@@ -103,12 +103,12 @@ mod tests {
                 None,
                 #[cfg(not(windows))]
                 "\
-                root//third-party/rust:syn buck-out/third-party/rust/syn.rlib\n\
+                root//third-party/rust:syn yak-out/third-party/rust/syn.rlib\n\
                 root//third-party/rust:serde_derive \n\
                 ",
                 #[cfg(windows)]
                 "\
-                root//third-party/rust:syn buck-out\\third-party\\rust\\syn.rlib\n\
+                root//third-party/rust:syn yak-out\\third-party\\rust\\syn.rlib\n\
                 root//third-party/rust:serde_derive \n\
                 ",
             ),
@@ -122,12 +122,12 @@ mod tests {
                 ),
                 #[cfg(not(windows))]
                 "\
-                root//third-party/rust:syn /home/user/buck-out/third-party/rust/syn.rlib\n\
+                root//third-party/rust:syn /home/user/yak-out/third-party/rust/syn.rlib\n\
                 root//third-party/rust:serde_derive \n\
                 ",
                 #[cfg(windows)]
                 "\
-                root//third-party/rust:syn C:\\user\\buck-out\\third-party\\rust\\syn.rlib\n\
+                root//third-party/rust:syn C:\\user\\yak-out\\third-party\\rust\\syn.rlib\n\
                 root//third-party/rust:serde_derive \n\
                 ",
             ),
@@ -136,12 +136,12 @@ mod tests {
                 None,
                 #[cfg(not(windows))]
                 "\
-                buck-out/third-party/rust/syn.rlib\n\
+                yak-out/third-party/rust/syn.rlib\n\
                 \n\
                 ",
                 #[cfg(windows)]
                 "\
-                buck-out\\third-party\\rust\\syn.rlib\n\
+                yak-out\\third-party\\rust\\syn.rlib\n\
                 \n\
                 ",
             ),
@@ -150,11 +150,11 @@ mod tests {
                 None,
                 #[cfg(not(windows))]
                 "\
-                {\"root//third-party/rust:syn\":\"buck-out/third-party/rust/syn.rlib\",\"root//third-party/rust:serde_derive\":\"\"}\n\
+                {\"root//third-party/rust:syn\":\"yak-out/third-party/rust/syn.rlib\",\"root//third-party/rust:serde_derive\":\"\"}\n\
                 ",
                 #[cfg(windows)]
                 "\
-                {\"root//third-party/rust:syn\":\"buck-out\\\\third-party\\\\rust\\\\syn.rlib\",\"root//third-party/rust:serde_derive\":\"\"}\n\
+                {\"root//third-party/rust:syn\":\"yak-out\\\\third-party\\\\rust\\\\syn.rlib\",\"root//third-party/rust:serde_derive\":\"\"}\n\
                 ",
             ),
         ] {
@@ -163,7 +163,7 @@ mod tests {
             let mut print = PrintOutputs::new(&mut out, root_path, format)?;
             print.output(
                 "root//third-party/rust:syn",
-                Some("buck-out/third-party/rust/syn.rlib"),
+                Some("yak-out/third-party/rust/syn.rlib"),
             )?;
             print.output("root//third-party/rust:serde_derive", None)?;
             print.finish()?;

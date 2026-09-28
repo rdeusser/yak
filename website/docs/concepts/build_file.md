@@ -5,8 +5,8 @@ title: Build File
 
 # Build File
 
-A _build file_ is a file, typically named `BUCK`, that defines one or more
-[build rule](build_rule.md)s. Buck2 takes a `BUCK` file as input and evaluates
+A _build file_ is a file, typically named `YAK`, that defines one or more
+[build rule](build_rule.md)s. Buck2 takes a `YAK` file as input and evaluates
 the file to declare [target](build_target.md)s, which are then used to create a
 graph of dependencies and to derive the actions that must be completed to build
 intermediate and final software outputs.
@@ -38,7 +38,7 @@ the following restrictions:
 - Custom functions must be defined in `.bzl` files and loaded explicitly at the
   top of the build file.
 
-### Mini BUCK example
+### Mini YAK example
 
 Here is a mini example of a build file containing two targets, one refers to a
 file `main.c` as its inputs and the other two files `greeting.c` and
@@ -105,21 +105,21 @@ build file, where:
 - If a source file has a build file as a sibling, then that is its nearest
   ancestor.
 
-For example, if your project had the following `BUCK` files:
+For example, if your project had the following `YAK` files:
 
 ```
-java/com/example/base/BUCK
-java/com/example/common/BUCK
-java/com/example/common/collect/BUCK
+java/com/example/base/YAK
+java/com/example/common/YAK
+java/com/example/common/collect/YAK
 ```
 
 Then your build rules would have the following constraints:
 
-- Rules in `java/com/example/base/BUCK` can reference any file under
+- Rules in `java/com/example/base/YAK` can reference any file under
   `java/com/example/base/`.
-- Rules in `java/com/example/common/BUCK` can reference any files under that
+- Rules in `java/com/example/common/YAK` can reference any files under that
   directory, except for those under `java/com/example/common/collect/`, as
-  those "belong" to the `BUCK` file in the `collect` directory.
+  those "belong" to the `YAK` file in the `collect` directory.
 
 ### Packages dependencies
 
@@ -133,7 +133,7 @@ Going back to the previous example, suppose code in
 `java/com/example/common/concurrent/` wants to depend on code in
 `java/com/example/common/collect/`.
 
-First, the `java/com/example/common/collect/BUCK` file would have a build rule
+First, the `java/com/example/common/collect/YAK` file would have a build rule
 like:
 
 ```python
@@ -144,7 +144,7 @@ java_library(
 )
 ```
 
-Then `java/com/example/common/BUCK` could have a rule like:
+Then `java/com/example/common/YAK` could have a rule like:
 
 ```python
 java_library(

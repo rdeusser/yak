@@ -219,7 +219,7 @@ object ResourceSourceMapExecutableMain {
     val realPath = path.toRealPath()
     if (realPath.startsWith(root)) {
       val relative = PathFormatter.pathWithUnixSeparators(root.relativize(realPath))
-      if (!relative.startsWith("buck-out/")) return relative
+      if (!relative.startsWith("yak-out/")) return relative
     }
     return ownerBuildFile
   }

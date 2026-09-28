@@ -64,7 +64,7 @@ impl IgnoreSet {
     /// glob character is a glob in which `*` does not cross directory boundaries. Any other
     /// pattern matches the path it names and every path below it.
     ///
-    /// Always ignores `buck-out` if it is a `root_cell`.
+    /// Always ignores `yak-out` if it is a `root_cell`.
     pub fn from_ignore_spec(spec: &str, root_cell: bool) -> buck2_error::Result<Self> {
         // TODO(cjhopman): There's opportunity to greatly improve the performance of IgnoreSet by
         // constructing special cases for a couple of common patterns we see in ignore specs. We
@@ -74,7 +74,7 @@ impl IgnoreSet {
         // `**/*x*x*`: just some general glob on the filename alone, can merge these into one GlobSet that just needs to check against the filename.
         // `some/prefix/**`: a directory prefix. These can all be merged into one trie lookup.
         let mut patterns = Vec::new();
-        let buck_out = if root_cell { Some("buck-out") } else { None };
+        let buck_out = if root_cell { Some("yak-out") } else { None };
         for val in buck_out.into_iter().chain(spec.split(',')) {
             let val = val.trim();
             if val.is_empty() {
@@ -133,8 +133,8 @@ mod tests {
     #[test]
     fn test_ignore_set_defaults() {
         let set = IgnoreSet::from_ignore_spec("", true).unwrap();
-        assert!(set.is_match(CellRelativePath::testing_new("buck-out/gen/src/file.txt")));
-        assert!(set.is_match(CellRelativePath::testing_new("buck-out/art/src/file.txt")));
+        assert!(set.is_match(CellRelativePath::testing_new("yak-out/gen/src/file.txt")));
+        assert!(set.is_match(CellRelativePath::testing_new("yak-out/art/src/file.txt")));
         assert!(!set.is_match(CellRelativePath::testing_new("src/file.txt")));
     }
 }

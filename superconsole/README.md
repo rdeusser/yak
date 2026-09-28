@@ -19,7 +19,7 @@ use to inject state into their otherwise immutable rendering logic.
 
 ## Demo
 
-![Superconsole running some buck2 tests](demo.gif)
+![Superconsole running some yak tests](demo.gif)
 
 ## Examples
 

@@ -248,14 +248,14 @@ def _allow_offline_output_cache_arg():
                 Enables caching of this genrule's outputs for offline builds.
 
                  When set to `True`, the genrule's outputs are cached during trace builds
-                 (via `buck2 debug trace-io`) and restored during offline builds without
+                 (via `yak debug trace-io`) and restored during offline builds without
                  re-executing the command.
 
                  This is intended for genrules that read from the network (e.g., downloads,
                  remote artifact fetches) which cannot execute in offline build environments
                  where network access is restricted.
 
-                 During trace builds, outputs are copied to `buck-out/offline-cache/` after
+                 During trace builds, outputs are copied to `yak-out/offline-cache/` after
                  successful execution. During offline builds, if all outputs exist in the
                  offline cache, they are restored without running the genrule; otherwise
                  the genrule executes normally (graceful fallback).

@@ -31,7 +31,7 @@ def completion_test(
     shells: list[str] = SHELLS,
     options_only: bool = False,
     cwd: str = "",
-    bin: str = "buck2",
+    bin: str = "yak",
 ) -> None:
     for shell in shells:
         if shell == "fish" and not IS_LINUX:
@@ -127,18 +127,6 @@ completion_test(
 )
 
 completion_test(
-    name="test_build_flags_buck_bin",
-    # Use `--p` so that we don't get too many outputs, which the test framework doesn't handle well
-    # on zsh
-    input="build --p",
-    options_only=True,
-    expected=lambda actual: (
-        "--prefer-local" in actual and "--prefer-remote" in actual
-    ),
-    bin="buck",
-)
-
-completion_test(
     name="test_completes_simple_partial_directory",
     input="build d",
     expected=["dir1/", "dir1:", "dir2/"],
@@ -219,7 +207,7 @@ completion_test(
 
 completion_test(
     name="test_does_not_complete_files_in_target_position",
-    input="build TARG",
+    input="build YA",
     expected=[],
     cwd="dir1",
     shells=["fish", "zsh"],
@@ -227,9 +215,9 @@ completion_test(
 
 completion_test(
     name="test_does_not_complete_files_in_target_position",
-    input="build TARG",
+    input="build YA",
     # FIXME(JakobDegen): Bug: expected=[],
-    expected=["TARGETS.fixture"],
+    expected=["YAK.fixture"],
     cwd="dir1",
     shells=["bash"],
 )

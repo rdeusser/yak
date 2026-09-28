@@ -1,11 +1,11 @@
 # This file is @generated, regenerate by rerunning the test with `BUCK2_UPDATE_GOLDEN=1` set
 
 BUILD FAILED
-Error evaluating build file: `root//during_select:TARGETS.fixture`
+Error evaluating build file: `root//during_select:YAK.fixture`
 
 Caused by:
     Traceback (most recent call last):
-      * during_select/TARGETS.fixture:3, in <module>
+      * during_select/YAK.fixture:3, in <module>
           map()
       * during_select/select.bzl:14, in map
           select_map(str_select, _fail)

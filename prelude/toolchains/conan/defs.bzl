@@ -92,7 +92,7 @@ conan_update(
     conan_generate = ":conan-generate",
     conanfile = "conanfile.txt",
     lockfile_name = "conan.lock",
-    targets_name = "conan/BUCK",
+    targets_name = "conan/YAK",
 )
 ```
 
@@ -100,7 +100,7 @@ On first use, or whenever you change a Conan dependency or the toolchain
 configuration you must regenerate the import targets. For example:
 
 ```
-$ buck2 run //:update
+$ yak run //:update
 ```
 
 Then you can depend on Conan provided packages defined in the generated file,
@@ -774,7 +774,7 @@ conan_update = rule(
         "lock_generate": attrs.source(doc = "The targets generated from the Conan lockfile."),
         "lockfile": attrs.source(doc = "The generated Conan lockfile."),
         "lockfile_name": attrs.string(doc = "Generate a lockfile with this name next to the Conanfile."),
-        "targets_name": attrs.string(doc = "Generate a TARGETS file with this name next to the Conanfile."),
+        "targets_name": attrs.string(doc = "Generate a build file with this name next to the Conanfile."),
         "_conan_update": attrs.dep(providers = [RunInfo], default = "prelude//toolchains/conan:conan_update"),
     },
     doc = "Defines a runnable target that will update the Conan lockfile and import targets.",

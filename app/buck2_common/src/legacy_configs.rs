@@ -9,7 +9,7 @@
  */
 
 //! Contains utilities for dealing with buckv1 concepts (ex. buckv1's
-//! .buckconfig files as configuration)
+//! .yakconfig files as configuration)
 
 mod access;
 pub use access::parse_buckconfig_metadata;

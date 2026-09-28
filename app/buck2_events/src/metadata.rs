@@ -32,7 +32,7 @@ pub fn collect_with_extras(
 }
 
 /// `collect` returns the daemon id, the host name, the operating system and its version, the CPU
-/// architecture, and the buck2 revision when the binary was built with one.
+/// architecture, and the yak revision when the binary was built with one.
 pub fn collect(daemon: &DaemonId) -> IntentionallyStdHashMap<String, String> {
     let mut map = IntentionallyStdHashMap::new();
     map.insert("daemon_uuid".to_owned(), daemon.to_string());

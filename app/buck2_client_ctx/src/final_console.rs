@@ -13,7 +13,7 @@ use superconsole::style::ContentStyle;
 use superconsole::style::StyledContent;
 
 /// A way to uniformly print to the console after a command has finished. This should
-/// only be used at the end of a command, after the event context from the buckd client
+/// only be used at the end of a command, after the event context from the yakd client
 /// is not available.
 pub struct FinalConsole {
     is_tty: bool,

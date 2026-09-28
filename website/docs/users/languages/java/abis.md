@@ -31,7 +31,7 @@ in two important ways:
 ## ABI Generation Modes
 
 Buck2 can create ABI JARs in three different ways, depending on the
-`abi_generation_mode` configuration. You can set this globally in `.buckconfig`
+`abi_generation_mode` configuration. You can set this globally in `.yakconfig`
 or override it per-rule using the `abi_generation_mode` attribute.
 
 Kotlin rules support only `class` generation, or `none` for no ABI JAR. A Kotlin
@@ -159,7 +159,7 @@ To get the best performance from source-only ABI generation:
 
 ### Global Configuration
 
-Set the default ABI generation mode in `.buckconfig`:
+Set the default ABI generation mode in `.yakconfig`:
 
 ```ini
 [java]

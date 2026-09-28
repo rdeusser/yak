@@ -38,7 +38,7 @@ fn artifact_fs() -> ArtifactFs {
     ArtifactFs::new(
         cell_info.1,
         BuckOutPathResolver::new(ProjectRelativePathBuf::unchecked_new(
-            "buck-out/v2".to_owned(),
+            "yak-out/v2".to_owned(),
         )),
         ProjectRoot::new(AbsNormPathBuf::try_from(std::env::current_dir().unwrap()).unwrap())
             .unwrap(),

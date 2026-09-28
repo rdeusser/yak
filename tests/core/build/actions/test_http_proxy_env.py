@@ -82,7 +82,7 @@ def configure(buck: Buck, digest: str = "SHA256") -> None:
         assert buck.get_env_var(name) is None, (
             f"{name} leaked into the test environment"
         )
-    (buck.cwd / ".buckconfig.local").write_text(
+    (buck.cwd / ".yakconfig.local").write_text(
         f"[buck2]\ndigest_algorithms = {digest}\n"
     )
 

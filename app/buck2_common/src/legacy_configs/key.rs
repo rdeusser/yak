@@ -10,7 +10,7 @@
 
 use dupe::Dupe;
 
-// TODO(nga): implement `buck2 help-buckconfig`
+// TODO(nga): implement `yak help-buckconfig`
 #[derive(derive_more::Display, Debug, Copy, Clone, Dupe, Eq, PartialEq)]
 #[display("{}.{}", section, property)]
 pub struct BuckconfigKeyRef<'a> {

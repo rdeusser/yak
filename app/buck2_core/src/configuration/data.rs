@@ -57,7 +57,7 @@ enum ConfigurationError {
 enum ConfigurationLookupError {
     #[error("
     Could not find configuration `{0}`. Configuration lookup by string requires
-    that buck has already loaded the configuration through some other mechanism. You can run `buck2 cquery <some_target>`
+    that buck has already loaded the configuration through some other mechanism. You can run `yak cquery <some_target>`
     with a target that uses the configuration (somewhere in its graph) to make buck aware of the configuration first.
     ")]
     ConfigNotFound(BoundConfigurationId),
@@ -78,7 +78,7 @@ fn emit_configuration_instant_event(cfg: &ConfigurationData) -> buck2_error::Res
         })
         .collect();
 
-    // Sometimes this isn't going to be init'd in tests (oss or buck2), let's
+    // Sometimes this isn't going to be init'd in tests (oss or yak), let's
     // ignore that and rely on e2e test to assert we're still logging data from
     // production code paths.
     if let Ok(event_dispatch) = EVENT_DISPATCH.get() {

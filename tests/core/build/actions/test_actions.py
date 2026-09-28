@@ -95,7 +95,7 @@ async def test_symlink_dir(buck: Buck) -> None:
     dest4 = output / "subdir" / "dep.txt.suffix"
     dep_output = build_report.output_for_target("//symlinked_dir:dep").resolve()
 
-    # Example subdir: buck-out/v2/art/root/a59b783ba97fcd85891ddb2e62fbfebb/symlinked_dir/__out__/out/dir1/dir1_1
+    # Example subdir: yak-out/v2/art/root/a59b783ba97fcd85891ddb2e62fbfebb/symlinked_dir/__out__/out/dir1/dir1_1
     expected_link1 = "../" * 10 + "symlinked_dir/dir1/dir1_1/file1.txt"
     expected_link2 = os.path.relpath(dep_output, dest2.parent)
     expected_link3 = "../" * 11 + "symlinked_dir/dir1/dir1_1/file1.txt"
@@ -256,8 +256,8 @@ async def test_download_file(buck: Buck) -> None:
     await runner.cleanup()
 
     # The download has only a SHA-1 checksum, which the default SHA-256 digest
-    # configuration cannot defer, so buck2 downloads the file at once. The
-    # server sees the two failed requests that buck2 retries and the request
+    # configuration cannot defer, so yak downloads the file at once. The
+    # server sees the two failed requests that yak retries and the request
     # that succeeds.
     assert attempt == 3
 
@@ -303,7 +303,7 @@ async def test_download_file_timeout_after_retries(buck: Buck) -> None:
     # than passed as an invocation config.
     #
     # Add an aggressive read timeout.
-    with open(buck.cwd / ".buckconfig", "a") as buckconfig:
+    with open(buck.cwd / ".yakconfig", "a") as buckconfig:
         buckconfig.write("[http]\nread_timeout_ms = 50\n")
 
     await expect_failure(
@@ -452,7 +452,7 @@ async def test_remote_action_has_input_size(buck: Buck) -> None:
 
 @buck_test(data_dir="actions")
 async def test_action_invalidation_tracking(buck: Buck) -> None:
-    with open(buck.cwd / ".buckconfig", "a") as buckconfig:
+    with open(buck.cwd / ".yakconfig", "a") as buckconfig:
         buckconfig.write("[buck2]\n")
         buckconfig.write("invalidation_tracking_enabled = true\n")
         buckconfig.write("[buck2]\n")

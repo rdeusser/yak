@@ -8,7 +8,7 @@
  * above-listed licenses.
  */
 
-//! Typed buck settings, replaces buckconfig for core buck2 settings.
+//! Typed buck settings, replaces buckconfig for core yak settings.
 
 pub mod args;
 pub mod parser;

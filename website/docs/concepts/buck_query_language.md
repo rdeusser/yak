@@ -7,7 +7,7 @@ title: Buck Query Language
 
 Buck2's query language provides a powerful way to inspect and analyze the build
 graph. The query language is shared across different query commands
-(`buck2 uquery`, `buck2 cquery`, and `buck2 aquery`), though each command
+(`yak uquery`, `yak cquery`, and `yak aquery`), though each command
 operates on different graph representations and supports different sets of
 operators.
 
@@ -19,14 +19,14 @@ could be:
 
 - An explicit [build target](build_target.md)
 - A [build target pattern](target_pattern.md)
-- A [.buckconfig alias](buckconfig.md)
+- A [.yakconfig alias](buckconfig.md)
 - The set of targets returned by another Buck query operator
 
-**Tip:** You can pass an alias directly to the `buck2 query` command line to see
+**Tip:** You can pass an alias directly to the `yak query` command line to see
 what it resolves to. For example:
 
 ```sh
-buck2 uquery app
+yak uquery app
 ```
 
 ### Non-target Parameters
@@ -47,15 +47,15 @@ with a hyphen or period. For example, quoting `java_test` is unnecessary.
 However, we **do recommend** that you quote arguments as a best practice even
 when Buck2 doesn't require it.
 
-You should always use quotes when writing scripts that construct `buck2 query`
+You should always use quotes when writing scripts that construct `yak query`
 expressions from user-supplied values.
 
-Note that argument quoting for `buck2 query` is in addition to any quoting that
+Note that argument quoting for `yak query` is in addition to any quoting that
 your shell requires. In the following example, double-quotes are used for the
 shell and single-quotes are used for the build target expression:
 
 ```sh
-buck2 uquery "'//foo:bar=wiz'"
+yak uquery "'//foo:bar=wiz'"
 ```
 
 ## Algebraic Set Operations
@@ -79,13 +79,13 @@ just faster to type.
 For example:
 
 ```sh
-buck2 uquery "deps('//foo:bar') intersect deps('//baz:lib')"
+yak uquery "deps('//foo:bar') intersect deps('//baz:lib')"
 ```
 
 and
 
 ```sh
-buck2 uquery "deps('//foo:bar') ^ deps('//baz:lib')"
+yak uquery "deps('//foo:bar') ^ deps('//baz:lib')"
 ```
 
 both return the targets that appear in the transitive closure of `//foo:bar` and
@@ -121,7 +121,7 @@ The `set()` operator computes the union of a set of zero or more target
 expressions. Separate the targets with white space (not commas). Quote the
 targets to ensure they are parsed correctly.
 
-If you want to invoke `buck2 query` on a list of targets, then `set()` is a way
+If you want to invoke `yak query` on a list of targets, then `set()` is a way
 to group this list in a query.
 
 **Example:**
@@ -131,7 +131,7 @@ root of the Buck2 project and all the targets from the build file in the
 `myclass` subdirectory of the root:
 
 ```sh
-buck2 uquery "set( '//:main' '//myclass:' )"
+yak uquery "set( '//:main' '//myclass:' )"
 ```
 
 **Example:**
@@ -141,7 +141,7 @@ the targets `main` and `subs` in the build file in the root of the Buck2
 project:
 
 ```sh
-buck2 uquery "deps( set( '//:main' '//:subs' ) )"
+yak uquery "deps( set( '//:main' '//:subs' ) )"
 ```
 
 ## Executing Multiple Queries at Once
@@ -150,7 +150,7 @@ Suppose you want to know the tests associated with a set of targets. This can be
 done by combining query operators. For example:
 
 ```sh
-buck2 cquery "testsof(deps(set('target1' 'target2' 'target3')))"
+yak cquery "testsof(deps(set('target1' 'target2' 'target3')))"
 ```
 
 Suppose you now want to know the tests for **each** of these targets; the above
@@ -161,7 +161,7 @@ query expression format and then list the input targets, separated by spaces.
 For example:
 
 ```sh
-buck2 cquery "testsof(deps( %s ))" target1 target2 target3
+yak cquery "testsof(deps( %s ))" target1 target2 target3
 ```
 
 The `%s` in the query expression is replaced by each of the listed targets, and
@@ -175,7 +175,7 @@ targets, such as `owner()`. Recall that the `set()` operator works only with
 targets, but the `owner()` operator takes a filename as its argument:
 
 ```sh
-buck2 uquery "owner( %s )" main.cpp myclass.cpp myclass.h
+yak uquery "owner( %s )" main.cpp myclass.cpp myclass.h
 ```
 
 ## Referencing Args Files
@@ -186,7 +186,7 @@ of arguments is long or when you want to persist the query input in source
 control.
 
 ```sh
-buck2 cquery "testsof(deps(%s))" @/path/to/args-file
+yak cquery "testsof(deps(%s))" @/path/to/args-file
 ```
 
 If you want to include all the targets in the `@`-file in a single query
@@ -194,7 +194,7 @@ execution, you can use the following alternative syntax. Note the addition of
 the capital "S" in `%Ss`:
 
 ```sh
-buck2 cquery "testsof(deps(%Ss))" @/path/to/args-file
+yak cquery "testsof(deps(%Ss))" @/path/to/args-file
 ```
 
 In the example above, the lines of the file are converted to a set and
@@ -209,7 +209,7 @@ In the example above, if the args file contains the following:
 Then the query expression is equivalent to:
 
 ```sh
-buck2 cquery "testsof(deps(set('//foo:bar' '//foo:baz')))"
+yak cquery "testsof(deps(set('//foo:bar' '//foo:baz')))"
 ```
 
 ## Query Environments

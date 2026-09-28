@@ -51,7 +51,7 @@ class TestDistLtoOpt(unittest.TestCase):
         """Prebuilt toolchain: --log-fbcc is consumed by fbcc and included in prefix."""
         opt_args = [
             "--",
-            "buck-out/fbcc",
+            "yak-out/fbcc",
             "--cc=third-party/toolchains/build/llvm/19/bin/clang++",
             "--log-fbcc=False",
             "--target=x86_64-redhat-linux-gnu",
@@ -64,8 +64,8 @@ class TestDistLtoOpt(unittest.TestCase):
         excluded from prefix to avoid breaking -cc1 mode."""
         opt_args = [
             "--",
-            "buck-out/fbcc",
-            "--cc=buck-out/v2/art/root/third-party/llvm/19/__build/bin/clang++__/out/clang++",
+            "yak-out/fbcc",
+            "--cc=yak-out/v2/art/root/third-party/llvm/19/__build/bin/clang++__/out/clang++",
             "--target=x86_64-redhat-linux-gnu",
             "-nostdinc",
             "-nostdinc++",
@@ -76,7 +76,7 @@ class TestDistLtoOpt(unittest.TestCase):
         """Minimal case: only --cc= present."""
         opt_args = [
             "--",
-            "buck-out/fbcc",
+            "yak-out/fbcc",
             "--cc=some/clang++",
         ]
         self.assertEqual(_fbcc_prefix_end(opt_args), 3)
@@ -85,7 +85,7 @@ class TestDistLtoOpt(unittest.TestCase):
         """--fbcc-create-external-debug-info is consumed by fbcc."""
         opt_args = [
             "--",
-            "buck-out/fbcc",
+            "yak-out/fbcc",
             "--cc=some/clang++",
             "--fbcc-create-external-debug-info=/tmp/foo.dwo",
             "--target=x86_64-redhat-linux-gnu",
@@ -96,7 +96,7 @@ class TestDistLtoOpt(unittest.TestCase):
         """Multiple fbcc-consumed flags in a row."""
         opt_args = [
             "--",
-            "buck-out/fbcc",
+            "yak-out/fbcc",
             "--cc=some/clang++",
             "--log-fbcc=True",
             "--fbcc-create-external-debug-info=/tmp/foo.dwo",
@@ -253,7 +253,7 @@ class TestDistLtoOpt(unittest.TestCase):
             "--build-info-rule=root:server:index_server",
             "--build-info-rule-type=cpp_binary",
             "-flto=thin",
-            "-Wl,-plugin-opt,sample-profile=buck-out/v2/gen/root/40fc99293b37c503/fdo/autofdo/default_profile/__autofdo__/out/profile",
+            "-Wl,-plugin-opt,sample-profile=yak-out/v2/gen/root/40fc99293b37c503/fdo/autofdo/default_profile/__autofdo__/out/profile",
             "-Wl,-plugin-opt,-function-sections",
             "-Wl,-plugin-opt,-profile-guided-section-prefix=false",
             "-Wl,-plugin-opt,-generate-type-units",
@@ -314,7 +314,7 @@ class TestDistLtoOpt(unittest.TestCase):
                 "-ffunction-sections",
                 "-fdata-sections",
                 "-fuse-ld=lld",
-                "-fprofile-sample-use=buck-out/v2/gen/root/40fc99293b37c503/fdo/autofdo/default_profile/__autofdo__/out/profile",
+                "-fprofile-sample-use=yak-out/v2/gen/root/40fc99293b37c503/fdo/autofdo/default_profile/__autofdo__/out/profile",
                 "-mllvm",
                 "-profile-guided-section-prefix=false",
                 "-mllvm",

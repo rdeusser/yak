@@ -22,9 +22,9 @@ use crate::actions::query::ActionQueryNode;
 
 /// The result of audit output.
 pub enum AuditOutputResult {
-    /// The exact action that matched the buck-out path.
+    /// The exact action that matched the yak-out path.
     Match(ActionQueryNode),
-    /// If the platform configuration of the buck-out path doesn't match the platform used when calling
+    /// If the platform configuration of the yak-out path doesn't match the platform used when calling
     /// audit output, then we return the unconfigured target label.
     MaybeRelevantForConfigurationHashPath(TargetLabel),
     /// If we were given a content-based path, we cannot tell which configured node(s) it came from,

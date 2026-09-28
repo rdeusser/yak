@@ -28,7 +28,7 @@ pub struct ConfigSettingData {
     // This can't be done right now because ConfigArgumentPair lives in buck2_common
     // and buck2_core cannot depend on buck2_common.
     pub buckconfigs: BTreeMap<String, String>,
-    /// Buckconfigs that are always evaluated from the root cell's .buckconfig.
+    /// Buckconfigs that are always evaluated from the root cell's .yakconfig.
     pub root_buckconfigs: BTreeMap<String, String>,
 }
 

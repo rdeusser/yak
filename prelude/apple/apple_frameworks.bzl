@@ -107,7 +107,7 @@ def to_framework_name(framework_path: str) -> str:
 
 def _library_name(library: str) -> str:
     if ":" in library:
-        fail("Invalid library: {}. Use the field 'linker_flags' with $(location ) macro if you want to pass in a BUCK target for libraries.".format(library))
+        fail("Invalid library: {}. Use the field 'linker_flags' with $(location ) macro if you want to pass in a YAK target for libraries.".format(library))
 
     name = paths.basename(library)
     if not name.startswith("lib"):

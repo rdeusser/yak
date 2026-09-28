@@ -10,7 +10,7 @@ CythonToolchainInfo = provider(
     fields = {
         # The cython compiler binary (RunInfo provider).
         # Python version-based selection should be handled via select() on the
-        # compiler attribute in the toolchain BUCK definition.
+        # compiler attribute in the toolchain YAK definition.
         "compiler": provider_field(RunInfo),
         # Default compiler flags. Currently unused by cython_library and
         # cython_static_extension (flags are built from rule attributes instead).

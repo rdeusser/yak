@@ -52,7 +52,7 @@ use crate::legacy_configs::key::BuckconfigKeyRef;
 use crate::legacy_configs::parser::LegacyConfigParser;
 use crate::legacy_configs::path::DEFAULT_EXTERNAL_CONFIG_SOURCES;
 use crate::legacy_configs::path::DEFAULT_PROJECT_CONFIG_SOURCES;
-use crate::legacy_configs::path::DOT_BUCKCONFIG_LOCAL;
+use crate::legacy_configs::path::DOT_YAKCONFIG_LOCAL;
 use crate::legacy_configs::path::ExternalConfigSource;
 use crate::legacy_configs::path::ProjectConfigSource;
 
@@ -60,8 +60,8 @@ use crate::legacy_configs::path::ProjectConfigSource;
 /// buckconfig comes from outside the buildgraph, and this type represents those parts.
 #[derive(Clone, PartialEq, Eq, Allocative, Pagable)]
 pub struct ExternalBuckconfigData {
-    // The result of parsing the buckconfigs coming from either global (e.g. /etc/buckconfig.d) or
-    // user (e.g. ~/.buckconfig.d or $home_dir/.buckconfig.local) files/dirs outside of the repo
+    // The result of parsing the buckconfigs coming from either global (e.g. /etc/yakconfig.d) or
+    // user (e.g. ~/.yakconfig.d or $home_dir/.yakconfig.local) files/dirs outside of the repo
     // The order matters here and reflects the same order these are processed in buck.
     external_path_configs: Vec<ExternalPathBuckconfigData>,
     // The result of parsing the buckconfigs coming from command line args (e.g. --config or --config-file)
@@ -123,8 +123,8 @@ impl ExternalBuckconfigData {
         if let Ok(legacy_cells) =
             BuckConfigBasedCells::parse_with_config_args(project_root, &[]).await
         {
-            let path = ForwardRelativePath::new(DOT_BUCKCONFIG_LOCAL).expect(
-                "Internal error: .buckconfig.local should always be a valid forward relative path",
+            let path = ForwardRelativePath::new(DOT_YAKCONFIG_LOCAL).expect(
+                "Internal error: .yakconfig.local should always be a valid forward relative path",
             );
             for (_cell, cell_instance) in legacy_cells.cell_resolver.cells() {
                 let relative_path = cell_instance.path().as_project_relative_path().join(path);
@@ -139,7 +139,7 @@ impl ExternalBuckconfigData {
                 {
                     let values = parser.to_proto_external_config_values(false);
                     if values.is_empty() {
-                        // Don't create an empty component for cells with non-existing .buckconfig.local
+                        // Don't create an empty component for cells with non-existing .yakconfig.local
                         continue;
                     }
                     local_config_components.push(buck2_data::BuckconfigComponent {
@@ -181,10 +181,10 @@ impl ExternalBuckconfigData {
 }
 
 /// Used for creating a CellResolver in a buckv1-compatible way based on values
-/// in .buckconfig in each cell.
+/// in .yakconfig in each cell.
 ///
 /// We'll traverse the structure of the `[cells]` sections starting from
-/// the root .buckconfig. All aliases found in the root config will also be
+/// the root .yakconfig. All aliases found in the root config will also be
 /// available in all other cells (v1 provides that same behavior).
 ///
 /// We don't (currently) enforce that all aliases appear in the root config, but
@@ -659,7 +659,7 @@ mod tests {
     async fn test_cells() -> buck2_error::Result<()> {
         let mut file_ops = TestConfigParserFileOps::new(&[
             (
-                ".buckconfig",
+                ".yakconfig",
                 indoc!(
                     r#"
                             [cells]
@@ -671,7 +671,7 @@ mod tests {
                 ),
             ),
             (
-                "other/.buckconfig",
+                "other/.yakconfig",
                 indoc!(
                     r#"
                             [cells]
@@ -682,7 +682,7 @@ mod tests {
                 ),
             ),
             (
-                "third_party/.buckconfig",
+                "third_party/.yakconfig",
                 indoc!(
                     r#"
                             [cells]
@@ -728,7 +728,7 @@ mod tests {
     async fn test_multi_cell_with_config_file() -> buck2_error::Result<()> {
         let mut file_ops = TestConfigParserFileOps::new(&[
             (
-                ".buckconfig",
+                ".yakconfig",
                 indoc!(
                     r#"
                             [cells]
@@ -740,7 +740,7 @@ mod tests {
                 ),
             ),
             (
-                "other/.buckconfig",
+                "other/.yakconfig",
                 indoc!(
                     r#"
                             [cells]
@@ -748,19 +748,18 @@ mod tests {
                                 other = .
                                 third_party = ../third_party/
                             [buildfile]
-                                name = TARGETS
+                                name = BUILD
                         "#
                 ),
             ),
             (
-                "third_party/.buckconfig",
+                "third_party/.yakconfig",
                 indoc!(
                     r#"
                             [cells]
                                 third_party = .
                             [buildfile]
-                                name_v2 = OKAY
-                                name = OKAY_v1
+                                name = OKAY
                         "#
                 ),
             ),
@@ -823,7 +822,7 @@ mod tests {
     async fn test_multi_cell_no_repositories_in_non_root_cell() -> buck2_error::Result<()> {
         let mut file_ops = TestConfigParserFileOps::new(&[
             (
-                ".buckconfig",
+                ".yakconfig",
                 indoc!(
                     r#"
                             [cells]
@@ -833,7 +832,7 @@ mod tests {
                 ),
             ),
             (
-                "other/.buckconfig",
+                "other/.yakconfig",
                 indoc!(
                     r#"
                             [foo]
@@ -864,7 +863,7 @@ mod tests {
     async fn test_multi_cell_with_cell_relative() -> buck2_error::Result<()> {
         let mut file_ops = TestConfigParserFileOps::new(&[
             (
-                ".buckconfig",
+                ".yakconfig",
                 indoc!(
                     r#"
                             [cells]
@@ -883,14 +882,14 @@ mod tests {
                 ),
             ),
             (
-                "other/.buckconfig",
+                "other/.yakconfig",
                 indoc!(
                     r#"
                             [cells]
                                 root = ..
                                 other = .
                             [buildfile]
-                                name = TARGETS
+                                name = BUILD
                         "#
                 ),
             ),
@@ -940,7 +939,7 @@ mod tests {
     async fn test_local_config_file_overwrite_config_file() -> buck2_error::Result<()> {
         let mut file_ops = TestConfigParserFileOps::new(&[
             (
-                ".buckconfig",
+                ".yakconfig",
                 indoc!(
                     r#"
                             [cells]
@@ -952,7 +951,7 @@ mod tests {
                 ),
             ),
             (
-                ".buckconfig.local",
+                ".yakconfig.local",
                 indoc!(
                     r#"
                             [orange]
@@ -986,7 +985,7 @@ mod tests {
     async fn test_multi_cell_local_config_file_overwrite_config_file() -> buck2_error::Result<()> {
         let mut file_ops = TestConfigParserFileOps::new(&[
             (
-                ".buckconfig",
+                ".yakconfig",
                 indoc!(
                     r#"
                             [cells]
@@ -999,7 +998,7 @@ mod tests {
                 ),
             ),
             (
-                ".buckconfig.local",
+                ".yakconfig.local",
                 indoc!(
                     r#"
                             [orange]
@@ -1011,7 +1010,7 @@ mod tests {
                 ),
             ),
             (
-                "other/.buckconfig",
+                "other/.yakconfig",
                 indoc!(
                     r#"
                             [cells]
@@ -1024,7 +1023,7 @@ mod tests {
                 ),
             ),
             (
-                "other/.buckconfig.local",
+                "other/.yakconfig.local",
                 indoc!(
                     r#"
                             [orange]
@@ -1070,7 +1069,7 @@ mod tests {
     #[tokio::test]
     async fn test_config_arg_with_no_buckconfig() -> buck2_error::Result<()> {
         let mut file_ops = TestConfigParserFileOps::new(&[(
-            ".buckconfig",
+            ".yakconfig",
             indoc!(
                 r#"
                         [repositories]
@@ -1097,7 +1096,7 @@ mod tests {
     #[tokio::test]
     async fn test_cell_config_section_name() -> buck2_error::Result<()> {
         let mut file_ops = TestConfigParserFileOps::new(&[(
-            ".buckconfig",
+            ".yakconfig",
             indoc!(
                 r#"
                             [repositories]
@@ -1176,7 +1175,7 @@ mod tests {
         initialize_external_cells_impl();
 
         let mut file_ops = TestConfigParserFileOps::new(&[(
-            ".buckconfig",
+            ".yakconfig",
             indoc!(
                 r#"
                     [cells]
@@ -1228,7 +1227,7 @@ mod tests {
         initialize_external_cells_impl();
 
         let mut file_ops = TestConfigParserFileOps::new(&[(
-            ".buckconfig",
+            ".yakconfig",
             indoc!(
                 r#"
                     [cells]
@@ -1254,7 +1253,7 @@ mod tests {
         initialize_external_cells_impl();
 
         let mut file_ops = TestConfigParserFileOps::new(&[(
-            ".buckconfig",
+            ".yakconfig",
             indoc!(
                 r#"
                     [cells]
@@ -1283,7 +1282,7 @@ mod tests {
         initialize_external_cells_impl();
 
         let mut file_ops = TestConfigParserFileOps::new(&[(
-            ".buckconfig",
+            ".yakconfig",
             indoc!(
                 r#"
                     [cells]
@@ -1321,7 +1320,7 @@ mod tests {
         initialize_external_cells_impl();
 
         let mut file_ops = TestConfigParserFileOps::new(&[(
-            ".buckconfig",
+            ".yakconfig",
             indoc!(
                 r#"
                     [cells]

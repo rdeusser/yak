@@ -1,7 +1,7 @@
 Buck2 logs all the commands it runs. So, after you've run a build, you can query
 Buck2 to get access to the exact command it used.
 
-To do so, do your build as normal, then run `buck2 log what-ran`.
+To do so, do your build as normal, then run `yak log what-ran`.
 
 ## What Ran output format
 
@@ -36,7 +36,7 @@ Use What Ran as follows:
 - Once you found it, reproduce as follows:
   - If the executor was `local`, the command is in the output, so just run it.
     It's expected that you'll do this from the root of your project (use
-    `buck2 root --kind project` to find where that is).
+    `yak root --kind project` to find where that is).
   - If the executor was `re` or `cache`, you're provided a RE digest of the form
     `HASH:SIZE`.
 
@@ -45,13 +45,13 @@ Use What Ran as follows:
 The following ran locally:
 
 ```bash
-build  root//hello:hello (<unspecified>) (greeting)  local  env -C "$(buck2 root --kind project)" -- 'TMPDIR=/home/user/project/buck-out/v2/tmp/root/ba301b9fe7f0e990/greeting' 'BUCK_SCRATCH_PATH=buck-out/v2/tmp/root/ba301b9fe7f0e990/greeting' 'BUCK2_DAEMON_UUID=d02fef8c-7036-445f-a9e2-154afd2bb4f1' 'BUCK_BUILD_ID=a0e94d01-7a74-427e-bf45-5a0f4483322f' sh -c 'echo "$1" > "$2"' -- hello buck-out/v2/art/root/hello/__hello__/output_artifacts/greeting.txt
+build  root//hello:hello (<unspecified>) (greeting)  local  env -C "$(yak root --kind project)" -- 'TMPDIR=/home/user/project/yak-out/v2/tmp/root/ba301b9fe7f0e990/greeting' 'BUCK_SCRATCH_PATH=yak-out/v2/tmp/root/ba301b9fe7f0e990/greeting' 'BUCK2_DAEMON_UUID=d02fef8c-7036-445f-a9e2-154afd2bb4f1' 'BUCK_BUILD_ID=a0e94d01-7a74-427e-bf45-5a0f4483322f' sh -c 'echo "$1" > "$2"' -- hello yak-out/v2/art/root/hello/__hello__/output_artifacts/greeting.txt
 ```
 
 To repro, you'd run:
 
 ```bash
-env -C "$(buck2 root --kind project)" -- 'TMPDIR=/home/user/project/buck-out/v2/tmp/root/ba301b9fe7f0e990/greeting' 'BUCK_SCRATCH_PATH=buck-out/v2/tmp/root/ba301b9fe7f0e990/greeting' 'BUCK2_DAEMON_UUID=d02fef8c-7036-445f-a9e2-154afd2bb4f1' 'BUCK_BUILD_ID=a0e94d01-7a74-427e-bf45-5a0f4483322f' sh -c 'echo "$1" > "$2"' -- hello buck-out/v2/art/root/hello/__hello__/output_artifacts/greeting.txt
+env -C "$(yak root --kind project)" -- 'TMPDIR=/home/user/project/yak-out/v2/tmp/root/ba301b9fe7f0e990/greeting' 'BUCK_SCRATCH_PATH=yak-out/v2/tmp/root/ba301b9fe7f0e990/greeting' 'BUCK2_DAEMON_UUID=d02fef8c-7036-445f-a9e2-154afd2bb4f1' 'BUCK_BUILD_ID=a0e94d01-7a74-427e-bf45-5a0f4483322f' sh -c 'echo "$1" > "$2"' -- hello yak-out/v2/art/root/hello/__hello__/output_artifacts/greeting.txt
 ```
 
 The following ran on RE:

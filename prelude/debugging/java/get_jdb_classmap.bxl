@@ -8,7 +8,7 @@
 
 # BXL script to extract the Java class-to-source map debug info from a target
 # Usage:
-# buck2 bxl prelude//debugging/java/get_jdb_classmap.bxl:get_jdb_classmap -- --target=<your target here>
+# yak bxl prelude//debugging/java/get_jdb_classmap.bxl:get_jdb_classmap -- --target=<your target here>
 # This script extracts Java class-to-source mapping information from a buck target and outputs the path to a debuginfo JSON file
 # that can be used by Java debuggers (like java-dap) to map compiled classes back to their source files for debugging purposes.
 

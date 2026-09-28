@@ -19,9 +19,9 @@ import make_py_package_inplace
 
 TEMPLATE: Path = Path(__file__).resolve().parent.parent / "run_inplace.py.in"
 
-# An interpreter that some other rule built, as buck2 spells it: relative to the
+# An interpreter that some other rule built, as yak spells it: relative to the
 # project root, which is also the cwd the action runs in.
-ARTIFACT_PYTHON = "buck-out/v2/gen/toolchains/cpython/bin/python3"
+ARTIFACT_PYTHON = "yak-out/v2/gen/toolchains/cpython/bin/python3"
 
 STUB_RUNNER = """\
 def run_as_main(main_module, main_function):
@@ -53,7 +53,7 @@ def _make_bootstrapper(
     output: str = "out/bin.pex",
     modules_dir: str = "out/bin#link-tree",
 ) -> Path:
-    """Invoke the tool the way buck2 does: from the project root, with relative paths."""
+    """Invoke the tool the way yak does: from the project root, with relative paths."""
 
     argv = [
         "make_py_package_inplace.py",
@@ -106,7 +106,7 @@ class ShebangTest(unittest.TestCase):
 
             self.assertEqual(lines[0], "#!/bin/sh")
             self.assertIn(
-                'exec "${_self%/*}/../buck-out/v2/gen/toolchains/cpython/bin/python3"'
+                'exec "${_self%/*}/../yak-out/v2/gen/toolchains/cpython/bin/python3"'
                 ' "$0" "$@"',
                 lines,
             )
@@ -146,12 +146,12 @@ class TrampolineRuntimeTest(unittest.TestCase):
         (root / "out/bin#link-tree/app.py").write_text(APP, encoding="utf8")
 
         # Stand in for a hermetic interpreter built by some other rule.
-        (root / "buck-out/interpreter").mkdir(parents=True)
+        (root / "yak-out/interpreter").mkdir(parents=True)
         os.symlink(
-            os.path.realpath(sys.executable), root / "buck-out/interpreter/python3"
+            os.path.realpath(sys.executable), root / "yak-out/interpreter/python3"
         )
 
-        _make_bootstrapper(root, "buck-out/interpreter/python3")
+        _make_bootstrapper(root, "yak-out/interpreter/python3")
         return root
 
     def _run(self, argv: Sequence[str], cwd: str) -> str:
@@ -202,7 +202,7 @@ class TrampolineRuntimeTest(unittest.TestCase):
             )
 
     def test_runs_without_a_usable_path(self) -> None:
-        # Pexes get used as build tools, where buck2 scrubs the environment. Nothing in
+        # Pexes get used as build tools, where yak scrubs the environment. Nothing in
         # the trampoline may depend on finding a helper on $PATH.
         with tempfile.TemporaryDirectory() as tmpdir:
             pex = self._make_project(tmpdir) / "out/bin.pex"

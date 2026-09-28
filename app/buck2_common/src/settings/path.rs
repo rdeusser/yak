@@ -8,8 +8,8 @@
  * above-listed licenses.
  */
 
-pub(crate) static DOT_BUCKSETTINGS: &str = ".bucksettings.toml";
-pub(crate) static DOT_BUCKSETTINGS_LOCAL: &str = ".bucksettings.local.toml";
+pub(crate) static DOT_YAKSETTINGS: &str = ".yaksettings.toml";
+pub(crate) static DOT_YAKSETTINGS_LOCAL: &str = ".yaksettings.local.toml";
 
 pub(crate) enum SettingsSource {
     RepoRootFile(&'static str),
@@ -18,7 +18,7 @@ pub(crate) enum SettingsSource {
 
 /// Ordered lowest to highest priority.
 pub(crate) static DEFAULT_SETTINGS_SOURCES: &[SettingsSource] = &[
-    SettingsSource::RepoRootFile(DOT_BUCKSETTINGS),
-    SettingsSource::HomeFile(DOT_BUCKSETTINGS_LOCAL),
-    SettingsSource::RepoRootFile(DOT_BUCKSETTINGS_LOCAL),
+    SettingsSource::RepoRootFile(DOT_YAKSETTINGS),
+    SettingsSource::HomeFile(DOT_YAKSETTINGS_LOCAL),
+    SettingsSource::RepoRootFile(DOT_YAKSETTINGS_LOCAL),
 ];

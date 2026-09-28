@@ -60,7 +60,7 @@ async def test_many_rebound_outputs_incremental_rebuild(buck: Buck) -> None:
     # Invalidate the analysis (and with it every action key). The seed changes
     # the content of exactly one of the dynamic action's outputs (see the
     # fixture for why that matters).
-    with fileinput.input(buck.cwd / "TARGETS.fixture", inplace=True) as f:
+    with fileinput.input(buck.cwd / "YAK.fixture", inplace=True) as f:
         for line in f:
             print(line.replace('seed = "A"', 'seed = "B"'), end="")
 

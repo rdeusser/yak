@@ -93,7 +93,7 @@ struct KeyValues {
     /// is retained, since none can be recomputed and the key's assertion history names them all.
     asserted: bool,
     /// Whether the key is an `InjectedKey`, which takes no part in paging. A computed key whose
-    /// values are asserted (buck2 does this for its pageable starlark roots) pages like any other.
+    /// values are asserted (yak does this for its pageable starlark roots) pages like any other.
     injected: bool,
     entries: SmallVec<[(Revision, PagableValue); 1]>,
 }

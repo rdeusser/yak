@@ -5,13 +5,13 @@
 Command
 
 ```shell
-buck2 build //foo:bar@config//platform:linux-x86_64
+yak build //foo:bar@config//platform:linux-x86_64
 ```
 
 should be equivalent to current syntax:
 
 ```shell
-buck2 build //foo:bar --target-platforms=//platform:linux-x86_64
+yak build //foo:bar --target-platforms=//platform:linux-x86_64
 ```
 
 ## Why
@@ -26,14 +26,14 @@ release=//config:linux-x86_64-release
 The command above can be expressed as:
 
 ```shell
-buck2 build //foo:bar@release
+yak build //foo:bar@release
 ```
 
 Additionally, if we have configuration expressions implemented, we can do
 something like:
 
 ```shell
-buck2 build //foo:bar@release+gcc
+yak build //foo:bar@release+gcc
 ```
 
 ## Possible future extensions

@@ -115,7 +115,7 @@ def _make_cc_shim(ctx: AnalysisContext, name: str, cmd: cmd_args) -> cmd_args:
 
     For a cmd like this:
 
-        buck-out/v2/art/root/tools/build/__cc_wrapper__/0cdd64957fa390c4/cc_wrapper \
+        yak-out/v2/art/root/tools/build/__cc_wrapper__/0cdd64957fa390c4/cc_wrapper \
         -resource-dir \
         third-party/toolchains/build/llvm/21/lib/clang/stable \
         -Bthird-party/toolchains/build/binutils/x86_64-pc-linux-gnu/bin
@@ -126,8 +126,8 @@ def _make_cc_shim(ctx: AnalysisContext, name: str, cmd: cmd_args) -> cmd_args:
 
         python3 \
         prelude/rust/tools/from_any_dir.py \
-        --cwd=/re_cwd/buck-out/v2/art/root/eef091ffd45259ca/third-party/rust/vendor/gmp-mpfr-sys/__1-build-script-run__/cwd \
-        ${..}/buck-out/v2/art/root/tools/build/__cc_wrapper__/0cdd64957fa390c4/cc_wrapper \
+        --cwd=/re_cwd/yak-out/v2/art/root/eef091ffd45259ca/third-party/rust/vendor/gmp-mpfr-sys/__1-build-script-run__/cwd \
+        ${..}/yak-out/v2/art/root/tools/build/__cc_wrapper__/0cdd64957fa390c4/cc_wrapper \
         -resource-dir \
         ${..}/third-party/toolchains/build/llvm/21/lib/clang/stable \
         -B${..}/third-party/toolchains/build/binutils/x86_64-pc-linux-gnu/bin
@@ -164,7 +164,7 @@ def _make_cc_shim(ctx: AnalysisContext, name: str, cmd: cmd_args) -> cmd_args:
                 "#!/usr/bin/env bash",
                 # Capture buildscript-selected working directory.
                 "cc_original_dir=$(pwd)",
-                # Change directory to the script's location in buck-out, then up
+                # Change directory to the script's location in yak-out, then up
                 # to the repo root.
                 'cd -- "$(dirname -- "$(realpath "${BASH_SOURCE[0]}")")"',
                 cmd_args(ctx.label.project_root, relative_to = (script, 1), format = "cd {}"),

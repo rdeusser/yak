@@ -208,7 +208,7 @@ impl<M: MemoryMonitoring, K: CgroupKind> Cgroup<M, K> {
     /// Setting this means that various OOM killer implementations will always kill the entire
     /// cgroup and all its children together, instead of just subgroups.
     ///
-    /// In buck2 we want this because there's a risk that actions will not correctly report failures
+    /// In yak we want this because there's a risk that actions will not correctly report failures
     /// if sub-processes are getting killed.
     pub(crate) async fn set_memory_oom_group(&self) -> buck2_error::Result<()> {
         CgroupFile::open(

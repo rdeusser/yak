@@ -57,7 +57,7 @@ pub(crate) const DEFAULT_TARGET_PLATFORM_ATTRIBUTE: InternalAttribute = Internal
     is_configurable: AttrIsConfigurable::No,
 };
 
-/// buck1 used "compatible_with" for this. in buck2, we have two "compatible with" concepts, both
+/// buck1 used "compatible_with" for this. in yak, we have two "compatible with" concepts, both
 /// target and exec compatibility and so we are switching to "target_compatible_with". For now we'll accept
 /// either form for target compatibility (but not both).
 pub const TARGET_COMPATIBLE_WITH_ATTRIBUTE: InternalAttribute = InternalAttribute {

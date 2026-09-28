@@ -1,5 +1,5 @@
 # This file is @generated, regenerate by rerunning the test with `BUCK2_UPDATE_GOLDEN=1` set
 
-buck-out/v2/art/root/__write__/<HASH>/out.txt	materialized (ts=<TIMESTAMP>, size=5)
-buck-out/v2/art/root/__write__/<HASH>/out.txt	declared: cas download (action: uploaded by client)
-buck-out/v2/art/root/__write__/<HASH>/out.txt	materialized (ts=<TIMESTAMP>, size=5)
+yak-out/v2/art/root/__write__/<HASH>/out.txt	materialized (ts=<TIMESTAMP>, size=5)
+yak-out/v2/art/root/__write__/<HASH>/out.txt	declared: cas download (action: uploaded by client)
+yak-out/v2/art/root/__write__/<HASH>/out.txt	materialized (ts=<TIMESTAMP>, size=5)

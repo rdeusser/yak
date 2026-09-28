@@ -89,7 +89,7 @@ fn format_directory_entry_leaves(
     RE CAS and Buck does not have it. \
     This likely happened because your Buck daemon \
     has been online for a long time. This error is currently unrecoverable. \
-    To proceed, you should restart Buck using `buck2 killall`.
+    To proceed, you should restart Buck using `yak killall`.
 
 Debug information:
   Path: {}
@@ -326,7 +326,7 @@ pub trait Materializer: Allocative + Send + Sync + 'static {
         args: CleanStaleArtifactsArgs,
     ) -> buck2_error::Result<buck2_cli_proto::CleanStaleResponse>;
 
-    /// Delete all local-action scratch (`buck-out/<iso>/tmp*`). Only sound while no
+    /// Delete all local-action scratch (`yak-out/<iso>/tmp*`). Only sound while no
     /// command is running actions: scratch liveness is command-scoped. Aborts as soon
     /// as any other materializer command arrives.
     async fn clean_scratch(&self) -> buck2_error::Result<buck2_cli_proto::CleanStaleResponse>;
@@ -479,7 +479,7 @@ pub enum CasDownloadInfoOrigin {
     /// Simply declared by an action.
     Declared,
 
-    /// Declared by an action after buck2 itself confirmed the blob is present in the CAS. A
+    /// Declared by an action after yak itself confirmed the blob is present in the CAS. A
     /// later miss is therefore a CAS failure rather than a wrong user-supplied digest.
     Probed,
 

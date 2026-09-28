@@ -167,7 +167,7 @@ def android_instrumentation_test_impl(ctx: AnalysisContext):
 
     test_info, run_info = inject_test_run_info(ctx, test_info)
 
-    # We append additional args so that "buck2 run" will work with sane defaults
+    # We append additional args so that "yak run" will work with sane defaults
     run_info.args.add(cmd_args(["--auto-run-on-connected-device", "--output", ".", "--adb-executable-path", "adb"]))
     return [
         test_info,

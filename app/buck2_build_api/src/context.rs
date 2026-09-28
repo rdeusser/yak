@@ -76,7 +76,7 @@ impl SetBuildContextData for DiceTransactionUpdater {
             BuildDataKey,
             BuildData {
                 buck_out_path_resolver: BuckOutPathResolver::new(path.unwrap_or_else(|| {
-                    ProjectRelativePathBuf::unchecked_new("buck-out/v2".to_owned())
+                    ProjectRelativePathBuf::unchecked_new("yak-out/v2".to_owned())
                 })),
             },
         )])?)

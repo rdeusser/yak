@@ -15,7 +15,7 @@ import java.nio.file.Paths;
 
 public class BuckConstant {
 
-  public static final String DEFAULT_BUCK_OUT_DIR_NAME = "buck-out";
+  public static final String DEFAULT_BUCK_OUT_DIR_NAME = "yak-out";
   private static final Path BUCK_OUTPUT_PATH_DEFAULT =
       Paths.get(System.getProperty("buck.base_buck_out_dir", DEFAULT_BUCK_OUT_DIR_NAME));
 

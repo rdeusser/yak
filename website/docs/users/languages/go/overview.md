@@ -24,7 +24,7 @@ Buck2 is a general-purpose build system, so you need to provide more information
 about your project:
 
 - You need to tell Buck2 that specific code is Go code. This is done by
-  declaring targets like `go_binary` in `BUCK` files.
+  declaring targets like `go_binary` in `YAK` files.
 - You need to tell Buck2 where dependencies of a particular target are. This is
   done by adding `deps` to the target definition.
 - You need to configure Buck2 where to find the Go compiler and other tools by
@@ -48,11 +48,11 @@ rest of the Go ecosystem:
 - Keep a single Go package per directory. For example, for a Go library, all
   non-test `.go` files should belong to a single `go_library` and all
   `*_test.go` files to a single `go_test`.
-- Put a `BUCK` file in the same directory as the Go package, unless you have a
+- Put a `YAK` file in the same directory as the Go package, unless you have a
   reason not to.
 
 ```python
-# File: foo/BUCK
+# File: foo/YAK
 
 go_library(
     name = "foo",
@@ -72,12 +72,12 @@ go_test(
 )
 ```
 
-## How to pass options to `buck2` commands
+## How to pass options to `yak` commands
 
 ### Envs GOOS and GOARCH
 
 Compilation for different platforms is done by passing `--target-platforms` or
-`-m` (`--modifier`) flags to `buck2` commands.
+`-m` (`--modifier`) flags to `yak` commands.
 
 You need to specify what target platforms you support by declaring them with the
 `platform()` rule, or you can avoid pre-declaring them by using configuration
@@ -89,14 +89,14 @@ For example, to build for linux/amd64, the following commands are equivalent
 
 ```sh
 $ GOOS=linux GOARCH=amd64 go build example.com/foo/bar
-$ buck2 build --target-platforms root//platforms:linux_x86_64 root//foo/bar:bar
-$ buck2 build -m config//os:linux -m config//arch:x86_64 root//foo/bar:bar
+$ yak build --target-platforms root//platforms:linux_x86_64 root//foo/bar:bar
+$ yak build -m config//os:linux -m config//arch:x86_64 root//foo/bar:bar
 ```
 
 ### Test options like `-test.bench`
 
-To pass test options, use `--` to separate buck2 options from test options:
+To pass test options, use `--` to separate yak options from test options:
 
 ```sh
-$ buck2 test root//foo/bar:bar -- -test.bench=.
+$ yak test root//foo/bar:bar -- -test.bench=.
 ```

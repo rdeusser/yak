@@ -33,7 +33,7 @@ pub enum Tier {
     // ambiguous input errors.
     // These can be tracked but not eliminated.
     Environment,
-    // Unexpected errors in buck2 or core dependencies.
+    // Unexpected errors in yak or core dependencies.
     // It should be possible to eliminate these, in theory.
     Tier0,
 }
@@ -331,10 +331,10 @@ fn tag_metadata(tag: ErrorTag) -> TagMetadata {
         ErrorTag::EventLogDownload => rank!(tier0),
 
         ErrorTag::UnhashedOutputSymlink => rank!(tier0),
-        // Validations declare their result as an output, so buck2 having materialized it and
-        // then not finding it is a buck2 bug.
+        // Validations declare their result as an output, so yak having materialized it and
+        // then not finding it is a yak bug.
         ErrorTag::ValidationResultRead => rank!(tier0),
-        // buck-out is also removed by concurrent `buck2 clean` invocations, which buck2 could
+        // yak-out is also removed by concurrent `yak clean` invocations, which yak could
         // serialize.
         ErrorTag::CleanBuckOut => rank!(tier0),
         // These files are not tracked by the file watcher, so they can change mid-command.
@@ -423,7 +423,7 @@ fn tag_metadata(tag: ErrorTag) -> TagMetadata {
         ErrorTag::EventLogIndexOutOfBounds => rank!(input),
         ErrorTag::EventLogNotFound => rank!(input),
         // RE quota exhaustion is actionable by the quota-pool owner, not the build author.
-        // Input category keeps these out of buck2's non-user-error alerting; infra exit code
+        // Input category keeps these out of yak's non-user-error alerting; infra exit code
         // so CI can regex-on-stderr detect RE resource exhaustion, prevent retries on an already
         // exhausted resource, and set the signal to yellow, not red.
         ErrorTag::ReResourceExhausted => rank!(input).exit_code(ExitCode::InfraError),

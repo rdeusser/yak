@@ -10,20 +10,20 @@ likely to be relevant to end users.
 
 ## Starlark profiling
 
-`buck2` supports profiling of the evaluation of specific `BUCK` files and
+`yak` supports profiling of the evaluation of specific `YAK` files and
 profiling of the analysis of specific targets.
 
-There are three `buck2` profiling commands:
+There are three `yak` profiling commands:
 
-- `buck2 profile loading`
-- `buck2 profile analysis`
-- `buck2 profile bxl`
+- `yak profile loading`
+- `yak profile analysis`
+- `yak profile bxl`
 
 For example:
 
 ```shell
-buck2 profile loading --mode=heap-summary-allocated -o heap-summary.csv //some/package:
-buck2 profile analysis --mode=heap-summary-allocated -o heap-summary.csv //some/package:target
+yak profile loading --mode=heap-summary-allocated -o heap-summary.csv //some/package:
+yak profile analysis --mode=heap-summary-allocated -o heap-summary.csv //some/package:target
 ```
 
 Possible values for profiling modes are as follows:
@@ -54,7 +54,7 @@ Possible values for profiling modes are as follows:
 The first profiling mode (`heap-summary-allocated`) provides the time spent
 within a function and the allocations that are performed.
 
-As an example, running over a folly BUCK file, produces a CSV file whose
+As an example, running over a folly YAK file, produces a CSV file whose
 top-left corner is:
 
 ```text
@@ -89,7 +89,7 @@ mode may consume significantly more memory.
 ### Statement profiling
 
 The second profiling mode tells us which statements spent most time executing.
-Running it over a large `BUCK` file gives us a CSV file starting with:
+Running it over a large `YAK` file gives us a CSV file starting with:
 
 ```text
 File                            Span  Duration(s)    Count
@@ -134,9 +134,9 @@ graph.
 
 - Profiling on Linux can be done with
   `perf record -g --call-graph=dwarf,20000 ...` and `perf report --call-graph`
-  - Don't profile the `buck2` process directly unless you are interested in
-    profiling the CLI; you likely want to profile the `buck2` daemon process.
-    You can find the pid with `buck2 status` and attach `perf` to that PID.
+  - Don't profile the `yak` process directly unless you are interested in
+    profiling the CLI; you likely want to profile the `yak` daemon process.
+    You can find the pid with `yak status` and attach `perf` to that PID.
 - Profiling on Mac can be done with `Instruments`.
 
 ## Benchmarking

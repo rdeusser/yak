@@ -128,10 +128,10 @@ Use TodoWrite to show:
 
 ## Important: Use System Buck2 Command
 
-This tutorial uses the **system `buck2` command**, NOT `./buck2.py`.
+This tutorial uses the **system `yak` command**, NOT `./yak.py`.
 
-- Use: `buck2 build`, `buck2 test`, `buck2 cquery`, etc.
-- Do NOT use: `./buck2.py` (that's for Buck2 development/self-bootstrap)
+- Use: `yak build`, `yak test`, `yak cquery`, etc.
+- Do NOT use: `./yak.py` (that's for Buck2 development/self-bootstrap)
 
 This ensures the tutorial works for all users with Buck2 installed.
 
@@ -141,13 +141,13 @@ The tutorial has 8 progressive steps:
 
 ### Step 0: Setup
 
-Create a Buck2 project that uses the prelude bundled with `buck2`, then create
+Create a Buck2 project that uses the prelude bundled with `yak`, then create
 a directory for the tutorial inside it and navigate into it:
 
 **Run this:**
 
 ```bash
-buck2 init buck2-tutorial-project
+yak init buck2-tutorial-project
 cd buck2-tutorial-project
 mkdir buck2-tutorial
 cd buck2-tutorial
@@ -184,7 +184,7 @@ TodoWrite with 8 items (all pending initially)
 
 ```python
 - Does `uppercase.bzl` exist?
-- Does `BUCK` exist?
+- Does `YAK` exist?
 - Does `input.txt` exist?
 - If yes, read them to determine current step
 ```
@@ -207,8 +207,8 @@ AskUserQuestion:
 **What to do:**
 
 1. Create `uppercase.bzl` with minimal implementation
-2. Create `BUCK` file with target definition
-3. Build it with `buck2 build`
+2. Create `YAK` file with target definition
+3. Build it with `yak build`
 4. Observe success (with warning about no outputs)
 
 **Code to create:**
@@ -228,7 +228,7 @@ uppercase = rule(
 )
 ```
 
-`BUCK`:
+`YAK`:
 
 ```starlark
 load(":uppercase.bzl", "uppercase")
@@ -239,7 +239,7 @@ uppercase(name = "hello")
 **Testing:**
 
 ```bash
-buck2 build :hello
+yak build :hello
 # Expected: SUCCESS with warning "target does not have any outputs"
 ```
 
@@ -267,7 +267,7 @@ show they understand.
 **What to do:**
 
 1. Update `uppercase.bzl` to add `src` attribute
-2. Update `BUCK` to pass a source file
+2. Update `YAK` to pass a source file
 3. Create `input.txt` test file
 4. Build again
 
@@ -288,7 +288,7 @@ uppercase = rule(
 )
 ```
 
-**Update `BUCK`:**
+**Update `YAK`:**
 
 ```starlark
 load(":uppercase.bzl", "uppercase")
@@ -308,7 +308,7 @@ hello world
 **Testing:**
 
 ```bash
-buck2 build :hello
+yak build :hello
 # Expected: SUCCESS (still no outputs, but accepts input now)
 ```
 
@@ -355,7 +355,7 @@ def _uppercase_impl(ctx: AnalysisContext) -> list[Provider]:
 **Testing:**
 
 ```bash
-buck2 build :hello
+yak build :hello
 # Expected: ERROR - "Artifact must be bound by now"
 ```
 
@@ -414,7 +414,7 @@ python3 -c "import sys; print(open(sys.argv[1]).read().upper(), end='')" "$1" > 
             src,  # Input artifact
             output.as_output(),  # Output artifact
         ]),
-        category = "uppercase",  # Shows in buck2 output
+        category = "uppercase",  # Shows in yak output
     )
 
     return [DefaultInfo(default_output = output)]
@@ -423,7 +423,7 @@ python3 -c "import sys; print(open(sys.argv[1]).read().upper(), end='')" "$1" > 
 **Testing:**
 
 ```bash
-buck2 build :hello --show-full-output
+yak build :hello --show-full-output
 # Expected: SUCCESS with output path shown
 
 # Check the content
@@ -457,7 +457,7 @@ error. Advance only once they show they understand.
 
 **What to do:**
 
-1. List available targets with `buck2 targets`
+1. List available targets with `yak targets`
 2. Understand the anatomy of target names
 3. Query the target in unconfigured mode (`uquery`)
 4. Query the target in configured mode (`cquery`)
@@ -467,7 +467,7 @@ error. Advance only once they show they understand.
 
 ```bash
 # List all targets in the current package
-buck2 targets :
+yak targets :
 
 # Expected output shows targets like:
 # root//buck2-tutorial:hello
@@ -482,7 +482,7 @@ A full Buck2 target name has three parts:
 cell//package/path:target_name
 └─┬┘ └─────┬──────┘ └────┬────┘
   │        │             └─ Target name (from 'name' attribute)
-  │        └─────────────── Package path (directory containing BUCK file)
+  │        └─────────────── Package path (directory containing YAK file)
   └──────────────────────── Cell name (repository root)
 ```
 
@@ -497,29 +497,29 @@ cell//package/path:target_name
   - **Cell name omitted** - defaults to the current repository's cell
   - Since we're working in the `root` cell, `//` is shorthand for `root//`
   - Valid when referring to any target in the same repository/cell
-  - This is the most common form you'll see in BUCK files
+  - This is the most common form you'll see in YAK files
 
 - `:hello`
   - **Cell and package path omitted** - only the target name
   - Only valid when you're in the same directory/package
-  - Shortest form for referring to targets in the current BUCK file
-  - When you run `buck2 build :hello` from the `buck2-tutorial` directory, Buck2 knows you mean `root//buck2-tutorial:hello`
+  - Shortest form for referring to targets in the current YAK file
+  - When you run `yak build :hello` from the `buck2-tutorial` directory, Buck2 knows you mean `root//buck2-tutorial:hello`
 
 **Now query the targets:**
 
 ```bash
 # Unconfigured - shows raw attributes
-buck2 uquery :hello --output-attribute=src
+yak uquery :hello --output-attribute=src
 
 # Configured - shows with platform config applied
-buck2 cquery :hello --output-attribute=src
+yak cquery :hello --output-attribute=src
 ```
 
 **Key concepts to explain:**
 
 **Unconfigured Target** (`//path:name`):
 
-- Raw definition from BUCK file
+- Raw definition from YAK file
 - `select()` expressions not yet resolved
 - No platform-specific settings applied
 
@@ -553,7 +553,7 @@ once they show they understand.
 **What to do:**
 
 1. Add `output_name` attribute to the rule
-2. Use `select()` in BUCK to choose different names per platform
+2. Use `select()` in YAK to choose different names per platform
 3. Query to see select() before and after resolution
 4. Build and verify the platform-specific name is used
 
@@ -594,7 +594,7 @@ uppercase = rule(
 )
 ```
 
-**Update `BUCK` to use select():**
+**Update `YAK` to use select():**
 
 ```starlark
 load(":uppercase.bzl", "uppercase")
@@ -615,13 +615,13 @@ uppercase(
 
 ```bash
 # See the raw select() expression
-buck2 uquery :hello --output-attribute=output_name
+yak uquery :hello --output-attribute=output_name
 
 # See the resolved value for your platform
-buck2 cquery :hello --output-attribute=output_name
+yak cquery :hello --output-attribute=output_name
 
 # Build with resolved configuration
-buck2 build :hello --show-full-output
+yak build :hello --show-full-output
 # Notice the output filename matches your OS!
 ```
 
@@ -713,7 +713,7 @@ uppercase = rule(
 )
 ```
 
-**Add to `BUCK`:**
+**Add to `YAK`:**
 
 ```starlark
 # Create input2.txt first
@@ -737,7 +737,7 @@ goodbye world
 
 ```bash
 # Build goodbye - will also build hello automatically
-buck2 build :goodbye --show-full-output
+yak build :goodbye --show-full-output
 
 # Check the content - it should contain BOTH files uppercased with newline between!
 cat <output-path-for-goodbye>
@@ -747,7 +747,7 @@ cat <output-path-for-goodbye>
 # (concatenated hello's output + goodbye's input, separated by newline, all uppercased)
 
 # See the dependency graph
-buck2 cquery "deps(:goodbye)"
+yak cquery "deps(:goodbye)"
 ```
 
 **Key concepts to explain:**
@@ -777,7 +777,7 @@ they show they understand.
 
 1. Explain that what they created is a RULE
 2. Create a MACRO that wraps the rule
-3. Use the macro in BUCK
+3. Use the macro in YAK
 4. Build and compare
 
 **Add macro to `uppercase.bzl`:**
@@ -797,7 +797,7 @@ def uppercase_macro(name, src, prefix = "UPPER", **kwargs):
     )
 ```
 
-**Add to `BUCK`:**
+**Add to `YAK`:**
 
 ```starlark
 uppercase_macro(
@@ -810,7 +810,7 @@ uppercase_macro(
 **Testing:**
 
 ```bash
-buck2 build :hello_macro --show-full-output
+yak build :hello_macro --show-full-output
 # Output filename will be: PREFIXED_input.txt
 ```
 
@@ -821,7 +821,7 @@ buck2 build :hello_macro --show-full-output
 - Core Buck2 primitives declared with `rule()`
 - Run during analysis phase
 - Create actions that produce artifacts
-- Can be queried with `buck2 cquery`/`uquery`
+- Can be queried with `yak cquery`/`uquery`
 - The fundamental building block
 
 **Macros:**
@@ -844,7 +844,7 @@ buck2 build :hello_macro --show-full-output
 Run a comprehension check (see "Use the Socratic Method Between Major
 Steps"), generating the question from what this step covered. Aim it at
 the rule-vs-macro distinction — which phase each runs in, and why the
-macro itself doesn't appear in `buck2 cquery`/`uquery`. Wrap up only once
+macro itself doesn't appear in `yak cquery`/`uquery`. Wrap up only once
 they show they understand.
 
 **Final wrap-up:**
@@ -892,7 +892,7 @@ rule - one that does nothing but is valid.
 I'll create two files:
 
 - `uppercase.bzl` - The rule definition
-- `BUCK` - How to use the rule
+- `YAK` - How to use the rule
 
 [Creates files and builds]
 
@@ -929,7 +929,7 @@ again.]
 6. **Connect concepts**: "Remember in Step 2 when we learned about artifacts?
    Here's where that matters..."
 7. **Show file changes after each step**: After creating or modifying files, briefly list what changed:
-   - Example: "I just created `uppercase.bzl` with the rule definition and updated `BUCK` to use it."
+   - Example: "I just created `uppercase.bzl` with the rule definition and updated `YAK` to use it."
    - Example: "I modified `uppercase.bzl` to add the `src` attribute."
 8. **Remind users about the editor**: Tell users they can open the files in their editor to see the complete code:
    - Example: "You can open `uppercase.bzl` in your editor to see the full implementation."

@@ -348,7 +348,7 @@ pub(crate) fn register_read_package_visibility_functions(builder: &mut GlobalsBu
     /// Read the `visibility` declared via `package()` in the `PACKAGE` files for the
     /// given package path.
     ///
-    /// Returns the same JSON-shaped value as `buck2 audit package-values`: a list of
+    /// Returns the same JSON-shaped value as `yak audit package-values`: a list of
     /// visibility pattern strings (with `target_name_glob(...)` entries rendered as
     /// objects). An empty list means the package is visible to nothing by default.
     ///
@@ -375,7 +375,7 @@ pub(crate) fn register_read_package_visibility_functions(builder: &mut GlobalsBu
     /// Read the `within_view` declared via `package()` in the `PACKAGE` files for the
     /// given package path.
     ///
-    /// Returns the same JSON-shaped value as `buck2 audit package-values`: a list of
+    /// Returns the same JSON-shaped value as `yak audit package-values`: a list of
     /// pattern strings, or `["PUBLIC"]` when the package may depend on anything (the
     /// default).
     ///
@@ -402,7 +402,7 @@ pub(crate) fn register_read_package_visibility_functions(builder: &mut GlobalsBu
     /// Read the visibility cap propagated from `enforce_visibility_intersection()` in
     /// ancestor `PACKAGE` files for the given package path.
     ///
-    /// Returns the same JSON-shaped value as `buck2 audit package-values`: a list of
+    /// Returns the same JSON-shaped value as `yak audit package-values`: a list of
     /// pattern strings, or `["PUBLIC"]` when no ancestor caps visibility (the default).
     ///
     /// The `package_path` parameter accepts any of the following:
@@ -428,7 +428,7 @@ pub(crate) fn register_read_package_visibility_functions(builder: &mut GlobalsBu
     /// Read the `within_view` cap propagated from `enforce_within_view_intersection()`
     /// in ancestor `PACKAGE` files for the given package path.
     ///
-    /// Returns the same JSON-shaped value as `buck2 audit package-values`: a list of
+    /// Returns the same JSON-shaped value as `yak audit package-values`: a list of
     /// pattern strings, `["PUBLIC"]` when no ancestor caps `within_view` (the default),
     /// or `{"intersection": [list, ...]}` with one list per opted-in ancestor when
     /// several of them contributed to the cap.

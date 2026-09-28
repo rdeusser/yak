@@ -45,7 +45,7 @@ passed as the universe and all transitive deps of them).  When not
 provided, we implicitly set the universe to be rooted at every
 target literal in the `cquery`.
 
-Run `buck2 docs cquery` or
+Run `yak docs cquery` or
 "#,
         "https://rdeusser.github.io/buck2/docs/users/query/cquery/",
         r#"
@@ -56,12 +56,12 @@ Examples:
 
 Print all the attributes of a target
 
-`buck2 cquery //java/com/example/app:amazing --output-all-attributes`
+`yak cquery //java/com/example/app:amazing --output-all-attributes`
 
 List the deps of a target (special characters in a target will
 require quotes):
 
-`buck2 cquery 'deps("//java/com/example/app:amazing+more")'`
+`yak cquery 'deps("//java/com/example/app:amazing+more")'`
 "#
     )
 }
@@ -71,7 +71,7 @@ require quotes):
     name = "cquery",
     about = "Perform queries on the configured target graph",
     long_about = help(),
-    after_help = "Run `buck2 docs cquery` for detailed information about query functions such as allbuildfiles, allpaths, attrfilter, and more.",
+    after_help = "Run `yak docs cquery` for detailed information about query functions such as allbuildfiles, allpaths, attrfilter, and more.",
     after_long_help = "",
     verbatim_doc_comment,
 )]

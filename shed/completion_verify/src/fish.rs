@@ -77,8 +77,8 @@ mod tests {
     #[test]
     fn test_replace_last_word() {
         assert_eq!(
-            replace_last_word("buck2 build other/", "root//other/"),
-            "buck2 build root//other/",
+            replace_last_word("yak build other/", "root//other/"),
+            "yak build root//other/",
         );
     }
 }

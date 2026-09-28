@@ -22,21 +22,21 @@
 //! Example:
 //! ```ignore
 //! project
-//! +-- .buckconfig
+//! +-- .yakconfig
 //! +-- package1
-//! |   +-- TARGETS
+//! |   +-- YAK
 //! |   +-- my.java
 //! +-- package2
 //! |   +-- subdir     // package 2 contains this subdir
 //! |   |   +-- foo.cpp
 //! |   +-- bar.cpp
-//! |   +-- TARGETS
+//! |   +-- YAK
 //! +-- package3
 //! |   +-- package4  // package 3 excludes all subdirectories rooted at package4
 //! |   |   +-- a.cpp
-//! |   |   +-- TARGETS
+//! |   |   +-- YAK
 //! |   +-- faz.java
-//! |   +-- TARGETS
+//! |   +-- YAK
 //! ```
 
 pub mod package_relative_path;
@@ -74,15 +74,15 @@ use crate::pattern::pattern::Modifiers;
 /// if it is a directory, but does not have a build file).
 ///
 /// A **valid** Buck2 package is defined by:
-/// - A `BUCK` file that designates the root of the package.
-/// - All files in the BUCK file’s directory and its subdirectories,
-///   provided that none of those subdirectories contain their own `BUCK` file.
-///   (If a subdirectory does contain a BUCK file, it forms a new, separate package.)
+/// - A `YAK` file that designates the root of the package.
+/// - All files in the YAK file’s directory and its subdirectories,
+///   provided that none of those subdirectories contain their own `YAK` file.
+///   (If a subdirectory does contain a YAK file, it forms a new, separate package.)
 ///
 /// You can find the example above
 ///
-/// a valid `PackageLabel` is the `CellPath` that points to a folder containing a `BUCK` file.
-/// e.g. `root//path/to/package` is a valid `PackageLabel` if `root//path/to/package/BUCK` exists.
+/// a valid `PackageLabel` is the `CellPath` that points to a folder containing a `YAK` file.
+/// e.g. `root//path/to/package` is a valid `PackageLabel` if `root//path/to/package/YAK` exists.
 #[derive(
     Copy, Clone, Dupe, Debug, Display, Eq, PartialEq, Hash, Ord, PartialOrd, Allocative,
     StrongHash, Pagable

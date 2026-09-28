@@ -39,7 +39,7 @@ def _init_repo(cwd: Path) -> str:
     _git(["commit", "-m", "Commit name"], cwd=repo)
     rev = _git(["log", "--format=format:%H", "-1"], cwd=repo)
 
-    with open(cwd / ".buckconfig", "a") as f:
+    with open(cwd / ".yakconfig", "a") as f:
         f.write(f"\n[test_git_fetch]\n  repo = {repo.as_uri()}\n  rev = {rev}\n")
     return rev
 

@@ -2,7 +2,7 @@
 
 Print documentation for uquery
 
-Usage: buck2 docs query [OPTIONS]
+Usage: yak docs query [OPTIONS]
 
 Options:
       --format <FORMAT>

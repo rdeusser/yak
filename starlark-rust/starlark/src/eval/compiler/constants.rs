@@ -43,7 +43,7 @@ impl BuiltinFn {
         // Pointer equality works because `#[starlark_module]` allocates each native once, in a
         // static heap that every `GlobalsBuilder` populated from that module references
         // (`GlobalsStatic::populate`), so the `len` of any `Globals` built on the standard
-        // library, buck2's included, is this value. A globals set that defines its own `len`
+        // library, yak's included, is this value. A globals set that defines its own `len`
         // has a different function, and the optimizations keyed on these do not apply to it.
         self.0.by_ref(|f| f.ptr_eq(v))
     }

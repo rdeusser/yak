@@ -1,0 +1,8 @@
+[cells]
+  root = .
+
+[buildfile]
+  name=YAK.fixture
+
+[buck2]
+  materializations = deferred

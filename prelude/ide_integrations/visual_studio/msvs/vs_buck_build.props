@@ -11,7 +11,7 @@
       <Exec WorkingDirectory="$(RepoRoot)" Command="$(vs_buck_build_command) $(ExtraBuckOptions)"/>
   </Target>
   <Target Name="Clean">
-    <Exec WorkingDirectory="$(RepoRoot)" Command="buck2 clean @$(BuckModeFile)"/>
+    <Exec WorkingDirectory="$(RepoRoot)" Command="yak clean @$(BuckModeFile)"/>
   </Target>
   <Target Name="Rebuild" DependsOnTargets="Clean;Build"/>
   <PropertyGroup>

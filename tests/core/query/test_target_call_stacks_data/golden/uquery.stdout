@@ -2,6 +2,6 @@
 
 root//:test
   Traceback (most recent call last):
-    * TARGETS.fixture:1, in <module>
+    * YAK.fixture:1, in <module>
         trivial_build(
 

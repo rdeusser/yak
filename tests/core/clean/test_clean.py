@@ -77,9 +77,9 @@ async def test_clean_dry_run(buck: Buck) -> None:
 
 def is_buck_path(x: str) -> bool:
     if platform.system() == "Windows":
-        return "\\.buck\\buckd\\" in x or "\\buck-out\\" in x
+        return "\\.yak\\yakd\\" in x or "\\yak-out\\" in x
     else:
-        return "/.buck/buckd/" in x or "/buck-out/" in x
+        return "/.yak/yakd/" in x or "/yak-out/" in x
 
 
 def _assert_all_paths_exist(paths: Iterable[str]) -> None:
@@ -89,11 +89,11 @@ def _assert_all_paths_exist(paths: Iterable[str]) -> None:
 
 def _assert_all_paths_do_not_exist(paths: Iterable[str]) -> None:
     for path in paths:
-        if os.path.exists(f"{path}/buckd.lifecycle"):
+        if os.path.exists(f"{path}/yakd.lifecycle"):
             # Clean keeps lifecycle file in daemon dir.
-            assert ["buckd.lifecycle"] == os.listdir(path)
-        elif path.endswith("buck-out/v2/log") or (
-            platform.system() == "Windows" and path.endswith("buck-out\\v2\\log")
+            assert ["yakd.lifecycle"] == os.listdir(path)
+        elif path.endswith("yak-out/v2/log") or (
+            platform.system() == "Windows" and path.endswith("yak-out\\v2\\log")
         ):
             # Log dir should contain one entry, for the clean command itself.
             assert len(os.listdir(path)) == 1
@@ -103,11 +103,11 @@ def _assert_all_paths_do_not_exist(paths: Iterable[str]) -> None:
 
 @buck_test()
 async def test_isolation_dir_reserved_prefix_rejected(buck: Buck) -> None:
-    buck.set_isolation_prefix("._buck2_anything")
+    buck.set_isolation_prefix("._yak_anything")
     try:
         await expect_failure(
             buck.build("root//:trivial_build"),
-            stderr_regex="reserved for buck2",
+            stderr_regex="reserved for yak",
         )
     finally:
         # The fixture teardown runs `buck clean`, which would itself trip the
@@ -117,7 +117,7 @@ async def test_isolation_dir_reserved_prefix_rejected(buck: Buck) -> None:
 
 @buck_test()
 async def test_clean_background(buck: Buck) -> None:
-    """Test that buck2 clean --background moves buck-out to trash and deletes it."""
+    """Test that yak clean --background moves yak-out to trash and deletes it."""
     build_result = await buck.build("root//:trivial_build")
     build_report = build_result.get_build_report()
     build_report_outputs = [
@@ -132,7 +132,7 @@ async def test_clean_background(buck: Buck) -> None:
     assert "Buck-out moved to trash. Now cleaning up..." in clean_result.stderr
     assert "Tip: Use Ctrl-Z to put this in the background" in clean_result.stderr
     assert (
-        "You can run other buck2 commands while this completes." in clean_result.stderr
+        "You can run other yak commands while this completes." in clean_result.stderr
     )
 
     # Verify all build outputs are eventually deleted

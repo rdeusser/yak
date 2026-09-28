@@ -20,7 +20,7 @@ who want to go beyond the basic tutorial.
 
 Buck2 uses a **declarative, graph-based build model**:
 
-1. **Load Phase**: Read and evaluate BUCK/BUILD files, create unconfigured
+1. **Load Phase**: Read and evaluate YAK/BUILD files, create unconfigured
    targets
 2. **Configuration Phase**: Apply configurations to targets, resolve `select()`
    expressions
@@ -40,12 +40,12 @@ should be run. Buck2 decides when to actually run them.
 
 #### 1. Unconfigured Target
 
-- **What it is:** A target as written in BUCK files, before configuration is
+- **What it is:** A target as written in YAK files, before configuration is
   applied
 - **Identifier:** `//package:name` (no configuration suffix)
-- **Query tool:** `buck2 uquery`
+- **Query tool:** `yak uquery`
 - **Characteristics:**
-  - Has all attributes from BUCK file
+  - Has all attributes from YAK file
   - `select()` expressions are **not** resolved (still conditional)
   - No platform-specific information applied
   - Same for all configurations
@@ -53,7 +53,7 @@ should be run. Buck2 decides when to actually run them.
 **Example:**
 
 ```starlark
-# BUCK file
+# YAK file
 cpp_binary(
     name = "app",
     srcs = select({
@@ -63,7 +63,7 @@ cpp_binary(
 )
 
 # Unconfigured query shows the raw select():
-# buck2 uquery //path:app --output-attribute=srcs
+# yak uquery //path:app --output-attribute=srcs
 # Returns: select({"DEFAULT": ["main.cpp"], ...})
 ```
 
@@ -71,7 +71,7 @@ cpp_binary(
 
 - **What it is:** A target with a specific configuration applied
 - **Identifier:** `//package:name (prelude//platforms:default#<hash>)`
-- **Query tool:** `buck2 cquery`
+- **Query tool:** `yak cquery`
 - **Characteristics:**
   - `select()` expressions are resolved to concrete values
   - Platform-specific settings applied (os, cpu, compiler flags, etc.)
@@ -81,7 +81,7 @@ cpp_binary(
 
 ```starlark
 # Same target as above, but configured for Linux:
-# buck2 cquery //path:app --output-attribute=srcs
+# yak cquery //path:app --output-attribute=srcs
 # Returns: ["main.cpp"]  (select() resolved to DEFAULT)
 
 # Configured for Windows:
@@ -112,7 +112,7 @@ with multiple repositories or isolated parts of a monorepo.
 - **Implicit cell reference:** `//app:server`
   - Uses the current cell based on your working directory
   - Equivalent to `root//app:server` if your current directory is under
-    the `root` cell folder (the project root that `buck2 init` creates)
+    the `root` cell folder (the project root that `yak init` creates)
 
 **When to use explicit cells:**
 
@@ -159,12 +159,12 @@ Artifacts represent files in Buck2's build model.
 - **Characteristics:**
   - Immutable (within a build)
   - No action produces them
-  - Directly referenced in BUCK files
+  - Directly referenced in YAK files
 
 #### 2. Build Artifacts
 
 - **Definition:** Files produced by actions during the build
-- **Location:** `buck-out/` directory
+- **Location:** `yak-out/` directory
 - **Characteristics:**
   - Created by actions
   - Cached based on inputs
@@ -311,7 +311,7 @@ DefaultInfo(
 )
 ```
 
-**Used by `buck2 build`:** When you run `buck2 build //target:name`, Buck2
+**Used by `yak build`:** When you run `yak build //target:name`, Buck2
 builds the artifacts listed in `default_outputs`. This is what determines which
 files get built.
 
@@ -319,10 +319,10 @@ files get built.
 
 ```bash
 # Builds the artifacts in DefaultInfo.default_outputs
-buck2 build //app:main
+yak build //app:main
 
 # Access sub-targets
-buck2 build //app:main[foo]  # Builds artifacts from sub_targets["foo"]
+yak build //app:main[foo]  # Builds artifacts from sub_targets["foo"]
 ```
 
 #### RunInfo
@@ -335,7 +335,7 @@ RunInfo(
 )
 ```
 
-**Used by `buck2 run`:** When you run `buck2 run //target:name`, Buck2 executes
+**Used by `yak run`:** When you run `yak run //target:name`, Buck2 executes
 the command specified in `RunInfo.args`. The target must provide `RunInfo` to be
 runnable.
 
@@ -343,7 +343,7 @@ runnable.
 
 ```bash
 # Runs the command from RunInfo.args
-buck2 run //app:main -- additional_args
+yak run //app:main -- additional_args
 
 # Buck2 will:
 # 1. Build the target (using DefaultInfo)
@@ -396,19 +396,19 @@ A target can only access providers from its dependencies (targets listed in its
 **Example dependency chain:**
 
 ```starlark
-# BUCK file for //app:main
+# YAK file for //app:main
 my_binary(
     name = "main",
     deps = ["//lib:utils"],  # main depends on utils
 )
 
-# BUCK file for //lib:utils
+# YAK file for //lib:utils
 my_library(
     name = "utils",
     deps = ["//third-party:json"],  # utils depends on json
 )
 
-# BUCK file for //third-party:json
+# YAK file for //third-party:json
 my_library(
     name = "json",
 )
@@ -462,7 +462,7 @@ This is not actual Buck2 syntax - it's a conceptual representation.
 Defined in Starlark:
 
 ```starlark
-# root//platforms/BUCK
+# root//platforms/YAK
 platform(
     name = "linux-x86_64",
     constraint_values = [
@@ -474,7 +474,7 @@ platform(
 
 ### How Configurations Are Applied
 
-1. User specifies a target: `buck2 build //app:main`
+1. User specifies a target: `yak build //app:main`
 2. Buck2 applies default configuration (or user-specified one)
 3. Configuration resolves `select()` expressions
 4. Different platforms → different configured targets
@@ -502,8 +502,8 @@ cpp_binary(
 The same unconfigured target can be built for multiple platforms simultaneously:
 
 ```bash
-buck2 build //app:main --target-platforms root//platforms:linux-x86_64
-buck2 build //app:main --target-platforms root//platforms:macos-arm64
+yak build //app:main --target-platforms root//platforms:linux-x86_64
+yak build //app:main --target-platforms root//platforms:macos-arm64
 ```
 
 These create two distinct configured targets in the build graph.
@@ -555,7 +555,7 @@ def my_rule_impl(ctx: AnalysisContext):
 
 ```starlark
 def my_rule_impl(ctx):
-    print("Analysis!")  # Prints during buck2 build (analysis)
+    print("Analysis!")  # Prints during yak build (analysis)
 
     ctx.actions.run(
         cmd_args(["bash", "-c", "echo Execution!"]),  # Runs later (execution)
@@ -590,21 +590,21 @@ Buck2 provides tools to inspect the graph:
 #### uquery - Unconfigured target graph
 
 ```bash
-buck2 uquery "deps(//app:main)"        # All dependencies
-buck2 uquery "rdeps(//..., //lib:foo)" # Reverse dependencies
+yak uquery "deps(//app:main)"        # All dependencies
+yak uquery "rdeps(//..., //lib:foo)" # Reverse dependencies
 ```
 
 #### cquery - Configured target graph
 
 ```bash
-buck2 cquery "deps(//app:main)"                    # With configs applied
-buck2 cquery //app:main --output-attribute=srcs   # Show resolved attributes
+yak cquery "deps(//app:main)"                    # With configs applied
+yak cquery //app:main --output-attribute=srcs   # Show resolved attributes
 ```
 
 #### aquery - Action graph
 
 ```bash
-buck2 aquery "deps(//app:main)"  # Show actions that will run
+yak aquery "deps(//app:main)"  # Show actions that will run
 ```
 
 ### Incremental Builds

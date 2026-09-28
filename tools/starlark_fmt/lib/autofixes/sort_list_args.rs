@@ -129,7 +129,7 @@ fn string_sort_phase(value: &str) -> u8 {
 /// lexicographically. We walk the strings byte-by-byte so the comparison
 /// runs in O(len) without allocating temporary `String`s — important since
 /// `Vec::sort_by` invokes this O(n log n) times per list, and the sort is
-/// on the hot path for every BUILD/TARGETS file.
+/// on the hot path for every build file.
 fn compare_buildifier_split_parts(a: &str, b: &str) -> Ordering {
     let is_separator = |c| c == ':' || c == '.';
     let mut a_parts = a.split(is_separator);
@@ -2280,7 +2280,7 @@ DEPS = [
 
     #[test]
     fn test_section_headers_wa_msys_style() {
-        // Simulates wa-msys/BUCK pattern: section header comments with deps underneath
+        // Simulates wa-msys/YAK pattern: section header comments with deps underneath
         let source = r#"my_rule(deps=[
     # buildifier: keep sorted
     # Various helpers

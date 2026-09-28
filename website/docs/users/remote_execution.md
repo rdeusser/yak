@@ -14,10 +14,10 @@ Buck2 projects have been successfully tested for remote execution against
 providers are available under
 [examples/remote_execution](https://github.com/rdeusser/buck2/tree/main/examples/remote_execution).
 
-## RE configuration in `.buckconfig`
+## RE configuration in `.yakconfig`
 
 Configuration for remote execution can be found under `[buck2_re_client]` in
-`.buckconfig`.
+`.yakconfig`.
 
 Keys supported include:
 
@@ -40,7 +40,7 @@ Keys supported include:
   requests.
 
 Buck2 uses `SHA256` for all its hashing by default. If your RE engine requires
-something else, this can be configured in `.buckconfig` as follows:
+something else, this can be configured in `.yakconfig` as follows:
 
 ```ini
 [buck2]

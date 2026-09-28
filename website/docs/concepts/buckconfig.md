@@ -1,10 +1,10 @@
 ---
 id: buckconfig
-title: .buckconfig
+title: .yakconfig
 ---
 
 The root of your [project](glossary.md#project) must contain a configuration
-file named `.buckconfig`. Before executing, Buck2 reads this file to incorporate
+file named `.yakconfig`. Before executing, Buck2 reads this file to incorporate
 any customizations it specifies.
 
 ## Performance impact of Buck2 configuration changes
@@ -17,12 +17,12 @@ those artifacts, which can impact your build time.
 These configuration changes can happen when modifying configuration files and
 command line args. [See more](#precedence-of-buck2-configuration-specifications)
 
-## The .buckconfig file uses the INI file format
+## The .yakconfig file uses the INI file format
 
-The `.buckconfig` file uses the
+The `.yakconfig` file uses the
 [INI file format](http://en.wikipedia.org/wiki/INI_file). That is, it is divided
 into _sections_ where each section contains a collection of key _names_ and key
-_values_. The `.buckconfig` implementation supports some modifications to the
+_values_. The `.yakconfig` implementation supports some modifications to the
 INI file format; these are discussed below.
 
 ### Other INI file parsers
@@ -51,7 +51,7 @@ key names in other contexts such as the `--config` command-line parameter.
 
 ## Character encoding
 
-To ensure that any character can be encoded in a `.buckconfig` key value, you
+To ensure that any character can be encoded in a `.yakconfig` key value, you
 can use escape sequences to encode characters that would otherwise be
 problematic. The following escape sequences are supported.
 
@@ -107,37 +107,35 @@ For example, to use the `[go].vendor_path` in a custom setting:
 ## Comments
 
 In addition to the semicolon (`;`), you can use the pound sign (`#`), as a
-comment character in `.buckconfig`.
+comment character in `.yakconfig`.
 
-## .buckconfig.local
+## .yakconfig.local
 
 The root of your [project](glossary.md#project) may contain a second
-configuration file named `.buckconfig.local`. Its format is the same as that of
-`.buckconfig`, but settings in `.buckconfig.local` override those in
-`.buckconfig`. In practice, `.buckconfig` is a version-controlled file that
+configuration file named `.yakconfig.local`. Its format is the same as that of
+`.yakconfig`, but settings in `.yakconfig.local` override those in
+`.yakconfig`. In practice, `.yakconfig` is a version-controlled file that
 contains settings that are applicable to all team members, whereas
-`.buckconfig.local` is excluded from version control to allow users to define
+`.yakconfig.local` is excluded from version control to allow users to define
 personal settings, such as personal aliases.
 
 ## Other initialization files
 
-In addition to the `.buckconfig` and `.buckconfig.local` files in the project
+In addition to the `.yakconfig` and `.yakconfig.local` files in the project
 root, Buck2 reads configuration settings from the following additional
 locations, some of which are actually directories:
 
-1. Directory `.buckconfig.d` located in the project root directory.
-2. File `.buckconfig` and directory `.buckconfig.d` located in the current
+1. Directory `.yakconfig.d` located in the project root directory.
+2. File `.yakconfig` and directory `.yakconfig.d` located in the current
    user's home directory which, on Unix-like systems, is available from the
    `HOME` environment variable or through the `~` symbol.
-3. File `buckconfig` and directory `buckconfig.d` located in system directory
+3. File `yakconfig` and directory `yakconfig.d` located in system directory
    `/etc/`.
 
 Buck2 treats _any_ file—irrespective of name—in a
-`.buckconfig.d`(`buckconfig.d`) directory (excluding files found in
+`.yakconfig.d`(`yakconfig.d`) directory (excluding files found in
 subdirectories) as a Buck2 configuration file, provided that it adheres to
-`.buckconfig` syntax. Note that a `.buckconfig.d` directory is distinct from the
-similarly-named `.buckd` directory which is used by the
-[Buck2 Daemon (`buckd`)](daemon.md) . For a description of how Buck2 resolves
+`.yakconfig` syntax. For a description of how Buck2 resolves
 collisions between settings in these configuration files, see the section
 [**Precedence of Buck2 configuration specifications**](#precedence-of-buck2-configuration-specifications)
 below.
@@ -158,21 +156,21 @@ _mode files_ or _at_ (`@`) files.
 The following list shows the order of precedence for how Buck2 interprets its
 configuration specifications. Settings specified using a method closer to the
 top of the list have higher precedence and will override those lower on the
-list. For example, the `.buckconfig` file in the repo overrides a `.buckconfig`
+list. For example, the `.yakconfig` file in the repo overrides a `.yakconfig`
 file in the user's `HOME` directory.
 
 1. Configuration specified on the command line using `--config` (`-c`),
    `--config-file` and `--flagfile`. Configuration specified later on the
    command line overrides configuration specified earlier.
-1. `.buckconfig.local` in the repo.
-1. `.buckconfig` in the repo.
-1. Files in a `.buckconfig.d` folder of the repo.
-1. `.buckconfig.local` in user's `HOME` directory.
-1. Files in a `.buckconfig.d` folder in user's `HOME` directory.
-1. The global file `/etc/buckconfig`
-1. Files in the global directory `/etc/buckconfig.d`
+1. `.yakconfig.local` in the repo.
+1. `.yakconfig` in the repo.
+1. Files in a `.yakconfig.d` folder of the repo.
+1. `.yakconfig.local` in user's `HOME` directory.
+1. Files in a `.yakconfig.d` folder in user's `HOME` directory.
+1. The global file `/etc/yakconfig`
+1. Files in the global directory `/etc/yakconfig.d`
 
-Files in a `.buckconfig.d` (`buckconfig.d`) directory have precedence according
+Files in a `.yakconfig.d` (`yakconfig.d`) directory have precedence according
 to the lexicographical order of their file names. Files _later_ in the
 lexicographical order have precedence over files earlier in that order.
 
@@ -180,7 +178,7 @@ lexicographical order have precedence over files earlier in that order.
 
 Any of the configuration files that we've discussed so far can also include by
 reference other files that contain configuration information. These included
-files can contain complete `.buckconfig` sections or they can contain a group of
+files can contain complete `.yakconfig` sections or they can contain a group of
 key name/value pairs that constitute part of a section. In this second use case,
 you'll need to ensure that the _included_ file is referenced beneath the
 appropriate section in the _including_ file. Because of this additional
@@ -205,15 +203,15 @@ question mark (`?`).
 
 If you use this prefix, it is not an error condition if the file does not exist;
 Buck2 just silently continues to process the rest of the configuration file. In
-the following example, the `.buckconfig` file includes the file
+the following example, the `.yakconfig` file includes the file
 `cxx-other-platform.include` which exists in the subdirectory
-`cxx-other-platform`. The `.buckconfig` file will also include the file
+`cxx-other-platform`. The `.yakconfig` file will also include the file
 `future-platform` from the directory `future-platform.include` if that file
 exists.
 
 ```ini
 #
-# .buckconfig
+# .yakconfig
 #
 [cxx]
   cxxppflags="-D MYMACRO=\"Buck\""
@@ -245,14 +243,14 @@ This section contains definitions of [build target](build_target.md) aliases.
 These aliases can then be used from the command line:
 
 ```sh
-$ buck2 build app
-$ buck2 test apptest
+$ yak build app
+$ yak test apptest
 ```
 
 ## [cells]
 
 Lists the cells that constitute the Buck2 project. Buck2 builds that are part of
-this project—that is, which use this `.buckconfig`—can access the cells
+this project—that is, which use this `.yakconfig`—can access the cells
 specified in this section.
 
 ```ini
@@ -263,7 +261,7 @@ specified in this section.
 
 The string on the left-hand side of the equals sign is the _alias_ for the cell.
 The string on the right-hand side of the equals sign is the path to the cell
-from the directory that contains this `.buckconfig` file. It is not necessary to
+from the directory that contains this `.yakconfig` file. It is not necessary to
 include the current cell in this section, but we consider it a best practice to
 do so:
 
@@ -271,7 +269,7 @@ do so:
 buck = .
 ```
 
-You can view the contents of this section using the `buck2 audit cell` command.
+You can view the contents of this section using the `yak audit cell` command.
 
 `[repositories]` is additionally supported as a deprecated alternative name for
 this section.

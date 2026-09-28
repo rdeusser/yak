@@ -1,7 +1,7 @@
 # This file is @generated, regenerate by rerunning the test with `BUCK2_UPDATE_GOLDEN=1` set
 
 #  Traceback (most recent call last):
-#    * lib/TARGETS.fixture:3, in <module>
+#    * lib/YAK.fixture:3, in <module>
 #        foo_config_setting(
 foo_config_setting(
   name = "constraint",
@@ -11,7 +11,7 @@ foo_config_setting(
 
 
 #  Traceback (most recent call last):
-#    * lib/TARGETS.fixture:33, in <module>
+#    * lib/YAK.fixture:33, in <module>
 #        foo_genrule(
 #    * rules/rules.bzl:111, in foo_genrule
 #        _foo_genrule(default_target_platform = _default_platform, **kwargs)
@@ -25,7 +25,7 @@ _foo_genrule(
 
 
 #  Traceback (most recent call last):
-#    * lib/TARGETS.fixture:39, in <module>
+#    * lib/YAK.fixture:39, in <module>
 #        foo_genrule(
 #    * rules/rules.bzl:111, in foo_genrule
 #        _foo_genrule(default_target_platform = _default_platform, **kwargs)
@@ -39,7 +39,7 @@ _foo_genrule(
 
 
 #  Traceback (most recent call last):
-#    * lib/TARGETS.fixture:45, in <module>
+#    * lib/YAK.fixture:45, in <module>
 #        foo_genrule(
 #    * rules/rules.bzl:111, in foo_genrule
 #        _foo_genrule(default_target_platform = _default_platform, **kwargs)
@@ -53,7 +53,7 @@ _foo_genrule(
 
 
 #  Traceback (most recent call last):
-#    * lib/TARGETS.fixture:7, in <module>
+#    * lib/YAK.fixture:7, in <module>
 #        foo_library(
 #    * rules/rules.bzl:104, in foo_library
 #        _foo_library(default_target_platform = _default_platform, **kwargs)
@@ -63,7 +63,7 @@ _foo_library(
   description = "this is lib1",
   srcs = [
     "root//lib:file1",
-    "root//lib/TARGETS.fixture"
+    "root//lib/YAK.fixture"
   ],
   visibility = ["PUBLIC"],
   within_view = ["PUBLIC"],
@@ -71,7 +71,7 @@ _foo_library(
 
 
 #  Traceback (most recent call last):
-#    * lib/TARGETS.fixture:14, in <module>
+#    * lib/YAK.fixture:14, in <module>
 #        foo_library(
 #    * rules/rules.bzl:104, in foo_library
 #        _foo_library(default_target_platform = _default_platform, **kwargs)
@@ -91,7 +91,7 @@ _foo_library(
 
 
 #  Traceback (most recent call last):
-#    * lib/TARGETS.fixture:22, in <module>
+#    * lib/YAK.fixture:22, in <module>
 #        foo_library(
 #    * rules/rules.bzl:104, in foo_library
 #        _foo_library(default_target_platform = _default_platform, **kwargs)

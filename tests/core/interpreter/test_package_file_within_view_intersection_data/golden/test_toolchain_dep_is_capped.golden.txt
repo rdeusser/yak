@@ -8,9 +8,9 @@ Error evaluating expression:
 
 
 Caused by:
-    0: Error evaluating build file: `root//exec_dep/toolchain:TARGETS.fixture`
+    0: Error evaluating build file: `root//exec_dep/toolchain:YAK.fixture`
     1: error: checking `within_view` for attribute `toolchain_deps` of `root//exec_dep/toolchain:c`
-        --> exec_dep/toolchain/TARGETS.fixture:2:1
+        --> exec_dep/toolchain/YAK.fixture:2:1
          |
        2 | / stub(
        3 | |     name = "c",
@@ -19,7 +19,7 @@ Caused by:
        6 | | )
          | |_^
        Traceback (most recent call last):
-         * exec_dep/toolchain/TARGETS.fixture:2, in <module>
+         * exec_dep/toolchain/YAK.fixture:2, in <module>
              stub(
        
     2: Target's effective `within_view` does not allow dependency `root//outside:tc` (within_view = ["PUBLIC"]). Capped to ["root//exec_dep/..."] by `enforce_within_view_intersection()` in an ancestor PACKAGE

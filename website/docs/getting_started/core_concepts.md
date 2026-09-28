@@ -36,20 +36,20 @@ Here is the anatomy of a target label:
 [Cell](../../concepts/key_concepts/#cells) defines a directory tree of one or
 more buck [packages](../../concepts/key_concepts/#packages). The root of a buck
 cell contains a global configuration file called
-[**`.buckconfig`**](../../concepts/buckconfig).
+[**`.yakconfig`**](../../concepts/buckconfig).
 
-You can run `buck2 audit cell` to inspect the abs path of each cell root.
+You can run `yak audit cell` to inspect the abs path of each cell root.
 
 ## Package
 
-The existence of a [BUCK file](#buck-file) (`buck2_lab/greeter_bin/BUCK`) makes
+The existence of a [YAK file](#buck-file) (`buck2_lab/greeter_bin/YAK`) makes
 `buck2_lab/greeter_bin` a buck [package](../../concepts/key_concepts/#packages),
 which is more than a directory. If a buck target uses the source file as input,
 that target is regarded as the **owner** of the source.
 
 ## Target name
 
-The name of the target in the package. It is the name we defined in the BUCK
+The name of the target in the package. It is the name we defined in the YAK
 file.
 
 ```python
@@ -67,13 +67,13 @@ It should be unique within the package.
 In the lab, you’ve already created three
 [build files](../../concepts/build_file/):
 
-- `greeter_bin/BUCK`
-- `greeter_lib/BUCK`
-- `logging_lib/BUCK`
+- `greeter_bin/YAK`
+- `greeter_lib/YAK`
+- `logging_lib/YAK`
 
-Although configurable, the name of the build file normally is just BUCK.
+Although configurable, the name of the build file normally is just YAK.
 
-In these BUCK files, you’ve written a couple of
+In these YAK files, you’ve written a couple of
 [buck targets](../../concepts/build_target/), `:main`, `:library`,
 `:logging_lib` and `:test`. Buck targets are instances of
 [build rules](../../concepts/build_rule/), which defines how the target should
@@ -83,7 +83,7 @@ be a binary that’s runnable, while `:library`, `:logging_lib` are of rule type
 [rust_library](../../prelude/rules/rust/rust_library/), the output of which will
 be a library that can be linked to the binary.
 
-Referring to buck targets in BUCK files and CLI commands need to follow a
+Referring to buck targets in YAK files and CLI commands need to follow a
 special [target pattern](../../concepts/target_pattern/), which looks like:
 
 <code>cell//path/to/dir:target</code> or <code>cell//path/to/dir/...</code>
@@ -92,7 +92,7 @@ you will soon become very familiar with these patterns during daily development.
 
 #### Tips:
 
-<!--  TODO: change link to buck2 doc once available for macros -->
+<!--  TODO: change link to yak doc once available for macros -->
 
 - Buck targets can be either build rules or
   [macros](https://buck.build/extending/macros.html), which are
@@ -118,17 +118,17 @@ graph TD
     A --> C[greeter_lib/]
     A --> D[logging_lib/]
 
-    B --> B1[BUCK]
+    B --> B1[YAK]
     B --> B2[src/]
     B2 --> B3[main.rs]
 
-    C --> C1[BUCK]
+    C --> C1[YAK]
     C --> C2[src/]
     C --> C3[tests/]
     C2 --> C4[lib.rs]
     C3 --> C5[test.rs]
 
-    D --> D1[BUCK]
+    D --> D1[YAK]
     D --> D2[src/]
     D2 --> D3[lib.rs]
 
@@ -144,16 +144,16 @@ graph TD
 
 ### From Files to Targets
 
-Now that we understand packages and target concepts, let's see how your BUCK
+Now that we understand packages and target concepts, let's see how your YAK
 files define targets and their relationships:
 
 <TutorialMermaidDiagram>
 {`
 graph TD
-    A["greeter_bin/BUCK"] --> A1@{ shape: circle, label: "**🎯 :main**</br> (rust_binary)"}
-    B["greeter_lib/BUCK"] --> B1@{ shape: circle, label: "**🎯 :library** </br> (rust_library)"}
+    A["greeter_bin/YAK"] --> A1@{ shape: circle, label: "**🎯 :main**</br> (rust_binary)"}
+    B["greeter_lib/YAK"] --> B1@{ shape: circle, label: "**🎯 :library** </br> (rust_library)"}
     B --> B2@{ shape: circle, label: "**🎯 :test** </br> (rust_test)"}
-    C["logging_lib/BUCK"] --> C1@{ shape: circle, label: "**🎯 :logging_lib** </br> (rust_library)"}
+    C["logging_lib/YAK"] --> C1@{ shape: circle, label: "**🎯 :logging_lib** </br> (rust_library)"}
 
     A1 -.-> A2["srcs: [src/main.rs]"]
     A1 -.-> A3["deps: [:library, :logging_lib]"]
@@ -192,7 +192,7 @@ graph TD
     A --> D["📁 logging_lib/<br/>(Package)"]
 
     %% greeter_bin package
-    B --> B1["📄 BUCK"]
+    B --> B1["📄 YAK"]
     B --> B2["📁 src/"]
     B2 --> B3["📄 main.rs"]
     B1 -.-> B4(("🎯 **:main**<br/>(rust_binary)"))
@@ -200,7 +200,7 @@ graph TD
 
 
     %% greeter_lib package
-    C --> C1["📄 BUCK"]
+    C --> C1["📄 YAK"]
     C --> C2["📁 src/"]
     C --> C3["📁 tests/"]
     C2 --> C4["📄 lib.rs"]
@@ -211,7 +211,7 @@ graph TD
     C9@{ shape: braces, label: "srcs: test.rs<br/>deps: :library"}
 
     %% logging_lib package
-    D --> D1["📄 BUCK"]
+    D --> D1["📄 YAK"]
     D --> D2["📁 src/"]
     D2 --> D3["📄 lib.rs"]
     D1 -.-> D4(("🎯 **:logging_lib**<br/>(rust_library)"))
@@ -282,13 +282,13 @@ graph TD
 
 **Diagram Legend:**
 
-- **Dotted arrows**: Show how BUCK files define targets
+- **Dotted arrows**: Show how YAK files define targets
 - **Thick arrows**: Show dependency relationships between targets
 - **Double circles**: Represent Buck2 targets with 🎯 icon
 - **Curly braces**: Contain target attributes and configurations
 - **Subgraphs**: Group targets with their attributes
 - **📁 Icons**: Represent directories and packages
-- **📄 Icons**: Represent files (BUCK files and source files)
+- **📄 Icons**: Represent files (YAK files and source files)
 
 ## Load Function and Attributes
 
@@ -355,7 +355,7 @@ dependency graph.
 ## Buck Commands
 
 In the lab, once buck and source files are in place, we use
-`buck2 build :main --show-output` to build the `:main` target. This uses the
+`yak build :main --show-output` to build the `:main` target. This uses the
 [buck build command](../../users/commands/build/) to compile and link your rust
 code into a binary. Now let’s take a closer look at this command. A buck command
 is usually composed of a command type ( `build`, `run`, `test` ...), some
@@ -391,11 +391,11 @@ As you become more adept, you can explore other powerful buck commands, such as:
   [buck daemon](../../concepts/daemon/), this is sometimes needed to recover
   from a failed build due to bad daemon state;
 - [`buck clean`](../../users/commands/clean/) to remove build artifacts from
-  [buck-out](../../concepts/buck_out/), this is a remedy to recover from failed
+  [yak-out](../../concepts/buck_out/), this is a remedy to recover from failed
   build due to either bad daemon or bad artifacts in cache;
 - [`buck log`](../../users/commands/log/) to see information about previous
   builds
-- [`buck bxl`](../../bxl/tutorial/) to run bxl scripts. BXL is a buck2 script
+- [`buck bxl`](../../bxl/tutorial/) to run bxl scripts. BXL is a yak script
   language using starlark syntax to write complex query or build logic.
 
 #### Tips:
@@ -410,19 +410,19 @@ Here's how Buck2 commands work in your tutorial workflow:
 <TutorialMermaidDiagram>
 {`
 graph TD
-    A[User runs buck2 command] --> B{Command Type}
+    A[User runs yak command] --> B{Command Type}
 
     B -->|build| C[buck2 build :main]
     B -->|run| D[buck2 run :main]
     B -->|test| E[buck2 test :test]
 
-    C --> F[Parse BUCK files]
+    C --> F[Parse YAK files]
     D --> F
     E --> F
 
     F --> G[Resolve dependencies]
     G --> H[Execute build actions]
-    H --> I[Generate outputs in </br> buck-out/]
+    H --> I[Generate outputs in </br> yak-out/]
 
     I --> J{Command specific behavior}
     J -->|build| K[Show output path </br> if --show-output available]
@@ -448,13 +448,13 @@ purposes, and the interactive feature helps during debugging.
 ## Buck-out
 
 So you’ve successfully built the target and run it. Finally, let’s briefly talk
-about [buck-out](../../concepts/buck_out/), which is an important concept yet
+about [yak-out](../../concepts/buck_out/), which is an important concept yet
 hard to understand initially. We know that buck builds complicated targets with
 big dependency graphs and generates tons of outputs for test and run. Where
 should these output artifacts be stored at? The outputs should not be stored at
 the source directory which is tracked by the source control system. The outputs
 also need to be reused/cached for later builds to save build time. So here comes
-buck-out,it has the following characteristics:
+yak-out,it has the following characteristics:
 
 - It’s under repo root;
 - It has a unique file structure, some directories are hashed for caching
@@ -465,6 +465,6 @@ buck-out,it has the following characteristics:
 
 #### Tips:
 
-- **Do NOT** delete artifacts manually from buck-out directory and expect buck
-  to rebuild them, buck doesn’t track things under buck-out, use buck clean
+- **Do NOT** delete artifacts manually from yak-out directory and expect buck
+  to rebuild them, buck doesn’t track things under yak-out, use buck clean
   instead;

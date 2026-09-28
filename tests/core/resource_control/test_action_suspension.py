@@ -22,7 +22,7 @@ pytestmark = pytest.mark.needs_binary("USE_SOME_MEMORY_BIN")
 
 
 def _configure(buck: Buck, kill_and_retry: bool) -> None:
-    with open(buck.cwd / ".buckconfig.local", "w") as f:
+    with open(buck.cwd / ".yakconfig.local", "w") as f:
         f.write("[buck2_resource_control]\n")
         if kill_and_retry:
             f.write("preferred_action_suspend_strategy = kill_and_retry\n")
@@ -147,7 +147,7 @@ async def test_action_suspend_stress_test(
 
 
 # Only kill_and_retry is exercised. Deterministic memory pressure requires swap to be disabled
-# for actions (see `memory_swap_max_actions` in the data `.buckconfig`); otherwise the overshoot
+# for actions (see `memory_swap_max_actions` in the data `.yakconfig`); otherwise the overshoot
 # is paged out cheaply and pressure never crosses the suspension threshold. cgroup_freeze is
 # incompatible with that: freezing an action does not release its memory, so with swap off the
 # still-running action stays throttled above memory.high and never makes progress, deadlocking the

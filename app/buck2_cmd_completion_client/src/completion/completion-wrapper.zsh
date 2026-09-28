@@ -1,4 +1,4 @@
-#compdef buck2 buck
+#compdef yak
 # Copyright (c) Meta Platforms, Inc. and affiliates.
 #
 # This source code is licensed under both the MIT license found in the
@@ -12,11 +12,11 @@
 # %INSERT_OPTION_COMPLETION%
 # clap_complete generated content ENDS
 
-compdef -d buck2
+compdef -d yak
 
-_BUCK_COMPLETE_BIN="${_BUCK_COMPLETE_BIN:-buck2}"
+_BUCK_COMPLETE_BIN="${_BUCK_COMPLETE_BIN:-yak}"
 
-__buck2_takes_target()
+__yak_takes_target()
 {
     case "$1" in
     build|ctargets|install|run|targets|test|utargets)
@@ -28,7 +28,7 @@ __buck2_takes_target()
     esac
 }
 
-__buck2_subcommand()
+__yak_subcommand()
 {
     local subcommand=
     for w in "${words[@]:1:$CURRENT - 1}"; do
@@ -47,7 +47,7 @@ __buck2_subcommand()
     fi
 }
 
-__buck2_add_target_completions()
+__yak_add_target_completions()
 {
     local completions=()
     while read -r; do
@@ -58,7 +58,7 @@ __buck2_add_target_completions()
     compadd -S '' -J targets -o nosort -- "${completions[@]}"
 }
 
-__buck2_add_flagfile_completions()
+__yak_add_flagfile_completions()
 {
     local completions=()
     while read -r; do
@@ -68,7 +68,7 @@ __buck2_add_flagfile_completions()
     compadd -S '' -J flagfiles -o nosort -- "${completions[@]}"
 }
 
-__buck2_completions_queued()
+__yak_completions_queued()
 {
     if [[ ${compstate[nmatches]} -eq 0 ]]; then
         return 255
@@ -77,7 +77,7 @@ __buck2_completions_queued()
     fi
 }
 
-__buck2_fix()
+__yak_fix()
 {
     for w in "${words[@]:1:$CURRENT - 1}"; do
         if [[ "$w" = '--' ]]; then
@@ -95,7 +95,7 @@ __buck2_fix()
     # Flagfile / mode-file completion: an `@file` argument or the value of
     # `--flagfile`/`--config-file`.
     if [[ $cur == @* || $prev == --flagfile || $prev == --config-file ]]; then
-        __buck2_add_flagfile_completions "$cur"
+        __yak_add_flagfile_completions "$cur"
         compstate[insert]="automenu-unambiguous"
         return
     fi
@@ -114,20 +114,20 @@ __buck2_fix()
         fi
     fi
 
-    if __buck2_takes_target "$(__buck2_subcommand)"; then
+    if __yak_takes_target "$(__yak_subcommand)"; then
         if [[ $cur =~ ^- ]]; then
-            _buck2 "$@"
+            _yak "$@"
         else
-            _buck2 "$@"
-            if ! __buck2_completions_queued; then
-                __buck2_add_target_completions "$cur"
+            _yak "$@"
+            if ! __yak_completions_queued; then
+                __yak_add_target_completions "$cur"
             fi
         fi
     else
-        _buck2 "$@"
+        _yak "$@"
     fi
 
     compstate[insert]="automenu-unambiguous"
 }
 
-compdef __buck2_fix buck buck2
+compdef __yak_fix yak

@@ -22,7 +22,7 @@ use serde::de::DeserializeOwned;
 
 use crate::settings::BuckSettings;
 use crate::settings::path::DEFAULT_SETTINGS_SOURCES;
-use crate::settings::path::DOT_BUCKSETTINGS;
+use crate::settings::path::DOT_YAKSETTINGS;
 use crate::settings::path::SettingsSource as SettingsPathSource;
 use crate::settings::settings::ALL_SETTING_METADATA;
 use crate::settings::settings::BuckSettingsData;
@@ -214,7 +214,7 @@ fn parse_layers(
         let (path, is_base) = match source {
             SettingsPathSource::RepoRootFile(name) => {
                 let path = repo_root.join(name);
-                (path, *name == DOT_BUCKSETTINGS)
+                (path, *name == DOT_YAKSETTINGS)
             }
             SettingsPathSource::HomeFile(name) => {
                 let Some(home_dir) = home_dir else {
@@ -454,7 +454,7 @@ mod tests {
     #[test]
     fn test_parse_table_missing_file() -> buck2_error::Result<()> {
         let fs = ProjectRootTemp::new()?;
-        let path = fs.path().root().as_abs_path().join(".bucksettings.toml");
+        let path = fs.path().root().as_abs_path().join(".yaksettings.toml");
         assert_eq!(parse_table(&path)?, None);
         Ok(())
     }
@@ -462,8 +462,8 @@ mod tests {
     #[test]
     fn test_parse_table_invalid_format() -> buck2_error::Result<()> {
         let fs = ProjectRootTemp::new()?;
-        let path = fs.path().root().as_abs_path().join(".bucksettings.toml");
-        fs.write_file(".bucksettings.toml", "= broken");
+        let path = fs.path().root().as_abs_path().join(".yaksettings.toml");
+        fs.write_file(".yaksettings.toml", "= broken");
         assert!(parse_table(&path).is_err());
         Ok(())
     }
@@ -471,13 +471,13 @@ mod tests {
     #[test]
     fn test_parse_table() -> buck2_error::Result<()> {
         let fs = ProjectRootTemp::new()?;
-        let path = fs.path().root().as_abs_path().join(".bucksettings.toml");
+        let path = fs.path().root().as_abs_path().join(".yaksettings.toml");
 
-        fs.write_file(".bucksettings.toml", "");
+        fs.write_file(".yaksettings.toml", "");
         assert_eq!(parse_table(&path)?, Some(toml::Table::new()));
 
         let sectioned = "[test_section]\ntest_flag = true\ntest_value = \"x\"";
-        fs.write_file(".bucksettings.toml", sectioned);
+        fs.write_file(".yaksettings.toml", sectioned);
         assert_eq!(parse_table(&path)?, Some(table(sectioned)));
 
         Ok(())
@@ -498,14 +498,14 @@ mod tests {
     #[test]
     fn test_layer_sources_and_winning_origins() -> buck2_error::Result<()> {
         let repo = ProjectRootTemp::new()?;
-        repo.write_file(".bucksettings.toml", "[test_section]\ntest_flag = true");
+        repo.write_file(".yaksettings.toml", "[test_section]\ntest_flag = true");
         repo.write_file(
-            ".bucksettings.local.toml",
+            ".yaksettings.local.toml",
             "[test_section]\ntest_flag = false",
         );
         let home = ProjectRootTemp::new()?;
         home.write_file(
-            ".bucksettings.local.toml",
+            ".yaksettings.local.toml",
             "[test_section]\ntest_value = \"home\"",
         );
         let mut layers = parse_layers(
@@ -514,7 +514,7 @@ mod tests {
         )?;
         assert_eq!(
             layers[0].provenance.as_ref(),
-            &Provenance::Base(repo.path().root().as_abs_path().join(DOT_BUCKSETTINGS))
+            &Provenance::Base(repo.path().root().as_abs_path().join(DOT_YAKSETTINGS))
         );
         assert_eq!(layers[0].provenance.setting_source(), SettingSource::Base);
         assert_eq!(
@@ -523,7 +523,7 @@ mod tests {
                 home.path()
                     .root()
                     .as_abs_path()
-                    .join(".bucksettings.local.toml")
+                    .join(".yaksettings.local.toml")
             )
         );
         assert_eq!(
@@ -532,7 +532,7 @@ mod tests {
                 repo.path()
                     .root()
                     .as_abs_path()
-                    .join(".bucksettings.local.toml")
+                    .join(".yaksettings.local.toml")
             )
         );
         layers.push(SettingsLayer::setting_flag(table(
@@ -574,7 +574,7 @@ mod tests {
                 home.path()
                     .root()
                     .as_abs_path()
-                    .join(".bucksettings.local.toml")
+                    .join(".yaksettings.local.toml")
             ))
         );
         Ok(())
@@ -587,7 +587,7 @@ mod tests {
             .path()
             .root()
             .as_abs_path()
-            .join(".bucksettings.local.toml");
+            .join(".yaksettings.local.toml");
         let error = resolve_with_metadata::<TestBuckSettingsData>(
             vec![SettingsLayer::new(
                 Provenance::LocalSettings(path.clone()),
@@ -655,7 +655,7 @@ mod tests {
         let repo = ProjectRootTemp::new()?;
         let base = resolve_with_metadata::<TestBuckSettingsData>(
             vec![SettingsLayer::new(
-                Provenance::Base(repo.path().root().as_abs_path().join(".bucksettings.toml")),
+                Provenance::Base(repo.path().root().as_abs_path().join(".yaksettings.toml")),
                 table("[test_section]\ntest_flag = true"),
             )],
             &[TEST_FLAG_METADATA],
@@ -676,7 +676,7 @@ mod tests {
                             .path()
                             .root()
                             .as_abs_path()
-                            .join(".bucksettings.local.toml"),
+                            .join(".yaksettings.local.toml"),
                     ),
                     table("[test_section]\ntest_flag = false"),
                 ),
@@ -711,11 +711,11 @@ mod tests {
     fn test_home_local_override_repo() -> buck2_error::Result<()> {
         let resolved = resolve_from_files_and_args(
             &[(
-                ".bucksettings.toml",
+                ".yaksettings.toml",
                 "[test_section]\ntest_flag = true\ntest_value = \"repo\"",
             )],
             &[(
-                ".bucksettings.local.toml",
+                ".yaksettings.local.toml",
                 "[test_section]\ntest_flag = false",
             )],
             &[],
@@ -736,14 +736,14 @@ mod tests {
     fn test_repo_local_overrides_home_local_and_repo_root() -> buck2_error::Result<()> {
         let resolved = resolve_from_files_and_args(
             &[
-                (".bucksettings.toml", "[test_section]\ntest_flag = true"),
+                (".yaksettings.toml", "[test_section]\ntest_flag = true"),
                 (
-                    ".bucksettings.local.toml",
+                    ".yaksettings.local.toml",
                     "[test_section]\ntest_flag = false\ntest_value = \"repo_local\"",
                 ),
             ],
             &[(
-                ".bucksettings.local.toml",
+                ".yaksettings.local.toml",
                 "[test_section]\ntest_value = \"home_local\"",
             )],
             &[],
@@ -764,17 +764,14 @@ mod tests {
     fn test_settings_args_override_all() -> buck2_error::Result<()> {
         let resolved = resolve_from_files_and_args(
             &[
+                (".yaksettings.toml", "[test_section]\ntest_value = \"repo\""),
                 (
-                    ".bucksettings.toml",
-                    "[test_section]\ntest_value = \"repo\"",
-                ),
-                (
-                    ".bucksettings.local.toml",
+                    ".yaksettings.local.toml",
                     "[test_section]\ntest_value = \"repo_local\"",
                 ),
             ],
             &[(
-                ".bucksettings.local.toml",
+                ".yaksettings.local.toml",
                 "[test_section]\ntest_value = \"home_local\"",
             )],
             &["test_section.test_value=command_line"],

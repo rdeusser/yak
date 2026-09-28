@@ -14,10 +14,10 @@ dynamic linking can be resolved correctly, and where the resources.json required
 by Folly's resources implementation is available.
 
     rustdoc_test_with_resources.py \
-        --resources buck-out/path/to/resources.json \
+        --resources yak-out/path/to/resources.json \
         /tmp/rustdoctestABCXYZ/rust_out [ARGS]...
 
-This will copy the executable rust_out to buck-out/path/to/rustdoctestABCXYZ and
+This will copy the executable rust_out to yak-out/path/to/rustdoctestABCXYZ and
 exec it from there with the rest of the args.
 """
 

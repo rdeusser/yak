@@ -40,7 +40,7 @@ exceptions:
   can depend on.
 - _Empty or Unset `visibility` List_: If the `visibility` list is empty or
   unset, then only targets defined in the same
-  [BUCK file](./glossary.md#buck-file) can depend upon the current target.
+  [YAK file](./glossary.md#buck-file) can depend upon the current target.
 - _Special Value: `'PUBLIC'`_: `visibility` can be set to a special value
   `'PUBLIC'` which makes a build rule visible to all targets. (Example below)
 
@@ -74,7 +74,7 @@ android_resource(
 ```
 
 Or it may be simpler to make it visible to the entire directory in case
-additional build rules are added to `java/com/example/ui/BUCK`:
+additional build rules are added to `java/com/example/ui/YAK`:
 
 ```python
 android_resource(
@@ -111,9 +111,9 @@ java_library(
 
 ## Auditing visibility
 
-Use [`buck2 audit visibility`](../../users/commands/audit#buck2-audit-visibility) to verify that no `visibility` constraints
+Use [`yak audit visibility`](../../users/commands/audit#buck2-audit-visibility) to verify that no `visibility` constraints
 are violated in the transitive dependency graph of the given targets.
 
 ```sh
-buck2 audit visibility //myproject/...
+yak audit visibility //myproject/...
 ```

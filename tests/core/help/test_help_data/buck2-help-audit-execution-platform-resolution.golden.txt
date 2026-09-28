@@ -2,7 +2,7 @@
 
 prints out information about execution platform resolution
 
-Usage: buck2 audit execution-platform-resolution [OPTIONS] [TARGET_PATTERNS]...
+Usage: yak audit execution-platform-resolution [OPTIONS] [TARGET_PATTERNS]...
 
 Arguments:
   [TARGET_PATTERNS]...
@@ -21,7 +21,7 @@ Target Configuration Options:
           universe targets, not the command targets.
 
           This argument is particularly recommended on most non-trivial cqueries. In the absence of
-          this argument, buck2 will use the target literals in your cquery expression as the value
+          this argument, yak will use the target literals in your cquery expression as the value
           for this argument, which may not be what you want.
 
       --target-platforms <PLATFORM>
@@ -61,11 +61,11 @@ Buckconfig Options:
           Used to configure when this command could be preempted by another command for the same
           isolation dir.
 
-          Normally, when you run two commands - from different terminals, say - buck2 will attempt
-          to run them in parallel. However, if the two commands are based on different state, that
-          is they either have different configs or different filesystem states, buck2 cannot run
-          them in parallel. The default behavior in this case is to block the second command until
-          the first completes.
+          Normally, when you run two commands - from different terminals, say - yak will attempt to
+          run them in parallel. However, if the two commands are based on different state, that is
+          they either have different configs or different filesystem states, yak cannot run them in
+          parallel. The default behavior in this case is to block the second command until the first
+          completes.
 
           Possible values:
           - never:            (default) When another command starts that cannot run in parallel with
@@ -164,7 +164,7 @@ Console Options:
           Accepts a comma-separated list of superconsole components to add. Possible values are:
 
           dice - shows information about evaluated dice nodes debugevents - shows information about
-          the flow of events from buckd
+          the flow of events from yakd
 
           These components can be turned on/off interactively. Press 'h' for help when superconsole
           is active.
@@ -193,13 +193,12 @@ Event Log Options:
 
       --command-report-path <PATH>
           Write the command report to this path. A command report is always written to
-          `buck-out/v2/<uuid>/command_report` even without this flag
+          `yak-out/v2/<uuid>/command_report` even without this flag
 
 Universal Options:
       --isolation-dir <ISOLATION_DIR>
-          The name of the directory that Buck2 creates within buck-out for writing outputs and
-          daemon information. If one is not provided, Buck2 creates a directory with the default
-          name.
+          The name of the directory that Buck2 creates within yak-out for writing outputs and daemon
+          information. If one is not provided, Buck2 creates a directory with the default name.
 
           Instances of Buck2 share a daemon if and only if their isolation directory is identical.
           The isolation directory also influences the output paths provided by Buck2, and as a

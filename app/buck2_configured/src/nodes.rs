@@ -138,7 +138,7 @@ enum NodeCalculationError {
          in initial configuration  `{1}`
          first transitioned to cfg `{2}`
          then transitions to cfg   `{3}`
-         Use `buck2 audit configurations {1} {2} {3}` to see the configurations."
+         Use `yak audit configurations {1} {2} {3}` to see the configurations."
     )]
     TransitionNotIdempotent(
         TargetLabel,

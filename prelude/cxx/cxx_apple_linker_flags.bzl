@@ -86,10 +86,10 @@ def apple_extra_darwin_linker_flags(target_triple: str | None) -> list[str]:
     #
     # The flag accepts a special value, `.`, which means it will
     # use the current workding directory. This will make all paths
-    # relative to the parent of `buck-out`.
+    # relative to the parent of `yak-out`.
     #
     # Because all actions in Buck2 are run from the project root
-    # and `buck-out` is always inside the project root, we can
+    # and `yak-out` is always inside the project root, we can
     # safely pass `.` as the `-oso_prefix` without having to
     # write a wrapper script to compute it dynamically.
     extra_linker_flags.append("-Wl,-oso_prefix,.")

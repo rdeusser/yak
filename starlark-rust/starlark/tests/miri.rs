@@ -24,7 +24,7 @@
 //! running Rust tests through Miri; CI invokes it with `cargo miri test --test miri`.
 //!
 //! This file is compiled both from the `starlark-rust` export, where the `pagable` feature
-//! is off, and from the `buck2` workspace, where the root `Cargo.toml` turns it on for
+//! is off, and from the `yak` workspace, where the root `Cargo.toml` turns it on for
 //! every crate. Use only APIs that exist under both: notably `Module::freeze_named` rather
 //! than `Module::freeze`, which is `#[cfg(not(feature = "pagable"))]`.
 

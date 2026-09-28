@@ -155,7 +155,7 @@ def sanitize_hashes(s: str) -> str:
     return re.sub(r"\b(?:[0-9a-f]{40}|[0-9a-f]{64}):[0-9]+\b", "<DIGEST>", s)
 
 
-# C++ libraries in the tools that buck2 spawns can emit glog-format lines such as
+# C++ libraries in the tools that yak spawns can emit glog-format lines such as
 # `I0623 15:40:41.926481 128942 Hash.cpp:327] tiHash seed: ...ull` to stderr
 # during process init. Their timestamps, PIDs, and source locations
 # vary between runs, so they leak non-deterministically into captured stderr and
@@ -271,7 +271,7 @@ def sanitize_stacktrace(s: str) -> str:
 
 
 # Build report errors can change based on minor test changes such as
-# 1. Adding a target in TARGETS.fixture
+# 1. Adding a target in YAK.fixture
 # 2. Line number changing due to code moving around
 # Sanitize so that we only check the important bits of the error message
 def sanitize_build_report_error(s: str) -> str:
@@ -279,7 +279,7 @@ def sanitize_build_report_error(s: str) -> str:
     s = re.sub(
         r"Error running analysis for.*\"", 'Error running analysis for <IRRELEVANT>"', s
     )
-    # Simplify the Unknown target error (Can change due to number of targets in TARGETS.fixture)
+    # Simplify the Unknown target error (Can change due to number of targets in YAK.fixture)
     s = re.sub(
         r"Unknown target `.*` from package .*\"",
         'Unknown target `<TARGET>` from package <IRRELEVANT>"',

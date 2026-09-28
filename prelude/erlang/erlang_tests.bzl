@@ -42,7 +42,7 @@ def erlang_tests_macro(
 ) -> None:
     """
     Generate multiple erlang_test targets based on the `suites` field.
-    Also adds the default 'config' and 'deps' from the buck2 config.
+    Also adds the default 'config' and 'deps' from the yak config.
     The macro also produces and adds
     resource targets for files in the suite associated <suitename>_data folder.
     """

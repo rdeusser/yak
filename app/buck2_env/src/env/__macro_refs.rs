@@ -35,7 +35,7 @@ where
 ///    not set.
 ///  - `converter=<expr>` - a function to use as an alternative to the `FromStr::from_str`
 ///    conversion. Must have signature `fn(&str) -> Result<Ty, E>`
-///  - `applicability=testing` - to indicate that the variable is only for self-testing of buck2
+///  - `applicability=testing` - to indicate that the variable is only for self-testing of yak
 ///
 /// The macro expands to an expression of type `buck2_error::Result<Type>` if a default is set, and
 /// `buck2_error::Result<Option<Type>` otherwise.
@@ -117,7 +117,7 @@ pub macro buck2_env {
     }},
 }
 
-/// Register env name to be shown in `buck2 help-env`.
+/// Register env name to be shown in `yak help-env`.
 pub macro buck2_env_name($var:expr) {{
     $crate::env::__macro_refs::register!(
         $var,

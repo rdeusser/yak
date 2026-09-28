@@ -32,7 +32,7 @@ class TestIncrementalState(unittest.TestCase):
                     resolved_symlink=None,
                 ),
                 IncrementalStateItem(
-                    source=Path("buck-out/bar.txt"),
+                    source=Path("yak-out/bar.txt"),
                     destination_relative_to_bundle=Path("Resources/bar.txt"),
                     digest="bar_digest",
                     resolved_symlink=None,
@@ -97,13 +97,13 @@ class TestIncrementalState(unittest.TestCase):
                     resolved_symlink=None,
                 ),
                 IncrementalStateItem(
-                    source=Path("buck-out/bar.txt"),
+                    source=Path("yak-out/bar.txt"),
                     destination_relative_to_bundle=Path("Resources/bar.txt"),
                     digest="bar_digest",
                     resolved_symlink=None,
                 ),
                 IncrementalStateItem(
-                    source=Path("buck-out/bar"),
+                    source=Path("yak-out/bar"),
                     destination_relative_to_bundle=Path("Resources/bar"),
                     digest=None,
                     resolved_symlink=Path("bar.txt"),

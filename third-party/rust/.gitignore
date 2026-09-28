@@ -15,8 +15,8 @@
 # Various cruft in vendored packages
 vendor/*/target
 vendor/*/Cargo.lock
-vendor/**/.buckconfig
-vendor/**/BUCK
+vendor/**/.yakconfig
+vendor/**/YAK
 vendor/**/OWNERS
 vendor/**/*~
 vendor/**/*.bzl
@@ -39,6 +39,6 @@ vendor/**/[Nn][Uu][Ll].*
 
 # Output of `reindeer buckify` and `reindeer vendor`
 /.cargo/
-/BUCK
+/YAK
 /Cargo.lock
 /vendor/

@@ -20,10 +20,10 @@ unambiguous regression.
 
 ### Quick run (CI)
 
-`buck2 test` picks up the `#[test]` in `src/main.rs` automatically:
+`yak test` picks up the `#[test]` in `src/main.rs` automatically:
 
 ```sh
-buck2 test //buck2/dice/fuzzy_dice:fuzzy_dice
+yak test //buck2/dice/fuzzy_dice:fuzzy_dice
 ```
 
 The CI test is bounded (small case count, fixed size, no shrinking) — it's a
@@ -32,7 +32,7 @@ smoke test, not a bug hunt. Failures should be reproduced with the deep run.
 ### Deep run
 
 ```sh
-buck2 run //buck2/dice/fuzzy_dice:fuzzy_dice -- fuzz 10000 10000
+yak run //buck2/dice/fuzzy_dice:fuzzy_dice -- fuzz 10000 10000
 ```
 
 Positional args are `max_tests` and `num_tests` (defaults `2_000_000`).
@@ -47,7 +47,7 @@ Known-buggy generator scenarios are still gated by env vars:
 
 ```sh
 NOGEN_TRANSIENTS=1 NOGEN_OUT_OF_ORDER=1 \
-    buck2 run //buck2/dice/fuzzy_dice:fuzzy_dice -- fuzz 10000 10000
+    yak run //buck2/dice/fuzzy_dice:fuzzy_dice -- fuzz 10000 10000
 ```
 
 When a failure is found the input `DiceExecutionOrder` is written to
@@ -65,7 +65,7 @@ Useful flags:
 ### Replay
 
 ```sh
-buck2 run //buck2/dice/fuzzy_dice:fuzzy_dice -- replay /path/to/input.json
+yak run //buck2/dice/fuzzy_dice:fuzzy_dice -- replay /path/to/input.json
 ```
 
 ## Operation vocabulary
@@ -80,7 +80,7 @@ buck2 run //buck2/dice/fuzzy_dice:fuzzy_dice -- replay /path/to/input.json
 - `ForceDirty { new_ctx_id, var }` — `changed(vec![EvalVar { key: var, ..}])`.
   Exercises dice's `InvalidateKind::ForceDirty` on the *computed* key;
   equations are untouched, so `EvalVar(var)` must recompute on next touch and
-  dependents cutoff on value equality. Analogous to buck2's file-watcher
+  dependents cutoff on value equality. Analogous to yak's file-watcher
   invalidation of a computed key whose `compute` reads the environment.
 - `ReinjectEquivalent { new_ctx_id, var }` — `changed_to(LookupVar(var), e)`
   where `e` evaluates to the same boolean as the current expr but compares

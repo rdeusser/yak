@@ -214,8 +214,8 @@ def arg_parse() -> Args:
 def arg_eval(arg: str) -> str:
     """
     Expand the following two special cases:
-        --extern=$(cat buck-out/v2/gen/foo.txt)=buck-out/dev/gen/libfoo.rlib
-        --env-set=FOO=$(abspath buck-out/v2/gen/foo.txt)
+        --extern=$(cat yak-out/v2/gen/foo.txt)=yak-out/dev/gen/libfoo.rlib
+        --env-set=FOO=$(abspath yak-out/v2/gen/foo.txt)
     """
     expanded = ""
 

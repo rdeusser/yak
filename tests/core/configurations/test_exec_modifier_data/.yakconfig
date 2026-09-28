@@ -1,0 +1,19 @@
+[buildfile]
+name=YAK.fixture
+
+[repositories]
+root = .
+prelude = prelude
+
+[cell_aliases]
+config = prelude
+toolchains = prelude
+
+[external_cells]
+prelude = bundled
+
+[build]
+execution_platforms = root//cfg:execution_platforms
+
+[test]
+enable_buckconfig_backed = true

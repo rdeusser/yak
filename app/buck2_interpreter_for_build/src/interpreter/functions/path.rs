@@ -23,7 +23,7 @@ use crate::interpreter::module_internals::ModuleInternals;
 #[starlark_module]
 pub(crate) fn register_path(builder: &mut GlobalsBuilder) {
     /// The `glob()` function specifies a set of files using patterns.
-    /// Only available from `BUCK` files.
+    /// Only available from `YAK` files.
     ///
     /// A typical `glob` call looks like:
     ///
@@ -41,11 +41,11 @@ pub(crate) fn register_path(builder: &mut GlobalsBuilder) {
     ///
     /// This call will remove all `config.h` files from the initial match.
     ///
-    /// The `glob()` call is evaluated against the list of files owned by this `BUCK` file.
-    /// A file is owned by whichever `BUCK` file is closest above it - so given `foo/BUCK` and
-    /// `foo/bar/BUCK` the file `foo/file.txt` would be owned by `foo/BUCK` (and available from
+    /// The `glob()` call is evaluated against the list of files owned by this `YAK` file.
+    /// A file is owned by whichever `YAK` file is closest above it - so given `foo/YAK` and
+    /// `foo/bar/YAK` the file `foo/file.txt` would be owned by `foo/YAK` (and available from
     /// its `glob` results) but the file `foo/bar/file.txt` would be owned by `foo/bar/BUCk`
-    /// and _not_ appear in the glob result of `foo/BUCK`, even if you write `glob(["bar/file.txt"])`.
+    /// and _not_ appear in the glob result of `foo/YAK`, even if you write `glob(["bar/file.txt"])`.
     /// As a consequence of this rule, `glob(["../foo.txt"])` will always return an empty list of files.
     ///
     /// Currently `glob` is evaluated case-insensitively on all file systems, but we expect
@@ -62,8 +62,8 @@ pub(crate) fn register_path(builder: &mut GlobalsBuilder) {
         Ok(eval.heap().alloc_typed_unchecked(AllocList(res)).cast())
     }
 
-    /// `package_name()` can only be called in buildfiles (e.g. BUCK files) or PACKAGE files, and returns the name of the package.
-    /// E.g. inside `foo//bar/baz/BUCK` the output will be `bar/baz`.
+    /// `package_name()` can only be called in buildfiles (e.g. YAK files) or PACKAGE files, and returns the name of the package.
+    /// E.g. inside `foo//bar/baz/YAK` the output will be `bar/baz`.
     /// E.g. inside `foo//bar/PACKAGE` the output will be `bar`.
     fn package_name(eval: &mut Evaluator) -> starlark::Result<String> {
         // An (IMO) unfortunate choice in the skylark api is that this just gives the cell-relative
@@ -74,8 +74,8 @@ pub(crate) fn register_path(builder: &mut GlobalsBuilder) {
             .to_string())
     }
 
-    /// `get_base_path()` can only be called in buildfiles (e.g. BUCK files) or PACKAGE files, and returns the name of the package.
-    /// E.g. inside `foo//bar/baz/BUCK` the output will be `bar/baz`.
+    /// `get_base_path()` can only be called in buildfiles (e.g. YAK files) or PACKAGE files, and returns the name of the package.
+    /// E.g. inside `foo//bar/baz/YAK` the output will be `bar/baz`.
     /// E.g. inside `foo//bar/PACKAGE` the output will be `bar`.
     ///
     /// This function is identical to `package_name`.
@@ -98,12 +98,12 @@ pub(crate) fn register_path(builder: &mut GlobalsBuilder) {
         ))
     }
 
-    /// `get_cell_name()` can be called from either a `BUCK` file or a `.bzl` file,
-    /// and returns the name of the cell where the `BUCK` file that started the call
+    /// `get_cell_name()` can be called from either a `YAK` file or a `.bzl` file,
+    /// and returns the name of the cell where the `YAK` file that started the call
     /// lives.
     ///
-    /// For example, inside `foo//bar/baz/BUCK` the output will be `foo`.
-    /// If that `BUCK` file does a `load("hello//world.bzl", "something")` then
+    /// For example, inside `foo//bar/baz/YAK` the output will be `foo`.
+    /// If that `YAK` file does a `load("hello//world.bzl", "something")` then
     /// the result in that `.bzl` file will also be `foo`.
     fn get_cell_name(eval: &mut Evaluator) -> starlark::Result<String> {
         Ok(BuildContext::from_context(eval)?

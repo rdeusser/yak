@@ -29,36 +29,19 @@ use crate::legacy_configs::dice::HasLegacyConfigs;
 use crate::legacy_configs::key::BuckconfigKeyRef;
 use crate::legacy_configs::view::LegacyBuckConfigView;
 
-const DEFAULT_BUILDFILES: &[&str] = &["BUCK.v2", "BUCK"];
+const DEFAULT_BUILDFILES: &[&str] = &["YAK"];
 
-/// Deal with the `buildfile.name` key (and `name_v2`)
+/// parse_buildfile_name returns the build file names of a cell: the list in `buildfile.name`, or
+/// `YAK` when the key is unset, followed by `buildfile.extra_for_test` when it is set.
 pub fn parse_buildfile_name(
     mut config: impl LegacyBuckConfigView,
 ) -> buck2_error::Result<Vec<FileNameBuf>> {
-    // For buck2, we support a slightly different mechanism for setting the buildfile to
-    // assist with easier migration from v1 to v2.
-    // First, we check the key `buildfile.name_v2`, if this is provided, we use it.
-    // Second, if that wasn't provided, we will use `buildfile.name` like buck1 does,
-    // but for every entry `FOO` we will insert a preceding `FOO.v2`.
-    // If neither of those is provided, we will use the default of `["BUCK.v2", "BUCK"]`.
-    // This scheme provides a natural progression to buckv2, with the ability to use separate
-    // buildfiles for the two where necessary.
     let mut base = if let Some(buildfiles_value) =
         config.parse_list::<String>(BuckconfigKeyRef {
             section: "buildfile",
-            property: "name_v2",
+            property: "name",
         })? {
         buildfiles_value.into_try_map(FileNameBuf::try_from)?
-    } else if let Some(buildfiles_value) = config.parse_list::<String>(BuckconfigKeyRef {
-        section: "buildfile",
-        property: "name",
-    })? {
-        let mut buildfiles = Vec::new();
-        for buildfile in buildfiles_value {
-            buildfiles.push(FileNameBuf::try_from(format!("{buildfile}.v2"))?);
-            buildfiles.push(FileNameBuf::try_from(buildfile)?);
-        }
-        buildfiles
     } else {
         DEFAULT_BUILDFILES.map(|&n| FileNameBuf::try_from(n.to_owned()).unwrap())
     };
@@ -145,37 +128,24 @@ mod tests {
     async fn test_buildfiles() -> buck2_error::Result<()> {
         let mut file_ops = TestConfigParserFileOps::new(&[
             (
-                ".buckconfig",
+                ".yakconfig",
                 indoc!(
                     r#"
                             [cells]
                                 root = .
                                 other = other/
-                                third_party = third_party/
                         "#
                 ),
             ),
             (
-                "other/.buckconfig",
+                "other/.yakconfig",
                 indoc!(
                     r#"
                             [cells]
                                 other = .
                             [buildfile]
-                                name = TARGETS
-                                extra_for_test = TARGETS.test
-                        "#
-                ),
-            ),
-            (
-                "third_party/.buckconfig",
-                indoc!(
-                    r#"
-                            [cells]
-                                third_party = .
-                            [buildfile]
-                                name_v2 = OKAY
-                                name = OKAY_v1
+                                name = BUILD,YAK
+                                extra_for_test = BUILD.test
                         "#
                 ),
             ),
@@ -187,7 +157,7 @@ mod tests {
             .parse_single_cell_with_file_ops(CellName::testing_new("root"), &mut file_ops)
             .await?;
         assert_eq!(
-            vec!["BUCK.v2", "BUCK"],
+            vec!["YAK"],
             parse_buildfile_name(&config)?.map(|f| f.as_str()),
         );
 
@@ -195,15 +165,7 @@ mod tests {
             .parse_single_cell_with_file_ops(CellName::testing_new("other"), &mut file_ops)
             .await?;
         assert_eq!(
-            vec!["TARGETS.v2", "TARGETS", "TARGETS.test"],
-            parse_buildfile_name(&config)?.map(|f| f.as_str()),
-        );
-
-        let config = cells
-            .parse_single_cell_with_file_ops(CellName::testing_new("third_party"), &mut file_ops)
-            .await?;
-        assert_eq!(
-            vec!["OKAY"],
+            vec!["BUILD", "YAK", "BUILD.test"],
             parse_buildfile_name(&config)?.map(|f| f.as_str()),
         );
 

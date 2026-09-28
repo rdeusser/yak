@@ -19,7 +19,7 @@ use crate::cells::cell_path::CellPath;
 use crate::cells::name::CellName;
 use crate::package::PackageLabel;
 
-/// Path of a build file (e.g. `BUCK`) only. (`bzl` files are not included).
+/// Path of a build file (e.g. `YAK`) only. (`bzl` files are not included).
 #[derive(
     Clone,
     Hash,
@@ -34,7 +34,7 @@ use crate::package::PackageLabel;
 pub struct BuildFilePath {
     /// The package of this build file
     package: PackageLabel,
-    /// The build file's filename (which can be configured). i.e. `BUCK`
+    /// The build file's filename (which can be configured). i.e. `YAK`
     filename: FileNameBuf,
 }
 
@@ -80,8 +80,8 @@ mod tests {
     fn test_testing_new() {
         // `testing_new` accepts the same format `Display` produces.
         assert_eq!(
-            "foo//bar/baz:BUCK",
-            BuildFilePath::testing_new("foo//bar/baz:BUCK").to_string()
+            "foo//bar/baz:YAK",
+            BuildFilePath::testing_new("foo//bar/baz:YAK").to_string()
         );
     }
 }

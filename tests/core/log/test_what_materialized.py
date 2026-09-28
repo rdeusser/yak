@@ -13,7 +13,7 @@ import pytest
 from e2e_util.api.buck import Buck
 from e2e_util.buck_workspace import buck_test
 
-# buck2 records a materialization when it downloads an output from a Remote
+# yak records a materialization when it downloads an output from a Remote
 # Execution backend. An output that a local action wrote needs none.
 pytestmark = pytest.mark.remote_execution
 
@@ -51,7 +51,7 @@ async def test_what_materialized_sorted(buck: Buck) -> None:
 @buck_test()
 async def test_what_materialized_aggregated(buck: Buck) -> None:
     await buck.build("//:my_rule")
-    # buck2 log what-materialized --aggregate-by-ext has the following output:
+    # yak log what-materialized --aggregate-by-ext has the following output:
     # <empty>	cas	1	1
     out = await buck.log("what-materialized", "--aggregate-by-ext")
     out = [line.split() for line in out.stdout.splitlines() if line]

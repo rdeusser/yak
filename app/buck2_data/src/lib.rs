@@ -110,7 +110,7 @@ pub trait ToProtoMessage {
 
 // Lives here rather than on `MiniperfCounter` because the orphan rule allows
 // only these two crates, and `buck2_miniperf_proto` deliberately has no
-// `buck2_data` dep; see `buck2_miniperf_proto/BUCK`.
+// `buck2_data` dep; see `buck2_miniperf_proto/YAK`.
 impl From<MiniperfCounter> for CpuCounter {
     fn from(counter: MiniperfCounter) -> Self {
         CpuCounter {

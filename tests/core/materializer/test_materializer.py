@@ -28,7 +28,7 @@ def watchman_dependency_linux_only() -> bool:
 async def test_modify_input_source(buck: Buck) -> None:
     await buck.build("//:urandom_dep")
 
-    targets_file = buck.cwd / "TARGETS.fixture"
+    targets_file = buck.cwd / "YAK.fixture"
 
     # Change the label in Targets.
     replace_in_file("__NOT_A_REAL_LABEL__", "buck2_test_local_exec", file=targets_file)
@@ -110,7 +110,7 @@ async def test_matching_artifact_optimization(buck: Buck) -> None:
 )
 async def test_cache_directory_cleanup(buck: Buck) -> None:
     # sqlite materializer state is already enabled
-    cache_dir = Path(buck.cwd, "buck-out", "v2", "cache")
+    cache_dir = Path(buck.cwd, "yak-out", "v2", "cache")
     materializer_state_dir = cache_dir / "materializer_state"
     materializer_state_dir.mkdir(parents=True)
     incremental_state_dir = cache_dir / "incremental_state"
@@ -232,10 +232,10 @@ async def test_sqlite_materializer_state_buckconfig_version_change(
     replace_in_file(
         "sqlite_materializer_state_version = 0",
         "sqlite_materializer_state_version = 1",
-        buck.cwd / ".buckconfig",
+        buck.cwd / ".yakconfig",
     )
 
-    # just starting the buck2 daemon should delete the sqlite materializer state
+    # just starting the yak daemon should delete the sqlite materializer state
     await buck.audit_config()
 
 
@@ -273,7 +273,7 @@ async def test_materializer_command_events_have_parent_id(buck: Buck) -> None:
     """MaterializerCommand instant events emitted on the synchronous command
     processing thread should be parented to the span that sent the command,
     not appear as root events with parent_id == 0.  This requires
-    verbose_materializer_event_log = true in .buckconfig."""
+    verbose_materializer_event_log = true in .yakconfig."""
     await buck.build("//:check")
 
     command_events = await filter_events(
@@ -297,7 +297,7 @@ async def test_materializer_command_events_have_parent_id(buck: Buck) -> None:
 
 
 def disable_sqlite_materializer_state(buck: Buck) -> None:
-    config_file = buck.cwd / ".buckconfig"
+    config_file = buck.cwd / ".yakconfig"
     replace_in_file(
         "sqlite_materializer_state = true",
         "sqlite_materializer_state = false",
