@@ -83,6 +83,8 @@ load("@prelude//linking:strip.bzl", "strip_debug_info")
 load("@prelude//linking:types.bzl", "Linkage")
 load("@prelude//os_lookup:defs.bzl", "Os", "OsLookup")
 load("@prelude//python:manifest.bzl", "create_manifest_for_entries")
+load("@prelude//target_stats:target_stats.bzl", "CycleMode", "target_stats_providers_and_subtargets")
+load("@prelude//target_stats:target_stats_config.bzl", "TARGET_STATS_ENABLED")
 load("@prelude//test:inject_test_run_info.bzl", "inject_test_run_info")
 load(
     "@prelude//tests:re_utils.bzl",
@@ -140,6 +142,7 @@ load(
 load(
     ":headers.bzl",
     "CPrecompiledHeaderInfo",
+    "cxx_attr_headers_list",
     "cxx_get_regular_cxx_headers_layout",
 )
 load(
@@ -1006,11 +1009,13 @@ def cxx_test_impl(ctx: AnalysisContext) -> list[Provider]:
     )
 
     # TODO: have the runinfo contain the correct test running args
+    headers_layout = cxx_get_regular_cxx_headers_layout(ctx)
+    srcs = get_srcs_with_flags(ctx)
     params = CxxRuleConstructorParams(
         rule_type = "cxx_test",
         generate_sub_targets = CxxRuleSubTargetParams(xcode_data = xcode_data_enabled()),
-        headers_layout = cxx_get_regular_cxx_headers_layout(ctx),
-        srcs = get_srcs_with_flags(ctx),
+        headers_layout = headers_layout,
+        srcs = srcs,
         link_group_info = link_group_info,
         auto_link_group_specs = get_auto_link_group_specs(ctx, link_group_info),
         prefer_stripped_objects = ctx.attrs.prefer_stripped_objects,
@@ -1037,6 +1042,28 @@ def cxx_test_impl(ctx: AnalysisContext) -> list[Provider]:
         link_preference = LinkPreference(ctx.attrs.link_preference),
     )
     output = cxx_executable(ctx, params, is_cxx_test = True)
+
+    target_stats_providers = []
+    if TARGET_STATS_ENABLED:
+        target_stats_tools = get_cxx_toolchain_info(ctx).target_stats_tools
+        if target_stats_tools != None:
+            target_stats_srcs = {src.file.short_path: src.file for src in srcs}
+            target_stats_srcs.update({
+                # Named headers use the dict key; list headers retain their
+                # package-relative path. This matches the collector and avoids
+                # collisions between headers with the same basename.
+                (header.name if header.named else header.artifact.short_path): header.artifact
+                for header in cxx_attr_headers_list(ctx, ctx.attrs.headers, headers_layout)
+            })
+            target_stats_providers, target_stats_subtargets = target_stats_providers_and_subtargets(
+                ctx,
+                tools = target_stats_tools,
+                srcs = target_stats_srcs,
+                deps = cxx_attr_deps(ctx),
+                cycle_mode = CycleMode("file"),
+                module_name = ctx.label.name,
+            )
+            output.sub_targets.update(target_stats_subtargets)
 
     command = [cmd_args(output.binary, hidden = output.runtime_files)] + ctx.attrs.args
 
@@ -1079,5 +1106,7 @@ def cxx_test_impl(ctx: AnalysisContext) -> list[Provider]:
 
     if get_cxx_toolchain_info(ctx).gcno_files and output.gcno_files:
         providers.append(GcnoFilesInfo(gcno_files = output.gcno_files))
+
+    providers.extend(target_stats_providers)
 
     return providers
