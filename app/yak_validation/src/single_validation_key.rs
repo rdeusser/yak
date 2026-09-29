@@ -23,11 +23,13 @@ use pagable::pagable_typetag;
 use yak_artifact::actions::key::ActionKey;
 use yak_build_api::actions::artifact::get_artifact_fs::GetArtifactFs;
 use yak_build_api::actions::calculation::ActionCalculation;
+use yak_build_api::materialize::invocation_re_use_case;
 use yak_error::ErrorTag;
 use yak_error::YakErrorContext;
 use yak_error::YakErrorOptionContext;
 use yak_execute::materialize::materializer::HasMaterializer;
 use yak_execute::materialize::materializer::MaterializationPurpose;
+use yak_execute::materialize::materializer::MaterializeRequest;
 use yak_fs::async_fs_util;
 use yak_fs::error::IoResultExt;
 
@@ -88,13 +90,22 @@ impl Key for SingleValidationKey {
         let validation_result_path = fs.fs().resolve(&project_relative_path);
 
         // Make sure validation result is materialized before we parse it
-        ctx.per_transaction_data()
+        let re_use_case = invocation_re_use_case(ctx);
+        let response = ctx
+            .per_transaction_data()
             .get_materializer()
-            .ensure_materialized(
-                vec![project_relative_path],
-                MaterializationPurpose::IntermediateOnly,
-            )
+            .materialize(MaterializeRequest {
+                artifacts: vec![(project_relative_path, artifact_value.dupe())],
+                outputs: Vec::new(),
+                purpose: MaterializationPurpose::IntermediateOnly,
+                re_use_case,
+            })
             .await?;
+        for result in response.results {
+            result?;
+        }
+        // Held while the result is read.
+        let _lease = response.lease;
 
         let content = async_fs_util::read_to_string(&validation_result_path)
             .await

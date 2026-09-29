@@ -51,6 +51,7 @@ use yak_build_api::interpreter::rule_defs::context::AnalysisActions;
 use yak_build_api::interpreter::rule_defs::context::AnalysisContext;
 use yak_build_api::interpreter::rule_defs::provider::collection::FrozenProviderCollectionValue;
 use yak_build_api::interpreter::rule_defs::provider::collection::ProviderCollection;
+use yak_build_api::materialize::invocation_re_use_case;
 use yak_build_signals::env::WaitingCategory;
 use yak_build_signals::env::WaitingData;
 use yak_core::deferred::base_deferred_key::BaseDeferredKey;
@@ -71,6 +72,8 @@ use yak_execute::digest_config::DigestConfig;
 use yak_execute::digest_config::HasDigestConfig;
 use yak_execute::materialize::materializer::HasMaterializer;
 use yak_execute::materialize::materializer::MaterializationPurpose;
+use yak_execute::materialize::materializer::MaterializeRequest;
+use yak_execute::materialize::materializer::ReadLease;
 use yak_hash::YakIndexMap;
 use yak_hash::YakMutMap;
 use yak_interpreter::dice::starlark_provider::StarlarkEvalKind;
@@ -380,20 +383,26 @@ pub(crate) async fn prepare_and_execute_lambda(
         },
         async move {
             waiting_data.start_waiting_category_now(WaitingCategory::MaterializingInputs);
-            let (input_artifacts_materialized, resolved_dynamic_values) = span_async_simple(
-                yak_data::DeferredPreparationStageStart {
-                    stage: Some(yak_data::MaterializedArtifacts {}.into()),
-                },
-                ctx.try_compute2(
-                    async |ctx| materialize_inputs(&ensured_artifacts, ctx).await,
-                    async |ctx| {
-                        resolve_dynamic_values(&lambda.value().static_fields.dynamic_values, ctx)
-                            .await
+            let ((input_artifacts_materialized, inputs_lease), resolved_dynamic_values) =
+                span_async_simple(
+                    yak_data::DeferredPreparationStageStart {
+                        stage: Some(yak_data::MaterializedArtifacts {}.into()),
                     },
-                ),
-                yak_data::DeferredPreparationStageEnd {},
-            )
-            .await?;
+                    ctx.try_compute2(
+                        async |ctx| materialize_inputs(&ensured_artifacts, ctx).await,
+                        async |ctx| {
+                            resolve_dynamic_values(
+                                &lambda.value().static_fields.dynamic_values,
+                                ctx,
+                            )
+                            .await
+                        },
+                    ),
+                    yak_data::DeferredPreparationStageEnd {},
+                )
+                .await?;
+            // The lambda reads the materialized inputs while it runs.
+            let _inputs_lease = inputs_lease;
             waiting_data.start_waiting_category_now(WaitingCategory::Unknown);
             let (time_span, spans, res) = cancellation
                 .with_structured_cancellation(|observer| {
@@ -449,14 +458,14 @@ pub struct InputArtifactsMaterialized(());
 async fn materialize_inputs(
     ensured_artifacts: &YakIndexMap<&Artifact, &ArtifactValue>,
     ctx: &mut DiceComputations<'_>,
-) -> yak_error::Result<InputArtifactsMaterialized> {
+) -> yak_error::Result<(InputArtifactsMaterialized, ReadLease)> {
     if ensured_artifacts.is_empty() {
-        return Ok(InputArtifactsMaterialized(()));
+        return Ok((InputArtifactsMaterialized(()), ReadLease::noop()));
     }
 
     let artifact_fs = ctx.get_artifact_fs().await?;
 
-    let mut paths = Vec::with_capacity(ensured_artifacts.len());
+    let mut artifacts = Vec::with_capacity(ensured_artifacts.len());
 
     for (artifact, artifact_value) in ensured_artifacts {
         let path = artifact.resolve_path(
@@ -468,15 +477,25 @@ async fn materialize_inputs(
             }
             .as_ref(),
         )?;
-        paths.push(path.clone());
+        artifacts.push((path, (*artifact_value).dupe()));
     }
 
-    ctx.per_transaction_data()
+    let re_use_case = invocation_re_use_case(ctx);
+    let response = ctx
+        .per_transaction_data()
         .get_materializer()
-        .ensure_materialized(paths, MaterializationPurpose::IntermediateOnly)
+        .materialize(MaterializeRequest {
+            artifacts,
+            outputs: Vec::new(),
+            purpose: MaterializationPurpose::IntermediateOnly,
+            re_use_case,
+        })
         .await?;
+    for result in response.results {
+        result?;
+    }
 
-    Ok(InputArtifactsMaterialized(()))
+    Ok((InputArtifactsMaterialized(()), response.lease))
 }
 
 async fn resolve_dynamic_values(

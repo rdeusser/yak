@@ -31,6 +31,7 @@ use remote_execution::TTimestamp;
 use yak_action_metadata_proto::REMOTE_DEP_FILE_KEY;
 use yak_common::file_ops::metadata::TrackedFileDigest;
 use yak_core::execution_types::executor_config::RePlatformFields;
+use yak_core::execution_types::executor_config::RemoteExecutorUseCase;
 use yak_core::fs::artifact_path_resolver::ArtifactFs;
 use yak_core::yak_env;
 use yak_directory::directory::entry::DirectoryEntry;
@@ -50,6 +51,7 @@ use yak_execute::execute::cache_uploader::IntoRemoteDepFile;
 use yak_execute::execute::cache_uploader::UploadCache;
 use yak_execute::execute::result::CommandExecutionResult;
 use yak_execute::materialize::materializer::MaterializationPurpose;
+use yak_execute::materialize::materializer::MaterializeRequest;
 use yak_execute::materialize::materializer::Materializer;
 use yak_execute::re::client::ActionCacheWriteType;
 use yak_execute::re::manager::ManagedRemoteExecutionClient;
@@ -71,6 +73,8 @@ pub struct CacheUploader {
     artifact_fs: ArtifactFs,
     materializer: Arc<dyn Materializer>,
     re_client: ManagedRemoteExecutionClient,
+    /// For what the upload has to materialize first; the upload itself runs under `re_client`'s.
+    invocation_re_use_case: RemoteExecutorUseCase,
     platform: RePlatformFields,
     max_bytes: Option<u64>,
     cache_upload_permission_checker: Arc<ActionCacheUploadPermissionChecker>,
@@ -82,6 +86,7 @@ impl CacheUploader {
         artifact_fs: ArtifactFs,
         materializer: Arc<dyn Materializer>,
         re_client: ManagedRemoteExecutionClient,
+        invocation_re_use_case: RemoteExecutorUseCase,
         platform: RePlatformFields,
         max_bytes: Option<u64>,
         cache_upload_permission_checker: Arc<ActionCacheUploadPermissionChecker>,
@@ -91,6 +96,7 @@ impl CacheUploader {
             artifact_fs,
             materializer,
             re_client,
+            invocation_re_use_case,
             platform,
             max_bytes,
             cache_upload_permission_checker,
@@ -345,11 +351,11 @@ impl CacheUploader {
         let mut output_files: Vec<TFile> = Vec::new();
         let mut output_directories: Vec<TDirectory2> = Vec::new();
 
-        let mut content_paths = Vec::new();
+        let mut outputs_to_materialize = Vec::new();
 
         for output_result in result.resolve_outputs(&self.artifact_fs) {
             let (output, content_path, value) = output_result?;
-            content_paths.push(content_path.clone());
+            outputs_to_materialize.push((content_path.clone(), value.dupe()));
             match value.entry().as_ref() {
                 DirectoryEntry::Leaf(ActionDirectoryMember::File(f)) => {
                     output_files.push(TFile {
@@ -434,14 +440,24 @@ impl CacheUploader {
         }
 
         let uploads = async {
-            // This may be belt-and-suspenders: the action just ran, so one
-            // would expect these to exist. I'm not sure it's 100% necessary to
-            // ask the materializer to ensure just-built possibly-content-based
-            // paths exist.
-            self.materializer
-                .ensure_materialized(content_paths, MaterializationPurpose::IntermediateOnly)
+            // FIXME(materializer): The execution that produced these outputs held a lease over
+            // them and knows their values; it should hand that lease on to the upload instead of
+            // the upload asking for the outputs again. No worse than before, so later.
+            let response = self
+                .materializer
+                .materialize(MaterializeRequest {
+                    artifacts: outputs_to_materialize,
+                    outputs: Vec::new(),
+                    purpose: MaterializationPurpose::IntermediateOnly,
+                    re_use_case: self.invocation_re_use_case,
+                })
                 .await
                 .yak_error_context("Error materializing outputs for cache upload")?;
+            for result in response.results {
+                result.yak_error_context("Error materializing outputs for cache upload")?;
+            }
+            // The uploads below read the outputs.
+            let _outputs_lease = response.lease;
 
             yak_util::future::try_join_all(upload_futs)
                 .await

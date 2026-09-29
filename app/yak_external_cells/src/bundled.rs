@@ -29,6 +29,7 @@ use pagable::PagableSerialize;
 use pagable::PagableSerializer;
 use pagable::pagable_typetag;
 use yak_build_api::actions::artifact::get_artifact_fs::GetArtifactFs;
+use yak_build_api::materialize::invocation_re_use_case;
 use yak_common::file_ops::delegate::FileOpsDelegate;
 use yak_common::file_ops::metadata::FileMetadata;
 use yak_common::file_ops::metadata::FileType;
@@ -57,10 +58,12 @@ use yak_error::YakErrorContext;
 use yak_error::YakErrorOptionContext;
 use yak_error::conversion::from_any_with_tag;
 use yak_error::yak_error;
+use yak_execute::artifact_value::ArtifactValue;
 use yak_execute::digest_config::DigestConfig;
 use yak_execute::digest_config::HasDigestConfig;
 use yak_execute::materialize::materializer::HasMaterializer;
 use yak_execute::materialize::materializer::MaterializationPurpose;
+use yak_execute::materialize::materializer::MaterializeRequest;
 use yak_execute::materialize::materializer::WriteRequest;
 use yak_external_cells_bundled::BundledCell;
 use yak_external_cells_bundled::BundledFile;
@@ -502,19 +505,37 @@ pub(crate) async fn materialize_all(
     let yak_out_resolver = artifact_fs.yak_out_path_resolver();
 
     let ops = get_file_ops_delegate(ctx, cell).await?;
-    let materializer = ctx.per_transaction_data().get_materializer();
-    let mut paths = Vec::new();
-    for (path, _entry) in ops.dir.unordered_walk_leaves().with_paths() {
+    let mut artifacts = Vec::new();
+    for (path, entry) in ops.dir.unordered_walk_leaves().with_paths() {
         let path = yak_out_resolver.resolve_external_cell_source(
             CellRelativePath::new(path.as_ref()),
             ExternalCellOrigin::Bundled(cell),
         );
-        paths.push(path);
+        // `entry.metadata` was digested with the source-files config, while the files were
+        // written through `declare_write` under the CAS config. The two are identical today; a
+        // materializer that checks values against disk should be sent the `declare_write`
+        // results instead.
+        artifacts.push((path, ArtifactValue::file(entry.metadata.dupe())));
     }
 
-    materializer
-        .ensure_materialized(paths, MaterializationPurpose::IntermediateOnly)
+    let re_use_case = invocation_re_use_case(ctx);
+    let response = ctx
+        .per_transaction_data()
+        .get_materializer()
+        .materialize(MaterializeRequest {
+            artifacts,
+            outputs: Vec::new(),
+            purpose: MaterializationPurpose::IntermediateOnly,
+            re_use_case,
+        })
         .await?;
+    for result in response.results {
+        result?;
+    }
+    // FIXME(materializer): The command reads the cell's sources for as long as it runs, so the
+    // lease should live as long, held by whatever dice value this becomes. Nothing here can
+    // hold it that long, so it goes with the result.
+    drop(response.lease);
     Ok(yak_out_resolver.resolve_external_cell_source(
         CellRelativePath::unchecked_new(""),
         ExternalCellOrigin::Bundled(cell),
