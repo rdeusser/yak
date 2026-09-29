@@ -9,6 +9,8 @@
 
 load("@prelude//cxx:cxx_sources.bzl", "CxxSrcWithFlags")
 
+MetaXcassetsAssetSymbolSpec = record()
+
 def meta_xcassets_asset_symbol_usage_providers_and_subtargets(
     ctx: AnalysisContext, cxx_srcs: list[CxxSrcWithFlags], swift_srcs: list[CxxSrcWithFlags]
 ) -> (list[Provider], dict[str, list[Provider]]):
