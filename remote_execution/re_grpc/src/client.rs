@@ -1104,6 +1104,10 @@ impl REClient {
         // TODO(aloiscochard): Return a unique ID, ideally from the GRPC client
         "GRPC-SESSION-ID"
     }
+
+    pub fn release_temporary_memory(&self) -> anyhow::Result<()> {
+        Ok(())
+    }
 }
 
 fn convert_action_result(action_result: ActionResult) -> anyhow::Result<TActionResult2> {

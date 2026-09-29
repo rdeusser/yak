@@ -449,6 +449,14 @@ impl RemoteExecutionClient {
         self.data.client.get_session_id()
     }
 
+    pub fn release_temporary_memory(&self) -> yak_error::Result<()> {
+        self.data
+            .client
+            .client()
+            .release_temporary_memory()
+            .map_err(|e| from_any_with_tag(e, yak_error::ErrorTag::Tier0))
+    }
+
     pub fn fill_network_stats(&self, stats: &mut RemoteExecutionClientStats) {
         stats.uploads = RemoteExecutionClientOpStats::from(&self.data.uploads);
         stats.downloads = RemoteExecutionClientOpStats::from(&self.data.downloads);
