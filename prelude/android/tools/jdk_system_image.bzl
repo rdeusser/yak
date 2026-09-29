@@ -41,7 +41,7 @@ jdk_system_image = rule(
     attrs = {
         "core_for_system_modules_jar": attrs.source(),
         "create_jdk_system_image": attrs.exec_dep(default = "prelude//android/tools:create_jdk_system_image"),
-        "jar_builder": attrs.source(default = "prelude//toolchains/android/src/com/facebook/buck/util/zip:jar_builder"),
+        "jar_builder": attrs.source(default = "prelude//toolchains/android/src/dev/yak/util/zip:jar_builder"),
         "_java_toolchain": toolchains_common.java_for_android(),
     },
 )

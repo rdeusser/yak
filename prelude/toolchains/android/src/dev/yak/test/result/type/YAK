@@ -1,0 +1,16 @@
+load("@prelude//toolchains/android/tools:build_rules.bzl", "buck_java_library")
+load("@prelude//utils:source_listing.bzl", "source_listing")
+
+source_listing()
+
+buck_java_library(
+    name = "type",
+    srcs = glob(["*.java"]),
+    # This target gets pulled in by ideabuck, which can't move to Java 11 yet, so explicitly target 8.
+    source = "11",
+    target = "11",
+    visibility = [
+        "PUBLIC",
+    ],
+    deps = [],  # This list is to remain empty. See src/dev/yak/testrunner/BUCK.
+)

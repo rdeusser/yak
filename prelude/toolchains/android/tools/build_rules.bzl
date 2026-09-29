@@ -238,7 +238,7 @@ def buck_java_test(name, vm_args = None, run_test_separately = False, **kwargs):
             # and the bootstrapper loads the rest of Buck. For unit tests, which don't
             # run Buck, we have to add a direct dependency on the bootstrapper in case
             # they exercise code that uses it.
-            "prelude//toolchains/android/src/com/facebook/buck/cli/bootstrapper:bootstrapper_lib",
+            "prelude//toolchains/android/src/dev/yak/cli/bootstrapper:bootstrapper_lib",
         ],
         vm_args = [
             # Don't use the system-installed JNA; extract it from the local jar.

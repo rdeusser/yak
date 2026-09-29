@@ -1,0 +1,145 @@
+load(
+    "@prelude//toolchains/android/tools:build_rules.bzl",
+    "buck_java_binary",
+    "buck_java_library",
+    "buck_kotlin_library",
+    "buck_prebuilt_artifact",
+    "buck_prebuilt_jar",
+)
+load("@prelude//utils:source_listing.bzl", "source_listing")
+
+source_listing()
+
+JAR_BUILDER_MAIN_SRCS = [
+    "JarBuilderMain.java",
+]
+
+ZIP_SCRUBBER_SRCS = [
+    "ZipScrubber.java",
+    "ZipConstants.java",
+]
+
+buck_kotlin_library(
+    name = "zip",
+    srcs = glob(
+        [
+            "*.java",
+            "*.kt",
+        ],
+        exclude = JAR_BUILDER_MAIN_SRCS + ZIP_SCRUBBER_SRCS,
+    ),
+    tests = [
+        "prelude//toolchains/android/test/dev/yak/util/zip:zip",
+    ],
+    visibility = ["PUBLIC"],
+    deps = [
+        "prelude//toolchains/android/src/dev/yak/core/util/log:log",
+        "prelude//toolchains/android/src/dev/yak/io/file:file",
+        "prelude//toolchains/android/src/dev/yak/io/filesystem:filesystem",
+        "prelude//toolchains/android/src/dev/yak/io/filesystem/impl:utils",
+        "prelude//toolchains/android/src/dev/yak/io/pathformat:pathformat",
+        "prelude//toolchains/android/src/dev/yak/util/function:function",
+        "prelude//toolchains/android/src/dev/yak/util/io:io",
+        "prelude//toolchains/android/src/dev/yak/util/unarchive:unarchive",
+        "prelude//toolchains/android/third-party:guava",
+        "prelude//toolchains/android/third-party:jsr305",
+    ],
+    exported_deps = [
+        ":zip_scrubber_lib",
+    ],
+)
+
+buck_java_library(
+    name = "zip_scrubber_lib",
+    srcs = ZIP_SCRUBBER_SRCS,
+    visibility = ["PUBLIC"],
+    deps = [
+        "prelude//toolchains/android/src/dev/yak/util:util",
+        "prelude//toolchains/android/src/dev/yak/util/nio:nio",
+        "prelude//toolchains/android/third-party:args4j",
+        "prelude//toolchains/android/third-party:guava",
+    ],
+)
+
+alias(
+    name = "zip_scrubber",
+    actual = ":zip_scrubber_prebuilt",
+    visibility = ["PUBLIC"],
+)
+
+# This is a prebuilt jar so that it can be part of the buck2 bootstrap toolchain.
+buck_prebuilt_jar(
+    name = "zip_scrubber_prebuilt",
+    _dex_toolchain = "toolchains//:empty_dex",
+    binary_jar = ":zip_scrubber_main.jar",
+    should_generate_snapshot = False,
+    visibility = ["PUBLIC"],
+)
+
+# Built from `prelude//toolchains/android/src/dev/yak/util/zip:zip_scrubber_main`. To update it, build that target and publish the jar at a new `url`.
+buck_prebuilt_artifact(
+    name = "zip_scrubber_main.jar",
+    sha1 = "23c85d8db2958ad502c1cd1eb3bbcd1342c37c7d",
+    url = "https://github.com/facebook/buck2/releases/download/androidToolchain%2F2025-04-03/zip_scrubber_main.jar",
+)
+
+buck_java_binary(
+    name = "zip_scrubber_main",
+    main_class = "dev.yak.util.zip.ZipScrubber",
+    visibility = ["PUBLIC"],
+    deps = [":zip_scrubber_lib"],
+)
+
+buck_java_library(
+    name = "jar_builder_main_lib",
+    srcs = JAR_BUILDER_MAIN_SRCS,
+    visibility = ["PUBLIC"],
+    deps = [
+        "prelude//toolchains/android/src/dev/yak/core/filesystems:filesystems",
+        "prelude//toolchains/android/src/dev/yak/jvm/java:remove_classes_patterns_matcher",
+        "prelude//toolchains/android/src/dev/yak/util:util",
+        "prelude//toolchains/android/src/dev/yak/util/function:function",
+        "prelude//toolchains/android/third-party:args4j",
+        "prelude//toolchains/android/third-party:guava",
+        ":zip",
+    ],
+)
+
+alias(
+    name = "jar_builder",
+    actual = ":jar_builder_prebuilt",
+    visibility = ["PUBLIC"],
+)
+
+# This is a prebuilt jar so that it can be part of the buck2 bootstrap toolchain.
+buck_prebuilt_jar(
+    name = "jar_builder_prebuilt",
+    _dex_toolchain = "toolchains//:empty_dex",
+    binary_jar = ":jar_builder_main.jar",
+    should_generate_snapshot = False,
+    visibility = ["PUBLIC"],
+)
+
+# Built from `prelude//toolchains/android/src/dev/yak/util/zip:jar_builder_main`. To update it, build that target and publish the jar at a new `url`.
+buck_prebuilt_artifact(
+    name = "jar_builder_main.jar",
+    sha1 = "18f839ebb58babae4ae35900ef33cdf065d0cbc5",
+    url = "https://github.com/facebook/buck2/releases/download/androidToolchain%2F2025-04-03/jar_builder_main.jar",
+)
+
+buck_java_binary(
+    name = "jar_builder_main",
+    main_class = "dev.yak.util.zip.JarBuilderMain",
+    deps = [
+        ":jar_builder_main_lib",
+    ],
+)
+
+buck_java_binary(
+    name = "jar_diff",
+    main_class = "dev.yak.util.zip.JarDiff",
+    visibility = ["PUBLIC"],
+    deps = [
+        ":jar_builder_main_lib",
+    ],
+)

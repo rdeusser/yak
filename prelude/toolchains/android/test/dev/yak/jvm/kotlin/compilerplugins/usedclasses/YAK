@@ -1,0 +1,17 @@
+load("@prelude//toolchains/android/tools:build_rules.bzl", "buck_kotlin_test")
+load("@prelude//utils:source_listing.bzl", "source_listing")
+
+source_listing()
+
+buck_kotlin_test(
+    name = "usedclasses",
+    srcs = glob(
+        [
+            "**/*.kt",
+        ],
+    ),
+    deps = [
+        "prelude//toolchains/android/src/dev/yak/jvm/kotlin/compilerplugins/usedclasses:usedclasses",
+        "prelude//toolchains/android/third-party:junit",
+    ],
+)

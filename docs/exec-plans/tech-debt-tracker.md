@@ -124,20 +124,21 @@ Remove this entry when the site has a search box.
 
 ### The JVM toolchain has targets that do not build
 
-`prelude//toolchains/android/src/com/facebook/buck/android/aapt:merge_android_resource_sources` and `prelude//toolchains/android/src/com/facebook/buck/android/proguard:translator` fail to compile, and `prelude//toolchains/android/third-party:manifest-merger_jar` fails to download version 31.7.3.
+`prelude//toolchains/android/src/dev/yak/android/aapt:merge_android_resource_sources` and `prelude//toolchains/android/src/dev/yak/android/proguard:translator` fail to compile, and `prelude//toolchains/android/third-party:manifest-merger_jar` fails to download version 31.7.3.
 All three fail the same way at `903bfd7a61`.
+Analysis of `prelude//toolchains/android/test/dev/yak/jvm/cd/workertool/grpc:workertool_grpc` fails, because the target depends on `prelude//toolchains/android/third-party:grpc-api`, which sets no visibility. `grpc-api` sets none at `903bfd7a61` either.
 
 Remove this entry when `yak build prelude//toolchains/android/...` succeeds in a project that vendors the prelude.
 
 ### JVM tests fail in their JUnit reports
 
 `yak test` reports these failures as passes (see "`yak test` reports failing JVM tests as passing").
-Results are from 2026-09-28 at `903bfd7a61`.
+Results are from 2026-09-28, after the move to `dev.yak`, for `yak test prelude//toolchains/android/test/...` in a project that vendors the prelude.
 
-- `prelude/toolchains/android/third-party/YAK` pins Byte Buddy 1.15.10, which Mockito 5.20.0 uses to mock classes, and ASM 9.7. Neither reads Java 26 class files. Under a Java 26 JDK, the tests that mock classes fail with `Java 26 (70) is not supported by the current version of Byte Buddy`, and 26 tests in `ClassReferenceTrackerTest` fail with `Unsupported class file major version 70`.
-- The tests under `prelude//toolchains/android/test/com/facebook/buck/jvm/kotlin/...` that mock classes pass when the test JVM runs with `-Dnet.bytebuddy.experimental=true`.
-- Six tests in `StubJarTest` fail with `NoClassDefFoundError: org/apache/commons/io/input/CountingInputStream`, and the third-party `YAK` file defines no Commons IO jar.
-- Two tests in `DescriptorFactoryTest` and two in `SignatureFactoryTest` fail with an `InvocationTargetException` whose cause is unexamined.
+- Under a Java 21 JDK, 29 of the 2684 tests fail.
+- `prelude/toolchains/android/third-party/YAK` defines no Commons IO jar. Six tests in `StubJarTest`, eight in `UnzipTest`, three in `ZipOutputStreamTest`, and one in `ZipScrubberTest` fail with a `NoClassDefFoundError` for a Commons IO class.
+- The system Java toolchain in `prelude/toolchains/java.bzl` sets no source roots, so a resource of a target without `resources_root` keeps its path in the cell. Six tests in `ZipOutputStreamTest`, four in `ZipScrubberTest`, and `DdPlistTest.testXMLWriting` fail because they load a resource by the path of their package.
+- `prelude/toolchains/android/third-party/YAK` pins Byte Buddy 1.15.10, which Mockito 5.20.0 uses to mock classes, and ASM 9.7. Neither reads Java 26 class files. Under a Java 26 JDK, the tests that mock classes fail with `Java 26 (70) is not supported by the current version of Byte Buddy` unless the test JVM runs with `-Dnet.bytebuddy.experimental=true`. 26 tests in `ClassReferenceTrackerTest`, two in `DescriptorFactoryTest`, and two in `SignatureFactoryTest` fail with `Unsupported class file major version 70`.
 
 Remove this entry when the JUnit reports of `yak test prelude//toolchains/android/test/...` show no failures.
 
@@ -158,7 +159,7 @@ Remove each item when its command succeeds.
 
 ### `yak test` reports failing JVM tests as passing
 
-`BaseRunner.runAndExit` in `prelude/toolchains/android/src/com/facebook/buck/testrunner/BaseRunner.java` exits 0 whatever the outcome of the tests, and it records failures only in its report.
+`BaseRunner.runAndExit` in `prelude/toolchains/android/src/dev/yak/testrunner/BaseRunner.java` exits 0 whatever the outcome of the tests, and it records failures only in its report.
 The built-in test runner decides a test's result from its exit code, so a `java_test` whose test methods fail is reported as a pass.
 Meta's Tpx test runner read the report instead, and `TestResultsOutputSender` still writes the Tpx result protocol when Tpx's environment variable is set.
 
@@ -247,7 +248,7 @@ The repository owner plans to remove what still ties the repository to Meta's up
 ### Downloads from upstream releases
 
 - `bootstrap/reindeer` downloads `reindeer` from `facebookincubator/reindeer` releases, and `.github/actions/setup_reindeer/action.yml` installs it from that repository with `cargo install`.
-- The prelude downloads four jars from the `androidToolchain/2025-04-03` release of `facebook/buck2` (`cp_snapshot_generator.jar`, `zip_scrubber_main.jar`, `jar_builder_main.jar`, and `d8_dexer_patched.jar`). The jars run `com.facebook` main classes.
+- The prelude downloads four jars from the `androidToolchain/2025-04-03` release of `facebook/buck2` (`cp_snapshot_generator.jar`, `zip_scrubber_main.jar`, `jar_builder_main.jar`, and `d8_dexer_patched.jar`). The first three hold the `com.facebook.buck` classes that upstream built before this repository moved its sources to `dev.yak`.
 - `examples/android/demoapp/app/libs/external_deps.txt` points at the same release for the Artificer jar.
 - `.github/workflows/release.yml` and `.github/workflows/upload_buck2.yml` publish DotSlash files with the `facebook/dotslash-publish-release` action.
 
@@ -255,20 +256,9 @@ The repository owner plans to remove what still ties the repository to Meta's up
 
 Remove each item when the fork publishes its own artifact or drops the download.
 
-### `com.facebook` packages
-
-991 files under `prelude/` use `com.facebook` Java and Kotlin packages or paths, most of them under `prelude/toolchains/android/` (2026-09-28).
-Eight `.proto` files set a `java_package` under `com.facebook`, six in `prelude/` and two named `worker.proto` in `app/buck2_worker_proto/` and `examples/persistent_worker/proto/buck2/`.
-The packages stay until the rename chooses a package name, and the bootstrap jars above need rebuilding when they move.
-132 files import `com.facebook.infer.annotation`, which the Infer annotation jar from Maven Central defines, so those imports keep their package.
-
-`git grep -l -E '(^|[^.[:alnum:]_])com[./]facebook' -- prelude | wc -l` counts the prelude files.
-
-Remove this entry when no source file uses a `com.facebook` package other than `com.facebook.infer.annotation`.
-
 ### The Tpx result protocol
 
-The JUnit runner in `prelude/toolchains/android/src/com/facebook/buck/testrunner/` and the Common Test hooks in `prelude/erlang/common_test/` write results for Meta's Tpx test runner.
+The JUnit runner in `prelude/toolchains/android/src/dev/yak/testrunner/` and the Common Test hooks in `prelude/erlang/common_test/` write results for Meta's Tpx test runner.
 The built-in test runner reads exit codes, so it uses none of that output.
 
 Remove this entry when the runners report results only in a form the built-in runner reads.

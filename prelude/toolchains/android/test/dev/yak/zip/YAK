@@ -1,0 +1,16 @@
+load("@prelude//toolchains/android/tools:build_rules.bzl", "buck_java_test")
+load("@prelude//utils:source_listing.bzl", "source_listing")
+
+source_listing()
+
+buck_java_test(
+    name = "zip",
+    srcs = glob(["*.java"]),
+    deps = [
+        "prelude//toolchains/android/src/dev/yak/core/filesystems:filesystems",
+        "prelude//toolchains/android/src/dev/yak/util/zip:zip",
+        "prelude//toolchains/android/test/dev/yak/testutil:testutil",
+        "prelude//toolchains/android/third-party:guava",
+        "prelude//toolchains/android/third-party:junit",
+    ],
+)

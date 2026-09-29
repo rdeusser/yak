@@ -6,8 +6,8 @@ source_listing()
 buck_java_library(
     name = "aosp",
     visibility = [
-        "prelude//toolchains/android/src/com/facebook/buck/android/manifest:manifest",
-        "prelude//toolchains/android/src/com/facebook/buck/cli/bootstrapper:bootstrapper_lib",
+        "prelude//toolchains/android/src/dev/yak/android/manifest:manifest",
+        "prelude//toolchains/android/src/dev/yak/cli/bootstrapper:bootstrapper_lib",
     ],
     exported_deps = [
         "prelude//toolchains/android/third-party:android-annotations",
@@ -26,7 +26,7 @@ third_party_jar(
     sha1 = "d51ecbc4a5b7a2c7832586a4dde18f61d92810a4",
     url = "mvn:https://maven.google.com:com.android.tools.build:apksig:jar:8.4.0",
     visibility = [
-        "prelude//toolchains/android/src/com/facebook/buck/android/apk:apk",
-        "prelude//toolchains/android/src/com/facebook/buck/android/bundle:bundle",
+        "prelude//toolchains/android/src/dev/yak/android/apk:apk",
+        "prelude//toolchains/android/src/dev/yak/android/bundle:bundle",
     ],
 )

@@ -1,0 +1,17 @@
+load("@prelude//toolchains/android/tools:build_rules.bzl", "buck_java_library")
+load("@prelude//utils:source_listing.bzl", "source_listing")
+
+source_listing()
+
+buck_java_library(
+    name = "filesystems",
+    srcs = glob(["*.java"]),
+    tests = ["prelude//toolchains/android/test/dev/yak/core/filesystems:filesystems"],
+    visibility = [
+        "prelude//toolchains/android/src/dev/yak/...",
+        "prelude//toolchains/android/test/...",
+    ],
+    deps = [
+        # Do NOT add deps here. This library is loaded into the JVM bootstrap classloader in Java 9+.
+    ],
+)

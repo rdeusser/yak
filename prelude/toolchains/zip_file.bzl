@@ -9,7 +9,7 @@
 load("@prelude//zip_file:zip_file_toolchain.bzl", "ZipFileToolchainInfo")
 
 def zip_file_toolchain(name, **kwargs):
-    kwargs["create_zip"] = "prelude//toolchains/android/src/com/facebook/buck/features/zip/rules/utils:zip_binary"
+    kwargs["create_zip"] = "prelude//toolchains/android/src/dev/yak/features/zip/rules/utils:zip_binary"
 
     _zip_file_toolchain_rule(name = name, **kwargs)
 

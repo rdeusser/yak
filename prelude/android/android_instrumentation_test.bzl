@@ -140,7 +140,7 @@ def android_instrumentation_test_impl(ctx: AnalysisContext):
 
     # Exopackage secondary dexes live out-of-band, not in base.apk. Pass the build's secondary-dex
     # dir so the runner pushes them to /data/local/tmp/exopackage/<pkg>/secondary-dex before
-    # Application init; otherwise classes in those dexes (e.g. com.facebook.R$style) hit NoClassDefFoundError on RE.
+    # Application init; otherwise classes in those dexes (e.g. com.example.R$style) hit NoClassDefFoundError on RE.
     apk_exopackage_info = ctx.attrs.apk.get(AndroidApkExopackageInfo)
     if apk_exopackage_info != None:
         cmd.extend([

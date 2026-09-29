@@ -1,0 +1,53 @@
+load("@prelude//toolchains/android/tools:build_rules.bzl", "buck_java_binary", "buck_kotlin_library", "buck_prebuilt_artifact", "buck_prebuilt_jar")
+load("@prelude//utils:source_listing.bzl", "source_listing")
+
+source_listing()
+
+buck_kotlin_library(
+    name = "cp_snapshot_generator_lib",
+    srcs = glob(
+        ["**/*.kt"],
+    ),
+    extra_kotlinc_arguments = ["-Xopt-in=kotlin.ExperimentalStdlibApi"],
+    visibility = ["PUBLIC"],
+    runtime_deps = [
+        "prelude//toolchains/android/third-party:kotlin-build-tools-impl",
+        "prelude//toolchains/android/third-party:kotlin-compiler-embeddable",
+    ],
+    deps = [
+        "prelude//toolchains/android/src/dev/yak/core/util/log:log",
+        "prelude//toolchains/android/third-party:args4j",
+        "prelude//toolchains/android/third-party:kotlin-build-tools-api",
+    ],
+)
+
+buck_java_binary(
+    name = "cp_snapshot_generator_binary",
+    main_class = "dev.yak.jvm.kotlin.buildtools.snapshot.Main",
+    visibility = ["PUBLIC"],
+    deps = [
+        ":cp_snapshot_generator_lib",
+    ],
+)
+
+alias(
+    name = "cp_snapshot_generator",
+    actual = ":cp_snapshot_generator_prebuilt",
+    visibility = ["PUBLIC"],
+)
+
+# This is a prebuilt jar so that it can be part of the buck2 bootstrap toolchain.
+buck_prebuilt_jar(
+    name = "cp_snapshot_generator_prebuilt",
+    binary_jar = ":cp_snapshot_generator.jar",
+    is_executable = True,
+    should_generate_snapshot = False,
+    visibility = ["PUBLIC"],
+)
+
+# Built from `prelude//toolchains/android/src/dev/yak/jvm/kotlin/buildtools/snapshot:cp_snapshot_generator_binary`. To update it, build that target and publish the jar at a new `url`.
+buck_prebuilt_artifact(
+    name = "cp_snapshot_generator.jar",
+    sha1 = "1bbf0a79f5c88a4bb316ebd98dfca7b615aae52a",
+    url = "https://github.com/facebook/buck2/releases/download/androidToolchain%2F2025-04-03/cp_snapshot_generator.jar",
+)

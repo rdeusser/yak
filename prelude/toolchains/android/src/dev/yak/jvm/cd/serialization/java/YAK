@@ -1,0 +1,22 @@
+load("@prelude//toolchains/android/tools:build_rules.bzl", "buck_java_library")
+load("@prelude//utils:source_listing.bzl", "source_listing")
+
+source_listing()
+
+buck_java_library(
+    name = "java",
+    srcs = glob(["*.java"]),
+    visibility = [
+        "prelude//toolchains/android/src/dev/yak/jvm/...",
+        "prelude//toolchains/android/test/dev/yak/jvm/cd/serialization/...",
+    ],
+    deps = [
+        "prelude//toolchains/android/src/dev/yak/cd/resources/proto:javacd-model",
+        "prelude//toolchains/android/src/dev/yak/core/filesystems:filesystems",
+        "prelude//toolchains/android/src/dev/yak/jvm/cd/serialization:serialization",
+        "prelude//toolchains/android/src/dev/yak/jvm/cd/serialization:util",
+        "prelude//toolchains/android/src/dev/yak/jvm/java:support",
+        "prelude//toolchains/android/third-party:guava",
+        "prelude//toolchains/android/third-party:infer-annotations",
+    ],
+)

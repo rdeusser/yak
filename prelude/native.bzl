@@ -222,7 +222,7 @@ def _android_binary_macro_stub(allow_r_dot_java_in_secondary_dex = False, cpu_fi
             "/R^",
             "/R$",
             # Pin this to the primary for apps with no primary dex classes.
-            "^com/facebook/buck_generated/AppWithoutResourcesStub^",
+            "^dev/yak_generated/AppWithoutResourcesStub^",
         ]
 
     # TODO: Accept `select` for `cpu_filters` and apply the same logic as for non-select cases
@@ -245,7 +245,7 @@ def _android_instrumentation_apk_macro_stub(cpu_filters = None, primary_dex_patt
         "/R^",
         "/R$",
         # Pin this to the primary for apps with no primary dex classes.
-        "^com/facebook/buck_generated/AppWithoutResourcesStub^",
+        "^dev/yak_generated/AppWithoutResourcesStub^",
     ]
     __rules__["android_instrumentation_apk"](cpu_filters = _get_valid_cpu_filters(cpu_filters), primary_dex_patterns = primary_dex_patterns, **kwargs)
 

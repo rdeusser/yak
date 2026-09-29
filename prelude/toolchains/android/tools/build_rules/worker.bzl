@@ -75,7 +75,7 @@ def _worker_impl(ctx):
 worker = rule(
     impl = _worker_impl,
     attrs = {
-        "class_loader_bootstrapper": attrs.source(default = "prelude//toolchains/android/src/com/facebook/buck/cli/bootstrapper:bootstrapper"),
+        "class_loader_bootstrapper": attrs.source(default = "prelude//toolchains/android/src/dev/yak/cli/bootstrapper:bootstrapper"),
         "concurrency": attrs.option(attrs.int(), default = None),
         "exe": attrs.source(),
         "jvm_args": attrs.list(attrs.string(), default = []),
@@ -87,7 +87,7 @@ worker = rule(
 remote_worker = rule(
     impl = _worker_impl,
     attrs = {
-        "class_loader_bootstrapper": attrs.source(default = "prelude//toolchains/android/src/com/facebook/buck/cli/bootstrapper:bootstrapper"),
+        "class_loader_bootstrapper": attrs.source(default = "prelude//toolchains/android/src/dev/yak/cli/bootstrapper:bootstrapper"),
         "concurrency": attrs.option(attrs.int(), default = None),
         "exe": attrs.source(),
         "jvm_args": attrs.list(attrs.string(), default = []),

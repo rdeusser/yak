@@ -18,7 +18,7 @@ def system_dex_toolchain(name, android_sdk_tools_target, visibility = None):
     _dex_toolchain_rule(
         name = name,
         android_jar = "{}[android.jar]".format(android_sdk_tools_target),
-        d8_command_binary = "prelude//toolchains/android/src/com/facebook/buck/android/dex:run_d8_binary",
+        d8_command_binary = "prelude//toolchains/android/src/dev/yak/android/dex:run_d8_binary",
         visibility = visibility,
     )
 

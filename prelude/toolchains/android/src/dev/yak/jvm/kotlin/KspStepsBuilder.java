@@ -1,0 +1,288 @@
+/*
+ * Copyright (c) Meta Platforms, Inc. and affiliates.
+ *
+ * This source code is dual-licensed under either the MIT license found in the
+ * LICENSE-MIT file in the root directory of this source tree or the Apache
+ * License, Version 2.0 found in the LICENSE-APACHE file in the root directory
+ * of this source tree. You may select, at your option, one of the
+ * above-listed licenses.
+ */
+
+package dev.yak.jvm.kotlin;
+
+import static dev.yak.jvm.java.JavaPaths.SRC_ZIP;
+import static dev.yak.jvm.kotlin.AnnotationProcessorUtils.getAnnotationProcessors;
+import static dev.yak.jvm.kotlin.CompilerPluginUtils.getKotlinCompilerPluginsArgs;
+
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.ImmutableSortedSet;
+import dev.yak.core.filesystems.AbsPath;
+import dev.yak.core.filesystems.RelPath;
+import dev.yak.io.filesystem.CopySourceMode;
+import dev.yak.jvm.cd.command.kotlin.KotlinExtraParams;
+import dev.yak.jvm.core.BuildTargetValue;
+import dev.yak.jvm.core.BuildTargetValueExtraParams;
+import dev.yak.jvm.java.ActionMetadata;
+import dev.yak.jvm.java.CompilerOutputPaths;
+import dev.yak.jvm.java.JavacPluginParams;
+import dev.yak.jvm.java.ResolvedJavacPluginProperties;
+import dev.yak.jvm.kotlin.kotlinc.Kotlinc;
+import dev.yak.jvm.kotlin.ksp.Ksp2Step;
+import dev.yak.step.isolatedsteps.IsolatedStep;
+import dev.yak.step.isolatedsteps.common.CopyIsolatedStep;
+import dev.yak.step.isolatedsteps.common.MakeCleanDirectoryIsolatedStep;
+import dev.yak.step.isolatedsteps.common.MkdirIsolatedStep;
+import dev.yak.step.isolatedsteps.common.ZipIsolatedStep;
+import dev.yak.util.zip.ZipCompressionLevel;
+import java.nio.file.Path;
+import java.util.List;
+import java.util.Optional;
+
+public class KspStepsBuilder {
+  private static final String KSP_PLUGIN_ID = "plugin:com.google.devtools.ksp.symbol-processing:";
+  private static final String MODULE_NAME = "-module-name";
+  private static final String PLUGIN = "-P";
+
+  /** Initialize all the folders, steps and parameters needed to run KSP plugins for this rule. */
+  public static KSPInvocationStatus prepareKspProcessorsIfNeeded(
+      Optional<ActionMetadata> actionMetadata,
+      KotlinExtraParams extraParams,
+      BuildTargetValue invokingRule,
+      AbsPath rootPath,
+      ImmutableList.Builder<IsolatedStep> steps,
+      ImmutableList.Builder<IsolatedStep> postKotlinCompilationSteps,
+      BuildTargetValueExtraParams buildTargetValueExtraParams,
+      RelPath outputDirectory,
+      RelPath annotationGenFolder,
+      ImmutableSortedSet.Builder<RelPath> javacSourceBuilder,
+      RelPath reportsOutput,
+      boolean shouldTrackClassUsage,
+      ImmutableList<AbsPath> allClasspaths,
+      String kotlinPluginGeneratedOutFullPath,
+      RelPath projectBaseDir,
+      JavacPluginParams annotationProcessorParams,
+      ImmutableSortedSet<RelPath> sourceFilePaths,
+      Path pathToSrcsList,
+      ImmutableList<AbsPath> kotlinHomeLibraries,
+      Kotlinc kotlinc,
+      CompilerOutputPaths compilerOutputPaths,
+      RelPath configuredBuckOut,
+      ImmutableSortedSet.Builder<RelPath> sourceBuilderWithKspOutputs,
+      ImmutableList<AbsPath> compilationClasspath,
+      String moduleName) {
+
+    ImmutableList<ResolvedJavacPluginProperties> kspAnnotationProcessors =
+        getKspAnnotationProcessors(getAnnotationProcessors(annotationProcessorParams));
+
+    KSPInvocationStatus kspInvocationStatus = KSPInvocationStatus.NOT_INVOKED;
+
+    // We need to generate the KSP generation folder anyway, to help IntelliJ with red
+    // symbols.
+    RelPath kspAnnotationGenFolder = buildTargetValueExtraParams.getKspAnnotationGenPath();
+    steps.addAll(MakeCleanDirectoryIsolatedStep.of(kspAnnotationGenFolder));
+
+    if (kspAnnotationProcessors.isEmpty()) {
+      return kspInvocationStatus;
+    }
+
+    steps.add(new MkdirIsolatedStep(outputDirectory));
+    // KSP folders
+    RelPath kspOutputBaseDir = buildTargetValueExtraParams.getAnnotationOutputBasePath();
+    RelPath kspClassesOutput =
+        buildTargetValueExtraParams.getAnnotationOutputPath("__%s_ksp_classes__");
+    RelPath kspKotlinOutput =
+        buildTargetValueExtraParams.getAnnotationOutputPath("__%s_ksp_generated_kotlin__");
+    RelPath kspJavaOutput =
+        buildTargetValueExtraParams.getAnnotationOutputPath("__%s_ksp_generated_java__");
+    RelPath kspResOutput =
+        buildTargetValueExtraParams.getAnnotationOutputPath("__%s_ksp_res_output__");
+    RelPath kspCachesOutput =
+        buildTargetValueExtraParams.getAnnotationOutputPath("__%s_ksp_cache_output__");
+    RelPath kspMetaOutput =
+        buildTargetValueExtraParams.getAnnotationOutputPath("__%s_ksp_meta_output__");
+
+    // More KSP folders
+    RelPath kspGenOutputFolder = buildTargetValueExtraParams.getGenPath("__%s_ksp_gen_sources__");
+    RelPath kspGenOutput =
+        buildTargetValueExtraParams.getGenPath("__%s_ksp_gen_sources__/generated" + SRC_ZIP);
+
+    // Creating KSP dirs
+    steps.addAll(MakeCleanDirectoryIsolatedStep.of(kspClassesOutput));
+    steps.addAll(MakeCleanDirectoryIsolatedStep.of(kspKotlinOutput));
+    steps.addAll(MakeCleanDirectoryIsolatedStep.of(kspJavaOutput));
+    steps.addAll(MakeCleanDirectoryIsolatedStep.of(kspResOutput));
+    steps.addAll(MakeCleanDirectoryIsolatedStep.of(kspCachesOutput));
+    steps.addAll(MakeCleanDirectoryIsolatedStep.of(kspMetaOutput));
+    steps.addAll(MakeCleanDirectoryIsolatedStep.of(kspGenOutputFolder));
+
+    ImmutableList<String> kspProcessorsClasspathList =
+        kspAnnotationProcessors.stream()
+            .map(p -> p.toUrlClasspath(rootPath))
+            .flatMap(List::stream)
+            .map(AnnotationProcessorUtils::urlToFile)
+            .collect(ImmutableList.toImmutableList());
+
+    kspInvocationStatus = KSPInvocationStatus.KSP2_INVOKED;
+
+    ImmutableList.Builder<AbsPath> allClassPathsBuilder = ImmutableList.builder();
+
+    allClassPathsBuilder.addAll(allClasspaths);
+
+    if (invokingRule.isSourceOnlyAbi()) {
+      allClassPathsBuilder.addAll(
+          compilationClasspath.stream().filter(p -> !allClasspaths.contains(p)).toList());
+    }
+
+    Ksp2Step ksp2Step =
+        new Ksp2Step(
+            invokingRule,
+            compilerOutputPaths,
+            rootPath,
+            shouldTrackClassUsage,
+            allClassPathsBuilder.build(),
+            kotlinPluginGeneratedOutFullPath,
+            annotationProcessorParams.getParameters(),
+            sourceFilePaths,
+            CompilerOutputPaths.getKspDepFilePath(reportsOutput),
+            moduleName,
+            kspProcessorsClasspathList,
+            kspClassesOutput,
+            kspKotlinOutput,
+            kspJavaOutput,
+            kspOutputBaseDir,
+            extraParams.getJvmTarget(),
+            extraParams.getLanguageVersion(),
+            getJvmDefaultMode(extraParams.getExtraKotlincArguments()),
+            extraParams.getJavaBinary(),
+            Ksp2ModeFactory.create(
+                rootPath,
+                invokingRule.isSourceOnlyAbi(),
+                kspCachesOutput,
+                extraParams,
+                actionMetadata.orElse(null)));
+    steps.add(ksp2Step);
+    steps.addAll(
+        createKspOutputStagingSteps(
+            rootPath,
+            kspKotlinOutput,
+            kspJavaOutput,
+            kspClassesOutput,
+            kspAnnotationGenFolder,
+            kspGenOutput,
+            annotationGenFolder));
+
+    // Generated classes should be part of the output. This way generated files such as
+    // META-INF dirs will also be added to the final jar.
+    postKotlinCompilationSteps.add(
+        CopyIsolatedStep.forDirectory(
+            kspClassesOutput.getPath(),
+            outputDirectory.getPath(),
+            CopySourceMode.DIRECTORY_CONTENTS_ONLY));
+
+    sourceBuilderWithKspOutputs.add(kspGenOutput);
+
+    javacSourceBuilder.add(kspGenOutput);
+
+    return kspInvocationStatus;
+  }
+
+  static ImmutableList<IsolatedStep> createKspOutputStagingSteps(
+      AbsPath rootPath,
+      RelPath kspKotlinOutput,
+      RelPath kspJavaOutput,
+      RelPath kspClassesOutput,
+      RelPath kspAnnotationGenFolder,
+      RelPath kspGenOutput,
+      RelPath annotationGenFolder) {
+    ImmutableList.Builder<IsolatedStep> stagingSteps = ImmutableList.builder();
+    stagingSteps.add(
+        CopyIsolatedStep.forDirectory(
+            kspKotlinOutput, kspAnnotationGenFolder, CopySourceMode.DIRECTORY_CONTENTS_ONLY));
+    stagingSteps.add(
+        CopyIsolatedStep.forDirectory(
+            kspJavaOutput, kspAnnotationGenFolder, CopySourceMode.DIRECTORY_CONTENTS_ONLY));
+    stagingSteps.add(
+        CopyIsolatedStep.forDirectory(
+            kspClassesOutput, kspAnnotationGenFolder, CopySourceMode.DIRECTORY_CONTENTS_ONLY));
+    stagingSteps.add(
+        new ZipIsolatedStep(
+            rootPath,
+            kspGenOutput.getPath(),
+            ImmutableSet.of(),
+            ImmutableSet.of(),
+            false,
+            ZipCompressionLevel.DEFAULT,
+            kspAnnotationGenFolder.getPath()));
+    stagingSteps.add(
+        CopyIsolatedStep.forDirectory(
+            kspAnnotationGenFolder, annotationGenFolder, CopySourceMode.DIRECTORY_CONTENTS_ONLY));
+    return stagingSteps.build();
+  }
+
+  static ImmutableList<String> getKspPluginsArgs(
+      ImmutableMap<AbsPath, ImmutableMap<String, String>> resolvedKotlinCompilerPlugins,
+      String outputDir) {
+    return getKotlinCompilerPluginsArgs(
+        resolvedKotlinCompilerPlugins,
+        outputDir,
+        KspStepsBuilder::isPluginRequiredForStandaloneKsp);
+  }
+
+  private static String getJvmDefaultMode(ImmutableList<String> args) {
+    for (String arg : args) {
+      String[] splitArg = arg.split("=");
+      if (splitArg.length == 2) {
+        if (splitArg[0].equals("-Xjvm-default")) {
+          return splitArg[1];
+        }
+        // Kotlin 2.3 renamed -Xjvm-default to -jvm-default with new mode names. Map them back to
+        // the legacy mode names KSP expects to preserve behavior.
+        if (splitArg[0].equals("-jvm-default")) {
+          switch (splitArg[1]) {
+            case "no-compatibility":
+              return "all";
+            case "enable":
+              return "all-compatibility";
+            case "disable":
+              return "disable";
+            default:
+              return splitArg[1];
+          }
+        }
+      }
+    }
+    return "disabled";
+  }
+
+  private static boolean isPluginRequiredForStandaloneKsp(
+      AbsPath sourcePath, ImmutableMap<String, String> options) {
+    return isKspPlugin(sourcePath);
+  }
+
+  private static boolean isPluginNotRequiredForStandaloneKsp(
+      AbsPath sourcePath, ImmutableMap<String, String> options) {
+    return !isPluginRequiredForStandaloneKsp(sourcePath, options);
+  }
+
+  private static boolean isKspPlugin(AbsPath sourcePath) {
+    return sourcePath.toString().contains("symbol-processing");
+  }
+
+  public static boolean isNotKspPlugin(AbsPath sourcePath, ImmutableMap<String, String> options) {
+    return !isKspPlugin(sourcePath);
+  }
+
+  static ImmutableList<ResolvedJavacPluginProperties> getKspAnnotationProcessors(
+      ImmutableList<ResolvedJavacPluginProperties> annotationProcessors) {
+    return annotationProcessors.stream()
+        .filter(AnnotationProcessorUtils::isKSPProcessor)
+        .collect(ImmutableList.toImmutableList());
+  }
+
+  public enum KSPInvocationStatus {
+    KSP2_INVOKED,
+    NOT_INVOKED
+  }
+}

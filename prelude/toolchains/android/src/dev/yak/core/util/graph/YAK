@@ -1,0 +1,21 @@
+load("@prelude//toolchains/android/tools:build_rules.bzl", "buck_java_library")
+load("@prelude//utils:source_listing.bzl", "source_listing")
+
+source_listing()
+
+buck_java_library(
+    name = "graph",
+    srcs = glob(["*.java"]),
+    tests = [
+        "prelude//toolchains/android/test/dev/yak/core/util/graph:graph",
+    ],
+    visibility = [
+        "prelude//toolchains/android/src/dev/yak/android/apkmodule:apkmodule",
+        "prelude//toolchains/android/test/dev/yak/android/apkmodule:apkmodule",
+        "prelude//toolchains/android/test/dev/yak/core/util/graph:graph",
+    ],
+    deps = [
+        "prelude//toolchains/android/src/dev/yak/util:util",
+        "prelude//toolchains/android/third-party:guava",
+    ],
+)

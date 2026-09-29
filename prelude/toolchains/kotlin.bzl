@@ -14,7 +14,7 @@ def kotlincd_toolchain(name, java_binary_for_kotlincd = None, visibility = None)
         java_binary_for_kotlincd = java_binary_for_kotlincd,
         name = name,
         annotation_processing_jar = "prelude//toolchains/android/third-party:kotlin-annotation-processing-embeddable",
-        class_loader_bootstrapper = "prelude//toolchains/android/src/com/facebook/buck/cli/bootstrapper:bootstrapper",
+        class_loader_bootstrapper = "prelude//toolchains/android/src/dev/yak/cli/bootstrapper:bootstrapper",
         compile_kotlin = "prelude//kotlin/tools/compile_kotlin:compile_kotlin",
         dep_files = "none",
         kapt_base64_encoder = "prelude//kotlin/tools/kapt_base64_encoder:kapt_base64_encoder",
@@ -32,9 +32,9 @@ def kotlincd_toolchain(name, java_binary_for_kotlincd = None, visibility = None)
             "prelude//toolchains/android/third-party:kotlinx-coroutines-core-jvm",
         ],
         kotlinc = "prelude//toolchains/android/third-party:kotlin-compiler-binary",
-        kotlincd = "prelude//toolchains/android/src/com/facebook/buck/jvm/kotlin/cd/workertool:kotlincd_tool-main",
+        kotlincd = "prelude//toolchains/android/src/dev/yak/jvm/kotlin/cd/workertool:kotlincd_tool-main",
         kotlinc_protocol = "kotlincd",
-        kotlincd_main_class = "com.facebook.buck.jvm.kotlin.cd.workertool.KotlinCDMain",
+        kotlincd_main_class = "dev.yak.jvm.kotlin.cd.workertool.KotlinCDMain",
         visibility = visibility,
     )
 

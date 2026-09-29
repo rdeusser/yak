@@ -1,0 +1,54 @@
+load("@prelude//toolchains/android/tools:build_rules.bzl", "buck_java_binary", "buck_kotlin_library")
+load("@prelude//utils:source_listing.bzl", "source_listing")
+
+source_listing()
+
+buck_kotlin_library(
+    name = "exceptions",
+    srcs = [
+        "AndroidInstallErrorTag.kt",
+        "AndroidInstallException.kt",
+    ],
+    visibility = ["PUBLIC"],
+    deps = [
+        "prelude//toolchains/android/src/dev/yak/core/util/log:log",
+        "prelude//toolchains/android/src/dev/yak/installer:installer_server",
+    ],
+)
+
+buck_kotlin_library(
+    name = "installer_android_lib",
+    srcs = glob([
+        "*.java",
+        "*.kt",
+    ]),
+    visibility = [
+        "PUBLIC",
+    ],
+    deps = [
+        "prelude//toolchains/android/src/dev/yak/android:helpers",
+        "prelude//toolchains/android/src/dev/yak/android:utils_api",
+        "prelude//toolchains/android/src/dev/yak/android/device:device",
+        "prelude//toolchains/android/src/dev/yak/core/filesystems:filesystems",
+        "prelude//toolchains/android/src/dev/yak/core/util/log:log",
+        "prelude//toolchains/android/src/dev/yak/installer:installer_server",
+        "prelude//toolchains/android/src/dev/yak/util:process_executor",
+        "prelude//toolchains/android/src/dev/yak/util/environment:environment",
+        "prelude//toolchains/android/src/dev/yak/util/environment:platform",
+        "prelude//toolchains/android/src/dev/yak/util/json:json",
+        "prelude//toolchains/android/third-party:args4j",
+        "prelude//toolchains/android/third-party:guava",
+        "prelude//toolchains/android/third-party:jsr305",
+    ],
+)
+
+buck_java_binary(
+    name = "android_installer",
+    main_class = "dev.yak.installer.android.AndroidInstallerMain",
+    visibility = [
+        "PUBLIC",
+    ],
+    deps = [
+        ":installer_android_lib",
+    ],
+)

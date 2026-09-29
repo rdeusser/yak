@@ -1,0 +1,26 @@
+load("@prelude//toolchains/android/tools:build_rules.bzl", "buck_java_library")
+load("@prelude//utils:source_listing.bzl", "source_listing")
+
+source_listing()
+
+buck_java_library(
+    name = "file",
+    srcs = glob(["*.java"]),
+    visibility = [
+        "PUBLIC",
+    ],
+    deps = [
+        "prelude//toolchains/android/src/dev/yak/core/filesystems:filesystems",
+        "prelude//toolchains/android/src/dev/yak/core/util/log:log",
+        "prelude//toolchains/android/src/dev/yak/io/pathformat:pathformat",
+        "prelude//toolchains/android/src/dev/yak/util:process_executor",
+        "prelude//toolchains/android/src/dev/yak/util:util",
+        "prelude//toolchains/android/src/dev/yak/util/environment:platform",
+        "prelude//toolchains/android/third-party:guava",
+        "prelude//toolchains/android/third-party:jsr305",
+    ],
+    exported_deps = [
+        "prelude//toolchains/android/src/dev/yak/core/filesystems:filesystems",
+        "prelude//toolchains/android/src/dev/yak/io/windowsfs:windowsfs",
+    ],
+)

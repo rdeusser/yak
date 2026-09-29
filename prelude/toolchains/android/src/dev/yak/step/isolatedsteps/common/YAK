@@ -1,0 +1,28 @@
+load(
+    "@prelude//toolchains/android/tools:build_rules.bzl",
+    "buck_kotlin_library",
+)
+load("@prelude//utils:source_listing.bzl", "source_listing")
+
+source_listing()
+
+buck_kotlin_library(
+    name = "common",
+    srcs = glob([
+        "*.java",
+        "*.kt",
+    ]),
+    visibility = [
+        "prelude//toolchains/android/src/dev/yak/...",
+        "prelude//toolchains/android/test/dev/yak/...",
+    ],
+    deps = [
+        "prelude//toolchains/android/src/dev/yak/io/file:file",
+        "prelude//toolchains/android/src/dev/yak/util/zip:zip",
+        "prelude//toolchains/android/third-party:guava",
+    ],
+    exported_deps = [
+        "prelude//toolchains/android/src/dev/yak/io/filesystem/impl:utils",
+        "prelude//toolchains/android/src/dev/yak/step/isolatedsteps:isolatedsteps",
+    ],
+)

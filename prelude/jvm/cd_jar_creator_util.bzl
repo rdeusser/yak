@@ -61,7 +61,7 @@ def get_abi_generation_mode(
 # protobuf message.
 #
 # The definitions are javacd.proto and kotlincd.proto in
-# prelude/toolchains/android/src/com/facebook/buck/cd/resources/proto/.
+# prelude/toolchains/android/src/dev/yak/cd/resources/proto/.
 
 # Our protobuf format mostly encodes paths in RelPath/AbsPath structs with a single "path" field.
 # Note that we don't actually use abspath and instead enable JAVACD_ABSOLUTE_PATHS_ARE_RELATIVE_TO_CWD

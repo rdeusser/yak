@@ -1,0 +1,16 @@
+load("@prelude//toolchains/android/tools:build_rules.bzl", "buck_kotlin_library")
+load("@prelude//utils:source_listing.bzl", "source_listing")
+
+source_listing()
+
+buck_kotlin_library(
+    name = "incremental",
+    srcs = glob(["**/*.kt"]),
+    visibility = [
+        "prelude//toolchains/android/src/dev/yak/jvm/kotlin/...",
+        "prelude//toolchains/android/test/dev/yak/jvm/kotlin/...",
+    ],
+    deps = [
+        "prelude//toolchains/android/src/dev/yak/core/filesystems:filesystems",
+    ],
+)

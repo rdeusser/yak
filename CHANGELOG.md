@@ -34,6 +34,11 @@ Removes the code, configuration, and service clients that only Meta's internal b
 - The hidden flag that runs the daemon in the client process is `--no-yakd`, and its variable is `YAK_NO_YAKD`.
 - `host_info()` no longer has a `buck2` field.
 - The integration tests take the binary from `YAK_BINARY` and rewrite golden files when `YAK_UPDATE_GOLDEN` is set.
+- The Java and Kotlin packages of the JVM and Android toolchain are under `dev.yak` in place of `com.facebook.buck`, such as `dev.yak.jvm.java`.
+- Apps that use exopackage extend `dev.yak.android.support.exopackage.ExopackageApplication`.
+- The JUnit runner reads its log levels from the system properties `dev.yak.stdOutLogLevel` and `dev.yak.stdErrLogLevel`.
+- The source ABI and KSP steps pass the annotation processor options `dev.yak.java.generating_abi`, `dev.yak.kotlin.generating_abi`, and `dev.yak.kotlin.ksp_generated_out_path`.
+- The Java classes of the worker protocol are in `dev.yak.worker.model`.
 
 ### Removed commands and flags
 

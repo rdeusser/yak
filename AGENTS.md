@@ -2,8 +2,8 @@
 
 This repository is a fork of Meta's Buck2 build system.
 It holds the Rust client and daemon (`app/`), the Starlark interpreter (`starlark-rust/`), the incremental computation engine (`dice/`), the Starlark rule library (`prelude/`), and the crates they use.
-The fork is being renamed to yak. The binary is `yak`, it reads `YAK` build files and `.yakconfig` files, and it writes `yak-out`. [The rename plan](docs/exec-plans/active/2026-09-28-rename-the-fork.md) tracks the remaining work, such as the Java packages and the `buck2*` crates.
-[The tech-debt tracker](docs/exec-plans/tech-debt-tracker.md) lists what still depends on the upstream project, such as release downloads and the `com.facebook` packages of the JVM toolchain.
+The fork is being renamed to yak. The binary is `yak`, it reads `YAK` build files and `.yakconfig` files, and it writes `yak-out`. [The rename plan](docs/exec-plans/active/2026-09-28-rename-the-fork.md) tracks the remaining work, such as the `buck2*` crates.
+[The tech-debt tracker](docs/exec-plans/tech-debt-tracker.md) lists what still depends on the upstream project, such as release downloads.
 
 ## Read before changing code
 

@@ -224,5 +224,5 @@ Buck builds on Linux and macOS use the system allocator, because `third-party/ru
 
 ## Planned changes
 
-- The rename to yak continues with the Java packages and the `buck2*` crates. `docs/exec-plans/active/2026-09-28-rename-the-fork.md` tracks the work.
-- The `com.facebook` packages of the JVM and Android toolchain will move to a package under the new name. `docs/exec-plans/tech-debt-tracker.md` lists them with the other upstream connections that remain.
+- The rename to yak continues with the `buck2*` crates. `docs/exec-plans/active/2026-09-28-rename-the-fork.md` tracks the work.
+- The bootstrap jars of the JVM toolchain will be built from this repository's sources and stored outside the upstream releases. `docs/exec-plans/tech-debt-tracker.md` lists them with the other upstream connections that remain.

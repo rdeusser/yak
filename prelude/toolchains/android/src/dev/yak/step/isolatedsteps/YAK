@@ -1,0 +1,22 @@
+load("@prelude//toolchains/android/tools:build_rules.bzl", "buck_java_library")
+load("@prelude//utils:source_listing.bzl", "source_listing")
+
+source_listing()
+
+buck_java_library(
+    name = "isolatedsteps",
+    srcs = glob(["*.java"]),
+    visibility = [
+        "prelude//toolchains/android/src/dev/yak/...",
+        "prelude//toolchains/android/test/dev/yak/...",
+    ],
+    deps = [
+        "prelude//toolchains/android/src/dev/yak/util/json:json",
+        "prelude//toolchains/android/third-party:guava",
+    ],
+    exported_deps = [
+        "prelude//toolchains/android/src/dev/yak/core/build/execution/context:context",
+        "prelude//toolchains/android/src/dev/yak/core/util/log:log",
+        "prelude//toolchains/android/src/dev/yak/step:step",
+    ],
+)

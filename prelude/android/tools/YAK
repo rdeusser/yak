@@ -87,7 +87,7 @@ prelude.python_bootstrap_binary(
 
 prelude.zip_file(
     name = "app_without_resources_stub",
-    srcs = ["com/facebook/buck_generated/AppWithoutResourcesStub.java"],
+    srcs = ["dev/yak_generated/AppWithoutResourcesStub.java"],
     out = "app_without_resources_stub.src.zip",
     visibility = ["PUBLIC"],
 )

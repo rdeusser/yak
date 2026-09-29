@@ -1,0 +1,13 @@
+load("@prelude//toolchains/android/tools:build_rules.bzl", "buck_kotlin_library")
+load("@prelude//utils:source_listing.bzl", "source_listing")
+
+source_listing()
+
+buck_kotlin_library(
+    name = "usedclasses",
+    srcs = glob(["**/*.kt"]),
+    tests = [
+        "prelude//toolchains/android/test/dev/yak/jvm/kotlin/compilerplugins/usedclasses:usedclasses",
+    ],
+    visibility = ["PUBLIC"],
+)

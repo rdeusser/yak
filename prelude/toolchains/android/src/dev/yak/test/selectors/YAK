@@ -1,0 +1,20 @@
+load("@prelude//toolchains/android/tools:build_rules.bzl", "buck_java_library")
+load("@prelude//utils:source_listing.bzl", "source_listing")
+
+source_listing()
+
+buck_java_library(
+    name = "selectors",
+    srcs = glob(["*.java"]),
+    required_for_source_only_abi = True,
+    # This target is pulled in by testrunner, which needs to compile against Java 8.
+    source = "11",
+    target = "11",
+    tests = [
+        "prelude//toolchains/android/test/dev/yak/test/selectors:selectors",
+    ],
+    visibility = [
+        "PUBLIC",
+    ],
+    deps = [],  # This list is to remain empty. See src/dev/yak/testrunner/BUCK.
+)

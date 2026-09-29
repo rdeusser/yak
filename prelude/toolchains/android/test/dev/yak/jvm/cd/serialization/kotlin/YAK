@@ -1,0 +1,23 @@
+load("@prelude//toolchains/android/tools:build_rules.bzl", "standard_java_test")
+load("@prelude//utils:source_listing.bzl", "source_listing")
+
+source_listing()
+
+standard_java_test(
+    name = "kotlin",
+    env = {"JAVACD_ABSOLUTE_PATHS_ARE_RELATIVE_TO_CWD": "1"},
+    deps = [
+        "prelude//toolchains/android/src/dev/yak/cd/resources/proto:cd-model",
+        "prelude//toolchains/android/src/dev/yak/cd/resources/proto:javacd-model",
+        "prelude//toolchains/android/src/dev/yak/cd/resources/proto:kotlincd-model",
+        "prelude//toolchains/android/src/dev/yak/core/filesystems:filesystems",
+        "prelude//toolchains/android/src/dev/yak/jvm/cd/command:command",
+        "prelude//toolchains/android/src/dev/yak/jvm/cd/command/kotlin:language-version",
+        "prelude//toolchains/android/src/dev/yak/jvm/cd/command/kotlin:support",
+        "prelude//toolchains/android/src/dev/yak/jvm/cd/serialization/java:java",
+        "prelude//toolchains/android/src/dev/yak/jvm/cd/serialization/kotlin:kotlin",
+        "prelude//toolchains/android/src/dev/yak/jvm/java:support",
+        "prelude//toolchains/android/third-party:guava",
+        "prelude//toolchains/android/third-party:junit",
+    ],
+)

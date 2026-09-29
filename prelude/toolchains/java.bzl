@@ -76,13 +76,13 @@ def javacd_toolchain(name, java, javac, jar, jlink, jmod, jrt_fs_jar, java_for_t
         jar = jar,
         java_for_tests = java_for_tests,
         is_bootstrap_toolchain = False,
-        class_abi_generator = "prelude//toolchains/android/src/com/facebook/buck/jvm/java/abi:api-stubber",
-        class_loader_bootstrapper = "prelude//toolchains/android/src/com/facebook/buck/cli/bootstrapper:bootstrapper",
-        fat_jar_main_class_lib = "prelude//toolchains/android/src/com/facebook/buck/jvm/java/fatjar:fat-jar-main-binary",
+        class_abi_generator = "prelude//toolchains/android/src/dev/yak/jvm/java/abi:api-stubber",
+        class_loader_bootstrapper = "prelude//toolchains/android/src/dev/yak/cli/bootstrapper:bootstrapper",
+        fat_jar_main_class_lib = "prelude//toolchains/android/src/dev/yak/jvm/java/fatjar:fat-jar-main-binary",
         javac = javac,
-        javacd = "prelude//toolchains/android/src/com/facebook/buck/jvm/java/stepsbuilder/javacd/main:javacd_tool",
+        javacd = "prelude//toolchains/android/src/dev/yak/jvm/java/stepsbuilder/javacd/main:javacd_tool",
         javac_protocol = "javacd",
-        javacd_main_class = "com.facebook.buck.jvm.java.stepsbuilder.javacd.main.JavaCDMain",
+        javacd_main_class = "dev.yak.jvm.java.stepsbuilder.javacd.main.JavaCDMain",
         jlink = jlink,
         jmod = jmod,
         jrt_fs_jar = jrt_fs_jar,
@@ -177,7 +177,7 @@ _java_toolchain = rule(
         ),
         "is_bootstrap_toolchain": attrs.bool(default = False),
         "jar": attrs.option(attrs.exec_dep(providers = [RunInfo]), default = None),
-        "jar_builder": attrs.source(default = "prelude//toolchains/android/src/com/facebook/buck/util/zip:jar_builder"),
+        "jar_builder": attrs.source(default = "prelude//toolchains/android/src/dev/yak/util/zip:jar_builder"),
         "java": attrs.exec_dep(providers = [RunInfo]),
         "java_for_tests": attrs.option(attrs.exec_dep(providers = [RunInfo]), default = None),
         "javac": attrs.option(attrs.one_of(attrs.exec_dep(), attrs.source(), attrs.string()), default = None),
@@ -193,15 +193,15 @@ _java_toolchain = rule(
         ),
         "source_level": attrs.string(default = "8"),
         "target_level": attrs.string(default = "8"),
-        "zip_scrubber": attrs.source(default = "prelude//toolchains/android/src/com/facebook/buck/util/zip:zip_scrubber"),
+        "zip_scrubber": attrs.source(default = "prelude//toolchains/android/src/dev/yak/util/zip:zip_scrubber"),
     },
 )
 
 def java_test_toolchain(name, **kwargs):
-    kwargs["test_runner_library_jar"] = "prelude//toolchains/android/src/com/facebook/buck/testrunner:testrunner-bin-fixed"
-    kwargs["junit_test_runner_main_class_args"] = ["com.facebook.buck.jvm.java.runner.FileClassPathRunner", "com.facebook.buck.testrunner.JUnitMain"]
-    kwargs["junit5_test_runner_main_class_args"] = ["com.facebook.buck.jvm.java.runner.FileClassPathRunner", "com.facebook.buck.testrunner.JupiterMain"]
-    kwargs["testng_test_runner_main_class_args"] = ["com.facebook.buck.jvm.java.runner.FileClassPathRunner", "com.facebook.buck.testrunner.TestNGMain"]
+    kwargs["test_runner_library_jar"] = "prelude//toolchains/android/src/dev/yak/testrunner:testrunner-bin-fixed"
+    kwargs["junit_test_runner_main_class_args"] = ["dev.yak.jvm.java.runner.FileClassPathRunner", "dev.yak.testrunner.JUnitMain"]
+    kwargs["junit5_test_runner_main_class_args"] = ["dev.yak.jvm.java.runner.FileClassPathRunner", "dev.yak.testrunner.JupiterMain"]
+    kwargs["testng_test_runner_main_class_args"] = ["dev.yak.jvm.java.runner.FileClassPathRunner", "dev.yak.testrunner.TestNGMain"]
     kwargs["list_class_names"] = "prelude//java/tools:list_class_names"
 
     _java_test_toolchain_rule(name = name, **kwargs)
