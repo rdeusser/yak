@@ -44,7 +44,6 @@ yak_execute.workspace = true
 yak_execute_local.workspace = true
 yak_fs.workspace = true
 yak_hash.workspace = true
-yak_http.workspace = true
 yak_resource_control.workspace = true
 yak_util.workspace = true
 yak_worker_proto.workspace = true

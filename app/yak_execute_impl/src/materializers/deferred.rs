@@ -72,7 +72,6 @@ use yak_execute::materialize::materializer::CleanStaleArtifactsArgs;
 use yak_execute::materialize::materializer::CopiedArtifact;
 use yak_execute::materialize::materializer::DeclareArtifactPayload;
 use yak_execute::materialize::materializer::DeclareMatchOutcome;
-use yak_execute::materialize::materializer::HttpDownloadInfo;
 use yak_execute::materialize::materializer::MaterializationError;
 use yak_execute::materialize::materializer::MaterializationPurpose;
 use yak_execute::materialize::materializer::Materializer;
@@ -81,7 +80,6 @@ use yak_execute::materialize::materializer::MaterializerIterItem;
 use yak_execute::materialize::materializer::WriteRequest;
 use yak_execute::re::manager::ReConnectionManager;
 use yak_hash::YakMutSet;
-use yak_http::HttpClient;
 use yak_util::threads::thread_spawn;
 
 use crate::materializers::deferred::artifact_tree::ArtifactTree;
@@ -496,25 +494,6 @@ impl<T: IoHandler + Allocative> Materializer for DeferredMaterializerAccessor<T>
         Ok(())
     }
 
-    async fn declare_http(
-        &self,
-        path: ProjectRelativePathBuf,
-        info: HttpDownloadInfo,
-    ) -> yak_error::Result<()> {
-        let cmd = MaterializerCommand::Declare(
-            DeclareArtifactPayload {
-                path,
-                artifact: ArtifactValue::file(info.metadata.dupe()),
-            },
-            Box::new(ArtifactMaterializationMethod::HttpDownload { info }),
-            get_dispatcher(),
-            current_span(),
-        );
-        self.command_sender.send(cmd)?;
-
-        Ok(())
-    }
-
     async fn declare_write<'a>(
         &self,
         generate: Box<dyn FnOnce() -> yak_error::Result<Vec<WriteRequest>> + Send + 'a>,
@@ -890,7 +869,6 @@ impl DeferredMaterializerAccessor<DefaultIoHandler> {
         configs: DeferredMaterializerConfigs,
         sqlite_db: Option<MaterializerStateSqliteDb>,
         sqlite_state: Option<MaterializerState>,
-        http_client: HttpClient,
         daemon_dispatcher: EventDispatcher,
     ) -> yak_error::Result<Self> {
         Self::new_with_io(
@@ -900,7 +878,6 @@ impl DeferredMaterializerAccessor<DefaultIoHandler> {
                 yak_out_path,
                 re_client_manager,
                 io_executor,
-                http_client,
             )),
             configs,
             sqlite_db,

@@ -9023,7 +9023,6 @@ dependencies = [
  "yak_forkserver_proto",
  "yak_fs",
  "yak_hash",
- "yak_http",
  "yak_resource_control",
  "yak_util",
  "yak_worker_proto",

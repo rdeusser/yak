@@ -21,8 +21,6 @@ use futures::stream::TryStreamExt;
 use jiff::SignedDuration;
 use jiff::Timestamp;
 use remote_execution::TCode;
-use yak_common::file_ops::metadata::FileMetadata;
-use yak_core::deferred::base_deferred_key::BaseDeferredKey;
 use yak_core::execution_types::executor_config::RemoteExecutorUseCase;
 use yak_core::fs::project_rel_path::ProjectRelativePathBuf;
 use yak_core::fs::yak_out_path::YakOutPathKind;
@@ -38,7 +36,6 @@ use crate::directory::ActionDirectoryMember;
 use crate::directory::ActionImmutableDirectory;
 use crate::directory::ActionSharedDirectory;
 use crate::execute::action_digest::TrackedActionDigest;
-use crate::materialize::http::Checksum;
 use crate::re::error::RemoteExecutionError;
 
 pub struct WriteRequest {
@@ -201,12 +198,6 @@ pub trait Materializer: Allocative + Send + Sync + 'static {
         &self,
         info: Arc<CasDownloadInfo>,
         artifacts: Vec<DeclareArtifactPayload>,
-    ) -> yak_error::Result<()>;
-
-    async fn declare_http(
-        &self,
-        path: ProjectRelativePathBuf,
-        info: HttpDownloadInfo,
     ) -> yak_error::Result<()>;
 
     /// Write contents to paths. The output is ordered in the same order as the input. Implicitly
@@ -671,24 +662,6 @@ impl CasDownloadInfo {
             | CasDownloadInfoOrigin::TestArtifact => None,
         }
     }
-}
-
-/// Information about a CAS download we might require when an artifact is not materialized.
-#[derive(Debug, Display, Allocative)]
-#[display("{} declared by {}", self.url, self.owner)]
-pub struct HttpDownloadInfo {
-    /// URL to download the file from.
-    pub url: Arc<str>,
-
-    /// Size, whether the file is executable. Also contains a digest, which is a bit of a shame
-    /// since it's duplicative of checksum.
-    pub metadata: FileMetadata,
-
-    /// Checksum for the file, to valiate before downloading.
-    pub checksum: Checksum,
-
-    /// Target that declared the action.
-    pub owner: BaseDeferredKey,
 }
 
 #[derive(Debug, yak_error::Error)]

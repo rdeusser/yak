@@ -53,7 +53,6 @@ use yak_execute::directory::ActionSharedDirectory;
 use yak_execute::execute::blocking::BlockingExecutor;
 use yak_execute::execute::blocking::IoRequest;
 use yak_execute::execute::clean_output_paths::cleanup_path;
-use yak_execute::materialize::http::http_download;
 use yak_execute::materialize::materializer::CasDownloadInfo;
 use yak_execute::materialize::materializer::CasNotFoundError;
 use yak_execute::materialize::materializer::WriteRequest;
@@ -66,7 +65,6 @@ use yak_fs::fs_util::ReadDir;
 use yak_fs::paths::abs_norm_path::AbsNormPathBuf;
 use yak_hash::YakMutMap;
 use yak_hash::YakMutSet;
-use yak_http::HttpClient;
 
 use crate::materializers::deferred::ArtifactMaterializationMethod;
 use crate::materializers::deferred::ArtifactMaterializationStage;
@@ -90,7 +88,6 @@ pub struct DefaultIoHandler {
     re_client_manager: Arc<ReConnectionManager>,
     /// Executor for blocking IO operations
     io_executor: Arc<dyn BlockingExecutor>,
-    http_client: HttpClient,
 }
 
 #[derive(Allocative)]
@@ -176,7 +173,6 @@ impl DefaultIoHandler {
         yak_out_path: ProjectRelativePathBuf,
         re_client_manager: Arc<ReConnectionManager>,
         io_executor: Arc<dyn BlockingExecutor>,
-        http_client: HttpClient,
     ) -> Self {
         Self {
             fs,
@@ -184,7 +180,6 @@ impl DefaultIoHandler {
             yak_out_path,
             re_client_manager,
             io_executor,
-            http_client,
         }
     }
     /// Materializes an `entry` at `path`, using the materialization `method`
@@ -265,44 +260,6 @@ impl DefaultIoHandler {
                             format!("Error materializing files declared by action: {info}")
                         })),
                     })?;
-            }
-            ArtifactMaterializationMethod::HttpDownload { info } => {
-                async {
-                    let downloaded = http_download(
-                        &self.http_client,
-                        &self.fs,
-                        self.digest_config,
-                        &path,
-                        &info.url,
-                        &info.checksum,
-                        info.metadata.is_executable,
-                    )
-                    .await?;
-
-                    // Check that the size we got was the one that we expected. This isn't strictly
-                    // speaking necessary here, but since an invalid size would break actions
-                    // running on RE, it's a good idea to catch it here when materializing so that
-                    // our test suite can surface bugs when downloading things locally.
-                    if downloaded.size() != info.metadata.digest.size() {
-                        return Err(yak_error::yak_error!(
-                            ErrorTag::DownloadSizeMismatch,
-                            "Downloaded size ({}) does not match expected size ({})",
-                            downloaded.size(),
-                            info.metadata.digest.size(),
-                        ));
-                    }
-                    stat.file_count = 1;
-                    stat.total_bytes = info.metadata.digest.size();
-                    Ok(())
-                }
-                .boxed()
-                .await
-                .with_yak_error_context(|| {
-                    format!(
-                        "Error materializing HTTP resource declared by target `{}`",
-                        info.owner
-                    )
-                })?;
             }
             ArtifactMaterializationMethod::LocalCopy(_, copied_artifacts) => {
                 self.io_executor

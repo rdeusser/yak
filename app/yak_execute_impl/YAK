@@ -20,7 +20,6 @@ rust_library(
         "//app/yak_execute_local:yak_execute_local",
         "//app/yak_fs:yak_fs",
         "//app/yak_hash:yak_hash",
-        "//app/yak_http:yak_http",
         "//app/yak_resource_control:yak_resource_control",
         "//app/yak_util:yak_util",
         "//app/yak_worker_proto:yak_worker_proto",

@@ -240,7 +240,6 @@ struct TenantStateInit<'a> {
 
 struct DaemonSharedServices<'a> {
     blocking_executor_factory: &'a BlockingExecutorFactory,
-    http_client: &'a HttpClient,
     memory_tracker: Option<&'a MemoryTrackerHandle>,
     daemon_id: &'a DaemonId,
 }
@@ -517,7 +516,6 @@ impl TenantState {
             deferred_materializer_configs,
             materializer_db,
             materializer_state,
-            shared.http_client.dupe(),
             // Events the materializer emits outside any command (such as background cleanup) have
             // no client to reach.
             EventDispatcher::null(),
@@ -665,7 +663,6 @@ impl RepoState {
         deferred_materializer_configs: DeferredMaterializerConfigs,
         materializer_db: Option<MaterializerStateSqliteDb>,
         materializer_state: Option<MaterializerState>,
-        http_client: HttpClient,
         daemon_dispatcher: EventDispatcher,
     ) -> yak_error::Result<Arc<dyn Materializer>> {
         Ok(Arc::new(DeferredMaterializer::new(
@@ -677,7 +674,6 @@ impl RepoState {
             deferred_materializer_configs,
             materializer_db,
             materializer_state,
-            http_client,
             daemon_dispatcher,
         )?))
     }
@@ -877,7 +873,6 @@ impl DaemonStateData {
     fn repo_shared_services(&self) -> DaemonSharedServices<'_> {
         DaemonSharedServices {
             blocking_executor_factory: &self.blocking_executor_factory,
-            http_client: &self.http_client,
             memory_tracker: self.memory_tracker.as_ref(),
             daemon_id: &self.daemon_id,
         }
@@ -1036,7 +1031,6 @@ impl DaemonState {
                     root_config,
                     DaemonSharedServices {
                         blocking_executor_factory: &blocking_executor_factory,
-                        http_client: &http_client,
                         memory_tracker: memory_tracker.as_ref(),
                         daemon_id: &daemon_id,
                     },
