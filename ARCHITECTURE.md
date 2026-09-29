@@ -4,7 +4,7 @@ This repository holds yak, a build system, together with the Starlark interprete
 A user declares targets in build files (`YAK` by default) in Starlark. yak evaluates those files, configures each target for a platform, runs each rule's analysis to produce actions, and runs the actions locally or on a Remote Execution service.
 yak keeps its results in an incremental computation graph, so a later command recomputes only what its changed inputs affect.
 
-The repository is a fork of `facebook/buck2`. [Planned changes](#planned-changes) lists what the fork intends to change.
+The repository is a fork of `facebook/buck2` from commit `903bfd7a61` (2026-09-25), and it ports upstream commits one at a time instead of merging (`docs/developers/basics.md`). [Planned changes](#planned-changes) lists what the fork intends to change.
 `website/docs/concepts/architecture.md` describes the build phases for users. This document maps them to the code.
 
 ## Bird's-eye view

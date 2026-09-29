@@ -119,6 +119,18 @@ knobs.
 
 ## Porting changes from upstream
 
+The fork split from `facebook/buck2` at commit `903bfd7a61` (2026-09-25) and does not merge upstream again.
+A fix or feature from upstream reaches the fork only when someone ports its commit.
+To see what upstream changed since the split, fetch `https://github.com/facebook/buck2.git` and list its commits after `903bfd7a61`.
+
+A ported commit takes the fork's names:
+
+- Paths and names that contain `buck` or `buck2` take the `yak` form in the same case, such as `app/buck2_core` to `app/yak_core`, `BUCK2_` to `YAK_`, `buck-out` to `yak-out`, and `BUCK` to `YAK`.
+- Links to the upstream project and text about it keep the upstream names.
+- Hunks for code that the fork removed are dropped. `CHANGELOG.md` lists the removed code, such as the JVM, Android, and JavaScript rules, the Buck1 compatibility code, and the clients of Meta's services.
+
+The commit message names the upstream commit it ports, as `Ported from facebook/buck2@<hash>`, so `git log --grep 'Ported from'` lists what the fork has taken.
+
 `facebook/buck2` builds inside Meta's internal repository, and its code marks what only that build uses (`#[cfg(fbcode_build)]` branches, `@oss-disable` and `@oss-enable` comments, `is_open_source()` checks, and `fbcode//` or `fbsource//` labels). This repository has none of these markers. A change ported from upstream keeps the open-source side of each marker and drops the rest.
 
 Upstream `BUCK` files load macros from Meta's cells and name crates by their path inside Meta's repository. A ported build file is named `YAK`, loads `//build_defs:rust.bzl` or `//build_defs:proto.bzl`, names third-party crates `//third-party/rust:<crate>` in place of `fbsource//third-party/rust:<crate>`, and names crates of this repository `//<path>:<crate>` in place of `//buck2/<path>:<crate>`.
