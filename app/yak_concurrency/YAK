@@ -15,7 +15,6 @@ rust_library(
         "//dice/dice_futures:dice_futures",
         "//gazebo/dupe:dupe",
         "//starlark-rust/starlark_map:starlark_map",
-        "//third-party/rust:async-condvar-fair",
         "//third-party/rust:async-trait",
         "//third-party/rust:derive_more",
         "//third-party/rust:futures",

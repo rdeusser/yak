@@ -8524,7 +8524,6 @@ version = "0.1.0"
 dependencies = [
  "allocative",
  "assert_matches",
- "async-condvar-fair",
  "async-trait",
  "derivative",
  "derive_more 2.1.1",

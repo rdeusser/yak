@@ -7,7 +7,6 @@ license.workspace = true
 
 [dependencies]
 allocative.workspace = true
-async-condvar-fair.workspace = true
 async-trait.workspace = true
 derive_more.workspace = true
 dice.workspace = true
