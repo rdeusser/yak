@@ -73,19 +73,20 @@ copy_to_dir = rule(
     },
 )
 
-def _download(ctx: AnalysisContext):
-    download = ctx.actions.download_file("download", ctx.attrs.url, sha256 = ctx.attrs.sha256, has_content_based_path = False)
-    return [
-        DefaultInfo(default_output = download),
-    ]
+def _remote_write_impl(ctx: AnalysisContext):
+    out = ctx.actions.declare_output("out.txt", has_content_based_path = False)
+    ctx.actions.run(
+        cmd_args(["sh", "-c", 'echo REMOTE > "$1"', "--", out.as_output()]),
+        category = "remote_write",
+        prefer_remote = True,
+    )
+    return [DefaultInfo(default_output = out)]
 
-download = rule(
-    impl = _download,
-    attrs = {
-        "deferrable": attrs.bool(),
-        "sha256": attrs.string(default = read_config("test", "download_sha256", "")),
-        "url": attrs.string(default = read_config("test", "download_url", "")),
-    },
+# An artifact the materializer can fetch again from the CAS, which is what a remotely executed
+# action's outputs are.
+remote_write = rule(
+    impl = _remote_write_impl,
+    attrs = {},
 )
 
 def _cas_artifact_impl(ctx: AnalysisContext):

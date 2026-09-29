@@ -7,7 +7,6 @@
 # above-listed licenses.
 
 import asyncio
-import hashlib
 import json
 import os
 import platform
@@ -18,8 +17,13 @@ from aiohttp import web
 import pytest
 from e2e_util.api.yak import Yak
 from e2e_util.asserts import expect_failure
-from e2e_util.yak_workspace import yak_test
-from e2e_util.helper.utils import filter_events
+from e2e_util.yak_workspace import env, yak_test
+from e2e_util.helper.http_server import sha1_hex, StaticHttpServer
+from e2e_util.helper.utils import filter_events, random_string
+
+# The CAS names content by the daemon's digest algorithm, and the download tests declare
+# SHA-1 checksums, as upstream's tests do. yak defaults to SHA-256.
+sha1_digests = env("YAK_DEFAULT_DIGEST_ALGORITHM", "SHA1")
 
 
 @yak_test(data_dir="actions")
@@ -219,12 +223,14 @@ async def test_anon_targets(yak: Yak) -> None:
 
 
 @yak_test(data_dir="actions")
+@sha1_digests
 async def test_download_file(yak: Yak) -> None:
     routes = web.RouteTableDef()
 
     attempt = 0
-    body: bytes = b"foobar"
-    sha1 = hashlib.sha1(body).hexdigest()
+    # Fresh content, so the CAS cannot already have it and the download really happens.
+    body: bytes = random_string().encode()
+    sha1 = sha1_hex(body)
 
     @routes.get("/")
     async def hello(request: web.Request) -> web.Response:
@@ -255,19 +261,54 @@ async def test_download_file(yak: Yak) -> None:
 
     await runner.cleanup()
 
-    # The download has only a SHA-1 checksum, which the default SHA-256 digest
-    # configuration cannot defer, so yak downloads the file at once. The
-    # server sees the two failed requests that yak retries and the request
-    # that succeeds.
-    assert attempt == 3
+    # HEAD, then the GET's two retried errors and its success.
+    assert attempt == 4
 
 
 @yak_test(data_dir="actions")
+@sha1_digests
+async def test_download_file_without_head_support(yak: Yak) -> None:
+    content = random_string().encode()
+    async with StaticHttpServer({"/file": content}, allow_head=False) as server:
+        result = await yak.build(
+            "//download_file:",
+            "-c",
+            f"test.sha1={sha1_hex(content)}",
+            "-c",
+            f"test.url={server.url('/file')}",
+        )
+        output = result.get_build_report().output_for_target("//download_file:test")
+        assert output.read_bytes() == content
+        assert server.count("HEAD", "/file") == 1
+        assert server.count("GET", "/file") == 1
+
+
+@yak_test(data_dir="actions")
+@sha1_digests
+async def test_download_file_wrong_size(yak: Yak) -> None:
+    content = random_string().encode()
+    async with StaticHttpServer({"/file": content}) as server:
+        await expect_failure(
+            yak.build(
+                "//download_file:",
+                "-c",
+                f"test.sha1={sha1_hex(content)}",
+                "-c",
+                f"test.url={server.url('/file')}",
+                "-c",
+                f"test.size_bytes={len(content) + 1}",
+            ),
+            stderr_regex=f"Downloaded size \\({len(content)}\\) does not match expected size \\({len(content) + 1}\\)",
+        )
+
+
+@yak_test(data_dir="actions")
+@sha1_digests
 async def test_download_file_timeout_after_retries(yak: Yak) -> None:
     routes = web.RouteTableDef()
 
-    body: bytes = b"foobar"
-    sha1 = hashlib.sha1(body).hexdigest()
+    body: bytes = random_string().encode()
+    sha1 = sha1_hex(body)
 
     @routes.get("/always_times_out")
     async def always_times_out(request: web.Request) -> web.Response:

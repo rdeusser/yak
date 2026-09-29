@@ -11,13 +11,17 @@ from pathlib import Path
 
 import pytest
 from e2e_util.api.yak import Yak
-from e2e_util.yak_workspace import yak_test, env
+from e2e_util.yak_workspace import env, yak_test
+from e2e_util.helper.http_server import sha1_hex, StaticHttpServer
 from e2e_util.helper.utils import (
-    configure_served_file,
     filter_events,
+    random_string,
     replace_in_file,
-    serve_file,
 )
+
+# The CAS names content by the daemon's digest algorithm, and the download tests declare
+# SHA-1 checksums, as upstream's tests do. yak defaults to SHA-256.
+sha1_digests = env("YAK_DEFAULT_DIGEST_ALGORITHM", "SHA1")
 
 
 def watchman_dependency_linux_only() -> bool:
@@ -170,24 +174,31 @@ async def test_sqlite_materializer_state_matching_artifact_optimization(
 @yak_test(
     data_dir="deferred_materializer_matching_artifact_optimization",
 )
-@env("YAK_LOG", "yak_execute_impl::materializers=trace")
-async def test_download_file_sqlite_matching_artifact_optimization(
+@sha1_digests
+async def test_download_file_not_repeated_after_restart(
     yak: Yak,
 ) -> None:
-    async with serve_file(b"downloaded by the materializer test\n") as served:
-        configure_served_file(yak, served)
-        # sqlite materializer state is already enabled
+    # Fresh content, so the CAS cannot already have it and the download really happens.
+    content = random_string().encode()
+    async with StaticHttpServer({"/file": content}) as server:
         target = "root//:download"
-        res = await yak.build(target)
-        # Check output is correctly materialized
-        assert res.get_build_report().output_for_target(target).exists()
+        configs = [
+            "-c",
+            f"test.url={server.url('/file')}",
+            "-c",
+            f"test.sha1={sha1_hex(content)}",
+        ]
 
+        res = await yak.build(target, *configs)
+        output = res.get_build_report().output_for_target(target)
+        assert output.read_bytes() == content
+        assert server.count("GET", "/file") == 1
+
+        # The sqlite materializer state tells the new daemon the file is already there.
         await yak.kill()
-
-        res = await yak.build(target)
-        # Check that materializer did not report any rematerialization
-        assert "already materialized, updating deps only" in res.stderr, res.stderr
-        assert "materialize artifact" not in res.stderr
+        await yak.build(target, *configs)
+        assert output.read_bytes() == content
+        assert server.count("GET", "/file") == 1
 
 
 @pytest.mark.remote_execution

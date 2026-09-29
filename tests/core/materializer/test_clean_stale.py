@@ -16,15 +16,7 @@ import pytest
 from e2e_util.api.yak import Yak
 from e2e_util.yak_workspace import yak_test, env
 from e2e_util.helper.golden import golden, sanitize_hashes
-from e2e_util.helper.utils import (
-    configure_served_file,
-    expect_exec_count,
-    replace_in_file,
-    serve_file,
-)
-
-# The content of the file that the `download` targets download.
-DOWNLOAD_CONTENT = b"downloaded by the clean stale tests\n"
+from e2e_util.helper.utils import expect_exec_count, replace_in_file
 
 
 def configure_active_unmaterialization(
@@ -68,7 +60,11 @@ async def audit_entry(yak: Yak, artifact_name: str) -> str:
 
 def golden_audit_entries(*, entries: list[str], rel_path: str) -> None:
     output = re.sub(r"ts=[^,)]*", "ts=<TIMESTAMP>", "\n".join(entries))
-    output = re.sub(r"http://127\.0\.0\.1:\d+/", "http://127.0.0.1:<PORT>/", output)
+    output = re.sub(
+        r"retrieved [0-9.]+ seconds ago with ttl = [0-9.]+ seconds",
+        "retrieved <AGE> ago with ttl = <TTL>",
+        output,
+    )
     golden(output=sanitize_hashes(output), rel_path=rel_path)
 
 
@@ -199,26 +195,24 @@ async def test_clean_stale_yak_out_empty(yak: Yak) -> None:
 @yak_test()
 @env("YAK_LOG", "yak_execute_impl::materializers=trace")
 async def test_clean_stale_actions(yak: Yak) -> None:
-    async with serve_file(DOWNLOAD_CONTENT) as served:
-        configure_served_file(yak, served)
-        query_res = await yak.cquery("root//...")
-        targets = [
-            target.split(" ")[0] for target in query_res.stdout.split("\n") if target
-        ]
+    query_res = await yak.cquery("root//...")
+    targets = [
+        target.split(" ")[0] for target in query_res.stdout.split("\n") if target
+    ]
 
-        outputs = []
-        for target in targets:
-            res = await yak.build(target)
-            output = res.get_build_report().outputs_for_target(target)
-            outputs += output
+    outputs = []
+    for target in targets:
+        res = await yak.build(target)
+        output = res.get_build_report().outputs_for_target(target)
+        outputs += output
 
-        assert len(outputs) >= len(targets)
-        for output in outputs:
-            assert output.exists()
+    assert len(outputs) >= len(targets)
+    for output in outputs:
+        assert output.exists()
 
-        await yak.clean("--stale")
-        for output in outputs:
-            assert output.exists()
+    await yak.clean("--stale")
+    for output in outputs:
+        assert output.exists()
 
 
 @yak_test()
@@ -518,31 +512,25 @@ async def test_clean_stale_cli_adaptive_min_ttl_protects_recent(yak: Yak) -> Non
     assert output.exists()
 
 
+@pytest.mark.remote_execution
 @yak_test(skip_for_os=["windows"])
 async def test_adaptive_unmaterializes_active_remote_intermediate(
     yak: Yak,
 ) -> None:
     configure_active_unmaterialization(yak, enabled=True)
-    async with serve_file(DOWNLOAD_CONTENT) as served:
-        configure_served_file(yak, served)
-        result = await yak.build(
-            "root//:consume_remote", "--local-only", "--no-remote-cache"
-        )
-        output = result.get_build_report().output_for_target("root//:consume_remote")
-        assert output.exists()
-        audit_entries = [await audit_entry(yak, "__download_deferred__")]
+    result = await yak.build("root//:consume_remote", "--no-remote-cache")
+    output = result.get_build_report().output_for_target("root//:consume_remote")
+    assert output.exists()
 
-        await asyncio.sleep(30)
-        audit_entries.append(await audit_entry(yak, "__download_deferred__"))
+    # Whether an adaptive pass has already run by the time the build returns is a race, so the
+    # intermediate's state is only recorded once it has certainly had the chance to.
+    await asyncio.sleep(30)
+    audit_entries = [await audit_entry(yak, "__remote_write__")]
 
-        remote = await yak.build("root//:download_deferred")
-        await expect_exec_count(yak, 0)
-        assert (
-            remote.get_build_report()
-            .output_for_target("root//:download_deferred")
-            .exists()
-        )
-        audit_entries.append(await audit_entry(yak, "__download_deferred__"))
+    remote = await yak.build("root//:remote_write")
+    await expect_exec_count(yak, 0)
+    assert remote.get_build_report().output_for_target("root//:remote_write").exists()
+    audit_entries.append(await audit_entry(yak, "__remote_write__"))
     golden_audit_entries(
         entries=audit_entries,
         rel_path="golden/test_adaptive_unmaterializes_active_remote_intermediate.golden.txt",
@@ -667,39 +655,25 @@ async def test_adaptive_unmaterializes_active_local_action_intermediate(
 @yak_test(skip_for_os=["windows"])
 async def test_adaptive_does_not_unmaterialize_active_final_output(yak: Yak) -> None:
     configure_active_unmaterialization(yak, enabled=True)
-    async with serve_file(DOWNLOAD_CONTENT) as served:
-        configure_served_file(yak, served)
-        result = await yak.build("root//:download_deferred")
-        assert (
-            result.get_build_report()
-            .output_for_target("root//:download_deferred")
-            .exists()
-        )
+    result = await yak.build("root//:remote_write")
+    assert result.get_build_report().output_for_target("root//:remote_write").exists()
 
-        await asyncio.sleep(30)
-        golden_audit_entries(
-            entries=[await audit_entry(yak, "__download_deferred__")],
-            rel_path="golden/test_adaptive_does_not_unmaterialize_active_final_output.golden.txt",
-        )
+    await asyncio.sleep(30)
+    golden_audit_entries(
+        entries=[await audit_entry(yak, "__remote_write__")],
+        rel_path="golden/test_adaptive_does_not_unmaterialize_active_final_output.golden.txt",
+    )
 
 
 @yak_test(skip_for_os=["windows"])
 async def test_adaptive_does_not_unmaterialize_when_disabled(yak: Yak) -> None:
     configure_active_unmaterialization(yak, enabled=False)
-    async with serve_file(DOWNLOAD_CONTENT) as served:
-        configure_served_file(yak, served)
-        result = await yak.build(
-            "root//:consume_remote", "--local-only", "--no-remote-cache"
-        )
-        assert (
-            result.get_build_report()
-            .output_for_target("root//:consume_remote")
-            .exists()
-        )
-        audit_entries = [await audit_entry(yak, "__download_deferred__")]
+    result = await yak.build("root//:consume_remote", "--no-remote-cache")
+    assert result.get_build_report().output_for_target("root//:consume_remote").exists()
+    audit_entries = [await audit_entry(yak, "__remote_write__")]
 
-        await asyncio.sleep(30)
-        audit_entries.append(await audit_entry(yak, "__download_deferred__"))
+    await asyncio.sleep(30)
+    audit_entries.append(await audit_entry(yak, "__remote_write__"))
     golden_audit_entries(
         entries=audit_entries,
         rel_path="golden/test_adaptive_does_not_unmaterialize_when_disabled.golden.txt",

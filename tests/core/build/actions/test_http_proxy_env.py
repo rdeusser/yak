@@ -12,17 +12,13 @@ from __future__ import annotations
 import asyncio
 import hashlib
 import json
-import socket
 import uuid
-from collections.abc import AsyncIterator
-from contextlib import asynccontextmanager
-from dataclasses import dataclass
 
 import pytest
-from aiohttp import web
 from e2e_util.api.yak import Yak
 from e2e_util.asserts import expect_failure
 from e2e_util.yak_workspace import yak_test
+from e2e_util.helper.http_server import StaticHttpServer
 
 
 PROXY_ENV_VARS = [
@@ -39,42 +35,17 @@ def make_payload() -> bytes:
     return f"download contents {uuid.uuid4()}\n".encode()
 
 
-@dataclass
-class Server:
-    url: str
-    requests: list[tuple[str, str]]
-
-
-@asynccontextmanager
-async def serve(
-    payload: bytes,
+def serve(
+    payload: bytes | dict[str, bytes],
     *,
     host: str = "127.0.0.1",
     redirects: dict[str, str] | None = None,
-) -> AsyncIterator[Server]:
-    requests: list[tuple[str, str]] = []
-
-    async def handle(request: web.Request) -> web.Response:
-        requests.append((request.method, request.raw_path))
-        if redirects and request.raw_path in redirects:
-            return web.Response(
-                status=302, headers={"Location": redirects[request.raw_path]}
-            )
-        return web.Response(body=payload)
-
-    app = web.Application()
-    app.router.add_route("*", "/{path:.*}", handle)
-    runner = web.AppRunner(app, access_log=None)
-    await runner.setup()
-    with socket.socket() as sock:
-        try:
-            sock.bind((host, 0))
-            port = sock.getsockname()[1]
-            site = web.SockSite(runner, sock)
-            await site.start()
-            yield Server(f"http://{host}:{port}", requests)
-        finally:
-            await runner.cleanup()
+) -> StaticHttpServer:
+    """
+    A server answering every request with `payload`, or routing by what was asked for when given a
+    mapping.
+    """
+    return StaticHttpServer(payload, host=host, redirects=redirects)
 
 
 def configure(yak: Yak, digest: str = "SHA256") -> None:
@@ -89,7 +60,7 @@ def configure(yak: Yak, digest: str = "SHA256") -> None:
 
 def build_args(
     payload: bytes,
-    origin: Server,
+    origin: StaticHttpServer,
     *,
     size: bool = False,
 ) -> list[str]:
@@ -97,7 +68,7 @@ def build_args(
         "--local-only",
         "--no-remote-cache",
         "-c",
-        f"test.url={origin.url}/download",
+        f"test.url={origin.url('/download')}",
         "-c",
         f"test.sha256={hashlib.sha256(payload).hexdigest()}",
     ]
@@ -109,7 +80,7 @@ def build_args(
 async def build_download(
     yak: Yak,
     payload: bytes,
-    origin: Server,
+    origin: StaticHttpServer,
     env: dict[str, str],
     *,
     size: bool = False,
@@ -144,7 +115,7 @@ class TestHttpProxyEnv:
             ("SHA256", False, ["HEAD", "GET"]),
             ("SHA256", True, ["GET"]),
         ],
-        ids=["immediate", "head-and-deferred-get", "sized-deferred-get"],
+        ids=["get-only", "head-then-get", "sized-get-only"],
     )
     @yak_test(skip_for_os=["windows"])
     async def test_proxy_download_paths(
@@ -157,12 +128,12 @@ class TestHttpProxyEnv:
                 yak,
                 payload,
                 origin,
-                {"HTTP_PROXY": proxy.url},
+                {"HTTP_PROXY": proxy.url()},
                 size=size,
             )
             assert origin.requests == []
             assert proxy.requests == [
-                (method, f"{origin.url}/download") for method in methods
+                (method, origin.url("/download")) for method in methods
             ]
 
     @pytest.mark.parametrize(
@@ -198,7 +169,7 @@ class TestHttpProxyEnv:
         configure(yak)
         payload = make_payload()
         async with serve(payload) as origin, serve(payload) as proxy:
-            substitutions = {"origin": origin.url, "proxy": proxy.url}
+            substitutions = {"origin": origin.url(), "proxy": proxy.url()}
             env = {
                 name: substitutions.get(value, value) for name, value in values.items()
             }
@@ -206,8 +177,8 @@ class TestHttpProxyEnv:
             if proxied:
                 assert origin.requests == []
                 assert proxy.requests == [
-                    ("HEAD", f"{origin.url}/download"),
-                    ("GET", f"{origin.url}/download"),
+                    ("HEAD", origin.url("/download")),
+                    ("GET", origin.url("/download")),
                 ]
             else:
                 assert proxy.requests == []
@@ -265,63 +236,44 @@ class TestHttpProxyEnv:
         self, yak: Yak
     ) -> None:
         configure(yak)
-        payload = make_payload()
-        second_payload = make_payload()
+        payloads = [make_payload() for _ in range(3)]
         async with (
-            serve(payload) as origin,
-            serve(payload) as first_proxy,
-            serve(second_payload) as second_origin,
-            serve(second_payload) as second_proxy,
+            serve(payloads[0]) as origin,
+            serve(payloads[1]) as second_origin,
+            serve(payloads[2]) as third_origin,
         ):
-            args = build_args(payload, origin)
-            first_env = {"HTTP_PROXY": first_proxy.url}
-            first_result = await asyncio.wait_for(
-                yak.build(
-                    "//:download", *args, "--materializations=None", env=first_env
-                ),
-                timeout=90,
-            )
-            output = first_result.get_build_report().output_for_target(
-                "root//:download"
-            )
-            assert not output.exists()
-            assert first_proxy.requests == [("HEAD", f"{origin.url}/download")]
-            first_pid = await daemon_pid(yak, first_env)
+            origins = [origin, second_origin, third_origin]
+            # Either proxy can be asked for any of the three, and answers as that origin would.
+            routes = {
+                server.url("/download"): payload
+                for server, payload in zip(origins, payloads)
+            }
+            async with serve(routes) as first_proxy, serve(routes) as second_proxy:
+                first_env = {"HTTP_PROXY": first_proxy.url()}
+                await build_download(yak, payloads[0], origin, first_env)
+                first_pid = await daemon_pid(yak, first_env)
+                assert first_proxy.requests == [
+                    ("HEAD", origin.url("/download")),
+                    ("GET", origin.url("/download")),
+                ]
 
-            second_env = {"HTTP_PROXY": second_proxy.url}
-            await asyncio.wait_for(
-                yak.build("//:download", *args, env=second_env),
-                timeout=90,
-            )
-            assert await daemon_pid(yak, second_env) == first_pid
-            assert output.read_bytes() == payload
-            assert first_proxy.requests == [
-                ("HEAD", f"{origin.url}/download"),
-                ("GET", f"{origin.url}/download"),
-            ]
-            assert second_proxy.requests == []
+                # A download in the same daemon, asked for with a different proxy in the
+                # environment, still goes through the proxy the daemon started with.
+                second_env = {"HTTP_PROXY": second_proxy.url()}
+                await build_download(yak, payloads[1], second_origin, second_env)
+                assert await daemon_pid(yak, second_env) == first_pid
+                assert second_proxy.requests == []
+                assert first_proxy.requests[-2:] == [
+                    ("HEAD", second_origin.url("/download")),
+                    ("GET", second_origin.url("/download")),
+                ]
 
-            await asyncio.wait_for(yak.kill(), timeout=30)
-            second_result = await asyncio.wait_for(
-                yak.build(
-                    "//:download",
-                    *build_args(second_payload, second_origin),
-                    env=second_env,
-                ),
-                timeout=90,
-            )
-            assert await daemon_pid(yak, second_env) != first_pid
-            output = second_result.get_build_report().output_for_target(
-                "root//:download"
-            )
-            assert output.read_bytes() == second_payload
-            assert first_proxy.requests == [
-                ("HEAD", f"{origin.url}/download"),
-                ("GET", f"{origin.url}/download"),
-            ]
-            assert second_proxy.requests == [
-                ("HEAD", f"{second_origin.url}/download"),
-                ("GET", f"{second_origin.url}/download"),
-            ]
-            assert origin.requests == []
-            assert second_origin.requests == []
+                # Only a restart picks the new one up.
+                await asyncio.wait_for(yak.kill(), timeout=30)
+                await build_download(yak, payloads[2], third_origin, second_env)
+                assert await daemon_pid(yak, second_env) != first_pid
+                assert second_proxy.requests == [
+                    ("HEAD", third_origin.url("/download")),
+                    ("GET", third_origin.url("/download")),
+                ]
+                assert [server.requests for server in origins] == [[], [], []]

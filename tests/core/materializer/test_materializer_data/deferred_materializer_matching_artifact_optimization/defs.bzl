@@ -28,16 +28,18 @@ copy = rule(
 
 def _download(ctx: AnalysisContext):
     download = ctx.actions.declare_output("download", has_content_based_path = False)
-    ctx.actions.download_file(download, ctx.attrs.url, sha256 = ctx.attrs.sha256)
+    ctx.actions.download_file(download, ctx.attrs.url, sha1 = ctx.attrs.sha1)
 
     return [
         DefaultInfo(default_output = download),
     ]
 
+# `url` and `sha1` come from `test.url` / `test.sha1` in the config; they are optional only so
+# that the package loads for the tests that do not build `:download`.
 download = rule(
     impl = _download,
     attrs = {
-        "sha256": attrs.string(default = read_config("test", "download_sha256", "")),
-        "url": attrs.string(default = read_config("test", "download_url", "")),
+        "sha1": attrs.option(attrs.string(), default = None),
+        "url": attrs.option(attrs.string(), default = None),
     },
 )
