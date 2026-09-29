@@ -27,7 +27,6 @@ use futures::future;
 use futures::future::Either;
 use futures::future::FutureExt;
 use futures::future::Shared;
-use futures::stream::StreamExt;
 use gazebo::prelude::*;
 use host_sharing::HostSharingBroker;
 use host_sharing::HostSharingRequirements;
@@ -36,11 +35,13 @@ use tokio_stream::wrappers::UnboundedReceiverStream;
 use tracing::info;
 use yak_build_signals::env::WaitingCategory;
 use yak_common::file_ops::metadata::FileDigestConfig;
+use yak_common::file_ops::metadata::FileMetadata;
 use yak_common::liveliness_observer::LivelinessObserver;
 use yak_common::liveliness_observer::LivelinessObserverExt;
 use yak_common::liveliness_observer::NoopLivelinessObserver;
 use yak_common::local_resource_state::LocalResourceHolder;
 use yak_core::content_hash::ContentBasedPathHash;
+use yak_core::execution_types::executor_config::RemoteExecutorUseCase;
 use yak_core::fs::artifact_path_resolver::ArtifactFs;
 use yak_core::fs::project_rel_path::ProjectRelativePath;
 use yak_core::fs::project_rel_path::ProjectRelativePathBuf;
@@ -86,7 +87,9 @@ use yak_execute::materialize::materializer::CopiedArtifact;
 use yak_execute::materialize::materializer::DeclareArtifactPayload;
 use yak_execute::materialize::materializer::MaterializationError;
 use yak_execute::materialize::materializer::MaterializationPurpose;
+use yak_execute::materialize::materializer::MaterializeRequest;
 use yak_execute::materialize::materializer::Materializer;
+use yak_execute::materialize::materializer::ReadLease;
 use yak_execute_local::CommandResult;
 use yak_execute_local::DefaultKillProcess;
 use yak_execute_local::GatherOutputStatus;
@@ -146,6 +149,9 @@ pub struct LocalExecutor {
     worker_pool: Option<Arc<WorkerPool>>,
     memory_tracker: Option<MemoryTrackerHandle>,
     daemon_id: DaemonId,
+    /// Attributed with the CAS traffic that materializing this executor's inputs causes. The
+    /// yak invocation's, not that of any RE work the action's configuration involves.
+    invocation_re_use_case: RemoteExecutorUseCase,
 }
 
 impl LocalExecutor {
@@ -161,6 +167,7 @@ impl LocalExecutor {
         worker_pool: Option<Arc<WorkerPool>>,
         memory_tracker: Option<MemoryTrackerHandle>,
         daemon_id: DaemonId,
+        invocation_re_use_case: RemoteExecutorUseCase,
     ) -> Self {
         Self {
             artifact_fs,
@@ -174,6 +181,7 @@ impl LocalExecutor {
             worker_pool,
             memory_tracker,
             daemon_id,
+            invocation_re_use_case,
         }
     }
 
@@ -557,6 +565,7 @@ impl LocalExecutor {
                             self.materializer.as_ref(),
                             request,
                             digest_config,
+                            self.invocation_re_use_case,
                         )
                         .await
                     },
@@ -586,21 +595,28 @@ impl LocalExecutor {
                 )
                 .await;
 
-                let scratch_path = r1?.scratch;
+                let materialized_inputs = r1?;
                 r2?;
 
-                yak_error::Ok((scratch_path, Instant::now() - start))
+                yak_error::Ok((materialized_inputs, Instant::now() - start))
             },
         )
         .boxed()
         .await;
 
-        let (scratch_path, input_materialization_duration) = match executor_stage_result {
-            Ok((scratch_path, input_materialization_duration)) => {
-                (scratch_path, input_materialization_duration)
+        let (materialized_inputs, input_materialization_duration) = match executor_stage_result {
+            Ok((materialized_inputs, input_materialization_duration)) => {
+                (materialized_inputs, input_materialization_duration)
             }
             Err(e) => return manager.error("materialize_inputs_failed", e),
         };
+        // The command reads its inputs until its outputs have been hashed, which is the end of
+        // this function.
+        let MaterializedInputPaths {
+            scratch: scratch_path,
+            lease: _inputs_lease,
+            ..
+        } = materialized_inputs;
 
         manager.start_waiting_category(WaitingCategory::Unknown);
 
@@ -1360,6 +1376,8 @@ impl<'a> StrOrOsStr<'a> {
 pub struct MaterializedInputPaths {
     pub scratch: ScratchPath,
     pub paths: Vec<ProjectRelativePathBuf>,
+    /// Held for as long as the inputs are needed.
+    pub lease: ReadLease,
 }
 
 /// Materialize all inputs artifact for CommandExecutionRequest so the command can be executed
@@ -1372,8 +1390,9 @@ pub async fn materialize_inputs(
     materializer: &dyn Materializer,
     request: &CommandExecutionRequest,
     digest_config: DigestConfig,
+    re_use_case: RemoteExecutorUseCase,
 ) -> yak_error::Result<MaterializedInputPaths> {
-    let mut paths = vec![];
+    let mut artifacts = vec![];
     let mut scratch = ScratchPath(None);
     let mut configuration_path_to_content_based_path_symlinks = vec![];
 
@@ -1399,7 +1418,7 @@ pub async fn materialize_inputs(
 
                             // TODO(ianc) We want to also create symlinks here for projected artifacts.
                             if artifact.is_projected() {
-                                paths.push(content_based_path);
+                                artifacts.push((content_based_path, artifact_value.dupe()));
                             } else {
                                 let mut builder =
                                     ArtifactValueBuilder::new(artifact_fs.fs(), digest_config);
@@ -1410,11 +1429,11 @@ pub async fn materialize_inputs(
                                 )?;
                                 let symlink_value = builder.build(&configuration_hash_path)?;
                                 configuration_path_to_content_based_path_symlinks
-                                    .push((configuration_hash_path.clone(), symlink_value));
-                                paths.push(configuration_hash_path);
+                                    .push((configuration_hash_path.clone(), symlink_value.dupe()));
+                                artifacts.push((configuration_hash_path, symlink_value));
                             }
                         } else {
-                            paths.push(configuration_hash_path);
+                            artifacts.push((configuration_hash_path, artifact_value.dupe()));
                         }
                     }
                 }
@@ -1423,9 +1442,18 @@ pub async fn materialize_inputs(
                 let path = artifact_fs
                     .yak_out_path_resolver()
                     .resolve_gen(&metadata.path, Some(&metadata.content_hash))?;
-                paths.push(path);
+                artifacts.push((
+                    path,
+                    ArtifactValue::file(FileMetadata {
+                        digest: metadata.digest.dupe(),
+                        is_executable: false,
+                    }),
+                ));
             }
             CommandExecutionInput::ScratchPath(path) => {
+                // FIXME: the action writes into its scratch path, so under a materializer that
+                // enforces leases it belongs with the outputs' write lease, not this request's
+                // read lease (problem-path-locking.md). Nothing acts on either lease yet.
                 let path = artifact_fs.yak_out_path_resolver().resolve_scratch(path)?;
 
                 if scratch.0.is_some() {
@@ -1441,6 +1469,9 @@ pub async fn materialize_inputs(
         }
     }
 
+    // No producer declares these symlinks, so the consumer does, as it always has. A
+    // materializer that takes the requested values as the truth about disk ignores this
+    // declaration and creates the symlink from the pair in the request instead.
     yak_util::future::try_join_all(
         configuration_path_to_content_based_path_symlinks
             .into_iter()
@@ -1448,25 +1479,32 @@ pub async fn materialize_inputs(
     )
     .await?;
 
-    let mut stream = materializer.materialize_many(paths.clone()).await?;
-    while let Some(res) = stream.next().await {
-        match res {
-            Ok(()) => {}
-            Err(MaterializationError::NotFound { source }) => {
-                return Err(tag_error!(
-                    "cas_missing_fatal",
-                    MaterializationError::NotFound { source }.into(),
-                    quiet: true,
-                    daemon_in_memory_state_is_corrupted: true,
-                ));
-            }
-            Err(e) => {
-                return Err(e.into());
-            }
+    let paths = artifacts.iter().map(|(path, _)| path.clone()).collect();
+    let response = materializer
+        .materialize(MaterializeRequest {
+            artifacts,
+            purpose: MaterializationPurpose::IntermediateOnly,
+            re_use_case,
+        })
+        .await?;
+    let lease = match response.ensure_results_ok() {
+        Ok(lease) => lease,
+        Err(MaterializationError::NotFound { source }) => {
+            return Err(tag_error!(
+                "cas_missing_fatal",
+                MaterializationError::NotFound { source }.into(),
+                quiet: true,
+                daemon_in_memory_state_is_corrupted: true,
+            ));
         }
-    }
+        Err(e) => return Err(e.into()),
+    };
 
-    Ok(MaterializedInputPaths { scratch, paths })
+    Ok(MaterializedInputPaths {
+        scratch,
+        paths,
+        lease,
+    })
 }
 
 /// A scratch path discovered during `materialize_inputs`.
@@ -1834,6 +1872,7 @@ mod tests {
             None,
             None,
             DaemonId::new(),
+            RemoteExecutorUseCase::yak_default(),
         );
 
         Ok((executor, temp.path().root().to_buf(), temp))

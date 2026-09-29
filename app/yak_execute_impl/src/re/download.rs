@@ -25,6 +25,7 @@ use yak_common::file_ops::metadata::FileDigest;
 use yak_common::file_ops::metadata::FileMetadata;
 use yak_common::file_ops::metadata::Symlink;
 use yak_common::file_ops::metadata::TrackedFileDigest;
+use yak_core::execution_types::executor_config::RemoteExecutorUseCase;
 use yak_core::fs::artifact_path_resolver::ArtifactFs;
 use yak_core::fs::project_rel_path::ProjectRelativePathBuf;
 use yak_core::fs::yak_out_path::BuildArtifactPath;
@@ -77,6 +78,7 @@ pub async fn download_action_results<'a>(
     execution_time: TimeSpanBuilder,
     materializer: &dyn Materializer,
     re_client: &ManagedRemoteExecutionClient,
+    invocation_re_use_case: RemoteExecutorUseCase,
     digest_config: DigestConfig,
     manager: CommandExecutionManager,
     identity: &ReActionIdentity<'_>,
@@ -157,8 +159,14 @@ pub async fn download_action_results<'a>(
                         stage: Some(yak_data::MaterializeFailedInputs {}.into()),
                     },
                     async move {
-                        match materialize_inputs(artifact_fs, materializer, request, digest_config)
-                            .await
+                        match materialize_inputs(
+                            artifact_fs,
+                            materializer,
+                            request,
+                            digest_config,
+                            invocation_re_use_case,
+                        )
+                        .await
                         {
                             Ok(materialized_paths) => Some(materialized_paths.paths.clone()),
                             Err(e) => {

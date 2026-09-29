@@ -20,6 +20,7 @@ use remote_execution as RE;
 use remote_execution::TCode;
 use remote_execution::TCodeReasonGroup;
 use tracing::info;
+use yak_core::execution_types::executor_config::RemoteExecutorUseCase;
 use yak_core::fs::artifact_path_resolver::ArtifactFs;
 use yak_core::fs::project::ProjectRoot;
 use yak_core::fs::project_rel_path::ProjectRelativePath;
@@ -77,6 +78,8 @@ pub struct ReExecutor {
     pub materializer: Arc<dyn Materializer>,
     pub incremental_db_state: Arc<IncrementalDbState>,
     pub re_client: ManagedRemoteExecutionClient,
+    /// For what the executor materializes; the RE request itself runs under `re_client`'s.
+    pub invocation_re_use_case: RemoteExecutorUseCase,
     pub re_action_key: Option<String>,
     pub knobs: ExecutorGlobalKnobs,
     pub skip_cache_read: bool,
@@ -444,6 +447,7 @@ impl PreparedCommandExecutor for ReExecutor {
             execution_time,
             &*self.materializer,
             &self.re_client,
+            self.invocation_re_use_case,
             *digest_config,
             manager,
             &identity,
