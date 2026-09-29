@@ -12,10 +12,10 @@ use async_trait::async_trait;
 use yak_cli_proto::UnstableDiceDumpRequest;
 use yak_cli_proto::unstable_dice_dump_request::DiceDumpFormat;
 use yak_client_ctx::client_ctx::ClientCommandContext;
-use yak_client_ctx::common::YakArgMatches;
 use yak_client_ctx::common::CommonBuildConfigurationOptions;
 use yak_client_ctx::common::CommonEventLogOptions;
 use yak_client_ctx::common::CommonStarlarkOptions;
+use yak_client_ctx::common::YakArgMatches;
 use yak_client_ctx::common::ui::CommonConsoleOptions;
 use yak_client_ctx::daemon::client::YakdClientConnector;
 use yak_client_ctx::events_ctx::EventsCtx;
@@ -57,8 +57,7 @@ impl StreamingCommand for DiceDumpCommand {
             DiceDumpFormat::Tsv
         };
         let context = ctx.empty_client_context("debug-dice-dump")?;
-        yakd
-            .with_flushing()
+        yakd.with_flushing()
             .unstable_dice_dump(
                 UnstableDiceDumpRequest {
                     destination_path: self.path.resolve(&ctx.working_dir).into_string()?,

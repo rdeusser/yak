@@ -219,8 +219,8 @@ fn is_paranoid_enabled(path: &AbsPath) -> yak_error::Result<bool> {
         None => return Ok(false),
     };
 
-    let info = yak_cli_proto::ParanoidInfo::decode(bytes.as_slice())
-        .yak_error_context("Invalid data ")?;
+    let info =
+        yak_cli_proto::ParanoidInfo::decode(bytes.as_slice()).yak_error_context("Invalid data ")?;
 
     let now = SystemTime::now();
     let expires_at = SystemTime::try_from(info.expires_at.internal_error("Missing expires_at")?)

@@ -14,13 +14,13 @@ use yak_cli_proto::TraceIoResponse;
 use yak_cli_proto::trace_io_request;
 use yak_client_ctx::client_ctx::ClientCommandContext;
 use yak_client_ctx::command_outcome::CommandOutcome;
-use yak_client_ctx::common::YakArgMatches;
 use yak_client_ctx::common::CommonBuildConfigurationOptions;
 use yak_client_ctx::common::CommonEventLogOptions;
 use yak_client_ctx::common::CommonStarlarkOptions;
+use yak_client_ctx::common::YakArgMatches;
 use yak_client_ctx::common::ui::CommonConsoleOptions;
-use yak_client_ctx::daemon::client::YakdClientConnector;
 use yak_client_ctx::daemon::client::NoPartialResultHandler;
+use yak_client_ctx::daemon::client::YakdClientConnector;
 use yak_client_ctx::daemon::client::connect::DesiredTraceIoState;
 use yak_client_ctx::events_ctx::EventsCtx;
 use yak_client_ctx::exit_result::ExitResult;
@@ -70,8 +70,7 @@ impl TraceIoCommand {
         events_ctx: &mut EventsCtx,
         ctx: &mut ClientCommandContext<'_>,
     ) -> yak_error::Result<CommandOutcome<TraceIoResponse>> {
-        yakd
-            .with_flushing()
+        yakd.with_flushing()
             .trace_io(
                 req,
                 events_ctx,

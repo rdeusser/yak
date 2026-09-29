@@ -142,9 +142,7 @@ impl BuildCountManager {
             return Ok(None);
         };
         let build_count_map: BuildCountMap = serde_json::from_str(&buffer)
-            .with_yak_error_context(|| {
-                format!("Parsing JSON from {}", self.file_path.display())
-            })?;
+            .with_yak_error_context(|| format!("Parsing JSON from {}", self.file_path.display()))?;
         Ok(Some(build_count_map))
     }
 

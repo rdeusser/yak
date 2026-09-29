@@ -94,8 +94,8 @@ use yak_events::dispatch::get_dispatcher;
 use yak_events::dispatch::span_async;
 use yak_execute::digest_config::HasDigestConfig;
 use yak_fs::paths::forward_rel_path::ForwardRelativePath;
-use yak_interpreter::factory::YakStarlarkModule;
 use yak_interpreter::factory::StarlarkEvaluatorProvider;
+use yak_interpreter::factory::YakStarlarkModule;
 use yak_interpreter::print_handler::EventDispatcherPrintHandler;
 use yak_interpreter::soft_error::YakStarlarkSoftErrorHandler;
 use yak_interpreter::starlark_promise::StarlarkPromise;
@@ -349,8 +349,7 @@ impl AnonTargetKey {
                 x.to_owned()
             )
         };
-        let lex =
-            lex_target_pattern::<TargetPatternExtra>(x, false).with_yak_error_context(err)?;
+        let lex = lex_target_pattern::<TargetPatternExtra>(x, false).with_yak_error_context(err)?;
         // TODO(nga): `CellName` contract requires it refers to declared cell name.
         //   This `unchecked_new` violates it.
         let cell =

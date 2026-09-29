@@ -9,8 +9,8 @@
  */
 
 use remote_execution::ActionHistoryInfo;
-use remote_execution::YakInfo;
 use remote_execution::RemoteExecutionMetadata;
+use remote_execution::YakInfo;
 use yak_core::execution_types::executor_config::RemoteExecutorUseCase;
 use yak_events::dispatch::get_dispatcher_opt;
 

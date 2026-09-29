@@ -28,8 +28,8 @@ use yak_core::deferred::key::DeferredHolderKey;
 use yak_core::execution_types::execution::ExecutionPlatform;
 use yak_core::execution_types::execution::ExecutionPlatformResolution;
 use yak_core::execution_types::executor_config::CommandExecutorConfig;
-use yak_core::fs::yak_out_path::YakOutPathKind;
 use yak_core::fs::yak_out_path::BuildArtifactPath;
+use yak_core::fs::yak_out_path::YakOutPathKind;
 use yak_core::target::configured_target_label::ConfiguredTargetLabel;
 use yak_execute::execute::request::OutputType;
 use yak_fs::paths::forward_rel_path::ForwardRelativePathBuf;
@@ -49,8 +49,7 @@ fn declaring_artifacts() -> yak_error::Result<()> {
             ExecutionPlatformResolution::unspecified(),
         );
         let out1 = ForwardRelativePathBuf::unchecked_new("bar.out".into());
-        let yakout1 =
-            BuildArtifactPath::new(base.dupe(), out1.clone(), YakOutPathKind::default());
+        let yakout1 = BuildArtifactPath::new(base.dupe(), out1.clone(), YakOutPathKind::default());
         let declared1 = actions.declare_artifact(
             None,
             out1.clone(),

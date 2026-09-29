@@ -20,8 +20,8 @@ use std::io::Write;
 use object::Object;
 use object::ObjectSection;
 use object::ReadCache;
-use yak_error::YakErrorContext;
 use yak_error::ErrorTag;
+use yak_error::YakErrorContext;
 use yak_error::yak_error;
 
 /// The kernel resolves this to the inode we are executing, so it still reaches

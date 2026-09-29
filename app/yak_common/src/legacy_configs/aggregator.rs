@@ -22,8 +22,8 @@ use yak_core::cells::name::CellName;
 use yak_core::cells::nested::NestedCells;
 use yak_core::fs::project_rel_path::ProjectRelativePath;
 use yak_error::YakErrorOptionContext;
-use yak_hash::YakMutMap;
 use yak_hash::IntentionallyStdHashMap;
+use yak_hash::YakMutMap;
 
 /// Errors from cell creation
 #[derive(yak_error::Error, Debug)]

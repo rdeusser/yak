@@ -36,11 +36,10 @@ const DEFAULT_BUILDFILES: &[&str] = &["YAK"];
 pub fn parse_buildfile_name(
     mut config: impl LegacyYakConfigView,
 ) -> yak_error::Result<Vec<FileNameBuf>> {
-    let mut base = if let Some(buildfiles_value) =
-        config.parse_list::<String>(YakconfigKeyRef {
-            section: "buildfile",
-            property: "name",
-        })? {
+    let mut base = if let Some(buildfiles_value) = config.parse_list::<String>(YakconfigKeyRef {
+        section: "buildfile",
+        property: "name",
+    })? {
         buildfiles_value.into_try_map(FileNameBuf::try_from)?
     } else {
         DEFAULT_BUILDFILES.map(|&n| FileNameBuf::try_from(n.to_owned()).unwrap())

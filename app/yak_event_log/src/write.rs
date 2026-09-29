@@ -162,9 +162,7 @@ impl WriteEventLog {
         };
         tokio::fs::create_dir_all(logdir)
             .await
-            .with_yak_error_context(|| {
-                format!("Error creating event log directory: `{logdir}`")
-            })?;
+            .with_yak_error_context(|| format!("Error creating event log directory: `{logdir}`"))?;
         remove_old_logs(logdir, self.retained_event_logs).await;
 
         let encoding = Encoding::PROTO_ZSTD;

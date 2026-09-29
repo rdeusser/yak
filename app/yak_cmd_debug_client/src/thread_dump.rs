@@ -13,8 +13,8 @@ use yak_client_ctx::common::YakArgMatches;
 use yak_client_ctx::daemon::client::connect::YakdProcessInfo;
 use yak_client_ctx::exit_result::ExitResult;
 use yak_client_ctx::thread_dump::thread_dump_command;
-use yak_error::YakErrorContext;
 use yak_error::ErrorTag;
+use yak_error::YakErrorContext;
 use yak_error::yak_error;
 
 /// Prints a thread dump of the currently running yak daemon to stdout

@@ -10,10 +10,10 @@
 
 use std::time::Duration;
 
-use yak_client_ctx::client_ctx::YakSubcommand;
 use yak_client_ctx::client_ctx::ClientCommandContext;
-use yak_client_ctx::common::YakArgMatches;
+use yak_client_ctx::client_ctx::YakSubcommand;
 use yak_client_ctx::common::CommonEventLogOptions;
+use yak_client_ctx::common::YakArgMatches;
 use yak_client_ctx::daemon::client::YakdLifecycleLock;
 use yak_client_ctx::events_ctx::EventsCtx;
 use yak_client_ctx::exit_result::ExitResult;

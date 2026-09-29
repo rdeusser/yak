@@ -20,9 +20,9 @@ use yak_build_api::interpreter::rule_defs::cmd_args::value_as::ValueAsCommandLin
 use yak_build_api::interpreter::rule_defs::register_rule_defs;
 use yak_core::execution_types::executor_config::PathSeparatorKind;
 use yak_core::fs::artifact_path_resolver::ArtifactFs;
-use yak_core::fs::yak_out_path::YakOutPathResolver;
 use yak_core::fs::project::ProjectRoot;
 use yak_core::fs::project_rel_path::ProjectRelativePathBuf;
+use yak_core::fs::yak_out_path::YakOutPathResolver;
 use yak_execute::artifact::fs::ExecutorFs;
 use yak_fs::paths::abs_norm_path::AbsNormPathBuf;
 use yak_hash::YakMutMap;

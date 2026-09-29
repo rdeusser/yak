@@ -192,8 +192,7 @@ impl SystemWarningConfig {
     }
 
     pub fn deserialize(s: &str) -> yak_error::Result<Self> {
-        serde_json::from_str::<Self>(s)
-            .yak_error_context("Error deserializing SystemWarningConfig")
+        serde_json::from_str::<Self>(s).yak_error_context("Error deserializing SystemWarningConfig")
     }
 }
 
@@ -697,8 +696,7 @@ impl DaemonStartupConfig {
     }
 
     pub fn deserialize(s: &str) -> yak_error::Result<Self> {
-        serde_json::from_str::<Self>(s)
-            .yak_error_context("Error deserializing DaemonStartupConfig")
+        serde_json::from_str::<Self>(s).yak_error_context("Error deserializing DaemonStartupConfig")
     }
 
     pub fn testing_empty() -> Self {

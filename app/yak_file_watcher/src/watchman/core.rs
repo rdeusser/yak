@@ -24,9 +24,9 @@ use tokio::sync::mpsc::UnboundedSender;
 use tokio::sync::oneshot;
 use watchman_client::prelude::*;
 use yak_core::yak_env;
+use yak_error::ErrorTag;
 use yak_error::YakErrorContext;
 use yak_error::YakErrorOptionContext;
-use yak_error::ErrorTag;
 use yak_error::internal_error;
 
 fn watchman_error_tag(e: &watchman_client::Error) -> ErrorTag {

@@ -47,11 +47,11 @@ use yak_node::nodes::eval_result::EvaluationResult;
 use yak_node::nodes::targets_map::TargetsMap;
 use yak_node::super_package::SuperPackage;
 
-use crate::interpreter::yakconfig::LegacyConfigsViewForStarlark;
 use crate::interpreter::cell_info::InterpreterCellInfo;
 use crate::interpreter::configuror::AdditionalGlobalsFn;
 use crate::interpreter::configuror::AdditionalGlobalsFnDyn;
 use crate::interpreter::configuror::BuildInterpreterConfiguror;
+use crate::interpreter::yakconfig::LegacyConfigsViewForStarlark;
 
 #[derive(Allocative, PagablePanic)] // test only
 struct FnWrapper(#[allocative(skip)] Box<dyn Fn(&mut GlobalsBuilder) + Sync + Send + 'static>);

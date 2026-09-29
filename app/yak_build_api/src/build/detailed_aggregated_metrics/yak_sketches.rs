@@ -487,9 +487,9 @@ mod tests {
     use yak_core::configuration::data::ConfigurationData;
     use yak_core::deferred::key::DeferredHolderKey;
     use yak_core::execution_types::executor_config::CommandExecutorConfig;
-    use yak_core::fs::yak_out_path::YakOutPathKind;
-    use yak_core::fs::yak_out_path::BuildArtifactPath;
     use yak_core::fs::project_rel_path::ProjectRelativePathBuf;
+    use yak_core::fs::yak_out_path::BuildArtifactPath;
+    use yak_core::fs::yak_out_path::YakOutPathKind;
     use yak_core::target::configured_target_label::ConfiguredTargetLabel;
     use yak_execute::artifact_value::ArtifactValue;
     use yak_execute::digest_config::DigestConfig;
@@ -500,10 +500,10 @@ mod tests {
     use yak_execute::directory::insert_artifact;
     use yak_execute::directory::insert_file;
     use yak_fs::paths::forward_rel_path::ForwardRelativePathBuf;
+    use yak_hash::StdYakHashMap;
     use yak_hash::YakIndexSet;
     use yak_hash::YakMutMap;
     use yak_hash::YakMutSet;
-    use yak_hash::StdYakHashMap;
 
     use crate::actions::Action;
     use crate::actions::ActionExecutionCtx;

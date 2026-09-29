@@ -8,7 +8,6 @@
  * above-listed licenses.
  */
 
-pub mod yakconfig;
 pub mod build_context;
 pub(crate) mod bzl_eval_ctx;
 pub mod calculation;
@@ -31,3 +30,4 @@ pub mod package_file_calculation;
 pub mod package_file_extra;
 pub mod selector;
 pub mod testing;
+pub mod yakconfig;

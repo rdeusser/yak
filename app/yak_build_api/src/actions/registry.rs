@@ -28,8 +28,8 @@ use yak_artifact::artifact::build_artifact::BuildArtifact;
 use yak_core::category::Category;
 use yak_core::deferred::key::DeferredHolderKey;
 use yak_core::execution_types::execution::ExecutionPlatformResolution;
-use yak_core::fs::yak_out_path::YakOutPathKind;
 use yak_core::fs::yak_out_path::BuildArtifactPath;
+use yak_core::fs::yak_out_path::YakOutPathKind;
 use yak_directory::directory;
 use yak_directory::directory::builder::DirectoryBuilder;
 use yak_directory::directory::builder::DirectoryInsertError;
@@ -254,8 +254,7 @@ impl<'v> ActionsRegistry<'v> {
         Ok(move |analysis_value_fetcher: &AnalysisValueFetcher| {
             // yak has an invariant that pairs of categories and identifiers are unique throughout a build. That
             // invariant is enforced here, using observed_names to keep track of the categories and identifiers that we've seen.
-            let mut observed_names: YakMutMap<Category, YakMutSet<String>> =
-                YakMutMap::default();
+            let mut observed_names: YakMutMap<Category, YakMutSet<String>> = YakMutMap::default();
             for a in self.pending.into_iter() {
                 let key = a.key().dupe();
                 let (starlark_data, error_handler) =

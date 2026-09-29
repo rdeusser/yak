@@ -14,7 +14,6 @@
 #![feature(used_with_arg)]
 
 pub mod argv;
-pub mod yakd_connection;
 pub mod build_count;
 pub mod buildfiles;
 pub mod cas_digest;
@@ -52,3 +51,4 @@ pub mod starlark_profiler;
 pub mod target_aliases;
 pub mod temp_path;
 pub mod tenant;
+pub mod yakd_connection;

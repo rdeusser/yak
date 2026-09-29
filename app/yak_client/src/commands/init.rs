@@ -19,8 +19,8 @@ use yak_client_ctx::final_console::FinalConsole;
 use yak_client_ctx::path_arg::PathArg;
 use yak_common::argv::Argv;
 use yak_common::argv::SanitizedArgv;
-use yak_error::YakErrorContext;
 use yak_error::ErrorTag;
+use yak_error::YakErrorContext;
 use yak_error::yak_error;
 use yak_fs::error::IoResultExt;
 use yak_fs::fs_util;
@@ -262,8 +262,8 @@ mod tests {
     use yak_fs::fs_util::uncategorized as fs_util;
     use yak_fs::paths::abs_path::AbsPath;
 
-    use crate::commands::init::initialize_yakconfig;
     use crate::commands::init::initialize_root_yak;
+    use crate::commands::init::initialize_yakconfig;
     use crate::commands::init::set_up_gitignore;
     use crate::commands::init::set_up_project;
 

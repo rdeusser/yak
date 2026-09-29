@@ -17,8 +17,8 @@ use futures::Future;
 use tokio::time::Instant;
 use tonic::transport::Channel;
 use tonic::transport::Endpoint;
-use yak_error::YakErrorContext;
 use yak_error::ErrorTag;
+use yak_error::YakErrorContext;
 use yak_grpc::configure_endpoint;
 
 pub static UDS_DAEMON_FILENAME: &str = "yakd.uds";

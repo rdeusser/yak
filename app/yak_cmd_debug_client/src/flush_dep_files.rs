@@ -11,10 +11,10 @@
 use async_trait::async_trait;
 use yak_cli_proto::FlushDepFilesRequest;
 use yak_client_ctx::client_ctx::ClientCommandContext;
-use yak_client_ctx::common::YakArgMatches;
 use yak_client_ctx::common::CommonBuildConfigurationOptions;
 use yak_client_ctx::common::CommonEventLogOptions;
 use yak_client_ctx::common::CommonStarlarkOptions;
+use yak_client_ctx::common::YakArgMatches;
 use yak_client_ctx::common::ui::CommonConsoleOptions;
 use yak_client_ctx::daemon::client::YakdClientConnector;
 use yak_client_ctx::events_ctx::EventsCtx;
@@ -43,8 +43,7 @@ impl StreamingCommand for FlushDepFilesCommand {
         events_ctx: &mut EventsCtx,
     ) -> ExitResult {
         let context = ctx.empty_client_context("debug-flush-dep-files")?;
-        yakd
-            .with_flushing()
+        yakd.with_flushing()
             .flush_dep_files(
                 FlushDepFilesRequest {
                     retain_locally_produced_dep_files: self.retain_local,

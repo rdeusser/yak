@@ -17,8 +17,8 @@ use std::path::Path;
 
 use serde::Serialize;
 use tokio_stream::StreamExt;
-use yak_client_ctx::client_ctx::YakSubcommand;
 use yak_client_ctx::client_ctx::ClientCommandContext;
+use yak_client_ctx::client_ctx::YakSubcommand;
 use yak_client_ctx::common::YakArgMatches;
 use yak_client_ctx::event_log_options::EventLogOptions;
 use yak_client_ctx::events_ctx::EventsCtx;

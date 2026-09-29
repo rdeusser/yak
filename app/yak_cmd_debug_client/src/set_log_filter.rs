@@ -46,8 +46,7 @@ impl SetLogFilterCommand {
             )
             .await?;
 
-            yakd
-                .with_flushing()
+            yakd.with_flushing()
                 .set_log_filter(
                     &mut events_ctx,
                     SetLogFilterRequest {

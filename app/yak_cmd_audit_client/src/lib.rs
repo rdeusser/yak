@@ -11,14 +11,14 @@
 use async_trait::async_trait;
 use yak_cli_proto::GenericRequest;
 use yak_client_ctx::client_ctx::ClientCommandContext;
-use yak_client_ctx::common::YakArgMatches;
 use yak_client_ctx::common::CommonBuildConfigurationOptions;
 use yak_client_ctx::common::CommonCommandOptions;
 use yak_client_ctx::common::CommonEventLogOptions;
 use yak_client_ctx::common::CommonStarlarkOptions;
+use yak_client_ctx::common::YakArgMatches;
 use yak_client_ctx::common::ui::CommonConsoleOptions;
-use yak_client_ctx::daemon::client::YakdClientConnector;
 use yak_client_ctx::daemon::client::StdoutPartialResultHandler;
+use yak_client_ctx::daemon::client::YakdClientConnector;
 use yak_client_ctx::events_ctx::EventsCtx;
 use yak_client_ctx::exit_result::ExitResult;
 use yak_client_ctx::streaming::StreamingCommand;
@@ -141,8 +141,7 @@ impl StreamingCommand for AuditCommand {
 
         let context = ctx.client_context(submatches, &self)?;
 
-        yakd
-            .with_flushing()
+        yakd.with_flushing()
             .audit(
                 GenericRequest {
                     context: Some(context),

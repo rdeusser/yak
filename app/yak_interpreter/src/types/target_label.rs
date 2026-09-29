@@ -315,9 +315,7 @@ fn value_to_providers_name(subtarget_name: SubtargetNameArg) -> yak_error::Resul
         SubtargetNameArg::List(list) => list
             .items
             .into_iter()
-            .map(|name| {
-                ProviderName::new(name).yak_error_context("for parameter `subtarget_name`")
-            })
+            .map(|name| ProviderName::new(name).yak_error_context("for parameter `subtarget_name`"))
             .collect::<yak_error::Result<Vec<_>>>()?,
         SubtargetNameArg::Str(str) => {
             vec![

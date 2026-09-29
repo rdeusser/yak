@@ -20,8 +20,8 @@ use yak_core::cells::CellResolver;
 use yak_core::cells::name::CellName;
 use yak_core::fs::project::ProjectRoot;
 use yak_core::yak_env;
-use yak_error::YakErrorContext;
 use yak_error::ErrorTag;
+use yak_error::YakErrorContext;
 use yak_error::yak_error;
 use yak_hash::StdYakHashMap;
 

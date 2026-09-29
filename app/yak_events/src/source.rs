@@ -32,14 +32,14 @@ mod tests {
 
     use yak_data::CommandStart;
     use yak_data::SpanStartEvent;
-    use yak_data::yak_event::Data::SpanStart;
     use yak_data::span_start_event::Data::Command;
+    use yak_data::yak_event::Data::SpanStart;
 
     use super::ChannelEventSource;
-    use crate::YakEvent;
     use crate::Event;
     use crate::EventSink;
     use crate::TraceId;
+    use crate::YakEvent;
     use crate::sink::channel::ChannelEventSink;
 
     #[tokio::test]

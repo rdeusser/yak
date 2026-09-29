@@ -493,12 +493,12 @@ mod tests {
     use crate::deferred::dynamic::DynamicLambdaResultsKey;
     use crate::deferred::key::DeferredHolderKey;
     use crate::fs::artifact_path_resolver::ArtifactFs;
+    use crate::fs::project::ProjectRoot;
+    use crate::fs::project_rel_path::ProjectRelativePathBuf;
+    use crate::fs::yak_out_path::BuildArtifactPath;
     use crate::fs::yak_out_path::YakOutPathKind;
     use crate::fs::yak_out_path::YakOutPathResolver;
     use crate::fs::yak_out_path::YakOutScratchPath;
-    use crate::fs::yak_out_path::BuildArtifactPath;
-    use crate::fs::project::ProjectRoot;
-    use crate::fs::project_rel_path::ProjectRelativePathBuf;
     use crate::package::PackageLabel;
     use crate::package::source_path::SourcePath;
     use crate::provider::label::ConfiguredProvidersLabel;
@@ -513,9 +513,9 @@ mod tests {
             CellName::testing_new("foo"),
             CellRootPathBuf::new(ProjectRelativePathBuf::unchecked_new("bar-cell".into())),
         );
-        let yak_out_path_resolver = YakOutPathResolver::new(
-            ProjectRelativePathBuf::unchecked_new("base/yak-out/v2".into()),
-        );
+        let yak_out_path_resolver = YakOutPathResolver::new(ProjectRelativePathBuf::unchecked_new(
+            "base/yak-out/v2".into(),
+        ));
         let artifact_fs = ArtifactFs::new(
             cell_resolver,
             yak_out_path_resolver,

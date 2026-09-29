@@ -20,14 +20,14 @@ use yak_fs::paths::abs_norm_path::AbsNormPath;
 use yak_util::process;
 use yak_util::process::async_background_command;
 
-use crate::yak_cgroup_tree::parse_procfs_cgroup_output;
-use crate::yak_cgroup_tree::read_current_cgroup;
 #[cfg(unix)]
 use crate::cgroup::Cgroup;
 #[cfg(unix)]
 use crate::cgroup::CgroupKindInternal;
 #[cfg(unix)]
 use crate::cgroup::NoMemoryMonitoring;
+use crate::yak_cgroup_tree::parse_procfs_cgroup_output;
+use crate::yak_cgroup_tree::read_current_cgroup;
 
 const DAEMON_ORIGINATING_CGROUP_FLAG: &str = "--daemon-originating-cgroup";
 

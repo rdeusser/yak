@@ -14,9 +14,9 @@ use std::process::Stdio;
 
 use tracing::instrument;
 
+use crate::project_json::Sysroot;
 use crate::yak::truncate_line_ending;
 use crate::yak::utf8_output;
-use crate::project_json::Sysroot;
 
 #[derive(Debug)]
 pub(crate) enum SysrootConfig {

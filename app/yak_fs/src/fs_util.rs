@@ -22,9 +22,9 @@ use std::path::Path;
 use std::path::PathBuf;
 
 pub use yak_env::soft_error::soft_error;
+use yak_error::ErrorTag;
 #[cfg(unix)]
 use yak_error::YakErrorContext;
-use yak_error::ErrorTag;
 #[cfg(unix)]
 use yak_error::internal_error;
 use yak_error::yak_error;

@@ -88,8 +88,8 @@ use tonic::metadata::MetadataKey;
 use tonic::metadata::MetadataValue;
 use tonic::service::Interceptor;
 use tonic::transport::Channel;
-use yak_re_configuration::YakOssReConfiguration;
 use yak_re_configuration::HttpHeader;
+use yak_re_configuration::YakOssReConfiguration;
 
 use crate::error::*;
 use crate::metadata::*;

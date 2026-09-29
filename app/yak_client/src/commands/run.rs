@@ -22,16 +22,16 @@ use yak_cli_proto::build_request::Uploads;
 use yak_cli_proto::build_request::build_providers;
 use yak_client_ctx::client_ctx::ClientCommandContext;
 use yak_client_ctx::command_outcome::CommandOutcome;
-use yak_client_ctx::common::YakArgMatches;
 use yak_client_ctx::common::CommonBuildConfigurationOptions;
 use yak_client_ctx::common::CommonCommandOptions;
 use yak_client_ctx::common::CommonEventLogOptions;
 use yak_client_ctx::common::CommonStarlarkOptions;
+use yak_client_ctx::common::YakArgMatches;
 use yak_client_ctx::common::build::CommonBuildOptions;
 use yak_client_ctx::common::target_cfg::TargetCfgWithUniverseOptions;
 use yak_client_ctx::common::ui::CommonConsoleOptions;
-use yak_client_ctx::daemon::client::YakdClientConnector;
 use yak_client_ctx::daemon::client::NoPartialResultHandler;
+use yak_client_ctx::daemon::client::YakdClientConnector;
 use yak_client_ctx::events_ctx::EventsCtx;
 use yak_client_ctx::exit_result::ExecEnvironment;
 use yak_client_ctx::exit_result::ExitResult;
@@ -42,9 +42,9 @@ use yak_common::argv::SanitizedArgv;
 use yak_error::YakErrorContext;
 use yak_error::conversion::from_any_with_tag;
 use yak_hash::YakMutSet;
+use yak_wrapper_common::YAK_WRAPPER_ENV_VAR;
 use yak_wrapper_common::YAK_WRAPPER_START_TIME_ENV_VAR;
 use yak_wrapper_common::YAK_WRAPPER_UUID_ENV_VAR;
-use yak_wrapper_common::YAK_WRAPPER_ENV_VAR;
 
 use crate::commands::build::print_build_failed;
 use crate::commands::build::print_build_id;
@@ -217,8 +217,8 @@ impl StreamingCommand for RunCommand {
                     .filter(|(key, _value)| !WRAPPER_ENV_VARS.contains(&key.as_str()))
                     .collect(),
             };
-            let serialized = serde_json::to_string(&command)
-                .yak_error_context("Failed to serialize command")?;
+            let serialized =
+                serde_json::to_string(&command).yak_error_context("Failed to serialize command")?;
             output
                 .write_all(serialized.as_bytes())
                 .yak_error_context("Failed to write command")?;

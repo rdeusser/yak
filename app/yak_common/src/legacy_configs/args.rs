@@ -143,10 +143,10 @@ pub(crate) async fn resolve_config_args(
 pub(crate) fn to_proto_config_args(
     args: &[ResolvedLegacyConfigArg],
 ) -> Vec<yak_data::YakconfigComponent> {
-    use yak_data::yakconfig_component::Data::ConfigFile;
-    use yak_data::yakconfig_component::Data::ConfigValue;
     use yak_data::config_file::Data::GlobalExternalConfig;
     use yak_data::config_file::Data::ProjectRelativePath;
+    use yak_data::yakconfig_component::Data::ConfigFile;
+    use yak_data::yakconfig_component::Data::ConfigValue;
 
     args.iter()
         .map(|arg| {

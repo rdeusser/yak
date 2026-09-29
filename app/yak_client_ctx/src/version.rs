@@ -12,8 +12,8 @@ use std::fs::File;
 use std::sync::OnceLock;
 
 use object::Object;
-use yak_error::YakErrorContext;
 use yak_error::ErrorTag;
+use yak_error::YakErrorContext;
 
 /// Provides information about this yak version.
 pub struct YakVersion {

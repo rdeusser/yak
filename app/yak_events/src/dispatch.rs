@@ -32,14 +32,14 @@ use yak_core::error::SoftErrorContext;
 use yak_core::event::EventDispatch;
 use yak_data::SpanEndEvent;
 use yak_data::SpanStartEvent;
-use yak_data::yak_event;
 use yak_data::span_end_event;
 use yak_data::span_start_event;
+use yak_data::yak_event;
 use yak_wrapper_common::invocation_id::TraceId;
 
-use crate::YakEvent;
 use crate::Event;
 use crate::EventSink;
+use crate::YakEvent;
 use crate::daemon_id::DaemonId;
 use crate::sink::null::NullEventSink;
 use crate::span::SpanId;

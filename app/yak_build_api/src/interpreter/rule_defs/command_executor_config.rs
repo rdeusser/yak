@@ -273,8 +273,7 @@ pub fn register_command_executor_config(builder: &mut GlobalsBuilder) {
                     Executor::RemoteEnabled(RemoteEnabledExecutorOptions {
                         executor: RemoteEnabledExecutor::Local(local),
                         re_properties: re_properties.unwrap_or_default(),
-                        re_use_case: re_use_case
-                            .unwrap_or_else(RemoteExecutorUseCase::yak_default),
+                        re_use_case: re_use_case.unwrap_or_else(RemoteExecutorUseCase::yak_default),
                         re_action_key,
                         cache_upload_behavior,
                         remote_cache_enabled: true,

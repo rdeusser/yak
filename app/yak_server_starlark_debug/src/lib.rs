@@ -129,10 +129,7 @@ impl ServerConnection {
             return Err(StarlarkDebuggerError::DebuggerAlreadyAttached.into());
         }
 
-        let server = Arc::new(YakStarlarkDebuggerServer::new(
-            to_client_send,
-            project_root,
-        ));
+        let server = Arc::new(YakStarlarkDebuggerServer::new(to_client_send, project_root));
         *locked = Some(server.dupe());
         Ok(Self(server))
     }

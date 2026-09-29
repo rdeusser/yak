@@ -13,11 +13,11 @@ use gazebo::prelude::SliceExt;
 use yak_cli_proto::new_generic::DebugEvalRequest;
 use yak_cli_proto::new_generic::NewGenericRequest;
 use yak_client_ctx::client_ctx::ClientCommandContext;
-use yak_client_ctx::common::YakArgMatches;
 use yak_client_ctx::common::CommonBuildConfigurationOptions;
 use yak_client_ctx::common::CommonCommandOptions;
 use yak_client_ctx::common::CommonEventLogOptions;
 use yak_client_ctx::common::CommonStarlarkOptions;
+use yak_client_ctx::common::YakArgMatches;
 use yak_client_ctx::common::ui::CommonConsoleOptions;
 use yak_client_ctx::daemon::client::YakdClientConnector;
 use yak_client_ctx::events_ctx::EventsCtx;
@@ -56,8 +56,7 @@ impl StreamingCommand for EvalCommand {
         }
 
         let context = ctx.client_context(matches, &self)?;
-        yakd
-            .with_flushing()
+        yakd.with_flushing()
             .new_generic(
                 context,
                 NewGenericRequest::DebugEval(DebugEvalRequest {

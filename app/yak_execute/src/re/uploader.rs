@@ -50,9 +50,9 @@ use yak_error::YakErrorOptionContext;
 use yak_error::conversion::from_any_with_tag;
 use yak_events::dispatch::get_dispatcher;
 use yak_events::dispatch::with_dispatcher_async;
+use yak_hash::IntentionallyStdHashMap;
 use yak_hash::YakMutMap;
 use yak_hash::YakMutSet;
-use yak_hash::IntentionallyStdHashMap;
 
 use crate::digest::CasDigestFromReExt;
 use crate::digest::CasDigestToReExt;

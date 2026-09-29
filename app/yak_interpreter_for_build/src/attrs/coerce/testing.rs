@@ -33,12 +33,12 @@ use yak_interpreter::file_type::StarlarkFileType;
 use yak_node::attrs::coercion_context::AttrCoercionContext;
 
 use crate::attrs::coerce::ctx::BuildAttrCoercionContext;
-use crate::interpreter::yakconfig::LegacyConfigsViewForStarlark;
 use crate::interpreter::build_context::BuildContext;
 use crate::interpreter::build_context::PerFileTypeContext;
 use crate::interpreter::bzl_eval_ctx::BzlEvalCtx;
 use crate::interpreter::cell_info::InterpreterCellInfo;
 use crate::interpreter::functions::host_info::HostInfo;
+use crate::interpreter::yakconfig::LegacyConfigsViewForStarlark;
 
 pub fn coercion_ctx() -> impl AttrCoercionContext {
     coercion_ctx_listing(PackageListing::testing_empty())

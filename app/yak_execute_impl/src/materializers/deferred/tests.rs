@@ -12,8 +12,8 @@ use std::sync::Arc;
 
 use parking_lot::Mutex;
 use yak_common::file_ops::metadata::FileMetadata;
-use yak_core::fs::yak_out_path::YakOutPathKind;
 use yak_core::fs::project_rel_path::ProjectRelativePath;
+use yak_core::fs::yak_out_path::YakOutPathKind;
 use yak_error::YakErrorOptionContext;
 use yak_error::internal_error;
 use yak_execute::digest_config::DigestConfig;

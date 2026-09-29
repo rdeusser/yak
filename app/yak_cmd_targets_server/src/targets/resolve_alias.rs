@@ -183,9 +183,7 @@ pub(crate) async fn targets_resolve_aliases(
                 package_data
                     .as_ref()
                     .map_err(|e| e.dupe())
-                    .with_yak_error_context(|| {
-                        format!("Package cannot be evaluated: `{package}`")
-                    })?
+                    .with_yak_error_context(|| format!("Package cannot be evaluated: `{package}`"))?
                     .resolve_target(target_name)
                     .with_yak_error_context(|| {
                         format!("Target does not exist in package `{package}`: `{target_name}`",)

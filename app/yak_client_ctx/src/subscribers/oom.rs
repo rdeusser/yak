@@ -389,8 +389,8 @@ fn parse_systemd_oomd_kill_cgroup(line: &str) -> Option<&str> {
 mod tests {
     use std::time::Duration;
 
-    use super::YakCgroupMatcher;
     use super::OomEvidence;
+    use super::YakCgroupMatcher;
     use super::dmesg_lower_bound_at;
     use super::find_matching_oom_kill;
     use super::parse_dmesg_timestamp;

@@ -15,8 +15,8 @@ use yak_common::convert::ProstDurationExt;
 use yak_data::ActionExecutionKind;
 use yak_data::ActionKind;
 use yak_data::ActionName;
-use yak_data::YakEvent;
 use yak_data::StarlarkUserEvent;
+use yak_data::YakEvent;
 use yak_event_observer::display::TargetDisplayOptions;
 use yak_event_observer::display::display_action_owner;
 

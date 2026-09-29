@@ -62,7 +62,6 @@ use yak_node::nodes::eval_result::EvaluationResult;
 use yak_node::super_package::SuperPackage;
 use yak_util::time_span::TimeSpan;
 
-use crate::interpreter::yakconfig::ConfigsOnDiceViewForStarlark;
 use crate::interpreter::cell_info::InterpreterCellInfo;
 use crate::interpreter::check_starlark_stack_size::check_starlark_stack_size;
 use crate::interpreter::cycles::LoadCycleDescriptor;
@@ -70,6 +69,7 @@ use crate::interpreter::global_interpreter_state::HasGlobalInterpreterState;
 use crate::interpreter::interpreter_for_dir::InterpreterForDir;
 use crate::interpreter::interpreter_for_dir::ParseData;
 use crate::interpreter::interpreter_for_dir::ParseResult;
+use crate::interpreter::yakconfig::ConfigsOnDiceViewForStarlark;
 use crate::super_package::package_value::SuperPackageValuesImpl;
 
 fn toml_value_to_json(value: toml::Value) -> serde_json::Value {
@@ -300,8 +300,8 @@ impl<'c, 'd: 'c> DiceCalculationDelegate<'c, 'd> {
             .await
             .with_package_context_information(path.path().to_string())?;
 
-        let value: serde_json::Value = serde_json::from_str(&contents)
-            .with_yak_error_context(|| format!("Parsing {path}"))?;
+        let value: serde_json::Value =
+            serde_json::from_str(&contents).with_yak_error_context(|| format!("Parsing {path}"))?;
 
         // We expect these to be small + simple
         let frozen = Module::with_temp_heap(|module| {
@@ -677,8 +677,7 @@ impl<'c, 'd: 'c> DiceCalculationDelegate<'c, 'd> {
 
             now = Some(TimeSpan::start_now());
             let provider = StarlarkEvaluatorProvider::new(ctx, eval_kind).await?;
-            let mut yakconfigs =
-                ConfigsOnDiceViewForStarlark::new(ctx, yakconfig, root_yakconfig);
+            let mut yakconfigs = ConfigsOnDiceViewForStarlark::new(ctx, yakconfig, root_yakconfig);
 
             let (profile_data, eval_result) = span(start_event, move || {
                 let result_with_stats = configs

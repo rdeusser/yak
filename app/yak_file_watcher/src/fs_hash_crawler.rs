@@ -40,8 +40,8 @@ use yak_fs::error::IoResultExt;
 use yak_fs::fs_util;
 use yak_fs::paths::abs_norm_path::AbsNormPath;
 use yak_fs::paths::file_name::FileNameBuf;
-use yak_hash::YakMutMap;
 use yak_hash::StdYakHashMap;
+use yak_hash::YakMutMap;
 
 use crate::file_watcher::FileWatcher;
 use crate::mergebase::Mergebase;

@@ -26,12 +26,12 @@ use yak_hash::YakMutMap;
 use yak_util::threads::thread_spawn;
 
 use crate::action_scene::ActionScene;
-use crate::yak_cgroup_tree::YakCgroupTree;
 use crate::cgroup::MemoryPressureHandle;
 use crate::pool::CgroupPool;
 use crate::scheduler::SceneIdRef;
 use crate::scheduler::SceneResourceReading;
 use crate::scheduler::Scheduler;
+use crate::yak_cgroup_tree::YakCgroupTree;
 
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub struct MemoryReading {

@@ -27,9 +27,9 @@ use pagable::ValueSerialize;
 use serde::Deserialize;
 use serde::Serialize;
 use strong_hash::StrongHash;
-use yak_error::YakErrorContext;
 use yak_error::ContextValue;
 use yak_error::TypedContext;
+use yak_error::YakErrorContext;
 use yak_util::arc_str::ArcStr;
 
 use crate::provider::label::ProvidersLabel;

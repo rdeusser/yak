@@ -16,10 +16,10 @@ use futures::stream::StreamExt;
 use lsp_server::Message;
 use yak_cli_proto::LspRequest;
 use yak_client_ctx::client_ctx::ClientCommandContext;
-use yak_client_ctx::common::YakArgMatches;
 use yak_client_ctx::common::CommonBuildConfigurationOptions;
 use yak_client_ctx::common::CommonEventLogOptions;
 use yak_client_ctx::common::CommonStarlarkOptions;
+use yak_client_ctx::common::YakArgMatches;
 use yak_client_ctx::common::ui::CommonConsoleOptions;
 use yak_client_ctx::common::ui::ConsoleType;
 use yak_client_ctx::daemon::client::YakdClientConnector;
@@ -71,8 +71,7 @@ impl StreamingCommand for LspCommand {
         reborrow_stream_for_static(
             stream,
             |stream| async move {
-                yakd
-                    .with_flushing()
+                yakd.with_flushing()
                     .lsp(
                         client_context,
                         stream,

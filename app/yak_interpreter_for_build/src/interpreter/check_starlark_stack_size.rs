@@ -25,8 +25,8 @@ use starlark::syntax::AstModule;
 use yak_error::YakErrorContext;
 use yak_error::starlark_error::from_starlark_with_options;
 use yak_interpreter::dice::starlark_provider::StarlarkEvalKind;
-use yak_interpreter::factory::YakStarlarkModule;
 use yak_interpreter::factory::StarlarkEvaluatorProvider;
+use yak_interpreter::factory::YakStarlarkModule;
 use yak_interpreter::file_type::StarlarkFileType;
 
 #[derive(Debug, yak_error::Error)]

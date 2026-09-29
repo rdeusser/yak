@@ -52,8 +52,8 @@ use yak_core::provider::label::ProvidersName;
 use yak_core::target::configured_target_label::ConfiguredTargetLabel;
 use yak_data::ErrorReport;
 use yak_directory::directory::entry::DirectoryEntry;
-use yak_error::YakErrorContext;
 use yak_error::UniqueRootId;
+use yak_error::YakErrorContext;
 use yak_error::classify::ErrorLike;
 use yak_error::classify::Tier;
 use yak_error::classify::best_error;
@@ -376,10 +376,8 @@ impl<'a> BuildReportCollector<'a> {
         > = YakMutMap::default();
         let mut action_graph_sketches_by_configured: YakMutMap<ConfiguredProvidersLabel, String> =
             YakMutMap::default();
-        let mut artifact_count_sketches_by_configured: YakMutMap<
-            ConfiguredProvidersLabel,
-            String,
-        > = YakMutMap::default();
+        let mut artifact_count_sketches_by_configured: YakMutMap<ConfiguredProvidersLabel, String> =
+            YakMutMap::default();
         let mut artifact_size_sketches_by_configured: YakMutMap<ConfiguredProvidersLabel, String> =
             YakMutMap::default();
         let mut artifact_count_cardinalities_by_configured: YakMutMap<

@@ -181,9 +181,7 @@ impl BlockingExecutor for YakBlockingExecutor {
         });
 
         cancellations
-            .critical_section(
-                || async move { receiver.await.yak_error_context("Pool shut down")? },
-            )
+            .critical_section(|| async move { receiver.await.yak_error_context("Pool shut down")? })
             .boxed()
     }
 

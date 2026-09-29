@@ -22,8 +22,8 @@ use dice::ValueSerialize;
 use dupe::Dupe;
 use pagable::Pagable;
 use pagable::pagable_typetag;
-use yak_core::fs::yak_out_path::YakOutPathResolver;
 use yak_core::fs::project_rel_path::ProjectRelativePathBuf;
+use yak_core::fs::yak_out_path::YakOutPathResolver;
 
 #[async_trait]
 pub trait HasBuildContextData<'d> {

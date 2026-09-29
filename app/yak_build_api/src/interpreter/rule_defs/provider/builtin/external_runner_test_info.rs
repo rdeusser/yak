@@ -455,10 +455,9 @@ fn validate_external_runner_test_info<'v>(
     check_all(iter_opt_str_list(info.contacts.get(), "contacts"))?;
     check_all(iter_executor_overrides(info.executor_overrides.get()))?;
 
-    let provided_local_resources = iter_local_resources(info.local_resources.get())
-        .collect::<yak_error::Result<
-        YakIndexMap<&str, Option<&ConfiguredProvidersLabel>>,
-    >>()?;
+    let provided_local_resources =
+        iter_local_resources(info.local_resources.get())
+            .collect::<yak_error::Result<YakIndexMap<&str, Option<&ConfiguredProvidersLabel>>>>()?;
 
     let required_local_resources = info.required_local_resources.get();
     if !required_local_resources.is_none() {

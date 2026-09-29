@@ -22,8 +22,8 @@ use yak_core::pattern::unparsed::UnparsedPatterns;
 use crate::dice::cells::HasCellResolver;
 use crate::pattern::resolve::ResolveTargetPatterns;
 use crate::pattern::resolve::ResolvedPattern;
-use crate::target_aliases::YakConfigTargetAliasResolver;
 use crate::target_aliases::HasTargetAliasResolver;
+use crate::target_aliases::YakConfigTargetAliasResolver;
 
 struct PatternParser<'d> {
     cell_resolver: &'d CellResolver,

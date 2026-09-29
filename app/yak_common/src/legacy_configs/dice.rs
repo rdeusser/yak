@@ -40,8 +40,8 @@ use yak_error::YakErrorOptionContext;
 use yak_events::dispatch::get_dispatcher;
 
 use crate::dice::cells::HasCellResolver;
-use crate::legacy_configs::cells::YakConfigBasedCells;
 use crate::legacy_configs::cells::ExternalYakconfigData;
+use crate::legacy_configs::cells::YakConfigBasedCells;
 use crate::legacy_configs::configs::LegacyYakConfig;
 use crate::legacy_configs::key::YakconfigKeyRef;
 use crate::legacy_configs::view::LegacyYakConfigView;

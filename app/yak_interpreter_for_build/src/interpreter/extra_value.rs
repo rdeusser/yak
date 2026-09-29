@@ -25,9 +25,9 @@ use starlark::values::ValueTyped;
 use starlark::values::any_complex::StarlarkAnyComplex;
 use yak_error::YakErrorOptionContext;
 
-use crate::interpreter::yakconfig::YakConfigsCache;
 use crate::interpreter::package_file_extra::FrozenPackageFileExtra;
 use crate::interpreter::package_file_extra::PackageFileExtra;
+use crate::interpreter::yakconfig::YakConfigsCache;
 
 /// `Module.extra_value` when evaluating build, bzl, package, and bxl files.
 #[derive(

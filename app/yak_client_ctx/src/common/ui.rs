@@ -22,9 +22,9 @@ use crate::final_console::FinalConsole;
 use crate::subscribers::errorconsole::ErrorConsole;
 use crate::subscribers::simpleconsole::SimpleConsole;
 use crate::subscribers::subscriber::EventSubscriber;
-use crate::subscribers::superconsole::YAK_NO_INTERACTIVE_CONSOLE;
 use crate::subscribers::superconsole::StatefulSuperConsole;
 use crate::subscribers::superconsole::SuperConsoleConfig;
+use crate::subscribers::superconsole::YAK_NO_INTERACTIVE_CONSOLE;
 use crate::subscribers::superconsole::timekeeper::Timekeeper;
 
 #[derive(

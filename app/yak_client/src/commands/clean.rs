@@ -25,11 +25,11 @@ use superconsole::components::Spinner;
 use threadpool::ThreadPool;
 use uuid::Uuid;
 use walkdir::WalkDir;
-use yak_client_ctx::client_ctx::YakSubcommand;
 use yak_client_ctx::client_ctx::ClientCommandContext;
-use yak_client_ctx::common::YakArgMatches;
+use yak_client_ctx::client_ctx::YakSubcommand;
 use yak_client_ctx::common::CommonCommandOptions;
 use yak_client_ctx::common::CommonEventLogOptions;
+use yak_client_ctx::common::YakArgMatches;
 use yak_client_ctx::common::target_cfg::TargetCfgUnusedOptions;
 use yak_client_ctx::common::ui::ConsoleType;
 use yak_client_ctx::daemon::client::YakdLifecycleLock;
@@ -40,8 +40,8 @@ use yak_client_ctx::final_console::FinalConsole;
 use yak_client_ctx::startup_deadline::StartupDeadline;
 use yak_client_ctx::subscribers::superconsole::StatefulSuperConsole;
 use yak_common::daemon_dir::DaemonDir;
-use yak_error::YakErrorContext;
 use yak_error::ErrorTag;
+use yak_error::YakErrorContext;
 use yak_fs::error::IoError;
 use yak_fs::error::IoResultExt;
 use yak_fs::fs_util;
@@ -354,9 +354,7 @@ async fn clean(
     Ok(())
 }
 
-fn collect_paths_to_clean(
-    yak_out_path: &AbsNormPathBuf,
-) -> yak_error::Result<Vec<AbsNormPathBuf>> {
+fn collect_paths_to_clean(yak_out_path: &AbsNormPathBuf) -> yak_error::Result<Vec<AbsNormPathBuf>> {
     if !yak_out_path.exists() {
         return Ok(vec![]);
     }

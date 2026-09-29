@@ -16,8 +16,8 @@ use futures::TryStreamExt;
 use serde::Serialize;
 use similar::ChangeTag;
 use similar::TextDiff;
-use yak_client_ctx::client_ctx::YakSubcommand;
 use yak_client_ctx::client_ctx::ClientCommandContext;
+use yak_client_ctx::client_ctx::YakSubcommand;
 use yak_client_ctx::common::YakArgMatches;
 use yak_client_ctx::events_ctx::EventsCtx;
 use yak_client_ctx::exit_result::ExitResult;
@@ -88,11 +88,11 @@ fn process_yakconfig_data(
     order: &mut Vec<String>,
     event: &yak_data::YakEvent,
 ) {
+    use yak_data::config_file::Data::GlobalExternalConfig;
+    use yak_data::config_file::Data::ProjectRelativePath;
     use yak_data::yakconfig_component::Data::ConfigFile;
     use yak_data::yakconfig_component::Data::ConfigValue;
     use yak_data::yakconfig_component::Data::GlobalExternalConfigFile;
-    use yak_data::config_file::Data::GlobalExternalConfig;
-    use yak_data::config_file::Data::ProjectRelativePath;
 
     if let Some(yak_data::yak_event::Data::Instant(end)) = event.data.as_ref() {
         if let Some(yak_data::instant_event::Data::YakconfigInputValues(input)) = end.data.as_ref()

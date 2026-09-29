@@ -53,8 +53,8 @@ use yak_core::target::configured_target_label::ConfiguredTargetLabel;
 use yak_execute::artifact_value::ArtifactValue;
 use yak_execute::digest_config::DigestConfig;
 use yak_execute::digest_config::SetDigestConfig;
-use yak_hash::YakMutMap;
 use yak_hash::StdYakHashMap;
+use yak_hash::YakMutMap;
 
 use crate::interpreter::transitive_set::testing::TSET_TEST_LOCK;
 use crate::interpreter::transitive_set::testing::new_transitive_set;

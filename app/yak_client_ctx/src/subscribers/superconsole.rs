@@ -815,43 +815,39 @@ impl StatefulSuperConsoleImpl {
     async fn handle_inner_event(&mut self, event: &YakEvent) -> yak_error::Result<()> {
         match unpack_event(event)? {
             yak_event_observer::unpack_event::UnpackedYakEvent::SpanStart(_, _, _) => Ok(()),
-            yak_event_observer::unpack_event::UnpackedYakEvent::SpanEnd(_, _, data) => {
-                match data {
-                    yak_data::span_end_event::Data::ActionExecution(action) => {
-                        self.handle_action_execution_end(action).await
-                    }
-                    yak_data::span_end_event::Data::FileWatcher(file_watcher) => {
-                        self.handle_file_watcher_end(file_watcher).await
-                    }
-                    _ => Ok(()),
+            yak_event_observer::unpack_event::UnpackedYakEvent::SpanEnd(_, _, data) => match data {
+                yak_data::span_end_event::Data::ActionExecution(action) => {
+                    self.handle_action_execution_end(action).await
                 }
-            }
-            yak_event_observer::unpack_event::UnpackedYakEvent::Instant(_, _, data) => {
-                match data {
-                    yak_data::instant_event::Data::ConsoleMessage(message) => {
-                        self.handle_console_message(message).await
-                    }
-                    yak_data::instant_event::Data::ConsoleWarning(message) => {
-                        self.handle_console_warning(message).await
-                    }
-                    yak_data::instant_event::Data::StructuredError(err) => {
-                        self.handle_structured_error(err).await
-                    }
-                    yak_data::instant_event::Data::TestResult(result) => {
-                        self.handle_test_result(result).await
-                    }
-                    yak_data::instant_event::Data::ConsolePreferences(preferences) => {
-                        self.handle_console_preferences(preferences).await
-                    }
-                    yak_data::instant_event::Data::ActionError(error) => {
-                        self.handle_action_error(error).await
-                    }
-                    yak_data::instant_event::Data::StreamingOutput(message) => {
-                        self.handle_streaming_output(message).await
-                    }
-                    _ => Ok(()),
+                yak_data::span_end_event::Data::FileWatcher(file_watcher) => {
+                    self.handle_file_watcher_end(file_watcher).await
                 }
-            }
+                _ => Ok(()),
+            },
+            yak_event_observer::unpack_event::UnpackedYakEvent::Instant(_, _, data) => match data {
+                yak_data::instant_event::Data::ConsoleMessage(message) => {
+                    self.handle_console_message(message).await
+                }
+                yak_data::instant_event::Data::ConsoleWarning(message) => {
+                    self.handle_console_warning(message).await
+                }
+                yak_data::instant_event::Data::StructuredError(err) => {
+                    self.handle_structured_error(err).await
+                }
+                yak_data::instant_event::Data::TestResult(result) => {
+                    self.handle_test_result(result).await
+                }
+                yak_data::instant_event::Data::ConsolePreferences(preferences) => {
+                    self.handle_console_preferences(preferences).await
+                }
+                yak_data::instant_event::Data::ActionError(error) => {
+                    self.handle_action_error(error).await
+                }
+                yak_data::instant_event::Data::StreamingOutput(message) => {
+                    self.handle_streaming_output(message).await
+                }
+                _ => Ok(()),
+            },
             yak_event_observer::unpack_event::UnpackedYakEvent::UnrecognizedSpanStart(_, _)
             | yak_event_observer::unpack_event::UnpackedYakEvent::UnrecognizedSpanEnd(_, _)
             | yak_event_observer::unpack_event::UnpackedYakEvent::UnrecognizedInstant(_, _) => {

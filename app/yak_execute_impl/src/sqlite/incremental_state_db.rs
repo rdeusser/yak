@@ -23,8 +23,8 @@ use yak_core::soft_error;
 use yak_execute::execute::blocking::BlockingExecutor;
 use yak_fs::paths::abs_norm_path::AbsNormPath;
 use yak_fs::paths::abs_norm_path::AbsNormPathBuf;
-use yak_hash::YakDashMap;
 use yak_hash::IntentionallyStdHashMap;
+use yak_hash::YakDashMap;
 
 use crate::incremental_actions_helper::IncrementalPathMap;
 use crate::materializers::deferred::artifact_tree::ArtifactMetadata;

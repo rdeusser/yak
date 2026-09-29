@@ -15,10 +15,10 @@ use async_trait::async_trait;
 use futures::StreamExt;
 use yak_cli_proto::DapRequest;
 use yak_client_ctx::client_ctx::ClientCommandContext;
-use yak_client_ctx::common::YakArgMatches;
 use yak_client_ctx::common::CommonBuildConfigurationOptions;
 use yak_client_ctx::common::CommonEventLogOptions;
 use yak_client_ctx::common::CommonStarlarkOptions;
+use yak_client_ctx::common::YakArgMatches;
 use yak_client_ctx::common::ui::CommonConsoleOptions;
 use yak_client_ctx::common::ui::ConsoleType;
 use yak_client_ctx::daemon::client::YakdClientConnector;
@@ -100,8 +100,7 @@ impl StreamingCommand for StarlarkDebugAttachCommand {
         reborrow_stream_for_static(
             stream,
             |stream| async move {
-                yakd
-                    .with_flushing()
+                yakd.with_flushing()
                     .dap(
                         client_context,
                         stream,

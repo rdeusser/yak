@@ -24,12 +24,12 @@ use yak_interpreter::build_context::STARLARK_PATH_FROM_BUILD_CONTEXT;
 use yak_interpreter::file_type::StarlarkFileType;
 use yak_interpreter::paths::path::StarlarkPath;
 
-use crate::interpreter::yakconfig::YakConfigsViewForStarlark;
-use crate::interpreter::yakconfig::LegacyYakConfigsForStarlark;
 use crate::interpreter::bzl_eval_ctx::BzlEvalCtx;
 use crate::interpreter::cell_info::InterpreterCellInfo;
 use crate::interpreter::functions::host_info::HostInfo;
 use crate::interpreter::module_internals::ModuleInternals;
+use crate::interpreter::yakconfig::LegacyYakConfigsForStarlark;
+use crate::interpreter::yakconfig::YakConfigsViewForStarlark;
 use crate::super_package::eval_ctx::PackageFileEvalCtx;
 
 #[derive(yak_error::Error, Debug)]

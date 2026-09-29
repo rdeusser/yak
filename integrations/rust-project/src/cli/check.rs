@@ -15,10 +15,10 @@ use std::str::FromStr;
 use anyhow::Context as _;
 use rustc_hash::FxHashSet;
 
-use crate::yak;
-use crate::yak::Yak;
 use crate::diagnostics;
 use crate::path::safe_canonicalize;
+use crate::yak;
+use crate::yak::Yak;
 
 pub(crate) struct Check {
     pub(crate) yak: yak::Yak,

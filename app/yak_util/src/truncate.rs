@@ -84,7 +84,8 @@ pub fn truncate_container<T: AsRef<str>, Iter: IntoIterator<Item = T>>(
 mod tests {
     use super::*;
 
-    const MSG: &str = "rdeps(set(root//yak/... other//tools/yak/..., other//apple/yak/...), root//yak/cli:yak)";
+    const MSG: &str =
+        "rdeps(set(root//yak/... other//tools/yak/..., other//apple/yak/...), root//yak/cli:yak)";
 
     #[test]
     fn test_truncate() {

@@ -25,11 +25,11 @@ use crate::settings::path::DEFAULT_SETTINGS_SOURCES;
 use crate::settings::path::DOT_YAKSETTINGS;
 use crate::settings::path::SettingsSource as SettingsPathSource;
 use crate::settings::settings::ALL_SETTING_METADATA;
-use crate::settings::settings::YakSettingsData;
 use crate::settings::settings::OverrideSource;
 use crate::settings::settings::SettingKeyMetadata;
 use crate::settings::settings::SettingKeyRef;
 use crate::settings::settings::SettingSource;
+use crate::settings::settings::YakSettingsData;
 use crate::settings::settings::find_setting_metadata;
 
 /// Source of a setting value.
@@ -374,8 +374,8 @@ mod tests {
     use super::*;
     use crate::settings::args::SettingOverride;
     use crate::settings::args::parse_setting_flag_arg;
-    use crate::settings::settings::testing::TestYakSettingsData;
     use crate::settings::settings::testing::TestSection;
+    use crate::settings::settings::testing::TestYakSettingsData;
 
     impl MergedSettings {
         fn provenance(&self, key: SettingKeyRef<'_>) -> Option<&Provenance> {

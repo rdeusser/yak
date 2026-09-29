@@ -70,8 +70,8 @@ use futures::TryStreamExt;
 use futures::stream::BoxStream;
 use serde::Serialize;
 use serde_json::json;
-use yak_client_ctx::client_ctx::YakSubcommand;
 use yak_client_ctx::client_ctx::ClientCommandContext;
+use yak_client_ctx::client_ctx::YakSubcommand;
 use yak_client_ctx::common::YakArgMatches;
 use yak_client_ctx::event_log_options::EventLogOptions;
 use yak_client_ctx::events_ctx::EventsCtx;
@@ -2250,11 +2250,9 @@ impl ChromeTraceCommand {
         let mut first_pass = ChromeTraceFirstPass::new();
         let mut build_graph_info = None;
         while let Some(event) = tokio_stream::StreamExt::try_next(&mut stream).await? {
-            first_pass
-                .handle_event(&event)
-                .with_yak_error_context(|| {
-                    display::InvalidYakEvent(Arc::new(event.clone())).to_string()
-                })?;
+            first_pass.handle_event(&event).with_yak_error_context(|| {
+                display::InvalidYakEvent(Arc::new(event.clone())).to_string()
+            })?;
             if let Ok(UnpackedYakEvent::Instant(
                 _,
                 _,

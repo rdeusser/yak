@@ -42,9 +42,9 @@ use yak_common::liveliness_observer::NoopLivelinessObserver;
 use yak_common::local_resource_state::LocalResourceHolder;
 use yak_core::content_hash::ContentBasedPathHash;
 use yak_core::fs::artifact_path_resolver::ArtifactFs;
-use yak_core::fs::yak_out_path::BuildArtifactPath;
 use yak_core::fs::project_rel_path::ProjectRelativePath;
 use yak_core::fs::project_rel_path::ProjectRelativePathBuf;
+use yak_core::fs::yak_out_path::BuildArtifactPath;
 use yak_core::soft_error;
 use yak_core::tag_error;
 use yak_core::tag_result;
@@ -1790,9 +1790,9 @@ mod tests {
     use yak_core::cells::CellResolver;
     use yak_core::cells::cell_root_path::CellRootPathBuf;
     use yak_core::cells::name::CellName;
-    use yak_core::fs::yak_out_path::YakOutPathResolver;
     use yak_core::fs::project::ProjectRoot;
     use yak_core::fs::project::ProjectRootTemp;
+    use yak_core::fs::yak_out_path::YakOutPathResolver;
     use yak_execute::execute::blocking::testing::DummyBlockingExecutor;
     use yak_hash::YakMutMap;
 

@@ -37,8 +37,8 @@ mod tests {
     use yak_core::deferred::dynamic::DynamicLambdaResultsKey;
     use yak_core::deferred::key::DeferredHolderKey;
     use yak_core::execution_types::executor_config::CommandExecutorConfig;
-    use yak_core::fs::yak_out_path::YakOutPathKind;
     use yak_core::fs::yak_out_path::BuildArtifactPath;
+    use yak_core::fs::yak_out_path::YakOutPathKind;
     use yak_core::package::source_path::SourcePath;
     use yak_core::target::configured_target_label::ConfiguredTargetLabel;
     use yak_fs::paths::forward_rel_path::ForwardRelativePathBuf;

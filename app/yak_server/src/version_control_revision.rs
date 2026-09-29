@@ -349,11 +349,7 @@ mod tests {
     async fn init_git_repo(repo_root: &AbsNormPathBuf) {
         git(repo_root, &["init", "-q"]).await;
         git(repo_root, &["config", "user.name", "yak Test"]).await;
-        git(
-            repo_root,
-            &["config", "user.email", "yak-test@example.com"],
-        )
-        .await;
+        git(repo_root, &["config", "user.email", "yak-test@example.com"]).await;
         git(repo_root, &["config", "commit.gpgsign", "false"]).await;
     }
 

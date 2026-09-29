@@ -53,8 +53,8 @@ use yak_execute::digest_config::HasDigestConfig;
 use yak_hash::YakIndexMap;
 use yak_hash::YakMutMap;
 use yak_interpreter::dice::starlark_provider::StarlarkEvalKind;
-use yak_interpreter::factory::YakStarlarkModule;
 use yak_interpreter::factory::StarlarkEvaluatorProvider;
+use yak_interpreter::factory::YakStarlarkModule;
 use yak_interpreter::print_handler::EventDispatcherPrintHandler;
 use yak_interpreter::soft_error::YakStarlarkSoftErrorHandler;
 

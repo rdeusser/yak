@@ -807,9 +807,7 @@ pub(crate) async fn compute_configured_node_preamble<'d>(
         target_node.as_ref(),
     )
     .await
-    .with_yak_error_context(|| {
-        format!("Error resolving configuration deps of `{target_label}`")
-    })?;
+    .with_yak_error_context(|| format!("Error resolving configuration deps of `{target_label}`"))?;
 
     // Must check for compatibility before evaluating non-compatibility attributes.
     if let MaybeCompatible::Incompatible(reason) =

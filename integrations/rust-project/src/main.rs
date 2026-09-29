@@ -8,7 +8,6 @@
  * above-listed licenses.
  */
 
-mod yak;
 mod cli;
 mod diagnostics;
 mod path;
@@ -16,6 +15,7 @@ mod progress;
 mod project_json;
 mod sysroot;
 mod target;
+mod yak;
 
 use std::io;
 use std::io::IsTerminal as _;
@@ -32,10 +32,10 @@ use tracing_subscriber::Layer;
 use tracing_subscriber::filter::LevelFilter;
 use tracing_subscriber::layer::SubscriberExt;
 
-use crate::yak::Yak;
 use crate::cli::ProjectKind;
 use crate::project_json::Crate;
 use crate::project_json::Dep;
+use crate::yak::Yak;
 
 #[derive(Parser, Debug, PartialEq)]
 struct Opt {

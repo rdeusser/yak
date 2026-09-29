@@ -327,12 +327,12 @@ mod tests {
     use yak_common::init::ResourceControlConfig;
     use yak_fs::paths::file_name::FileNameBuf;
 
-    use crate::yak_cgroup_tree::YakCgroupTree;
-    use crate::yak_cgroup_tree::PreppedYakCgroups;
-    use crate::yak_cgroup_tree::parse_procfs_cgroup_output;
-    use crate::yak_cgroup_tree::resolve_memory_restriction_value;
     use crate::cgroup::Cgroup;
     use crate::path::CgroupPath;
+    use crate::yak_cgroup_tree::PreppedYakCgroups;
+    use crate::yak_cgroup_tree::YakCgroupTree;
+    use crate::yak_cgroup_tree::parse_procfs_cgroup_output;
+    use crate::yak_cgroup_tree::resolve_memory_restriction_value;
 
     #[test]
     fn test_cgroup_info_parse() {

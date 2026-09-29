@@ -39,9 +39,9 @@ use yak_error::conversion::from_any_with_tag;
 use yak_error::internal_error;
 use yak_event_observer::humanized::HumanizedBytes;
 use yak_events::dispatch::get_dispatcher;
-use yak_interpreter::factory::YakStarlarkModule;
 use yak_interpreter::factory::FinishedStarlarkEvaluation;
 use yak_interpreter::factory::StarlarkEvaluatorProvider;
+use yak_interpreter::factory::YakStarlarkModule;
 use yak_interpreter::file_loader::InterpreterFileLoader;
 use yak_interpreter::file_loader::LoadResolver;
 use yak_interpreter::file_loader::LoadedModules;
@@ -64,7 +64,6 @@ use yak_node::nodes::eval_result::EvaluationResultWithStats;
 use yak_node::super_package::SuperPackage;
 use yak_util::per_thread_instruction_counter::PerThreadInstructionCounter;
 
-use crate::interpreter::yakconfig::YakConfigsViewForStarlark;
 use crate::interpreter::build_context::BuildContext;
 use crate::interpreter::build_context::PerFileTypeContext;
 use crate::interpreter::bzl_eval_ctx::BzlEvalCtx;
@@ -73,6 +72,7 @@ use crate::interpreter::extra_value::InterpreterExtraValue;
 use crate::interpreter::global_interpreter_state::GlobalInterpreterState;
 use crate::interpreter::module_internals::ModuleInternals;
 use crate::interpreter::package_file_extra::FrozenPackageFileExtra;
+use crate::interpreter::yakconfig::YakConfigsViewForStarlark;
 use crate::super_package::eval_ctx::PackageFileEvalCtx;
 
 const DEFAULT_STARLARK_MEMORY_USAGE_LIMIT: u64 = 2 * (1 << 30);
@@ -698,9 +698,7 @@ impl InterpreterForDir {
             };
             let starlark_peak_mem_config_enabled = LegacyYakConfig::parse_value(
                 yakconfig_key,
-                yakconfigs
-                    .read_root_cell_config(yakconfig_key)?
-                    .as_deref(),
+                yakconfigs.read_root_cell_config(yakconfig_key)?.as_deref(),
             )?
             .unwrap_or(false);
 

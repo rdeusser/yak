@@ -20,15 +20,15 @@ use tracing::info;
 
 use super::Input;
 use crate::Command;
-use crate::yak;
-use crate::yak::Yak;
-use crate::yak::to_project_json;
 use crate::path::safe_canonicalize;
 use crate::project_json::ProjectJson;
 use crate::project_json::Sysroot;
 use crate::sysroot::SysrootConfig;
 use crate::sysroot::resolve_rustup_sysroot;
 use crate::target::Target;
+use crate::yak;
+use crate::yak::Yak;
+use crate::yak::to_project_json;
 
 #[derive(Debug)]
 pub(crate) struct Develop {

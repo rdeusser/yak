@@ -17,10 +17,10 @@ use remote_execution::NamedDigest;
 use remote_execution::NamedDigestWithPermissions;
 use yak_common::file_ops::metadata::FileMetadata;
 use yak_common::file_ops::metadata::TrackedFileDigest;
-use yak_core::fs::yak_out_path::YakOutPathKind;
 use yak_core::fs::project::ProjectRoot;
 use yak_core::fs::project_rel_path::ProjectRelativePath;
 use yak_core::fs::project_rel_path::ProjectRelativePathBuf;
+use yak_core::fs::yak_out_path::YakOutPathKind;
 use yak_directory::directory::directory::Directory;
 use yak_directory::directory::directory_iterator::DirectoryIterator;
 use yak_directory::directory::directory_iterator::DirectoryIteratorPathStack;
@@ -395,10 +395,10 @@ mod tests {
     use std::time::Duration;
     use std::time::Instant;
 
-    use yak_core::fs::yak_out_path::YakOutPathKind;
     use yak_core::fs::project::ProjectRootTemp;
     use yak_core::fs::project_rel_path::ProjectRelativePath;
     use yak_core::fs::project_rel_path::ProjectRelativePathBuf;
+    use yak_core::fs::yak_out_path::YakOutPathKind;
     use yak_fs::error::IoResultExt;
     use yak_fs::fs_util;
 

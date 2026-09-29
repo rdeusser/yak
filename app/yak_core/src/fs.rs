@@ -9,8 +9,8 @@
  */
 
 pub mod artifact_path_resolver;
-pub mod yak_out_path;
 pub mod dynamic_actions_action_key;
 mod paths_cmp_ext;
 pub mod project;
 pub mod project_rel_path;
+pub mod yak_out_path;

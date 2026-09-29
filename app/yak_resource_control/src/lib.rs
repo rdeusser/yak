@@ -18,8 +18,6 @@ use tokio::sync::oneshot;
 #[cfg(unix)]
 pub mod action_scene;
 #[cfg(unix)]
-pub mod yak_cgroup_tree;
-#[cfg(unix)]
 pub mod cgroup;
 #[cfg(unix)]
 pub mod cgroup_files;
@@ -31,6 +29,8 @@ pub mod pool;
 #[cfg(unix)]
 pub(crate) mod scheduler;
 pub mod spawn_daemon;
+#[cfg(unix)]
+pub mod yak_cgroup_tree;
 
 pub struct HasResourceControl(pub bool);
 

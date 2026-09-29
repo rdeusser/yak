@@ -31,9 +31,9 @@ use yak_fs::paths::forward_rel_path::ForwardRelativePathBuf;
 use yak_util::size_assert;
 
 use crate::content_hash::ContentBasedPathHash;
-use crate::fs::yak_out_path::YakOutPathKind;
 use crate::fs::project_rel_path::ProjectRelativePath;
 use crate::fs::project_rel_path::ProjectRelativePathBuf;
+use crate::fs::yak_out_path::YakOutPathKind;
 use crate::global_cfg_options::GlobalCfgOptions;
 use crate::target::configured_target_label::ConfiguredTargetLabel;
 use crate::target::name::EQ_SIGN_SUBST;

@@ -33,9 +33,7 @@ impl ServerHandle {
     /// Tell the server to shutdown and wait for it to exit.
     pub async fn shutdown(self) -> yak_error::Result<()> {
         self.channel.notify_now();
-        self.handle
-            .await
-            .yak_error_context("Failed to join task")?
+        self.handle.await.yak_error_context("Failed to join task")?
     }
 
     /// Obtain the JoinHandle to the task driving the server, without asking the server to

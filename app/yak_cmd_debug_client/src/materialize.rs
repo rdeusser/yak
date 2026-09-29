@@ -12,11 +12,11 @@ use async_trait::async_trait;
 use yak_cli_proto::new_generic::MaterializeRequest;
 use yak_cli_proto::new_generic::NewGenericRequest;
 use yak_client_ctx::client_ctx::ClientCommandContext;
-use yak_client_ctx::common::YakArgMatches;
 use yak_client_ctx::common::CommonBuildConfigurationOptions;
 use yak_client_ctx::common::CommonCommandOptions;
 use yak_client_ctx::common::CommonEventLogOptions;
 use yak_client_ctx::common::CommonStarlarkOptions;
+use yak_client_ctx::common::YakArgMatches;
 use yak_client_ctx::common::ui::CommonConsoleOptions;
 use yak_client_ctx::daemon::client::YakdClientConnector;
 use yak_client_ctx::events_ctx::EventsCtx;
@@ -49,8 +49,7 @@ impl StreamingCommand for MaterializeCommand {
         events_ctx: &mut EventsCtx,
     ) -> ExitResult {
         let context = ctx.client_context(matches, &self)?;
-        yakd
-            .with_flushing()
+        yakd.with_flushing()
             .new_generic(
                 context,
                 NewGenericRequest::Materialize(MaterializeRequest { paths: self.paths }),

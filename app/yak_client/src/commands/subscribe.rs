@@ -19,10 +19,10 @@ use tokio_util::codec::FramedRead;
 use yak_cli_proto::protobuf_util::ProtobufSplitter;
 use yak_client_ctx::client_ctx::ClientCommandContext;
 use yak_client_ctx::command_outcome::CommandOutcome;
-use yak_client_ctx::common::YakArgMatches;
 use yak_client_ctx::common::CommonBuildConfigurationOptions;
 use yak_client_ctx::common::CommonEventLogOptions;
 use yak_client_ctx::common::CommonStarlarkOptions;
+use yak_client_ctx::common::YakArgMatches;
 use yak_client_ctx::common::ui::CommonConsoleOptions;
 use yak_client_ctx::common::ui::ConsoleType;
 use yak_client_ctx::daemon::client::YakdClientConnector;
@@ -132,8 +132,7 @@ impl StreamingCommand for SubscribeCommand {
             reborrow_stream_for_static(
                 stream,
                 |stream| async move {
-                    yakd
-                        .with_flushing()
+                    yakd.with_flushing()
                         .subscription(client_context, stream, events_ctx, partial_result_handler)
                         .await
                 },

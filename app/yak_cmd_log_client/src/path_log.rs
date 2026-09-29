@@ -8,8 +8,8 @@
  * above-listed licenses.
  */
 
-use yak_client_ctx::client_ctx::YakSubcommand;
 use yak_client_ctx::client_ctx::ClientCommandContext;
+use yak_client_ctx::client_ctx::YakSubcommand;
 use yak_client_ctx::common::YakArgMatches;
 use yak_client_ctx::event_log_options::EventLogOptions;
 use yak_client_ctx::events_ctx::EventsCtx;
@@ -44,10 +44,7 @@ impl YakSubcommand for PathLogCommand {
         } = self;
 
         let paths = if all {
-            retrieve_all_logs(
-                ctx.paths()
-                    .yak_error_context("Error identifying log dir")?,
-            )?
+            retrieve_all_logs(ctx.paths().yak_error_context("Error identifying log dir")?)?
         } else {
             vec![event_log_options.get(&ctx).await?]
         };

@@ -8,8 +8,8 @@
  * above-listed licenses.
  */
 
-pub mod yak_types;
 pub mod environment;
 pub mod graph;
 pub mod syntax;
 pub mod traversal;
+pub mod yak_types;

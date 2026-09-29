@@ -15,10 +15,10 @@ use pagable::Pagable;
 use crate::cells::CellResolver;
 use crate::cells::cell_path::CellPathRef;
 use crate::content_hash::ContentBasedPathHash;
-use crate::fs::yak_out_path::YakOutPathResolver;
-use crate::fs::yak_out_path::BuildArtifactPath;
 use crate::fs::project::ProjectRoot;
 use crate::fs::project_rel_path::ProjectRelativePathBuf;
+use crate::fs::yak_out_path::BuildArtifactPath;
+use crate::fs::yak_out_path::YakOutPathResolver;
 use crate::package::source_path::SourcePathRef;
 
 #[derive(Clone, Dupe, PartialEq, Allocative, Pagable)]
