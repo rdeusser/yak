@@ -396,6 +396,7 @@ impl SnapshotCollector {
         let stats = yak_common::cas_digest::file_digest_interner_stats();
         snapshot.file_digest_interner_entries = stats.entries;
         snapshot.file_digest_interner_pinned_entries = stats.pinned;
+        snapshot.file_digest_interner_paged_entries = stats.paged;
         snapshot.file_digest_interner_hits = stats.hits;
         snapshot.file_digest_interner_misses = stats.misses;
     }
