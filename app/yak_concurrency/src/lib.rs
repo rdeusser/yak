@@ -158,6 +158,7 @@ enum PreUpdateDecision {
         running: ConcurrentTraces,
     },
     Update {
+        attempt: UpdateAttemptId,
         conflict_on_arrival: Option<DiceEquality>,
     },
 }
@@ -191,7 +192,8 @@ struct CoordinatorState {
     /// A list of the currently running commands.
     active_commands: SmallMap<CommandId, CommandData>,
     /// Commands that entered admission but have not begun execution.
-    pending_commands: SmallMap<CommandId, AdmissionRequest>,
+    pending_commands: SmallMap<CommandId, PendingCommand>,
+    next_update_attempt: usize,
     /// The epoch of the last ActiveDice we assigned.
     cleanup_epoch: usize,
     /// Whether this has been tainted previously.
@@ -205,6 +207,9 @@ struct CoordinatorState {
 /// registration burns one.
 #[derive(Allocative, Debug, Display, Copy, Clone, Dupe, PartialEq, Eq, Hash)]
 struct CommandId(usize);
+
+#[derive(Allocative, Debug, Display, Copy, Clone, Dupe, PartialEq, Eq)]
+struct UpdateAttemptId(usize);
 
 #[derive(Debug)]
 struct RegisteredCommand(CommandId);
@@ -312,6 +317,12 @@ struct AdmissionRequest {
     exit_when: ExitWhen,
 }
 
+#[derive(Allocative)]
+struct PendingCommand {
+    request: AdmissionRequest,
+    update_attempt: Option<UpdateAttemptId>,
+}
+
 enum PendingAdmissionDecision {
     Retain(AdmissionOutcome),
     Admit {
@@ -321,12 +332,14 @@ enum PendingAdmissionDecision {
 }
 
 struct CompletedUpdate {
+    attempt: UpdateAttemptId,
     version: DiceEquality,
     conflict_on_arrival: Option<DiceEquality>,
     dice_was_idle: bool,
 }
 
 struct PendingUpdate {
+    attempt: UpdateAttemptId,
     conflict_on_arrival: Option<DiceEquality>,
     dice_was_idle: BoxFuture<'static, bool>,
 }
@@ -529,13 +542,20 @@ impl CoordinatorState {
             ));
         }
 
-        self.pending_commands.insert(command, request);
+        self.pending_commands.insert(
+            command,
+            PendingCommand {
+                request,
+                update_attempt: None,
+            },
+        );
         self.decide_before_update_for(command)
     }
 
     fn pending_command(&self, command: CommandId) -> yak_error::Result<&AdmissionRequest> {
         self.pending_commands
             .get(&command)
+            .map(|pending| &pending.request)
             .ok_or_else(|| internal_error!("command `{command}` is not pending admission"))
     }
 
@@ -633,7 +653,11 @@ impl CoordinatorState {
         }
     }
 
-    fn decide_before_update(&self, request: &AdmissionRequest) -> PreUpdateDecision {
+    fn decide_before_update(
+        &self,
+        request: &AdmissionRequest,
+        attempt: UpdateAttemptId,
+    ) -> PreUpdateDecision {
         match &self.dice_status {
             DiceStatus::CleanupStarting { .. } => PreUpdateDecision::WaitForCleanupStart,
             DiceStatus::Cleanup { future, epoch } => PreUpdateDecision::WaitForCleanup {
@@ -650,6 +674,7 @@ impl CoordinatorState {
                 }
 
                 PreUpdateDecision::Update {
+                    attempt,
                     conflict_on_arrival: active
                         .as_ref()
                         .filter(|_| !self.active_commands.is_empty())
@@ -659,8 +684,23 @@ impl CoordinatorState {
         }
     }
 
-    fn decide_before_update_for(&self, command: CommandId) -> yak_error::Result<PreUpdateDecision> {
-        Ok(self.decide_before_update(self.pending_command(command)?))
+    fn decide_before_update_for(
+        &mut self,
+        command: CommandId,
+    ) -> yak_error::Result<PreUpdateDecision> {
+        let attempt = UpdateAttemptId(self.next_update_attempt);
+        let decision = self.decide_before_update(self.pending_command(command)?, attempt);
+        let pending = self
+            .pending_commands
+            .get_mut(&command)
+            .expect("the pending command was read above");
+        if matches!(decision, PreUpdateDecision::Update { .. }) {
+            self.next_update_attempt += 1;
+            pending.update_attempt = Some(attempt);
+        } else {
+            pending.update_attempt = None;
+        }
+        Ok(decision)
     }
 
     fn decide_after_update(
@@ -794,20 +834,45 @@ impl CoordinatorState {
         command: CommandId,
         update: CompletedUpdate,
     ) -> yak_error::Result<AdmissionOutcome> {
+        let pending = self
+            .pending_commands
+            .get(&command)
+            .ok_or_else(|| internal_error!("command `{command}` is not pending admission"))?;
+        if pending.update_attempt != Some(update.attempt) {
+            return Err(internal_error!(
+                "update attempt `{}` is not current for command `{}`",
+                update.attempt,
+                command
+            ));
+        }
+
         let request = self
             .pending_commands
             .shift_remove(&command)
-            .ok_or_else(|| internal_error!("command `{command}` is not pending admission"))?;
+            .expect("the pending command was read above")
+            .request;
         match self.decide_after_update(&request, update) {
             Ok(PendingAdmissionDecision::Admit { state, effects }) => {
                 Ok(self.admit_command(request, state, effects))
             }
             Ok(PendingAdmissionDecision::Retain(outcome)) => {
-                self.pending_commands.insert(command, request);
+                self.pending_commands.insert(
+                    command,
+                    PendingCommand {
+                        request,
+                        update_attempt: None,
+                    },
+                );
                 Ok(outcome)
             }
             Err(error) => {
-                self.pending_commands.insert(command, request);
+                self.pending_commands.insert(
+                    command,
+                    PendingCommand {
+                        request,
+                        update_attempt: None,
+                    },
+                );
                 Err(error)
             }
         }
@@ -818,7 +883,7 @@ impl CoordinatorState {
             self.pending_commands
                 .iter()
                 .filter(|(queued, _)| **queued != asking)
-                .map(|(_, request)| request.command.trace_id.dupe())
+                .map(|(_, pending)| pending.request.command.trace_id.dupe())
                 .collect(),
         ))
     }
@@ -950,6 +1015,7 @@ impl AdmissionCoordinatorTask {
                 dice_status: DiceStatus::idle(),
                 active_commands: SmallMap::new(),
                 pending_commands: SmallMap::new(),
+                next_update_attempt: 0,
                 cleanup_epoch: 0,
                 previously_tainted: false,
             },
@@ -1421,6 +1487,7 @@ impl ConcurrencyHandler {
         Ok(UpdatedTransaction {
             transaction,
             update: CompletedUpdate {
+                attempt: pending.attempt,
                 version,
                 conflict_on_arrival: pending.conflict_on_arrival,
                 dice_was_idle,
@@ -1596,7 +1663,7 @@ impl ConcurrencyHandler {
                 }
             }
 
-            let conflict_on_arrival = match before_update {
+            let (attempt, conflict_on_arrival) = match before_update {
                 PreUpdateDecision::WaitForCleanupStart => {
                     return Err(internal_error!("coordinator exposed an unprepared cleanup"));
                 }
@@ -1615,11 +1682,13 @@ impl ConcurrencyHandler {
                         });
                 }
                 PreUpdateDecision::Update {
+                    attempt,
                     conflict_on_arrival,
-                } => conflict_on_arrival,
+                } => (attempt, conflict_on_arrival),
             };
 
             let pending_update = PendingUpdate {
+                attempt,
                 conflict_on_arrival,
                 // Enqueue the sample before the update because committing a transaction makes
                 // DICE non-idle. The returned future can be awaited after the coordinator reply.
@@ -2345,15 +2414,13 @@ mod tests {
                 exit_when: ExitWhen::ExitNever,
             })
             .await?;
-        assert!(
-            matches!(
-                decision,
-                PreUpdateDecision::Update {
-                    conflict_on_arrival: None
-                }
-            ),
-            "an idle coordinator should request an update"
-        );
+        let PreUpdateDecision::Update {
+            attempt,
+            conflict_on_arrival: None,
+        } = decision
+        else {
+            panic!("an idle coordinator should request an update");
+        };
 
         let version = dice.updater().commit().await.equality_token();
         let (response, receiver) = oneshot::channel();
@@ -2365,6 +2432,7 @@ mod tests {
                 .send(CoordinatorMessage::AfterUpdate {
                     command: command_id,
                     update: CompletedUpdate {
+                        attempt,
                         version,
                         conflict_on_arrival: None,
                         dice_was_idle: true,
@@ -2396,6 +2464,7 @@ mod tests {
         let command_id = concurrency.allocate_command_id();
         let PreUpdateDecision::Update {
             conflict_on_arrival,
+            attempt,
         } = concurrency
             .coordinator
             .begin(AdmissionRequest {
@@ -2426,6 +2495,7 @@ mod tests {
                 .send(CoordinatorMessage::AfterUpdate {
                     command: command_id,
                     update: CompletedUpdate {
+                        attempt,
                         version: transaction.equality_token(),
                         conflict_on_arrival,
                         dice_was_idle: false,
@@ -2479,7 +2549,10 @@ mod tests {
         };
 
         let first = CommandId(0);
-        coordinator
+        let PreUpdateDecision::Update {
+            attempt: first_attempt,
+            ..
+        } = coordinator
             .begin(AdmissionRequest {
                 command_id: first,
                 command: CommandData {
@@ -2491,11 +2564,15 @@ mod tests {
                 is_nested: false,
                 exit_when: ExitWhen::ExitNever,
             })
-            .await?;
+            .await?
+        else {
+            panic!("the first command should update");
+        };
         let first_decision = coordinator
             .after_update(
                 first,
                 CompletedUpdate {
+                    attempt: first_attempt,
                     version: first_version,
                     conflict_on_arrival: None,
                     dice_was_idle: true,
@@ -2514,7 +2591,10 @@ mod tests {
         );
 
         let blocked = CommandId(1);
-        coordinator
+        let PreUpdateDecision::Update {
+            attempt: blocked_attempt,
+            ..
+        } = coordinator
             .begin(AdmissionRequest {
                 command_id: blocked,
                 command: CommandData {
@@ -2526,11 +2606,15 @@ mod tests {
                 is_nested: false,
                 exit_when: ExitWhen::ExitNever,
             })
-            .await?;
+            .await?
+        else {
+            panic!("the blocked command should update");
+        };
         let PostUpdateDecision::Block { wake, .. } = coordinator
             .after_update(
                 blocked,
                 CompletedUpdate {
+                    attempt: blocked_attempt,
                     version: different_version,
                     conflict_on_arrival: Some(first_version),
                     dice_was_idle: false,
@@ -2576,7 +2660,10 @@ mod tests {
 
         let first_id = concurrency.allocate_command_id();
         let (preempt, mut preempted) = oneshot::channel();
-        concurrency
+        let PreUpdateDecision::Update {
+            attempt: first_attempt,
+            ..
+        } = concurrency
             .coordinator
             .begin(AdmissionRequest {
                 command_id: first_id,
@@ -2589,7 +2676,10 @@ mod tests {
                 is_nested: false,
                 exit_when: ExitWhen::ExitNever,
             })
-            .await?;
+            .await?
+        else {
+            panic!("the first command should update");
+        };
         assert!(
             matches!(
                 concurrency
@@ -2597,6 +2687,7 @@ mod tests {
                     .after_update(
                         first_id,
                         CompletedUpdate {
+                            attempt: first_attempt,
                             version: first_version,
                             conflict_on_arrival: None,
                             dice_was_idle: true,
@@ -2612,7 +2703,10 @@ mod tests {
         );
 
         let cancelled_id = concurrency.allocate_command_id();
-        concurrency
+        let PreUpdateDecision::Update {
+            attempt: cancelled_attempt,
+            ..
+        } = concurrency
             .coordinator
             .begin(AdmissionRequest {
                 command_id: cancelled_id,
@@ -2625,7 +2719,10 @@ mod tests {
                 is_nested: false,
                 exit_when: ExitWhen::ExitNever,
             })
-            .await?;
+            .await?
+        else {
+            panic!("the cancelled command should update");
+        };
         let (response, receiver) = oneshot::channel();
         drop(receiver);
         assert!(
@@ -2635,6 +2732,7 @@ mod tests {
                 .send(CoordinatorMessage::AfterUpdate {
                     command: cancelled_id,
                     update: CompletedUpdate {
+                        attempt: cancelled_attempt,
                         version: arriving_version,
                         conflict_on_arrival: Some(first_version),
                         dice_was_idle: false,
@@ -2655,7 +2753,10 @@ mod tests {
         );
 
         let retry_id = concurrency.allocate_command_id();
-        concurrency
+        let PreUpdateDecision::Update {
+            attempt: retry_attempt,
+            ..
+        } = concurrency
             .coordinator
             .begin(AdmissionRequest {
                 command_id: retry_id,
@@ -2668,12 +2769,16 @@ mod tests {
                 is_nested: false,
                 exit_when: ExitWhen::ExitNever,
             })
-            .await?;
+            .await?
+        else {
+            panic!("the retry should update");
+        };
         let effects = match concurrency
             .coordinator
             .after_update(
                 retry_id,
                 CompletedUpdate {
+                    attempt: retry_attempt,
                     version: arriving_version,
                     conflict_on_arrival: Some(first_version),
                     dice_was_idle: false,
@@ -2882,6 +2987,7 @@ mod tests {
             dice_status: DiceStatus::idle(),
             active_commands: SmallMap::new(),
             pending_commands: SmallMap::new(),
+            next_update_attempt: 0,
             cleanup_epoch: 0,
             previously_tainted: false,
         };
@@ -2918,6 +3024,7 @@ mod tests {
             dice_status: DiceStatus::idle(),
             active_commands: SmallMap::new(),
             pending_commands: SmallMap::new(),
+            next_update_attempt: 0,
             cleanup_epoch: 0,
             previously_tainted: false,
         };
@@ -3362,6 +3469,7 @@ mod tests {
                 dice_status,
                 active_commands: SmallMap::new(),
                 pending_commands: SmallMap::new(),
+                next_update_attempt: 0,
                 cleanup_epoch,
                 previously_tainted: false,
             }
@@ -3392,6 +3500,7 @@ mod tests {
             conflict_on_arrival: Option<DiceEquality>,
         ) -> CompletedUpdate {
             CompletedUpdate {
+                attempt: UpdateAttemptId(0),
                 version,
                 conflict_on_arrival,
                 dice_was_idle: true,
@@ -3403,11 +3512,15 @@ mod tests {
             request: AdmissionRequest,
             update: CompletedUpdate,
         ) -> AdmissionOutcome {
-            let command = request.command_id;
-            data.begin_admission(request)
-                .expect("test command should begin admission");
-            data.decide_after_update_for(command, update)
+            match data
+                .decide_after_update(&request, update)
                 .expect("test command should be eligible for admission")
+            {
+                PendingAdmissionDecision::Retain(outcome) => outcome,
+                PendingAdmissionDecision::Admit { state, effects } => {
+                    data.admit_command(request, state, effects)
+                }
+            }
         }
 
         async fn distinct_versions(dice: &Arc<Dice>) -> (DiceEquality, DiceEquality) {
@@ -3533,8 +3646,8 @@ mod tests {
         #[tokio::test]
         async fn pre_update_decision_mapping() {
             let cleanup = data_with(cleanup_at(3), 3);
-            let PreUpdateDecision::WaitForCleanup { epoch, .. } =
-                cleanup.decide_before_update(&request(false, ExitWhen::ExitNever))
+            let PreUpdateDecision::WaitForCleanup { epoch, .. } = cleanup
+                .decide_before_update(&request(false, ExitWhen::ExitNever), UpdateAttemptId(0))
             else {
                 panic!("cleanup must be awaited before updating");
             };
@@ -3543,7 +3656,9 @@ mod tests {
             let idle = data_with(DiceStatus::idle(), 0);
             let PreUpdateDecision::Update {
                 conflict_on_arrival,
-            } = idle.decide_before_update(&request(false, ExitWhen::ExitNotIdle))
+                ..
+            } = idle
+                .decide_before_update(&request(false, ExitWhen::ExitNotIdle), UpdateAttemptId(0))
             else {
                 panic!("an idle handler should proceed to the update");
             };
@@ -3555,7 +3670,9 @@ mod tests {
 
             let PreUpdateDecision::Update {
                 conflict_on_arrival,
-            } = active.decide_before_update(&request(false, ExitWhen::ExitNotIdle))
+                ..
+            } = active
+                .decide_before_update(&request(false, ExitWhen::ExitNotIdle), UpdateAttemptId(0))
             else {
                 panic!("an active DICE version without commands is not busy");
             };
@@ -3565,8 +3682,8 @@ mod tests {
             let command_trace = command.trace_id.dupe();
             active.active_commands.insert(CommandId(0), command);
 
-            let PreUpdateDecision::RejectNotIdle { running } =
-                active.decide_before_update(&request(false, ExitWhen::ExitNotIdle))
+            let PreUpdateDecision::RejectNotIdle { running } = active
+                .decide_before_update(&request(false, ExitWhen::ExitNotIdle), UpdateAttemptId(0))
             else {
                 panic!("an active command must trigger ExitNotIdle");
             };
@@ -3574,7 +3691,11 @@ mod tests {
 
             let PreUpdateDecision::Update {
                 conflict_on_arrival,
-            } = active.decide_before_update(&request(false, ExitWhen::ExitDifferentState))
+                ..
+            } = active.decide_before_update(
+                &request(false, ExitWhen::ExitDifferentState),
+                UpdateAttemptId(0),
+            )
             else {
                 panic!("ExitDifferentState is decided after the update");
             };
@@ -3765,6 +3886,58 @@ mod tests {
         }
 
         #[tokio::test]
+        async fn stale_update_attempt_does_not_mutate_pending_command() -> yak_error::Result<()> {
+            let dice = make_default_dice();
+            let version = dice.updater().commit().await.equality_token();
+            let mut data = data_with(DiceStatus::idle(), 0);
+            let request = request(false, ExitWhen::ExitNever);
+            let command = request.command_id;
+
+            let PreUpdateDecision::Update {
+                attempt: stale_attempt,
+                ..
+            } = data.begin_admission(request)?
+            else {
+                panic!("the first admission should request an update");
+            };
+            let PreUpdateDecision::Update {
+                attempt: current_attempt,
+                ..
+            } = data.decide_before_update_for(command)?
+            else {
+                panic!("the repeated decision should request an update");
+            };
+            assert_ne!(stale_attempt, current_attempt);
+
+            let stale = data.decide_after_update_for(
+                command,
+                CompletedUpdate {
+                    attempt: stale_attempt,
+                    version,
+                    conflict_on_arrival: None,
+                    dice_was_idle: true,
+                },
+            );
+            assert!(stale.is_err(), "a stale update must be rejected");
+            assert!(data.pending_commands.contains_key(&command));
+            assert!(data.active_commands.is_empty());
+
+            let outcome = data.decide_after_update_for(
+                command,
+                CompletedUpdate {
+                    attempt: current_attempt,
+                    version,
+                    conflict_on_arrival: None,
+                    dice_was_idle: true,
+                },
+            )?;
+            assert_matches!(outcome.decision, AdmissionDecision::Admit(_));
+            assert!(!data.pending_commands.contains_key(&command));
+            assert!(data.active_commands.contains_key(&command));
+            Ok(())
+        }
+
+        #[tokio::test]
         async fn admission_reducer_sequence() {
             let dice = make_default_dice();
             let (first_version, second_version) = distinct_versions(&dice).await;
@@ -3777,7 +3950,8 @@ mod tests {
                     data.begin_admission(first_request)
                         .expect("the first command should begin admission"),
                     PreUpdateDecision::Update {
-                        conflict_on_arrival: None
+                        conflict_on_arrival: None,
+                        ..
                     }
                 ),
                 "idle state proceeds without a conflict snapshot"
@@ -3859,7 +4033,10 @@ mod tests {
             };
             assert!(
                 matches!(
-                    data.decide_before_update(&request(false, ExitWhen::ExitNever)),
+                    data.decide_before_update(
+                        &request(false, ExitWhen::ExitNever),
+                        UpdateAttemptId(0),
+                    ),
                     PreUpdateDecision::WaitForCleanupStart
                 ),
                 "commands should wait until the cleanup future is installed"
@@ -3873,7 +4050,7 @@ mod tests {
             );
 
             let PreUpdateDecision::WaitForCleanup { future, epoch } =
-                data.decide_before_update(&request(false, ExitWhen::ExitNever))
+                data.decide_before_update(&request(false, ExitWhen::ExitNever), UpdateAttemptId(0))
             else {
                 panic!("the next attempt must wait for cleanup");
             };
