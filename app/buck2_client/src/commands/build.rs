@@ -125,10 +125,6 @@ pub struct BuildCommand {
     #[clap(name = "TARGET_PATTERNS", help = "Patterns to build", value_hint = clap::ValueHint::Other)]
     patterns: Vec<String>,
 
-    /// This option does nothing. It is here to keep compatibility with Buck1 and ci
-    #[clap(long = "deep", hide = true)]
-    _deep: bool,
-
     #[clap(flatten)]
     build_opts: CommonBuildOptions,
 

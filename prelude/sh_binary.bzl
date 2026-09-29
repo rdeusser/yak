@@ -67,11 +67,6 @@ def _generate_script(
             '__SRC="${BASH_SOURCE[0]}"',
             '__SRC="$(realpath "$__SRC")"',
             '__SCRIPT_DIR=$(dirname "$__SRC")',
-            # The format of the directory tree is different in v1 and v2. We
-            # should unify the two, but prior to doing this we should also
-            # identify what the right format is. For now, this variable lets
-            # callees disambiguate.
-            "export YAK_SH_BINARY_VERSION_UNSTABLE=2",
             cmd_args('export YAK_PROJECT_ROOT="$__SCRIPT_DIR/', resources_dir, '"', delimiter = ""),
             # Normalize backslashes to forward slashes for the Windows-host /
             # Linux-target (RE) case where relative_to produces Windows-style separators.
@@ -96,7 +91,6 @@ def _generate_script(
             else "",
             # Get parent folder.
             'for %%a in ("%__SRC%") do set "__SCRIPT_DIR=%%~dpa"',
-            "set YAK_SH_BINARY_VERSION_UNSTABLE=2",
             cmd_args("set YAK_PROJECT_ROOT=%__SCRIPT_DIR%\\", resources_dir, delimiter = ""),
             "set YAK_DEFAULT_RUNTIME_RESOURCES=%YAK_PROJECT_ROOT%",
             "%YAK_PROJECT_ROOT%\\{} %*".format(main_link),

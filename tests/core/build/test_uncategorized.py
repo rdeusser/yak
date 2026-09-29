@@ -58,8 +58,9 @@ def read_all_outputs(buck: Buck, report: str) -> list[str]:
     with open(buck.cwd / report) as f:
         report = json.load(f)
         for _target, state in report["results"].items():
-            ret.extend(state["outputs"].get("DEFAULT", []))
-            ret.extend(state["other_outputs"].get("DEFAULT", []))
+            for configured in state["configured"].values():
+                ret.extend(configured["outputs"].get("DEFAULT", []))
+                ret.extend(configured["other_outputs"].get("DEFAULT", []))
 
     return ret
 

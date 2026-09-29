@@ -269,8 +269,6 @@ cxx_python_extension = prelude_rule(
         | third_party_common.create_third_party_build_root_attrs()
         | {
             "cxx_runtime_type": attrs.option(attrs.enum(CxxRuntimeType), default = None),
-            "default_platform": attrs.option(attrs.string(), default = None),
-            "defaults": attrs.dict(key = attrs.string(), value = attrs.string(), sorted = False, default = {}),
             "executable_name": attrs.option(attrs.string(), default = None),
             "frameworks": attrs.list(attrs.string(), default = []),
             "headers_as_raw_headers_mode": attrs.option(attrs.enum(HeadersAsRawHeadersMode), default = None),
@@ -570,8 +568,6 @@ python_library = prelude_rule(
             ),
             "type_stubs": attrs.named_set(attrs.source(), sorted = True, default = []),
             "use_lifeguard_incremental": attrs.bool(default = False),
-            "versioned_resources": attrs.option(attrs.versioned(attrs.named_set(attrs.source(), sorted = True)), default = None),
-            "versioned_srcs": attrs.option(attrs.versioned(attrs.named_set(attrs.source(), sorted = True)), default = None),
             "zip_safe": attrs.option(attrs.bool(), default = None),
             "_create_manifest_for_source_dir": _create_manifest_for_source_dir(),
             "_cxx_toolchain": toolchains_common.cxx(),
@@ -685,8 +681,6 @@ python_test = prelude_rule(
             "repl_only_deps": attrs.list(attrs.dep(), default = []),
             "runner": attrs.option(attrs.dep(), default = None),
             "specs": attrs.option(attrs.arg(json = True), default = None),
-            "versioned_resources": attrs.option(attrs.versioned(attrs.named_set(attrs.source(), sorted = True)), default = None),
-            "versioned_srcs": attrs.option(attrs.versioned(attrs.named_set(attrs.source(), sorted = True)), default = None),
             "zip_safe": attrs.option(attrs.bool(), default = None),
         }
         | buck.licenses_arg()
@@ -698,23 +692,6 @@ python_test = prelude_rule(
         | validation_common.attrs_validators_arg()
     ),
     cfg = constraint_overrides.transition,
-)
-
-python_test_runner = prelude_rule(
-    name = "python_test_runner",
-    docs = "",
-    examples = None,
-    further = None,
-    attrs = (
-        # @unsorted-dict-items
-        buck.labels_arg()
-        | {
-            "main_module": attrs.string(default = ""),
-            "src": attrs.source(),
-        }
-        | buck.licenses_arg()
-        | buck.contacts_arg()
-    ),
 )
 
 python_bootstrap_binary = prelude_rule(
@@ -785,5 +762,4 @@ python_rules = struct(
     python_needed_coverage_test = python_needed_coverage_test,
     python_runtime_bundle = python_runtime_bundle,
     python_test = python_test,
-    python_test_runner = python_test_runner,
 )

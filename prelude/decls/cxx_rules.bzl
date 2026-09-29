@@ -77,8 +77,6 @@ def _cxx_binary_and_test_attrs():
 
 ArchiverProviderType = ["bsd", "gnu", "llvm", "windows", "windows_clang"]
 
-CxxTestType = ["gtest", "boost"]
-
 LinkerProviderType = ["darwin", "gnu", "windows", "unknown", "wasm"]
 
 PicType = ["pic", "pdc"]
@@ -116,12 +114,6 @@ cxx_binary = prelude_rule(
             'util.h',
           ],
         )
-
-        # To build without stripping:
-        buck build :echo
-
-        # To build with stripping debug symbols only:
-        buck build :echo#strip-debug
         ```
     """,
     further = None,
@@ -148,8 +140,6 @@ cxx_binary = prelude_rule(
         | cxx_common.use_content_based_paths_arg()
         | {
             "cxx_runtime_type": attrs.option(attrs.enum(CxxRuntimeType), default = None),
-            "default_platform": attrs.option(attrs.string(), default = None),
-            "defaults": attrs.dict(key = attrs.string(), value = attrs.string(), sorted = False, default = {}),
             "deps": attrs.list(attrs.dep(), default = []),
             "devirt_enabled": attrs.bool(default = False),
             "executable_name": attrs.option(attrs.string(), default = None),
@@ -160,7 +150,6 @@ cxx_binary = prelude_rule(
             "lang_compiler_flags": attrs.dict(key = attrs.enum(CxxSourceType), value = attrs.list(attrs.arg()), sorted = False, default = {}),
             "lang_preprocessor_flags": attrs.dict(key = attrs.enum(CxxSourceType), value = attrs.list(attrs.arg()), sorted = False, default = {}),
             "libraries": attrs.list(attrs.string(), default = []),
-            "link_deps_query_whole": attrs.bool(default = False),
             "link_group": attrs.option(attrs.string(), default = None),
             "link_group_map": LINK_GROUP_MAP_ATTR,
             "post_linker_flags": attrs.list(attrs.arg(anon_target_compatible = True), default = []),
@@ -203,20 +192,6 @@ cxx_genrule = prelude_rule(
 
         A `cxx_genrule()` can be an input to
         another `cxx_genrule()`.
-
-        Note that if you specify the `cxx_genrule` as a command-line
-        target to `buck build`, you must include a platform flavor.
-        For example:
-
-        ```
-        buck build :cxx_gr_name#iphonesimulator-x86_64
-        ```
-
-        You could also just specify the default platform flavor explicitly:
-
-        ```
-        buck build :cxx_gr_name#default
-        ```
     """,
     examples = None,
     further = None,
@@ -443,8 +418,6 @@ library_attrs = (
         "bridging_header": attrs.option(attrs.source(), default = None),
         "cxx_runtime_type": attrs.option(attrs.enum(CxxRuntimeType), default = None),
         "default_host_platform": attrs.option(attrs.configuration_label(), default = None),
-        "default_platform": attrs.option(attrs.string(), default = None),
-        "defaults": attrs.dict(key = attrs.string(), value = attrs.string(), sorted = False, default = {}),
         "deps": attrs.list(attrs.dep(), default = []),
         "devirt_enabled": attrs.bool(default = False),
         "diagnostics": attrs.dict(key = attrs.string(), value = attrs.source(), sorted = False, default = {}),
@@ -869,13 +842,6 @@ cxx_test = prelude_rule(
                  Buck is storing data on the disk mid-build.
             """,
             ),
-            "framework": attrs.option(
-                attrs.enum(CxxTestType),
-                default = None,
-                doc = """
-                Unused.
-            """,
-            ),
         }
         | buck.run_test_separately_arg(run_test_separately_type = attrs.option(attrs.bool(), default = None))
         | buck.test_rule_timeout_ms()
@@ -886,8 +852,6 @@ cxx_test = prelude_rule(
         | {
             "additional_coverage_targets": attrs.list(attrs.source(), default = []),
             "cxx_runtime_type": attrs.option(attrs.enum(CxxRuntimeType), default = None),
-            "default_platform": attrs.option(attrs.string(), default = None),
-            "defaults": attrs.dict(key = attrs.string(), value = attrs.string(), sorted = False, default = {}),
             "deps": attrs.list(attrs.dep(), default = []),
             "devirt_enabled": attrs.bool(default = False),
             "executable_name": attrs.option(attrs.string(), default = None),
@@ -899,7 +863,6 @@ cxx_test = prelude_rule(
             "lang_compiler_flags": attrs.dict(key = attrs.enum(CxxSourceType), value = attrs.list(attrs.arg()), sorted = False, default = {}),
             "lang_preprocessor_flags": attrs.dict(key = attrs.enum(CxxSourceType), value = attrs.list(attrs.arg()), sorted = False, default = {}),
             "libraries": attrs.list(attrs.string(), default = []),
-            "link_deps_query_whole": attrs.bool(default = False),
             "link_group": attrs.option(attrs.string(), default = None),
             "link_group_map": LINK_GROUP_MAP_ATTR,
             "linker_extra_outputs": attrs.list(attrs.string(), default = []),
@@ -1173,16 +1136,6 @@ prebuilt_cxx_library = prelude_rule(
             "provided": attrs.bool(default = False),
             "soname": attrs.option(attrs.string(), default = None),
             "supports_shared_library_interface": attrs.bool(default = True),
-            "versioned_exported_lang_preprocessor_flags": attrs.versioned(
-                attrs.dict(key = attrs.enum(CxxSourceType), value = attrs.list(attrs.arg()), sorted = False)
-            ),
-            "versioned_exported_preprocessor_flags": attrs.versioned(attrs.list(attrs.arg())),
-            "versioned_header_dirs": attrs.option(attrs.versioned(attrs.list(attrs.source())), default = None),
-            "versioned_import_lib": attrs.option(attrs.versioned(attrs.source()), default = None),
-            "versioned_shared_lib": attrs.option(attrs.versioned(attrs.source()), default = None),
-            "versioned_soname": attrs.option(attrs.versioned(attrs.string()), default = None),
-            "versioned_static_lib": attrs.option(attrs.versioned(attrs.source()), default = None),
-            "versioned_static_pic_lib": attrs.option(attrs.versioned(attrs.source()), default = None),
         }
         | buck.allow_cache_upload_arg()
         | buck.licenses_arg()

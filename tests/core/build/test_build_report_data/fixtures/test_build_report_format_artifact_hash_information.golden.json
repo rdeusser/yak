@@ -1,7 +1,6 @@
 # This file is @generated, regenerate by rerunning the test with `YAK_UPDATE_GOLDEN=1` set
 
 {
-  "failures": {},
   "results": {
     "root//:dir1": {
       "configured": {
@@ -23,15 +22,7 @@
           "success": "SUCCESS"
         }
       },
-      "configured_graph_size": null,
-      "errors": [],
-      "other_outputs": {},
-      "outputs": {
-        "DEFAULT": [
-          "yak-out/v2/art/root/<HASH>/__dir1__/out"
-        ]
-      },
-      "success": "SUCCESS"
+      "errors": []
     },
     "root//:rule1": {
       "configured": {
@@ -54,15 +45,7 @@
           "success": "SUCCESS"
         }
       },
-      "configured_graph_size": null,
-      "errors": [],
-      "other_outputs": {},
-      "outputs": {
-        "DEFAULT": [
-          "yak-out/v2/art/root/<HASH>/__rule1__/out.txt"
-        ]
-      },
-      "success": "SUCCESS"
+      "errors": []
     },
     "root//subdir:rule": {
       "configured": {
@@ -85,18 +68,9 @@
           "success": "SUCCESS"
         }
       },
-      "configured_graph_size": null,
-      "errors": [],
-      "other_outputs": {},
-      "outputs": {
-        "DEFAULT": [
-          "yak-out/v2/art/root/<HASH>/subdir/__rule__/out.txt"
-        ]
-      },
-      "success": "SUCCESS"
+      "errors": []
     }
   },
   "strings": {},
-  "success": true,
-  "truncated": false
+  "success": true
 }

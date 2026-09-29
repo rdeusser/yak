@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-Removes the code, configuration, and service clients that only Meta's internal build used, removes the JVM, Android, and JavaScript support, and renames the tool to yak.
+Removes the code, configuration, and service clients that only Meta's internal build used, removes the JVM, Android, and JavaScript support and the Buck1 compatibility code, and renames the tool to yak.
 
 ### Renamed to yak
 
@@ -60,6 +60,45 @@ Removes the code, configuration, and service clients that only Meta's internal b
 - Entries copied from `zip_srcs` keep their permissions. The Java tool dropped them.
 - The directory entries that `zip_file` adds for the parent directories of `srcs` files have the permissions 0755.
 - `entries_to_exclude` patterns use the syntax of Python's `re` module in place of Java's `java.util.regex`.
+
+### Removed Buck1 compatibility
+
+Commands, flags, and build file functions:
+
+- `yak build` loses the hidden `--deep` flag, which did nothing.
+- `yak test` loses the hidden `--deep` and `--xml` flags, which did nothing.
+- The JSON that `yak run --command-args-file` writes loses the `is_fix_script` and `print_command` fields.
+- Test executors no longer receive the `--buck-test-info ignored` arguments.
+- The `--output-attributes` flag is removed. It returned an error that named `--output-attribute`.
+- The `labels()` query function is removed. It returned an error for every input.
+- `yak targets --target-hash-function` accepts `fast` and `strong`. The `sha1`, `sha256`, and `murmur_hash3` values, which chose one of the two, are removed.
+- Target labels and patterns lose the `#flavor` suffix. `//foo:bar#headers` fails as an invalid target name. `//foo:bar[headers]` names the subtarget that `#headers` mapped to.
+- `repository_name()` is removed. `get_cell_name()` returns the same name without the leading `@`.
+- Entries of `[buildfile] package_includes` take the form `<package path>=><import path>`. The `::` list of symbols and its `alias=symbol` renames are removed. `implicit_package_symbol()` looks up each symbol by its name in the imported file.
+
+The build report:
+
+- The build report loses the `failures` and `truncated` fields.
+- Each entry of `results` loses the `success`, `outputs`, `other_outputs`, and `configured_graph_size` fields that merged its configurations. Each entry of `configured` keeps them.
+- The `fill-out-failures` value of `--build-report-options` is removed.
+- The `[build_report] print_unconfigured_section` setting is removed.
+
+The prelude:
+
+- `sh_test` loses `list_args`, `list_env`, `run_args`, and `run_env`, which failed analysis when set.
+- `cxx_test` loses `framework`, which did nothing.
+- Rules lose `default_platform` and `link_deps_query_whole`, which no rule read.
+- Rules lose `defaults`. A `static`, `static_pic`, or `shared` value in it set the link style of C++ and Apple targets that left `link_style` unset.
+- Genrules no longer set the `GEN_DIR` environment variable, whose value was `GEN_DIR_DEPRECATED`.
+- On Windows, genrules no longer rewrite `$OUT` and `${OUT}` in a command to `%OUT%`. The rewrite also covered `SRCDIR`, `SRCS`, `TMP`, and the variables that rules added. Commands that run on Windows use the `%OUT%` form.
+- Scripts that `sh_binary` writes no longer set `YAK_SH_BINARY_VERSION_UNSTABLE`.
+- `@prelude//platforms/apple:base.bzl` loses `apple_generated_platforms`.
+- The `legacy_toolchain`, `external_test_runner`, and `python_test_runner` rules are removed. They failed analysis for every target.
+- `configured_alias` loses the `actual` attribute, which query output showed and analysis ignored. The `configured_alias` macro still takes `actual`.
+- `versioned_alias` is removed.
+- `prebuilt_cxx_library` loses its `versioned_*` attributes.
+- `python_library` and `python_test` lose `versioned_srcs` and `versioned_resources`.
+- `attrs.versioned()` is removed. A `select()` on constraints replaces the versioned attributes.
 
 ### Removed commands and flags
 
@@ -120,7 +159,6 @@ The Bazel Remote Execution API has no field for gang workers, action dependencie
 - C++ header units compile with `-DPRELUDE_CPP_HEADER_UNIT=1` in place of `-DFACEBOOK_CPP_HEADER_UNIT=1`.
 - Late-stamped build info goes into an ELF section named `build_info` in place of `fb_build_info`.
 - The `tests.disable_re_tests` buckconfig key replaces `fbcode.disable_re_tests`.
-- `versioned_alias` and versioned parameters select on `config//third-party/<project>/constraints:<version>`, which the `config` cell must define. They selected on `ovr_config//third-party/...` before.
 - A Remote Execution test without a `use_case` no longer falls back to the `tpx-default` use case.
 - `BuckconfigBackedModifier` no longer has an `oncall` field.
 - Test rules no longer add the labels that only Meta's Tpx test runner read (the `tpx:*` labels of `apple_test`, and the `run_as_bundle` label).

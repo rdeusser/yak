@@ -2,10 +2,6 @@
 
 {
   "error_category": "USER",
-  "failures": {
-    "root//:fail_build?root//:linux": "Error running analysis for <IRRELEVANT>",
-    "root//:fail_build?root//:macos": "Error running analysis for <IRRELEVANT>"
-  },
   "results": {
     "root//:fail_build?root//:linux": {
       "configured": {
@@ -28,11 +24,7 @@
           "success": "FAIL"
         }
       },
-      "configured_graph_size": null,
-      "errors": [],
-      "other_outputs": {},
-      "outputs": {},
-      "success": "FAIL"
+      "errors": []
     },
     "root//:fail_build?root//:macos": {
       "configured": {
@@ -55,17 +47,12 @@
           "success": "FAIL"
         }
       },
-      "configured_graph_size": null,
-      "errors": [],
-      "other_outputs": {},
-      "outputs": {},
-      "success": "FAIL"
+      "errors": []
     }
   },
   "strings": {
     "<STRING_HASH>": "Error running analysis for <IRRELEVANT>",
     "<STRING_HASH>": "Error running analysis for <IRRELEVANT>"
   },
-  "success": false,
-  "truncated": false
+  "success": false
 }

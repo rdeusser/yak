@@ -18,7 +18,6 @@ use buck2_interpreter::types::provider::callable::ValueAsProviderCallableLike;
 use buck2_interpreter::types::transition::transition_id_from_value;
 use buck2_node::attrs::attr::Attribute;
 use buck2_node::attrs::attr_type::AttrType;
-use buck2_node::attrs::attr_type::any::AnyAttrType;
 use buck2_node::attrs::coercion_context::AttrCoercionContext;
 use buck2_node::attrs::configurable::AttrIsConfigurable;
 use buck2_node::attrs::display::AttrDisplayWithContextExt;
@@ -558,25 +557,6 @@ fn attr_module(registry: &mut GlobalsBuilder) {
         eval: &mut Evaluator<'v, '_, '_>,
     ) -> starlark::Result<StarlarkAttribute> {
         Ok(Attribute::attr(eval, None, doc, AttrType::query())?)
-    }
-
-    fn versioned<'v>(
-        value_type: &StarlarkAttribute,
-        #[starlark(require = named, default = "")] doc: &str,
-    ) -> starlark::Result<StarlarkAttribute> {
-        // A versioned field looks like:
-        // [ ({"key":"value1"}, arg), ({"key":"value2"}, arg) ]
-        let element_type = AttrType::tuple(vec![
-            AttrType::dict(AttrType::string(), AttrType::string(), false),
-            value_type.coercer_for_inner()?,
-        ]);
-        let coercer = AttrType::list(element_type.dupe());
-
-        Ok(StarlarkAttribute::new(Attribute::new(
-            Some(Arc::new(AnyAttrType::empty_list())),
-            doc,
-            coercer,
-        )?))
     }
 
     /// Takes a source file from the user, supplies an artifact to the rule.

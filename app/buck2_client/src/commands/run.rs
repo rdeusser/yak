@@ -216,8 +216,6 @@ impl StreamingCommand for RunCommand {
                 envp: std::env::vars()
                     .filter(|(key, _value)| !WRAPPER_ENV_VARS.contains(&key.as_str()))
                     .collect(),
-                is_fix_script: false,
-                print_command: false,
             };
             let serialized = serde_json::to_string(&command)
                 .buck_error_context("Failed to serialize command")?;
@@ -281,10 +279,6 @@ struct CommandArgsFile {
     path: String,
     argv: Vec<String>,
     envp: BTreeMap<String, String>,
-    // Not used. For buck_v1 back compatibility only.
-    is_fix_script: bool,
-    // Not used. For buck_v1 back compatibility only.
-    print_command: bool,
 }
 
 #[derive(buck2_error::Error, Debug)]

@@ -10,11 +10,6 @@ load("@prelude//test:inject_test_run_info.bzl", "inject_test_run_info")
 load("@prelude//tests:re_utils.bzl", "get_re_executors_from_props")
 
 def sh_test_impl(ctx: AnalysisContext) -> list[Provider]:
-    # This does not exist in v1 either, but v1 has those attributes presumably
-    # to be compatible with this. We just fail if they're passed.
-    if ctx.attrs.list_args or ctx.attrs.list_env or ctx.attrs.run_args or ctx.attrs.run_env:
-        fail("An unsupported attribute was passed")
-
     args_args = []
     args_hidden = []
 

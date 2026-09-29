@@ -38,7 +38,6 @@ cxx_implicit_attrs = {
     "bolt_profile": attrs.option(attrs.source(), default = None),
     "compiler_flags": attrs.list(attrs.arg(anon_target_compatible = True), default = []),
     "cxx_main": attrs.source(default = "prelude//python/tools:embedded_main.cpp"),
-    "defaults": attrs.dict(key = attrs.string(), value = attrs.string(), sorted = False, default = {}),
     "enable_distributed_thinlto": attrs.bool(default = False),
     "executable_deps": attrs.list(attrs.dep()),
     "executable_name": attrs.option(attrs.string(), default = None),

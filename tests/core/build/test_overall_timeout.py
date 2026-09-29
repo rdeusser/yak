@@ -11,7 +11,7 @@ import json
 from pathlib import Path
 
 from e2e_util.api.buck import Buck
-from e2e_util.api.buck_result import ExitCodeV2
+from e2e_util.api.buck_result import ExitCode
 from e2e_util.asserts import expect_failure
 from e2e_util.buck_workspace import buck_test
 
@@ -29,7 +29,7 @@ async def test_overall_timeout(buck: Buck, tmp_path: Path) -> None:
             str(build_report),
         ),
         stderr_regex="Build timed out",
-        exit_code=ExitCodeV2.USER_ERROR,
+        exit_code=ExitCode.USER_ERROR,
     )
 
     with open(build_report) as f:
@@ -67,7 +67,7 @@ async def test_overall_timeout_with_artifact_path_sketch(
                     str(build_report),
                 ),
                 stderr_regex="Build timed out",
-                exit_code=ExitCodeV2.USER_ERROR,
+                exit_code=ExitCode.USER_ERROR,
             ),
             timeout=60,
         )

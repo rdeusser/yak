@@ -30,27 +30,16 @@ use crate::parse_import::parse_import;
 enum PackageImportsError {
     #[error("Expected value to contain `=>`. Got `{0}`.")]
     MissingArrow(String),
-    #[error("Expected value to contain `::`. Got `{0}`.")]
-    MissingColons(String),
 }
 
 #[derive(Debug, Eq, PartialEq, Allocative, Pagable)]
 pub struct ImplicitImport {
     import: ImportPath,
-    // Oddly buckv1 allows renaming symbols for these imports.
-    symbols: OrderedMap<String, String>,
 }
 
 impl ImplicitImport {
     pub fn import(&self) -> &ImportPath {
         &self.import
-    }
-
-    pub fn lookup_alias<'a>(&'a self, name: &'a str) -> &'a str {
-        match self.symbols.get(name) {
-            Some(v) => v,
-            None => name,
-        }
     }
 }
 
@@ -64,12 +53,10 @@ pub struct PackageImplicitImports {
 }
 
 impl PackageImplicitImports {
-    /// Mappings are encoded roughly like so:
+    /// Mappings are encoded like so:
     ///
     /// full_mappings: `package_mapping`,`package_mapping`,...
-    /// package_mapping:
-    /// `package_path`=>`import_path`::`symbol_spec`::`symbol_spec`::
-    /// `symbol_spec`::... symbol_spec: `alias`=`symbol` | `symbol`
+    /// package_mapping: `package_path`=>`import_path`
     pub fn new(
         cell_name: BuildFileCell,
         cell_alias_resolver: CellAliasResolver,
@@ -82,13 +69,10 @@ impl PackageImplicitImports {
                 CellRelativePathBuf::unchecked_new("".to_owned()),
             );
             for item in value.split(',') {
-                let (dir, import_spec) = item
+                let (dir, import) = item
                     .trim()
                     .split_once("=>")
                     .ok_or_else(|| PackageImportsError::MissingArrow(item.to_owned()))?;
-                let (import, symbol_specs) = import_spec
-                    .split_once("::")
-                    .ok_or_else(|| PackageImportsError::MissingColons(import_spec.to_owned()))?;
                 let relative_import_option = RelativeImports::Allow {
                     current_dir_with_allowed_relative: &CellPathWithAllowedRelativeDir::new(
                         root_path.clone(),
@@ -100,20 +84,11 @@ impl PackageImplicitImports {
                 // Package implicit imports are only going to be used for a top-level module in
                 // the same cell, so we can set that early.
                 let import_path = ImportPath::new_with_build_file_cells(import_path, cell_name)?;
-                let mut symbols = OrderedMap::new();
-                for spec in symbol_specs.split("::") {
-                    let (alias, symbol) = match spec.split_once('=') {
-                        Some(v) => v,
-                        None => (spec, spec),
-                    };
-                    symbols.insert(alias.to_owned(), symbol.to_owned());
-                }
 
                 mappings.insert(
                     CellRelativePathBuf::try_from(dir.to_owned())?,
                     Arc::new(ImplicitImport {
                         import: import_path,
-                        symbols,
                     }),
                 );
             }
@@ -163,9 +138,7 @@ mod tests {
         let imports = PackageImplicitImports::new(
             BuildFileCell::new(root_name),
             cell_alias_resolver,
-            Some(
-                "src=>//:src.bzl::symbols,src/bin=>//:bin.bzl::symbols , other=>@cell1//:other.bzl::alias1=symbol1::alias2=symbol2::symbol3",
-            ),
+            Some("src=>//:src.bzl,src/bin=>//:bin.bzl , other=>@cell1//:other.bzl"),
         )?;
 
         assert_eq!(
@@ -183,8 +156,6 @@ mod tests {
 
         let import = expect_import("root", "src/java/com");
         assert_eq!("root//src.bzl", import.import().to_string());
-        assert_eq!("symbols", import.lookup_alias("symbols"));
-        assert_eq!("other", import.lookup_alias("other"));
 
         let import = expect_import("root", "src");
         assert_eq!("root//src.bzl", import.import().to_string());
@@ -194,11 +165,6 @@ mod tests {
 
         let import = expect_import("root", "other/bin");
         assert_eq!("cell1//other.bzl@root", import.import().to_string());
-        assert_eq!("symbol1", import.lookup_alias("alias1"));
-        assert_eq!("symbol2", import.lookup_alias("alias2"));
-        assert_eq!("symbol3", import.lookup_alias("symbol3"));
-        assert_eq!("alias3", import.lookup_alias("alias3"));
-        assert_eq!("symbol1", import.lookup_alias("symbol1"));
 
         assert_eq!(None, imports.get(PackageLabel::testing_parse("root//")));
         assert_eq!(

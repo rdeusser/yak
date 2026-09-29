@@ -48,7 +48,8 @@ def external_pkgconfig_library(
         name = pkg_config_cflags,
         default_target_platform = default_target_platform,
         out = "out",
-        cmd = cmd_cflags,
+        bash = cmd_cflags,
+        cmd_exe = cmd_cflags.replace("$OUT", "%OUT%"),
         remote = False,
     )
 
@@ -57,7 +58,8 @@ def external_pkgconfig_library(
         name = pkg_config_libs,
         default_target_platform = default_target_platform,
         out = "out",
-        cmd = cmd_libs,
+        bash = cmd_libs,
+        cmd_exe = cmd_libs.replace("$OUT", "%OUT%"),
         remote = False,
     )
 

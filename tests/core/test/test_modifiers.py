@@ -29,8 +29,6 @@ def build_report_test(name: str, command: List[str], should_fail: bool) -> None:
                 buck.test(
                     "--build-report",
                     str(report),
-                    "--build-report-options",
-                    "fill-out-failures",
                     *command,
                 )
             )
@@ -115,8 +113,6 @@ def modifiers_match_test(
                 buck.test(
                     "--build-report",
                     str(report),
-                    "--build-report-options",
-                    "fill-out-failures",
                     *command,
                 )
             )

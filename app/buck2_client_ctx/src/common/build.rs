@@ -19,9 +19,6 @@ use crate::common::PrintOutputsFormat;
 
 #[derive(Debug, Clone, Copy, serde::Serialize, serde::Deserialize)]
 pub struct BuildReportOption {
-    /// Fill out the failures in build report as it was done by default in buck1.
-    fill_out_failures: bool,
-
     /// Include package relative paths in the output.
     include_package_project_relative_paths: bool,
 
@@ -36,15 +33,12 @@ pub struct BuildReportOption {
 }
 
 fn parse_build_report_option(s: &str) -> buck2_error::Result<BuildReportOption> {
-    let mut fill_out_failures = false;
     let mut include_package_project_relative_paths = false;
     let mut include_artifact_hash_information = false;
     let mut exclude_action_error_diagnostics = false;
     let mut truncate_error_content = false;
 
-    if s.to_lowercase() == "fill-out-failures" {
-        fill_out_failures = true;
-    } else if s.to_lowercase() == "package-project-relative-paths" {
+    if s.to_lowercase() == "package-project-relative-paths" {
         include_package_project_relative_paths = true;
     } else if s.to_lowercase() == "include-artifact-hash-information" {
         include_artifact_hash_information = true;
@@ -54,12 +48,11 @@ fn parse_build_report_option(s: &str) -> buck2_error::Result<BuildReportOption> 
         truncate_error_content = true;
     } else {
         warn!(
-            "Incorrect syntax for build report option. Got: `{}` but expected one of `fill-out-failures, package-project-relative-paths, include-artifact-hash-information, exclude-action-error-diagnostics, truncate-error-content`",
+            "Incorrect syntax for build report option. Got: `{}` but expected one of `package-project-relative-paths, include-artifact-hash-information, exclude-action-error-diagnostics, truncate-error-content`",
             s.to_owned()
         )
     }
     Ok(BuildReportOption {
-        fill_out_failures,
         include_package_project_relative_paths,
         include_artifact_hash_information,
         exclude_action_error_diagnostics,
@@ -86,9 +79,6 @@ pub struct CommonBuildOptions {
     /// Comma separated list of build report options.
     ///
     /// The following options are supported:
-    ///
-    /// `fill-out-failures`:
-    /// fill out failures the same way Buck1 would.
     ///
     /// `package-project-relative-paths`:
     /// emit the project-relative path of packages for the targets that were built.
@@ -221,10 +211,6 @@ impl CommonBuildOptions {
         let (unstable_print_build_report, unstable_build_report_filename) = self.build_report();
         let unstable_streaming_build_report_filename =
             self.streaming_build_report.clone().unwrap_or_default();
-        let unstable_include_failures_build_report = self
-            .build_report_options
-            .iter()
-            .any(|option| option.fill_out_failures);
         let unstable_include_package_project_relative_paths = self
             .build_report_options
             .iter()
@@ -278,7 +264,6 @@ impl CommonBuildOptions {
             materialize_failed_inputs: self.materialize_failed_inputs,
             enable_optional_validations,
             materialize_failed_outputs: self.materialize_failed_outputs,
-            unstable_include_failures_build_report,
             unstable_include_package_project_relative_paths,
             unstable_include_artifact_hash_information,
             unstable_streaming_build_report_filename,

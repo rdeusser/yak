@@ -11,7 +11,7 @@ import json
 from pathlib import Path
 
 from e2e_util.api.buck import Buck
-from e2e_util.api.buck_result import ExitCodeV2
+from e2e_util.api.buck_result import ExitCode
 from e2e_util.asserts import expect_failure
 from e2e_util.buck_workspace import buck_test, env
 from e2e_util.helper.golden import golden
@@ -53,7 +53,7 @@ async def test_command_report_watchman_error(buck: Buck, tmp_path: Path) -> None
     with open(report) as f:
         report = json.loads(f.read())
 
-    assert report["exit_code"] == ExitCodeV2.USER_ERROR.value
+    assert report["exit_code"] == ExitCode.USER_ERROR.value
     assert "SyncableQueryHandler returned an error" in report["error_messages"][0]
 
 
@@ -69,7 +69,7 @@ async def test_command_report_init_daemon_error(buck: Buck, tmp_path: Path) -> N
     with open(report) as f:
         report = json.loads(f.read())
 
-    assert report["exit_code"] == ExitCodeV2.CONNECT_ERROR.value
+    assert report["exit_code"] == ExitCode.CONNECT_ERROR.value
     assert "Injected init daemon error" in report["error_messages"][0]
 
 
@@ -95,7 +95,7 @@ async def test_exit_result_connection_error(buck: Buck, tmp_path: Path) -> None:
     with open(report) as f:
         report = json.loads(f.read())
 
-    assert report["exit_code"] == ExitCodeV2.CONNECT_ERROR.value
+    assert report["exit_code"] == ExitCode.CONNECT_ERROR.value
     assert "injected auth error" in report["error_messages"][0]
     assert record["exit_result_name"] == "CONNECT_ERROR"
 
@@ -130,7 +130,7 @@ async def test_command_report_post_build_client_error(
         report = json.loads(f.read())
 
     assert len(report["error_messages"]) == 1
-    assert report["exit_code"] == ExitCodeV2.INFRA_ERROR.value
+    assert report["exit_code"] == ExitCode.INFRA_ERROR.value
     assert "Injected Build Response Error" in report["error_messages"][0]
 
     assert record["exit_result_name"] == "INFRA_ERROR"

@@ -28,7 +28,6 @@
 ## read\_parent\_package\_value
 ## read\_root\_config
 ## regex\_match
-## repository\_name
 ## rule
 ## rule\_exists
 ## select

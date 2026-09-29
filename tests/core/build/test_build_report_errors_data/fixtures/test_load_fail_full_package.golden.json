@@ -2,9 +2,7 @@
 
 {
   "error_category": "INFRA",
-  "failures": {},
   "results": {},
   "strings": {},
-  "success": false,
-  "truncated": false
+  "success": false
 }

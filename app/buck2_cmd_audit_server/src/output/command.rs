@@ -166,7 +166,7 @@ impl ServerAuditSubcommand for AuditOutputCommand {
                     Some(result) => {
                         match result {
                             AuditOutputResult::Match(action) => {
-                                (PRINT_ACTION_NODE.get()?)(&mut stdout, action, self.json, &self.query_attributes.get()?, &cell_resolver).await?
+                                (PRINT_ACTION_NODE.get()?)(&mut stdout, action, self.json, &self.query_attributes.get(), &cell_resolver).await?
                             },
                             AuditOutputResult::MaybeRelevantForConfigurationHashPath(label) => {
                                 writeln!(

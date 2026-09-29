@@ -6,7 +6,7 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-load("@prelude//:alias.bzl", "alias_impl", "configured_alias_impl", "versioned_alias_impl")
+load("@prelude//:alias.bzl", "alias_impl", "configured_alias_impl")
 load("@prelude//:command_alias.bzl", "command_alias_impl")
 load("@prelude//:export_file.bzl", "export_file_impl")
 load("@prelude//:filegroup.bzl", "filegroup_impl")
@@ -47,7 +47,6 @@ load("@prelude//decls:rust_rules.bzl", "rust_rules")
 load("@prelude//decls:shell_rules.bzl", "shell_rules")
 load("@prelude//decls:third_party_common.bzl", "third_party_common")
 load("@prelude//decls:toolchains_common.bzl", "toolchains_common")
-load("@prelude//decls:uncategorized_rules.bzl", "uncategorized_rules")
 load("@prelude//erlang:erlang.bzl", _erlang_implemented_rules = "implemented_rules")
 load("@prelude//git:git_fetch.bzl", "git_fetch_impl")
 load("@prelude//go:coverage.bzl", "GoCoverageMode")
@@ -103,7 +102,6 @@ _OCAML_RULES_KEY = "ocaml"
 _PYTHON_RULES_KEY = "python"
 _RUST_RULES_KEY = "rust"
 _SHELL_RULES_KEY = "shell"
-_UNCATEGORIZED_RULES_KEY = "uncategorized"
 
 _JULIA_RULES_KEY = "julia"
 _MATLAB_RULES_KEY = "matlab"
@@ -123,7 +121,6 @@ categorized_rule_decl_records = {
     _PYTHON_RULES_KEY: python_rules,
     _RUST_RULES_KEY: rust_rules,
     _SHELL_RULES_KEY: shell_rules,
-    _UNCATEGORIZED_RULES_KEY: uncategorized_rules,
 }
 
 def _merge_dictionaries(dicts):
@@ -151,7 +148,6 @@ extra_implemented_rules = struct(
     sh_test = sh_test_impl,
     test_suite = test_suite_impl,
     toolchain_alias = alias_impl,
-    versioned_alias = versioned_alias_impl,
     # c#
     csharp_library = csharp_library_impl,
     prebuilt_dotnet_library = prebuilt_dotnet_library_impl,
@@ -257,7 +253,6 @@ _cxx_extra_library_attrs = (
         "exported_needs_coverage_instrumentation": attrs.bool(default = False),
         "extra_dwp_flags": attrs.list(attrs.string(), default = []),
         "header_mode": attrs.option(attrs.enum(HeaderMode.values()), default = None),
-        "link_deps_query_whole": attrs.bool(default = False),
         "link_execution_preference": link_execution_preference_attr(),
         "link_group_map": LINK_GROUP_MAP_ATTR,
         "link_ordering": attrs.option(attrs.enum(LinkOrdering.values()), default = None),
@@ -333,7 +328,6 @@ control how the dependencies of this library are linked, use `link_style` instea
             "supports_lto": attrs.bool(default = False),
             "supports_python_dlopen": attrs.bool(default = True),
             "third_party_build": attrs.option(attrs.dep(providers = [ThirdPartyBuildInfo]), default = None),
-            "versioned_header_dirs": attrs.option(attrs.versioned(attrs.list(attrs.source(allow_directory = True))), default = None),
             "_cxx_toolchain": toolchains_common.cxx(),
             "_target_os_type": buck.target_os_type_arg(),
         }
@@ -511,9 +505,6 @@ _shell_extra_attributes = {
     "sh_test": constraint_overrides.attributes,
 }
 
-_uncategorized_extra_attributes = {
-}
-
 _cython_extra_attributes = {
     "cython_library": _cxx_extra_library_attrs,
     "cython_static_extension": _cxx_extra_library_attrs,
@@ -533,7 +524,6 @@ categorized_extra_attributes = {
     _PYTHON_RULES_KEY: _python_extra_attributes,
     _RUST_RULES_KEY: _rust_extra_attributes,
     _SHELL_RULES_KEY: _shell_extra_attributes,
-    _UNCATEGORIZED_RULES_KEY: _uncategorized_extra_attributes,
 }
 
 toolchain_rule_names = [

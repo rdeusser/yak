@@ -58,7 +58,7 @@ async def test_query_provider_names(buck: Buck) -> None:
 
     await expect_failure(
         buck.cquery("'root//bin:the_binary#some_flavor'"),
-        stderr_regex="Expected a target pattern without providers",
+        stderr_regex="Invalid target name `the_binary#some_flavor`",
     )
 
 

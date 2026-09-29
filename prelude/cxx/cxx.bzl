@@ -97,7 +97,6 @@ load(
     "ThirdPartyBuildInfo",
 )
 load("@prelude//unix:providers.bzl", "UnixEnv", "create_unix_env_info")
-load("@prelude//utils:expect.bzl", "expect")
 load(
     "@prelude//utils:utils.bzl",
     "filter_and_map_idx",
@@ -832,14 +831,6 @@ def _create_prebuilt_library_providers(
     return (providers, sub_targets, default_output)
 
 def prebuilt_cxx_library_impl(ctx: AnalysisContext) -> list[Provider]:
-    # Versioned params should be intercepted and converted away via the stub.
-    expect(not ctx.attrs.versioned_exported_lang_preprocessor_flags)
-    expect(not ctx.attrs.versioned_exported_preprocessor_flags)
-    expect(not ctx.attrs.versioned_header_dirs)
-    expect(not ctx.attrs.versioned_shared_lib)
-    expect(not ctx.attrs.versioned_static_lib)
-    expect(not ctx.attrs.versioned_static_pic_lib)
-
     if not cxx_platform_supported(ctx):
         return [DefaultInfo(default_output = None)]
 

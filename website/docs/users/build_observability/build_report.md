@@ -15,8 +15,6 @@ CLI.
 You can also pass `--build-report-options` with a comma-separated list of
 options to customize the build report:
 
-- `fill-out-failures`: Fill out the `failures` field in the build report (for
-  Buck1 backwards compatibility).
 - `package-project-relative-paths`: Include the project-relative path of
   packages for built targets.
 - `include-artifact-hash-information`: Include artifact hash information in the
@@ -62,14 +60,6 @@ BuildReport {
     # report in reference to these strings.
     strings: dict[str, str],
 
-    # BUCK1 BACKCOMPAT ONLY!
-    #
-    # Currently always empty. Will be filled in if a flag is passed in the future.
-    #
-    # A map from targets with potential `?modifier` modifiers that failed to build to error messages describing the
-    # failure.
-    failures: dict[TargetLabelWithModifiers, str],
-
     # Build metrics aggregated across all targets.
     build_metrics: AllTargetsBuildMetrics,
 
@@ -90,14 +80,6 @@ BuildReportEntry {
     # target, typically because they occurred before the target could be
     # configured.
     errors: list[Error],
-
-    # BUCK1 BACKCOMPAT ONLY!
-    #
-    # The two fields below are included for buck1 backwards compatibility only.
-    # They are both computed by aggregating across all the configured targets in
-    # the way you might expect.
-    success: "FAIL" | "SUCCESS",
-    outputs: dict[str, list[Path]],
 
     # The path to the package containing this target, relative to the project
     # root. This is the source code location for this target.
@@ -378,15 +360,8 @@ The format of the build report is generally stable. However, note that new
 fields may be added at any time, and you should ensure this does not cause your
 parsing to fail.
 
-A number of fields above are marked as being for buck1 backwards compatibility
-only. These fields all have superior alternatives available in the build report
-already. We would strongly prefer that new code neither use nor parse them, as
-this increases the likelihood that they can be removed one day.
-
-The build report additionally outputs a few fields that are intentionally not
-documented here. Those fields are even less useful than ones documented as being
-for backwards compatibility only, and even closer to removal. **Please** avoid
-using or parsing these if at all possible.
+The build report also outputs a few undocumented fields, which may be removed.
+Avoid using or parsing them.
 
 ### Limitations
 
@@ -397,9 +372,6 @@ The build report currently has at least the following limitations:
     passed, this is a bug.
 1.  It is currently not generated when a non-existent package is specified on
     the command line. This is also a bug.
-1.  The "failures" field is empty by default. To populate it, pass the
-    `fill-out-failures` option via `--build-report-options` (this exists for
-    buck1 backwards compatibility only; new code should not rely on it).
 
 Finally, it's worth raising that the concept of error deduplication has some
 fundamental limitations; if two targets both refer to the same non-existent

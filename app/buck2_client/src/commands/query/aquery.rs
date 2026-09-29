@@ -93,7 +93,7 @@ impl StreamingCommand for AqueryCommand {
     ) -> ExitResult {
         let (query, query_args) = self.query_common.get_query();
         let unstable_output_format = self.query_common.output_format() as i32;
-        let output_attributes = self.query_common.attributes.get()?;
+        let output_attributes = self.query_common.attributes.get();
         let context = ctx.client_context(matches, &self)?;
 
         let AqueryResponse {} = buckd

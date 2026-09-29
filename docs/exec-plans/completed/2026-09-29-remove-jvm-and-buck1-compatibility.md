@@ -23,10 +23,15 @@ The example projects load and build as before, and `tests/prelude/test_prelude_r
   - [x] Replace the Java zip tool of `zip_file` with `prelude/zip_file/tools/create_zip.py`, and add `zip_file` tests to `tests/prelude/test_prelude_rules.py` (2026-09-29).
   - [x] Check the prelude with a binary built from `870fb4a2c8`, in projects that vendor the prelude before and after the change (2026-09-29). The results are under Validation and Acceptance.
   - [x] Remove the JVM code of the binary: the Android flags of `yak install`, `yak audit classpath`, the `classpath()` function of analysis queries, and the Java options of the worker protocol files (2026-09-29).
-  - [x] Update the website, `CHANGELOG.md`, and the tech-debt tracker (2026-09-29). `ARCHITECTURE.md`, `AGENTS.md`, and `README.md` mention none of the removed code.
+  - [x] Update the website, `CHANGELOG.md`, and the tech-debt tracker (2026-09-29). `AGENTS.md` and `README.md` mention none of the removed code. `ARCHITECTURE.md` kept a planned change for the JVM bootstrap jars until milestone 2.
   - [x] On Linux, build the binary, run `python3 test.py` for the changed crates, and run the integration tests with regenerated golden files (2026-09-29).
   - [x] On Linux, run `python3 test.py` for the whole workspace, build the repository with yak, and build the example projects that CI builds (2026-09-29).
-- [ ] Milestone 2: remove the Buck1 compatibility code of tiers A and B.
+- [x] Milestone 2: remove the Buck1 compatibility code of tiers A and B (2026-09-29).
+  - [x] Remove the tier A items: the hidden `--deep` and `--xml` flags, the Buck1 fields of `--command-args-file`, `--buck-test-info`, `--output-attributes`, `labels()`, the no-op prelude attributes, `GEN_DIR`, `YAK_SH_BINARY_VERSION_UNSTABLE`, `apple_generated_platforms`, and the rules that have no implementation (2026-09-29).
+  - [x] Remove the tier B items: the compatibility fields of the build report, `#flavor` labels, the hash function aliases of `yak targets`, `repository_name()`, the renames of `package_includes`, the Windows rewrite of `$OUT` in genrules, `configured_alias.actual`, `defaults`, and the versioned attributes (2026-09-29).
+  - [x] Update the tests, the website, and `CHANGELOG.md` (2026-09-29).
+  - [x] On Linux, build the binary, run clippy, rustdoc, and the unit tests for the whole workspace, build the repository with yak and the examples, and run the integration tests with regenerated golden files (2026-09-29).
+  - [x] Record the decisions still in effect in `ARCHITECTURE.md` and the remaining Buck1 and JVM prose in the tech-debt tracker, and move the plan to `docs/exec-plans/completed/` (2026-09-29).
 
 ## Surprises & Discoveries
 
@@ -38,10 +43,14 @@ The example projects load and build as before, and `tests/prelude/test_prelude_r
 - `attrs.regex()` is an alias for `attrs.string()`, so no check ran on `entries_to_exclude` before the zip tool compiled the patterns.
 - The Java zip tool wrote each archive in `zip_srcs` as one run of entries, at the position of its first entry in sorted order. It wrote external attributes of 0 for the entries it copied and for directory entries, so copied executables lost their mode.
 - `examples/with_prelude` fails to load until `haskell-setup.sh` creates the GHC directory. `examples/vscode` registers execution platforms only on Windows and Linux hosts, so its `cquery //...` fails on macOS. Both fail the same way before and after the change.
+- The `defaults` attribute did more than hold Buck1 flavors. `cxx_attr_link_style` took the link style of C++ and Apple targets from its values when `link_style` was unset.
+- The `#strip-debug` flavor mapped to the default outputs, so the `cxx_binary` example that built `:echo#strip-debug` built the unstripped binary.
+- The `::` symbol list of `package_includes` changed nothing but renames. `implicit_package_symbol()` finds every symbol of the imported file by its name, whether the list names it or not.
+- The prelude's own genrules for `libpython_symbols` in `remote_python_toolchain` and the pkg-config flags of `external_pkgconfig_library` wrote `$OUT` in `cmd`, and they ran on Windows only through the rewrite.
 
 ## Decision Log
 
-- 2026-09-28: Remove the Java, Kotlin, and Android rules and toolchains, and the `prelude/js` rules (owner). The bootstrap jar downloads from the upstream release go with them, which supersedes the open jar item of [the rename plan](2026-09-28-rename-the-fork.md).
+- 2026-09-28: Remove the Java, Kotlin, and Android rules and toolchains, and the `prelude/js` rules (owner). The bootstrap jar downloads from the upstream release go with them, which supersedes the open jar item of [the rename plan](../active/2026-09-28-rename-the-fork.md).
 - 2026-09-28: Keep the `os:android` constraint. C, C++, Rust, and Go can target Android without the JVM rules. The `building_android_binary` constraint and the Android test runtimes in `prelude/runtime/constraints` go, because only the Android rules selected on them.
 - 2026-09-28: `zip_file` keeps its attributes and gets a Python tool. The tool names entries, applies `entries_to_exclude`, and handles duplicates as the Java tool did. It sorts every entry by name and keeps the external attributes of entries copied from `zip_srcs`.
 - 2026-09-28: Delete `prelude/debugging` and `prelude/graphql` in milestone 1. Both served only Meta's internal tools, and both held JVM code (the Java debugger branch and `GraphQLAndroidInfo`).
@@ -49,7 +58,13 @@ The example projects load and build as before, and `tests/prelude/test_prelude_r
 - 2026-09-28: Remove the `mvn:` URLs of `remote_file`, and with them the `[http] maven_repo` and `[http] maven_repo_override` settings.
 - 2026-09-29: Remove the `classpath()` function of analysis queries. `EVAL_ANALYSIS_QUERY` stops taking a `DiceComputations`, because `classpath()` was its only use of DICE.
 - 2026-09-29: Leave `app/buck2_core/src/provider/flavors.rs` to milestone 2, which removes the `#flavor` syntax and with it the Android, Java, and JavaScript flavors.
+- 2026-09-29: `package_includes` entries lose the `::` symbol list together with its renames, because the list did nothing else.
+- 2026-09-29: `NonDefaultProvidersName` keeps its enum form with one `Named` variant. A struct would change its serialized form and every match on it for no behavior change.
+- 2026-09-29: The prelude genrules that relied on the Windows rewrite get a `cmd_exe` with `%OUT%`, so they run on Windows as before.
+- 2026-09-29: `outputs_for_target` in `tests/e2e_util/api/buck_result.py` reads the outputs of the one configuration that has them, and fails when several do.
+- 2026-09-29: The build report tests of `print_unconfigured_section` are removed with the setting.
 - 2026-09-29: Keep the tier C behaviors (owner). They include the working directory of tests (the cell root unless `run_from_project_root` is set), the output of `audit includes`, the `%s` substitution of multiple queries, and the depth values that mean an unbounded traversal. Their Buck1 comments are prose for milestone 6 of the rename plan.
+- 2026-09-29: The tech-debt tracker records the comments in code that mention Buck1 and the examples that describe removed features. The plan of work of milestone 6 of the rename plan lists only the documentation.
 
 ## Outcomes & Retrospective
 
@@ -60,6 +75,20 @@ Milestone 1 (2026-09-29):
 - The example projects give the same results as before the change.
 - The binary loses `yak audit classpath`, the `classpath()` query function, and the Android flags of `yak install`.
 - `python3 test.py` runs `cargo test` without `--no-fail-fast`, so on a host where a known test fails it skips the test binaries after that one. `cargo test --workspace --no-fail-fast` ran the rest.
+
+Milestone 2 (2026-09-29):
+
+- The binary loses the Buck1 flags, fields, and query function of tiers A and B, and target patterns lose `#flavor`.
+- The build report lists the outputs and status of each target only under `configured`.
+- The prelude loses the Buck1 attributes, the rules that had no implementation, and the versioned attributes.
+- The tier C behaviors and the prose that mentions Buck1 remain.
+- A leftover `attrs.versioned()` call in `prelude/rules_impl.bzl` survived the first pass, because `cargo check` cannot see Starlark. A search of the prelude for each removed name found it before the integration tests ran.
+
+At completion (2026-09-29):
+
+- `ARCHITECTURE.md` records the owner's decision to drop the JVM, Android, and JavaScript rules. It also says what the `android` value of the `os` constraint is for.
+- The tech-debt tracker records the comments that explain behavior by comparison with Buck1 and the examples that describe removed features. It also records the open jar item of the rename plan.
+- The search of milestone 1 looked for the names of rules and targets, so it missed the planned change for the JVM bootstrap jars in `ARCHITECTURE.md`. Milestone 2 replaced it. A search for the words that describe a removed feature, such as `jar` and `JVM`, finds prose that a search for identifiers misses.
 
 ## Context and Orientation
 
@@ -123,6 +152,17 @@ Milestone 1 on Linux, for the whole workspace and the examples (2026-09-29):
 - In `examples/toolchains/python_toolchain`, `yak build //...` succeeds.
 - In `examples/no_prelude`, `yak build //...` fails at `root//go:main`, which the tech-debt tracker records for Linux on ARM. Milestone 1 changes no file of either example.
 - The integration tests of `tests/core/help`, `tests/core/docs`, `tests/prelude`, `tests/core/analysis`, `tests/core/install`, `tests/core/audit`, and `tests/core/query` give 233 passed and 28 skipped.
+
+Milestone 2 on Linux, from the repository root (2026-09-29):
+
+- `cargo build --bin=yak` and `cargo fmt --all -- --check` pass.
+- `python3 test.py --lint-only` and `python3 test.py --rustdoc-only` pass for the whole workspace.
+- `cargo test --lib --workspace --no-fail-fast` runs 129 test binaries, with 3865 passed, 3 ignored, and 1 failed. The failure is `test_perf_thread_instruction_counter`.
+- `cargo test --doc --workspace --no-fail-fast` gives 311 passed and 77 ignored.
+- After `reindeer buckify`, `yak build //:yak` succeeds.
+- `yak build //...` in `examples/toolchains/python_toolchain` and `examples/no_prelude` gives the same results as for milestone 1.
+- The integration tests (`python -m pytest tests -n auto`) give 1727 passed, 223 skipped, and 3 expected failures. Milestone 2 removes the two tests of `print_unconfigured_section` and adds a test of `--command-args-file`.
+- With `YAK_UPDATE_GOLDEN` set, the run changed 72 golden files. The golden build reports lose `failures`, `truncated`, and the merged fields of each entry, and their `configured` sections stay the same. The help pages lose `--output-attributes`, `fill-out-failures`, and the three hash function values. The generated docs lose `attrs.versioned` and `repository_name`.
 
 ## Idempotence and Recovery
 

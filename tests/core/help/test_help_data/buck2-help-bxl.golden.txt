@@ -48,8 +48,6 @@ Options:
 
           The following options are supported:
 
-          `fill-out-failures`: fill out failures the same way Buck1 would.
-
           `package-project-relative-paths`: emit the project-relative path of packages for the
           targets that were built.
 

@@ -86,18 +86,6 @@ pub(crate) fn register_path(builder: &mut GlobalsBuilder) {
             .to_string())
     }
 
-    /// Like `get_cell_name()` but prepends a leading `@` for compatibility with Buck1.
-    /// You should call `get_cell_name()` instead, and if you really want the `@`,
-    /// prepend it yourself.
-    fn repository_name(eval: &mut Evaluator) -> starlark::Result<String> {
-        // In Buck v1 the repository name has a leading `@` on it, so match that with v2.
-        // In practice, most users do `repository_name()[1:]` to drop it.
-        Ok(format!(
-            "@{}",
-            BuildContext::from_context(eval)?.cell_info().name()
-        ))
-    }
-
     /// `get_cell_name()` can be called from either a `YAK` file or a `.bzl` file,
     /// and returns the name of the cell where the `YAK` file that started the call
     /// lives.

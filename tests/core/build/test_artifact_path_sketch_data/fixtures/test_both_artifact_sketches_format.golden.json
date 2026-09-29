@@ -1,7 +1,6 @@
 # This file is @generated, regenerate by rerunning the test with `YAK_UPDATE_GOLDEN=1` set
 
 {
-  "failures": {},
   "results": {
     "root//:simple": {
       "configured": {
@@ -19,15 +18,7 @@
           "success": "SUCCESS"
         }
       },
-      "configured_graph_size": 1,
-      "errors": [],
-      "other_outputs": {},
-      "outputs": {
-        "DEFAULT": [
-          "yak-out/v2/art/root/<HASH>/__simple__/out.txt"
-        ]
-      },
-      "success": "SUCCESS"
+      "errors": []
     },
     "root//:with_dep": {
       "configured": {
@@ -45,18 +36,9 @@
           "success": "SUCCESS"
         }
       },
-      "configured_graph_size": 2,
-      "errors": [],
-      "other_outputs": {},
-      "outputs": {
-        "DEFAULT": [
-          "yak-out/v2/art/root/<HASH>/__with_dep__/out.txt"
-        ]
-      },
-      "success": "SUCCESS"
+      "errors": []
     }
   },
   "strings": {},
-  "success": true,
-  "truncated": false
+  "success": true
 }

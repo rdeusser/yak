@@ -2,13 +2,9 @@
 
 {
   "error_category": "USER",
-  "failures": {
-    "root//:doesnt_exist": "Unknown target `<TARGET>` from package <IRRELEVANT>"
-  },
   "results": {
     "root//:doesnt_exist": {
       "configured": {},
-      "configured_graph_size": null,
       "errors": [
         {
           "action_error": null,
@@ -19,15 +15,11 @@
           ],
           "message_content": "<STRING_HASH>"
         }
-      ],
-      "other_outputs": {},
-      "outputs": {},
-      "success": "FAIL"
+      ]
     }
   },
   "strings": {
     "<STRING_HASH>": "Unknown target `<TARGET>` from package <IRRELEVANT>"
   },
-  "success": false,
-  "truncated": false
+  "success": false
 }

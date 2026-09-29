@@ -22,10 +22,6 @@ pub struct Config {
     #[clap(long, default_value = "600")]
     pub timeout: u64,
 
-    /// Ignored arg included for backwards compatibility.
-    #[clap(long, hide = true)]
-    buck_test_info: String,
-
     /// Passthrough argments to test binary.
     /// Available as a workaround for when test features are available.
     #[clap(long, num_args=1.., allow_hyphen_values = true)]

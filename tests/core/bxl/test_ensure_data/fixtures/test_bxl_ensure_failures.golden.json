@@ -2,7 +2,6 @@
 
 {
   "error_category": "USER",
-  "failures": {},
   "results": {
     "root//ensure.bxl:ensure_failures": {
       "configured": {},
@@ -56,6 +55,5 @@
     "<STRING_HASH>": "Spawning executable `exit` failed: Failed to spawn a process: No such file or directory (os error 2)",
     "<STRING_HASH>": "fail to build"
   },
-  "success": false,
-  "truncated": false
+  "success": false
 }

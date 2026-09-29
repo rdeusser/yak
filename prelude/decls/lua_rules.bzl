@@ -72,8 +72,6 @@ cxx_lua_extension = prelude_rule(
         | cxx_common.linker_flags_arg()
         | {
             "cxx_runtime_type": attrs.option(attrs.enum(CxxRuntimeType), default = None),
-            "default_platform": attrs.option(attrs.string(), default = None),
-            "defaults": attrs.dict(key = attrs.string(), value = attrs.string(), sorted = False, default = {}),
             "deps": attrs.list(attrs.dep(), default = []),
             "executable_name": attrs.option(attrs.string(), default = None),
             "frameworks": attrs.list(attrs.string(), default = []),

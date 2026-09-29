@@ -28,8 +28,6 @@ def build_report_test(name: str, command: List[str], should_fail: bool) -> None:
                 buck.test(
                     "--build-report",
                     str(report),
-                    "--build-report-options",
-                    "fill-out-failures",
                     *command,
                 )
             )
@@ -58,12 +56,6 @@ build_report_test(
     "test_build_report_format",
     ["//:ok", "//:fail_test"],
     True,
-)
-
-build_report_test(
-    "test_build_report_skip_unconfigured",
-    ["//:ok", "-c", "build_report.print_unconfigured_section=false"],
-    False,
 )
 
 build_report_test(

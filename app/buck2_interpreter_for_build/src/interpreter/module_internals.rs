@@ -21,7 +21,6 @@ use buck2_core::bzl::ImportPath;
 use buck2_core::package::package_relative_path::PackageRelativePath;
 use buck2_core::target::name::TargetNameRef;
 use buck2_events::dispatch::console_message;
-use buck2_interpreter::package_imports::ImplicitImport;
 use buck2_node::nodes::eval_result::EvaluationResult;
 use buck2_node::nodes::targets_map::TargetsMap;
 use buck2_node::nodes::targets_map::TargetsMapRecordError;
@@ -97,20 +96,16 @@ pub struct ModuleInternals {
 
 #[derive(Debug)]
 pub(crate) struct PackageImplicits {
-    import_spec: Arc<ImplicitImport>,
     env: FrozenModule,
 }
 
 impl PackageImplicits {
-    pub(crate) fn new(import_spec: Arc<ImplicitImport>, env: FrozenModule) -> Self {
-        Self { import_spec, env }
+    pub(crate) fn new(env: FrozenModule) -> Self {
+        Self { env }
     }
 
     fn lookup(&self, name: &str) -> Option<OwnedFrozen<Value<'static>>> {
-        self.env
-            .get_option(self.import_spec.lookup_alias(name))
-            .ok()
-            .flatten()
+        self.env.get_option(name).ok().flatten()
     }
 }
 

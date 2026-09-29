@@ -100,13 +100,6 @@ def cxx_attr_linker_flags(ctx: AnalysisContext) -> list[typing.Any]:
 def cxx_attr_link_style(ctx: AnalysisContext) -> LinkStyle:
     if ctx.attrs.link_style != None:
         return LinkStyle(ctx.attrs.link_style)
-    if ctx.attrs.defaults != None:
-        # v1 equivalent code is in CxxConstructorArg::getDefaultFlavors and ParserWithConfigurableAttributes::applyDefaultFlavors
-        # Only values in the map are used by v1 as flavors, copy this behavior and return the first value which is compatible with link style.
-        v1_flavors = ctx.attrs.defaults.values()
-        for s in [LinkStyle("static"), LinkStyle("static_pic"), LinkStyle("shared")]:
-            if s.value in v1_flavors:
-                return s
     return get_cxx_toolchain_info(ctx).linker_info.link_style
 
 def cxx_attr_preferred_linkage(ctx: AnalysisContext) -> Linkage:

@@ -6,6 +6,7 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
+import json
 import subprocess
 from pathlib import Path
 from typing import List
@@ -30,6 +31,25 @@ async def test_emit_shell(buck: Buck) -> None:
 
     out = subprocess.check_output(result.stdout, shell=True, encoding="utf-8")
     assert out.strip() == "hello"
+
+
+@buck_test()
+async def test_command_args_file(buck: Buck, tmp_path: Path) -> None:
+    args_file = tmp_path / "command.json"
+    await buck.run(
+        "root//:echo_args",
+        f"--command-args-file={args_file}",
+        "--",
+        "a",
+        "b",
+    )
+    command = json.loads(args_file.read_text(encoding="utf-8"))
+    assert sorted(command) == ["argv", "envp", "path"]
+    assert command["path"] == command["argv"][0]
+    out = subprocess.check_output(
+        command["argv"], env=command["envp"], encoding="utf-8"
+    )
+    assert out.strip() == "a b"
 
 
 @buck_test(write_invocation_record=True)

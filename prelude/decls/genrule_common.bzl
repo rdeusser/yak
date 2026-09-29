@@ -49,6 +49,8 @@ def _cmd_arg():
     ${SRCS}
     ```
 
+     On Windows, `cmd.exe` runs the command and reads the variables as `%<variable>%`.
+
     `${SRCS}`
 
      A string expansion of the `srcs` argument delimited
@@ -112,6 +114,7 @@ def _cmd_exe_arg():
     A platform-specific version of the shell command parameter `cmd`. It runs on Windows and has a higher
      priority than `cmd`. The `cmd_exe` argument is run with `cmd.exe /v:off /c`.
      It has access to the same set of macros and variables as the `cmd` argument.
+     `cmd.exe` reads the variables with the `%<variable>%` syntax, such as `%OUT%`.
 """,
         ),
     }

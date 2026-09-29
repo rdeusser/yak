@@ -355,19 +355,9 @@ configured_alias = prelude_rule(
     attrs = (
         # @unsorted-dict-items
         {
-            # The 'actual' attribute of configured_alias is a configured_label, which is
-            # currently unimplemented. Map it to dep so we can simply forward the providers.
-            # TODO(nga): "actual" attribute exists here only to display it in query,
-            #   actual `actual` attribute used in rule implementation is named `configured_actual`.
-            #   Logically this should be `attrs.configuration_label`, but `configuration_label`
-            #   is currently an alias for `attrs.dep`, which makes non-transitioned dependency
-            #   also a dependency along with transitioned dependency.
-            "actual": attrs.label(),
             "configured_actual": attrs.option(attrs.configured_dep(), default = None),
+            # If `configured_actual` is `None`, the alias forwards this unconfigured dep.
             "fallback_actual": attrs.option(attrs.dep(), default = None),
-            # We use a separate field instead of re-purposing `actual`, as we want
-            # to keep output format compatibility with v1.
-            # If `configured_actual` is `None`, fallback to this unconfigured dep.
             "platform": attrs.option(attrs.configuration_label(), default = None),
         }
         | buck.licenses_arg()
@@ -613,22 +603,6 @@ export_file = prelude_rule(
         | buck.contacts_arg()
     ),
     cfg = constraint_overrides.transition,
-)
-
-external_test_runner = prelude_rule(
-    name = "external_test_runner",
-    docs = "",
-    examples = None,
-    further = None,
-    attrs = (
-        # @unsorted-dict-items
-        {
-            "binary": attrs.dep(),
-        }
-        | buck.licenses_arg()
-        | buck.labels_arg()
-        | buck.contacts_arg()
-    ),
 )
 
 filegroup = prelude_rule(
@@ -1232,22 +1206,6 @@ expected to be a toolchain_rule as well.
     },
 )
 
-versioned_alias = prelude_rule(
-    name = "versioned_alias",
-    docs = "",
-    examples = None,
-    further = None,
-    attrs = (
-        # @unsorted-dict-items
-        {
-            "versions": attrs.dict(key = attrs.string(), value = attrs.dep(), sorted = False, default = {}),
-        }
-        | buck.licenses_arg()
-        | buck.labels_arg()
-        | buck.contacts_arg()
-    ),
-)
-
 zip_file = prelude_rule(
     name = "zip_file",
     docs = """
@@ -1395,7 +1353,6 @@ core_rules = struct(
     constraint_value = constraint_value,
     exec_platform_marker_constraint = exec_platform_marker_constraint,
     export_file = export_file,
-    external_test_runner = external_test_runner,
     filegroup = filegroup,
     genrule = genrule,
     http_archive = http_archive,
@@ -1404,6 +1361,5 @@ core_rules = struct(
     remote_file = remote_file,
     test_suite = test_suite,
     toolchain_alias = toolchain_alias,
-    versioned_alias = versioned_alias,
     zip_file = zip_file,
 )

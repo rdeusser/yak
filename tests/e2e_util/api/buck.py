@@ -9,7 +9,7 @@
 import uuid
 from asyncio import subprocess
 from pathlib import Path
-from typing import Any, Dict, Iterable, Optional, Tuple
+from typing import Dict, Optional, Tuple
 
 from e2e_util.api.buck_result import (
     AuditConfigResult,
@@ -17,7 +17,6 @@ from e2e_util.api.buck_result import (
     BuckResult,
     BuildResult,
     TargetsResult,
-    TestResult,
 )
 from e2e_util.api.executable import Executable
 from e2e_util.api.lsp import LspClient
@@ -241,9 +240,9 @@ class Buck(Executable):
         input: Optional[bytes] = None,
         rel_cwd: Optional[Path] = None,
         env: Optional[Dict[str, str]] = None,
-    ) -> Process[TestResult, BuckException]:
+    ) -> Process[BuckResult, BuckException]:
         """
-        Returns a Process with TestResult type using a process
+        Returns a Process with BuckResult type using a process
         created with the test command and any
         additional arguments
 
@@ -253,8 +252,6 @@ class Buck(Executable):
         the command relative to the root.
         env: Optional dictionary for environment variables to run command with.
         """
-        xml_flag, test_output_file = self._create_xml_file()
-
         argv_list = list(argv)
         argv_separator_idx = (
             argv_list.index("--") if "--" in argv_list else len(argv_list)
@@ -273,13 +270,10 @@ class Buck(Executable):
 
         return self._run_buck_command(
             "test",
-            *xml_flag,
             *patched_argv,
             input=input,
             rel_cwd=rel_cwd,
             env=env,
-            result_type=TestResult,
-            result_kwargs={"test_output_file": self.cwd / test_output_file},
         )
 
     def targets(
@@ -781,7 +775,6 @@ class Buck(Executable):
         rel_cwd: Optional[Path],
         env: Optional[Dict[str, str]],
         result_type: type[R] = BuckResult,
-        result_kwargs: Optional[Dict[str, Any]] = None,
         stdin: Optional[int] = None,
         intercept_stderr: bool = True,
         can_write_invocation_record: bool = True,
@@ -812,7 +805,6 @@ class Buck(Executable):
         cmd_to_run = self.construct_buck_command(cmd, *args)
 
         args_tuple: Tuple[str, ...] = argv
-        result_kwargs = result_kwargs or {}
         _buck_build_id: str = buck_build_id
         _invocation_record_path: Optional[Path] = invocation_record_path
 
@@ -827,7 +819,7 @@ class Buck(Executable):
             )
             if result_type is BuckResult:
                 return base  # type: ignore[return-value]
-            return result_type(base, **result_kwargs)  # type: ignore[return-value]
+            return result_type(base)  # type: ignore[return-value]
 
         _buck_build_id2: str = buck_build_id
         _invocation_record_path2: Optional[Path] = invocation_record_path
@@ -878,20 +870,6 @@ class Buck(Executable):
             rel_cwd=rel_cwd,
             env=env,
         )
-
-    def _create_xml_file(self, *argv: str) -> Tuple[Iterable[str], str]:
-        """
-        Creates a xml file used for the test output. Ensures an xml file
-        is created if not specified.
-        """
-        xml_flag = [""]
-        test_output_file = "testOutput.xml"
-        # ensures xml file is always generated
-        if "--xml" not in argv:
-            xml_flag = ["--xml", "testOutput.xml"]
-        else:
-            test_output_file = argv[argv.index("--xml") + 1]
-        return xml_flag, test_output_file
 
     def execute(
         self,

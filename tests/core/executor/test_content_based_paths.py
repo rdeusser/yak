@@ -11,7 +11,7 @@ import time
 
 import pytest
 from e2e_util.api.buck import Buck
-from e2e_util.api.buck_result import ExitCodeV2
+from e2e_util.api.buck_result import ExitCode
 from e2e_util.asserts import expect_failure
 from e2e_util.buck_workspace import buck_test
 from e2e_util.helper.utils import (
@@ -695,7 +695,7 @@ async def test_failing_run_with_run_info(buck: Buck) -> None:
             "root//:p_default",
             "--show-output",
         ),
-        exit_code=ExitCodeV2.USER_ERROR,
+        exit_code=ExitCode.USER_ERROR,
         stderr_regex="Remote command returned non-zero exit code 1",
     )
     assert (

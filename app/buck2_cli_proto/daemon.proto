@@ -460,7 +460,7 @@ message CommonBuildOptions {
   // that should be handled in the server or the client, though.
   bool unstable_print_build_report = 4242000;
   string unstable_build_report_filename = 4242003;
-  bool unstable_include_failures_build_report = 4242004;
+  reserved 4242004;
   bool unstable_include_package_project_relative_paths = 4242005;
   bool unstable_include_artifact_hash_information = 4242006;
   string unstable_streaming_build_report_filename = 4242007;

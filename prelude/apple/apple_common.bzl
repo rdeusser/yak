@@ -268,17 +268,11 @@ def _enforce_minimum_os_plist_key():
         "enforce_minimum_os_plist_key": attrs.bool(default = False),
     }
 
-def _default_platform_arg():
-    return {"default_platform": attrs.option(attrs.string(), default = None)}
-
 def _codesign_flags_arg():
     return {"codesign_flags": attrs.list(attrs.string(), default = [])}
 
 def _codesign_identity_arg():
     return {"codesign_identity": attrs.option(attrs.string(), default = None)}
-
-def _defaults_arg():
-    return {"defaults": attrs.dict(key = attrs.string(), value = attrs.string(), sorted = False, default = {})}
 
 def _deps_arg():
     return {"deps": attrs.list(attrs.dep(), default = [])}
@@ -437,10 +431,8 @@ apple_common = struct(
     asset_catalogs_compilation_options_arg = _asset_catalogs_compilation_options_arg,
     apple_installer_arg = _apple_installer_arg,
     enforce_minimum_os_plist_key = _enforce_minimum_os_plist_key,
-    default_platform_arg = _default_platform_arg,
     codesign_flags_arg = _codesign_flags_arg,
     codesign_identity_arg = _codesign_identity_arg,
-    defaults_arg = _defaults_arg,
     deps_arg = _deps_arg,
     devirt_enabled_arg = _devirt_enabled_arg,
     diagnostics_arg = _diagnostics_arg,

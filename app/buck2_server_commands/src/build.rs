@@ -573,13 +573,7 @@ async fn process_build_result(
     )?;
 
     let serialized_build_report = if build_opts.unstable_print_build_report {
-        let build_report_opts = build_report_opts(
-            &mut ctx.ctx(),
-            &cell_resolver,
-            build_opts,
-            graph_properties_opts,
-        )
-        .await?;
+        let build_report_opts = build_report_opts(build_opts, graph_properties_opts);
 
         write_build_report(
             build_report_opts,

@@ -131,7 +131,6 @@ impl BuildInterpreterConfiguror {
         let skip_targets_with_duplicate_names = self.skip_targets_with_duplicate_names;
         let package_implicits = implicit_import.map(|spec| {
             PackageImplicits::new(
-                spec.dupe(),
                 loaded_modules
                     .map
                     .get(&StarlarkModulePath::LoadFile(spec.import()))

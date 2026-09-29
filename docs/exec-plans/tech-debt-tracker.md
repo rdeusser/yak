@@ -23,6 +23,7 @@ On 2026-09-28, the whole suite ran on Linux under Python 3.12 as a user other th
 That run gave 1726 passed, 230 skipped, 3 expected failures, and no other failures.
 After the rename to yak, the same setup gave 1763 passed, 190 skipped, and 3 expected failures, with `BUCK2_COMPLETION_VERIFY` set so the completion tests ran.
 On 2026-09-29, after the removal of the JVM, Android, and JavaScript support, the same setup without a completion helper gave 1728 passed, 223 skipped, and 3 expected failures.
+After the removal of the Buck1 compatibility code, the same setup gave 1727 passed, 223 skipped, and 3 expected failures.
 The skipped tests need a Remote Execution backend, cgroup delegation, helper binaries, Go, or Watchman. The repository has no Remote Execution backend to test against.
 A separate run with Go 1.26, `clang`, and `lld` passed the 30 tests in `tests/prelude/test_prelude_rules.py`, which include the 19 Go tests.
 Whether the GitHub runner puts the daemon in a cgroup below the root of its cgroup namespace is unverified.
@@ -137,7 +138,7 @@ Remove each item when its command succeeds.
 ### The rename plan has an open item for jars that no longer exist
 
 `docs/exec-plans/active/2026-09-28-rename-the-fork.md` lists an open Progress item for bootstrap jars built from the `dev.yak` sources.
-`docs/exec-plans/active/2026-09-29-remove-jvm-and-buck1-compatibility.md` removed the JVM toolchain, its sources, and the jar downloads, so the item has nothing left to build.
+`docs/exec-plans/completed/2026-09-29-remove-jvm-and-buck1-compatibility.md` removed the JVM toolchain, its sources, and the jar downloads, so the item has nothing left to build.
 
 Remove this entry when the rename plan closes the item.
 
@@ -253,3 +254,18 @@ Remove this entry when the tools detect remote execution in a way other backends
 `prelude/python/tools/YAK` exports the script and gives it to the `tool_tests` target, and only `prelude/python/tools/tests/gen_bytecode_bundle_test.py` uses it.
 
 Remove this entry when the script and its test are deleted, or a rule runs the script.
+
+### Comments and examples describe Buck1 and the removed JVM rules
+
+`docs/exec-plans/completed/2026-09-29-remove-jvm-and-buck1-compatibility.md` removed the Buck1 compatibility code that did nothing or had a replacement.
+The owner chose to keep the Buck1 behaviors that have no replacement, such as the working directory of tests and the `%s` substitution of multiple queries (2026-09-29).
+Comments in code still explain those behaviors and others by comparison with Buck1. `git grep -n -i -E 'buck ?1|buck v1' -- app prelude dice starlark-rust` finds 68 lines in 47 files.
+Some examples and pages still describe removed features:
+
+- The `genrule` examples in `prelude/decls/core_rules.bzl` build an `AndroidManifest.xml`.
+- The `deps_query` example in `prelude/decls/common.bzl` filters Java annotation processors.
+- `website/docs/concepts/buckconfig.md` mentions the platform flavors of C++ and Python. Target patterns accept no flavors.
+
+Milestone 6 of `docs/exec-plans/active/2026-09-28-rename-the-fork.md` rewrites the prose of the documentation, and its plan of work lists no comments in code.
+
+Remove this entry when no comment explains yak's behavior by comparison with Buck1 and every example uses a rule that the prelude defines.

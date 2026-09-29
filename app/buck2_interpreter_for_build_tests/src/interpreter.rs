@@ -387,7 +387,7 @@ fn test_package_import() -> buck2_error::Result<()> {
         Some(indoc!(
             r#"
             [buildfile]
-                package_includes = src=>//include.bzl::func_alias=some_func
+                package_includes = src=>//include.bzl
         "#
         )),
     )?)?;
@@ -412,7 +412,7 @@ fn test_package_import() -> buck2_error::Result<()> {
         &build_path,
         indoc!(
             r#"
-                implicit_package_symbol("func_alias")(
+                implicit_package_symbol("some_func")(
                     implicit_package_symbol("missing", "DEFAULT")
                 )
                 "#
@@ -456,10 +456,10 @@ fn eval() -> buck2_error::Result<()> {
 
             def test():
                 assert_eq("some/package", __buck2_builtins__.package_name())
-                assert_eq("@root", __buck2_builtins__.repository_name())
+                assert_eq("root", __buck2_builtins__.get_cell_name())
 
                 assert_eq(package_name(), __buck2_builtins__.package_name())
-                assert_eq(repository_name(), __buck2_builtins__.repository_name())
+                assert_eq(get_cell_name(), __buck2_builtins__.get_cell_name())
 
                 assert_eq(package_name(), get_base_path())
 

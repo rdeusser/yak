@@ -2,9 +2,6 @@
 
 {
   "error_category": "USER",
-  "failures": {
-    "root//fail_action:fail_error_handler_with_output": "Action failed: root//fail_action:fail_error_handler_with_output (<unspecified>) (fail_error_handler_with_output)\nLocal command returned non-zero exit code 1\nLocal command: env -C \"$(yak root --kind project)\" -- 'YAK_SCRATCH_PATH=yak-out/v2/tmp/root/<HASH>/fail_error_handler_with_output' python3 fail_action/fail_with_output.py yak-out/v2/art/root/fail_action/__fail_error_handler_with_output__/output_artifacts/output\nStdout: <empty>\nStderr: <empty>\n"
-  },
   "results": {
     "root//fail_action:fail_error_handler_with_output": {
       "configured": {
@@ -69,11 +66,7 @@
           "success": "FAIL"
         }
       },
-      "configured_graph_size": null,
-      "errors": [],
-      "other_outputs": {},
-      "outputs": {},
-      "success": "FAIL"
+      "errors": []
     }
   },
   "strings": {
@@ -82,6 +75,5 @@
     "<STRING_HASH>": "Local command returned non-zero exit code 1",
     "<STRING_HASH>": "Try doing xyz"
   },
-  "success": false,
-  "truncated": false
+  "success": false
 }

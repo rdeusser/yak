@@ -138,17 +138,10 @@ fn configured_label_methods(builder: &mut MethodsBuilder) {
     ) -> starlark::Result<NoneOr<Vec<&'v str>>> {
         Ok(match this.label.name() {
             ProvidersName::Default => NoneOr::None,
-            ProvidersName::NonDefault(flavor) => match flavor.as_ref() {
-                NonDefaultProvidersName::Named(names) => {
-                    NoneOr::Other(names.iter().map(|p| p.as_str()).collect())
-                }
-                NonDefaultProvidersName::UnrecognizedFlavor(_) => {
-                    unreachable!(
-                        "This should have been an error when looking up the corresponding analysis (`{}`)",
-                        this.label
-                    )
-                }
-            },
+            ProvidersName::NonDefault(non_default) => {
+                let NonDefaultProvidersName::Named(names) = non_default.as_ref();
+                NoneOr::Other(names.iter().map(|p| p.as_str()).collect())
+            }
         })
     }
 
@@ -279,17 +272,10 @@ fn label_methods(builder: &mut MethodsBuilder) {
     fn sub_target<'v>(this: &'v StarlarkProvidersLabel) -> starlark::Result<NoneOr<Vec<&'v str>>> {
         Ok(match this.label.name() {
             ProvidersName::Default => NoneOr::None,
-            ProvidersName::NonDefault(flavor) => match flavor.as_ref() {
-                NonDefaultProvidersName::Named(names) => {
-                    NoneOr::Other(names.iter().map(|p| p.as_str()).collect())
-                }
-                NonDefaultProvidersName::UnrecognizedFlavor(_) => {
-                    unreachable!(
-                        "This should have been an error when looking up the corresponding analysis (`{}`)",
-                        this.label
-                    )
-                }
-            },
+            ProvidersName::NonDefault(non_default) => {
+                let NonDefaultProvidersName::Named(names) = non_default.as_ref();
+                NoneOr::Other(names.iter().map(|p| p.as_str()).collect())
+            }
         })
     }
 

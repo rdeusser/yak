@@ -30,7 +30,6 @@ def _rust_common_attributes(is_binary: bool):
         | {
             "clippy_configuration": attrs.option(attrs.dep(providers = [ClippyConfiguration]), default = None),
             "coverage": attrs.bool(default = False),
-            "default_platform": attrs.option(attrs.string(), default = None),
             "flagged_deps": attrs.list(attrs.tuple(rust_target_dep(is_binary), attrs.list(attrs.string())), default = []),
             "incremental_enabled": attrs.bool(default = False),
             "resources": attrs.named_set(attrs.one_of(attrs.dep(), attrs.source()), sorted = True, default = []),

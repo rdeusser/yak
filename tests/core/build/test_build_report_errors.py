@@ -33,8 +33,6 @@ def build_report_test(
             buck.build(
                 "--build-report",
                 str(report),
-                "--build-report-options",
-                "fill-out-failures",
                 *command,
             )
         )
@@ -364,7 +362,7 @@ if not running_on_windows() and not running_on_mac():
                 "--build-report",
                 str(report),
                 "--build-report-options",
-                "fill-out-failures,exclude-action-error-diagnostics",
+                "exclude-action-error-diagnostics",
                 "//fail_action:fail_one_with_error_handler",
             )
         )
@@ -393,7 +391,7 @@ if not running_on_windows() and not running_on_mac():
                 "--build-report",
                 str(report),
                 "--build-report-options",
-                "fill-out-failures,truncate-error-content",
+                "truncate-error-content",
                 "//fail_action:fail_large_error",
             )
         )

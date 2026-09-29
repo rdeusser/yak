@@ -11,7 +11,6 @@
 # This is yak's shim import. Any public symbols here will be available within
 # **all** interpreted files.
 
-load("@prelude//:paths.bzl", "paths")
 load("@prelude//:rules.bzl", __rules__ = "rules")
 load(
     "@prelude//apple:apple_macro_layer.bzl",
@@ -45,7 +44,6 @@ load(
     _read_root_config = "read_root_config_with_logging",
     log_buckconfigs = "LOG_BUCKCONFIGS",
 )
-load("@prelude//utils:expect.bzl", "expect")
 load("@prelude//utils:selects.bzl", "selects")
 
 def __struct_to_dict(s):
@@ -54,184 +52,9 @@ def __struct_to_dict(s):
         vals[name] = getattr(s, name)
     return vals
 
-def _version_constraint(project, version):
-    """
-    Return the target configuration constraint to use for the given project
-    version. The config cell defines these constraints.
-    """
-
-    return "config//third-party/{}/constraints:{}".format(project, version)
-
-def _version_constraint_multi(versions):
-    """
-    Return the `select` key rule name which corresponds to the given project
-    versions.
-    """
-
-    expect(len(versions) >= 1, str(versions))
-
-    # If there's only a single project/version pair, then just return the its
-    # pre-defined constraint value rule name.
-    if len(versions) == 1:
-        (project, version) = versions.items()[0]
-        return _version_constraint(project, version)
-
-    # Otherwise, generate a `config_setting` to combine the constraint value
-    # rules for all the project/version pairs.
-    name = "-".join(["_version_constraints_"] + ["{}-{}".format(p, v) for p, v in sorted(versions.items())])
-    if not rule_exists(name):
-        __rules__["config_setting"](
-            name = name,
-            constraint_values = [_version_constraint(p, v) for p, v in versions.items()],
-        )
-    return ":" + name
-
-def _extract_versions(constraints):
-    """
-    Convert v1-style version constraints to a v2-compatible config settings.
-
-    The constraints are normally of the form:
-    `{"python": "3.8"}`.
-    """
-
-    versions = {}
-
-    # Since the constraints can be duplicated for each platform, do some
-    # initial work to de-duplicate them here, by extracting just the project
-    # and version and verify we get just a single reduced result.
-    for project, version in constraints.items():
-        expect(project not in versions or version == versions[project])
-        versions[project] = version
-
-    return versions
-
-def _versioned_param_to_select(items, default = None):
-    """
-    Convert a v1-style `versioned_*` param to a `select` map.
-
-    Parameters:
-    - items: A list of 2-tuples of a list of version constraints to match and
-          the values to use in case of match.
-    """
-
-    if items == None:
-        return None
-
-    # A single item with empty constraints applies to every version.
-    if len(items) == 1 and not items[0][0]:
-        return items[0][1]
-
-    select_map = {}
-
-    # If a default is provided add that.
-    if default != None:
-        select_map["DEFAULT"] = default
-
-    # Convert v1-style versioned_* params to their analogous v2 select
-    # constraint maps.
-    for constraints, item in items:
-        versions = _extract_versions(constraints)
-        select_map[_version_constraint_multi(versions)] = item
-
-    if not select_map:
-        return None
-
-    return select(select_map)
-
-def _concat(*items):
-    """
-    Concatenate non-`None` items and return result.
-    """
-    res = None
-
-    for item in items:
-        if item == None:
-            continue
-        if res == None:
-            res = item
-        elif type(res) == type({}) and type(item) == type({}):
-            new_res = {}
-            new_res.update(res)
-            new_res.update(item)
-            res = new_res
-        else:
-            res += item  # buildifier: disable=dict-concatenation
-
-    return res
-
-def _at_most_one(*items):
-    """
-    Return a non-`None` value if it exists.  Fail if more that one non-`None`
-    exists.
-    """
-
-    res = None
-
-    for item in items:
-        if item == None:
-            continue
-        expect(res == None)
-        res = item
-
-    return res
-
 # export_file src defaults to name, despite being string vs source, so adjust it in the macros
 def _export_file_macro_stub(name, src = None, **kwargs):
     __rules__["export_file"](name = name, src = name if src == None else src, **kwargs)
-
-def _prebuilt_cxx_library_macro_stub(
-    exported_preprocessor_flags = None,
-    versioned_exported_preprocessor_flags = None,
-    exported_lang_preprocessor_flags = None,
-    versioned_exported_lang_preprocessor_flags = None,
-    static_lib = None,
-    versioned_static_lib = None,
-    static_pic_lib = None,
-    versioned_static_pic_lib = None,
-    shared_lib = None,
-    versioned_shared_lib = None,
-    header_dirs = None,
-    versioned_header_dirs = None,
-    **kwargs,
-):
-    __rules__["prebuilt_cxx_library"](
-        exported_preprocessor_flags = _concat(
-            exported_preprocessor_flags,
-            _versioned_param_to_select(versioned_exported_preprocessor_flags),
-        ),
-        exported_lang_preprocessor_flags = _concat(
-            exported_lang_preprocessor_flags,
-            _versioned_param_to_select(versioned_exported_lang_preprocessor_flags),
-        ),
-        static_lib = selects.apply_n(
-            [static_lib, selects.apply(versioned_static_lib, _versioned_param_to_select)],
-            _at_most_one,
-        ),
-        static_pic_lib = selects.apply_n(
-            [static_pic_lib, selects.apply(versioned_static_pic_lib, _versioned_param_to_select)],
-            _at_most_one,
-        ),
-        shared_lib = selects.apply_n(
-            [shared_lib, selects.apply(versioned_shared_lib, _versioned_param_to_select)],
-            _at_most_one,
-        ),
-        header_dirs = selects.apply_n(
-            [header_dirs, selects.apply(versioned_header_dirs, _versioned_param_to_select)],
-            _at_most_one,
-        ),
-        **kwargs,
-    )
-
-def _python_library_macro_stub(srcs = None, versioned_srcs = None, resources = None, versioned_resources = None, **kwargs):
-    __rules__["python_library"](
-        srcs = _concat(srcs, _versioned_param_to_select(versioned_srcs, default = None)),
-        resources = _concat(resources, _versioned_param_to_select(versioned_resources, default = None)),
-        **kwargs,
-    )
-
-def _versioned_alias_macro_stub(versions = {}, **kwargs):
-    project = paths.basename(package_name())
-    __rules__["alias"](actual = select({_version_constraint(project, version): actual for version, actual in versions.items()}), **kwargs)
 
 def _configured_alias_macro_stub(
     name,
@@ -256,8 +79,6 @@ def _configured_alias_macro_stub(
             platform,
             lambda platform: None if pred(platform) else actual,
         ),
-        # Unused.
-        actual = actual,
         platform = platform,
         **kwargs,
     )
@@ -356,14 +177,11 @@ __extra_rules__ = {
     "export_file": _export_file_macro_stub,
     "prebuilt_apple_framework": _prebuilt_apple_framework_macro_stub,
     "prebuilt_apple_xcframework": _prebuilt_apple_xcframework_macro_stub,
-    "prebuilt_cxx_library": _prebuilt_cxx_library_macro_stub,
-    "python_library": _python_library_macro_stub,
     "rust_binary": _rust_binary_macro_stub,
     "rust_library": _rust_library_macro_stub,
     "rust_test": _rust_test_macro_stub,
     "rust_with_workspace": with_rust_workspace,
     "swift_toolchain": _swift_toolchain_macro_stub,
-    "versioned_alias": _versioned_alias_macro_stub,
 }
 
 __overridden_builtins__ = (

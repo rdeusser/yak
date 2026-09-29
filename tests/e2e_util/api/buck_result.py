@@ -9,10 +9,9 @@
 
 import json
 import textwrap
-import xml.etree.ElementTree as ET
 from asyncio import subprocess
 from collections import defaultdict
-from enum import auto, Enum
+from enum import Enum
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Tuple
 
@@ -20,28 +19,7 @@ from e2e_util.api.result import Result
 
 
 class ExitCode(Enum):
-    """Enum for exit codes of Buck1"""
-
-    SUCCESS = 0
-    BUILD_ERROR = 1
-    BUSY = 2
-    COMMANDLINE_ERROR = 3
-    NOTHING_TO_DO = 4
-    PARSE_ERROR = 5
-    RUN_ERROR = 6
-    FATAL_GENERIC = 10
-    FATAL_BOOTSTRAP = 11
-    FATAL_OOM = 12
-    FATAL_IO = 13
-    FATAL_DISK_FULL = 14
-    FIX_FAILED = 16
-    TEST_ERROR = 32
-    TEST_NOTHING = 64
-    SIGNAL_INTERRUPT = 130
-
-
-class ExitCodeV2(Enum):
-    """Enum for exit codes of Buck2"""
+    """The exit codes of yak."""
 
     SUCCESS = 0
     UNKNOWN_ERROR = 1
@@ -53,27 +31,6 @@ class ExitCodeV2(Enum):
     CONNECT_ERROR = 11
     BROKEN_PIPE = 130
     SIGNAL_INTERRUPT = 141
-
-
-class AutoName(str, Enum):
-    """Makes the value of the Enum its name"""
-
-    @staticmethod
-    def _generate_next_value_(
-        name: str, start: int, count: int, last_values: list
-    ) -> str:
-        return name
-
-
-class ResultType(AutoName):
-    """Enum for result types of buck test"""
-
-    DRY_RUN = auto()
-    EXCLUDED = auto()
-    DISABLED = auto()
-    ASSUMPTION_VIOLATION = auto()
-    FAILURE = auto()
-    SUCCESS = auto()
 
 
 class InvocationRecord:
@@ -180,27 +137,15 @@ class BuckException(Exception, BuckResult):
             return ExitCode(128 - self.process.returncode)  # type: ignore
         return ExitCode(self.process.returncode)
 
-    def get_exit_code_v2(self) -> ExitCodeV2:
-        """Returns the exit code of a Buck Result when it exits"""
-        # See https://docs.python.org/3/library/subprocess.html#subprocess.Popen.returncode
-        # for negative return code.
-        assert self.process.returncode is not None
-        if self.process.returncode < 0:  # type: ignore
-            return ExitCodeV2(128 - self.process.returncode)  # type: ignore
-        return ExitCodeV2(self.process.returncode)
-
 
 class BuildReport:
     """
-    A parsed JSON representation of buck v2 build output on stdout.
-    Build report is invoked on v2 builds by passing --build-report flag.
-    Does not support buck v1.
+    A parsed build report, which the --build-report flag writes.
 
     Attributes:
-        build_report: A JSON dictionary parsed representation of stdout build report.
+        build_report: A JSON dictionary parsed representation of the build report.
         root: A Path to the project root. Parsed from build report.
-        results: A dictionary mapping targets to a tuple of output paths.
-            Parsed from build report.
+        results: A dictionary mapping targets to their build report entries.
     """
 
     def __init__(self, parsed) -> None:
@@ -212,6 +157,20 @@ class BuildReport:
     def _to_abs_paths(self, paths: Tuple[Path, ...]) -> Tuple[Path, ...]:
         return tuple(self.root / path for path in paths)
 
+    @staticmethod
+    def _configured_outputs(
+        target: str, entry: Dict[str, Any], sub_target: str
+    ) -> Tuple[Path, ...]:
+        outputs = [
+            configured["outputs"][sub_target]
+            for configured in entry["configured"].values()
+            if sub_target in configured["outputs"]
+        ]
+        assert len(outputs) == 1, (
+            f"Expected outputs of {target}[{sub_target}] in one configuration, found {len(outputs)}: {entry}"
+        )
+        return outputs[0]
+
     def outputs_for_target(
         self, target: str, sub_target: str = "DEFAULT", rel_path: bool = False
     ) -> Tuple[Path, ...]:
@@ -220,7 +179,7 @@ class BuildReport:
         if target.startswith("//"):
             # Get the full target "cell//target" that matches this target.
             matched_outputs = [
-                entry["outputs"][sub_target]
+                self._configured_outputs(t, entry, sub_target)
                 for t, entry in self.results.items()
                 if t.endswith(target)
             ]
@@ -232,7 +191,7 @@ class BuildReport:
             )
             paths = matched_outputs[0]
         else:
-            paths = self.results[target]["outputs"][sub_target]
+            paths = self._configured_outputs(target, self.results[target], sub_target)
         if rel_path:
             return tuple(Path(p) for p in paths)
         return self._to_abs_paths(paths)
@@ -346,78 +305,6 @@ class BuildResult(BuckResult):
                 target = line.split(LOG_COMPUTE_KEY)[-1].strip()
                 action_to_cache_miss_count[target] += 1
         return dict(action_to_cache_miss_count)
-
-
-class TestResultSummary:
-    """Represents a summary of a test result"""
-
-    def __init__(self, name: str, status: str, result_type: ResultType) -> None:
-        self.name: str = name
-        self.status: str = status
-        self.result_type: ResultType = ResultType(result_type)
-
-    def get_name(self) -> str:
-        """Returns the name of the test"""
-        return self.name
-
-    def get_status(self) -> str:
-        """Returns the status of the test"""
-        return self.status
-
-    def get_result_type(self) -> ResultType:
-        """Returns the result type of the test"""
-        return self.result_type
-
-
-class TestResult(BuckResult):
-    """Represents a Buck process  of a test command that has finished running"""
-
-    def __init__(self, base: BuckResult, test_output_file: Path) -> None:
-        self.__dict__.update(base.__dict__)
-        self.test_root = (
-            ET.parse(str(test_output_file)).getroot()
-            if test_output_file.exists()
-            else None
-        )
-
-    def get_tests(self) -> List[TestResultSummary]:
-        """Returns a list of test result summaries"""
-        if not self.test_root:
-            return []
-        test_list = []
-        for tests in self.test_root:
-            for testresult in tests.iter("testresult"):
-                name = testresult.get("name")
-                status = testresult.get("status")
-                testresult_type = testresult.get("type")
-                assert name is not None
-                assert status is not None
-                assert testresult_type is not None
-                assert testresult_type in (e.value for e in ResultType), (
-                    f"Type {testresult_type} is not a ResultType Enum"
-                )
-                result_type = ResultType(testresult_type)
-                test_result_summary = TestResultSummary(name, status, result_type)
-                test_list.append(test_result_summary)
-        return test_list
-
-    def get_success_count(self) -> int:
-        """Returns the number of successful tests"""
-        return self._get_count(ResultType.SUCCESS)
-
-    def get_failure_count(self) -> int:
-        """Returns the number of failed tests"""
-        return self._get_count(ResultType.FAILURE)
-
-    def get_skipped_count(self) -> int:
-        """Returns the number of tests skipped"""
-        return self._get_count(ResultType.EXCLUDED)
-
-    def _get_count(self, result_type: ResultType) -> int:
-        """Returns the number of tests with the given status"""
-        return sum(
-            1 for test in self.get_tests() if test.get_result_type() == result_type
-        )
 
 
 class AuditConfigResult(BuckResult):

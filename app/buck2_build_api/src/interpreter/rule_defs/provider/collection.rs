@@ -99,10 +99,6 @@ enum ProviderCollectionError {
     )]
     RequestedInvalidSubTarget(ProviderName, ConfiguredProvidersLabel, Vec<String>),
     #[error(
-        "Cannot handle flavor `{flavor}` on target `{target}`. Most flavors are unsupported in Buck2."
-    )]
-    UnknownFlavors { target: String, flavor: String },
-    #[error(
         "provider collection operation {0} parameter type must be a provider type \
         but not and instance of provider (for example, `RunInfo` or user defined provider type), \
         got `{1}`"
@@ -613,57 +609,49 @@ impl<'f> FrozenProviderCollectionValueRef<'f> {
     ) -> buck2_error::Result<FrozenProviderCollectionValueRef<'f>> {
         match label.name() {
             ProvidersName::Default => buck2_error::Ok(self),
-            ProvidersName::NonDefault(flavor) => match flavor.as_ref() {
-                NonDefaultProvidersName::Named(provider_names) => {
-                    let inner = self.inner.try_map::<FrozenValueTyped<
-                        'static,
-                        ProviderCollection<'static>,
-                    >, buck2_error::Error, _>(
-                        |collection_value| {
-                            let mut collection_value = collection_value.to_value_typed();
-                            for provider_name in &**provider_names {
-                                let maybe_di = collection_value
-                                    .default_info()?
-                                    .get_sub_target_providers(provider_name.as_str());
+            ProvidersName::NonDefault(non_default) => {
+                let NonDefaultProvidersName::Named(provider_names) = non_default.as_ref();
+                let inner = self.inner.try_map::<FrozenValueTyped<
+                    'static,
+                    ProviderCollection<'static>,
+                >, buck2_error::Error, _>(
+                    |collection_value| {
+                        let mut collection_value = collection_value.to_value_typed();
+                        for provider_name in &**provider_names {
+                            let maybe_di = collection_value
+                                .default_info()?
+                                .get_sub_target_providers(provider_name.as_str());
 
-                                match maybe_di {
-                                    Some(inner) => {
-                                        collection_value = inner;
-                                    }
-                                    None => {
-                                        return Err(
-                                            ProviderCollectionError::RequestedInvalidSubTarget(
-                                                provider_name.clone(),
-                                                label.dupe(),
-                                                collection_value
-                                                    .default_info()?
-                                                    .sub_targets()
-                                                    .keys()
-                                                    .map(|s| (*s).to_owned())
-                                                    .collect(),
-                                            )
-                                            .into(),
-                                        );
-                                    }
+                            match maybe_di {
+                                Some(inner) => {
+                                    collection_value = inner;
+                                }
+                                None => {
+                                    return Err(
+                                        ProviderCollectionError::RequestedInvalidSubTarget(
+                                            provider_name.clone(),
+                                            label.dupe(),
+                                            collection_value
+                                                .default_info()?
+                                                .sub_targets()
+                                                .keys()
+                                                .map(|s| (*s).to_owned())
+                                                .collect(),
+                                        )
+                                        .into(),
+                                    );
                                 }
                             }
-                            // This wrapper type's constructors only accept collections stored in
-                            // frozen heaps, and sub-target collections of a frozen `DefaultInfo`
-                            // are themselves frozen.
-                            Ok(FrozenValueTyped::new(collection_value.to_value())
-                                .expect("wrapper holds a frozen collection"))
-                        },
-                    )?;
-                    Ok(FrozenProviderCollectionValueRef { inner })
-                }
-                NonDefaultProvidersName::UnrecognizedFlavor(flavor) => {
-                    Err(ProviderCollectionError::UnknownFlavors {
-                        target: label.unconfigured().to_string(),
-                        flavor: (**flavor).to_owned(),
-                    }
-                    .into())
-                }
-            },
+                        }
+                        // This wrapper type's constructors only accept collections stored in
+                        // frozen heaps, and sub-target collections of a frozen `DefaultInfo`
+                        // are themselves frozen.
+                        Ok(FrozenValueTyped::new(collection_value.to_value())
+                            .expect("wrapper holds a frozen collection"))
+                    },
+                )?;
+                Ok(FrozenProviderCollectionValueRef { inner })
+            }
         }
     }
 }

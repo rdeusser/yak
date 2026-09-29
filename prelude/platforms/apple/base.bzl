@@ -45,33 +45,6 @@ _MAC_PLATFORMS = [
     mac_catalyst_platforms.MACCATALYST_X86_64,
 ]
 
-# TODO: Drop the platform_rule when we're not longer attempting to support buck1.
-def apple_generated_platforms(
-    name, constraint_values, deps, platform_rule, platform = None, supported_build_modes = APPLE_BUILD_MODES
-):
-    # By convention, the cxx.default_platform is typically the same as the platform being defined.
-    # This is not the case for all watch platforms, so provide an override.
-    platform = platform if platform else name
-    build_mode_constraints_map = get_build_mode_constraints_map()
-    if is_mobile_platform(platform) or is_buck2_mac_platform(platform):
-        for build_mode in supported_build_modes:
-            platform_rule(
-                name = _get_generated_name(name, platform, build_mode),
-                constraint_values = constraint_values + build_mode_constraints_map[build_mode],
-                visibility = ["PUBLIC"],
-                deps = deps,
-            )
-
-    # Create a platform without the build mode to support backwards compatibility of hardcoded platforms
-    # and with buck1 cxx platform setup.
-    # TODO(chatatap): Look to remove all hardcoded references and get rid of these
-    platform_rule(
-        name = name,
-        constraint_values = constraint_values,
-        visibility = ["PUBLIC"],
-        deps = deps,
-    )
-
 def apple_build_mode_backed_platform(name, platform, build_mode = None):
     build_mode = get_build_mode() if build_mode == None else build_mode
     return _get_generated_name(name, platform, build_mode)

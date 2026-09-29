@@ -284,7 +284,8 @@ def remote_python_toolchain(
         name = "libpython_symbols",
         out = "linker_args",
         # TODO: is this necessary on Windows?
-        cmd = '$(exe_target prelude//python/tools:gather_libpython_symbols) "$OUT"',
+        bash = '$(exe_target prelude//python/tools:gather_libpython_symbols) "$OUT"',
+        cmd_exe = '$(exe_target prelude//python/tools:gather_libpython_symbols) "%OUT%"',
     )
 
     python_toolchain(

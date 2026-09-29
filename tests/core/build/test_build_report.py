@@ -82,15 +82,6 @@ build_report_test(
 )
 
 build_report_test(
-    "test_build_report_format_skip_unconfigured",
-    [
-        "//:rule1",
-        "-c",
-        "build_report.print_unconfigured_section=false",
-    ],
-)
-
-build_report_test(
     "test_build_report_format_package_relative_paths",
     [
         "//:rule1",
@@ -278,15 +269,6 @@ def streaming_build_report_test(name: str, command: list[str]) -> None:
 
     return buck_test()(impl)
 
-
-streaming_build_report_test(
-    "test_build_report_format_skip_unconfigured",
-    [
-        "//:rule1",
-        "-c",
-        "build_report.print_unconfigured_section=false",
-    ],
-)
 
 streaming_build_report_test(
     "test_build_report_format_package_relative_paths",

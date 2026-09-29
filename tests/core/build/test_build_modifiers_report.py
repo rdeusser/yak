@@ -30,7 +30,6 @@ def build_report_test(
         command.extend(["--build-report", str(report)])
 
         if expect_error:
-            command.extend(["--build-report-options", "fill-out-failures"])
             await expect_failure(buck.build(*command))
         else:
             await buck.build(*command)

@@ -50,7 +50,6 @@ use crate::pattern::pattern_type::ConfiguredProvidersPatternExtra;
 use crate::pattern::pattern_type::PatternType;
 use crate::pattern::pattern_type::ProvidersPatternExtra;
 use crate::pattern::pattern_type::TargetPatternExtra;
-use crate::provider::flavors::map_flavors;
 use crate::provider::label::NonDefaultProvidersName;
 use crate::provider::label::ProviderName;
 use crate::provider::label::ProvidersLabel;
@@ -117,10 +116,7 @@ pub fn display_precise_pattern<'a, T: PatternType>(
 
 /// Extract provider name from a target pattern.
 pub(crate) fn split_providers_name(s: &str) -> buck2_error::Result<(&str, ProvidersName)> {
-    if let Some((t, flavors)) = split1_opt_ascii(s, AsciiChar::new('#')) {
-        let name = map_flavors(flavors, s)?;
-        Ok((t, name))
-    } else if let Some((t, p)) = split1_opt_ascii(s, AsciiChar::new('[')) {
+    if let Some((t, p)) = split1_opt_ascii(s, AsciiChar::new('[')) {
         let mut names = Vec::new();
 
         let mut remaining = if let Some((p, r)) = split1_opt_ascii(p, AsciiChar::new(']')) {
@@ -1960,21 +1956,16 @@ mod tests {
             )?
         );
 
-        let (target_label, providers) = ParsedPattern::parse_precise(
+        let err = ParsedPattern::<ProvidersPatternExtra>::parse_precise(
             "//package/path:target#flavor",
             CellName::testing_new("root"),
             &resolver(),
             &alias_resolver(),
-        )?
-        .as_literal("")?;
-        assert_eq!(
-            "root//package/path:target#flavor",
-            ProvidersPatternExtra::into_providers_label(
-                providers,
-                target_label.pkg(),
-                target_label.name()
-            )
-            .to_string(),
+        )
+        .unwrap_err();
+        assert!(
+            format!("{err:?}").contains("Invalid target name `target#flavor`"),
+            "{err:?}"
         );
         Ok(())
     }

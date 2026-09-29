@@ -120,7 +120,6 @@ def apple_bundle_base_attrs():
         | apple_common.asset_catalogs_compilation_options_arg()
         | apple_common.info_plist_substitutions_arg()
         | buck.contacts_arg()
-        | apple_common.default_platform_arg()
         | buck.labels_arg()
         | buck.licenses_arg()
         | apple_common.codesign_flags_arg()
@@ -319,10 +318,8 @@ apple_binary = prelude_rule(
         | apple_common.info_plist_substitutions_arg()
         | cxx_common.supported_platforms_regex_arg()
         | buck.contacts_arg()
-        | apple_common.default_platform_arg()
         | buck.labels_arg()
         | buck.licenses_arg()
-        | apple_common.defaults_arg()
         | apple_common.deps_arg()
         | apple_common.devirt_enabled_arg()
         | apple_common.diagnostics_arg()
@@ -456,7 +453,7 @@ apple_bundle = prelude_rule(
         apple_bundle(
           name = 'DemoApp',
           binary = ':DemoAppBinary',
-          deps = [':DemoWatchApp#watch'],
+          deps = [':DemoWatchApp'],
           extension = 'app',
           info_plist = 'Info.plist',
         )
@@ -518,7 +515,7 @@ apple_bundle = prelude_rule(
                  be used as the main executable binary of the generated bundle. The required rule type depends
                  on the value in the `extension` attribute. For example, application bundles expect
                  a binary (e.g. `'//Apps/MyApp:MyApp'`), application extension bundles expect a shared
-                 library (e.g. `'//Libraries/MyLibrary:MyLibrary#shared'`).
+                 library (e.g. `'//Libraries/MyLibrary:MyLibrary[shared]'`).
             """,
             ),
         }
@@ -528,7 +525,6 @@ apple_bundle = prelude_rule(
         | apple_common.product_name_from_module_name_arg()
         | apple_common.asset_catalogs_compilation_options_arg()
         | buck.contacts_arg()
-        | apple_common.default_platform_arg()
         | buck.labels_arg()
         | buck.licenses_arg()
         | apple_common.codesign_flags_arg()
@@ -635,10 +631,8 @@ apple_library = prelude_rule(
         | apple_common.apple_toolchain_arg()
         | validation_common.attrs_validators_arg()
         | buck.contacts_arg()
-        | apple_common.default_platform_arg()
         | buck.labels_arg()
         | buck.licenses_arg()
-        | apple_common.defaults_arg()
         | apple_common.deps_arg()
         | apple_common.devirt_enabled_arg()
         | apple_common.diagnostics_arg()
@@ -824,7 +818,6 @@ apple_package = prelude_rule(
     attrs = (
         # @unsorted-dict-items
         buck.contacts_arg()
-        | apple_common.default_platform_arg()
         | buck.labels_arg()
         | buck.licenses_arg()
         | {
@@ -1041,11 +1034,9 @@ apple_test = prelude_rule(
         | apple_common.asset_catalogs_compilation_options_arg()
         | cxx_common.supported_platforms_regex_arg()
         | buck.contacts_arg()
-        | apple_common.default_platform_arg()
         | buck.licenses_arg()
         | apple_common.codesign_flags_arg()
         | apple_common.codesign_identity_arg()
-        | apple_common.defaults_arg()
         | apple_common.deps_arg()
         | cxx_common.exported_deps_arg()
         | apple_common.devirt_enabled_arg()

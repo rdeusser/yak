@@ -4,8 +4,8 @@ title: Alias
 ---
 
 The `alias` rule creates another name by which an existing rule can be referred
-to. There two variants: [versioned_alias](#versioned_alias) and
-[configured_alias](#configured_alias), which are detailed below.
+to. The [configured_alias](#configured_alias) variant also sets the platform to
+build the target with.
 
 ## alias
 
@@ -28,36 +28,6 @@ alias(
 )
 ```
 
-## versioned_alias
-
-The `versioned_alias` rule has the following relevant attributes:
-
-- `name` - (required) what the `actual`'s label should be aliased as.
-- `versions` - (required) a map of versions to their respective versioned target
-  labels.
-
-Under the hood, any versioned parameters from the `versioned_alias`'s underlying
-`actual` are translated into their `select`-based equivalents, which rely on
-constraint settings added to the target platform. The constraint for version
-`1.2` of project `foo` is `config//third-party/foo/constraints:1.2`, so the
-`config` cell must define it.
-
-**Example**
-
-```Python
-versioned_alias(
-    name = "foo",
-    versions = {
-        # Target labels for foo versions
-        "1.1": "//path/to/lib/1.1:foo",
-        "1.2": "//path/to/lib/1.2:foo",
-    },
-    visibility = [
-        "PUBLIC",
-    ],
-)
-```
-
 ## configured_alias
 
 The `configured_alias` rule has the following relevant attributes:
@@ -69,13 +39,6 @@ The `configured_alias` rule has the following relevant attributes:
   value, which is an unconfigured dep. If `configured_actual` is not set, then
   `fallback_actual` must be set.
 - `platform` - the platform to build the aliased target with.
-
-:::note
-
-The `actual` field is available for `configured_alias` but it is not used under
-the hood (to keep compatibility of output format with Buck1 queries).
-
-:::
 
 Outside of simply pointing at another target, this target has one other useful
 feature - it contains a platform argument.

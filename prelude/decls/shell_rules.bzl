@@ -190,11 +190,7 @@ sh_test = prelude_rule(
                 such as the location of a generated binary to be used by the test script.
             """,
             ),
-            "list_args": attrs.option(attrs.list(attrs.string()), default = None),
-            "list_env": attrs.option(attrs.dict(key = attrs.string(), value = attrs.string(), sorted = False), default = None),
             "resources": attrs.list(attrs.source(), default = []),
-            "run_args": attrs.list(attrs.string(), default = []),
-            "run_env": attrs.dict(key = attrs.string(), value = attrs.string(), sorted = False, default = {}),
             "run_test_separately": attrs.bool(default = False),
             "supports_test_execution_caching": attrs.bool(default = False),
             "test": attrs.option(

@@ -64,13 +64,13 @@ pub struct ConfiguredTargetsCommand {
 }
 
 impl ConfiguredTargetsCommand {
-    fn output_format(&self) -> buck2_error::Result<OutputFormat> {
+    fn output_format(&self) -> OutputFormat {
         if self.json_report {
-            Ok(OutputFormat::JsonReport)
-        } else if self.json || !self.attributes.get()?.is_empty() {
-            Ok(OutputFormat::Json)
+            OutputFormat::JsonReport
+        } else if self.json || !self.attributes.get().is_empty() {
+            OutputFormat::Json
         } else {
-            Ok(OutputFormat::Text)
+            OutputFormat::Text
         }
     }
 }
@@ -87,7 +87,7 @@ impl StreamingCommand for ConfiguredTargetsCommand {
         events_ctx: &mut EventsCtx,
     ) -> ExitResult {
         let context = Some(ctx.client_context(matches, &self)?);
-        let output_format = self.output_format()?;
+        let output_format = self.output_format();
         let ConfiguredTargetsResponse {
             serialized_targets_output,
         } = buckd
@@ -99,7 +99,7 @@ impl StreamingCommand for ConfiguredTargetsCommand {
                     target_cfg: Some(self.target_cfg.target_cfg()),
                     skip_missing_targets: self.skip_missing_targets,
                     output_format: output_format as i32,
-                    output_attributes: self.attributes.get()?,
+                    output_attributes: self.attributes.get(),
                     keep_going: self.keep_going,
                 },
                 events_ctx,

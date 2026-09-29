@@ -13,7 +13,7 @@ from collections.abc import Callable
 from pathlib import Path
 
 from e2e_util.api.buck import Buck
-from e2e_util.api.buck_result import BuckException, BuckResult, ExitCodeV2
+from e2e_util.api.buck_result import BuckException, BuckResult, ExitCode
 from e2e_util.api.process import Process
 from e2e_util.buck_workspace import buck_test
 from e2e_util.helper.utils import read_invocation_record
@@ -72,7 +72,7 @@ async def _test_cancellation_helper(
             raise Exception(f"PID existed: {pid}")
 
     record = read_invocation_record(record_path)
-    assert record["exit_code"] == ExitCodeV2.SIGNAL_INTERRUPT.value
+    assert record["exit_code"] == ExitCode.SIGNAL_INTERRUPT.value
     assert record["exit_result_name"] == "SIGNAL_INTERRUPT"
 
 

@@ -109,19 +109,6 @@ def _deps_query_arg():
         ),
     }
 
-def _provided_deps_query_arg():
-    return {
-        "provided_deps_query": attrs.option(
-            attrs.query(),
-            default = None,
-            doc = """
-    Status: **experimental/unstable**.
-     The provided deps query functions in the same way as the deps query, but the
-     results of the query are appended to the declared provided deps.
-""",
-        ),
-    }
-
 def _labels_arg():
     return {
         "labels": attrs.list(
@@ -245,7 +232,6 @@ buck = struct(
     name_arg = _name_arg,
     deps_query_arg = _deps_query_arg,
     exec_os_type_arg = _exec_os_type_arg,
-    provided_deps_query_arg = _provided_deps_query_arg,
     labels_arg = _labels_arg,
     visibility_arg = _visibility_arg,
     tests_arg = _tests_arg,

@@ -2,10 +2,6 @@
 
 {
   "error_category": "USER",
-  "failures": {
-    "root//:fail_build1": "Error running analysis for <IRRELEVANT>",
-    "root//:fail_build2": "Error running analysis for <IRRELEVANT>"
-  },
   "results": {
     "root//:fail_build1": {
       "configured": {
@@ -28,11 +24,7 @@
           "success": "FAIL"
         }
       },
-      "configured_graph_size": null,
-      "errors": [],
-      "other_outputs": {},
-      "outputs": {},
-      "success": "FAIL"
+      "errors": []
     },
     "root//:fail_build2": {
       "configured": {
@@ -55,11 +47,7 @@
           "success": "FAIL"
         }
       },
-      "configured_graph_size": null,
-      "errors": [],
-      "other_outputs": {},
-      "outputs": {},
-      "success": "FAIL"
+      "errors": []
     },
     "root//:fail_test": {
       "configured": {
@@ -71,11 +59,7 @@
           "success": "SUCCESS"
         }
       },
-      "configured_graph_size": null,
-      "errors": [],
-      "other_outputs": {},
-      "outputs": {},
-      "success": "SUCCESS"
+      "errors": []
     },
     "root//:ok": {
       "configured": {
@@ -87,17 +71,12 @@
           "success": "SUCCESS"
         }
       },
-      "configured_graph_size": null,
-      "errors": [],
-      "other_outputs": {},
-      "outputs": {},
-      "success": "SUCCESS"
+      "errors": []
     }
   },
   "strings": {
     "<STRING_HASH>": "Error running analysis for <IRRELEVANT>",
     "<STRING_HASH>": "Error running analysis for <IRRELEVANT>"
   },
-  "success": false,
-  "truncated": false
+  "success": false
 }

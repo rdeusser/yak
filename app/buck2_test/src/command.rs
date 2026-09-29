@@ -620,13 +620,7 @@ async fn test(
 
     let serialized_build_report = if build_opts.unstable_print_build_report {
         let artifact_fs = ctx.ctx().get_artifact_fs().await?;
-        let build_report_opts = build_report_opts(
-            &mut ctx.ctx(),
-            &cell_resolver,
-            build_opts,
-            Default::default(),
-        )
-        .await?;
+        let build_report_opts = build_report_opts(build_opts, Default::default());
 
         write_build_report(
             build_report_opts,
@@ -693,11 +687,8 @@ async fn test_targets(
     }
 
     let executor_args = {
-        let mut args = vec![
-            "ignored".to_owned(),
-            "--buck-test-info".to_owned(),
-            "ignored".to_owned(),
-        ];
+        // The first argument takes the place of the program name.
+        let mut args = vec!["ignored".to_owned()];
         args.extend(external_runner_args);
         args
     };

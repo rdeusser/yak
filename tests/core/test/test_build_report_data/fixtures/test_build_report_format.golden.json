@@ -1,7 +1,6 @@
 # This file is @generated, regenerate by rerunning the test with `YAK_UPDATE_GOLDEN=1` set
 
 {
-  "failures": {},
   "results": {
     "root//:fail_test": {
       "configured": {
@@ -13,11 +12,7 @@
           "success": "SUCCESS"
         }
       },
-      "configured_graph_size": null,
-      "errors": [],
-      "other_outputs": {},
-      "outputs": {},
-      "success": "SUCCESS"
+      "errors": []
     },
     "root//:ok": {
       "configured": {
@@ -29,14 +24,9 @@
           "success": "SUCCESS"
         }
       },
-      "configured_graph_size": null,
-      "errors": [],
-      "other_outputs": {},
-      "outputs": {},
-      "success": "SUCCESS"
+      "errors": []
     }
   },
   "strings": {},
-  "success": true,
-  "truncated": false
+  "success": true
 }

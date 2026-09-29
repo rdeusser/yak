@@ -11,15 +11,10 @@ import platform
 import re
 import stat
 from pathlib import Path
-from typing import Awaitable, Optional, Type, TypeVar, Union
+from typing import Awaitable, Optional, Type, TypeVar
 
 import pytest
-from e2e_util.api.buck_result import (
-    BuckException,
-    BuckResult,
-    ExitCode,
-    ExitCodeV2,
-)
+from e2e_util.api.buck_result import BuckException, BuckResult, ExitCode
 
 
 E = TypeVar("E", bound=BaseException)
@@ -47,7 +42,7 @@ async def expect_failure(
     process: Awaitable[BuckResult],
     *,
     exception: Type[E] = BuckException,
-    exit_code: Union[ExitCode, ExitCodeV2, None] = None,
+    exit_code: Optional[ExitCode] = None,
     stdout_regex: Optional[str] = None,
     stderr_regex: Optional[str] = None,
 ) -> E:
@@ -76,11 +71,7 @@ async def expect_failure(
     if not isinstance(failure, BuckException):
         return failure
     if exit_code is not None:
-        actual_exit_code = (
-            failure.get_exit_code()
-            if isinstance(exit_code, ExitCode)
-            else failure.get_exit_code_v2()
-        )
+        actual_exit_code = failure.get_exit_code()
         assert actual_exit_code == exit_code, (
             f"Expected exit code {exit_code} but found {actual_exit_code}\n<stderr>\n{_indent(failure.stderr)}</stderr>"
         )

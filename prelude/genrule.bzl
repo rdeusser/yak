@@ -39,14 +39,6 @@ _BUILD_ROOT_LABELS = set([
 # that behavior.
 _NO_SRCS_ENVIRONMENT_LABEL = "no_srcs_environment"
 
-_WINDOWS_ENV_SUBSTITUTIONS = [
-    # Replace $OUT and ${OUT}
-    (regex("\\$(OUT\\b|\\{OUT\\})"), "%OUT%"),
-    (regex("\\$(SRCDIR\\b|\\{SRCDIR\\})"), "%SRCDIR%"),
-    (regex("\\$(SRCS\\b|\\{SRCS\\})"), "%SRCS%"),
-    (regex("\\$(TMP\\b|\\{TMP\\})"), "%TMP%"),
-]
-
 def _requires_build_root(ctx: AnalysisContext) -> bool:
     for label in ctx.attrs.labels:
         if label in _BUILD_ROOT_LABELS:
@@ -240,19 +232,7 @@ def process_genrule(
         if cmd == None:
             fail("One of `cmd` or `bash` should be set.")
 
-    replace_regex = []
-
-    # For backwards compatibility with Buck1.
-    if is_windows:
-        for re, sub in _WINDOWS_ENV_SUBSTITUTIONS:
-            replace_regex.append((re, sub))
-
-        for extra_env_var in extra_env_vars:
-            replace_regex.append(
-                (regex("\\$(%s\\b|\\{%s\\})" % (extra_env_var, extra_env_var)), "%%%s%%" % extra_env_var),
-            )
-
-    cmd = cmd_args(cmd, ignore_artifacts = _ignore_artifacts(ctx), replace_regex = replace_regex)
+    cmd = cmd_args(cmd, ignore_artifacts = _ignore_artifacts(ctx))
 
     if type(ctx.attrs.srcs) == type([]):
         # FIXME: We should always use the short_path, but currently that is sometimes blank.
@@ -283,7 +263,6 @@ def process_genrule(
     for symlink in symlinks:
         srcs.add(cmd_args(srcs_artifact, format = path_sep.join([".", "{}", symlink.replace("/", path_sep)])))
     env_vars = {
-        "GEN_DIR": "GEN_DIR_DEPRECATED",
         "OUT": out_env.as_output(),
         "SRCDIR": cmd_args(srcs_artifact, format = path_sep.join([".", "{}"])),
         "SRCS": srcs,

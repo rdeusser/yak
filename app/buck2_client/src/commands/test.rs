@@ -206,14 +206,6 @@ If include patterns are present, regardless of whether exclude patterns are pres
     #[clap(long, group = "run-info")]
     skip_run_info: bool,
 
-    /// This option does nothing. It is here to keep compatibility with Buck1 and ci
-    #[clap(long = "deep", hide = true)]
-    _deep: bool,
-
-    // ignored. only for e2e tests. compatibility with v1.
-    #[clap(long = "xml", hide = true)]
-    _xml: Option<String>,
-
     #[clap(flatten)]
     build_opts: CommonBuildOptions,
 

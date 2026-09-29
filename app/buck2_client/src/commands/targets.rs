@@ -75,15 +75,9 @@ enum TargetHashGraphType {
     Configured,
 }
 
-// Use non-camel case so the possible values match buck1's
-/// Possible values for the --target-hash-function arg. We don't actually
-/// honor the specific algorithms, we use them as a hint to pick "fast" or "strong".
-#[allow(non_camel_case_types)]
+/// Possible values for the --target-hash-function arg.
 #[derive(Debug, clap::ValueEnum, Clone, Dupe)]
 enum TargetHashFunction {
-    Sha1,
-    Sha256,
-    Murmur_Hash3,
     Fast,
     Strong,
 }
@@ -253,7 +247,7 @@ impl TargetsCommand {
                 return Err(TargetsError::IncompatibleArguments.into());
             }
             Ok(OutputFormat::JsonLines)
-        } else if !self.attributes.get()?.is_empty() {
+        } else if !self.attributes.get().is_empty() {
             Ok(OutputFormat::Json)
         } else if self.package_values || !self.package_values_regex.is_empty() {
             Ok(OutputFormat::Json)
@@ -294,23 +288,11 @@ impl StreamingCommand for TargetsCommand {
         events_ctx: &mut EventsCtx,
     ) -> ExitResult {
         let target_hash_use_fast_hash = match self.target_hash_function {
-            TargetHashFunction::Sha1 | TargetHashFunction::Sha256 => {
-                buck2_client_ctx::eprintln!(
-                    "yak only supports \"fast\" and \"strong\" target hash functions. Using the \"strong\" hash."
-                )?;
-                false
-            }
-            TargetHashFunction::Murmur_Hash3 => {
-                buck2_client_ctx::eprintln!(
-                    "yak only supports \"fast\" and \"strong\" target hash functions. Using the \"fast\" hash."
-                )?;
-                true
-            }
             TargetHashFunction::Fast => true,
             TargetHashFunction::Strong => false,
         };
 
-        let output_attributes = self.attributes.get()?;
+        let output_attributes = self.attributes.get();
         let package_values = self.package_values_as_regexes()?;
         let target_hash_graph_type =
             match (self.show_target_hash, self.show_unconfigured_target_hash) {

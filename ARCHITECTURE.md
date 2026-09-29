@@ -115,7 +115,7 @@ Without an execution platform, this repository's build runs every action locally
 
 ### Rules and libraries
 
-- `prelude/` holds the Starlark rules and toolchains for every supported language (`prelude/cxx`, `prelude/rust`, `prelude/python`, and others). The binary embeds it as the `prelude` cell, and `yak init` configures new projects to use that copy.
+- `prelude/` holds the Starlark rules and toolchains for every supported language (`prelude/cxx`, `prelude/rust`, `prelude/python`, and others). The binary embeds it as the `prelude` cell, and `yak init` configures new projects to use that copy. The prelude has no Java, Kotlin, Android, or JavaScript rules, as the owner chose on 2026-09-28 (`docs/exec-plans/completed/2026-09-29-remove-jvm-and-buck1-compatibility.md`). The `os` constraint in `prelude/os/constraints/` has an `android` value for C, C++, Rust, and Go code that targets Android.
 - `gazebo/` holds small utility crates. `dupe` defines `Dupe`, a clone that is constant time and allocation-free.
 - `allocative/` measures memory use per type (`Allocative`).
 - `shed/` holds generic data structures that know nothing of Buck2 (`lock_free_hashtable`, `static_interner`, `provider`, and others).
@@ -225,4 +225,4 @@ Buck builds on Linux and macOS use the system allocator, because `third-party/ru
 ## Planned changes
 
 - The rename to yak continues with the `buck2*` crates. `docs/exec-plans/active/2026-09-28-rename-the-fork.md` tracks the work.
-- The bootstrap jars of the JVM toolchain will be built from this repository's sources and stored outside the upstream releases. `docs/exec-plans/tech-debt-tracker.md` lists them with the other upstream connections that remain.
+- The owner plans to remove what still ties the repository to Meta's upstream projects, such as the downloads from upstream releases. `docs/exec-plans/tech-debt-tracker.md` lists them under Upstream connections.

@@ -2,14 +2,9 @@
 
 {
   "error_category": "USER",
-  "failures": {
-    "root//fail_load:first": "Error evaluating build file: `root//fail_load:YAK.fixture`\nCaused by:\n    Traceback (most recent call last):\n      * fail_load/YAK.fixture:1, in <module>\n          fail(\"Non-specific load failure\")\n    error: fail: Non-specific load failure\n     --> fail_load/YAK.fixture:1:1\n      |\n    1 | fail(\"Non-specific load failure\")\n      |\n    ",
-    "root//fail_load:second": "Error evaluating build file: `root//fail_load:YAK.fixture`\nCaused by:\n    Traceback (most recent call last):\n      * fail_load/YAK.fixture:1, in <module>\n          fail(\"Non-specific load failure\")\n    error: fail: Non-specific load failure\n     --> fail_load/YAK.fixture:1:1\n      |\n    1 | fail(\"Non-specific load failure\")\n      |\n    "
-  },
   "results": {
     "root//fail_load:first": {
       "configured": {},
-      "configured_graph_size": null,
       "errors": [
         {
           "action_error": null,
@@ -20,14 +15,10 @@
           ],
           "message_content": "<STRING_HASH>"
         }
-      ],
-      "other_outputs": {},
-      "outputs": {},
-      "success": "FAIL"
+      ]
     },
     "root//fail_load:second": {
       "configured": {},
-      "configured_graph_size": null,
       "errors": [
         {
           "action_error": null,
@@ -38,15 +29,11 @@
           ],
           "message_content": "<STRING_HASH>"
         }
-      ],
-      "other_outputs": {},
-      "outputs": {},
-      "success": "FAIL"
+      ]
     }
   },
   "strings": {
     "<STRING_HASH>": "Error evaluating build file: `root//fail_load:YAK.fixture`\nCaused by:\n    Traceback (most recent call last):\n      * fail_load/YAK.fixture:1, in <module>\n          fail(\"Non-specific load failure\")\n    error: fail: Non-specific load failure\n     --> fail_load/YAK.fixture:1:1\n      |\n    1 | fail(\"Non-specific load failure\")\n      |\n    "
   },
-  "success": false,
-  "truncated": false
+  "success": false
 }

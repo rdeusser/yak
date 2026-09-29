@@ -516,15 +516,6 @@ impl<Env: QueryEnvironment> DefaultQueryFunctionsModule<Env> {
         Ok(targets.kind(&regex)?.into())
     }
 
-    /// Not implemented.
-    ///
-    /// This function won't be implemented in the future, because yak query core does not support returning both files and targets from a single function.
-    ///
-    /// In buck1 it returns targets and files referenced by the given attribute in the given targets.
-    async fn labels(&self, attr: String, targets: TargetSet<Env::Target>) -> QueryFuncResult<Env> {
-        self.implementation.labels(&attr, &targets)
-    }
-
     /// Targets owning the given file.
     ///
     /// Returns all targets that have a specified file as an input.
@@ -865,14 +856,6 @@ impl<Env: QueryEnvironment> DefaultQueryFunctions<Env> {
 
     pub fn inputs(&self, targets: &TargetSet<Env::Target>) -> buck2_error::Result<FileSet> {
         targets.inputs()
-    }
-
-    pub fn labels(
-        &self,
-        _attr: &str,
-        _targets: &TargetSet<Env::Target>,
-    ) -> Result<QueryValue<Env::Target>, QueryError> {
-        Err(QueryError::FunctionUnimplemented("labels"))
     }
 
     pub async fn owner(
