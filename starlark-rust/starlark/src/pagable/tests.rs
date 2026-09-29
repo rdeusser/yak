@@ -3884,7 +3884,7 @@ fn test_unread_dependency_is_bound_but_not_read() -> crate::Result<()> {
     use pagable::storage::handle::PagableStorageHandle;
     use pagable::storage::in_memory::InMemoryPagableStorage;
 
-    use crate::pagable::starlark_partial_deser_stats;
+    use crate::pagable::starlark_deserialize_context::starlark_partial_deser_stats_on_this_thread;
 
     let dep = ErasingHeap::new();
     dep.alloc_simple(SimpleData {
@@ -3909,9 +3909,9 @@ fn test_unread_dependency_is_bound_but_not_read() -> crate::Result<()> {
     drop(ofv);
     drop(dep_ref);
 
-    let before = starlark_partial_deser_stats().expect("counters are on under cfg(test)");
+    let before = starlark_partial_deser_stats_on_this_thread();
     let restored = deser_owned_frozen_from_storage(&backing, &handle, &key)?;
-    let after = starlark_partial_deser_stats().expect("counters are on under cfg(test)");
+    let after = starlark_partial_deser_stats_on_this_thread();
 
     let root: &SimpleData = restored
         .as_ref()
@@ -4010,14 +4010,14 @@ fn assert_points_into_g(restored: &OwnedFrozen<Value<'static>>) {
 /// stays a skeleton.
 #[test]
 fn test_pointer_into_indirect_dependency_resolves_through_the_index() -> crate::Result<()> {
-    use crate::pagable::starlark_partial_deser_stats;
+    use crate::pagable::starlark_deserialize_context::starlark_partial_deser_stats_on_this_thread;
 
     let (backing, handle, key) = page_out_indirect_graph("indexed")?;
 
-    let before = starlark_partial_deser_stats().expect("counters are on under cfg(test)");
+    let before = starlark_partial_deser_stats_on_this_thread();
     let restored = deser_owned_frozen_from_storage(&backing, &handle, &key)?;
     assert_points_into_g(&restored);
-    let after = starlark_partial_deser_stats().expect("counters are on under cfg(test)");
+    let after = starlark_partial_deser_stats_on_this_thread();
 
     assert_eq!(
         after.heaps_loaded - before.heaps_loaded,
@@ -4078,7 +4078,7 @@ fn test_skeleton_first_read_by_another_root_resolves_its_dependencies() -> crate
     use pagable::storage::handle::PagableStorageHandle;
     use pagable::storage::in_memory::InMemoryPagableStorage;
 
-    use crate::pagable::starlark_partial_deser_stats;
+    use crate::pagable::starlark_deserialize_context::starlark_partial_deser_stats_on_this_thread;
     use crate::values::layout::heap::sealed::heap_key_index::StarlarkHeapKeyIndex;
 
     let heap_g = ErasingHeap::new();
@@ -4121,9 +4121,9 @@ fn test_skeleton_first_read_by_another_root_resolves_its_dependencies() -> crate
         .expect("page-out registers the index")
         .clear();
 
-    let before = starlark_partial_deser_stats().expect("counters are on under cfg(test)");
+    let before = starlark_partial_deser_stats_on_this_thread();
     let restored1 = deser_owned_frozen_from_storage(&backing, &handle, &key1)?;
-    let mid = starlark_partial_deser_stats().expect("counters are on under cfg(test)");
+    let mid = starlark_partial_deser_stats_on_this_thread();
     assert_eq!(
         mid.heaps_loaded - before.heaps_loaded,
         1,
@@ -4131,7 +4131,7 @@ fn test_skeleton_first_read_by_another_root_resolves_its_dependencies() -> crate
     );
 
     let restored2 = deser_owned_frozen_from_storage(&backing, &handle, &key2)?;
-    let after = starlark_partial_deser_stats().expect("counters are on under cfg(test)");
+    let after = starlark_partial_deser_stats_on_this_thread();
     assert_eq!(
         after.heaps_loaded - mid.heaps_loaded,
         3,
@@ -4162,7 +4162,7 @@ fn test_skeleton_first_read_by_another_root_resolves_its_dependencies() -> crate
 #[test]
 fn test_pointer_into_indirect_dependency_walks_from_origin_without_the_index() -> crate::Result<()>
 {
-    use crate::pagable::starlark_partial_deser_stats;
+    use crate::pagable::starlark_deserialize_context::starlark_partial_deser_stats_on_this_thread;
     use crate::values::layout::heap::sealed::heap_key_index::StarlarkHeapKeyIndex;
 
     let (backing, handle, key) = page_out_indirect_graph("walked")?;
@@ -4172,10 +4172,10 @@ fn test_pointer_into_indirect_dependency_walks_from_origin_without_the_index() -
         .expect("page-out registers the index")
         .clear();
 
-    let before = starlark_partial_deser_stats().expect("counters are on under cfg(test)");
+    let before = starlark_partial_deser_stats_on_this_thread();
     let restored = deser_owned_frozen_from_storage(&backing, &handle, &key)?;
     assert_points_into_g(&restored);
-    let after = starlark_partial_deser_stats().expect("counters are on under cfg(test)");
+    let after = starlark_partial_deser_stats_on_this_thread();
 
     assert_eq!(
         after.heaps_loaded - before.heaps_loaded,
@@ -4208,7 +4208,7 @@ fn test_restored_heap_with_unread_dependencies_reserializes_by_key() -> crate::R
     use pagable::storage::handle::PagableStorageHandle;
     use pagable::storage::in_memory::InMemoryPagableStorage;
 
-    use crate::pagable::starlark_partial_deser_stats;
+    use crate::pagable::starlark_deserialize_context::starlark_partial_deser_stats_on_this_thread;
 
     let dep = ErasingHeap::new();
     dep.alloc_simple(SimpleData {
@@ -4234,9 +4234,9 @@ fn test_restored_heap_with_unread_dependencies_reserializes_by_key() -> crate::R
     drop(dep_ref);
 
     let restored = deser_owned_frozen_from_storage(&backing, &handle, &key)?;
-    let before = starlark_partial_deser_stats().expect("counters are on under cfg(test)");
+    let before = starlark_partial_deser_stats_on_this_thread();
     let key_again = ser_owned_frozen_value_into_storage(&backing, &restored)?;
-    let after = starlark_partial_deser_stats().expect("counters are on under cfg(test)");
+    let after = starlark_partial_deser_stats_on_this_thread();
 
     assert_eq!(
         key_again, key,

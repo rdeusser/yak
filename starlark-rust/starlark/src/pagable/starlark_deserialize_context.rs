@@ -1120,7 +1120,9 @@ mod partial_deser_stats {
     /// runs millions of times per page-in and shared counters there are a
     /// contended cache line. Always on under `cfg(test)`, so the counting
     /// paths stay exercised. The counters are process-global and never reset,
-    /// so tests must not assert on absolute values. Callers branch on this
+    /// so tests must not assert on absolute values. Tests that run in
+    /// parallel also add to them, so tests assert on the per-thread counts
+    /// of `starlark_partial_deser_stats_on_this_thread`. Callers branch on this
     /// before computing anything a counter needs, not just before storing it.
     pub(super) fn enabled() -> bool {
         if cfg!(test) {
@@ -1153,10 +1155,35 @@ mod partial_deser_stats {
     /// used to order other memory.
     pub(super) fn add(counter: &AtomicU64, n: u64) {
         counter.fetch_add(n, Ordering::Relaxed);
+        #[cfg(test)]
+        THIS_THREAD.with(|counts| {
+            *counts
+                .borrow_mut()
+                .entry(std::ptr::from_ref(counter))
+                .or_default() += n;
+        });
     }
 
     pub(super) fn get(counter: &AtomicU64) -> u64 {
         counter.load(Ordering::Relaxed)
+    }
+
+    #[cfg(test)]
+    thread_local! {
+        /// What this thread added to each counter, keyed by the counter's address.
+        static THIS_THREAD: std::cell::RefCell<std::collections::HashMap<*const AtomicU64, u64>> =
+            Default::default();
+    }
+
+    #[cfg(test)]
+    pub(super) fn get_on_this_thread(counter: &AtomicU64) -> u64 {
+        THIS_THREAD.with(|counts| {
+            counts
+                .borrow()
+                .get(&std::ptr::from_ref(counter))
+                .copied()
+                .unwrap_or(0)
+        })
     }
 }
 
@@ -1194,21 +1221,33 @@ pub struct PartialDeserStats {
 /// Process-wide partial-deserialization counters since daemon start, or `None`
 /// if counting is off, so callers report "not measured" rather than zeros.
 pub fn starlark_partial_deser_stats() -> Option<PartialDeserStats> {
-    use partial_deser_stats as s;
-    if !s::enabled() {
+    if !partial_deser_stats::enabled() {
         return None;
     }
-    Some(PartialDeserStats {
-        heaps_loaded: s::get(&s::HEAPS_LOADED),
-        heap_retained_blob_bytes: s::get(&s::HEAP_RETAINED_BLOB_BYTES),
-        heaps_with_metadata: s::get(&s::HEAPS_WITH_METADATA),
-        used_heap_retained_blob_bytes: s::get(&s::USED_HEAP_RETAINED_BLOB_BYTES),
-        heap_value_serialized_bytes: s::get(&s::HEAP_VALUE_SERIALIZED_BYTES),
-        heap_values: s::get(&s::HEAP_VALUES),
-        heap_value_alloc_bytes: s::get(&s::HEAP_VALUE_ALLOC_BYTES),
-        claimed_values: s::get(&s::CLAIMED_VALUES),
-        claimed_alloc_bytes: s::get(&s::CLAIMED_ALLOC_BYTES),
-    })
+    Some(partial_deser_snapshot(partial_deser_stats::get))
+}
+
+/// What the current thread added to [`starlark_partial_deser_stats`]. Tests
+/// assert on these counts because tests on other threads add to the
+/// process-wide counters while they run.
+#[cfg(test)]
+pub(crate) fn starlark_partial_deser_stats_on_this_thread() -> PartialDeserStats {
+    partial_deser_snapshot(partial_deser_stats::get_on_this_thread)
+}
+
+fn partial_deser_snapshot(get: impl Fn(&std::sync::atomic::AtomicU64) -> u64) -> PartialDeserStats {
+    use partial_deser_stats as s;
+    PartialDeserStats {
+        heaps_loaded: get(&s::HEAPS_LOADED),
+        heap_retained_blob_bytes: get(&s::HEAP_RETAINED_BLOB_BYTES),
+        heaps_with_metadata: get(&s::HEAPS_WITH_METADATA),
+        used_heap_retained_blob_bytes: get(&s::USED_HEAP_RETAINED_BLOB_BYTES),
+        heap_value_serialized_bytes: get(&s::HEAP_VALUE_SERIALIZED_BYTES),
+        heap_values: get(&s::HEAP_VALUES),
+        heap_value_alloc_bytes: get(&s::HEAP_VALUE_ALLOC_BYTES),
+        claimed_values: get(&s::CLAIMED_VALUES),
+        claimed_alloc_bytes: get(&s::CLAIMED_ALLOC_BYTES),
+    }
 }
 
 /// Exact process-local value identity used only while a claim or wait guard is
