@@ -32,6 +32,7 @@ rust_library(
         "//third-party/rust:blake3",
         "//third-party/rust:bytes",
         "//third-party/rust:compact_str",
+        "//third-party/rust:ctor",
         "//third-party/rust:derivative",
         "//third-party/rust:derive_more",
         "//third-party/rust:digest-010",

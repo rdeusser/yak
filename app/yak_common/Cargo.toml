@@ -13,6 +13,7 @@ blake3.workspace = true
 bytes.workspace = true
 cmp_any.workspace = true
 compact_str.workspace = true
+ctor.workspace = true
 derivative.workspace = true
 derive_more.workspace = true
 dice.workspace = true
