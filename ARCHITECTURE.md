@@ -4,7 +4,7 @@ This repository holds yak, a build system, together with the Starlark interprete
 A user declares targets in build files (`YAK` by default) in Starlark. yak evaluates those files, configures each target for a platform, runs each rule's analysis to produce actions, and runs the actions locally or on a Remote Execution service.
 yak keeps its results in an incremental computation graph, so a later command recomputes only what its changed inputs affect.
 
-The repository is a fork of `facebook/yak`. [Planned changes](#planned-changes) lists what the fork intends to change.
+The repository is a fork of `facebook/buck2`. [Planned changes](#planned-changes) lists what the fork intends to change.
 `website/docs/concepts/architecture.md` describes the build phases for users. This document maps them to the code.
 
 ## Bird's-eye view
@@ -115,7 +115,7 @@ Without an execution platform, this repository's build runs every action locally
 
 ### Rules and libraries
 
-- `prelude/` holds the Starlark rules and toolchains for every supported language (`prelude/cxx`, `prelude/rust`, `prelude/python`, and others). The binary embeds it as the `prelude` cell, and `yak init` configures new projects to use that copy. The prelude has no Java, Kotlin, Android, or JavaScript rules, as the owner chose on 2026-09-28 (`docs/exec-plans/completed/2026-09-29-remove-jvm-and-yak1-compatibility.md`). The `os` constraint in `prelude/os/constraints/` has an `android` value for C, C++, Rust, and Go code that targets Android.
+- `prelude/` holds the Starlark rules and toolchains for every supported language (`prelude/cxx`, `prelude/rust`, `prelude/python`, and others). The binary embeds it as the `prelude` cell, and `yak init` configures new projects to use that copy. The prelude has no Java, Kotlin, Android, or JavaScript rules, as the owner chose on 2026-09-28 (`docs/exec-plans/completed/2026-09-29-remove-jvm-and-buck1-compatibility.md`). The `os` constraint in `prelude/os/constraints/` has an `android` value for C, C++, Rust, and Go code that targets Android.
 - `gazebo/` holds small utility crates. `dupe` defines `Dupe`, a clone that is constant time and allocation-free.
 - `allocative/` measures memory use per type (`Allocative`).
 - `shed/` holds generic data structures that know nothing of yak (`lock_free_hashtable`, `static_interner`, `provider`, and others).

@@ -55,7 +55,7 @@ unsafe fn maybe_set_protoc() {
         // `cargo build` of `yak` does not require external `protoc` dependency
         // because it uses prebuilt bundled `protoc` binary from `protoc-bin-vendored` crate.
         // However, prebuilt `protoc` binaries do not work in NixOS builds, see
-        // https://github.com/facebook/yak/issues/65
+        // https://github.com/facebook/buck2/issues/65
         // So for NixOS builds path to `protoc` binary can be overridden with
         // `YAK_BUILD_PROTOC` environment variable.
         unsafe {

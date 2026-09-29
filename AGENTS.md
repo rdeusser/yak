@@ -1,6 +1,6 @@
 # Agent instructions
 
-This repository is a fork of Meta's Yak build system.
+This repository is a fork of Meta's Buck2 build system.
 It holds the Rust client and daemon (`app/`), the Starlark interpreter (`starlark-rust/`), the incremental computation engine (`dice/`), the Starlark rule library (`prelude/`), and the crates they use.
 The fork is named yak. The binary is `yak`, it reads `YAK` build files and `.yakconfig` files, and it writes `yak-out`.
 [The tech-debt tracker](docs/exec-plans/tech-debt-tracker.md) lists what still depends on the upstream project, such as release downloads.
@@ -47,7 +47,7 @@ To check behavior end to end, run `target/debug/yak` in a project under `example
 
 ## Rules for changes
 
-- Code ported from `facebook/yak` keeps only its open-source side. Drop `#[cfg(fbcode_build)]` branches, `@oss-disable` lines, `is_open_source()` checks, and `fbcode//` or `fbsource//` labels (`docs/developers/basics.md`).
+- Code ported from `facebook/buck2` keeps only its open-source side. Drop `#[cfg(fbcode_build)]` branches, `@oss-disable` lines, `is_open_source()` checks, and `fbcode//` or `fbsource//` labels (`docs/developers/basics.md`).
 - A dependency change updates both the crate's `Cargo.toml` and its `YAK` file. `docs/developers/basics.md` gives the steps, including `third-party/rust/` for new third-party crates.
 - Check new crate dependencies against the late-binding and dependency rules in `ARCHITECTURE.md`. The yak build checks them (`docs/developers/basics.md`), but CI does not run the yak build.
 - Read files, yakconfig, and other build state inside DICE computations only through DICE, so invalidation stays correct.

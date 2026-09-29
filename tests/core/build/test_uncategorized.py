@@ -132,7 +132,7 @@ async def test_yakroot(yak: Yak) -> None:
 @yak_test(data_dir="cell_delete")
 async def test_cell_deletion(yak: Yak) -> None:
     """
-    This is a regression test for https://github.com/facebook/yak/pull/43,
+    This is a regression test for https://github.com/facebook/buck2/pull/43,
     including the similar issue with directories that was fixed first.
     """
     await yak.targets(":")

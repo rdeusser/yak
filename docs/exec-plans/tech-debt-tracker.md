@@ -17,7 +17,7 @@ On 2026-09-28, the whole suite ran on Linux under Python 3.12 as a user other th
 That run gave 1726 passed, 230 skipped, 3 expected failures, and no other failures.
 After the rename to yak, the same setup gave 1763 passed, 190 skipped, and 3 expected failures, with `YAK_COMPLETION_VERIFY` set so the completion tests ran.
 On 2026-09-29, after the removal of the JVM, Android, and JavaScript support, the same setup without a completion helper gave 1728 passed, 223 skipped, and 3 expected failures.
-After the removal of the Yak1 compatibility code, the same setup gave 1727 passed, 223 skipped, and 3 expected failures.
+After the removal of the Buck1 compatibility code, the same setup gave 1727 passed, 223 skipped, and 3 expected failures.
 After the rename of the messages and comments of the code, the same setup gave 1727 passed, 223 skipped, and 3 expected failures.
 The skipped tests need a Remote Execution backend, cgroup delegation, helper binaries, Go, or Watchman. The repository has no Remote Execution backend to test against.
 A separate run with Go 1.26, `clang`, and `lld` passed the 30 tests in `tests/prelude/test_prelude_rules.py`, which include the 19 Go tests.

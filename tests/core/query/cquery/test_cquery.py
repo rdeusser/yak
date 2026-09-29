@@ -272,7 +272,7 @@ async def test_declared_deps_query(yak: Yak) -> None:
 
 
 # Tests for intersect and except operators on FileSet, TargetSet, and String types
-# These tests verify the fix for https://github.com/facebook/yak/issues/1109
+# These tests verify the fix for https://github.com/facebook/buck2/issues/1109
 @yak_test(data_dir="set_operators")
 async def test_cquery_fileset_intersect(yak: Yak) -> None:
     """Test FileSet intersect FileSet using inputs()."""

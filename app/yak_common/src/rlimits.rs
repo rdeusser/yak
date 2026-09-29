@@ -43,7 +43,7 @@ pub fn raise_file_descriptor_limits() -> yak_error::Result<()> {
     //
     // See: https://www.freedesktop.org/software/systemd/man/devel/systemd.exec.html
     //
-    // And: https://github.com/facebook/yak/pull/986
+    // And: https://github.com/facebook/buck2/pull/986
     resource::setrlimit(Resource::RLIMIT_NOFILE, hard_limit, hard_limit)
         .with_yak_error_context(|| format!(
             "Open file descriptor limit is lower than 80,000. yak needs a lot of FDs. Raising open FD limit from {soft_limit} to hard limit {hard_limit}",

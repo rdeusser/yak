@@ -623,7 +623,7 @@ async def test_query_attrfilter_special_attribute(yak: Yak) -> None:
 
 
 # Tests for intersect and except operators on FileSet, TargetSet, and String types
-# These tests verify the fix for https://github.com/facebook/yak/issues/1109
+# These tests verify the fix for https://github.com/facebook/buck2/issues/1109
 @yak_test(data_dir="set_operators")
 async def test_uquery_fileset_intersect(yak: Yak) -> None:
     """Test FileSet intersect FileSet using inputs()."""

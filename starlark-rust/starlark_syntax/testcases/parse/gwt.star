@@ -14,7 +14,7 @@
 # limitations under the License.
 
 # Port of Yak native gwt_binary() rule. See discussion in context of
-# https://github.com/facebook/yak/issues/109
+# https://github.com/facebook/buck/issues/109
 load("//tools/bzl:genrule2.bzl", "genrule2")
 load("//tools/bzl:java.bzl", "java_library2")
 

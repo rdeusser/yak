@@ -17,7 +17,7 @@
 
 //! A [Starlark interpreter in Rust](https://github.com/rdeusser/yak/tree/main/starlark-rust).
 //! Starlark is a deterministic version of Python, with [a specification](https://github.com/bazelbuild/starlark/blob/master/spec.md),
-//! used by (amongst others) the [Yak](https://yak.build) and [Bazel](https://bazel.build) build systems.
+//! used by (amongst others) the [Buck](https://buck.build) and [Bazel](https://bazel.build) build systems.
 //!
 //! To evaluate a simple file:
 //!

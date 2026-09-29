@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-Removes the code, configuration, and service clients that only Meta's internal build used, removes the JVM, Android, and JavaScript support and the Yak1 compatibility code, and renames the tool to yak.
+Removes the code, configuration, and service clients that only Meta's internal build used, removes the JVM, Android, and JavaScript support and the Buck1 compatibility code, and renames the tool to yak.
 
 ### Renamed to yak
 
@@ -17,13 +17,13 @@ Removes the code, configuration, and service clients that only Meta's internal b
 - The reserved directory in `yak-out` is `._yak`. Tools keep scratch files in `yak-out/._yak/tmp`, and `--isolation-dir` rejects names that start with `._yak`.
 - The daemon keeps its state in `~/.yak/yakd/`, in files named `yakd.info`, `yakd.pid`, and so on.
 - The alternative package file name is `YAK_TREE`.
-- yak reads none of the old names. A project renames its `YAK`, `.yakconfig`, and `.yakroot` files, or sets `[buildfile] name = YAK` in `.yakconfig` to keep its build files.
-- For a crate whose target is incompatible with the host, `prelude//rust/rust-analyzer/resolve_deps.bxl` reports the directory of its build file as the source folder. It removed only a `/TARGETS` or `/YAK` file name before. It also joined the cell's name to the project root in place of the cell's path.
+- yak reads none of the old names. A project renames its `BUCK`, `.buckconfig`, and `.buckroot` files, or sets `[buildfile] name = BUCK` in `.yakconfig` to keep its build files.
+- For a crate whose target is incompatible with the host, `prelude//rust/rust-analyzer/resolve_deps.bxl` reports the directory of its build file as the source folder. It removed only a `/TARGETS` or `/BUCK` file name before. It also joined the cell's name to the project root in place of the cell's path.
 - The daemon runs in the systemd slice `yak.slice` as the unit `yak-daemon.<project>.<isolation dir>.<id>`.
 - The daemon's process title is `yakd[<project>]`.
 - `yak killall` and `yak clean --stale` look for processes named `yak` and `yak-daemon`.
 - The client-only build looks for the daemon binary `yak-daemon` next to the client.
-- Shell completions register for `yak` and no longer for a `yak` command.
+- Shell completions register for `yak` and no longer for a `buck` command.
 - Remote Execution requests name the tool `yak`.
 - The release assets are named `yak-<target triple>`.
 - Wheels that `python_wheel` builds name `yak` as their generator in the `WHEEL` file.
@@ -32,17 +32,17 @@ Removes the code, configuration, and service clients that only Meta's internal b
 - Actions and the prelude's tools see `YAK_SCRATCH_PATH`, `YAK_BUILD_ID`, and the other variables that yak and the prelude set.
 - The configuration sections are `[yak]`, `[yak_re_client]`, `[yak_resource_control]`, `[yak_system_warning]`, `[yak_hydration]`, and `[yak_metadata]`.
 - The hidden flag that runs the daemon in the client process is `--no-yakd`, and its variable is `YAK_NO_YAKD`.
-- `host_info()` no longer has a `yak` field.
+- `host_info()` no longer has a `buck2` field.
 - The integration tests take the binary from `YAK_BINARY` and rewrite golden files when `YAK_UPDATE_GOLDEN` is set.
 - The documentation calls the tool yak and its configuration the yakconfig.
-- The site's pages `concepts/yakconfig`, `concepts/yak_out`, `concepts/yak_query_language`, `getting_started/what_is_yak`, and `users/faq/yak_hanging` moved to `concepts/yakconfig`, `concepts/yak_out`, `concepts/query_language`, `getting_started/what_is_yak`, and `users/faq/yak_hanging`.
-- The site no longer has the page that compared Yak with Yak1, or the lists of articles, videos, projects, and tools about Yak.
+- The site's pages `concepts/buckconfig`, `concepts/buck_out`, `concepts/buck_query_language`, `getting_started/what_is_buck2`, and `users/faq/buck_hanging` moved to `concepts/yakconfig`, `concepts/yak_out`, `concepts/query_language`, `getting_started/what_is_yak`, and `users/faq/yak_hanging`.
+- The site no longer has the page that compared Buck2 with Buck1, or the lists of articles, videos, projects, and tools about Buck2.
 - The site's logo is a yak.
 - `website/gen_docs.py` takes the path of the binary with `--yak`.
 - The publisher of the Starlark extension for VS Code is `yak`.
 - The messages, help text, and doc comments of the binary and the prelude call the tool yak and its configuration the yakconfig.
 - HTTP requests name `yak` as the user agent.
-- The Visual Studio projects that `vsgo` generates build with `yak`. They ran `yak`.
+- The Visual Studio projects that `vsgo` generates build with `yak`. They ran `buck2`.
 - The example target in the `YAK` file that `yak init` writes prints `BUILT BY YAK`.
 - The `rust-project.json` that `rust-project` writes tells rust-analyzer to run tests with `yak test`.
 - The examples of the query functions in `yak docs uquery` query this repository's own targets.
@@ -86,14 +86,14 @@ Removes the code, configuration, and service clients that only Meta's internal b
 - The directory entries that `zip_file` adds for the parent directories of `srcs` files have the permissions 0755.
 - `entries_to_exclude` patterns use the syntax of Python's `re` module in place of Java's `java.util.regex`.
 
-### Removed Yak1 compatibility
+### Removed Buck1 compatibility
 
 Commands, flags, and build file functions:
 
 - `yak build` loses the hidden `--deep` flag, which did nothing.
 - `yak test` loses the hidden `--deep` and `--xml` flags, which did nothing.
 - The JSON that `yak run --command-args-file` writes loses the `is_fix_script` and `print_command` fields.
-- Test executors no longer receive the `--yak-test-info ignored` arguments.
+- Test executors no longer receive the `--buck-test-info ignored` arguments.
 - The `--output-attributes` flag is removed. It returned an error that named `--output-attribute`.
 - The `labels()` query function is removed. It returned an error for every input.
 - `yak targets --target-hash-function` accepts `fast` and `strong`. The `sha1`, `sha256`, and `murmur_hash3` values, which chose one of the two, are removed.
@@ -127,13 +127,13 @@ The prelude:
 
 ### Removed commands and flags
 
-- `yak rage` is removed. It uploaded diagnostics to Meta's internal services.
-- `yak explain` is removed. It printed nothing outside Meta's build.
-- `yak debug upload-re-logs` is removed. It uploaded Remote Execution logs to Manifold.
-- `yak debug persist-event-logs` is removed. It uploaded event logs to Manifold.
-- `yak docs agent` is removed. It printed Meta's schema for `--agent-context`.
+- `buck2 rage` is removed. It uploaded diagnostics to Meta's internal services.
+- `buck2 explain` is removed. It printed nothing outside Meta's build.
+- `buck2 debug upload-re-logs` is removed. It uploaded Remote Execution logs to Manifold.
+- `buck2 debug persist-event-logs` is removed. It uploaded event logs to Manifold.
+- `buck2 docs agent` is removed. It printed Meta's schema for `--agent-context`.
 - The global `--agent-context` flag and the `CODING_AGENT_METADATA` environment variable are removed. They tagged invocations for Meta's analytics.
-- `yak query --output-format html` is removed. It uploaded the page to Manifold.
+- `buck2 query --output-format html` is removed. It uploaded the page to Manifold.
 - The hidden `--skip-targets-with-duplicate-names` flag is removed. Its help called it a hack for TD and said not to use it.
 
 ### Removed analytics
@@ -148,22 +148,22 @@ The prelude:
 
 ### Removed configuration
 
-- `yak init` no longer writes the `none` cell or the `fbcode`, `fbsource`, `fbcode_macros`, `yak`, and `ovr_config` cell aliases. A project that loads through those names needs its own `[cell_aliases]` entries.
-- The `[yak_health_check]` section is removed.
+- `yak init` no longer writes the `none` cell or the `fbcode`, `fbsource`, `fbcode_macros`, `buck`, and `ovr_config` cell aliases. A project that loads through those names needs its own `[cell_aliases]` entries.
+- The `[buck2_health_check]` section is removed.
 - The `[scuba] defaults` key is removed.
 - The `[agent_context] enforced_clients` key is removed.
-- The `[yak]` keys for Eden are removed (`allow_eden_io`, `detect_eden_restart`, `use_eden_thrift_read`).
-- The `[yak]` keys for event log upload are removed (`log_use_manifold`, `event_log_buffer_size`, `event_log_message_batch_size`, `event_log_retry_attempts`, `event_log_retry_backoff_duration_ms`).
+- The `[buck2]` keys for Eden are removed (`allow_eden_io`, `detect_eden_restart`, `use_eden_thrift_read`).
+- The `[buck2]` keys for event log upload are removed (`log_use_manifold`, `event_log_buffer_size`, `event_log_message_batch_size`, `event_log_retry_attempts`, `event_log_retry_backoff_duration_ms`).
 - The `log_use_manifold` setting in `[log_download]` is removed. `log_url` still selects a server for `yak log` downloads.
-- The `[yak]` keys `agent_hostname_fail_v2_context`, `agent_hostname_fail_v2_glob`, and `allow_daemon_start_unsandboxed_via_wrapper` are removed.
+- The `[buck2]` keys `agent_hostname_fail_v2_context`, `agent_hostname_fail_v2_glob`, and `allow_daemon_start_unsandboxed_via_wrapper` are removed.
 - The `[apple] info_plist_identify_build_system` key is removed.
 - The `[http] proxy_env_allowlist` key is removed. Only Meta's internal HTTP client read it. `HTTPS_PROXY`, `HTTP_PROXY`, and `NO_PROXY` work as before.
-- The environment variables for Eden (`YAK_DISABLE_EDEN_HEALTH_CHECK`, `YAK_EDEN_SEMAPHORE`, `YAK_ENABLE_EDEN_THRIFT_READ`) are removed.
-- The environment variables for log upload (`YAK_SCRIBE_CATEGORY`, `YAK_TEST_MANIFOLD_TTL_S`, `YAK_TEST_MANIFOLD_CHUNK_BYTES`, `YAK_TEST_BLOCK_ON_UPLOAD`, `YAK_TEST_DISABLE_LOG_UPLOAD`) are removed.
+- The environment variables for Eden (`BUCK2_DISABLE_EDEN_HEALTH_CHECK`, `BUCK2_EDEN_SEMAPHORE`, `BUCK2_ENABLE_EDEN_THRIFT_READ`) are removed.
+- The environment variables for log upload (`BUCK2_SCRIBE_CATEGORY`, `BUCK2_TEST_MANIFOLD_TTL_S`, `BUCK2_TEST_MANIFOLD_CHUNK_BYTES`, `BUCK2_TEST_BLOCK_ON_UPLOAD`, `BUCK2_TEST_DISABLE_LOG_UPLOAD`) are removed.
 - The CI metadata variables that tagged events for analytics (`SANDCASTLE`, `SANDCASTLE_ALIAS`, `SANDCASTLE_ID`, `SANDCASTLE_INSTANCE_ID`, `SANDCASTLE_JOB_INFO`, `SANDCASTLE_SCHEDULE_TYPE`, `SANDCASTLE_TYPE`, `SCHEDULE_TYPE`, `SKYCASTLE_WORKFLOW_ALIAS`, `SKYCASTLE_WORKFLOW_RUN_ID`) are no longer read.
-- `YAK_ACTION_DIGEST_TRACE_LG_SAMPLE_RATE`, `YAK_DICE_DUMP_ON_PANIC`, `YAK_DUMP_FBS`, `YAK_IGNORE_VERSION_EXTRACTION_FAILURE`, and `YAK_TEST_DAEMON_ORIGINATING_CGROUP` are removed.
-- The `YAK_TEST_EXECUTOR_USE_TCP` environment variable replaces `YAK_TEST_TPX_USE_TCP`.
-- The daemon no longer reads `~/.yakconfig.d/experiments_from_yak_start`, in which Meta's wrapper listed Gatekeeper experiments. Commands no longer log a `TagEvent` of its `[experiments]` keys.
+- `BUCK2_ACTION_DIGEST_TRACE_LG_SAMPLE_RATE`, `BUCK2_DICE_DUMP_ON_PANIC`, `BUCK2_DUMP_FBS`, `BUCK2_IGNORE_VERSION_EXTRACTION_FAILURE`, and `BUCK2_TEST_DAEMON_ORIGINATING_CGROUP` are removed.
+- The `YAK_TEST_EXECUTOR_USE_TCP` environment variable replaces `BUCK2_TEST_TPX_USE_TCP`.
+- The daemon no longer reads `~/.buckconfig.d/experiments_from_buck_start`, in which Meta's wrapper listed Gatekeeper experiments. Commands no longer log a `TagEvent` of its `[experiments]` keys.
 
 ### Remote Execution
 
@@ -194,7 +194,7 @@ The Bazel Remote Execution API has no field for gang workers, action dependencie
 - `yak run` on a `go_test` without `env` runs the test binary directly. It ran through `inject_test_env.py` before.
 - The `TestListingInfo` provider and the `prelude//go/tools:list_tests` target are removed.
 - The `@prelude//apple:apple_test_device_types.bzl` module is removed.
-- Top-level `.app` bundles no longer carry the `FBYak` key in `Info.plist`.
+- Top-level `.app` bundles no longer carry the `FBBuck2` key in `Info.plist`.
 - `@prelude//cfg/modifier:alias.bzl` exports its struct of modifier aliases as `ALIASES` in place of `OSS_ALIASES`.
 
 Rule attributes and toolchain fields that only Meta's build used are removed:
