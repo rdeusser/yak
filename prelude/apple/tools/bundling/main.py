@@ -613,7 +613,7 @@ def _amend_spec_with_build_uuid(
     resources_destination: Optional[Path],
     tmp_dir: Path,
 ) -> None:
-    build_id = os.environ.get("BUCK_BUILD_ID")
+    build_id = os.environ.get("YAK_BUILD_ID")
     if not build_id:
         return
 

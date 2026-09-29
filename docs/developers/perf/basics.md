@@ -28,7 +28,7 @@ Implications for measurement:
 - The daemon survives between invocations. Two consecutive `yak build` commands share DICE state,
   allocators, file watchers, etc. State carries across commands until the daemon is killed or
   restarted by version skew.
-- `--no-buckd` runs everything in one process. When possible this is preferred as it's less noisy,
+- `--no-yakd` runs everything in one process. When possible this is preferred as it's less noisy,
   but cannot be used for something like retained memory or with a pre-warming step.
 
 ## Avoiding daemon conflicts
@@ -69,7 +69,7 @@ Choosing the right workload means higher SNR and faster results. *Typically:*
    - Ensure you get 100% cache hits. One build with `--remote-only` will generally populate anything
      missing and being on the right revision helps.
 
-Additionally: `-v0`, `--console=none`, and `--no-buckd` helps reduce variance. Event log is still
+Additionally: `-v0`, `--console=none`, and `--no-yakd` helps reduce variance. Event log is still
 produced.
 
 This is not to the exclusion of anything else, other workloads may be appropriate depending on what

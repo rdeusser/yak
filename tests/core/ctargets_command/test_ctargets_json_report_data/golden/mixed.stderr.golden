@@ -1,4 +1,4 @@
-# This file is @generated, regenerate by rerunning the test with `BUCK2_UPDATE_GOLDEN=1` set
+# This file is @generated, regenerate by rerunning the test with `YAK_UPDATE_GOLDEN=1` set
 
 [<TIMESTAMP>] Starting new yak daemon...
 [<TIMESTAMP>] Connected to new yak daemon.
@@ -20,6 +20,6 @@
 [<TIMESTAMP>]     2 | fail("test_parse_error")
 [<TIMESTAMP>]       | ^^^^^^^^^^^^^^^^^^^^^^^^
 [<TIMESTAMP>]     
-[<TIMESTAMP>] ERROR:Upgraded warning to failure via $BUCK2_HARD_ERROR: root//c:depends_on_incompatible (root//:linux_platform#<HASH>) does not pass compatibility check (will be error in future) because its transitive dep root//c:macos_only_target
+[<TIMESTAMP>] ERROR:Upgraded warning to failure via $YAK_HARD_ERROR: root//c:depends_on_incompatible (root//:linux_platform#<HASH>) does not pass compatibility check (will be error in future) because its transitive dep root//c:macos_only_target
 [<TIMESTAMP>]     is incompatible with root//:linux_platform#<HASH> (root//:macos unsatisfied), check the target's compatibility attributes
 [<TIMESTAMP>]

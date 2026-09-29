@@ -265,13 +265,13 @@ pub async fn new_daemon_api_client(
 
 pub fn buckd_startup_timeout() -> buck2_error::Result<Duration> {
     Ok(Duration::from_secs(
-        buck2_env!("BUCKD_STARTUP_TIMEOUT", type=u64)?.unwrap_or(10),
+        buck2_env!("YAKD_STARTUP_TIMEOUT", type=u64)?.unwrap_or(10),
     ))
 }
 
 pub fn buckd_startup_init_timeout() -> buck2_error::Result<Duration> {
     Ok(Duration::from_secs(
-        buck2_env!("BUCKD_STARTUP_INIT_TIMEOUT", type=u64)?.unwrap_or(90),
+        buck2_env!("YAKD_STARTUP_INIT_TIMEOUT", type=u64)?.unwrap_or(90),
     ))
 }
 
@@ -354,7 +354,7 @@ impl<'a> BuckdLifecycle<'a> {
         //   behavior.
         daemon_env_vars.push((
             OsStr::new("RUST_LIB_BACKTRACE"),
-            OsString::from(buck2_env!("BUCK2_LIB_BACKTRACE")?.unwrap_or("0")),
+            OsString::from(buck2_env!("YAK_LIB_BACKTRACE")?.unwrap_or("0")),
         ));
 
         if env::var_os("FORCE_WANT_RESTART").is_some() {
@@ -446,8 +446,8 @@ impl<'a> BuckdLifecycle<'a> {
 
         cmd.args(&resource_control_args);
 
-        if buck2_env!("BUCK_DAEMON_LOG_TO_FILE", type=u8)? == Some(1) {
-            cmd.env("BUCK_LOG_TO_FILE_PATH", self.paths.log_dir().as_os_str());
+        if buck2_env!("YAK_DAEMON_LOG_TO_FILE", type=u8)? == Some(1) {
+            cmd.env("YAK_LOG_TO_FILE_PATH", self.paths.log_dir().as_os_str());
         }
 
         for (key, val) in daemon_env_vars {

@@ -46,7 +46,7 @@ use crate::sqlite::tables::dep_file_state_table::DepFileStateSqliteTable;
 /// PLEASE bump this version if you are making a breaking change to the schema!
 ///
 /// If you forget to bump this version, you can fix forward by bumping the
-/// `buck2.sqlite_dep_file_state_version` buckconfig in the project root's .yakconfig.
+/// `yak.sqlite_dep_file_state_version` buckconfig in the project root's .yakconfig.
 pub const DEP_FILE_DB_SCHEMA_VERSION: u64 = 2;
 
 impl SqliteTable for DepFileStateSqliteTable {

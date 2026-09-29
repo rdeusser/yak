@@ -52,7 +52,7 @@ def android_instrumentation_test_impl(ctx: AnalysisContext):
             shared_libs = traverse_shared_library_info(shared_library_info, transformation_provider = None),
         )
 
-        env["BUCK_LD_SYMLINK_TREE"] = cxx_library_symlink_tree
+        env["YAK_LD_SYMLINK_TREE"] = cxx_library_symlink_tree
     classpath_args.add(cmd_args(extra_classpath + classpath, delimiter = get_path_separator_for_exec_os(ctx)))
     cmd.append(at_argfile(actions = ctx.actions, name = "classpath_args_file", args = classpath_args))
 

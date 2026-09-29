@@ -1846,7 +1846,7 @@ def _rustc_invoke(
             identifier += " "
         identifier += "[incr]"
 
-    # None defers the choice to the `buck2.default_allow_cache_upload` config; an
+    # None defers the choice to the `yak.default_allow_cache_upload` config; an
     # explicit False overrides it. Actions without a preference pass None.
     if incremental_enabled:
         # Incremental compilation should not publish any action output to a shared cache:

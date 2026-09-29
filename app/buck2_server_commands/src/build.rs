@@ -240,7 +240,7 @@ async fn build(
         .parse_legacy_config_property(
             cell_resolver.root_cell(),
             BuckconfigKeyRef {
-                section: "buck2",
+                section: "yak",
                 property: "log_configured_graph_size",
             },
         )
@@ -252,7 +252,7 @@ async fn build(
         .parse_legacy_config_property(
             cell_resolver.root_cell(),
             BuckconfigKeyRef {
-                section: "buck2",
+                section: "yak",
                 property: "log_configured_graph_sketch",
             },
         )
@@ -264,7 +264,7 @@ async fn build(
         .parse_legacy_config_property(
             cell_resolver.root_cell(),
             BuckconfigKeyRef {
-                section: "buck2",
+                section: "yak",
                 property: "log_total_configured_graph_sketch",
             },
         )
@@ -276,7 +276,7 @@ async fn build(
         .parse_legacy_config_property(
             cell_resolver.root_cell(),
             BuckconfigKeyRef {
-                section: "buck2",
+                section: "yak",
                 property: "log_retained_analysis_memory_sketch",
             },
         )
@@ -288,7 +288,7 @@ async fn build(
         .parse_legacy_config_property(
             cell_resolver.root_cell(),
             BuckconfigKeyRef {
-                section: "buck2",
+                section: "yak",
                 property: "log_action_graph_sketch",
             },
         )
@@ -300,7 +300,7 @@ async fn build(
         .parse_legacy_config_property(
             cell_resolver.root_cell(),
             BuckconfigKeyRef {
-                section: "buck2",
+                section: "yak",
                 property: "log_peak_analysis_memory_sketch",
             },
         )
@@ -312,7 +312,7 @@ async fn build(
         .parse_legacy_config_property(
             cell_resolver.root_cell(),
             BuckconfigKeyRef {
-                section: "buck2",
+                section: "yak",
                 property: "log_peak_load_memory_sketch",
             },
         )
@@ -324,7 +324,7 @@ async fn build(
         .parse_legacy_config_property(
             cell_resolver.root_cell(),
             BuckconfigKeyRef {
-                section: "buck2",
+                section: "yak",
                 property: "log_artifact_count_sketch",
             },
         )
@@ -336,7 +336,7 @@ async fn build(
         .parse_legacy_config_property(
             cell_resolver.root_cell(),
             BuckconfigKeyRef {
-                section: "buck2",
+                section: "yak",
                 property: "log_artifact_size_sketch",
             },
         )
@@ -348,7 +348,7 @@ async fn build(
         .parse_legacy_config_property(
             cell_resolver.root_cell(),
             BuckconfigKeyRef {
-                section: "buck2",
+                section: "yak",
                 property: "log_sketch_cardinalities",
             },
         )
@@ -373,7 +373,7 @@ async fn build(
         .parse_legacy_config_list_property::<SkipProvider>(
             cell_resolver.root_cell(),
             BuckconfigKeyRef {
-                section: "buck2",
+                section: "yak",
                 property: "providers_to_skip_in_artifact_path_sketch",
             },
         )
@@ -441,7 +441,7 @@ async fn build(
         .parse_legacy_config_property(
             cell_resolver.root_cell(),
             BuckconfigKeyRef {
-                section: "buck2",
+                section: "yak",
                 property: "detailed_aggregated_metrics",
             },
         )
@@ -612,7 +612,7 @@ async fn process_build_result(
         .parse_legacy_config_property(
             cell_resolver.root_cell(),
             BuckconfigKeyRef {
-                section: "buck2",
+                section: "yak",
                 property: "create_unhashed_links",
             },
         )
@@ -982,7 +982,7 @@ async fn build_target(
 }
 
 /// Provider types that can be skipped in artifact path sketch computation.
-/// Parsed from `buck2.providers_to_skip_in_artifact_path_sketch` buckconfig.
+/// Parsed from `yak.providers_to_skip_in_artifact_path_sketch` buckconfig.
 enum SkipProvider {
     Build,
     Run,

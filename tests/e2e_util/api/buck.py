@@ -343,7 +343,7 @@ class Buck(Executable):
         """
 
         my_env = {} if env is None else env.copy()
-        my_env["BUCK2_COMPLETION_TIMEOUT"] = "30000"
+        my_env["YAK_COMPLETION_TIMEOUT"] = "30000"
 
         return self._run_buck_command(
             "complete",
@@ -792,8 +792,8 @@ class Buck(Executable):
         """
         buck_build_id = str(uuid.uuid1())
         command_env = self._get_command_env(env)
-        if "BUCK_WRAPPER_UUID" not in command_env:
-            command_env["BUCK_WRAPPER_UUID"] = buck_build_id
+        if "YAK_WRAPPER_UUID" not in command_env:
+            command_env["YAK_WRAPPER_UUID"] = buck_build_id
 
         cwd = self._get_cwd(rel_cwd)
 
@@ -931,4 +931,4 @@ class Buck(Executable):
         return (daemon_dir / "prev/yakd.stderr").read_text()
 
     def get_settings_home_dir(self) -> Path:
-        return Path(self._env["BUCK2_TEST_SETTINGS_HOME_DIR"])
+        return Path(self._env["YAK_TEST_SETTINGS_HOME_DIR"])

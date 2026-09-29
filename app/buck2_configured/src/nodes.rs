@@ -1370,7 +1370,7 @@ impl ConfiguredTargetNodeCalculationImpl for ConfiguredTargetNodeCalculationInst
     }
 }
 
-pagable::static_str!(SECTION_BUCK2 = "buck2");
+pagable::static_str!(SECTION_BUCK2 = "yak");
 pagable::static_str!(PROPERTY_ERROR_ON_DEP_ONLY_INCOMPATIBLE = "error_on_dep_only_incompatible");
 pagable::static_str!(
     PROPERTY_ERROR_ON_DEP_ONLY_INCOMPATIBLE_EXCLUDED = "error_on_dep_only_incompatible_excluded"
@@ -1497,7 +1497,7 @@ async fn get_dep_only_incompatible_custom_soft_error(
             let alias_resolver = ctx.get_cell_alias_resolver(root_cell).await?;
             let root_conf = ctx.get_legacy_root_config_on_dice().await?;
             let Some(target) = root_conf.view(ctx).parse::<String>(BuckconfigKeyRef {
-                section: "buck2",
+                section: "yak",
                 property: "dep_only_incompatible_info",
             })?
             else {

@@ -57,7 +57,7 @@ def _generate_script(
     # used for the links in the invocation-specific sandbox (so things would
     # point through the cell symlinks to their original locations). Instead we
     # construct links directly to things (which buck1 actually also did for its
-    # BUCK_DEFAULT_RUNTIME_RESOURCES).
+    # YAK_DEFAULT_RUNTIME_RESOURCES).
     if not is_windows:
         script_content = cmd_args(
             "#!/usr/bin/env bash",
@@ -71,20 +71,16 @@ def _generate_script(
             # should unify the two, but prior to doing this we should also
             # identify what the right format is. For now, this variable lets
             # callees disambiguate.
-            "export BUCK_SH_BINARY_VERSION_UNSTABLE=2",
-            cmd_args('export BUCK_PROJECT_ROOT="$__SCRIPT_DIR/', resources_dir, '"', delimiter = ""),
+            "export YAK_SH_BINARY_VERSION_UNSTABLE=2",
+            cmd_args('export YAK_PROJECT_ROOT="$__SCRIPT_DIR/', resources_dir, '"', delimiter = ""),
             # Normalize backslashes to forward slashes for the Windows-host /
             # Linux-target (RE) case where relative_to produces Windows-style separators.
-            'export BUCK_PROJECT_ROOT="${BUCK_PROJECT_ROOT//\\\\//}"',
-            # In buck1, the paths for resources that are outputs of rules have
-            # different paths in BUCK_PROJECT_ROOT and
-            # BUCK_DEFAULT_RUNTIME_RESOURCES, but we use the same paths. buck1's
-            # BUCK_PROJECT_ROOT paths would use the actual yak-out path rather
-            # than something derived from the target and so to use that people
-            # would need to hardcode yak-out paths into their scripts. For repo
-            # sources, the paths are the same for both.
-            'export BUCK_DEFAULT_RUNTIME_RESOURCES="$BUCK_PROJECT_ROOT"',
-            'exec "$BUCK_PROJECT_ROOT/{}" "$@"'.format(main_link),
+            'export YAK_PROJECT_ROOT="${YAK_PROJECT_ROOT//\\\\//}"',
+            # YAK_PROJECT_ROOT and YAK_DEFAULT_RUNTIME_RESOURCES name the same
+            # directory. A resource that a rule outputs has a path there that
+            # derives from its target, so scripts need no yak-out paths.
+            'export YAK_DEFAULT_RUNTIME_RESOURCES="$YAK_PROJECT_ROOT"',
+            'exec "$YAK_PROJECT_ROOT/{}" "$@"'.format(main_link),
             relative_to = (script, 1),
         )
     else:
@@ -100,10 +96,10 @@ def _generate_script(
             else "",
             # Get parent folder.
             'for %%a in ("%__SRC%") do set "__SCRIPT_DIR=%%~dpa"',
-            "set BUCK_SH_BINARY_VERSION_UNSTABLE=2",
-            cmd_args("set BUCK_PROJECT_ROOT=%__SCRIPT_DIR%\\", resources_dir, delimiter = ""),
-            "set BUCK_DEFAULT_RUNTIME_RESOURCES=%BUCK_PROJECT_ROOT%",
-            "%BUCK_PROJECT_ROOT%\\{} %*".format(main_link),
+            "set YAK_SH_BINARY_VERSION_UNSTABLE=2",
+            cmd_args("set YAK_PROJECT_ROOT=%__SCRIPT_DIR%\\", resources_dir, delimiter = ""),
+            "set YAK_DEFAULT_RUNTIME_RESOURCES=%YAK_PROJECT_ROOT%",
+            "%YAK_PROJECT_ROOT%\\{} %*".format(main_link),
             relative_to = (script, 1),
         )
     actions.write(

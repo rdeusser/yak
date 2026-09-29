@@ -1,42 +1,42 @@
-# This file is @generated, regenerate by rerunning the test with `BUCK2_UPDATE_GOLDEN=1` set
+# This file is @generated, regenerate by rerunning the test with `YAK_UPDATE_GOLDEN=1` set
 
-Name                             Type                  Default
-BUCK2_ARG0                       String
-BUCK2_CLIENT_METADATA            String
-BUCK2_CONSOLE_OUTPUT_LIMIT       u64
-BUCK2_DEBUG_RAWOUTPUT_CHUNK_SIZE usize                 DEFAULT_CHUNK_SIZE
-BUCK2_DICE_SNAPSHOT_INTERVAL_MS  u64                   500
-BUCK2_DISABLE_FILE_ATTR          bool                  false
-BUCK2_DISABLE_MACOS_QOS          bool                  false
-BUCK2_HARD_ERROR                 String
-BUCK2_INSTALLER_SEND_TIMEOUT_S   u64
-BUCK2_INSTALLER_TIMEOUT_S        u64
-BUCK2_IO_SEMAPHORE               usize                 buck2_util::threads::available_parallelism()
-BUCK2_IO_THREADS                 usize                 directory_mutation_parallelism()
-BUCK2_KEEP_DEP_FILE_DIRECTORIES  bool                  false
-BUCK2_LIB_BACKTRACE              String
-BUCK2_MAX_BLOCKING_THREADS       usize
-BUCK2_PARANOID_PATH              String
-BUCK2_RE_CONNECT_TIMEOUT_S       u64                   120
-BUCK2_RE_DOWNLOAD_CONCURRENCY    usize                 256
-BUCK2_RUNTIME_THREADS            usize
-BUCK2_SHOW_SOFT_ERRORS           String
-BUCK2_TEST_EXECUTOR_USE_TCP      bool                  false
-BUCK2_WATCHMAN_TIMEOUT           u64                   57
-BUCKD_STARTUP_INIT_TIMEOUT       u64
-BUCKD_STARTUP_TIMEOUT            u64
-BUCK_CONSOLE                     String
-BUCK_DAEMON_LOG_TO_FILE          u8
-BUCK_DEFAULT_DIGEST_ALGORITHM    DigestAlgorithmFamily
-BUCK_DISABLE_EXPANDED_PROGRESS   bool                  false
-BUCK_LOG                         String
-BUCK_NO_INTERACTIVE_CONSOLE      String
-BUCK_OFFLINE_BUILD               String
-BUCK_PARANOID                    bool
-BUCK_PREFER_REMOTE               String
-BUCK_VERBOSE                     String
-BUCK_WRAPPER_START_TIME          u64
-CI                               bool                  false
-DICE_DETECT_CYCLES_UNSTABLE      DetectCycles
-ENFORCE_DISPATCHER_SET           bool                  false
-FORCE_WANT_RESTART               bool                  false
+Name                           Type                  Default
+CI                             bool                  false
+DICE_DETECT_CYCLES_UNSTABLE    DetectCycles
+ENFORCE_DISPATCHER_SET         bool                  false
+FORCE_WANT_RESTART             bool                  false
+YAKD_STARTUP_INIT_TIMEOUT      u64
+YAKD_STARTUP_TIMEOUT           u64
+YAK_ARG0                       String
+YAK_CLIENT_METADATA            String
+YAK_CONSOLE                    String
+YAK_CONSOLE_OUTPUT_LIMIT       u64
+YAK_DAEMON_LOG_TO_FILE         u8
+YAK_DEBUG_RAWOUTPUT_CHUNK_SIZE usize                 DEFAULT_CHUNK_SIZE
+YAK_DEFAULT_DIGEST_ALGORITHM   DigestAlgorithmFamily
+YAK_DICE_SNAPSHOT_INTERVAL_MS  u64                   500
+YAK_DISABLE_EXPANDED_PROGRESS  bool                  false
+YAK_DISABLE_FILE_ATTR          bool                  false
+YAK_DISABLE_MACOS_QOS          bool                  false
+YAK_HARD_ERROR                 String
+YAK_INSTALLER_SEND_TIMEOUT_S   u64
+YAK_INSTALLER_TIMEOUT_S        u64
+YAK_IO_SEMAPHORE               usize                 buck2_util::threads::available_parallelism()
+YAK_IO_THREADS                 usize                 directory_mutation_parallelism()
+YAK_KEEP_DEP_FILE_DIRECTORIES  bool                  false
+YAK_LIB_BACKTRACE              String
+YAK_LOG                        String
+YAK_MAX_BLOCKING_THREADS       usize
+YAK_NO_INTERACTIVE_CONSOLE     String
+YAK_OFFLINE_BUILD              String
+YAK_PARANOID                   bool
+YAK_PARANOID_PATH              String
+YAK_PREFER_REMOTE              String
+YAK_RE_CONNECT_TIMEOUT_S       u64                   120
+YAK_RE_DOWNLOAD_CONCURRENCY    usize                 256
+YAK_RUNTIME_THREADS            usize
+YAK_SHOW_SOFT_ERRORS           String
+YAK_TEST_EXECUTOR_USE_TCP      bool                  false
+YAK_VERBOSE                    String
+YAK_WATCHMAN_TIMEOUT           u64                   57
+YAK_WRAPPER_START_TIME         u64

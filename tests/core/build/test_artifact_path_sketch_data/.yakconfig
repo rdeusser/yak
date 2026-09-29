@@ -4,5 +4,5 @@
 [buildfile]
   name=YAK.fixture
 
-[buck2]
+[yak]
   defer_write_actions = true

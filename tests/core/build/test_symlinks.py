@@ -28,7 +28,7 @@ def setup_symlink(symlink_path: Path, target: Path) -> None:
     os.symlink(target, symlink_path)
 
 
-@buck_test(extra_buck_config={"buck2": {"use_correct_source_symlink_reading": "true"}})
+@buck_test(extra_buck_config={"yak": {"use_correct_source_symlink_reading": "true"}})
 async def test_symlink_target_tracked_for_rebuild(buck: Buck) -> None:
     setup_symlink(buck.cwd / "src" / "link", Path("../dir"))
 
@@ -53,7 +53,7 @@ async def test_symlink_target_tracked_for_rebuild(buck: Buck) -> None:
     strict=True,
 )
 @buck_test(
-    extra_buck_config={"buck2": {"use_correct_source_symlink_reading": "true"}},
+    extra_buck_config={"yak": {"use_correct_source_symlink_reading": "true"}},
 )
 async def test_symlinks_redirection(buck: Buck) -> None:
     setup_symlink(buck.cwd / "src" / "link", Path("../dir"))
@@ -76,7 +76,7 @@ async def test_symlinks_redirection(buck: Buck) -> None:
     strict=True,
 )
 @buck_test(
-    extra_buck_config={"buck2": {"use_correct_source_symlink_reading": "true"}},
+    extra_buck_config={"yak": {"use_correct_source_symlink_reading": "true"}},
 )
 async def test_symlinks_external(buck: Buck) -> None:
     top_level = Path(tempfile.mkdtemp())
@@ -101,7 +101,7 @@ async def test_symlinks_external(buck: Buck) -> None:
 
 
 @pytest.mark.remote_execution
-@buck_test(extra_buck_config={"buck2": {"use_correct_source_symlink_reading": "true"}})
+@buck_test(extra_buck_config={"yak": {"use_correct_source_symlink_reading": "true"}})
 async def test_no_read_through_symlinks(buck: Buck) -> None:
     res = await buck.build_without_report(
         "//:stat_symlink",
@@ -132,7 +132,7 @@ async def test_no_read_through_symlinks(buck: Buck) -> None:
 
 
 @pytest.mark.remote_execution
-@buck_test(extra_buck_config={"buck2": {"use_correct_source_symlink_reading": "true"}})
+@buck_test(extra_buck_config={"yak": {"use_correct_source_symlink_reading": "true"}})
 async def test_no_read_through_source_symlinks_to_file(buck: Buck) -> None:
     res = await buck.build_without_report(
         "//:stat_symlink",
@@ -157,7 +157,7 @@ async def test_no_read_through_source_symlinks_to_file(buck: Buck) -> None:
     assert res.stdout.strip() == "True"
 
 
-@buck_test(extra_buck_config={"buck2": {"use_correct_source_symlink_reading": "true"}})
+@buck_test(extra_buck_config={"yak": {"use_correct_source_symlink_reading": "true"}})
 async def test_no_read_through_source_symlinks_to_in_symlink_target(buck: Buck) -> None:
     for s in ("dir", "dir2/dir"):
         (buck.cwd / s).mkdir(parents=True, exist_ok=True)

@@ -373,7 +373,7 @@ async fn test(
                 .parse_legacy_config_property::<bool>(
                     cell_resolver.root_cell(),
                     BuckconfigKeyRef {
-                        section: "buck2",
+                        section: "yak",
                         property: "test_builds_targets",
                     },
                 )
@@ -1863,7 +1863,7 @@ fn generate_config_entry_args(
 }
 
 fn post_process_test_executor(s: &str) -> buck2_error::Result<PathBuf> {
-    match s.split_once("$BUCK2_BINARY_DIR/") {
+    match s.split_once("$YAK_BINARY_DIR/") {
         Some(("", rest)) => {
             let exe = AbsPathBuf::new(
                 std::env::current_exe().buck_error_context("Cannot get Buck2 executable")?,

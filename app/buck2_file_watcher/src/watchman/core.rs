@@ -172,7 +172,7 @@ impl Debug for WatchmanClient {
 async fn with_timeout<R>(
     fut: impl Future<Output = Result<R, watchman_client::Error>> + Send,
 ) -> buck2_error::Result<R> {
-    let timeout = buck2_env!("BUCK2_WATCHMAN_TIMEOUT", type=u64, default=57)?;
+    let timeout = buck2_env!("YAK_WATCHMAN_TIMEOUT", type=u64, default=57)?;
     if timeout == 0 {
         return Err(WatchmanClientError::ZeroTimeout.into());
     }

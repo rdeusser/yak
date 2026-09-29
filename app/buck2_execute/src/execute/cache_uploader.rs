@@ -221,11 +221,7 @@ impl CacheUploadOutcome {
 
 // This is for quick testing of cache upload without configuring executors.
 pub fn force_cache_upload() -> buck2_error::Result<bool> {
-    buck2_env!(
-        "BUCK2_TEST_FORCE_CACHE_UPLOAD",
-        bool,
-        applicability = testing
-    )
+    buck2_env!("YAK_TEST_FORCE_CACHE_UPLOAD", bool, applicability = testing)
 }
 
 /// A single purpose trait to handle cache uploads

@@ -1,2 +1,2 @@
-[buck2]
+[yak]
   test_builds_targets = true

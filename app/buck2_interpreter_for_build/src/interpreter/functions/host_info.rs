@@ -92,18 +92,7 @@ fn new_host_info(
             )
         };
 
-        new_struct(
-            heap,
-            &[
-                ("os", os),
-                ("arch", arch),
-                // TODO(cjhopman): Remove in favour of version_info() in Buck v1 and v2
-                // We want to be able to determine if we are on Buck v2 or not, this mechanism
-                // is quick, cheap and Buck v1 compatible.
-                ("buck2", Value::new_bool(true)),
-                ("xcode", xcode),
-            ],
-        )
+        new_struct(heap, &[("os", os), ("arch", arch), ("xcode", xcode)])
     })
 }
 

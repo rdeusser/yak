@@ -209,7 +209,7 @@ fn detailed_aggregated_metrics_requested(config: &LegacyBuckConfig) -> buck2_err
     for property in ["detailed_aggregated_metrics", "log_action_graph_sketch"] {
         if config
             .parse::<bool>(BuckconfigKeyRef {
-                section: "buck2",
+                section: "yak",
                 property,
             })?
             .unwrap_or(false)

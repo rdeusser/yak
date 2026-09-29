@@ -177,7 +177,7 @@ pub struct BuildContext<'a> {
 
     /// Whether to infer a target name when a label pattern does not provide one,
     /// making `//foo/bar` equivalent to `//foo/bar:bar`. Controlled by the
-    /// `buck2.infer_target_names` buckconfig.
+    /// `yak.infer_target_names` buckconfig.
     pub(crate) infer_target_names: InferTargetNames,
 
     /// Peak allocated bytes limit for starlark.

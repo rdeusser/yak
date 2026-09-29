@@ -1,4 +1,4 @@
-# This file is @generated, regenerate by rerunning the test with `BUCK2_UPDATE_GOLDEN=1` set
+# This file is @generated, regenerate by rerunning the test with `YAK_UPDATE_GOLDEN=1` set
 
 root//:foo yak-out/v2/art/root/1ef78538d8598cb2/__foo__/foo.txt
 

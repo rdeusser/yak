@@ -61,7 +61,7 @@ use crate::metrics::PagingMemorySnapshot;
 use crate::value::DiceValidValue;
 use crate::value::PageOutResult;
 
-/// On-disk backend for pagable DICE storage, from `buck2_hydration.pagable_storage_backend`.
+/// On-disk backend for pagable DICE storage, from `yak_hydration.pagable_storage_backend`.
 #[derive(
     Allocative,
     Clone,
@@ -264,7 +264,7 @@ impl DiceStorage {
         // Process this many keys in parallel at a time, limit peak RSS
         const CHUNK_SIZE: usize = 32768;
         let finished = Arc::new(ArcSerCache::new());
-        let num_workers = env_concurrency("BUCK2_DICE_PAGE_OUT_WORKERS");
+        let num_workers = env_concurrency("YAK_DICE_PAGE_OUT_WORKERS");
 
         let mut remaining = keys;
         let mut worker_error = None;
@@ -448,7 +448,7 @@ impl DiceStorage {
         if keys.is_empty() {
             return Ok(());
         }
-        let num_workers = env_concurrency("BUCK2_DICE_PAGE_IN_WORKERS");
+        let num_workers = env_concurrency("YAK_DICE_PAGE_IN_WORKERS");
         let worker_size = keys.len().div_ceil(num_workers);
 
         let handles: Vec<_> = keys

@@ -53,7 +53,7 @@ pub struct CompleteCommand {
         hide = true,
         long = "timeout",
         help = "Timeout for completion in milliseconds",
-        env = "BUCK2_COMPLETION_TIMEOUT",
+        env = "YAK_COMPLETION_TIMEOUT",
         default_value_t = 500
     )]
     timeout_ms: u64,

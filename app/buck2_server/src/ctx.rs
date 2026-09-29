@@ -685,7 +685,7 @@ impl DiceUpdater for DiceCommandUpdater<'_, '_> {
         let infer_target_names = if cells_and_configs
             .root_config
             .parse::<bool>(BuckconfigKeyRef {
-                section: "buck2",
+                section: "yak",
                 property: "infer_target_names",
             })?
             .unwrap_or(false)
@@ -774,7 +774,7 @@ impl DiceCommandUpdater<'_, '_> {
 
         let enable_miniperf = root_config
             .parse::<RolloutPercentage>(BuckconfigKeyRef {
-                section: "buck2",
+                section: "yak",
                 property: "miniperf2",
             })?
             .unwrap_or_else(RolloutPercentage::always)
@@ -782,7 +782,7 @@ impl DiceCommandUpdater<'_, '_> {
 
         let log_action_keys = root_config
             .parse::<RolloutPercentage>(BuckconfigKeyRef {
-                section: "buck2",
+                section: "yak",
                 property: "log_action_keys",
             })?
             .unwrap_or_else(RolloutPercentage::always)
@@ -790,7 +790,7 @@ impl DiceCommandUpdater<'_, '_> {
 
         let log_configured_graph_size = root_config
             .parse::<bool>(BuckconfigKeyRef {
-                section: "buck2",
+                section: "yak",
                 property: "log_configured_graph_size",
             })?
             .unwrap_or(false);
@@ -861,20 +861,20 @@ impl DiceCommandUpdater<'_, '_> {
         let mut run_action_knobs = self.run_action_knobs.dupe();
         run_action_knobs.use_network_action_output_cache |= root_config
             .parse::<bool>(BuckconfigKeyRef {
-                section: "buck2",
+                section: "yak",
                 property: "use_network_action_output_cache",
             })?
             .unwrap_or(false);
         run_action_knobs.default_allow_cache_upload |= root_config
             .parse::<bool>(BuckconfigKeyRef {
-                section: "buck2",
+                section: "yak",
                 property: "default_allow_cache_upload",
             })?
             .unwrap_or(false);
 
         if root_config
             .parse::<bool>(BuckconfigKeyRef {
-                section: "buck2",
+                section: "yak",
                 property: "share_action_paths",
             })?
             .unwrap_or(true)
@@ -884,19 +884,19 @@ impl DiceCommandUpdater<'_, '_> {
 
         run_action_knobs.deduplicate_get_digests_ttl_calls |= root_config
             .parse::<bool>(BuckconfigKeyRef {
-                section: "buck2",
+                section: "yak",
                 property: "deduplicate_get_digests_ttl_calls",
             })?
             .unwrap_or(true);
 
         let output_trees_download_semaphore_size = root_config.parse::<u32>(BuckconfigKeyRef {
-            section: "buck2",
+            section: "yak",
             property: "output_trees_download_semaphore_size",
         })?;
 
         let fingerprint_re_output_trees_eagerly = root_config
             .parse::<bool>(BuckconfigKeyRef {
-                section: "buck2",
+                section: "yak",
                 property: "fingerprint_re_output_trees_eagerly",
             })?
             .unwrap_or(true);
@@ -909,7 +909,7 @@ impl DiceCommandUpdater<'_, '_> {
         buck2_core::faster_directories::VALUE.store(
             root_config
                 .parse::<bool>(BuckconfigKeyRef {
-                    section: "buck2",
+                    section: "yak",
                     property: "faster_directories",
                 })?
                 .unwrap_or(true),
@@ -942,7 +942,7 @@ impl DiceCommandUpdater<'_, '_> {
 
         let critical_path_backend = root_config
             .parse(BuckconfigKeyRef {
-                section: "buck2",
+                section: "yak",
                 property: "critical_path_backend2",
             })?
             .unwrap_or(CriticalPathBackendName::LongestPathGraph);
@@ -964,7 +964,7 @@ impl DiceCommandUpdater<'_, '_> {
 
         set_fallback_executor_config(&mut data.data, self.executor_config.dupe());
         // This client is only used in places that do not use the RE use case specified in the executor config.
-        // They currently use either a usecase specified in actions (cas_artifact), or a global default (buck2.default_remote_execution_use_case).
+        // They currently use either a usecase specified in actions (cas_artifact), or a global default (build.default_remote_execution_use_case).
         // We should not override the cas_artifact usecase or else the ttl may not match the action declaration.
         data.set_re_client(self.re_connection.get_client());
         if let Some(v) = &self.profile_event_listener {

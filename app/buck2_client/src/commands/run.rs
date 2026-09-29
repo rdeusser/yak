@@ -64,7 +64,7 @@ const WRAPPER_ENV_VARS: [&str; 3] = [
 /// yak run //my/target -- --arg1 --arg2
 ///
 /// The Build ID for the underlying build execution is made available to the target in
-/// the `BUCK_RUN_BUILD_ID` environment variable.
+/// the `YAK_RUN_BUILD_ID` environment variable.
 #[derive(Debug, clap::Parser)]
 // FIXME(JakobDegen): Remove usage override once soft error is removed
 #[clap(
@@ -248,7 +248,7 @@ impl StreamingCommand for RunCommand {
             run_args.into_iter().map(|arg| arg.into()).collect(),
             chdir,
             ExecEnvironment {
-                set: vec![("BUCK_RUN_BUILD_ID".to_owned(), ctx.trace_id.to_string())],
+                set: vec![("YAK_RUN_BUILD_ID".to_owned(), ctx.trace_id.to_string())],
                 remove: WRAPPER_ENV_VARS.into_iter().map(str::to_owned).collect(),
             },
         )

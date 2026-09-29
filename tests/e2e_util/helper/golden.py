@@ -18,7 +18,7 @@ GOLDEN_DIRECTORY = "fixtures/"
 def _prepend_header(content: str) -> str:
     return (
         f"# This file is {'@'}generated, "
-        f"regenerate by rerunning the test with `BUCK2_UPDATE_GOLDEN=1` set\n\n{content}"
+        f"regenerate by rerunning the test with `YAK_UPDATE_GOLDEN=1` set\n\n{content}"
     )
 
 
@@ -58,7 +58,7 @@ def _unified_diff(
 
 
 def _is_update_invocation() -> bool:
-    return os.getenv("BUCK2_UPDATE_GOLDEN") is not None
+    return os.getenv("YAK_UPDATE_GOLDEN") is not None
 
 
 # Output is a map of `rel_path`-relative files to their expected values
@@ -118,7 +118,7 @@ def golden(*, output: str, rel_path: str) -> None:
         raise AssertionError(
             f"Expected golden file to match actual\n"
             f"\n\n{unified_diff}\n\n"
-            "Rerun the test with `BUCK2_UPDATE_GOLDEN=1` set to regenerate the files"
+            "Rerun the test with `YAK_UPDATE_GOLDEN=1` set to regenerate the files"
         )
 
 

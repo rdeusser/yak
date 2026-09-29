@@ -118,7 +118,7 @@ impl StarlarkEvaluatorProvider {
 
         let starlark_max_callstack_size =
             root_buckconfig.view(ctx).parse::<usize>(BuckconfigKeyRef {
-                section: "buck2",
+                section: "yak",
                 property: "starlark_max_callstack_size",
             })?;
 

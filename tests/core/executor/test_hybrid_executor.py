@@ -345,7 +345,7 @@ async def test_build_fails_with_mutually_exclusive_executors(buck: Buck) -> None
 
 
 @buck_test()
-@env("BUCK_OFFLINE_BUILD", "1")
+@env("YAK_OFFLINE_BUILD", "1")
 async def test_build_offline(buck: Buck) -> None:
     await buck.build("root//executor_threshold_tests/...")
     out = await read_what_ran(buck)
@@ -389,7 +389,7 @@ async def test_hybrid_executor_remote_queuing_fallback(buck: Buck) -> None:
 
     record = await build(
         "slower_remotely_and_works_on_both_fallback_only",
-        env={"BUCK2_TEST_RE_QUEUE_ESTIMATE_S": "0"},
+        env={"YAK_TEST_RE_QUEUE_ESTIMATE_S": "0"},
     )
     assert record["run_local_count"] == 0
     assert record["run_remote_count"] == 1
@@ -400,7 +400,7 @@ async def test_hybrid_executor_remote_queuing_fallback(buck: Buck) -> None:
         "slower_remotely_and_works_on_both_fallback_only",
         "-c",
         "build.remote_execution_fallback_on_estimated_queue_time_exceeds_s=10",
-        env={"BUCK2_TEST_RE_QUEUE_ESTIMATE_S": "100"},
+        env={"YAK_TEST_RE_QUEUE_ESTIMATE_S": "100"},
     )
     assert record["run_local_count"] == 1
     assert record["run_remote_count"] == 0

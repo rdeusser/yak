@@ -95,8 +95,8 @@ def _get_debug_settings(target: bxl.ConfiguredTargetNode, attrs: dict, attrs_laz
             debug_settings[ADDITIONAL_TARGETS] += vs_settings_dict[exe_target.label][BY_MODES][default_mode_file][ADDITIONAL_TARGETS]
         else:
             log_warn("Failed to infer debug settings for command_alias target ({}).", target.label)
-    elif attrs["buck_type"] == "cxx_test" and "BUCK_BASE_BINARY" in attrs["env"]:
-        test_binary_path = attrs["env"]["BUCK_BASE_BINARY"][0]
+    elif attrs["buck_type"] == "cxx_test" and "YAK_BASE_BINARY" in attrs["env"]:
+        test_binary_path = attrs["env"]["YAK_BASE_BINARY"][0]
         debug_settings[DEBUG_CMD] = test_binary_path
 
     return debug_settings

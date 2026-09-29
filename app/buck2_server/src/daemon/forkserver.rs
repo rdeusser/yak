@@ -27,7 +27,7 @@ pub async fn maybe_launch_forkserver(
 
     let config = root_config
         .parse::<RolloutPercentage>(BuckconfigKeyRef {
-            section: "buck2",
+            section: "yak",
             property: "forkserver",
         })?
         .unwrap_or_else(RolloutPercentage::always);

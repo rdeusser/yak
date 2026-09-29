@@ -24,7 +24,7 @@ pub const DEFAULT_RE_USE_CASE_KEY: BuckconfigKeyRef<'static> = BuckconfigKeyRef 
 
 /// Replaces every RE use case in the daemon when set: the executors' and the invocation's own.
 pub const RE_USE_CASE_OVERRIDE_KEY: BuckconfigKeyRef<'static> = BuckconfigKeyRef {
-    section: "buck2_re_client",
+    section: "yak_re_client",
     property: "override_use_case",
 };
 

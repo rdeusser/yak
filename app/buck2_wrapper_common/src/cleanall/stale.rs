@@ -29,7 +29,7 @@ const MAX_CONCURRENT_CLEANS: usize = 8;
 ///
 /// Exists so tests can force serialized execution (e.g. `=1`) and verify that
 /// a failing target does not prevent later targets from running.
-const MAX_CONCURRENT_CLEANS_ENV_VAR: &str = "BUCK2_CLEANALL_MAX_CONCURRENT_CLEANS";
+const MAX_CONCURRENT_CLEANS_ENV_VAR: &str = "YAK_CLEANALL_MAX_CONCURRENT_CLEANS";
 
 fn max_concurrent_cleans() -> usize {
     std::env::var(MAX_CONCURRENT_CLEANS_ENV_VAR)

@@ -4,7 +4,7 @@ on:
   workflow_call:
     inputs:
       buck2_version:
-        description: "Version string stamped into the binaries via BUCK2_SET_EXPLICIT_VERSION"
+        description: "Version string stamped into the binaries via YAK_SET_EXPLICIT_VERSION"
         required: true
         type: string
 
@@ -86,8 +86,8 @@ jobs:
         shell: bash
         env:
           # BUCK2 prefixed variables used within the build to stamp in a version information
-          # BUCK2_SET_EXPLICIT_VERSION will populate the yak --version string
-          BUCK2_SET_EXPLICIT_VERSION: ${{ inputs.buck2_version }}
+          # YAK_SET_EXPLICIT_VERSION will populate the yak --version string
+          YAK_SET_EXPLICIT_VERSION: ${{ inputs.buck2_version }}
           RUSTFLAGS: "--cfg tokio_unstable -C strip=debuginfo -C codegen-units=1"
         run: |
           # aarch64-linux builds need JEMALLOC_SYS_WITH_LG_PAGE=16

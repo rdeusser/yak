@@ -32,7 +32,7 @@ This command starts a development server at `http://localhost:3000/buck2/`. It r
 
 ## Production build
 
-`yarn build` generates the reference pages and writes the static site to `build/`. `yarn serve` serves `build/` locally. `yarn build_cargo` and `yarn build_prebuilt` do the same with a Cargo build of `yak` or with the binary that `BUCK2_BIN` names.
+`yarn build` generates the reference pages and writes the static site to `build/`. `yarn serve` serves `build/` locally. `yarn build_cargo` and `yarn build_prebuilt` do the same with a Cargo build of `yak` or with the binary that `YAK_BIN` names.
 
 ## Deployment
 

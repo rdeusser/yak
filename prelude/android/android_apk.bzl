@@ -57,7 +57,7 @@ def android_apk_impl(ctx: AnalysisContext) -> list[Provider]:
         compress_resources_dot_arsc = ctx.attrs.resource_compression == "enabled" or ctx.attrs.resource_compression == "enabled_with_strings_as_assets",
         validation_deps_outputs = get_validation_deps_outputs(ctx) + validation_outputs,
         packaging_options = ctx.attrs.packaging_options,
-        # Exclude BUCK_BUILD_ID from assets/BuildInfo.json for release builds.
+        # Exclude YAK_BUILD_ID from assets/BuildInfo.json for release builds.
         include_build_info_file = ctx.attrs.include_build_info_file and ctx.attrs.package_type != "release",
     )
 
@@ -241,7 +241,7 @@ def build_apk(
     ])
 
     # Invoke the toolchain's build-info generator from this apk packaging action (which already has
-    # every APK input) so the baked BUCK_BUILD_ID refreshes when the APK content changes and
+    # every APK input) so the baked YAK_BUILD_ID refreshes when the APK content changes and
     # cache-hits otherwise -- no separate action. Its run command is multi-token (java -jar ...), so
     # pass it via an argfile the apk-builder reads and execs.
     if include_build_info_file:

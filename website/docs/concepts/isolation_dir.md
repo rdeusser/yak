@@ -119,7 +119,7 @@ valid.
 ### 2. Environment Variable
 
 ```sh
-$ BUCK_ISOLATION_DIR=DIRECTORY_NAME yak COMMAND [ARGS]
+$ YAK_ISOLATION_DIR=DIRECTORY_NAME yak COMMAND [ARGS]
 ```
 
 If not specified, the default isolation directory name is `v2`.

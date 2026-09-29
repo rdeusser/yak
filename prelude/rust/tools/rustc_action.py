@@ -468,7 +468,7 @@ async def main() -> int:  # noqa: C901
         delete=False,
         # This isn't set when running doctests. Once that's fixed, we won't need
         # `tempfile`
-        dir=os.environ.get("BUCK_SCRATCH_PATH", None),
+        dir=os.environ.get("YAK_SCRATCH_PATH", None),
     ) as args_file:
         args_file.write("\n".join(rustc_args).encode() + b"\n")
         args_file.flush()

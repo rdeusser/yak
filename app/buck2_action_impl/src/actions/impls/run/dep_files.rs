@@ -316,7 +316,7 @@ fn dep_files(cache: &dyn DepFileCache) -> &ShardedDepFiles {
 /// When this is set, we retain directories after fingerprinting, so that we can output them later
 /// for debugging via `yak audit dep-files`.
 fn keep_directories() -> buck2_error::Result<bool> {
-    buck2_env!("BUCK2_KEEP_DEP_FILE_DIRECTORIES", bool)
+    buck2_env!("YAK_KEEP_DEP_FILE_DIRECTORIES", bool)
 }
 
 fn new_dep_file_cache() -> Arc<dyn DepFileCache> {
@@ -369,7 +369,7 @@ pub(crate) enum StoredFingerprints {
     /// Store only digests. This is what we use in prod because it is small.
     Digests(PartitionedInputs<TrackedFileDigest>),
 
-    /// Store digests + dirs. We allow this via BUCK2_KEEP_DEP_FILE_DIRECTORIES because it gives
+    /// Store digests + dirs. We allow this via YAK_KEEP_DEP_FILE_DIRECTORIES because it gives
     /// more debuggability.
     Dirs(PartitionedInputs<ActionImmutableDirectory>),
 }

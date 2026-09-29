@@ -81,7 +81,7 @@ async def do_critical_path(buck: Buck) -> None:
 @buck_test()
 async def test_critical_path_longest_path_graph(buck: Buck) -> None:
     with open(buck.cwd / ".yakconfig", "a") as f:
-        f.write("[buck2]\n")
+        f.write("[yak]\n")
         f.write("critical_path_backend2 = longest-path-graph\n")
     await do_critical_path(buck)
 
@@ -156,7 +156,7 @@ async def test_critical_path_json(buck: Buck) -> None:
 @buck_test()
 async def test_dynamic_input_events(buck: Buck) -> None:
     with open(buck.cwd / ".yakconfig", "a") as f:
-        f.write("[buck2]\n")
+        f.write("[yak]\n")
         f.write("critical_path_backend2 = logging\n")
 
     await buck.build("//:check_dynamic_input", "--no-remote-cache")
@@ -415,7 +415,7 @@ async def test_critical_path_test_entries(buck: Buck) -> None:
 @buck_test()
 async def test_critical_path_tset_final_materialization(buck: Buck) -> None:
     with open(buck.cwd / ".yakconfig", "a") as f:
-        f.write("[buck2]\n")
+        f.write("[yak]\n")
         f.write("critical_path_backend2 = logging\n")
 
     await buck.build("//:tset_top", "--no-remote-cache")
@@ -465,7 +465,7 @@ async def test_critical_path_tset_final_materialization(buck: Buck) -> None:
 @buck_test()
 async def test_cross_package_load_edge(buck: Buck) -> None:
     with open(buck.cwd / ".yakconfig", "a") as f:
-        f.write("[buck2]\n")
+        f.write("[yak]\n")
         f.write("critical_path_backend2 = logging\n")
 
     await buck.build("//:cross_pkg", "--no-remote-cache")
@@ -503,7 +503,7 @@ async def test_cross_package_load_edge(buck: Buck) -> None:
 @buck_test()
 async def test_configuration_dep_load_edge(buck: Buck) -> None:
     with open(buck.cwd / ".yakconfig", "a") as f:
-        f.write("[buck2]\n")
+        f.write("[yak]\n")
         f.write("critical_path_backend2 = logging\n")
 
     await buck.build("//:cfg_dep_pkg", "--no-remote-cache")

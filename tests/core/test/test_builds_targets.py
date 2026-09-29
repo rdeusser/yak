@@ -32,14 +32,14 @@ async def test_builds_targets_from_command_line_config(buck: Buck) -> None:
         buck,
         "//:failing_default_info",
         "--skip-default-info",
-        ["-c", "buck2.test_builds_targets=true"],
+        ["-c", "yak.test_builds_targets=true"],
         "failing_default_info",
     )
     await _check_build_and_skip_override(
         buck,
         "//:failing_run_info",
         "--skip-run-info",
-        ["-c", "buck2.test_builds_targets=true"],
+        ["-c", "yak.test_builds_targets=true"],
         "failing_run_info",
     )
 
@@ -50,7 +50,7 @@ async def test_explicit_build_flags_override_disabled_config(buck: Buck) -> None
         buck.test(
             "//:failing_default_info",
             "-c",
-            "buck2.test_builds_targets=false",
+            "yak.test_builds_targets=false",
             "--build-default-info",
         )
     )
@@ -60,7 +60,7 @@ async def test_explicit_build_flags_override_disabled_config(buck: Buck) -> None
         buck.test(
             "//:failing_run_info",
             "-c",
-            "buck2.test_builds_targets=false",
+            "yak.test_builds_targets=false",
             "--build-run-info",
         )
     )

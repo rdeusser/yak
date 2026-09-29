@@ -13,7 +13,7 @@ from e2e_util.helper.golden import golden
 
 # Turns `//lib/greeting` into `//lib/greeting:greeting` during coercion in
 # build/bzl files. Off by default.
-_ENABLE = "buck2.infer_target_names=true"
+_ENABLE = "yak.infer_target_names=true"
 
 
 @buck_test()

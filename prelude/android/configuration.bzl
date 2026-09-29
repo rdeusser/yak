@@ -165,8 +165,8 @@ cpu_transition = transition(
     ],
 )
 
-FORCE_SINGLE_CPU = read_root_config("buck2", "android_force_single_cpu") in ("True", "true")
-FORCE_SINGLE_DEFAULT_CPU = read_root_config("buck2", "android_force_single_default_cpu") in ("True", "true")
+FORCE_SINGLE_CPU = read_root_config("yak", "android_force_single_cpu") in ("True", "true")
+FORCE_SINGLE_DEFAULT_CPU = read_root_config("yak", "android_force_single_default_cpu") in ("True", "true")
 
 # Common attributes required by any rule that uses cpu_transition or cpu_split_transition.
 CPU_TRANSITION_ATTRS = {

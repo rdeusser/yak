@@ -46,18 +46,18 @@ yak kill
 
 ## Tracing
 
-Buck2 also emits sparse `tracing` output. `BUCK_LOG` sets the filter, using the [`EnvFilter` syntax](https://docs.rs/tracing-subscriber/0.3/tracing_subscriber/filter/struct.EnvFilter.html). The daemon reads `BUCK_LOG` only when it starts, so restart it to change the filter:
+Buck2 also emits sparse `tracing` output. `YAK_LOG` sets the filter, using the [`EnvFilter` syntax](https://docs.rs/tracing-subscriber/0.3/tracing_subscriber/filter/struct.EnvFilter.html). The daemon reads `YAK_LOG` only when it starts, so restart it to change the filter:
 
 ```bash
 yak kill
-BUCK_LOG=module_name=trace yak <command>
+YAK_LOG=module_name=trace yak <command>
 # Examples
-BUCK_LOG=starlark=trace yak uquery cell//path/to:target
-BUCK_LOG=buck2_execute_impl::materializers=trace yak build cell//path/to:target
+YAK_LOG=starlark=trace yak uquery cell//path/to:target
+YAK_LOG=buck2_execute_impl::materializers=trace yak build cell//path/to:target
 ```
 
-The client prints its own tracing output to the terminal, and the daemon writes its output to `yakd.stderr`. With `--no-buckd`, the daemon runs inside the client process and its output also goes to the terminal.
+The client prints its own tracing output to the terminal, and the daemon writes its output to `yakd.stderr`. With `--no-yakd`, the daemon runs inside the client process and its output also goes to the terminal.
 
 ## Tests
 
-`yak test` runs tests through the built-in test executor (`yak internal-test-runner`) unless `[test] v2_test_executor` names another executable. `buck2_test` logs each line the executor prints to stdout or stderr at `debug` level, so `BUCK_LOG=buck2_test=debug` shows them while you print-debug a test executor.
+`yak test` runs tests through the built-in test executor (`yak internal-test-runner`) unless `[test] v2_test_executor` names another executable. `buck2_test` logs each line the executor prints to stdout or stderr at `debug` level, so `YAK_LOG=buck2_test=debug` shows them while you print-debug a test executor.

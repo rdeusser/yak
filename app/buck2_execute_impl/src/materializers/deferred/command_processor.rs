@@ -1044,7 +1044,7 @@ impl<T: IoHandler> DeferredMaterializerCommandProcessor<T> {
                     // NOTE: This is for testing performance when hitting mismatches with disk
                     // state. Unwrapping isn't ideal, but we can't report errors here.
                     let force_mismatch = buck2_env!(
-                        "BUCK2_TEST_FORCE_DECLARE_MISMATCH",
+                        "YAK_TEST_FORCE_DECLARE_MISMATCH",
                         bool,
                         applicability = testing
                     )

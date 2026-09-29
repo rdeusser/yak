@@ -371,7 +371,7 @@ impl WatchmanFileWatcher {
             // double negative here because we'd prefer that rollout changes config value from false->true.
             !root_config
                 .parse::<RolloutPercentage>(BuckconfigKeyRef {
-                    section: "buck2",
+                    section: "yak",
                     property: "disable_watchman_empty_on_fresh_instance",
                 })?
                 .unwrap_or_else(RolloutPercentage::never)
@@ -387,7 +387,7 @@ impl WatchmanFileWatcher {
 
         let report_global_rev = root_config
             .parse::<bool>(BuckconfigKeyRef {
-                section: "buck2",
+                section: "yak",
                 property: "watchman_report_global_rev",
             })?
             .unwrap_or(false);

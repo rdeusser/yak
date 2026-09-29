@@ -100,7 +100,7 @@ struct BeforeSubcommandOptions {
     /// and as a result using a non-default isolation dir will cause cache misses (and slower builds).
     #[clap(
         value_parser = buck_error_clap_parser(parse_isolation_dir),
-        env("BUCK_ISOLATION_DIR"),
+        env("YAK_ISOLATION_DIR"),
         long,
         global = true,
         default_value="v2"
@@ -123,7 +123,7 @@ struct BeforeSubcommandOptions {
         long = "verbose",
         default_value = "1",
         global = true,
-        env = buck2_env_name!("BUCK_VERBOSE"),
+        env = buck2_env_name!("YAK_VERBOSE"),
         value_parser = buck_error_clap_parser(Verbosity::try_from_cli)
     )]
     verbosity: Verbosity,
@@ -149,15 +149,12 @@ struct BeforeSubcommandOptions {
 
     /// Do not launch a daemon process, run buck server in client process.
     ///
-    /// Note even when running in no-buckd mode, it still writes state files.
+    /// Note even when running in no-yakd mode, it still writes state files.
     /// In particular, this command effectively kills yakd process
     /// running with the same isolation directory.
     ///
     /// This is an unsupported option used only for development work.
-    #[clap(env("BUCK2_NO_BUCKD"), long, global(true), hide(true))]
-    // Env var is BUCK2_NO_BUCKD instead of NO_BUCKD env var from buck1 because no yakd
-    // is not supported for production work for yak and lots of places already set
-    // NO_BUCKD=1 for buck1.
+    #[clap(env("YAK_NO_YAKD"), long = "no-yakd", global(true), hide(true))]
     no_buckd: bool,
 }
 
@@ -206,7 +203,7 @@ impl Opt {
 pub fn exec(process: ProcessContext<'_>) -> ExitResult {
     let cwd = process.shared.working_dir.clone();
     let mut immediate_config = ImmediateConfigContext::new(&cwd);
-    let arg0_override = buck2_env!("BUCK2_ARG0")?;
+    let arg0_override = buck2_env!("YAK_ARG0")?;
     let expanded_args = expand_argv(
         arg0_override,
         process.shared.args.to_vec(),

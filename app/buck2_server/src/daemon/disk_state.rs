@@ -49,7 +49,7 @@ impl DiskStateOptions {
     pub fn new(root_config: &LegacyBuckConfig) -> buck2_error::Result<Self> {
         let sqlite_materializer_state = root_config
             .parse::<RolloutPercentage>(BuckconfigKeyRef {
-                section: "buck2",
+                section: "yak",
                 property: "sqlite_materializer_state",
             })?
             .unwrap_or_else(RolloutPercentage::always)
@@ -83,7 +83,7 @@ fn sqlite_db_setup_metadata_and_versions(
     }
 
     if let Some(buckconfig_version) = root_config.parse(BuckconfigKeyRef {
-        section: "buck2",
+        section: "yak",
         property: version_config,
     })? {
         versions.insert("buckconfig_version".to_owned(), buckconfig_version);
@@ -155,7 +155,7 @@ pub(crate) async fn maybe_initialize_incremental_sqlite_db(
     // Rolling it out by default, but giving an option to disable in case something goes horribly wrong
     if !root_config
         .parse(BuckconfigKeyRef {
-            section: "buck2",
+            section: "yak",
             property: "sqlite_incremental_state",
         })?
         .unwrap_or(true)
@@ -200,20 +200,20 @@ pub(crate) async fn maybe_initialize_dep_file_sqlite_db(
     root_config: &LegacyBuckConfig,
     daemon_id: &DaemonId,
 ) -> buck2_error::Result<Option<DepFileStateSqliteDb>> {
-    // Opt-in (Phase 1), enabled with `buck2.sqlite_dep_file_state = true` -- but only meaningful with
+    // Opt-in (Phase 1), enabled with `yak.sqlite_dep_file_state = true` -- but only meaningful with
     // the materializer state db. A cross-restart hit re-validates outputs via
     // `Materializer::declare_match`, which after a restart only reports a match if the materializer
     // reloaded its tracked state from sqlite. Without `sqlite_materializer_state` that tree is empty
     // post-restart, so no reloaded entry could ever hit and persisting them would be pure overhead.
     let requested = root_config
         .parse(BuckconfigKeyRef {
-            section: "buck2",
+            section: "yak",
             property: "sqlite_dep_file_state",
         })?
         .unwrap_or(false);
     if requested && !options.sqlite_materializer_state {
         tracing::warn!(
-            "Ignoring `buck2.sqlite_dep_file_state`: it needs `buck2.sqlite_materializer_state`, \
+            "Ignoring `yak.sqlite_dep_file_state`: it needs `yak.sqlite_materializer_state`, \
              which is disabled. The persisted dep-file cache re-validates outputs against the \
              materializer state db after a restart. Startup continues with the cache disabled."
         );
@@ -257,7 +257,7 @@ pub(crate) async fn maybe_initialize_dep_file_sqlite_db(
     // default `clean_stale_artifact_ttl_hours`; `max_entries` is an optional hard cap.
     let ttl_days: u64 = root_config
         .parse(BuckconfigKeyRef {
-            section: "buck2",
+            section: "yak",
             property: "sqlite_dep_file_state_ttl_days",
         })?
         .unwrap_or(DEFAULT_CLEAN_STALE_TTL_DAYS);
@@ -272,7 +272,7 @@ pub(crate) async fn maybe_initialize_dep_file_sqlite_db(
         Some(Timestamp::now().as_second().saturating_sub(ttl_seconds))
     };
     let max_entries: Option<usize> = root_config.parse(BuckconfigKeyRef {
-        section: "buck2",
+        section: "yak",
         property: "sqlite_dep_file_state_max_entries",
     })?;
 

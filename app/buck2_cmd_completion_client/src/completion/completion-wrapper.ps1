@@ -24,7 +24,7 @@ using namespace System.Management.Automation.Language
 $BuckCompleter = {
     param($wordToComplete, $commandAst, $cursorPosition)
 
-    $completeBin = if ($env:_BUCK_COMPLETE_BIN) { $env:_BUCK_COMPLETE_BIN } else { 'yak' }
+    $completeBin = if ($env:_YAK_COMPLETE_BIN) { $env:_YAK_COMPLETE_BIN } else { 'yak' }
     $targetSubcommands = @('build', 'ctargets', 'install', 'run', 'targets', 'test', 'utargets')
 
     $elements = $commandAst.CommandElements

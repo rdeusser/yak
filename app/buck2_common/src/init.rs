@@ -145,38 +145,38 @@ impl HttpConfig {
 pub struct SystemWarningConfig {
     /// A threshold that is used to determine the percent of memory yak uses to display memory pressure warnings.
     /// If None, we don't warn the user.
-    /// The corresponding buckconfig is `buck2_system_warning.memory_pressure_threshold_percent`.
+    /// The corresponding buckconfig is `yak_system_warning.memory_pressure_threshold_percent`.
     pub memory_pressure_threshold_percent: Option<u64>,
     /// A threshold that is used to determine remaining disk space yak uses to display disk space warnings.
     /// If None, we don't warn the user.
-    /// The corresponding buckconfig is `buck2_system_warning.remaining_disk_space_threshold`.
+    /// The corresponding buckconfig is `yak_system_warning.remaining_disk_space_threshold`.
     pub remaining_disk_space_threshold_gb: Option<u64>,
     /// Minimum number of bytes downloaded to measure average download speed.
     /// If None, we don't warn the user.
-    /// The corresponding buckconfig is `buck2_system_warning.min_re_download_bytes_threshold`.
+    /// The corresponding buckconfig is `yak_system_warning.min_re_download_bytes_threshold`.
     pub min_re_download_bytes_threshold: Option<u64>,
     /// A threshold that is used to determine if download speed is too low and display a warning.
     /// If None, we don't warn the user.
-    /// The corresponding buckconfig is `buck2_system_warning.avg_re_download_bytes_per_sec_threshold`.
+    /// The corresponding buckconfig is `yak_system_warning.avg_re_download_bytes_per_sec_threshold`.
     pub avg_re_download_bytes_per_sec_threshold: Option<u64>,
 }
 
 impl SystemWarningConfig {
     pub fn from_config(config: &LegacyBuckConfig) -> buck2_error::Result<Self> {
         let memory_pressure_threshold_percent = config.parse(BuckconfigKeyRef {
-            section: "buck2_system_warning",
+            section: "yak_system_warning",
             property: "memory_pressure_threshold_percent",
         })?;
         let remaining_disk_space_threshold_gb = config.parse(BuckconfigKeyRef {
-            section: "buck2_system_warning",
+            section: "yak_system_warning",
             property: "remaining_disk_space_threshold_gb",
         })?;
         let min_re_download_bytes_threshold = config.parse(BuckconfigKeyRef {
-            section: "buck2_system_warning",
+            section: "yak_system_warning",
             property: "min_re_download_bytes_threshold",
         })?;
         let avg_re_download_bytes_per_sec_threshold = config.parse(BuckconfigKeyRef {
-            section: "buck2_system_warning",
+            section: "yak_system_warning",
             property: "avg_re_download_bytes_per_sec_threshold",
         })?;
         Ok(Self {
@@ -200,7 +200,7 @@ impl SystemWarningConfig {
 #[derive(Allocative, Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct ResourceControlConfig {
     /// A config to determine if the resource control should be activated or not.
-    /// The corresponding buckconfig is `buck2_resource_control.status` that can take
+    /// The corresponding buckconfig is `yak_resource_control.status` that can take
     /// one of `{off | if_available | required}`.
     pub status: ResourceControlStatus,
     /// If resource control is enabled, buck needs to get a cgroup to run in from somewhere - this is
@@ -210,11 +210,11 @@ pub struct ResourceControlConfig {
     ///
     /// Accepts either a number of bytes or a percentage of the available resources.
     ///
-    /// The corresponding buckconfig is `buck2_resource_control.memory_max`.
+    /// The corresponding buckconfig is `yak_resource_control.memory_max`.
     pub memory_max: Option<String>,
     /// Like `memory_max`, but controls cgroupv2's `memory.high`
     ///
-    /// The corresponding buckconfig is `buck2_resource_control.memory_high`.
+    /// The corresponding buckconfig is `yak_resource_control.memory_high`.
     pub memory_high: Option<String>,
     /// A memory threshold that any action is allowed to allocate.
     pub memory_max_per_action: Option<String>,
@@ -340,33 +340,32 @@ impl FromStr for ResourceControlInit {
 
 /// The current version of the resource control algorithm. Say you have some important change to the
 /// algo that fixes a bug. Incrementing this to `N + 1` and setting the
-/// `buck2_resource_control.enable_suspension_if_min_algo_version` buckconfig to `N + 1` enables
+/// `yak_resource_control.enable_suspension_if_min_algo_version` buckconfig to `N + 1` enables
 /// suspension only if your bug fix is actually included in the version of buck in use
 const RESOURCE_CONTROL_ALGO_VERSION: u32 = 6;
 
 /// The current version of the daemon cgroup wrapping logic. Incrementing this to `N + 1` and
-/// setting `buck2_resource_control.min_version_for_gated_status` buckconfig to `N + 1` enables the
-/// gated default status (`buck2_resource_control.version_gated_default_status`, defaulting to
+/// setting `yak_resource_control.min_version_for_gated_status` buckconfig to `N + 1` enables the
+/// gated default status (`yak_resource_control.version_gated_default_status`, defaulting to
 /// `if_available`) only if the bug fix is included in the version of buck in use.
 const DAEMON_CGROUP_VERSION: u32 = 1;
 
 impl ResourceControlConfig {
     pub fn from_config(config: &LegacyBuckConfig) -> buck2_error::Result<Self> {
-        if let Some(env_conf) = buck2_env!(
-            "BUCK2_TEST_RESOURCE_CONTROL_CONFIG",
-            applicability = testing,
-        )? {
+        if let Some(env_conf) =
+            buck2_env!("YAK_TEST_RESOURCE_CONTROL_CONFIG", applicability = testing)?
+        {
             Self::deserialize(env_conf)
         } else {
             let status: Option<ResourceControlStatus> = config.parse(BuckconfigKeyRef {
-                section: "buck2_resource_control",
+                section: "yak_resource_control",
                 property: "status",
             })?;
             let status = if let Some(status) = status {
                 status
             } else {
                 let min_version_for_gated_status: Option<u32> = config.parse(BuckconfigKeyRef {
-                    section: "buck2_resource_control",
+                    section: "yak_resource_control",
                     property: "min_version_for_gated_status",
                 })?;
                 if min_version_for_gated_status
@@ -374,7 +373,7 @@ impl ResourceControlConfig {
                 {
                     config
                         .parse(BuckconfigKeyRef {
-                            section: "buck2_resource_control",
+                            section: "yak_resource_control",
                             property: "version_gated_default_status",
                         })?
                         .unwrap_or(ResourceControlStatus::IfAvailable)
@@ -384,57 +383,57 @@ impl ResourceControlConfig {
             };
             let init = config
                 .parse(BuckconfigKeyRef {
-                    section: "buck2_resource_control",
+                    section: "yak_resource_control",
                     property: "init",
                 })?
                 .unwrap_or(ResourceControlInit::Systemd);
             let memory_max = config.parse(BuckconfigKeyRef {
-                section: "buck2_resource_control",
+                section: "yak_resource_control",
                 property: "memory_max",
             })?;
             let memory_high = config.parse(BuckconfigKeyRef {
-                section: "buck2_resource_control",
+                section: "yak_resource_control",
                 property: "memory_high",
             })?;
             let memory_max_per_action = config.parse(BuckconfigKeyRef {
-                section: "buck2_resource_control",
+                section: "yak_resource_control",
                 property: "memory_max_per_action",
             })?;
             let memory_high_per_action = config.parse(BuckconfigKeyRef {
-                section: "buck2_resource_control",
+                section: "yak_resource_control",
                 property: "memory_high_per_action",
             })?;
             let memory_high_actions = config.parse(BuckconfigKeyRef {
-                section: "buck2_resource_control",
+                section: "yak_resource_control",
                 property: "memory_high_actions",
             })?;
             let memory_max_actions = config.parse(BuckconfigKeyRef {
-                section: "buck2_resource_control",
+                section: "yak_resource_control",
                 property: "memory_max_actions",
             })?;
             let memory_swap_max_actions = config.parse(BuckconfigKeyRef {
-                section: "buck2_resource_control",
+                section: "yak_resource_control",
                 property: "memory_swap_max_actions",
             })?;
             let enable_suspension = config.parse(BuckconfigKeyRef {
-                section: "buck2_resource_control",
+                section: "yak_resource_control",
                 property: "enable_suspension",
             })?;
             let enable_suspension_if_min_algo_version: Option<u32> =
                 config.parse(BuckconfigKeyRef {
-                    section: "buck2_resource_control",
+                    section: "yak_resource_control",
                     property: "enable_suspension_if_min_algo_version",
                 })?;
             let enable_suspension = enable_suspension.unwrap_or(false)
                 || enable_suspension_if_min_algo_version
                     .is_some_and(|min_version| RESOURCE_CONTROL_ALGO_VERSION >= min_version);
             let experimental_suspension_algo_variant = config.parse(BuckconfigKeyRef {
-                section: "buck2_resource_control",
+                section: "yak_resource_control",
                 property: "experimental_suspension_algo_variant",
             })?;
             let preferred_action_suspend_strategy = config
                 .parse(BuckconfigKeyRef {
-                    section: "buck2_resource_control",
+                    section: "yak_resource_control",
                     property: "preferred_action_suspend_strategy",
                 })?
                 .unwrap_or(ActionSuspendStrategy::KillAndRetry);
@@ -508,7 +507,7 @@ impl HydrationConfig {
 
             Ok(config
                 .parse(BuckconfigKeyRef {
-                    section: "buck2_hydration",
+                    section: "yak_hydration",
                     property,
                 })?
                 .unwrap_or(false))
@@ -528,20 +527,20 @@ impl HydrationConfig {
         Ok(Some(Self {
             pagable_storage_backend: config
                 .parse::<PagableStorageBackend>(BuckconfigKeyRef {
-                    section: "buck2_hydration",
+                    section: "yak_hydration",
                     property: "pagable_storage_backend",
                 })?
                 .unwrap_or_default(),
             page_out_on_idle,
             page_out_min_free_disk_gb: config
                 .parse(BuckconfigKeyRef {
-                    section: "buck2_hydration",
+                    section: "yak_hydration",
                     property: "page_out_min_free_disk_gb",
                 })?
                 .unwrap_or(100),
             allow_multiple_idle_page_outs: config
                 .parse(BuckconfigKeyRef {
-                    section: "buck2_hydration",
+                    section: "yak_hydration",
                     property: "allow_multiple_idle_page_outs",
                 })?
                 .unwrap_or(false),
@@ -588,7 +587,7 @@ impl DaemonStartupConfig {
 
         let log_url = settings.log_download.log_url().or_else(|| {
             config.get(BuckconfigKeyRef {
-                section: "buck2",
+                section: "yak",
                 property: "log_url",
             })
         });
@@ -613,26 +612,26 @@ impl DaemonStartupConfig {
                 .unwrap_or(Some(0)),
             daemon_buster: config
                 .get(BuckconfigKeyRef {
-                    section: "buck2",
+                    section: "yak",
                     property: "daemon_buster",
                 })
                 .map(ToOwned::to_owned),
             digest_algorithms: config
                 .get(BuckconfigKeyRef {
-                    section: "buck2",
+                    section: "yak",
                     property: "digest_algorithms",
                 })
                 .map(ToOwned::to_owned),
             source_digest_algorithm: config
                 .get(BuckconfigKeyRef {
-                    section: "buck2",
+                    section: "yak",
                     property: "source_digest_algorithm",
                 })
                 .map(ToOwned::to_owned),
             paranoid,
             materializations: config
                 .get(BuckconfigKeyRef {
-                    section: "buck2",
+                    section: "yak",
                     property: "materializations",
                 })
                 .map(ToOwned::to_owned),
@@ -641,7 +640,7 @@ impl DaemonStartupConfig {
             log_download_method,
             retained_event_logs: config
                 .get(BuckconfigKeyRef {
-                    section: "buck2",
+                    section: "yak",
                     property: "retained_event_logs",
                 })
                 .and_then(|s| s.parse::<usize>().ok())
@@ -649,17 +648,17 @@ impl DaemonStartupConfig {
             macos_qos_class: {
                 let from_config = config
                     .get(BuckconfigKeyRef {
-                        section: "buck2",
+                        section: "yak",
                         property: "macos_qos_class",
                     })
                     .map(ToOwned::to_owned);
-                if buck2_env!("BUCK2_DISABLE_MACOS_QOS", bool)? {
+                if buck2_env!("YAK_DISABLE_MACOS_QOS", bool)? {
                     buck2_core::soft_error!(
                         "disable_macos_qos_env_var",
                         buck2_error::buck2_error!(
                             buck2_error::ErrorTag::Input,
-                            "BUCK2_DISABLE_MACOS_QOS is deprecated. \
-                             Use `[buck2] macos_qos_class = skip_lowering` in buckconfig instead. \
+                            "YAK_DISABLE_MACOS_QOS is deprecated. \
+                             Use `[yak] macos_qos_class = skip_lowering` in buckconfig instead. \
                              This will be the default very soon."
                         ),
                         quiet: false,
@@ -671,7 +670,7 @@ impl DaemonStartupConfig {
                 }
             },
             daemon_idle_timeout_s: config.parse(BuckconfigKeyRef {
-                section: "buck2",
+                section: "yak",
                 property: "daemon_idle_timeout_s",
             })?,
             hydration: HydrationConfig::from_config(config, settings)?,
@@ -746,7 +745,7 @@ mod tests {
                 "config",
                 indoc!(
                     r#"
-                    [buck2]
+                    [yak]
                     daemon_idle_timeout_s = 10800
                     "#
                 ),
@@ -781,7 +780,7 @@ mod tests {
                 "config",
                 indoc!(
                     r#"
-                    [buck2_hydration]
+                    [yak_hydration]
                     page_out_on_idle = true
                     allow_multiple_idle_page_outs = true
                     "#
@@ -806,7 +805,7 @@ mod tests {
                 "config",
                 indoc!(
                     r#"
-                    [buck2_hydration]
+                    [yak_hydration]
                     enable_paging = true
                     page_out_on_idle = true
                     allow_multiple_idle_page_outs = true
@@ -835,7 +834,7 @@ mod tests {
                 "config",
                 indoc!(
                     r#"
-                    [buck2_hydration]
+                    [yak_hydration]
                     enable_paging = true
                     page_out_on_idle = true
                     "#
@@ -859,7 +858,7 @@ mod tests {
                 "config",
                 indoc!(
                     r#"
-                    [buck2_hydration]
+                    [yak_hydration]
                     page_out_on_idle = true
                     "#
                 ),

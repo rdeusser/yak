@@ -29,7 +29,7 @@ impl ClientMetadata {
     }
 
     pub fn from_env() -> buck2_error::Result<Vec<Self>> {
-        let client_metadata_str = buck2_env!("BUCK2_CLIENT_METADATA")?.unwrap_or_default();
+        let client_metadata_str = buck2_env!("YAK_CLIENT_METADATA")?.unwrap_or_default();
         if client_metadata_str.is_empty() {
             return Ok(vec![]);
         }

@@ -16,6 +16,6 @@ async def test_print(buck: Buck) -> None:
     assert "print me" in result.stderr
     assert "print me" not in result.stdout
 
-    result = await buck.build("root//:", "--no-buckd")
+    result = await buck.build("root//:", "--no-yakd")
     assert "print me" in result.stderr
     assert "print me" not in result.stdout

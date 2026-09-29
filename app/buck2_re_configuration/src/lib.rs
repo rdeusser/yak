@@ -14,7 +14,7 @@ use allocative::Allocative;
 use buck2_common::legacy_configs::configs::LegacyBuckConfig;
 use buck2_common::legacy_configs::key::BuckconfigKeyRef;
 
-static BUCK2_RE_CLIENT_CFG_SECTION: &str = "buck2_re_client";
+static BUCK2_RE_CLIENT_CFG_SECTION: &str = "yak_re_client";
 
 /// Settings every remote execution configuration provides.
 pub trait RemoteExecutionStaticMetadataImpl: Sized {
@@ -101,7 +101,7 @@ pub struct Buck2OssReConfiguration {
     /// reduce per-call wall-clock latency by issuing fewer round-trips,
     /// at the cost of bigger requests and more concurrent server load
     /// when many actions issue independent calls. Recommended to raise
-    /// only in combination with `[buck2] deduplicate_get_digests_ttl_calls`.
+    /// only in combination with `[yak] deduplicate_get_digests_ttl_calls`.
     pub find_missing_blobs_batch_size: Option<usize>,
     /// Time that digests are assumed to live in CAS after being touched.
     pub cas_ttl_secs: Option<i64>,

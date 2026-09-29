@@ -1,4 +1,4 @@
-# This file is @generated, regenerate by rerunning the test with `BUCK2_UPDATE_GOLDEN=1` set
+# This file is @generated, regenerate by rerunning the test with `YAK_UPDATE_GOLDEN=1` set
 
 Initialize a yak project
 
@@ -28,7 +28,7 @@ Console Options:
       --console <super|simple|...>
           Which console to use for this command
 
-          [env: BUCK_CONSOLE=]
+          [env: YAK_CONSOLE=]
           [default: auto]
           [possible values: auto, none, simple, simplenotty, simpletty, super]
 
@@ -52,7 +52,7 @@ Console Options:
       --no-interactive-console
           Disable console interactions
 
-          [env: BUCK_NO_INTERACTIVE_CONSOLE=]
+          [env: YAK_NO_INTERACTIVE_CONSOLE=]
 
 Universal Options:
       --isolation-dir <ISOLATION_DIR>
@@ -63,7 +63,7 @@ Universal Options:
           The isolation directory also influences the output paths provided by Buck2, and as a
           result using a non-default isolation dir will cause cache misses (and slower builds).
 
-          [env: BUCK_ISOLATION_DIR=]
+          [env: YAK_ISOLATION_DIR=]
           [default: v2]
 
   -v, --verbose <VERBOSITY>
@@ -76,7 +76,7 @@ Universal Options:
           actions, status, stats, success) to fine-tune the verbosity of the log. Example usage
           "-v=1,stderr"
 
-          [env: BUCK_VERBOSE=]
+          [env: YAK_VERBOSE=]
           [default: 1]
 
       --oncall <ONCALL>

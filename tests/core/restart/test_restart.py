@@ -60,7 +60,7 @@ async def test_restart_cas_missing(buck: Buck) -> None:
     await buck.kill()
 
     # Start a daemon with the `src` file tombstoned. This means we cannot download it from RE.
-    await buck.build(env={"BUCK2_TEST_TOMBSTONED_DIGESTS": TEST_DIGEST})
+    await buck.build(env={"YAK_TEST_TOMBSTONED_DIGESTS": TEST_DIGEST})
 
     # Now build //:stage2. Buck2 must try to download the file, fail, then
     # restart the daemon.
@@ -105,12 +105,12 @@ async def test_restart_disabled(buck: Buck) -> None:
     await buck.kill()
 
     with open(buck.cwd / ".yakconfig", "a") as f:
-        f.write("[buck2]\nrestarter = false")
+        f.write("[yak]\nrestarter = false")
 
     result = await expect_failure(
         buck.build(
             "//:stage2",
-            env={"BUCK2_TEST_TOMBSTONED_DIGESTS": TEST_DIGEST},
+            env={"YAK_TEST_TOMBSTONED_DIGESTS": TEST_DIGEST},
         ),
     )
     assert "Your command will now restart" not in result.stderr
@@ -124,7 +124,7 @@ async def test_trace_id(buck: Buck) -> None:
     res = await expect_failure(
         buck.targets(
             "//:invalid",
-            env={"FORCE_WANT_RESTART": "true", "BUCK_WRAPPER_UUID": trace_id},
+            env={"FORCE_WANT_RESTART": "true", "YAK_WRAPPER_UUID": trace_id},
         )
     )
     record = res.invocation_record()

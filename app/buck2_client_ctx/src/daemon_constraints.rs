@@ -20,7 +20,7 @@ use crate::version::BuckVersion;
 /// a nested invocation.
 pub fn get_possibly_nested_invocation_daemon_uuid() -> Option<String> {
     // Intentionally don't use `buck2_env!` because we don't want this showing up in help output
-    std::env::var("BUCK2_DAEMON_UUID").ok()
+    std::env::var("YAK_DAEMON_UUID").ok()
 }
 
 /// Generates the daemon constraints *for the currently running daemon.*

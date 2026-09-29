@@ -13,7 +13,7 @@ The commands in this file run from the repository root, except where a block cha
 cargo build --bin=yak
 ```
 
-Cargo builds compile the protobuf definitions with the `protoc` binary from the `protoc-bin-vendored` crate. Set `BUCK2_BUILD_PROTOC` and `BUCK2_BUILD_PROTOC_INCLUDE` to use another `protoc`, which NixOS requires. `flake.nix` sets both in its development shell.
+Cargo builds compile the protobuf definitions with the `protoc` binary from the `protoc-bin-vendored` crate. Set `YAK_BUILD_PROTOC` and `YAK_BUILD_PROTOC_INCLUDE` to use another `protoc`, which NixOS requires. `flake.nix` sets both in its development shell.
 
 To try a change, run the built binary in a test project such as `examples/no_prelude`. Pass `--isolation-dir` with a name of your own so the binary starts its own daemon and leaves any other daemon for that project running:
 
@@ -58,10 +58,10 @@ Unit tests live next to the code they test. Crates named `*_tests` (for example 
 
 Golden tests compare output with checked-in files whose names contain `.golden`. To regenerate them, rerun the test with the regeneration variable set:
 
-- `BUCK2_RUST_REGENERATE_GOLDEN_TESTS=1` for tests that use `buck2_util::golden_test_helper`.
+- `YAK_RUST_REGENERATE_GOLDEN_TESTS=1` for tests that use `buck2_util::golden_test_helper`.
 - `STARLARK_RUST_REGENERATE_GOLDEN_TESTS=1` for `starlark-rust/`.
 - `ALLOCATIVE_REGENERATE_TESTS=1` for `allocative/`.
-- `BUCK2_UPDATE_GOLDEN=1` for the integration tests under `tests/`. The update accepts whatever the binary prints, so review each golden file diff.
+- `YAK_UPDATE_GOLDEN=1` for the integration tests under `tests/`. The update accepts whatever the binary prints, so review each golden file diff.
 
 The integration tests under `tests/` run `target/debug/yak` against small projects with pytest. `tests/README.md` gives the commands, the markers that skip tests that need Remote Execution, cgroups, or helper programs, and the golden file workflow. `tests/core/README.md` gives the guidelines for writing them.
 
@@ -117,8 +117,8 @@ Handling](./error_handling.md).
 ## Feature gates
 
 Gate new or risky behavior with buckconfig, not environment variables: a
-`[buck2]`-section key, read where DICE can track it (grep for
-`BuckconfigKeyRef` with `section: "buck2"` for the pattern), and named so
+`[yak]`-section key, read where DICE can track it (grep for
+`BuckconfigKeyRef` with `section: "yak"` for the pattern), and named so
 the value flips false -> true as the feature rolls out. Use
 `RolloutPercentage` in place of `bool` when you want hostname-hashed
 percentage rollout. Reserve `buck2_env!` for the few places configuration

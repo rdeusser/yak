@@ -150,7 +150,7 @@ impl FileDigestConfig {
 impl FileDigest {
     /// Obtain the digest of the file if you can.
     pub fn from_file(file: &AbsPath, config: FileDigestConfig) -> buck2_error::Result<Self> {
-        if !buck2_env!("BUCK2_DISABLE_FILE_ATTR", bool)? {
+        if !buck2_env!("YAK_DISABLE_FILE_ATTR", bool)? {
             if let Some(digest) = Self::from_file_attr(file, config) {
                 return Ok(digest);
             }

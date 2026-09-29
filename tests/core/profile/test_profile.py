@@ -299,7 +299,7 @@ async def test_profile_no_buckd(
         "//simple:",
         "--output",
         str(file_path),
-        "--no-buckd",
+        "--no-yakd",
     )
 
     assert "Total retained bytes:" in command.stdout

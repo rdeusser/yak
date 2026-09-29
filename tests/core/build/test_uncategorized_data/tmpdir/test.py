@@ -21,7 +21,7 @@ def main():
         check = ["TMPDIR"]
         buck_out = "yak-out/v2"
 
-    scratch = os.environ["BUCK_SCRATCH_PATH"]
+    scratch = os.environ["YAK_SCRATCH_PATH"]
     assert not os.path.isabs(scratch), scratch
     assert buck_out in scratch, scratch
     assert os.path.isdir(scratch), scratch
@@ -33,7 +33,7 @@ def main():
         if location == "local":
             # Check the path is "ours"
             assert buck_out in v, v
-            # Check the path is the same as BUCK_SCRATCH_PATH
+            # Check the path is the same as YAK_SCRATCH_PATH
             rel = os.path.relpath(os.path.normpath(v))
             assert rel == scratch, rel
         elif location == "remote":

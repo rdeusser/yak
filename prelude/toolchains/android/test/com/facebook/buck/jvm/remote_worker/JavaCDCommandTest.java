@@ -53,7 +53,7 @@ public class JavaCDCommandTest {
             () ->
                 new JavaCDCommand(
                     new String[] {"--action-id", "test-action", "--command-file", missingPath},
-                    ImmutableMap.of("BUCK_SCRATCH_PATH", "/tmp/scratch")));
+                    ImmutableMap.of("YAK_SCRATCH_PATH", "/tmp/scratch")));
     assertTrue(
         "Expected exception message to contain the missing file path",
         thrown.getMessage().contains(missingPath));

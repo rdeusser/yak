@@ -16,18 +16,18 @@ load("@prelude//cfg/modifier:name.bzl", "cfg_name")
 #       here in the form of config settings with lists of comma-separated elements. Specifically,
 #       the configuration transition relies on the following config settings:
 #
-#           * buck2.platforms
-#           * buck2.constraints
-#           * buck2.passthrough_constraints
+#           * yak.platforms
+#           * yak.constraints
+#           * yak.passthrough_constraints
 #
-#       buck2.platforms and buck2.constraints list all possible target platforms and constraint
-#       values, and buck2.passthrough_constraints lists constraint settings to preserve when
+#       yak.platforms and yak.constraints list all possible target platforms and constraint
+#       values, and yak.passthrough_constraints lists constraint settings to preserve when
 #       applying the configuration transition. The use of read_config avoids hard-coding these
 #       repo-specific configuration rules into the prelude.
 load("@prelude//transitions:constraint_override_registry.bzl", "ConstraintOverrideRegistryInfo", "constraint_override_refs")
 
 _config = struct(
-    passthrough_constraints = read_root_config("buck2", "passthrough_constraints", ""),
+    passthrough_constraints = read_root_config("yak", "passthrough_constraints", ""),
     split = lambda values: [value.strip() for value in values.split(",") if value.strip()],
 )
 
@@ -124,14 +124,14 @@ def _apply(old_platform: PlatformInfo, *, platform: PlatformInfo | None = None, 
 
         1. Initializing it from old_platform, if platform is None, or from platform if not None;
         2. Applying the constraint values in old_platform whose constraint settings match any of
-           those listed in buck2.passthrough_constraints; and
+           those listed in yak.passthrough_constraints; and
         3. Applying the constraint values present in constraints.
 
     If platform is None the constraint values in old_platform are preserved unless overridden by
     constraint values in constraints. If platform is not None the constraint values in old_platform
     are discarded unless:
 
-        * Their constraint settings are listed in buck2.passthrough_constraints; and
+        * Their constraint settings are listed in yak.passthrough_constraints; and
         * They're not overridden by a constraint value in constraints.
 
     Args:
@@ -186,7 +186,7 @@ def _impl(platform: PlatformInfo, refs: struct, attrs: struct) -> PlatformInfo:
 
 _refs = constraint_override_refs()
 # Registry dependencies enforce visibility, unlike direct transition refs.
-_registry = read_root_config("buck2", "constraint_override_registry", "")
+_registry = read_root_config("yak", "constraint_override_registry", "")
 _transition_refs = {"_constraint_override_registry": _registry} if _registry else _refs
 
 _attributes = {

@@ -21,7 +21,7 @@ pub(crate) enum EmitResult {
 }
 
 /// Tracks cumulative action/test output bytes and enforces an optional global
-/// limit configured via `BUCK2_CONSOLE_OUTPUT_LIMIT` (in bytes).
+/// limit configured via `YAK_CONSOLE_OUTPUT_LIMIT` (in bytes).
 pub(crate) struct ConsoleOutputLimit {
     limit: Option<u64>,
     bytes_emitted: u64,
@@ -30,7 +30,7 @@ pub(crate) struct ConsoleOutputLimit {
 
 impl ConsoleOutputLimit {
     pub(crate) fn new() -> Self {
-        let limit = buck2_env!("BUCK2_CONSOLE_OUTPUT_LIMIT", type=u64).unwrap_or(None);
+        let limit = buck2_env!("YAK_CONSOLE_OUTPUT_LIMIT", type=u64).unwrap_or(None);
         Self {
             limit,
             bytes_emitted: 0,

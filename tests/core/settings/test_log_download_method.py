@@ -21,7 +21,7 @@ async def _log_download_method(buck: Buck) -> Any:
 
 def _write_buckconfig_log_url(buck: Buck, value: str) -> None:
     with open(buck.cwd / ".yakconfig", "a") as f:
-        f.write(f"\n[buck2]\nlog_url = {value}\n")
+        f.write(f"\n[yak]\nlog_url = {value}\n")
 
 
 def _write_home_local_settings(buck: Buck, settings: str) -> None:

@@ -157,7 +157,7 @@ struct RemoteExecutionClientData {
 
 impl RemoteExecutionClient {
     pub async fn new(re_config: &RemoteExecutionConfig) -> buck2_error::Result<Self> {
-        if buck2_env!("BUCK2_TEST_FAIL_CONNECT", bool, applicability = testing)? {
+        if buck2_env!("YAK_TEST_FAIL_CONNECT", bool, applicability = testing)? {
             return Err(buck2_error!(
                 buck2_error::ErrorTag::Input,
                 "Injected RE Connection error"
@@ -166,7 +166,7 @@ impl RemoteExecutionClient {
 
         // Creating the client normally takes seconds. Every command sharing the connection waits
         // on it, so an attempt that wedges must fail rather than hang them all. 0 removes the bound.
-        let timeout_s = buck2_env!("BUCK2_RE_CONNECT_TIMEOUT_S", type = u64, default = 120)?;
+        let timeout_s = buck2_env!("YAK_RE_CONNECT_TIMEOUT_S", type = u64, default = 120)?;
         let create = RemoteExecutionClientImpl::new(re_config);
         let client = if timeout_s == 0 {
             create.await?
@@ -496,7 +496,7 @@ fn anticipated_queue_duration(
 ) -> anyhow::Result<Option<Duration>> {
     // Return a queue estimate even if RE dequeues immediately
     if let Some(duration) = buck2_env!(
-        "BUCK2_TEST_RE_QUEUE_ESTIMATE_S",
+        "YAK_TEST_RE_QUEUE_ESTIMATE_S",
         type=u64,
         applicability = testing
     )
@@ -525,7 +525,7 @@ fn anticipated_queue_duration(
 // it's true after the first time we execute the action
 static INDUCED_CACHE_MISSES: LazyLock<Option<BuckMutMap<String, AtomicBool>>> =
     LazyLock::new(|| {
-        if let Ok(p) = std::env::var("BUCK2_INDUCED_CACHE_MISSES") {
+        if let Ok(p) = std::env::var("YAK_INDUCED_CACHE_MISSES") {
             let c = fs_util::read_to_string(AbsNormPath::new(&p).unwrap())
                 .categorize_input()
                 .unwrap();
@@ -546,7 +546,7 @@ impl RemoteExecutionClientImpl {
 
         let res: buck2_error::Result<Self> = try {
             let download_concurrency =
-                buck2_env!("BUCK2_RE_DOWNLOAD_CONCURRENCY", type=usize, default=256)?;
+                buck2_env!("YAK_RE_DOWNLOAD_CONCURRENCY", type=usize, default=256)?;
 
             // Split things up into smaller chunks.
             let download_chunk_size = std::cmp::max(download_concurrency / 8, 1);
@@ -982,12 +982,12 @@ impl RemoteExecutionClientImpl {
 
         let _unused = worker_tool_action_digest;
 
-        if buck2_env!("BUCK2_TEST_FAIL_RE_EXECUTE", bool, applicability = testing)? {
+        if buck2_env!("YAK_TEST_FAIL_RE_EXECUTE", bool, applicability = testing)? {
             return Err(test_re_error("Injected error", TCode::FAILED_PRECONDITION));
         }
 
         if buck2_env!(
-            "BUCK2_TEST_FAIL_RE_RESOURCE_EXHAUSTED",
+            "YAK_TEST_FAIL_RE_RESOURCE_EXHAUSTED",
             bool,
             applicability = testing
         )? {
@@ -1073,11 +1073,7 @@ impl RemoteExecutionClientImpl {
         if digests.is_empty() {
             return Ok((Vec::new(), TLocalCacheStats::default()));
         }
-        if buck2_env!(
-            "BUCK2_TEST_FAIL_RE_DOWNLOADS",
-            bool,
-            applicability = testing
-        )? {
+        if buck2_env!("YAK_TEST_FAIL_RE_DOWNLOADS", bool, applicability = testing)? {
             return Err(test_re_error_with_group(
                 "Injected error",
                 TCode::NOT_FOUND,
@@ -1173,11 +1169,7 @@ impl RemoteExecutionClientImpl {
         files: Vec<NamedDigestWithPermissions>,
         use_case: RemoteExecutorUseCase,
     ) -> buck2_error::Result<TLocalCacheStats> {
-        if buck2_env!(
-            "BUCK2_TEST_FAIL_RE_DOWNLOADS",
-            bool,
-            applicability = testing
-        )? {
+        if buck2_env!("YAK_TEST_FAIL_RE_DOWNLOADS", bool, applicability = testing)? {
             return Err(test_re_error_with_group(
                 "Injected error",
                 TCode::NOT_FOUND,

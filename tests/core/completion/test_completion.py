@@ -16,7 +16,7 @@ import pytest
 from e2e_util.api.buck import Buck
 from e2e_util.buck_workspace import buck_test
 
-pytestmark = pytest.mark.needs_binary("BUCK2_COMPLETION_VERIFY")
+pytestmark = pytest.mark.needs_binary("YAK_COMPLETION_VERIFY")
 
 IS_LINUX: bool = platform.system() == "Linux"
 
@@ -43,7 +43,7 @@ def completion_test(
             tmp_path = Path(buck.cwd).parent / "tmp"
             tmp_path.mkdir(exist_ok=True)
 
-            verify_bin = Path(os.environ["BUCK2_COMPLETION_VERIFY"])
+            verify_bin = Path(os.environ["YAK_COMPLETION_VERIFY"])
 
             get_completions = await buck.completion(
                 shell, *(["--options-only"] if options_only else [])
@@ -54,13 +54,13 @@ def completion_test(
             shell_home = (tmp_path / f"{shell}_tmp").absolute()
             shell_home.mkdir(exist_ok=True)
 
-            # Write this to a script to make it easier to debug with `BUCK_E2E_KEEP_TEMP=1`
+            # Write this to a script to make it easier to debug with `YAK_E2E_KEEP_TEMP=1`
             script = "\n".join(
                 [
                     "#!/bin/bash",
                     "shopt -s dotglob",
                     f'export PATH="{buck.path_to_executable.parent.absolute()}:$PATH"',
-                    "export BUCK2_COMPLETION_TIMEOUT=30000",
+                    "export YAK_COMPLETION_TIMEOUT=30000",
                     f"if [ -n \"$( ls -A '{shell_home}' )\" ]; then",
                     f"    rm -r -- {shell_home}/*",
                     "fi",

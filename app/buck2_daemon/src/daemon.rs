@@ -110,7 +110,7 @@ pub struct DaemonCommand {
 }
 
 impl DaemonCommand {
-    /// Command instance for `--no-buckd`.
+    /// Command instance for `--no-yakd`.
     pub(crate) fn new_in_process(daemon_startup_config: DaemonStartupConfig) -> DaemonCommand {
         DaemonCommand {
             checker_interval_seconds: 60,
@@ -233,8 +233,8 @@ impl DaemonCommand {
             self.daemon_startup_config.macos_qos_class.as_deref(),
         )?;
 
-        // TODO(nga): this breaks relative paths in `--no-buckd`.
-        //   `--no-buckd` should capture correct directories earlier.
+        // TODO(nga): this breaks relative paths in `--no-yakd`.
+        //   `--no-yakd` should capture correct directories earlier.
         //   Or even better, client should set current directory to project root,
         //   and resolve all paths relative to original cwd.
         fs_util::set_current_dir(paths.project_root().root()).categorize_internal()?;
@@ -252,7 +252,7 @@ impl DaemonCommand {
         let span_guard = span.enter();
 
         if buck2_env!(
-            "BUCK2_TEST_DAEMON_STARTUP_SIGNAL",
+            "YAK_TEST_DAEMON_STARTUP_SIGNAL",
             bool,
             applicability = testing
         )? {
@@ -360,14 +360,14 @@ impl DaemonCommand {
         if let Some(num_tokio_workers) = server_init_ctx
             .daemon_startup_config
             .num_tokio_workers
-            .or(buck2_env!("BUCK2_RUNTIME_THREADS", type=usize)?)
+            .or(buck2_env!("YAK_RUNTIME_THREADS", type=usize)?)
         {
             if num_tokio_workers > 0 {
                 builder.worker_threads(num_tokio_workers);
             }
         }
 
-        if let Some(threads) = buck2_env!("BUCK2_MAX_BLOCKING_THREADS", type=usize)? {
+        if let Some(threads) = buck2_env!("YAK_MAX_BLOCKING_THREADS", type=usize)? {
             builder.max_blocking_threads(threads);
         }
 
@@ -510,7 +510,7 @@ impl DaemonCommand {
         hard_shutdown_sender: UnboundedSender<String>,
     ) {
         let checker_interval_seconds = buck2_env!(
-            "BUCK2_TESTING_CHECKER_INTERVAL_SECONDS",
+            "YAK_TESTING_CHECKER_INTERVAL_SECONDS",
             type = u64,
             applicability = testing
         )
@@ -700,7 +700,7 @@ mod tests {
             .path()
             .write_file(
                 buckconfig,
-                "[cells]\nroot = .\n[buck2]\nforkserver = false\n",
+                "[cells]\nroot = .\n[yak]\nforkserver = false\n",
                 false,
             )
             .unwrap();

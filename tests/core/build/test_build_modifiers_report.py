@@ -103,11 +103,11 @@ async def test_build_modifiers_that_lead_to_same_configured(buck: Buck) -> None:
         mac_first,
         arm_first,
         "-c",
-        "buck2.detailed_aggregated_metrics=true",
+        "yak.detailed_aggregated_metrics=true",
         "-c",
-        "buck2.log_configured_graph_sketch=true",
+        "yak.log_configured_graph_sketch=true",
         "-c",
-        "buck2.log_configured_graph_unconfigured_sketch=true",
+        "yak.log_configured_graph_unconfigured_sketch=true",
     )
 
     report = json.loads(result.stdout)

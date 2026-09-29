@@ -4,5 +4,5 @@
 [buildfile]
   name = YAK.fixture
 
-[buck2_resource_control]
+[yak_resource_control]
   status = required

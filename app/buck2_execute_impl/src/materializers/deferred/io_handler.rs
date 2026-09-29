@@ -598,7 +598,7 @@ impl IoHandler for NoDiskIoHandler {
     }
 }
 
-/// This is used for testing to ingest digests (via BUCK2_TEST_TOMBSTONED_DIGESTS).
+/// This is used for testing to ingest digests (via YAK_TEST_TOMBSTONED_DIGESTS).
 fn maybe_tombstone_digest(digest: &FileDigest) -> buck2_error::Result<&FileDigest> {
     // This has to be of size 1 since size 0 will result in the RE client just producing an empty
     // instead of a not-found error.
@@ -620,7 +620,7 @@ fn maybe_tombstone_digest(digest: &FileDigest) -> buck2_error::Result<&FileDiges
     }
 
     let tombstoned_digests = buck2_env!(
-        "BUCK2_TEST_TOMBSTONED_DIGESTS",
+        "YAK_TEST_TOMBSTONED_DIGESTS",
         type=BuckMutSet<FileDigest>,
         converter=convert_digests,
         applicability=testing,

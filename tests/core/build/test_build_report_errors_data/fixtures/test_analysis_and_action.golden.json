@@ -1,9 +1,9 @@
-# This file is @generated, regenerate by rerunning the test with `BUCK2_UPDATE_GOLDEN=1` set
+# This file is @generated, regenerate by rerunning the test with `YAK_UPDATE_GOLDEN=1` set
 
 {
   "error_category": "USER",
   "failures": {
-    "root//fail_action:fail_one": "Action failed: root//fail_action:fail_one (root//config:dog_platform#<HASH>) (failname)\nLocal command returned non-zero exit code 1\nLocal command: env -C \"$(yak root --kind project)\" -- 'BUCK_SCRATCH_PATH=yak-out/v2/tmp/root/<HASH>/failname' false\nStdout: <empty>\nStderr: <empty>\n",
+    "root//fail_action:fail_one": "Action failed: root//fail_action:fail_one (root//config:dog_platform#<HASH>) (failname)\nLocal command returned non-zero exit code 1\nLocal command: env -C \"$(yak root --kind project)\" -- 'YAK_SCRATCH_PATH=yak-out/v2/tmp/root/<HASH>/failname' false\nStdout: <empty>\nStderr: <empty>\n",
     "root//fail_analysis:fail_analysis": "Error running analysis for `root//fail_analysis:fail_analysis (<unspecified>)`\nCaused by:\n    Traceback (most recent call last):\n      File <builtin>, in <module>\n      * fail_analysis/fail_analysis.bzl:10, in _impl\n          fail(\"Failure during analysis\")\n    error: fail: Failure during analysis\n      --> fail_analysis/fail_analysis.bzl:10:5\n       |\n    10 |     fail(\"Failure during analysis\")\n       |\n    "
   },
   "results": {
@@ -77,7 +77,7 @@
   },
   "strings": {
     "<STRING_HASH>": "",
-    "<STRING_HASH>": "Action failed: root//fail_action:fail_one (root//config:dog_platform#<HASH>) (failname)\nLocal command returned non-zero exit code 1\nLocal command: env -C \"$(yak root --kind project)\" -- 'BUCK_SCRATCH_PATH=yak-out/v2/tmp/root/<HASH>/failname' false\nStdout: <empty>\nStderr: <empty>\n",
+    "<STRING_HASH>": "Action failed: root//fail_action:fail_one (root//config:dog_platform#<HASH>) (failname)\nLocal command returned non-zero exit code 1\nLocal command: env -C \"$(yak root --kind project)\" -- 'YAK_SCRATCH_PATH=yak-out/v2/tmp/root/<HASH>/failname' false\nStdout: <empty>\nStderr: <empty>\n",
     "<STRING_HASH>": "Error running analysis for `root//fail_analysis:fail_analysis (<unspecified>)`\nCaused by:\n    Traceback (most recent call last):\n      File <builtin>, in <module>\n      * fail_analysis/fail_analysis.bzl:10, in _impl\n          fail(\"Failure during analysis\")\n    error: fail: Failure during analysis\n      --> fail_analysis/fail_analysis.bzl:10:5\n       |\n    10 |     fail(\"Failure during analysis\")\n       |\n    ",
     "<STRING_HASH>": "Local command returned non-zero exit code 1"
   },

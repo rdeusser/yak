@@ -92,7 +92,7 @@ impl<'d> HasAllowRelativePaths<'d> for DiceComputations<'d> {
                 let allowed_relative_dirs_for_current_dir = config
                     .view(ctx)
                     .parse_list::<String>(BuckconfigKeyRef {
-                        section: "buck2",
+                        section: "yak",
                         property: "directories_to_allow_relative_paths",
                     })?
                     .unwrap_or_default()

@@ -205,4 +205,4 @@ def _get_native_libs_env(ctx: AnalysisContext) -> dict:
         shared_libs = traverse_shared_library_info(shared_library_info, transformation_provider = None),
     )
 
-    return {"BUCK_LD_SYMLINK_TREE": cxx_library_symlink_tree}
+    return {"YAK_LD_SYMLINK_TREE": cxx_library_symlink_tree}

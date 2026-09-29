@@ -244,7 +244,7 @@ impl HasCommandExecutor for CommandExecutorFactory {
                 // in remediating prod incidents in the past, and this is the kind of thing that can easily
                 // become tribal knowledge. Keeping this does not hurt us.
                 let disable_caching =
-                    buck2_env!("BUCK2_TEST_DISABLE_CACHING", type=bool, applicability=testing)?
+                    buck2_env!("YAK_TEST_DISABLE_CACHING", type=bool, applicability=testing)?
                         .unwrap_or(self.skip_cache_read);
 
                 let disable_caching = disable_caching
@@ -254,7 +254,7 @@ impl HasCommandExecutor for CommandExecutorFactory {
                 // This is for test only as in real life, it would be silly to only use the remote dep file cache and not the regular cache
                 // This will only do anything if cache is not disabled and remote dep file cache is enabled
                 let only_remote_dep_file_cache = buck2_env!(
-                    "BUCK2_TEST_ONLY_REMOTE_DEP_FILE_CACHE",
+                    "YAK_TEST_ONLY_REMOTE_DEP_FILE_CACHE",
                     bool,
                     applicability = testing
                 )?;

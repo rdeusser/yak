@@ -17,7 +17,7 @@ OUTPUT_LIMIT_EXCEEDED = "(output limit exceeded)"
 @buck_test(skip_for_os=["darwin", "windows"])
 async def test_output_limit_truncates_action_stderr(buck: Buck) -> None:
     """With a small output limit, action stderr should be truncated."""
-    buck.set_env("BUCK2_CONSOLE_OUTPUT_LIMIT", "10")
+    buck.set_env("YAK_CONSOLE_OUTPUT_LIMIT", "10")
     res = await buck.build("--console=simplenotty", "-v5", "//:noisy1")
     # The exceeded message should appear exactly once.
     assert res.stderr.count(OUTPUT_LIMIT_EXCEEDED) == 1, res.stderr
@@ -37,7 +37,7 @@ async def test_output_limit_not_set_prints_all(buck: Buck) -> None:
 async def test_output_limit_global_across_actions(buck: Buck) -> None:
     """The limit is global: building two noisy targets should still only
     print the exceeded message once."""
-    buck.set_env("BUCK2_CONSOLE_OUTPUT_LIMIT", "10")
+    buck.set_env("YAK_CONSOLE_OUTPUT_LIMIT", "10")
     res = await buck.build("--console=simplenotty", "-v5", "//:noisy1", "//:noisy2")
     assert res.stderr.count(OUTPUT_LIMIT_EXCEEDED) == 1, res.stderr
 
@@ -45,7 +45,7 @@ async def test_output_limit_global_across_actions(buck: Buck) -> None:
 @buck_test(skip_for_os=["darwin", "windows"])
 async def test_output_limit_truncates_test_output(buck: Buck) -> None:
     """With a small output limit, test result output should be truncated."""
-    buck.set_env("BUCK2_CONSOLE_OUTPUT_LIMIT", "10")
+    buck.set_env("YAK_CONSOLE_OUTPUT_LIMIT", "10")
     # The test rule exits with 1 so that test result details (stderr) are
     # always printed, letting us verify the output limit applies to them.
     res = await expect_failure(

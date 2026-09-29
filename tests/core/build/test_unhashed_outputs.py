@@ -117,7 +117,7 @@ async def test_conflict_with_content_based_paths(buck: Buck) -> None:
     res = await buck.build(
         "//conflict/shared_name:subtarget",
         "--config",
-        "buck2.create_unhashed_links=false",
+        "yak.create_unhashed_links=false",
     )
     subtarget_output = res.get_build_report().output_for_target(
         "root//conflict/shared_name:subtarget"
@@ -131,7 +131,7 @@ async def test_conflict_with_content_based_paths(buck: Buck) -> None:
     await buck.build(
         "//conflict:shared_name",
         "--config",
-        "buck2.create_unhashed_links=false",
+        "yak.create_unhashed_links=false",
     )
     # TODO(jtbraun): this should instead ensure the symlink does NOT exist, and the content_based_path does and is a folder
     base_checks(should_symlink_exist=False)

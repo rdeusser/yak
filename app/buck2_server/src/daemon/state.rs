@@ -213,7 +213,7 @@ pub struct RepoState {
 
     /// Whether a finishing command schedules a background sweep of the local-action
     /// scratch dirs (`yak-out/<iso>/tmp*`) once the daemon is idle
-    /// (`buck2.clean_scratch_on_idle`). The sweep runs through this repo's `materializer`.
+    /// (`yak.clean_scratch_on_idle`). The sweep runs through this repo's `materializer`.
     pub(crate) clean_scratch_on_idle: bool,
 
     /// Resource-pressure thresholds for automatic idle page-out, selected for this tenant's
@@ -305,7 +305,7 @@ impl RepoState {
         let cells = &legacy_cells.cell_resolver;
 
         let default_digest_algorithm =
-            buck2_env!("BUCK_DEFAULT_DIGEST_ALGORITHM", type=DigestAlgorithmFamily)?;
+            buck2_env!("YAK_DEFAULT_DIGEST_ALGORITHM", type=DigestAlgorithmFamily)?;
 
         let default_digest_algorithm =
             default_digest_algorithm.unwrap_or(DigestAlgorithmFamily::Sha256);
@@ -367,7 +367,7 @@ impl RepoState {
         let deferred_materializer_configs = {
             let defer_write_actions = root_config
                 .parse::<RolloutPercentage>(BuckconfigKeyRef {
-                    section: "buck2",
+                    section: "yak",
                     property: "defer_write_actions",
                 })?
                 .unwrap_or_else(RolloutPercentage::never)
@@ -377,21 +377,21 @@ impl RepoState {
             // < 1 hour.
             let ttl_refresh_frequency = root_config
                 .parse(BuckconfigKeyRef {
-                    section: "buck2",
+                    section: "yak",
                     property: "ttl_refresh_frequency_seconds",
                 })?
                 .unwrap_or(1800);
 
             let ttl_refresh_min_ttl = root_config
                 .parse(BuckconfigKeyRef {
-                    section: "buck2",
+                    section: "yak",
                     property: "ttl_refresh_min_ttl_seconds",
                 })?
                 .unwrap_or(3600);
 
             let ttl_refresh_enabled = root_config
                 .parse::<RolloutPercentage>(BuckconfigKeyRef {
-                    section: "buck2",
+                    section: "yak",
                     property: "ttl_refresh_enabled",
                 })?
                 .unwrap_or_else(RolloutPercentage::never)
@@ -399,13 +399,13 @@ impl RepoState {
 
             let update_access_times =
                 AccessTimesUpdates::try_new_from_config_value(root_config.get(BuckconfigKeyRef {
-                    section: "buck2",
+                    section: "yak",
                     property: "update_access_times",
                 }))?;
 
             let verbose_materializer_log = root_config
                 .parse(BuckconfigKeyRef {
-                    section: "buck2",
+                    section: "yak",
                     property: "verbose_materializer_event_log",
                 })?
                 .unwrap_or(false);
@@ -547,7 +547,7 @@ impl RepoState {
 
         let use_network_action_output_cache = root_config
             .parse(BuckconfigKeyRef {
-                section: "buck2",
+                section: "yak",
                 property: "use_network_action_output_cache",
             })?
             .unwrap_or(false);
@@ -607,7 +607,7 @@ impl RepoState {
             use_network_action_output_cache,
             restart_daemon_on_error: root_config
                 .parse::<RolloutPercentage>(BuckconfigKeyRef {
-                    section: "buck2",
+                    section: "yak",
                     property: "restarter",
                 })?
                 .unwrap_or_else(RolloutPercentage::never)
@@ -627,7 +627,7 @@ impl RepoState {
             system_warning_config: SystemWarningConfig::from_config(root_config)?,
             clean_scratch_on_idle: root_config
                 .parse::<RolloutPercentage>(BuckconfigKeyRef {
-                    section: "buck2",
+                    section: "yak",
                     property: "clean_scratch_on_idle",
                 })?
                 .unwrap_or_else(RolloutPercentage::never)
@@ -961,11 +961,7 @@ impl DaemonState {
         cgroup_tree: Option<BuckCgroupTree>,
         daemon_id: DaemonId,
     ) -> buck2_error::Result<Arc<DaemonStateData>> {
-        if buck2_env!(
-            "BUCK2_TEST_INIT_DAEMON_ERROR",
-            bool,
-            applicability = testing
-        )? {
+        if buck2_env!("YAK_TEST_INIT_DAEMON_ERROR", bool, applicability = testing)? {
             // TODO(minglunli): Errors here don't actually make it to invocation records which should be fixed
             return Err(buck2_error::buck2_error!(
                 ErrorTag::TestOnly,

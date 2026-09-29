@@ -11,7 +11,7 @@ ConstraintOverrideRegistryInfo = provider(
 )
 
 def constraint_override_refs() -> dict[str, str]:
-    overrides = read_root_config("buck2", "platforms", "") + "," + read_root_config("buck2", "constraints", "")
+    overrides = read_root_config("yak", "platforms", "") + "," + read_root_config("yak", "constraints", "")
     return {override.strip(): override.strip() for override in overrides.split(",") if override.strip()}
 
 def _constraint_override_registry_impl(ctx: AnalysisContext) -> list[Provider]:

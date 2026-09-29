@@ -160,10 +160,10 @@ message ClientContext {
   // Any --client-metadata passed by the user.
   repeated buck.data.ClientMetadata client_metadata = 18;
 
-  /// Contents of `BUCK2_HARD_ERROR` environment variable.
+  /// Contents of `YAK_HARD_ERROR` environment variable.
   string buck2_hard_error = 20;
 
-  /// Contents of `BUCK2_SHOW_SOFT_ERRORS` environment variable.
+  /// Contents of `YAK_SHOW_SOFT_ERRORS` environment variable.
   string buck2_show_soft_errors = 26;
 
   enum PreemptibleWhen {
@@ -577,12 +577,12 @@ message TestRequest {
 
   // Whether `DefaultInfo` providers for targets matching `target_patterns`
   // should be built instead of only test providers. When unset, this defaults
-  // to the `buck2.test_builds_targets` buckconfig.
+  // to the `yak.test_builds_targets` buckconfig.
   optional bool build_default_info = 15;
 
   // Whether `RunInfo` providers for targets matching `target_patterns`
   // should be built instead of only test providers. When unset, this defaults
-  // to the `buck2.test_builds_targets` buckconfig.
+  // to the `yak.test_builds_targets` buckconfig.
   optional bool build_run_info = 16;
 }
 

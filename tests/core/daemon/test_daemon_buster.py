@@ -25,7 +25,7 @@ async def test_daemon_buster(buck: Buck) -> None:
     assert pid1 == pid0
 
     with open(buck.cwd / ".yakconfig", "a") as f:
-        f.write("[buck2]\n")
+        f.write("[yak]\n")
         f.write("daemon_buster = 1\n")
 
     await buck.build(":")
@@ -37,7 +37,7 @@ async def test_daemon_buster(buck: Buck) -> None:
     assert pid3 == pid2
 
     with open(buck.cwd / ".yakconfig", "a") as f:
-        f.write("[buck2]\n")
+        f.write("[yak]\n")
         f.write("daemon_buster = 2\n")
 
     await buck.build(":")

@@ -319,7 +319,7 @@ public class AdbHelper implements AndroidDevicesHelper {
       String packageName)
       throws InterruptedException {
     Optional<String> buck2BuildUuid =
-        Optional.ofNullable(EnvVariablesProvider.getSystemEnv().get("BUCK2_UUID"));
+        Optional.ofNullable(EnvVariablesProvider.getSystemEnv().get("YAK_UUID"));
 
     AtomicBoolean success = new AtomicBoolean();
 

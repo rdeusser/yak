@@ -205,7 +205,7 @@ fn expand_argfile_contents(
         }
         ArgFileKind::PythonExecutable(path, flag) => {
             let mut cmd = background_command("python3");
-            cmd.env("BUCK2_ARG_FILE", "1");
+            cmd.env("YAK_ARG_FILE", "1");
             cmd.arg(argfile_abs_path(context, path)?.as_os_str());
             if let Some(flag) = flag.as_deref() {
                 cmd.args(["--flavors", flag]);

@@ -14,7 +14,7 @@ use std::io;
 fn main() -> io::Result<()> {
     let proto_files = &["forkserver.proto"];
 
-    let buck_proto_srcs = env::var("BUCK_PROTO_SRCS");
+    let buck_proto_srcs = env::var("YAK_PROTO_SRCS");
     let includes = if let Ok(path) = &buck_proto_srcs {
         vec![path.as_str()]
     } else {

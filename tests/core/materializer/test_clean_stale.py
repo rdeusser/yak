@@ -34,7 +34,7 @@ def configure_active_unmaterialization(
     with open(config_file, "w") as f:
         f.write(
             f"""
-[buck2]
+[yak]
 ttl_refresh_enabled = true
 clean_stale_enabled = {str(scheduled).lower()}
 clean_stale_artifact_ttl_hours = 8
@@ -52,7 +52,7 @@ clean_stale_unmaterialize_upload_enabled = {str(enabled).lower()}
 def configure_clean_stale(buck: Buck, settings: str) -> None:
     config_file = buck.cwd / ".yakconfig.local"
     with open(config_file, "w") as f:
-        f.write(f"[buck2]\n{settings}")
+        f.write(f"[yak]\n{settings}")
 
 
 async def audit_entry(buck: Buck, artifact_name: str) -> str:
@@ -73,7 +73,7 @@ def golden_audit_entries(*, entries: list[str], rel_path: str) -> None:
 
 
 @buck_test()
-@env("BUCK_LOG", "buck2_execute_impl::materializers=trace")
+@env("YAK_LOG", "buck2_execute_impl::materializers=trace")
 async def test_artifact_access_time(buck: Buck) -> None:
     # drop microseconds to match 1s precision from materializer
     start = datetime.now(UTC).replace(microsecond=0)
@@ -124,7 +124,7 @@ async def test_artifact_access_time(buck: Buck) -> None:
 
 
 @buck_test()
-@env("BUCK_LOG", "buck2_execute_impl::materializers=trace")
+@env("YAK_LOG", "buck2_execute_impl::materializers=trace")
 async def test_clean_stale_artifacts(buck: Buck) -> None:
     target_1 = "root//:copy"
     result_1 = await buck.build(target_1)
@@ -170,7 +170,7 @@ async def test_clean_stale_artifacts(buck: Buck) -> None:
 
 
 @buck_test()
-@env("BUCK_LOG", "buck2_execute_impl::materializers=trace")
+@env("YAK_LOG", "buck2_execute_impl::materializers=trace")
 async def test_clean_stale_artifact_dir(buck: Buck) -> None:
     target_1 = "root//:copy"
     result_1 = await buck.build(target_1)
@@ -197,7 +197,7 @@ async def test_clean_stale_buck_out_empty(buck: Buck) -> None:
 
 
 @buck_test()
-@env("BUCK_LOG", "buck2_execute_impl::materializers=trace")
+@env("YAK_LOG", "buck2_execute_impl::materializers=trace")
 async def test_clean_stale_actions(buck: Buck) -> None:
     async with serve_file(DOWNLOAD_CONTENT) as served:
         configure_served_file(buck, served)
@@ -314,7 +314,7 @@ async def test_clean_stale_scheduled(buck: Buck) -> None:
     with open(config_file, "w") as f:
         f.write(
             """
-[buck2]
+[yak]
 clean_stale_enabled = true
 clean_stale_artifact_ttl_hours = 0
 clean_stale_start_offset_hours = 0
@@ -362,7 +362,7 @@ async def test_clean_stale_scheduled_high_disk_usage(buck: Buck) -> None:
     with open(config_file, "w") as f:
         f.write(
             """
-[buck2]
+[yak]
 clean_stale_enabled = true
 clean_stale_artifact_ttl_hours = 8
 clean_stale_start_offset_hours = 0
@@ -396,7 +396,7 @@ async def test_clean_stale_scheduled_adaptive_high_disk_usage(buck: Buck) -> Non
     with open(config_file, "w") as f:
         f.write(
             """
-[buck2]
+[yak]
 clean_stale_enabled = true
 clean_stale_artifact_ttl_hours = 8
 clean_stale_start_offset_hours = 0
@@ -425,7 +425,7 @@ async def test_clean_stale_scheduled_adaptive_threshold_not_tripped(buck: Buck) 
     with open(config_file, "w") as f:
         f.write(
             """
-[buck2]
+[yak]
 clean_stale_enabled = true
 clean_stale_artifact_ttl_hours = 8
 clean_stale_start_offset_hours = 0
@@ -457,7 +457,7 @@ async def test_clean_stale_scheduled_adaptive_min_ttl_protects_recent(
     with open(config_file, "w") as f:
         f.write(
             """
-[buck2]
+[yak]
 clean_stale_enabled = true
 clean_stale_artifact_ttl_hours = 8
 clean_stale_start_offset_hours = 0
@@ -710,7 +710,7 @@ async def test_adaptive_does_not_unmaterialize_when_disabled(buck: Buck) -> None
 async def test_clean_scratch_on_idle(buck: Buck) -> None:
     """Scratch (yak-out/<iso>/tmp) is swept once the daemon goes idle."""
     with open(buck.cwd / ".yakconfig.local", "w") as f:
-        f.write("[buck2]\nclean_scratch_on_idle = true\n")
+        f.write("[yak]\nclean_scratch_on_idle = true\n")
 
     # Dead scratch from past actions: deleted regardless of age.
     dead = (

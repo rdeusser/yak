@@ -61,7 +61,7 @@ async def test_success_install(buck: Buck, tmp_path: Path) -> None:
 
 
 @buck_test(write_invocation_record=True)
-@env("BUCK_LOG", "buck2_server_commands::commands::install=debug")
+@env("YAK_LOG", "buck2_server_commands::commands::install=debug")
 async def test_install_logging(buck: Buck, tmp_path: Path) -> None:
     _setup_sandbox(buck)
     tmp_dir = tmp_path / "install_test"
@@ -111,7 +111,7 @@ async def test_install_logs_target_rule_type_names(buck: Buck, tmp_path: Path) -
 
 
 @buck_test()
-@env("BUCK2_INSTALLER_SEND_TIMEOUT_S", "1")
+@env("YAK_INSTALLER_SEND_TIMEOUT_S", "1")
 async def test_send_file_timeout(buck: Buck, tmp_path: Path) -> None:
     _setup_sandbox(buck)
     await expect_failure(

@@ -270,7 +270,7 @@ struct EvalResult {
 
 impl InterpreterForDir {
     fn verbose_gc() -> buck2_error::Result<bool> {
-        match std::env::var_os("BUCK2_STARLARK_VERBOSE_GC") {
+        match std::env::var_os("YAK_STARLARK_VERBOSE_GC") {
             Some(val) => Ok(!val.is_empty()),
             None => Ok(false),
         }
@@ -279,8 +279,7 @@ impl InterpreterForDir {
     fn is_ignore_attrs_for_profiling() -> buck2_error::Result<bool> {
         // If unsure, feel free to break this code or just delete it.
         // It is intended only for profiling of very specific use cases.
-        let ignore_attrs_for_profiling = match std::env::var_os("BUCK2_IGNORE_ATTRS_FOR_PROFILING")
-        {
+        let ignore_attrs_for_profiling = match std::env::var_os("YAK_IGNORE_ATTRS_FOR_PROFILING") {
             Some(val) => !val.is_empty(),
             None => false,
         };
@@ -694,7 +693,7 @@ impl InterpreterForDir {
                 &loaded_modules,
             )?;
             let buckconfig_key = BuckconfigKeyRef {
-                section: "buck2",
+                section: "yak",
                 property: "check_starlark_peak_memory",
             };
             let starlark_peak_mem_config_enabled = LegacyBuckConfig::parse_value(

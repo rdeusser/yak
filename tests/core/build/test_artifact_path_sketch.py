@@ -67,11 +67,11 @@ async def _get_sketch_cardinalities_from_report(
         "--build-report",
         str(report_path),
         "-c",
-        "buck2.log_artifact_count_sketch=true",
+        "yak.log_artifact_count_sketch=true",
         "-c",
-        "buck2.log_artifact_size_sketch=true",
+        "yak.log_artifact_size_sketch=true",
         "-c",
-        "buck2.log_sketch_cardinalities=true",
+        "yak.log_sketch_cardinalities=true",
     ]
     if extra_args:
         args.extend(extra_args)
@@ -93,7 +93,7 @@ build_report_test(
     [
         "//:simple",
         "-c",
-        "buck2.log_artifact_count_sketch=true",
+        "yak.log_artifact_count_sketch=true",
     ],
 )
 
@@ -102,7 +102,7 @@ build_report_test(
     [
         "//:simple",
         "-c",
-        "buck2.log_artifact_size_sketch=true",
+        "yak.log_artifact_size_sketch=true",
     ],
 )
 
@@ -112,9 +112,9 @@ build_report_test(
         "//:simple",
         "//:with_dep",
         "-c",
-        "buck2.log_artifact_count_sketch=true",
+        "yak.log_artifact_count_sketch=true",
         "-c",
-        "buck2.log_artifact_size_sketch=true",
+        "yak.log_artifact_size_sketch=true",
     ],
 )
 

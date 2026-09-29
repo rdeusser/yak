@@ -1116,7 +1116,7 @@ mod partial_deser_stats {
     pub(super) static CLAIMED_VALUES: AtomicU64 = AtomicU64::new(0);
     pub(super) static CLAIMED_ALLOC_BYTES: AtomicU64 = AtomicU64::new(0);
 
-    /// Off unless `BUCK2_STARLARK_PARTIAL_DESER_STATS` is set: the claim site
+    /// Off unless `YAK_STARLARK_PARTIAL_DESER_STATS` is set: the claim site
     /// runs millions of times per page-in and shared counters there are a
     /// contended cache line. Always on under `cfg(test)`, so the counting
     /// paths stay exercised. The counters are process-global and never reset,
@@ -1127,7 +1127,7 @@ mod partial_deser_stats {
             return true;
         }
         static ON: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
-        *ON.get_or_init(|| std::env::var_os("BUCK2_STARLARK_PARTIAL_DESER_STATS").is_some())
+        *ON.get_or_init(|| std::env::var_os("YAK_STARLARK_PARTIAL_DESER_STATS").is_some())
     }
 
     /// What one heap's metadata parse contributes, held until the parse is

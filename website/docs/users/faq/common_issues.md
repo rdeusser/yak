@@ -7,7 +7,7 @@ title: Common Issues
 
 Buck2 offers an interactive console by default.
 
-To disable either use an env var: `BUCK_NO_INTERACTIVE_CONSOLE` or a flag:
+To disable either use an env var: `YAK_NO_INTERACTIVE_CONSOLE` or a flag:
 `--no-interactive-console`
 
 ## Where is my output file?

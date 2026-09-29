@@ -88,7 +88,7 @@ async def test_exec_dep_transitive_incompatible_post_transition(buck: Buck) -> N
 async def test_error_on_dep_only_incompatible(buck: Buck, target_pattern: str) -> None:
     args = [
         "-c",
-        f"buck2.error_on_dep_only_incompatible=//some/...,{target_pattern}",
+        f"yak.error_on_dep_only_incompatible=//some/...,{target_pattern}",
         "//dep_incompatible:dep_incompatible",
     ]
     await expect_failure(

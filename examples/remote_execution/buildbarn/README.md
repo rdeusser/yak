@@ -80,7 +80,7 @@ More information is available in the
 Configure the `Buildbarn` endpoint as follows:
 
 ```ini
-[buck2_re_client]
+[yak_re_client]
 engine_address       = grpc://localhost:8980
 action_cache_address = grpc://localhost:8980
 cas_address          = grpc://localhost:8980

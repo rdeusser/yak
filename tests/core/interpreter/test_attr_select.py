@@ -177,7 +177,7 @@ async def test_select_incompatible(buck: Buck) -> None:
 
     # On platform2 (incompatible), incompat_foo is incompatible,
     # so depends_on_incompat should also be incompatible (dep-only).
-    # This is currently a soft error upgraded to hard error via BUCK2_HARD_ERROR.
+    # This is currently a soft error upgraded to hard error via YAK_HARD_ERROR.
     await expect_failure(
         run(
             "cquery",

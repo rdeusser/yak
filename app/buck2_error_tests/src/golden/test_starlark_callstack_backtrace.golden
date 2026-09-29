@@ -1,5 +1,5 @@
 # @generated
-# To regenerate, append -- --env BUCK2_RUST_REGENERATE_GOLDEN_TESTS=1 and re-run the test
+# To regenerate, append -- --env YAK_RUST_REGENERATE_GOLDEN_TESTS=1 and re-run the test
 
 error: rust failure
  --> imported.bzl:9:6

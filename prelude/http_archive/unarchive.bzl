@@ -94,7 +94,7 @@ def _windows_unpack_ps1(out: OutputArtifact, archive: Artifact, ext_type: str, s
         # bsdtar cannot invoke zstd itself, and a PowerShell native pipe would
         # corrupt the binary stream, so decompress to a scratch file first.
         return lines + [
-            "$scratch = $env:BUCK_SCRATCH_PATH",
+            "$scratch = $env:YAK_SCRATCH_PATH",
             "if (-not $scratch) { $scratch = [System.IO.Path]::GetTempPath() }",
             "$tmp = Join-Path $scratch 'http_archive_unpack.tar'",
             cmd_args("zstd", "-d", "-f", quoted_archive, "-o", '"$tmp"', delimiter = " "),

@@ -102,10 +102,10 @@ func main() {
 		envs["GOROOT"] = absGoroot
 	}
 
-	if buckScratchPath, ok := envs["BUCK_SCRATCH_PATH"]; ok {
+	if buckScratchPath, ok := envs["YAK_SCRATCH_PATH"]; ok {
 		absBuckScratchPath, err := filepath.Abs(buckScratchPath)
 		if err != nil {
-			log.Fatal("Failed to resolve BUCK_SCRATCH_PATH: %s", err)
+			log.Fatal("Failed to resolve YAK_SCRATCH_PATH: %s", err)
 		}
 		envs["GOCACHE"] = absBuckScratchPath
 		envs["TMPDIR"] = absBuckScratchPath

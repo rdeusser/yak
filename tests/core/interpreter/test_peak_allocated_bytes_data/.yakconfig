@@ -4,5 +4,5 @@ name=YAK.fixture
 [repositories]
 prelude = .
 
-[buck2]
+[yak]
 check_starlark_peak_memory = true

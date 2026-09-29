@@ -69,7 +69,7 @@ def main(argv):
     if "GOROOT" in env:
         env["GOROOT"] = os.path.realpath(env["GOROOT"])
 
-    env["GOCACHE"] = os.path.realpath(env["BUCK_SCRATCH_PATH"])
+    env["GOCACHE"] = os.path.realpath(env["YAK_SCRATCH_PATH"])
 
     cwd = os.getcwd()
     for env_var in ["CC", "CGO_CFLAGS", "CGO_CPPFLAGS", "CGO_LDFLAGS"]:

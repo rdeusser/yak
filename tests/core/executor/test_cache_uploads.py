@@ -95,7 +95,7 @@ async def test_re_uploads_default(buck: Buck) -> None:
         "-c",
         f"write.text={random_string()}",
         "-c",
-        "buck2.default_allow_cache_upload=true",
+        "yak.default_allow_cache_upload=true",
     ]
     await buck.build("root//:write_default", *args)
     await _assert_locally_executed_upload_attempted(buck, 1)

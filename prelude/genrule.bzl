@@ -359,13 +359,13 @@ def process_genrule(
         if is_windows:
             rewrite_scratch_path = cmd_args(
                 cmd_args(ctx.label.project_root, relative_to = srcs_artifact),
-                format = 'set "BUCK_SCRATCH_PATH={}\\%BUCK_SCRATCH_PATH%"',
+                format = 'set "YAK_SCRATCH_PATH={}\\%YAK_SCRATCH_PATH%"',
             )
         else:
             srcs_dir = cmd_args(srcs_dir, quote = "shell")
             rewrite_scratch_path = cmd_args(
                 cmd_args(ctx.label.project_root, quote = "shell", relative_to = srcs_artifact),
-                format = "export BUCK_SCRATCH_PATH={}/$BUCK_SCRATCH_PATH",
+                format = "export YAK_SCRATCH_PATH={}/$YAK_SCRATCH_PATH",
             )
 
         # Relativize all paths in the command to the sandbox dir.
@@ -373,7 +373,7 @@ def process_genrule(
             script_cmd.relative_to(srcs_artifact)
 
         script = [
-            # Rewrite BUCK_SCRATCH_PATH
+            # Rewrite YAK_SCRATCH_PATH
             rewrite_scratch_path,
             # Change to the directory that genrules expect.
             cmd_args(srcs_dir, format = "cd {}"),

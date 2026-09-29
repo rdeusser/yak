@@ -518,7 +518,7 @@ impl ManagedRemoteExecutionClient {
         write_type: ActionCacheWriteType,
     ) -> buck2_error::Result<WriteActionResultResponse> {
         if buck2_env!(
-            "BUCK2_TEST_SKIP_ACTION_CACHE_WRITE",
+            "YAK_TEST_SKIP_ACTION_CACHE_WRITE",
             bool,
             applicability = testing
         )? {

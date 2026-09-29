@@ -44,11 +44,11 @@ pub use cleanall::cleanall_stale;
 pub use process::async_background_command;
 pub use process::background_command;
 
-pub const BUCK2_WRAPPER_ENV_VAR: &str = "BUCK2_WRAPPER";
-pub const BUCK_WRAPPER_UUID_ENV_VAR: &str = "BUCK_WRAPPER_UUID";
-pub const BUCK_WRAPPER_START_TIME_ENV_VAR: &str = "BUCK_WRAPPER_START_TIME";
+pub const BUCK2_WRAPPER_ENV_VAR: &str = "YAK_WRAPPER";
+pub const BUCK_WRAPPER_UUID_ENV_VAR: &str = "YAK_WRAPPER_UUID";
+pub const BUCK_WRAPPER_START_TIME_ENV_VAR: &str = "YAK_WRAPPER_START_TIME";
 pub const YAKD_LIFECYCLE: &str = "yakd.lifecycle";
-const BUCK2_TEST_HOME_DIR_ENV_VAR: &str = "BUCK2_TEST_HOME_DIR";
+const BUCK2_TEST_HOME_DIR_ENV_VAR: &str = "YAK_TEST_HOME_DIR";
 /// Default yak isolation dir. Must match the `--isolation-dir` clap
 /// `default_value` in `app/buck2/src/lib.rs`; the default-isolation golden test
 /// (`denied.golden.stderr`) catches drift.
@@ -125,7 +125,7 @@ impl KillallFilter {
 /// `--isolation-dir <name>` flag (see `buck2_client_ctx::daemon::client::connect`),
 /// accepting both the `--isolation-dir <name>` and `--isolation-dir=<name>` forms.
 /// Returns `None` when the flag is absent (e.g. the isolation dir was supplied via
-/// the `BUCK_ISOLATION_DIR` env var, which does not appear in argv, or the process
+/// the `YAK_ISOLATION_DIR` env var, which does not appear in argv, or the process
 /// predates the flag being added to forkserver spawns).
 fn parse_isolation_dir(cmd: &[String]) -> Option<String> {
     let mut args = cmd.iter();

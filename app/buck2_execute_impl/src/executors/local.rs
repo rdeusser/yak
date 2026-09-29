@@ -668,8 +668,8 @@ impl LocalExecutor {
             })
         }));
         let daemon_id = self.daemon_id.to_string();
-        env.push(("BUCK2_DAEMON_UUID", StrOrOsStr::from(&*daemon_id)));
-        env.push(("BUCK_BUILD_ID", StrOrOsStr::from(build_id)));
+        env.push(("YAK_DAEMON_UUID", StrOrOsStr::from(&*daemon_id)));
+        env.push(("YAK_BUILD_ID", StrOrOsStr::from(build_id)));
 
         let liveliness_observer = manager.inner.liveliness_observer.dupe().and(cancellation);
 

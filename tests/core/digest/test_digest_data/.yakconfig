@@ -4,7 +4,7 @@
     prelude = root
 [buildfile]
     name = YAK.fixture
-[buck2]
+[yak]
   materializations = deferred
   digest_algorithms = BLAKE3,SHA1
 [build]

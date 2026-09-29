@@ -72,7 +72,7 @@ impl StderrOutputWriter {
     fn get_chunk_size() -> buck2_error::Result<usize> {
         // protobuf recommends each message should be under 1MB
         const DEFAULT_CHUNK_SIZE: usize = 1024 * 1024;
-        buck2_env!("BUCK2_DEBUG_RAWOUTPUT_CHUNK_SIZE", type=usize, default=DEFAULT_CHUNK_SIZE)
+        buck2_env!("YAK_DEBUG_RAWOUTPUT_CHUNK_SIZE", type=usize, default=DEFAULT_CHUNK_SIZE)
     }
 
     /// Given complete valid UTF-8 string, truncate it to be no longer than given limit.

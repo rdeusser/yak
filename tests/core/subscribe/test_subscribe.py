@@ -43,7 +43,7 @@ async def test_disconnect_eof(buck: Buck) -> None:
 
 
 @buck_test()
-@env("BUCK2_TESTING_INACTIVITY_TIMEOUT", "true")
+@env("YAK_TESTING_INACTIVITY_TIMEOUT", "true")
 async def test_requests_keep_daemon_alive(buck: Buck) -> None:
     async with await buck.subscribe() as subscribe:
         subscribe.stdin.write(SUBSCRIBE_TO_ACTIVE_COMMANDS_REQUEST)

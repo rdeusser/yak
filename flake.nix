@@ -41,8 +41,8 @@
         packages = [ my-rust-bin pkgs.dotslash pkgs.python3 pkgs.lld_20 pkgs.clang_20 pkgs.yarn ];
         shellHook =
           ''
-            export BUCK2_BUILD_PROTOC=${pkgs.protobuf}/bin/protoc
-            export BUCK2_BUILD_PROTOC_INCLUDE=${pkgs.protobuf}/include
+            export YAK_BUILD_PROTOC=${pkgs.protobuf}/bin/protoc
+            export YAK_BUILD_PROTOC_INCLUDE=${pkgs.protobuf}/include
           ''
           # enable mold for linux users, for more tolerable link times
           # we have to specify tokio_unstable in the RUSTFLAGS here since they override

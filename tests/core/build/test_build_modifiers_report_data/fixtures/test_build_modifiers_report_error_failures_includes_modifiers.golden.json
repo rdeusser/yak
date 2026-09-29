@@ -1,9 +1,9 @@
-# This file is @generated, regenerate by rerunning the test with `BUCK2_UPDATE_GOLDEN=1` set
+# This file is @generated, regenerate by rerunning the test with `YAK_UPDATE_GOLDEN=1` set
 
 {
   "error_category": "USER",
   "failures": {
-    "root//fail:fail?root//:macos+root//:arm": "Action failed: root//fail:fail (cfg:<empty>#<HASH>) (fail)\nLocal command returned non-zero exit code 1\nLocal command: env -C \"$(yak root --kind project)\" -- 'BUCK_SCRATCH_PATH=yak-out/v2/tmp/root/<HASH>/fail' false\nStdout: <empty>\nStderr: <empty>\n"
+    "root//fail:fail?root//:macos+root//:arm": "Action failed: root//fail:fail (cfg:<empty>#<HASH>) (fail)\nLocal command returned non-zero exit code 1\nLocal command: env -C \"$(yak root --kind project)\" -- 'YAK_SCRATCH_PATH=yak-out/v2/tmp/root/<HASH>/fail' false\nStdout: <empty>\nStderr: <empty>\n"
   },
   "results": {
     "root//fail:fail?root//:macos+root//:arm": {
@@ -49,7 +49,7 @@
   },
   "strings": {
     "<STRING_HASH>": "",
-    "<STRING_HASH>": "Action failed: root//fail:fail (cfg:<empty>#<HASH>) (fail)\nLocal command returned non-zero exit code 1\nLocal command: env -C \"$(yak root --kind project)\" -- 'BUCK_SCRATCH_PATH=yak-out/v2/tmp/root/<HASH>/fail' false\nStdout: <empty>\nStderr: <empty>\n",
+    "<STRING_HASH>": "Action failed: root//fail:fail (cfg:<empty>#<HASH>) (fail)\nLocal command returned non-zero exit code 1\nLocal command: env -C \"$(yak root --kind project)\" -- 'YAK_SCRATCH_PATH=yak-out/v2/tmp/root/<HASH>/fail' false\nStdout: <empty>\nStderr: <empty>\n",
     "<STRING_HASH>": "Local command returned non-zero exit code 1"
   },
   "success": false,

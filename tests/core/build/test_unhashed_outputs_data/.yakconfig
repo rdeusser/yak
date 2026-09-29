@@ -11,6 +11,6 @@
 [buildfile]
   name = YAK.fixture
 
-[buck2]
+[yak]
   create_unhashed_links = true
   deconflict_content_based_paths_rollout = true

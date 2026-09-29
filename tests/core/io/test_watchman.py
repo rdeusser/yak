@@ -117,7 +117,7 @@ async def test_watchman_restack_with_mergebase(buck: Buck) -> None:
 
 @buck_test(
     extra_buck_config={
-        "buck2": {"disable_watchman_empty_on_fresh_instance": "true"},
+        "yak": {"disable_watchman_empty_on_fresh_instance": "true"},
     },
 )
 async def test_watchman_files_report_on_fresh_instance(buck: Buck) -> None:

@@ -95,13 +95,13 @@ const DEFAULT_WRITE_BUFFER_BYTES: usize = 128 << 20;
 const WRITE_BUFFER_PREALLOC_ROWS: usize = 32768;
 
 /// Rows a producer buffers before publishing one write transaction.
-/// `BUCK2_PAGABLE_WRITE_BUFFER_ROWS` overrides, as a measurement probe:
+/// `YAK_PAGABLE_WRITE_BUFFER_ROWS` overrides, as a measurement probe:
 /// shrinking it reproduces large-table index write amplification on a small
 /// target.
 fn write_buffer_rows() -> usize {
     static ROWS: OnceLock<usize> = OnceLock::new();
     *ROWS.get_or_init(|| {
-        parse_positive_env("BUCK2_PAGABLE_WRITE_BUFFER_ROWS", DEFAULT_WRITE_BUFFER_ROWS)
+        parse_positive_env("YAK_PAGABLE_WRITE_BUFFER_ROWS", DEFAULT_WRITE_BUFFER_ROWS)
     })
 }
 
@@ -123,7 +123,7 @@ fn parse_positive_env(var: &str, default: usize) -> usize {
 }
 
 /// Serialized bytes a producer buffers before publishing one write
-/// transaction; `BUCK2_PAGABLE_WRITE_BUFFER_BYTES` overrides.
+/// transaction; `YAK_PAGABLE_WRITE_BUFFER_BYTES` overrides.
 ///
 /// The row cap alone would let byte volume swing with row size, and
 /// transaction size is what page-out cost scales by: content-hash keys land
@@ -134,10 +134,7 @@ fn parse_positive_env(var: &str, default: usize) -> usize {
 fn write_buffer_bytes() -> usize {
     static BYTES: OnceLock<usize> = OnceLock::new();
     *BYTES.get_or_init(|| {
-        parse_positive_env(
-            "BUCK2_PAGABLE_WRITE_BUFFER_BYTES",
-            DEFAULT_WRITE_BUFFER_BYTES,
-        )
+        parse_positive_env("YAK_PAGABLE_WRITE_BUFFER_BYTES", DEFAULT_WRITE_BUFFER_BYTES)
     })
 }
 const IDLE_SPARE_WRITE_BUFFERS: usize = 1;
@@ -303,7 +300,7 @@ impl ConnectionPool {
         // memory cost by the reader count per shard.
         // Cached so a bad value warns once, not once per shard connection.
         static CACHE_KB: OnceLock<usize> = OnceLock::new();
-        let kb = *CACHE_KB.get_or_init(|| parse_positive_env("BUCK2_PAGABLE_CACHE_KB", 0));
+        let kb = *CACHE_KB.get_or_init(|| parse_positive_env("YAK_PAGABLE_CACHE_KB", 0));
         if kb > 0 {
             conn.execute_batch(&format!("PRAGMA cache_size=-{kb};"))?;
         }

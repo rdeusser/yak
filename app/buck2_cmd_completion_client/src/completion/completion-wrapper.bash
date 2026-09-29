@@ -14,7 +14,7 @@
 
 complete -r yak
 
-_BUCK_COMPLETE_BIN="${_BUCK_COMPLETE_BIN:-yak}"
+_YAK_COMPLETE_BIN="${_YAK_COMPLETE_BIN:-yak}"
 
 __yak_takes_target()
 {
@@ -60,7 +60,7 @@ __yak_add_target_completions()
         else
             completions+=("$REPLY")
         fi
-    done < <("${_BUCK_COMPLETE_BIN[@]}" complete --target="$1" 2>/dev/null)
+    done < <("${_YAK_COMPLETE_BIN[@]}" complete --target="$1" 2>/dev/null)
     COMPREPLY=("${completions[@]}")
 }
 
@@ -69,7 +69,7 @@ __yak_add_flagfile_completions()
     local completions=()
     while read -r; do
         completions+=("$REPLY")
-    done < <("${_BUCK_COMPLETE_BIN[@]}" complete --flagfile="$1" 2>/dev/null)
+    done < <("${_YAK_COMPLETE_BIN[@]}" complete --flagfile="$1" 2>/dev/null)
     COMPREPLY=("${completions[@]}")
 }
 

@@ -25,7 +25,7 @@ async def test_soft_error(buck: Buck) -> None:
     # windows errors are slightly different, just skip for now
     skip_for_os=["windows"],
 )
-@env("BUCK2_HARD_ERROR", "false")
+@env("YAK_HARD_ERROR", "false")
 async def test_package_listing_errors(buck: Buck) -> None:
     outs = []
     for target in [

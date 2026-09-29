@@ -47,7 +47,7 @@ static ALLOC: tikv_jemallocator::Jemalloc = tikv_jemallocator::Jemalloc;
 static ALLOC: mimalloc::MiMalloc = mimalloc::MiMalloc;
 
 fn init_logging() -> buck2_error::Result<Arc<dyn LogConfigurationReloadHandle>> {
-    static ENV_TRACING_LOG_FILE_PATH: &str = "BUCK_LOG_TO_FILE_PATH";
+    static ENV_TRACING_LOG_FILE_PATH: &str = "YAK_LOG_TO_FILE_PATH";
 
     let handle = match std::env::var_os(ENV_TRACING_LOG_FILE_PATH) {
         Some(path) => {
@@ -135,7 +135,7 @@ fn main() -> ! {
         buck2_events::init_late_bindings();
     }
     BUCK2_BUILD_INFO.init(Buck2BuildInfo {
-        revision: std::option_env!("BUCK2_SET_EXPLICIT_VERSION"),
+        revision: std::option_env!("YAK_SET_EXPLICIT_VERSION"),
     });
 
     // Set up crypto impl once per process
@@ -148,7 +148,7 @@ fn main() -> ! {
         tracing::debug!("Client initialized logging");
 
         let stdin_buffer_size = buck2_env!(
-            "BUCK2_TEST_STDIN_BUFFER_SIZE",
+            "YAK_TEST_STDIN_BUFFER_SIZE",
             type=usize,
             applicability=testing,
         )?

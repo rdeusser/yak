@@ -4,6 +4,6 @@
 [buildfile]
   name=YAK.fixture
 
-[buck2]
+[yak]
   materializations = deferred
   verbose_materializer_event_log = true

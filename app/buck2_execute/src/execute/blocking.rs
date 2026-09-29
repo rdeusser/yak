@@ -108,8 +108,8 @@ impl BuckBlockingExecutorShared {
     ///   issues modifying the directory structure does.
     fn default_concurrency() -> buck2_error::Result<Self> {
         let io_threads =
-            buck2_env!("BUCK2_IO_THREADS", type=usize, default=directory_mutation_parallelism())?;
-        let io_semaphore = buck2_env!("BUCK2_IO_SEMAPHORE", type=usize, default=buck2_util::threads::available_parallelism())?;
+            buck2_env!("YAK_IO_THREADS", type=usize, default=directory_mutation_parallelism())?;
+        let io_semaphore = buck2_env!("YAK_IO_SEMAPHORE", type=usize, default=buck2_util::threads::available_parallelism())?;
 
         let (command_sender, command_receiver) = unbounded();
 

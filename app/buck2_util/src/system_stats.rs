@@ -58,7 +58,7 @@ pub fn num_cores() -> usize {
 }
 
 pub fn system_memory_stats() -> u64 {
-    if let Ok(Some(bytes)) = buck2_env::env::buck2_env!("BUCK2_TEST_FAKE_SYSTEM_TOTAL_MEMORY", type=u64, applicability=testing)
+    if let Ok(Some(bytes)) = buck2_env::env::buck2_env!("YAK_TEST_FAKE_SYSTEM_TOTAL_MEMORY", type=u64, applicability=testing)
     {
         return bytes;
     }

@@ -180,12 +180,12 @@ pub(crate) struct ConfiguredBuildReportEntry {
     #[serde(skip_serializing_if = "Option::is_none")]
     artifact_size_sketch: Option<String>,
     /// Estimated cardinality of `artifact_count_sketch`. Populated only when the
-    /// `buck2.log_sketch_cardinalities` buckconfig is set; the corresponding
+    /// `yak.log_sketch_cardinalities` buckconfig is set; the corresponding
     /// sketch field is left intact in both cases.
     #[serde(skip_serializing_if = "Option::is_none")]
     artifact_count_sketch_cardinality: Option<f64>,
     /// Estimated cardinality of `artifact_size_sketch`. Populated only when the
-    /// `buck2.log_sketch_cardinalities` buckconfig is set; the corresponding
+    /// `yak.log_sketch_cardinalities` buckconfig is set; the corresponding
     /// sketch field is left intact in both cases.
     #[serde(skip_serializing_if = "Option::is_none")]
     artifact_size_sketch_cardinality: Option<f64>,

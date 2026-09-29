@@ -5,5 +5,5 @@ name=YAK.fixture
 root = .
 prelude = .
 
-[buck2]
+[yak]
 materializations = deferred

@@ -19,7 +19,7 @@ pytestmark = pytest.mark.remote_execution
 
 
 @buck_test()
-@env("BUCK2_TEST_FAIL_CONNECT", "true")
+@env("YAK_TEST_FAIL_CONNECT", "true")
 async def test_re_connection_failure_no_retry(buck: Buck) -> None:
     out = await expect_failure(
         buck.build(
@@ -74,7 +74,7 @@ async def test_re_use_case_override_with_arg(buck: Buck) -> None:
         "--remote-only",
         "--no-remote-cache",
         "--config",
-        "buck2_re_client.override_use_case=buck2-user",
+        "yak_re_client.override_use_case=buck2-user",
     )
     await assert_re_use_case(buck, "buck2-user")
 
@@ -94,7 +94,7 @@ async def test_re_use_case_override_with_config(buck: Buck) -> None:
     with open(buck.cwd / "input.txt", "w") as f:
         f.write(random_string())
     with open(buck.cwd / ".yakconfig.local", "w") as f:
-        f.write("[buck2_re_client]\n")
+        f.write("[yak_re_client]\n")
         f.write("override_use_case = buck2-user\n")
     await buck.build(
         "root//:simple",
@@ -119,7 +119,7 @@ async def test_re_use_case_override_with_external_config(buck: Buck) -> None:
     with open(buck.cwd / "input.txt", "w") as f:
         f.write(random_string())
     with tempfile.NamedTemporaryFile("w", delete=False) as f:
-        f.write("[buck2_re_client]\n")
+        f.write("[yak_re_client]\n")
         f.write("override_use_case = buck2-user\n")
         f.close()
         await buck.build(
@@ -136,7 +136,7 @@ async def test_re_use_case_override_with_external_config(buck: Buck) -> None:
 async def test_re_use_case_override_with_external_config_source(buck: Buck) -> None:
     with tempfile.NamedTemporaryFile("w", delete=False) as temp:
         env = os.environ.copy()
-        env["BUCK2_TEST_EXTRA_EXTERNAL_CONFIG"] = temp.name
+        env["YAK_TEST_EXTRA_EXTERNAL_CONFIG"] = temp.name
         # Make sure action is not cached
         with open(buck.cwd / "input.txt", "w") as f:
             f.write(random_string())
@@ -150,7 +150,7 @@ async def test_re_use_case_override_with_external_config_source(buck: Buck) -> N
         # Change the target input
         with open(buck.cwd / "input.txt", "w") as f:
             f.write(random_string())
-        temp.write("[buck2_re_client]\n")
+        temp.write("[yak_re_client]\n")
         temp.write("override_use_case = buck2-user\n")
         temp.flush()
         await buck.build(

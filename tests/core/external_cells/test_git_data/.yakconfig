@@ -9,7 +9,7 @@
 [buildfile]
   name = YAK.fixture
 
-[buck2]
+[yak]
   materializations = deferred
   sqlite_materializer_state = true
 

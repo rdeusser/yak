@@ -12,7 +12,7 @@ def _check_run_uuid(_ctx):
         RunInfo([
             "python3",
             "-c",
-            'import os; assert "BUCK_RUN_BUILD_ID" in os.environ',
+            'import os; assert "YAK_RUN_BUILD_ID" in os.environ',
         ]),
     ]
 

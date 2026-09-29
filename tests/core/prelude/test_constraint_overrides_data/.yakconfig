@@ -16,7 +16,7 @@
 [parser]
   target_platform_detector_spec = target:root//...->root//:original
 
-[buck2]
+[yak]
   platforms = root//:replacement
   constraints = root//:red, root//:colors, alias//:blue, alias//:colors[blue]
   passthrough_constraints = root//:retained

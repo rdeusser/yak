@@ -62,7 +62,7 @@ async def test_overall_timeout_with_artifact_path_sketch(
                     "--overall-timeout",
                     "1s",
                     "-c",
-                    "buck2.log_artifact_size_sketch=true",
+                    "yak.log_artifact_size_sketch=true",
                     "--build-report",
                     str(build_report),
                 ),

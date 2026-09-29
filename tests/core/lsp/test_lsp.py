@@ -161,7 +161,7 @@ async def test_lsp_stdin_eof_clears_server_command(
 
 
 @buck_test()
-@env("BUCK2_TESTING_INACTIVITY_TIMEOUT", "true")
+@env("YAK_TESTING_INACTIVITY_TIMEOUT", "true")
 async def test_lsp_exits_when_daemon_times_out(buck: Buck) -> None:
     # The inactivity timer only resets when a command *starts*, so it fires while the
     # lsp is still connected. The daemon cannot drain that stream, so it exits on its
@@ -189,14 +189,14 @@ async def test_lsp_exits_when_daemon_times_out(buck: Buck) -> None:
 
 
 @buck_test(skip_for_os=["windows"])
-@env("BUCK2_TESTING_INACTIVITY_TIMEOUT", "true")
-@env("BUCKD_STARTUP_TIMEOUT", "90")
+@env("YAK_TESTING_INACTIVITY_TIMEOUT", "true")
+@env("YAKD_STARTUP_TIMEOUT", "90")
 async def test_lsp_daemon_inactivity_shutdown_recovers_with_different_version(
     buck: Buck,
 ) -> None:
     # `yakd.info` outlives the daemon, and a version mismatch in it is what sends the
     # client down the connect-to-the-existing-daemon path. That used to cost the full
-    # `BUCKD_STARTUP_TIMEOUT`, because the daemon accepted the connection and then
+    # `YAKD_STARTUP_TIMEOUT`, because the daemon accepted the connection and then
     # never answered it. Now there is nothing listening and the client replaces it.
     await buck.server()
     status = await buck.status()
@@ -250,7 +250,7 @@ async def test_lsp_exits_when_daemon_disappears(buck: Buck) -> None:
 
 
 @buck_test()
-@env("BUCK2_TESTING_INACTIVITY_TIMEOUT", "true")
+@env("YAK_TESTING_INACTIVITY_TIMEOUT", "true")
 async def test_lsp_requests_keep_daemon_alive(buck: Buck) -> None:
     async with await buck.lsp() as lsp:
         await lsp.init_connection()

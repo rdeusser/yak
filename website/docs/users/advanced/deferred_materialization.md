@@ -41,7 +41,7 @@ backend if they are already on disk.
 To enable, add this to your Buckconfig:
 
 ```ini
-[buck2]
+[yak]
 sqlite_materializer_state = true
 ```
 
@@ -53,7 +53,7 @@ writes on the critical path for a build.
 To enable, add this to your Buckconfig:
 
 ```ini
-[buck2]
+[yak]
 defer_write_actions = true
 ```
 
@@ -74,14 +74,14 @@ Enabling this requires enabling [on-disk state](#on-disk-state) and
 Buckconfig:
 
 ```ini
-[buck2]
+[yak]
 clean_stale_enabled = true
 ```
 
 It can be further configured by changing these default values:
 
 ```ini
-[buck2]
+[yak]
 # one week
 clean_stale_artifact_ttl_hours = 24 * 7
 clean_stale_period_hours = 24

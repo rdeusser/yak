@@ -462,9 +462,9 @@ impl<'a> ConnectedInstaller<'a> {
         let initial_delay = Duration::from_millis(100);
         let max_delay = Duration::from_millis(500);
         let timeout =
-            Duration::from_secs(buck2_env!("BUCK2_INSTALLER_TIMEOUT_S", type=u64)?.unwrap_or(120));
+            Duration::from_secs(buck2_env!("YAK_INSTALLER_TIMEOUT_S", type=u64)?.unwrap_or(120));
         let send_timeout = Duration::from_secs(
-            buck2_env!("BUCK2_INSTALLER_SEND_TIMEOUT_S", type=u64)?
+            buck2_env!("YAK_INSTALLER_SEND_TIMEOUT_S", type=u64)?
                 .unwrap_or_else(|| parse_install_timeout(installer_run_args)),
         );
 
@@ -937,7 +937,7 @@ async fn build_launch_installer(
         let child = async_background_command(&run_args[0])
             .args(&run_args[1..])
             .args(installer_run_args)
-            .env("BUCK2_UUID", build_id)
+            .env("YAK_UUID", build_id)
             .stderr(stderr)
             .spawn()
             .buck_error_context("Failed to spawn installer")?;

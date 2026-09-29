@@ -201,7 +201,7 @@ func TestRetriveActionErrors(t *testing.T) {
 	buckStderr := []byte(`[2024-09-12T07:57:42.799-07:00] Build ID: 86f93efa-c28e-4a34-94a8-129da2fc5336
 [2024-09-12T07:57:42.880-07:00] Action failed: root//greeting:greeting (prelude//platforms:default#0b9c1ba57ab15e90) (go_compile greeting)
 [2024-09-12T07:57:42.880-07:00] Local command returned non-zero exit code 2
-[2024-09-12T07:57:42.880-07:00] Local command: env -- 'BUCK_SCRATCH_PATH=yak-out/v2/tmp/root/638f78105dd4e4ee/go_compile/greeting' 'CGO_ENABLED=1' 'GOARCH=amd64' 'GOOS=linux' yak-out/v2/gen/prelude/a32dc125c1d570bc/go_bootstrap/tools/__go_go_wrapper__/go_go_wrapper --go go -- -p greeting -o yak-out/v2/gen/root/0b9c1ba57ab15e90/greeting/__greeting__/__action___0__/go_compile_out.a
+[2024-09-12T07:57:42.880-07:00] Local command: env -- 'YAK_SCRATCH_PATH=yak-out/v2/tmp/root/638f78105dd4e4ee/go_compile/greeting' 'CGO_ENABLED=1' 'GOARCH=amd64' 'GOOS=linux' yak-out/v2/gen/prelude/a32dc125c1d570bc/go_bootstrap/tools/__go_go_wrapper__/go_go_wrapper --go go -- -p greeting -o yak-out/v2/gen/root/0b9c1ba57ab15e90/greeting/__greeting__/__action___0__/go_compile_out.a
 [2024-09-12T07:57:42.880-07:00] Stdout:
 greeting/greeting.go:8:18: syntax error: unexpected name get, expected (
 greeting/greeting.go:10:1: syntax error: unexpected } after top level declaration
@@ -217,7 +217,7 @@ Error running command: exit status 2
 [2024-09-12T07:57:42.886-07:00] The following actions failed during the execution of this command:
 [2024-09-12T07:57:42.886-07:00] Action failed: root//greeting:greeting (prelude//platforms:default#0b9c1ba57ab15e90) (go_compile greeting)
 [2024-09-12T07:57:42.886-07:00] Local command returned non-zero exit code 2
-[2024-09-12T07:57:42.886-07:00] Local command: env -- 'BUCK_SCRATCH_PATH=yak-out/v2/tmp/root/638f78105dd4e4ee/go_compile/greeting' 'CGO_ENABLED=1' 'GOARCH=amd64' 'GOOS=linux' yak-out/v2/gen/prelude/a32dc125c1d570bc/go_bootstrap/tools/__go_go_wrapper__/go_go_wrapper --go go -- -p greeting -o yak-out/v2/gen/root/0b9c1ba57ab15e90/greeting/__greeting__/__action___0__/go_compile_out.a
+[2024-09-12T07:57:42.886-07:00] Local command: env -- 'YAK_SCRATCH_PATH=yak-out/v2/tmp/root/638f78105dd4e4ee/go_compile/greeting' 'CGO_ENABLED=1' 'GOARCH=amd64' 'GOOS=linux' yak-out/v2/gen/prelude/a32dc125c1d570bc/go_bootstrap/tools/__go_go_wrapper__/go_go_wrapper --go go -- -p greeting -o yak-out/v2/gen/root/0b9c1ba57ab15e90/greeting/__greeting__/__action___0__/go_compile_out.a
 [2024-09-12T07:57:42.886-07:00] Stdout:
 greeting/greeting.go:8:18: syntax error: unexpected name get, expected (
 greeting/greeting.go:10:1: syntax error: unexpected } after top level declaration

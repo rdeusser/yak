@@ -1,4 +1,4 @@
-# This file is @generated, regenerate by rerunning the test with `BUCK2_UPDATE_GOLDEN=1` set
+# This file is @generated, regenerate by rerunning the test with `YAK_UPDATE_GOLDEN=1` set
 
 Converts the event log from a selected invocation into a user event log, in JSONL format
 
@@ -33,7 +33,7 @@ Universal Options:
           The isolation directory also influences the output paths provided by Buck2, and as a
           result using a non-default isolation dir will cause cache misses (and slower builds).
 
-          [env: BUCK_ISOLATION_DIR=]
+          [env: YAK_ISOLATION_DIR=]
           [default: v2]
 
   -v, --verbose <VERBOSITY>
@@ -46,7 +46,7 @@ Universal Options:
           actions, status, stats, success) to fine-tune the verbosity of the log. Example usage
           "-v=1,stderr"
 
-          [env: BUCK_VERBOSE=]
+          [env: YAK_VERBOSE=]
           [default: 1]
 
       --oncall <ONCALL>

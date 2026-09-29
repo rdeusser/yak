@@ -184,25 +184,25 @@ If include patterns are present, regardless of whether exclude patterns are pres
 
     /// Also build DefaultInfo provider, which is what `yak build` builds.
     ///
-    /// This overrides the `buck2.test_builds_targets` buckconfig.
+    /// This overrides the `yak.test_builds_targets` buckconfig.
     #[clap(long, group = "default-info")]
     build_default_info: bool,
 
     /// Do not build DefaultInfo provider.
     ///
-    /// This overrides the `buck2.test_builds_targets` buckconfig.
+    /// This overrides the `yak.test_builds_targets` buckconfig.
     #[clap(long, group = "default-info")]
     skip_default_info: bool,
 
     /// Also build RunInfo provider, which builds artifacts needed for `yak run`.
     ///
-    /// This overrides the `buck2.test_builds_targets` buckconfig.
+    /// This overrides the `yak.test_builds_targets` buckconfig.
     #[clap(long, group = "run-info")]
     build_run_info: bool,
 
     /// Do not build RunInfo provider.
     ///
-    /// This overrides the `buck2.test_builds_targets` buckconfig.
+    /// This overrides the `yak.test_builds_targets` buckconfig.
     #[clap(long, group = "run-info")]
     skip_run_info: bool,
 

@@ -49,7 +49,7 @@ async def test_changing_external_include(buck: Buck) -> None:
 
     # Start the daemon and build once
     await buck.audit_config(
-        "--all-cells", env={"BUCK2_TEST_EXTRA_EXTERNAL_CONFIG": str(extra)}
+        "--all-cells", env={"YAK_TEST_EXTRA_EXTERNAL_CONFIG": str(extra)}
     )
 
     # Change the file and build again

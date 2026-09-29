@@ -182,8 +182,8 @@ async def test_daemon_crash(buck: Buck) -> None:
 
 
 @buck_test(write_invocation_record=True)
-@env("BUCKD_STARTUP_TIMEOUT", "0")
-@env("BUCKD_STARTUP_INIT_TIMEOUT", "0")
+@env("YAKD_STARTUP_TIMEOUT", "0")
+@env("YAKD_STARTUP_INIT_TIMEOUT", "0")
 async def test_connection_timeout(buck: Buck) -> None:
     res = await expect_failure(buck.targets(":"))
     assert "timed out before establishing connection to Buck daemon" in res.stderr
@@ -241,14 +241,14 @@ def fake_dmesg_env(tmp_path: Path, output: str) -> tuple[dict[str, str], Path]:
     fake_bin.mkdir()
     fake_dmesg = fake_bin / "dmesg"
     fake_dmesg.write_text(
-        '#!/bin/sh\n: > "$BUCK2_TEST_DMESG_CALLED"\nexec /bin/cat "$BUCK2_TEST_DMESG_OUTPUT"\n'
+        '#!/bin/sh\n: > "$YAK_TEST_DMESG_CALLED"\nexec /bin/cat "$YAK_TEST_DMESG_OUTPUT"\n'
     )
     fake_dmesg.chmod(0o755)
     dmesg_called = tmp_path / "dmesg-called"
     return (
         {
-            "BUCK2_TEST_DMESG_CALLED": str(dmesg_called),
-            "BUCK2_TEST_DMESG_OUTPUT": str(dmesg_output),
+            "YAK_TEST_DMESG_CALLED": str(dmesg_called),
+            "YAK_TEST_DMESG_OUTPUT": str(dmesg_output),
             "PATH": f"{fake_bin}{os.pathsep}{os.environ['PATH']}",
         },
         dmesg_called,
@@ -429,7 +429,7 @@ async def test_download_failure(buck: Buck) -> None:
     res = await expect_failure(
         buck.build(
             "//:run_action",
-            env={"BUCK2_TEST_FAIL_RE_DOWNLOADS": "true"},
+            env={"YAK_TEST_FAIL_RE_DOWNLOADS": "true"},
         )
     )
     error = res.invocation_record().single_error()
@@ -447,7 +447,7 @@ async def test_declared_artifact_download_failure(buck: Buck) -> None:
     res = await expect_failure(
         buck.build(
             "//:declared_file",
-            env={"BUCK2_TEST_FAIL_RE_DOWNLOADS": "true"},
+            env={"YAK_TEST_FAIL_RE_DOWNLOADS": "true"},
         )
     )
     error = res.invocation_record().single_error()
@@ -461,7 +461,7 @@ async def test_declared_tree_download_failure(buck: Buck) -> None:
     res = await expect_failure(
         buck.build(
             "//:declared_tree",
-            env={"BUCK2_TEST_FAIL_RE_DOWNLOADS": "true"},
+            env={"YAK_TEST_FAIL_RE_DOWNLOADS": "true"},
         )
     )
     error = res.invocation_record().single_error()
@@ -479,7 +479,7 @@ async def test_re_execute_failure(buck: Buck) -> None:
         buck.build(
             "//:run_action",
             "--no-remote-cache",
-            env={"BUCK2_TEST_FAIL_RE_EXECUTE": "true"},
+            env={"YAK_TEST_FAIL_RE_EXECUTE": "true"},
         )
     )
     error = res.invocation_record().single_error()
@@ -506,7 +506,7 @@ async def test_local_incompatible(buck: Buck) -> None:
 
 
 @buck_test(write_invocation_record=True)
-@env("BUCK2_TEST_INIT_DAEMON_ERROR", "true")
+@env("YAK_TEST_INIT_DAEMON_ERROR", "true")
 async def test_daemon_startup_error(buck: Buck) -> None:
     res = await expect_failure(buck.targets(":"))
     assert "Injected init daemon error" in res.stderr
@@ -523,7 +523,7 @@ async def test_daemon_startup_error(buck: Buck) -> None:
 
 
 @buck_test(skip_for_os=["windows"], write_invocation_record=True)
-@env("BUCK2_TEST_DAEMON_STARTUP_SIGNAL", "true")
+@env("YAK_TEST_DAEMON_STARTUP_SIGNAL", "true")
 async def test_daemon_startup_signal(buck: Buck) -> None:
     res = await expect_failure(buck.targets(":"))
     error = res.invocation_record().single_error()
@@ -536,7 +536,7 @@ async def test_daemon_startup_signal(buck: Buck) -> None:
 
 
 @buck_test(write_invocation_record=True)
-@env("BUCK2_TEST_FAIL_STREAMING", "true")
+@env("YAK_TEST_FAIL_STREAMING", "true")
 async def test_client_streaming_error(buck: Buck) -> None:
     res = await expect_failure(buck.targets(":"))
     assert "Injected client streaming error" in res.stderr
@@ -563,8 +563,8 @@ async def test_action_error_has_categorization(buck: Buck) -> None:
 
 
 @buck_test(write_invocation_record=True, skip_for_os=["windows"])
-@env("BUCK2_TEST_INIT_DATA_SLEEP_SECS", "120")
-@env("BUCKD_STARTUP_INIT_TIMEOUT", "5")
+@env("YAK_TEST_INIT_DATA_SLEEP_SECS", "120")
+@env("YAKD_STARTUP_INIT_TIMEOUT", "5")
 async def test_init_data_timeout(buck: Buck) -> None:
     res = await expect_failure(buck.targets(":"))
     record = res.invocation_record()

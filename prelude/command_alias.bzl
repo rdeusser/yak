@@ -162,7 +162,7 @@ def _command_alias_write_trampoline_unix(
     # `$(...)` into `absolute_prefix`, since we must also shell quote paths, and that expression
     # would be shell quoted.
     #
-    # Instead, we use `BUCK_COMMAND_ALIAS_ABSOLUTE_PREFIX/`, verbatim, as an absolute prefix on the
+    # Instead, we use `YAK_COMMAND_ALIAS_ABSOLUTE_PREFIX/`, verbatim, as an absolute prefix on the
     # cmd_args, and then replace that with the actual path of the script at runtime
     #
     # Resolve symlinks first to handle execution via symlinks (e.g., in link-trees)
@@ -185,8 +185,8 @@ for arg in "${ARGS[@]}"; do
     # Normalize Windows-style backslash path separators to forward slashes for
     # artifact paths (identified by the prefix placeholder). This handles the case
     # where Buck2 runs on Windows but this trampoline executes on Linux via RE.
-    if [[ "$arg" == *BUCK_COMMAND_ALIAS_ABSOLUTE_PREFIX* ]]; then arg="${arg//\\\\//}"; fi
-    R_ARGS+=("${arg//BUCK_COMMAND_ALIAS_ABSOLUTE_PREFIX/$BASE}")
+    if [[ "$arg" == *YAK_COMMAND_ALIAS_ABSOLUTE_PREFIX* ]]; then arg="${arg//\\\\//}"; fi
+    R_ARGS+=("${arg//YAK_COMMAND_ALIAS_ABSOLUTE_PREFIX/$BASE}")
 done
 """,
     )
@@ -194,7 +194,7 @@ done
     for k, v in env.items():
         # TODO(akozhevnikov): maybe check environment variable is not conflicting with pre-existing one
         trampoline_args.add(cmd_args("export ", k, "=", cmd_args(v, quote = "shell"), delimiter = ""))
-        trampoline_args.add(cmd_args("export ", k, '="${', k, '//BUCK_COMMAND_ALIAS_ABSOLUTE_PREFIX/$BASE}"', delimiter = ""))
+        trampoline_args.add(cmd_args("export ", k, '="${', k, '//YAK_COMMAND_ALIAS_ABSOLUTE_PREFIX/$BASE}"', delimiter = ""))
 
     trampoline_args.add('exec "${R_ARGS[@]}" "$@"')
 
@@ -202,7 +202,7 @@ done
     trampoline_args = cmd_args(
         trampoline_args,
         relative_to = (trampoline, 1),
-        absolute_prefix = "BUCK_COMMAND_ALIAS_ABSOLUTE_PREFIX/",
+        absolute_prefix = "YAK_COMMAND_ALIAS_ABSOLUTE_PREFIX/",
     )
     actions.write(
         trampoline.as_output(),
@@ -226,9 +226,9 @@ def _command_alias_write_trampoline_windows(
         # This will call the same trampoline batch file with stdin disabled
         trampoline_args.add("if not defined STDIN_CLOSED (set STDIN_CLOSED=1 & CALL <NUL %0 %* & GOTO :EOF)")
 
-    # Set BUCK_COMMAND_ALIAS_ABSOLUTE to the drive and full path of the script being created here
+    # Set YAK_COMMAND_ALIAS_ABSOLUTE to the drive and full path of the script being created here
     # We use this below to prefix any artifacts being referenced in the script
-    trampoline_args.add("set BUCK_COMMAND_ALIAS_ABSOLUTE=%~dp0")
+    trampoline_args.add("set YAK_COMMAND_ALIAS_ABSOLUTE=%~dp0")
 
     # Handle envs
     for k, v in env.items():
@@ -244,7 +244,7 @@ def _command_alias_write_trampoline_windows(
     trampoline_args = cmd_args(
         trampoline_args,
         relative_to = (trampoline, 1),
-        absolute_prefix = "%BUCK_COMMAND_ALIAS_ABSOLUTE%/",
+        absolute_prefix = "%YAK_COMMAND_ALIAS_ABSOLUTE%/",
     )
     actions.write(
         trampoline.as_output(),

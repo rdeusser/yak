@@ -39,7 +39,7 @@ pub async fn configure_dice_for_buck(
     detect_cycles: Option<DetectCycles>,
     // Path to open pagable DICE storage at, or `None` to leave paging disabled.
     dice_state_path: Option<&Path>,
-    // On-disk backend for pagable storage (`buck2_hydration.pagable_storage_backend`).
+    // On-disk backend for pagable storage (`yak_hydration.pagable_storage_backend`).
     pagable_storage_backend: PagableStorageBackend,
 ) -> buck2_error::Result<Arc<Dice>> {
     let detect_cycles = detect_cycles.map_or_else(
@@ -47,7 +47,7 @@ pub async fn configure_dice_for_buck(
             root_config
                 .and_then(|c| {
                     c.parse::<DetectCycles>(BuckconfigKeyRef {
-                        section: "buck2",
+                        section: "yak",
                         property: "detect_cycles",
                     })
                     .transpose()
@@ -63,7 +63,7 @@ pub async fn configure_dice_for_buck(
     let invalidation_tracking_enabled = match root_config {
         Some(c) => c
             .parse::<RolloutPercentage>(BuckconfigKeyRef {
-                section: "buck2",
+                section: "yak",
                 property: "invalidation_tracking_enabled",
             })?
             .is_some_and(|v| v.roll()),
@@ -77,10 +77,10 @@ pub async fn configure_dice_for_buck(
     // Opt-in pagable storage, enabling `Dice::page_out()` to serialize node
     // values to disk (backend chosen by `pagable_storage_backend`) via `yak
     // debug hydration`. `dice_state_path` is `Some` when
-    // `buck2_hydration.enable_paging` is set (its value is the default path,
-    // under yak-out). The `BUCK2_DICE_DB_PATH` override (used by benchmarks)
+    // `yak_hydration.enable_paging` is set (its value is the default path,
+    // under yak-out). The `YAK_DICE_DB_PATH` override (used by benchmarks)
     // takes precedence and picks the path.
-    let db_path: Option<PathBuf> = match std::env::var_os("BUCK2_DICE_DB_PATH") {
+    let db_path: Option<PathBuf> = match std::env::var_os("YAK_DICE_DB_PATH") {
         Some(path) => Some(PathBuf::from(path)),
         None => dice_state_path.map(Path::to_path_buf),
     };

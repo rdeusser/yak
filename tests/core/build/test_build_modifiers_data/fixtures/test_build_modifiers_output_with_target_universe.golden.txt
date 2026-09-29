@@ -1,4 +1,4 @@
-# This file is @generated, regenerate by rerunning the test with `BUCK2_UPDATE_GOLDEN=1` set
+# This file is @generated, regenerate by rerunning the test with `YAK_UPDATE_GOLDEN=1` set
 
 --show-output
 root//:dummy yak-out/v2/art/root/4dc73a17d3222267/__dummy__/dummy.txt

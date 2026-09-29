@@ -1,10 +1,10 @@
 [cells]
 root = .
 
-[buck2]
+[yak]
 digest_algorithms = SHA256
 
-[buck2_re_client]
+[yak_re_client]
 engine_address = $BUILDBUDDY_ENDPOINT
 action_cache_address = $BUILDBUDDY_ENDPOINT
 cas_address = $BUILDBUDDY_ENDPOINT

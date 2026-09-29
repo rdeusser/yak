@@ -77,7 +77,7 @@ build_report_test(
         "//:rule2",
         "//:rule2[out1]",
         "-c",
-        "buck2.log_configured_graph_size=true",
+        "yak.log_configured_graph_size=true",
     ],
 )
 
@@ -119,7 +119,7 @@ build_report_test(
         "//:dir1",
         "//subdir:rule",
         "-c",
-        "buck2.log_configured_graph_sketch=true",
+        "yak.log_configured_graph_sketch=true",
     ],
 )
 
@@ -130,7 +130,7 @@ build_report_test(
         "//:dir1",
         "//subdir:rule",
         "-c",
-        "buck2.log_total_configured_graph_sketch=true",
+        "yak.log_total_configured_graph_sketch=true",
     ],
 )
 
@@ -141,7 +141,7 @@ build_report_test(
         "//:dir1",
         "//subdir:rule",
         "-c",
-        "buck2.log_action_graph_sketch=true",
+        "yak.log_action_graph_sketch=true",
     ],
 )
 
@@ -154,11 +154,11 @@ build_report_test(
         # Let's look at something more interesting than unspecified platform
         "--target-platforms=root//:platform",
         "-c",
-        "buck2.log_configured_graph_sketch=true",
+        "yak.log_configured_graph_sketch=true",
         "-c",
-        "buck2.log_total_configured_graph_sketch=true",
+        "yak.log_total_configured_graph_sketch=true",
         "-c",
-        "buck2.log_action_graph_sketch=true",
+        "yak.log_action_graph_sketch=true",
     ],
 )
 
@@ -185,7 +185,7 @@ async def test_build_report_contains_metrics(buck: Buck, tmp_path: Path) -> None
     await buck.build(
         "//:rule1",
         "-c",
-        "buck2.detailed_aggregated_metrics=true",
+        "yak.detailed_aggregated_metrics=true",
         "--build-report",
         str(report),
     )
@@ -209,7 +209,7 @@ async def test_build_report_contains_per_target_build_metrics(
         "//:rule1",
         "//:rule2",
         "-c",
-        "buck2.detailed_aggregated_metrics=true",
+        "yak.detailed_aggregated_metrics=true",
         "--build-report",
         str(report),
     )
@@ -409,7 +409,7 @@ async def test_build_report_re_platform_names(buck: Buck, tmp_path: Path) -> Non
     await buck.build(
         "//:run_action",
         "-c",
-        "buck2.detailed_aggregated_metrics=true",
+        "yak.detailed_aggregated_metrics=true",
         "--build-report",
         str(report),
     )

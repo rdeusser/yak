@@ -427,7 +427,7 @@ async fn path_artifact_value(
                 .parse_legacy_config_property(
                     root_cell,
                     BuckconfigKeyRef {
-                        section: "buck2",
+                        section: "yak",
                         property: "use_correct_source_symlink_reading",
                     },
                 )

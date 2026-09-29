@@ -31,12 +31,12 @@ fn test_host_info() -> buck2_error::Result<()> {
 }
 
 #[test]
-fn test_buck_v2() -> buck2_error::Result<()> {
+fn test_no_buck_version_fields() -> buck2_error::Result<()> {
     let mut tester = Tester::new().unwrap();
     tester.run_starlark_test(indoc!(
         r#"
             def test():
-                assert_eq(True, hasattr(host_info(), "buck2"))
+                assert_eq(False, hasattr(host_info(), "buck2"))
                 assert_eq(False, hasattr(host_info(), "buck1"))
         "#
     ))?;

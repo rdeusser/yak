@@ -85,7 +85,7 @@ async def test_query_chunked_stream(buck: Buck) -> None:
     q = "deps(root//bin:the_binary)"
     result1 = await buck.cquery(q)
     await buck.kill()
-    result2 = await buck.cquery(q, env={"BUCK2_DEBUG_RAWOUTPUT_CHUNK_SIZE": "5"})
+    result2 = await buck.cquery(q, env={"YAK_DEBUG_RAWOUTPUT_CHUNK_SIZE": "5"})
     assert result1.stdout == result2.stdout
 
 

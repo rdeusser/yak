@@ -22,7 +22,7 @@ _BUCK_TEST_DECORATOR = buck_test(
     # is still running and accessing the sqlite db file when being killed. Given this is a
     # pre-existing issue, we disable sqlite state on windows for now.
     extra_buck_config={
-        "buck2": {
+        "yak": {
             "sqlite_materializer_state": "false",
             "sqlite_incremental_state": "false",
         },
@@ -33,7 +33,7 @@ _BUCK_TEST_DECORATOR = buck_test(
 
 
 @_BUCK_TEST_DECORATOR
-@env("BUCK2_TEST_FAIL_BUCKD_AUTH", "true")
+@env("YAK_TEST_FAIL_YAKD_AUTH", "true")
 async def test_kill_error(buck: Buck) -> None:
     # Performing a build should fail, since we will not be able to authenticate to the
     # buck daemon
@@ -44,7 +44,7 @@ async def test_kill_error(buck: Buck) -> None:
 
 
 @_BUCK_TEST_DECORATOR
-@env("BUCK2_TEST_FAIL_BUCKD_AUTH", "true")
+@env("YAK_TEST_FAIL_YAKD_AUTH", "true")
 async def test_clean_error(buck: Buck) -> None:
     # Performing a build should fail, since we will not be able to authenticate to the
     # buck daemon

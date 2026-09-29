@@ -265,7 +265,7 @@ def assemble_bundle(
     env = {}
     cache_buster = ctx.attrs._bundling_cache_buster
     if cache_buster:
-        env["BUCK2_BUNDLING_CACHE_BUSTER"] = cache_buster
+        env["YAK_BUNDLING_CACHE_BUSTER"] = cache_buster
 
     if codesign_required:
         signing_context_path = ctx.actions.declare_output("signing_context.json", has_content_based_path = False)

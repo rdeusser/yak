@@ -83,7 +83,7 @@ def configure(buck: Buck, digest: str = "SHA256") -> None:
             f"{name} leaked into the test environment"
         )
     (buck.cwd / ".yakconfig.local").write_text(
-        f"[buck2]\ndigest_algorithms = {digest}\n"
+        f"[yak]\ndigest_algorithms = {digest}\n"
     )
 
 
@@ -243,8 +243,8 @@ class TestHttpProxyEnv:
         # sometimes notices only when its startup timeout runs out, so this
         # test shortens the 120 seconds that the harness sets.
         startup_timeout = {
-            "BUCKD_STARTUP_TIMEOUT": "30",
-            "BUCKD_STARTUP_INIT_TIMEOUT": "30",
+            "YAKD_STARTUP_TIMEOUT": "30",
+            "YAKD_STARTUP_INIT_TIMEOUT": "30",
         }
         async with serve(payload) as origin:
             await asyncio.wait_for(

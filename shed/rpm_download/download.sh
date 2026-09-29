@@ -9,8 +9,8 @@
 
 set -e
 
-dnf download "$1" --destdir "$BUCK_SCRATCH_PATH"
-rpm=$(echo "$BUCK_SCRATCH_PATH"/*)
+dnf download "$1" --destdir "$YAK_SCRATCH_PATH"
+rpm=$(echo "$YAK_SCRATCH_PATH"/*)
 mkdir -p "$2"
 rpm2archive - < "$rpm" | tar -xvzf - -C "$(realpath "$2")"
 

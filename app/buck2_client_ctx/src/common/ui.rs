@@ -175,7 +175,7 @@ pub struct CommonConsoleOptions {
         help = "Which console to use for this command",
         default_value = "auto",
         ignore_case = true,
-        env = buck2_env_name!("BUCK_CONSOLE"),
+        env = buck2_env_name!("YAK_CONSOLE"),
         value_name = "super|simple|...",
         value_enum
     )]
@@ -262,7 +262,7 @@ impl CommonConsoleOptions {
 
     pub fn superconsole_config(&self) -> SuperConsoleConfig {
         let mut config = SuperConsoleConfig {
-            expanded_progress: !buck2_env!("BUCK_DISABLE_EXPANDED_PROGRESS", bool).unwrap_or(false),
+            expanded_progress: !buck2_env!("YAK_DISABLE_EXPANDED_PROGRESS", bool).unwrap_or(false),
             ..SuperConsoleConfig::default()
         };
 

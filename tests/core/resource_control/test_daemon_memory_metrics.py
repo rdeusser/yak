@@ -54,7 +54,7 @@ async def test_cgroup_path_tag(buck: Buck) -> None:
 
 def write_config(buck: Buck, *, resource_control: bool) -> None:
     with open(buck.cwd / ".yakconfig", "a") as buckconfig:
-        buckconfig.write("[buck2_resource_control]\n")
+        buckconfig.write("[yak_resource_control]\n")
         buckconfig.write(f"status = {'required' if resource_control else 'off'}\n")
 
 

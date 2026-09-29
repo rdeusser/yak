@@ -27,6 +27,13 @@ Removes the code, configuration, and service clients that only Meta's internal b
 - Remote Execution requests name the tool `yak`.
 - The release assets are named `yak-<target triple>`.
 - Wheels that `python_wheel` builds name `yak` as their generator in the `WHEEL` file.
+- The environment variables that yak reads take the `YAK_` prefix in place of `BUCK2_` and `BUCK_`, such as `YAK_LOG` and `YAK_ISOLATION_DIR`.
+- The daemon startup timeouts are `YAKD_STARTUP_TIMEOUT` and `YAKD_STARTUP_INIT_TIMEOUT`.
+- Actions and the prelude's tools see `YAK_SCRATCH_PATH`, `YAK_BUILD_ID`, and the other variables that yak and the prelude set, in place of their `BUCK_` names.
+- The configuration sections are `[yak]`, `[yak_re_client]`, `[yak_resource_control]`, `[yak_system_warning]`, `[yak_hydration]`, and `[yak_metadata]`.
+- The hidden flag that runs the daemon in the client process is `--no-yakd`, and its variable is `YAK_NO_YAKD`.
+- `host_info()` no longer has a `buck2` field.
+- The integration tests take the binary from `YAK_BINARY` and rewrite golden files when `YAK_UPDATE_GOLDEN` is set.
 
 ### Removed commands and flags
 

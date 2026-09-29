@@ -4,7 +4,7 @@ log format or the daemon and client protocol changes.
 
 `my_genrule0.proto` records a build of one action whose result came from a
 remote cache. To regenerate it, run a cache that serves the Remote Execution
-API action cache and CAS, such as bazel-remote, and point `[buck2_re_client]`
+API action cache and CAS, such as bazel-remote, and point `[yak_re_client]`
 at it. The project's execution platform runs actions locally, looks them up in
 the cache, and uploads their results:
 

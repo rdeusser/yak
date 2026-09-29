@@ -772,7 +772,7 @@ pub enum FinalArtifactMaterialization {
 #[buck2(tag = Input)]
 pub enum FinalArtifactMaterializationError {
     #[error(
-        "Invalid value for buckconfig `[buck2] materializations`. Got `{0}`. Expected one of `all`, `deferred`, or `deferred_skip_final_artifacts`."
+        "Invalid value for buckconfig `[yak] materializations`. Got `{0}`. Expected one of `all`, `deferred`, or `deferred_skip_final_artifacts`."
     )]
     InvalidValueForConfig(String),
 }

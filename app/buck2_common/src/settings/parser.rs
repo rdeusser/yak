@@ -59,7 +59,7 @@ impl Provenance {
 enum SettingsError {
     #[error("Error parsing buck settings: {0}")]
     Parse(toml::de::Error),
-    #[error("BUCK2_SETTINGS_OVERRIDE file `{0}` does not exist")]
+    #[error("YAK_SETTINGS_OVERRIDE file `{0}` does not exist")]
     OverrideFileMissing(String),
     #[error("Buck setting `{key}` cannot be overridden from {origin}")]
     InvalidOverride {
@@ -313,17 +313,17 @@ pub fn parse_settings(
     settings_args: &[toml::Table],
 ) -> buck2_error::Result<BuckSettings> {
     let repo_root = project_fs.root().as_abs_path();
-    let home_dir = buck2_env!("BUCK2_TEST_SETTINGS_HOME_DIR", applicability = testing)?
+    let home_dir = buck2_env!("YAK_TEST_SETTINGS_HOME_DIR", applicability = testing)?
         .map(PathBuf::from)
         .or_else(dirs::home_dir);
     let home_dir = home_dir.map(AbsPathBuf::new).transpose()?;
-    let override_file = buck2_env!("BUCK2_SETTINGS_OVERRIDE", applicability = testing)?
+    let override_file = buck2_env!("YAK_SETTINGS_OVERRIDE", applicability = testing)?
         .map(|path| {
             // Absolute only: this parses in the daemon, whose cwd is not the
             // caller's, so a relative path has nothing sound to resolve
             // against.
             AbsPathBuf::new(PathBuf::from(path))
-                .buck_error_context("`BUCK2_SETTINGS_OVERRIDE` must be an absolute path")
+                .buck_error_context("`YAK_SETTINGS_OVERRIDE` must be an absolute path")
         })
         .transpose()?;
     parse_settings_with_home(

@@ -40,23 +40,23 @@ pub trait FileWatcher: Allocative + Send + Sync + 'static {
 }
 
 /// Parse the `dice_clear_on_mergebase_change` config, honoring both the buckconfig
-/// and the `BUCK2_TEST_SKIP_DICE_CLEAR_ON_MERGEBASE_CHANGE` env var override.
+/// and the `YAK_TEST_SKIP_DICE_CLEAR_ON_MERGEBASE_CHANGE` env var override.
 pub(crate) fn dice_clear_on_mergebase_change(
     root_config: &LegacyBuckConfig,
 ) -> buck2_error::Result<bool> {
     let config_value = root_config
         .parse::<bool>(BuckconfigKeyRef {
-            section: "buck2",
+            section: "yak",
             property: "dice_clear_on_mergebase_change",
         })
         .buck_error_context("Failed to parse dice_clear_on_mergebase_change config")?
         .unwrap_or(true);
     let env_skip = buck2_env!(
-        "BUCK2_TEST_SKIP_DICE_CLEAR_ON_MERGEBASE_CHANGE",
+        "YAK_TEST_SKIP_DICE_CLEAR_ON_MERGEBASE_CHANGE",
         bool,
         applicability = testing
     )
-    .buck_error_context("Failed to parse BUCK2_TEST_SKIP_DICE_CLEAR_ON_MERGEBASE_CHANGE env")?;
+    .buck_error_context("Failed to parse YAK_TEST_SKIP_DICE_CLEAR_ON_MERGEBASE_CHANGE env")?;
     Ok(config_value && !env_skip)
 }
 
@@ -83,7 +83,7 @@ impl dyn FileWatcher {
 
         let watcher_conf = root_config
             .get(BuckconfigKeyRef {
-                section: "buck2",
+                section: "yak",
                 property: "file_watcher",
             })
             .unwrap_or(default);
@@ -109,7 +109,7 @@ impl dyn FileWatcher {
             )),
             other => Err(buck2_error!(
                 buck2_error::ErrorTag::Tier0,
-                "Invalid buck2.file_watcher: {}",
+                "Invalid yak.file_watcher: {}",
                 other
             )),
         }

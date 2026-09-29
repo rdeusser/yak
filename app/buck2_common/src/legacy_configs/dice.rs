@@ -445,7 +445,7 @@ fn is_config_invisible_to_dice(key: &BuckconfigKeyRef) -> bool {
 /// to these configs do not cause state invalidations.
 // FIXME(JakobDegen): Error if someone tries to read any of these from in dice
 const CONFIGS_INVISIBLE_TO_DICE: &[BuckconfigKeyRef<'static>] = &[BuckconfigKeyRef {
-    section: "buck2_re_client",
+    section: "yak_re_client",
     property: "override_use_case",
 }];
 

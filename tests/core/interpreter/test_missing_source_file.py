@@ -13,7 +13,7 @@ from e2e_util.buck_workspace import buck_test, env
 
 @buck_test()
 @env(
-    "BUCK2_HARD_ERROR",
+    "YAK_HARD_ERROR",
     "true",
 )
 async def test_missing_source_file_when_hard_errors_enabled(buck: Buck) -> None:
@@ -25,12 +25,12 @@ async def test_missing_source_file_when_hard_errors_enabled(buck: Buck) -> None:
 
 @buck_test()
 @env(
-    "BUCK2_HARD_ERROR",
+    "YAK_HARD_ERROR",
     "false",
 )
 async def test_missing_source_file_when_hard_errors_disabled(buck: Buck) -> None:
     # `source_file_missing` is a hard error, so the command fails even when
-    # `BUCK2_HARD_ERROR` turns other soft errors into warnings.
+    # `YAK_HARD_ERROR` turns other soft errors into warnings.
     await expect_failure(
         buck.uquery("//package1:"),
         stderr_regex="Source file `non_existent_source_file.txt` does not exist as a member of package `prelude//package1`",

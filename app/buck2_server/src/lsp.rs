@@ -518,7 +518,7 @@ impl<'a> BuckLspContext<'a> {
                 .parse_legacy_config_property(
                     artifact_fs.cell_resolver().root_cell(),
                     BuckconfigKeyRef {
-                        section: "buck2",
+                        section: "yak",
                         property: "infer_target_names",
                     },
                 )

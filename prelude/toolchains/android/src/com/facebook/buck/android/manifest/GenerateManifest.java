@@ -107,10 +107,10 @@ public class GenerateManifest {
     SdkVersions sdkVersions = extractSdkVersions(skeletonManifestPath.toFile(), logger);
 
     // Preprocess library manifests to inject targetSdkVersion and minSdkVersion if missing
-    String tmpDirEnv = System.getenv("BUCK_SCRATCH_PATH");
+    String tmpDirEnv = System.getenv("YAK_SCRATCH_PATH");
     if (tmpDirEnv == null || tmpDirEnv.isEmpty()) {
       throw new RuntimeException(
-          "BUCK_SCRATCH_PATH environment variable must be set and non-empty");
+          "YAK_SCRATCH_PATH environment variable must be set and non-empty");
     }
     Path tmpDirPath = java.nio.file.Paths.get(tmpDirEnv);
     Path tempDir = tmpDirPath.resolve("preprocessed_manifests");

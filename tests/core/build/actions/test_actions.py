@@ -453,9 +453,9 @@ async def test_remote_action_has_input_size(buck: Buck) -> None:
 @buck_test(data_dir="actions")
 async def test_action_invalidation_tracking(buck: Buck) -> None:
     with open(buck.cwd / ".yakconfig", "a") as buckconfig:
-        buckconfig.write("[buck2]\n")
+        buckconfig.write("[yak]\n")
         buckconfig.write("invalidation_tracking_enabled = true\n")
-        buckconfig.write("[buck2]\n")
+        buckconfig.write("[yak]\n")
         buckconfig.write("invalidation_tracking_enabled = true\n")
 
     await buck.build("//run:runs_simple_script")

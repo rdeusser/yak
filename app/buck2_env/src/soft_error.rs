@@ -58,7 +58,7 @@ impl Drop for RestoreSoftErrorContext {
 }
 
 pub fn buck2_hard_error_env() -> buck2_error::Result<Option<&'static str>> {
-    buck2_env!("BUCK2_HARD_ERROR")
+    buck2_env!("YAK_HARD_ERROR")
 }
 
 #[derive(Debug, PartialEq, Eq)]
@@ -95,7 +95,7 @@ impl ShowSoftErrorConfig {
 }
 
 pub fn buck2_show_soft_errors_env() -> buck2_error::Result<Option<&'static str>> {
-    buck2_env!("BUCK2_SHOW_SOFT_ERRORS")
+    buck2_env!("YAK_SHOW_SOFT_ERRORS")
 }
 
 static HARD_ERROR_PANIC_ALLOWLIST: LazyLock<SmallSet<String>> =
@@ -111,8 +111,8 @@ static HARD_ERROR_PANIC_ALLOWLIST: LazyLock<SmallSet<String>> =
 /// You should pass two arguments:
 ///
 /// * The category string that will remain constant and identifies this specific soft error
-///   (used to report as a key, and to select it in `BUCK2_HARD_ERROR` and
-///   `BUCK2_SHOW_SOFT_ERRORS`).
+///   (used to report as a key, and to select it in `YAK_HARD_ERROR` and
+///   `YAK_SHOW_SOFT_ERRORS`).
 /// * The error is a `buck2_error::Error`.
 ///
 /// You'll get the error back as the Ok() value if it wasn't thrown, otherwise you get a Err() to
@@ -183,7 +183,7 @@ pub macro tag_result {
 pub struct StructuredErrorOptions {
     /// Log this error to the event log, but do not print it to stderr.
     pub quiet: bool,
-    /// Return this error as `Err` after reporting it, as if `BUCK2_HARD_ERROR` selected its
+    /// Return this error as `Err` after reporting it, as if `YAK_HARD_ERROR` selected its
     /// category. Deprecations and migrations whose old behavior is no longer accepted set this.
     pub hard_error: bool,
     pub daemon_in_memory_state_is_corrupted: bool,
@@ -229,12 +229,12 @@ pub fn handle_soft_error(
 
     if context.hard_error_config.should_panic(category) {
         panic!(
-            "Upgraded warning to panic via $BUCK2_HARD_ERROR\n {category}: {:?}",
+            "Upgraded warning to panic via $YAK_HARD_ERROR\n {category}: {:?}",
             err
         );
     }
     if context.hard_error_config.should_hard_error(category) {
-        return Err(err.context("Upgraded warning to failure via $BUCK2_HARD_ERROR"));
+        return Err(err.context("Upgraded warning to failure via $YAK_HARD_ERROR"));
     }
 
     if hard_error {
@@ -419,7 +419,7 @@ enum InvalidSoftError {
 }
 
 /// `validate_category_name` accepts a category made of `a-z` words joined by single underscores.
-/// `BUCK2_HARD_ERROR=only=...` and `BUCK2_SHOW_SOFT_ERRORS=only=...` take comma-separated,
+/// `YAK_HARD_ERROR=only=...` and `YAK_SHOW_SOFT_ERRORS=only=...` take comma-separated,
 /// lowercased category lists, so only such names can be selected there.
 pub fn validate_category_name(category: &str) -> buck2_error::Result<()> {
     let mut allow_underscore = false;

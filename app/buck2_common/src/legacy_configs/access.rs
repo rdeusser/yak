@@ -23,11 +23,11 @@ use crate::legacy_configs::configs::LegacyBuckConfigValue;
 use crate::legacy_configs::key::BuckconfigKeyRef;
 use crate::legacy_configs::view::LegacyBuckConfigView;
 
-/// Read the `[buck2_metadata]` section from a `LegacyBuckConfig` and resolve any `$VAR`
+/// Read the `[yak_metadata]` section from a `LegacyBuckConfig` and resolve any `$VAR`
 /// references. Entries whose env vars are not set are skipped with a warning.
 pub fn parse_buckconfig_metadata(config: &LegacyBuckConfig) -> StdBuckHashMap<String, String> {
     let mut map = StdBuckHashMap::default();
-    let Some(section) = config.get_section("buck2_metadata") else {
+    let Some(section) = config.get_section("yak_metadata") else {
         return map;
     };
     for (key, value) in section.iter() {
@@ -36,7 +36,7 @@ pub fn parse_buckconfig_metadata(config: &LegacyBuckConfig) -> StdBuckHashMap<St
                 map.insert(key.to_owned(), resolved);
             }
             Err(e) => {
-                tracing::warn!("Skipping [buck2_metadata] key `{}`: {:#}", key, e);
+                tracing::warn!("Skipping [yak_metadata] key `{}`: {:#}", key, e);
             }
         }
     }

@@ -377,7 +377,7 @@ def _define_javacd_action(
     actions.run(
         args,
         env = {
-            "BUCK_CLASSPATH": compiler,
+            "YAK_CLASSPATH": compiler,
             "JAVACD_ABSOLUTE_PATHS_ARE_RELATIVE_TO_CWD": "1",
         },
         category = "{}javacd_jar".format(category_prefix),

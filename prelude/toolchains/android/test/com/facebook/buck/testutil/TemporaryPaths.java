@@ -35,7 +35,7 @@ public class TemporaryPaths extends ExternalResource {
   private AbsPath root;
 
   public TemporaryPaths() {
-    this("1".equals(EnvVariablesProvider.getSystemEnv().get("BUCK_TEST_KEEP_TEMPORARY_PATHS")));
+    this("1".equals(EnvVariablesProvider.getSystemEnv().get("YAK_TEST_KEEP_TEMPORARY_PATHS")));
   }
 
   public TemporaryPaths(boolean keepContents) {

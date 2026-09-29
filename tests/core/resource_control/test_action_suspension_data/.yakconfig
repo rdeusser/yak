@@ -5,7 +5,7 @@
     root = .
     prelude = .
 
-[buck2_resource_control]
+[yak_resource_control]
     status = required
     enable_suspension = true
     # Soft limit (throttle, not OOM-kill) combined with swap disabled so that reclaim stalls

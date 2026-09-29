@@ -24,7 +24,7 @@ from e2e_util.helper.utils import daemon_is_alive
 
 
 @buck_test()
-@env("BUCK2_TESTING_INACTIVITY_TIMEOUT", "true")
+@env("YAK_TESTING_INACTIVITY_TIMEOUT", "true")
 async def test_inactivity_timeout(buck: Buck) -> None:
     #######################################################
     # Recommend running this test in opt mode
@@ -227,10 +227,10 @@ async def test_status_all(buck: Buck) -> None:
 
 
 @buck_test()
-@env("BUCK_LOG", "buck2_client_ctx::daemon::client::kill=debug")
+@env("YAK_LOG", "buck2_client_ctx::daemon::client::kill=debug")
 async def test_no_buckd_kills_existing_daemon(buck: Buck) -> None:
     await buck.audit("cell")  # Start the daemon
-    result = await buck.audit("cell", "--no-buckd")  # Kill the existing daemon
+    result = await buck.audit("cell", "--no-yakd")  # Kill the existing daemon
     assert "Killing daemon with PID" in result.stderr
 
 
@@ -267,8 +267,8 @@ async def test_prev_daemon_dir(buck: Buck) -> None:
 
 
 @buck_test()
-@env("BUCK2_TESTING_INACTIVITY_TIMEOUT", "true")
-@env("BUCKD_STARTUP_INIT_TIMEOUT", "20")
+@env("YAK_TESTING_INACTIVITY_TIMEOUT", "true")
+@env("YAKD_STARTUP_INIT_TIMEOUT", "20")
 async def test_recovers_promptly_after_inactivity_shutdown(buck: Buck) -> None:
     # A daemon that retires on its inactivity timeout leaves yakd.info behind
     # naming a pid that is gone. The next invocation must notice that quickly and
@@ -299,7 +299,7 @@ async def test_recovers_promptly_after_inactivity_shutdown(buck: Buck) -> None:
 
 
 @buck_test()
-@env("BUCK2_TESTING_INACTIVITY_TIMEOUT", "true")
+@env("YAK_TESTING_INACTIVITY_TIMEOUT", "true")
 async def test_inactivity_shutdown_exits_with_a_command_in_flight(buck: Buck) -> None:
     # The inactivity timer is only reset when a command *starts*, so a long lived
     # streaming command lets the timeout fire underneath itself. The daemon then

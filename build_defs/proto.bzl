@@ -35,7 +35,7 @@ def rust_protobuf_library(
         doctests: Whether to run the library's doctests.
         build_env: Extra environment for the build script.
         proto_srcs: A `proto_srcs` target, exposed to the build script as
-            `BUCK_PROTO_SRCS`.
+            `YAK_PROTO_SRCS`.
     """
     build_name = name + "-build"
     proto_name = name + "-proto"
@@ -51,7 +51,7 @@ def rust_protobuf_library(
     env["PROTOC"] = "$(exe //third-party/proto:protoc)"
     env["PROTOC_INCLUDE"] = "$(location //third-party/proto:google_protobuf)"
     if proto_srcs:
-        env["BUCK_PROTO_SRCS"] = "$(location {})".format(proto_srcs)
+        env["YAK_PROTO_SRCS"] = "$(location {})".format(proto_srcs)
 
     native.genrule(
         name = proto_name,

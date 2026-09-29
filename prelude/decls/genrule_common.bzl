@@ -260,7 +260,7 @@ def _allow_offline_output_cache_arg():
                  offline cache, they are restored without running the genrule; otherwise
                  the genrule executes normally (graceful fallback).
 
-                 Requires `buck2.use_network_action_output_cache=true` config to take effect.
+                 Requires `yak.use_network_action_output_cache=true` config to take effect.
 
                  Example use case: caching network downloads in containerized offline build environments.
             """,

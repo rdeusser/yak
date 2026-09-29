@@ -16,6 +16,6 @@ your Remote Execution backend.
 To enable, add this to your Buckconfig:
 
 ```ini
-[buck2]
+[yak]
 restarter = true
 ```

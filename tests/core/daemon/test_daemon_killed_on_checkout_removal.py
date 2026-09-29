@@ -45,7 +45,7 @@ def _get_process_name(pid: int) -> str | None:
 
 
 @buck_test(skip_final_kill=True)
-@env("BUCK2_TESTING_CHECKER_INTERVAL_SECONDS", "1")
+@env("YAK_TESTING_CHECKER_INTERVAL_SECONDS", "1")
 async def test_daemon_killed_on_checkout_removal(buck: Buck) -> None:
     # Start the daemon and capture its PID and daemon dir before removal.
     await buck.server()

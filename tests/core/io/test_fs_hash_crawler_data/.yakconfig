@@ -4,7 +4,7 @@
 [buildfile]
   name = YAK.fixture
 
-[buck2]
+[yak]
   file_watcher = fs_hash_crawler
 
 [project]

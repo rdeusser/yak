@@ -232,7 +232,7 @@ public class ApkBuilderExecutableMain {
   /**
    * Runs the toolchain's build-info generator into a temp dir and returns it for inclusion as an
    * APK asset. {@code argsFile} holds the generator's run command, one token per line; the
-   * generator reads {@code BUCK_BUILD_ID} from this action's environment, inherited by the
+   * generator reads {@code YAK_BUILD_ID} from this action's environment, inherited by the
    * subprocess. Keeping the build-info-writing logic in that separate toolchain tool, but running
    * it from the apk packaging action, ties the baked id to the APK content (re-baked only when the
    * APK changes).

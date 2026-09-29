@@ -234,10 +234,10 @@ impl From<CleanResult> for buck2_cli_proto::CleanStaleResponse {
         let message = match result.kind {
             CleanStaleResultKind::SkippedNoGenDir => Some("Nothing to clean"),
             CleanStaleResultKind::SkippedDeferWriteDisabled => {
-                Some("Skipping clean, set buck2.defer_write_actions to use clean --stale")
+                Some("Skipping clean, set yak.defer_write_actions to use clean --stale")
             }
             CleanStaleResultKind::SkippedSqliteDisabled => {
-                Some("Skipping clean, set buck2.sqlite_materializer_state to use clean --stale")
+                Some("Skipping clean, set yak.sqlite_materializer_state to use clean --stale")
             }
             CleanStaleResultKind::SkippedDryRun => None,
             CleanStaleResultKind::Interrupted => Some("Interrupted"),
@@ -1337,7 +1337,7 @@ impl IoRequest for CleanInvalidatedPathRequest {
 }
 
 /// Deletes everything under the scratch roots (`tmp`, `tmp-anon`, `tmp-bxl`): the local
-/// actions' `BUCK_SCRATCH_PATH`s. Scratch liveness is command-scoped — a scratch dir is only
+/// actions' `YAK_SCRATCH_PATH`s. Scratch liveness is command-scoped — a scratch dir is only
 /// in use while its action runs, and the local executor wipes it before the same action's
 /// next run — so with no command active, everything under the roots is dead. The daemon
 /// sends this when it goes idle after a command.
@@ -2078,7 +2078,7 @@ fn unmaterialization_threshold_from_config(
     } else {
         Err(buck2_error::buck2_error!(
             buck2_error::ErrorTag::Input,
-            "`buck2.clean_stale_low_disk_unmaterialization_threshold` ({}) must not exceed `buck2.clean_stale_low_disk_threshold` ({})",
+            "`yak.clean_stale_low_disk_unmaterialization_threshold` ({}) must not exceed `yak.clean_stale_low_disk_threshold` ({})",
             value,
             low_disk_threshold,
         ))
@@ -2089,72 +2089,72 @@ impl CleanStaleConfig {
     pub fn from_buck_config(root_config: &LegacyBuckConfig) -> buck2_error::Result<Self> {
         let clean_stale_enabled = root_config
             .parse(BuckconfigKeyRef {
-                section: "buck2",
+                section: "yak",
                 property: "clean_stale_enabled",
             })?
             .unwrap_or(false);
         let clean_stale_artifact_ttl_hours = root_config
             .parse(BuckconfigKeyRef {
-                section: "buck2",
+                section: "yak",
                 property: "clean_stale_artifact_ttl_hours",
             })?
             .unwrap_or(24.0 * DEFAULT_CLEAN_STALE_TTL_DAYS as f64);
         let clean_stale_period_hours = root_config
             .parse(BuckconfigKeyRef {
-                section: "buck2",
+                section: "yak",
                 property: "clean_stale_period_hours",
             })?
             .unwrap_or(24.0);
         let clean_stale_start_offset_hours = root_config
             .parse(BuckconfigKeyRef {
-                section: "buck2",
+                section: "yak",
                 property: "clean_stale_start_offset_hours",
             })?
             .unwrap_or(12.0);
         let clean_stale_dry_run = root_config
             .parse(BuckconfigKeyRef {
-                section: "buck2",
+                section: "yak",
                 property: "clean_stale_dry_run",
             })?
             .unwrap_or(false);
         let adaptive_enabled = root_config
             .parse(BuckconfigKeyRef {
-                section: "buck2",
+                section: "yak",
                 property: "clean_stale_low_disk_adaptive_enabled",
             })?
             .unwrap_or(false);
         let adaptive_min_ttl_hours: f64 = root_config
             .parse(BuckconfigKeyRef {
-                section: "buck2",
+                section: "yak",
                 property: "clean_stale_low_disk_adaptive_min_ttl_hours",
             })?
             .unwrap_or(12.0);
         let delete_intermediate_within_min_ttl = root_config
             .parse(BuckconfigKeyRef {
-                section: "buck2",
+                section: "yak",
                 property: "clean_stale_low_disk_adaptive_delete_intermediate_within_min_ttl",
             })?
             .unwrap_or(false);
         let unmaterialize_active = root_config
             .parse(BuckconfigKeyRef {
-                section: "buck2",
+                section: "yak",
                 property: "clean_stale_low_disk_adaptive_unmaterialize_active",
             })?
             .unwrap_or(false);
         let unmaterialization_threshold_percent: Option<f64> =
             root_config.parse(BuckconfigKeyRef {
-                section: "buck2",
+                section: "yak",
                 property: "clean_stale_low_disk_unmaterialization_threshold",
             })?;
         let unmaterialize_upload_enabled = root_config
             .parse(BuckconfigKeyRef {
-                section: "buck2",
+                section: "yak",
                 property: "clean_stale_unmaterialize_upload_enabled",
             })?
             .unwrap_or(false);
         let unmaterialize_upload_max_bytes = root_config
             .parse(BuckconfigKeyRef {
-                section: "buck2",
+                section: "yak",
                 property: "clean_stale_unmaterialize_upload_max_bytes",
             })?
             .unwrap_or(1024 * 1024 * 1024);
@@ -2165,11 +2165,11 @@ impl CleanStaleConfig {
                 max_bytes: unmaterialize_upload_max_bytes,
             });
         let low_disk_artifact_ttl_hours: Option<f64> = root_config.parse(BuckconfigKeyRef {
-            section: "buck2",
+            section: "yak",
             property: "clean_stale_low_disk_artifact_ttl_hours",
         })?;
         let low_disk_threshold_percent: Option<f64> = root_config.parse(BuckconfigKeyRef {
-            section: "buck2",
+            section: "yak",
             property: "clean_stale_low_disk_threshold",
         })?;
         let low_disk = match low_disk_threshold_percent {

@@ -66,7 +66,7 @@ def _worker_impl(ctx):
         WorkerInfo(
             exe = RunInfo(args),
             env = {
-                "BUCK_CLASSPATH": ctx.attrs.exe,
+                "YAK_CLASSPATH": ctx.attrs.exe,
                 "JAVACD_ABSOLUTE_PATHS_ARE_RELATIVE_TO_CWD": "1",
             },
         ),

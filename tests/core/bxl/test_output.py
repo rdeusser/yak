@@ -80,7 +80,7 @@ async def test_bxl_error_caching(buck: Buck) -> None:
 async def test_bxl_print_with_no_buckd(buck: Buck) -> None:
     result = await buck.bxl(
         "//caching.bxl:print_caching",
-        "--no-buckd",
+        "--no-yakd",
     )
 
     assert "ran me" in result.stderr

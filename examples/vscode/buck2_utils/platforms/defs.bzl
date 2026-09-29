@@ -7,7 +7,7 @@
 # above-listed licenses.
 
 def is_remote_enabled() -> bool:
-    re_enabled = read_config("buck2_re_client", "enabled", "false")
+    re_enabled = read_config("yak_re_client", "enabled", "false")
     return re_enabled == "true"
 
 def _execution_platforms_impl(ctx: AnalysisContext) -> list[Provider]:

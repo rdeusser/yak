@@ -213,7 +213,7 @@ impl<'a> ImmediateConfigContext<'a> {
 }
 
 fn is_paranoid_enabled(path: &AbsPath) -> buck2_error::Result<bool> {
-    if let Some(p) = buck2_env!("BUCK_PARANOID", type=bool)? {
+    if let Some(p) = buck2_env!("YAK_PARANOID", type=bool)? {
         return Ok(p);
     }
 

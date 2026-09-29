@@ -672,7 +672,7 @@ async def test_incremental_action_multi_outputs_with_daemon_restart_and_content_
 
 
 @buck_test(
-    extra_buck_config={"buck2": {"sqlite_incremental_state": "false"}},
+    extra_buck_config={"yak": {"sqlite_incremental_state": "false"}},
 )
 async def test_incremental_action_db_disabled(
     buck: Buck,

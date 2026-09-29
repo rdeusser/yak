@@ -173,7 +173,7 @@ impl ExecutorLauncher for OutOfProcessTestExecutor {
     async fn launch(&self, executor_args: Vec<String>) -> buck2_error::Result<ExecutorLaunch> {
         // Declare outside of `cfg(unix)` so `yak help-env` would include it on Windows
         // even if it is no-op on Windows.
-        let use_tcp = buck2_env!("BUCK2_TEST_EXECUTOR_USE_TCP", bool)?;
+        let use_tcp = buck2_env!("YAK_TEST_EXECUTOR_USE_TCP", bool)?;
 
         if !use_tcp {
             #[cfg(unix)]

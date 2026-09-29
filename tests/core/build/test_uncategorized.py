@@ -335,7 +335,7 @@ async def test_log_action_keys(buck: Buck) -> None:
 
     # Run on RE
     await buck.build(
-        ":test", "-c", f"test.seed={seed}", "-c", "buck2.log_action_keys=true"
+        ":test", "-c", f"test.seed={seed}", "-c", "yak.log_action_keys=true"
     )
     assert await read_action_keys() == [("Re", action_key)]
 
@@ -343,7 +343,7 @@ async def test_log_action_keys(buck: Buck) -> None:
 
     # Run on RE again, get a cache hit this time
     await buck.build(
-        ":test", "-c", f"test.seed={seed}", "-c", "buck2.log_action_keys=true"
+        ":test", "-c", f"test.seed={seed}", "-c", "yak.log_action_keys=true"
     )
 
     assert await read_action_keys() == [("Cache", action_key)]

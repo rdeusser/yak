@@ -432,7 +432,7 @@ async def _execution_kinds(buck: Buck) -> list[int]:
     skip_for_os=["windows"],
     # The persisted dep-file cache is gated on a daemon-startup buckconfig (read once when the daemon
     # boots, like the materializer/incremental state dbs), so it must be set here rather than via `-c`.
-    extra_buck_config={"buck2": {"sqlite_dep_file_state": "true"}},
+    extra_buck_config={"yak": {"sqlite_dep_file_state": "true"}},
 )
 async def test_dep_file_hit_persisted_across_restart(buck: Buck) -> None:
     args = [
@@ -498,7 +498,7 @@ async def _prepare_persisted_dep_file_input_after_clean(
     data_dir="dep_files",
     skip_for_os=["windows"],
     extra_buck_config={
-        "buck2": {
+        "yak": {
             "defer_write_actions": "true",
             "restarter": "false",
             "sqlite_dep_file_state": "true",
@@ -543,7 +543,7 @@ async def test_dep_file_not_persisted_across_restart_when_disabled(buck: Buck) -
 @buck_test(
     data_dir="dep_files",
     skip_for_os=["windows"],
-    extra_buck_config={"buck2": {"sqlite_dep_file_state": "true"}},
+    extra_buck_config={"yak": {"sqlite_dep_file_state": "true"}},
 )
 async def test_changed_action_is_not_served_from_persisted_cache(buck: Buck) -> None:
     # The risk the persisted cache carries is not missing a hit, it is serving a stale output. A
@@ -582,7 +582,7 @@ async def test_changed_action_is_not_served_from_persisted_cache(buck: Buck) -> 
 @buck_test(
     data_dir="dep_files",
     skip_for_os=["windows"],
-    extra_buck_config={"buck2": {"sqlite_dep_file_state": "true"}},
+    extra_buck_config={"yak": {"sqlite_dep_file_state": "true"}},
 )
 async def test_dir_output_dep_file_hit_persisted_across_restart(buck: Buck) -> None:
     args = [
@@ -603,7 +603,7 @@ async def test_dir_output_dep_file_hit_persisted_across_restart(buck: Buck) -> N
 @buck_test(
     data_dir="dep_files",
     skip_for_os=["windows"],
-    extra_buck_config={"buck2": {"sqlite_dep_file_state": "true"}},
+    extra_buck_config={"yak": {"sqlite_dep_file_state": "true"}},
 )
 async def test_dir_output_dep_file_hit_persisted_without_content_based_paths(
     buck: Buck,
@@ -629,7 +629,7 @@ async def test_dir_output_dep_file_hit_persisted_without_content_based_paths(
 @buck_test(
     data_dir="dep_files",
     skip_for_os=["windows"],
-    extra_buck_config={"buck2": {"sqlite_dep_file_state": "true"}},
+    extra_buck_config={"yak": {"sqlite_dep_file_state": "true"}},
 )
 async def test_flush_dep_files_clears_persisted_cache(buck: Buck) -> None:
     # `flush-dep-files` clears the in-memory cache synchronously, so the persisted rows must be gone
@@ -659,7 +659,7 @@ async def test_flush_dep_files_clears_persisted_cache(buck: Buck) -> None:
     # The persisted cache re-validates reloaded outputs against the materializer's own state db, so
     # it refuses to start without it. Requesting it here should warn and stay disabled, not fail.
     extra_buck_config={
-        "buck2": {"sqlite_dep_file_state": "true", "sqlite_materializer_state": "false"}
+        "yak": {"sqlite_dep_file_state": "true", "sqlite_materializer_state": "false"}
     },
 )
 async def test_dep_file_persistence_disabled_without_materializer_state(
@@ -904,7 +904,7 @@ async def test_dep_file_hit_with_action_key_change(buck: Buck) -> None:
 @pytest.mark.remote_execution
 @buck_test(data_dir="dep_files", skip_for_os=["darwin", "windows"])
 @env(
-    "BUCK2_TEST_TOMBSTONED_DIGESTS",
+    "YAK_TEST_TOMBSTONED_DIGESTS",
     "e537c6611d7e2ba1c9b71248f7a0ca506e5a0f9a:78",
 )
 async def test_dep_files_ignore_missing_digests(buck: Buck, tmp_path: Path) -> None:
@@ -920,7 +920,7 @@ async def test_dep_files_ignore_missing_digests(buck: Buck, tmp_path: Path) -> N
             dep_file_hash = hashlib.sha1(dep_file).hexdigest()
             dep_file_len = len(dep_file)
             raise Exception(
-                f"Misconfigured test, BUCK2_TEST_TOMBSTONED_DIGESTS to {dep_file_hash}:{dep_file_len}",
+                f"Misconfigured test, YAK_TEST_TOMBSTONED_DIGESTS to {dep_file_hash}:{dep_file_len}",
             )
 
     touch(buck, "app/other.h")
@@ -985,7 +985,7 @@ async def _dep_file_key_from_executions(buck: Buck) -> str:
 
 
 async def _check_uploaded_dep_file_key(buck: Buck, dep_file_key: str) -> None:
-    # BUCK2_TEST_SKIP_ACTION_CACHE_WRITE causes action result writes for dep files to always pass.
+    # YAK_TEST_SKIP_ACTION_CACHE_WRITE causes action result writes for dep files to always pass.
     # This is to allow testing without action cache write permission.
     dep_file_uploads = [
         upload for upload in await _dep_file_uploads(buck) if upload["success"]
@@ -997,8 +997,8 @@ async def _check_uploaded_dep_file_key(buck: Buck, dep_file_key: str) -> None:
 
 @pytest.mark.remote_execution
 @buck_test(data_dir="upload_dep_files")
-@env("BUCK_LOG", "buck2_execute_impl::executors::caching=debug")
-@env("BUCK2_TEST_SKIP_ACTION_CACHE_WRITE", "true")
+@env("YAK_LOG", "buck2_execute_impl::executors::caching=debug")
+@env("YAK_TEST_SKIP_ACTION_CACHE_WRITE", "true")
 async def test_re_dep_file_uploads_same_key(buck: Buck) -> None:
     # Test all the cases where the remote dep file key should stay the same
     target = "root//:dep_files"
@@ -1035,8 +1035,8 @@ async def test_re_dep_file_uploads_same_key(buck: Buck) -> None:
 
 @pytest.mark.remote_execution
 @buck_test(data_dir="upload_dep_files")
-@env("BUCK_LOG", "buck2_execute_impl::executors::caching=debug")
-@env("BUCK2_TEST_SKIP_ACTION_CACHE_WRITE", "true")
+@env("YAK_LOG", "buck2_execute_impl::executors::caching=debug")
+@env("YAK_TEST_SKIP_ACTION_CACHE_WRITE", "true")
 async def test_re_dep_file_uploads_different_key(buck: Buck) -> None:
     # TODO: Mergebase is currently not set in this test.
     # Include it so we can test for the case where the mergebase differs
@@ -1099,8 +1099,8 @@ async def test_re_dep_file_uploads_different_key(buck: Buck) -> None:
 
 @pytest.mark.remote_execution
 @buck_test(data_dir="upload_dep_files")
-@env("BUCK_LOG", "buck2_execute_impl::executors::caching=debug")
-@env("BUCK2_TEST_SKIP_ACTION_CACHE_WRITE", "true")
+@env("YAK_LOG", "buck2_execute_impl::executors::caching=debug")
+@env("YAK_TEST_SKIP_ACTION_CACHE_WRITE", "true")
 async def test_dep_file_does_not_upload_when_allow_cache_upload_is_true(
     buck: Buck,
 ) -> None:
@@ -1124,9 +1124,9 @@ async def test_dep_file_does_not_upload_when_allow_cache_upload_is_true(
 
 @pytest.mark.remote_execution
 @buck_test(data_dir="upload_dep_files")
-@env("BUCK_LOG", "buck2_execute_impl::executors::caching=debug")
-@env("BUCK2_TEST_SKIP_ACTION_CACHE_WRITE", "true")
-@env("BUCK2_TEST_ONLY_REMOTE_DEP_FILE_CACHE", "true")
+@env("YAK_LOG", "buck2_execute_impl::executors::caching=debug")
+@env("YAK_TEST_SKIP_ACTION_CACHE_WRITE", "true")
+@env("YAK_TEST_ONLY_REMOTE_DEP_FILE_CACHE", "true")
 async def test_only_do_cache_lookup_when_dep_file_upload_is_enabled(
     buck: Buck,
 ) -> None:
@@ -1163,8 +1163,8 @@ async def test_only_do_cache_lookup_when_dep_file_upload_is_enabled(
 
 @pytest.mark.remote_execution
 @buck_test(data_dir="upload_dep_files")
-@env("BUCK_LOG", "buck2_execute_impl::executors::caching=debug")
-@env("BUCK2_TEST_SKIP_ACTION_CACHE_WRITE", "true")
+@env("YAK_LOG", "buck2_execute_impl::executors::caching=debug")
+@env("YAK_TEST_SKIP_ACTION_CACHE_WRITE", "true")
 async def test_re_dep_file_remote_upload(buck: Buck) -> None:
     target = [
         "root//:dep_files",
@@ -1183,8 +1183,8 @@ async def test_re_dep_file_remote_upload(buck: Buck) -> None:
 
 @pytest.mark.remote_execution
 @buck_test(data_dir="upload_dep_files", write_invocation_record=True)
-@env("BUCK_LOG", "buck2_action_impl=debug,buck2_execute_impl::executors::caching=debug")
-@env("BUCK2_TEST_SKIP_ACTION_CACHE_WRITE", "true")
+@env("YAK_LOG", "buck2_action_impl=debug,buck2_execute_impl::executors::caching=debug")
+@env("YAK_TEST_SKIP_ACTION_CACHE_WRITE", "true")
 async def test_re_dep_file_cache_hit_upload(buck: Buck) -> None:
     target = [
         "root//:dep_files",
@@ -1264,11 +1264,11 @@ async def check_remote_dep_file_cache_query_took_place(buck: Buck) -> str:
 
 @buck_test(data_dir="upload_dep_files")
 @env(
-    "BUCK_LOG",
+    "YAK_LOG",
     "buck2_execute_impl::executors::caching=debug,buck2_execute_impl::executors::action_cache=debug,buck2_action_impl=debug",
 )
 # Disable the regular action cache query so that we actually hit the remote dep file cache query.
-@env("BUCK2_TEST_ONLY_REMOTE_DEP_FILE_CACHE", "true")
+@env("YAK_TEST_ONLY_REMOTE_DEP_FILE_CACHE", "true")
 async def test_re_dep_file_query_change_tagged_unused_file(buck: Buck) -> None:
     target = "root//:dep_files"
     # Tagged for depfile0, and exists in depfile0
@@ -1360,11 +1360,11 @@ async def test_re_dep_file_query_change_tagged_unused_file(buck: Buck) -> None:
 
 @buck_test(data_dir="upload_dep_files")
 @env(
-    "BUCK_LOG",
+    "YAK_LOG",
     "buck2_execute_impl::executors::caching=debug,buck2_execute_impl::executors::action_cache=debug,buck2_action_impl=debug",
 )
 # Disable the regular action cache query so that we actually hit the remote dep file cache query.
-@env("BUCK2_TEST_ONLY_REMOTE_DEP_FILE_CACHE", "true")
+@env("YAK_TEST_ONLY_REMOTE_DEP_FILE_CACHE", "true")
 async def test_re_dep_file_query_change_tagged_used_file(buck: Buck) -> None:
     target = "root//:dep_files"
     # Tagged for depfile0, and exists in depfile0
@@ -1670,7 +1670,7 @@ async def test_canonical_input_invalid_placement(
 @buck_test(
     data_dir="dep_files",
     skip_for_os=["windows"],
-    extra_buck_config={"buck2": {"sqlite_dep_file_state": "true"}},
+    extra_buck_config={"yak": {"sqlite_dep_file_state": "true"}},
 )
 @pytest.mark.parametrize("input_format", ["json", "args"])
 async def test_canonical_input_persisted_dep_file(
@@ -1715,7 +1715,7 @@ async def test_canonical_input_persisted_dep_file(
     write_invocation_record=True,
     skip_for_os=["windows"],
     extra_buck_config={
-        "buck2_hydration": {
+        "yak_hydration": {
             "enable_paging": "true",
             "page_out_on_idle": "true",
             "page_out_min_free_disk_gb": "0",
@@ -1743,7 +1743,7 @@ async def test_canonical_input_paged_analysis(buck: Buck, input_format: str) -> 
         "build": {"execution_platforms": "root//app:canonical_platforms"}
     },
 )
-@env("BUCK2_TEST_ONLY_REMOTE_DEP_FILE_CACHE", "true")
+@env("YAK_TEST_ONLY_REMOTE_DEP_FILE_CACHE", "true")
 @pytest.mark.parametrize("input_format", ["json", "args"])
 async def test_canonical_input_remote_dep_file_key(
     buck: Buck, input_format: str

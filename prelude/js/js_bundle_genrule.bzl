@@ -132,13 +132,13 @@ def _run_genrule(ctx: AnalysisContext, out_name: str, extra_env_vars: dict, iden
         if is_windows:
             rewrite_scratch_path = cmd_args(
                 cmd_args(ctx.label.project_root, relative_to = srcs_artifact),
-                format = 'set "BUCK_SCRATCH_PATH={}\\%BUCK_SCRATCH_PATH%"',
+                format = 'set "YAK_SCRATCH_PATH={}\\%YAK_SCRATCH_PATH%"',
             )
         else:
             srcs_dir = cmd_args(srcs_dir, quote = "shell")
             rewrite_scratch_path = cmd_args(
                 cmd_args(ctx.label.project_root, quote = "shell", relative_to = srcs_artifact),
-                format = "export BUCK_SCRATCH_PATH={}/$BUCK_SCRATCH_PATH",
+                format = "export YAK_SCRATCH_PATH={}/$YAK_SCRATCH_PATH",
             )
 
         for script_cmd in script:

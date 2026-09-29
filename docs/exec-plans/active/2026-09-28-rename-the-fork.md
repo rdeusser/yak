@@ -23,9 +23,16 @@ After the change, the binary is `yak`, it reads `YAK` files and `.yakconfig` fil
   - On Linux, after `./bootstrap/reindeer --third-party-dir third-party/rust buckify`, `yak build //:yak`, `yak build //app_dep_graph_rules:test_buck2_dep_graph`, and `yak targets //...` succeed. `yak bxl prelude//rust/rust-analyzer/resolve_deps.bxl:resolve_targets -- --targets //app/buck2_wrapper_common:buck2_wrapper_common` succeeds and reports source folders in `yak-out`.
   - On Linux, `yak build //... -v 2` succeeds in `examples/toolchains/python_toolchain`. In `examples/no_prelude`, it fails only at the Go download that the tech-debt tracker lists under "Examples that fail to load or build".
   - On Linux, in a project that `yak init` created and whose build files are named `BUILD`, `resolve_deps.bxl:resolve_targets` reports `<project root>/lib` as the source folder of a Windows-only `rust_library` in `lib/BUILD`.
-  - Remaining: the same checks on macOS.
+  - On macOS, `cargo build --bin=yak` passes, and `python3 test.py` passes clippy and rustdoc. `cargo test --lib --no-fail-fast` passes 3860 unit tests and fails one of the paging tests of `starlark`, which fail when they run in parallel (see the tech-debt tracker). `cargo test --doc` passes 311 doc tests.
+  - On macOS, `yak init --git <dir>` writes `.yakconfig`, `.yakroot`, and a `.gitignore` that lists `/yak-out`. `resolve_deps.bxl:resolve_targets` reports `<project root>/lib` as the source folder of the Windows-only crate in `lib/BUILD`.
+  - Remaining on macOS: the integration tests and the Buck build of the repository, which the tech-debt tracker lists as failing.
 - [ ] The owner decides whether the default isolation dir keeps the name `v2`, which puts build output in `yak-out/v2/`.
-- [ ] Milestone 3: the environment variables take the `YAK_` prefix, and the configuration sections, flags, and Starlark names that say `buck2` take `yak`.
+- [x] Milestone 3: the environment variables take the `YAK_` prefix, and the configuration sections and the flag that say `buck2` or `buckd` take `yak` (2026-09-28).
+  - `rename_env.py` and `manual_edits_env.py` in `docs/exec-plans/active/2026-09-28-rename-the-fork/` made the milestone from commit `04fcc47b52`. `rename_env.py` edited 814 files. `cargo fmt --all` and the golden files that the integration tests regenerated complete the change.
+  - On Linux, `cargo build --bin=yak` and `cargo fmt --all -- --check` pass. `python3 test.py` passes clippy and rustdoc. `cargo test --lib --no-fail-fast` passes 3865 unit tests and fails only `test_perf_thread_instruction_counter`, and `cargo test --doc` passes 311 doc tests.
+  - On Linux, the integration tests gave 1760 passed, 190 skipped, 3 expected failures, and 3 failures. `yak help-env` sorts the variables by name, and a build report cuts an error message at a fixed length, so three golden files changed with the names. `test_external_buckconfigs` expected `buck2` to sort before its own section. After the regenerated golden files and the fixed test, `tests/core/help`, `test_build_report_errors.py`, and `test_external_buckconfigs.py` give 39 passed and 3 skipped.
+  - On Linux, `yak init --git`, the `resolve_deps.bxl` check, and the two example projects give the same results as for milestone 2, and the integration tests left 13 action processes running, as before.
+  - On Linux, after `buckify`, `yak build //:yak`, `yak build //app_dep_graph_rules:test_buck2_dep_graph`, `yak targets //...`, and the `resolve_deps.bxl` run of the repository succeed. The repository's proto rules pass `YAK_PROTO_SRCS` to the build scripts.
 - [ ] Milestone 4: the Java packages move under the chosen root, and the four bootstrap jars are rebuilt from the moved sources.
   - [x] Test inputs that stand for user code use `com.example` names, which needs no package root (2026-09-28).
     - A script replaced 394 names in 22 files under `prelude/toolchains/android/test/` and `prelude/android/tools/tests/`. It left the packages that this repository declares outside `testdata/` and the Infer package.
@@ -53,6 +60,10 @@ After the change, the binary is `yak`, it reads `YAK` files and `.yakconfig` fil
 - Three more binary files hold the old names, which the text rules skip. The event logs `tests/core/console/fixtures/my_genrule0.proto` and `my_genrule1.proto` recorded builds under `buck-out` and `~/.buck/buckd`. `prelude/toolchains/android/test/com/facebook/buck/util/zip/sample-bytes.dat` holds `buck-out` in the bytes that `ZipOutputStreamTest` compresses.
 - Upstream named the build files of its test data `TARGETS.fixture` (633 files), `BUCK.fixture` (6 files), and `TARGETS.test` (2 files). The root `.yakconfig` lists `tests` and `examples` under `[project] ignore`, so the repository's own build reads none of them under any name.
 - `prelude//rust/rust-analyzer/resolve_deps.bxl` found the source folder of a crate that the host cannot build by removing a `/TARGETS` or `/BUCK` suffix from its build file path. For any other build file name, the file name stayed in the path. The path also joined the cell's name to the project root, so `lib/BUILD` in a root cell named `root` gave `<project root>/root/lib`.
+- In a Rust file, the lexer of `rename_runtime.py` splits `section: "buck2"` into code and a string literal, so a pattern that includes the code around a literal matches no single part. `rename_env.py` runs such patterns over the whole text of each Rust file.
+- `buck2_resource_control` names a configuration section and a crate, so the rule for section names skips `Cargo.toml` and `YAK` files.
+- A comment in `app/buck2_server/src/ctx.rs` named the key `buck2.default_remote_execution_use_case`, but `DEFAULT_RE_USE_CASE_KEY` reads it from the `build` section.
+- None of the four jars that the prelude downloads from the upstream release reads a `BUCK_` or `BUCK2_` variable. Their class files hold `BUCK_` only in the field names of `BuckConstant`, which no class calls.
 - The command rule skips `buck2` after a `/`, which keeps crate paths such as `app/buck2` intact, but it also skipped paths to the binary. `test_is_buck2_exe` in `app/buck2_wrapper_common/src/is_buck2.rs` failed on `/dir/buck2`. `manual_edits.py` renames that path and the binary paths in `docs/developers/perf/scripts/bin_waste.py` and `examples/with_prelude/README.md`.
 
 ## Decision Log
@@ -74,11 +85,19 @@ After the change, the binary is `yak`, it reads `YAK` files and `.yakconfig` fil
 - 2026-09-28: Milestones 1 and 2 rename only the names a user sees. Rust and Starlark identifiers that contain `buck`, such as `BuckConfig`, `RESERVED_BUCK_OUT_PREFIX`, and the `buck2` and `buck2_client` attributes of `yak_bundle` in `defs.bzl`, keep their names. Milestone 5 renames the two attributes together with the crate targets they name.
 - 2026-09-28: The event logs under `tests/core/console/fixtures/` and `sample-bytes.dat` keep the old names. A string of a different length breaks the protobuf framing of an event log, and the console tests check only the action digest and the console output. `ZipOutputStreamTest` treats `sample-bytes.dat` as arbitrary bytes.
 - 2026-09-28: `resolve_deps.bxl` takes the directory of the build file's project-relative path as the source folder. `[buildfile] name` can give the build file any name, and a cell's directory can have a name other than the cell's.
+- 2026-09-28: `BUCK2_` and `BUCK_` variables take the `YAK_` prefix, and `BUCKD_` variables take `YAKD_`. `BUCK2_NO_BUCKD` and `BUCK2_TEST_FAIL_BUCKD_AUTH` become `YAK_NO_YAKD` and `YAK_TEST_FAIL_YAKD_AUTH`. No two old names map to one new name.
+- 2026-09-28: The variables that yak and the prelude set for actions and tools, such as `BUCK_SCRATCH_PATH` and `BUCK_BUILD_ID`, take the `YAK_` prefix too. The prelude's tools and the Java sources read the new names, and the downloaded jars read none of them.
+- 2026-09-28: Constants, enum values, and placeholders whose names contain `BUCK`, such as `BUCK_WRAPPER_UUID_ENV_VAR` and `BUCKD_INFO_MISSING`, keep their names, as other identifiers do. `KEEP` in `rename_env.py` lists them.
+- 2026-09-28: The configuration sections `[buck2]`, `[buck2_re_client]`, `[buck2_resource_control]`, `[buck2_system_warning]`, `[buck2_hydration]`, and `[buck2_metadata]` take the `yak` prefix.
+- 2026-09-28: The `--no-buckd` flag is `--no-yakd`. The `no_buckd` field keeps its name, and its `clap` attribute names the flag.
+- 2026-09-28: `host_info()` loses its `buck2` field. The field was always true, and it told Buck2 from Buck1 in rules that both tools loaded.
 - 2026-09-28: The scripts of each milestone live beside this plan in `docs/exec-plans/active/2026-09-28-rename-the-fork/`. `rename_runtime.py` skips `docs/exec-plans/`, so it never rewrites its own patterns.
 
 ## Outcomes & Retrospective
 
 Milestones 1 and 2 landed on 2026-09-28. The binary is `yak`, it reads `YAK` and `.yakconfig` files, and it writes `yak-out`. The two milestones landed as one commit, because the integration tests and the repository's own build need the binary and the files it reads to change together. The environment variables, configuration sections, Java packages, crates, and prose remain. For the scripts of later milestones, a rule for Rust files needs a lexer, because the same word is a file name inside a string and a field name outside one. A pattern that ends at `$` needs multiline mode to match at the end of each line. Binary fixtures, test inputs that type part of a renamed name, and paths that end in the binary's name need edits of their own.
+
+Milestone 3 landed on 2026-09-28. The variables, the configuration sections, and the hidden daemon flag take yak names. Output that sorts or cuts names changes when the names change, so golden files and a test that assumed an order needed updates. A pattern that includes the code around a Rust string literal needs the whole text of the file, because the lexer separates the literal from its code.
 
 ## Context and Orientation
 
@@ -93,7 +112,7 @@ The names the binary uses are defined in these files:
 | Output directory `yak-out` and its reserved directory `._yak` | `app/buck2_common/src/invocation_paths.rs`, and `app/buck2_common/src/ignores/ignore_set.rs` for the ignore rule |
 | `.yaksettings.toml` | `app/buck2_common/src/settings/parser.rs` |
 | Files that `init` writes | `app/buck2_client/src/commands/init.rs` |
-| Environment variables | each `buck2_env!` call, 110 distinct `BUCK2_` names |
+| Environment variables | each `buck2_env!` call, with the `YAK_` prefix |
 
 The repository's own Buck build is described in `ARCHITECTURE.md` under "Two build definitions". Most Java and Kotlin sources of the JVM and Android toolchain live under `prelude/toolchains/android/src/com/facebook/` and `prelude/toolchains/android/test/com/facebook/`, and Surprises & Discoveries lists the other three trees. `prelude/toolchains/java.bzl`, `prelude/toolchains/kotlin.bzl`, and `prelude/toolchains/android.bzl` name targets in that tree. The tech-debt tracker lists the four jars that the prelude downloads from an upstream release under "Downloads from upstream releases".
 
@@ -137,4 +156,4 @@ Commands run from the repository root unless a step names another directory.
 
 ## Idempotence and Recovery
 
-Each milestone's script runs on a clean tree and can be rerun after `git checkout` of the files it changed. To rerun milestones 1 and 2, copy `rename_runtime.py` and `manual_edits.py` out of the checkout, check out `b25e8f97d8`, and run `rename_runtime.py --apply` and then `manual_edits.py` from the repository root. `manual_edits.py` exits with a list of failures when an edit matches a different number of times than it expects. Moving the Java sources with `git mv` keeps their history. The bootstrap jars are stored before the prelude points at them, so a failed upload leaves the upstream downloads in place.
+Each milestone's script runs on a clean tree and can be rerun after `git checkout` of the files it changed. To rerun milestones 1 and 2, copy `rename_runtime.py` and `manual_edits.py` out of the checkout, check out `b25e8f97d8`, and run `rename_runtime.py --apply` and then `manual_edits.py` from the repository root. `manual_edits.py` exits with a list of failures when an edit matches a different number of times than it expects. To rerun milestone 3, copy `rename_runtime.py`, `rename_env.py`, and `manual_edits_env.py` out of the checkout together, check out `04fcc47b52`, and run `rename_env.py --apply` and then `manual_edits_env.py`. Moving the Java sources with `git mv` keeps their history. The bootstrap jars are stored before the prelude points at them, so a failed upload leaves the upstream downloads in place.

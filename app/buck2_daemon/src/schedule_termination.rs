@@ -32,7 +32,7 @@ fn elapsed_cpu_time_as_percents(
 /// if they are terminated. This allows the daemon to self-destruct.
 pub(crate) fn maybe_schedule_termination() -> buck2_error::Result<()> {
     if let Some(duration) =
-        buck2_core::buck2_env!("BUCK2_TERMINATE_AFTER", type=u64, applicability=testing)?
+        buck2_core::buck2_env!("YAK_TERMINATE_AFTER", type=u64, applicability=testing)?
             .map(Duration::from_secs)
             .or_else(buck2_common::self_test_timeout::until_post_test_shutdown)
     {

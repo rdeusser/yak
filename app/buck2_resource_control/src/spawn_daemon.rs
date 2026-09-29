@@ -115,7 +115,7 @@ pub async fn create_daemon_spawn_command(
     let daemon_spawner = {
         if config.status == ResourceControlStatus::Off
             || buck2_core::buck2_env!(
-                "BUCK2_TEST_DISABLE_DAEMON_CGROUP",
+                "YAK_TEST_DISABLE_DAEMON_CGROUP",
                 type = bool,
                 applicability = testing,
             )?

@@ -34,14 +34,14 @@ from e2e_util.api.executable import WindowsCmdOption
 # The directory that holds `e2e_util`, `core`, and the other test directories.
 TESTS_DIR: Path = Path(__file__).resolve().parent.parent
 
-# BUCK2_BINARY names the binary under test. It defaults to the Cargo debug build.
-BUCK2_BINARY_ENV_VAR = "BUCK2_BINARY"
-# BUCK2_TEST_RE_CONFIG names a buckconfig file with the `[buck2_re_client]`
+# YAK_BINARY names the binary under test. It defaults to the Cargo debug build.
+BUCK2_BINARY_ENV_VAR = "YAK_BINARY"
+# YAK_TEST_RE_CONFIG names a buckconfig file with the `[yak_re_client]`
 # settings of a Remote Execution backend. Every test project reads it, and tests
 # marked `remote_execution` run only when it is set.
-RE_CONFIG_ENV_VAR = "BUCK2_TEST_RE_CONFIG"
-# Tests marked `cgroups` run only when BUCK2_TEST_CGROUPS is 1.
-CGROUPS_ENV_VAR = "BUCK2_TEST_CGROUPS"
+RE_CONFIG_ENV_VAR = "YAK_TEST_RE_CONFIG"
+# Tests marked `cgroups` run only when YAK_TEST_CGROUPS is 1.
+CGROUPS_ENV_VAR = "YAK_TEST_CGROUPS"
 
 BuckTestMarker = namedtuple(
     "BuckTestMarker",
@@ -94,24 +94,24 @@ async def buck_fixture(  # noqa C901 : "too complex"
     }
     # This is necessary for static linking on Linux.
     if platform.system() != "Windows":
-        env["BUCKD_STARTUP_TIMEOUT"] = "120"
-        env["BUCKD_STARTUP_INIT_TIMEOUT"] = "120"
+        env["YAKD_STARTUP_TIMEOUT"] = "120"
+        env["YAKD_STARTUP_INIT_TIMEOUT"] = "120"
 
-    env["BUCK2_HARD_ERROR"] = "false" if marker.allow_soft_errors else "true"
+    env["YAK_HARD_ERROR"] = "false" if marker.allow_soft_errors else "true"
     # Use a very small stdin buffer to catch any scenarios in which we
     # don't properly handle partial input.
-    env["BUCK2_TEST_STDIN_BUFFER_SIZE"] = "8"
+    env["YAK_TEST_STDIN_BUFFER_SIZE"] = "8"
     # Require the events dispatcher to be set for e2e tests.
     env["ENFORCE_DISPATCHER_SET"] = "true"
     # Inform buck of the test timeout
-    env["BUCK2_SELF_TEST_TIMEOUT_S"] = "600"
+    env["YAK_SELF_TEST_TIMEOUT_S"] = "600"
     # Timeout Watchman requests because we often see it hang and crash.
-    env["BUCK2_WATCHMAN_TIMEOUT"] = "30"
+    env["YAK_WATCHMAN_TIMEOUT"] = "30"
     # Use few threads. Tests do little work, but many daemons can run at once.
-    env["BUCK2_RUNTIME_THREADS"] = "8"
+    env["YAK_RUNTIME_THREADS"] = "8"
     # Windows uses blocking threads for subprocess I/O, so the blocking pool
     # keeps its default size.
-    env.pop("BUCK2_MAX_BLOCKING_THREADS", None)
+    env.pop("YAK_MAX_BLOCKING_THREADS", None)
     # A fixed console size keeps golden files independent of the terminal.
     env["SUPERCONSOLE_TESTING_WIDTH"] = "100"
     env["SUPERCONSOLE_TESTING_HEIGHT"] = "100"
@@ -123,17 +123,17 @@ async def buck_fixture(  # noqa C901 : "too complex"
     env["NANO_PRELUDE"] = str(TESTS_DIR / "e2e_util" / "nano_prelude")
     # Don't try to assign to a new cgroup during tests.
     if marker.disable_daemon_cgroup:
-        env["BUCK2_TEST_DISABLE_DAEMON_CGROUP"] = "true"
-    env["BUCK2_TEST_SKIP_DEFAULT_EXTERNAL_CONFIG"] = "true"
+        env["YAK_TEST_DISABLE_DAEMON_CGROUP"] = "true"
+    env["YAK_TEST_SKIP_DEFAULT_EXTERNAL_CONFIG"] = "true"
 
     base_dir = Path(tempfile.mkdtemp())
-    keep_temp = os.environ.get("BUCK_E2E_KEEP_TEMP") == "1"
+    keep_temp = os.environ.get("YAK_E2E_KEEP_TEMP") == "1"
 
     # Keep the daemon directories (`~/.yak/yakd`) of the test inside its
     # temporary directory.
     home_dir = base_dir / "home"
     home_dir.mkdir()
-    env["BUCK2_TEST_HOME_DIR"] = str(home_dir)
+    env["YAK_TEST_HOME_DIR"] = str(home_dir)
 
     # Golden file helpers find the test data through this variable.
     test_data = test_data_dir(test_file)
@@ -168,7 +168,7 @@ async def buck_fixture(  # noqa C901 : "too complex"
 
         # The crawler rehashes the project on every command, so each command
         # sees the files a test changed without waiting for file system events.
-        extra_config_lines.append("[buck2]\nfile_watcher = fs_hash_crawler\n")
+        extra_config_lines.append("[yak]\nfile_watcher = fs_hash_crawler\n")
 
         re_config = os.environ.get(RE_CONFIG_ENV_VAR)
         if re_config:
@@ -183,11 +183,11 @@ async def buck_fixture(  # noqa C901 : "too complex"
         with open(extra_config, "w") as f:
             for line in extra_config_lines:
                 f.write(line)
-        env["BUCK2_TEST_EXTRA_EXTERNAL_CONFIG"] = extra_config
+        env["YAK_TEST_EXTRA_EXTERNAL_CONFIG"] = extra_config
 
         settings_home_dir = os.path.join(base_dir, "settings_home")
         os.makedirs(settings_home_dir, exist_ok=True)
-        env["BUCK2_TEST_SETTINGS_HOME_DIR"] = settings_home_dir
+        env["YAK_TEST_SETTINGS_HOME_DIR"] = settings_home_dir
 
         buck = Buck(
             binary,
@@ -315,7 +315,7 @@ def buck_test(
 def env(key: str, value: str) -> Callable[..., Any]:
     """
     Decorator for adding an environment variable to a test case.
-    For example, @env("BUCK_LOG", "info")
+    For example, @env("YAK_LOG", "info")
     """
 
     def inner_decorator(fn: BuckTestFn) -> Callable[..., Any]:

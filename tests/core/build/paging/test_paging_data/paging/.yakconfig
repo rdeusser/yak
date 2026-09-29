@@ -7,7 +7,7 @@
 [build]
   execution_platforms = root//platforms:platforms
 
-[buck2_hydration]
+[yak_hydration]
   enable_paging = true
   page_out_on_idle = true
   # Relax the disk-headroom gate so idle page-out always fires in the test.

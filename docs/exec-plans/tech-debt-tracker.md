@@ -77,7 +77,7 @@ Remove this entry when `yak build //...` succeeds, or when the documentation nam
 
 `download_rpm` in `shed/rpm_download/packages.bzl` runs `dnf download` and `rpm2archive`, so `//shed/completion_verify/packages:zsh` and `//shed/completion_verify/packages:fish` build only where those tools exist, such as on Fedora.
 On Linux, `//shed/completion_verify:completion_verify` takes both packages as resources.
-The completion tests need the binary through `BUCK2_COMPLETION_VERIFY`, and they skip without it (`tests/README.md`).
+The completion tests need the binary through `YAK_COMPLETION_VERIFY`, and they skip without it (`tests/README.md`).
 On Linux on 2026-09-28, a `completion_verify` built with Cargo from `shed/completion_verify/src/` ran them. Its `completion_verify.resources.json` pointed at directories that link the Debian `fish` and `zsh` into the layout of the RPMs.
 
 Remove this entry when the completion packages build without `dnf`.
@@ -98,6 +98,16 @@ The build file interpreter continues without the counter when `init()` fails (`a
 On Linux on 2026-09-28, the test failed this way in a container, which stopped `python3 test.py`.
 
 Remove this entry when the test skips or passes wherever `perf_event_open` is denied.
+
+### The paging tests of `starlark` fail when they run in parallel
+
+Tests in `starlark-rust/starlark/src/pagable/tests.rs` read `starlark_partial_deser_stats()` before and after a page-in and assert on the difference.
+The whole test process shares the counters, so a test that pages in while another test runs adds its reads to the other test's difference.
+On macOS on 2026-09-28, 9 of 10 runs of `cargo test -p starlark --features pagable --lib` failed one or two of these tests, and five different tests failed across the runs.
+Each of the five passed in 10 of 10 runs alone, and the `pagable::tests` module passed in 5 of 5 runs with `--test-threads=1`.
+The failures stopped `python3 test.py`.
+
+Remove this entry when the tests pass under the default parallelism of `cargo test`.
 
 ### The documentation site build is unverified
 
@@ -192,7 +202,7 @@ Remove this entry when a failed build stops the installer.
 
 ### The `fs_hash_crawler` file watcher misses changes
 
-With `buck2.file_watcher = fs_hash_crawler`, a symlink whose target changes is not reported as changed, and a file name that contains a backslash fails the command.
+With `yak.file_watcher = fs_hash_crawler`, a symlink whose target changes is not reported as changed, and a file name that contains a backslash fails the command.
 The strict `xfail` markers on two tests in `tests/core/build/test_symlinks.py` and one in `tests/core/build/test_uncategorized.py` record both bugs.
 
 Remove this entry when those tests pass without the markers.

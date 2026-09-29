@@ -85,7 +85,7 @@ The owner's criteria (2026-09-27):
     - `vscode` fails `cquery` as it did at `903bfd7a61`, because it registers execution platforms only on Windows and Linux hosts or with Remote Execution enabled.
   - `# pyre-strict`, Pyre suppressions, `@nolint`, `@noautodeps`, and Meta `@lint-ignore` pragmas are removed from 92 files outside `tests/` and `shim/` and from 300 more in `tests/`.
   - The `fb_build_info` ELF section is `build_info`, and `BUCK2_TEST_TPX_USE_TCP` is `BUCK2_TEST_EXECUTOR_USE_TCP`.
-  - psutil builds with only its `network` feature, which drops `darwin-libproc` and its `github.com/fbsource` patch from `Cargo.toml` and `Cargo.lock`. `cargo tree --locked` resolves, and the Linux build compiles it. The macOS build, the only one that used `darwin-libproc`, is unverified.
+  - psutil builds with only its `network` feature, which drops `darwin-libproc` and its `github.com/fbsource` patch from `Cargo.toml` and `Cargo.lock`. `cargo tree --locked` resolves, and the Linux and macOS builds compile it.
   - `CHANGELOG.md` lists the user-visible removals and renames.
   - `test.py` checks the Git working tree, and its `--git` flag and `hg` commands are gone.
   - The fbpython shebangs in `prelude/apple/tools/` and the Meta names in test data (`xplat`, `lionhead`, the `buck` cell) are replaced.
@@ -101,7 +101,8 @@ The owner's criteria (2026-09-27):
   - The daemon no longer reads `~/.buckconfig.d/experiments_from_buck_start`, which Meta's `buck_start` wrapper wrote with Gatekeeper experiments (2026-09-28). `const_format`, which only that code used, is gone from the manifests and `Cargo.lock`.
   - The unit tests of `buck2_client` and `buck2_client_ctx` no longer use the `fb//` cell, the `metaguest` home directory, the header of Meta's generated mode files, or a Tupperware cgroup path.
   - On Linux, `cargo build --bin=buck2`, `cargo fmt --check`, and `python3 test.py buck2_client buck2_client_ctx buck2_server_ctx buck2_wrapper_common` pass. The integration tests give 1726 passed, 230 skipped, and 3 expected failures, as before.
-  - Remaining: `cargo build --bin=buck2`, `python3 test.py`, the integration tests, and `buck2 build //:buck2` on macOS.
+  - On macOS on 2026-09-28, at `04fcc47b52`, which renamed the binary to `yak`, `cargo build --bin=yak` passes, and `python3 test.py` passes clippy and rustdoc. The unit and doc tests pass apart from the paging tests of `starlark`, which fail when they run in parallel (tech-debt tracker, "The paging tests of `starlark` fail when they run in parallel").
+  - Remaining: the integration tests and the Buck build on macOS.
 
 ## Surprises & Discoveries
 

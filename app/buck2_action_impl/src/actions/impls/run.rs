@@ -1052,7 +1052,7 @@ impl RunAction {
         }
 
         extra_env.push((
-            "BUCK_SCRATCH_PATH".to_owned(),
+            "YAK_SCRATCH_PATH".to_owned(),
             path_format(scratch_path.as_ref(), fs.path_separator()).into_owned(),
         ));
         inputs.push(CommandExecutionInput::ScratchPath(scratch));

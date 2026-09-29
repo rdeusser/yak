@@ -65,8 +65,8 @@ where
     W: for<'writer> MakeWriter<'writer> + Send + Sync + 'static,
 {
     // By default, show warnings/errors.
-    // If the user specifies BUCK_LOG, we want to honour that.
-    const ENV_VAR: &str = "BUCK_LOG";
+    // If the user specifies YAK_LOG, we want to honour that.
+    const ENV_VAR: &str = "YAK_LOG";
 
     let filter = match buck2_env!(ENV_VAR)? {
         Some(v) => EnvFilter::try_new(v)

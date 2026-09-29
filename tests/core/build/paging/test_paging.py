@@ -18,8 +18,8 @@ from e2e_util.api.buck_result import BuildResult
 from e2e_util.buck_workspace import buck_test, env
 
 # The fixture's `.yakconfig` sets two `DaemonStartupConfig`s:
-# `buck2_hydration.enable_paging` (pagable DICE storage on disk) and
-# `buck2_hydration.page_out_on_idle` (page the graph out when the daemon goes idle).
+# `yak_hydration.enable_paging` (pagable DICE storage on disk) and
+# `yak_hydration.page_out_on_idle` (page the graph out when the daemon goes idle).
 
 # `buck2_data.PageOutStarted::*` — the invocation record serializes the
 # `page_out_started` enum field as its integer value (see data.proto).
@@ -135,7 +135,7 @@ async def test_incremental_build_after_page_out(buck: Buck) -> None:
     # Note: this does not check that stale paged-out values are reclaimed from
     # storage. Garbage-collecting them is future work (reference counting).
     #
-    # Pagable storage is set up by `buck2_hydration.enable_paging = true` in the
+    # Pagable storage is set up by `yak_hydration.enable_paging = true` in the
     # fixture `.yakconfig` (a `DaemonStartupConfig`).
     (buck.cwd / "src.txt").write_text("content-0\n")
     assert _output(await _build(buck)) == "content-0\n"
@@ -172,9 +172,9 @@ async def test_incremental_build_after_page_out(buck: Buck) -> None:
 @buck_test(
     data_dir="paging",
     write_invocation_record=True,
-    extra_buck_config={"buck2_hydration": {"page_out_on_idle": "false"}},
+    extra_buck_config={"yak_hydration": {"page_out_on_idle": "false"}},
 )
-@env("BUCK2_DICE_SNAPSHOT_INTERVAL_MS", "1")
+@env("YAK_DICE_SNAPSHOT_INTERVAL_MS", "1")
 async def test_config_change_after_page_out_analysis_validation(buck: Buck) -> None:
     await buck.build("//:analysis_root")
     await buck.debug("hydration", "page-out")
@@ -281,7 +281,7 @@ async def test_page_in_shared_anon_target(buck: Buck) -> None:
 
 @buck_test(data_dir="paging", write_invocation_record=True)
 async def test_page_out_on_idle(buck: Buck) -> None:
-    # With `buck2_hydration.page_out_on_idle`, the daemon pages the DICE graph out to
+    # With `yak_hydration.page_out_on_idle`, the daemon pages the DICE graph out to
     # disk in a background task once it goes idle after a command. Subsequent
     # builds stay correct by paging values back in on demand.
     (buck.cwd / "src.txt").write_text("content-0\n")
@@ -316,11 +316,11 @@ async def test_page_out_on_idle(buck: Buck) -> None:
 
 
 @buck_test(data_dir="paging", write_invocation_record=True)
-@env("BUCK2_TEST_FAIL_PAGE_OUT", "true")
+@env("YAK_TEST_FAIL_PAGE_OUT", "true")
 async def test_idle_page_out_disabled_after_error(buck: Buck) -> None:
     # A failed idle page-out disables idle page-out for the rest of the daemon's
     # lifetime: the failure is likely persistent, so retrying at the end of every
-    # command would repeat the work and re-log the error. `BUCK2_TEST_FAIL_PAGE_OUT`
+    # command would repeat the work and re-log the error. `YAK_TEST_FAIL_PAGE_OUT`
     # injects the failure on the idle path only.
     (buck.cwd / "src.txt").write_text("content-0\n")
     result = await _build(buck)
@@ -349,7 +349,7 @@ async def test_idle_page_out_disabled_after_error(buck: Buck) -> None:
 @buck_test(
     data_dir="paging",
     write_invocation_record=True,
-    extra_buck_config={"buck2_hydration": {"allow_multiple_idle_page_outs": "true"}},
+    extra_buck_config={"yak_hydration": {"allow_multiple_idle_page_outs": "true"}},
 )
 async def test_page_out_triggered_only_when_values_computed(buck: Buck) -> None:
     # A command triggers an idle page-out only when it computed values worth
@@ -372,7 +372,7 @@ async def test_page_out_triggered_only_when_values_computed(buck: Buck) -> None:
 @buck_test(
     data_dir="paging",
     write_invocation_record=True,
-    extra_buck_config={"buck2_hydration": {"allow_multiple_idle_page_outs": "true"}},
+    extra_buck_config={"yak_hydration": {"allow_multiple_idle_page_outs": "true"}},
 )
 async def test_page_out_at_most_once(buck: Buck) -> None:
     # A value is paged out at most once: once an incremental build pages a value
@@ -429,7 +429,7 @@ async def test_idle_page_out_runs_once_per_daemon(buck: Buck) -> None:
 @buck_test(
     data_dir="paging",
     write_invocation_record=True,
-    extra_buck_config={"buck2_hydration": {"allow_multiple_idle_page_outs": "true"}},
+    extra_buck_config={"yak_hydration": {"allow_multiple_idle_page_outs": "true"}},
 )
 async def test_idle_page_out_rollout_config_allows_multiple_runs(buck: Buck) -> None:
     first = await buck.build("//:module_const_a")

@@ -32,7 +32,7 @@ tests/.venv/bin/python -m pytest tests/core/build/test_out_flag.py
 tests/.venv/bin/python -m pytest "tests/core/build/test_out_flag.py::test_out_single_default_output"
 ```
 
-The tests run `target/debug/yak`. Set `BUCK2_BINARY` to an absolute path to test another binary.
+The tests run `target/debug/yak`. Set `YAK_BINARY` to an absolute path to test another binary.
 
 These tests fail when a program or condition they rely on is missing:
 
@@ -42,7 +42,7 @@ These tests fail when a program or condition they rely on is missing:
 - On Linux, `test_current_oomd_record_marks_daemon_crash_as_oom` in `core/build/test_error_categorization.py` needs the daemon in a cgroup below the root of its cgroup namespace.
 - `test_go` in `prelude/test_prelude_rules.py` fails with a Go older than 1.23, because the prelude's Go tools use newer standard library functions. On Linux, its cgo and external linking packages also need `clang` and `lld`, because the system C++ toolchain links with `-fuse-ld=lld` (`prelude/toolchains/cxx.bzl`).
 
-Each test copies its project into a new temporary directory and starts its own daemon, which keeps its state under that directory. The test kills the daemon and deletes the directory when it finishes. Set `BUCK_E2E_KEEP_TEMP=1` to keep the directory, and the test prints its path.
+Each test copies its project into a new temporary directory and starts its own daemon, which keeps its state under that directory. The test kills the daemon and deletes the directory when it finishes. Set `YAK_E2E_KEEP_TEMP=1` to keep the directory, and the test prints its path.
 
 ## Skipped tests
 
@@ -50,8 +50,8 @@ Some tests need resources that a developer machine usually lacks. They carry a m
 
 | Marker | Needs | Runs when |
 | --- | --- | --- |
-| `remote_execution` | A Remote Execution backend. | `BUCK2_TEST_RE_CONFIG` names a buckconfig file with the backend's `[buck2_re_client]` settings. The harness appends the file to every test project's `.yakconfig`. |
-| `cgroups` | Linux with a systemd user session that delegates cgroups, because the daemon moves itself into a cgroup with `systemd-run --user`. `@buck_test(disable_daemon_cgroup=False)` adds this marker. | `BUCK2_TEST_CGROUPS=1` is set. |
+| `remote_execution` | A Remote Execution backend. | `YAK_TEST_RE_CONFIG` names a buckconfig file with the backend's `[yak_re_client]` settings. The harness appends the file to every test project's `.yakconfig`. |
+| `cgroups` | Linux with a systemd user session that delegates cgroups, because the daemon moves itself into a cgroup with `systemd-run --user`. `@buck_test(disable_daemon_cgroup=False)` adds this marker. | `YAK_TEST_CGROUPS=1` is set. |
 | `needs_binary` | Helper programs named by environment variables. | Every variable that the marker names is set. |
 
 This repository has no Remote Execution backend to test against, so the `remote_execution` tests are unverified. Some of them build a project that declares no execution platforms, and yak does not run the actions of such a project remotely even when a backend is configured. Those projects need a remote-enabled execution platform before their tests can pass.
@@ -63,7 +63,7 @@ The helper programs:
 | `THREE_BILLION_INSTRUCTIONS_BIN` | `shed/three_billion_instructions` | `cargo build -p three_billion_instructions --bin three_billion_instructions_bin` |
 | `SKETCH_SIZE_BIN` | `shed/setsketch` | `cargo build -p setsketch --bin sketch_size` |
 | `USE_SOME_MEMORY_BIN` | `shed/cgroups/use_some_memory` | It has a Buck target but no Cargo target. |
-| `BUCK2_COMPLETION_VERIFY` | `shed/completion_verify` | It has a Buck target but no Cargo target. |
+| `YAK_COMPLETION_VERIFY` | `shed/completion_verify` | It has a Buck target but no Cargo target. |
 | `INSTALLER_BIN`, `FORWARDED_PARAMS_INSTALLER_BIN`, `EXTRA_ARGS_VALIDATOR_BIN`, `EARLY_EXIT_INSTALLER_BIN` | Installers for the `yak install` tests. | Their sources are not in this repository. |
 
 The Watchman tests in `core/io/` skip when `watchman` is not on `PATH`. The Go tests in `prelude/` skip when `go` is not on `PATH`.
@@ -72,10 +72,10 @@ Tests can also skip an operating system with `@buck_test(skip_for_os=[...])`.
 
 ## Golden files
 
-A golden test compares output with a checked-in file after it replaces timestamps, digests, and temporary paths with placeholders. When a change alters that output on purpose, rerun the failing tests with `BUCK2_UPDATE_GOLDEN=1` to rewrite their golden files:
+A golden test compares output with a checked-in file after it replaces timestamps, digests, and temporary paths with placeholders. When a change alters that output on purpose, rerun the failing tests with `YAK_UPDATE_GOLDEN=1` to rewrite their golden files:
 
 ```sh
-BUCK2_UPDATE_GOLDEN=1 tests/.venv/bin/python -m pytest tests/core/help -n auto
+YAK_UPDATE_GOLDEN=1 tests/.venv/bin/python -m pytest tests/core/help -n auto
 ```
 
 The update accepts whatever the binary printed, so review the diff of the golden files before you commit them.

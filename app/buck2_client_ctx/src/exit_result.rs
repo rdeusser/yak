@@ -211,7 +211,7 @@ impl ExitResult {
 
     /// Buck2 supports being built as both a "full" binary as well as a "client-only" binary.
     ///
-    /// However, some commands (eg `--no-buckd`) are not supported in the client-only binary, and so
+    /// However, some commands (eg `--no-yakd`) are not supported in the client-only binary, and so
     /// when these commands are run, we have to retry them with the full build.
     ///
     /// This function is called in those cases. It returns `Some` only for client-only builds.

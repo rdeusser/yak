@@ -85,14 +85,14 @@ no setup is required.
 On other operating systems, install `protoc` from another source (out of scope
 here) and point the build at it before running `cargo build`:
 
-- `BUCK2_BUILD_PROTOC` — path to the `protoc` binary
-- `BUCK2_BUILD_PROTOC_INCLUDE` — path to the protocol buffers header directory
+- `YAK_BUILD_PROTOC` — path to the `protoc` binary
+- `YAK_BUILD_PROTOC_INCLUDE` — path to the protocol buffers header directory
 
 For example, with protobuf installed under `/opt/protobuf`:
 
 ```bash
-export BUCK2_BUILD_PROTOC=/opt/protobuf/bin/protoc
-export BUCK2_BUILD_PROTOC_INCLUDE=/opt/protobuf/include
+export YAK_BUILD_PROTOC=/opt/protobuf/bin/protoc
+export YAK_BUILD_PROTOC_INCLUDE=/opt/protobuf/include
 ```
 
 ### Building Buck2 with Buck2

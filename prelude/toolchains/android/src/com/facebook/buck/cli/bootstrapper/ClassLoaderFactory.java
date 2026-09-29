@@ -27,7 +27,7 @@ public class ClassLoaderFactory {
   @FunctionalInterface
   public interface ClassPathProvider extends Function<String, String> {}
 
-  static final String BUCK_CLASSPATH = "BUCK_CLASSPATH";
+  static final String YAK_CLASSPATH = "YAK_CLASSPATH";
   static final String EXTRA_BUCK_CLASSPATH = "EXTRA_BUCK_CLASSPATH";
 
   private final ClassPathProvider classPathProvider;
@@ -42,17 +42,17 @@ public class ClassLoaderFactory {
   }
 
   /**
-   * Create a new ClassLoader that concats {@value BUCK_CLASSPATH} and {@value EXTRA_BUCK_CLASSPATH}
+   * Create a new ClassLoader that concats {@value YAK_CLASSPATH} and {@value EXTRA_BUCK_CLASSPATH}
    *
    * @return ClassLoader instance to env classpath.
    */
   public ClassLoader create() {
-    // BUCK_CLASSPATH is not set by a user, no need to use EnvVariablesProvider.
-    String classPath = classPathProvider.apply(BUCK_CLASSPATH);
+    // YAK_CLASSPATH is not set by a user, no need to use EnvVariablesProvider.
+    String classPath = classPathProvider.apply(YAK_CLASSPATH);
     String extraClassPath = classPathProvider.apply(EXTRA_BUCK_CLASSPATH);
 
     if (classPath == null) {
-      throw new RuntimeException(BUCK_CLASSPATH + " not set");
+      throw new RuntimeException(YAK_CLASSPATH + " not set");
     }
 
     URL[] urls =

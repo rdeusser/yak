@@ -45,13 +45,13 @@ Use What Ran as follows:
 The following ran locally:
 
 ```bash
-build  root//hello:hello (<unspecified>) (greeting)  local  env -C "$(yak root --kind project)" -- 'TMPDIR=/home/user/project/yak-out/v2/tmp/root/ba301b9fe7f0e990/greeting' 'BUCK_SCRATCH_PATH=yak-out/v2/tmp/root/ba301b9fe7f0e990/greeting' 'BUCK2_DAEMON_UUID=d02fef8c-7036-445f-a9e2-154afd2bb4f1' 'BUCK_BUILD_ID=a0e94d01-7a74-427e-bf45-5a0f4483322f' sh -c 'echo "$1" > "$2"' -- hello yak-out/v2/art/root/hello/__hello__/output_artifacts/greeting.txt
+build  root//hello:hello (<unspecified>) (greeting)  local  env -C "$(yak root --kind project)" -- 'TMPDIR=/home/user/project/yak-out/v2/tmp/root/ba301b9fe7f0e990/greeting' 'YAK_SCRATCH_PATH=yak-out/v2/tmp/root/ba301b9fe7f0e990/greeting' 'YAK_DAEMON_UUID=d02fef8c-7036-445f-a9e2-154afd2bb4f1' 'YAK_BUILD_ID=a0e94d01-7a74-427e-bf45-5a0f4483322f' sh -c 'echo "$1" > "$2"' -- hello yak-out/v2/art/root/hello/__hello__/output_artifacts/greeting.txt
 ```
 
 To repro, you'd run:
 
 ```bash
-env -C "$(yak root --kind project)" -- 'TMPDIR=/home/user/project/yak-out/v2/tmp/root/ba301b9fe7f0e990/greeting' 'BUCK_SCRATCH_PATH=yak-out/v2/tmp/root/ba301b9fe7f0e990/greeting' 'BUCK2_DAEMON_UUID=d02fef8c-7036-445f-a9e2-154afd2bb4f1' 'BUCK_BUILD_ID=a0e94d01-7a74-427e-bf45-5a0f4483322f' sh -c 'echo "$1" > "$2"' -- hello yak-out/v2/art/root/hello/__hello__/output_artifacts/greeting.txt
+env -C "$(yak root --kind project)" -- 'TMPDIR=/home/user/project/yak-out/v2/tmp/root/ba301b9fe7f0e990/greeting' 'YAK_SCRATCH_PATH=yak-out/v2/tmp/root/ba301b9fe7f0e990/greeting' 'YAK_DAEMON_UUID=d02fef8c-7036-445f-a9e2-154afd2bb4f1' 'YAK_BUILD_ID=a0e94d01-7a74-427e-bf45-5a0f4483322f' sh -c 'echo "$1" > "$2"' -- hello yak-out/v2/art/root/hello/__hello__/output_artifacts/greeting.txt
 ```
 
 The following ran on RE:

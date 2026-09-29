@@ -41,13 +41,13 @@ public class ClassLoaderFactoryTest {
 
   @Test
   public void testMissingBuckClassPlath() {
-    String expectedMessage = ClassLoaderFactory.BUCK_CLASSPATH + " not set";
+    String expectedMessage = ClassLoaderFactory.YAK_CLASSPATH + " not set";
     assertThrows(expectedMessage, RuntimeException.class, classLoaderFactory::create);
   }
 
   @Test
   public void testBuckClassPlath() {
-    testEnvironment.put(ClassLoaderFactory.BUCK_CLASSPATH, CLASS_PATH_JAR);
+    testEnvironment.put(ClassLoaderFactory.YAK_CLASSPATH, CLASS_PATH_JAR);
 
     URL[] urls = ((URLClassLoader) classLoaderFactory.create()).getURLs();
 
@@ -58,7 +58,7 @@ public class ClassLoaderFactoryTest {
 
   @Test
   public void testBuckClassPlathWithExtraClassPath() {
-    testEnvironment.put(ClassLoaderFactory.BUCK_CLASSPATH, CLASS_PATH_JAR);
+    testEnvironment.put(ClassLoaderFactory.YAK_CLASSPATH, CLASS_PATH_JAR);
     testEnvironment.put(ClassLoaderFactory.EXTRA_BUCK_CLASSPATH, EXTRA_CLASS_PATH_JAR);
 
     URL[] urls = ((URLClassLoader) classLoaderFactory.create()).getURLs();

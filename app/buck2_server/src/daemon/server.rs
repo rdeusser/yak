@@ -165,7 +165,7 @@ impl DaemonInactivityConfig {
             .map(Duration::from_secs)
             .unwrap_or(DEFAULT_INACTIVITY_TIMEOUT);
         if buck2_env!(
-            "BUCK2_TESTING_INACTIVITY_TIMEOUT",
+            "YAK_TESTING_INACTIVITY_TIMEOUT",
             bool,
             applicability = testing
         )? {
@@ -306,7 +306,7 @@ impl Interceptor for BuckCheckAuthTokenInterceptor {
             return Err(Status::unauthenticated("invalid auth token"));
         }
 
-        if buck2_env!("BUCK2_TEST_FAIL_BUCKD_AUTH", bool, applicability = testing).unwrap() {
+        if buck2_env!("YAK_TEST_FAIL_YAKD_AUTH", bool, applicability = testing).unwrap() {
             return Err(Status::unauthenticated("injected auth error"));
         }
 
@@ -454,7 +454,7 @@ impl BuckdServer {
 
         tracing::info!("Starting server");
         if let Some(sleep_secs) = buck2_env!(
-            "BUCK2_TEST_INIT_DATA_SLEEP_SECS",
+            "YAK_TEST_INIT_DATA_SLEEP_SECS",
             type = u64,
             applicability = testing
         )? {
@@ -554,7 +554,7 @@ impl BuckdServer {
     {
         let command_start = Instant::now();
 
-        if buck2_env!("BUCK2_TEST_FAIL_STREAMING", bool, applicability = testing).unwrap() {
+        if buck2_env!("YAK_TEST_FAIL_STREAMING", bool, applicability = testing).unwrap() {
             Err(buck2_error::buck2_error!(
                 buck2_error::ErrorTag::Input,
                 "Injected client streaming error"
@@ -1897,7 +1897,7 @@ fn server_shutdown_signal(
 /// Runs on its own thread, so neither the drain nor a runtime that has stopped making progress
 /// can starve it.
 ///
-/// Does nothing for an in-process daemon, which has no process of its own to end: `--no-buckd`
+/// Does nothing for an in-process daemon, which has no process of its own to end: `--no-yakd`
 /// runs it on a thread inside the client, and tests run it inside the test binary. Note this is
 /// not the same as `--dont-daemonize`, which still gets a process to itself.
 fn spawn_shutdown_watchdog(in_process: bool, deadline: tokio::time::Instant) {

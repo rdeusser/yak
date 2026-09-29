@@ -19,7 +19,7 @@ use std::fs;
 
 use buck2_error::BuckErrorContext;
 
-const REGENERATE_VAR_NAME: &str = "BUCK2_RUST_REGENERATE_GOLDEN_TESTS";
+const REGENERATE_VAR_NAME: &str = "YAK_RUST_REGENERATE_GOLDEN_TESTS";
 
 #[allow(clippy::write_literal)] // We mark generated files as generated, but not this file.
 fn make_golden(output: &str) -> String {

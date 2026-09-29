@@ -300,7 +300,7 @@ pub enum AccessTimesUpdates {
 #[buck2(tag = Input)]
 pub enum AccessTimesUpdatesError {
     #[error(
-        "Invalid value for buckconfig `[buck2] update_access_times`. Got `{0}`. Expected one of `full`, `partial`  or `disabled`."
+        "Invalid value for buckconfig `[yak] update_access_times`. Got `{0}`. Expected one of `full`, `partial`  or `disabled`."
     )]
     InvalidValueForConfig(String),
 }

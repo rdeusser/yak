@@ -782,7 +782,7 @@ impl SuperConsoleState {
     }
 }
 
-pub(crate) const BUCK_NO_INTERACTIVE_CONSOLE: &str = "BUCK_NO_INTERACTIVE_CONSOLE";
+pub(crate) const BUCK_NO_INTERACTIVE_CONSOLE: &str = "YAK_NO_INTERACTIVE_CONSOLE";
 
 impl StatefulSuperConsoleImpl {
     async fn toggle(

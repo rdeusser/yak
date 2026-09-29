@@ -164,7 +164,7 @@ pub(crate) fn analysis_actions_methods_run(methods: &mut MethodsBuilder) {
     ///     * During trace builds: outputs are copied to `yak-out/offline-cache/` after successful execution
     ///     * During offline builds: if all outputs exist in offline cache, they are restored without
     ///       running the action; otherwise the action executes normally (graceful fallback)
-    ///     * Requires `buck2.use_network_action_output_cache=true` config to take effect
+    ///     * Requires `yak.use_network_action_output_cache=true` config to take effect
     ///     * Example use case: caching network downloads in containerized offline build environments
     /// * The `prefer_local`, `prefer_remote` and `local_only` options allow selecting where the
     /// action should run if the executor selected for this target is a hybrid executor.
@@ -203,7 +203,7 @@ pub(crate) fn analysis_actions_methods_run(methods: &mut MethodsBuilder) {
     /// actions have exclusive access to their output directory.
     ///
     /// Actions also get exclusive access to a "scratch" path that is exposed via the environment
-    /// variable `BUCK_SCRATCH_PATH`. This path is expressed as a path relative to the working
+    /// variable `YAK_SCRATCH_PATH`. This path is expressed as a path relative to the working
     /// directory (i.e. relative to the project). This path is guaranteed to exist when the action
     /// executes.
     ///

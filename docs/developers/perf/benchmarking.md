@@ -18,9 +18,9 @@ How the daemon is managed around each sample decides which metric answers which 
 
 | Question                                 | Daemon lifecycle                          | Metric                    |
 |------------------------------------------|-------------------------------------------|---------------------------|
-| "How long does yak take?"              | any (`--no-buckd` has the least variance) | Wall time                 |
+| "How long does yak take?"              | any (`--no-yakd` has the least variance) | Wall time                 |
 | "How much memory at peak?"               | a fresh daemon for each sample            | Daemon `VmHWM` (peak RSS) |
-| "Peak of a single `--no-buckd` process?" | `--no-buckd`                              | Max RSS of the process    |
+| "Peak of a single `--no-yakd` process?" | `--no-yakd`                              | Max RSS of the process    |
 | "How much does the daemon retain?"       | a fresh daemon for each sample            | jemalloc `allocated`      |
 | "Does the daemon grow across commands?"  | one daemon reused across samples          | jemalloc `allocated`      |
 | "Is fragmentation to blame?"             | fresh or reused                           | jemalloc `active - allocated` ([memory_fragmentation.md](memory_fragmentation.md)) |
@@ -53,7 +53,7 @@ cargo install --git https://github.com/stepancheg/absh absh
 absh -a '/tmp/b2a ...' -b '/tmp/b2b ...' -i -r -m -n 30
 ```
 
-`-m` is only meaningful with `--no-buckd`, where the spawned process is the one doing the work.
+`-m` is only meaningful with `--no-yakd`, where the spawned process is the one doing the work.
 Run local loops in a benchmark-only worktree
 ([basics.md](basics.md#avoiding-daemon-conflicts)); switching binaries between iterations kills
 the daemon via version skew, which conveniently gives fresh DICE each time.

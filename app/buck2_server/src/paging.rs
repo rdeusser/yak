@@ -15,7 +15,7 @@
 //! hydration`, see [`crate::hydration`]) and automatic page-out when the daemon
 //! goes idle.
 //!
-//! Automatic page-out is enabled with `buck2_hydration.page_out_on_idle = true`. When
+//! Automatic page-out is enabled with `yak_hydration.page_out_on_idle = true`. When
 //! enabled, a finishing command schedules a background task (see
 //! [`spawn_page_out_on_idle`]) that waits for DICE to go idle and then pages out
 //! to reclaim memory — but only when there is something to page out and there is
@@ -263,10 +263,10 @@ pub(crate) async fn page_out(
     dice: &Arc<Dice>,
     cancelled: PageOutCancel,
 ) -> buck2_error::Result<()> {
-    if buck2_env!("BUCK2_TEST_FAIL_PAGE_OUT", bool, applicability = testing).unwrap() {
+    if buck2_env!("YAK_TEST_FAIL_PAGE_OUT", bool, applicability = testing).unwrap() {
         return Err(buck2_error::buck2_error!(
             ErrorTag::TestOnly,
-            "Injected page-out failure (BUCK2_TEST_FAIL_PAGE_OUT)"
+            "Injected page-out failure (YAK_TEST_FAIL_PAGE_OUT)"
         ));
     }
     dice.page_out_cancellable(cancelled)

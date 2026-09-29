@@ -529,7 +529,7 @@ enum PageOutStarted {
   PAGE_OUT_STARTED_UNSPECIFIED = 0;
   // A background idle page-out was scheduled.
   PAGE_OUT_STARTED_STARTED = 1;
-  // Idle page-out is disabled (`buck2_hydration.page_out_on_idle` unset).
+  // Idle page-out is disabled (`yak_hydration.page_out_on_idle` unset).
   PAGE_OUT_STARTED_DISABLED = 2;
   // Nothing to page out (no pagable candidates).
   PAGE_OUT_STARTED_NOTHING_TO_PAGE_OUT = 3;
@@ -547,7 +547,7 @@ enum PageOutStarted {
   // daemon's lifetime.
   PAGE_OUT_STARTED_DISABLED_AFTER_ERROR = 9;
   // An idle page-out already ran in this daemon. Set
-  // `buck2_hydration.allow_multiple_idle_page_outs = true` to allow repeated
+  // `yak_hydration.allow_multiple_idle_page_outs = true` to allow repeated
   // runs.
   PAGE_OUT_STARTED_ALREADY_RAN = 10;
 }
@@ -3620,7 +3620,7 @@ message RestartConfiguration {
 }
 
 // Events capturing commands to the deferred materializer.
-// Currently only enabled with `-c buck2.verbose_materializer_event_log=true`.
+// Currently only enabled with `-c yak.verbose_materializer_event_log=true`.
 // Events are reported by the command processor, so they are logged
 // when they are processed by the materializer, not when they are sent
 // to the materializer

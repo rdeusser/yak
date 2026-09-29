@@ -62,7 +62,7 @@ async def test_ignore_state_invalidation_with_re_override_in_arg(buck: Buck) -> 
     await buck.build(
         "root//:simple",
         "--config",
-        "buck2_re_client.override_use_case=buck2-user",
+        "yak_re_client.override_use_case=buck2-user",
     )
     # No arg, default is buck2-default
     await buck.build("root//:simple")
@@ -72,7 +72,7 @@ async def test_ignore_state_invalidation_with_re_override_in_arg(buck: Buck) -> 
     await buck.build(
         "root//:simple",
         "--config",
-        "buck2_re_client.override_use_case=buck2-user",
+        "yak_re_client.override_use_case=buck2-user",
     )
     await check_dice_equality(buck)
     await check_config_is_the_same(buck)
@@ -84,13 +84,13 @@ async def test_ignore_state_invalidation_with_re_override_in_config(buck: Buck) 
     await buck.build("root//:simple")
     # Add config to switch to buck2-user
     with open(buck.cwd / ".yakconfig.local", "w") as f:
-        f.write("[buck2_re_client]\n")
+        f.write("[yak_re_client]\n")
         f.write("override_use_case = buck2-user\n")
     await buck.build("root//:simple")
     await check_config_is_different(buck)
     # Add config to return to buck2-default
     with open(buck.cwd / ".yakconfig.local", "w") as f:
-        f.write("[buck2_re_client]\n")
+        f.write("[yak_re_client]\n")
         f.write("override_use_case = buck2-default\n")
     await buck.build("root//:simple")
     await check_config_is_different(buck)
@@ -104,14 +104,14 @@ async def test_ignore_state_invalidation_with_re_override_in_external_config(
     await buck.build("root//:simple")
     # Add config to switch to buck2-user
     with tempfile.NamedTemporaryFile("w", delete=False) as f:
-        f.write("[buck2_re_client]\n")
+        f.write("[yak_re_client]\n")
         f.write("override_use_case = buck2-user\n")
         f.close()
         await buck.build("root//:simple", "--config-file", f.name)
     await check_config_is_different(buck)
     # Add config to return to buck2-default
     with tempfile.NamedTemporaryFile("w", delete=False) as f:
-        f.write("[buck2_re_client]\n")
+        f.write("[yak_re_client]\n")
         f.write("override_use_case = buck2-default\n")
         f.close()
         await buck.build("root//:simple", "--config-file", f.name)
@@ -124,13 +124,13 @@ async def test_ignore_state_invalidation_with_re_override_in_external_config_sou
 ) -> None:
     with tempfile.NamedTemporaryFile("w", delete=False) as temp:
         env = os.environ.copy()
-        env["BUCK2_TEST_EXTRA_EXTERNAL_CONFIG"] = temp.name
+        env["YAK_TEST_EXTRA_EXTERNAL_CONFIG"] = temp.name
 
         # Default is buck2-default
         await buck.build("root//:simple", env=env)
 
         # Add config to switch to buck2-user
-        temp.write("[buck2_re_client]\n")
+        temp.write("[yak_re_client]\n")
         temp.write("override_use_case = buck2-user\n")
         temp.flush()
         await buck.build("root//:simple", env=env)
@@ -139,7 +139,7 @@ async def test_ignore_state_invalidation_with_re_override_in_external_config_sou
         # Add config to return to buck2-default
         temp.seek(0)
         temp.truncate()
-        temp.write("[buck2_re_client]\n")
+        temp.write("[yak_re_client]\n")
         temp.write("override_use_case = buck2-default\n")
         temp.flush()
         await buck.build("root//:simple", env=env)

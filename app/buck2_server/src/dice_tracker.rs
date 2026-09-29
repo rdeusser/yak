@@ -59,7 +59,7 @@ impl BuckDiceTracker {
     ) -> buck2_error::Result<Self> {
         let (event_forwarder, receiver) = mpsc::unbounded();
         let snapshot_interval =
-            buck2_env!("BUCK2_DICE_SNAPSHOT_INTERVAL_MS", type=u64, default = 500)
+            buck2_env!("YAK_DICE_SNAPSHOT_INTERVAL_MS", type=u64, default = 500)
                 .map(Duration::from_millis)?;
 
         thread_spawn("buck2-dice-tracker", move || {

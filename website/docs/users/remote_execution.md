@@ -16,7 +16,7 @@ providers are available under
 
 ## RE configuration in `.yakconfig`
 
-Configuration for remote execution can be found under `[buck2_re_client]` in
+Configuration for remote execution can be found under `[yak_re_client]` in
 `.yakconfig`.
 
 Keys supported include:
@@ -43,7 +43,7 @@ Buck2 uses `SHA256` for all its hashing by default. If your RE engine requires
 something else, this can be configured in `.yakconfig` as follows:
 
 ```ini
-[buck2]
+[yak]
 # Accepts BLAKE3, SHA1, or SHA256
 digest_algorithms = BLAKE3
 ```

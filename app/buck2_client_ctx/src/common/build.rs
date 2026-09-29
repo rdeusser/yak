@@ -119,7 +119,7 @@ pub struct CommonBuildOptions {
     pub num_threads: Option<u32>,
 
     /// Enable only local execution. Will reject actions that cannot execute locally.
-    #[clap(long, group = "build_strategy", env = buck2_env_name!("BUCK_OFFLINE_BUILD"), value_parser = FalseyValueParser::new())]
+    #[clap(long, group = "build_strategy", env = buck2_env_name!("YAK_OFFLINE_BUILD"), value_parser = FalseyValueParser::new())]
     local_only: bool,
 
     /// Enable only remote execution. Will reject actions that cannot execute remotely.
@@ -132,7 +132,7 @@ pub struct CommonBuildOptions {
     prefer_local: bool,
 
     /// Enable hybrid execution. Will prefer executing actions that can execute remotely on RE and will avoid racing local and remote execution.
-    #[clap(long, group = "build_strategy", env = buck2_env_name!("BUCK_PREFER_REMOTE"), value_parser = FalseyValueParser::new())]
+    #[clap(long, group = "build_strategy", env = buck2_env_name!("YAK_PREFER_REMOTE"), value_parser = FalseyValueParser::new())]
     prefer_remote: bool,
 
     /// Experimental: Disable all execution.
@@ -142,7 +142,7 @@ pub struct CommonBuildOptions {
     /// Do not perform remote cache queries or cache writes. If remote execution is enabled, the RE
     /// service might still deduplicate actions, so for e.g. benchmarking, using a random isolation
     /// dir is preferred.
-    #[clap(long, env = buck2_env_name!("BUCK_OFFLINE_BUILD"), value_parser = FalseyValueParser::new())]
+    #[clap(long, env = buck2_env_name!("YAK_OFFLINE_BUILD"), value_parser = FalseyValueParser::new())]
     no_remote_cache: bool,
 
     /// Could be used to enable the action cache writes on the RE worker when no_remote_cache is specified

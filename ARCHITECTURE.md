@@ -12,7 +12,7 @@ The repository is a fork of `facebook/buck2`. [Planned changes](#planned-changes
 `yak` runs as two processes built from one binary.
 The client parses the command line, connects to a daemon or starts one, and renders the events the daemon streams back.
 The daemon (`yakd`) holds all state between commands and does all build work. It is the hidden `yak daemon` subcommand.
-`--no-buckd` runs the daemon inside the client process.
+`--no-yakd` runs the daemon inside the client process.
 
 Build state in the daemon lives in DICE, an incremental computation engine.
 A DICE `Key` computes its value from other keys, and DICE records each read as a dependency edge.
@@ -91,9 +91,9 @@ A client restarts the daemon when the daemon's `DaemonConstraints` do not satisf
 - `app/buck2_execute` declares the execution interfaces. `PreparedCommandExecutor` runs a command, `Materializer` puts outputs on disk, and `RemoteExecutionClient` wraps the Remote Execution connection.
 - `app/buck2_execute_impl` implements them. `src/executors/` holds `LocalExecutor`, `ReExecutor`, `HybridExecutor`, the action cache checkers, and persistent workers. `src/materializers/deferred.rs` holds `DeferredMaterializer`, the only materializer. `src/sqlite/` keeps materializer, dep-file, and incremental state on disk.
 - `app/buck2_execute_local` spawns local processes and streams their output. On Unix the daemon spawns them through a forkserver process (`app/buck2_forkserver`).
-- `remote_execution/re_grpc` (package `remote_execution`) is the client for the Bazel Remote Execution API v2. `app/buck2_re_configuration` reads its settings from the `[buck2_re_client]` buckconfig section.
+- `remote_execution/re_grpc` (package `remote_execution`) is the client for the Bazel Remote Execution API v2. `app/buck2_re_configuration` reads its settings from the `[yak_re_client]` buckconfig section.
 - `app/buck2_resource_control` limits the memory of local actions with Linux cgroup v2. `host_sharing` limits how many local commands and tests run at once.
-- `app/buck2_file_watcher` reports file changes to DICE. The `buck2.file_watcher` buckconfig key selects `notify` (the default in this repository), `watchman`, or `fs_hash_crawler`.
+- `app/buck2_file_watcher` reports file changes to DICE. The `yak.file_watcher` buckconfig key selects `notify` (the default in this repository), `watchman`, or `fs_hash_crawler`.
 
 An execution platform's `CommandExecutorConfig` selects local, remote, or hybrid execution for each action.
 Without an execution platform, this repository's build runs every action locally (`get_default_executor_config` in `app/buck2_server/src/daemon/common.rs`).
@@ -168,7 +168,7 @@ Code that needs the behavior depends on the interface crate.
 
 - A computation reads files, buckconfig, and other computed values only through DICE. DICE then records the dependency and invalidates the value when the input changes. Uncached helpers such as `get_interpreter_results_uncached` must not run inside a `Key::compute`, because DICE cannot see their reads.
 - A key's `equality_behavior` never reports two different values as equal. A false equality leaves dependent values stale.
-- A feature gate is a key in the `[buck2]` buckconfig section read through DICE. `buck2_env!` environment variables are for the client before it reaches the daemon and for test-only settings.
+- A feature gate is a key in the `[yak]` buckconfig section read through DICE. `buck2_env!` environment variables are for the client before it reaches the daemon and for test-only settings.
 
 ### Other invariants
 
@@ -197,7 +197,7 @@ Errors carry tags (`ErrorTag`) that classify them, and `internal_error!` marks a
 ### Observability
 
 The daemon reports progress as `BuckEvent`s, which the client renders and writes to the event log.
-`yak log` reads the event log, and `BUCK_LOG` enables `tracing` output.
+`yak log` reads the event log, and `YAK_LOG` enables `tracing` output.
 `docs/developers/debugging.md` lists the commands.
 
 ### Build flags
@@ -224,5 +224,5 @@ Buck builds on Linux and macOS use the system allocator, because `third-party/ru
 
 ## Planned changes
 
-- The rename to yak continues with the `BUCK2_` environment variables, the `[buck2]` configuration sections, the Java packages, and the `buck2*` crates. `docs/exec-plans/active/2026-09-28-rename-the-fork.md` tracks the work.
+- The rename to yak continues with the Java packages and the `buck2*` crates. `docs/exec-plans/active/2026-09-28-rename-the-fork.md` tracks the work.
 - The `com.facebook` packages of the JVM and Android toolchain will move to a package under the new name. `docs/exec-plans/tech-debt-tracker.md` lists them with the other upstream connections that remain.

@@ -4,7 +4,7 @@ name = YAK.fixture
 [repositories]
 root = .
 
-[buck2]
+[yak]
 materializations = deferred
 digest_algorithms = SHA256
 

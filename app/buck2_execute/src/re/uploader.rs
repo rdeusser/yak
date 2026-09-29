@@ -522,7 +522,7 @@ fn add_injected_missing_digests<'a>(
     }
 
     let ingested_digests = buck2_env!(
-        "BUCK2_TEST_INJECTED_MISSING_DIGESTS",
+        "YAK_TEST_INJECTED_MISSING_DIGESTS",
         type=Vec<FileDigest>,
         converter=convert_digests,
         applicability=testing

@@ -13,7 +13,7 @@ use buck2_error::conversion::from_any_with_tag;
 
 /// macOS QoS (Quality of Service) class for the Buck2 daemon process.
 ///
-/// Configurable via `[buck2] macos_qos_class` in buckconfig.
+/// Configurable via `[yak] macos_qos_class` in buckconfig.
 /// Defaults to `Utility` if unset.
 ///
 /// Only `utility` and `background` are supported by

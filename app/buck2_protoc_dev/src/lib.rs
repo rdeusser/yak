@@ -57,11 +57,11 @@ unsafe fn maybe_set_protoc() {
         // However, prebuilt `protoc` binaries do not work in NixOS builds, see
         // https://github.com/facebook/buck2/issues/65
         // So for NixOS builds path to `protoc` binary can be overridden with
-        // `BUCK2_BUILD_PROTOC` environment variable.
+        // `YAK_BUILD_PROTOC` environment variable.
         unsafe {
             set_var(
                 "PROTOC",
-                "BUCK2_BUILD_PROTOC",
+                "YAK_BUILD_PROTOC",
                 protoc_bin_vendored::protoc_bin_path(),
             );
         }
@@ -75,7 +75,7 @@ unsafe fn maybe_set_protoc_include() {
         unsafe {
             set_var(
                 "PROTOC_INCLUDE",
-                "BUCK2_BUILD_PROTOC_INCLUDE",
+                "YAK_BUILD_PROTOC_INCLUDE",
                 protoc_bin_vendored::include_path(),
             );
         }

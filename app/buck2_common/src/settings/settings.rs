@@ -360,7 +360,7 @@ mod tests {
             find_setting_metadata(
                 ALL_SETTING_METADATA,
                 SettingKeyRef {
-                    section: "buck2",
+                    section: "yak",
                     name: "log_url",
                 },
             ),

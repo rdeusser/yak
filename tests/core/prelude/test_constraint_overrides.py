@@ -28,13 +28,13 @@ async def test_constraint_override_registry_equivalence(buck: Buck) -> None:
     targets = [f"root//:{name}" for name in expected]
     for registry in REGISTRIES:
         result = await buck.build(
-            *targets, "-c", f"buck2.constraint_override_registry={registry}"
+            *targets, "-c", f"yak.constraint_override_registry={registry}"
         )
         for name, selected in expected.items():
             output = result.get_build_report().output_for_target(f"root//:{name}")
             assert json.loads(output.read_text()) == selected
         query = await buck.cquery(
-            "root//:unchanged", "-c", f"buck2.constraint_override_registry={registry}"
+            "root//:unchanged", "-c", f"yak.constraint_override_registry={registry}"
         )
         assert "root//:original#" in query.stdout
 
@@ -42,7 +42,7 @@ async def test_constraint_override_registry_equivalence(buck: Buck) -> None:
 @buck_test()
 async def test_constraint_override_registry_errors_and_invalidation(buck: Buck) -> None:
     for registry in REGISTRIES:
-        config = ["-c", f"buck2.constraint_override_registry={registry}"]
+        config = ["-c", f"yak.constraint_override_registry={registry}"]
         await expect_failure(
             buck.build("root//:unsupported", *config),
             stderr_regex="Constraint value override not supported: root//:keep",
@@ -54,7 +54,7 @@ async def test_constraint_override_registry_errors_and_invalidation(buck: Buck) 
         await buck.build("root//:constraint", *config)
         await expect_failure(
             buck.build(
-                "root//:constraint", *config, "-c", "buck2.constraints=root//:red"
+                "root//:constraint", *config, "-c", "yak.constraints=root//:red"
             ),
             stderr_regex="Constraint value override not supported: alias//:blue",
         )
@@ -83,12 +83,12 @@ async def test_legacy_constraint_override_private_visibility(buck: Buck) -> None
             'value(name = "blue", setting = ":color")',
         )
     )
-    await buck.build("root//:constraint", "-c", "buck2.constraint_override_registry=")
+    await buck.build("root//:constraint", "-c", "yak.constraint_override_registry=")
     await expect_failure(
         buck.build(
             "root//:constraint",
             "-c",
-            "buck2.constraint_override_registry=prelude//:constraint_override_registry",
+            "yak.constraint_override_registry=prelude//:constraint_override_registry",
         ),
         stderr_regex="not visible",
     )

@@ -172,13 +172,13 @@ async def test_super_console_changes(buck: Buck) -> None:
 # has no measurement, so it never warns.
 @buck_test(
     extra_buck_config={
-        "buck2_system_warning": {
+        "yak_system_warning": {
             "memory_pressure_threshold_percent": "1",
         },
     },
     skip_for_os=["darwin"],
 )
-@env("BUCK2_TEST_FAKE_SYSTEM_TOTAL_MEMORY", "1000")
+@env("YAK_TEST_FAKE_SYSTEM_TOTAL_MEMORY", "1000")
 async def test_system_memory_exceeded_warning(buck: Buck) -> None:
     res = await buck.build("//:slow", "--console=simple")
     assert "High memory pressure" in res.stderr

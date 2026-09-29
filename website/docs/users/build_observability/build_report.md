@@ -74,7 +74,7 @@ BuildReport {
     build_metrics: AllTargetsBuildMetrics,
 
     # Set sketch of configured target graph stored in a hex string.
-    # Enabled by setting `-c buck2.log_total_configured_graph_sketch=true`.
+    # Enabled by setting `-c yak.log_total_configured_graph_sketch=true`.
     total_configured_graph_sketch: Optional[str],
 }
 
@@ -118,7 +118,7 @@ ConfiguredBuildReportEntry {
 
     # The number of targets in the configured dependency graph of this target.
     #
-    # This is only included if `-c buck2.log_configured_graph_size=true` is set.
+    # This is only included if `-c yak.log_configured_graph_size=true` is set.
     # Otherwise, it is left as None.
     configured_graph_size: Optional[uint],
 
@@ -127,21 +127,21 @@ ConfiguredBuildReportEntry {
     artifact_info: dict[str, ArtifactInfoFile | ArtifactInfoSymlink | ArtifactInfoExternalSymlink],
 
     # Set sketch of configured target graph stored in a hex string.
-    # Enabled by setting `-c buck2.log_configured_graph_sketch=true`.
+    # Enabled by setting `-c yak.log_configured_graph_sketch=true`.
     configured_graph_sketch: Optional[str],
 
     # Set sketch of retained analysis memory utilization stored in a hex string.
     #
     # Computing the cardinality of this sketch returns an (approximate) number of bytes.
     #
-    # Enabled by setting `-c buck2.log_retained_analysis_memory_sketch=true`
+    # Enabled by setting `-c yak.log_retained_analysis_memory_sketch=true`
     retained_analysis_memory_sketch: Optional[str],
 
     # Set sketch of peak analysis memory utilization stored in a hex string.
     #
     # Computing the cardinality of this sketch returns an (approximate) number of bytes.
     #
-    # Enabled by setting `-c buck2.log_peak_analysis_memory_sketch=true`
+    # Enabled by setting `-c yak.log_peak_analysis_memory_sketch=true`
     peak_analysis_memory_sketch: Optional[str],
 
     # Set sketch of distinct artifact paths stored in a hex string.
@@ -149,23 +149,23 @@ ConfiguredBuildReportEntry {
     # Computing the cardinality of this sketch returns an (approximate) count
     # of distinct artifact file paths.
     #
-    # Enabled by setting `-c buck2.log_artifact_count_sketch=true`.
+    # Enabled by setting `-c yak.log_artifact_count_sketch=true`.
     artifact_count_sketch: Optional[str],
 
     # Set sketch of artifact path sizes stored in a hex string. Each path is
     # weighted by its file size in bytes; computing the cardinality returns an
     # (approximate) total artifact size in bytes.
     #
-    # Enabled by setting `-c buck2.log_artifact_size_sketch=true`.
+    # Enabled by setting `-c yak.log_artifact_size_sketch=true`.
     artifact_size_sketch: Optional[str],
 
     # Estimated cardinality of `artifact_count_sketch`. Populated only when
-    # `-c buck2.log_sketch_cardinalities=true` is set; the corresponding sketch
+    # `-c yak.log_sketch_cardinalities=true` is set; the corresponding sketch
     # field is left intact in both cases.
     artifact_count_sketch_cardinality: Optional[float],
 
     # Estimated cardinality of `artifact_size_sketch`. Populated only when
-    # `-c buck2.log_sketch_cardinalities=true` is set; the corresponding sketch
+    # `-c yak.log_sketch_cardinalities=true` is set; the corresponding sketch
     # field is left intact in both cases.
     artifact_size_sketch_cardinality: Optional[float],
 

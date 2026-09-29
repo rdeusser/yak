@@ -335,7 +335,7 @@ def _build_erl(
             error_handler = toolchain.error_handler.erlc,
             category = "erlc",
             identifier = src.basename,
-            env = {"BUCK2_FILE_MAPPING": mapping_file},
+            env = {"YAK_FILE_MAPPING": mapping_file},
             always_print_stderr = True,
         )
 

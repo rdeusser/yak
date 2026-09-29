@@ -23,7 +23,7 @@ pytestmark = pytest.mark.needs_binary("USE_SOME_MEMORY_BIN")
 
 def _configure(buck: Buck, kill_and_retry: bool) -> None:
     with open(buck.cwd / ".yakconfig.local", "w") as f:
-        f.write("[buck2_resource_control]\n")
+        f.write("[yak_resource_control]\n")
         if kill_and_retry:
             f.write("preferred_action_suspend_strategy = kill_and_retry\n")
         else:
@@ -115,7 +115,7 @@ async def _check_suspends(  # noqa C901
 
 
 @buck_test(skip_for_os=["darwin", "windows"], disable_daemon_cgroup=False)
-@env("BUCK2_HARD_ERROR", "panic")
+@env("YAK_HARD_ERROR", "panic")
 @pytest.mark.parametrize("kill_and_retry", [True, False])
 async def test_action_suspend(
     buck: Buck,
@@ -132,7 +132,7 @@ async def test_action_suspend(
 
 
 @buck_test(skip_for_os=["darwin", "windows"], disable_daemon_cgroup=False)
-@env("BUCK2_HARD_ERROR", "panic")
+@env("YAK_HARD_ERROR", "panic")
 @pytest.mark.parametrize("kill_and_retry", [True, False])
 async def test_action_suspend_stress_test(
     buck: Buck,

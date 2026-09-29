@@ -177,7 +177,7 @@ def _at_most_one(*items):
     return res
 
 def _get_valid_cpu_filters(cpu_filters: [list[str], None]) -> list[str]:
-    if read_root_config("buck2", "android_force_single_default_cpu") in ("True", "true"):
+    if read_root_config("yak", "android_force_single_default_cpu") in ("True", "true"):
         return [CPU_FILTER_FOR_DEFAULT_PLATFORM]
 
     cpu_abis_config_string = read_root_config("ndk", "cpu_abis")

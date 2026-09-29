@@ -130,7 +130,7 @@ async def test_client_metadata_env(buck: Buck) -> None:
     res = await buck.build(
         "--client-metadata=foo=bar",
         "--client-metadata=id=baz",
-        env={"BUCK2_CLIENT_METADATA": "env_foo=env_bar,id=foobar"},
+        env={"YAK_CLIENT_METADATA": "env_foo=env_bar,id=foobar"},
     )
 
     record = res.invocation_record()
