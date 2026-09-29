@@ -2044,7 +2044,7 @@ fn duration_from_config_hours(hours: f64, property: &str) -> buck2_error::Result
     Duration::try_from_secs_f64(hours * 3600.0).map_err(|e| {
         buck2_error::buck2_error!(
             buck2_error::ErrorTag::Input,
-            "Invalid value `{}` for `buck2.{}`: {}",
+            "Invalid value `{}` for `yak.{}`: {}",
             hours,
             property,
             e
@@ -2058,7 +2058,7 @@ fn percentage_from_config(value: f64, property: &str) -> buck2_error::Result<f64
     } else {
         Err(buck2_error::buck2_error!(
             buck2_error::ErrorTag::Input,
-            "Invalid value `{}` for `buck2.{}`: expected a percentage between 0.0 and 100.0",
+            "Invalid value `{}` for `yak.{}`: expected a percentage between 0.0 and 100.0",
             value,
             property,
         ))
@@ -2323,7 +2323,10 @@ mod tests {
             duration_from_config_hours(2.0, "prop").unwrap(),
             std::time::Duration::from_secs(7200)
         );
-        assert!(duration_from_config_hours(-1.0, "prop").is_err());
+        let error = duration_from_config_hours(-1.0, "prop")
+            .unwrap_err()
+            .to_string();
+        assert!(error.contains("`yak.prop`"), "{error}");
         assert!(duration_from_config_hours(f64::NAN, "prop").is_err());
         assert!(duration_from_config_hours(f64::INFINITY, "prop").is_err());
     }
@@ -2332,7 +2335,10 @@ mod tests {
     fn test_percentage_from_config() {
         assert_eq!(percentage_from_config(0.0, "prop").unwrap(), 0.0);
         assert_eq!(percentage_from_config(100.0, "prop").unwrap(), 100.0);
-        assert!(percentage_from_config(-1.0, "prop").is_err());
+        let error = percentage_from_config(-1.0, "prop")
+            .unwrap_err()
+            .to_string();
+        assert!(error.contains("`yak.prop`"), "{error}");
         assert!(percentage_from_config(100.1, "prop").is_err());
         assert!(percentage_from_config(f64::NAN, "prop").is_err());
         assert!(percentage_from_config(f64::INFINITY, "prop").is_err());

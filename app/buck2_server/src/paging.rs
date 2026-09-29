@@ -20,7 +20,7 @@
 //! [`spawn_page_out_on_idle`]) that waits for DICE to go idle and then pages out
 //! to reclaim memory — but only when there is something to page out and there is
 //! disk headroom (see [`should_page_out_decision`], configurable via
-//! `buck2_hydration.*` / [`PageOutThresholds`]).
+//! `yak_hydration.*` / [`PageOutThresholds`]).
 //!
 //! Concurrency: automatic page-out deliberately does *not* take the DICE
 //! exclusivity lock the explicit command uses, so it never blocks an incoming
