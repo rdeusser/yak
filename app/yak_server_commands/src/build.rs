@@ -75,6 +75,7 @@ use yak_events::dispatch::instant_event;
 use yak_events::dispatch::span_async;
 use yak_execute::digest_config::HasDigestConfig;
 use yak_execute::materialize::materializer::HasMaterializer;
+use yak_execute::re::invocation_re_settings::HasInvocationReSettings;
 use yak_hash::YakMutSet;
 use yak_node::configured_universe::CqueryUniverse;
 use yak_node::load_patterns::MissingTargetBehavior;
@@ -624,6 +625,9 @@ async fn process_build_result(
                 ctx.global_data().get_digest_config(),
                 ctx.per_transaction_data().get_materializer(),
                 final_artifact_materializations,
+                ctx.per_transaction_data()
+                    .get_invocation_re_settings()
+                    .use_case,
             )
             .await;
             (res, yak_data::CreateOutputSymlinksEnd {})

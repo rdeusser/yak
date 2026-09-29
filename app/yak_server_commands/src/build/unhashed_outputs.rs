@@ -8,12 +8,14 @@
  * above-listed licenses.
  */
 
+use dupe::Dupe;
 use itertools::Itertools;
 use tracing::info;
 use yak_artifact::artifact::artifact_type::BaseArtifactKind;
 use yak_build_api::build::BuildProviderType;
 use yak_build_api::build::ProviderArtifacts;
 use yak_cli_proto::build_request::Materializations;
+use yak_core::execution_types::executor_config::RemoteExecutorUseCase;
 use yak_core::fs::artifact_path_resolver::ArtifactFs;
 use yak_core::fs::project_rel_path::ProjectRelativePathBuf;
 use yak_error::ErrorTag;
@@ -22,6 +24,7 @@ use yak_execute::artifact_utils::ArtifactValueBuilder;
 use yak_execute::artifact_value::ArtifactValue;
 use yak_execute::digest_config::DigestConfig;
 use yak_execute::materialize::materializer::MaterializationPurpose;
+use yak_execute::materialize::materializer::MaterializeRequest;
 use yak_execute::materialize::materializer::Materializer;
 use yak_query::__derive_refs::indexmap::IndexMap;
 use yak_util::future::try_join_all;
@@ -67,6 +70,7 @@ pub(crate) async fn create_unhashed_outputs_via_materializer(
     digest_config: DigestConfig,
     materializer: &dyn Materializer,
     materializations: Materializations,
+    re_use_case: RemoteExecutorUseCase,
 ) -> yak_error::Result<()> {
     create_unhashed_outputs_via_materializer_impl(
         provider_artifacts,
@@ -74,6 +78,7 @@ pub(crate) async fn create_unhashed_outputs_via_materializer(
         digest_config,
         materializer,
         materializations,
+        re_use_case,
     )
     .await
     .tag(ErrorTag::UnhashedOutputSymlink)
@@ -86,6 +91,7 @@ async fn create_unhashed_outputs_via_materializer_impl(
     digest_config: DigestConfig,
     materializer: &dyn Materializer,
     materializations: Materializations,
+    re_use_case: RemoteExecutorUseCase,
 ) -> yak_error::Result<()> {
     let unhashed_to_hashed = unhashed_output_links(provider_artifacts, artifact_fs)?;
     let mut declarations = Vec::new();
@@ -107,32 +113,27 @@ async fn create_unhashed_outputs_via_materializer_impl(
             );
         }
     }
-    let unhashed_paths: Vec<_> = declarations.iter().map(|(path, _)| path.clone()).collect();
+    // Nothing produces these symlinks, so they are declared rather than reported.
     try_join_all(
         declarations
-            .into_iter()
-            .map(|(path, value)| materializer.declare_copy(path, value, Vec::new())),
+            .iter()
+            .map(|(path, value)| materializer.declare_copy(path.clone(), value.dupe(), Vec::new())),
     )
     .await?;
-    match materializations {
-        Materializations::Skip => {}
-        Materializations::Default => {
-            try_join_all(
-                unhashed_paths
-                    .into_iter()
-                    .map(|path| materializer.try_materialize_final_artifact(path)),
-            )
-            .await?;
-        }
-        Materializations::Materialize => {
-            materializer
-                .ensure_materialized(
-                    unhashed_paths,
-                    MaterializationPurpose::FinalOutput { required: true },
-                )
-                .await?;
-        }
-    }
+    let required = match materializations {
+        Materializations::Skip => return Ok(()),
+        Materializations::Default => false,
+        Materializations::Materialize => true,
+    };
+    let response = materializer
+        .materialize(MaterializeRequest {
+            artifacts: declarations,
+            purpose: MaterializationPurpose::FinalOutput { required },
+            re_use_case,
+        })
+        .await?;
+    // Read after the command returns, so there is no scope to hold the lease over.
+    drop(response.ensure_results_ok()?);
 
     Ok(())
 }
