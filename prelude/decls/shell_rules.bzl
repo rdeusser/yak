@@ -8,7 +8,7 @@
 
 load("@prelude//decls:test_common.bzl", "test_common")
 load("@prelude//transitions:constraint_overrides.bzl", "constraint_overrides")
-load(":common.bzl", "buck", "prelude_rule")
+load(":common.bzl", "yak", "prelude_rule")
 load(":re_test_common.bzl", "re_test_common")
 
 sh_binary = prelude_rule(
@@ -94,12 +94,12 @@ sh_binary = prelude_rule(
             """,
             ),
             "deps": attrs.list(attrs.dep(), default = []),
-            "_target_os_type": buck.target_os_type_arg(),
+            "_target_os_type": yak.target_os_type_arg(),
             "has_content_based_path": attrs.bool(default = True),
         }
-        | buck.licenses_arg()
-        | buck.labels_arg()
-        | buck.contacts_arg()
+        | yak.licenses_arg()
+        | yak.labels_arg()
+        | yak.contacts_arg()
     ),
 )
 
@@ -165,7 +165,7 @@ sh_test = prelude_rule(
     further = None,
     attrs = (
         # @unsorted-dict-items
-        buck.inject_test_env_arg()
+        yak.inject_test_env_arg()
         | {
             "args": attrs.list(
                 attrs.arg(),
@@ -210,9 +210,9 @@ sh_test = prelude_rule(
             """,
             ),
         }
-        | buck.licenses_arg()
-        | buck.labels_arg()
-        | buck.contacts_arg()
+        | yak.licenses_arg()
+        | yak.labels_arg()
+        | yak.contacts_arg()
         | test_common.attributes()
         | re_test_common.test_args()
         | test_common.attributes()

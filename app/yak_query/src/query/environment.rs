@@ -21,7 +21,7 @@ use yak_core::build_file_path::BuildFilePath;
 use yak_core::cells::cell_path::CellPath;
 use yak_core::configuration::compatibility::MaybeCompatible;
 use yak_core::package::PackageLabel;
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 
 use crate::query::graph::async_bfs::async_bfs_find_path;
 use crate::query::graph::graph::Graph;
@@ -261,7 +261,7 @@ pub trait QueryEnvironment: Send + Sync {
             .into_iter()
             .flat_map(|(target, tests)| {
                 tests.into_iter().map(move |test| async move {
-                    let test = self.get_node(&test).await.with_buck_error_context(|| {
+                    let test = self.get_node(&test).await.with_yak_error_context(|| {
                         format!(
                             "Error getting test of target {}",
                             LabeledNode::node_key(target),
@@ -302,7 +302,7 @@ pub trait QueryEnvironment: Send + Sync {
                     let test = self
                         .get_node_for_default_configured_target(&test)
                         .await
-                        .with_buck_error_context(|| {
+                        .with_yak_error_context(|| {
                             format!(
                                 "Error getting test of target {}",
                                 LabeledNode::node_key(target),
@@ -496,7 +496,7 @@ impl<'a, Q: QueryTarget> AsyncChildVisitor<Q> for QueryTargetFilteredDepsSucceso
                 }
             }
         };
-        res.with_buck_error_context(|| {
+        res.with_yak_error_context(|| {
             format!("Error traversing children of `{}`", target.node_key())
         })
     }

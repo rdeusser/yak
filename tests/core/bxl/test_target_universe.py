@@ -6,86 +6,86 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-from e2e_util.api.buck import Buck
-from e2e_util.buck_workspace import buck_test
+from e2e_util.api.yak import Yak
+from e2e_util.yak_workspace import yak_test
 
 
-@buck_test()
-async def test_bxl_target_universe_keep_going_no_errors(buck: Buck) -> None:
-    await buck.bxl(
+@yak_test()
+async def test_bxl_target_universe_keep_going_no_errors(yak: Yak) -> None:
+    await yak.bxl(
         "//target_universe.bxl:target_universe_keep_going_no_errors",
     )
 
 
-@buck_test()
-async def test_bxl_target_universe_universe_target_set(buck: Buck) -> None:
-    await buck.bxl(
+@yak_test()
+async def test_bxl_target_universe_universe_target_set(yak: Yak) -> None:
+    await yak.bxl(
         "//target_universe.bxl:target_universe_universe_target_set",
     )
 
 
-@buck_test()
-async def test_bxl_target_universe_keep_going_with_errors(buck: Buck) -> None:
-    await buck.bxl(
+@yak_test()
+async def test_bxl_target_universe_keep_going_with_errors(yak: Yak) -> None:
+    await yak.bxl(
         "//keep_going.bxl:target_universe_keep_going_with_errors",
     )
 
 
-@buck_test()
-async def test_bxl_target_universe_keep_going_list_input(buck: Buck) -> None:
-    await buck.bxl(
+@yak_test()
+async def test_bxl_target_universe_keep_going_list_input(yak: Yak) -> None:
+    await yak.bxl(
         "//keep_going.bxl:target_universe_keep_going_list_input",
     )
 
 
-@buck_test()
-async def test_bxl_target_universe_keep_going_target_set_input(buck: Buck) -> None:
-    await buck.bxl(
+@yak_test()
+async def test_bxl_target_universe_keep_going_target_set_input(yak: Yak) -> None:
+    await yak.bxl(
         "//keep_going.bxl:target_universe_keep_going_target_set_input",
     )
 
 
-@buck_test()
-async def test_bxl_target_universe_keep_going_mixed_list(buck: Buck) -> None:
-    await buck.bxl(
+@yak_test()
+async def test_bxl_target_universe_keep_going_mixed_list(yak: Yak) -> None:
+    await yak.bxl(
         "//keep_going.bxl:target_universe_keep_going_mixed_list",
     )
 
 
-@buck_test()
-async def test_bxl_target_universe_keep_going_all_fail(buck: Buck) -> None:
-    await buck.bxl(
+@yak_test()
+async def test_bxl_target_universe_keep_going_all_fail(yak: Yak) -> None:
+    await yak.bxl(
         "//keep_going.bxl:target_universe_keep_going_all_fail",
     )
 
 
-@buck_test()
+@yak_test()
 async def test_bxl_target_universe_keep_going_incompatible_target_set(
-    buck: Buck,
+    yak: Yak,
 ) -> None:
-    result = await buck.bxl(
+    result = await yak.bxl(
         "//keep_going.bxl:target_universe_keep_going_incompatible_target_set",
     )
     assert "Skipped 1 incompatible targets" in result.stderr
     assert "root//incompatible_targets:incompatible_target" in result.stderr
 
 
-@buck_test()
+@yak_test()
 async def test_bxl_target_universe_keep_going_incompatible_string_pattern(
-    buck: Buck,
+    yak: Yak,
 ) -> None:
-    result = await buck.bxl(
+    result = await yak.bxl(
         "//keep_going.bxl:target_universe_keep_going_incompatible_string_pattern",
     )
     assert "Skipped 1 incompatible targets" in result.stderr
     assert "root//incompatible_targets:incompatible_target" in result.stderr
 
 
-@buck_test()
+@yak_test()
 async def test_bxl_target_universe_keep_going_incompatible_list(
-    buck: Buck,
+    yak: Yak,
 ) -> None:
-    result = await buck.bxl(
+    result = await yak.bxl(
         "//keep_going.bxl:target_universe_keep_going_incompatible_list",
     )
     assert "Skipped 1 incompatible targets" in result.stderr

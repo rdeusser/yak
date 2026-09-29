@@ -51,16 +51,16 @@ def build_command(
         "run",
         "//:yak_bundle",
     ]
-    inner_buck_isolation_dir = (
+    inner_yak_isolation_dir = (
         args.run_isolation_dir if args.run_isolation_dir else "v2.self"
     )
-    inner_buck_isolation_dir_arg = [f"--isolation-dir={inner_buck_isolation_dir}"]
+    inner_yak_isolation_dir_arg = [f"--isolation-dir={inner_yak_isolation_dir}"]
 
     if cwd is not None and "--chdir" not in extra_args:
         cmd.extend(["--chdir", os.getcwd()])
 
     cmd.append("--")
-    cmd.extend(inner_buck_isolation_dir_arg)
+    cmd.extend(inner_yak_isolation_dir_arg)
     cmd.extend(extra_args)
 
     if args.echo_run_cmd:

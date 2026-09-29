@@ -49,10 +49,10 @@ use yak_core::package::PackageLabel;
 use yak_core::soft_error;
 use yak_data::BxlEnsureArtifactsEnd;
 use yak_data::BxlEnsureArtifactsStart;
-use yak_error::BuckErrorContext;
-use yak_error::BuckErrorOptionContext;
+use yak_error::YakErrorContext;
+use yak_error::YakErrorOptionContext;
 use yak_events::dispatch::get_dispatcher;
-use yak_hash::BuckMutMap;
+use yak_hash::YakMutMap;
 use yak_interpreter::load_module::InterpreterCalculation;
 use yak_interpreter::parse_import::ParseImportOptions;
 use yak_interpreter::parse_import::RelativeImports;
@@ -302,11 +302,11 @@ impl BxlServerCommand {
     /// This context determines how artifacts will be materialized and uploaded.
     fn create_materialization_context(&self) -> MaterializationAndUploadContext {
         let materializations = Materializations::try_from(self.req.final_artifact_materializations)
-            .with_buck_error_context(|| "Invalid final_artifact_materializations")
+            .with_yak_error_context(|| "Invalid final_artifact_materializations")
             .unwrap();
 
         let uploads = Uploads::try_from(self.req.final_artifact_uploads)
-            .with_buck_error_context(|| "Invalid final_artifact_uploads")
+            .with_yak_error_context(|| "Invalid final_artifact_uploads")
             .unwrap();
 
         (materializations, uploads).into()
@@ -591,13 +591,13 @@ pub(crate) fn parse_bxl_label_from_cli(
 
 #[derive(Debug)]
 struct PendingStreaming {
-    indexes: BuckMutMap<ArtifactGroup, Vec<Arc<Mutex<PendingStreamingOutput>>>>,
+    indexes: YakMutMap<ArtifactGroup, Vec<Arc<Mutex<PendingStreamingOutput>>>>,
 }
 
 impl PendingStreaming {
     fn new(pending_streaming_outputs: impl Iterator<Item = PendingStreamingOutput>) -> Self {
-        let mut indexes: BuckMutMap<ArtifactGroup, Vec<Arc<Mutex<PendingStreamingOutput>>>> =
-            BuckMutMap::default();
+        let mut indexes: YakMutMap<ArtifactGroup, Vec<Arc<Mutex<PendingStreamingOutput>>>> =
+            YakMutMap::default();
 
         let pending_streaming_outputs = pending_streaming_outputs
             .into_iter()
@@ -640,7 +640,7 @@ mod tests {
     use yak_artifact::artifact::build_artifact::BuildArtifact;
     use yak_core::configuration::data::ConfigurationData;
     use yak_core::target::configured_target_label::ConfiguredTargetLabel;
-    use yak_hash::BuckIndexSet;
+    use yak_hash::YakIndexSet;
 
     use super::*;
 
@@ -660,12 +660,12 @@ mod tests {
         let a2 = new_test_artifact_group(2);
         let a3 = new_test_artifact_group(3);
         let p1 = PendingStreamingOutput::new(
-            BuckIndexSet::from([a1.dupe(), a2.dupe()]),
+            YakIndexSet::from([a1.dupe(), a2.dupe()]),
             b"output1".to_vec(),
         );
-        let p2 = PendingStreamingOutput::new(BuckIndexSet::from([a1.dupe()]), b"output2".to_vec());
+        let p2 = PendingStreamingOutput::new(YakIndexSet::from([a1.dupe()]), b"output2".to_vec());
         let p3 = PendingStreamingOutput::new(
-            BuckIndexSet::from([a2.dupe(), a3.dupe()]),
+            YakIndexSet::from([a2.dupe(), a3.dupe()]),
             b"output3".to_vec(),
         );
 

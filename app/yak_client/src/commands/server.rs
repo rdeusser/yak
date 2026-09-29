@@ -10,12 +10,12 @@
 
 use async_trait::async_trait;
 use yak_client_ctx::client_ctx::ClientCommandContext;
-use yak_client_ctx::common::BuckArgMatches;
+use yak_client_ctx::common::YakArgMatches;
 use yak_client_ctx::common::CommonBuildConfigurationOptions;
 use yak_client_ctx::common::CommonEventLogOptions;
 use yak_client_ctx::common::CommonStarlarkOptions;
 use yak_client_ctx::common::ui::CommonConsoleOptions;
-use yak_client_ctx::daemon::client::BuckdClientConnector;
+use yak_client_ctx::daemon::client::YakdClientConnector;
 use yak_client_ctx::events_ctx::EventsCtx;
 use yak_client_ctx::exit_result::ExitResult;
 use yak_client_ctx::streaming::StreamingCommand;
@@ -51,12 +51,12 @@ impl StreamingCommand for ServerCommand {
 
     async fn exec_impl(
         self,
-        buckd: &mut BuckdClientConnector,
-        _matches: BuckArgMatches<'_>,
+        yakd: &mut YakdClientConnector,
+        _matches: YakArgMatches<'_>,
         _ctx: &mut ClientCommandContext<'_>,
         events_ctx: &mut EventsCtx,
     ) -> ExitResult {
-        let status = buckd
+        let status = yakd
             .with_flushing()
             .status(events_ctx, self.snapshot, false)
             .await?;

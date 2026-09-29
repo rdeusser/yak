@@ -10,9 +10,9 @@ import json
 import re
 from pathlib import Path
 
-from e2e_util.api.buck import Buck
+from e2e_util.api.yak import Yak
 from e2e_util.asserts import expect_failure
-from e2e_util.buck_workspace import buck_test
+from e2e_util.yak_workspace import yak_test
 from e2e_util.helper.golden import golden_replace_cfg_hash
 
 """
@@ -25,82 +25,82 @@ def _replace_hash(s: str) -> str:
     return re.sub(r"\b[0-9a-f]{16}\b", "<HASH>", s)
 
 
-@buck_test(data_dir="unsorted")
-async def test_query_inputs(buck: Buck) -> None:
-    result = await buck.cquery("""inputs(set(root//bin:the_binary //lib:file1))""")
+@yak_test(data_dir="unsorted")
+async def test_query_inputs(yak: Yak) -> None:
+    result = await yak.cquery("""inputs(set(root//bin:the_binary //lib:file1))""")
     assert result.stdout == "bin/YAK.fixture\n"
 
 
-@buck_test(data_dir="unsorted")
-async def test_query_cell(buck: Buck) -> None:
-    result = await buck.cquery("""//stuff:magic""", rel_cwd=Path("special"))
+@yak_test(data_dir="unsorted")
+async def test_query_cell(yak: Yak) -> None:
+    result = await yak.cquery("""//stuff:magic""", rel_cwd=Path("special"))
     assert (
         _replace_hash(result.stdout)
         == "special//stuff:magic (root//platforms:platform1#<HASH>)\n"
     )
 
 
-@buck_test(data_dir="unsorted")
-async def test_query_relative(buck: Buck) -> None:
-    result = await buck.cquery("""...""", rel_cwd=Path("special"))
+@yak_test(data_dir="unsorted")
+async def test_query_relative(yak: Yak) -> None:
+    result = await yak.cquery("""...""", rel_cwd=Path("special"))
     assert (
         _replace_hash(result.stdout)
         == "special//stuff:magic (root//platforms:platform1#<HASH>)\n"
     )
 
 
-@buck_test(data_dir="unsorted")
-async def test_query_provider_names(buck: Buck) -> None:
+@yak_test(data_dir="unsorted")
+async def test_query_provider_names(yak: Yak) -> None:
     await expect_failure(
-        buck.cquery("'root//bin:the_binary[provider_name]'"),
+        yak.cquery("'root//bin:the_binary[provider_name]'"),
         stderr_regex="Expected a target pattern without providers",
     )
 
     await expect_failure(
-        buck.cquery("'root//bin:the_binary#some_flavor'"),
+        yak.cquery("'root//bin:the_binary#some_flavor'"),
         stderr_regex="Invalid target name `the_binary#some_flavor`",
     )
 
 
-@buck_test(data_dir="unsorted")
-async def test_query_print_provider_text(buck: Buck) -> None:
-    out = await buck.cquery("%s", "root//bin:the_binary", "--show-providers")
+@yak_test(data_dir="unsorted")
+async def test_query_print_provider_text(yak: Yak) -> None:
+    out = await yak.cquery("%s", "root//bin:the_binary", "--show-providers")
     golden_replace_cfg_hash(
         output=_replace_hash(out.stdout),
         rel_path="unsorted/query_print_provider_text.golden.txt",
     )
 
 
-@buck_test(data_dir="unsorted")
-async def test_query_print_provider_json(buck: Buck) -> None:
-    out = await buck.cquery("%s", "root//bin:the_binary", "--show-providers", "--json")
+@yak_test(data_dir="unsorted")
+async def test_query_print_provider_json(yak: Yak) -> None:
+    out = await yak.cquery("%s", "root//bin:the_binary", "--show-providers", "--json")
     golden_replace_cfg_hash(
         output=_replace_hash(out.stdout),
         rel_path="unsorted/query_print_provider_json.golden.json",
     )
 
 
-@buck_test(data_dir="unsorted")
-async def test_query_chunked_stream(buck: Buck) -> None:
+@yak_test(data_dir="unsorted")
+async def test_query_chunked_stream(yak: Yak) -> None:
     q = "deps(root//bin:the_binary)"
-    result1 = await buck.cquery(q)
-    await buck.kill()
-    result2 = await buck.cquery(q, env={"YAK_DEBUG_RAWOUTPUT_CHUNK_SIZE": "5"})
+    result1 = await yak.cquery(q)
+    await yak.kill()
+    result2 = await yak.cquery(q, env={"YAK_DEBUG_RAWOUTPUT_CHUNK_SIZE": "5"})
     assert result1.stdout == result2.stdout
 
 
-@buck_test(data_dir="unsorted")
-async def test_attributes(buck: Buck) -> None:
-    attrs_out = await buck.cquery(
+@yak_test(data_dir="unsorted")
+async def test_attributes(yak: Yak) -> None:
+    attrs_out = await yak.cquery(
         "--output-attribute",
-        "buck\\..*",
+        "yak\\..*",
         "--output-attribute",
         "srcs",
         "set(root//bin:the_binary //lib:file1)",
     )
-    attrs_json_out = await buck.cquery(
+    attrs_json_out = await yak.cquery(
         "--output-attribute",
-        "buck\\..*",
+        "yak\\..*",
         "--output-attribute",
         "srcs",
         "--json",
@@ -111,7 +111,7 @@ async def test_attributes(buck: Buck) -> None:
     attrs_json_out = json.loads(_replace_hash(attrs_json_out.stdout))
     assert {
         "root//bin:the_binary (root//platforms:platform1#<HASH>)": {
-            "buck.deps": [
+            "yak.deps": [
                 "root//:data (root//platforms:platform1#<HASH>)",
                 "root//lib:lib1 (root//platforms:platform1#<HASH>)",
                 "root//lib:lib2 (root//platforms:platform1#<HASH>)",
@@ -119,56 +119,56 @@ async def test_attributes(buck: Buck) -> None:
                 "root//:foo_toolchain (root//platforms:platform1#<HASH>)",
                 "root//:bin (root//platforms:platform1#<HASH>)",
             ],
-            "buck.execution_platform": "<legacy_global_exec_platform>",
-            "buck.package": "root//bin:YAK.fixture",
-            "buck.plugins": {},
-            "buck.target_configuration": "root//platforms:platform1#<HASH>",
-            "buck.type": "_foo_binary",
-            "buck.oncall": None,
+            "yak.execution_platform": "<legacy_global_exec_platform>",
+            "yak.package": "root//bin:YAK.fixture",
+            "yak.plugins": {},
+            "yak.target_configuration": "root//platforms:platform1#<HASH>",
+            "yak.type": "_foo_binary",
+            "yak.oncall": None,
             "srcs": ["root//bin/YAK.fixture"],
         },
         "root//lib:file1 (root//platforms:platform1#<HASH>)": {
-            "buck.deps": [],
-            "buck.execution_platform": "<legacy_global_exec_platform>",
-            "buck.package": "root//lib:YAK.fixture",
-            "buck.plugins": {},
-            "buck.target_configuration": "root//platforms:platform1#<HASH>",
-            "buck.type": "_foo_genrule",
-            "buck.oncall": None,
+            "yak.deps": [],
+            "yak.execution_platform": "<legacy_global_exec_platform>",
+            "yak.package": "root//lib:YAK.fixture",
+            "yak.plugins": {},
+            "yak.target_configuration": "root//platforms:platform1#<HASH>",
+            "yak.type": "_foo_genrule",
+            "yak.oncall": None,
         },
     } == attrs_json_out
 
 
 # Tests for "%Ss" uses
-@buck_test(data_dir="unsorted")
-async def test_args_as_set(buck: Buck) -> None:
-    out = await buck.cquery("%Ss", "root//bin:the_binary", "//lib:file1")
+@yak_test(data_dir="unsorted")
+async def test_args_as_set(yak: Yak) -> None:
+    out = await yak.cquery("%Ss", "root//bin:the_binary", "//lib:file1")
     assert (
         _replace_hash(out.stdout)
         == "root//bin:the_binary (root//platforms:platform1#<HASH>)\nroot//lib:file1 (root//platforms:platform1#<HASH>)\n"
     )
 
 
-@buck_test(data_dir="unsorted")
-async def test_multi_query(buck: Buck) -> None:
-    out = await buck.cquery("%s", "root//bin:the_binary", "//lib:file1")
+@yak_test(data_dir="unsorted")
+async def test_multi_query(yak: Yak) -> None:
+    out = await yak.cquery("%s", "root//bin:the_binary", "//lib:file1")
     assert (
         _replace_hash(out.stdout)
         == "root//bin:the_binary (root//platforms:platform1#<HASH>)\nroot//lib:file1 (root//platforms:platform1#<HASH>)\n"
     )
 
 
-@buck_test(data_dir="unsorted")
-async def test_query_attrfilter(buck: Buck) -> None:
-    out = await buck.uquery(
-        "attrfilter(buck.package, 'root//bin:YAK.fixture',root//bin:the_binary)"
+@yak_test(data_dir="unsorted")
+async def test_query_attrfilter(yak: Yak) -> None:
+    out = await yak.uquery(
+        "attrfilter(yak.package, 'root//bin:YAK.fixture',root//bin:the_binary)"
     )
     assert out.stdout.strip() == "root//bin:the_binary"
 
 
-@buck_test(data_dir="multi_query_universe")
-async def test_multi_query_universe(buck: Buck) -> None:
-    out = await buck.cquery(
+@yak_test(data_dir="multi_query_universe")
+async def test_multi_query_universe(yak: Yak) -> None:
+    out = await yak.cquery(
         "deps(%s)", "root//:macos-bin", "//:common-dep", "--output-format=json"
     )
     # `common-dep` is configured for linux, so it must not include `only-on-macos` target.
@@ -180,9 +180,9 @@ async def test_multi_query_universe(buck: Buck) -> None:
     )
 
 
-@buck_test(data_dir="unsorted")
-async def test_multi_query_print_provider_text(buck: Buck) -> None:
-    out = await buck.cquery(
+@yak_test(data_dir="unsorted")
+async def test_multi_query_print_provider_text(yak: Yak) -> None:
+    out = await yak.cquery(
         "%s", "root//bin:the_binary", "//lib:lib1", "--show-providers"
     )
     golden_replace_cfg_hash(
@@ -191,9 +191,9 @@ async def test_multi_query_print_provider_text(buck: Buck) -> None:
     )
 
 
-@buck_test(data_dir="unsorted")
-async def test_multi_query_print_provider_json(buck: Buck) -> None:
-    out = await buck.cquery(
+@yak_test(data_dir="unsorted")
+async def test_multi_query_print_provider_json(yak: Yak) -> None:
+    out = await yak.cquery(
         "%s", "root//bin:the_binary", "//lib:lib1", "--show-providers", "--json"
     )
 
@@ -203,15 +203,15 @@ async def test_multi_query_print_provider_json(buck: Buck) -> None:
     )
 
 
-@buck_test(data_dir="visibility")
-async def test_visibility(buck: Buck) -> None:
+@yak_test(data_dir="visibility")
+async def test_visibility(yak: Yak) -> None:
     for good in [
         "self//:pass1",
         "self//:pass2",
         "self//:pass3",
         "self//:pass4",
     ]:
-        out = await buck.cquery(good)
+        out = await yak.cquery(good)
         assert good in out.stdout
 
     for bad in [
@@ -221,13 +221,13 @@ async def test_visibility(buck: Buck) -> None:
         "self//:fail4",
     ]:
         print(bad)
-        failure = await expect_failure(buck.cquery(bad))
+        failure = await expect_failure(yak.cquery(bad))
         assert "not visible to `%s`" % bad in failure.stderr
 
 
-@buck_test(data_dir="testsof")
-async def test_testsof(buck: Buck) -> None:
-    out = await buck.cquery(
+@yak_test(data_dir="testsof")
+async def test_testsof(yak: Yak) -> None:
+    out = await yak.cquery(
         "testsof(//:foo_lib)",
         "--target-platforms",
         "//:platform_default_tests",
@@ -237,7 +237,7 @@ async def test_testsof(buck: Buck) -> None:
     assert "root//:foo_extra_test" not in out.stdout
     assert "root//:foo_lib" not in out.stdout
 
-    out = await buck.cquery(
+    out = await yak.cquery(
         "testsof(//:foo_lib)",
         "--target-platforms",
         "//:platform_more_tests",
@@ -251,20 +251,20 @@ async def test_testsof(buck: Buck) -> None:
 # DICE currently may re-evaluate dead nodes ignoring errors, but it cannot ignore panics.
 # Disabling execution platforms through a yakconfig used to cause such a panic,
 # which made builds fail at random.
-@buck_test(data_dir="toolchain_deps")
-async def test_disabling_of_execution_platforms(buck: Buck) -> None:
+@yak_test(data_dir="toolchain_deps")
+async def test_disabling_of_execution_platforms(yak: Yak) -> None:
     # Run these commands 10x such that a stress run of 10 on continuous CI would run these commands 100x.
     # If there is a regression then the stress run would for sure detect it.
     for _ in range(10):
         query = "deps(set(tests/...))"
-        await buck.cquery(query)
-        await buck.cquery(query, "-c", "build.execution_platforms=")
+        await yak.cquery(query)
+        await yak.cquery(query, "-c", "build.execution_platforms=")
 
 
-@buck_test(data_dir="deps_query")
-async def test_declared_deps_query(buck: Buck) -> None:
+@yak_test(data_dir="deps_query")
+async def test_declared_deps_query(yak: Yak) -> None:
     await expect_failure(
-        buck.cquery(
+        yak.cquery(
             "root//:declared_deps",
         ),
         stderr_regex="Error parsing target pattern `\\$declared_deps`",
@@ -272,20 +272,20 @@ async def test_declared_deps_query(buck: Buck) -> None:
 
 
 # Tests for intersect and except operators on FileSet, TargetSet, and String types
-# These tests verify the fix for https://github.com/facebook/buck2/issues/1109
-@buck_test(data_dir="set_operators")
-async def test_cquery_fileset_intersect(buck: Buck) -> None:
+# These tests verify the fix for https://github.com/facebook/yak/issues/1109
+@yak_test(data_dir="set_operators")
+async def test_cquery_fileset_intersect(yak: Yak) -> None:
     """Test FileSet intersect FileSet using inputs()."""
-    result = await buck.cquery(
+    result = await yak.cquery(
         """inputs(root//:lib_a) intersect inputs(root//:lib_b)"""
     )
     assert result.stdout == "common.txt\n"
 
 
-@buck_test(data_dir="set_operators")
-async def test_cquery_targetset_except(buck: Buck) -> None:
+@yak_test(data_dir="set_operators")
+async def test_cquery_targetset_except(yak: Yak) -> None:
     """Test TargetSet except TargetSet using set()."""
-    result = await buck.cquery(
+    result = await yak.cquery(
         """set(root//:lib_a root//:app) except set(root//:app)"""
     )
     assert "root//:lib_a" in result.stdout

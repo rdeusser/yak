@@ -13,8 +13,8 @@ import re
 from pathlib import Path
 from typing import Any
 
-from e2e_util.api.buck import Buck
-from e2e_util.buck_workspace import buck_test, env
+from e2e_util.api.yak import Yak
+from e2e_util.yak_workspace import yak_test, env
 
 
 def fixture(name: str) -> str:
@@ -22,9 +22,9 @@ def fixture(name: str) -> str:
     return str(p)
 
 
-@buck_test()
-async def test_console_facts(buck: Buck) -> None:
-    res = await buck.log(
+@yak_test()
+async def test_console_facts(yak: Yak) -> None:
+    res = await yak.log(
         "replay",
         fixture("my_genrule0"),
     )
@@ -33,29 +33,29 @@ async def test_console_facts(buck: Buck) -> None:
     assert "Commands: 1 (cached: 1, remote: 0, local: 0)" in res.stderr
 
 
-@buck_test()
-async def test_console_facts_no_repo(buck: Buck) -> None:
-    res = await buck.log(
+@yak_test()
+async def test_console_facts_no_repo(yak: Yak) -> None:
+    res = await yak.log(
         "replay",
         fixture("my_genrule0"),
-        rel_cwd=Path(os.path.relpath("/", buck.cwd)),
+        rel_cwd=Path(os.path.relpath("/", yak.cwd)),
     )
     assert re.search("Network: .*([0-9.]+)([KMG]?)B", res.stderr) is not None
     assert "Cache hits: 100%" in res.stderr
     assert "Commands: 1 (cached: 1, remote: 0, local: 0)" in res.stderr
 
 
-@buck_test()
-async def test_super_console_facts(buck: Buck) -> None:
-    res = await buck.log("replay", fixture("my_genrule0"))
+@yak_test()
+async def test_super_console_facts(yak: Yak) -> None:
+    res = await yak.log("replay", fixture("my_genrule0"))
     assert re.search("Network: .*([0-9.]+)([KMG]?)B", res.stderr) is not None
     assert "Cache hits: 100%" in res.stderr
     assert "Commands: 1" in res.stderr
 
 
-@buck_test()
-async def test_whatran(buck: Buck) -> None:
-    res = await buck.log(
+@yak_test()
+async def test_whatran(yak: Yak) -> None:
+    res = await yak.log(
         "what-ran",
         fixture("my_genrule0"),
     )
@@ -66,12 +66,12 @@ async def test_whatran(buck: Buck) -> None:
     )
 
 
-@buck_test()
-async def test_whatran_no_repo(buck: Buck) -> None:
-    res = await buck.log(
+@yak_test()
+async def test_whatran_no_repo(yak: Yak) -> None:
+    res = await yak.log(
         "what-ran",
         fixture("my_genrule0"),
-        rel_cwd=Path(os.path.relpath("/", buck.cwd)),
+        rel_cwd=Path(os.path.relpath("/", yak.cwd)),
     )
     assert "cache" in res.stdout
     assert (
@@ -80,15 +80,15 @@ async def test_whatran_no_repo(buck: Buck) -> None:
     )
 
 
-@buck_test()
-async def test_file_watcher_span_depth(buck: Buck) -> None:
+@yak_test()
+async def test_file_watcher_span_depth(yak: Yak) -> None:
     """
     We show spans up to depth 2 in the console. We should make sure that spans
     whose runtime depends on external tools (i.e. the file watcher) are
     displayed.
     """
-    await buck.build()
-    log = await buck.log("show")
+    await yak.build()
+    log = await yak.log("show")
 
     depths = collections.defaultdict(int)
     file_watcher_span = None
@@ -119,10 +119,10 @@ async def test_file_watcher_span_depth(buck: Buck) -> None:
     assert depths[file_watcher_span["span_id"]] <= 2
 
 
-@buck_test()
-async def test_stale_snapshot(buck: Buck, tmp_path: Path) -> None:
+@yak_test()
+async def test_stale_snapshot(yak: Yak, tmp_path: Path) -> None:
     original = fixture("my_genrule0")
-    log = (await buck.log("show", original)).stdout
+    log = (await yak.log("show", original)).stdout
 
     # Now we're going to make a new log where we just delay the last event by
     # some amount of time.
@@ -142,11 +142,11 @@ async def test_stale_snapshot(buck: Buck, tmp_path: Path) -> None:
     stale_message = "Resource usage: <snapshot is stale>"
 
     # Check it's there.
-    res = await buck.log("replay", str(logfile))
+    res = await yak.log("replay", str(logfile))
     assert stale_message in res.stderr
 
     # Check it's not in the original one.
-    res = await buck.log("replay", original)
+    res = await yak.log("replay", original)
     assert stale_message not in res.stderr
 
 
@@ -160,9 +160,9 @@ def _get(data: dict[str, Any], *key: str) -> dict[str, Any] | None:
     return data
 
 
-@buck_test()
-async def test_super_console_changes(buck: Buck) -> None:
-    res = await buck.log("replay", fixture("my_genrule1"))
+@yak_test()
+async def test_super_console_changes(yak: Yak) -> None:
+    res = await yak.log("replay", fixture("my_genrule1"))
     assert "File changed: root//dir1/file1" in res.stderr
     assert "Directory changed: root//dir1/sub" in res.stderr
 
@@ -170,8 +170,8 @@ async def test_super_console_changes(buck: Buck) -> None:
 # The daemon measures its memory with RSS, which it does not read on macOS,
 # and with jemalloc statistics, which Cargo builds do not collect. On macOS it
 # has no measurement, so it never warns.
-@buck_test(
-    extra_buck_config={
+@yak_test(
+    extra_yak_config={
         "yak_system_warning": {
             "memory_pressure_threshold_percent": "1",
         },
@@ -179,6 +179,6 @@ async def test_super_console_changes(buck: Buck) -> None:
     skip_for_os=["darwin"],
 )
 @env("YAK_TEST_FAKE_SYSTEM_TOTAL_MEMORY", "1000")
-async def test_system_memory_exceeded_warning(buck: Buck) -> None:
-    res = await buck.build("//:slow", "--console=simple")
+async def test_system_memory_exceeded_warning(yak: Yak) -> None:
+    res = await yak.build("//:slow", "--console=simple")
     assert "High memory pressure" in res.stderr

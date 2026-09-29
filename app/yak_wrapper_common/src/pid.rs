@@ -11,8 +11,8 @@
 use std::num::NonZeroU32;
 
 use dupe::Dupe;
-use yak_error::BuckErrorContext;
-use yak_error::BuckErrorOptionContext;
+use yak_error::YakErrorContext;
+use yak_error::YakErrorOptionContext;
 
 /// Process id.
 #[derive(Debug, Clone, Copy, Dupe, derive_more::Display)]
@@ -31,7 +31,7 @@ impl Pid {
     pub fn from_i64(pid: i64) -> yak_error::Result<Self> {
         Self::from_u32(
             pid.try_into()
-                .buck_error_context("integer overflow converting pid to u32")?,
+                .yak_error_context("integer overflow converting pid to u32")?,
         )
     }
 
@@ -45,7 +45,7 @@ impl Pid {
             self.pid
                 .get()
                 .try_into()
-                .buck_error_context("Integer overflow converting pid to pid_t")?,
+                .yak_error_context("Integer overflow converting pid to pid_t")?,
         ))
     }
 }

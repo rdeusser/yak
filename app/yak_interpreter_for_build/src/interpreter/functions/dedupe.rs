@@ -13,7 +13,7 @@ use starlark::starlark_module;
 use starlark::values::Heap;
 use starlark::values::Value;
 use starlark::values::list::AllocList;
-use yak_hash::BuckMutSet;
+use yak_hash::YakMutSet;
 
 #[starlark_module]
 pub(crate) fn register_dedupe(builder: &mut GlobalsBuilder) {
@@ -23,7 +23,7 @@ pub(crate) fn register_dedupe(builder: &mut GlobalsBuilder) {
         #[starlark(require = pos)] val: Value<'v>,
         heap: Heap<'v>,
     ) -> starlark::Result<Value<'v>> {
-        let mut seen = BuckMutSet::default();
+        let mut seen = YakMutSet::default();
         let mut res = Vec::new();
         for v in val.iterate(heap)? {
             if seen.insert(v.identity()) {

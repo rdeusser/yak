@@ -17,7 +17,7 @@ use std::sync::OnceLock;
 use std::task::Poll;
 use std::thread;
 
-use yak_error::BuckErrorOptionContext;
+use yak_error::YakErrorOptionContext;
 use yak_error::internal_error;
 
 /// Concurrency for filesystem operations that modify directory structure (unlinks, rmdirs,

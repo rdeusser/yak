@@ -6,20 +6,20 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-from e2e_util.api.buck import Buck
-from e2e_util.buck_workspace import buck_test
+from e2e_util.api.yak import Yak
+from e2e_util.yak_workspace import yak_test
 
 
-@buck_test()
-async def test_run_test_with_content_based_path(buck: Buck) -> None:
-    await buck.test("root//:run_test_with_content_based_path")
+@yak_test()
+async def test_run_test_with_content_based_path(yak: Yak) -> None:
+    await yak.test("root//:run_test_with_content_based_path")
 
 
-@buck_test()
-async def test_platform_resolution(buck: Buck) -> None:
-    await buck.test(
+@yak_test()
+async def test_platform_resolution(yak: Yak) -> None:
+    await yak.test(
         ":local_resources_test",
         test_executor="",
     )
-    res = await buck.log("what-ran")
+    res = await yak.log("what-ran")
     assert "MY_RESOURCE_ID=42" in res.stdout

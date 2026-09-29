@@ -14,8 +14,8 @@ use std::io;
 fn main() -> io::Result<()> {
     let proto_files = &["daemon.proto"];
 
-    let buck_proto_srcs = env::var("YAK_PROTO_SRCS");
-    let includes = if let Ok(path) = &buck_proto_srcs {
+    let yak_proto_srcs = env::var("YAK_PROTO_SRCS");
+    let includes = if let Ok(path) = &yak_proto_srcs {
         vec![path.as_str()]
     } else {
         vec![
@@ -39,7 +39,7 @@ fn main() -> io::Result<()> {
         .boxed("CommandProgress.progress.result")
         .boxed("CommandProgress.progress.partial_result")
         .field_attribute("expires_at", "#[serde(with = \"serialize_timestamp\")]")
-        .extern_path(".buck.data", "::yak_data")
-        .extern_path(".buck.subscription", "::yak_subscription_proto")
+        .extern_path(".yak.data", "::yak_data")
+        .extern_path(".yak.subscription", "::yak_subscription_proto")
         .compile(proto_files, &includes)
 }

@@ -7,14 +7,14 @@
 # above-listed licenses.
 
 import pytest
-from e2e_util.api.buck import Buck
-from e2e_util.buck_workspace import buck_test
+from e2e_util.api.yak import Yak
+from e2e_util.yak_workspace import yak_test
 from e2e_util.helper.utils import random_string, read_what_ran
 
 
 @pytest.mark.remote_execution
-@buck_test()
-async def test_stable_action_digest_with_deterministic_paths(buck: Buck) -> None:
+@yak_test()
+async def test_stable_action_digest_with_deterministic_paths(yak: Yak) -> None:
     args = [
         "-c",
         "test.local_enabled=false",
@@ -23,8 +23,8 @@ async def test_stable_action_digest_with_deterministic_paths(buck: Buck) -> None
         "//:test",
     ]
 
-    await buck.test(*args)
-    first_what_ran = await read_what_ran(buck)
+    await yak.test(*args)
+    first_what_ran = await read_what_ran(yak)
     first_digests = [
         entry["reproducer"]["details"]["digest"]
         for entry in first_what_ran
@@ -32,8 +32,8 @@ async def test_stable_action_digest_with_deterministic_paths(buck: Buck) -> None
     ]
     assert len(first_digests) == 1, "Expected one test.run entry"
 
-    await buck.test(*args)
-    second_what_ran = await read_what_ran(buck)
+    await yak.test(*args)
+    second_what_ran = await read_what_ran(yak)
     second_digests = [
         entry["reproducer"]["details"]["digest"]
         for entry in second_what_ran
@@ -47,8 +47,8 @@ async def test_stable_action_digest_with_deterministic_paths(buck: Buck) -> None
 
 
 @pytest.mark.remote_execution
-@buck_test()
-async def test_remote_test_execution_cached(buck: Buck) -> None:
+@yak_test()
+async def test_remote_test_execution_cached(yak: Yak) -> None:
     args = [
         "-c",
         "test.local_enabled=false",
@@ -57,10 +57,10 @@ async def test_remote_test_execution_cached(buck: Buck) -> None:
         "//:cacheable_test",
     ]
 
-    await buck.test(*args)
+    await yak.test(*args)
 
-    await buck.test(*args)
-    second_what_ran = await read_what_ran(buck, "--emit-cache-queries")
+    await yak.test(*args)
+    second_what_ran = await read_what_ran(yak, "--emit-cache-queries")
     second_test_runs = [
         entry
         for entry in second_what_ran
@@ -72,8 +72,8 @@ async def test_remote_test_execution_cached(buck: Buck) -> None:
     )
 
 
-@buck_test()
-async def test_local_test_execution_not_cached(buck: Buck) -> None:
+@yak_test()
+async def test_local_test_execution_not_cached(yak: Yak) -> None:
     seed = random_string()
     args = [
         "-c",
@@ -85,10 +85,10 @@ async def test_local_test_execution_not_cached(buck: Buck) -> None:
         "//:cacheable_test",
     ]
 
-    await buck.test(*args)
+    await yak.test(*args)
 
-    await buck.test(*args)
-    second_what_ran = await read_what_ran(buck)
+    await yak.test(*args)
+    second_what_ran = await read_what_ran(yak)
     second_test_runs = [
         entry for entry in second_what_ran if entry["reason"] == "test.run"
     ]
@@ -101,9 +101,9 @@ async def test_local_test_execution_not_cached(buck: Buck) -> None:
 
 
 @pytest.mark.remote_execution
-@buck_test()
+@yak_test()
 async def test_remote_test_execution_not_cached_with_no_remote_cache(
-    buck: Buck,
+    yak: Yak,
 ) -> None:
     args = [
         "-c",
@@ -114,10 +114,10 @@ async def test_remote_test_execution_not_cached_with_no_remote_cache(
         "//:cacheable_test",
     ]
 
-    await buck.test(*args)
+    await yak.test(*args)
 
-    await buck.test(*args)
-    second_what_ran = await read_what_ran(buck)
+    await yak.test(*args)
+    second_what_ran = await read_what_ran(yak)
     second_test_runs = [
         entry for entry in second_what_ran if entry["reason"] == "test.run"
     ]

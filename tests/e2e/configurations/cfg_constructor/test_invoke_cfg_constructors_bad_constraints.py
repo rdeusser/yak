@@ -6,12 +6,12 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-from e2e_util.api.buck import Buck
+from e2e_util.api.yak import Yak
 from e2e_util.asserts import expect_failure
-from e2e_util.buck_workspace import buck_test
+from e2e_util.yak_workspace import yak_test
 
 
-@buck_test()
-async def test_invoke_cfg_constructors_bad_constraints(buck: Buck) -> None:
-    result = await expect_failure(buck.cquery("root//:test"))
+@yak_test()
+async def test_invoke_cfg_constructors_bad_constraints(yak: Yak) -> None:
+    result = await expect_failure(yak.cquery("root//:test"))
     assert "root//:not_a_constraint is not a configuration rule." in result.stderr

@@ -44,8 +44,8 @@ use yak_build_signals::node_key::BuildSignalsNodeKeyImpl;
 use yak_common::dice::cells::HasCellResolver;
 use yak_common::dice::cycles::CycleGuard;
 use yak_common::legacy_configs::dice::HasLegacyConfigs;
-use yak_common::legacy_configs::key::BuckconfigKeyRef;
-use yak_common::legacy_configs::view::LegacyBuckConfigView;
+use yak_common::legacy_configs::key::YakconfigKeyRef;
+use yak_common::legacy_configs::view::LegacyYakConfigView;
 use yak_core::configuration::compatibility::IncompatiblePlatformReason;
 use yak_core::configuration::compatibility::IncompatiblePlatformReasonCause;
 use yak_core::configuration::compatibility::MaybeCompatible;
@@ -71,7 +71,7 @@ use yak_core::target::configured_or_unconfigured::ConfiguredOrUnconfiguredTarget
 use yak_core::target::configured_target_label::ConfiguredTargetLabel;
 use yak_core::target::label::label::TargetLabel;
 use yak_core::target::target_configured_target_label::TargetConfiguredTargetLabel;
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 use yak_error::internal_error;
 use yak_node::attrs::coerced_attr::CoercedAttr;
 use yak_node::attrs::configuration_context::AttrConfigurationContext;
@@ -246,7 +246,7 @@ fn unpack_target_compatible_with_attr(
             label: target_node.label().dupe(),
             target_label,
         })
-        .with_buck_error_context(|| format!("Error configuring attribute `{}`", attr.name))
+        .with_yak_error_context(|| format!("Error configuring attribute `{}`", attr.name))
         .require_compatible()?;
 
     match attr.value.unpack_list() {
@@ -319,7 +319,7 @@ fn check_compatible(
     let incompatible_target = match compatibility_constraints {
         CompatibilityConstraints::Any(attr) => {
             let (compatible, incompatible) =
-                check_compatibility(attr).with_buck_error_context(|| {
+                check_compatibility(attr).with_yak_error_context(|| {
                     format!(
                         "attribute `{}`",
                         LEGACY_TARGET_COMPATIBLE_WITH_ATTRIBUTE.name
@@ -335,7 +335,7 @@ fn check_compatible(
         }
         CompatibilityConstraints::All(attr) => {
             let (_compatible, incompatible) =
-                check_compatibility(attr).with_buck_error_context(|| {
+                check_compatibility(attr).with_yak_error_context(|| {
                     format!("attribute `{}`", TARGET_COMPATIBLE_WITH_ATTRIBUTE.name)
                 })?;
             match incompatible.into_iter().next() {
@@ -367,7 +367,7 @@ async fn check_plugin_deps(
             let dep_node = ctx
                 .get_target_node(dep_label)
                 .await
-                .with_buck_error_context(|| {
+                .with_yak_error_context(|| {
                     format!("looking up unconfigured target node `{dep_label}`")
                 })?;
             if dep_node.is_toolchain_rule() {
@@ -525,7 +525,7 @@ pub(crate) async fn gather_deps(
     for a in target_node.attrs(AttrInspectOptions::All) {
         a.configure(attr_cfg_ctx)?
             .traverse(target_node.label().pkg(), &mut traversal)
-            .with_buck_error_context(|| format!("traversing attribute `{}`", a.name))?;
+            .with_yak_error_context(|| format!("traversing attribute `{}`", a.name))?;
     }
 
     let dep_results = ctx
@@ -807,7 +807,7 @@ pub(crate) async fn compute_configured_node_preamble<'d>(
         target_node.as_ref(),
     )
     .await
-    .with_buck_error_context(|| {
+    .with_yak_error_context(|| {
         format!("Error resolving configuration deps of `{target_label}`")
     })?;
 
@@ -1038,7 +1038,7 @@ async fn compute_configured_target_node(
     let target_node = ctx
         .get_target_node(key.0.unconfigured())
         .await
-        .with_buck_error_context(|| {
+        .with_yak_error_context(|| {
             format!(
                 "looking up unconfigured target node `{}`",
                 key.0.unconfigured()
@@ -1098,7 +1098,7 @@ async fn compute_configured_forward_target_node(
         target_node.as_ref(),
     )
     .await
-    .with_buck_error_context(|| {
+    .with_yak_error_context(|| {
         format!("Error resolving configuration deps of `{target_label_before_transition}`")
     })?;
 
@@ -1370,7 +1370,7 @@ impl ConfiguredTargetNodeCalculationImpl for ConfiguredTargetNodeCalculationInst
     }
 }
 
-pagable::static_str!(SECTION_BUCK2 = "yak");
+pagable::static_str!(SECTION_YAK = "yak");
 pagable::static_str!(PROPERTY_ERROR_ON_DEP_ONLY_INCOMPATIBLE = "error_on_dep_only_incompatible");
 pagable::static_str!(
     PROPERTY_ERROR_ON_DEP_ONLY_INCOMPATIBLE_EXCLUDED = "error_on_dep_only_incompatible_excluded"
@@ -1383,7 +1383,7 @@ async fn check_error_on_incompatible_dep(
     if check_target_enabled_for_config(
         ctx,
         target_label,
-        SECTION_BUCK2,
+        SECTION_YAK,
         PROPERTY_ERROR_ON_DEP_ONLY_INCOMPATIBLE_EXCLUDED,
     )
     .await?
@@ -1393,7 +1393,7 @@ async fn check_error_on_incompatible_dep(
     check_target_enabled_for_config(
         ctx,
         target_label,
-        SECTION_BUCK2,
+        SECTION_YAK,
         PROPERTY_ERROR_ON_DEP_ONLY_INCOMPATIBLE,
     )
     .await
@@ -1428,7 +1428,7 @@ async fn check_target_enabled_for_config(
             let root_conf = ctx.get_legacy_root_config_on_dice().await?;
             let patterns: Vec<String> = root_conf
                 .view(ctx)
-                .parse_list(BuckconfigKeyRef {
+                .parse_list(YakconfigKeyRef {
                     section: &self.section,
                     property: &self.property,
                 })?
@@ -1496,7 +1496,7 @@ async fn get_dep_only_incompatible_custom_soft_error(
             let root_cell = cell_resolver.root_cell();
             let alias_resolver = ctx.get_cell_alias_resolver(root_cell).await?;
             let root_conf = ctx.get_legacy_root_config_on_dice().await?;
-            let Some(target) = root_conf.view(ctx).parse::<String>(BuckconfigKeyRef {
+            let Some(target) = root_conf.view(ctx).parse::<String>(YakconfigKeyRef {
                 section: "yak",
                 property: "dep_only_incompatible_info",
             })?

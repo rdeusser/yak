@@ -250,7 +250,7 @@ fn test_error_message_with_provided_field() {
 }
 
 #[test]
-fn test_recovery_through_transparent_buck2_error() {
+fn test_recovery_through_transparent_yak_error() {
     #[derive(yak_error_derive::Error, Debug)]
     #[error("base_display")]
     #[yak(tag = Environment)]

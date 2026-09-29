@@ -36,15 +36,15 @@ _APPLE_STDERR_ERROR_CATEGORIES = [
     ErrorEnricher(matcher = "command timed out", category = "timeout_failure"),
     ErrorEnricher(matcher = "no such file or directory", category = "no_such_file_failure"),
     # user errors
-    ErrorEnricher(matcher = "unknown target", category = "unknown_buck_target_failure"),
+    ErrorEnricher(matcher = "unknown target", category = "unknown_yak_target_failure"),
     # yak configuration issues
     ErrorEnricher(matcher = "unknown cell alias", category = "unknown_cell_alias_failure"),
 ]
 
-def _match(matcher: str | BuckRegex, lowercase_stderr: str) -> bool:
+def _match(matcher: str | YakRegex, lowercase_stderr: str) -> bool:
     if isinstance(matcher, str):
         return matcher in lowercase_stderr
-    elif isinstance(matcher, BuckRegex):
+    elif isinstance(matcher, YakRegex):
         return matcher.match(lowercase_stderr)
     else:
         fail("Unknown matcher type: {}", type(matcher))

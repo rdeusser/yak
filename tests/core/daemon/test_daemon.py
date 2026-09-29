@@ -16,16 +16,16 @@ import time
 from pathlib import Path
 
 import pytest
-from e2e_util.api.buck import Buck
-from e2e_util.api.buck_result import BuckException
+from e2e_util.api.yak import Yak
+from e2e_util.api.yak_result import YakException
 from e2e_util.asserts import expect_failure
-from e2e_util.buck_workspace import buck_test, env
+from e2e_util.yak_workspace import yak_test, env
 from e2e_util.helper.utils import daemon_is_alive
 
 
-@buck_test()
+@yak_test()
 @env("YAK_TESTING_INACTIVITY_TIMEOUT", "true")
-async def test_inactivity_timeout(buck: Buck) -> None:
+async def test_inactivity_timeout(yak: Yak) -> None:
     #######################################################
     # Recommend running this test in opt mode
     # Otherwise the command that is run here
@@ -34,9 +34,9 @@ async def test_inactivity_timeout(buck: Buck) -> None:
     #######################################################
 
     # this will start the daemon
-    status = await buck.server("--status")
+    status = await yak.server("--status")
     pid = json.loads(status.stdout)["process_info"]["pid"]
-    daemon_dir = await buck.get_daemon_dir()
+    daemon_dir = await yak.get_daemon_dir()
 
     time.sleep(1)  # 1 sec timeout
 
@@ -44,7 +44,7 @@ async def test_inactivity_timeout(buck: Buck) -> None:
     for _ in range(20):
         time.sleep(1)
         if not daemon_is_alive(pid):
-            result = await buck.status()
+            result = await yak.status()
             assert "no yakd running" == result.stderr.splitlines()[-1]
 
             stderr = (daemon_dir / "yakd.stderr").read_text()
@@ -54,75 +54,75 @@ async def test_inactivity_timeout(buck: Buck) -> None:
     raise AssertionError(f"Server with pid {pid} did not die in 20 seconds")
 
 
-@buck_test()
-async def test_server_endpoint_output(buck: Buck) -> None:
-    result = await buck.server()
+@yak_test()
+async def test_server_endpoint_output(yak: Yak) -> None:
+    result = await yak.server()
     stdout = result.stdout.strip()
     assert stdout.startswith("yakd.endpoint=")
     assert stdout.removeprefix("yakd.endpoint=")
 
 
-@buck_test()
-async def test_server_status_output(buck: Buck) -> None:
-    result = await buck.server("--status")
+@yak_test()
+async def test_server_status_output(yak: Yak) -> None:
+    result = await yak.server("--status")
     status = json.loads(result.stdout)
     pid = status["process_info"]["pid"]
     assert isinstance(pid, int)
     assert pid > 0
 
 
-@buck_test()
-async def test_server_status_snapshot_output(buck: Buck) -> None:
-    result = await buck.server("--status", "--snapshot")
+@yak_test()
+async def test_server_status_snapshot_output(yak: Yak) -> None:
+    result = await yak.server("--status", "--snapshot")
     status = json.loads(result.stdout)
     snapshot = status["snapshot"]
     assert snapshot is not None
-    assert "buck2_max_rss" in snapshot
+    assert "yak_max_rss" in snapshot
 
 
-@buck_test()
-async def test_server_snapshot_requires_status(buck: Buck) -> None:
-    await expect_failure(buck.server("--snapshot"), stderr_regex="--status")
+@yak_test()
+async def test_server_snapshot_requires_status(yak: Yak) -> None:
+    await expect_failure(yak.server("--snapshot"), stderr_regex="--status")
 
 
-@buck_test()
+@yak_test()
 @pytest.mark.parametrize(
     "corrupt",
     ["not-json", '{"valid-json", "but-not-valid-data"}'],
 )
-async def test_corrupted_buckd_info(buck: Buck, corrupt: str) -> None:
-    await buck.targets("//:rule")
+async def test_corrupted_yakd_info(yak: Yak, corrupt: str) -> None:
+    await yak.targets("//:rule")
 
-    daemon_dir = await buck.get_daemon_dir()
+    daemon_dir = await yak.get_daemon_dir()
     with open(f"{daemon_dir}/yakd.info") as f:
         # Check file exists and valid.
         json.load(f)
 
     # Kill that daemon now to avoid having making a mess and leaving 2 daemons
     # around.
-    await buck.kill()
+    await yak.kill()
 
     with open(f"{daemon_dir}/yakd.info", "w") as f:
         f.write(corrupt)
 
-    await buck.targets("//:rule")
+    await yak.targets("//:rule")
 
 
-@buck_test()
-async def test_recovers_when_daemon_pid_cannot_be_killed(buck: Buck) -> None:
+@yak_test()
+async def test_recovers_when_daemon_pid_cannot_be_killed(yak: Yak) -> None:
     # A stale yakd.info can name a pid we cannot kill (e.g. one reused by a
     # process owned by another user). yak must report the failed kill and start
     # a fresh daemon rather than aborting, which used to leave yakd.info in
     # place so every later invocation failed the same way.
-    await buck.targets("//:rule")
+    await yak.targets("//:rule")
 
-    daemon_dir = await buck.get_daemon_dir()
+    daemon_dir = await yak.get_daemon_dir()
     with open(f"{daemon_dir}/yakd.info") as f:
         info = json.load(f)
 
     # Kill the daemon so its endpoint stops accepting connections, forcing the
     # next invocation down the "could not connect, killing daemon" path.
-    await buck.kill()
+    await yak.kill()
 
     # Point yakd.info at a pid that hard_kill_until cannot kill. An out-of-range
     # pid fails the kill deterministically on every platform, standing in for the
@@ -132,14 +132,14 @@ async def test_recovers_when_daemon_pid_cannot_be_killed(buck: Buck) -> None:
         json.dump(info, f)
 
     # Recovers by starting a new daemon; this used to fail to connect entirely.
-    result = await buck.targets("//:rule")
+    result = await yak.targets("//:rule")
     assert "Failed to kill yakd" in result.stderr
 
 
-@buck_test()
-async def test_process_title(buck: Buck) -> None:
-    await buck.build()  # Start the daemon
-    status = await buck.status()
+@yak_test()
+async def test_process_title(yak: Yak) -> None:
+    await yak.build()  # Start the daemon
+    status = await yak.status()
     status = json.loads(status.stdout)
     pid = status["process_info"]["pid"]
 
@@ -156,32 +156,32 @@ async def test_process_title(buck: Buck) -> None:
         raise Exception("Unknown platform")
 
 
-@buck_test()
-async def test_status_fields(buck: Buck) -> None:
-    await buck.build()  # Start the daemon
-    status = await buck.status()
+@yak_test()
+async def test_status_fields(yak: Yak) -> None:
+    await yak.build()  # Start the daemon
+    status = await yak.status()
     status = json.loads(status.stdout)
     assert status["valid_working_directory"]
 
 
-@buck_test()
-async def test_status_active_commands(buck: Buck) -> None:
-    await buck.build()  # Start the daemon
+@yak_test()
+async def test_status_active_commands(yak: Yak) -> None:
+    await yak.build()  # Start the daemon
 
-    status = json.loads((await buck.status()).stdout)
+    status = json.loads((await yak.status()).stdout)
     # `status` is a oneshot request, not a registered command, so an idle
     # daemon reports no active commands.
     assert status["active_commands"] == []
 
     async def run_build() -> None:
-        await buck.build(":long_running", "--local-only", "--no-remote-cache")
+        await yak.build(":long_running", "--local-only", "--no-remote-cache")
 
     build_task = asyncio.create_task(run_build())
     try:
         # Generous budget: under heavy CI load, daemon warm-up plus the local
         # action launch can take a while to register as an active command.
         for _ in range(600):
-            status = json.loads((await buck.status()).stdout)
+            status = json.loads((await yak.status()).stdout)
             if status["active_commands"]:
                 break
             if build_task.done():
@@ -207,16 +207,16 @@ async def test_status_active_commands(buck: Buck) -> None:
         await asyncio.gather(build_task, return_exceptions=True)
 
 
-@buck_test()
-async def test_status_all(buck: Buck) -> None:
+@yak_test()
+async def test_status_all(yak: Yak) -> None:
     # this will start the daemons
-    await buck.server()
+    await yak.server()
 
-    status = await buck.status()
+    status = await yak.status()
     status = json.loads(status.stdout)
     pid = status["process_info"]["pid"]
 
-    status_all = await buck.status("--all")
+    status_all = await yak.status("--all")
     status_all = json.loads(status_all.stdout)
     for status in status_all:
         if status["process_info"]["pid"] == pid:
@@ -226,18 +226,18 @@ async def test_status_all(buck: Buck) -> None:
     )
 
 
-@buck_test()
+@yak_test()
 @env("YAK_LOG", "yak_client_ctx::daemon::client::kill=debug")
-async def test_no_buckd_kills_existing_daemon(buck: Buck) -> None:
-    await buck.audit("cell")  # Start the daemon
-    result = await buck.audit("cell", "--no-yakd")  # Kill the existing daemon
+async def test_no_yakd_kills_existing_daemon(yak: Yak) -> None:
+    await yak.audit("cell")  # Start the daemon
+    result = await yak.audit("cell", "--no-yakd")  # Kill the existing daemon
     assert "Killing daemon with PID" in result.stderr
 
 
-@buck_test()
-async def test_buck_out_is_cache_dir(buck: Buck) -> None:
-    await buck.targets(":")  # Start a daemon
-    root = await buck.root()
+@yak_test()
+async def test_yak_out_is_cache_dir(yak: Yak) -> None:
+    await yak.targets(":")  # Start a daemon
+    root = await yak.root()
     assert (
         (Path(root.stdout.strip()) / "yak-out" / "v2" / "CACHEDIR.TAG")
         .read_text(encoding="utf-8")
@@ -245,11 +245,11 @@ async def test_buck_out_is_cache_dir(buck: Buck) -> None:
     )
 
 
-@buck_test()
-async def test_prev_daemon_dir(buck: Buck) -> None:
-    await buck.targets(":")  # Start a daemon
-    await buck.kill()
-    await buck.targets(":")  # Start another daemon
+@yak_test()
+async def test_prev_daemon_dir(yak: Yak) -> None:
+    await yak.targets(":")  # Start a daemon
+    await yak.kill()
+    await yak.targets(":")  # Start another daemon
 
     def extract_pid(stderr: str) -> int:
         pid = [re.match(r".* PID: (\d+)", line) for line in stderr.splitlines()]
@@ -257,8 +257,8 @@ async def test_prev_daemon_dir(buck: Buck) -> None:
         assert len(pid) == 1, pid[0]
         return int(pid[0].group(1))
 
-    new_daemon_stderr = await buck.daemon_stderr()
-    killed_daemon_stderr = await buck.prev_daemon_stderr()
+    new_daemon_stderr = await yak.daemon_stderr()
+    killed_daemon_stderr = await yak.prev_daemon_stderr()
 
     # check logs contain yakd pid and don't match
     assert extract_pid(new_daemon_stderr) != extract_pid(killed_daemon_stderr)
@@ -266,17 +266,17 @@ async def test_prev_daemon_dir(buck: Buck) -> None:
     assert "triggered shutdown: `yak kill` was invoked" in killed_daemon_stderr
 
 
-@buck_test()
+@yak_test()
 @env("YAK_TESTING_INACTIVITY_TIMEOUT", "true")
 @env("YAKD_STARTUP_INIT_TIMEOUT", "20")
-async def test_recovers_promptly_after_inactivity_shutdown(buck: Buck) -> None:
+async def test_recovers_promptly_after_inactivity_shutdown(yak: Yak) -> None:
     # A daemon that retires on its inactivity timeout leaves yakd.info behind
     # naming a pid that is gone. The next invocation must notice that quickly and
     # start a fresh daemon; it used to be suspected of spending the whole startup
     # budget here, which would turn an idle daemon into a 90s CLIENT_STARTUP_TIMEOUT.
-    status = await buck.server("--status")
+    status = await yak.server("--status")
     pid = json.loads(status.stdout)["process_info"]["pid"]
-    daemon_dir = await buck.get_daemon_dir()
+    daemon_dir = await yak.get_daemon_dir()
 
     for _ in range(20):
         time.sleep(1)
@@ -289,7 +289,7 @@ async def test_recovers_promptly_after_inactivity_shutdown(buck: Buck) -> None:
     assert (daemon_dir / "yakd.info").exists(), "stale yakd.info is the point"
 
     start = time.time()
-    result = await buck.targets("//:rule")
+    result = await yak.targets("//:rule")
     elapsed = time.time() - start
 
     assert "yak daemon is not running" in result.stderr, result.stderr
@@ -298,19 +298,19 @@ async def test_recovers_promptly_after_inactivity_shutdown(buck: Buck) -> None:
     assert elapsed < 15.0, f"took {elapsed:.2f}s to recover"
 
 
-@buck_test()
+@yak_test()
 @env("YAK_TESTING_INACTIVITY_TIMEOUT", "true")
-async def test_inactivity_shutdown_exits_with_a_command_in_flight(buck: Buck) -> None:
+async def test_inactivity_shutdown_exits_with_a_command_in_flight(yak: Yak) -> None:
     # The inactivity timer is only reset when a command *starts*, so a long lived
     # streaming command lets the timeout fire underneath itself. The daemon then
     # cannot finish draining while the client holds the stream open, and it used
     # to sit alive forever - still accepting connections it would never answer,
     # so every later invocation on this isolation dir burned its startup budget.
-    status = await buck.server("--status")
+    status = await yak.server("--status")
     pid = json.loads(status.stdout)["process_info"]["pid"]
-    daemon_dir = await buck.get_daemon_dir()
+    daemon_dir = await yak.get_daemon_dir()
 
-    subscriber = await buck.subscribe()
+    subscriber = await yak.subscribe()
     try:
         for _ in range(20):
             time.sleep(1)
@@ -336,5 +336,5 @@ async def test_inactivity_shutdown_exits_with_a_command_in_flight(buck: Buck) ->
         # Exiting tears the stream down under the subscriber, so it reports a
         # broken connection. That is the deliberate trade: the command is
         # terminated rather than the daemon being left alive and unusable.
-        with contextlib.suppress(BuckException):
+        with contextlib.suppress(YakException):
             await subscriber.__aexit__(None, None, None)

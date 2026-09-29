@@ -12,7 +12,7 @@ const $target = document.getElementById("target");
 const $completions = document.getElementById("completions");
 const $forward = document.getElementById("forward");
 const $backward = document.getElementById("backward");
-const $buckdir = document.getElementById("buckdir");
+const $yakdir = document.getElementById("yakdir");
 const $host = document.getElementById("host");
 
 // Note that we clear the $output by setting innerHTML,
@@ -141,16 +141,16 @@ addTab("providers", /(Providers|[A-Z][A-Za-z]*Info)/, async () => {
     return await window.api.providers($target.value, $host.value);
 });
 
-function update_buckdir(dir) {
-    $buckdir.title = "yak directory: " + dir;
+function update_yakdir(dir) {
+    $yakdir.title = "yak directory: " + dir;
 }
 
-$buckdir.addEventListener('click', async (e) => {
-    const res = await window.api.select_buck_dir();
-    update_buckdir(res);
+$yakdir.addEventListener('click', async (e) => {
+    const res = await window.api.select_yak_dir();
+    update_yakdir(res);
 });
 
 (async function(){
-    const buck_dir = await window.api.current_buck_dir();
-    update_buckdir(buck_dir);
+    const yak_dir = await window.api.current_yak_dir();
+    update_yakdir(yak_dir);
 })();

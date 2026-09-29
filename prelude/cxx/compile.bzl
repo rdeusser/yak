@@ -83,7 +83,7 @@ load(
 # plan must declare its outputs under the same folder as the objects it feeds.
 _OBJECTS_FOLDER = "__objects__"
 
-_CUDA_DRYRUN_SOURCE_PLACEHOLDER = "__buck2_cuda_dryrun_placeholder__.cu"
+_CUDA_DRYRUN_SOURCE_PLACEHOLDER = "__yak_cuda_dryrun_placeholder__.cu"
 
 # Record containing compile info that will be passed to the dynamic action
 CxxCompileInfo = record(
@@ -1158,7 +1158,7 @@ def _cxx_dynamic_compile(
 
     return [EMPTY_DEFAULT_INFO]
 
-# https://rdeusser.github.io/buck2/docs/api/build/AnalysisActions/#analysisactionsdynamic_output_new
+# https://rdeusser.github.io/yak/docs/api/build/AnalysisActions/#analysisactionsdynamic_output_new
 # Dynamic actions factory for batch CXX compilation
 _dynamic_compile_rule = dynamic_actions(
     impl = _cxx_dynamic_compile,
@@ -2267,11 +2267,11 @@ def _mk_argsfiles(
             deps_args.append(headers_tag.tag_artifacts(preprocessor.set.project_as_args("modular_args")))
 
         # filename example: .cpp.deps_cxx_args, .cpp.deps_cxx_args_redacted
-        deps_argsfile_for_compiler, deps_argsfile_for_buck_action_rerun = mk_argsfile_for_dep_file_filtering(filename_prefix + "deps_cxx_args", deps_args)
+        deps_argsfile_for_compiler, deps_argsfile_for_yak_action_rerun = mk_argsfile_for_dep_file_filtering(filename_prefix + "deps_cxx_args", deps_args)
         argsfiles.append(
             cmd_args(
                 headers_tag.tag_artifacts(deps_argsfile_for_compiler),
-                hidden = [deps_argsfile_for_buck_action_rerun] if deps_argsfile_for_buck_action_rerun != None else [],
+                hidden = [deps_argsfile_for_yak_action_rerun] if deps_argsfile_for_yak_action_rerun != None else [],
             )
         )
         args_list.extend(deps_args)
@@ -2360,27 +2360,27 @@ def _mk_argsfiles(
                 file_prefix_args,
                 delimiter = " ",
             )
-            specs_file, specs_file_for_buck_action_rerun = write_for_dep_file_filtering(
+            specs_file, specs_file_for_yak_action_rerun = write_for_dep_file_filtering(
                 file_prefix_args_filename + ".specs",
                 specs_content,
             )
             prefix_ref = cmd_args(
                 headers_tag.tag_artifacts(specs_file),
                 format = "-specs={}",
-                hidden = specs_file_for_buck_action_rerun,
+                hidden = specs_file_for_yak_action_rerun,
             )
             file_prefix_specs.append(specs_file)
         else:
             prefix_ref = file_prefix_args
 
-        file_prefix_argsfile_for_compiler, file_prefix_argsfile_for_buck_action_rerun = mk_argsfile_for_dep_file_filtering(
+        file_prefix_argsfile_for_compiler, file_prefix_argsfile_for_yak_action_rerun = mk_argsfile_for_dep_file_filtering(
             file_prefix_args_filename,
             prefix_ref,
         )
         argsfiles.append(
             cmd_args(
                 headers_tag.tag_artifacts(file_prefix_argsfile_for_compiler),
-                hidden = file_prefix_argsfile_for_buck_action_rerun,
+                hidden = file_prefix_argsfile_for_yak_action_rerun,
             )
         )
         args_list.append(prefix_ref)
@@ -2398,7 +2398,7 @@ def _mk_argsfiles(
     file_name = filename_prefix + "cxx_compile_argsfile"
 
     # For Xcode to parse argsfiles of argsfiles, the paths in the former must be absolute.
-    argsfile, argsfile_for_buck_action_rerun = write_for_dep_file_filtering(
+    argsfile, argsfile_for_yak_action_rerun = write_for_dep_file_filtering(
         file_name,
         file_args,
         absolute = is_xcode_argsfile,
@@ -2406,8 +2406,8 @@ def _mk_argsfiles(
 
     args = create_cmd_args(is_nasm, is_xcode_argsfile, args_list)
     input_args = [args, file_args]
-    if argsfile_for_buck_action_rerun != None:
-        input_args.append(argsfile_for_buck_action_rerun)
+    if argsfile_for_yak_action_rerun != None:
+        input_args.append(argsfile_for_yak_action_rerun)
 
     cmd_form = cmd_args(
         headers_tag.tag_artifacts(argsfile),

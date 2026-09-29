@@ -9,13 +9,13 @@
  */
 
 pub fn create_listener() -> yak_error::Result<(
-    yak_common::buckd_connection::ConnectionType,
+    yak_common::yakd_connection::ConnectionType,
     std::net::TcpListener,
 )> {
     use std::net::Ipv4Addr;
     use std::net::SocketAddr;
 
-    use yak_common::buckd_connection::ConnectionType;
+    use yak_common::yakd_connection::ConnectionType;
 
     let addr = SocketAddr::new(Ipv4Addr::LOCALHOST.into(), 0);
     let tcp_listener = std::net::TcpListener::bind(addr)?;
@@ -32,7 +32,7 @@ pub fn create_listener() -> yak_error::Result<(
 #[cfg(test)]
 mod tests {
     use assert_matches::assert_matches;
-    use yak_common::buckd_connection::ConnectionType;
+    use yak_common::yakd_connection::ConnectionType;
 
     use crate::daemon::daemon_tcp::create_listener;
 

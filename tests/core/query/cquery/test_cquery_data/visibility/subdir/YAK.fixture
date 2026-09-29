@@ -30,12 +30,12 @@ stub(
 stub(
     name = "badpackage",
     # TODO(cjhopman): This should check a package that's a prefix of the dependent, but yak doesn't handle that correctly currently.
-    visibility = ["//buck2:"],
+    visibility = ["//yak:"],
 )
 
 stub(
     name = "badrecursive",
-    visibility = ["//buck2/..."],
+    visibility = ["//yak/..."],
 )
 
 stub(

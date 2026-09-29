@@ -37,11 +37,11 @@ use yak_core::provider::label::ProvidersLabel;
 use yak_core::unsafe_send_future::UnsafeSendFuture;
 use yak_events::dispatch::get_dispatcher;
 use yak_interpreter::dice::starlark_provider::StarlarkEvalKind;
-use yak_interpreter::factory::BuckStarlarkModule;
+use yak_interpreter::factory::YakStarlarkModule;
 use yak_interpreter::factory::ReentrantStarlarkEvaluator;
 use yak_interpreter::factory::StarlarkEvaluatorProvider;
 use yak_interpreter::print_handler::EventDispatcherPrintHandler;
-use yak_interpreter::soft_error::Buck2StarlarkSoftErrorHandler;
+use yak_interpreter::soft_error::YakStarlarkSoftErrorHandler;
 use yak_node::cfg_constructor::CFG_CONSTRUCTOR_CALCULATION_IMPL;
 use yak_node::cfg_constructor::CfgConstructorImpl;
 use yak_node::metadata::key::MetadataKey;
@@ -87,7 +87,7 @@ async fn eval_pre_constraint_analysis<'v, 'a>(
 ) -> yak_error::Result<(Vec<String>, Value<'v>)> {
     reentrant_eval.with_evaluator(|eval| {
         eval.set_print_handler(print);
-        eval.set_soft_error_handler(&Buck2StarlarkSoftErrorHandler);
+        eval.set_soft_error_handler(&YakStarlarkSoftErrorHandler);
 
         let legacy_platform = if cfg.is_bound() {
             eval.heap()
@@ -228,7 +228,7 @@ async fn eval_underlying(
     let eval_kind = StarlarkEvalKind::Unknown("constraint-analysis invocation".into());
     let provider = StarlarkEvaluatorProvider::new(ctx, eval_kind).await?;
 
-    BuckStarlarkModule::with_profiling_async(async move |module| {
+    YakStarlarkModule::with_profiling_async(async move |module| {
         let mut reentrant_eval = provider.make_reentrant_evaluator(&module, cancellation.into())?;
 
         let to_heap = |v: &OwnedFrozen<Value<'static>>| v.as_ref().add_to_heap(module.heap());

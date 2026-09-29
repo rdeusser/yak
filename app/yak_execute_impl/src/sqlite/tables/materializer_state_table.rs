@@ -35,9 +35,9 @@ use yak_directory::directory::directory_iterator::DirectoryIterator;
 use yak_directory::directory::directory_iterator::DirectoryIteratorPathStack;
 use yak_directory::directory::entry::DirectoryEntry;
 use yak_directory::directory::walk::unordered_entry_walk;
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 use yak_error::conversion::from_any_with_tag;
-use yak_error::conversion::rusqlite::Buck2ErrorAsRusqliteError;
+use yak_error::conversion::rusqlite::YakErrorAsRusqliteError;
 use yak_error::internal_error;
 use yak_execute::digest_config::DigestConfig;
 use yak_execute::directory::ActionDirectoryBuilder;
@@ -46,7 +46,7 @@ use yak_execute::directory::ActionDirectoryMember;
 use yak_execute::directory::ActionSharedDirectory;
 use yak_execute::directory::INTERNER;
 use yak_fs::paths::forward_rel_path::ForwardRelativePathBuf;
-use yak_hash::BuckMutMap;
+use yak_hash::YakMutMap;
 
 use crate::materializers::artifact_type::ARTIFACT_TYPE_DIRECTORY;
 use crate::materializers::artifact_type::ARTIFACT_TYPE_EXTERNAL_SYMLINK;
@@ -100,7 +100,7 @@ impl FromSql for ArtifactClassification {
         match value.as_i64()? {
             0 => Ok(Self::IntermediateOnly),
             1 => Ok(Self::FinalOutput),
-            invalid => Err(FromSqlError::Other(Box::new(Buck2ErrorAsRusqliteError(
+            invalid => Err(FromSqlError::Other(Box::new(YakErrorAsRusqliteError(
                 internal_error!("invalid artifact classification `{invalid}`"),
             )))),
         }
@@ -320,7 +320,7 @@ fn convert_sqlite_entries_to_materializer_state(
         children: Vec<SqliteEntry<'a>>,
     }
 
-    let mut directories: BuckMutMap<ProjectRelativePathBuf, DirectoryData> = BuckMutMap::default();
+    let mut directories: YakMutMap<ProjectRelativePathBuf, DirectoryData> = YakMutMap::default();
 
     let mut results = Vec::new();
 
@@ -460,7 +460,7 @@ fn digest(
     let entry_hash_kind = entry_hash_kind
         .try_into()
         .map_err(|e| from_any_with_tag(e, yak_error::ErrorTag::Tier0))
-        .with_buck_error_context(|| format!("Invalid entry_hash_kind: `{entry_hash_kind}`"))?;
+        .with_yak_error_context(|| format!("Invalid entry_hash_kind: `{entry_hash_kind}`"))?;
 
     let file_digest = FileDigest::from_digest_bytes(entry_hash_kind, entry_hash, size)?;
     Ok(TrackedFileDigest::new(
@@ -550,7 +550,7 @@ impl MaterializerStateSqliteTable {
         self.connection
             .lock()
             .execute(&sql, [])
-            .with_buck_error_context(|| format!("creating sqlite table {STATE_TABLE_NAME}"))?;
+            .with_yak_error_context(|| format!("creating sqlite table {STATE_TABLE_NAME}"))?;
         self.create_parent_path_index()?;
         Ok(())
     }
@@ -566,7 +566,7 @@ impl MaterializerStateSqliteTable {
         self.connection
             .lock()
             .execute(&sql, [])
-            .with_buck_error_context(|| format!("creating index on {STATE_TABLE_NAME}"))?;
+            .with_yak_error_context(|| format!("creating index on {STATE_TABLE_NAME}"))?;
         Ok(())
     }
 
@@ -603,7 +603,7 @@ impl MaterializerStateSqliteTable {
                     entry.classification,
                 ],
             )
-            .with_buck_error_context(|| {
+            .with_yak_error_context(|| {
                 format!("inserting `{path}` into sqlite table {STATE_TABLE_NAME}")
             })?;
         }
@@ -626,7 +626,7 @@ impl MaterializerStateSqliteTable {
             );
             tracing::trace!(sql = %sql, chunk = ?chunk, "updating last_access_times");
             tx.execute(&sql, rusqlite::params_from_iter(chunk.map(|p| p.as_str())))
-                .with_buck_error_context(|| format!("updating sqlite table {STATE_TABLE_NAME}"))?;
+                .with_yak_error_context(|| format!("updating sqlite table {STATE_TABLE_NAME}"))?;
         }
         tx.commit()?;
         Ok(())
@@ -650,7 +650,7 @@ impl MaterializerStateSqliteTable {
                 &sql,
                 rusqlite::params_from_iter(chunk.iter().map(|path| path.as_str())),
             )
-            .with_buck_error_context(|| {
+            .with_yak_error_context(|| {
                 format!("updating classifications in sqlite table {STATE_TABLE_NAME}")
             })?;
         }
@@ -662,7 +662,7 @@ impl MaterializerStateSqliteTable {
         &self,
         digest_config: DigestConfig,
     ) -> yak_error::Result<MaterializerState> {
-        let entries = self.read_all_entries().with_buck_error_context(|| {
+        let entries = self.read_all_entries().with_yak_error_context(|| {
             format!("error reading row of sqlite table {STATE_TABLE_NAME}")
         })?;
         convert_sqlite_entries_to_materializer_state(entries, digest_config)
@@ -692,7 +692,7 @@ impl MaterializerStateSqliteTable {
             ))
         })?
         .collect::<Result<Vec<_>, _>>()
-        .with_buck_error_context(|| format!("reading from sqlite table {STATE_TABLE_NAME}"))
+        .with_yak_error_context(|| format!("reading from sqlite table {STATE_TABLE_NAME}"))
     }
 
     pub(crate) fn delete(&self, paths: Vec<ProjectRelativePathBuf>) -> yak_error::Result<usize> {
@@ -722,7 +722,7 @@ impl MaterializerStateSqliteTable {
                     &sql,
                     rusqlite::params_from_iter(paths.iter().map(|p| p.as_str())),
                 )
-                .with_buck_error_context(|| {
+                .with_yak_error_context(|| {
                     format!("deleting artifact rows from sqlite table {STATE_TABLE_NAME}")
                 })
         }
@@ -747,7 +747,7 @@ impl MaterializerStateSqliteTable {
                     &sql,
                     rusqlite::params_from_iter(paths.iter().map(|p| p.as_str())),
                 )
-                .with_buck_error_context(|| {
+                .with_yak_error_context(|| {
                     format!(
                         "deleting directory artifact members from sqlite table {STATE_TABLE_NAME}"
                     )

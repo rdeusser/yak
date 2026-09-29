@@ -20,26 +20,26 @@ pub struct DaemonDir {
 
 impl DaemonDir {
     /// Path to `yakd.info` file.
-    pub fn buckd_info(&self) -> AbsNormPathBuf {
+    pub fn yakd_info(&self) -> AbsNormPathBuf {
         self.path.join(FileName::new("yakd.info").unwrap())
     }
 
     /// Path to `yakd.stdout` file.
-    pub fn buckd_stdout(&self) -> AbsNormPathBuf {
+    pub fn yakd_stdout(&self) -> AbsNormPathBuf {
         self.path.join(FileName::new("yakd.stdout").unwrap())
     }
 
     /// Path to `yakd.stderr` file.
-    pub fn buckd_stderr(&self) -> AbsNormPathBuf {
+    pub fn yakd_stderr(&self) -> AbsNormPathBuf {
         self.path.join(FileName::new("yakd.stderr").unwrap())
     }
 
     /// Path to `yakd.pid` file.
-    pub fn buckd_pid(&self) -> AbsNormPathBuf {
+    pub fn yakd_pid(&self) -> AbsNormPathBuf {
         self.path.join(FileName::new("yakd.pid").unwrap())
     }
 
-    pub fn buckd_error_log(&self) -> AbsNormPathBuf {
+    pub fn yakd_error_log(&self) -> AbsNormPathBuf {
         self.path.join(FileName::new("yakd.error.log").unwrap())
     }
 }

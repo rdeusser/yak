@@ -57,7 +57,7 @@ use yak_core::deferred::base_deferred_key::BaseDeferredKey;
 use yak_core::deferred::dynamic::DynamicLambdaResultsKey;
 use yak_core::deferred::key::DeferredHolderKey;
 use yak_core::fs::artifact_path_resolver::ArtifactFs;
-use yak_error::BuckErrorOptionContext;
+use yak_error::YakErrorOptionContext;
 use yak_error::internal_error;
 use yak_error::yak_error;
 use yak_events::dispatch::get_dispatcher;
@@ -71,14 +71,14 @@ use yak_execute::digest_config::DigestConfig;
 use yak_execute::digest_config::HasDigestConfig;
 use yak_execute::materialize::materializer::HasMaterializer;
 use yak_execute::materialize::materializer::MaterializationPurpose;
-use yak_hash::BuckIndexMap;
-use yak_hash::BuckMutMap;
+use yak_hash::YakIndexMap;
+use yak_hash::YakMutMap;
 use yak_interpreter::dice::starlark_provider::StarlarkEvalKind;
-use yak_interpreter::factory::BuckStarlarkModule;
+use yak_interpreter::factory::YakStarlarkModule;
 use yak_interpreter::factory::FinishedStarlarkEvaluation;
 use yak_interpreter::factory::StarlarkEvaluatorProvider;
 use yak_interpreter::print_handler::EventDispatcherPrintHandler;
-use yak_interpreter::soft_error::Buck2StarlarkSoftErrorHandler;
+use yak_interpreter::soft_error::YakStarlarkSoftErrorHandler;
 use yak_util::time_span::TimeSpan;
 
 use crate::dynamic::attrs::DynamicAttrValue;
@@ -166,13 +166,13 @@ pub fn invoke_dynamic_output_lambda<'v>(
 }
 
 fn execute_lambda_inner<'v>(
-    env: &BuckStarlarkModule<'v>,
+    env: &YakStarlarkModule<'v>,
     eval_provider: StarlarkEvaluatorProvider,
     liveness: CancellationObserver,
     lambda: OwnedFrozenRef<'_, &'static FrozenDynamicLambdaParams<'static>>,
     self_key: &DynamicLambdaResultsKey,
-    resolved_dynamic_values: BuckMutMap<DynamicValue, FrozenProviderCollectionValue>,
-    ensured_artifacts: &BuckIndexMap<&Artifact, &ArtifactValue>,
+    resolved_dynamic_values: YakMutMap<DynamicValue, FrozenProviderCollectionValue>,
+    ensured_artifacts: &YakIndexMap<&Artifact, &ArtifactValue>,
     input_artifacts_materialized: InputArtifactsMaterialized,
     digest_config: DigestConfig,
     artifact_fs: &ArtifactFs,
@@ -181,7 +181,7 @@ fn execute_lambda_inner<'v>(
     eval_provider.with_evaluator(env, liveness.into(), |eval, _| {
         let heap = env.heap();
         eval.set_print_handler(&print);
-        eval.set_soft_error_handler(&Buck2StarlarkSoftErrorHandler);
+        eval.set_soft_error_handler(&YakStarlarkSoftErrorHandler);
         let dynamic_lambda_ctx_data = dynamic_lambda_ctx_data(
             lambda,
             self_key.dupe(),
@@ -253,8 +253,8 @@ async fn execute_lambda(
     lambda: OwnedFrozenRef<'_, &'static FrozenDynamicLambdaParams<'static>>,
     dice: &mut DiceComputations<'_>,
     self_key: DynamicLambdaResultsKey,
-    resolved_dynamic_values: BuckMutMap<DynamicValue, FrozenProviderCollectionValue>,
-    ensured_artifacts: &BuckIndexMap<&Artifact, &ArtifactValue>,
+    resolved_dynamic_values: YakMutMap<DynamicValue, FrozenProviderCollectionValue>,
+    ensured_artifacts: &YakIndexMap<&Artifact, &ArtifactValue>,
     input_artifacts_materialized: InputArtifactsMaterialized,
     digest_config: DigestConfig,
     liveness: CancellationObserver,
@@ -308,7 +308,7 @@ async fn execute_lambda(
                 let mut declared_actions = None;
                 let mut declared_artifacts = None;
 
-                let output: yak_error::Result<_> = BuckStarlarkModule::with_profiling(|env| {
+                let output: yak_error::Result<_> = YakStarlarkModule::with_profiling(|env| {
                     let (finished_evaluation, analysis_registry) = execute_lambda_inner(
                         &env,
                         eval_provider,
@@ -364,7 +364,7 @@ pub(crate) async fn prepare_and_execute_lambda(
     // the grand scheme of things that's probably not a huge deal.
     let all_artifact_group_values =
         ensure_artifacts_built(&lambda.value().static_fields.artifact_values, ctx).await?;
-    let ensured_artifacts: BuckIndexMap<_, _> = all_artifact_group_values
+    let ensured_artifacts: YakIndexMap<_, _> = all_artifact_group_values
         .iter()
         .flat_map(|x| x.iter())
         .map(|(a, v)| (a, v))
@@ -447,7 +447,7 @@ async fn ensure_artifacts_built(
 pub struct InputArtifactsMaterialized(());
 
 async fn materialize_inputs(
-    ensured_artifacts: &BuckIndexMap<&Artifact, &ArtifactValue>,
+    ensured_artifacts: &YakIndexMap<&Artifact, &ArtifactValue>,
     ctx: &mut DiceComputations<'_>,
 ) -> yak_error::Result<InputArtifactsMaterialized> {
     if ensured_artifacts.is_empty() {
@@ -482,9 +482,9 @@ async fn materialize_inputs(
 async fn resolve_dynamic_values(
     dynamic_values: &[DynamicValue],
     ctx: &mut DiceComputations<'_>,
-) -> yak_error::Result<BuckMutMap<DynamicValue, FrozenProviderCollectionValue>> {
+) -> yak_error::Result<YakMutMap<DynamicValue, FrozenProviderCollectionValue>> {
     if dynamic_values.is_empty() {
-        return Ok(BuckMutMap::default());
+        return Ok(YakMutMap::default());
     }
 
     let providers = ctx
@@ -498,7 +498,7 @@ async fn resolve_dynamic_values(
         })
         .await?;
 
-    Ok(BuckMutMap::from_iter(providers))
+    Ok(YakMutMap::from_iter(providers))
 }
 
 pub enum DynamicLambdaCtxDataSpec<'v> {
@@ -521,7 +521,7 @@ pub struct DynamicLambdaCtxData<'v> {
 
 /// Prepare dict of artifact values for dynamic actions.
 fn artifact_values<'v>(
-    ensured_artifacts: &BuckIndexMap<&Artifact, &ArtifactValue>,
+    ensured_artifacts: &YakIndexMap<&Artifact, &ArtifactValue>,
     _: InputArtifactsMaterialized,
     artifact_fs: &ArtifactFs,
     heap: Heap<'v>,
@@ -569,10 +569,10 @@ fn outputs<'v>(
 fn new_attr_value<'v>(
     value: &DynamicAttrValue<'v>,
     _input_artifacts_materialized: InputArtifactsMaterialized,
-    ensured_artifacts: &BuckIndexMap<&Artifact, &ArtifactValue>,
+    ensured_artifacts: &YakIndexMap<&Artifact, &ArtifactValue>,
     artifact_fs: &ArtifactFs,
     registry: &mut AnalysisRegistry<'v>,
-    resolved_dynamic_values: &BuckMutMap<DynamicValue, FrozenProviderCollectionValue>,
+    resolved_dynamic_values: &YakMutMap<DynamicValue, FrozenProviderCollectionValue>,
     env: &Module<'v>,
 ) -> yak_error::Result<Value<'v>> {
     match value {
@@ -700,10 +700,10 @@ fn new_attr_values<'v>(
     values: &DynamicAttrValues<'v>,
     callable: &FrozenStarlarkDynamicActionsCallable<'_>,
     input_artifacts_materialized: InputArtifactsMaterialized,
-    ensured_artifacts: &BuckIndexMap<&Artifact, &ArtifactValue>,
+    ensured_artifacts: &YakIndexMap<&Artifact, &ArtifactValue>,
     artifact_fs: &ArtifactFs,
     registry: &mut AnalysisRegistry<'v>,
-    resolved_dynamic_values: &BuckMutMap<DynamicValue, FrozenProviderCollectionValue>,
+    resolved_dynamic_values: &YakMutMap<DynamicValue, FrozenProviderCollectionValue>,
     env: &Module<'v>,
 ) -> yak_error::Result<Box<[(String, Value<'v>)]>> {
     if values.values.len() != callable.attrs.len() {
@@ -735,8 +735,8 @@ pub fn dynamic_lambda_ctx_data<'v>(
     dynamic_lambda: OwnedFrozenRef<'_, &'static FrozenDynamicLambdaParams<'static>>,
     self_key: DynamicLambdaResultsKey,
     input_artifacts_materialized: InputArtifactsMaterialized,
-    ensured_artifacts: &BuckIndexMap<&Artifact, &ArtifactValue>,
-    resolved_dynamic_values: &BuckMutMap<DynamicValue, FrozenProviderCollectionValue>,
+    ensured_artifacts: &YakIndexMap<&Artifact, &ArtifactValue>,
+    resolved_dynamic_values: &YakMutMap<DynamicValue, FrozenProviderCollectionValue>,
     artifact_fs: &ArtifactFs,
     digest_config: DigestConfig,
     env: &Module<'v>,

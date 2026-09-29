@@ -45,15 +45,15 @@ use yak_events::dispatch::get_dispatcher_opt;
 use yak_events::dispatch::with_dispatcher_opt_async;
 use yak_fs::fs_util;
 use yak_fs::paths::abs_norm_path::AbsNormPath;
-use yak_hash::BuckMutMap;
+use yak_hash::YakMutMap;
 use yak_hash::IntentionallyStdHashMap;
 use yak_interpreter::starlark_debug::StarlarkDebugController;
 
-use crate::BuckStarlarkDebuggerHandle;
+use crate::YakStarlarkDebuggerHandle;
 use crate::HandleData;
 use crate::HandleId;
 use crate::HookId;
-use crate::controller::BuckStarlarkDebugController;
+use crate::controller::YakStarlarkDebugController;
 use crate::dap_api::ContinueArguments;
 use crate::dap_api::DebugServer;
 use crate::dap_api::dap_event;
@@ -94,10 +94,10 @@ enum DebuggerError {
 
 /// The yak starlark debugger server. Most of the work is managed by the single-threaded server state.
 ///
-/// There will be several references to the BuckStarlarkDebuggerServer instance and it will forward messages
+/// There will be several references to the YakStarlarkDebuggerServer instance and it will forward messages
 /// along to the state.
 #[derive(Debug)]
-pub(crate) struct BuckStarlarkDebuggerServer {
+pub(crate) struct YakStarlarkDebuggerServer {
     to_state: mpsc::UnboundedSender<ServerMessage>,
     next_handle_id: AtomicU32,
     /// When debugging a starlark evaluation, we wrap it in tokio::task::block_in_place (so that when it is paused
@@ -109,7 +109,7 @@ pub(crate) struct BuckStarlarkDebuggerServer {
     eval_semaphore: Arc<Semaphore>,
 }
 
-impl BuckStarlarkDebuggerServer {
+impl YakStarlarkDebuggerServer {
     pub(crate) fn new(
         to_client: mpsc::UnboundedSender<ToClientMessage>,
         project_root: ProjectRoot,
@@ -148,13 +148,13 @@ impl BuckStarlarkDebuggerServer {
     pub(crate) fn new_handle(
         self: &Arc<Self>,
         events: EventDispatcher,
-    ) -> Option<BuckStarlarkDebuggerHandle> {
+    ) -> Option<YakStarlarkDebuggerHandle> {
         let handle_id = HandleId(self.next_handle_id.fetch_add(1, Ordering::Relaxed));
         self.maybe_to_state(ServerMessage::NewHandle {
             id: handle_id,
             events,
         });
-        Some(BuckStarlarkDebuggerHandle(Arc::new(HandleData {
+        Some(YakStarlarkDebuggerHandle(Arc::new(HandleData {
             id: handle_id,
             server: self.clone(),
         })))
@@ -167,7 +167,7 @@ impl BuckStarlarkDebuggerServer {
     /// debugger is attached and so we need to otherwise limit the concurrent ones.
     pub(crate) async fn start_eval(
         self: &Arc<Self>,
-        handle: &BuckStarlarkDebuggerHandle,
+        handle: &YakStarlarkDebuggerHandle,
         description: &str,
     ) -> yak_error::Result<Box<dyn StarlarkDebugController>> {
         debug!("starting debug-hooked eval {}", description);
@@ -193,7 +193,7 @@ impl BuckStarlarkDebuggerServer {
                 (HookId(u32::MAX), None)
             }
         };
-        Ok(Box::new(BuckStarlarkDebugController::new(
+        Ok(Box::new(YakStarlarkDebugController::new(
             eval_wrapper,
             hook_id,
             description,
@@ -237,7 +237,7 @@ impl BuckStarlarkDebuggerServer {
 /// Messages to the debugger server state
 enum ServerMessage {
     NewHook {
-        handle: BuckStarlarkDebuggerHandle,
+        handle: YakStarlarkDebuggerHandle,
         description: String,
         response_channel: oneshot::Sender<(HookId, Option<Box<dyn DapAdapterEvalHook>>)>,
     },
@@ -272,16 +272,16 @@ struct ServerState {
     to_client: mpsc::UnboundedSender<ToClientMessage>,
 
     /// The currently set breakpoints. New hooks will be initialized with these.
-    set_breakpoints: BuckMutMap<String, ResolvedBreakpoints>,
+    set_breakpoints: YakMutMap<String, ResolvedBreakpoints>,
 
     /// The project root is used to get the current source code to resolve breakpoints.
     project_root: ProjectRoot,
 
     /// Currently executing yak commands, this is primarily used to send debugger snapshots.
-    current_commands: BuckMutMap<HandleId, CommandState>,
+    current_commands: YakMutMap<HandleId, CommandState>,
 
     /// Current starlark evaluation hooks.
-    current_hooks: BuckMutMap<HookId, HookState>,
+    current_hooks: YakMutMap<HookId, HookState>,
 
     /// HookIds are simply incrementing.
     next_hook_id: HookId,
@@ -296,7 +296,7 @@ struct ServerState {
     /// This data structure keeps track of destructured local variables obtained by debugger at breakpoint
     /// this is required to satify incremental nature of VariablesRequeste
     /// variables are lazily fetched from starlark evaluator and cached by thread id
-    variables_by_thread: BuckMutMap<u32, VariablesKnownPaths>,
+    variables_by_thread: YakMutMap<u32, VariablesKnownPaths>,
 }
 
 /// This type is using bitmasking to pack "frame_id, thread_id, variable_id" into an integer value
@@ -690,13 +690,13 @@ impl ServerState {
         Self {
             to_client,
             project_root,
-            current_commands: BuckMutMap::default(),
-            current_hooks: BuckMutMap::default(),
+            current_commands: YakMutMap::default(),
+            current_hooks: YakMutMap::default(),
             free_pseudo_threads: BTreeSet::new(),
             next_pseudo_thread: 0,
             next_hook_id: HookId(0),
-            set_breakpoints: BuckMutMap::default(),
-            variables_by_thread: BuckMutMap::default(),
+            set_breakpoints: YakMutMap::default(),
+            variables_by_thread: YakMutMap::default(),
         }
     }
 
@@ -823,12 +823,12 @@ impl ServerState {
 
     fn new_hook(
         &mut self,
-        handle: BuckStarlarkDebuggerHandle,
+        handle: YakStarlarkDebuggerHandle,
         description: String,
     ) -> yak_error::Result<(HookId, Option<Box<dyn DapAdapterEvalHook>>)> {
         let (hook_id, pseudo_thread_id) = self.next_hook_id();
 
-        let client = Box::new(BuckStarlarkDapAdapterClient {
+        let client = Box::new(YakStarlarkDapAdapterClient {
             handle: handle.dupe(),
             hook_id,
         });
@@ -960,12 +960,12 @@ impl ServerState {
 /// forward along events to the server with the hook_id (so the server can tell
 /// which evaluation the event came from).
 #[derive(Debug)]
-struct BuckStarlarkDapAdapterClient {
-    handle: BuckStarlarkDebuggerHandle,
+struct YakStarlarkDapAdapterClient {
+    handle: YakStarlarkDebuggerHandle,
     hook_id: HookId,
 }
 
-impl DapAdapterClient for BuckStarlarkDapAdapterClient {
+impl DapAdapterClient for YakStarlarkDapAdapterClient {
     fn event_stopped(&self) -> starlark::Result<()> {
         self.handle.0.server.event_stopped(self.hook_id);
         Ok(())

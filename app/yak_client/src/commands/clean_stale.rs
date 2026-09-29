@@ -14,19 +14,19 @@ use jiff::Timestamp;
 use yak_cli_proto::CleanStaleRequest;
 use yak_cli_proto::CleanStaleResponse;
 use yak_client_ctx::client_ctx::ClientCommandContext;
-use yak_client_ctx::common::BuckArgMatches;
+use yak_client_ctx::common::YakArgMatches;
 use yak_client_ctx::common::CommonBuildConfigurationOptions;
 use yak_client_ctx::common::CommonCommandOptions;
 use yak_client_ctx::common::CommonEventLogOptions;
 use yak_client_ctx::common::CommonStarlarkOptions;
 use yak_client_ctx::common::ui::CommonConsoleOptions;
-use yak_client_ctx::daemon::client::BuckdClientConnector;
+use yak_client_ctx::daemon::client::YakdClientConnector;
 use yak_client_ctx::daemon::client::NoPartialResultHandler;
 use yak_client_ctx::daemon::client::connect::DaemonStartupMode;
 use yak_client_ctx::events_ctx::EventsCtx;
 use yak_client_ctx::exit_result::ExitResult;
 use yak_client_ctx::streaming::StreamingCommand;
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 use yak_error::conversion::from_any_with_tag;
 use yak_error::internal_error;
 
@@ -126,8 +126,8 @@ impl StreamingCommand for CleanStaleCommand {
 
     async fn exec_impl(
         self,
-        buckd: &mut BuckdClientConnector,
-        matches: BuckArgMatches<'_>,
+        yakd: &mut YakdClientConnector,
+        matches: YakArgMatches<'_>,
         ctx: &mut ClientCommandContext<'_>,
         events_ctx: &mut EventsCtx,
     ) -> ExitResult {
@@ -147,7 +147,7 @@ impl StreamingCommand for CleanStaleCommand {
                     humantime::format_duration(
                         std::time::Duration::try_from(duration)
                             .map_err(|e| from_any_with_tag(e, yak_error::ErrorTag::InvalidDuration))
-                            .buck_error_context("Error converting duration")?
+                            .yak_error_context("Error converting duration")?
                     ),
                 )?;
                 // Round up to next second since timestamp below is rounded down
@@ -177,7 +177,7 @@ impl StreamingCommand for CleanStaleCommand {
         }
 
         let context = ctx.client_context(matches, &self)?;
-        let response: CleanStaleResponse = buckd
+        let response: CleanStaleResponse = yakd
             .with_flushing()
             .clean_stale(
                 CleanStaleRequest {

@@ -39,21 +39,21 @@ use yak_client::commands::subscribe::SubscribeCommand;
 use yak_client::commands::targets::TargetsCommand;
 use yak_client::commands::test::TestCommand;
 use yak_client_ctx::argfiles::expand_argv;
-use yak_client_ctx::client_ctx::BuckSubcommand;
+use yak_client_ctx::client_ctx::YakSubcommand;
 use yak_client_ctx::client_ctx::ClientCommandContext;
 use yak_client_ctx::client_metadata::ClientMetadata;
 use yak_client_ctx::client_metadata::parse_client_metadata;
-use yak_client_ctx::common::BuckArgMatches;
+use yak_client_ctx::common::YakArgMatches;
 use yak_client_ctx::exit_result::ClientIoError;
 use yak_client_ctx::exit_result::ExitResult;
 use yak_client_ctx::immediate_config::ImmediateConfigContext;
-use yak_client_ctx::version::BuckVersion;
+use yak_client_ctx::version::YakVersion;
 use yak_cmd_audit_client::AuditCommand;
 use yak_cmd_debug_client::DebugCommand;
 use yak_cmd_log_client::LogCommand;
 use yak_cmd_starlark_client::StarlarkCommand;
 use yak_common::argv::Argv;
-use yak_common::invocation_paths::RESERVED_BUCK_OUT_PREFIX;
+use yak_common::invocation_paths::RESERVED_YAK_OUT_PREFIX;
 use yak_common::invocation_paths_result::InvocationPathsResult;
 use yak_common::invocation_roots::get_invocation_paths_result;
 use yak_common::settings::args::SettingOverride;
@@ -61,10 +61,10 @@ use yak_common::settings::args::parse_setting_flag_arg;
 use yak_core::yak_env;
 use yak_core::yak_env_name;
 use yak_data::ErrorReport;
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 use yak_error::ErrorTag;
 use yak_error::ExitCode;
-use yak_error::conversion::clap::buck_error_clap_parser;
+use yak_error::conversion::clap::yak_error_clap_parser;
 use yak_event_observer::verbosity::Verbosity;
 use yak_fs::paths::file_name::FileNameBuf;
 use yak_util::threads::thread_spawn_scoped;
@@ -79,13 +79,13 @@ pub mod process_context;
 pub mod soft_error;
 
 fn parse_isolation_dir(s: &str) -> yak_error::Result<FileNameBuf> {
-    if s.starts_with(RESERVED_BUCK_OUT_PREFIX) {
+    if s.starts_with(RESERVED_YAK_OUT_PREFIX) {
         return Err(yak_error::yak_error!(
             yak_error::ErrorTag::Input,
-            "Isolation dir names starting with `{RESERVED_BUCK_OUT_PREFIX}` are reserved for yak's internal use"
+            "Isolation dir names starting with `{RESERVED_YAK_OUT_PREFIX}` are reserved for yak's internal use"
         ));
     }
-    FileNameBuf::try_from(s.to_owned()).buck_error_context("isolation dir must be a directory name")
+    FileNameBuf::try_from(s.to_owned()).yak_error_context("isolation dir must be a directory name")
 }
 
 /// Options of `yak` command, before subcommand.
@@ -99,7 +99,7 @@ struct BeforeSubcommandOptions {
     /// The isolation directory also influences the output paths provided by yak,
     /// and as a result using a non-default isolation dir will cause cache misses (and slower builds).
     #[clap(
-        value_parser = buck_error_clap_parser(parse_isolation_dir),
+        value_parser = yak_error_clap_parser(parse_isolation_dir),
         env("YAK_ISOLATION_DIR"),
         long,
         global = true,
@@ -124,7 +124,7 @@ struct BeforeSubcommandOptions {
         default_value = "1",
         global = true,
         env = yak_env_name!("YAK_VERBOSE"),
-        value_parser = buck_error_clap_parser(Verbosity::try_from_cli)
+        value_parser = yak_error_clap_parser(Verbosity::try_from_cli)
     )]
     verbosity: Verbosity,
 
@@ -134,7 +134,7 @@ struct BeforeSubcommandOptions {
 
     /// Metadata key-value pairs to record in the event log. Client metadata must be of the form
     /// `key=value`, where `key` is a snake_case identifier.
-    #[clap(long, global = true, value_parser = buck_error_clap_parser(parse_client_metadata))]
+    #[clap(long, global = true, value_parser = yak_error_clap_parser(parse_client_metadata))]
     client_metadata: Vec<ClientMetadata>,
 
     /// Override a yak setting using `section.key=value`.
@@ -143,7 +143,7 @@ struct BeforeSubcommandOptions {
         value_name = "SECTION.KEY=VALUE",
         global = true,
         num_args = 1,
-        value_parser = buck_error_clap_parser(parse_setting_flag_arg)
+        value_parser = yak_error_clap_parser(parse_setting_flag_arg)
     )]
     settings: Vec<SettingOverride>,
 
@@ -155,14 +155,14 @@ struct BeforeSubcommandOptions {
     ///
     /// This is an unsupported option used only for development work.
     #[clap(env("YAK_NO_YAKD"), long = "no-yakd", global(true), hide(true))]
-    no_buckd: bool,
+    no_yakd: bool,
 }
 
 fn help() -> &'static str {
     concat!(
         "A build system\n",
         "\n",
-        "Documentation: https://rdeusser.github.io/buck2/docs/\n",
+        "Documentation: https://rdeusser.github.io/yak/docs/\n",
     )
 }
 
@@ -170,7 +170,7 @@ fn help() -> &'static str {
 #[clap(
     name = "yak",
     about(Some(help())),
-    version(BuckVersion::get_version_for_clap()),
+    version(YakVersion::get_version_for_clap()),
     styles = cli_style::get_styles(),
 )]
 pub(crate) struct Opt {
@@ -185,7 +185,7 @@ impl Opt {
         self,
         process: ProcessContext<'_>,
         immediate_config: &ImmediateConfigContext,
-        matches: BuckArgMatches<'_>,
+        matches: YakArgMatches<'_>,
         argv: Argv,
     ) -> ExitResult {
         let subcommand_matches = matches.unwrap_subcommand();
@@ -210,7 +210,7 @@ pub fn exec(process: ProcessContext<'_>) -> ExitResult {
         &mut immediate_config,
         &cwd,
     )
-    .buck_error_context("Error expanding argsfiles")?;
+    .yak_error_context("Error expanding argsfiles")?;
 
     let argv = Argv {
         argv: process.shared.args.to_vec(),
@@ -288,7 +288,7 @@ impl ParsedArgv {
         self.opt.exec(
             process,
             immediate_config,
-            BuckArgMatches::from_clap(&self.matches, &expanded_args),
+            YakArgMatches::from_clap(&self.matches, &expanded_args),
             self.argv,
         )
     }
@@ -310,7 +310,7 @@ pub(crate) enum CommandKind {
     Aquery(AqueryCommand),
     Build(BuildCommand),
     Bxl(BxlCommand),
-    // TODO(nga): implement `yak help-buckconfig` too
+    // TODO(nga): implement `yak help-yakconfig` too
     HelpEnv(HelpEnvCommand),
     Test(TestCommand),
     Cquery(CqueryCommand),
@@ -353,7 +353,7 @@ impl CommandKind {
         self,
         process: ProcessContext<'_>,
         immediate_config: &ImmediateConfigContext,
-        matches: BuckArgMatches<'_>,
+        matches: YakArgMatches<'_>,
         argv: Argv,
         common_opts: BeforeSubcommandOptions,
     ) -> ExitResult {
@@ -402,12 +402,12 @@ impl CommandKind {
         common_opts: BeforeSubcommandOptions,
         process: ProcessContext<'_>,
         immediate_config: &ImmediateConfigContext,
-        matches: BuckArgMatches<'_>,
+        matches: YakArgMatches<'_>,
         argv: Argv,
         paths: InvocationPathsResult,
     ) -> ExitResult {
-        if common_opts.no_buckd {
-            // `no_buckd` can't work in a client-only binary
+        if common_opts.no_yakd {
+            // `no_yakd` can't work in a client-only binary
             if let Some(res) = ExitResult::retry_command_with_full_binary()? {
                 return res;
             }
@@ -423,10 +423,10 @@ impl CommandKind {
 
         let runtime = runtime.get_or_init()?;
 
-        let start_in_process_daemon = if common_opts.no_buckd {
+        let start_in_process_daemon = if common_opts.no_yakd {
             #[cfg(not(client_only))]
             {
-                yak_daemon::no_buckd::start_in_process_daemon(
+                yak_daemon::no_yakd::start_in_process_daemon(
                     immediate_config.daemon_startup_config()?,
                     paths.clone().get_result()?,
                     runtime,

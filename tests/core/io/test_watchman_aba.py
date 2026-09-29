@@ -10,8 +10,8 @@ import shutil
 
 import pytest
 from core.common.io.file_watcher_tests import run_aba_test
-from e2e_util.api.buck import Buck
-from e2e_util.buck_workspace import buck_test
+from e2e_util.api.yak import Yak
+from e2e_util.yak_workspace import yak_test
 
 # The daemon finds the Watchman server by running the `watchman` program on
 # PATH.
@@ -20,6 +20,6 @@ pytestmark = pytest.mark.skipif(
 )
 
 
-@buck_test()
-async def test_watchman_aba(buck: Buck) -> None:
-    await run_aba_test(buck)
+@yak_test()
+async def test_watchman_aba(yak: Yak) -> None:
+    await run_aba_test(yak)

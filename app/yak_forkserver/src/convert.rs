@@ -11,8 +11,8 @@
 use futures::stream::Stream;
 use futures::stream::StreamExt;
 use yak_common::convert::ProstDurationExt;
-use yak_error::BuckErrorContext;
-use yak_error::BuckErrorOptionContext;
+use yak_error::YakErrorContext;
+use yak_error::YakErrorOptionContext;
 use yak_execute_local::CommandEvent;
 use yak_execute_local::GatherOutputStatus;
 use yak_resource_control::OrphanProcessInfo;
@@ -138,7 +138,7 @@ where
                     duration
                         .internal_error("Missing `duration`")?
                         .try_into_duration()
-                        .buck_error_context("Invalid `duration`")?,
+                        .yak_error_context("Invalid `duration`")?,
                 ),
                 orphans,
             ),

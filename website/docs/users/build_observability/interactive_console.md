@@ -44,7 +44,7 @@ line. There is no resource usage telemetry emitted.
 ## Superconsole
 
 The superconsole uses the
-[superconsole](https://github.com/rdeusser/buck2/tree/main/superconsole) library to
+[superconsole](https://github.com/rdeusser/yak/tree/main/superconsole) library to
 provide an interactive console which shows the event spans going on within
 yak.
 

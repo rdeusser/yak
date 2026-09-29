@@ -14,8 +14,8 @@ use std::io;
 fn main() -> io::Result<()> {
     let proto_files = &["test.proto"];
 
-    let buck_proto_srcs = env::var("YAK_PROTO_SRCS");
-    let includes = if let Ok(path) = &buck_proto_srcs {
+    let yak_proto_srcs = env::var("YAK_PROTO_SRCS");
+    let includes = if let Ok(path) = &yak_proto_srcs {
         vec![path.as_str()]
     } else {
         vec![".", "../yak_data", "../yak_host_sharing_proto"]
@@ -24,10 +24,10 @@ fn main() -> io::Result<()> {
     let builder = yak_protoc_dev::configure();
     unsafe { builder.setup_protoc() }
         .type_attribute(
-            "buck.test.ExecuteResponse2.response",
+            "yak.test.ExecuteResponse2.response",
             "#[allow(clippy::large_enum_variant)]",
         )
-        .extern_path(".buck.data", "::yak_data")
-        .extern_path(".buck.host_sharing", "::yak_host_sharing_proto")
+        .extern_path(".yak.data", "::yak_data")
+        .extern_path(".yak.host_sharing", "::yak_host_sharing_proto")
         .compile(proto_files, &includes)
 }

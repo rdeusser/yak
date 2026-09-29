@@ -11,64 +11,64 @@ import shutil
 from datetime import datetime, timedelta
 from pathlib import Path
 
-from e2e_util.api.buck import Buck
-from e2e_util.buck_workspace import buck_test
+from e2e_util.api.yak import Yak
+from e2e_util.yak_workspace import yak_test
 
 
-@buck_test()
-async def test_unhashed_putputs(buck: Buck) -> None:
-    await buck.build("//pack:trivial_build")
+@yak_test()
+async def test_unhashed_putputs(yak: Yak) -> None:
+    await yak.build("//pack:trivial_build")
 
-    p = buck.cwd / "yak-out" / "v2" / "gen" / "root" / "pack" / "foo.txt"
+    p = yak.cwd / "yak-out" / "v2" / "gen" / "root" / "pack" / "foo.txt"
     assert p.exists()
     assert p.is_symlink()
 
 
-@buck_test()
-async def test_projected_output(buck: Buck) -> None:
-    await buck.build("//:projected_output")
+@yak_test()
+async def test_projected_output(yak: Yak) -> None:
+    await yak.build("//:projected_output")
 
-    p = buck.cwd / "yak-out" / "v2" / "gen" / "root" / "dir"
+    p = yak.cwd / "yak-out" / "v2" / "gen" / "root" / "dir"
     assert p.exists()
     assert p.is_symlink()
     assert (p / "file").is_file()
 
 
-@buck_test()
-async def test_materializer_managed_unhashed_output(buck: Buck) -> None:
-    await buck.build("//pack:trivial_build")
+@yak_test()
+async def test_materializer_managed_unhashed_output(yak: Yak) -> None:
+    await yak.build("//pack:trivial_build")
 
-    p = buck.cwd / "yak-out" / "v2" / "gen" / "root" / "pack" / "foo.txt"
+    p = yak.cwd / "yak-out" / "v2" / "gen" / "root" / "pack" / "foo.txt"
     assert p.is_symlink()
 
-    materializer_state = await buck.audit("deferred-materializer", "list")
+    materializer_state = await yak.audit("deferred-materializer", "list")
     assert "yak-out/v2/gen/root/pack/foo.txt" in materializer_state.stdout
 
     future_time = int((datetime.now() + timedelta(weeks=7)).timestamp())
-    await buck.clean(f"--keep-since-time={future_time}")
+    await yak.clean(f"--keep-since-time={future_time}")
     assert p.is_symlink()
     assert p.is_file()
-    materializer_state = await buck.audit("deferred-materializer", "list")
+    materializer_state = await yak.audit("deferred-materializer", "list")
     assert "yak-out/v2/gen/root/pack/foo.txt" in materializer_state.stdout
 
 
-@buck_test()
+@yak_test()
 async def test_materializer_managed_unhashed_output_without_materialization(
-    buck: Buck,
+    yak: Yak,
 ) -> None:
-    await buck.build("//pack:trivial_build", "--materializations=none")
-    unhashed = buck.cwd / "yak-out" / "v2" / "gen" / "root" / "pack" / "foo.txt"
+    await yak.build("//pack:trivial_build", "--materializations=none")
+    unhashed = yak.cwd / "yak-out" / "v2" / "gen" / "root" / "pack" / "foo.txt"
 
     assert not unhashed.is_symlink()
 
-    materializer_state = await buck.audit("deferred-materializer", "list")
+    materializer_state = await yak.audit("deferred-materializer", "list")
     assert "yak-out/v2/gen/root/pack/foo.txt" in materializer_state.stdout
 
 
-@buck_test()
-async def test_build_symlink_does_not_traverse_existing_symlinks(buck: Buck) -> None:
-    await buck.build("//pack:trivial_build")
-    symlink_folder = buck.cwd / "yak-out" / "v2" / "gen" / "root" / "pack"
+@yak_test()
+async def test_build_symlink_does_not_traverse_existing_symlinks(yak: Yak) -> None:
+    await yak.build("//pack:trivial_build")
+    symlink_folder = yak.cwd / "yak-out" / "v2" / "gen" / "root" / "pack"
 
     # Now, overwrite part of the symlink path with something we cannot traverse.
     path = symlink_folder.parent
@@ -78,16 +78,16 @@ async def test_build_symlink_does_not_traverse_existing_symlinks(buck: Buck) -> 
 
     # Can we still build? If we delete the symlink when walking up the path, we
     # can. If we traverse it, we can't.
-    await buck.build("//pack:trivial_build")
+    await yak.build("//pack:trivial_build")
 
 
-@buck_test()
-async def test_conflict_with_content_based_paths(buck: Buck) -> None:
+@yak_test()
+async def test_conflict_with_content_based_paths(yak: Yak) -> None:
     symlink_path: Path = (
-        buck.cwd / "yak-out" / "v2" / "gen" / "root" / "conflict" / "shared_name"
+        yak.cwd / "yak-out" / "v2" / "gen" / "root" / "conflict" / "shared_name"
     )
     content_based_path: Path = (
-        buck.cwd / "yak-out" / "v2" / "art" / "root" / "conflict" / "shared_name"
+        yak.cwd / "yak-out" / "v2" / "art" / "root" / "conflict" / "shared_name"
     )
     subtarget_output: Path
     # sanity check that we're starting from a clean state
@@ -114,7 +114,7 @@ async def test_conflict_with_content_based_paths(buck: Buck) -> None:
     # Build just the subtarget. Esnsure that the subtarget output exists and is
     # reacable, and that it lives in the place we expect.
     #
-    res = await buck.build(
+    res = await yak.build(
         "//conflict/shared_name:subtarget",
         "--config",
         "yak.create_unhashed_links=false",
@@ -128,7 +128,7 @@ async def test_conflict_with_content_based_paths(buck: Buck) -> None:
     # Build the conflicting target w/o unhashed links. This should leave the
     # subtarget_output alone, which should remain readable.
     #
-    await buck.build(
+    await yak.build(
         "//conflict:shared_name",
         "--config",
         "yak.create_unhashed_links=false",
@@ -140,13 +140,13 @@ async def test_conflict_with_content_based_paths(buck: Buck) -> None:
     # Build the conflicting target with unhashed links. This will overwrite the
     # subtarget with a directory, and the symlink_path will now exist.
     #
-    await buck.build("//conflict:shared_name")
+    await yak.build("//conflict:shared_name")
     base_checks(should_symlink_exist=True)
 
 
-@buck_test()
-async def test_projected_symlink_output(buck: Buck) -> None:
-    result = await buck.build("//:projected_symlink_output")
+@yak_test()
+async def test_projected_symlink_output(yak: Yak) -> None:
+    result = await yak.build("//:projected_symlink_output")
     output = result.get_build_report().output_for_target(
         "root//:projected_symlink_output"
     )

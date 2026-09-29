@@ -9,7 +9,7 @@
 load("@prelude//:artifacts.bzl", "ArtifactGroupInfo")
 load("@prelude//:paths.bzl", "paths")
 load("@prelude//cxx:preprocessor.bzl", "CPreprocessorInfo", "cxx_merge_cpreprocessors")
-load("@prelude//decls:common.bzl", "buck")
+load("@prelude//decls:common.bzl", "yak")
 load("@prelude//utils:expect.bzl", "expect")
 load(":rule_spec.bzl", "RuleRegistrationSpec")
 
@@ -49,8 +49,8 @@ registration_spec = RuleRegistrationSpec(
         libraries that export them.
     """,
     impl = _impl,
-    attrs = buck.labels_arg()
-    | buck.contacts_arg()
+    attrs = yak.labels_arg()
+    | yak.contacts_arg()
     | {
         "deps": attrs.list(
             attrs.dep(providers = [CPreprocessorInfo]),

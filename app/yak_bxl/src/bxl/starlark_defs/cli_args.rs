@@ -60,10 +60,10 @@ use yak_core::pattern::pattern_type::TargetPatternExtra;
 use yak_core::provider::label::ProvidersLabel;
 use yak_core::target::configured_target_label::ConfiguredTargetLabel;
 use yak_core::target::label::label::TargetLabel;
-use yak_error::conversion::clap::buck_error_clap_parser;
+use yak_error::conversion::clap::yak_error_clap_parser;
 use yak_error::conversion::from_any_with_tag;
 use yak_fs::paths::abs_norm_path::AbsNormPathBuf;
-use yak_hash::BuckIndexSet;
+use yak_hash::YakIndexSet;
 use yak_interpreter::types::configured_providers_label::StarlarkProvidersLabel;
 use yak_interpreter::types::target_label::StarlarkConfiguredTargetLabel;
 use yak_interpreter::types::target_label::StarlarkTargetLabel;
@@ -326,7 +326,7 @@ pub(crate) enum CliArgType {
     Int,
     Float,
     String,
-    Enumeration(Arc<BuckIndexSet<String>>),
+    Enumeration(Arc<YakIndexSet<String>>),
     List(Arc<CliArgType>),
     Option(Arc<CliArgType>),
     TargetLabel,
@@ -410,7 +410,7 @@ impl CliArgType {
         CliArgType::SubTargetExpr
     }
 
-    fn enumeration(vs: BuckIndexSet<String>) -> Self {
+    fn enumeration(vs: YakIndexSet<String>) -> Self {
         CliArgType::Enumeration(Arc::new(vs))
     }
 
@@ -559,7 +559,7 @@ impl CliArgType {
             CliArgType::Option(inner) => inner.to_clap(clap).required(false),
             CliArgType::TargetLabel => {
                 clap.num_args(1)
-                    .value_parser(buck_error_clap_parser(|x: &str| {
+                    .value_parser(yak_error_clap_parser(|x: &str| {
                         yak_error::Ok(
                             lex_target_pattern::<TargetPatternExtra>(x, false)
                                 .and_then(|parsed| parsed.pattern.infer_target())
@@ -577,7 +577,7 @@ impl CliArgType {
             }
             CliArgType::ConfiguredTargetLabel => {
                 clap.num_args(1)
-                    .value_parser(buck_error_clap_parser(|x: &str| {
+                    .value_parser(yak_error_clap_parser(|x: &str| {
                         yak_error::Ok(
                             lex_target_pattern::<TargetPatternExtra>(x, false)
                                 .and_then(|parsed| parsed.pattern.infer_target())
@@ -595,7 +595,7 @@ impl CliArgType {
             }
             CliArgType::SubTarget => {
                 clap.num_args(1)
-                    .value_parser(buck_error_clap_parser(|x: &str| {
+                    .value_parser(yak_error_clap_parser(|x: &str| {
                         yak_error::Ok(
                             lex_target_pattern::<ProvidersPatternExtra>(x, false)
                                 .and_then(|parsed| parsed.pattern.infer_target())
@@ -1313,7 +1313,7 @@ mod tests {
     use yak_core::provider::label::testing::ProvidersLabelTestExt;
     use yak_core::target::configured_target_label::ConfiguredTargetLabel;
     use yak_core::target::label::label::TargetLabel;
-    use yak_hash::BuckIndexSet;
+    use yak_hash::YakIndexSet;
     use yak_interpreter::types::configured_providers_label::StarlarkProvidersLabel;
     use yak_interpreter::types::target_label::StarlarkConfiguredTargetLabel;
     use yak_interpreter::types::target_label::StarlarkTargetLabel;
@@ -1392,7 +1392,7 @@ mod tests {
             );
 
             assert_eq!(
-                CliArgType::enumeration(BuckIndexSet::from_iter([
+                CliArgType::enumeration(YakIndexSet::from_iter([
                     "a".to_owned(),
                     "b".to_owned(),
                     "c".to_owned()

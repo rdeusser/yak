@@ -100,7 +100,7 @@ impl Direction {
 enum Cell {
     Empty,
     Apple,
-    Buck,
+    Yak,
 }
 
 #[derive(Debug)]
@@ -128,7 +128,7 @@ impl Game {
             next_update: 10,
         };
 
-        this.set(Position { x: 40, y: 20 }, Cell::Buck);
+        this.set(Position { x: 40, y: 20 }, Cell::Yak);
         this.segments.push_back(Position { x: 40, y: 20 });
 
         this.place_apple();
@@ -193,12 +193,12 @@ impl Game {
     fn is_bad(&self, position: Position) -> bool {
         match self.get(position) {
             Some(Cell::Empty) | Some(Cell::Apple) => false,
-            Some(Cell::Buck) if *self.segments.front().unwrap() == position => false,
+            Some(Cell::Yak) if *self.segments.front().unwrap() == position => false,
             _ => true,
         }
     }
 
-    pub fn move_buck(&mut self, direction: Direction) -> bool {
+    pub fn move_yak(&mut self, direction: Direction) -> bool {
         let next_position = direction.apply(self.head());
         if self.is_bad(next_position) {
             false
@@ -216,7 +216,7 @@ impl Game {
 
     fn push_segment(&mut self, position: Position) {
         self.segments.push_back(position);
-        self.set(position, Cell::Buck);
+        self.set(position, Cell::Yak);
     }
 
     fn pop_segment(&mut self) {
@@ -242,7 +242,7 @@ impl super::Game for Game {
             if let Some(next_direction) = self.input_buffer.pop_front() {
                 self.direction = self.direction.turn(next_direction);
             }
-            if self.move_buck(self.direction) {
+            if self.move_yak(self.direction) {
                 self.last_chance = false;
                 self.next_update += 4;
             } else if !self.last_chance {
@@ -314,7 +314,7 @@ impl super::Game for Game {
             // Reconstruct board from segments
             for i in 0..self.segments.len() {
                 let pos = self.segments[i];
-                self.set(pos, Cell::Buck);
+                self.set(pos, Cell::Yak);
             }
             self.set(self.apple_position, Cell::Apple);
             true
@@ -345,7 +345,7 @@ impl Component for Game {
                         if let Some(replace) = match cell {
                             Cell::Empty => None,
                             Cell::Apple => Some("🍎"),
-                            Cell::Buck => Some("🦌"),
+                            Cell::Yak => Some("🦌"),
                         } {
                             line.replace_range((2 * i)..(2 * i + 2), replace);
                         }

@@ -39,7 +39,7 @@ def _get_exported_additional_include_directories(target: bxl.ConfiguredTargetNod
                 name = header_namespace + "/" + name
         name = normcase(name)
 
-        # If file path is in generated yak-out, the file will be either not available or more correct form buck-headers exists.
+        # If file path is in generated yak-out, the file will be either not available or more correct form yak-headers exists.
         if "yak-out" not in path and path.endswith(name):
             include_dir = path.removesuffix(name)
             if include_dir:
@@ -48,7 +48,7 @@ def _get_exported_additional_include_directories(target: bxl.ConfiguredTargetNod
             # Header tree created by yak. This is the most correct form but depends on previous local build to materialize.
             argsfiles_output_path = get_argsfiles_output_path(target, bxl_ctx)
             if argsfiles_output_path:
-                dirs.append(dirname(argsfiles_output_path) + "/buck-headers")
+                dirs.append(dirname(argsfiles_output_path) + "/yak-headers")
 
     dirs = [normpath(d) for d in dirs]
     dirs = dedupe_by_value(dirs)

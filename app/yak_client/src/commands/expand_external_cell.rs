@@ -12,12 +12,12 @@ use yak_cli_proto::new_generic::ExpandExternalCellsRequest;
 use yak_cli_proto::new_generic::NewGenericRequest;
 use yak_cli_proto::new_generic::NewGenericResponse;
 use yak_client_ctx::client_ctx::ClientCommandContext;
-use yak_client_ctx::common::BuckArgMatches;
+use yak_client_ctx::common::YakArgMatches;
 use yak_client_ctx::common::CommonBuildConfigurationOptions;
 use yak_client_ctx::common::CommonEventLogOptions;
 use yak_client_ctx::common::CommonStarlarkOptions;
 use yak_client_ctx::common::ui::CommonConsoleOptions;
-use yak_client_ctx::daemon::client::BuckdClientConnector;
+use yak_client_ctx::daemon::client::YakdClientConnector;
 use yak_client_ctx::events_ctx::EventsCtx;
 use yak_client_ctx::exit_result::ExitResult;
 use yak_client_ctx::streaming::StreamingCommand;
@@ -49,8 +49,8 @@ impl StreamingCommand for ExpandExternalCellsCommand {
 
     async fn exec_impl(
         self,
-        buckd: &mut BuckdClientConnector,
-        matches: BuckArgMatches<'_>,
+        yakd: &mut YakdClientConnector,
+        matches: YakArgMatches<'_>,
         ctx: &mut ClientCommandContext<'_>,
         events_ctx: &mut EventsCtx,
     ) -> ExitResult {
@@ -60,7 +60,7 @@ impl StreamingCommand for ExpandExternalCellsCommand {
         } else {
             ExpandExternalCellsRequest::Specific(self.cells.into_iter().collect())
         };
-        let resp = buckd
+        let resp = yakd
             .with_flushing()
             .new_generic(
                 context,

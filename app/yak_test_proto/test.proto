@@ -10,7 +10,7 @@
 
 syntax = "proto3";
 
-package buck.test;
+package yak.test;
 
 import "google/protobuf/duration.proto";
 import "data.proto";
@@ -179,7 +179,7 @@ message LocalResourceType {
 message ExecuteRequest2 {
   reserved 1 to 4, 7;
   google.protobuf.Duration timeout = 5;
-  buck.host_sharing.HostSharingRequirements host_sharing_requirements = 6;
+  yak.host_sharing.HostSharingRequirements host_sharing_requirements = 6;
   TestExecutable test_executable = 8;
   ExecutorConfigOverride executor_override = 9;
   repeated LocalResourceType required_local_resources = 10;
@@ -288,11 +288,11 @@ message ExecutionResult2 {
   google.protobuf.Duration execution_time = 6;
   ExecutionDetails execution_details = 7;
   optional uint64 max_memory_used_bytes = 8;
-  optional buck.data.CommandExecution command_execution = 9;
+  optional yak.data.CommandExecution command_execution = 9;
 }
 
 message ExecutionDetails {
-  optional buck.data.CommandExecutionKind execution_kind = 1;
+  optional yak.data.CommandExecutionKind execution_kind = 1;
 }
 
 enum CancellationReason {

@@ -21,10 +21,10 @@ use yak_build_api::interpreter::rule_defs::artifact::starlark_declared_artifact:
 use yak_build_api::interpreter::rule_defs::context::AnalysisActions;
 use yak_common::cas_digest::CasDigest;
 use yak_core::execution_types::executor_config::RemoteExecutorUseCase;
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 use yak_execute::execute::request::OutputType;
 use yak_execute::materialize::http::Checksum;
-use yak_hash::buck_indexset;
+use yak_hash::yak_indexset;
 
 use crate::actions::impls::cas_artifact::ArtifactKind;
 use crate::actions::impls::cas_artifact::DirectoryKind;
@@ -68,7 +68,7 @@ pub(crate) fn analysis_actions_methods_download(methods: &mut MethodsBuilder) {
         let checksum = Checksum::new(sha1.into_option(), sha256.into_option())?;
 
         this.register_action(
-            buck_indexset![output_artifact],
+            yak_indexset![output_artifact],
             UnregisteredDownloadFileAction::new(
                 checksum,
                 size_bytes.into_option(),
@@ -112,7 +112,7 @@ pub(crate) fn analysis_actions_methods_download(methods: &mut MethodsBuilder) {
         let mut registry = this.state()?;
 
         let digest = CasDigest::parse_digest(digest, this.digest_config.cas_digest_config())
-            .with_buck_error_context(|| format!("Not a valid RE digest: `{}`", digest))?
+            .with_yak_error_context(|| format!("Not a valid RE digest: `{}`", digest))?
             .0;
 
         let use_case = RemoteExecutorUseCase::new(use_case.to_owned());
@@ -143,7 +143,7 @@ pub(crate) fn analysis_actions_methods_download(methods: &mut MethodsBuilder) {
         )?;
 
         registry.register_action(
-            buck_indexset![output_artifact],
+            yak_indexset![output_artifact],
             UnregisteredCasArtifactAction {
                 digest,
                 re_use_case: use_case,

@@ -46,7 +46,7 @@ use crate::autofixes::utils::find_ignore_ascii_case;
 // Sentinel package marker used so relative labels (`:foo`) sort *after* all
 // real packages in `compare_load_labels`. `\u{7f}` (DEL) is the highest ASCII
 // code point — it sorts after any other byte that can legally appear in a
-// Bazel/Buck package path. Bazel/Buck package paths are restricted to ASCII,
+// Bazel/Yak package path. Bazel/Yak package paths are restricted to ASCII,
 // so no real package can collide with this sentinel in practice.
 const RELATIVE_LABEL_PACKAGE: &str = "\u{7f}";
 
@@ -116,7 +116,7 @@ fn compare_paths(a: &str, b: &str) -> Ordering {
         match (a_chunks.next(), b_chunks.next()) {
             (Some(a_chunk), Some(b_chunk)) => {
                 // Compare lowercase bytes lazily without allocating a `String`
-                // per chunk. ASCII-only is sufficient since Bazel/Buck labels
+                // per chunk. ASCII-only is sufficient since Bazel/Yak labels
                 // never contain non-ASCII characters; this matches the
                 // original `to_ascii_lowercase()` behavior byte-for-byte.
                 let ord = a_chunk

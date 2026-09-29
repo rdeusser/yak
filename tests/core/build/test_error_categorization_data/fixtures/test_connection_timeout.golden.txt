@@ -1,7 +1,7 @@
 # This file is @generated, regenerate by rerunning the test with `YAK_UPDATE_GOLDEN=1` set
 
 Command failed: Failed to connect to yak daemon.
-    Daemon process info from <BUCKD_INFO>
+    Daemon process info from <YAKD_INFO>
     daemon dir: <DAEMON_DIR>
     status: <missing>
 

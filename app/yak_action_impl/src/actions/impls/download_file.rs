@@ -34,8 +34,8 @@ use yak_common::file_ops::metadata::FileMetadata;
 use yak_common::file_ops::metadata::TrackedFileDigest;
 use yak_common::io::trace::TracingIoProvider;
 use yak_core::category::CategoryRef;
-use yak_core::fs::buck_out_path::BuildArtifactPath;
-use yak_error::BuckErrorContext;
+use yak_core::fs::yak_out_path::BuildArtifactPath;
+use yak_error::YakErrorContext;
 use yak_error::ErrorTag;
 use yak_error::conversion::from_any_with_tag;
 use yak_execute::artifact_value::ArtifactValue;
@@ -46,7 +46,7 @@ use yak_execute::materialize::http::http_download;
 use yak_execute::materialize::http::http_head;
 use yak_execute::materialize::materializer::DeclareArtifactPayload;
 use yak_execute::materialize::materializer::HttpDownloadInfo;
-use yak_hash::BuckIndexSet;
+use yak_hash::YakIndexSet;
 use yak_http::HttpClient;
 
 use crate::actions::impls::offline;
@@ -89,7 +89,7 @@ impl UnregisteredDownloadFileAction {
 impl UnregisteredAction for UnregisteredDownloadFileAction {
     fn register(
         self: Box<Self>,
-        outputs: BuckIndexSet<BuildArtifact>,
+        outputs: YakIndexSet<BuildArtifact>,
         _starlark_data: Option<OwnedFrozen<Value<'static>>>,
         _error_handler: Option<OwnedFrozen<Value<'static>>>,
     ) -> yak_error::Result<Box<dyn Action>> {
@@ -105,7 +105,7 @@ struct DownloadFileAction {
 
 impl DownloadFileAction {
     fn new(
-        outputs: BuckIndexSet<BuildArtifact>,
+        outputs: YakIndexSet<BuildArtifact>,
         inner: UnregisteredDownloadFileAction,
     ) -> yak_error::Result<Self> {
         if outputs.len() != 1 {
@@ -164,15 +164,15 @@ impl DownloadFileAction {
                         let content_length = content_length
                             .to_str()
                             .map_err(|e| from_any_with_tag(e, yak_error::ErrorTag::Http))
-                            .buck_error_context("Header is not valid utf-8")?;
+                            .yak_error_context("Header is not valid utf-8")?;
                         let content_length_number =
-                            content_length.parse().with_buck_error_context(|| {
+                            content_length.parse().with_yak_error_context(|| {
                                 format!("Header is not a number: `{content_length}`")
                             })?;
                         yak_error::Ok(content_length_number)
                     })
                     .transpose()
-                    .with_buck_error_context(|| {
+                    .with_yak_error_context(|| {
                         format!(
                             "Request to `{}` returned an invalid `{}` header",
                             url,
@@ -346,7 +346,7 @@ impl Action for DownloadFileAction {
             let offline_cache_path =
                 offline::declare_copy_to_offline_output_cache(ctx, self.output(), value.dupe())
                     .await?;
-            tracer.add_buck_out_entry(offline_cache_path);
+            tracer.add_yak_out_entry(offline_cache_path);
         }
 
         Ok((

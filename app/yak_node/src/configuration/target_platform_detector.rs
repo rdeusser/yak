@@ -33,7 +33,7 @@ use yak_core::cells::name::CellName;
 use yak_core::pattern::pattern::ParsedPattern;
 use yak_core::pattern::pattern_type::TargetPatternExtra;
 use yak_core::target::label::label::TargetLabel;
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 
 #[derive(Debug, yak_error::Error)]
 #[yak(tag = Input)]
@@ -98,7 +98,7 @@ impl TargetPlatformDetector {
                             cell_alias_resolver,
                         )
                         .and_then(|x| x.as_target_label(target))
-                        .buck_error_context("Error parsing target platform detector spec")?;
+                        .yak_error_context("Error parsing target platform detector spec")?;
                         detectors.push((matcher_package, target))
                     }
                     None => {

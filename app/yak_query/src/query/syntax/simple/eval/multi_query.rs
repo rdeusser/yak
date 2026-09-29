@@ -14,7 +14,7 @@ use std::iter;
 
 use dupe::Dupe;
 use itertools::Either;
-use yak_hash::BuckIndexMap;
+use yak_hash::YakIndexMap;
 
 use crate::query::environment::QueryTarget;
 use crate::query::syntax::simple::eval::set::TargetSet;
@@ -22,7 +22,7 @@ use crate::query::syntax::simple::eval::values::QueryEvaluationValue;
 
 /// Used to represent the results for a "multi-query" (one that contains a "%s" and potentially is applied against multiple literals).
 pub struct MultiQueryResult<T: QueryTarget>(
-    pub BuckIndexMap<String, yak_error::Result<QueryEvaluationValue<T>>>,
+    pub YakIndexMap<String, yak_error::Result<QueryEvaluationValue<T>>>,
 );
 
 impl<T: QueryTarget> MultiQueryResult<T> {

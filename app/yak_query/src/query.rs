@@ -8,7 +8,7 @@
  * above-listed licenses.
  */
 
-pub mod buck_types;
+pub mod yak_types;
 pub mod environment;
 pub mod graph;
 pub mod syntax;

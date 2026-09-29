@@ -16,7 +16,7 @@ use pagable::Pagable;
 use static_interner::Intern;
 use static_interner::interner;
 use strong_hash::StrongHash;
-use yak_hash::BuckHasher;
+use yak_hash::YakHasher;
 
 use crate::configuration::data::ConfigurationData;
 
@@ -43,7 +43,7 @@ struct ConfigurationPairData {
 )]
 pub struct Configuration(Intern<ConfigurationPairData>);
 
-interner!(INTERNER, BuckHasher, ConfigurationPairData);
+interner!(INTERNER, YakHasher, ConfigurationPairData);
 
 impl Configuration {
     #[inline]

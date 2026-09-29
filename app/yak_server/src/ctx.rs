@@ -60,11 +60,11 @@ use yak_common::dice::cycles::PairDiceCycleDetector;
 use yak_common::file_ops::io::initialize_read_dir_cache;
 use yak_common::http::SetHttpClient;
 use yak_common::io::trace::TracingIoProvider;
-use yak_common::legacy_configs::cells::BuckConfigBasedCells;
-use yak_common::legacy_configs::configs::LegacyBuckConfig;
+use yak_common::legacy_configs::cells::YakConfigBasedCells;
+use yak_common::legacy_configs::configs::LegacyYakConfig;
 use yak_common::legacy_configs::dice::HasInjectedLegacyConfigs;
 use yak_common::legacy_configs::file_ops::ConfigPath;
-use yak_common::legacy_configs::key::BuckconfigKeyRef;
+use yak_common::legacy_configs::key::YakconfigKeyRef;
 use yak_configured::cycle::ConfiguredGraphCycleDescriptor;
 use yak_core::execution_types::executor_config::CommandExecutorConfig;
 use yak_core::execution_types::executor_config::RemoteExecutorUseCase;
@@ -107,7 +107,7 @@ use yak_fs::paths::abs_norm_path::AbsNormPathBuf;
 use yak_fs::paths::file_name::FileName;
 use yak_fs::paths::file_name::FileNameBuf;
 use yak_fs::working_dir::AbsWorkingDir;
-use yak_hash::BuckMutSet;
+use yak_hash::YakMutSet;
 use yak_hash::IntentionallyStdHashMap;
 use yak_interpreter::dice::starlark_debug::SetStarlarkDebugger;
 use yak_interpreter::extra::InterpreterHostArchitecture;
@@ -127,7 +127,7 @@ use yak_server_ctx::ctx::PrivateStruct;
 use yak_server_ctx::ctx::ServerCommandContextTrait;
 use yak_server_ctx::stderr_output_guard::StderrOutputGuard;
 use yak_server_ctx::stderr_output_guard::StderrOutputWriter;
-use yak_server_starlark_debug::BuckStarlarkDebuggerHandle;
+use yak_server_starlark_debug::YakStarlarkDebuggerHandle;
 use yak_server_starlark_debug::create_debugger_handle;
 use yak_test::local_resource_registry::InitLocalResourceRegistry;
 use yak_util::arc_str::ArcS;
@@ -141,7 +141,7 @@ use crate::daemon::common::CommandExecutorFactory;
 use crate::daemon::common::get_default_executor_config;
 use crate::daemon::state::DaemonStateData;
 use crate::daemon::state::RepoState;
-use crate::dice_tracker::BuckDiceTracker;
+use crate::dice_tracker::YakDiceTracker;
 use crate::dice_tracker::CoreStateQueueSample;
 use crate::heartbeat_guard::HeartbeatGuard;
 use crate::host_info;
@@ -220,13 +220,13 @@ pub struct ServerCommandContext<'a> {
     /// the `yak profile` command.
     pub starlark_profiling_manager: StarlarkProfilingManager,
 
-    debugger_handle: Option<BuckStarlarkDebuggerHandle>,
+    debugger_handle: Option<YakStarlarkDebuggerHandle>,
 
     record_target_call_stacks: bool,
     disable_starlark_types: bool,
     unstable_typecheck: bool,
 
-    pub buck_out_dir: ProjectRelativePathBuf,
+    pub yak_out_dir: ProjectRelativePathBuf,
     isolation_prefix: FileNameBuf,
 
     /// Common build options associated with this command.
@@ -341,7 +341,7 @@ impl<'a> ServerCommandContext<'a> {
         let debugger_handle = create_debugger_handle(base_context.events.dupe());
 
         // Read before `base_context` moves into the struct literal below.
-        let buck_out_dir = base_context.repo.paths.buck_out_dir();
+        let yak_out_dir = base_context.repo.paths.yak_out_dir();
         let isolation_prefix = base_context.repo.paths.isolation().to_owned();
 
         Ok(ServerCommandContext {
@@ -357,7 +357,7 @@ impl<'a> ServerCommandContext<'a> {
             client_id_from_client_metadata,
             _re_connection_handle: re_connection_handle,
             starlark_profiling_manager,
-            buck_out_dir,
+            yak_out_dir,
             isolation_prefix,
             build_options: build_options.cloned(),
             record_target_call_stacks: client_context.target_call_stacks,
@@ -557,8 +557,8 @@ impl ServerCommandContext<'_> {
     async fn load_new_configs(
         &self,
         dice_ctx: &mut DiceComputations<'_>,
-    ) -> yak_error::Result<BuckConfigBasedCells> {
-        let new_configs = BuckConfigBasedCells::parse_with_config_args(
+    ) -> yak_error::Result<YakConfigBasedCells> {
+        let new_configs = YakConfigBasedCells::parse_with_config_args(
             self.base_context.repo.paths.project_root(),
             &self.config_overrides,
         )
@@ -567,7 +567,7 @@ impl ServerCommandContext<'_> {
         self.report_traced_config_paths(&new_configs.config_paths)?;
         if self.reuse_current_config {
             if dice_ctx
-                .is_injected_external_buckconfig_data_key_set()
+                .is_injected_external_yakconfig_data_key_set()
                 .await?
             {
                 if !self.config_overrides.is_empty() {
@@ -588,11 +588,11 @@ impl ServerCommandContext<'_> {
                 }
                 // If `--reuse-current-config` is set, use the external config data from the
                 // previous command.
-                Ok(BuckConfigBasedCells {
+                Ok(YakConfigBasedCells {
                     cell_resolver: new_configs.cell_resolver,
                     root_config: new_configs.root_config,
-                    config_paths: BuckMutSet::default(),
-                    external_data: (*dice_ctx.get_injected_external_buckconfig_data().await?)
+                    config_paths: YakMutSet::default(),
+                    external_data: (*dice_ctx.get_injected_external_yakconfig_data().await?)
                         .clone(),
                 })
             } else {
@@ -608,7 +608,7 @@ impl ServerCommandContext<'_> {
         }
     }
 
-    fn report_traced_config_paths(&self, paths: &BuckMutSet<ConfigPath>) -> yak_error::Result<()> {
+    fn report_traced_config_paths(&self, paths: &YakMutSet<ConfigPath>) -> yak_error::Result<()> {
         if let Some(tracing_provider) = TracingIoProvider::from_io(&*self.base_context.repo.io) {
             for config_path in paths {
                 match config_path {
@@ -676,7 +676,7 @@ impl DiceUpdater for DiceCommandUpdater<'_, '_> {
 
         let infer_target_names = if cells_and_configs
             .root_config
-            .parse::<bool>(BuckconfigKeyRef {
+            .parse::<bool>(YakconfigKeyRef {
                 section: "yak",
                 property: "infer_target_names",
             })?
@@ -697,7 +697,7 @@ impl DiceUpdater for DiceCommandUpdater<'_, '_> {
             None,
         )?;
 
-        ctx.set_buck_out_path(Some(self.cmd_ctx.buck_out_dir.clone()))?;
+        ctx.set_yak_out_path(Some(self.cmd_ctx.yak_out_dir.clone()))?;
 
         let optional_validations = self
             .cmd_ctx
@@ -740,10 +740,10 @@ impl DiceUpdater for DiceCommandUpdater<'_, '_> {
 impl DiceCommandUpdater<'_, '_> {
     fn make_user_computation_data(
         &self,
-        root_config: &LegacyBuckConfig,
+        root_config: &LegacyYakConfig,
     ) -> yak_error::Result<UserComputationData> {
         let config_threads = root_config
-            .parse(BuckconfigKeyRef {
+            .parse(YakconfigKeyRef {
                 section: "build",
                 property: "threads",
             })?
@@ -754,7 +754,7 @@ impl DiceCommandUpdater<'_, '_> {
             .or_else(|| parse_concurrency(config_threads))
             .unwrap_or_else(yak_util::threads::available_parallelism_fresh);
 
-        if let Some(max_lines) = root_config.parse(BuckconfigKeyRef {
+        if let Some(max_lines) = root_config.parse(YakconfigKeyRef {
             section: "ui",
             property: "thread_line_limit",
         })? {
@@ -764,7 +764,7 @@ impl DiceCommandUpdater<'_, '_> {
         }
 
         let enable_miniperf = root_config
-            .parse::<RolloutPercentage>(BuckconfigKeyRef {
+            .parse::<RolloutPercentage>(YakconfigKeyRef {
                 section: "yak",
                 property: "miniperf2",
             })?
@@ -772,7 +772,7 @@ impl DiceCommandUpdater<'_, '_> {
             .roll();
 
         let log_action_keys = root_config
-            .parse::<RolloutPercentage>(BuckconfigKeyRef {
+            .parse::<RolloutPercentage>(YakconfigKeyRef {
                 section: "yak",
                 property: "log_action_keys",
             })?
@@ -780,27 +780,27 @@ impl DiceCommandUpdater<'_, '_> {
             .roll();
 
         let log_configured_graph_size = root_config
-            .parse::<bool>(BuckconfigKeyRef {
+            .parse::<bool>(YakconfigKeyRef {
                 section: "yak",
                 property: "log_configured_graph_size",
             })?
             .unwrap_or(false);
 
         let persistent_worker_shutdown_timeout_s = root_config
-            .parse::<u32>(BuckconfigKeyRef {
+            .parse::<u32>(YakconfigKeyRef {
                 section: "build",
                 property: "persistent_worker_shutdown_timeout_s",
             })?
             .or(Some(10));
 
         let re_cancel_on_estimated_queue_time_exceeds = root_config
-            .parse::<u64>(BuckconfigKeyRef {
+            .parse::<u64>(YakconfigKeyRef {
                 section: "build",
                 property: "remote_execution_cancel_on_estimated_queue_time_exceeds_s",
             })?
             .map(Duration::from_secs);
         let re_fallback_on_estimated_queue_time_exceeds = root_config
-            .parse::<u64>(BuckconfigKeyRef {
+            .parse::<u64>(YakconfigKeyRef {
                 section: "build",
                 property: "remote_execution_fallback_on_estimated_queue_time_exceeds_s",
             })?
@@ -837,7 +837,7 @@ impl DiceCommandUpdater<'_, '_> {
         ));
 
         let cycle_detector = if root_config
-            .parse::<bool>(BuckconfigKeyRef {
+            .parse::<bool>(YakconfigKeyRef {
                 section: "build",
                 property: "lazy_cycle_detector",
             })?
@@ -851,20 +851,20 @@ impl DiceCommandUpdater<'_, '_> {
 
         let mut run_action_knobs = self.run_action_knobs.dupe();
         run_action_knobs.use_network_action_output_cache |= root_config
-            .parse::<bool>(BuckconfigKeyRef {
+            .parse::<bool>(YakconfigKeyRef {
                 section: "yak",
                 property: "use_network_action_output_cache",
             })?
             .unwrap_or(false);
         run_action_knobs.default_allow_cache_upload |= root_config
-            .parse::<bool>(BuckconfigKeyRef {
+            .parse::<bool>(YakconfigKeyRef {
                 section: "yak",
                 property: "default_allow_cache_upload",
             })?
             .unwrap_or(false);
 
         if root_config
-            .parse::<bool>(BuckconfigKeyRef {
+            .parse::<bool>(YakconfigKeyRef {
                 section: "yak",
                 property: "share_action_paths",
             })?
@@ -874,19 +874,19 @@ impl DiceCommandUpdater<'_, '_> {
         }
 
         run_action_knobs.deduplicate_get_digests_ttl_calls |= root_config
-            .parse::<bool>(BuckconfigKeyRef {
+            .parse::<bool>(YakconfigKeyRef {
                 section: "yak",
                 property: "deduplicate_get_digests_ttl_calls",
             })?
             .unwrap_or(true);
 
-        let output_trees_download_semaphore_size = root_config.parse::<u32>(BuckconfigKeyRef {
+        let output_trees_download_semaphore_size = root_config.parse::<u32>(YakconfigKeyRef {
             section: "yak",
             property: "output_trees_download_semaphore_size",
         })?;
 
         let fingerprint_re_output_trees_eagerly = root_config
-            .parse::<bool>(BuckconfigKeyRef {
+            .parse::<bool>(YakconfigKeyRef {
                 section: "yak",
                 property: "fingerprint_re_output_trees_eagerly",
             })?
@@ -899,7 +899,7 @@ impl DiceCommandUpdater<'_, '_> {
 
         yak_core::faster_directories::VALUE.store(
             root_config
-                .parse::<bool>(BuckconfigKeyRef {
+                .parse::<bool>(YakconfigKeyRef {
                     section: "yak",
                     property: "faster_directories",
                 })?
@@ -916,7 +916,7 @@ impl DiceCommandUpdater<'_, '_> {
             .dupe();
         let mut data = UserComputationData {
             data,
-            tracker: Arc::new(BuckDiceTracker::new(
+            tracker: Arc::new(YakDiceTracker::new(
                 self.cmd_ctx.events().dupe(),
                 Box::new(move || CoreStateQueueSample {
                     depth: dice.core_state_queue_depth() as u64,
@@ -932,7 +932,7 @@ impl DiceCommandUpdater<'_, '_> {
         let worker_pool = Arc::new(WorkerPool::new(persistent_worker_shutdown_timeout_s));
 
         let critical_path_backend = root_config
-            .parse(BuckconfigKeyRef {
+            .parse(YakconfigKeyRef {
                 section: "yak",
                 property: "critical_path_backend2",
             })?
@@ -1021,7 +1021,7 @@ impl DiceCommandUpdater<'_, '_> {
         initialize_read_dir_cache(&mut data);
         data.spawner = self.cmd_ctx.base_context.daemon.spawner.dupe();
 
-        let clean_stale_config = CleanStaleConfig::from_buck_config(root_config)?;
+        let clean_stale_config = CleanStaleConfig::from_yak_config(root_config)?;
         let mut tags = vec![
             format!("lazy-cycle-detector:{}", has_cycle_detector),
             format!("miniperf:{}", enable_miniperf),
@@ -1054,11 +1054,11 @@ impl DiceCommandUpdater<'_, '_> {
 
 struct ConfigMetadataHolder(IntentionallyStdHashMap<String, String>);
 
-fn collect_config_metadata_into(config: &LegacyBuckConfig, data: &mut UserComputationData) {
+fn collect_config_metadata_into(config: &LegacyYakConfig, data: &mut UserComputationData) {
     fn add_config(
         map: &mut IntentionallyStdHashMap<String, String>,
-        cfg: &LegacyBuckConfig,
-        key: BuckconfigKeyRef<'static>,
+        cfg: &LegacyYakConfig,
+        key: YakconfigKeyRef<'static>,
         field_name: &'static str,
     ) {
         if let Some(value) = cfg.get(key) {
@@ -1071,7 +1071,7 @@ fn collect_config_metadata_into(config: &LegacyBuckConfig, data: &mut UserComput
     add_config(
         &mut metadata,
         config,
-        BuckconfigKeyRef {
+        YakconfigKeyRef {
             section: "log",
             property: "repository",
         },
@@ -1082,7 +1082,7 @@ fn collect_config_metadata_into(config: &LegacyBuckConfig, data: &mut UserComput
     add_config(
         &mut metadata,
         config,
-        BuckconfigKeyRef {
+        YakconfigKeyRef {
             section: "client",
             property: "id",
         },
@@ -1090,14 +1090,14 @@ fn collect_config_metadata_into(config: &LegacyBuckConfig, data: &mut UserComput
     );
 
     // Soft error if client.id is set in yakconfig (deprecated, will become hard error)
-    if let Some(client_id) = config.get(BuckconfigKeyRef {
+    if let Some(client_id) = config.get(YakconfigKeyRef {
         section: "client",
         property: "id",
     }) {
         use yak_core::soft_error;
 
         soft_error!(
-            "client_id_in_buckconfig",
+            "client_id_in_yakconfig",
             yak_error::yak_error!(
                 yak_error::ErrorTag::Input,
                 "Setting `client.id` via config (`-c|--config client.id={}`) is deprecated \
@@ -1209,7 +1209,7 @@ impl ServerCommandContextTrait for ServerCommandContext<'_> {
     async fn request_metadata(&self) -> yak_error::Result<IntentionallyStdHashMap<String, String>> {
         let mut metadata = metadata::collect_with_extras(
             &self.base_context.daemon.daemon_id,
-            &self.base_context.repo.buckconfig_metadata,
+            &self.base_context.repo.yakconfig_metadata,
         );
 
         metadata.insert(

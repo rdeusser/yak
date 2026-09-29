@@ -6,23 +6,23 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-from e2e_util.api.buck import Buck
+from e2e_util.api.yak import Yak
 from e2e_util.asserts import expect_failure
-from e2e_util.buck_workspace import buck_test
+from e2e_util.yak_workspace import yak_test
 
 
-@buck_test()
-async def test_transition_success_if_attr_value_has_not_changed(buck: Buck) -> None:
-    await buck.build("root//:target_where_transition_does_not_change_attr")
+@yak_test()
+async def test_transition_success_if_attr_value_has_not_changed(yak: Yak) -> None:
+    await yak.build("root//:target_where_transition_does_not_change_attr")
 
 
-@buck_test()
-async def test_transition_dep_success_if_attr_value_has_not_changed(buck: Buck) -> None:
-    await buck.build("root//:target_with_transition_dep")
+@yak_test()
+async def test_transition_dep_success_if_attr_value_has_not_changed(yak: Yak) -> None:
+    await yak.build("root//:target_with_transition_dep")
 
 
-@buck_test()
-async def test_transition_failed_if_attr_value_has_changed(buck: Buck) -> None:
+@yak_test()
+async def test_transition_failed_if_attr_value_has_changed(yak: Yak) -> None:
     err_msg = (
         r"Target root//:target_where_transition_changes_attr configuration transitioned\n"
         r"\s+old: root//:iphone#.*\n"
@@ -33,13 +33,13 @@ async def test_transition_failed_if_attr_value_has_changed(buck: Buck) -> None:
     )
 
     await expect_failure(
-        buck.build("root//:target_where_transition_changes_attr"),
+        yak.build("root//:target_where_transition_changes_attr"),
         stderr_regex=err_msg,
     )
 
 
-@buck_test()
-async def test_transition_failed_if_attr_value_cycle(buck: Buck) -> None:
+@yak_test()
+async def test_transition_failed_if_attr_value_cycle(yak: Yak) -> None:
     err_msg = (
         r"Configured target cycle detected \(`->` means \"depends on\"\):\n"
         r"\s+root//:target_where_transition_cycles_via_changed_attrs \(<transitioned-from-.*>#.*\) ->.*\n"
@@ -47,6 +47,6 @@ async def test_transition_failed_if_attr_value_cycle(buck: Buck) -> None:
     )
 
     await expect_failure(
-        buck.build("root//:target_where_transition_cycles_via_changed_attrs"),
+        yak.build("root//:target_where_transition_cycles_via_changed_attrs"),
         stderr_regex=err_msg,
     )

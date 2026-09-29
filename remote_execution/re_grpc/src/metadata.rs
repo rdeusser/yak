@@ -21,7 +21,7 @@ pub struct ActionHistoryInfo {
 }
 
 #[derive(Clone, Default)]
-pub struct BuckInfo {
+pub struct YakInfo {
     pub build_id: String,
     pub version: String,
     pub _dot_dot: (),
@@ -36,7 +36,7 @@ pub struct TClientContextMetadata {
 #[derive(Clone, Default)]
 pub struct RemoteExecutionMetadata {
     pub action_history_info: Option<ActionHistoryInfo>,
-    pub buck_info: Option<BuckInfo>,
+    pub yak_info: Option<YakInfo>,
     pub platform: Option<TPlatform>,
     pub use_case_id: String,
     pub do_not_cache: bool,

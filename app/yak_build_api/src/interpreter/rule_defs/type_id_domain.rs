@@ -17,7 +17,7 @@ use starlark::values::typing::TypeIdDomain;
 
 /// [`TypeIdDomain`]s for yak-defined nominal types.
 #[derive(Copy, Clone, Dupe, Debug, Eq, PartialEq)]
-pub(crate) enum Buck2TypeIdDomain {
+pub(crate) enum YakTypeIdDomain {
     /// A user-defined `provider(...)` type.
     UserProvider,
     /// A transitive set definition.
@@ -29,13 +29,13 @@ pub(crate) enum Buck2TypeIdDomain {
     ProviderSingleton,
 }
 
-impl TypeIdDomain for Buck2TypeIdDomain {
+impl TypeIdDomain for YakTypeIdDomain {
     fn tag(&self) -> &'static str {
         match self {
-            Buck2TypeIdDomain::UserProvider => "buck2.user_provider",
-            Buck2TypeIdDomain::TransitiveSet => "buck2.transitive_set",
-            Buck2TypeIdDomain::BuiltinProvider => "buck2.builtin_provider",
-            Buck2TypeIdDomain::ProviderSingleton => "buck2.provider_singleton",
+            YakTypeIdDomain::UserProvider => "yak.user_provider",
+            YakTypeIdDomain::TransitiveSet => "yak.transitive_set",
+            YakTypeIdDomain::BuiltinProvider => "yak.builtin_provider",
+            YakTypeIdDomain::ProviderSingleton => "yak.provider_singleton",
         }
     }
 }

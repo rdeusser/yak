@@ -23,7 +23,7 @@ use yak_common::package_listing::dice::DicePackageListingResolver;
 use yak_common::package_listing::resolver::PackageListingResolver;
 use yak_common::pattern::resolve::ResolveTargetPatterns;
 use yak_common::pattern::resolve::ResolvedPattern;
-use yak_common::target_aliases::BuckConfigTargetAliasResolver;
+use yak_common::target_aliases::YakConfigTargetAliasResolver;
 use yak_common::target_aliases::HasTargetAliasResolver;
 use yak_core::cells::CellAliasResolver;
 use yak_core::cells::CellResolver;
@@ -49,8 +49,8 @@ use yak_core::target::configured_target_label::ConfiguredTargetLabel;
 use yak_core::target::label::label::TargetLabel;
 use yak_fs::paths::abs_norm_path::AbsNormPathBuf;
 use yak_fs::paths::file_name::FileNameBuf;
-use yak_hash::BuckMutMap;
-use yak_hash::buck_indexset;
+use yak_hash::YakMutMap;
+use yak_hash::yak_indexset;
 use yak_node::load_patterns::MissingTargetBehavior;
 use yak_node::load_patterns::load_patterns;
 use yak_node::nodes::configured::ConfiguredTargetNode;
@@ -81,7 +81,7 @@ pub(crate) struct LiteralParser {
     project_root: ProjectRoot,
     cell_resolver: CellResolver,
     cell_alias_resolver: CellAliasResolver,
-    target_alias_resolver: BuckConfigTargetAliasResolver,
+    target_alias_resolver: YakConfigTargetAliasResolver,
 }
 
 impl LiteralParser {
@@ -208,7 +208,7 @@ impl DiceQueryData {
         cell_alias_resolver: CellAliasResolver,
         working_dir: &ProjectRelativePath,
         project_root: ProjectRoot,
-        target_alias_resolver: BuckConfigTargetAliasResolver,
+        target_alias_resolver: YakConfigTargetAliasResolver,
         allow_partial_graph: bool,
     ) -> Self {
         let cell_path = cell_resolver.get_cell_path(working_dir);
@@ -260,7 +260,7 @@ impl UqueryDelegate for DiceQueryDelegate<'_, '_> {
     // get the list of potential buildfile names for each cell
     async fn get_buildfile_names_by_cell(
         &self,
-    ) -> yak_error::Result<BuckMutMap<CellName, Arc<[FileNameBuf]>>> {
+    ) -> yak_error::Result<YakMutMap<CellName, Arc<[FileNameBuf]>>> {
         let mut ctx = self.ctx.get();
         let resolver = ctx.get_cell_resolver().await?;
         let buildfiles = ctx
@@ -298,7 +298,7 @@ impl UqueryDelegate for DiceQueryDelegate<'_, '_> {
 
     async fn eval_file_literal(&self, literal: &str) -> yak_error::Result<FileSet> {
         let cell_path = self.query_data.literal_parser.parse_file_literal(literal)?;
-        Ok(FileSet::new(buck_indexset![FileNode(cell_path)]))
+        Ok(FileSet::new(yak_indexset![FileNode(cell_path)]))
     }
 
     fn linear_dice_computations(&self) -> LinearRecomputeDiceComputations<'_, '_> {

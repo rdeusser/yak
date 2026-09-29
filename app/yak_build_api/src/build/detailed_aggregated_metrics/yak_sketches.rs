@@ -37,7 +37,7 @@ use yak_directory::directory::walk::unordered_entry_walk;
 use yak_execute::directory::ActionDirectoryBuilder;
 use yak_execute::directory::ActionDirectoryMember;
 use yak_execute::directory::LazyActionDirectoryBuilder;
-use yak_hash::BuckMutSet;
+use yak_hash::YakMutSet;
 use yak_interpreter::dice::starlark_provider::StarlarkEvalKind;
 use yak_interpreter::load_module::InterpreterCalculation;
 use yak_node::nodes::configured::ConfiguredTargetNode;
@@ -72,7 +72,7 @@ use crate::deferred::calculation::OwnedDeferredHolder;
 /// failed analysis or dynamic nodes).
 pub fn compute_action_graph_sketch<'a>(
     root_artifacts: impl IntoIterator<Item = &'a ArtifactGroup>,
-    state: &yak_hash::BuckMutMap<DeferredHolderKey, OwnedDeferredHolder>,
+    state: &yak_hash::YakMutMap<DeferredHolderKey, OwnedDeferredHolder>,
 ) -> yak_error::Result<(bool, MergeableGraphSketch<ActionKey, ActionGraphSketch>)> {
     let mut sketcher = DEFAULT_SKETCH_VERSION.create_sketcher();
     let complete = compute_action_graph_sketch_impl(root_artifacts, state, &mut sketcher)?;
@@ -82,7 +82,7 @@ pub fn compute_action_graph_sketch<'a>(
 /// Private implementation that accepts any Sketcher for testing.
 fn compute_action_graph_sketch_impl<'a>(
     root_artifacts: impl IntoIterator<Item = &'a ArtifactGroup>,
-    state: &yak_hash::BuckMutMap<DeferredHolderKey, OwnedDeferredHolder>,
+    state: &yak_hash::YakMutMap<DeferredHolderKey, OwnedDeferredHolder>,
     sketcher: &mut impl Sketcher<ActionKey>,
 ) -> yak_error::Result<bool> {
     let (complete, actions) =
@@ -121,7 +121,7 @@ fn compute_configured_graph_sketch_impl<'a>(
     sketcher: &mut impl Sketcher<ConfiguredTargetLabel>,
 ) -> usize {
     let mut queue = vec![node];
-    let mut visited: BuckMutSet<_> = BuckMutSet::default();
+    let mut visited: YakMutSet<_> = YakMutSet::default();
     visited.insert(node);
 
     while let Some(item) = queue.pop() {
@@ -222,7 +222,7 @@ pub(crate) async fn compute_artifact_path_sketches_for_target(
     ctx: &mut DiceComputations<'_>,
     outputs: &[(ArtifactGroup, BuildProviderType)],
     artifact_fs: &ArtifactFs,
-    providers_to_skip: &BuckMutSet<BuildProviderType>,
+    providers_to_skip: &YakMutSet<BuildProviderType>,
     sketch_size: bool,
     sketch_count: bool,
 ) -> yak_error::Result<ArtifactPathSketches> {
@@ -328,9 +328,9 @@ pub(crate) struct LoadGraphPropertiesKey {
     pub label: ConfiguredTargetLabel,
 }
 
-fn collect_transitive_packages(root: &ConfiguredTargetNode) -> BuckMutSet<PackageLabel> {
-    let mut packages = BuckMutSet::default();
-    let mut visited = BuckMutSet::default();
+fn collect_transitive_packages(root: &ConfiguredTargetNode) -> YakMutSet<PackageLabel> {
+    let mut packages = YakMutSet::default();
+    let mut visited = YakMutSet::default();
     visited.insert(root);
     let mut queue = vec![root];
     while let Some(node) = queue.pop() {
@@ -371,7 +371,7 @@ impl Key for LoadGraphPropertiesKey {
             })
             .await?;
 
-        let mut imports = BuckMutSet::default();
+        let mut imports = YakMutSet::default();
         for (pkg, eval_result) in &pkg_results {
             let peak_bytes = eval_result.starlark_peak_allocated_bytes;
             if peak_bytes > 0 {
@@ -389,7 +389,7 @@ impl Key for LoadGraphPropertiesKey {
             })
             .await?;
 
-        let mut visited: BuckMutSet<OwnedFrozenRef<()>> = BuckMutSet::default();
+        let mut visited: YakMutSet<OwnedFrozenRef<()>> = YakMutSet::default();
         let mut queue: Vec<OwnedFrozenRef<()>> = Vec::new();
         for heap in &loaded_modules {
             let heap = heap.owner();
@@ -439,7 +439,7 @@ fn gather_heap_graph_sketch(
     let mut retained_sketcher = compute_retained.then(|| DEFAULT_SKETCH_VERSION.create_sketcher());
     let mut peak_sketcher = compute_peak.then(|| DEFAULT_SKETCH_VERSION.create_sketcher());
 
-    let mut visited = BuckMutSet::default();
+    let mut visited = YakMutSet::default();
     visited.insert(root);
     let mut queue = vec![root];
 
@@ -487,8 +487,8 @@ mod tests {
     use yak_core::configuration::data::ConfigurationData;
     use yak_core::deferred::key::DeferredHolderKey;
     use yak_core::execution_types::executor_config::CommandExecutorConfig;
-    use yak_core::fs::buck_out_path::BuckOutPathKind;
-    use yak_core::fs::buck_out_path::BuildArtifactPath;
+    use yak_core::fs::yak_out_path::YakOutPathKind;
+    use yak_core::fs::yak_out_path::BuildArtifactPath;
     use yak_core::fs::project_rel_path::ProjectRelativePathBuf;
     use yak_core::target::configured_target_label::ConfiguredTargetLabel;
     use yak_execute::artifact_value::ArtifactValue;
@@ -500,10 +500,10 @@ mod tests {
     use yak_execute::directory::insert_artifact;
     use yak_execute::directory::insert_file;
     use yak_fs::paths::forward_rel_path::ForwardRelativePathBuf;
-    use yak_hash::BuckIndexSet;
-    use yak_hash::BuckMutMap;
-    use yak_hash::BuckMutSet;
-    use yak_hash::StdBuckHashMap;
+    use yak_hash::YakIndexSet;
+    use yak_hash::YakMutMap;
+    use yak_hash::YakMutSet;
+    use yak_hash::StdYakHashMap;
 
     use crate::actions::Action;
     use crate::actions::ActionExecutionCtx;
@@ -556,8 +556,8 @@ mod tests {
 
     impl MockAction {
         fn new(
-            inputs: BuckIndexSet<ArtifactGroup>,
-            outputs: BuckIndexSet<BuildArtifact>,
+            inputs: YakIndexSet<ArtifactGroup>,
+            outputs: YakIndexSet<BuildArtifact>,
             identifier: Option<String>,
         ) -> Self {
             Self {
@@ -616,7 +616,7 @@ mod tests {
             BuildArtifactPath::new(
                 holder_key.owner().dupe(),
                 ForwardRelativePathBuf::unchecked_new(format!("output-{index}")),
-                BuckOutPathKind::default(),
+                YakOutPathKind::default(),
             ),
             action_key,
             yak_execute::execute::request::OutputType::File,
@@ -635,7 +635,7 @@ mod tests {
             action_key.dupe(),
             Box::new(MockAction::new(
                 inputs.into_iter().cloned().collect(),
-                BuckIndexSet::from([output.dupe()]),
+                YakIndexSet::from([output.dupe()]),
                 Some(format!("action-{index}")),
             )),
             CommandExecutorConfig::testing_local(),
@@ -645,7 +645,7 @@ mod tests {
 
     #[test]
     fn test_action_graph_sketch_impl_empty() {
-        let state = BuckMutMap::default();
+        let state = YakMutMap::default();
         let mut mock_sketcher: MockSketcher<ActionKey> = MockSketcher::new();
 
         let complete = super::compute_action_graph_sketch_impl(
@@ -669,7 +669,7 @@ mod tests {
         let artifact_group = ArtifactGroup::Artifact(output.into());
 
         // Empty state - the action is not registered
-        let state = BuckMutMap::default();
+        let state = YakMutMap::default();
 
         let mut mock_sketcher: MockSketcher<ActionKey> = MockSketcher::new();
         let complete =
@@ -716,13 +716,13 @@ mod tests {
         let holder = OwnedDeferredHolder::Analysis(AnalysisResult::new(
             analysis_values,
             None,
-            StdBuckHashMap::default(),
+            StdYakHashMap::default(),
             0,
             0,
             None,
         ));
 
-        let mut state = BuckMutMap::default();
+        let mut state = YakMutMap::default();
         state.insert(holder_key, holder);
 
         let mut mock_sketcher: MockSketcher<ActionKey> = MockSketcher::new();
@@ -733,7 +733,7 @@ mod tests {
         assert!(complete);
         // Diamond has 4 unique actions - action0 should only be sketched once
         assert_eq!(mock_sketcher.items.len(), 4);
-        let sketched: BuckMutSet<_> = mock_sketcher.items.into_iter().collect();
+        let sketched: YakMutSet<_> = mock_sketcher.items.into_iter().collect();
         assert!(sketched.contains(&action_key0));
         assert!(sketched.contains(&action_key1));
         assert!(sketched.contains(&action_key2));
@@ -785,22 +785,22 @@ mod tests {
         compute_artifact_path_sketches_impl(&builder, Some(&mut size_mock), Some(&mut count_mock));
 
         // Walk order isn't stable, so compare as maps.
-        let expected_counts: BuckMutMap<_, _> = [p_first, p_other, p_shared]
+        let expected_counts: YakMutMap<_, _> = [p_first, p_other, p_shared]
             .into_iter()
             .map(|p| (p, 1usize))
             .collect();
-        let expected_sizes: BuckMutMap<_, _> =
+        let expected_sizes: YakMutMap<_, _> =
             expected_counts.keys().map(|p| (p.clone(), 0u64)).collect();
 
-        let count_seen: BuckMutMap<_, usize> =
+        let count_seen: YakMutMap<_, usize> =
             count_mock
                 .items
                 .iter()
-                .fold(BuckMutMap::default(), |mut m, p| {
+                .fold(YakMutMap::default(), |mut m, p| {
                     *m.entry(p.clone()).or_default() += 1;
                     m
                 });
-        let size_seen: BuckMutMap<_, _> = size_mock.weighted_items.into_iter().collect();
+        let size_seen: YakMutMap<_, _> = size_mock.weighted_items.into_iter().collect();
 
         assert_eq!(count_seen, expected_counts);
         assert_eq!(size_seen, expected_sizes);

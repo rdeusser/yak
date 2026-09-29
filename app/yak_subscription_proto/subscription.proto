@@ -10,7 +10,7 @@
 
 syntax = "proto3";
 
-package buck.subscription;
+package yak.subscription;
 
 // Client-to-daemon interaction in a subscription. This is what the client
 // writes to `stdin` of the `subscribe` command.

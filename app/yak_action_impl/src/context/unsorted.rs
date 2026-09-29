@@ -23,7 +23,7 @@ use yak_build_api::interpreter::rule_defs::context::AnalysisActions;
 use yak_build_api::interpreter::rule_defs::digest_config::StarlarkDigestConfig;
 use yak_build_api::interpreter::rule_defs::transitive_set::FrozenTransitiveSetDefinition;
 use yak_build_api::interpreter::rule_defs::transitive_set::TransitiveSet;
-use yak_core::fs::buck_out_path::BuckOutPathKind;
+use yak_core::fs::yak_out_path::YakOutPathKind;
 use yak_execute::execute::request::OutputType;
 
 #[starlark_module]
@@ -70,9 +70,9 @@ pub(crate) fn analysis_actions_methods_unsorted(builder: &mut MethodsBuilder) {
         };
         let has_content_based_path = has_content_based_path.unwrap_or(true);
         let path_resolution_method = if has_content_based_path {
-            BuckOutPathKind::ContentHash
+            YakOutPathKind::ContentHash
         } else {
-            BuckOutPathKind::Configuration
+            YakOutPathKind::Configuration
         };
         let artifact = this.state()?.declare_output(
             prefix,
@@ -90,7 +90,7 @@ pub(crate) fn analysis_actions_methods_unsorted(builder: &mut MethodsBuilder) {
         ))
     }
 
-    /// Creates a new transitive set. For details, see https://rdeusser.github.io/buck2/docs/rule_authors/transitive_sets/.
+    /// Creates a new transitive set. For details, see https://rdeusser.github.io/yak/docs/rule_authors/transitive_sets/.
     fn tset<'v>(
         this: &AnalysisActions<'v>,
         #[starlark(require = pos)] definition: FrozenValueTyped<

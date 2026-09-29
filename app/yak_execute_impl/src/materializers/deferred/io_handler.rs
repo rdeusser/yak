@@ -38,7 +38,7 @@ use yak_directory::directory::directory_iterator::DirectoryIterator;
 use yak_directory::directory::directory_iterator::DirectoryIteratorPathStack;
 use yak_directory::directory::entry::DirectoryEntry;
 use yak_directory::directory::walk::unordered_entry_walk;
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 use yak_error::ErrorTag;
 use yak_error::conversion::from_any_with_tag;
 use yak_events::dispatch::EventDispatcher;
@@ -64,8 +64,8 @@ use yak_fs::error::IoResultExt;
 use yak_fs::fs_util;
 use yak_fs::fs_util::ReadDir;
 use yak_fs::paths::abs_norm_path::AbsNormPathBuf;
-use yak_hash::BuckMutMap;
-use yak_hash::BuckMutSet;
+use yak_hash::YakMutMap;
+use yak_hash::YakMutSet;
 use yak_http::HttpClient;
 
 use crate::materializers::deferred::ArtifactMaterializationMethod;
@@ -86,7 +86,7 @@ use crate::materializers::io::materialize_files;
 pub struct DefaultIoHandler {
     fs: ProjectRoot,
     digest_config: DigestConfig,
-    buck_out_path: ProjectRelativePathBuf,
+    yak_out_path: ProjectRelativePathBuf,
     re_client_manager: Arc<ReConnectionManager>,
     /// Executor for blocking IO operations
     io_executor: Arc<dyn BlockingExecutor>,
@@ -97,19 +97,19 @@ pub struct DefaultIoHandler {
 pub struct NoDiskIoHandler {
     fs: ProjectRoot,
     digest_config: DigestConfig,
-    buck_out_path: ProjectRelativePathBuf,
+    yak_out_path: ProjectRelativePathBuf,
 }
 
 impl NoDiskIoHandler {
     pub fn new(
         fs: ProjectRoot,
         digest_config: DigestConfig,
-        buck_out_path: ProjectRelativePathBuf,
+        yak_out_path: ProjectRelativePathBuf,
     ) -> Self {
         Self {
             fs,
             digest_config,
-            buck_out_path,
+            yak_out_path,
         }
     }
 }
@@ -163,7 +163,7 @@ pub trait IoHandler: Sized + Sync + Send + 'static {
     ) -> yak_error::Result<()>;
 
     fn read_dir(&self, path: &AbsNormPathBuf) -> yak_error::Result<ReadDir>;
-    fn buck_out_path(&self) -> &ProjectRelativePathBuf;
+    fn yak_out_path(&self) -> &ProjectRelativePathBuf;
     fn re_client_manager(&self) -> &Arc<ReConnectionManager>;
     fn fs(&self) -> &ProjectRoot;
     fn digest_config(&self) -> DigestConfig;
@@ -173,7 +173,7 @@ impl DefaultIoHandler {
     pub fn new(
         fs: ProjectRoot,
         digest_config: DigestConfig,
-        buck_out_path: ProjectRelativePathBuf,
+        yak_out_path: ProjectRelativePathBuf,
         re_client_manager: Arc<ReConnectionManager>,
         io_executor: Arc<dyn BlockingExecutor>,
         http_client: HttpClient,
@@ -181,7 +181,7 @@ impl DefaultIoHandler {
         Self {
             fs,
             digest_config,
-            buck_out_path,
+            yak_out_path,
             re_client_manager,
             io_executor,
             http_client,
@@ -297,7 +297,7 @@ impl DefaultIoHandler {
                 }
                 .boxed()
                 .await
-                .with_buck_error_context(|| {
+                .with_yak_error_context(|| {
                     format!(
                         "Error materializing HTTP resource declared by target `{}`",
                         info.owner
@@ -329,7 +329,7 @@ impl DefaultIoHandler {
                     .execute_io_inline(|| {
                         let data =
                             zstd::bulk::decompress(&write.compressed_data, write.decompressed_size)
-                                .buck_error_context("Error decompressing data")?;
+                                .yak_error_context("Error decompressing data")?;
                         stat.total_bytes = write.decompressed_size as u64;
                         self.fs.write_file(&path, data, write.is_executable)
                     })
@@ -480,8 +480,8 @@ impl IoHandler for DefaultIoHandler {
         fs_util::read_dir(path).categorize_internal()
     }
 
-    fn buck_out_path(&self) -> &ProjectRelativePathBuf {
-        &self.buck_out_path
+    fn yak_out_path(&self) -> &ProjectRelativePathBuf {
+        &self.yak_out_path
     }
 
     fn re_client_manager(&self) -> &Arc<ReConnectionManager> {
@@ -581,8 +581,8 @@ impl IoHandler for NoDiskIoHandler {
         fs_util::read_dir(path).categorize_internal()
     }
 
-    fn buck_out_path(&self) -> &ProjectRelativePathBuf {
-        &self.buck_out_path
+    fn yak_out_path(&self) -> &ProjectRelativePathBuf {
+        &self.yak_out_path
     }
 
     fn re_client_manager(&self) -> &Arc<ReConnectionManager> {
@@ -605,12 +605,12 @@ fn maybe_tombstone_digest(digest: &FileDigest) -> yak_error::Result<&FileDigest>
     static TOMBSTONE_DIGEST: LazyLock<FileDigest> =
         LazyLock::new(|| FileDigest::new_sha1([0; 20], 1));
 
-    fn convert_digests(val: &str) -> yak_error::Result<BuckMutSet<FileDigest>> {
+    fn convert_digests(val: &str) -> yak_error::Result<YakMutSet<FileDigest>> {
         val.split(' ')
             .map(|digest| {
                 let digest = TDigest::from_str(digest)
                     .map_err(|e| from_any_with_tag(e, ErrorTag::InvalidDigest))
-                    .with_buck_error_context(|| format!("Invalid digest: `{digest}`"))?;
+                    .with_yak_error_context(|| format!("Invalid digest: `{digest}`"))?;
                 // This code is only used by E2E tests, so while it's not *a test*, testing_default
                 // is an OK choice here.
                 let digest = FileDigest::from_re(&digest, DigestConfig::testing_default())?;
@@ -621,7 +621,7 @@ fn maybe_tombstone_digest(digest: &FileDigest) -> yak_error::Result<&FileDigest>
 
     let tombstoned_digests = yak_env!(
         "YAK_TEST_TOMBSTONED_DIGESTS",
-        type=BuckMutSet<FileDigest>,
+        type=YakMutSet<FileDigest>,
         converter=convert_digests,
         applicability=testing,
     )?;
@@ -642,7 +642,7 @@ pub(super) fn create_ttl_refresh(
     digest_config: DigestConfig,
 ) -> Option<impl Future<Output = yak_error::Result<()>> + use<>> {
     let mut digests_to_refresh =
-        BuckMutMap::<usize, (Arc<CasDownloadInfo>, BuckMutSet<_>)>::default();
+        YakMutMap::<usize, (Arc<CasDownloadInfo>, YakMutSet<_>)>::default();
 
     let ttl_deadline = Timestamp::now()
         .checked_add(min_ttl)
@@ -662,7 +662,7 @@ pub(super) fn create_ttl_refresh(
                         let info_key = Arc::as_ptr(info) as usize;
                         digests_to_refresh
                             .entry(info_key)
-                            .or_insert_with(|| (info.dupe(), BuckMutSet::default()))
+                            .or_insert_with(|| (info.dupe(), YakMutSet::default()))
                             .1
                             .insert(file.digest.dupe());
                     }

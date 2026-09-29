@@ -20,7 +20,7 @@ use yak_common::argv::ArgFileKind;
 use yak_common::argv::ArgFilePath;
 use yak_common::argv::ExpandedArgv;
 use yak_common::argv::ExpandedArgvBuilder;
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 use yak_fs::error::IoResultExt;
 use yak_fs::fs_util;
 use yak_fs::paths::abs_norm_path::AbsNormPathBuf;
@@ -160,7 +160,7 @@ fn resolve_and_expand_argfile(
     cwd: &AbsWorkingDir,
 ) -> yak_error::Result<()> {
     let flagfile = resolve_flagfile(path, context, cwd)
-        .with_buck_error_context(|| format!("Error resolving flagfile `{path}`"))?;
+        .with_yak_error_context(|| format!("Error resolving flagfile `{path}`"))?;
     let flagfile_lines = expand_argfile_contents(context, &flagfile)?;
     expanded.argfile_scope(flagfile, |expanded| {
         expand_argfiles_with_context(expanded, flagfile_lines, context, cwd)
@@ -263,7 +263,7 @@ fn resolve_flagfile(
     let resolved_path = match path_part.split_once("//") {
         Some((cell_alias, cell_relative_path)) => context
             .resolve_cell_path(cell_alias, cell_relative_path)
-            .buck_error_context("Error resolving cell path")?
+            .yak_error_context("Error resolving cell path")?
             .into_abs_path_buf(),
         None => {
             let p = Path::new(path_part);

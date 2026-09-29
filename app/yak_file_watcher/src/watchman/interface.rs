@@ -20,8 +20,8 @@ use watchman_client::prelude::Connector;
 use watchman_client::prelude::FileType;
 use yak_common::file_ops::dice::FileChangeTracker;
 use yak_common::ignores::ignore_set::IgnoreSet;
-use yak_common::legacy_configs::configs::LegacyBuckConfig;
-use yak_common::legacy_configs::key::BuckconfigKeyRef;
+use yak_common::legacy_configs::configs::LegacyYakConfig;
+use yak_common::legacy_configs::key::YakconfigKeyRef;
 use yak_core::cells::CellResolver;
 use yak_core::cells::name::CellName;
 use yak_core::fs::project_rel_path::ProjectRelativePath;
@@ -29,7 +29,7 @@ use yak_core::rollout_percentage::RolloutPercentage;
 use yak_error::internal_error;
 use yak_events::dispatch::span_async;
 use yak_fs::paths::abs_norm_path::AbsNormPath;
-use yak_hash::StdBuckHashMap;
+use yak_hash::StdYakHashMap;
 use yak_util::process::async_background_command;
 
 use crate::dep_files::DepFileCache;
@@ -47,7 +47,7 @@ struct WatchmanQueryProcessor {
     // FIXME(JakobDegen): Storing these values statically is broken, because a cell whose location
     // changes keeps its old location here.
     cells: CellResolver,
-    ignore_specs: StdBuckHashMap<CellName, IgnoreSet>,
+    ignore_specs: StdYakHashMap<CellName, IgnoreSet>,
     empty_on_fresh_instance: bool,
     report_global_rev: bool,
     last_mergebase: Option<String>,
@@ -355,13 +355,13 @@ pub(crate) struct WatchmanFileWatcher {
 impl WatchmanFileWatcher {
     pub(crate) fn new(
         project_root: &AbsNormPath,
-        root_config: &LegacyBuckConfig,
+        root_config: &LegacyYakConfig,
         cells: CellResolver,
-        ignore_specs: StdBuckHashMap<CellName, IgnoreSet>,
+        ignore_specs: StdYakHashMap<CellName, IgnoreSet>,
         dep_file_cache: Arc<dyn DepFileCache>,
     ) -> yak_error::Result<Self> {
         let watchman_merge_base = root_config
-            .get(BuckconfigKeyRef {
+            .get(YakconfigKeyRef {
                 section: "project",
                 property: "watchman_merge_base",
             })
@@ -370,7 +370,7 @@ impl WatchmanFileWatcher {
         let empty_on_fresh_instance = if watchman_merge_base.is_some() {
             // double negative here because we'd prefer that rollout changes config value from false->true.
             !root_config
-                .parse::<RolloutPercentage>(BuckconfigKeyRef {
+                .parse::<RolloutPercentage>(YakconfigKeyRef {
                     section: "yak",
                     property: "disable_watchman_empty_on_fresh_instance",
                 })?
@@ -386,7 +386,7 @@ impl WatchmanFileWatcher {
         };
 
         let report_global_rev = root_config
-            .parse::<bool>(BuckconfigKeyRef {
+            .parse::<bool>(YakconfigKeyRef {
                 section: "yak",
                 property: "watchman_report_global_rev",
             })?

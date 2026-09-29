@@ -12,7 +12,7 @@ use std::env;
 use std::ffi::OsString;
 use std::io;
 use std::path::Path;
-#[cfg(not(buck_build))]
+#[cfg(not(yak_build))]
 use std::path::PathBuf;
 
 fn get_env(key: &str) -> Option<OsString> {
@@ -20,7 +20,7 @@ fn get_env(key: &str) -> Option<OsString> {
     env::var_os(key)
 }
 
-#[cfg(not(buck_build))]
+#[cfg(not(yak_build))]
 unsafe fn set_var(
     var: &str,
     override_var: &str,
@@ -50,12 +50,12 @@ unsafe fn set_var(
 ///
 /// Note: repo root is expected to be a relative or absolute path to the root of the repository.
 unsafe fn maybe_set_protoc() {
-    #[cfg(not(buck_build))]
+    #[cfg(not(yak_build))]
     {
         // `cargo build` of `yak` does not require external `protoc` dependency
         // because it uses prebuilt bundled `protoc` binary from `protoc-bin-vendored` crate.
         // However, prebuilt `protoc` binaries do not work in NixOS builds, see
-        // https://github.com/facebook/buck2/issues/65
+        // https://github.com/facebook/yak/issues/65
         // So for NixOS builds path to `protoc` binary can be overridden with
         // `YAK_BUILD_PROTOC` environment variable.
         unsafe {
@@ -70,7 +70,7 @@ unsafe fn maybe_set_protoc() {
 
 /// Set $PROTOC_INCLUDE.
 unsafe fn maybe_set_protoc_include() {
-    #[cfg(not(buck_build))]
+    #[cfg(not(yak_build))]
     {
         unsafe {
             set_var(

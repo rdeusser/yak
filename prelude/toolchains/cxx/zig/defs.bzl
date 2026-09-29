@@ -249,7 +249,7 @@ def _http_archive_impl(ctx: AnalysisContext) -> list[Provider]:
     return [DefaultInfo(default_output = output)]
 
 # TODO Switch to http_archive once that supports zip download.
-#   See https://github.com/facebook/buck2/issues/21
+#   See https://github.com/facebook/yak/issues/21
 _http_archive = rule(
     impl = _http_archive_impl,
     attrs = {
@@ -315,7 +315,7 @@ def _get_linker_type(os: str) -> LinkerType:
         # TODO[AH] return "darwin".
         #   The cc rules emit linker flags on MacOS that are not supported by Zig's linker.
         #   Declaring the linker as GNU style is not entirely correct, however it works better than
-        #   declaring Darwin style at this point. See https://github.com/facebook/buck2/issues/470
+        #   declaring Darwin style at this point. See https://github.com/facebook/yak/issues/470
         return LinkerType("gnu")
     elif os == "windows":
         return LinkerType("windows")

@@ -23,13 +23,13 @@ use pagable::Pagable;
 use pagable::pagable_typetag;
 use yak_common::dice::cells::HasCellResolver;
 use yak_common::legacy_configs::dice::HasLegacyConfigs;
-use yak_common::legacy_configs::key::BuckconfigKeyRef;
+use yak_common::legacy_configs::key::YakconfigKeyRef;
 use yak_core::configuration::data::ConfigurationData;
 use yak_core::global_cfg_options::GlobalCfgOptions;
 use yak_core::target::configured_target_label::ConfiguredTargetLabel;
 use yak_core::target::label::label::TargetLabel;
 use yak_core::target::target_configured_target_label::TargetConfiguredTargetLabel;
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 use yak_node::cfg_constructor::CFG_CONSTRUCTOR_CALCULATION_IMPL;
 use yak_node::cfg_constructor::CfgConstructorModifiers;
 use yak_node::configuration::target_platform_detector::TargetPlatformDetector;
@@ -71,7 +71,7 @@ async fn get_target_platform_detector<'d>(
                 match ctx
                     .get_legacy_config_property(
                         root_cell,
-                        BuckconfigKeyRef {
+                        YakconfigKeyRef {
                             section: "parser",
                             property: "target_platform_detector_spec",
                         },
@@ -165,7 +165,7 @@ impl ConfiguredTargetCalculationImpl for ConfiguredTargetCalculationInstance {
                     node.rule_type(),
                 )
                 .await
-                .with_buck_error_context(|| format!("Resolving modifiers for target `{target}`"))
+                .with_yak_error_context(|| format!("Resolving modifiers for target `{target}`"))
         }
 
         match node.rule_kind() {

@@ -21,17 +21,17 @@ use yak_event_observer::pending_estimate::pending_estimate;
 use yak_event_observer::span_tracker;
 use yak_event_observer::span_tracker::RootData;
 use yak_event_observer::span_tracker::Roots;
-use yak_events::BuckEvent;
+use yak_events::YakEvent;
 use yak_events::dispatch::EventDispatcher;
 use yak_events::span::SpanId;
-use yak_hash::BuckMutMap;
-use yak_hash::BuckMutSet;
+use yak_hash::YakMutMap;
+use yak_hash::YakMutSet;
 use yak_wrapper_common::invocation_id::TraceId;
 
-static ACTIVE_COMMANDS: LazyLock<Mutex<BuckMutMap<TraceId, ActiveCommandHandle>>> =
-    LazyLock::new(|| Mutex::new(BuckMutMap::default()));
+static ACTIVE_COMMANDS: LazyLock<Mutex<YakMutMap<TraceId, ActiveCommandHandle>>> =
+    LazyLock::new(|| Mutex::new(YakMutMap::default()));
 
-pub fn active_commands() -> MutexGuard<'static, BuckMutMap<TraceId, ActiveCommandHandle>> {
+pub fn active_commands() -> MutexGuard<'static, YakMutMap<TraceId, ActiveCommandHandle>> {
     ACTIVE_COMMANDS.lock()
 }
 
@@ -169,8 +169,8 @@ pub struct SpansSnapshot {
 /// A wrapper around ActiveCommandState that allows 1 client to write to it.
 pub struct ActiveCommandStateWriter {
     /// Maps a SpanId to whether it is a root (i.e. no parent)
-    roots: Roots<Arc<BuckEvent>>,
-    non_roots: BuckMutSet<SpanId>,
+    roots: Roots<Arc<YakEvent>>,
+    non_roots: YakMutSet<SpanId>,
     dice_state: DiceState,
     closed: u64,
     shared: Arc<ActiveCommandState>,
@@ -180,42 +180,42 @@ impl ActiveCommandStateWriter {
     fn new(shared: Arc<ActiveCommandState>) -> Self {
         Self {
             roots: Roots::default(),
-            non_roots: BuckMutSet::default(),
+            non_roots: YakMutSet::default(),
             dice_state: DiceState::new(),
             closed: 0,
             shared,
         }
     }
 
-    pub fn peek_event(&mut self, buck_event: &BuckEvent) {
-        use yak_data::buck_event::Data::*;
+    pub fn peek_event(&mut self, yak_event: &YakEvent) {
+        use yak_data::yak_event::Data::*;
 
         let mut changed = false;
 
-        match buck_event.data() {
+        match yak_event.data() {
             SpanStart(..) => {
-                let span_id = match buck_event.span_id() {
+                let span_id = match yak_event.span_id() {
                     Some(id) => id,
                     None => return,
                 };
 
-                if !span_tracker::is_span_shown(buck_event) {
+                if !span_tracker::is_span_shown(yak_event) {
                     return;
                 }
 
-                let is_root = buck_event
+                let is_root = yak_event
                     .parent_id()
                     .is_none_or(|id| !self.roots.contains(id) && !self.non_roots.contains(&id));
 
                 if is_root {
-                    self.roots.insert(span_id, false, RootData::new(buck_event));
+                    self.roots.insert(span_id, false, RootData::new(yak_event));
                     changed = true;
                 } else {
                     self.non_roots.insert(span_id);
                 }
             }
             SpanEnd(..) => {
-                let span_id = match buck_event.span_id() {
+                let span_id = match yak_event.span_id() {
                     Some(id) => id,
                     None => return,
                 };
@@ -332,7 +332,7 @@ mod tests {
         let child = SpanId::next();
         let trace = TraceId::new();
 
-        writer.peek_event(&BuckEvent::new(
+        writer.peek_event(&YakEvent::new(
             SystemTime::now(),
             trace.clone(),
             Some(root),
@@ -352,7 +352,7 @@ mod tests {
             }
         );
 
-        writer.peek_event(&BuckEvent::new(
+        writer.peek_event(&YakEvent::new(
             SystemTime::now(),
             trace.clone(),
             Some(child),
@@ -372,7 +372,7 @@ mod tests {
             }
         );
 
-        writer.peek_event(&BuckEvent::new(
+        writer.peek_event(&YakEvent::new(
             SystemTime::now(),
             trace.clone(),
             Some(child),
@@ -393,7 +393,7 @@ mod tests {
             }
         );
 
-        writer.peek_event(&BuckEvent::new(
+        writer.peek_event(&YakEvent::new(
             SystemTime::now(),
             trace.clone(),
             Some(root),
@@ -414,7 +414,7 @@ mod tests {
             }
         );
 
-        writer.peek_event(&BuckEvent::new(
+        writer.peek_event(&YakEvent::new(
             SystemTime::now(),
             trace,
             None,
@@ -467,10 +467,10 @@ mod tests {
     }
 
     fn check_concurrent_command_trace_ids_eq(event: Option<Event>, expected_trace_ids: &[String]) {
-        assert_matches!(event, Some(Event::Buck(event)) => {
+        assert_matches!(event, Some(Event::Yak(event)) => {
             assert_matches!(
                 event.data(),
-                yak_data::buck_event::Data::Instant(yak_data::InstantEvent {
+                yak_data::yak_event::Data::Instant(yak_data::InstantEvent {
                     data: Some(yak_data::instant_event::Data::ConcurrentCommands(
                         yak_data::ConcurrentCommands {
                             trace_ids,
@@ -478,8 +478,8 @@ mod tests {
                     ))
                 }) => {
                     // Use HashSets because  trace ids may not be reported in the same order that we specified.
-                    let trace_ids: BuckMutSet<&String> = trace_ids.iter().collect();
-                    let expected_trace_ids: BuckMutSet<&String> = expected_trace_ids.iter().collect();
+                    let trace_ids: YakMutSet<&String> = trace_ids.iter().collect();
+                    let expected_trace_ids: YakMutSet<&String> = expected_trace_ids.iter().collect();
                     assert_eq!(trace_ids, expected_trace_ids);
                 }
             );

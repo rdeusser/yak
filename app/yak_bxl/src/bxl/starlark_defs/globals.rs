@@ -12,7 +12,7 @@
 
 use starlark::environment::GlobalsBuilder;
 use yak_build_api::bxl::select::register_select_types;
-use yak_interpreter::downstream_crate_starlark_defs::REGISTER_BUCK2_BXL_GLOBALS;
+use yak_interpreter::downstream_crate_starlark_defs::REGISTER_YAK_BXL_GLOBALS;
 
 use crate::bxl::starlark_defs::bxl_function::register_bxl_main_function;
 use crate::bxl::starlark_defs::bxl_function::register_bxl_prefixed_main_function;
@@ -44,7 +44,7 @@ fn bxl_namespace(g: &mut GlobalsBuilder) {
 }
 
 pub(crate) fn init_bxl_specific_globals() {
-    REGISTER_BUCK2_BXL_GLOBALS.init(|g| {
+    REGISTER_YAK_BXL_GLOBALS.init(|g| {
         g.namespace("bxl", bxl_namespace);
         // TODO(nga): move these into `bxl` namespace.
         g.namespace("cli_args", cli_args::register_cli_args_module);

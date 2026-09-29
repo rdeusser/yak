@@ -14,7 +14,7 @@ from pathlib import Path
 from typing import Awaitable, Optional, Type, TypeVar
 
 import pytest
-from e2e_util.api.buck_result import BuckException, BuckResult, ExitCode
+from e2e_util.api.yak_result import YakException, YakResult, ExitCode
 
 
 E = TypeVar("E", bound=BaseException)
@@ -39,22 +39,22 @@ def _indent(text: str) -> str:
 
 
 async def expect_failure(
-    process: Awaitable[BuckResult],
+    process: Awaitable[YakResult],
     *,
-    exception: Type[E] = BuckException,
+    exception: Type[E] = YakException,
     exit_code: Optional[ExitCode] = None,
     stdout_regex: Optional[str] = None,
     stderr_regex: Optional[str] = None,
 ) -> E:
     """
-    Asserts that the process raises a BuckException.
+    Asserts that the process raises a YakException.
 
     Parameters:
-        process: An Awaitable of BuckResult, usually a Process
+        process: An Awaitable of YakResult, usually a Process
         exception:
             The type of exception to check for.
-            The exception can be a BuckException or any subclass.
-            Default is BuckException.
+            The exception can be a YakException or any subclass.
+            Default is YakException.
         exit_code:
             An optional exit code to check for if provided.
             Raises an AssertionError if the actual exit code is different.
@@ -68,7 +68,7 @@ async def expect_failure(
     with pytest.raises(exception) as execinfo:  # type: ignore
         await process
     failure = execinfo.value
-    if not isinstance(failure, BuckException):
+    if not isinstance(failure, YakException):
         return failure
     if exit_code is not None:
         actual_exit_code = failure.get_exit_code()

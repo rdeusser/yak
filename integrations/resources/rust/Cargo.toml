@@ -1,5 +1,5 @@
 [package]
-name = "buck-resources"
+name = "yak-resources"
 version = "1.0.0"
 edition.workspace = true
 description = "Load resource paths from a resources.json produced by yak"

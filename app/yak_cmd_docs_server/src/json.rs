@@ -15,7 +15,7 @@ use starlark::docs::DocItem;
 use starlark::docs::DocMember;
 use starlark::docs::DocModule;
 use starlark::typing::Ty;
-use yak_hash::BuckMutMap;
+use yak_hash::YakMutMap;
 
 use crate::starlark_::StarlarkFilePath;
 
@@ -34,7 +34,7 @@ fn serialize_opt_ty<S: serde::Serializer>(ty: &Option<Ty>, s: S) -> Result<S::Ok
 struct JsonDoc {
     id: JsonIdentifier,
     item: JsonDocItem,
-    custom_attrs: BuckMutMap<String, String>,
+    custom_attrs: YakMutMap<String, String>,
 }
 
 #[derive(Serialize)]
@@ -56,7 +56,7 @@ impl JsonDoc {
                 location: Some(JsonLocation { path: doc.location }),
             },
             item: JsonDocItem::from_starlark(doc.item),
-            custom_attrs: BuckMutMap::default(),
+            custom_attrs: YakMutMap::default(),
         }
     }
 }

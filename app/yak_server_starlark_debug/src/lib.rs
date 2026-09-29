@@ -14,12 +14,12 @@
 //!
 //! Components of the debugger:
 //!
-//! [BuckStarlarkDebuggerServer] is the main way that the core of yak integrates
+//! [YakStarlarkDebuggerServer] is the main way that the core of yak integrates
 //! the starlark debugger. This provides the hooks to wrap a Starlark evaluation and
 //! enable the debugger (and handle communication between that starlark evaluation
 //! and the debugger server/state)
 //!
-//! [BuckStarlarkDebuggerHandle] is a "handle" the to the debugger server. One of these
+//! [YakStarlarkDebuggerHandle] is a "handle" the to the debugger server. One of these
 //! will be created for each yak command and put in the dice per-transaction data. Code
 //! that needs to do starlark evaluation can then use this to setup their Evaluator
 //! appropriately (though this is really just an implementation detail hidden in the
@@ -61,7 +61,7 @@ use yak_interpreter::starlark_debug::StarlarkDebuggerHandle;
 
 use crate::error::StarlarkDebuggerError;
 use crate::run::ToClientMessage;
-use crate::server::BuckStarlarkDebuggerServer;
+use crate::server::YakStarlarkDebuggerServer;
 
 mod controller;
 mod dap_api;
@@ -72,12 +72,12 @@ mod variable_known_paths;
 
 /// A handle to the debugger server.
 #[derive(Debug, Clone, Dupe)]
-pub struct BuckStarlarkDebuggerHandle(Arc<HandleData>);
+pub struct YakStarlarkDebuggerHandle(Arc<HandleData>);
 
 #[derive(Debug)]
 pub struct HandleData {
     id: HandleId,
-    server: Arc<BuckStarlarkDebuggerServer>,
+    server: Arc<YakStarlarkDebuggerServer>,
 }
 
 impl Drop for HandleData {
@@ -87,7 +87,7 @@ impl Drop for HandleData {
 }
 
 #[async_trait]
-impl StarlarkDebuggerHandle for BuckStarlarkDebuggerHandle {
+impl StarlarkDebuggerHandle for YakStarlarkDebuggerHandle {
     async fn start_eval(
         &self,
         description: &str,
@@ -103,12 +103,12 @@ pub(crate) struct HandleId(u32);
 pub(crate) struct HookId(u32);
 
 /// We allow only a single debugger to be attached at a time. While it's attached, this will hold the server instance.
-static CURRENT_DEBUGGER: Mutex<Option<Arc<BuckStarlarkDebuggerServer>>> = Mutex::new(None);
+static CURRENT_DEBUGGER: Mutex<Option<Arc<YakStarlarkDebuggerServer>>> = Mutex::new(None);
 
 /// Used by each command to get a handle to the current debugger. The debugger server will capture the
 /// event dispatcher to send back debugger state snapshots (which indicate that the debugger is attached
 /// and which, if any, threads are paused) while the command is running.
-pub fn create_debugger_handle(events: EventDispatcher) -> Option<BuckStarlarkDebuggerHandle> {
+pub fn create_debugger_handle(events: EventDispatcher) -> Option<YakStarlarkDebuggerHandle> {
     CURRENT_DEBUGGER
         .lock()
         .unwrap()
@@ -117,7 +117,7 @@ pub fn create_debugger_handle(events: EventDispatcher) -> Option<BuckStarlarkDeb
 }
 
 /// Manages setting/unsetting the CURRENT_DEBUGGER while the starlark debug-attach command is running.
-struct ServerConnection(Arc<BuckStarlarkDebuggerServer>);
+struct ServerConnection(Arc<YakStarlarkDebuggerServer>);
 
 impl ServerConnection {
     fn new(
@@ -129,7 +129,7 @@ impl ServerConnection {
             return Err(StarlarkDebuggerError::DebuggerAlreadyAttached.into());
         }
 
-        let server = Arc::new(BuckStarlarkDebuggerServer::new(
+        let server = Arc::new(YakStarlarkDebuggerServer::new(
             to_client_send,
             project_root,
         ));

@@ -12,7 +12,7 @@
 //! will need to handle as the process runner.
 
 use tracing::Level;
-use yak_hash::BuckMutMap;
+use yak_hash::YakMutMap;
 
 /// The API available to processes that yak will need to handle
 #[async_trait::async_trait]
@@ -25,5 +25,5 @@ pub trait DownwardApi {
     async fn log(&self, level: Level, msg: String) -> yak_error::Result<()>;
 
     /// reports an externally consumable event containing some data that will be untouched by yak
-    async fn external(&self, data: BuckMutMap<String, String>) -> yak_error::Result<()>;
+    async fn external(&self, data: YakMutMap<String, String>) -> yak_error::Result<()>;
 }

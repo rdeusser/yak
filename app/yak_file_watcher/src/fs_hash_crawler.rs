@@ -32,16 +32,16 @@ use yak_core::fs::project::ProjectRoot;
 use yak_core::fs::project_rel_path::ProjectRelativePath;
 use yak_data::FileWatcherEventType;
 use yak_data::FileWatcherKind;
-use yak_error::BuckErrorContext;
-use yak_error::BuckErrorOptionContext;
+use yak_error::YakErrorContext;
+use yak_error::YakErrorOptionContext;
 use yak_events::dispatch::span_async;
 use yak_fs::async_fs_util::spawn_blocking;
 use yak_fs::error::IoResultExt;
 use yak_fs::fs_util;
 use yak_fs::paths::abs_norm_path::AbsNormPath;
 use yak_fs::paths::file_name::FileNameBuf;
-use yak_hash::BuckMutMap;
-use yak_hash::StdBuckHashMap;
+use yak_hash::YakMutMap;
+use yak_hash::StdYakHashMap;
 
 use crate::file_watcher::FileWatcher;
 use crate::mergebase::Mergebase;
@@ -54,7 +54,7 @@ use crate::stats::FileWatcherStats;
 pub struct FsHashCrawler {
     root: ProjectRoot,
     cells: CellResolver,
-    ignore_specs: StdBuckHashMap<CellName, IgnoreSet>,
+    ignore_specs: StdYakHashMap<CellName, IgnoreSet>,
     snapshot: Arc<Mutex<FsSnapshot>>,
 }
 
@@ -62,7 +62,7 @@ impl FsHashCrawler {
     pub fn new(
         root: &ProjectRoot,
         cells: CellResolver,
-        ignore_specs: StdBuckHashMap<CellName, IgnoreSet>,
+        ignore_specs: StdYakHashMap<CellName, IgnoreSet>,
     ) -> yak_error::Result<Self> {
         let snapshot = Arc::new(Mutex::new(FsSnapshot::build(root, &cells)?));
         Ok(Self {
@@ -139,11 +139,11 @@ impl EntryInfo {
 }
 
 #[derive(Allocative)]
-struct FsSnapshot(BuckMutMap<CellPath, EntryInfo>);
+struct FsSnapshot(YakMutMap<CellPath, EntryInfo>);
 
 impl FsSnapshot {
     fn build(root: &ProjectRoot, cells: &CellResolver) -> yak_error::Result<Self> {
-        let mut snapshot = FsSnapshot(BuckMutMap::default());
+        let mut snapshot = FsSnapshot(YakMutMap::default());
         snapshot.build_fs_snapshot(root, cells, root.root())?;
         Ok(snapshot)
     }
@@ -207,7 +207,7 @@ impl FsSnapshot {
     fn get_updates_for_dice(
         &self,
         new_snapshot: &FsSnapshot,
-        ignore_specs: &StdBuckHashMap<CellName, IgnoreSet>,
+        ignore_specs: &StdYakHashMap<CellName, IgnoreSet>,
     ) -> yak_error::Result<(yak_data::FileWatcherStats, FileChangeTracker)> {
         let events = self.get_updates(new_snapshot)?;
         let mut changed = FileChangeTracker::new();
@@ -273,14 +273,14 @@ impl FsSnapshot {
             let filename = FileNameBuf::try_from(CompactString::new(
                 filename.to_str().internal_error("Filename is not UTF-8")?,
             ))
-            .with_buck_error_context(|| format!("Invalid filename: {}", disk_path.display()))?;
+            .with_yak_error_context(|| format!("Invalid filename: {}", disk_path.display()))?;
 
             let disk_path = disk_path.join(filename);
             let rel_path = root.relativize(&disk_path)?;
             let cell_path = cells.get_cell_path(&rel_path);
 
             // We ignore yak-out and .hg dirs, as those are uninteresting events caused by us.
-            if rel_path.starts_with(InvocationPaths::buck_out_dir_prefix())
+            if rel_path.starts_with(InvocationPaths::yak_out_dir_prefix())
                 || rel_path.starts_with(ProjectRelativePath::unchecked_new(".hg"))
             {
                 continue;

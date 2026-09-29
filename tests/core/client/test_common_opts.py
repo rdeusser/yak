@@ -9,30 +9,30 @@
 import tempfile
 
 import pytest
-from e2e_util.api.buck import Buck
+from e2e_util.api.yak import Yak
 from e2e_util.asserts import expect_failure
-from e2e_util.buck_workspace import buck_test
+from e2e_util.yak_workspace import yak_test
 
 
-@buck_test()
+@yak_test()
 @pytest.mark.parametrize(  # type: ignore
     "cmd",
     ["build", "targets", "cquery", "bxl", "uquery"],
 )
-async def test_write_uuid(buck: Buck, cmd: str) -> None:
+async def test_write_uuid(yak: Yak, cmd: str) -> None:
     with tempfile.NamedTemporaryFile() as file:
-        cmd_call = getattr(buck, cmd)
+        cmd_call = getattr(yak, cmd)
         await expect_failure(cmd_call("--write-build-id", file.name, "a"))
 
         assert len(file.read()) > 0
 
 
-@buck_test()
+@yak_test()
 @pytest.mark.parametrize(  # type: ignore
     "cmd",
     ["build", "targets", "cquery", "bxl", "uquery"],
 )
-async def test_ban_cell_override(buck: Buck, cmd: str) -> None:
-    cmd_call = getattr(buck, cmd)
+async def test_ban_cell_override(yak: Yak, cmd: str) -> None:
+    cmd_call = getattr(yak, cmd)
     await expect_failure(cmd_call("--config", "repositories.foo=bar", "a"))
     await expect_failure(cmd_call("--config", "cells.foo=bar", "a"))

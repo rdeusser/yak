@@ -124,7 +124,7 @@ mod tests {
     fn test_windows_path() {
         assert_eq!(
             SourceLocation::new(
-                r"C:\whatever\repo\buck2\app\yak_error\src\source_location.rs",
+                r"C:\whatever\repo\yak\app\yak_error\src\source_location.rs",
                 42,
             )
             .to_string(),

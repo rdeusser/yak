@@ -15,7 +15,7 @@ use async_trait::async_trait;
 use dice_futures::cancellation::CancellationContext;
 use sorted_vector_map::SortedVectorMap;
 use yak_core::fs::artifact_path_resolver::ArtifactFs;
-use yak_hash::BuckIndexMap;
+use yak_hash::YakIndexMap;
 use yak_util::time_span::TimeSpan;
 
 use crate::artifact_value::ArtifactValue;
@@ -101,7 +101,7 @@ impl PreparedCommandExecutor for DryRunExecutor {
             // NOTE: This should probably be an error() but who cares.
             Err(..) => manager.failure(
                 exec_kind,
-                BuckIndexMap::default(),
+                YakIndexMap::default(),
                 Default::default(),
                 Some(1),
                 CommandExecutionMetadata::empty(TimeSpan::empty_now()),

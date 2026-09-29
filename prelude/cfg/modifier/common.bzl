@@ -14,7 +14,7 @@ load(
     ":types.bzl",
     "ConditionalModifierInfo",
     "Modifier",
-    "ModifierBuckconfigLocation",
+    "ModifierYakconfigLocation",
     "ModifierCliLocation",
     "ModifierInfo",
     "ModifierLocation",
@@ -27,10 +27,10 @@ load(
 
 # Key under which `set_cfg_modifiers()` writes its PACKAGE-level cfg modifiers
 # (consumed by `set_cfg_constructor(key = MODIFIER_METADATA_KEY, ...)`). The
-# string value collides with the historical per-target `metadata["buck.cfg_modifiers"]`
+# string value collides with the historical per-target `metadata["yak.cfg_modifiers"]`
 # key, which is no longer supported - per-target modifiers must use the first-class
 # `modifiers` attribute.
-MODIFIER_METADATA_KEY = "buck.cfg_modifiers"
+MODIFIER_METADATA_KEY = "yak.cfg_modifiers"
 
 _TARGET_LOCATION_STR = "`modifiers` attribute of target"
 _CLI_LOCATION_STR = "command line"
@@ -42,7 +42,7 @@ def location_to_string(location: ModifierLocation) -> str:
         return _TARGET_LOCATION_STR
     if isinstance(location, ModifierCliLocation):
         return _CLI_LOCATION_STR
-    if isinstance(location, ModifierBuckconfigLocation):
+    if isinstance(location, ModifierYakconfigLocation):
         return "yakconfig {}.{}".format(location.section, location.property)
     fail("Internal error. Unrecognized location type `{}` for location `{}`".format(type(location), location))
 
@@ -105,10 +105,10 @@ def get_modifier_info(refs: dict[str, ProviderCollection], modifier: Modifier, l
                 cfg_info = refs[key][ConfigurationInfo]
                 root_values = cfg_info.root_values
                 if cfg_info.values or root_values:
-                    buckconfig_values = cfg_info.values | root_values
+                    yakconfig_values = cfg_info.values | root_values
                     soft_error(
-                        "starlark_config_setting_non_empty_buckconfig_values_in_conditional_modifier",
-                        "config_setting `{}` defines yakconfig values {} which are NOT supported in conditional modifiers.\n".format(key, buckconfig_values)
+                        "starlark_config_setting_non_empty_yakconfig_values_in_conditional_modifier",
+                        "config_setting `{}` defines yakconfig values {} which are NOT supported in conditional modifiers.\n".format(key, yakconfig_values)
                         + "These yakconfig values are being IGNORED.\n\n"
                         + "Action required: Remove the `values` and `root_values` parameters from this config_setting {} and use only `constraint_values` instead.\n".format(
                             key
@@ -262,7 +262,7 @@ def resolve_alias(modifier: Modifier, aliases: struct) -> list[Modifier]:
     resolved = getattr(aliases, modifier, None)
     if resolved:
         return resolved if isinstance(resolved, list) else [resolved]
-    fail("Found invalid modifier alias `{}`. A list of valid modifier aliases is in buck2/cfg/experimental/alias.bzl".format(modifier))
+    fail("Found invalid modifier alias `{}`. A list of valid modifier aliases is in yak/cfg/experimental/alias.bzl".format(modifier))
 
 def _get_constraint_setting_deps(modifier_info: ModifierInfo) -> list[TargetLabel]:
     deps = []
@@ -301,7 +301,7 @@ def get_and_insert_modifier_info(
     add_to_constraint_setting_to_modifier_infos(constraint_setting_to_modifier_infos, constraint_setting_label, modifier_info)
     return (constraint_setting_label, modifier_info)
 
-def apply_buckconfig_backed_modifiers(constraint_setting_to_modifier_infos: dict[TargetLabel, list[ModifierInfo]], modifiers: list[ConditionalModifierInfo]):
+def apply_yakconfig_backed_modifiers(constraint_setting_to_modifier_infos: dict[TargetLabel, list[ModifierInfo]], modifiers: list[ConditionalModifierInfo]):
     for conditional_modifier_info in modifiers:
         add_to_constraint_setting_to_modifier_infos(
             constraint_setting_to_modifier_infos = constraint_setting_to_modifier_infos,

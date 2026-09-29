@@ -32,7 +32,7 @@ use allocative::Key;
 use allocative::Visitor;
 use allocative::hashbrown_util::bucket_count_for_capacity;
 use yak_error::yak_error;
-use yak_hash::StdBuckHashMap;
+use yak_hash::StdYakHashMap;
 
 /// Tree that stores data in the leaves. Think of the key as the path to the
 /// leaf containing the value. The data/value is of type `V`, and each edge
@@ -51,7 +51,7 @@ pub enum DataTree<K, V> {
 pub enum DataTreeChildren<K, V> {
     Empty,
     One(Box<(K, V)>),
-    Many(Box<StdBuckHashMap<K, V>>),
+    Many(Box<StdYakHashMap<K, V>>),
 }
 
 impl<K, V> DataTreeChildren<K, V> {
@@ -87,7 +87,7 @@ impl<K, V> DataTreeChildren<K, V> {
             let Self::One(entry) = mem::replace(self, Self::Empty) else {
                 unreachable!();
             };
-            *self = Self::Many(Box::new(StdBuckHashMap::from([*entry])));
+            *self = Self::Many(Box::new(StdYakHashMap::from([*entry])));
         }
 
         if matches!(self, Self::Empty) {
@@ -252,7 +252,7 @@ impl<K: Allocative, V: Allocative> Allocative for DataTree<K, V> {
 /// — the full hashmap allocation minus the value slots that the DFS accounts for.
 fn visit_hash_map_keys_and_skipped_values<K: Allocative, V: Allocative>(
     visitor: &mut Visitor<'_>,
-    map: &StdBuckHashMap<K, DataTree<K, V>>,
+    map: &StdYakHashMap<K, DataTree<K, V>>,
 ) {
     let bucket_count = bucket_count_for_capacity(map.capacity());
     let occupied_key_slot_bytes = map.len()

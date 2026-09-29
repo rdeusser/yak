@@ -10,21 +10,21 @@ import os
 import platform
 from typing import Iterable
 
-from e2e_util.api.buck import Buck
+from e2e_util.api.yak import Yak
 from e2e_util.asserts import expect_failure
-from e2e_util.buck_workspace import buck_test
+from e2e_util.yak_workspace import yak_test
 
 
-@buck_test()
-async def test_clean(buck: Buck) -> None:
-    build_result = await buck.build("root//:trivial_build")
+@yak_test()
+async def test_clean(yak: Yak) -> None:
+    build_result = await yak.build("root//:trivial_build")
     build_report = build_result.get_build_report()
     build_report_outputs = [
         str(output)
         for output in build_report.outputs_for_target("root//:trivial_build")
     ]
 
-    clean_result = await buck.clean()
+    clean_result = await yak.clean()
     clean_paths = tuple(filter(None, clean_result.stderr.split("\n")))
 
     for output in build_report_outputs:
@@ -33,20 +33,20 @@ async def test_clean(buck: Buck) -> None:
     _assert_all_paths_do_not_exist(build_report_outputs)
 
 
-@buck_test()
-async def test_clean_dry_run(buck: Buck) -> None:
-    build_result = await buck.build("root//:trivial_build", "--show-output")
+@yak_test()
+async def test_clean_dry_run(yak: Yak) -> None:
+    build_result = await yak.build("root//:trivial_build", "--show-output")
     build_report = build_result.get_build_report()
     build_report_outputs = [
         str(output)
         for output in build_report.outputs_for_target("root//:trivial_build")
     ]
 
-    dry_clean_result = await buck.clean("--dry-run")
+    dry_clean_result = await yak.clean("--dry-run")
 
     dry_clean_paths = set(
         filter(
-            is_buck_path,
+            is_yak_path,
             dry_clean_result.stderr.split("\n"),
         )
     )
@@ -59,10 +59,10 @@ async def test_clean_dry_run(buck: Buck) -> None:
     _assert_all_paths_exist(build_report_outputs)
 
     # Run clean without dry-run and make sure all files are removed now
-    clean_result = await buck.clean()
+    clean_result = await yak.clean()
     clean_paths = set(
         filter(
-            is_buck_path,
+            is_yak_path,
             clean_result.stderr.split("\n"),
         )
     )
@@ -75,7 +75,7 @@ async def test_clean_dry_run(buck: Buck) -> None:
     _assert_all_paths_do_not_exist(clean_paths)
 
 
-def is_buck_path(x: str) -> bool:
+def is_yak_path(x: str) -> bool:
     if platform.system() == "Windows":
         return "\\.yak\\yakd\\" in x or "\\yak-out\\" in x
     else:
@@ -101,24 +101,24 @@ def _assert_all_paths_do_not_exist(paths: Iterable[str]) -> None:
             assert os.path.exists(path) is False
 
 
-@buck_test()
-async def test_isolation_dir_reserved_prefix_rejected(buck: Buck) -> None:
-    buck.set_isolation_prefix("._yak_anything")
+@yak_test()
+async def test_isolation_dir_reserved_prefix_rejected(yak: Yak) -> None:
+    yak.set_isolation_prefix("._yak_anything")
     try:
         await expect_failure(
-            buck.build("root//:trivial_build"),
+            yak.build("root//:trivial_build"),
             stderr_regex="reserved for yak",
         )
     finally:
         # The fixture teardown runs `yak clean`, which would itself trip the
         # reserved-name rejection with the prefix still set.
-        buck.set_isolation_prefix("v2")
+        yak.set_isolation_prefix("v2")
 
 
-@buck_test()
-async def test_clean_background(buck: Buck) -> None:
+@yak_test()
+async def test_clean_background(yak: Yak) -> None:
     """Test that yak clean --background moves yak-out to trash and deletes it."""
-    build_result = await buck.build("root//:trivial_build")
+    build_result = await yak.build("root//:trivial_build")
     build_report = build_result.get_build_report()
     build_report_outputs = [
         str(output)
@@ -126,7 +126,7 @@ async def test_clean_background(buck: Buck) -> None:
     ]
 
     # Run clean with --background flag
-    clean_result = await buck.clean("--background")
+    clean_result = await yak.clean("--background")
 
     # Check that the output contains the expected messages
     assert "yak-out moved to trash. Now cleaning up..." in clean_result.stderr

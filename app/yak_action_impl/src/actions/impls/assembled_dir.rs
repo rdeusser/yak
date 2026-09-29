@@ -37,7 +37,7 @@ use yak_build_api::interpreter::rule_defs::artifact::starlark_artifact_like::Val
 use yak_build_signals::env::WaitingData;
 use yak_core::category::CategoryRef;
 use yak_core::content_hash::ContentBasedPathHash;
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 use yak_error::internal_error;
 use yak_execute::artifact::artifact_dyn::ArtifactDyn;
 use yak_execute::artifact_utils::ArtifactValueBuilder;
@@ -45,7 +45,7 @@ use yak_execute::execute::command_executor::ActionExecutionTimingData;
 use yak_execute::materialize::materializer::CopiedArtifact;
 use yak_fs::paths::forward_rel_path::ForwardRelativePath;
 use yak_fs::paths::forward_rel_path::ForwardRelativePathBuf;
-use yak_hash::BuckIndexSet;
+use yak_hash::YakIndexSet;
 
 use crate::actions::impls::copy::CopyMode;
 
@@ -147,7 +147,7 @@ impl UnregisteredAssembledDirAction {
                     (
                         as_artifact.0.get_artifact_group()?,
                         ForwardRelativePathBuf::try_from(k.to_owned())
-                            .buck_error_context("dict key must be a forward relative path")?
+                            .yak_error_context("dict key must be a forward relative path")?
                             .into_box(),
                         copy,
                     ),
@@ -173,7 +173,7 @@ impl UnregisteredAssembledDirAction {
         let (mut args, unioned_associated_artifacts) = Self::unpack_args(srcs, copy)
             // FIXME: This warning is talking about the Starlark-level argument name `srcs`.
             //        Once we use a proper Value parser this should all get cleaned up.
-            .buck_error_context(
+            .yak_error_context(
                 ValueError::IncorrectParameterTypeNamed("srcs".to_owned()).to_string(),
             )?;
         // Overlapping check make sense for non-copy mode only.
@@ -204,7 +204,7 @@ impl UnregisteredAssembledDirAction {
             args.push((
                 as_artifact.0.get_artifact_group()?,
                 ForwardRelativePathBuf::try_from(k.to_owned())
-                    .buck_error_context("dict key must be a forward relative path")?
+                    .yak_error_context("dict key must be a forward relative path")?
                     .into_box(),
                 mode,
             ));
@@ -228,7 +228,7 @@ impl UnregisteredAssembledDirAction {
 impl UnregisteredAction for UnregisteredAssembledDirAction {
     fn register(
         self: Box<Self>,
-        outputs: BuckIndexSet<BuildArtifact>,
+        outputs: YakIndexSet<BuildArtifact>,
         _starlark_data: Option<OwnedFrozen<Value<'static>>>,
         _error_handler: Option<OwnedFrozen<Value<'static>>>,
     ) -> yak_error::Result<Box<dyn Action>> {
@@ -388,8 +388,8 @@ mod tests {
     use super::*;
 
     fn mk_artifact() -> Artifact {
-        let buck_path = SourcePath::testing_new("cell//pkg", "");
-        Artifact::from(SourceArtifact::new(buck_path))
+        let yak_path = SourcePath::testing_new("cell//pkg", "");
+        Artifact::from(SourceArtifact::new(yak_path))
     }
 
     // TODO: This needs proper tests, but right now it's kind of a pain to get the

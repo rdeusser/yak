@@ -59,7 +59,7 @@ mod interactive_terminal {
     use std::os::unix::io::AsRawFd;
 
     use termios::*;
-    use yak_error::BuckErrorContext;
+    use yak_error::YakErrorContext;
 
     pub struct InteractiveTerminal {
         orig: Termios,
@@ -79,7 +79,7 @@ mod interactive_terminal {
                 return Ok(None);
             }
 
-            // We also check for stderr, since if a user is starting a bunch of bucks in the
+            // We also check for stderr, since if a user is starting a bunch of yaks in the
             // background those may end up clobbering the termios state and the following can
             // happen:
             //
@@ -95,7 +95,7 @@ mod interactive_terminal {
             }
 
             let orig =
-                Termios::from_fd(fd).buck_error_context("Failed to access current termios")?;
+                Termios::from_fd(fd).yak_error_context("Failed to access current termios")?;
 
             let mut termios = orig;
 
@@ -106,14 +106,14 @@ mod interactive_terminal {
             termios.c_cc[VMIN] = 1;
             termios.c_cc[VTIME] = 0;
 
-            tcsetattr(fd, TCSANOW, &termios).buck_error_context("Failed to set termios")?;
+            tcsetattr(fd, TCSANOW, &termios).yak_error_context("Failed to set termios")?;
 
             Ok(Some(Self { orig }))
         }
 
         pub fn disable(&mut self) -> yak_error::Result<()> {
             let fd = std::io::stdin().as_raw_fd();
-            tcsetattr(fd, TCSANOW, &self.orig).buck_error_context("Failed to reset termios")?;
+            tcsetattr(fd, TCSANOW, &self.orig).yak_error_context("Failed to reset termios")?;
             Ok(())
         }
     }
@@ -129,14 +129,14 @@ mod interactive_terminal {
     use windows_sys::Win32::System::Console::ENABLE_LINE_INPUT;
     use windows_sys::Win32::System::Console::GetConsoleMode;
     use windows_sys::Win32::System::Console::SetConsoleMode;
-    use yak_error::BuckErrorContext;
+    use yak_error::YakErrorContext;
 
     fn get_console_mode(handle: HANDLE) -> yak_error::Result<u32> {
         let mut mode: u32 = 0;
         if unsafe { GetConsoleMode(handle, &mut mode) } != 0 {
             Ok(mode)
         } else {
-            Err(std::io::Error::last_os_error()).buck_error_context("Failed to get console mode")
+            Err(std::io::Error::last_os_error()).yak_error_context("Failed to get console mode")
         }
     }
 
@@ -144,7 +144,7 @@ mod interactive_terminal {
         if unsafe { SetConsoleMode(handle, mode) != 0 } {
             Ok(())
         } else {
-            Err(std::io::Error::last_os_error()).buck_error_context("Failed to set console mode")
+            Err(std::io::Error::last_os_error()).yak_error_context("Failed to set console mode")
         }
     }
 

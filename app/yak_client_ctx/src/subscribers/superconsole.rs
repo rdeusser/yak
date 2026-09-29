@@ -31,7 +31,7 @@ use superconsole::style::ContentStyle;
 use superconsole::style::StyledContent;
 use superconsole::style::Stylize;
 use yak_data::CommandExecutionDetails;
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 use yak_event_observer::action_sub_error_display::ActionSubErrorDisplay;
 use yak_event_observer::display;
 use yak_event_observer::display::TargetDisplayOptions;
@@ -45,7 +45,7 @@ use yak_event_observer::unpack_event::unpack_event;
 use yak_event_observer::verbosity::Verbosity;
 use yak_event_observer::what_ran::command_to_string;
 use yak_event_observer::what_ran::worker_command_as_fallback_to_string;
-use yak_events::BuckEvent;
+use yak_events::YakEvent;
 use yak_wrapper_common::invocation_id::TraceId;
 
 use crate::console_interaction_stream::ConsoleInteraction;
@@ -436,7 +436,7 @@ impl Default for SuperConsoleConfig {
     }
 }
 
-struct BuckRootComponent<'s> {
+struct YakRootComponent<'s> {
     header: &'s str,
     state: &'s SuperConsoleState,
     games_overlay: &'s GamesOverlay,
@@ -493,7 +493,7 @@ impl Component for StaticLinesAdapter<'_> {
     }
 }
 
-impl Component for BuckRootComponent<'_> {
+impl Component for YakRootComponent<'_> {
     type Error = yak_error::Error;
 
     fn draw_unchecked(&self, dimensions: Dimensions, mode: DrawMode) -> yak_error::Result<Lines> {
@@ -699,7 +699,7 @@ impl StatefulSuperConsole {
         lines
     }
 
-    async fn handle_event(&mut self, ev: &Arc<BuckEvent>) -> yak_error::Result<()> {
+    async fn handle_event(&mut self, ev: &Arc<YakEvent>) -> yak_error::Result<()> {
         match self {
             Self::Running(c) => c.handle_event(ev).await,
             Self::Finalized(c) => c.handle_event(ev).await,
@@ -754,7 +754,7 @@ impl SuperConsoleState {
         })
     }
 
-    pub async fn update_event_observer(&mut self, event: &Arc<BuckEvent>) -> yak_error::Result<()> {
+    pub async fn update_event_observer(&mut self, event: &Arc<YakEvent>) -> yak_error::Result<()> {
         self.simple_console.update_event_observer(event).await
     }
 
@@ -775,7 +775,7 @@ impl SuperConsoleState {
     }
 }
 
-pub(crate) const BUCK_NO_INTERACTIVE_CONSOLE: &str = "YAK_NO_INTERACTIVE_CONSOLE";
+pub(crate) const YAK_NO_INTERACTIVE_CONSOLE: &str = "YAK_NO_INTERACTIVE_CONSOLE";
 
 impl StatefulSuperConsoleImpl {
     async fn toggle(
@@ -794,12 +794,12 @@ impl StatefulSuperConsoleImpl {
             .await
     }
 
-    async fn handle_event(&mut self, event: &Arc<BuckEvent>) -> yak_error::Result<()> {
+    async fn handle_event(&mut self, event: &Arc<YakEvent>) -> yak_error::Result<()> {
         self.state.update_event_observer(event).await?;
 
         self.handle_inner_event(event)
             .await
-            .with_buck_error_context(|| display::InvalidBuckEvent(event.clone()).to_string())?;
+            .with_yak_error_context(|| display::InvalidYakEvent(event.clone()).to_string())?;
 
         if self.verbosity.print_all_commands() {
             emit_event_if_relevant(
@@ -812,10 +812,10 @@ impl StatefulSuperConsoleImpl {
         Ok(())
     }
 
-    async fn handle_inner_event(&mut self, event: &BuckEvent) -> yak_error::Result<()> {
+    async fn handle_inner_event(&mut self, event: &YakEvent) -> yak_error::Result<()> {
         match unpack_event(event)? {
-            yak_event_observer::unpack_event::UnpackedBuckEvent::SpanStart(_, _, _) => Ok(()),
-            yak_event_observer::unpack_event::UnpackedBuckEvent::SpanEnd(_, _, data) => {
+            yak_event_observer::unpack_event::UnpackedYakEvent::SpanStart(_, _, _) => Ok(()),
+            yak_event_observer::unpack_event::UnpackedYakEvent::SpanEnd(_, _, data) => {
                 match data {
                     yak_data::span_end_event::Data::ActionExecution(action) => {
                         self.handle_action_execution_end(action).await
@@ -826,7 +826,7 @@ impl StatefulSuperConsoleImpl {
                     _ => Ok(()),
                 }
             }
-            yak_event_observer::unpack_event::UnpackedBuckEvent::Instant(_, _, data) => {
+            yak_event_observer::unpack_event::UnpackedYakEvent::Instant(_, _, data) => {
                 match data {
                     yak_data::instant_event::Data::ConsoleMessage(message) => {
                         self.handle_console_message(message).await
@@ -852,9 +852,9 @@ impl StatefulSuperConsoleImpl {
                     _ => Ok(()),
                 }
             }
-            yak_event_observer::unpack_event::UnpackedBuckEvent::UnrecognizedSpanStart(_, _)
-            | yak_event_observer::unpack_event::UnpackedBuckEvent::UnrecognizedSpanEnd(_, _)
-            | yak_event_observer::unpack_event::UnpackedBuckEvent::UnrecognizedInstant(_, _) => {
+            yak_event_observer::unpack_event::UnpackedYakEvent::UnrecognizedSpanStart(_, _)
+            | yak_event_observer::unpack_event::UnpackedYakEvent::UnrecognizedSpanEnd(_, _)
+            | yak_event_observer::unpack_event::UnpackedYakEvent::UnrecognizedInstant(_, _) => {
                 Err(VisitorError::MissingField(event.clone()).into())
             }
         }
@@ -1116,7 +1116,7 @@ impl StatefulSuperConsoleImpl {
                 return Ok(());
             }
             ConsoleInteraction::Resize => {
-                self.super_console.render(&BuckRootComponent {
+                self.super_console.render(&YakRootComponent {
                     header: &self.header,
                     state: &self.state,
                     games_overlay: &self.games_overlay,
@@ -1242,7 +1242,7 @@ impl StatefulSuperConsoleImpl {
                     .join("\n");
                 self.handle_stderr(&format!(
                     "Help:\n{}\n`g` x3 = games\nenv var {}=true disables interactive console",
-                    help_message, BUCK_NO_INTERACTIVE_CONSOLE
+                    help_message, YAK_NO_INTERACTIVE_CONSOLE
                 ))
                 .await?
             }
@@ -1252,7 +1252,7 @@ impl StatefulSuperConsoleImpl {
                     self.handle_stderr(&format!(
                         "yak has an interactive console; input is consumed. \
                          Press `h` for help or set {}=true to disable.",
-                        BUCK_NO_INTERACTIVE_CONSOLE
+                        YAK_NO_INTERACTIVE_CONSOLE
                     ))
                     .await?;
                 }
@@ -1426,7 +1426,7 @@ impl StatefulSuperConsoleImpl {
             }
         }
 
-        self.super_console.render(&BuckRootComponent {
+        self.super_console.render(&YakRootComponent {
             header: &self.header,
             state: &self.state,
             games_overlay: &self.games_overlay,
@@ -1451,7 +1451,7 @@ impl StatefulSuperConsoleImpl {
     ) {
         let err = self
             .super_console
-            .finalize(&BuckRootComponent {
+            .finalize(&YakRootComponent {
                 header: &self.header,
                 state: &self.state,
                 games_overlay: &self.games_overlay,
@@ -1482,7 +1482,7 @@ impl StatefulSuperConsoleImpl {
 
 #[async_trait]
 impl EventSubscriber for StatefulSuperConsole {
-    async fn handle_events(&mut self, events: &[Arc<BuckEvent>]) -> yak_error::Result<()> {
+    async fn handle_events(&mut self, events: &[Arc<YakEvent>]) -> yak_error::Result<()> {
         for ev in events {
             self.handle_event(ev).await?;
         }
@@ -1697,7 +1697,7 @@ mod tests {
     use yak_data::LoadBuildFileStart;
     use yak_data::SpanEndEvent;
     use yak_data::SpanStartEvent;
-    use yak_error::BuckErrorOptionContext;
+    use yak_error::YakErrorOptionContext;
     use yak_event_observer::span_tracker::EventTimestamp;
     use yak_events::span::SpanId;
 
@@ -1723,12 +1723,12 @@ mod tests {
 
         // start a new event.
         let id = SpanId::next();
-        let event = Arc::new(BuckEvent::new(
+        let event = Arc::new(YakEvent::new(
             SystemTime::now(),
             trace_id,
             Some(id),
             None,
-            yak_data::buck_event::Data::SpanStart(SpanStartEvent {
+            yak_data::yak_event::Data::SpanStart(SpanStartEvent {
                 data: Some(yak_data::span_start_event::Data::Load(LoadBuildFileStart {
                     module_id: "foo".to_owned(),
                     cell: "bar".to_owned(),
@@ -1749,12 +1749,12 @@ mod tests {
 
         // finish the event from before
         // expect to successfully close event.
-        let event = Arc::new(BuckEvent::new(
+        let event = Arc::new(YakEvent::new(
             SystemTime::now(),
             TraceId::new(),
             Some(id),
             None,
-            yak_data::buck_event::Data::SpanEnd(SpanEndEvent {
+            yak_data::yak_event::Data::SpanEnd(SpanEndEvent {
                 data: Some(yak_data::span_end_event::Data::Load(LoadBuildFileEnd {
                     module_id: "foo".to_owned(),
                     cell: "bar".to_owned(),
@@ -1792,12 +1792,12 @@ mod tests {
         )?;
 
         console
-            .handle_event(&Arc::new(BuckEvent::new(
+            .handle_event(&Arc::new(YakEvent::new(
                 now,
                 trace_id.dupe(),
                 Some(SpanId::next()),
                 None,
-                yak_data::buck_event::Data::SpanStart(SpanStartEvent {
+                yak_data::yak_event::Data::SpanStart(SpanStartEvent {
                     data: Some(
                         yak_data::CommandStart {
                             data: Some(yak_data::BuildCommandStart {}.into()),
@@ -1810,7 +1810,7 @@ mod tests {
             .await?;
 
         console
-            .handle_event(&Arc::new(BuckEvent::new(
+            .handle_event(&Arc::new(YakEvent::new(
                 now,
                 trace_id.dupe(),
                 None,
@@ -1828,7 +1828,7 @@ mod tests {
             .await?;
 
         console
-            .handle_event(&Arc::new(BuckEvent::new(
+            .handle_event(&Arc::new(YakEvent::new(
                 now,
                 trace_id.dupe(),
                 Some(SpanId::next()),

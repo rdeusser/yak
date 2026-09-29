@@ -18,7 +18,7 @@ use rusqlite::types::FromSqlError;
 use rusqlite::types::FromSqlResult;
 use rusqlite::types::ToSqlOutput;
 use rusqlite::types::ValueRef;
-use yak_error::conversion::rusqlite::Buck2ErrorAsRusqliteError;
+use yak_error::conversion::rusqlite::YakErrorAsRusqliteError;
 
 // Use 'static here to avoid rust-analyzer crash when pattern matching
 // on these string literals. https://github.com/rust-lang/rust-analyzer/issues/20149
@@ -69,7 +69,7 @@ impl FromSql for ArtifactType {
             ARTIFACT_TYPE_FILE => Ok(ArtifactType::File),
             ARTIFACT_TYPE_SYMLINK => Ok(ArtifactType::Symlink),
             ARTIFACT_TYPE_EXTERNAL_SYMLINK => Ok(ArtifactType::ExternalSymlink),
-            other => Err(FromSqlError::Other(Box::new(Buck2ErrorAsRusqliteError(
+            other => Err(FromSqlError::Other(Box::new(YakErrorAsRusqliteError(
                 UnknownArtifactTypeError(other.to_owned()).into(),
             )))),
         }

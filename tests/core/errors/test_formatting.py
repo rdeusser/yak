@@ -8,9 +8,9 @@
 
 import re
 
-from e2e_util.api.buck import Buck
+from e2e_util.api.yak import Yak
 from e2e_util.asserts import expect_failure
-from e2e_util.buck_workspace import buck_test
+from e2e_util.yak_workspace import yak_test
 from e2e_util.helper.golden import golden, strip_glog_lines
 
 
@@ -26,8 +26,8 @@ def _sanitize(s: str) -> str:
 def error_formatting_test(
     name: str, command: list[str], command_name: str = "build"
 ) -> None:
-    async def impl(buck: Buck) -> None:
-        func = getattr(buck, command_name)
+    async def impl(yak: Yak) -> None:
+        func = getattr(yak, command_name)
         res = await expect_failure(func("--console=none", *command))
         golden(
             output=_sanitize(res.stderr),
@@ -36,7 +36,7 @@ def error_formatting_test(
 
     globals()[name] = impl
 
-    buck_test()(impl)
+    yak_test()(impl)
 
 
 error_formatting_test(name="test_action_fail", command=["//:action_fail"])

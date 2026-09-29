@@ -12,7 +12,7 @@ use std::borrow::Cow;
 use std::fmt::Write;
 
 use itertools::Itertools;
-use yak_hash::BuckIndexMap;
+use yak_hash::YakIndexMap;
 
 use crate::query::syntax::simple::functions::helpers::QueryArgType;
 
@@ -114,7 +114,7 @@ impl QueryEnvironmentDescription {
         let merged_sorted_functions = self
             .mods
             .iter()
-            .fold(BuckIndexMap::default(), |acc, module| {
+            .fold(YakIndexMap::default(), |acc, module| {
                 acc.into_iter().chain(module.functions.iter()).collect()
             })
             .into_iter()

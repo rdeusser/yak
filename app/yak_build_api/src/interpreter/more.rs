@@ -9,8 +9,8 @@
  */
 
 use starlark::environment::GlobalsBuilder;
-use yak_interpreter::downstream_crate_starlark_defs::REGISTER_BUCK2_BUILD_API_GLOBALS;
-use yak_interpreter::downstream_crate_starlark_defs::REGISTER_BUCK2_BUILD_API_INTERNALS;
+use yak_interpreter::downstream_crate_starlark_defs::REGISTER_YAK_BUILD_API_GLOBALS;
+use yak_interpreter::downstream_crate_starlark_defs::REGISTER_YAK_BUILD_API_INTERNALS;
 
 use crate::actions::errors::error_handler::register_action_error_handler_for_testing;
 use crate::actions::errors::error_handler::register_action_error_types;
@@ -68,6 +68,6 @@ fn register_build_api_internals(globals: &mut GlobalsBuilder) {
 }
 
 pub(crate) fn init_register_build_api_globals() {
-    REGISTER_BUCK2_BUILD_API_GLOBALS.init(register_build_api_globals);
-    REGISTER_BUCK2_BUILD_API_INTERNALS.init(register_build_api_internals);
+    REGISTER_YAK_BUILD_API_GLOBALS.init(register_build_api_globals);
+    REGISTER_YAK_BUILD_API_INTERNALS.init(register_build_api_internals);
 }

@@ -6,20 +6,20 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-from e2e_util.api.buck import Buck
-from e2e_util.buck_workspace import buck_test
+from e2e_util.api.yak import Yak
+from e2e_util.yak_workspace import yak_test
 from e2e_util.helper.utils import filter_events
 
 
-@buck_test()
-async def test_forward_node_supports_cutoff(buck: Buck) -> None:
-    await buck.targets("--show-output", "root//:main")
+@yak_test()
+async def test_forward_node_supports_cutoff(yak: Yak) -> None:
+    await yak.targets("--show-output", "root//:main")
     # Add a file to the root directory
-    with open(buck.cwd / "YAK.fixture", "a") as targetsfile:
+    with open(yak.cwd / "YAK.fixture", "a") as targetsfile:
         targetsfile.write("\n# a comment\n")
-    await buck.targets("--show-output", "root//:main")
+    await yak.targets("--show-output", "root//:main")
 
-    events = await filter_events(buck, "Event", "data", "SpanEnd", "data")
+    events = await filter_events(yak, "Event", "data", "SpanEnd", "data")
     loads = []
     analyses = []
 

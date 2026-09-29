@@ -11,7 +11,7 @@
 use std::env;
 
 use yak_client_ctx::client_ctx::ClientCommandContext;
-use yak_client_ctx::common::BuckArgMatches;
+use yak_client_ctx::common::YakArgMatches;
 use yak_client_ctx::exit_result::ExitResult;
 
 /// Path to current executable.
@@ -19,7 +19,7 @@ use yak_client_ctx::exit_result::ExitResult;
 pub struct ExeCommand {}
 
 impl ExeCommand {
-    pub fn exec(self, _matches: BuckArgMatches<'_>, _ctx: ClientCommandContext<'_>) -> ExitResult {
+    pub fn exec(self, _matches: YakArgMatches<'_>, _ctx: ClientCommandContext<'_>) -> ExitResult {
         yak_client_ctx::println!("{}", env::current_exe()?.display())?;
         ExitResult::success()
     }

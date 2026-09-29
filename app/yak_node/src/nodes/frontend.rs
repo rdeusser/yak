@@ -18,7 +18,7 @@ use futures::FutureExt;
 use futures::future::BoxFuture;
 use yak_core::package::PackageLabel;
 use yak_core::target::label::label::TargetLabel;
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 use yak_util::late_binding::LateBinding;
 use yak_util::time_span::TimeSpan;
 
@@ -138,7 +138,7 @@ impl<'d> TargetGraphCalculation<'d> for DiceComputations<'d> {
             .unwrap()
             .get_interpreter_results(self, target.pkg())
             .map(move |res| {
-                let res = res.with_buck_error_context(|| {
+                let res = res.with_yak_error_context(|| {
                     format!(
                         "Error loading targets in package `{}` for target `{}`",
                         target.pkg(),

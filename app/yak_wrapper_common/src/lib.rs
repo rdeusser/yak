@@ -8,7 +8,7 @@
  * above-listed licenses.
  */
 
-//! Code shared between `buck2_wrapper` and `yak`.
+//! Code shared between `yak_wrapper` and `yak`.
 //!
 //! Careful! The wrapper is not released as part of the regular yak version bumps,
 //! meaning code changes here are not "atomically" updated.
@@ -24,14 +24,14 @@ use sysinfo::ProcessRefreshKind;
 use sysinfo::ProcessesToUpdate;
 use sysinfo::System;
 use sysinfo::UpdateKind;
-use yak_hash::BuckMutSet;
+use yak_hash::YakMutSet;
 
-use crate::is_buck2::is_buck2_exe;
+use crate::is_yak::is_yak_exe;
 use crate::pid::Pid;
 
 mod cleanall;
 pub mod invocation_id;
-mod is_buck2;
+mod is_yak;
 pub mod kill;
 pub mod pid;
 mod process;
@@ -44,11 +44,11 @@ pub use cleanall::cleanall_stale;
 pub use process::async_background_command;
 pub use process::background_command;
 
-pub const BUCK2_WRAPPER_ENV_VAR: &str = "YAK_WRAPPER";
-pub const BUCK_WRAPPER_UUID_ENV_VAR: &str = "YAK_WRAPPER_UUID";
-pub const BUCK_WRAPPER_START_TIME_ENV_VAR: &str = "YAK_WRAPPER_START_TIME";
+pub const YAK_WRAPPER_ENV_VAR: &str = "YAK_WRAPPER";
+pub const YAK_WRAPPER_UUID_ENV_VAR: &str = "YAK_WRAPPER_UUID";
+pub const YAK_WRAPPER_START_TIME_ENV_VAR: &str = "YAK_WRAPPER_START_TIME";
 pub const YAKD_LIFECYCLE: &str = "yakd.lifecycle";
-const BUCK2_TEST_HOME_DIR_ENV_VAR: &str = "YAK_TEST_HOME_DIR";
+const YAK_TEST_HOME_DIR_ENV_VAR: &str = "YAK_TEST_HOME_DIR";
 /// Default yak isolation dir. Must match the `--isolation-dir` clap
 /// `default_value` in `app/yak/src/lib.rs`; the default-isolation golden test
 /// (`denied.golden.stderr`) catches drift.
@@ -58,8 +58,8 @@ pub const CLEAN_STALE_HELP: &str =
 pub const DOT_YAKCONFIG_D: &str = ".yakconfig.d";
 
 /// Returns the home directory used for yak state.
-pub fn buck2_home_dir() -> Option<PathBuf> {
-    std::env::var_os(BUCK2_TEST_HOME_DIR_ENV_VAR)
+pub fn yak_home_dir() -> Option<PathBuf> {
+    std::env::var_os(YAK_TEST_HOME_DIR_ENV_VAR)
         .map(PathBuf::from)
         .or_else(dirs::home_dir)
 }
@@ -146,16 +146,16 @@ fn parse_isolation_dir(cmd: &[String]) -> Option<String> {
 /// PIDs), and not just all posix PIDs (what the kernel calls TGIDs). In order to make sure that we
 /// don't kill any of the TIDs in our PID, we need to filter the list of TIDs down. This function
 /// returns the list of all PIDs on the system.
-fn get_all_tgids_linux() -> Option<BuckMutSet<sysinfo::Pid>> {
+fn get_all_tgids_linux() -> Option<YakMutSet<sysinfo::Pid>> {
     if !cfg!(target_os = "linux") {
         return None;
     }
 
     let Ok(entries) = std::fs::read_dir("/proc") else {
-        return Some(BuckMutSet::default());
+        return Some(YakMutSet::default());
     };
 
-    let mut all_tgids = BuckMutSet::default();
+    let mut all_tgids = YakMutSet::default();
 
     for e in entries {
         let Ok(e) = e else {
@@ -180,7 +180,7 @@ fn get_all_tgids_linux() -> Option<BuckMutSet<sysinfo::Pid>> {
 ///
 /// Working directories are only collected when `collect_cwd` is set, as sysinfo has to read
 /// them per-process.
-fn find_buck2_processes(collect_cwd: bool) -> Vec<ProcessInfo> {
+fn find_yak_processes(collect_cwd: bool) -> Vec<ProcessInfo> {
     let mut system = System::new();
     let linux_tgids =
         get_all_tgids_linux().map(|pids| pids.into_iter().collect::<Vec<sysinfo::Pid>>());
@@ -194,7 +194,7 @@ fn find_buck2_processes(collect_cwd: bool) -> Vec<ProcessInfo> {
         ProcessRefreshKind::nothing().with_exe(UpdateKind::Always),
     );
 
-    let mut current_parents = BuckMutSet::default();
+    let mut current_parents = YakMutSet::default();
     let mut parent = Some(sysinfo::Pid::from_u32(std::process::id()));
     while let Some(pid) = parent {
         // There is a small chance on Windows that the PID of a dead parent
@@ -205,16 +205,16 @@ fn find_buck2_processes(collect_cwd: bool) -> Vec<ProcessInfo> {
         parent = system.process(pid).and_then(|p| p.parent());
     }
 
-    let mut buck2_processes = Vec::new();
+    let mut yak_processes = Vec::new();
     for (sys_pid, process) in system.processes() {
         let Some(exe) = process.exe() else {
             continue;
         };
-        if is_buck2_exe(exe) && !current_parents.contains(sys_pid) {
+        if is_yak_exe(exe) && !current_parents.contains(sys_pid) {
             let Ok(pid) = Pid::from_u32(sys_pid.as_u32()) else {
                 continue;
             };
-            buck2_processes.push((
+            yak_processes.push((
                 *sys_pid,
                 ProcessInfo {
                     pid,
@@ -226,7 +226,7 @@ fn find_buck2_processes(collect_cwd: bool) -> Vec<ProcessInfo> {
         }
     }
 
-    let matched_pids = buck2_processes
+    let matched_pids = yak_processes
         .iter()
         .map(|(pid, _)| *pid)
         .collect::<Vec<_>>();
@@ -242,7 +242,7 @@ fn find_buck2_processes(collect_cwd: bool) -> Vec<ProcessInfo> {
         );
     }
 
-    buck2_processes
+    yak_processes
         .into_iter()
         .map(|(pid, mut process_info)| {
             if let Some(process) = system.process(pid) {
@@ -263,13 +263,13 @@ fn find_buck2_processes(collect_cwd: bool) -> Vec<ProcessInfo> {
 /// Processes the filter cannot attribute are reported and left alone. Returns whether it
 /// succeeded without errors.
 pub fn killall(filter: &KillallFilter, write: impl Fn(String)) -> bool {
-    let found = find_buck2_processes(filter.project_root.is_some());
+    let found = find_yak_processes(filter.project_root.is_some());
     let found_any = !found.is_empty();
 
-    let mut buck2_processes = Vec::new();
+    let mut yak_processes = Vec::new();
     for process in found {
         match filter.classify(&process) {
-            FilterResult::Kill => buck2_processes.push(process),
+            FilterResult::Kill => yak_processes.push(process),
             FilterResult::Exclude => {}
             FilterResult::Unknown(reason) => {
                 write(format!(
@@ -280,7 +280,7 @@ pub fn killall(filter: &KillallFilter, write: impl Fn(String)) -> bool {
         }
     }
 
-    if buck2_processes.is_empty() {
+    if yak_processes.is_empty() {
         if found_any {
             write("No yak processes matched the requested filter".to_owned());
         } else {
@@ -329,7 +329,7 @@ pub fn killall(filter: &KillallFilter, write: impl Fn(String)) -> bool {
     // Send a kill signal and collect the processes that are still alive.
 
     let mut processes_still_alive: Vec<(ProcessInfo, _)> = Vec::new();
-    for process in buck2_processes {
+    for process in yak_processes {
         match kill::kill(process.pid) {
             Ok(Some(handle)) => processes_still_alive.push((process, handle)),
             Ok(None) => {}
@@ -471,7 +471,7 @@ mod tests {
 
     #[cfg(target_os = "linux")]
     #[test]
-    fn test_find_buck2_processes() {
+    fn test_find_yak_processes() {
         use std::fs;
         use std::path::PathBuf;
         use std::process::Child;
@@ -498,21 +498,21 @@ mod tests {
             .expect("system clock should be after the Unix epoch")
             .as_nanos();
         let temp_dir = std::env::temp_dir().join(format!(
-            "buck2_wrapper_common_process_scan_{}_{}",
+            "yak_wrapper_common_process_scan_{}_{}",
             std::process::id(),
             nonce,
         ));
         fs::create_dir(&temp_dir).expect("temporary test directory should be created");
-        let fake_buck2 = temp_dir.join("yak");
-        fs::copy("/bin/sh", &fake_buck2).expect("test yak executable should be copied");
+        let fake_yak = temp_dir.join("yak");
+        fs::copy("/bin/sh", &fake_yak).expect("test yak executable should be copied");
 
         // Under `cargo test` (all tests share one process, unlike yak's
         // per-test process isolation) a sibling test's `fork` can inherit the
-        // write fd `fs::copy` briefly holds on `fake_buck2`, making `exec` fail
+        // write fd `fs::copy` briefly holds on `fake_yak`, making `exec` fail
         // with ETXTBSY until that fd clears. Retry past the window.
         let mut child = None;
         for _ in 0..100 {
-            match background_command(&fake_buck2)
+            match background_command(&fake_yak)
                 .args(["-c", "read _", "--isolation-dir=process-scan-test"])
                 .stdin(Stdio::piped())
                 .spawn()
@@ -531,7 +531,7 @@ mod tests {
         let child_pid = child.id();
         let _guard = ChildGuard { child, temp_dir };
 
-        let processes = find_buck2_processes(true);
+        let processes = find_yak_processes(true);
         let child_process = processes
             .iter()
             .find(|process| process.pid.to_u32() == child_pid)

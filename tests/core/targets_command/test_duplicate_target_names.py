@@ -6,14 +6,14 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-from e2e_util.api.buck import Buck
+from e2e_util.api.yak import Yak
 from e2e_util.asserts import expect_failure
-from e2e_util.buck_workspace import buck_test
+from e2e_util.yak_workspace import yak_test
 
 
-@buck_test()
-async def test_duplicate_target_names(buck: Buck) -> None:
+@yak_test()
+async def test_duplicate_target_names(yak: Yak) -> None:
     await expect_failure(
-        buck.targets("//..."),
+        yak.targets("//..."),
         stderr_regex="Attempted to register target prelude//:aa twice",
     )

@@ -10,7 +10,7 @@
 
 syntax = "proto3";
 
-package buck.downward_api;
+package yak.downward_api;
 
 message LogLevel {
   enum Value {

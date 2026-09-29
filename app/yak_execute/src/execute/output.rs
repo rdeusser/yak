@@ -15,7 +15,7 @@ use futures::future;
 use remote_execution::InlinedBlobWithDigest;
 use remote_execution::TDigest;
 use yak_common::file_ops::metadata::FileDigest;
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 
 use crate::digest::CasDigestConversionResultExt;
 use crate::digest::CasDigestFromReExt;
@@ -98,7 +98,7 @@ impl ReStdStream {
                 let bytes = client
                     .download_blob(&digest)
                     .await
-                    .with_buck_error_context(|| {
+                    .with_yak_error_context(|| {
                         format!(
                             "Error downloading from {}",
                             FileDigest::from_re(&digest, digest_config).as_display()

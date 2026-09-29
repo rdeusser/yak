@@ -21,8 +21,8 @@ use serde::Serialize;
 use static_interner::Intern;
 use static_interner::interner;
 use strong_hash::StrongHash;
-use yak_error::BuckErrorSerde;
-use yak_hash::BuckHasher;
+use yak_error::YakErrorSerde;
+use yak_hash::YakHasher;
 
 #[derive(Debug, yak_error::Error)]
 #[yak(input)]
@@ -64,7 +64,7 @@ impl<'a> From<CellNameDataRef<'a>> for CellNameData {
     }
 }
 
-interner!(INTERNER, BuckHasher, CellNameData);
+interner!(INTERNER, YakHasher, CellNameData);
 
 /// A 'CellName' is a canonicalized, human-readable name that corresponds to a
 /// 'CellInstance'. There should be a one to one mapping between a 'CellName'

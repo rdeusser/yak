@@ -40,7 +40,7 @@ use yak_core::provider::label::ProvidersLabel;
 use yak_core::provider::label::ProvidersName;
 use yak_core::target::configured_target_label::ConfiguredTargetLabel;
 use yak_core::target::label::label::TargetLabel;
-use yak_hash::BuckIndexSet;
+use yak_hash::YakIndexSet;
 use yak_util::arc_str::ArcStr;
 
 use crate::attrs::attr::Attribute;
@@ -825,10 +825,10 @@ impl<'a> ConfiguredTargetNodeRef<'a> {
         self,
     ) -> impl Iterator<Item = (String, ResolvedQueryLiterals<ConfiguredProvidersLabel>)> + 'a {
         struct Traversal {
-            queries: BuckIndexSet<(String, ResolvedQueryLiterals<ConfiguredProvidersLabel>)>,
+            queries: YakIndexSet<(String, ResolvedQueryLiterals<ConfiguredProvidersLabel>)>,
         }
         let mut traversal = Traversal {
-            queries: BuckIndexSet::default(),
+            queries: YakIndexSet::default(),
         };
         impl ConfiguredAttrTraversal for Traversal {
             fn dep(&mut self, _dep: &ConfiguredProvidersLabel) -> yak_error::Result<()> {

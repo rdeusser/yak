@@ -25,7 +25,7 @@ use tokio::runtime::Handle;
 use tokio::sync::Mutex;
 use tokio::sync::OnceCell;
 use tracing::Instrument;
-use yak_build_api::spawner::BuckSpawner;
+use yak_build_api::spawner::YakSpawner;
 use yak_cli_proto::ClientContext;
 use yak_cli_proto::unstable_dice_dump_request::DiceDumpFormat;
 use yak_common::cas_digest::DigestAlgorithm;
@@ -37,10 +37,10 @@ use yak_common::init::Timeout;
 use yak_common::invocation_paths::InvocationPaths;
 use yak_common::invocation_paths::TenantPaths;
 use yak_common::io::IoProvider;
-use yak_common::legacy_configs::cells::BuckConfigBasedCells;
-use yak_common::legacy_configs::configs::LegacyBuckConfig;
-use yak_common::legacy_configs::key::BuckconfigKeyRef;
-use yak_common::legacy_configs::parse_buckconfig_metadata;
+use yak_common::legacy_configs::cells::YakConfigBasedCells;
+use yak_common::legacy_configs::configs::LegacyYakConfig;
+use yak_common::legacy_configs::key::YakconfigKeyRef;
+use yak_common::legacy_configs::parse_yakconfig_metadata;
 use yak_common::sqlite::sqlite_db::SqliteDb;
 use yak_common::sqlite::sqlite_db::SqliteIdentity;
 use yak_common::tenant::TenantKey;
@@ -52,7 +52,7 @@ use yak_core::rollout_percentage::RolloutPercentage;
 use yak_core::soft_error;
 use yak_core::tag_result;
 use yak_core::yak_env;
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 use yak_error::ErrorTag;
 use yak_error::yak_error;
 use yak_events::daemon_id::DaemonId;
@@ -82,12 +82,12 @@ use yak_file_watcher::file_watcher::FileWatcher;
 use yak_fs::cwd::WorkingDirectory;
 use yak_fs::paths::abs_norm_path::AbsNormPathBuf;
 use yak_fs::paths::file_name::FileNameBuf;
-use yak_hash::StdBuckHashMap;
+use yak_hash::StdYakHashMap;
 use yak_http::HttpClient;
 use yak_http::HttpClientBuilder;
 use yak_re_configuration::RemoteExecutionStaticMetadata;
 use yak_re_configuration::RemoteExecutionStaticMetadataImpl;
-use yak_resource_control::buck_cgroup_tree::BuckCgroupTree;
+use yak_resource_control::yak_cgroup_tree::YakCgroupTree;
 use yak_resource_control::memory_tracker;
 use yak_resource_control::memory_tracker::MemoryTrackerHandle;
 use yak_server_ctx::concurrency::ConcurrencyHandler;
@@ -104,7 +104,7 @@ use crate::daemon::disk_state::maybe_initialize_incremental_sqlite_db;
 use crate::daemon::disk_state::maybe_initialize_materializer_sqlite_db;
 use crate::daemon::forkserver::maybe_launch_forkserver;
 use crate::daemon::io_provider::create_io_provider;
-use crate::daemon::server::BuckdServerInitPreferences;
+use crate::daemon::server::YakdServerInitPreferences;
 use crate::daemon::server::RepoStateInitPreferences;
 use crate::paging::PageOutThresholds;
 use crate::snapshot::DepFileDbSizeSampler;
@@ -203,7 +203,7 @@ pub struct RepoState {
     /// Executor for blocking I/O against this repo's project root.
     pub blocking_executor: Arc<dyn BlockingExecutor>,
 
-    pub buckconfig_metadata: StdBuckHashMap<String, String>,
+    pub yakconfig_metadata: StdYakHashMap<String, String>,
 
     /// Tags to be logged per command.
     pub tags: Vec<String>,
@@ -224,8 +224,8 @@ pub struct RepoState {
 struct RepoStateInit<'a> {
     paths: TenantPaths,
     init_ctx: &'a RepoStateInitPreferences,
-    legacy_cells: &'a BuckConfigBasedCells,
-    root_config: &'a LegacyBuckConfig,
+    legacy_cells: &'a YakConfigBasedCells,
+    root_config: &'a LegacyYakConfig,
     final_artifact_materialization: FinalArtifactMaterialization,
     runtime: &'a Handle,
     shared: DaemonSharedServices<'a>,
@@ -253,14 +253,14 @@ impl RepoStateFactory {
         paths: TenantPaths,
         shared: DaemonSharedServices<'_>,
     ) -> yak_error::Result<Arc<RepoState>> {
-        let buck_out_path = paths.buck_out_path();
-        tokio::fs::create_dir_all(&buck_out_path)
+        let yak_out_path = paths.yak_out_path();
+        tokio::fs::create_dir_all(&yak_out_path)
             .await
-            .tag(ErrorTag::InvalidBuckOut)
-            .buck_error_context("Error creating buck_out_path")?;
+            .tag(ErrorTag::InvalidYakOut)
+            .yak_error_context("Error creating yak_out_path")?;
 
         let fs = paths.project_root().clone();
-        let legacy_cells = BuckConfigBasedCells::parse_with_config_args(&fs, &[]).await?;
+        let legacy_cells = YakConfigBasedCells::parse_with_config_args(&fs, &[]).await?;
         let cells = &legacy_cells.cell_resolver;
         let root_config = &legacy_cells
             .parse_single_cell(cells.root_cell(), &fs)
@@ -273,8 +273,8 @@ impl RepoStateFactory {
     async fn create_with_loaded_config(
         &self,
         paths: TenantPaths,
-        legacy_cells: &BuckConfigBasedCells,
-        root_config: &LegacyBuckConfig,
+        legacy_cells: &YakConfigBasedCells,
+        root_config: &LegacyYakConfig,
         shared: DaemonSharedServices<'_>,
     ) -> yak_error::Result<Arc<RepoState>> {
         RepoState::create(RepoStateInit {
@@ -321,7 +321,7 @@ impl RepoState {
                     .collect::<Result<_, _>>()
             })
             .transpose()
-            .buck_error_context("Invalid digest_algorithms")?
+            .yak_error_context("Invalid digest_algorithms")?
             .unwrap_or_else(|| vec![default_digest_algorithm])
             .into_try_map(convert_algorithm_kind)?;
 
@@ -331,24 +331,24 @@ impl RepoState {
             .as_deref()
             .map(|a| convert_algorithm_kind(a.parse()?))
             .transpose()
-            .buck_error_context("Invalid source_digest_algorithm")?;
+            .yak_error_context("Invalid source_digest_algorithm")?;
 
         let digest_config = DigestConfig::leak_new(digest_algorithms, preferred_source_algorithm)
-            .buck_error_context("Error initializing DigestConfig")?;
+            .yak_error_context("Error initializing DigestConfig")?;
 
         // TODO(rafaelc): merge configs from all cells once they are consistent
         let static_metadata = Arc::new(RemoteExecutionStaticMetadata::from_legacy_config(
             root_config,
         )?);
 
-        let mut ignore_specs: StdBuckHashMap<CellName, IgnoreSet> = StdBuckHashMap::default();
+        let mut ignore_specs: StdYakHashMap<CellName, IgnoreSet> = StdYakHashMap::default();
         for (cell, _) in cells.cells() {
             let config = legacy_cells.parse_single_cell(cell, &fs).await?;
             ignore_specs.insert(
                 cell,
                 IgnoreSet::from_ignore_spec(
                     config
-                        .get(BuckconfigKeyRef {
+                        .get(YakconfigKeyRef {
                             section: "project",
                             property: "ignore",
                         })
@@ -366,7 +366,7 @@ impl RepoState {
 
         let deferred_materializer_configs = {
             let defer_write_actions = root_config
-                .parse::<RolloutPercentage>(BuckconfigKeyRef {
+                .parse::<RolloutPercentage>(YakconfigKeyRef {
                     section: "yak",
                     property: "defer_write_actions",
                 })?
@@ -376,21 +376,21 @@ impl RepoState {
             // RE will refresh any TTL < 1 hour, so we check twice an hour and refresh any TTL
             // < 1 hour.
             let ttl_refresh_frequency = root_config
-                .parse(BuckconfigKeyRef {
+                .parse(YakconfigKeyRef {
                     section: "yak",
                     property: "ttl_refresh_frequency_seconds",
                 })?
                 .unwrap_or(1800);
 
             let ttl_refresh_min_ttl = root_config
-                .parse(BuckconfigKeyRef {
+                .parse(YakconfigKeyRef {
                     section: "yak",
                     property: "ttl_refresh_min_ttl_seconds",
                 })?
                 .unwrap_or(3600);
 
             let ttl_refresh_enabled = root_config
-                .parse::<RolloutPercentage>(BuckconfigKeyRef {
+                .parse::<RolloutPercentage>(YakconfigKeyRef {
                     section: "yak",
                     property: "ttl_refresh_enabled",
                 })?
@@ -398,19 +398,19 @@ impl RepoState {
                 .roll();
 
             let update_access_times =
-                AccessTimesUpdates::try_new_from_config_value(root_config.get(BuckconfigKeyRef {
+                AccessTimesUpdates::try_new_from_config_value(root_config.get(YakconfigKeyRef {
                     section: "yak",
                     property: "update_access_times",
                 }))?;
 
             let verbose_materializer_log = root_config
-                .parse(BuckconfigKeyRef {
+                .parse(YakconfigKeyRef {
                     section: "yak",
                     property: "verbose_materializer_event_log",
                 })?
                 .unwrap_or(false);
 
-            let mut clean_stale_config = CleanStaleConfig::from_buck_config(root_config)?;
+            let mut clean_stale_config = CleanStaleConfig::from_yak_config(root_config)?;
             clean_stale_config.suppress_unmaterialize_without_ttl_refresh(ttl_refresh_enabled);
 
             DeferredMaterializerConfigs {
@@ -504,7 +504,7 @@ impl RepoState {
         let materializer = Self::create_materializer(
             io.project_root().dupe(),
             digest_config,
-            paths.buck_out_dir(),
+            paths.yak_out_dir(),
             re_client_manager.dupe(),
             blocking_executor.dupe(),
             deferred_materializer_configs,
@@ -536,7 +536,7 @@ impl RepoState {
             ignore_specs,
             dep_file_cache.dupe(),
         )
-        .with_buck_error_context(|| {
+        .with_yak_error_context(|| {
             format!(
                 "Error creating a FileWatcher for project root `{}`",
                 paths.project_root()
@@ -546,7 +546,7 @@ impl RepoState {
         // TODO(bobyf): Eagerly sync the file watcher here once the DICE commit panic is fixed.
 
         let use_network_action_output_cache = root_config
-            .parse(BuckconfigKeyRef {
+            .parse(YakconfigKeyRef {
                 section: "yak",
                 property: "use_network_action_output_cache",
             })?
@@ -564,7 +564,7 @@ impl RepoState {
         };
 
         let remote_dep_files_enabled = root_config
-            .parse(BuckconfigKeyRef {
+            .parse(YakconfigKeyRef {
                 section: "build",
                 property: "remote_dep_file_cache_enabled",
             })?
@@ -606,7 +606,7 @@ impl RepoState {
             materializer,
             use_network_action_output_cache,
             restart_daemon_on_error: root_config
-                .parse::<RolloutPercentage>(BuckconfigKeyRef {
+                .parse::<RolloutPercentage>(YakconfigKeyRef {
                     section: "yak",
                     property: "restarter",
                 })?
@@ -622,11 +622,11 @@ impl RepoState {
             paranoid,
             re_client_manager,
             blocking_executor,
-            buckconfig_metadata: parse_buckconfig_metadata(root_config),
+            yakconfig_metadata: parse_yakconfig_metadata(root_config),
             tags,
             system_warning_config: SystemWarningConfig::from_config(root_config)?,
             clean_scratch_on_idle: root_config
-                .parse::<RolloutPercentage>(BuckconfigKeyRef {
+                .parse::<RolloutPercentage>(YakconfigKeyRef {
                     section: "yak",
                     property: "clean_scratch_on_idle",
                 })?
@@ -650,7 +650,7 @@ impl RepoState {
     fn create_materializer(
         fs: ProjectRoot,
         digest_config: DigestConfig,
-        buck_out_path: ProjectRelativePathBuf,
+        yak_out_path: ProjectRelativePathBuf,
         re_client_manager: Arc<ReConnectionManager>,
         blocking_executor: Arc<dyn BlockingExecutor>,
         deferred_materializer_configs: DeferredMaterializerConfigs,
@@ -662,7 +662,7 @@ impl RepoState {
         Ok(Arc::new(DeferredMaterializer::new(
             fs,
             digest_config,
-            buck_out_path,
+            yak_out_path,
             re_client_manager,
             blocking_executor,
             deferred_materializer_configs,
@@ -685,7 +685,7 @@ struct TenantStateRegistry {
     /// insertion, and the same allocation is accounted for through `tenants`.
     #[allocative(skip)]
     initial_state: Arc<RepoState>,
-    tenants: StdMutex<StdBuckHashMap<TenantKey, Arc<TenantStateEntry<RepoState>>>>,
+    tenants: StdMutex<StdYakHashMap<TenantKey, Arc<TenantStateEntry<RepoState>>>>,
 }
 
 struct TenantStateEntry<T: Allocative> {
@@ -732,7 +732,7 @@ impl TenantStateRegistry {
         let registry = Self {
             initial_tenant: initial_key,
             initial_state: initial_tenant.dupe(),
-            tenants: StdMutex::new(StdBuckHashMap::default()),
+            tenants: StdMutex::new(StdYakHashMap::default()),
         };
         registry
             .get_or_create(spec, || async { Ok(initial_tenant) })
@@ -816,9 +816,9 @@ fn tenant_paths_from_client_context(
     };
 
     let project_root = AbsNormPathBuf::try_from(identity.project_root.clone())
-        .buck_error_context("Invalid tenant project root in client context")?;
+        .yak_error_context("Invalid tenant project root in client context")?;
     let isolation = FileNameBuf::try_from(identity.isolation.clone())
-        .buck_error_context("Invalid tenant isolation in client context")?;
+        .yak_error_context("Invalid tenant isolation in client context")?;
     Ok(Some(TenantPaths::new(
         ProjectRoot::new_unchecked(project_root),
         isolation,
@@ -843,7 +843,7 @@ pub struct DaemonStateData {
     pub http_client: HttpClient,
 
     /// Spawner
-    pub spawner: Arc<BuckSpawner>,
+    pub spawner: Arc<YakSpawner>,
 
     /// Tracks memory usage. Used to make scheduling decisions.
     #[allocative(skip)]
@@ -921,11 +921,11 @@ impl DaemonStateData {
 impl DaemonState {
     pub(crate) async fn new(
         paths: InvocationPaths,
-        init_ctx: BuckdServerInitPreferences,
+        init_ctx: YakdServerInitPreferences,
         rt: &Handle,
         final_artifact_materialization: FinalArtifactMaterialization,
         working_directory: WorkingDirectory,
-        cgroup_tree: Option<BuckCgroupTree>,
+        cgroup_tree: Option<YakCgroupTree>,
         daemon_id: DaemonId,
     ) -> Result<Self, yak_error::Error> {
         let data = Self::init_data(
@@ -955,10 +955,10 @@ impl DaemonState {
     // Starts up the watchman query.
     async fn init_data(
         paths: InvocationPaths,
-        init_ctx: BuckdServerInitPreferences,
+        init_ctx: YakdServerInitPreferences,
         rt: &Handle,
         final_artifact_materialization: FinalArtifactMaterialization,
-        cgroup_tree: Option<BuckCgroupTree>,
+        cgroup_tree: Option<YakCgroupTree>,
         daemon_id: DaemonId,
     ) -> yak_error::Result<Arc<DaemonStateData>> {
         if yak_env!("YAK_TEST_INIT_DAEMON_ERROR", bool, applicability = testing)? {
@@ -978,7 +978,7 @@ impl DaemonState {
             let fs = paths.project_root().clone();
 
             tracing::info!("Reading config...");
-            let legacy_cells = BuckConfigBasedCells::parse_with_config_args(&fs, &[]).await?;
+            let legacy_cells = YakConfigBasedCells::parse_with_config_args(&fs, &[]).await?;
 
             tracing::info!("Starting...");
 
@@ -991,7 +991,7 @@ impl DaemonState {
 
             let http_client = http_client_from_startup_config(&init_ctx.daemon_startup_config)
                 .await
-                .buck_error_context("Error creating HTTP client")?
+                .yak_error_context("Error creating HTTP client")?
                 .build();
 
             tracing::info!("Creating memory tracker...");
@@ -1048,7 +1048,7 @@ impl DaemonState {
                 forkserver,
                 start_time: std::time::Instant::now(),
                 http_client,
-                spawner: Arc::new(BuckSpawner::new(daemon_state_data_rt)),
+                spawner: Arc::new(YakSpawner::new(daemon_state_data_rt)),
                 memory_tracker,
                 daemon_id: daemon_id.dupe(),
                 daemon_originating_cgroup,
@@ -1091,7 +1091,7 @@ impl DaemonState {
         )?;
 
         self.validate_cwd()
-            .buck_error_context("Error validating working directory")?;
+            .yak_error_context("Error validating working directory")?;
 
         dispatcher.instant_event(yak_data::TagEvent {
             tags: repo.tags.clone(),
@@ -1203,7 +1203,7 @@ mod tests {
     use indoc::indoc;
     use yak_cli_proto::TenantIdentity;
     use yak_common::legacy_configs::configs::testing::parse;
-    use yak_common::settings::BuckSettings;
+    use yak_common::settings::YakSettings;
     use yak_fs::paths::abs_norm_path::AbsNormPathBuf;
     use yak_fs::paths::file_name::FileNameBuf;
 
@@ -1361,7 +1361,7 @@ mod tests {
             )],
             "config",
         )?;
-        let startup_config = DaemonStartupConfig::new(&config, &BuckSettings::empty(), false)?;
+        let startup_config = DaemonStartupConfig::new(&config, &YakSettings::empty(), false)?;
         let builder = http_client_from_startup_config(&startup_config).await?;
         assert_eq!(5, builder.max_redirects().unwrap());
         assert_eq!(Some(Duration::from_millis(10)), builder.connect_timeout());
@@ -1389,7 +1389,7 @@ mod tests {
             )],
             "config",
         )?;
-        let startup_config = DaemonStartupConfig::new(&config, &BuckSettings::empty(), false)?;
+        let startup_config = DaemonStartupConfig::new(&config, &YakSettings::empty(), false)?;
         let builder = http_client_from_startup_config(&startup_config).await?;
         assert_eq!(None, builder.connect_timeout());
         assert_eq!(

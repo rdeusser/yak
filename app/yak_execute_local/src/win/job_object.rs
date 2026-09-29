@@ -33,7 +33,7 @@ use windows_sys::Win32::System::JobObjects::SetInformationJobObject;
 use windows_sys::Win32::System::JobObjects::TerminateJobObject;
 use windows_sys::Win32::System::SystemServices::JOB_OBJECT_MSG_ACTIVE_PROCESS_ZERO;
 use windows_sys::Win32::System::Threading::INFINITE;
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 use yak_wrapper_common::win::winapi_handle::WinapiHandle;
 
 use crate::win::utils::result_bool;
@@ -47,7 +47,7 @@ impl JobObject {
     pub(crate) fn new() -> yak_error::Result<Self> {
         let job_handle = unsafe {
             WinapiHandle::new_check_last_os_error(CreateJobObjectW(ptr::null(), ptr::null()))
-                .buck_error_context("CreateJobObject")?
+                .yak_error_context("CreateJobObject")?
         };
 
         let completion_handle = unsafe {
@@ -57,7 +57,7 @@ impl JobObject {
                 0,                    // CompletionKey
                 1,                    // NumberOfConcurrentThreads
             ))
-            .buck_error_context("CreateIoCompletionPort")?
+            .yak_error_context("CreateIoCompletionPort")?
         };
 
         associate_job_with_completion_port(&job_handle, &completion_handle)?;

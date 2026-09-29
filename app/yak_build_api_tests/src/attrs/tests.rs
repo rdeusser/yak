@@ -28,14 +28,14 @@ use yak_core::cells::name::CellName;
 use yak_core::configuration::data::ConfigurationData;
 use yak_core::execution_types::executor_config::PathSeparatorKind;
 use yak_core::fs::artifact_path_resolver::ArtifactFs;
-use yak_core::fs::buck_out_path::BuckOutPathResolver;
+use yak_core::fs::yak_out_path::YakOutPathResolver;
 use yak_core::fs::project::ProjectRoot;
 use yak_core::fs::project_rel_path::ProjectRelativePathBuf;
 use yak_core::package::PackageLabel;
 use yak_core::plugins::PluginKindSet;
 use yak_execute::artifact::fs::ExecutorFs;
 use yak_fs::paths::abs_norm_path::AbsNormPathBuf;
-use yak_hash::BuckMutMap;
+use yak_hash::YakMutMap;
 use yak_interpreter_for_build::attrs::coerce::attr_type::AttrTypeExt;
 use yak_interpreter_for_build::attrs::coerce::testing::coercion_ctx;
 use yak_interpreter_for_build::attrs::coerce::testing::coercion_ctx_listing;
@@ -991,15 +991,15 @@ fn test_user_placeholders() -> yak_error::Result<()> {
                                 "cell_path".into(),
                             )),
                         ),
-                        BuckOutPathResolver::new(ProjectRelativePathBuf::unchecked_new(
-                            "buck_out/v2".into(),
+                        YakOutPathResolver::new(ProjectRelativePathBuf::unchecked_new(
+                            "yak_out/v2".into(),
                         )),
                         project_fs,
                     );
                     let executor_fs = ExecutorFs::new(&fs, PathSeparatorKind::Unix);
 
                     let mut cli = Vec::<String>::new();
-                    let artifact_path_mapping = BuckMutMap::default();
+                    let artifact_path_mapping = YakMutMap::default();
                     let mut fmt =
                         CommandLineBuilder::new(&mut cli, &artifact_path_mapping, &executor_fs);
                     ValueAsCommandLineLike::unpack_value_err(v)

@@ -110,7 +110,7 @@ class IncrementalContext:
     Additional data you need to bundle incrementally (extra vs when non-incrementally).
     """
 
-    # Maps buck-project relative path to hash digest of the input file.
+    # Maps yak-project relative path to hash digest of the input file.
     metadata: Dict[Path, str]
     # Present when there is a valid incremental state on disk (i.e. previous build produced it).
     state: Optional[IncrementalState]

@@ -16,7 +16,7 @@ use std::sync::Arc;
 
 use cmp_any::PartialEqAny;
 use dupe::Dupe;
-use yak_hash::BuckHasher;
+use yak_hash::YakHasher;
 
 /// `Display` should not include type name (like `dice::Key`).
 pub trait BuildSignalsNodeKeyImpl:
@@ -58,7 +58,7 @@ impl<T: BuildSignalsNodeKeyImpl> BuildSignalsNodeKeyDyn for T {
     }
 
     fn hash(&self) -> u64 {
-        let mut hasher = BuckHasher::new();
+        let mut hasher = YakHasher::new();
         self.hash(&mut hasher);
         hasher.finish()
     }

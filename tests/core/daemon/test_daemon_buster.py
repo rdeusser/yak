@@ -8,52 +8,52 @@
 
 import json
 
-from e2e_util.api.buck import Buck
-from e2e_util.buck_workspace import buck_test
+from e2e_util.api.yak import Yak
+from e2e_util.yak_workspace import yak_test
 
 
-@buck_test()
-async def test_daemon_buster(buck: Buck) -> None:
+@yak_test()
+async def test_daemon_buster(yak: Yak) -> None:
     async def pid() -> int:
-        return json.loads((await buck.status()).stdout)["process_info"]["pid"]
+        return json.loads((await yak.status()).stdout)["process_info"]["pid"]
 
-    await buck.build(":")
+    await yak.build(":")
     pid0 = await pid()
 
-    await buck.build(":")
+    await yak.build(":")
     pid1 = await pid()
     assert pid1 == pid0
 
-    with open(buck.cwd / ".yakconfig", "a") as f:
+    with open(yak.cwd / ".yakconfig", "a") as f:
         f.write("[yak]\n")
         f.write("daemon_buster = 1\n")
 
-    await buck.build(":")
+    await yak.build(":")
     pid2 = await pid()
     assert pid2 != pid1
 
-    await buck.build(":")
+    await yak.build(":")
     pid3 = await pid()
     assert pid3 == pid2
 
-    with open(buck.cwd / ".yakconfig", "a") as f:
+    with open(yak.cwd / ".yakconfig", "a") as f:
         f.write("[yak]\n")
         f.write("daemon_buster = 2\n")
 
-    await buck.build(":")
+    await yak.build(":")
     pid4 = await pid()
     assert pid4 != pid3
 
-    with open(buck.cwd / ".yakconfig", "r") as f:
+    with open(yak.cwd / ".yakconfig", "r") as f:
         config = f.read()
 
-    with open(buck.cwd / ".yakconfig", "w") as f:
+    with open(yak.cwd / ".yakconfig", "w") as f:
         f.write(
             "\n".join(
                 line for line in config.splitlines() if "daemon_buster" not in line
             )
         )
 
-    await buck.build(":")
+    await yak.build(":")
     pid5 = await pid()
     assert pid5 != pid4

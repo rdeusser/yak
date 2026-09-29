@@ -19,7 +19,7 @@ pub fn background_command<S: AsRef<OsStr>>(program: S) -> Command {
         use std::os::windows::process::CommandExt;
         command.creation_flags(windows_sys::Win32::System::Threading::CREATE_NO_WINDOW);
     }
-    command.env_remove(crate::BUCK_WRAPPER_UUID_ENV_VAR);
+    command.env_remove(crate::YAK_WRAPPER_UUID_ENV_VAR);
     command
 }
 

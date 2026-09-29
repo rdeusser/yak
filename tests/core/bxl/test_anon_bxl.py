@@ -6,50 +6,50 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-from e2e_util.api.buck import Buck
+from e2e_util.api.yak import Yak
 from e2e_util.asserts import expect_failure
-from e2e_util.buck_workspace import buck_test
+from e2e_util.yak_workspace import yak_test
 
 
-@buck_test()
-async def test_define_anon_bxl(buck: Buck) -> None:
-    await buck.bxl(
+@yak_test()
+async def test_define_anon_bxl(yak: Yak) -> None:
+    await yak.bxl(
         "//anon_bxl.bxl:define_anon",
     )
 
 
-@buck_test()
-async def test_define_wrong_type_anon_bxl(buck: Buck) -> None:
+@yak_test()
+async def test_define_wrong_type_anon_bxl(yak: Yak) -> None:
     await expect_failure(
-        buck.bxl("//wrong_type_anon_bxl.bxl:wrong_type"),
+        yak.bxl("//wrong_type_anon_bxl.bxl:wrong_type"),
         stderr_regex="Type of parameter `impl` doesn't match,",
     )
 
 
-@buck_test()
-async def test_eval_anon_bxl(buck: Buck) -> None:
-    await buck.bxl(
+@yak_test()
+async def test_eval_anon_bxl(yak: Yak) -> None:
+    await yak.bxl(
         "//anon_bxl.bxl:eval_anon_bxl",
     )
 
 
-@buck_test()
-async def test_check_anon_ouput_artifact(buck: Buck) -> None:
-    await buck.bxl(
+@yak_test()
+async def test_check_anon_ouput_artifact(yak: Yak) -> None:
+    await yak.bxl(
         "//anon_bxl.bxl:check_anon_ouput_artifact",
     )
 
 
-@buck_test()
-async def test_pass_string_to_arg_attr(buck: Buck) -> None:
-    await buck.bxl("//anon_bxl.bxl:eval_of_anon_with_arg_bxl")
+@yak_test()
+async def test_pass_string_to_arg_attr(yak: Yak) -> None:
+    await yak.bxl("//anon_bxl.bxl:eval_of_anon_with_arg_bxl")
 
 
-@buck_test()
-async def test_content_based_output(buck: Buck) -> None:
-    result = await buck.bxl(
+@yak_test()
+async def test_content_based_output(yak: Yak) -> None:
+    result = await yak.bxl(
         "//anon_bxl.bxl:eval_of_anon_with_content_based_output_impl"
     )
 
-    output_path = (buck.cwd / result.stdout.strip()).resolve()
+    output_path = (yak.cwd / result.stdout.strip()).resolve()
     assert output_path.read_text() == "hello world"

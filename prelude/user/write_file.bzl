@@ -6,7 +6,7 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-load("@prelude//decls:common.bzl", "buck")
+load("@prelude//decls:common.bzl", "yak")
 load("@prelude//decls:core_rules.bzl", "core_args")
 load(":rule_spec.bzl", "RuleRegistrationSpec")
 
@@ -42,8 +42,8 @@ def _impl(ctx: AnalysisContext):
 registration_spec = RuleRegistrationSpec(
     name = "write_file",
     impl = _impl,
-    attrs = buck.labels_arg()
-    | buck.contacts_arg()
+    attrs = yak.labels_arg()
+    | yak.contacts_arg()
     | core_args.has_content_based_path_attr()
     | {
         # API based on https://github.com/bazelbuild/bazel-skylib/blob/main/docs/write_file_doc.md.

@@ -14,9 +14,9 @@ use std::time::Duration;
 
 use serde::Serialize;
 use tokio_stream::StreamExt;
-use yak_client_ctx::client_ctx::BuckSubcommand;
+use yak_client_ctx::client_ctx::YakSubcommand;
 use yak_client_ctx::client_ctx::ClientCommandContext;
-use yak_client_ctx::common::BuckArgMatches;
+use yak_client_ctx::common::YakArgMatches;
 use yak_client_ctx::event_log_options::EventLogOptions;
 use yak_client_ctx::events_ctx::EventsCtx;
 use yak_client_ctx::exit_result::ClientIoError;
@@ -58,12 +58,12 @@ pub struct CriticalPathCommand {
     format: LogCommandOutputFormat,
 }
 
-impl BuckSubcommand for CriticalPathCommand {
+impl YakSubcommand for CriticalPathCommand {
     const COMMAND_NAME: &'static str = "log-critical-path";
 
     async fn exec_impl(
         self,
-        _matches: BuckArgMatches<'_>,
+        _matches: YakArgMatches<'_>,
         ctx: ClientCommandContext<'_>,
         _events_ctx: &mut EventsCtx,
     ) -> ExitResult {
@@ -104,12 +104,12 @@ pub struct SlowestPathCommand {
     format: LogCommandOutputFormat,
 }
 
-impl BuckSubcommand for SlowestPathCommand {
+impl YakSubcommand for SlowestPathCommand {
     const COMMAND_NAME: &'static str = "log-slowest-path";
 
     async fn exec_impl(
         self,
-        _matches: BuckArgMatches<'_>,
+        _matches: YakArgMatches<'_>,
         ctx: ClientCommandContext<'_>,
         _events_ctx: &mut EventsCtx,
     ) -> ExitResult {
@@ -147,7 +147,7 @@ async fn log_critical_path_command_exec(
 
     while let Some(event) = events.try_next().await? {
         if let StreamValue::Event(event) = event
-            && let Some(yak_data::buck_event::Data::Instant(instant)) = event.data
+            && let Some(yak_data::yak_event::Data::Instant(instant)) = event.data
             && let Some(yak_data::instant_event::Data::BuildGraphInfo(build_graph)) = instant.data
         {
             match path_kind {

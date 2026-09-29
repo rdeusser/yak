@@ -13,7 +13,7 @@
 
 load("@prelude//cfg/exec_platform:marker.bzl", "get_exec_platform_marker")
 load("@prelude//transitions:constraint_overrides.bzl", "constraint_overrides")
-load(":common.bzl", "OnDuplicateEntry", "buck", "prelude_rule", "validate_uri")
+load(":common.bzl", "OnDuplicateEntry", "yak", "prelude_rule", "validate_uri")
 load(":genrule_common.bzl", "genrule_common")
 load(":remote_common.bzl", "remote_common")
 
@@ -45,9 +45,9 @@ alias = prelude_rule(
         {
             "actual": attrs.option(attrs.dep(pulls_and_pushes_plugins = plugins.All)),
         }
-        | buck.licenses_arg()
-        | buck.labels_arg()
-        | buck.contacts_arg()
+        | yak.licenses_arg()
+        | yak.labels_arg()
+        | yak.contacts_arg()
     ),
 )
 
@@ -228,12 +228,12 @@ command_alias = prelude_rule(
                 $(exe) or RunInfo potentially expanding to multiple arguments).
             """,
             ),
-            "_exec_os_type": buck.exec_os_type_arg(),
-            "_target_os_type": buck.target_os_type_arg(),
+            "_exec_os_type": yak.exec_os_type_arg(),
+            "_target_os_type": yak.target_os_type_arg(),
         }
-        | buck.licenses_arg()
-        | buck.labels_arg()
-        | buck.contacts_arg()
+        | yak.licenses_arg()
+        | yak.labels_arg()
+        | yak.contacts_arg()
     ),
 )
 
@@ -360,9 +360,9 @@ configured_alias = prelude_rule(
             "fallback_actual": attrs.option(attrs.dep(), default = None),
             "platform": attrs.option(attrs.configuration_label(), default = None),
         }
-        | buck.licenses_arg()
-        | buck.labels_arg()
-        | buck.contacts_arg()
+        | yak.licenses_arg()
+        | yak.labels_arg()
+        | yak.contacts_arg()
     ),
 )
 
@@ -598,9 +598,9 @@ export_file = prelude_rule(
             ),
         }
         | _has_content_based_path_attr()
-        | buck.licenses_arg()
-        | buck.labels_arg()
-        | buck.contacts_arg()
+        | yak.licenses_arg()
+        | yak.labels_arg()
+        | yak.contacts_arg()
     ),
     cfg = constraint_overrides.transition,
 )
@@ -663,9 +663,9 @@ filegroup = prelude_rule(
             ),
         }
         | _has_content_based_path_attr()
-        | buck.licenses_arg()
-        | buck.labels_arg()
-        | buck.contacts_arg()
+        | yak.licenses_arg()
+        | yak.labels_arg()
+        | yak.contacts_arg()
     ),
     cfg = constraint_overrides.transition,
 )
@@ -879,13 +879,13 @@ genrule = prelude_rule(
                  changes in the future.
             """,
             ),
-            "_exec_os_type": buck.exec_os_type_arg(),
+            "_exec_os_type": yak.exec_os_type_arg(),
         }
         | genrule_common.error_handler_arg()
         | genrule_common.allow_offline_output_cache_arg()
-        | buck.licenses_arg()
-        | buck.labels_arg()
-        | buck.contacts_arg()
+        | yak.licenses_arg()
+        | yak.labels_arg()
+        | yak.contacts_arg()
     ),
     cfg = constraint_overrides.transition,
 )
@@ -938,9 +938,9 @@ http_archive = prelude_rule(
             "size_bytes": attrs.option(attrs.int(), default = None),
         }
         | _has_content_based_path_attr()
-        | buck.licenses_arg()
-        | buck.labels_arg()
-        | buck.contacts_arg()
+        | yak.licenses_arg()
+        | yak.labels_arg()
+        | yak.contacts_arg()
     ),
 )
 
@@ -998,9 +998,9 @@ http_file = prelude_rule(
             "size_bytes": attrs.option(attrs.int(), default = None),
         }
         | _has_content_based_path_attr()
-        | buck.licenses_arg()
-        | buck.labels_arg()
-        | buck.contacts_arg()
+        | yak.licenses_arg()
+        | yak.labels_arg()
+        | yak.contacts_arg()
     ),
 )
 
@@ -1100,9 +1100,9 @@ remote_file = prelude_rule(
             "sha256": attrs.option(attrs.string(), default = None),
         }
         | _has_content_based_path_attr()
-        | buck.licenses_arg()
-        | buck.labels_arg()
-        | buck.contacts_arg()
+        | yak.licenses_arg()
+        | yak.labels_arg()
+        | yak.contacts_arg()
     ),
 )
 
@@ -1185,9 +1185,9 @@ test_suite = prelude_rule(
             # `test_deps` is a deps attribute, so a macro that sets `test_deps = tests` makes query follow the tests.
             "test_deps": attrs.list(attrs.dep(), default = []),
         }
-        | buck.licenses_arg()
-        | buck.labels_arg()
-        | buck.contacts_arg()
+        | yak.licenses_arg()
+        | yak.labels_arg()
+        | yak.contacts_arg()
     ),
 )
 
@@ -1331,9 +1331,9 @@ zip_file = prelude_rule(
             """,
             ),
         }
-        | buck.licenses_arg()
-        | buck.labels_arg()
-        | buck.contacts_arg()
+        | yak.licenses_arg()
+        | yak.labels_arg()
+        | yak.contacts_arg()
     ),
 )
 

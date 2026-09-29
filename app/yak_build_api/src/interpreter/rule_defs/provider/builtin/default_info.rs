@@ -43,8 +43,8 @@ use starlark::values::none::NoneOr;
 use yak_artifact::artifact::artifact_type::Artifact;
 use yak_artifact::artifact::artifact_type::OutputArtifact;
 use yak_build_api_derive::internal_provider;
-use yak_error::BuckErrorContext;
-use yak_error::BuckErrorOptionContext;
+use yak_error::YakErrorContext;
+use yak_error::YakErrorOptionContext;
 use yak_error::internal_error;
 
 use crate as yak_build_api;
@@ -211,7 +211,7 @@ impl<'v> DefaultInfo<'v> {
             .internal_error("sub_targets should be a dict-like object")?
             .get_str(name)
             .map(|v| {
-                ValueTyped::new_err(v).buck_error_context(
+                ValueTyped::new_err(v).yak_error_context(
                     "Values inside of `sub_targets` should be provider collections",
                 )
             })

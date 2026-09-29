@@ -32,9 +32,9 @@ const (
 	metaStdLib      = "std"
 )
 
-var allPackagesTargetExprs = strings.Fields(os.Getenv("GOPACKAGESDRIVER_BUCK_ALL_PACKAGES_TARGET_EXPRS"))
+var allPackagesTargetExprs = strings.Fields(os.Getenv("GOPACKAGESDRIVER_YAK_ALL_PACKAGES_TARGET_EXPRS"))
 
-func query(ctx context.Context, req *packages.DriverRequest, bucker Bucker, platform Platform, targets []string) (*packages.DriverResponse, error) {
+func query(ctx context.Context, req *packages.DriverRequest, yaker Yaker, platform Platform, targets []string) (*packages.DriverResponse, error) {
 	var resp *packages.DriverResponse
 	var err error
 
@@ -66,7 +66,7 @@ func query(ctx context.Context, req *packages.DriverRequest, bucker Bucker, plat
 		return nil, err
 	}
 
-	resp, err = queryBXL(ctx, req, bucker, targetsByType.buckPatterns, targetsByType.buckFiles)
+	resp, err = queryBXL(ctx, req, yaker, targetsByType.yakPatterns, targetsByType.yakFiles)
 	if err != nil {
 		slog.Error("error when query BXL", "args", os.Args, "err", err)
 		return nil, err
@@ -98,7 +98,7 @@ func query(ctx context.Context, req *packages.DriverRequest, bucker Bucker, plat
 	}
 
 	// fallback to `go list` if we don't have any roots
-	// this will allow us to resolve non-buck targets
+	// this will allow us to resolve non-yak targets
 	if len(resp.Roots) == 0 {
 		resp.NotHandled = true
 	}
@@ -156,9 +156,9 @@ func Run(ctx context.Context) error {
 	cwd := CWD()
 	targets := os.Args[1:]
 	cmder := &shellCommander{}
-	bucker := &buckShell{
+	yaker := &yakShell{
 		cmder:       cmder,
-		buckOptions: strings.Fields(os.Getenv("GOPACKAGESDRIVER_BUCK_OPTIONS")),
+		yakOptions: strings.Fields(os.Getenv("GOPACKAGESDRIVER_YAK_OPTIONS")),
 	}
 
 	req, err := readDriverRequest()
@@ -166,7 +166,7 @@ func Run(ctx context.Context) error {
 		return fmt.Errorf("failed to read driver request: %w", err)
 	}
 
-	platform, err := newPlatform(ctx, bucker, req)
+	platform, err := newPlatform(ctx, yaker, req)
 	if err != nil {
 		slog.Error("error creating platform", "err", err)
 		return err
@@ -175,7 +175,7 @@ func Run(ctx context.Context) error {
 	slog.Info("running with args", "cwd", cwd, "project", platform.ProjectDir(), "args", os.Args)
 	slog.Debug("running with env", "env", os.Environ())
 
-	resp, err := query(ctx, req, bucker, platform, targets)
+	resp, err := query(ctx, req, yaker, platform, targets)
 	if err != nil {
 		return err
 	}

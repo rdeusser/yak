@@ -11,64 +11,64 @@
 use yak_data::InstantEvent;
 use yak_data::SpanEndEvent;
 use yak_data::SpanStartEvent;
-use yak_data::buck_event;
-use yak_events::BuckEvent;
+use yak_data::yak_event;
+use yak_events::YakEvent;
 
 #[derive(yak_error::Error, Debug)]
 #[yak(tag = InvalidEvent)]
 pub enum VisitorError {
     #[error("Sent an event missing one or more fields: `{0:?}`")]
-    MissingField(BuckEvent),
+    MissingField(YakEvent),
     #[error("Sent an unexpected Record event: `{0:?}`")]
-    UnexpectedRecord(BuckEvent),
+    UnexpectedRecord(YakEvent),
 }
 
-/// Just a simple structure that makes it easier to deal with BuckEvent rather than
+/// Just a simple structure that makes it easier to deal with YakEvent rather than
 /// needing to deal with the unpacking of optional fields yourself.
-pub enum UnpackedBuckEvent<'a> {
+pub enum UnpackedYakEvent<'a> {
     SpanStart(
-        &'a BuckEvent,
+        &'a YakEvent,
         &'a SpanStartEvent,
         &'a yak_data::span_start_event::Data,
     ),
     SpanEnd(
-        &'a BuckEvent,
+        &'a YakEvent,
         &'a SpanEndEvent,
         &'a yak_data::span_end_event::Data,
     ),
     Instant(
-        &'a BuckEvent,
+        &'a YakEvent,
         &'a InstantEvent,
         &'a yak_data::instant_event::Data,
     ),
-    UnrecognizedSpanStart(&'a BuckEvent, &'a SpanStartEvent),
-    UnrecognizedSpanEnd(&'a BuckEvent, &'a SpanEndEvent),
-    UnrecognizedInstant(&'a BuckEvent, &'a InstantEvent),
+    UnrecognizedSpanStart(&'a YakEvent, &'a SpanStartEvent),
+    UnrecognizedSpanEnd(&'a YakEvent, &'a SpanEndEvent),
+    UnrecognizedInstant(&'a YakEvent, &'a InstantEvent),
 }
 
-pub fn unpack_event(event: &BuckEvent) -> yak_error::Result<UnpackedBuckEvent<'_>> {
+pub fn unpack_event(event: &YakEvent) -> yak_error::Result<UnpackedYakEvent<'_>> {
     match &event.data() {
-        buck_event::Data::SpanStart(v) => Ok({
+        yak_event::Data::SpanStart(v) => Ok({
             if let Some(data) = v.data.as_ref() {
-                UnpackedBuckEvent::SpanStart(event, v, data)
+                UnpackedYakEvent::SpanStart(event, v, data)
             } else {
-                UnpackedBuckEvent::UnrecognizedSpanStart(event, v)
+                UnpackedYakEvent::UnrecognizedSpanStart(event, v)
             }
         }),
-        buck_event::Data::SpanEnd(v) => Ok({
+        yak_event::Data::SpanEnd(v) => Ok({
             if let Some(data) = v.data.as_ref() {
-                UnpackedBuckEvent::SpanEnd(event, v, data)
+                UnpackedYakEvent::SpanEnd(event, v, data)
             } else {
-                UnpackedBuckEvent::UnrecognizedSpanEnd(event, v)
+                UnpackedYakEvent::UnrecognizedSpanEnd(event, v)
             }
         }),
-        buck_event::Data::Instant(v) => Ok({
+        yak_event::Data::Instant(v) => Ok({
             if let Some(data) = v.data.as_ref() {
-                UnpackedBuckEvent::Instant(event, v, data)
+                UnpackedYakEvent::Instant(event, v, data)
             } else {
-                UnpackedBuckEvent::UnrecognizedInstant(event, v)
+                UnpackedYakEvent::UnrecognizedInstant(event, v)
             }
         }),
-        buck_event::Data::Record(_) => Err(VisitorError::UnexpectedRecord(event.clone()).into()),
+        yak_event::Data::Record(_) => Err(VisitorError::UnexpectedRecord(event.clone()).into()),
     }
 }

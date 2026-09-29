@@ -9,19 +9,19 @@
 import typing
 from pathlib import Path
 
-from e2e_util.api.buck import Buck
+from e2e_util.api.yak import Yak
 from e2e_util.asserts import expect_failure
-from e2e_util.buck_workspace import buck_test
+from e2e_util.yak_workspace import yak_test
 from e2e_util.helper.utils import filter_events
 
 
 async def check_targets(
-    buck: Buck,
+    yak: Yak,
     expected_target_names: typing.List[str],
     expected_error_messages: typing.List[str],
 ) -> None:
     build_response = await filter_events(
-        buck,
+        yak,
         "Result",
         "result",
         "build_response",
@@ -39,11 +39,11 @@ async def check_targets(
             assert expected in actual_msg["message"]
 
 
-@buck_test()
-async def test_build_one_fails(buck: Buck, tmp_path: Path) -> None:
+@yak_test()
+async def test_build_one_fails(yak: Yak, tmp_path: Path) -> None:
     report = tmp_path / "build-report.json"
     await expect_failure(
-        buck.build(
+        yak.build(
             "--build-report",
             str(report),
             "//:fail",
@@ -52,7 +52,7 @@ async def test_build_one_fails(buck: Buck, tmp_path: Path) -> None:
         stderr_regex="Failed to build 'root//:fail",
     )
     await check_targets(
-        buck,
+        yak,
         ["root//:a_one", "root//:fail"],
         ["Failed to build 'root//:fail (<unspecified>)'"],
     )

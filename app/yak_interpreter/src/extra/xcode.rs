@@ -15,7 +15,7 @@ use allocative::Allocative;
 use pagable::Pagable;
 use regex::Regex;
 use serde::Deserialize;
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 use yak_error::conversion::from_any_with_tag;
 use yak_fs::fs_util;
 use yak_fs::paths::abs_norm_path::AbsNormPathBuf;
@@ -62,7 +62,7 @@ impl XcodeVersionInfo {
     pub fn new() -> yak_error::Result<Option<Self>> {
         let resolved_xcode_path =
             fs_util::canonicalize_if_exists(AbsPath::new(XCODE_SELECT_SYMLINK)?)
-                .buck_error_context("resolve selected xcode link")?;
+                .yak_error_context("resolve selected xcode link")?;
         let resolved_xcode_path = match resolved_xcode_path {
             Some(p) => p,
             None => return Ok(None),

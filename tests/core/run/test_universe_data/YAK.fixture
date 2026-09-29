@@ -46,7 +46,7 @@ platform(
 )
 
 transitioned(
-    name = "buck",
+    name = "yak",
     script = select({
         ":cat": 'print("hello cat")',
         "DEFAULT": 'print("hello yak")',

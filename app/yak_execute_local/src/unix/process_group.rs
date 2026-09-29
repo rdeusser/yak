@@ -24,8 +24,8 @@ use tokio::process::ChildStderr;
 use tokio::process::ChildStdout;
 use tokio::process::Command;
 use yak_common::kill_util::try_terminate_process_gracefully;
-use yak_error::BuckErrorContext;
-use yak_error::BuckErrorOptionContext;
+use yak_error::YakErrorContext;
+use yak_error::YakErrorOptionContext;
 use yak_resource_control::ActionFreezeEvent;
 use yak_resource_control::ActionFreezeEventReceiver;
 use yak_resource_control::OrphanProcessInfo;
@@ -157,10 +157,10 @@ impl ProcessGroupImpl {
                 Duration::from_secs(graceful_shutdown_timeout_s as u64),
             )
             .await
-            .with_buck_error_context(|| format!("Failed to terminate process {pid} gracefully"))?;
+            .with_yak_error_context(|| format!("Failed to terminate process {pid} gracefully"))?;
         } else {
             signal::killpg(Pid::from_raw(pid), Signal::SIGKILL)
-                .with_buck_error_context(|| format!("Failed to kill process {pid}"))?;
+                .with_yak_error_context(|| format!("Failed to kill process {pid}"))?;
         }
 
         Ok(())

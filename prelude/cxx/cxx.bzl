@@ -1068,7 +1068,7 @@ def cxx_test_impl(ctx: AnalysisContext) -> list[Provider]:
                 # We implicitly make this test via the project root, instead of
                 # the cell root. `network_access` is carried on
                 # the executor config (see `get_re_executors_from_props`).
-                run_from_project_root = ("buck2_run_from_project_root" in (ctx.attrs.labels or []) or re_executors.run_from_project_root),
+                run_from_project_root = ("yak_run_from_project_root" in (ctx.attrs.labels or []) or re_executors.run_from_project_root),
                 use_project_relative_paths = re_executors.use_project_relative_paths,
                 supports_test_execution_caching = ctx.attrs.supports_test_execution_caching,
             ),

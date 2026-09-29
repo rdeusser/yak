@@ -37,7 +37,7 @@ use yak_build_api::dynamic::storage::FrozenDynamicLambdaParamsStorageBox;
 use yak_core::deferred::dynamic::DynamicLambdaIndex;
 use yak_core::deferred::dynamic::DynamicLambdaResultsKey;
 use yak_core::deferred::key::DeferredHolderKey;
-use yak_error::BuckErrorOptionContext;
+use yak_error::YakErrorOptionContext;
 use yak_error::internal_error;
 
 use crate::dynamic::params::DynamicLambdaParams;

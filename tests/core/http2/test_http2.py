@@ -10,24 +10,24 @@ from __future__ import annotations
 
 import json
 
-from e2e_util.api.buck import Buck
-from e2e_util.buck_workspace import buck_test
+from e2e_util.api.yak import Yak
+from e2e_util.yak_workspace import yak_test
 
 
-@buck_test()
-async def test_http2_enabled(buck: Buck) -> None:
+@yak_test()
+async def test_http2_enabled(yak: Yak) -> None:
     # Get a daemon to start
-    await buck.build()
-    result = await buck.status()
+    await yak.build()
+    result = await yak.status()
     status = json.loads(result.stdout)
     assert status["http2"] is True, "http2 is enabled by default"
 
     # Insert necessary yakconfig to pick up http2 configuration.
-    with open(f"{buck.cwd}/.yakconfig", "a") as buckconfig:
-        buckconfig.writelines(["[http]\n", "http2 = false\n"])
+    with open(f"{yak.cwd}/.yakconfig", "a") as yakconfig:
+        yakconfig.writelines(["[http]\n", "http2 = false\n"])
 
     # Get a daemon to start
-    await buck.build()
-    result = await buck.status()
+    await yak.build()
+    result = await yak.status()
     status = json.loads(result.stdout)
     assert status["http2"] is False, "http2 was disabled by yakconfig"

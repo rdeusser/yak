@@ -8,4 +8,4 @@
  * above-listed licenses.
  */
 
-tonic::include_proto!("buck.forkserver");
+tonic::include_proto!("yak.forkserver");

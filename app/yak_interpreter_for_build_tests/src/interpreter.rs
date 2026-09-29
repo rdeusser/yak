@@ -14,8 +14,8 @@ use indoc::indoc;
 use serde_json::json;
 use yak_build_api::interpreter::rule_defs::provider::registration::register_builtin_providers;
 use yak_build_api::interpreter::rule_defs::register_rule_defs;
-use yak_common::legacy_configs::cells::BuckConfigBasedCells;
-use yak_common::legacy_configs::configs::LegacyBuckConfig;
+use yak_common::legacy_configs::cells::YakConfigBasedCells;
+use yak_common::legacy_configs::configs::LegacyYakConfig;
 use yak_common::legacy_configs::configs::testing::TestConfigParserFileOps;
 use yak_common::package_listing::listing::PackageListing;
 use yak_common::package_listing::listing::testing::PackageListingExt;
@@ -197,8 +197,8 @@ fn test_eval_build_file() {
 }
 
 fn cells() -> CellsData {
-    let BuckConfigBasedCells { cell_resolver, .. } =
-        futures::executor::block_on(BuckConfigBasedCells::testing_parse_with_file_ops(
+    let YakConfigBasedCells { cell_resolver, .. } =
+        futures::executor::block_on(YakConfigBasedCells::testing_parse_with_file_ops(
             &mut TestConfigParserFileOps::new(&[(
                 ".yakconfig",
                 indoc!(
@@ -218,7 +218,7 @@ fn cells() -> CellsData {
     (
         cell_resolver.root_cell_cell_alias_resolver().dupe(),
         cell_resolver,
-        LegacyBuckConfig::empty(),
+        LegacyYakConfig::empty(),
         CellPathWithAllowedRelativeDir::new(
             CellPath::testing_new("cell1//config/foo"),
             Some(CellPath::testing_new("cell1//config")),
@@ -455,11 +455,11 @@ fn eval() -> yak_error::Result<()> {
             export_file = rule(impl=_impl, attrs = {})
 
             def test():
-                assert_eq("some/package", __buck2_builtins__.package_name())
-                assert_eq("root", __buck2_builtins__.get_cell_name())
+                assert_eq("some/package", __yak_builtins__.package_name())
+                assert_eq("root", __yak_builtins__.get_cell_name())
 
-                assert_eq(package_name(), __buck2_builtins__.package_name())
-                assert_eq(get_cell_name(), __buck2_builtins__.get_cell_name())
+                assert_eq(package_name(), __yak_builtins__.package_name())
+                assert_eq(get_cell_name(), __yak_builtins__.get_cell_name())
 
                 assert_eq(package_name(), get_base_path())
 
@@ -477,11 +477,11 @@ fn eval() -> yak_error::Result<()> {
 
 #[test]
 fn test_builtins() -> yak_error::Result<()> {
-    // Test that most things end up on __buck2_builtins__
+    // Test that most things end up on __yak_builtins__
     run_simple_starlark_test(indoc!(
         r#"
             def test():
-                assert_eq(__buck2_builtins__.json.encode({}), "{}")
+                assert_eq(__yak_builtins__.json.encode({}), "{}")
             "#
     ))?;
 
@@ -491,10 +491,10 @@ fn test_builtins() -> yak_error::Result<()> {
         indoc!(
             r#"
             def test():
-                __buck2_builtins__.buck2_fail("message")
+                __yak_builtins__.yak_fail("message")
             "#
         ),
-        "The attribute `buck2_fail` is not available",
+        "The attribute `yak_fail` is not available",
     );
     Ok(())
 }

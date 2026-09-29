@@ -14,16 +14,16 @@ use allocative::Allocative;
 use async_trait::async_trait;
 use dice::DiceTransactionUpdater;
 use yak_common::ignores::ignore_set::IgnoreSet;
-use yak_common::legacy_configs::configs::LegacyBuckConfig;
-use yak_common::legacy_configs::key::BuckconfigKeyRef;
+use yak_common::legacy_configs::configs::LegacyYakConfig;
+use yak_common::legacy_configs::key::YakconfigKeyRef;
 use yak_core::cells::CellResolver;
 use yak_core::cells::name::CellName;
 use yak_core::fs::project::ProjectRoot;
 use yak_core::yak_env;
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 use yak_error::ErrorTag;
 use yak_error::yak_error;
-use yak_hash::StdBuckHashMap;
+use yak_hash::StdYakHashMap;
 
 use crate::dep_files::DepFileCache;
 use crate::fs_hash_crawler::FsHashCrawler;
@@ -42,21 +42,21 @@ pub trait FileWatcher: Allocative + Send + Sync + 'static {
 /// Parse the `dice_clear_on_mergebase_change` config, honoring both the yakconfig
 /// and the `YAK_TEST_SKIP_DICE_CLEAR_ON_MERGEBASE_CHANGE` env var override.
 pub(crate) fn dice_clear_on_mergebase_change(
-    root_config: &LegacyBuckConfig,
+    root_config: &LegacyYakConfig,
 ) -> yak_error::Result<bool> {
     let config_value = root_config
-        .parse::<bool>(BuckconfigKeyRef {
+        .parse::<bool>(YakconfigKeyRef {
             section: "yak",
             property: "dice_clear_on_mergebase_change",
         })
-        .buck_error_context("Failed to parse dice_clear_on_mergebase_change config")?
+        .yak_error_context("Failed to parse dice_clear_on_mergebase_change config")?
         .unwrap_or(true);
     let env_skip = yak_env!(
         "YAK_TEST_SKIP_DICE_CLEAR_ON_MERGEBASE_CHANGE",
         bool,
         applicability = testing
     )
-    .buck_error_context("Failed to parse YAK_TEST_SKIP_DICE_CLEAR_ON_MERGEBASE_CHANGE env")?;
+    .yak_error_context("Failed to parse YAK_TEST_SKIP_DICE_CLEAR_ON_MERGEBASE_CHANGE env")?;
     Ok(config_value && !env_skip)
 }
 
@@ -65,9 +65,9 @@ impl dyn FileWatcher {
     /// startup and shouldn't be doing any work that could warrant suspending.
     pub fn new(
         project_root: &ProjectRoot,
-        root_config: &LegacyBuckConfig,
+        root_config: &LegacyYakConfig,
         cells: CellResolver,
-        ignore_specs: StdBuckHashMap<CellName, IgnoreSet>,
+        ignore_specs: StdYakHashMap<CellName, IgnoreSet>,
         dep_file_cache: Arc<dyn DepFileCache>,
     ) -> yak_error::Result<Arc<dyn FileWatcher>> {
         if !project_root.root().as_path().exists() {
@@ -82,7 +82,7 @@ impl dyn FileWatcher {
         let default = "notify";
 
         let watcher_conf = root_config
-            .get(BuckconfigKeyRef {
+            .get(YakconfigKeyRef {
                 section: "yak",
                 property: "file_watcher",
             })
@@ -97,15 +97,15 @@ impl dyn FileWatcher {
                     ignore_specs,
                     dep_file_cache,
                 )
-                .buck_error_context("Creating watchman file watcher")?,
+                .yak_error_context("Creating watchman file watcher")?,
             )),
             "notify" => Ok(Arc::new(
                 NotifyFileWatcher::new(project_root, cells, ignore_specs)
-                    .buck_error_context("Creating notify file watcher")?,
+                    .yak_error_context("Creating notify file watcher")?,
             )),
             "fs_hash_crawler" => Ok(Arc::new(
                 FsHashCrawler::new(project_root, cells, ignore_specs)
-                    .buck_error_context("Creating fs_crawler file watcher")?,
+                    .yak_error_context("Creating fs_crawler file watcher")?,
             )),
             other => Err(yak_error!(
                 yak_error::ErrorTag::Tier0,

@@ -10,8 +10,8 @@ import os
 from typing import Any, Dict
 
 import pytest
-from e2e_util.api.buck import Buck
-from e2e_util.buck_workspace import buck_test
+from e2e_util.api.yak import Yak
+from e2e_util.yak_workspace import yak_test
 from e2e_util.helper.utils import filter_events, random_string
 
 pytestmark = pytest.mark.needs_binary("USE_SOME_MEMORY_BIN")
@@ -26,7 +26,7 @@ _MEMORY_PEAK_MIN: int = 100_000_000
 _MEMORY_PEAK_MAX: int = 130_000_000
 
 
-def _use_some_memory_args(buck: Buck) -> list[str]:
+def _use_some_memory_args(yak: Yak) -> list[str]:
     return [
         "root//:use_some_memory",
         "--no-remote-cache",
@@ -40,19 +40,19 @@ def _use_some_memory_args(buck: Buck) -> list[str]:
     ]
 
 
-@buck_test(skip_for_os=["windows", "darwin"], disable_daemon_cgroup=False)
-async def test_memory_reporting_disabled(buck: Buck) -> None:
+@yak_test(skip_for_os=["windows", "darwin"], disable_daemon_cgroup=False)
+async def test_memory_reporting_disabled(yak: Yak) -> None:
     env = {
         "YAK_TEST_RESOURCE_CONTROL_CONFIG": '{"status":"Off","init":"Systemd","memory_max":null,"memory_high":null,"memory_max_per_action":null,"memory_high_per_action":null,"memory_high_actions":null,"memory_max_actions":null,"enable_suspension":false,"preferred_action_suspend_strategy":"KillAndRetry"}'
     }
 
-    await buck.build(
-        *_use_some_memory_args(buck),
+    await yak.build(
+        *_use_some_memory_args(yak),
         env=env,
     )
 
     events = await filter_events(
-        buck,
+        yak,
         "Event",
         "data",
         "SpanEnd",
@@ -65,9 +65,9 @@ async def test_memory_reporting_disabled(buck: Buck) -> None:
             assert c["details"]["metadata"]["execution_stats"]["memory_peak"] is None
 
 
-async def get_matching_details(buck: Buck) -> Dict[str, Any]:
+async def get_matching_details(yak: Yak) -> Dict[str, Any]:
     events = await filter_events(
-        buck,
+        yak,
         "Event",
         "data",
         "SpanEnd",
@@ -81,13 +81,13 @@ async def get_matching_details(buck: Buck) -> Dict[str, Any]:
     raise AssertionError("did not find the expected target")
 
 
-@buck_test(skip_for_os=["windows", "darwin"], disable_daemon_cgroup=False)
-async def test_memory_reporting(buck: Buck) -> None:
-    await buck.build(
-        *_use_some_memory_args(buck),
+@yak_test(skip_for_os=["windows", "darwin"], disable_daemon_cgroup=False)
+async def test_memory_reporting(yak: Yak) -> None:
+    await yak.build(
+        *_use_some_memory_args(yak),
     )
 
-    details = await get_matching_details(buck)
+    details = await get_matching_details(yak)
     assert "OmittedLocalCommand" in details["command_kind"]["command"]
 
     memory_peak = details["metadata"]["execution_stats"]["memory_peak"]
@@ -95,14 +95,14 @@ async def test_memory_reporting(buck: Buck) -> None:
     assert memory_peak < _MEMORY_PEAK_MAX
 
 
-@buck_test(skip_for_os=["windows", "darwin"], disable_daemon_cgroup=False)
-async def test_memory_reporting_in_test(buck: Buck) -> None:
-    await buck.test(
-        *_use_some_memory_args(buck),
+@yak_test(skip_for_os=["windows", "darwin"], disable_daemon_cgroup=False)
+async def test_memory_reporting_in_test(yak: Yak) -> None:
+    await yak.test(
+        *_use_some_memory_args(yak),
     )
 
     events = await filter_events(
-        buck,
+        yak,
         "Event",
         "data",
         "SpanEnd",

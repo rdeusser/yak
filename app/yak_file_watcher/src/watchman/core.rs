@@ -24,8 +24,8 @@ use tokio::sync::mpsc::UnboundedSender;
 use tokio::sync::oneshot;
 use watchman_client::prelude::*;
 use yak_core::yak_env;
-use yak_error::BuckErrorContext;
-use yak_error::BuckErrorOptionContext;
+use yak_error::YakErrorContext;
+use yak_error::YakErrorOptionContext;
 use yak_error::ErrorTag;
 use yak_error::internal_error;
 
@@ -76,7 +76,7 @@ enum WatchmanClientError {
 mod types {
     use super::*;
     query_result_type! {
-        pub(crate) struct BuckQueryResult {
+        pub(crate) struct YakQueryResult {
             name: NameField,
             file_type: FileTypeField,
             exists: ExistsField,
@@ -84,7 +84,7 @@ mod types {
         }
     }
 
-    impl BuckQueryResult {
+    impl YakQueryResult {
         pub fn into_event(self) -> Option<WatchmanEvent> {
             let kind = match *self.file_type {
                 FileType::BlockSpecial
@@ -190,10 +190,10 @@ impl WatchmanClient {
     ) -> yak_error::Result<WatchmanClient> {
         let client = with_timeout(connector.connect())
             .await
-            .buck_error_context("Connecting to watchman")?;
+            .yak_error_context("Connecting to watchman")?;
         let root = with_timeout(client.resolve_root(path))
             .await
-            .buck_error_context("Resolving watchman root")?;
+            .yak_error_context("Resolving watchman root")?;
         Ok(Self(Arc::new((client, root))))
     }
 
@@ -333,7 +333,7 @@ where
             Err(e) => self
                 .reconnect_and_sync_query(client)
                 .await
-                .buck_error_context(e.to_string()),
+                .yak_error_context(e.to_string()),
         }?;
 
         let (res, new_mergebase, clock) = match sync_res {
@@ -390,7 +390,7 @@ where
         *client = Some(
             WatchmanClient::connect(&self.connector, self.path.clone())
                 .await
-                .buck_error_context("Error reconnecting to Watchman")?,
+                .yak_error_context("Error reconnecting to Watchman")?,
         );
         Ok(())
     }
@@ -446,10 +446,10 @@ where
             query.empty_on_fresh_instance = true;
         }
 
-        let mut query_result = client.query::<BuckQueryResult>(query).await?;
+        let mut query_result = client.query::<YakQueryResult>(query).await?;
         if needs_watchman_perf_workaround && query_result.is_fresh_instance {
             let query = make_query(ClockSpec::default(), None);
-            query_result = client.query::<BuckQueryResult>(query).await?;
+            query_result = client.query::<YakQueryResult>(query).await?;
         }
 
         let QueryResult {
@@ -534,10 +534,10 @@ where
 
             let out = sync_done_rx
                 .await
-                .buck_error_context(
+                .yak_error_context(
                     "SyncableQueryHandler did not return a response for sync request",
                 )?
-                .buck_error_context("SyncableQueryHandler returned an error")?;
+                .yak_error_context("SyncableQueryHandler returned an error")?;
 
             Ok(out)
         }
@@ -554,7 +554,7 @@ where
     ) -> yak_error::Result<SyncableQuery<T, P>> {
         let path = path.as_ref();
         let path = CanonicalPath::canonicalize(path)
-            .with_buck_error_context(|| format!("Error canonicalizing: `{}`", path.display()))?;
+            .with_yak_error_context(|| format!("Error canonicalizing: `{}`", path.display()))?;
 
         let query = QueryRequestCommon {
             expression: Some(expr),

@@ -9,7 +9,7 @@
  */
 
 use yak_build_api::analysis::calculation::EVAL_ANALYSIS_QUERY;
-use yak_hash::BuckMutMap;
+use yak_hash::YakMutMap;
 use yak_node::nodes::configured::ConfiguredTargetNode;
 use yak_node::nodes::configured_ref::ConfiguredGraphNodeRef;
 use yak_query::query::syntax::simple::eval::evaluator::QueryEvaluator;
@@ -25,7 +25,7 @@ pub(crate) fn init_eval_analysis_query() {
 
 async fn eval_analysis_query(
     query: &str,
-    resolved_literals: BuckMutMap<String, ConfiguredTargetNode>,
+    resolved_literals: YakMutMap<String, ConfiguredTargetNode>,
 ) -> yak_error::Result<TargetSet<ConfiguredGraphNodeRef>> {
     let delegate = AnalysisConfiguredGraphQueryDelegate { resolved_literals };
     let functions = ConfiguredGraphQueryEnvironment::functions();

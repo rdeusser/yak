@@ -26,14 +26,14 @@ use yak_core::deferred::base_deferred_key::BaseDeferredKey;
 use yak_core::deferred::base_deferred_key::BaseDeferredKeyBxl;
 use yak_core::deferred::base_deferred_key::BaseDeferredKeyDyn;
 use yak_core::deferred::base_deferred_key::PathResolutionError;
-use yak_core::fs::buck_out_path::BuckOutPathKind;
+use yak_core::fs::yak_out_path::YakOutPathKind;
 use yak_core::fs::project_rel_path::ProjectRelativePath;
 use yak_core::fs::project_rel_path::ProjectRelativePathBuf;
 use yak_core::global_cfg_options::GlobalCfgOptions;
 use yak_core::target::configured_target_label::ConfiguredTargetLabel;
 use yak_data::ToProtoMessage;
 use yak_data::action_key_owner::BaseDeferredKeyProto;
-use yak_error::BuckErrorOptionContext;
+use yak_error::YakErrorOptionContext;
 use yak_fs::paths::forward_rel_path::ForwardRelativePath;
 use yak_interpreter::dice::starlark_provider::DynEvalKindKey;
 use yak_interpreter::dice::starlark_provider::StarlarkEvalKind;
@@ -218,7 +218,7 @@ impl BaseDeferredKeyDyn for BxlDynamicKeyData {
         prefix: &ForwardRelativePath,
         action_key: Option<&str>,
         path: &ForwardRelativePath,
-        path_resolution_method: BuckOutPathKind,
+        path_resolution_method: YakOutPathKind,
         content_hash: Option<&ContentBasedPathHash>,
     ) -> yak_error::Result<ProjectRelativePathBuf> {
         let label = &self.key.spec;
@@ -251,12 +251,12 @@ impl BaseDeferredKeyDyn for BxlDynamicKeyData {
             "-bxl/",
             label.bxl_path.cell().as_str(),
             "/",
-            if path_resolution_method == BuckOutPathKind::Configuration {
+            if path_resolution_method == YakOutPathKind::Configuration {
                 exec_platform.as_str()
             } else {
                 ""
             },
-            if path_resolution_method == BuckOutPathKind::Configuration {
+            if path_resolution_method == YakOutPathKind::Configuration {
                 "/"
             } else {
                 ""
@@ -271,7 +271,7 @@ impl BaseDeferredKeyDyn for BxlDynamicKeyData {
             "__/",
             action_key.unwrap_or_default(),
             if action_key.is_none() { "" } else { "/" },
-            if path_resolution_method == BuckOutPathKind::Configuration {
+            if path_resolution_method == YakOutPathKind::Configuration {
                 output_hash.as_str()
             } else if let Some(content_hash) = content_hash {
                 content_hash.as_str()

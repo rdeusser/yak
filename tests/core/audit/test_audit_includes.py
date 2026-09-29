@@ -10,12 +10,12 @@ import os
 import re
 from pathlib import Path
 
-from e2e_util.api.buck import Buck
-from e2e_util.api.buck_result import BuckResult
-from e2e_util.buck_workspace import buck_test
+from e2e_util.api.yak import Yak
+from e2e_util.api.yak_result import YakResult
+from e2e_util.yak_workspace import yak_test
 
 
-def _includes(output: BuckResult) -> list[str]:
+def _includes(output: YakResult) -> list[str]:
     return sorted(
         [
             re.sub(".*[/\\\\]", "", line)
@@ -25,24 +25,24 @@ def _includes(output: BuckResult) -> list[str]:
     )
 
 
-@buck_test()
-async def test_audit_includes(buck: Buck, tmp_path: Path) -> None:
+@yak_test()
+async def test_audit_includes(yak: Yak, tmp_path: Path) -> None:
     expected_includes = ["example.json", "incl.bzl", "prelude.bzl"]
     # Using project relative path.
-    output = await buck.audit("includes", "YAK.fixture")
+    output = await yak.audit("includes", "YAK.fixture")
     assert _includes(output) == expected_includes
 
     # Using project relative path when in a subdirectory.
-    await buck.audit("includes", "YAK.fixture", rel_cwd=Path("dir"))
+    await yak.audit("includes", "YAK.fixture", rel_cwd=Path("dir"))
     assert _includes(output) == expected_includes
 
     # Using absolute path.
-    output = await buck.audit("includes", f"{buck.cwd}/YAK.fixture")
+    output = await yak.audit("includes", f"{yak.cwd}/YAK.fixture")
     assert _includes(output) == expected_includes
 
     if os.name != "nt":
         # Create symlink to the project root in a temporary directory.
-        (tmp_path / "symlink").symlink_to(buck.cwd)
+        (tmp_path / "symlink").symlink_to(yak.cwd)
 
-        output = await buck.audit("includes", f"{tmp_path}/symlink/YAK.fixture")
+        output = await yak.audit("includes", f"{tmp_path}/symlink/YAK.fixture")
         assert _includes(output) == expected_includes

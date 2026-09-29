@@ -15,7 +15,7 @@ use yak_cmd_audit_client::dep_files::AuditDepFilesCommand;
 use yak_common::pattern::parse_from_cli::parse_patterns_from_cli_args;
 use yak_core::category::CategoryRef;
 use yak_core::pattern::pattern_type::TargetPatternExtra;
-use yak_error::BuckErrorOptionContext;
+use yak_error::YakErrorOptionContext;
 use yak_node::target_calculation::ConfiguredTargetCalculation;
 use yak_server_ctx::ctx::ServerCommandContextTrait;
 use yak_server_ctx::ctx::ServerCommandDiceContext;

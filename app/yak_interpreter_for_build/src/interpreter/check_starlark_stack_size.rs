@@ -22,10 +22,10 @@ use pagable::Pagable;
 use pagable::pagable_typetag;
 use starlark::environment::Globals;
 use starlark::syntax::AstModule;
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 use yak_error::starlark_error::from_starlark_with_options;
 use yak_interpreter::dice::starlark_provider::StarlarkEvalKind;
-use yak_interpreter::factory::BuckStarlarkModule;
+use yak_interpreter::factory::YakStarlarkModule;
 use yak_interpreter::factory::StarlarkEvaluatorProvider;
 use yak_interpreter::file_type::StarlarkFileType;
 
@@ -68,7 +68,7 @@ pub(crate) async fn check_starlark_stack_size(
             let eval_kind = StarlarkEvalKind::Unknown("Check starlark stack size".into());
             let provider = StarlarkEvaluatorProvider::new(ctx, eval_kind).await?;
 
-            BuckStarlarkModule::with_profiling(|env| {
+            YakStarlarkModule::with_profiling(|env| {
                 let (finished_eval, _) =
                     provider.with_evaluator(&env, cancellation.into(), move |eval, _| {
                         let content = indoc!(

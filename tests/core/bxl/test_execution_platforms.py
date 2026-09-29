@@ -12,14 +12,14 @@ import string
 from pathlib import Path
 
 import pytest
-from e2e_util.api.buck import Buck
+from e2e_util.api.yak import Yak
 from e2e_util.asserts import expect_failure
-from e2e_util.buck_workspace import buck_test
+from e2e_util.yak_workspace import yak_test
 
 
-@buck_test(write_invocation_record=True)
-async def test_bxl_exec_platform_dynamic_output(buck: Buck) -> None:
-    result = await buck.bxl(
+@yak_test(write_invocation_record=True)
+async def test_bxl_exec_platform_dynamic_output(yak: Yak) -> None:
+    result = await yak.bxl(
         "//executor_fallback_tests/dynamic.bxl:test_dynamic_output",
         "-c",
         f"test.cache_buster={random_string()}",
@@ -27,10 +27,10 @@ async def test_bxl_exec_platform_dynamic_output(buck: Buck) -> None:
     )
 
     output = result.stdout.splitlines()[0]
-    assert os.path.exists(buck.cwd / Path(output))
+    assert os.path.exists(yak.cwd / Path(output))
 
     res = await expect_failure(
-        buck.bxl(
+        yak.bxl(
             "//executor_fallback_tests/dynamic.bxl:test_dynamic_output",
             "-c",
             f"test.cache_buster={random_string()}",
@@ -47,9 +47,9 @@ async def test_bxl_exec_platform_dynamic_output(buck: Buck) -> None:
 
 
 @pytest.mark.remote_execution
-@buck_test()
-async def test_bxl_execution_platforms(buck: Buck) -> None:
-    result = await buck.bxl(
+@yak_test()
+async def test_bxl_execution_platforms(yak: Yak) -> None:
+    result = await yak.bxl(
         "//executor_fallback_tests/test.bxl:test_exec_platforms",
         "-c",
         f"test.cache_buster={random_string()}",
@@ -59,10 +59,10 @@ async def test_bxl_execution_platforms(buck: Buck) -> None:
     )
 
     output = result.stdout.splitlines()[0]
-    assert os.path.exists(buck.cwd / Path(output))
+    assert os.path.exists(yak.cwd / Path(output))
 
     await expect_failure(
-        buck.bxl(
+        yak.bxl(
             "//executor_fallback_tests/test.bxl:test_exec_platforms",
             "-c",
             f"test.cache_buster={random_string()}",
@@ -72,7 +72,7 @@ async def test_bxl_execution_platforms(buck: Buck) -> None:
         )
     )
 
-    result = await buck.bxl(
+    result = await yak.bxl(
         "//executor_fallback_tests/test.bxl:test_exec_platforms",
         "-c",
         f"test.cache_buster={random_string()}",
@@ -82,10 +82,10 @@ async def test_bxl_execution_platforms(buck: Buck) -> None:
     )
 
     output = result.stdout.splitlines()[0]
-    assert os.path.exists(buck.cwd / Path(output))
+    assert os.path.exists(yak.cwd / Path(output))
 
     await expect_failure(
-        buck.bxl(
+        yak.bxl(
             "//executor_fallback_tests/test.bxl:test_exec_platforms",
             "-c",
             f"test.cache_buster={random_string()}",
@@ -95,17 +95,17 @@ async def test_bxl_execution_platforms(buck: Buck) -> None:
         )
     )
 
-    result = await buck.bxl(
+    result = await yak.bxl(
         "//executor_fallback_tests/test.bxl:test_exec_compatible_with",
         "-c",
         f"test.cache_buster={random_string()}",
     )
 
     output = result.stdout.splitlines()[0]
-    assert os.path.exists(buck.cwd / Path(output))
+    assert os.path.exists(yak.cwd / Path(output))
 
     await expect_failure(
-        buck.bxl(
+        yak.bxl(
             "//executor_fallback_tests/test.bxl:test_exec_compatible_with",
             "-c",
             f"test.cache_buster={random_string()}",

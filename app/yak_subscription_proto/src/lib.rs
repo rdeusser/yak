@@ -8,4 +8,4 @@
  * above-listed licenses.
  */
 
-tonic::include_proto!("buck.subscription");
+tonic::include_proto!("yak.subscription");

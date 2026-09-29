@@ -12,11 +12,11 @@ use std::sync::Arc;
 
 use async_trait::async_trait;
 use yak_data::error::ErrorTag;
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 use yak_error::yak_error;
-use yak_event_observer::unpack_event::UnpackedBuckEvent;
+use yak_event_observer::unpack_event::UnpackedYakEvent;
 use yak_event_observer::unpack_event::unpack_event;
-use yak_events::BuckEvent;
+use yak_events::YakEvent;
 use yak_fs::async_fs_util;
 use yak_fs::error::IoResultExt;
 use yak_fs::paths::abs_path::AbsPathBuf;
@@ -40,13 +40,13 @@ impl TestIdWriter {
 
 #[async_trait]
 impl EventSubscriber for TestIdWriter {
-    async fn handle_events(&mut self, events: &[Arc<BuckEvent>]) -> yak_error::Result<()> {
+    async fn handle_events(&mut self, events: &[Arc<YakEvent>]) -> yak_error::Result<()> {
         if self.written {
             return Ok(());
         }
 
         for event in events {
-            if let Ok(UnpackedBuckEvent::Instant(
+            if let Ok(UnpackedYakEvent::Instant(
                 _,
                 _,
                 yak_data::instant_event::Data::TestDiscovery(discovery),
@@ -66,7 +66,7 @@ impl EventSubscriber for TestIdWriter {
                     async_fs_util::write(&self.path, test_id)
                         .await
                         .categorize_input()
-                        .buck_error_context("Error writing test ID")?;
+                        .yak_error_context("Error writing test ID")?;
                     self.written = true;
                     return Ok(());
                 }
@@ -81,19 +81,19 @@ mod tests {
     use std::sync::Arc;
     use std::time::SystemTime;
 
-    use yak_events::BuckEvent;
+    use yak_events::YakEvent;
     use yak_fs::paths::abs_path::AbsPathBuf;
     use yak_wrapper_common::invocation_id::TraceId;
 
     use super::*;
 
-    fn test_discovery_session_event(info: &str, test_session_id: Option<&str>) -> Arc<BuckEvent> {
-        Arc::new(BuckEvent::new(
+    fn test_discovery_session_event(info: &str, test_session_id: Option<&str>) -> Arc<YakEvent> {
+        Arc::new(YakEvent::new(
             SystemTime::now(),
             TraceId::new(),
             None,
             None,
-            yak_data::buck_event::Data::Instant(yak_data::InstantEvent {
+            yak_data::yak_event::Data::Instant(yak_data::InstantEvent {
                 data: Some(
                     yak_data::TestDiscovery {
                         data: Some(yak_data::test_discovery::Data::Session(
@@ -109,13 +109,13 @@ mod tests {
         ))
     }
 
-    fn non_matching_event() -> Arc<BuckEvent> {
-        Arc::new(BuckEvent::new(
+    fn non_matching_event() -> Arc<YakEvent> {
+        Arc::new(YakEvent::new(
             SystemTime::now(),
             TraceId::new(),
             None,
             None,
-            yak_data::buck_event::Data::Instant(yak_data::InstantEvent {
+            yak_data::yak_event::Data::Instant(yak_data::InstantEvent {
                 data: Some(
                     yak_data::ConsoleMessage {
                         message: "hello".to_owned(),
@@ -126,25 +126,25 @@ mod tests {
         ))
     }
 
-    fn test_discovery_no_data_event() -> Arc<BuckEvent> {
-        Arc::new(BuckEvent::new(
+    fn test_discovery_no_data_event() -> Arc<YakEvent> {
+        Arc::new(YakEvent::new(
             SystemTime::now(),
             TraceId::new(),
             None,
             None,
-            yak_data::buck_event::Data::Instant(yak_data::InstantEvent {
+            yak_data::yak_event::Data::Instant(yak_data::InstantEvent {
                 data: Some(yak_data::TestDiscovery { data: None }.into()),
             }),
         ))
     }
 
-    fn test_discovery_suite_event() -> Arc<BuckEvent> {
-        Arc::new(BuckEvent::new(
+    fn test_discovery_suite_event() -> Arc<YakEvent> {
+        Arc::new(YakEvent::new(
             SystemTime::now(),
             TraceId::new(),
             None,
             None,
-            yak_data::buck_event::Data::Instant(yak_data::InstantEvent {
+            yak_data::yak_event::Data::Instant(yak_data::InstantEvent {
                 data: Some(
                     yak_data::TestDiscovery {
                         data: Some(yak_data::test_discovery::Data::Tests(yak_data::TestSuite {

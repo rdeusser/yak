@@ -690,14 +690,14 @@ impl Deref for PackageRelativePathBuf {
 
 #[cfg(test)]
 mod tests {
-    use yak_hash::BuckMutMap;
+    use yak_hash::YakMutMap;
 
     use crate::package::package_relative_path::PackageRelativePath;
     use crate::package::package_relative_path::PackageRelativePathBuf;
 
     #[test]
     fn paths_work_in_maps() -> yak_error::Result<()> {
-        let mut map = BuckMutMap::default();
+        let mut map = YakMutMap::default();
 
         let p1 = PackageRelativePath::new("foo")?;
         let p2 = PackageRelativePath::new("bar")?;

@@ -20,7 +20,7 @@ use remote_execution::TSubsysPerfCount;
 use remote_execution::TSymlink;
 use remote_execution::TTimestamp;
 use yak_core::fs::project_rel_path::ProjectRelativePathBuf;
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 use yak_miniperf_proto::MiniperfCounter;
 
 use crate::digest_config::DigestConfig;
@@ -231,14 +231,14 @@ fn convert_perf_count(perf_count: &TSubsysPerfCount) -> yak_error::Result<Option
         count: perf_count
             .count
             .try_into()
-            .buck_error_context("Invalid count")?,
+            .yak_error_context("Invalid count")?,
         time_enabled: perf_count
             .time_enabled
             .try_into()
-            .buck_error_context("Invalid time_enabled")?,
+            .yak_error_context("Invalid time_enabled")?,
         time_running: perf_count
             .time_running
             .try_into()
-            .buck_error_context("Invalid time_running")?,
+            .yak_error_context("Invalid time_running")?,
     }))
 }

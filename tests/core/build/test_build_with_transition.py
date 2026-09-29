@@ -6,14 +6,14 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-from e2e_util.api.buck import Buck
-from e2e_util.buck_workspace import buck_test
+from e2e_util.api.yak import Yak
+from e2e_util.yak_workspace import yak_test
 
 
-@buck_test()
-async def test_build_transition_without_target_universe(buck: Buck) -> None:
-    result = await buck.build_without_report(
-        "root//:buck",
+@yak_test()
+async def test_build_transition_without_target_universe(yak: Yak) -> None:
+    result = await yak.build_without_report(
+        "root//:yak",
         "--target-platforms=root//:p",
         "--show-output",
     )
@@ -21,20 +21,20 @@ async def test_build_transition_without_target_universe(buck: Buck) -> None:
     lines = result.stdout.splitlines()
     # Just a single target is built and output
     assert 1 == len(lines)
-    assert "root//:buck yak-out" in lines[0]
+    assert "root//:yak yak-out" in lines[0]
 
 
-@buck_test()
-async def test_build_transition_with_target_universe(buck: Buck) -> None:
-    result = await buck.build_without_report(
-        "root//:buck",
+@yak_test()
+async def test_build_transition_with_target_universe(yak: Yak) -> None:
+    result = await yak.build_without_report(
+        "root//:yak",
         "--target-platforms=root//:p",
         "--target-universe",
-        "root//:buck",
+        "root//:yak",
         "--show-output",
     )
 
     lines = result.stdout.splitlines()
     # Just a single target is built and output
     assert 1 == len(lines)
-    assert "root//:buck yak-out" in lines[0]
+    assert "root//:yak yak-out" in lines[0]

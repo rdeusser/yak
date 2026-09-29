@@ -8,7 +8,7 @@
  * above-listed licenses.
  */
 
-mod buck;
+mod yak;
 mod cli;
 mod diagnostics;
 mod path;
@@ -32,7 +32,7 @@ use tracing_subscriber::Layer;
 use tracing_subscriber::filter::LevelFilter;
 use tracing_subscriber::layer::SubscriberExt;
 
-use crate::buck::Buck;
+use crate::yak::Yak;
 use crate::cli::ProjectKind;
 use crate::project_json::Crate;
 use crate::project_json::Dep;
@@ -97,7 +97,7 @@ enum Command {
 
         /// Command used to run `yak`. Defaults to `"yak"`.
         #[clap(long)]
-        buck2_command: Option<String>,
+        yak_command: Option<String>,
 
         #[clap(long, default_value = "50", env = "RUST_PROJECT_EXTRA_TARGETS")]
         max_extra_targets: Option<usize>,
@@ -134,7 +134,7 @@ enum Command {
 
         /// Command used to run `yak`. Defaults to `"yak"`.
         #[clap(long)]
-        buck2_command: Option<String>,
+        yak_command: Option<String>,
 
         #[clap(long, default_value = "50", env = "RUST_PROJECT_EXTRA_TARGETS")]
         max_extra_targets: Option<usize>,
@@ -159,7 +159,7 @@ enum Command {
 
         /// Command used to run `yak`. Defaults to `"yak"`.
         #[clap(long)]
-        buck2_command: Option<String>,
+        yak_command: Option<String>,
 
         /// The file saved by the user. `rust-project` will infer the owning target(s) of the saved file and build them.
         saved_file: PathBuf,
@@ -335,15 +335,15 @@ fn main() -> Result<(), anyhow::Error> {
             mode,
             use_clippy,
             saved_file,
-            buck2_command,
+            yak_command,
             ..
         } => {
             let subscriber = tracing_subscriber::registry().with(fmt.with_filter(filter));
             tracing::subscriber::set_global_default(subscriber)?;
 
-            let buck = Buck::new(buck2_command, mode, project_root);
+            let yak = Yak::new(yak_command, mode, project_root);
 
-            cli::Check::new(buck, use_clippy, saved_file).run()
+            cli::Check::new(yak, use_clippy, saved_file).run()
         }
     }
 }

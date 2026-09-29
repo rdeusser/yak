@@ -11,7 +11,7 @@
 use std::sync::Arc;
 
 use yak_cli_proto::client_context::ProfilePatternOptions;
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 use yak_events::dispatch::EventDispatcher;
 use yak_fs::paths::abs_path::AbsPathBuf;
 use yak_interpreter::starlark_profiler::config::ProfileRegex;
@@ -21,7 +21,7 @@ use yak_profile::proto_to_profile_mode;
 use crate::profile_patterns::FileWritingProfileEventListener;
 
 #[derive(yak_error::Error)]
-pub enum BuckdServerError {
+pub enum YakdServerError {
     #[error(
         "server received multiple profiler configurations. this is due to using both --profile-patterns and one of the command specific profiling args"
     )]
@@ -59,7 +59,7 @@ impl StarlarkProfilingManager {
         let configuration = match (starlark_profile_patterns_opts, starlark_profile_override) {
             (None, v) => v,
             (Some(v), StarlarkProfilerConfiguration::None) => v,
-            (Some(_), _) => Err(BuckdServerError::StarlarkProfilerConfigurationConflict)?,
+            (Some(_), _) => Err(YakdServerError::StarlarkProfilerConfigurationConflict)?,
         };
 
         let profile_event_listener = if let StarlarkProfilerConfiguration::ProfilePattern(

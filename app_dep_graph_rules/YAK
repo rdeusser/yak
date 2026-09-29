@@ -1,6 +1,6 @@
-load(":test_impl.bzl", "test_buck2_dep_graph")
+load(":test_impl.bzl", "test_yak_dep_graph")
 
 # Note: This test is run by building this target
-test_buck2_dep_graph(
-    name = "test_buck2_dep_graph",
+test_yak_dep_graph(
+    name = "test_yak_dep_graph",
 )

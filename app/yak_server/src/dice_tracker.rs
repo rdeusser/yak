@@ -23,7 +23,7 @@ use yak_core::yak_env;
 use yak_data::*;
 use yak_events::dispatch::EventDispatcher;
 use yak_events::dispatch::with_dispatcher_async;
-use yak_hash::BuckMutMap;
+use yak_hash::YakMutMap;
 use yak_util::threads::thread_spawn;
 
 /// Sample of the dice core-state queue taken at each snapshot tick.
@@ -35,10 +35,10 @@ pub struct CoreStateQueueSample {
 }
 
 /// Closure used to sample the dice core-state queue at each snapshot tick.
-/// Boxed so that BuckDiceTracker doesn't need a generic parameter.
+/// Boxed so that YakDiceTracker doesn't need a generic parameter.
 type CoreStateQueueSampleFn = Box<dyn Fn() -> CoreStateQueueSample + Send + Sync + 'static>;
 
-/// The BuckDiceTracker keeps track of the started/finished events for a dice computation and periodically sends a snapshot to the client.
+/// The YakDiceTracker keeps track of the started/finished events for a dice computation and periodically sends a snapshot to the client.
 ///
 /// There are too many events coming out of dice for us to forward them all to the client, so we need to aggregate
 /// them in some way in the daemon.
@@ -47,12 +47,12 @@ type CoreStateQueueSampleFn = Box<dyn Fn() -> CoreStateQueueSample + Send + Sync
 ///
 /// A client won't necessarily get a final snapshot before a command returns.
 #[derive(Allocative)]
-pub struct BuckDiceTracker {
+pub struct YakDiceTracker {
     #[allocative(skip)]
     event_forwarder: UnboundedSender<DiceEvent>,
 }
 
-impl BuckDiceTracker {
+impl YakDiceTracker {
     pub fn new(
         events: EventDispatcher,
         core_state_queue_sample_fn: CoreStateQueueSampleFn,
@@ -88,7 +88,7 @@ impl BuckDiceTracker {
         core_state_queue_sample_fn: CoreStateQueueSampleFn,
     ) {
         let mut needs_update = false;
-        let mut states = BuckMutMap::default();
+        let mut states = YakMutMap::default();
         let mut interval = tokio::time::interval(snapshot_interval);
         interval.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Delay);
         // This will loop until the sender side of the channel is dropped.
@@ -150,7 +150,7 @@ impl BuckDiceTracker {
     }
 }
 
-impl DiceEventListener for BuckDiceTracker {
+impl DiceEventListener for YakDiceTracker {
     fn event(&self, event: DiceEvent) {
         let _ignored = self.event_forwarder.unbounded_send(event);
     }

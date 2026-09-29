@@ -16,7 +16,7 @@ use std::sync::Arc;
 use yak_core::error::SoftErrorContext;
 use yak_core::error::StructuredErrorOptions;
 use yak_data::Location;
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 
 /// Installs the soft error handler.
 pub fn initialize() -> yak_error::Result<()> {
@@ -39,7 +39,7 @@ pub fn initialize() -> yak_error::Result<()> {
                 .and_then(|dispatcher| dispatcher.soft_error_context())
         }),
     )
-    .buck_error_context("Error initializing soft errors")?;
+    .yak_error_context("Error initializing soft errors")?;
     Ok(())
 }
 

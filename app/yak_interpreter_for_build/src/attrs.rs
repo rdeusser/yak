@@ -11,7 +11,7 @@
 use starlark::docs::DocString;
 use starlark::docs::DocStringKind;
 use starlark::values::Value;
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 use yak_node::attrs::attr::Attribute;
 use yak_node::attrs::attr::CoercedValue;
 use yak_node::attrs::coercion_context::AttrCoercionContext;
@@ -71,7 +71,7 @@ impl AttributeCoerceExt for Attribute {
                 .coercer()
                 .coerce_with_default(configurable, coercer_ctx, value, default.map(|x| &**x))
                 .map(CoercedValue::Custom)
-                .with_buck_error_context(|| {
+                .with_yak_error_context(|| {
                     format!("Error coercing attribute `{param_name}` of type `{self}`")
                 }),
             Some(_) => Ok(CoercedValue::Default),

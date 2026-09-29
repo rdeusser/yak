@@ -18,8 +18,8 @@ use yak_cli_proto::build_target::BuildOutput;
 use yak_client_ctx::exit_result::ClientIoError;
 use yak_client_ctx::output_destination_arg::OutputDestinationArg;
 use yak_core::fs::project::ProjectRoot;
-use yak_error::BuckErrorContext;
-use yak_error::BuckErrorOptionContext;
+use yak_error::YakErrorContext;
+use yak_error::YakErrorOptionContext;
 use yak_error::ErrorTag;
 use yak_error::yak_error;
 use yak_fs::async_fs_util;
@@ -104,7 +104,7 @@ pub(super) async fn copy_to_out(
             .join(ForwardRelativePath::new(&single_default_output.path)?);
         let output_meta = tokio::fs::metadata(&output_path)
             .await
-            .buck_error_context("Error inspecting file metadata")?;
+            .yak_error_context("Error inspecting file metadata")?;
         let is_dir = output_meta.is_dir();
 
         outputs_to_be_copied.push(OutputToBeCopied {
@@ -172,13 +172,13 @@ fn copy_symlink<P: AsRef<AbsPath>, Q: AsRef<AbsPath>>(
     // Make symlinks overwrite items which were already present at destination path
     fs_util::remove_all(&dst_path)
         .categorize_tagged(ErrorTag::CopyOutputs)
-        .buck_error_context(format!(
+        .yak_error_context(format!(
             "Removing pre-existing item at path {:?}",
             src_path.as_ref()
         ))?;
     let symlink_target_abs_path = fs_util::canonicalize(src_path.as_ref())
         .categorize_tagged(ErrorTag::CopyOutputs)
-        .buck_error_context(format!(
+        .yak_error_context(format!(
             "Resolving symlink to be copied {:?}",
             src_path.as_ref()
         ))?;
@@ -189,7 +189,7 @@ fn copy_symlink<P: AsRef<AbsPath>, Q: AsRef<AbsPath>>(
             // Just keep it as it is.
             fs_util::read_link(&src_path)
                 .categorize_tagged(ErrorTag::CopyOutputs)
-                .buck_error_context(format!(
+                .yak_error_context(format!(
                     "Reading value of a symlink to be copied {:?}",
                     src_path.as_ref()
                 ))?
@@ -200,7 +200,7 @@ fn copy_symlink<P: AsRef<AbsPath>, Q: AsRef<AbsPath>>(
     };
     fs_util::symlink(&symlink_target, &dst_path)
         .categorize_tagged(ErrorTag::CopyOutputs)
-        .buck_error_context(format!(
+        .yak_error_context(format!(
             "Creating symlink at {:?} pointing to {:?}",
             dst_path.as_ref(),
             symlink_target
@@ -220,7 +220,7 @@ where
     let stream = tokio_stream::wrappers::ReadDirStream::new(
         tokio::fs::read_dir(src.as_ref())
             .await
-            .buck_error_context(format!("reading directory {:?}", src.as_ref()))?,
+            .yak_error_context(format!("reading directory {:?}", src.as_ref()))?,
     )
     .err_into::<yak_error::Error>();
 
@@ -232,18 +232,18 @@ where
             if file_type.is_dir() {
                 copy_directory(&entry_source_path, &entry_destination_path, context)
                     .await
-                    .buck_error_context(format!("Copying subdirectory {:?}", entry.path()))
+                    .yak_error_context(format!("Copying subdirectory {:?}", entry.path()))
             } else if file_type.is_symlink() {
                 let copy_context = context.clone();
                 tokio::task::spawn_blocking(move || {
                     copy_symlink(&entry_source_path, &entry_destination_path, &copy_context)
                 })
                 .await
-                .buck_error_context(format!("Copying symlink {:?}", entry.path()))?
+                .yak_error_context(format!("Copying symlink {:?}", entry.path()))?
             } else {
                 tokio::fs::copy(&entry.path(), &entry_destination_path)
                     .await
-                    .buck_error_context(format!("Copying file {:?}", entry.path()))
+                    .yak_error_context(format!("Copying file {:?}", entry.path()))
                     .map(|_| ())
             }
         })
@@ -412,7 +412,7 @@ mod tests {
         // Second time to check everything overwrites fine
         copy_directory(src_path, dst_path, &copy_context)
             .await
-            .buck_error_context("copy second time")?;
+            .yak_error_context("copy second time")?;
 
         Ok(())
     }
@@ -563,7 +563,7 @@ mod tests {
                 .arg("10000")
                 .kill_on_drop(true)
                 .spawn()
-                .buck_error_context("Error spawning")?;
+                .yak_error_context("Error spawning")?;
 
             // This will fail if we don't handle ETXTBSY.
             copy_file(Path::new("/bin/sleep"), &out).await?;

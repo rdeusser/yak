@@ -47,7 +47,7 @@ use yak_build_api::interpreter::rule_defs::artifact::starlark_artifact::Starlark
 use yak_build_api::interpreter::rule_defs::artifact::starlark_artifact_like::StarlarkInputArtifactLike;
 use yak_build_api::interpreter::rule_defs::artifact::starlark_declared_artifact::StarlarkDeclaredArtifact;
 use yak_execute::path::artifact_path::ArtifactPath;
-use yak_hash::BuckIndexSet;
+use yak_hash::YakIndexSet;
 
 #[derive(Clone, Debug, Dupe, Trace, ProvidesStaticType, Allocative)]
 #[repr(C)]
@@ -473,7 +473,7 @@ fn artifact_group_methods(builder: &mut MethodsBuilder) {
 #[derive(Debug, Allocative)]
 pub(crate) struct LazyBuildArtifact {
     /// The artifacts that are associated with this artifact. This is used to materialize.
-    artifacts_to_build: BuckIndexSet<ArtifactGroup>,
+    artifacts_to_build: YakIndexSet<ArtifactGroup>,
     artifact: StarlarkArtifact,
 }
 
@@ -489,7 +489,7 @@ impl LazyBuildArtifact {
             .flat_map(|v| v.iter())
             .cloned()
             .chain(iter::once(ArtifactGroup::Artifact(bound_artifact)))
-            .collect::<BuckIndexSet<_>>();
+            .collect::<YakIndexSet<_>>();
 
         LazyBuildArtifact {
             artifacts_to_build: artifacts,

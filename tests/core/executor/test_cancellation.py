@@ -12,17 +12,17 @@ import signal
 from collections.abc import Callable
 from pathlib import Path
 
-from e2e_util.api.buck import Buck
-from e2e_util.api.buck_result import BuckException, BuckResult, ExitCode
+from e2e_util.api.yak import Yak
+from e2e_util.api.yak_result import YakException, YakResult, ExitCode
 from e2e_util.api.process import Process
-from e2e_util.buck_workspace import buck_test
+from e2e_util.yak_workspace import yak_test
 from e2e_util.helper.utils import read_invocation_record
 
 
 async def _test_cancellation_helper(
-    buck: Buck,
+    yak: Yak,
     tmp_path: Path,
-    runner: Callable[[Buck, list[str]], Process[BuckResult, BuckException]],
+    runner: Callable[[Yak, list[str]], Process[YakResult, YakException]],
 ) -> None:
     """
     This test starts a test that writes its PID to a file then runs for 60
@@ -41,8 +41,8 @@ async def _test_cancellation_helper(
         "--unstable-write-invocation-record",
         str(record_path),
     ]
-    await buck.audit("providers", ":slow", *opts)
-    command = runner(buck, [*opts, "--local-only"])
+    await yak.audit("providers", ":slow", *opts)
+    command = runner(yak, [*opts, "--local-only"])
 
     command = await command.start()
 
@@ -76,15 +76,15 @@ async def _test_cancellation_helper(
     assert record["exit_result_name"] == "SIGNAL_INTERRUPT"
 
 
-@buck_test()
-async def test_cancellation(buck: Buck, tmp_path: Path) -> None:
+@yak_test()
+async def test_cancellation(yak: Yak, tmp_path: Path) -> None:
     await _test_cancellation_helper(
-        buck, tmp_path, lambda buck, opts: buck.build(*opts, ":slow")
+        yak, tmp_path, lambda yak, opts: yak.build(*opts, ":slow")
     )
 
 
-@buck_test()
-async def test_cancellation_bxl(buck: Buck, tmp_path: Path) -> None:
+@yak_test()
+async def test_cancellation_bxl(yak: Yak, tmp_path: Path) -> None:
     await _test_cancellation_helper(
-        buck, tmp_path, lambda buck, opts: buck.bxl(*opts, "//build.bxl:build")
+        yak, tmp_path, lambda yak, opts: yak.bxl(*opts, "//build.bxl:build")
     )

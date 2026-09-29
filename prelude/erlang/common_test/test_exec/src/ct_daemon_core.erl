@@ -28,7 +28,7 @@ Stateless Core functionality for ct_daemon
 -export_type([reason/0, run_result/0, setup/0]).
 
 -include_lib("common/include/tpx_records.hrl").
--include_lib("common/include/buck_ct_records.hrl").
+-include_lib("common/include/yak_ct_records.hrl").
 -include_lib("kernel/include/logger.hrl").
 
 -type reason() :: term().

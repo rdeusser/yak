@@ -27,7 +27,7 @@ use prost::Message;
 use remote_execution as RE;
 use remote_execution::ActionResultRequest;
 use remote_execution::ActionResultResponse;
-use remote_execution::BuckInfo;
+use remote_execution::YakInfo;
 use remote_execution::DownloadRequest;
 use remote_execution::ExecuteRequest;
 use remote_execution::ExecuteWithProgressResponse;
@@ -62,13 +62,13 @@ use yak_core::yak_env;
 use yak_data::ReQueueCancelled;
 use yak_data::ReQueueNoWorkerAvailable;
 use yak_data::ReQueueOverQuota;
-use yak_error::BuckErrorContext;
-use yak_error::BuckErrorOptionContext;
+use yak_error::YakErrorContext;
+use yak_error::YakErrorOptionContext;
 use yak_error::yak_error;
 use yak_fs::error::IoResultExt;
 use yak_fs::fs_util;
 use yak_fs::paths::abs_norm_path::AbsNormPath;
-use yak_hash::BuckMutMap;
+use yak_hash::YakMutMap;
 use yak_re_configuration::RemoteExecutionStaticMetadataImpl;
 
 use crate::digest::CasDigestToReExt;
@@ -500,7 +500,7 @@ fn anticipated_queue_duration(
         type=u64,
         applicability = testing
     )
-    // Stringify the error because we can't deal with buck2_errors here
+    // Stringify the error because we can't deal with yak_errors here
     .map_err(|e| anyhow::anyhow!(e))?
     {
         return Ok(Some(Duration::from_secs(duration)));
@@ -523,7 +523,7 @@ fn anticipated_queue_duration(
 // After we execute an action once, we no longer want to pretend that we got cache misses on it if
 // we execute it again (say, on a subsequent build); the `AtomicBool` in the value deals with that,
 // it's true after the first time we execute the action
-static INDUCED_CACHE_MISSES: LazyLock<Option<BuckMutMap<String, AtomicBool>>> =
+static INDUCED_CACHE_MISSES: LazyLock<Option<YakMutMap<String, AtomicBool>>> =
     LazyLock::new(|| {
         if let Ok(p) = std::env::var("YAK_INDUCED_CACHE_MISSES") {
             let c = fs_util::read_to_string(AbsNormPath::new(&p).unwrap())
@@ -1007,7 +1007,7 @@ impl RemoteExecutionClientImpl {
         let metadata = RemoteExecutionMetadata {
             platform: Some(platform.clone()),
             do_not_cache: skip_cache_write,
-            buck_info: Some(BuckInfo {
+            yak_info: Some(YakInfo {
                 version: yak_build_info::revision()
                     .map(|s| s.to_owned())
                     .unwrap_or_default(),
@@ -1100,7 +1100,7 @@ impl RemoteExecutionClientImpl {
         if let Some(ds) = response.inlined_blobs {
             for d in ds {
                 blobs.push(
-                    Message::decode(d.blob.as_slice()).with_buck_error_context(|| {
+                    Message::decode(d.blob.as_slice()).with_yak_error_context(|| {
                         format!("Failed to Protobuf decode tree at `{}`", d.digest)
                     })?,
                 );
@@ -1186,10 +1186,10 @@ impl RemoteExecutionClientImpl {
                     chunk
                         .len()
                         .try_into()
-                        .buck_error_context("chunk is too large")?,
+                        .yak_error_context("chunk is too large")?,
                 )
                 .await
-                .buck_error_context("Failed to acquire download_files_semapore")?;
+                .yak_error_context("Failed to acquire download_files_semapore")?;
 
             let response = with_error_handler(
                 "materialize_files",

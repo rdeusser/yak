@@ -65,7 +65,7 @@ pub struct TypeInstanceId(pub(crate) u64);
 /// whose identity bytes coincide still get distinct ids.
 ///
 /// Embedders implement this for their own kinds (e.g. yak providers); each
-/// [`tag`](Self::tag) must be namespaced (e.g. `"buck2.provider"`) so domains
+/// [`tag`](Self::tag) must be namespaced (e.g. `"yak.provider"`) so domains
 /// from different crates cannot collide.
 pub trait TypeIdDomain {
     /// A stable, globally unique, namespaced discriminator for this kind.

@@ -20,12 +20,12 @@ use yak_common::events::HasEvents;
 use yak_events::dispatch::with_dispatcher_async;
 
 #[derive(Allocative)]
-pub struct BuckSpawner {
+pub struct YakSpawner {
     #[allocative(skip)]
     rt: Handle,
 }
 
-impl BuckSpawner {
+impl YakSpawner {
     pub fn new(rt: Handle) -> Self {
         Self { rt }
     }
@@ -37,7 +37,7 @@ impl BuckSpawner {
     }
 }
 
-impl<T: HasEvents> Spawner<T> for BuckSpawner {
+impl<T: HasEvents> Spawner<T> for YakSpawner {
     fn spawn(
         &self,
         ctx: &T,
@@ -59,7 +59,7 @@ mod tests {
     use futures::future::FutureExt;
     use yak_data::CommandEnd;
     use yak_data::CommandStart;
-    use yak_events::BuckEvent;
+    use yak_events::YakEvent;
     use yak_events::create_source_sink_pair;
     use yak_events::daemon_id::DaemonId;
     use yak_events::dispatch::EventDispatcher;
@@ -69,8 +69,8 @@ mod tests {
 
     use super::*;
 
-    async fn next_event(source: &mut ChannelEventSource) -> BuckEvent {
-        source.receive().unwrap().unpack_buck().unwrap().clone()
+    async fn next_event(source: &mut ChannelEventSource) -> YakEvent {
+        source.receive().unwrap().unpack_yak().unwrap().clone()
     }
 
     fn create_ctx(dispatcher: EventDispatcher) -> UserComputationData {
@@ -98,7 +98,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_spawn() {
-        let sp = BuckSpawner::current_runtime().unwrap();
+        let sp = YakSpawner::current_runtime().unwrap();
 
         // Create dispatcher
         let (mut events, sink) = create_source_sink_pair();
@@ -124,7 +124,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_spawn_task() {
-        let sp = Arc::new(BuckSpawner::current_runtime().unwrap());
+        let sp = Arc::new(YakSpawner::current_runtime().unwrap());
 
         // Create dispatchers
         let (mut events1, sink1) = create_source_sink_pair();

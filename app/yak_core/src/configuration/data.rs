@@ -24,7 +24,7 @@ use static_interner::InternDisposition;
 use static_interner::interner;
 use strong_hash::StrongHash;
 use yak_data::ToProtoMessage;
-use yak_hash::BuckHasher;
+use yak_hash::YakHasher;
 use yak_util::strong_hasher::Blake3StrongHasher;
 
 use crate::configuration::bound_id::BoundConfigurationId;
@@ -123,7 +123,7 @@ impl Equivalent<HashedConfigurationPlatform> for ConfigurationHashRef<'_> {
     }
 }
 
-interner!(INTERNER, BuckHasher, HashedConfigurationPlatform);
+interner!(INTERNER, YakHasher, HashedConfigurationPlatform);
 
 impl ConfigurationData {
     /// Produces a "bound" configuration for a platform. The label should be a unique identifier for the data.

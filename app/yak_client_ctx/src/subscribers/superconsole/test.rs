@@ -17,7 +17,7 @@ use superconsole::Line;
 use superconsole::Lines;
 use superconsole::Span;
 use superconsole::SpanError;
-use yak_error::BuckErrorOptionContext;
+use yak_error::YakErrorOptionContext;
 use yak_event_observer::test_state::TestState;
 
 use crate::subscribers::superconsole::SessionInfo;

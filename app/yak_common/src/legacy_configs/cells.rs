@@ -27,11 +27,11 @@ use yak_core::cells::name::CellName;
 use yak_core::fs::project::ProjectRoot;
 use yak_core::fs::project_rel_path::ProjectRelativePath;
 use yak_core::yak_env;
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 use yak_fs::paths::RelativePath;
 use yak_fs::paths::abs_path::AbsPath;
 use yak_fs::paths::forward_rel_path::ForwardRelativePath;
-use yak_hash::BuckMutSet;
+use yak_hash::YakMutSet;
 
 use crate::dice::cells::HasCellResolver;
 use crate::dice::data::HasIoProvider;
@@ -40,7 +40,7 @@ use crate::legacy_configs::aggregator::CellsAggregator;
 use crate::legacy_configs::args::ResolvedLegacyConfigArg;
 use crate::legacy_configs::args::resolve_config_args;
 use crate::legacy_configs::args::to_proto_config_args;
-use crate::legacy_configs::configs::LegacyBuckConfig;
+use crate::legacy_configs::configs::LegacyYakConfig;
 use crate::legacy_configs::dice::HasInjectedLegacyConfigs;
 use crate::legacy_configs::file_ops::ConfigDirEntry;
 use crate::legacy_configs::file_ops::ConfigParserFileOps;
@@ -48,7 +48,7 @@ use crate::legacy_configs::file_ops::ConfigPath;
 use crate::legacy_configs::file_ops::DefaultConfigParserFileOps;
 use crate::legacy_configs::file_ops::DiceConfigFileOps;
 use crate::legacy_configs::file_ops::push_all_files_from_a_directory;
-use crate::legacy_configs::key::BuckconfigKeyRef;
+use crate::legacy_configs::key::YakconfigKeyRef;
 use crate::legacy_configs::parser::LegacyConfigParser;
 use crate::legacy_configs::path::DEFAULT_EXTERNAL_CONFIG_SOURCES;
 use crate::legacy_configs::path::DEFAULT_PROJECT_CONFIG_SOURCES;
@@ -59,22 +59,22 @@ use crate::legacy_configs::path::ProjectConfigSource;
 /// yakconfigs can partially be loaded from within dice. However, some parts of what makes up the
 /// yakconfig comes from outside the buildgraph, and this type represents those parts.
 #[derive(Clone, PartialEq, Eq, Allocative, Pagable)]
-pub struct ExternalBuckconfigData {
+pub struct ExternalYakconfigData {
     // The result of parsing the yakconfigs coming from either global (e.g. /etc/yakconfig.d) or
     // user (e.g. ~/.yakconfig.d or $home_dir/.yakconfig.local) files/dirs outside of the repo
     // The order matters here and reflects the same order these are processed in yak.
-    external_path_configs: Vec<ExternalPathBuckconfigData>,
+    external_path_configs: Vec<ExternalPathYakconfigData>,
     // The result of parsing the yakconfigs coming from command line args (e.g. --config or --config-file)
     args: Vec<ResolvedLegacyConfigArg>,
 }
 
 #[derive(PartialEq, Eq, Allocative, Clone, Pagable)]
-pub struct ExternalPathBuckconfigData {
+pub struct ExternalPathYakconfigData {
     pub(crate) parse_state: LegacyConfigParser,
     pub(crate) origin_path: ConfigPath,
 }
 
-impl ExternalBuckconfigData {
+impl ExternalYakconfigData {
     pub fn testing_default() -> Self {
         Self {
             external_path_configs: Vec::new(),
@@ -84,13 +84,13 @@ impl ExternalBuckconfigData {
 
     pub fn filter_values<F>(self, filter: F) -> Self
     where
-        F: Fn(&BuckconfigKeyRef) -> bool,
+        F: Fn(&YakconfigKeyRef) -> bool,
     {
         Self {
             external_path_configs: self
                 .external_path_configs
                 .into_iter()
-                .map(|o| ExternalPathBuckconfigData {
+                .map(|o| ExternalPathYakconfigData {
                     parse_state: o.parse_state.filter_values(&filter),
                     origin_path: o.origin_path,
                 })
@@ -101,7 +101,7 @@ impl ExternalBuckconfigData {
                 .filter(|arg| match arg {
                     ResolvedLegacyConfigArg::Flag(flag) => {
                         flag.cell.is_some()
-                            || filter(&BuckconfigKeyRef {
+                            || filter(&YakconfigKeyRef {
                                 section: &flag.section,
                                 property: &flag.key,
                             })
@@ -114,14 +114,14 @@ impl ExternalBuckconfigData {
 
     async fn get_local_config_components(
         project_root: &ProjectRoot,
-    ) -> Vec<yak_data::BuckconfigComponent> {
-        use yak_data::buckconfig_component::Data::GlobalExternalConfigFile;
+    ) -> Vec<yak_data::YakconfigComponent> {
+        use yak_data::yakconfig_component::Data::GlobalExternalConfigFile;
         let file_ops = &mut DefaultConfigParserFileOps {
             project_fs: project_root.dupe(),
         };
         let mut local_config_components = Vec::new();
         if let Ok(legacy_cells) =
-            BuckConfigBasedCells::parse_with_config_args(project_root, &[]).await
+            YakConfigBasedCells::parse_with_config_args(project_root, &[]).await
         {
             let path = ForwardRelativePath::new(DOT_YAKCONFIG_LOCAL).expect(
                 "Internal error: .yakconfig.local should always be a valid forward relative path",
@@ -142,7 +142,7 @@ impl ExternalBuckconfigData {
                         // Don't create an empty component for cells with non-existing .yakconfig.local
                         continue;
                     }
-                    local_config_components.push(yak_data::BuckconfigComponent {
+                    local_config_components.push(yak_data::YakconfigComponent {
                         data: Some(GlobalExternalConfigFile(yak_data::GlobalExternalConfig {
                             values,
                             origin_path,
@@ -154,12 +154,12 @@ impl ExternalBuckconfigData {
         local_config_components
     }
 
-    pub async fn get_buckconfig_components(
+    pub async fn get_yakconfig_components(
         &self,
         project_root: &ProjectRoot,
-    ) -> Vec<yak_data::BuckconfigComponent> {
-        use yak_data::buckconfig_component::Data::GlobalExternalConfigFile;
-        let mut res: Vec<yak_data::BuckconfigComponent> = self
+    ) -> Vec<yak_data::YakconfigComponent> {
+        use yak_data::yakconfig_component::Data::GlobalExternalConfigFile;
+        let mut res: Vec<yak_data::YakconfigComponent> = self
             .external_path_configs
             .clone()
             .into_iter()
@@ -168,7 +168,7 @@ impl ExternalBuckconfigData {
                     values: o.parse_state.to_proto_external_config_values(false),
                     origin_path: o.origin_path.to_string(),
                 };
-                yak_data::BuckconfigComponent {
+                yak_data::YakconfigComponent {
                     data: Some(GlobalExternalConfigFile(external_file)),
                 }
             })
@@ -189,14 +189,14 @@ impl ExternalBuckconfigData {
 ///
 /// We don't (currently) enforce that all aliases appear in the root config, but
 /// unlike v1, our cells implementation works just fine if that isn't the case.
-pub struct BuckConfigBasedCells {
+pub struct YakConfigBasedCells {
     pub cell_resolver: CellResolver,
-    pub root_config: LegacyBuckConfig,
-    pub config_paths: BuckMutSet<ConfigPath>,
-    pub external_data: ExternalBuckconfigData,
+    pub root_config: LegacyYakConfig,
+    pub config_paths: YakMutSet<ConfigPath>,
+    pub external_data: ExternalYakconfigData,
 }
 
-impl BuckConfigBasedCells {
+impl YakConfigBasedCells {
     /// In the client and one place in the daemon, we need access to the alias resolver for the cwd
     /// in some places where we don't have normal dice access
     ///
@@ -226,8 +226,8 @@ impl BuckConfigBasedCells {
 
         let follow_includes = false;
 
-        let config_paths = get_project_buckconfig_paths(cell_path, file_ops).await?;
-        let config = LegacyBuckConfig::finish_parse(
+        let config_paths = get_project_yakconfig_paths(cell_path, file_ops).await?;
+        let config = LegacyYakConfig::finish_parse(
             self.external_data.external_path_configs.clone(),
             &config_paths,
             cell_path,
@@ -240,7 +240,7 @@ impl BuckConfigBasedCells {
         CellAliasResolver::new_for_non_root_cell(
             cell_name,
             self.cell_resolver.root_cell_cell_alias_resolver(),
-            BuckConfigBasedCells::get_cell_aliases_from_config(&config)?,
+            YakConfigBasedCells::get_cell_aliases_from_config(&config)?,
         )
     }
 
@@ -277,7 +277,7 @@ impl BuckConfigBasedCells {
     ) -> yak_error::Result<Self> {
         Self::parse_with_file_ops_and_options_inner(file_ops, config_args, follow_includes)
             .await
-            .buck_error_context("Parsing cells")
+            .yak_error_context("Parsing cells")
     }
 
     async fn parse_with_file_ops_and_options_inner(
@@ -288,7 +288,7 @@ impl BuckConfigBasedCells {
         // Tracing file ops to record config file accesses on command invocation.
         struct TracingFileOps<'a> {
             inner: &'a mut dyn ConfigParserFileOps,
-            trace: BuckMutSet<ConfigPath>,
+            trace: YakMutSet<ConfigPath>,
         }
 
         #[async_trait::async_trait]
@@ -322,8 +322,8 @@ impl BuckConfigBasedCells {
         // NOTE: This will _not_ perform IO unless it needs to.
         let processed_config_args = resolve_config_args(config_args, &mut file_ops).await?;
 
-        let external_paths = get_external_buckconfig_paths(&mut file_ops).await?;
-        let started_parse = LegacyBuckConfig::start_parse_for_external_files(
+        let external_paths = get_external_yakconfig_paths(&mut file_ops).await?;
+        let started_parse = LegacyYakConfig::start_parse_for_external_files(
             &external_paths,
             &mut file_ops,
             follow_includes,
@@ -332,11 +332,11 @@ impl BuckConfigBasedCells {
 
         let root_path = CellRootPathBuf::new(ProjectRelativePath::empty().to_owned());
 
-        let buckconfig_paths = get_project_buckconfig_paths(&root_path, &mut file_ops).await?;
+        let yakconfig_paths = get_project_yakconfig_paths(&root_path, &mut file_ops).await?;
 
-        let root_config = LegacyBuckConfig::finish_parse(
+        let root_config = LegacyYakConfig::finish_parse(
             started_parse.clone(),
-            buckconfig_paths.as_slice(),
+            yakconfig_paths.as_slice(),
             &root_path,
             &mut file_ops,
             &processed_config_args,
@@ -356,7 +356,7 @@ impl BuckConfigBasedCells {
                 let alias_path = CellRootPathBuf::new(
                     root_path.as_project_relative_path()
                         .join_normalized(RelativePath::unchecked_new(alias_path.as_str()))
-                        .with_buck_error_context(|| {
+                        .with_yak_error_context(|| {
                             format!(
                                 "expected alias path to be a relative path, but found `{}` for `{}`",
                                 alias_path.as_str(),
@@ -401,7 +401,7 @@ impl BuckConfigBasedCells {
             cell_resolver,
             root_config,
             config_paths: file_ops.trace,
-            external_data: ExternalBuckconfigData {
+            external_data: ExternalYakconfigData {
                 external_path_configs: started_parse,
                 args: processed_config_args,
             },
@@ -409,7 +409,7 @@ impl BuckConfigBasedCells {
     }
 
     pub(crate) fn get_cell_aliases_from_config(
-        config: &LegacyBuckConfig,
+        config: &LegacyYakConfig,
     ) -> yak_error::Result<impl Iterator<Item = (NonEmptyCellAlias, NonEmptyCellAlias)> + use<>>
     {
         let mut aliases = Vec::new();
@@ -429,11 +429,11 @@ impl BuckConfigBasedCells {
     pub(crate) async fn parse_single_cell_with_dice(
         ctx: &mut DiceComputations<'_>,
         cell_path: &CellRootPath,
-    ) -> yak_error::Result<LegacyBuckConfig> {
+    ) -> yak_error::Result<LegacyYakConfig> {
         let resolver = ctx.get_cell_resolver().await?;
         let io_provider = ctx.global_data().get_io_provider();
         let project_fs = io_provider.project_root();
-        let external_data = ctx.get_injected_external_buckconfig_data().await?;
+        let external_data = ctx.get_injected_external_yakconfig_data().await?;
 
         let mut file_ops = DiceConfigFileOps::new(ctx, project_fs, &resolver);
 
@@ -444,7 +444,7 @@ impl BuckConfigBasedCells {
         &self,
         cell: CellName,
         project_fs: &ProjectRoot,
-    ) -> yak_error::Result<LegacyBuckConfig> {
+    ) -> yak_error::Result<LegacyYakConfig> {
         self.parse_single_cell_with_file_ops(
             cell,
             &mut DefaultConfigParserFileOps {
@@ -458,7 +458,7 @@ impl BuckConfigBasedCells {
         &self,
         cell: CellName,
         file_ops: &mut dyn ConfigParserFileOps,
-    ) -> yak_error::Result<LegacyBuckConfig> {
+    ) -> yak_error::Result<LegacyYakConfig> {
         Self::parse_single_cell_with_file_ops_inner(
             &self.external_data,
             file_ops,
@@ -468,12 +468,12 @@ impl BuckConfigBasedCells {
     }
 
     async fn parse_single_cell_with_file_ops_inner(
-        external_data: &ExternalBuckconfigData,
+        external_data: &ExternalYakconfigData,
         file_ops: &mut dyn ConfigParserFileOps,
         cell_path: &CellRootPath,
-    ) -> yak_error::Result<LegacyBuckConfig> {
-        let config_paths = get_project_buckconfig_paths(cell_path, file_ops).await?;
-        LegacyBuckConfig::finish_parse(
+    ) -> yak_error::Result<LegacyYakConfig> {
+        let config_paths = get_project_yakconfig_paths(cell_path, file_ops).await?;
+        LegacyYakConfig::finish_parse(
             external_data.external_path_configs.clone(),
             &config_paths,
             cell_path,
@@ -487,7 +487,7 @@ impl BuckConfigBasedCells {
     fn parse_external_cell_origin(
         cell: CellName,
         value: &str,
-        config: &LegacyBuckConfig,
+        config: &LegacyYakConfig,
     ) -> yak_error::Result<ExternalCellOrigin> {
         #[derive(yak_error::Error, Debug)]
         #[yak(tag = Input)]
@@ -500,7 +500,7 @@ impl BuckConfigBasedCells {
 
         let get_config = |section: &str, property: &str| {
             config
-                .get(crate::legacy_configs::key::BuckconfigKeyRef { section, property })
+                .get(crate::legacy_configs::key::YakconfigKeyRef { section, property })
                 .ok_or_else(|| {
                     ExternalCellOriginParseError::MissingConfiguration(
                         section.to_owned(),
@@ -538,7 +538,7 @@ impl BuckConfigBasedCells {
     }
 }
 
-async fn get_external_buckconfig_paths(
+async fn get_external_yakconfig_paths(
     file_ops: &mut dyn ConfigParserFileOps,
 ) -> yak_error::Result<Vec<ConfigPath>> {
     let skip_default_external_config = yak_env!(
@@ -547,42 +547,42 @@ async fn get_external_buckconfig_paths(
         applicability = testing
     )?;
 
-    let mut buckconfig_paths: Vec<ConfigPath> = Vec::new();
+    let mut yakconfig_paths: Vec<ConfigPath> = Vec::new();
 
     if !skip_default_external_config {
-        for buckconfig in DEFAULT_EXTERNAL_CONFIG_SOURCES {
-            match buckconfig {
+        for yakconfig in DEFAULT_EXTERNAL_CONFIG_SOURCES {
+            match yakconfig {
                 ExternalConfigSource::UserFile(file) => {
                     let home_dir = dirs::home_dir();
                     if let Some(home_dir_path) = home_dir {
-                        let buckconfig_path = ForwardRelativePath::new(file)?;
-                        buckconfig_paths.push(ConfigPath::Global(
-                            AbsPath::new(&home_dir_path)?.join(buckconfig_path.as_str()),
+                        let yakconfig_path = ForwardRelativePath::new(file)?;
+                        yakconfig_paths.push(ConfigPath::Global(
+                            AbsPath::new(&home_dir_path)?.join(yakconfig_path.as_str()),
                         ));
                     }
                 }
                 ExternalConfigSource::UserFolder(folder) => {
                     let home_dir = dirs::home_dir();
                     if let Some(home_dir_path) = home_dir {
-                        let buckconfig_path = ForwardRelativePath::new(folder)?;
-                        let buckconfig_folder_abs_path =
-                            AbsPath::new(&home_dir_path)?.join(buckconfig_path.as_str());
+                        let yakconfig_path = ForwardRelativePath::new(folder)?;
+                        let yakconfig_folder_abs_path =
+                            AbsPath::new(&home_dir_path)?.join(yakconfig_path.as_str());
                         push_all_files_from_a_directory(
-                            &mut buckconfig_paths,
-                            &ConfigPath::Global(buckconfig_folder_abs_path),
+                            &mut yakconfig_paths,
+                            &ConfigPath::Global(yakconfig_folder_abs_path),
                             file_ops,
                         )
                         .await?;
                     }
                 }
                 ExternalConfigSource::GlobalFile(file) => {
-                    buckconfig_paths.push(ConfigPath::Global(AbsPath::new(*file)?.to_owned()));
+                    yakconfig_paths.push(ConfigPath::Global(AbsPath::new(*file)?.to_owned()));
                 }
                 ExternalConfigSource::GlobalFolder(folder) => {
-                    let buckconfig_folder_abs_path = AbsPath::new(*folder)?.to_owned();
+                    let yakconfig_folder_abs_path = AbsPath::new(*folder)?.to_owned();
                     push_all_files_from_a_directory(
-                        &mut buckconfig_paths,
-                        &ConfigPath::Global(buckconfig_folder_abs_path),
+                        &mut yakconfig_paths,
+                        &ConfigPath::Global(yakconfig_folder_abs_path),
                         file_ops,
                     )
                     .await?;
@@ -595,33 +595,33 @@ async fn get_external_buckconfig_paths(
         yak_env!("YAK_TEST_EXTRA_EXTERNAL_CONFIG", applicability = testing)?;
 
     if let Some(f) = extra_external_config {
-        buckconfig_paths.push(ConfigPath::Global(AbsPath::new(f)?.to_owned()));
+        yakconfig_paths.push(ConfigPath::Global(AbsPath::new(f)?.to_owned()));
     }
 
-    Ok(buckconfig_paths)
+    Ok(yakconfig_paths)
 }
 
-async fn get_project_buckconfig_paths(
+async fn get_project_yakconfig_paths(
     path: &CellRootPath,
     file_ops: &mut dyn ConfigParserFileOps,
 ) -> yak_error::Result<Vec<ConfigPath>> {
-    let mut buckconfig_paths: Vec<ConfigPath> = Vec::new();
+    let mut yakconfig_paths: Vec<ConfigPath> = Vec::new();
 
-    for buckconfig in DEFAULT_PROJECT_CONFIG_SOURCES {
-        match buckconfig {
+    for yakconfig in DEFAULT_PROJECT_CONFIG_SOURCES {
+        match yakconfig {
             ProjectConfigSource::CellRelativeFile(file) => {
-                let buckconfig_path = ForwardRelativePath::new(file)?;
-                buckconfig_paths.push(ConfigPath::Project(
-                    path.as_project_relative_path().join(buckconfig_path),
+                let yakconfig_path = ForwardRelativePath::new(file)?;
+                yakconfig_paths.push(ConfigPath::Project(
+                    path.as_project_relative_path().join(yakconfig_path),
                 ));
             }
             ProjectConfigSource::CellRelativeFolder(folder) => {
-                let buckconfig_folder_path = ForwardRelativePath::new(folder)?;
-                let buckconfig_folder_path =
-                    path.as_project_relative_path().join(buckconfig_folder_path);
+                let yakconfig_folder_path = ForwardRelativePath::new(folder)?;
+                let yakconfig_folder_path =
+                    path.as_project_relative_path().join(yakconfig_folder_path);
                 push_all_files_from_a_directory(
-                    &mut buckconfig_paths,
-                    &ConfigPath::Project(buckconfig_folder_path),
+                    &mut yakconfig_paths,
+                    &ConfigPath::Project(yakconfig_folder_path),
                     file_ops,
                 )
                 .await?;
@@ -629,7 +629,7 @@ async fn get_project_buckconfig_paths(
         }
     }
 
-    Ok(buckconfig_paths)
+    Ok(yakconfig_paths)
 }
 
 #[cfg(test)]
@@ -648,10 +648,10 @@ mod tests {
     use crate::external_cells::EXTERNAL_CELLS_IMPL;
     use crate::external_cells::ExternalCellsImpl;
     use crate::file_ops::delegate::FileOpsDelegate;
-    use crate::legacy_configs::cells::BuckConfigBasedCells;
+    use crate::legacy_configs::cells::YakConfigBasedCells;
     use crate::legacy_configs::configs::testing::TestConfigParserFileOps;
     use crate::legacy_configs::configs::tests::assert_config_value;
-    use crate::legacy_configs::key::BuckconfigKeyRef;
+    use crate::legacy_configs::key::YakconfigKeyRef;
 
     #[tokio::test]
     async fn test_cells() -> yak_error::Result<()> {
@@ -690,7 +690,7 @@ mod tests {
             ),
         ])?;
 
-        let cells = BuckConfigBasedCells::testing_parse_with_file_ops(&mut file_ops, &[]).await?;
+        let cells = YakConfigBasedCells::testing_parse_with_file_ops(&mut file_ops, &[]).await?;
 
         let resolver = &cells.cell_resolver;
 
@@ -772,7 +772,7 @@ mod tests {
             ),
         ])?;
 
-        let cells = BuckConfigBasedCells::testing_parse_with_file_ops(
+        let cells = YakConfigBasedCells::testing_parse_with_file_ops(
             &mut file_ops,
             &[ConfigOverride::file(
                 "cli-conf",
@@ -792,21 +792,21 @@ mod tests {
             .await?;
 
         assert_eq!(
-            root_config.get(BuckconfigKeyRef {
+            root_config.get(YakconfigKeyRef {
                 section: "foo",
                 property: "bar"
             }),
             Some("blah")
         );
         assert_eq!(
-            other_config.get(BuckconfigKeyRef {
+            other_config.get(YakconfigKeyRef {
                 section: "foo",
                 property: "bar"
             }),
             Some("blah")
         );
         assert_eq!(
-            tp_config.get(BuckconfigKeyRef {
+            tp_config.get(YakconfigKeyRef {
                 section: "foo",
                 property: "bar"
             }),
@@ -840,14 +840,14 @@ mod tests {
             ),
         ])?;
 
-        let cells = BuckConfigBasedCells::testing_parse_with_file_ops(&mut file_ops, &[]).await?;
+        let cells = YakConfigBasedCells::testing_parse_with_file_ops(&mut file_ops, &[]).await?;
 
         let other_config = cells
             .parse_single_cell_with_file_ops(CellName::testing_new("other"), &mut file_ops)
             .await?;
 
         assert_eq!(
-            other_config.get(BuckconfigKeyRef {
+            other_config.get(YakconfigKeyRef {
                 section: "foo",
                 property: "bar"
             }),
@@ -902,7 +902,7 @@ mod tests {
             ),
         ])?;
 
-        let cells = BuckConfigBasedCells::testing_parse_with_file_ops(
+        let cells = YakConfigBasedCells::testing_parse_with_file_ops(
             &mut file_ops,
             &[
                 ConfigOverride::file("app-conf", Some(CellRootPathBuf::testing_new("other"))),
@@ -916,14 +916,14 @@ mod tests {
             .await?;
 
         assert_eq!(
-            other_config.get(BuckconfigKeyRef {
+            other_config.get(YakconfigKeyRef {
                 section: "apple",
                 property: "ide"
             }),
             Some("Xcode")
         );
         assert_eq!(
-            other_config.get(BuckconfigKeyRef {
+            other_config.get(YakconfigKeyRef {
                 section: "apple",
                 property: "test_tool"
             }),
@@ -962,7 +962,7 @@ mod tests {
             ),
         ])?;
 
-        let cells = BuckConfigBasedCells::testing_parse_with_file_ops(&mut file_ops, &[]).await?;
+        let cells = YakConfigBasedCells::testing_parse_with_file_ops(&mut file_ops, &[]).await?;
 
         let config = cells
             .parse_single_cell_with_file_ops(CellName::testing_new("root"), &mut file_ops)
@@ -1034,7 +1034,7 @@ mod tests {
             ),
         ])?;
 
-        let cells = BuckConfigBasedCells::testing_parse_with_file_ops(&mut file_ops, &[]).await?;
+        let cells = YakConfigBasedCells::testing_parse_with_file_ops(&mut file_ops, &[]).await?;
 
         let root_config = cells
             .parse_single_cell_with_file_ops(CellName::testing_new("root"), &mut file_ops)
@@ -1065,7 +1065,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_config_arg_with_no_buckconfig() -> yak_error::Result<()> {
+    async fn test_config_arg_with_no_yakconfig() -> yak_error::Result<()> {
         let mut file_ops = TestConfigParserFileOps::new(&[(
             ".yakconfig",
             indoc!(
@@ -1077,7 +1077,7 @@ mod tests {
             ),
         )])?;
 
-        let cells = BuckConfigBasedCells::testing_parse_with_file_ops(
+        let cells = YakConfigBasedCells::testing_parse_with_file_ops(
             &mut file_ops,
             &[ConfigOverride::flag_no_cell("some_section.key=value1")],
         )
@@ -1106,7 +1106,7 @@ mod tests {
             ),
         )])?;
 
-        let resolver = BuckConfigBasedCells::testing_parse_with_file_ops(&mut file_ops, &[])
+        let resolver = YakConfigBasedCells::testing_parse_with_file_ops(&mut file_ops, &[])
             .await?
             .cell_resolver;
 
@@ -1188,7 +1188,7 @@ mod tests {
             ),
         )])?;
 
-        let resolver = BuckConfigBasedCells::testing_parse_with_file_ops(&mut file_ops, &[])
+        let resolver = YakConfigBasedCells::testing_parse_with_file_ops(&mut file_ops, &[])
             .await?
             .cell_resolver;
 
@@ -1238,7 +1238,7 @@ mod tests {
             ),
         )])?;
 
-        BuckConfigBasedCells::testing_parse_with_file_ops(&mut file_ops, &[])
+        YakConfigBasedCells::testing_parse_with_file_ops(&mut file_ops, &[])
             .await
             .err()
             .unwrap();
@@ -1264,7 +1264,7 @@ mod tests {
             ),
         )])?;
 
-        let e = BuckConfigBasedCells::testing_parse_with_file_ops(&mut file_ops, &[])
+        let e = YakConfigBasedCells::testing_parse_with_file_ops(&mut file_ops, &[])
             .await
             .err()
             .unwrap();
@@ -1295,7 +1295,7 @@ mod tests {
             ),
         )])?;
 
-        let resolver = BuckConfigBasedCells::testing_parse_with_file_ops(&mut file_ops, &[])
+        let resolver = YakConfigBasedCells::testing_parse_with_file_ops(&mut file_ops, &[])
             .await?
             .cell_resolver;
 
@@ -1333,7 +1333,7 @@ mod tests {
             ),
         )])?;
 
-        let e = BuckConfigBasedCells::testing_parse_with_file_ops(&mut file_ops, &[])
+        let e = YakConfigBasedCells::testing_parse_with_file_ops(&mut file_ops, &[])
             .await
             .err()
             .unwrap();

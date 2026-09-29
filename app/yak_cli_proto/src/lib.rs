@@ -14,19 +14,19 @@
 use yak_core::cells::cell_root_path::CellRootPath;
 use yak_core::cells::cell_root_path::CellRootPathBuf;
 use yak_core::fs::project_rel_path::ProjectRelativePath;
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 use yak_error::internal_error;
 
-use crate::BuckDaemonProtoError::MissingClientContext;
+use crate::YakDaemonProtoError::MissingClientContext;
 
 pub mod new_generic;
 pub mod protobuf_util;
 
-tonic::include_proto!("buck.daemon");
+tonic::include_proto!("yak.daemon");
 
 #[derive(Debug, yak_error::Error)]
 #[yak(tag = Tier0)]
-enum BuckDaemonProtoError {
+enum YakDaemonProtoError {
     #[error("daemon request was missing client context")]
     MissingClientContext,
 }
@@ -219,7 +219,7 @@ macro_rules! define_request {
                 // A request that has a client context field should always set the context.
                 match &self.context {
                     Some(v) => Ok(v),
-                    None => Err(BuckDaemonProtoError::MissingClientContext.into()),
+                    None => Err(YakDaemonProtoError::MissingClientContext.into()),
                 }
             }
         }

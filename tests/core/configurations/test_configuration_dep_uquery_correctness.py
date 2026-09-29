@@ -8,26 +8,26 @@
 
 import json
 
-from e2e_util.api.buck import Buck
-from e2e_util.buck_workspace import buck_test
+from e2e_util.api.yak import Yak
+from e2e_util.yak_workspace import yak_test
 
 
 async def check_has_uquery_path(
-    buck: Buck, target: str, dep: str, expect_fail: bool = False
+    yak: Yak, target: str, dep: str, expect_fail: bool = False
 ) -> None:
-    result = await buck.uquery(
+    result = await yak.uquery(
         f"somepath({target}, {dep})",
     )
     path = result.stdout.splitlines()
     # Apparently, configuration deps never show up in `somepath`. Interesting.
     assert len(path) == 0
 
-    result = await buck.uquery(
+    result = await yak.uquery(
         f"deps({target})",
         "-a",
-        "buck.deps",
+        "yak.deps",
         "-a",
-        "buck.configuration_deps",
+        "yak.configuration_deps",
     )
     all_deps = [
         d
@@ -41,33 +41,33 @@ async def check_has_uquery_path(
         assert dep in all_deps
 
 
-@buck_test()
-async def test_default_target_platform(buck: Buck) -> None:
-    await check_has_uquery_path(buck, ":with_custom_dtp", "root//:base")
+@yak_test()
+async def test_default_target_platform(yak: Yak) -> None:
+    await check_has_uquery_path(yak, ":with_custom_dtp", "root//:base")
 
 
-@buck_test()
-async def test_configured_dep_platform(buck: Buck) -> None:
-    await check_has_uquery_path(buck, ":stub_configured", "root//:base")
+@yak_test()
+async def test_configured_dep_platform(yak: Yak) -> None:
+    await check_has_uquery_path(yak, ":stub_configured", "root//:base")
 
 
-@buck_test()
-async def test_transition_dep_refs(buck: Buck) -> None:
+@yak_test()
+async def test_transition_dep_refs(yak: Yak) -> None:
     # FIXME(JakobDegen): Bug.
     await check_has_uquery_path(
-        buck, ":pre_out_transition", "root//:cat", expect_fail=True
+        yak, ":pre_out_transition", "root//:cat", expect_fail=True
     )
 
     # FIXME(JakobDegen): Bug.
     await check_has_uquery_path(
-        buck, ":post_out_transition", "root//:cat", expect_fail=True
+        yak, ":post_out_transition", "root//:cat", expect_fail=True
     )
 
-    await check_has_uquery_path(buck, ":pre_out_transition_vnew", "root//:transition")
+    await check_has_uquery_path(yak, ":pre_out_transition_vnew", "root//:transition")
 
-    await check_has_uquery_path(buck, ":pre_inc_transition_vnew", "root//:transition")
+    await check_has_uquery_path(yak, ":pre_inc_transition_vnew", "root//:transition")
 
 
-@buck_test()
-async def test_select_keys(buck: Buck) -> None:
-    await check_has_uquery_path(buck, ":with_select", "root//:cat")
+@yak_test()
+async def test_select_keys(yak: Yak) -> None:
+    await check_has_uquery_path(yak, ":with_select", "root//:cat")

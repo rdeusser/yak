@@ -6,14 +6,14 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-from e2e_util.api.buck import Buck
-from e2e_util.buck_workspace import buck_test
+from e2e_util.api.yak import Yak
+from e2e_util.yak_workspace import yak_test
 from e2e_util.helper.golden import golden
 
 
-@buck_test()
-async def test_target_call_stacks_default(buck: Buck) -> None:
-    result = await buck.uquery(
+@yak_test()
+async def test_target_call_stacks_default(yak: Yak) -> None:
+    result = await yak.uquery(
         "--stack",
         "root//:test",
     )
@@ -21,7 +21,7 @@ async def test_target_call_stacks_default(buck: Buck) -> None:
         output=result.stdout,
         rel_path="golden/uquery.stdout",
     )
-    result = await buck.cquery(
+    result = await yak.cquery(
         "--stack",
         "root//:test",
     )

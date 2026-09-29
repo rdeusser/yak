@@ -10,27 +10,27 @@ import os
 from pathlib import Path
 
 import pytest
-from e2e_util.api.buck import Buck
-from e2e_util.buck_workspace import buck_test
+from e2e_util.api.yak import Yak
+from e2e_util.yak_workspace import yak_test
 
 
-@buck_test()
-async def test_buckconfig_works_in_external_cells(buck: Buck) -> None:
-    result = await buck.audit(
+@yak_test()
+async def test_yakconfig_works_in_external_cells(yak: Yak) -> None:
+    result = await yak.audit(
         "config", "--cell", "test_bundled_cell", "user_section.key"
     )
     assert "key = value" in result.stdout
 
 
-@buck_test()
-async def test_uquery(buck: Buck) -> None:
-    result = await buck.uquery("deps(other//:other_alias)")
+@yak_test()
+async def test_uquery(yak: Yak) -> None:
+    result = await yak.uquery("deps(other//:other_alias)")
     assert result.stdout.strip().split() == [
         "test_bundled_cell//dir:test_hidden",
         "test_bundled_cell//dir:test",
         "other//:other_alias",
     ]
-    result = await buck.uquery(
+    result = await yak.uquery(
         "deps(test_bundled_cell//dir:test)", rel_cwd=Path("other")
     )
     assert result.stdout.strip().split() == [
@@ -39,9 +39,9 @@ async def test_uquery(buck: Buck) -> None:
     ]
 
 
-@buck_test()
-async def test_build_local(buck: Buck) -> None:
-    result = await buck.build_without_report(
+@yak_test()
+async def test_build_local(yak: Yak) -> None:
+    result = await yak.build_without_report(
         "--show-full-simple-output", "--local-only", "other//:other_alias"
     )
     p = Path(result.stdout.strip())
@@ -49,18 +49,18 @@ async def test_build_local(buck: Buck) -> None:
 
 
 @pytest.mark.remote_execution
-@buck_test()
-async def test_build_remote(buck: Buck) -> None:
-    result = await buck.build_without_report(
+@yak_test()
+async def test_build_remote(yak: Yak) -> None:
+    result = await yak.build_without_report(
         "--show-full-simple-output", "--remote-only", "other//:other_alias"
     )
     p = Path(result.stdout.strip())
     assert p.read_text().strip() == "\n".join(["value", "6", "foobar", "foobar2"])
 
 
-@buck_test()
-async def test_materialize_source_directly(buck: Buck) -> None:
-    result = await buck.build_without_report(
+@yak_test()
+async def test_materialize_source_directly(yak: Yak) -> None:
+    result = await yak.build_without_report(
         "--show-full-simple-output", "test_bundled_cell//dir:exported"
     )
     p = Path(result.stdout.strip())
@@ -69,16 +69,16 @@ async def test_materialize_source_directly(buck: Buck) -> None:
     assert p.read_text().strip() == "foobar"
 
 
-@buck_test()
-async def test_expand_external_cell(buck: Buck) -> None:
-    await buck.expand_external_cell("test_bundled_cell")
-    assert (buck.cwd / "test_bundled_cell" / ".yakconfig").exists()
+@yak_test()
+async def test_expand_external_cell(yak: Yak) -> None:
+    await yak.expand_external_cell("test_bundled_cell")
+    assert (yak.cwd / "test_bundled_cell" / ".yakconfig").exists()
 
     # Remove the external cell declaration
-    (buck.cwd / ".yakconfig_no_external").replace(buck.cwd / ".yakconfig")
-    (buck.cwd / "test_bundled_cell" / "dir" / "src.txt").write_text("foobar3\n")
+    (yak.cwd / ".yakconfig_no_external").replace(yak.cwd / ".yakconfig")
+    (yak.cwd / "test_bundled_cell" / "dir" / "src.txt").write_text("foobar3\n")
 
-    result = await buck.build_without_report(
+    result = await yak.build_without_report(
         "--show-full-simple-output", "other//:other_alias"
     )
     p = Path(result.stdout.strip())

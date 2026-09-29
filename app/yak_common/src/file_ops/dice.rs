@@ -31,7 +31,7 @@ use yak_core::cells::cell_path::CellPath;
 use yak_core::cells::cell_path::CellPathRef;
 use yak_core::cells::name::CellName;
 use yak_fs::paths::file_name::FileNameBuf;
-use yak_hash::BuckMutSet;
+use yak_hash::YakMutSet;
 
 use crate::buildfiles::HasBuildfiles;
 use crate::file_ops::delegate::FileOpsDelegateWithIgnores;
@@ -118,7 +118,7 @@ impl DiceFileComputations {
     ) -> Result<String, FileReadError> {
         match Self::read_file_if_exists(ctx, path).await {
             Ok(result) => result.ok_or_else(|| FileReadError::NotFound(path.to_string())),
-            Err(e) => Err(FileReadError::Buck(e)),
+            Err(e) => Err(FileReadError::Yak(e)),
         }
     }
 
@@ -137,7 +137,7 @@ impl DiceFileComputations {
     ) -> Result<RawPathMetadata, FileReadError> {
         match Self::read_path_metadata_if_exists(ctx, path).await {
             Ok(result) => result.ok_or_else(|| FileReadError::NotFound(path.to_string())),
-            Err(e) => Err(FileReadError::Buck(e)),
+            Err(e) => Err(FileReadError::Yak(e)),
         }
     }
 
@@ -169,12 +169,12 @@ pub(crate) enum CheckIgnores {
 
 #[derive(Allocative)]
 pub struct FileChangeTracker {
-    files_to_dirty: BuckMutSet<ReadFileKey>,
-    dirs_to_dirty: BuckMutSet<ReadDirKey>,
-    paths_to_dirty: BuckMutSet<PathMetadataKey>,
-    exists_matching_exact_case_to_dirty: BuckMutSet<ExistsMatchingExactCaseKey>,
+    files_to_dirty: YakMutSet<ReadFileKey>,
+    dirs_to_dirty: YakMutSet<ReadDirKey>,
+    paths_to_dirty: YakMutSet<PathMetadataKey>,
+    exists_matching_exact_case_to_dirty: YakMutSet<ExistsMatchingExactCaseKey>,
 
-    maybe_modified_dirs: BuckMutSet<CellPath>,
+    maybe_modified_dirs: YakMutSet<CellPath>,
 }
 
 impl FileChangeTracker {

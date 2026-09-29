@@ -9,31 +9,31 @@
 import json
 import typing
 
-from e2e_util.api.buck import Buck
-from e2e_util.buck_workspace import buck_test
+from e2e_util.api.yak import Yak
+from e2e_util.yak_workspace import yak_test
 
 
-@buck_test(skip_for_os=["darwin", "windows"], disable_daemon_cgroup=False)
-async def test_if_available_fallback_no_user_session(buck: Buck) -> None:
+@yak_test(skip_for_os=["darwin", "windows"], disable_daemon_cgroup=False)
+async def test_if_available_fallback_no_user_session(yak: Yak) -> None:
     """When status=if_available and systemd-run --user can't connect to the
     user session bus, the daemon should start successfully without cgroups
     instead of failing with DAEMON_STARTUP_FAILED."""
 
-    with open(buck.cwd / ".yakconfig", "a") as buckconfig:
-        buckconfig.write("[yak_resource_control]\n")
-        buckconfig.write("status = if_available\n")
+    with open(yak.cwd / ".yakconfig", "a") as yakconfig:
+        yakconfig.write("[yak_resource_control]\n")
+        yakconfig.write("status = if_available\n")
 
     # Strip the env vars that systemd-run --user needs to find the D-Bus
     # session bus. This simulates the VS Code 3p extension sandbox which
     # filters these out via an allowlist.
-    buck._env.pop("DBUS_SESSION_BUS_ADDRESS", None)
-    buck._env.pop("XDG_RUNTIME_DIR", None)
+    yak._env.pop("DBUS_SESSION_BUS_ADDRESS", None)
+    yak._env.pop("XDG_RUNTIME_DIR", None)
 
     # The daemon should start successfully (fallback to no cgroup).
-    await buck.targets(":")
+    await yak.targets(":")
 
     # Verify daemon is running without cgroups.
-    status_result = await buck.status("--snapshot")
+    status_result = await yak.status("--snapshot")
     status_data = json.loads(status_result.stdout)
     snapshot: dict[str, typing.Any] = status_data["snapshot"]
     assert snapshot["allprocs_cgroup"] is None

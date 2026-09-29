@@ -6,14 +6,14 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-from e2e_util.api.buck import Buck
+from e2e_util.api.yak import Yak
 from e2e_util.asserts import expect_failure
-from e2e_util.buck_workspace import buck_test
+from e2e_util.yak_workspace import yak_test
 
 
-@buck_test()
-async def test_build_skip_missing(buck: Buck) -> None:
-    result = await buck.build(
+@yak_test()
+async def test_build_skip_missing(yak: Yak) -> None:
+    result = await yak.build(
         "//:existing",
         "//:missing",
         "--skip-missing-targets",
@@ -24,10 +24,10 @@ async def test_build_skip_missing(buck: Buck) -> None:
     assert "Skipped 1 missing targets:" in result.stderr
 
 
-@buck_test()
-async def test_build_skip_missing_fails_on_missing_package(buck: Buck) -> None:
+@yak_test()
+async def test_build_skip_missing_fails_on_missing_package(yak: Yak) -> None:
     await expect_failure(
-        buck.build(
+        yak.build(
             "//:existing",
             "//bad-package:existing",
             "--skip-missing-targets",

@@ -37,9 +37,9 @@ their own telemetry, rely on a more standardised approach using OTEL or
 Prometheus. Though this is potentially a good idea in terms of maintainability,
 it does not come with build debugging tooling out of the box, unlike BES.
 
-## yak's existing BuckEvent
+## yak's existing YakEvent
 
-yak already has a `BuckEvent` it defines. This could be transformed into a
+yak already has a `YakEvent` it defines. This could be transformed into a
 format supported by other APIs or a new API and combined with other options
 described in this document.
 
@@ -155,10 +155,10 @@ invocation) to be flushed out.
 There are multiple ways in which this proposal can be implemented:
 
 1. yak directly sends Bazel's BEP events and implements the BES protocol
-2. yak implements the BES protocol but sends BuckEvent events but a shim can
+2. yak implements the BES protocol but sends YakEvent events but a shim can
    be built inside yak to turn these events into Bazel's BEP events
 3. Same as above but the shim lives outside of yak, so as far as yak is
-   concerned it sends yak BuckEvent via BES
+   concerned it sends yak YakEvent via BES
 4. Same as 2 but we implement a new API that is BES-like, but not BES
 5. Same as 3 but we implement a new API that is BES-like, but not BES
 

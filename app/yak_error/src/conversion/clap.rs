@@ -28,9 +28,9 @@ impl From<clap::error::Error> for crate::Error {
 }
 
 #[derive(Clone)]
-struct BuckErrorClapParser<F, T>(F, PhantomData<T>);
+struct YakErrorClapParser<F, T>(F, PhantomData<T>);
 
-impl<F, T> clap::builder::TypedValueParser for BuckErrorClapParser<F, T>
+impl<F, T> clap::builder::TypedValueParser for YakErrorClapParser<F, T>
 where
     F: Fn(&str) -> crate::Result<T> + Send + Sync + Clone + 'static,
     T: Send + Sync + Clone + 'static,
@@ -54,10 +54,10 @@ where
     }
 }
 
-pub fn buck_error_clap_parser<F, T>(f: F) -> impl clap::builder::TypedValueParser<Value = T>
+pub fn yak_error_clap_parser<F, T>(f: F) -> impl clap::builder::TypedValueParser<Value = T>
 where
     F: Fn(&str) -> crate::Result<T> + Send + Sync + Clone + 'static,
     T: Clone + Send + Sync + 'static,
 {
-    BuckErrorClapParser(f, PhantomData)
+    YakErrorClapParser(f, PhantomData)
 }

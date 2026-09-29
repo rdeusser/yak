@@ -6,30 +6,30 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-from e2e_util.api.buck import Buck
-from e2e_util.buck_workspace import buck_test
+from e2e_util.api.yak import Yak
+from e2e_util.yak_workspace import yak_test
 
 
-@buck_test()
-async def test_clean_stale_bxl(buck: Buck) -> None:
-    await buck.bxl("//clean_stale/build.bxl:build_test")
+@yak_test()
+async def test_clean_stale_bxl(yak: Yak) -> None:
+    await yak.bxl("//clean_stale/build.bxl:build_test")
 
-    art_files = [path.name for path in (buck.cwd / "yak-out/v2/art").glob("**/*")]
+    art_files = [path.name for path in (yak.cwd / "yak-out/v2/art").glob("**/*")]
     assert "out.json" in art_files
 
     # Check that artifacts written to art by bxl are not deleted
-    await buck.clean("--stale")
-    art_files = [path.name for path in (buck.cwd / "yak-out/v2/art").glob("**/*")]
+    await yak.clean("--stale")
+    art_files = [path.name for path in (yak.cwd / "yak-out/v2/art").glob("**/*")]
     assert "out.json" in art_files
 
     # Force clean of tracked artifacts, check that art and bxl are both deleted
-    await buck.kill()
-    await buck.clean("--stale=0s")
+    await yak.kill()
+    await yak.clean("--stale=0s")
 
-    art_files = [path.name for path in (buck.cwd / "yak-out/v2/art").glob("**/*")]
+    art_files = [path.name for path in (yak.cwd / "yak-out/v2/art").glob("**/*")]
     assert "out.json" not in art_files
 
     art_bxl_files = [
-        path.name for path in (buck.cwd / "yak-out/v2/art-bxl").glob("**/*")
+        path.name for path in (yak.cwd / "yak-out/v2/art-bxl").glob("**/*")
     ]
     assert "foo_out" not in art_bxl_files

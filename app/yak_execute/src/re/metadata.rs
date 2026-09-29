@@ -9,7 +9,7 @@
  */
 
 use remote_execution::ActionHistoryInfo;
-use remote_execution::BuckInfo;
+use remote_execution::YakInfo;
 use remote_execution::RemoteExecutionMetadata;
 use yak_core::execution_types::executor_config::RemoteExecutorUseCase;
 use yak_events::dispatch::get_dispatcher_opt;
@@ -28,7 +28,7 @@ impl RemoteExecutionMetadataExt for RemoteExecutorUseCase {
         };
         RemoteExecutionMetadata {
             use_case_id: self.as_str().to_owned(),
-            buck_info: Some(BuckInfo {
+            yak_info: Some(YakInfo {
                 build_id: trace_id,
                 ..Default::default()
             }),

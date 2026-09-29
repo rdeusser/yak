@@ -162,5 +162,5 @@ memory.
 ## I still need more help!
 
 If you still can not figure out how to reduce Starlark memory footprint of your
-build files, raise [an issue](https://github.com/rdeusser/buck2/issues) on
+build files, raise [an issue](https://github.com/rdeusser/yak/issues) on
 GitHub.

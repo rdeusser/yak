@@ -20,7 +20,7 @@ use dupe::Dupe;
 use remote_execution as RE;
 use yak_core::execution_types::executor_config::CommandExecutorConfig;
 use yak_core::fs::artifact_path_resolver::ArtifactFs;
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 use yak_error::conversion::from_any_with_tag;
 use yak_execute::execute::cache_uploader::UploadCache;
 use yak_execute::execute::prepared::PreparedCommandExecutor;
@@ -77,7 +77,7 @@ impl DiceHasCommandExecutor for DiceComputations<'_> {
             .data
             .get::<HasCommandExecutorHolder>()
             .map_err(|e| from_any_with_tag(e, yak_error::ErrorTag::Tier0))
-            .buck_error_context("CommandExecutorDelegate should be set")?;
+            .yak_error_context("CommandExecutorDelegate should be set")?;
         holder.delegate.get_command_executor(artifact_fs, config)
     }
 }

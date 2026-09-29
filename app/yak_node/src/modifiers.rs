@@ -20,7 +20,7 @@ use yak_util::strong_hasher::StrongHash128;
 
 use crate::metadata::value::hash_json_value;
 
-pub const MODIFIER_METADATA_KEY: &str = "buck.cfg_modifiers";
+pub const MODIFIER_METADATA_KEY: &str = "yak.cfg_modifiers";
 
 /// Config modifiers from a `PACKAGE` file, as JSON.
 #[derive(Debug, Clone, Dupe, Allocative, Pagable)]

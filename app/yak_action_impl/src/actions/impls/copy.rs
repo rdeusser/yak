@@ -31,13 +31,13 @@ use yak_build_api::artifact_groups::ArtifactGroup;
 use yak_build_signals::env::WaitingData;
 use yak_core::category::CategoryRef;
 use yak_core::content_hash::ContentBasedPathHash;
-use yak_error::BuckErrorOptionContext;
+use yak_error::YakErrorOptionContext;
 use yak_execute::artifact::artifact_dyn::ArtifactDyn;
 use yak_execute::artifact_utils::ArtifactValueBuilder;
 use yak_execute::execute::command_executor::ActionExecutionTimingData;
 use yak_execute::materialize::materializer::CopiedArtifact;
-use yak_hash::BuckIndexSet;
-use yak_hash::buck_indexset;
+use yak_hash::YakIndexSet;
+use yak_hash::yak_indexset;
 
 #[derive(Debug, yak_error::Error)]
 #[yak(tag = Input)]
@@ -72,7 +72,7 @@ impl UnregisteredCopyAction {
 impl UnregisteredAction for UnregisteredCopyAction {
     fn register(
         self: Box<Self>,
-        outputs: BuckIndexSet<BuildArtifact>,
+        outputs: YakIndexSet<BuildArtifact>,
         _starlark_data: Option<OwnedFrozen<Value<'static>>>,
         _error_handler: Option<OwnedFrozen<Value<'static>>>,
     ) -> yak_error::Result<Box<dyn Action>> {
@@ -91,7 +91,7 @@ impl CopyAction {
     fn new(
         copy: CopyMode,
         src: ArtifactGroup,
-        outputs: BuckIndexSet<BuildArtifact>,
+        outputs: YakIndexSet<BuildArtifact>,
     ) -> yak_error::Result<Self> {
         // TODO: Exclude other variants once they become available here. For now, this is a noop.
         match src {
@@ -106,7 +106,7 @@ impl CopyAction {
         } else {
             Ok(CopyAction {
                 copy,
-                inputs: BoxSliceSet::from(buck_indexset![src]),
+                inputs: BoxSliceSet::from(yak_indexset![src]),
                 outputs: BoxSliceSet::from(outputs),
             })
         }

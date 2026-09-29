@@ -6,18 +6,18 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-BUCK_PYTHON_RULE_KINDS = [
+YAK_PYTHON_RULE_KINDS = [
     "python_binary",
     "python_library",
     "python_test",
 ]
-BUCK_PYTHON_RULE_KIND_QUERY = "|".join(BUCK_PYTHON_RULE_KINDS)
+YAK_PYTHON_RULE_KIND_QUERY = "|".join(YAK_PYTHON_RULE_KINDS)
 
 def get_unfiltered_root_targets(query: bxl.UqueryContext, target_patterns: typing.Any) -> bxl.UnconfiguredTargetSet:
     candidate_targets = utarget_set()
     for pattern in target_patterns:
         candidate_targets += query.kind(
-            BUCK_PYTHON_RULE_KIND_QUERY,
+            YAK_PYTHON_RULE_KIND_QUERY,
             pattern,
         )
     return candidate_targets

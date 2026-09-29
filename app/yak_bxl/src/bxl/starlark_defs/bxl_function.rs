@@ -41,7 +41,7 @@ use starlark::values::typing::StarlarkCallable;
 use starlark_map::ordered_map::OrderedMap;
 use yak_build_api::bxl::types::BxlFunctionLabel;
 use yak_core::bxl::BxlFilePath;
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 use yak_error::yak_error;
 use yak_interpreter::build_context::starlark_path_from_build_context;
 
@@ -274,7 +274,7 @@ impl<'a> BxlCliSpec<'a> {
                 snake_case_args,
                 cli.parse_clap(ArgAccessor::Clap { clap: &clap, arg }, ctx)
                     .await
-                    .with_buck_error_context(|| {
+                    .with_yak_error_context(|| {
                         format!("Error parsing cli flag `{arg}` for bxl function")
                     })?,
             );

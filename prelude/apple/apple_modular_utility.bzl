@@ -10,4 +10,4 @@
 #
 # TODO: This needs to be changed to use $TMPDIR in a
 # wrapper for modular clang compilation.
-MODULE_CACHE_PATH = "/tmp/buck-module-cache"
+MODULE_CACHE_PATH = "/tmp/yak-module-cache"

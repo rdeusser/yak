@@ -16,8 +16,8 @@ use allocative::Allocative;
 use dupe::Dupe;
 use pagable::Pagable;
 use yak_core::provider::label::ConfiguredProvidersLabel;
-use yak_error::BuckErrorOptionContext;
-use yak_hash::BuckDashMap;
+use yak_error::YakErrorOptionContext;
+use yak_hash::YakDashMap;
 use yak_test_api::data::ConfiguredTargetHandle;
 
 #[derive(
@@ -46,7 +46,7 @@ pub struct TestSession {
     next_id: AtomicU64,
     /// A mapping of ConfiguredTargetHandle (which the test executor uses) to the underlying provider in
     /// yak.
-    labels: BuckDashMap<ConfiguredTargetHandle, ConfiguredProvidersLabel>,
+    labels: YakDashMap<ConfiguredTargetHandle, ConfiguredProvidersLabel>,
     /// Options overriding the behavior of tests executed in this session. This is primarily
     /// intended for unstable or debugging features.
     options: TestSessionOptions,
@@ -56,7 +56,7 @@ impl TestSession {
     pub fn new(options: TestSessionOptions) -> Self {
         Self {
             next_id: AtomicU64::new(0),
-            labels: BuckDashMap::default(),
+            labels: YakDashMap::default(),
             options,
         }
     }

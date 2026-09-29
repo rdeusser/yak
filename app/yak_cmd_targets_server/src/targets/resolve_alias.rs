@@ -27,10 +27,10 @@ use yak_cli_proto::targets_request::OutputFormat;
 use yak_core::pattern::pattern::ParsedPattern;
 use yak_core::pattern::pattern_type::TargetPatternExtra;
 use yak_core::target::label::label::TargetLabel;
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 use yak_error::internal_error;
-use yak_hash::BuckMutMap;
-use yak_hash::BuckMutSet;
+use yak_hash::YakMutMap;
+use yak_hash::YakMutSet;
 use yak_node::nodes::attributes::PACKAGE;
 use yak_node::nodes::frontend::TargetGraphCalculation;
 
@@ -124,9 +124,9 @@ pub(crate) async fn targets_resolve_aliases(
     let packages = parsed_target_patterns
         .iter()
         .map(|(package, _name)| package.dupe())
-        .collect::<BuckMutSet<_>>();
+        .collect::<YakMutSet<_>>();
 
-    let packages: BuckMutMap<_, _> = dice
+    let packages: YakMutMap<_, _> = dice
         .ctx()
         .compute_join(packages, async |ctx: &mut _, package| {
             (
@@ -183,15 +183,15 @@ pub(crate) async fn targets_resolve_aliases(
                 package_data
                     .as_ref()
                     .map_err(|e| e.dupe())
-                    .with_buck_error_context(|| {
+                    .with_yak_error_context(|| {
                         format!("Package cannot be evaluated: `{package}`")
                     })?
                     .resolve_target(target_name)
-                    .with_buck_error_context(|| {
+                    .with_yak_error_context(|| {
                         format!("Target does not exist in package `{package}`: `{target_name}`",)
                     })
             })
-            .with_buck_error_context(|| format!("Invalid alias: `{alias}`"))?;
+            .with_yak_error_context(|| format!("Invalid alias: `{alias}`"))?;
 
         if needs_separator {
             formatter.separator(&mut buffer);

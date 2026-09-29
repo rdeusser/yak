@@ -31,7 +31,7 @@ use yak_fs::paths::forward_rel_path::ForwardRelativePathBuf;
 use yak_util::size_assert;
 
 use crate::content_hash::ContentBasedPathHash;
-use crate::fs::buck_out_path::BuckOutPathKind;
+use crate::fs::yak_out_path::YakOutPathKind;
 use crate::fs::project_rel_path::ProjectRelativePath;
 use crate::fs::project_rel_path::ProjectRelativePathBuf;
 use crate::global_cfg_options::GlobalCfgOptions;
@@ -51,7 +51,7 @@ pub trait BaseDeferredKeyDyn:
         prefix: &ForwardRelativePath,
         action_key: Option<&str>,
         path: &ForwardRelativePath,
-        path_resolution_method: BuckOutPathKind,
+        path_resolution_method: YakOutPathKind,
         content_hash: Option<&ContentBasedPathHash>,
     ) -> yak_error::Result<ProjectRelativePathBuf>;
     /// Fake label for anon targets, `None` for BXL.
@@ -184,7 +184,7 @@ impl BaseDeferredKey {
         action_key: Option<&str>,
         path: &ForwardRelativePath,
         fully_hash_path: bool,
-        path_resolution_method: BuckOutPathKind,
+        path_resolution_method: YakOutPathKind,
         content_hash: Option<&ContentBasedPathHash>,
     ) -> yak_error::Result<ProjectRelativePathBuf> {
         match self {
@@ -196,7 +196,7 @@ impl BaseDeferredKey {
                 // repeated calls to `join` on the path object because `join` allocates on each call,
                 // which has a significant impact.
                 let path_identifier = match path_resolution_method {
-                    BuckOutPathKind::Configuration => [
+                    YakOutPathKind::Configuration => [
                         target.cfg().output_hash().as_str(),
                         if target.exec_cfg().is_some() { "-" } else { "" },
                         target
@@ -222,7 +222,7 @@ impl BaseDeferredKey {
                         action_key.unwrap_or_default(),
                         if action_key.is_none() { "" } else { "__/" },
                     ],
-                    BuckOutPathKind::ContentHash => {
+                    YakOutPathKind::ContentHash => {
                         let content_hash = content_hash.as_ref().map(|x| x.as_str());
                         if let Some(content_hash) = content_hash {
                             [

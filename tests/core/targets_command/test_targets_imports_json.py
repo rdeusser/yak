@@ -8,14 +8,14 @@
 
 import json
 
-from e2e_util.api.buck import Buck
-from e2e_util.buck_workspace import buck_test
+from e2e_util.api.yak import Yak
+from e2e_util.yak_workspace import yak_test
 
 
-@buck_test()
-async def test_imports_json(buck: Buck) -> None:
+@yak_test()
+async def test_imports_json(yak: Yak) -> None:
     """Test that targets --streaming --imports handles JSON file imports."""
-    result = await buck.targets("//...", "--json", "--streaming", "--imports")
+    result = await yak.targets("//...", "--json", "--streaming", "--imports")
     xs = json.loads(result.stdout)
 
     found_targets = False
@@ -23,10 +23,10 @@ async def test_imports_json(buck: Buck) -> None:
     found_json = False
 
     for x in xs:
-        if "buck.imports" not in x:
+        if "yak.imports" not in x:
             continue
-        file = x["buck.file"]
-        imports = x["buck.imports"]
+        file = x["yak.file"]
+        imports = x["yak.imports"]
 
         if file == "root//YAK.fixture":
             assert "root//uses_json.bzl" in imports

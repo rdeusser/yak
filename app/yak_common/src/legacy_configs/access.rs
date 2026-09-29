@@ -12,21 +12,21 @@ use std::str::FromStr;
 use std::sync::Arc;
 
 use gazebo::eq_chain;
-use yak_error::BuckErrorContext;
-use yak_hash::StdBuckHashMap;
+use yak_error::YakErrorContext;
+use yak_hash::StdYakHashMap;
 use yak_util::env_vars::substitute_env_vars;
 
 use crate::legacy_configs::configs::ConfigValue;
-use crate::legacy_configs::configs::LegacyBuckConfig;
-use crate::legacy_configs::configs::LegacyBuckConfigSection;
-use crate::legacy_configs::configs::LegacyBuckConfigValue;
-use crate::legacy_configs::key::BuckconfigKeyRef;
-use crate::legacy_configs::view::LegacyBuckConfigView;
+use crate::legacy_configs::configs::LegacyYakConfig;
+use crate::legacy_configs::configs::LegacyYakConfigSection;
+use crate::legacy_configs::configs::LegacyYakConfigValue;
+use crate::legacy_configs::key::YakconfigKeyRef;
+use crate::legacy_configs::view::LegacyYakConfigView;
 
-/// Read the `[yak_metadata]` section from a `LegacyBuckConfig` and resolve any `$VAR`
+/// Read the `[yak_metadata]` section from a `LegacyYakConfig` and resolve any `$VAR`
 /// references. Entries whose env vars are not set are skipped with a warning.
-pub fn parse_buckconfig_metadata(config: &LegacyBuckConfig) -> StdBuckHashMap<String, String> {
-    let mut map = StdBuckHashMap::default();
+pub fn parse_yakconfig_metadata(config: &LegacyYakConfig) -> StdYakHashMap<String, String> {
+    let mut map = StdYakHashMap::default();
     let Some(section) = config.get_section("yak_metadata") else {
         return map;
     };
@@ -43,13 +43,13 @@ pub fn parse_buckconfig_metadata(config: &LegacyBuckConfig) -> StdBuckHashMap<St
     map
 }
 
-impl LegacyBuckConfigView for &LegacyBuckConfig {
-    fn get(&mut self, key: BuckconfigKeyRef) -> yak_error::Result<Option<Arc<str>>> {
-        Ok(LegacyBuckConfig::get(self, key).map(|v| v.to_owned().into()))
+impl LegacyYakConfigView for &LegacyYakConfig {
+    fn get(&mut self, key: YakconfigKeyRef) -> yak_error::Result<Option<Arc<str>>> {
+        Ok(LegacyYakConfig::get(self, key).map(|v| v.to_owned().into()))
     }
 }
 
-impl LegacyBuckConfigSection {
+impl LegacyYakConfigSection {
     /// configs are equal if the data they resolve in is equal, regardless of the origin of the config
     pub(crate) fn compare(&self, other: &Self) -> bool {
         eq_chain!(
@@ -61,33 +61,33 @@ impl LegacyBuckConfigSection {
         )
     }
 
-    pub fn iter(&self) -> impl Iterator<Item = (&str, LegacyBuckConfigValue<'_>)> {
+    pub fn iter(&self) -> impl Iterator<Item = (&str, LegacyYakConfigValue<'_>)> {
         self.values
             .iter()
-            .map(move |(key, value)| (key.as_str(), LegacyBuckConfigValue { value }))
+            .map(move |(key, value)| (key.as_str(), LegacyYakConfigValue { value }))
     }
 
     pub fn keys(&self) -> impl Iterator<Item = &String> {
         self.values.keys()
     }
 
-    pub fn get(&self, key: &str) -> Option<LegacyBuckConfigValue<'_>> {
+    pub fn get(&self, key: &str) -> Option<LegacyYakConfigValue<'_>> {
         self.values
             .get(key)
-            .map(move |value| LegacyBuckConfigValue { value })
+            .map(move |value| LegacyYakConfigValue { value })
     }
 }
 
-impl LegacyBuckConfig {
-    fn get_config_value(&self, key: BuckconfigKeyRef) -> Option<&ConfigValue> {
-        let BuckconfigKeyRef { section, property } = key;
+impl LegacyYakConfig {
+    fn get_config_value(&self, key: YakconfigKeyRef) -> Option<&ConfigValue> {
+        let YakconfigKeyRef { section, property } = key;
         self.0
             .values
             .get(section)
             .and_then(|s| s.values.get(property))
     }
 
-    pub fn get(&self, key: BuckconfigKeyRef) -> Option<&str> {
+    pub fn get(&self, key: YakconfigKeyRef) -> Option<&str> {
         self.get_config_value(key).map(|s| s.as_str())
     }
 
@@ -104,15 +104,15 @@ impl LegacyBuckConfig {
         })
     }
 
-    fn parse_impl<T: FromStr>(key: BuckconfigKeyRef, value: &str) -> yak_error::Result<T>
+    fn parse_impl<T: FromStr>(key: YakconfigKeyRef, value: &str) -> yak_error::Result<T>
     where
         yak_error::Error: From<<T as FromStr>::Err>,
     {
-        let BuckconfigKeyRef { section, property } = key;
+        let YakconfigKeyRef { section, property } = key;
         value
             .parse()
             .map_err(yak_error::Error::from)
-            .with_buck_error_context(|| {
+            .with_yak_error_context(|| {
                 format!(
                     "Invalid value for yakconfig `{}.{}`: conversion to {} failed, value as `{}`",
                     section.to_owned(),
@@ -123,21 +123,21 @@ impl LegacyBuckConfig {
             })
     }
 
-    pub fn parse<T: FromStr>(&self, key: BuckconfigKeyRef) -> yak_error::Result<Option<T>>
+    pub fn parse<T: FromStr>(&self, key: YakconfigKeyRef) -> yak_error::Result<Option<T>>
     where
         yak_error::Error: From<<T as FromStr>::Err>,
     {
         self.get_config_value(key)
             .map(|s| {
-                Self::parse_impl(key, s.as_str()).with_buck_error_context(|| {
-                    format!("Defined {}", s.source.as_legacy_buck_config_location())
+                Self::parse_impl(key, s.as_str()).with_yak_error_context(|| {
+                    format!("Defined {}", s.source.as_legacy_yak_config_location())
                 })
             })
             .transpose()
     }
 
     pub fn parse_value<T: FromStr>(
-        key: BuckconfigKeyRef,
+        key: YakconfigKeyRef,
         value: Option<&str>,
     ) -> yak_error::Result<Option<T>>
     where
@@ -146,7 +146,7 @@ impl LegacyBuckConfig {
         value.map(|s| Self::parse_impl(key, s)).transpose()
     }
 
-    pub fn parse_list<T: FromStr>(&self, key: BuckconfigKeyRef) -> yak_error::Result<Option<Vec<T>>>
+    pub fn parse_list<T: FromStr>(&self, key: YakconfigKeyRef) -> yak_error::Result<Option<Vec<T>>>
     where
         yak_error::Error: From<<T as FromStr>::Err>,
     {
@@ -154,7 +154,7 @@ impl LegacyBuckConfig {
     }
 
     pub fn parse_list_value<T: FromStr>(
-        key: BuckconfigKeyRef,
+        key: YakconfigKeyRef,
         value: Option<&str>,
     ) -> yak_error::Result<Option<Vec<T>>>
     where
@@ -183,11 +183,11 @@ impl LegacyBuckConfig {
         self.0.values.keys()
     }
 
-    pub fn all_sections(&self) -> impl Iterator<Item = (&String, &LegacyBuckConfigSection)> + '_ {
+    pub fn all_sections(&self) -> impl Iterator<Item = (&String, &LegacyYakConfigSection)> + '_ {
         self.0.values.iter()
     }
 
-    pub fn get_section(&self, section: &str) -> Option<&LegacyBuckConfigSection> {
+    pub fn get_section(&self, section: &str) -> Option<&LegacyYakConfigSection> {
         self.0.values.get(section)
     }
 

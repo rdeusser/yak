@@ -7,14 +7,14 @@
 # above-listed licenses.
 
 import pytest
-from e2e_util.api.buck import Buck
-from e2e_util.buck_workspace import buck_test
+from e2e_util.api.yak import Yak
+from e2e_util.yak_workspace import yak_test
 from e2e_util.helper.utils import json_get, random_string
 
 
-@buck_test()
-async def test_local_action(buck: Buck) -> None:
-    await buck.build(
+@yak_test()
+async def test_local_action(yak: Yak) -> None:
+    await yak.build(
         "//:foo",
         "--no-remote-cache",
         "--local-only",
@@ -22,7 +22,7 @@ async def test_local_action(buck: Buck) -> None:
         f"test.cache_buster={random_string()}",
     )
 
-    log = (await buck.log("show")).stdout.strip().splitlines()
+    log = (await yak.log("show")).stdout.strip().splitlines()
 
     for line in log:
         outputs = json_get(
@@ -50,9 +50,9 @@ async def test_local_action(buck: Buck) -> None:
 
 
 @pytest.mark.remote_execution
-@buck_test()
-async def test_remote_action(buck: Buck) -> None:
-    await buck.build(
+@yak_test()
+async def test_remote_action(yak: Yak) -> None:
+    await yak.build(
         "//:foo",
         "--no-remote-cache",
         "--remote-only",
@@ -60,7 +60,7 @@ async def test_remote_action(buck: Buck) -> None:
         f"test.cache_buster={random_string()}",
     )
 
-    log = (await buck.log("show")).stdout.strip().splitlines()
+    log = (await yak.log("show")).stdout.strip().splitlines()
 
     for line in log:
         outputs = json_get(

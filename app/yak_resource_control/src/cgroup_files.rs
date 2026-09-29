@@ -14,8 +14,8 @@ use std::sync::Arc;
 use dupe::Dupe;
 use nix::fcntl::OFlag;
 use nix::sys::stat::Mode;
-use yak_error::BuckErrorContext;
-use yak_error::BuckErrorOptionContext;
+use yak_error::YakErrorContext;
+use yak_error::YakErrorOptionContext;
 use yak_fs::paths::file_name::FileNameBuf;
 
 #[derive(Debug, yak_error::Error)]
@@ -65,7 +65,7 @@ impl CgroupFile {
             flags,
             Mode::empty(),
         )
-        .with_buck_error_context(|| format!("Failed to open cgroup file {}", name))?;
+        .with_yak_error_context(|| format!("Failed to open cgroup file {}", name))?;
         Ok(CgroupFile(Arc::new(file), name.to_owned()))
     }
 
@@ -79,7 +79,7 @@ impl CgroupFile {
             Self::sync_write_impl(&file, data.as_ref()).map_err(yak_error::Error::from)
         })
         .await?
-        .with_buck_error_context(|| format!("Writing cgroup file {}", name))
+        .with_yak_error_context(|| format!("Writing cgroup file {}", name))
     }
 
     /// Write the given buffer to the file
@@ -138,7 +138,7 @@ impl CgroupFile {
             yak_error::Ok((data, filled))
         })
         .await?
-        .with_buck_error_context(|| format!("Reading cgroup file {}", self.1))
+        .with_yak_error_context(|| format!("Reading cgroup file {}", self.1))
     }
 
     async fn read_to_buf(&self) -> yak_error::Result<Vec<u8>> {
@@ -164,7 +164,7 @@ impl CgroupFile {
             yak_error::Ok(data)
         })
         .await?
-        .with_buck_error_context(|| format!("Reading cgroup file {}", self.1))
+        .with_yak_error_context(|| format!("Reading cgroup file {}", self.1))
     }
 
     pub(crate) async fn read_to_string(&self) -> yak_error::Result<String> {
@@ -175,7 +175,7 @@ impl CgroupFile {
     // FIXME(JakobDegen): Ought probably to have some types to represent the files
     pub(crate) async fn read_memory_stat(&self) -> yak_error::Result<MemoryStat> {
         MemoryStat::parse(&self.read_to_string().await?)
-            .buck_error_context("Failed to parse memory.stat")
+            .yak_error_context("Failed to parse memory.stat")
     }
 
     pub(crate) async fn read_max_or_int(&self) -> yak_error::Result<Option<u64>> {
@@ -249,7 +249,7 @@ impl MemoryStat {
                 .next()
                 .with_internal_error(|| format!("Invalid line: '{}' (no value)", line))?
                 .parse::<u64>()
-                .with_buck_error_context(|| format!("Invalid line: '{}' (invalid value)", line))?;
+                .with_yak_error_context(|| format!("Invalid line: '{}' (invalid value)", line))?;
             if parts.next().is_some() {
                 return Err(yak_error::internal_error!(
                     "Invalid line: '{}' (too many parts)",

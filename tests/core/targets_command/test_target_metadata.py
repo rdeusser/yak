@@ -6,16 +6,16 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-from e2e_util.api.buck import Buck
-from e2e_util.buck_workspace import buck_test
+from e2e_util.api.yak import Yak
+from e2e_util.yak_workspace import yak_test
 from e2e_util.helper.golden import golden
 
 
-@buck_test()
-async def test_metadata(buck: Buck) -> None:
+@yak_test()
+async def test_metadata(yak: Yak) -> None:
     stdout = (
-        await buck.targets(
-            "//...", "--keep-going", "-a", "^metadata|buck.package|name$"
+        await yak.targets(
+            "//...", "--keep-going", "-a", "^metadata|yak.package|name$"
         )
     ).stdout
     golden(

@@ -37,7 +37,7 @@ use yak_common::dice::data::testing::SetTestingIoProvider;
 use yak_common::file_ops::metadata::FileMetadata;
 use yak_common::file_ops::metadata::TrackedFileDigest;
 use yak_common::file_ops::testing::TestFileOps;
-use yak_common::legacy_configs::configs::LegacyBuckConfig;
+use yak_common::legacy_configs::configs::LegacyYakConfig;
 use yak_common::legacy_configs::dice::inject_legacy_config_for_test;
 use yak_core::cells::CellResolver;
 use yak_core::cells::cell_path::CellPath;
@@ -53,8 +53,8 @@ use yak_core::target::configured_target_label::ConfiguredTargetLabel;
 use yak_execute::artifact_value::ArtifactValue;
 use yak_execute::digest_config::DigestConfig;
 use yak_execute::digest_config::SetDigestConfig;
-use yak_hash::BuckMutMap;
-use yak_hash::StdBuckHashMap;
+use yak_hash::YakMutMap;
+use yak_hash::StdYakHashMap;
 
 use crate::interpreter::transitive_set::testing::TSET_TEST_LOCK;
 use crate::interpreter::transitive_set::testing::new_transitive_set;
@@ -63,13 +63,13 @@ fn mock_analysis_for_tsets(
     mut dice_builder: DiceBuilder,
     tsets: Vec<OwnedFrozen<ValueTyped<'static, TransitiveSet<'static>>>>,
 ) -> DiceBuilder {
-    let mut by_target: BuckMutMap<
+    let mut by_target: YakMutMap<
         ConfiguredTargetLabel,
         Vec<(
             TransitiveSetKey,
             OwnedFrozen<ValueTyped<'static, TransitiveSet<'static>>>,
         )>,
-    > = BuckMutMap::default();
+    > = YakMutMap::default();
 
     for value in tsets {
         let key = value.by_ref(|s| s.key().dupe());
@@ -94,7 +94,7 @@ fn mock_analysis_for_tsets(
                     RecordedActions::new(0),
                 ),
                 None,
-                StdBuckHashMap::default(),
+                StdYakHashMap::default(),
                 0,
                 0,
                 None,
@@ -210,8 +210,8 @@ async fn test_ensure_artifact_group() -> yak_error::Result<()> {
 
     let mut dice = dice_builder.build(extra).unwrap();
     dice.set_cell_resolver(cell_resolver)?;
-    dice.set_buck_out_path(None)?;
-    inject_legacy_config_for_test(&mut dice, cell_parent, LegacyBuckConfig::empty())?;
+    dice.set_yak_out_path(None)?;
+    inject_legacy_config_for_test(&mut dice, cell_parent, LegacyYakConfig::empty())?;
     let dice = dice.commit().await;
 
     let result = dice

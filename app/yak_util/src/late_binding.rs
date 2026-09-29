@@ -10,7 +10,7 @@
 
 use std::sync::OnceLock;
 
-use yak_error::BuckErrorOptionContext;
+use yak_error::YakErrorOptionContext;
 
 /// Value (typically a function pointer or a trait pointer) that is initialized at program start.
 ///
@@ -34,8 +34,8 @@ use yak_error::BuckErrorOptionContext;
 /// on `yak_interpreter_for_build` or `starlark` crates.
 ///
 /// The best example of this pattern is probably `yak_bxl` crate:
-/// the only target depending on `yak_bxl` is the final binary with `buck2.rs` file.
-/// So when `yak_bxl` changes, we recompile only `yak_bxl` and `buck2.rs`.
+/// the only target depending on `yak_bxl` is the final binary with `yak.rs` file.
+/// So when `yak_bxl` changes, we recompile only `yak_bxl` and `yak.rs`.
 /// At the moment of writing this comment, `yak_bxl` had only one public function,
 /// that is `init_late_bindings()`, that initializes all late bindings.
 ///

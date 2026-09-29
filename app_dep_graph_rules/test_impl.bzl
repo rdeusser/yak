@@ -53,7 +53,7 @@ def _impl(ctx: AnalysisContext):
     _check_banned_dep_paths(ctx)
     return [DefaultInfo()]
 
-_test_buck2_dep_graph = rule(
+_test_yak_dep_graph = rule(
     impl = _impl,
     attrs = {
         "banned_dep_paths": attrs.list(attrs.query()),
@@ -65,13 +65,13 @@ _test_buck2_dep_graph = rule(
 
 _CLIENT_BIN = "//app/yak:yak_client-bin"
 
-_BUCK2_BIN = "//app/yak:yak-bin"
+_YAK_BIN = "//app/yak:yak-bin"
 
 _RE_CLIENT_TARGET = "//remote_execution/re_grpc:remote_execution"
 
 _CLIENT_TO_RE = "somepath({}, filter(root//remote_execution/, deps({})) + {})".format(_CLIENT_BIN, _CLIENT_BIN, _RE_CLIENT_TARGET)
 
-def test_buck2_dep_graph(name):
+def test_yak_dep_graph(name):
     banned_dep_paths = []
     for a, b in BANNED_DEP_PATHS:
         if a > b:
@@ -83,10 +83,10 @@ def test_buck2_dep_graph(name):
         banned_dep_paths.append("somepath({}, {})".format(a, b))
         banned_dep_paths.append("somepath({}, {})".format(b, a))
 
-    _test_buck2_dep_graph(
+    _test_yak_dep_graph(
         name = name,
         banned_dep_paths = banned_dep_paths,
         client_to_re_path = _CLIENT_TO_RE,
-        late_binding_only_paths = ["allpaths({}, {})".format(_BUCK2_BIN, c) for c in LATE_BINDING_ONLY_CRATES],
-        top_level_only_paths = ["allpaths({}, {})".format(_BUCK2_BIN, c) for c in TOP_LEVEL_ONLY_CRATES],
+        late_binding_only_paths = ["allpaths({}, {})".format(_YAK_BIN, c) for c in LATE_BINDING_ONLY_CRATES],
+        top_level_only_paths = ["allpaths({}, {})".format(_YAK_BIN, c) for c in TOP_LEVEL_ONLY_CRATES],
     )

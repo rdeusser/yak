@@ -45,7 +45,7 @@ pub fn collect(daemon: &DaemonId) -> IntentionallyStdHashMap<String, String> {
     }
     map.insert("arch".to_owned(), env::consts::ARCH.to_owned());
     if let Some(rev) = yak_build_info::revision() {
-        map.insert("buck2_revision".to_owned(), rev.to_owned());
+        map.insert("yak_revision".to_owned(), rev.to_owned());
     }
     map
 }
@@ -117,7 +117,7 @@ mod collect_tests {
             "os",
             "os_version",
             "arch",
-            "buck2_revision",
+            "yak_revision",
         ];
         for key in data.keys() {
             assert!(

@@ -6,22 +6,22 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-from e2e_util.api.buck import Buck
-from e2e_util.buck_workspace import buck_test
+from e2e_util.api.yak import Yak
+from e2e_util.yak_workspace import yak_test
 
 
-@buck_test()
-async def test_replay(buck: Buck) -> None:
-    await buck.build("//:EEE")
-    replay = await buck.log("replay", "-v2")
+@yak_test()
+async def test_replay(yak: Yak) -> None:
+    await yak.build("//:EEE")
+    replay = await yak.log("replay", "-v2")
     assert "//:EEE" in replay.stderr
 
 
-@buck_test()
-async def test_partial_result_replay(buck: Buck) -> None:
+@yak_test()
+async def test_partial_result_replay(yak: Yak) -> None:
     # `audit cell` is an easy way to produce partial results
-    res = await buck.audit("cell")
-    res2 = await buck.log("replay")
+    res = await yak.audit("cell")
+    res2 = await yak.log("replay")
 
     assert res.stdout != res2.stdout
     assert res2.stdout == ""

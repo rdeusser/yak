@@ -42,6 +42,6 @@ pub fn extract_target_literals<F: QueryFunctions>(
     };
     functions
         .visit_literals(&mut visitor, &parsed)
-        .into_buck2_error(query)?;
+        .into_yak_error(query)?;
     Ok(Vec::from_iter(visitor.literals))
 }

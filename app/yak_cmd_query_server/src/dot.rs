@@ -26,7 +26,7 @@ use std::sync::LazyLock;
 
 use regex::Regex;
 use starlark_map::small_map::SmallMap;
-use yak_hash::BuckMutMap;
+use yak_hash::YakMutMap;
 
 pub(crate) mod targets;
 
@@ -144,7 +144,7 @@ impl DotCompact {
         writeln!(w, "digraph {} {{", graph.name())?;
 
         let mut next_id: u32 = 0;
-        let mut lookup_numeric_id: BuckMutMap<String, u32> = BuckMutMap::default();
+        let mut lookup_numeric_id: YakMutMap<String, u32> = YakMutMap::default();
 
         let mut name_to_number = |node_name: &str| -> u32 {
             match lookup_numeric_id.entry(node_name.to_owned()) {

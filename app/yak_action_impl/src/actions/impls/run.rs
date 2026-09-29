@@ -93,12 +93,12 @@ use yak_core::configuration::pair::Configuration;
 use yak_core::content_hash::ContentBasedPathHash;
 use yak_core::deferred::base_deferred_key::BaseDeferredKey;
 use yak_core::fs::artifact_path_resolver::ArtifactFs;
-use yak_core::fs::buck_out_path::BuckOutPathKind;
-use yak_core::fs::buck_out_path::BuildArtifactPath;
+use yak_core::fs::yak_out_path::YakOutPathKind;
+use yak_core::fs::yak_out_path::BuildArtifactPath;
 use yak_core::fs::project_rel_path::ProjectRelativePathBuf;
 use yak_core::target::label::label::TargetLabel;
-use yak_error::BuckErrorContext;
-use yak_error::BuckErrorOptionContext;
+use yak_error::YakErrorContext;
+use yak_error::YakErrorOptionContext;
 use yak_error::yak_error;
 use yak_events::dispatch::span_async_simple;
 use yak_execute::artifact::fs::ExecutorFs;
@@ -122,9 +122,9 @@ use yak_execute::execute::result::CommandExecutionResult;
 use yak_execute::materialize::materializer::WriteRequest;
 use yak_fs::fs_util;
 use yak_fs::paths::forward_rel_path::ForwardRelativePathBuf;
-use yak_hash::BuckIndexMap;
-use yak_hash::BuckIndexSet;
-use yak_hash::buck_indexmap;
+use yak_hash::YakIndexMap;
+use yak_hash::YakIndexSet;
+use yak_hash::yak_indexmap;
 
 use self::dep_files::DepFileBundle;
 use crate::actions::impls::dep_file_fingerprint::StarlarkDepFileFingerprint;
@@ -292,7 +292,7 @@ pub(crate) struct UnregisteredRunAction {
 impl UnregisteredAction for UnregisteredRunAction {
     fn register(
         self: Box<Self>,
-        outputs: BuckIndexSet<BuildArtifact>,
+        outputs: YakIndexSet<BuildArtifact>,
         starlark_data: Option<OwnedFrozen<Value<'static>>>,
         error_handler: Option<OwnedFrozen<Value<'static>>>,
     ) -> yak_error::Result<Box<dyn Action>> {
@@ -461,13 +461,13 @@ type ExpandedCommandLineDigestForDepFiles = ExpandedCommandLineDigest;
 
 /// A CommandLineArtifactVisitor that gathers non-hidden inputs.
 pub struct SkipHiddenCommandLineArtifactVisitor {
-    pub inputs: BuckIndexSet<ArtifactGroup>,
+    pub inputs: YakIndexSet<ArtifactGroup>,
 }
 
 impl SkipHiddenCommandLineArtifactVisitor {
     pub fn new() -> Self {
         Self {
-            inputs: BuckIndexSet::default(),
+            inputs: YakIndexSet::default(),
         }
     }
 }
@@ -663,7 +663,7 @@ impl RunAction {
 
             let input_paths = CommandExecutionPaths::new(
                 inputs,
-                BuckIndexSet::default(),
+                YakIndexSet::default(),
                 action_execution_ctx.fs(),
                 action_execution_ctx.digest_config(),
                 action_execution_ctx
@@ -765,7 +765,7 @@ impl RunAction {
 
             let input_paths = CommandExecutionPaths::new(
                 inputs,
-                BuckIndexSet::default(),
+                YakIndexSet::default(),
                 action_execution_ctx.fs(),
                 action_execution_ctx.digest_config(),
                 action_execution_ctx
@@ -831,7 +831,7 @@ impl RunAction {
 
         if !values.dep_file_fingerprints.is_empty() {
             command_line_digest_for_dep_files
-                .push_arg(Cow::Borrowed("buck2.structured-dep-file-inputs.v1"));
+                .push_arg(Cow::Borrowed("yak.structured-dep-file-inputs.v1"));
             for fingerprint in values.dep_file_fingerprints {
                 let fingerprint = fingerprint.as_ref();
                 fingerprint.visit_inputs(artifact_visitor)?;
@@ -857,7 +857,7 @@ impl RunAction {
     pub(crate) fn new(
         inner: UnregisteredRunAction,
         starlark_values: OwnedFrozen<Value<'static>>,
-        outputs: BuckIndexSet<BuildArtifact>,
+        outputs: YakIndexSet<BuildArtifact>,
         error_handler: Option<OwnedFrozen<Value<'static>>>,
     ) -> yak_error::Result<Self> {
         let starlark_values: OwnedFrozen<
@@ -927,7 +927,7 @@ impl RunAction {
 
         for output in self.outputs.iter() {
             if output.get_path().is_content_based_path() {
-                let full_path = fs.buck_out_path_resolver().resolve_gen(
+                let full_path = fs.yak_out_path_resolver().resolve_gen(
                     output.get_path(),
                     Some(&ContentBasedPathHash::for_output_artifact()),
                 )?;
@@ -992,9 +992,9 @@ impl RunAction {
                 ctx.target().owner().dupe(),
                 metadata_param.path.clone(),
                 if self.all_outputs_are_content_based() {
-                    BuckOutPathKind::ContentHash
+                    YakOutPathKind::ContentHash
                 } else {
-                    BuckOutPathKind::Configuration
+                    YakOutPathKind::Configuration
                 },
             );
 
@@ -1007,7 +1007,7 @@ impl RunAction {
             let content_hash = ContentBasedPathHash::new(digest.raw_digest().as_bytes())?;
             let project_rel_path = fs
                 .fs()
-                .buck_out_path_resolver()
+                .yak_out_path_resolver()
                 .resolve_gen(&path, Some(&content_hash))?;
 
             ctx.materializer()
@@ -1020,7 +1020,7 @@ impl RunAction {
                     }])
                 }))
                 .await
-                .buck_error_context("Failed to write action metadata!")?;
+                .yak_error_context("Failed to write action metadata!")?;
 
             inputs.push(CommandExecutionInput::ActionMetadata(ActionMetadataBlob {
                 digest,
@@ -1045,7 +1045,7 @@ impl RunAction {
         extra_env: &mut Vec<(String, String)>,
     ) -> yak_error::Result<()> {
         let scratch = ctx.target().scratch_path();
-        let scratch_path = fs.fs().buck_out_path_resolver().resolve_scratch(&scratch)?;
+        let scratch_path = fs.fs().yak_out_path_resolver().resolve_scratch(&scratch)?;
 
         if scratch.uses_content_hash() {
             shared_content_based_paths.push(scratch_path.clone());
@@ -1491,14 +1491,14 @@ impl Action for RunAction {
         &self,
         fs: &ExecutorFs,
         artifact_path_mapping: &dyn ArtifactPathMapper,
-    ) -> BuckIndexMap<String, String> {
+    ) -> YakIndexMap<String, String> {
         let mut cli_rendered = Vec::<String>::new();
         let values = Self::unpack(self.values()).unwrap();
         let mut fmt = CommandLineBuilder::new(&mut cli_rendered, artifact_path_mapping, fs);
         values.exe.add_to_command_line(&mut fmt).unwrap();
         values.args.add_to_command_line(&mut fmt).unwrap();
         let cmd = format!("[{}]", cli_rendered.iter().join(", "));
-        buck_indexmap! {
+        yak_indexmap! {
             "cmd".to_owned() => cmd,
             "executor_preference".to_owned() => self.inner.executor_preference.to_string(),
             "always_print_stderr".to_owned() => self.inner.always_print_stderr.to_string(),
@@ -1694,7 +1694,7 @@ impl Action for RunAction {
                             value.dupe(),
                         )
                         .await?;
-                        tracer.add_buck_out_entry(offline_cache_path);
+                        tracer.add_yak_out_entry(offline_cache_path);
                     }
                 }
             }

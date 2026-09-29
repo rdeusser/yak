@@ -40,7 +40,7 @@ use yak_core::pattern::pattern::ParsedPattern;
 use yak_core::pattern::pattern_type::PatternType;
 use yak_core::pattern::pattern_type::TargetPatternExtra;
 use yak_core::target::name::TargetName;
-use yak_hash::BuckMutSet;
+use yak_hash::YakMutSet;
 use yak_interpreter::load_module::INTERPRETER_CALCULATION_IMPL;
 use yak_interpreter::load_module::InterpreterCalculation;
 use yak_interpreter::paths::package::PackageFilePath;
@@ -92,7 +92,7 @@ fn package_concurrency(threads: Option<usize>) -> yak_error::Result<PackageConcu
 ///
 /// # Arguments
 ///
-/// * `keep_going` - On loading errors, put buck.error in the output stream and continue
+/// * `keep_going` - On loading errors, put yak.error in the output stream and continue
 ///   Passing from cli args `--keep-going` from `app/yak_client/src/commands/targets.rs`.
 /// * `imports` - Show the imports of each package/import. Shows an additional output per package/import (not per target), including implicit dependencies (e.g. the prelude) but only direct dependencies (not the transitive closure)
 ///   Passing from cli args `--imports` from `app/yak_client/src/commands/targets.rs`.
@@ -226,7 +226,7 @@ pub(crate) async fn targets_streaming(
     // Recursively chase down all `imported` paths, and output them.
     // This will only be done if `imports` is set
     let mut todo = mem::take(&mut *imported.lock().unwrap());
-    let mut seen_imported = BuckMutSet::default();
+    let mut seen_imported = YakMutSet::default();
     while let Some(path) = todo.pop() {
         if seen_imported.insert(path.path().clone()) {
             // If these lead to an error, that's surpsing (we had a working module with it loaded)

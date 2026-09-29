@@ -41,9 +41,9 @@ use yak_core::pattern::pattern::Modifiers;
 use yak_core::provider::label::ConfiguredProvidersLabel;
 use yak_core::provider::label::ProvidersLabel;
 use yak_core::target::configured_target_label::ConfiguredTargetLabel;
-use yak_error::BuckErrorOptionContext;
+use yak_error::YakErrorOptionContext;
 use yak_events::dispatch::console_message;
-use yak_hash::BuckMutMap;
+use yak_hash::YakMutMap;
 use yak_node::nodes::configured_frontend::ConfiguredTargetNodeCalculation;
 
 use crate::actions::calculation::BuildKey;
@@ -210,11 +210,11 @@ impl AsyncBuildTargetResultBuilder {
 }
 
 pub struct BuildTargetResultBuilder {
-    res: BuckMutMap<
+    res: YakMutMap<
         ConfiguredProvidersLabel,
         Option<ConfiguredBuildTargetResultGen<(usize, yak_error::Result<ProviderArtifacts>)>>,
     >,
-    configured_to_pattern_modifiers: BuckMutMap<ConfiguredProvidersLabel, Vec<Modifiers>>,
+    configured_to_pattern_modifiers: YakMutMap<ConfiguredProvidersLabel, Vec<Modifiers>>,
     other_errors: BTreeMap<Option<ProvidersLabel>, Vec<yak_error::Error>>,
     build_failed: bool,
     incompatible_targets: SmallSet<ConfiguredTargetLabel>,
@@ -228,8 +228,8 @@ impl BuildTargetResultBuilder {
         build_start: Instant,
     ) -> Self {
         Self {
-            res: BuckMutMap::default(),
-            configured_to_pattern_modifiers: BuckMutMap::default(),
+            res: YakMutMap::default(),
+            configured_to_pattern_modifiers: YakMutMap::default(),
             other_errors: BTreeMap::new(),
             incompatible_targets: SmallSet::new(),
             build_failed: false,
@@ -366,7 +366,7 @@ impl BuildTargetResultBuilder {
         }
 
         // Sort our outputs within each individual BuildTargetResult, then return those.
-        // Also, turn our BuckMutMap into a BTreeMap.
+        // Also, turn our YakMutMap into a BTreeMap.
         let res = self
             .res
             .iter()
@@ -440,7 +440,7 @@ impl BuildTargetResultBuilder {
 
 pub struct BuildTargetResult {
     pub configured: BTreeMap<ConfiguredProvidersLabel, Option<ConfiguredBuildTargetResult>>,
-    pub configured_to_pattern_modifiers: BuckMutMap<ConfiguredProvidersLabel, BTreeSet<Modifiers>>,
+    pub configured_to_pattern_modifiers: YakMutMap<ConfiguredProvidersLabel, BTreeSet<Modifiers>>,
     /// Errors that could not be associated with a specific configured target. These errors may be
     /// associated with a providers label, or might not be associated with any target at all.
     pub other_errors: BTreeMap<Option<ProvidersLabel>, Vec<yak_error::Error>>,
@@ -451,7 +451,7 @@ impl BuildTargetResult {
     pub fn new() -> Self {
         Self {
             configured: BTreeMap::new(),
-            configured_to_pattern_modifiers: BuckMutMap::default(),
+            configured_to_pattern_modifiers: YakMutMap::default(),
             other_errors: BTreeMap::new(),
             build_failed: false,
         }
@@ -666,7 +666,7 @@ async fn build_configured_label_inner(
     }
 
     if !opts.skippable && outputs.is_empty() {
-        let docs = "https://rdeusser.github.io/buck2/docs/users/faq/common_issues/#why-does-my-target-not-have-any-outputs";
+        let docs = "https://rdeusser.github.io/yak/docs/users/faq/common_issues/#why-does-my-target-not-have-any-outputs";
         console_message(format!(
             "Target {} does not have any outputs. This means the rule did not define any outputs. See {} for more information",
             providers_label.target(),

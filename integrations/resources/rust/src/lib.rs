@@ -23,7 +23,7 @@ use thiserror::Error;
 use crate::manifest::ResourcesMap;
 
 #[derive(Debug, Error)]
-pub enum BuckResourcesError {
+pub enum YakResourcesError {
     #[error("Failed to look up our own executable path")]
     NoCurrentExe { source: io::Error },
 
@@ -72,13 +72,13 @@ pub enum BuckResourcesError {
 /// So for `//path/to:target`, the resource is named `path/to/target`.
 ///
 /// Still unsure about a resource path? Inspect the JSON manifest file
-/// found in the `BuckResourcesError`.
+/// found in the `YakResourcesError`.
 ///
 /// * Manifest location: `$CUR_EXE.resources.json`, where `$CUR_EXE` is
 ///   the absolute path of the currently executing binary.
 /// * Relative paths in the manifest are resolved relative to the location
 ///   of the currently executing binary.
-pub fn get<S>(name: S) -> Result<PathBuf, BuckResourcesError>
+pub fn get<S>(name: S) -> Result<PathBuf, YakResourcesError>
 where
     S: AsRef<str>,
 {
@@ -91,14 +91,14 @@ where
                 value
             }
             Err(source) => {
-                return Err(BuckResourcesError::NoCurrentExe { source });
+                return Err(YakResourcesError::NoCurrentExe { source });
             }
         };
 
         let data = match fs::read(&manifest_path) {
             Ok(x) => x,
             Err(source) => {
-                return Err(BuckResourcesError::ReadFailed {
+                return Err(YakResourcesError::ReadFailed {
                     manifest_path,
                     source,
                 });
@@ -111,7 +111,7 @@ where
         let manifest = match ResourcesMap::new(base_dir).deserialize(deserializer) {
             Ok(x) => x,
             Err(source) => {
-                return Err(BuckResourcesError::ParsingFailed {
+                return Err(YakResourcesError::ParsingFailed {
                     manifest_path,
                     source,
                 });
@@ -122,14 +122,14 @@ where
     })?;
 
     if let Some(resource_path) = manifest.get(name.as_ref()) {
-        dunce::canonicalize(resource_path).map_err(|source| BuckResourcesError::BadResourcePath {
+        dunce::canonicalize(resource_path).map_err(|source| YakResourcesError::BadResourcePath {
             name: name.as_ref().to_owned(),
             resource_path: resource_path.clone(),
             manifest_path: manifest_path.clone(),
             source,
         })
     } else {
-        Err(BuckResourcesError::NoSuchResource {
+        Err(YakResourcesError::NoSuchResource {
             name: name.as_ref().to_owned(),
             manifest_path: manifest_path.clone(),
         })

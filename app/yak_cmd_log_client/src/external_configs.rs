@@ -10,9 +10,9 @@
 
 use serde::Serialize;
 use tokio_stream::StreamExt;
-use yak_client_ctx::client_ctx::BuckSubcommand;
+use yak_client_ctx::client_ctx::YakSubcommand;
 use yak_client_ctx::client_ctx::ClientCommandContext;
-use yak_client_ctx::common::BuckArgMatches;
+use yak_client_ctx::common::YakArgMatches;
 use yak_client_ctx::event_log_options::EventLogOptions;
 use yak_client_ctx::events_ctx::EventsCtx;
 use yak_client_ctx::exit_result::ExitResult;
@@ -38,12 +38,12 @@ pub struct ExternalConfigsCommand {
     format: LogCommandOutputFormat,
 }
 
-impl BuckSubcommand for ExternalConfigsCommand {
+impl YakSubcommand for ExternalConfigsCommand {
     const COMMAND_NAME: &'static str = "log-external-configs";
 
     async fn exec_impl(
         self,
-        _matches: BuckArgMatches<'_>,
+        _matches: YakArgMatches<'_>,
         ctx: ClientCommandContext<'_>,
         _events_ctx: &mut EventsCtx,
     ) -> ExitResult {
@@ -59,8 +59,8 @@ impl BuckSubcommand for ExternalConfigsCommand {
 
         while let Some(event) = events.try_next().await? {
             if let StreamValue::Event(event) = event
-                && let Some(yak_data::buck_event::Data::Instant(instant)) = event.data
-                && let Some(yak_data::instant_event::Data::BuckconfigInputValues(configs)) =
+                && let Some(yak_data::yak_event::Data::Instant(instant)) = event.data
+                && let Some(yak_data::instant_event::Data::YakconfigInputValues(configs)) =
                     instant.data
             {
                 log_external_configs(&configs.components, format.clone()).await?;
@@ -170,14 +170,14 @@ fn write_config_file(
 }
 
 async fn log_external_configs(
-    components: &[yak_data::BuckconfigComponent],
+    components: &[yak_data::YakconfigComponent],
     format: LogCommandOutputFormat,
 ) -> yak_error::Result<()> {
     yak_client_ctx::stdio::print_with_writer::<yak_error::Error, _>(async move |w| {
         let mut log_writer = transform_format(format, w);
 
         for component in components {
-            use yak_data::buckconfig_component::Data;
+            use yak_data::yakconfig_component::Data;
             use yak_data::config_file::Data as CData;
             match &component.data {
                 Some(Data::ConfigValue(config_value)) => {

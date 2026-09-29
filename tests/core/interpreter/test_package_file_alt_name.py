@@ -8,18 +8,18 @@
 
 import os
 
-from e2e_util.api.buck import Buck
-from e2e_util.buck_workspace import buck_test
+from e2e_util.api.yak import Yak
+from e2e_util.yak_workspace import yak_test
 
 
-@buck_test()
-async def test_package_file_alt_name(buck: Buck) -> None:
-    output = await buck.build("//:")
+@yak_test()
+async def test_package_file_alt_name(yak: Yak) -> None:
+    output = await yak.build("//:")
     assert "AAA from YAK_TREE" in output.stderr
     assert "AAA from PACKAGE" not in output.stderr
 
-    os.unlink(buck.cwd / "YAK_TREE")
+    os.unlink(yak.cwd / "YAK_TREE")
 
-    output = await buck.build("//:")
+    output = await yak.build("//:")
     assert "AAA from YAK_TREE" not in output.stderr
     assert "AAA from PACKAGE" in output.stderr

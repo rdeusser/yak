@@ -11,7 +11,7 @@
 # the generated docs, and so those should be verified to be accurate and
 # well-formatted (and then delete this TODO)
 
-load(":common.bzl", "CxxRuntimeType", "CxxSourceType", "HeadersAsRawHeadersMode", "buck", "prelude_rule")
+load(":common.bzl", "CxxRuntimeType", "CxxSourceType", "HeadersAsRawHeadersMode", "yak", "prelude_rule")
 load(":cxx_common.bzl", "cxx_common")
 load(":lua_common.bzl", "lua_common")
 
@@ -87,9 +87,9 @@ cxx_lua_extension = prelude_rule(
             "raw_headers": attrs.set(attrs.source(), sorted = True, default = []),
             "version_universe": attrs.option(attrs.string(), default = None),
         }
-        | buck.licenses_arg()
-        | buck.labels_arg()
-        | buck.contacts_arg()
+        | yak.licenses_arg()
+        | yak.labels_arg()
+        | yak.contacts_arg()
     ),
 )
 
@@ -136,9 +136,9 @@ lua_binary = prelude_rule(
             "package_style": attrs.option(attrs.enum(LuaPlatformPackageStyle), default = None),
             "platform": attrs.option(attrs.string(), default = None),
         }
-        | buck.licenses_arg()
-        | buck.labels_arg()
-        | buck.contacts_arg()
+        | yak.licenses_arg()
+        | yak.labels_arg()
+        | yak.contacts_arg()
     ),
 )
 
@@ -180,9 +180,9 @@ lua_library = prelude_rule(
             """,
             ),
         }
-        | buck.licenses_arg()
-        | buck.labels_arg()
-        | buck.contacts_arg()
+        | yak.licenses_arg()
+        | yak.labels_arg()
+        | yak.contacts_arg()
     ),
 )
 

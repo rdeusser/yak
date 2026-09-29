@@ -17,8 +17,8 @@ import (
 )
 
 type targetsByType struct {
-	buckPatterns []string
-	buckFiles    []string
+	yakPatterns []string
+	yakFiles    []string
 	stdPatterns  []string
 	stdFiles     []string
 }
@@ -51,7 +51,7 @@ func parsePatterns(platform Platform, targets []string, goRoot string) (*targets
 	result := &targetsByType{}
 	for _, pkg := range pkgTargets {
 		if strings.Contains(pkg, "//") || strings.Contains(pkg, ":") {
-			result.buckPatterns = append(result.buckPatterns, pkg)
+			result.yakPatterns = append(result.yakPatterns, pkg)
 		} else {
 			result.stdPatterns = append(result.stdPatterns, pkg)
 		}
@@ -61,7 +61,7 @@ func parsePatterns(platform Platform, targets []string, goRoot string) (*targets
 		if strings.Contains(file, goRoot) {
 			result.stdFiles = append(result.stdFiles, file)
 		} else {
-			result.buckFiles = append(result.buckFiles, file)
+			result.yakFiles = append(result.yakFiles, file)
 		}
 	}
 

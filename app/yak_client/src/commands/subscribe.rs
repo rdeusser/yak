@@ -19,21 +19,21 @@ use tokio_util::codec::FramedRead;
 use yak_cli_proto::protobuf_util::ProtobufSplitter;
 use yak_client_ctx::client_ctx::ClientCommandContext;
 use yak_client_ctx::command_outcome::CommandOutcome;
-use yak_client_ctx::common::BuckArgMatches;
+use yak_client_ctx::common::YakArgMatches;
 use yak_client_ctx::common::CommonBuildConfigurationOptions;
 use yak_client_ctx::common::CommonEventLogOptions;
 use yak_client_ctx::common::CommonStarlarkOptions;
 use yak_client_ctx::common::ui::CommonConsoleOptions;
 use yak_client_ctx::common::ui::ConsoleType;
-use yak_client_ctx::daemon::client::BuckdClientConnector;
+use yak_client_ctx::daemon::client::YakdClientConnector;
 use yak_client_ctx::events_ctx::EventsCtx;
 use yak_client_ctx::events_ctx::PartialResultCtx;
 use yak_client_ctx::events_ctx::PartialResultHandler;
 use yak_client_ctx::exit_result::ExitResult;
 use yak_client_ctx::stream_util::reborrow_stream_for_static;
 use yak_client_ctx::streaming::StreamingCommand;
-use yak_error::BuckErrorContext;
-use yak_error::BuckErrorOptionContext;
+use yak_error::YakErrorContext;
+use yak_error::YakErrorOptionContext;
 use yak_subscription_proto::SubscriptionRequest;
 
 /// Open a subscription channel to the yak daemon. This allows you to interact with the yak
@@ -77,8 +77,8 @@ impl StreamingCommand for SubscribeCommand {
 
     async fn exec_impl(
         self,
-        buckd: &mut BuckdClientConnector,
-        matches: BuckArgMatches<'_>,
+        yakd: &mut YakdClientConnector,
+        matches: YakArgMatches<'_>,
         ctx: &mut ClientCommandContext<'_>,
         events_ctx: &mut EventsCtx,
     ) -> ExitResult {
@@ -88,7 +88,7 @@ impl StreamingCommand for SubscribeCommand {
             .and_then(|bytes| {
                 futures::future::ready(
                     SubscriptionRequest::decode_length_delimited(bytes)
-                        .buck_error_context("Error decoding SubscriptionRequest"),
+                        .yak_error_context("Error decoding SubscriptionRequest"),
                 )
             })
             .map(|res| match res {
@@ -132,7 +132,7 @@ impl StreamingCommand for SubscribeCommand {
             reborrow_stream_for_static(
                 stream,
                 |stream| async move {
-                    buckd
+                    yakd
                         .with_flushing()
                         .subscription(client_context, stream, events_ctx, partial_result_handler)
                         .await
@@ -232,12 +232,12 @@ impl PartialResultHandler for SubscriptionPartialResultHandler {
 
         if self.json {
             serde_json::to_writer(&mut self.buffer, &response)
-                .buck_error_context("JSON encoding failed")?;
+                .yak_error_context("JSON encoding failed")?;
             self.buffer.push(b'\n');
         } else {
             response
                 .encode_length_delimited(&mut self.buffer)
-                .buck_error_context("Encoding failed")?;
+                .yak_error_context("Encoding failed")?;
         }
 
         ctx.stdout(&self.buffer).await

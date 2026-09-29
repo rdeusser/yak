@@ -50,13 +50,13 @@ use yak_error::yak_error;
 use yak_execute::artifact_value::ArtifactValue;
 use yak_execute::digest_config::DigestConfig;
 use yak_execute::digest_config::HasDigestConfig;
-use yak_hash::BuckIndexMap;
-use yak_hash::BuckMutMap;
+use yak_hash::YakIndexMap;
+use yak_hash::YakMutMap;
 use yak_interpreter::dice::starlark_provider::StarlarkEvalKind;
-use yak_interpreter::factory::BuckStarlarkModule;
+use yak_interpreter::factory::YakStarlarkModule;
 use yak_interpreter::factory::StarlarkEvaluatorProvider;
 use yak_interpreter::print_handler::EventDispatcherPrintHandler;
-use yak_interpreter::soft_error::Buck2StarlarkSoftErrorHandler;
+use yak_interpreter::soft_error::YakStarlarkSoftErrorHandler;
 
 use crate::bxl::eval::LIMITED_EXECUTOR;
 use crate::bxl::key::BxlDynamicKey;
@@ -72,8 +72,8 @@ pub(crate) async fn eval_bxl_for_dynamic_output<'v>(
     dynamic_lambda: OwnedFrozenRef<'v, &'static FrozenDynamicLambdaParams<'static>>,
     dice_ctx: &'v mut DiceComputations<'_>,
     input_artifacts_materialized: InputArtifactsMaterialized,
-    ensured_artifacts: &'v BuckIndexMap<&'v Artifact, &'v ArtifactValue>,
-    resolved_dynamic_values: BuckMutMap<DynamicValue, FrozenProviderCollectionValue>,
+    ensured_artifacts: &'v YakIndexMap<&'v Artifact, &'v ArtifactValue>,
+    resolved_dynamic_values: YakMutMap<DynamicValue, FrozenProviderCollectionValue>,
     _digest_config: DigestConfig,
     liveness: CancellationObserver,
 ) -> yak_error::Result<RecordedAnalysisValues> {
@@ -157,8 +157,8 @@ struct BxlDynamicOutputEvaluator<'f> {
     dynamic_data: DynamicBxlContextData,
     digest_config: DigestConfig,
     input_artifacts_materialized: InputArtifactsMaterialized,
-    ensured_artifacts: &'f BuckIndexMap<&'f Artifact, &'f ArtifactValue>,
-    resolved_dynamic_values: BuckMutMap<DynamicValue, FrozenProviderCollectionValue>,
+    ensured_artifacts: &'f YakIndexMap<&'f Artifact, &'f ArtifactValue>,
+    resolved_dynamic_values: YakMutMap<DynamicValue, FrozenProviderCollectionValue>,
     artifact_fs: ArtifactFs,
     print: EventDispatcherPrintHandler,
 }
@@ -169,7 +169,7 @@ impl BxlDynamicOutputEvaluator<'_> {
         provider: StarlarkEvaluatorProvider,
         dice: &mut DiceComputations<'_>,
     ) -> yak_error::Result<RecordedAnalysisValues> {
-        BuckStarlarkModule::with_profiling(|env| {
+        YakStarlarkModule::with_profiling(|env| {
             let bxl_dice = BxlDiceComputations::new(dice, self.liveness.dupe());
 
             let (finished_eval, analysis_registry) = {
@@ -177,7 +177,7 @@ impl BxlDynamicOutputEvaluator<'_> {
                 let mut extra = BxlEvalExtra::new_dynamic(bxl_dice, data.dupe());
                 provider.with_evaluator(&env, self.liveness.into(), |eval, _| {
                     eval.set_print_handler(&self.print);
-                    eval.set_soft_error_handler(&Buck2StarlarkSoftErrorHandler);
+                    eval.set_soft_error_handler(&YakStarlarkSoftErrorHandler);
                     eval.extra_mut = Some(&mut extra);
 
                     let dynamic_lambda_ctx_data = dynamic_lambda_ctx_data(

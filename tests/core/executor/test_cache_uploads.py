@@ -9,19 +9,19 @@
 import sys
 
 import pytest
-from e2e_util.api.buck import Buck
-from e2e_util.buck_workspace import buck_test
+from e2e_util.api.yak import Yak
+from e2e_util.yak_workspace import yak_test
 from e2e_util.helper.utils import json_get, random_string
 
 pytestmark = pytest.mark.remote_execution
 
 
-async def _assert_locally_executed_upload_attempted(buck: Buck, count: int = 1) -> None:
-    await _assert_upload_attempted(buck, count)
+async def _assert_locally_executed_upload_attempted(yak: Yak, count: int = 1) -> None:
+    await _assert_upload_attempted(yak, count)
 
 
-async def _assert_upload_attempted(buck: Buck, count: int) -> None:
-    log = (await buck.log("show")).stdout.strip().splitlines()
+async def _assert_upload_attempted(yak: Yak, count: int) -> None:
+    log = (await yak.log("show")).stdout.strip().splitlines()
     uploads = []
     excluded_uploads = []
 
@@ -64,32 +64,32 @@ async def _assert_upload_attempted(buck: Buck, count: int) -> None:
         raise AssertionError("Wrong number of uploads, see above")
 
 
-@buck_test()
-async def test_re_uploads(buck: Buck) -> None:
+@yak_test()
+async def test_re_uploads(yak: Yak) -> None:
     args = ["-c", f"write.text={random_string()}"]
-    await buck.build("root//:write", *args)
-    await _assert_locally_executed_upload_attempted(buck, 1)
+    await yak.build("root//:write", *args)
+    await _assert_locally_executed_upload_attempted(yak, 1)
 
 
-@buck_test()
-async def test_re_uploads_dir(buck: Buck) -> None:
+@yak_test()
+async def test_re_uploads_dir(yak: Yak) -> None:
     args = ["-c", f"write.text={random_string()}"]
-    await buck.build("root//:write_in_dir", *args)
-    await _assert_locally_executed_upload_attempted(buck, 1)
+    await yak.build("root//:write_in_dir", *args)
+    await _assert_locally_executed_upload_attempted(yak, 1)
 
 
-@buck_test()
-async def test_re_uploads_limit(buck: Buck) -> None:
+@yak_test()
+async def test_re_uploads_limit(yak: Yak) -> None:
     args = ["-c", f"write.text={random_string()}"]
-    await buck.build("root//:write_xxl", *args)
-    await _assert_locally_executed_upload_attempted(buck, 0)
+    await yak.build("root//:write_xxl", *args)
+    await _assert_locally_executed_upload_attempted(yak, 0)
 
 
-@buck_test()
-async def test_re_uploads_default(buck: Buck) -> None:
+@yak_test()
+async def test_re_uploads_default(yak: Yak) -> None:
     args = ["-c", f"write.text={random_string()}"]
-    await buck.build("root//:write_default", *args)
-    await _assert_locally_executed_upload_attempted(buck, 0)
+    await yak.build("root//:write_default", *args)
+    await _assert_locally_executed_upload_attempted(yak, 0)
 
     args = [
         "-c",
@@ -97,5 +97,5 @@ async def test_re_uploads_default(buck: Buck) -> None:
         "-c",
         "yak.default_allow_cache_upload=true",
     ]
-    await buck.build("root//:write_default", *args)
-    await _assert_locally_executed_upload_attempted(buck, 1)
+    await yak.build("root//:write_default", *args)
+    await _assert_locally_executed_upload_attempted(yak, 1)

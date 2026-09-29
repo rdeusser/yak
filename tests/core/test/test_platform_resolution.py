@@ -6,15 +6,15 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-from e2e_util.api.buck import Buck
-from e2e_util.buck_workspace import buck_test
+from e2e_util.api.yak import Yak
+from e2e_util.yak_workspace import yak_test
 
 
-@buck_test()
-async def test_platform_resolution(buck: Buck) -> None:
+@yak_test()
+async def test_platform_resolution(yak: Yak) -> None:
     # Setup is such that test target is incompatible with testee's default
     # target platform.
-    await buck.test(
+    await yak.test(
         ":my_rule",
         test_executor="",
     )

@@ -23,10 +23,10 @@ use itertools::Itertools;
 use pagable::Pagable;
 use pagable::pagable_typetag;
 use yak_core::target_aliases::TargetAliasResolver;
-use yak_hash::BuckIndexSet;
+use yak_hash::YakIndexSet;
 
 use crate::dice::cells::HasCellResolver;
-use crate::legacy_configs::configs::LegacyBuckConfig;
+use crate::legacy_configs::configs::LegacyYakConfig;
 use crate::legacy_configs::dice::HasLegacyConfigs;
 
 #[derive(yak_error::Error, Debug)]
@@ -43,12 +43,12 @@ enum AliasResolutionError {
 }
 
 #[derive(Debug, Dupe, Clone, Allocative, Pagable)]
-pub struct BuckConfigTargetAliasResolver {
-    config: LegacyBuckConfig,
+pub struct YakConfigTargetAliasResolver {
+    config: LegacyYakConfig,
 }
 
-impl PartialEq for BuckConfigTargetAliasResolver {
-    fn eq(&self, other: &BuckConfigTargetAliasResolver) -> bool {
+impl PartialEq for YakConfigTargetAliasResolver {
+    fn eq(&self, other: &YakConfigTargetAliasResolver) -> bool {
         // `TargetAliasResolver` only uses `alias` section of yakconfig,
         // comparing only this section is enough.
         // Please update this code if `TargetAliasResolver` uses other yakconfigs.
@@ -62,7 +62,7 @@ impl PartialEq for BuckConfigTargetAliasResolver {
     }
 }
 
-impl TargetAliasResolver for BuckConfigTargetAliasResolver {
+impl TargetAliasResolver for YakConfigTargetAliasResolver {
     fn get<'a>(&'a self, name: &str) -> yak_error::Result<Option<&'a str>> {
         match self.resolve_alias(name) {
             Ok(a) => Ok(Some(a)),
@@ -77,8 +77,8 @@ impl TargetAliasResolver for BuckConfigTargetAliasResolver {
     }
 }
 
-impl BuckConfigTargetAliasResolver {
-    fn new(config: LegacyBuckConfig) -> Self {
+impl YakConfigTargetAliasResolver {
+    fn new(config: LegacyYakConfig) -> Self {
         Self { config }
     }
 
@@ -92,7 +92,7 @@ impl BuckConfigTargetAliasResolver {
         let mut alias = alias;
 
         let section = self.config.get_section("alias");
-        let mut stack = BuckIndexSet::<&str>::default();
+        let mut stack = YakIndexSet::<&str>::default();
         loop {
             if stack.contains(alias) {
                 return Err(AliasResolutionError::AliasCycle(
@@ -135,7 +135,7 @@ impl BuckConfigTargetAliasResolver {
 pub trait HasTargetAliasResolver<'d> {
     async fn target_alias_resolver(
         &mut self,
-    ) -> yak_error::Result<&'d BuckConfigTargetAliasResolver>;
+    ) -> yak_error::Result<&'d YakConfigTargetAliasResolver>;
 }
 
 #[derive(Debug, Display, Hash, PartialEq, Eq, Clone, Allocative, Pagable)]
@@ -144,16 +144,16 @@ struct TargetAliasResolverKey();
 
 #[async_trait]
 impl Key for TargetAliasResolverKey {
-    type Value = yak_error::Result<BuckConfigTargetAliasResolver>;
+    type Value = yak_error::Result<YakConfigTargetAliasResolver>;
 
     async fn compute(
         &self,
         ctx: &mut DiceComputations,
         _cancellations: &CancellationContext,
-    ) -> yak_error::Result<BuckConfigTargetAliasResolver> {
+    ) -> yak_error::Result<YakConfigTargetAliasResolver> {
         let root_cell = ctx.get_cell_resolver().await?.root_cell();
         let legacy_configs = ctx.get_legacy_config_for_cell(root_cell).await?;
-        Ok(BuckConfigTargetAliasResolver::new(legacy_configs.dupe()))
+        Ok(YakConfigTargetAliasResolver::new(legacy_configs.dupe()))
     }
 
     fn equality_behavior() -> EqualityBehavior<Self::Value> {
@@ -172,7 +172,7 @@ impl Key for TargetAliasResolverKey {
 impl<'d> HasTargetAliasResolver<'d> for DiceComputations<'d> {
     async fn target_alias_resolver(
         &mut self,
-    ) -> yak_error::Result<&'d BuckConfigTargetAliasResolver> {
+    ) -> yak_error::Result<&'d YakConfigTargetAliasResolver> {
         self.compute(&TargetAliasResolverKey())
             .await?
             .as_ref()
@@ -187,7 +187,7 @@ mod tests {
 
     use crate::legacy_configs;
     use crate::target_aliases::AliasResolutionError;
-    use crate::target_aliases::BuckConfigTargetAliasResolver;
+    use crate::target_aliases::YakConfigTargetAliasResolver;
 
     #[test]
     fn test_aliases() -> yak_error::Result<()> {
@@ -213,7 +213,7 @@ mod tests {
             "config",
         )?;
 
-        let target_alias_resolver = BuckConfigTargetAliasResolver::new(config);
+        let target_alias_resolver = YakConfigTargetAliasResolver::new(config);
 
         assert_eq!("//:foo", target_alias_resolver.resolve_alias("foo")?);
         assert_eq!("//:foo", target_alias_resolver.resolve_alias("bar")?);

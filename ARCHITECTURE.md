@@ -4,7 +4,7 @@ This repository holds yak, a build system, together with the Starlark interprete
 A user declares targets in build files (`YAK` by default) in Starlark. yak evaluates those files, configures each target for a platform, runs each rule's analysis to produce actions, and runs the actions locally or on a Remote Execution service.
 yak keeps its results in an incremental computation graph, so a later command recomputes only what its changed inputs affect.
 
-The repository is a fork of `facebook/buck2`. [Planned changes](#planned-changes) lists what the fork intends to change.
+The repository is a fork of `facebook/yak`. [Planned changes](#planned-changes) lists what the fork intends to change.
 `website/docs/concepts/architecture.md` describes the build phases for users. This document maps them to the code.
 
 ## Bird's-eye view
@@ -27,17 +27,17 @@ A build moves through four stages, each a family of DICE keys:
 
 ## Code map
 
-Paths are relative to the repository root. Rust crates under `app/` share the `buck2_` prefix.
+Paths are relative to the repository root. Rust crates under `app/` share the `yak_` prefix.
 
 ### Entry point and process model
 
 - `app/yak` is the `yak` binary. `main` in `bin/yak.rs` initializes every late binding before any thread starts, and `src/lib.rs` defines the top-level command line and dispatches each subcommand.
-- `app/yak_client_ctx` is the client runtime. It connects to or starts the daemon (`connect_buckd`, `BootstrapBuckdClient`), runs commands (`StreamingCommand`), and fans daemon events out to each `EventSubscriber`, such as the superconsole and the event log writer.
+- `app/yak_client_ctx` is the client runtime. It connects to or starts the daemon (`connect_yakd`, `BootstrapYakdClient`), runs commands (`StreamingCommand`), and fans daemon events out to each `EventSubscriber`, such as the superconsole and the event log writer.
 - `app/yak_client` implements most client commands (`build`, `test`, `targets`, `kill`, `status`, and others) in `src/commands/`.
 - `app/yak_cmd_*_client` crates implement the remaining client commands (`audit`, `completion`, `debug`, `docs`, `log`, `starlark`).
 - `app/yak_daemon` is the `yak daemon` process. It daemonizes, writes `yakd.pid` and `yakd.info` in the daemon directory (`~/.yak/yakd/<project root>/<isolation dir>/`), and starts the server. `app/yak_daemon/daemon_lifecycle.md` describes the startup, connection, and shutdown protocol.
 - `app/yak_cli_proto` defines the client-daemon protocol. `daemon.proto` declares `service DaemonApi`.
-- `app/yak_server` implements that service in `BuckdServer`, holds the daemon's state, and gives each request a `ServerCommandContext`.
+- `app/yak_server` implements that service in `YakdServer`, holds the daemon's state, and gives each request a `ServerCommandContext`.
 - `app/yak_server_ctx` declares the interfaces that server commands implement, and `app/yak_server_commands` and the `app/yak_cmd_*_server` crates implement them (`build`, `install`, `audit`, `docs`, `query`, `starlark`, `targets`).
 - `app/yak_concurrency` decides whether a command can run while other commands hold the daemon's DICE state (`ConcurrencyHandler`).
 
@@ -56,10 +56,10 @@ A client restarts the daemon when the daemon's `DaemonConstraints` do not satisf
 
 - `app/yak_fs` defines filesystem paths that know nothing of cells or projects (`ForwardRelativePath`, `AbsNormPath`, `FileName`).
 - `app/yak_core` defines cells (`CellName`, `CellPath`, `CellResolver`), project paths (`ProjectRelativePath`), packages and targets (`PackageLabel`, `TargetLabel`, `ConfiguredTargetLabel`), provider labels (`ProvidersLabel`), configurations (`ConfigurationData`), and target patterns (`ParsedPattern`). It does not depend on the `dice` crate.
-- `app/yak_common` reads files (`DiceFileComputations`, `FileOps`), yakconfig (`LegacyBuckConfig`, `HasLegacyConfigs`), cells, package listings, and build file names (`buildfiles.rs`) through DICE.
+- `app/yak_common` reads files (`DiceFileComputations`, `FileOps`), yakconfig (`LegacyYakConfig`, `HasLegacyConfigs`), cells, package listings, and build file names (`buildfiles.rs`) through DICE.
 - `app/yak_error` defines the error type used across the workspace (`yak_error::Error`, `yak_error::Result`), error tags (`ErrorTag`, generated from `app/yak_data/error.proto`), and the `yak_error!` and `internal_error!` macros.
 - `app/yak_env` defines the `yak_env!` macro (which reads an environment variable and registers it for `yak help-env`) and the soft error macros.
-- `app/yak_util`, `app/yak_hash` (`BuckMutMap`), `app/yak_directory` (directory trees and their digests), and `app/yak_http` (HTTP client) hold shared utilities.
+- `app/yak_util`, `app/yak_hash` (`YakMutMap`), `app/yak_directory` (directory trees and their digests), and `app/yak_http` (HTTP client) hold shared utilities.
 
 ### Loading and Starlark
 
@@ -100,13 +100,13 @@ Without an execution platform, this repository's build runs every action locally
 
 ### Tests
 
-- `app/yak_test` is the daemon side of `yak test` (`BuckTestOrchestrator`, `TestExecutionKey`). It launches a test executor process and serves the orchestrator API to it over gRPC.
+- `app/yak_test` is the daemon side of `yak test` (`YakTestOrchestrator`, `TestExecutionKey`). It launches a test executor process and serves the orchestrator API to it over gRPC.
 - `app/yak_test_api` and `app/yak_test_proto` define the protocol between yak and a test executor (`TestExecutor`, `TestOrchestrator`).
 - `app/yak_test_runner` is the built-in test executor, which runs as `yak internal-test-runner`. yak uses it unless `[test] v2_test_executor` names another executable.
 
 ### Events and logs
 
-- `app/yak_data` defines the event schema. `data.proto` declares `BuckEvent`.
+- `app/yak_data` defines the event schema. `data.proto` declares `YakEvent`.
 - `app/yak_events` creates and dispatches events inside a process (`EventDispatcher`, `EventSink`).
 - `app/yak_event_log` writes and reads event logs. Each command writes `yak-out/<isolation dir>/log/<timestamp>_<command>_<trace id>_events.pb.zst`.
 - `app/yak_cmd_log_client` implements `yak log`, which reads those files (`what-ran`, `what-failed`, `critical-path`, `replay`, and others).
@@ -115,7 +115,7 @@ Without an execution platform, this repository's build runs every action locally
 
 ### Rules and libraries
 
-- `prelude/` holds the Starlark rules and toolchains for every supported language (`prelude/cxx`, `prelude/rust`, `prelude/python`, and others). The binary embeds it as the `prelude` cell, and `yak init` configures new projects to use that copy. The prelude has no Java, Kotlin, Android, or JavaScript rules, as the owner chose on 2026-09-28 (`docs/exec-plans/completed/2026-09-29-remove-jvm-and-buck1-compatibility.md`). The `os` constraint in `prelude/os/constraints/` has an `android` value for C, C++, Rust, and Go code that targets Android.
+- `prelude/` holds the Starlark rules and toolchains for every supported language (`prelude/cxx`, `prelude/rust`, `prelude/python`, and others). The binary embeds it as the `prelude` cell, and `yak init` configures new projects to use that copy. The prelude has no Java, Kotlin, Android, or JavaScript rules, as the owner chose on 2026-09-28 (`docs/exec-plans/completed/2026-09-29-remove-jvm-and-yak1-compatibility.md`). The `os` constraint in `prelude/os/constraints/` has an `android` value for C, C++, Rust, and Go code that targets Android.
 - `gazebo/` holds small utility crates. `dupe` defines `Dupe`, a clone that is constant time and allocation-free.
 - `allocative/` measures memory use per type (`Allocative`).
 - `shed/` holds generic data structures that know nothing of yak (`lock_free_hashtable`, `static_interner`, `provider`, and others).
@@ -124,7 +124,7 @@ Without an execution platform, this repository's build runs every action locally
 ### Build and tooling
 
 - `Cargo.toml` defines the Cargo workspace. CI builds and tests the repository with Cargo.
-- `.yakconfig`, the `YAK` files, `build_defs/`, `toolchains/`, `third-party/`, and `bootstrap/` build the same crates with yak (see [Two build definitions](#two-build-definitions)).
+- `.yakconfig`, the `YAK` files, `build_defs/`, `toolchains/`, and `third-party/` build the same crates with yak (see [Two build definitions](#two-build-definitions)).
 - `test.py` runs clippy, rustdoc, and the unit and doc tests. CI runs it after building the binary.
 - `integrations/rust-project` generates `rust-project.json` for rust-analyzer from yak targets.
 - `tools/starlark_fmt` formats Starlark and build files.
@@ -162,7 +162,7 @@ Code that needs the behavior depends on the interface crate.
   - `yak_bxl` and `yak_configured`
 - The client-only binary does not depend on the Remote Execution client. The yak build produces that binary (`yak_client-bin`, compiled with `--cfg client_only`), which leaves out the daemon, the server, and every late-binding implementation.
 
-`//app_dep_graph_rules:test_buck2_dep_graph` checks the rules during analysis, so `yak build //app_dep_graph_rules:test_buck2_dep_graph` fails when a dependency breaks one. CI runs no yak build, and the tech-debt tracker records that gap.
+`//app_dep_graph_rules:test_yak_dep_graph` checks the rules during analysis, so `yak build //app_dep_graph_rules:test_yak_dep_graph` fails when a dependency breaks one. CI runs no yak build, and the tech-debt tracker records that gap.
 
 ### DICE correctness
 
@@ -180,7 +180,7 @@ Code that needs the behavior depends on the interface crate.
 ## Where input becomes typed values
 
 - Command-line arguments become clap structs in the client crates, which send protobuf requests from `app/yak_cli_proto` to the daemon.
-- yakconfig files become `LegacyBuckConfig`. Code reads a key through `BuckconfigKeyRef` and parses it into a typed value at the read.
+- yakconfig files become `LegacyYakConfig`. Code reads a key through `YakconfigKeyRef` and parses it into a typed value at the read.
 - Environment variables that configure yak are declared with `yak_env!`, which parses each into a typed value. Some code in `app/` reads other variables directly with `std::env::var`.
 - Build files become Starlark values, which attribute coercion (`AttrTypeCoerce`) checks against the rule's `AttributeSpec` and converts into `CoercedAttr` values on a `TargetNode`.
 - Target pattern strings become `ParsedPattern` values.
@@ -196,7 +196,7 @@ Errors carry tags (`ErrorTag`) that classify them, and `internal_error!` marks a
 
 ### Observability
 
-The daemon reports progress as `BuckEvent`s, which the client renders and writes to the event log.
+The daemon reports progress as `YakEvent`s, which the client renders and writes to the event log.
 `yak log` reads the event log, and `YAK_LOG` enables `tracing` output.
 `docs/developers/debugging.md` lists the commands.
 
@@ -204,25 +204,22 @@ The daemon reports progress as `BuckEvent`s, which the client renders and writes
 
 Two `cfg` flags change what a crate compiles:
 
-- `#[cfg(buck_build)]` code compiles only under yak. The macros in `build_defs/rust.bzl` set the flag. Under Cargo, `app/yak_external_cells_bundled` embeds the prelude through `build.rs`, and `app/yak/bin/yak.rs` sets jemalloc as the global allocator on Linux and macOS.
+- `#[cfg(yak_build)]` code compiles only under yak. The macros in `build_defs/rust.bzl` set the flag. Under Cargo, `app/yak_external_cells_bundled` embeds the prelude through `build.rs`, and `app/yak/bin/yak.rs` sets jemalloc as the global allocator on Linux and macOS.
 - `#[cfg(client_only)]` code compiles only in the client-only binary (see [Crate dependency rules](#crate-dependency-rules)).
 
 ### Two build definitions
 
 Each crate has a `Cargo.toml` and a `YAK` file, and a change to its dependencies updates both.
 The `YAK` files load their Rust macros from `build_defs/rust.bzl` and `build_defs/proto.bzl`, and they name crates in this repository as `//<path>:<crate>` (for example `//app/yak_core:yak_core`).
-They name third-party crates as `//third-party/rust:<crate>`. `reindeer buckify` generates `third-party/rust/YAK` from `third-party/rust/Cargo.toml`, and per-crate build settings live in `third-party/rust/fixups/`.
-Git ignores the generated `YAK`. Until it exists, `third-party/rust/YAK.missing` loads in its place and fails with the command that generates it (`[buildfile] name` in `.yakconfig`).
+They name third-party crates as `//third-party/rust:<crate>`, which this repository no longer defines, so the yak build of this repository does not load.
 `toolchains/YAK` defines the toolchains the build uses. `third-party/proto/` provides `protoc`, and `third-party/win/` provides the Windows libraries.
 `.yakconfig` sets `[external_cells] prelude = bundled`, so a yak build of this repository loads the prelude embedded in the running binary. Changes to `prelude/` take effect after a rebuild of the binary.
 
 ### Memory
 
 Cargo builds on Linux and macOS use jemalloc, and Windows builds use mimalloc (`#[global_allocator]` in `app/yak/bin/yak.rs`).
-yak builds on Linux and macOS use the system allocator, because `third-party/rust/fixups/tikv-jemalloc-sys` does not build jemalloc.
 `allocative` attributes memory to types, and `docs/developers/perf/memory.md` covers heap profiling.
 
 ## Planned changes
 
-- The rename to yak continues with the values that still name Buck, such as the `GOPACKAGESDRIVER_BUCK_OPTIONS` variable and the `buck-headers` directories of the C++ rules. `docs/exec-plans/active/2026-09-28-rename-the-fork.md` tracks the work.
 - The owner plans to remove what still ties the repository to Meta's upstream projects, such as the downloads from upstream releases. `docs/exec-plans/tech-debt-tracker.md` lists them under Upstream connections.

@@ -45,7 +45,7 @@ use yak_core::yak_env;
 use yak_data::clean_stale_result::PolicyMode;
 use yak_data::clean_stale_result::Trigger;
 use yak_data::error::ErrorTag;
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 use yak_error::yak_error;
 use yak_events::dispatch::EventDispatcher;
 use yak_events::dispatch::get_dispatcher_opt;
@@ -63,7 +63,7 @@ use yak_execute::materialize::materializer::MaterializationPurpose;
 use yak_fs::fs_util::disk_space_stats;
 use yak_fs::paths::abs_path::AbsPath;
 use yak_fs::paths::abs_path::AbsPathBuf;
-use yak_hash::BuckMutSet;
+use yak_hash::YakMutSet;
 use yak_util::threads::check_stack_overflow;
 
 use crate::materializers::deferred::AccessTimesUpdates;
@@ -123,7 +123,7 @@ pub(super) struct DeferredMaterializerCommandProcessor<T: 'static> {
     ttl_refresh_instance: Option<oneshot::Receiver<(Timestamp, yak_error::Result<()>)>>,
     pub(super) cancellations: &'static CancellationContext,
     pub(super) stats: Arc<DeferredMaterializerStats>,
-    access_times_buffer: Option<BuckMutSet<ProjectRelativePathBuf>>,
+    access_times_buffer: Option<YakMutSet<ProjectRelativePathBuf>>,
     verbose_materializer_log: bool,
     daemon_dispatcher: EventDispatcher,
     /// Filesystem root used for clean-stale `disk_space_stats` lookups.
@@ -429,7 +429,7 @@ impl<T: IoHandler> DeferredMaterializerCommandProcessor<T> {
         tree: ArtifactTree,
         cancellations: &'static CancellationContext,
         stats: Arc<DeferredMaterializerStats>,
-        access_times_buffer: Option<BuckMutSet<ProjectRelativePathBuf>>,
+        access_times_buffer: Option<YakMutSet<ProjectRelativePathBuf>>,
         verbose_materializer_log: bool,
         daemon_dispatcher: EventDispatcher,
         clean_stale_config: CleanStaleConfig,
@@ -911,7 +911,7 @@ impl<T: IoHandler> DeferredMaterializerCommandProcessor<T> {
 
     fn promote_final_output_closure(&mut self, paths: &[ProjectRelativePathBuf]) {
         let mut pending = paths.to_vec();
-        let mut visited: BuckMutSet<ProjectRelativePathBuf> = BuckMutSet::default();
+        let mut visited: YakMutSet<ProjectRelativePathBuf> = YakMutSet::default();
         let mut materialized_roots = Vec::new();
 
         // Traverse all artifacts and deps transitively
@@ -1481,7 +1481,7 @@ impl<T: IoHandler> DeferredMaterializerCommandProcessor<T> {
         if let Some(cleaning_fut) = cleaning_future {
             cleaning_fut
                 .await
-                .with_buck_error_context(|| "Error cleaning output path")
+                .with_yak_error_context(|| "Error cleaning output path")
                 .map_err(SharedMaterializingError::Error)?;
         };
 

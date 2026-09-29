@@ -56,13 +56,13 @@ use yak_build_signals::env::WaitingData;
 use yak_common::file_ops::metadata::TrackedFileDigest;
 use yak_core::category::CategoryRef;
 use yak_core::content_hash::ContentBasedPathHash;
-use yak_error::BuckErrorOptionContext;
+use yak_error::YakErrorOptionContext;
 use yak_execute::artifact::fs::ExecutorFs;
 use yak_execute::execute::command_executor::ActionExecutionTimingData;
 use yak_execute::materialize::materializer::WriteRequest;
-use yak_hash::BuckIndexMap;
-use yak_hash::BuckIndexSet;
-use yak_hash::buck_indexmap;
+use yak_hash::YakIndexMap;
+use yak_hash::YakIndexSet;
+use yak_hash::yak_indexmap;
 
 use crate::actions::impls::run::DepFilesPlaceholderArtifactPathMapper;
 use crate::actions::impls::write::CommandLineContentBasedInputVisitor;
@@ -107,7 +107,7 @@ impl UnregisteredWriteJsonAction {
 impl UnregisteredAction for UnregisteredWriteJsonAction {
     fn register(
         self: Box<Self>,
-        outputs: BuckIndexSet<BuildArtifact>,
+        outputs: YakIndexSet<BuildArtifact>,
         starlark_data: Option<OwnedFrozen<Value<'static>>>,
         _error_handler: Option<OwnedFrozen<Value<'static>>>,
     ) -> yak_error::Result<Box<dyn Action>> {
@@ -127,7 +127,7 @@ struct WriteJsonAction {
 impl WriteJsonAction {
     fn new(
         contents: OwnedFrozen<Value<'static>>,
-        outputs: BuckIndexSet<BuildArtifact>,
+        outputs: YakIndexSet<BuildArtifact>,
         inner: UnregisteredWriteJsonAction,
     ) -> yak_error::Result<Self> {
         contents.by_ref(|v| -> yak_error::Result<()> {
@@ -211,13 +211,13 @@ impl Action for WriteJsonAction {
         &self,
         fs: &ExecutorFs,
         artifact_path_mapping: &dyn ArtifactPathMapper,
-    ) -> BuckIndexMap<String, String> {
+    ) -> YakIndexMap<String, String> {
         let res: yak_error::Result<String> = try {
             let content = self.get_contents(fs, artifact_path_mapping)?;
             String::from_utf8(content).map_err(yak_error::Error::from)?
         };
         // TODO(cjhopman): We should change this api to support returning a Result.
-        buck_indexmap! {
+        yak_indexmap! {
             "contents".to_owned() => match res {
                 Ok(v) => v,
                 Err(e) => format!("ERROR: constructing contents ({e})")
@@ -275,7 +275,7 @@ impl Action for WriteJsonAction {
             - execution_start.internal_error("Action did not set execution_start")?;
 
         Ok((
-            ActionOutputs::new(buck_indexmap![self.output.get_path().dupe() => value]),
+            ActionOutputs::new(yak_indexmap![self.output.get_path().dupe() => value]),
             ActionExecutionMetadata {
                 dep_file_db_writes_queued: 0,
                 execution_kind: ActionExecutionKind::Simple,

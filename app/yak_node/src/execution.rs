@@ -14,7 +14,7 @@ use async_trait::async_trait;
 use dice::DiceComputations;
 use futures::FutureExt;
 use futures::future::BoxFuture;
-use yak_common::legacy_configs::key::BuckconfigKeyRef;
+use yak_common::legacy_configs::key::YakconfigKeyRef;
 use yak_core::execution_types::execution::ExecutionPlatformIncompatibleReason;
 use yak_core::execution_types::execution::ExecutionPlatformResolutionPartial;
 use yak_core::execution_types::execution_platforms::ExecutionPlatforms;
@@ -25,7 +25,7 @@ use yak_util::late_binding::LateBinding;
 use crate::configuration::calculation::CellNameForConfigurationResolution;
 use crate::configuration::resolved::ConfigurationSettingKey;
 
-pub const EXECUTION_PLATFORMS_BUCKCONFIG: BuckconfigKeyRef = BuckconfigKeyRef {
+pub const EXECUTION_PLATFORMS_YAKCONFIG: YakconfigKeyRef = YakconfigKeyRef {
     section: "build",
     property: "execution_platforms",
 };

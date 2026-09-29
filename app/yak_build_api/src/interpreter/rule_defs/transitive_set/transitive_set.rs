@@ -47,8 +47,8 @@ use yak_artifact::artifact::artifact_type::Artifact;
 use yak_artifact::artifact::artifact_type::OutputArtifact;
 use yak_core::configuration::data::ConfigurationData;
 use yak_core::deferred::base_deferred_key::BaseDeferredKey;
-use yak_error::BuckErrorContext;
-use yak_error::BuckErrorOptionContext;
+use yak_error::YakErrorContext;
+use yak_error::YakErrorOptionContext;
 use yak_error::internal_error;
 use yak_error::yak_error;
 
@@ -581,12 +581,12 @@ impl<'v> TransitiveSet<'v> {
 
         let projection_path_resolution_may_require_artifact_value =
             ProjectionBitSet::from_bools(&projection_path_resolution_may_require_artifact_value)
-                .with_buck_error_context(|| {
+                .with_yak_error_context(|| {
                     format!("in transitive set {:?}", definition.as_debug())
                 })?;
         let projection_is_eligible_for_dedupe =
             ProjectionBitSet::from_bools(&projection_is_eligible_for_dedupe_iter)
-                .with_buck_error_context(|| {
+                .with_yak_error_context(|| {
                     format!("in transitive set {:?}", definition.as_debug())
                 })?;
 

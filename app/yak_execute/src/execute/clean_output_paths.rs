@@ -11,7 +11,7 @@
 use yak_core::fs::project::ProjectRoot;
 use yak_core::fs::project_rel_path::ProjectRelativePath;
 use yak_core::fs::project_rel_path::ProjectRelativePathBuf;
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 use yak_error::yak_error;
 use yak_fs::error::IoResultExt;
 use yak_fs::fs_util;
@@ -31,7 +31,7 @@ impl CleanOutputPaths {
     ) -> yak_error::Result<()> {
         for path in paths {
             cleanup_path(fs, path)
-                .with_buck_error_context(|| format!("Error cleaning up output path `{path}`"))?;
+                .with_yak_error_context(|| format!("Error cleaning up output path `{path}`"))?;
         }
         Ok(())
     }

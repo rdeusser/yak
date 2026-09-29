@@ -15,4 +15,4 @@ pub mod parser;
 mod path;
 pub mod settings;
 
-pub use settings::BuckSettings;
+pub use settings::YakSettings;

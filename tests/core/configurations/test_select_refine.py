@@ -8,15 +8,15 @@
 
 import json
 
-from e2e_util.api.buck import Buck
-from e2e_util.buck_workspace import buck_test
+from e2e_util.api.yak import Yak
+from e2e_util.yak_workspace import yak_test
 
 
-@buck_test()
-async def test_select_refine(buck: Buck) -> None:
+@yak_test()
+async def test_select_refine(yak: Yak) -> None:
     # Smoke test for select refinement:
     # the most specific option is picked even if it is not listed first.
-    out = await buck.cquery(
+    out = await yak.cquery(
         "--target-platforms=//:p-good-domestic",
         "-a=labels",
         "//:the-test",

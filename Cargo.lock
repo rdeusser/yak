@@ -617,7 +617,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "buck-resources"
+name = "yak-resources"
 version = "1.0.0"
 dependencies = [
  "dunce",

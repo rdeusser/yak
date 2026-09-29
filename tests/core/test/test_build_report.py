@@ -10,9 +10,9 @@ import json
 from pathlib import Path
 from typing import List
 
-from e2e_util.api.buck import Buck
+from e2e_util.api.yak import Yak
 from e2e_util.asserts import expect_failure
-from e2e_util.buck_workspace import buck_test
+from e2e_util.yak_workspace import yak_test
 from e2e_util.helper.golden import (
     golden,
     sanitize_build_report,
@@ -21,18 +21,18 @@ from e2e_util.helper.golden import (
 
 
 def build_report_test(name: str, command: List[str], should_fail: bool) -> None:
-    async def impl(buck: Buck, tmp_path: Path) -> None:
+    async def impl(yak: Yak, tmp_path: Path) -> None:
         report = tmp_path / "build-report.json"
         if should_fail:
             await expect_failure(
-                buck.test(
+                yak.test(
                     "--build-report",
                     str(report),
                     *command,
                 )
             )
         else:
-            await buck.test("--build-report", str(report), *command)
+            await yak.test("--build-report", str(report), *command)
 
         with open(report) as file:
             report = json.loads(file.read())
@@ -49,7 +49,7 @@ def build_report_test(name: str, command: List[str], should_fail: bool) -> None:
 
     globals()[name] = impl
 
-    return buck_test()(impl)
+    return yak_test()(impl)
 
 
 build_report_test(

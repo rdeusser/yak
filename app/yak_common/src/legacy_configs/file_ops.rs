@@ -19,8 +19,8 @@ use pagable::Pagable;
 use yak_core::cells::CellResolver;
 use yak_core::fs::project::ProjectRoot;
 use yak_core::fs::project_rel_path::ProjectRelativePathBuf;
-use yak_error::BuckErrorContext;
-use yak_error::BuckErrorOptionContext;
+use yak_error::YakErrorContext;
+use yak_error::YakErrorOptionContext;
 use yak_error::ErrorTag;
 use yak_fs::IoResultExt;
 use yak_fs::fs_util;
@@ -117,7 +117,7 @@ impl ConfigParserFileOps for DefaultConfigParserFileOps {
     ) -> yak_error::Result<Option<Vec<String>>> {
         let path = path.resolve_absolute(&self.project_fs);
         let Some(f) = fs_util::open_file_if_exists(&path)
-            .with_buck_error_context(|| format!("Reading file `{path:?}`"))?
+            .with_yak_error_context(|| format!("Reading file `{path:?}`"))?
         else {
             return Ok(None);
         };
@@ -127,7 +127,7 @@ impl ConfigParserFileOps for DefaultConfigParserFileOps {
             .lines()
             .collect::<Result<Vec<_>, _>>()
             .map_err(|e| IoError::new_with_path("read_line", path, e))
-            .categorize_tagged(ErrorTag::BuckconfigRead)?;
+            .categorize_tagged(ErrorTag::YakconfigRead)?;
 
         Ok(Some(lines))
     }
@@ -249,7 +249,7 @@ impl ConfigParserFileOps for DiceConfigFileOps<'_, '_> {
 }
 
 pub(crate) fn push_all_files_from_a_directory<'a>(
-    buckconfig_paths: &'a mut Vec<ConfigPath>,
+    yakconfig_paths: &'a mut Vec<ConfigPath>,
     folder_path: &'a ConfigPath,
     file_ops: &'a mut dyn ConfigParserFileOps,
 ) -> BoxFuture<'a, yak_error::Result<()>> {
@@ -257,9 +257,9 @@ pub(crate) fn push_all_files_from_a_directory<'a>(
         for entry in file_ops.read_dir(folder_path).await? {
             let entry_path = folder_path.join(&entry.name);
             if entry.is_dir {
-                push_all_files_from_a_directory(buckconfig_paths, &entry_path, file_ops).await?;
+                push_all_files_from_a_directory(yakconfig_paths, &entry_path, file_ops).await?;
             } else {
-                buckconfig_paths.push(entry_path);
+                yakconfig_paths.push(entry_path);
             }
         }
 

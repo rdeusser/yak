@@ -6,14 +6,14 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-from e2e_util.api.buck import Buck
-from e2e_util.buck_workspace import buck_test
+from e2e_util.api.yak import Yak
+from e2e_util.yak_workspace import yak_test
 
 
-@buck_test()
-async def test_summary_command(buck: Buck) -> None:
-    await buck.build("//:my_rule")
-    out = await buck.log("summary")
+@yak_test()
+async def test_summary_command(yak: Yak) -> None:
+    await yak.build("//:my_rule")
+    out = await yak.log("summary")
 
     assert "Showing summary from:" in out.stdout
     assert "Targets Analyzed: 1" in out.stdout

@@ -9,13 +9,13 @@
  */
 
 use dupe::OptionDupedExt;
-use yak_hash::BuckMutMap;
+use yak_hash::YakMutMap;
 use yak_node::nodes::configured::ConfiguredTargetNode;
 
 use crate::analysis::environment::ConfiguredGraphQueryEnvironmentDelegate;
 
 pub(crate) struct AnalysisConfiguredGraphQueryDelegate {
-    pub(crate) resolved_literals: BuckMutMap<String, ConfiguredTargetNode>,
+    pub(crate) resolved_literals: YakMutMap<String, ConfiguredTargetNode>,
 }
 
 impl ConfiguredGraphQueryEnvironmentDelegate for AnalysisConfiguredGraphQueryDelegate {

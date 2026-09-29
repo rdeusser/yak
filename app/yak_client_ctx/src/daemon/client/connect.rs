@@ -35,8 +35,8 @@ use tonic::service::Interceptor;
 use tonic::transport::Channel;
 use yak_cli_proto::DaemonProcessInfo;
 use yak_cli_proto::daemon_api_client::DaemonApiClient;
-use yak_common::buckd_connection::BUCK_AUTH_TOKEN_HEADER;
-use yak_common::buckd_connection::ConnectionType;
+use yak_common::yakd_connection::YAK_AUTH_TOKEN_HEADER;
+use yak_common::yakd_connection::ConnectionType;
 use yak_common::client_utils::RetryError;
 use yak_common::client_utils::get_channel_tcp;
 use yak_common::client_utils::get_channel_uds;
@@ -46,8 +46,8 @@ use yak_common::init::DaemonStartupConfig;
 use yak_common::invocation_paths::InvocationPaths;
 use yak_core::yak_env;
 use yak_data::DaemonWasStartedReason;
-use yak_error::BuckErrorContext;
-use yak_error::BuckErrorOptionContext;
+use yak_error::YakErrorContext;
+use yak_error::YakErrorOptionContext;
 use yak_error::ErrorTag;
 use yak_error::conversion::from_any_with_tag;
 use yak_error::yak_error;
@@ -60,9 +60,9 @@ use yak_wrapper_common::kill::process_exists;
 use yak_wrapper_common::pid::Pid;
 
 use crate::command_outcome::CommandOutcome;
-use crate::daemon::client::BuckdClient;
-use crate::daemon::client::BuckdClientConnector;
-use crate::daemon::client::BuckdLifecycleLock;
+use crate::daemon::client::YakdClient;
+use crate::daemon::client::YakdClientConnector;
+use crate::daemon::client::YakdLifecycleLock;
 use crate::daemon::client::kill;
 use crate::daemon::client::kill::hard_kill_until;
 use crate::daemon::daemon_windows::spawn_background_process_on_windows;
@@ -209,13 +209,13 @@ pub enum DaemonStartupMode {
 
 #[derive(Debug, Clone)]
 #[allow(clippy::large_enum_variant)]
-pub enum BuckdConnectOptions {
+pub enum YakdConnectOptions {
     ExistingOnly,
-    Options(BuckdConnectDaemonOptions),
+    Options(YakdConnectDaemonOptions),
 }
 
 #[derive(Debug, Clone)]
-pub struct BuckdConnectDaemonOptions {
+pub struct YakdConnectDaemonOptions {
     pub(crate) constraints: DaemonConstraintsRequest,
     pub(crate) daemon_startup_mode: DaemonStartupMode,
 }
@@ -233,15 +233,15 @@ async fn get_channel(
 }
 
 #[derive(Clone)]
-pub struct BuckAddAuthTokenInterceptor {
+pub struct YakAddAuthTokenInterceptor {
     auth_token: AsciiMetadataValue,
 }
 
-impl Interceptor for BuckAddAuthTokenInterceptor {
+impl Interceptor for YakAddAuthTokenInterceptor {
     fn call(&mut self, mut request: Request<()>) -> Result<Request<()>, Status> {
         request
             .metadata_mut()
-            .append(BUCK_AUTH_TOKEN_HEADER, self.auth_token.clone());
+            .append(YAK_AUTH_TOKEN_HEADER, self.auth_token.clone());
         Ok(request)
     }
 }
@@ -249,11 +249,11 @@ impl Interceptor for BuckAddAuthTokenInterceptor {
 pub async fn new_daemon_api_client(
     endpoint: ConnectionType,
     auth_token: String,
-) -> yak_error::Result<DaemonApiClient<InterceptedService<Channel, BuckAddAuthTokenInterceptor>>> {
+) -> yak_error::Result<DaemonApiClient<InterceptedService<Channel, YakAddAuthTokenInterceptor>>> {
     let channel = get_channel(endpoint, true).await?;
     Ok(DaemonApiClient::with_interceptor(
         channel,
-        BuckAddAuthTokenInterceptor {
+        YakAddAuthTokenInterceptor {
             auth_token: AsciiMetadataValue::try_from(auth_token)
                 .map_err(|e| from_any_with_tag(e, ErrorTag::InvalidAuthToken))?,
         },
@@ -262,13 +262,13 @@ pub async fn new_daemon_api_client(
     .max_decoding_message_size(usize::MAX))
 }
 
-pub fn buckd_startup_timeout() -> yak_error::Result<Duration> {
+pub fn yakd_startup_timeout() -> yak_error::Result<Duration> {
     Ok(Duration::from_secs(
         yak_env!("YAKD_STARTUP_TIMEOUT", type=u64)?.unwrap_or(10),
     ))
 }
 
-pub fn buckd_startup_init_timeout() -> yak_error::Result<Duration> {
+pub fn yakd_startup_init_timeout() -> yak_error::Result<Duration> {
     Ok(Duration::from_secs(
         yak_env!("YAKD_STARTUP_INIT_TIMEOUT", type=u64)?.unwrap_or(90),
     ))
@@ -280,7 +280,7 @@ struct ExecutableAndArgs<'a> {
 }
 
 async fn get_unix_daemon_and_args<'a>(
-    _options: &BuckdConnectDaemonOptions,
+    _options: &YakdConnectDaemonOptions,
     args: Vec<&'a str>,
 ) -> yak_error::Result<ExecutableAndArgs<'a>> {
     Ok(ExecutableAndArgs {
@@ -291,30 +291,30 @@ async fn get_unix_daemon_and_args<'a>(
 
 /// Responsible for starting the daemon when no daemon is running.
 /// This struct holds a lock such that only one daemon is ever started per daemon directory.
-struct BuckdLifecycle<'a> {
+struct YakdLifecycle<'a> {
     paths: &'a InvocationPaths,
-    lock: BuckdLifecycleLock,
+    lock: YakdLifecycleLock,
 }
 
-impl<'a> BuckdLifecycle<'a> {
+impl<'a> YakdLifecycle<'a> {
     async fn lock_with_timeout(
         paths: &'a InvocationPaths,
         deadline: StartupDeadline,
-    ) -> yak_error::Result<BuckdLifecycle<'a>> {
-        Ok(BuckdLifecycle::<'a> {
+    ) -> yak_error::Result<YakdLifecycle<'a>> {
+        Ok(YakdLifecycle::<'a> {
             paths,
-            lock: BuckdLifecycleLock::lock_with_timeout(paths.daemon_dir()?, deadline).await?,
+            lock: YakdLifecycleLock::lock_with_timeout(paths.daemon_dir()?, deadline).await?,
         })
     }
 
     fn clean_daemon_dir(&self) -> yak_error::Result<()> {
         self.lock
             .clean_daemon_dir(true)
-            .buck_error_context("Cleaning daemon dir")
+            .yak_error_context("Cleaning daemon dir")
             .tag(ErrorTag::DaemonDirCleanupFailed)
     }
 
-    async fn start_server(&self, options: &BuckdConnectDaemonOptions) -> yak_error::Result<()> {
+    async fn start_server(&self, options: &YakdConnectDaemonOptions) -> yak_error::Result<()> {
         let constraints = &options.constraints;
         let mut args = vec!["--isolation-dir", self.paths.isolation.as_str(), "daemon"];
 
@@ -344,7 +344,7 @@ impl<'a> BuckdLifecycle<'a> {
         // TODO(nga): We create too many backtraces during `attrs.source()` coercion. Can be
         //   reproduced with this command:
         //   ```
-        //   yak --isolation-dir=xx audit providers root//:buck2 --quiet
+        //   yak --isolation-dir=xx audit providers root//:yak --quiet
         //   ```
         //   Which regresses from 15s to 80s when `RUST_LIB_BACKTRACE` is set. So we disable
         //   backtraces in the daemon unless the user has explicitly asked for them. We
@@ -411,7 +411,7 @@ impl<'a> BuckdLifecycle<'a> {
         daemon_id: &DaemonId,
     ) -> yak_error::Result<()> {
         let project_dir = self.paths.project_root();
-        let timeout_secs = buckd_startup_timeout()?;
+        let timeout_secs = yakd_startup_timeout()?;
 
         // Create a unique name that we know won't overlap with other yak daemons and has enough
         // information to understand at least a little bit about which daemon it is
@@ -483,7 +483,7 @@ impl<'a> BuckdLifecycle<'a> {
             match result {
                 Err(_elapsed) => {
                     // The command has timed out, kill the process and wait
-                    child.kill().await.buck_error_context(
+                    child.kill().await.yak_error_context(
                         "Error killing process after yak daemon launch timing out",
                     )?;
                     // This should return immediately as kill() waits for the process to end. We wait here again to fetch the ExitStatus
@@ -492,7 +492,7 @@ impl<'a> BuckdLifecycle<'a> {
                         child
                             .wait()
                             .await
-                            .buck_error_context("Daemon startup timed out")?,
+                            .yak_error_context("Daemon startup timed out")?,
                     )
                 }
                 Ok(result) => result.map_err(yak_error::Error::from),
@@ -503,7 +503,7 @@ impl<'a> BuckdLifecycle<'a> {
             stdout_taken
                 .read_to_end(&mut buf)
                 .await
-                .buck_error_context("Error reading stdout of child")?;
+                .yak_error_context("Error reading stdout of child")?;
             Ok(buf)
         };
         let stderr_fut = async {
@@ -511,7 +511,7 @@ impl<'a> BuckdLifecycle<'a> {
             stderr_taken
                 .read_to_end(&mut buf)
                 .await
-                .buck_error_context("Error reading stderr of child")?;
+                .yak_error_context("Error reading stderr of child")?;
             Ok(buf)
         };
 
@@ -521,11 +521,11 @@ impl<'a> BuckdLifecycle<'a> {
         // so we wait for termination of the child process.
         let joined = try_join3(status_fut, stdout_fut, stderr_fut).await;
         match joined {
-            Err(error) => Err(BuckdConnectError::BuckDaemonLaunchFailed { error }.into()),
+            Err(error) => Err(YakdConnectError::YakDaemonLaunchFailed { error }.into()),
             Ok((status, stdout, stderr)) => {
                 if !status.success() {
                     let exit_status_error = yak_error::Error::from(status);
-                    Err(BuckdConnectError::BuckDaemonStartupFailed {
+                    Err(YakdConnectError::YakDaemonStartupFailed {
                         stdout: String::from_utf8_lossy(&stdout).to_string(),
                         stderr: String::from_utf8_lossy(&stderr).to_string(),
                         exit_status_error,
@@ -540,17 +540,17 @@ impl<'a> BuckdLifecycle<'a> {
 }
 
 /// Represents an established connection to the daemon. We then upgrade it into a
-/// BootstrapBuckdClient by querying constraints. This is a separate step so that we retry
+/// BootstrapYakdClient by querying constraints. This is a separate step so that we retry
 /// establishing the channel but not querying constraints.
-pub struct BuckdChannel {
+pub struct YakdChannel {
     info: DaemonProcessInfo,
     daemon_dir: DaemonDir,
-    client: DaemonApiClient<InterceptedService<Channel, BuckAddAuthTokenInterceptor>>,
+    client: DaemonApiClient<InterceptedService<Channel, YakAddAuthTokenInterceptor>>,
 }
 
-impl BuckdChannel {
-    /// Upgrade this BuckdChannel to a BootstrapBuckdClient.
-    pub async fn upgrade(self) -> yak_error::Result<BootstrapBuckdClient> {
+impl YakdChannel {
+    /// Upgrade this YakdChannel to a BootstrapYakdClient.
+    pub async fn upgrade(self) -> yak_error::Result<BootstrapYakdClient> {
         let Self {
             info,
             daemon_dir,
@@ -559,9 +559,9 @@ impl BuckdChannel {
 
         let daemon_status = get_daemon_status(&mut client)
             .await
-            .buck_error_context("Error obtaining daemon status")?;
+            .yak_error_context("Error obtaining daemon status")?;
 
-        Ok(BootstrapBuckdClient {
+        Ok(BootstrapYakdClient {
             info,
             daemon_dir,
             client,
@@ -571,31 +571,31 @@ impl BuckdChannel {
     }
 }
 
-/// Client used for connection setup. Can be used to create BuckdClientConnector instances later.
+/// Client used for connection setup. Can be used to create YakdClientConnector instances later.
 #[derive(Clone)]
-pub struct BootstrapBuckdClient {
+pub struct BootstrapYakdClient {
     info: DaemonProcessInfo,
     daemon_dir: DaemonDir,
-    client: DaemonApiClient<InterceptedService<Channel, BuckAddAuthTokenInterceptor>>,
+    client: DaemonApiClient<InterceptedService<Channel, YakAddAuthTokenInterceptor>>,
     /// The constraints for the daemon we're connected to.
     constraints: yak_cli_proto::DaemonConstraints,
     daemon_start_instant: Option<Instant>,
 }
 
-impl BootstrapBuckdClient {
+impl BootstrapYakdClient {
     pub async fn connect(
         paths: &InvocationPaths,
-        options: BuckdConnectOptions,
+        options: YakdConnectOptions,
         events_ctx: &mut EventsCtx,
     ) -> yak_error::Result<Self> {
         let daemon_dir = paths.daemon_dir()?;
 
         fs_util::create_dir_all(&daemon_dir.path)
-            .with_buck_error_context(|| format!("Error creating daemon dir: {daemon_dir}"))?;
+            .with_yak_error_context(|| format!("Error creating daemon dir: {daemon_dir}"))?;
 
         let res = match &options {
-            BuckdConnectOptions::ExistingOnly => establish_connection_existing(&daemon_dir).await,
-            BuckdConnectOptions::Options(options) => {
+            YakdConnectOptions::ExistingOnly => establish_connection_existing(&daemon_dir).await,
+            YakdConnectOptions::Options(options) => {
                 establish_connection(paths, options, events_ctx).await
             }
         };
@@ -609,12 +609,12 @@ impl BootstrapBuckdClient {
         }
     }
 
-    pub fn to_connector(self) -> BuckdClientConnector {
+    pub fn to_connector(self) -> YakdClientConnector {
         let daemon_pid = self.info.pid;
-        let cgroup_path_of_buck2_daemon = {
+        let cgroup_path_of_yak_daemon = {
             #[cfg(target_os = "linux")]
             {
-                yak_resource_control::buck_cgroup_tree::read_cgroup_path_of_buck2_daemon(daemon_pid)
+                yak_resource_control::yak_cgroup_tree::read_cgroup_path_of_yak_daemon(daemon_pid)
                     .ok()
                     .flatten()
             }
@@ -623,14 +623,14 @@ impl BootstrapBuckdClient {
                 None
             }
         };
-        BuckdClientConnector {
-            client: BuckdClient {
+        YakdClientConnector {
+            client: YakdClient {
                 daemon_dir: self.daemon_dir,
                 client: self.client,
                 constraints: self.constraints,
             },
             daemon_pid,
-            cgroup_path_of_buck2_daemon,
+            cgroup_path_of_yak_daemon,
             daemon_start_instant: self.daemon_start_instant,
         }
     }
@@ -653,14 +653,14 @@ impl BootstrapBuckdClient {
 /// Attempt to connect to a daemon that can satisfy specified constraints.
 /// If the daemon does not match constraints (different version or does not enable I/O tracing),
 /// it will kill it and restart it with the correct constraints.
-/// This behavior can be overridden by passing `BuckdConnectOptions::ExistingOnly`.
+/// This behavior can be overridden by passing `YakdConnectOptions::ExistingOnly`.
 /// In that case, then any existing yak daemon (regardless of constraint) is accepted.
-pub async fn connect_buckd(
-    options: BuckdConnectOptions,
+pub async fn connect_yakd(
+    options: YakdConnectOptions,
     events_ctx: &mut EventsCtx,
     paths: &InvocationPaths,
-) -> yak_error::Result<BuckdClientConnector> {
-    match BootstrapBuckdClient::connect(paths, options, events_ctx).await {
+) -> yak_error::Result<YakdClientConnector> {
+    match BootstrapYakdClient::connect(paths, options, events_ctx).await {
         Ok(client) => Ok(client.to_connector()),
         Err(e) => {
             events_ctx.handle_daemon_connection_failure();
@@ -671,13 +671,13 @@ pub async fn connect_buckd(
 
 pub async fn establish_connection_existing(
     daemon_dir: &DaemonDir,
-) -> yak_error::Result<BootstrapBuckdClient> {
-    let deadline = StartupDeadline::duration_from_now(buckd_startup_timeout()?)?;
+) -> yak_error::Result<BootstrapYakdClient> {
+    let deadline = StartupDeadline::duration_from_now(yakd_startup_timeout()?)?;
     deadline
         .run(
             "establishing connection to existing yak daemon",
             async move {
-                BuckdProcessInfo::load(daemon_dir)?
+                YakdProcessInfo::load(daemon_dir)?
                     .create_channel()
                     .await?
                     .upgrade()
@@ -689,12 +689,12 @@ pub async fn establish_connection_existing(
 
 async fn establish_connection(
     paths: &InvocationPaths,
-    options: &BuckdConnectDaemonOptions,
+    options: &YakdConnectDaemonOptions,
     events_ctx: &mut EventsCtx,
-) -> yak_error::Result<BootstrapBuckdClient> {
+) -> yak_error::Result<BootstrapYakdClient> {
     // There are many places where `establish_connection_inner` may hang.
     // If it does, better print something to the user instead of hanging quietly forever.
-    let timeout = buckd_startup_init_timeout()?;
+    let timeout = yakd_startup_init_timeout()?;
     let deadline = StartupDeadline::duration_from_now(timeout)?;
     deadline
         .down(
@@ -718,8 +718,8 @@ fn explain_failed_to_connect_reason(reason: yak_data::DaemonWasStartedReason) ->
         }
         DaemonWasStartedReason::TimedOutConnectingToDaemon => "Timed out connecting to daemon",
         DaemonWasStartedReason::TimeoutCalculationError => "Timeout calculation error",
-        DaemonWasStartedReason::NoBuckdInfo => "No yakd.info",
-        DaemonWasStartedReason::CouldNotLoadBuckdInfo => "Could not load yakd.info",
+        DaemonWasStartedReason::NoYakdInfo => "No yakd.info",
+        DaemonWasStartedReason::CouldNotLoadYakdInfo => "Could not load yakd.info",
         DaemonWasStartedReason::NoDaemonProcess => "yak daemon is not running",
     }
 }
@@ -727,10 +727,10 @@ fn explain_failed_to_connect_reason(reason: yak_data::DaemonWasStartedReason) ->
 #[allow(clippy::collapsible_match)]
 async fn establish_connection_inner(
     paths: &InvocationPaths,
-    options: &BuckdConnectDaemonOptions,
+    options: &YakdConnectDaemonOptions,
     deadline: StartupDeadline,
     events_ctx: &mut EventsCtx,
-) -> yak_error::Result<BootstrapBuckdClient> {
+) -> yak_error::Result<BootstrapYakdClient> {
     let constraints = &options.constraints;
     let daemon_dir = paths.daemon_dir()?;
 
@@ -750,16 +750,16 @@ async fn establish_connection_inner(
     // Get the lifecycle lock to ensure we don't have races with other processes as we check and change things.
     let lifecycle_lock = deadline
         .down("acquire lifecycle lock", |deadline| {
-            BuckdLifecycle::lock_with_timeout(paths, deadline)
+            YakdLifecycle::lock_with_timeout(paths, deadline)
         })
         .await?;
 
     // Even if we didn't connect before, it's possible that we just raced with another invocation
     // starting the server, so we try to connect again while holding the lock.
     let daemon_was_started_reason = {
-        match BuckdProcessInfo::load_if_exists(&daemon_dir) {
-            Ok(Some(buckd_info)) => {
-                match try_connect_existing(&buckd_info, &deadline, &lifecycle_lock).await {
+        match YakdProcessInfo::load_if_exists(&daemon_dir) {
+            Ok(Some(yakd_info)) => {
+                match try_connect_existing(&yakd_info, &deadline, &lifecycle_lock).await {
                     Ok(channel) => {
                         let mut client = channel.upgrade().await?;
 
@@ -775,7 +775,7 @@ async fn establish_connection_inner(
                             match reason {
                                 ConstraintUnsatisfiedReason::TraceIo
                                 | ConstraintUnsatisfiedReason::StartupConfig => {
-                                    return Err(BuckdConnectError::NestedConstraintMismatch {
+                                    return Err(YakdConnectError::NestedConstraintMismatch {
                                         reason,
                                     }
                                     .into());
@@ -811,11 +811,11 @@ async fn establish_connection_inner(
 
                         // The recorded daemon is unusable either way, so start a new one rather
                         // than leaving yakd.info in place for the next invocation to trip over.
-                        if let Err(error) = hard_kill_until(&buckd_info.info, &deadline).await {
+                        if let Err(error) = hard_kill_until(&yakd_info.info, &deadline).await {
                             events_ctx
                                 .eprintln(&format!(
                                     "{}",
-                                    BuckdConnectError::DaemonKillFailed { error }
+                                    YakdConnectError::DaemonKillFailed { error }
                                 ))
                                 .await?;
                         }
@@ -827,7 +827,7 @@ async fn establish_connection_inner(
             Ok(None) => {
                 events_ctx.eprintln("Starting new yak daemon...").await?;
 
-                yak_data::DaemonWasStartedReason::NoBuckdInfo
+                yak_data::DaemonWasStartedReason::NoYakdInfo
             }
             Err(e) => {
                 events_ctx
@@ -836,7 +836,7 @@ async fn establish_connection_inner(
                     ))
                     .await?;
 
-                yak_data::DaemonWasStartedReason::CouldNotLoadBuckdInfo
+                yak_data::DaemonWasStartedReason::CouldNotLoadYakdInfo
             }
         }
     };
@@ -848,7 +848,7 @@ async fn establish_connection_inner(
                 explain_failed_to_connect_reason(daemon_was_started_reason)
             ),
             |deadline| {
-                start_new_buckd_and_connect(
+                start_new_yakd_and_connect(
                     deadline,
                     &lifecycle_lock,
                     paths,
@@ -861,14 +861,14 @@ async fn establish_connection_inner(
         .await
 }
 
-async fn start_new_buckd_and_connect(
+async fn start_new_yakd_and_connect(
     deadline: StartupDeadline,
-    lifecycle_lock: &BuckdLifecycle<'_>,
+    lifecycle_lock: &YakdLifecycle<'_>,
     paths: &InvocationPaths,
-    options: &BuckdConnectDaemonOptions,
+    options: &YakdConnectDaemonOptions,
     events_ctx: &mut EventsCtx,
     daemon_was_started_reason: yak_data::DaemonWasStartedReason,
-) -> yak_error::Result<BootstrapBuckdClient> {
+) -> yak_error::Result<BootstrapYakdClient> {
     let constraints = &options.constraints;
 
     // Daemon dir may be corrupted. Safer to delete it.
@@ -878,7 +878,7 @@ async fn start_new_buckd_and_connect(
     lifecycle_lock
         .start_server(options)
         .await
-        .buck_error_context("Error starting yak daemon")?;
+        .yak_error_context("Error starting yak daemon")?;
     // It might take a little bit for the daemon server to start up. We could wait for the yakd.info
     // file to appear, but it's just as easy to just retry the connection itself.
 
@@ -887,14 +887,14 @@ async fn start_new_buckd_and_connect(
             "connect to yakd after server start",
             Duration::from_millis(5),
             Duration::from_millis(100),
-            || async { BuckdProcessInfo::load_and_create_channel(&paths.daemon_dir()?).await },
+            || async { YakdProcessInfo::load_and_create_channel(&paths.daemon_dir()?).await },
         )
         .await?;
 
     let client = channel.upgrade().await?;
 
     if let Err(reason) = constraints.satisfied(&client.constraints) {
-        return Err(BuckdConnectError::BuckDaemonConstraintWrongAfterStart {
+        return Err(YakdConnectError::YakDaemonConstraintWrongAfterStart {
             reason,
             expected: (*constraints).clone(),
             actual: client.constraints,
@@ -911,7 +911,7 @@ async fn start_new_buckd_and_connect(
 
 #[allow(clippy::large_enum_variant)]
 enum ConnectBeforeRestart {
-    Accepted(BootstrapBuckdClient),
+    Accepted(BootstrapYakdClient),
     Rejected,
 }
 
@@ -926,7 +926,7 @@ async fn try_connect_existing_before_acquiring_lifecycle_lock(
     daemon_dir: &DaemonDir,
     constraints: &DaemonConstraintsRequest,
 ) -> ConnectBeforeRestart {
-    match BuckdProcessInfo::load_and_create_channel(daemon_dir).await {
+    match YakdProcessInfo::load_and_create_channel(daemon_dir).await {
         Ok(channel) => {
             let Ok(client) = channel.upgrade().await else {
                 return ConnectBeforeRestart::Rejected;
@@ -945,25 +945,25 @@ async fn try_connect_existing_before_acquiring_lifecycle_lock(
 }
 
 async fn try_connect_existing(
-    buckd_info: &BuckdProcessInfo<'_>,
+    yakd_info: &YakdProcessInfo<'_>,
     timeout: &StartupDeadline,
-    _lock: &BuckdLifecycle<'_>,
-) -> Result<BuckdChannel, yak_data::DaemonWasStartedReason> {
-    let timeout: yak_error::Result<_> = try { timeout.min(buckd_startup_timeout()?)? };
+    _lock: &YakdLifecycle<'_>,
+) -> Result<YakdChannel, yak_data::DaemonWasStartedReason> {
+    let timeout: yak_error::Result<_> = try { timeout.min(yakd_startup_timeout()?)? };
     let Ok(timeout) = timeout else {
         return Err(yak_data::DaemonWasStartedReason::TimeoutCalculationError);
     };
     let Ok(rem_duration) = timeout.rem_duration("connect existing yakd") else {
         return Err(yak_data::DaemonWasStartedReason::TimedOutConnectingToDaemon);
     };
-    match tokio::time::timeout(rem_duration, buckd_info.create_channel()).await {
+    match tokio::time::timeout(rem_duration, yakd_info.create_channel()).await {
         Ok(Ok(channel)) => Ok(channel),
         Ok(Err(_)) => {
-            let Ok(pid) = buckd_info.pid() else {
-                return Err(yak_data::DaemonWasStartedReason::CouldNotLoadBuckdInfo);
+            let Ok(pid) = yakd_info.pid() else {
+                return Err(yak_data::DaemonWasStartedReason::CouldNotLoadYakdInfo);
             };
-            let buckd_process_exists = process_exists(pid).unwrap_or(true);
-            if !buckd_process_exists {
+            let yakd_process_exists = process_exists(pid).unwrap_or(true);
+            if !yakd_process_exists {
                 // We don't delete the `yakd.info` file, and if we failed to connect,
                 // the most likely reason is that the daemon process doesn't exist.
                 Err(yak_data::DaemonWasStartedReason::NoDaemonProcess)
@@ -978,22 +978,22 @@ async fn try_connect_existing(
     }
 }
 
-pub struct BuckdProcessInfo<'a> {
+pub struct YakdProcessInfo<'a> {
     pub(crate) info: DaemonProcessInfo,
     daemon_dir: &'a DaemonDir,
 }
 
-impl<'a> BuckdProcessInfo<'a> {
+impl<'a> YakdProcessInfo<'a> {
     /// Utility method for places that want to match on the overall result of those two operations.
-    async fn load_and_create_channel(daemon_dir: &'a DaemonDir) -> yak_error::Result<BuckdChannel> {
+    async fn load_and_create_channel(daemon_dir: &'a DaemonDir) -> yak_error::Result<YakdChannel> {
         Self::load(daemon_dir)?.create_channel().await
     }
 
     pub fn load(daemon_dir: &'a DaemonDir) -> yak_error::Result<Self> {
         match Self::load_if_exists(daemon_dir) {
             Ok(Some(info)) => Ok(info),
-            Ok(None) => Err(BuckdConnectError::BuckdInfoMissing {
-                path: daemon_dir.buckd_info(),
+            Ok(None) => Err(YakdConnectError::YakdInfoMissing {
+                path: daemon_dir.yakd_info(),
             }
             .into()),
             Err(e) => Err(e),
@@ -1001,32 +1001,32 @@ impl<'a> BuckdProcessInfo<'a> {
     }
 
     pub fn load_if_exists(daemon_dir: &'a DaemonDir) -> yak_error::Result<Option<Self>> {
-        let location = daemon_dir.buckd_info();
+        let location = daemon_dir.yakd_info();
         let file = match File::open(&location) {
             Ok(file) => file,
             Err(e) if e.kind() == std::io::ErrorKind::NotFound => return Ok(None),
             Err(e) => {
-                return Err(e).with_buck_error_context(|| {
+                return Err(e).with_yak_error_context(|| {
                     format!("Trying to open yakd info, `{}`", location.display())
                 });
             }
         };
         let reader = BufReader::new(file);
         let info = serde_json::from_reader(reader)
-            .map_err(|error| BuckdConnectError::BuckdInfoParseError { location, error })?;
+            .map_err(|error| YakdConnectError::YakdInfoParseError { location, error })?;
 
-        Ok(Some(BuckdProcessInfo { info, daemon_dir }))
+        Ok(Some(YakdProcessInfo { info, daemon_dir }))
     }
 
-    pub async fn create_channel(&self) -> yak_error::Result<BuckdChannel> {
+    pub async fn create_channel(&self) -> yak_error::Result<YakdChannel> {
         tracing::debug!("Creating channel to: {}", self.info.endpoint);
         let connection_type = ConnectionType::parse(&self.info.endpoint)?;
 
         let client = new_daemon_api_client(connection_type, self.info.auth_token.clone())
             .await
-            .buck_error_context("Error connecting")?;
+            .yak_error_context("Error connecting")?;
 
-        Ok(BuckdChannel {
+        Ok(YakdChannel {
             info: self.info.clone(),
             daemon_dir: self.daemon_dir.clone(),
             client,
@@ -1048,7 +1048,7 @@ struct DaemonStatus {
 }
 
 async fn get_daemon_status(
-    client: &mut DaemonApiClient<InterceptedService<Channel, BuckAddAuthTokenInterceptor>>,
+    client: &mut DaemonApiClient<InterceptedService<Channel, YakAddAuthTokenInterceptor>>,
 ) -> yak_error::Result<DaemonStatus> {
     // NOTE: No tailers in bootstrap client, we capture logs if we fail to connect, but
     // otherwise we leave them alone.
@@ -1085,7 +1085,7 @@ async fn get_daemon_status(
 }
 
 pub fn get_daemon_exe() -> yak_error::Result<PathBuf> {
-    let exe = env::current_exe().buck_error_context("Failed to get current exe")?;
+    let exe = env::current_exe().yak_error_context("Failed to get current exe")?;
     if yak_core::client_only::is_client_only()? {
         let ext = if cfg!(windows) { ".exe" } else { "" };
         Ok(exe
@@ -1100,10 +1100,10 @@ pub fn get_daemon_exe() -> yak_error::Result<PathBuf> {
 #[derive(Debug, yak_error::Error)]
 #[allow(clippy::large_enum_variant)]
 #[yak(tag = DaemonConnect)]
-enum BuckdConnectError {
+enum YakdConnectError {
     #[error("yak daemon startup failed\nstdout:\n{stdout}\nstderr:\n{stderr}")]
     #[yak(tag = DaemonStartupFailed)]
-    BuckDaemonStartupFailed {
+    YakDaemonStartupFailed {
         stdout: String,
         stderr: String,
         #[source]
@@ -1111,7 +1111,7 @@ enum BuckdConnectError {
     },
     #[error("Failed to launch yak daemon: {error:#}")]
     #[yak(tag = DaemonLaunchFailed)]
-    BuckDaemonLaunchFailed {
+    YakDaemonLaunchFailed {
         #[source]
         error: yak_error::Error,
     },
@@ -1119,7 +1119,7 @@ enum BuckdConnectError {
         "during yak daemon startup, the started process did not match constraints ({reason}).\nexpected: {expected:?}\nactual: {actual:?}"
     )]
     #[yak(tag = DaemonConstraintsWrongAfterStart)]
-    BuckDaemonConstraintWrongAfterStart {
+    YakDaemonConstraintWrongAfterStart {
         reason: ConstraintUnsatisfiedReason,
         expected: DaemonConstraintsRequest,
         actual: yak_cli_proto::DaemonConstraints,
@@ -1128,13 +1128,13 @@ enum BuckdConnectError {
     #[yak(tag = DaemonNestedConstraintsMismatch)]
     NestedConstraintMismatch { reason: ConstraintUnsatisfiedReason },
     #[error("yakd info {path} does not exist")]
-    #[yak(tag = BuckdInfoMissing)]
-    BuckdInfoMissing { path: AbsNormPathBuf },
+    #[yak(tag = YakdInfoMissing)]
+    YakdInfoMissing { path: AbsNormPathBuf },
     #[error("Error parsing daemon info in `{}`. \
                 Try deleting that file and running `yak killall` before running your command again",
                 location.display())]
-    #[yak(tag = BuckdInfoParseError)]
-    BuckdInfoParseError {
+    #[yak(tag = YakdInfoParseError)]
+    YakdInfoParseError {
         location: AbsNormPathBuf,
         #[source]
         error: serde_json::Error,
@@ -1157,7 +1157,7 @@ async fn daemon_connect_error(
         Duration::from_millis(500),
         || async {
             let daemon_dir = paths.daemon_dir()?;
-            let error_log = std::fs::read(daemon_dir.buckd_error_log())?;
+            let error_log = std::fs::read(daemon_dir.yakd_error_log())?;
 
             let error_report = yak_data::ErrorReport::deserialize(
                 &mut serde_json::Deserializer::from_slice(&error_log),
@@ -1181,7 +1181,7 @@ async fn daemon_connect_error(
         let stderr = paths
             .daemon_dir()
             .and_then(|dir| {
-                let stderr = std::fs::read(dir.buckd_stderr())?;
+                let stderr = std::fs::read(dir.yakd_stderr())?;
                 Ok(String::from_utf8_lossy(&stderr).into_owned())
             })
             .unwrap_or_else(|_| "<none>".to_owned());
@@ -1200,7 +1200,7 @@ async fn daemon_connect_error(
     } else {
         "rm -rf ~/.yak/yakd"
     };
-    let daemon_process_info = BuckdProcessInfoDiagnostic::new(paths);
+    let daemon_process_info = YakdProcessInfoDiagnostic::new(paths);
 
     let kill_command = if daemon_process_info.process_exists() {
         "running `yak kill` and your command afterwards.
@@ -1218,9 +1218,9 @@ async fn daemon_connect_error(
     error.context(error_message)
 }
 
-enum BuckdProcessInfoDiagnostic {
+enum YakdProcessInfoDiagnostic {
     DaemonDirUnavailable(yak_error::Error),
-    MissingBuckdInfo(DaemonDir),
+    MissingYakdInfo(DaemonDir),
     LoadError {
         daemon_dir: DaemonDir,
         error: yak_error::Error,
@@ -1232,22 +1232,22 @@ enum BuckdProcessInfoDiagnostic {
     },
 }
 
-impl BuckdProcessInfoDiagnostic {
+impl YakdProcessInfoDiagnostic {
     fn new(paths: &InvocationPaths) -> Self {
         let daemon_dir = match paths.daemon_dir() {
             Ok(daemon_dir) => daemon_dir,
-            Err(e) => return BuckdProcessInfoDiagnostic::DaemonDirUnavailable(e),
+            Err(e) => return YakdProcessInfoDiagnostic::DaemonDirUnavailable(e),
         };
         let daemon_dir_for_load = daemon_dir.clone();
 
-        match BuckdProcessInfo::load_if_exists(&daemon_dir_for_load) {
-            Ok(Some(process_info)) => BuckdProcessInfoDiagnostic::ProcessInfo {
+        match YakdProcessInfo::load_if_exists(&daemon_dir_for_load) {
+            Ok(Some(process_info)) => YakdProcessInfoDiagnostic::ProcessInfo {
                 pid_present_on_system: pid_present_on_system(process_info.info.pid),
                 daemon_dir,
                 info: process_info.info,
             },
-            Ok(None) => BuckdProcessInfoDiagnostic::MissingBuckdInfo(daemon_dir),
-            Err(e) => BuckdProcessInfoDiagnostic::LoadError {
+            Ok(None) => YakdProcessInfoDiagnostic::MissingYakdInfo(daemon_dir),
+            Err(e) => YakdProcessInfoDiagnostic::LoadError {
                 daemon_dir,
                 error: e,
             },
@@ -1256,7 +1256,7 @@ impl BuckdProcessInfoDiagnostic {
 
     fn process_exists(&self) -> bool {
         match self {
-            BuckdProcessInfoDiagnostic::ProcessInfo {
+            YakdProcessInfoDiagnostic::ProcessInfo {
                 pid_present_on_system,
                 ..
             } => *pid_present_on_system == Some(true),
@@ -1266,7 +1266,7 @@ impl BuckdProcessInfoDiagnostic {
 
     fn pid_present_for_display(&self) -> &'static str {
         match self {
-            BuckdProcessInfoDiagnostic::ProcessInfo {
+            YakdProcessInfoDiagnostic::ProcessInfo {
                 pid_present_on_system,
                 ..
             } => match pid_present_on_system {
@@ -1287,10 +1287,10 @@ fn pid_present_on_system(pid: i64) -> Option<bool> {
         .and_then(|pid| process_exists(pid).ok())
 }
 
-impl Display for BuckdProcessInfoDiagnostic {
+impl Display for YakdProcessInfoDiagnostic {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            BuckdProcessInfoDiagnostic::ProcessInfo {
+            YakdProcessInfoDiagnostic::ProcessInfo {
                 daemon_dir, info, ..
             } => write!(
                 f,
@@ -1300,30 +1300,30 @@ impl Display for BuckdProcessInfoDiagnostic {
     endpoint: {}
     version: {}
     pid present on system: {}",
-                daemon_dir.buckd_info(),
+                daemon_dir.yakd_info(),
                 daemon_dir.path,
                 info.pid,
                 info.endpoint,
                 info.version,
                 self.pid_present_for_display(),
             ),
-            BuckdProcessInfoDiagnostic::MissingBuckdInfo(daemon_dir) => write!(
+            YakdProcessInfoDiagnostic::MissingYakdInfo(daemon_dir) => write!(
                 f,
                 "Daemon process info from {}:
     daemon dir: {}
     status: <missing>",
-                daemon_dir.buckd_info(),
+                daemon_dir.yakd_info(),
                 daemon_dir.path,
             ),
-            BuckdProcessInfoDiagnostic::LoadError { daemon_dir, error } => write!(
+            YakdProcessInfoDiagnostic::LoadError { daemon_dir, error } => write!(
                 f,
                 "Daemon process info from {}:
     daemon dir: {}
     status: unavailable: {error:#}",
-                daemon_dir.buckd_info(),
+                daemon_dir.yakd_info(),
                 daemon_dir.path,
             ),
-            BuckdProcessInfoDiagnostic::DaemonDirUnavailable(error) => {
+            YakdProcessInfoDiagnostic::DaemonDirUnavailable(error) => {
                 write!(f, "Daemon process info unavailable: {error:#}")
             }
         }
@@ -1331,10 +1331,10 @@ impl Display for BuckdProcessInfoDiagnostic {
 }
 
 fn is_nested_invocation(
-    buck2_daemon_uuid: Option<&String>,
+    yak_daemon_uuid: Option<&String>,
     daemon: &yak_cli_proto::DaemonConstraints,
 ) -> bool {
-    buck2_daemon_uuid == Some(&daemon.daemon_id)
+    yak_daemon_uuid == Some(&daemon.daemon_id)
 }
 
 #[cfg(test)]
@@ -1492,7 +1492,7 @@ mod tests {
         let daemon_dir = DaemonDir {
             path: AbsNormPathBuf::new("/tmp/yakd".into()).expect("daemon dir should be valid"),
         };
-        let wrapper = BuckdProcessInfoDiagnostic::ProcessInfo {
+        let wrapper = YakdProcessInfoDiagnostic::ProcessInfo {
             daemon_dir,
             info: process_info,
             pid_present_on_system: Some(true),
@@ -1518,7 +1518,7 @@ mod tests {
         let daemon_dir = DaemonDir {
             path: AbsNormPathBuf::new("/tmp/yakd".into()).expect("daemon dir should be valid"),
         };
-        let wrapper = BuckdProcessInfoDiagnostic::ProcessInfo {
+        let wrapper = YakdProcessInfoDiagnostic::ProcessInfo {
             daemon_dir,
             info: process_info,
             pid_present_on_system: Some(false),
@@ -1532,13 +1532,13 @@ mod tests {
 
     #[cfg(not(windows))]
     #[test]
-    fn test_format_daemon_process_info_missing_buckd_info() {
+    fn test_format_daemon_process_info_missing_yakd_info() {
         let daemon_dir = DaemonDir {
             path: AbsNormPathBuf::new("/tmp/yakd".into()).expect("daemon dir should be valid"),
         };
 
         assert_eq!(
-            BuckdProcessInfoDiagnostic::MissingBuckdInfo(daemon_dir).to_string(),
+            YakdProcessInfoDiagnostic::MissingYakdInfo(daemon_dir).to_string(),
             "Daemon process info from /tmp/yakd/yakd.info:\n    daemon dir: /tmp/yakd\n    status: <missing>"
         );
     }
@@ -1546,7 +1546,7 @@ mod tests {
     #[test]
     fn test_format_daemon_process_info_daemon_dir_unavailable() {
         assert_eq!(
-            BuckdProcessInfoDiagnostic::DaemonDirUnavailable(internal_error!("no daemon dir"))
+            YakdProcessInfoDiagnostic::DaemonDirUnavailable(internal_error!("no daemon dir"))
                 .to_string(),
             "Daemon process info unavailable: no daemon dir (internal error)"
         );
@@ -1560,7 +1560,7 @@ mod tests {
         };
 
         assert_eq!(
-            BuckdProcessInfoDiagnostic::LoadError {
+            YakdProcessInfoDiagnostic::LoadError {
                 daemon_dir,
                 error: internal_error!("failed to load yakd.info"),
             }

@@ -64,7 +64,7 @@ pub trait AttrCoercionContext {
         value: Vec<(CoercedAttr, CoercedAttr)>,
     ) -> ArcSlice<(CoercedAttr, CoercedAttr)>;
 
-    /// Attempt to convert a string into a BuckPath
+    /// Attempt to convert a string into a YakPath
     fn coerce_path(&self, value: &str, allow_directory: bool) -> yak_error::Result<CoercedPath>;
 
     fn coerce_target_pattern(

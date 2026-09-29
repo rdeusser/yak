@@ -171,11 +171,11 @@ impl<T: QueryCommandTarget> Serialize for PrintableQueryTarget<'_, T> {
         })?;
 
         if self.target_call_stacks {
-            map.serialize_entry("buck.target_call_stack", &self.value.call_stack())?;
+            map.serialize_entry("yak.target_call_stack", &self.value.call_stack())?;
         }
 
         if let Some(providers) = &self.providers {
-            map.serialize_entry("buck.providers", providers)?;
+            map.serialize_entry("yak.providers", providers)?;
         }
 
         map.end()

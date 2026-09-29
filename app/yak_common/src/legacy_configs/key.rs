@@ -10,10 +10,10 @@
 
 use dupe::Dupe;
 
-// TODO(nga): implement `yak help-buckconfig`
+// TODO(nga): implement `yak help-yakconfig`
 #[derive(derive_more::Display, Debug, Copy, Clone, Dupe, Eq, PartialEq)]
 #[display("{}.{}", section, property)]
-pub struct BuckconfigKeyRef<'a> {
+pub struct YakconfigKeyRef<'a> {
     pub section: &'a str,
     pub property: &'a str,
 }

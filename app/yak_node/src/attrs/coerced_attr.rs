@@ -34,7 +34,7 @@ use yak_core::provider::label::ProvidersLabel;
 use yak_core::soft_error;
 use yak_core::target::label::label::TargetLabel;
 use yak_data::error::ErrorTag;
-use yak_error::BuckErrorOptionContext;
+use yak_error::YakErrorOptionContext;
 use yak_error::internal_error;
 use yak_error::yak_error;
 use yak_util::arc_str::ArcSlice;

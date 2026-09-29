@@ -24,16 +24,16 @@ use yak_common::argv::Argv;
 use yak_common::init::LogDownloadMethod;
 use yak_common::invocation_paths::InvocationPaths;
 use yak_common::invocation_paths_result::InvocationPathsResult;
-use yak_core::error::buck2_hard_error_env;
-use yak_core::error::buck2_show_soft_errors_env;
-use yak_error::BuckErrorContext;
+use yak_core::error::yak_hard_error_env;
+use yak_core::error::yak_show_soft_errors_env;
+use yak_error::YakErrorContext;
 use yak_event_observer::verbosity::Verbosity;
 use yak_fs::paths::file_name::FileNameBuf;
 use yak_fs::working_dir::AbsWorkingDir;
 use yak_wrapper_common::invocation_id::TraceId;
 
 use crate::client_metadata::ClientMetadata;
-use crate::common::BuckArgMatches;
+use crate::common::YakArgMatches;
 use crate::common::CommonEventLogOptions;
 use crate::common::ExitWhen;
 use crate::common::HostArchOverride;
@@ -134,24 +134,24 @@ impl<'a> ClientCommandContext<'a> {
         self.runtime.block_on(func(self))
     }
 
-    pub fn exec<T: BuckSubcommand>(
+    pub fn exec<T: YakSubcommand>(
         self,
         cmd: T,
-        matches: BuckArgMatches<'_>,
+        matches: YakArgMatches<'_>,
         events_ctx: &mut EventsCtx,
     ) -> ExitResult {
         self.with_runtime(|ctx| ctx.exec_async(cmd, matches, events_ctx))
     }
 
     // Handles setting up subscribers, executing a command and finalizing logging.
-    pub async fn exec_async<T: BuckSubcommand>(
+    pub async fn exec_async<T: YakSubcommand>(
         self,
         cmd: T,
-        matches: BuckArgMatches<'_>,
+        matches: YakArgMatches<'_>,
         events_ctx: &mut EventsCtx,
     ) -> ExitResult {
         cmd.update_events_ctx(matches, &self, events_ctx);
-        events_ctx.buck_log_dir = self.paths().map(|paths| paths.log_dir()).ok();
+        events_ctx.yak_log_dir = self.paths().map(|paths| paths.log_dir()).ok();
         events_ctx.command_report_path = cmd
             .event_log_opts()
             .command_report_path
@@ -178,7 +178,7 @@ impl<'a> ClientCommandContext<'a> {
 
     pub fn client_context<T: StreamingCommand>(
         &self,
-        arg_matches: BuckArgMatches<'_>,
+        arg_matches: YakArgMatches<'_>,
         cmd: &T,
     ) -> yak_error::Result<ClientContext> {
         // TODO(cjhopman): Support non unicode paths?
@@ -253,7 +253,7 @@ impl<'a> ClientCommandContext<'a> {
                 .working_dir
                 .path()
                 .to_str()
-                .buck_error_context(CurrentDirIsNotUtf8.to_string())?
+                .yak_error_context(CurrentDirIsNotUtf8.to_string())?
                 .to_owned(),
             config_overrides: Default::default(),
             host_platform: Default::default(),
@@ -268,8 +268,8 @@ impl<'a> ClientCommandContext<'a> {
             daemon_uuid: get_possibly_nested_invocation_daemon_uuid(),
             sanitized_argv: Vec::new(),
             argfiles: Vec::new(),
-            buck2_hard_error: buck2_hard_error_env()?.unwrap_or_default().to_owned(),
-            buck2_show_soft_errors: buck2_show_soft_errors_env()?.unwrap_or_default().to_owned(),
+            yak_hard_error: yak_hard_error_env()?.unwrap_or_default().to_owned(),
+            yak_show_soft_errors: yak_show_soft_errors_env()?.unwrap_or_default().to_owned(),
             command_name: command_name.to_owned(),
             client_metadata: self
                 .client_metadata
@@ -303,13 +303,13 @@ impl<'a> ClientCommandContext<'a> {
 /// Provides a common interface for yak subcommands that use event subscribers for logging.
 /// Executed by a ClientCommandContext.
 #[allow(async_fn_in_trait)]
-pub trait BuckSubcommand {
+pub trait YakSubcommand {
     /// Give the command a name for printing, debugging, etc.
     const COMMAND_NAME: &'static str;
 
     async fn exec_impl(
         self,
-        matches: BuckArgMatches<'_>,
+        matches: YakArgMatches<'_>,
         ctx: ClientCommandContext<'_>,
         events_ctx: &mut EventsCtx,
     ) -> ExitResult;
@@ -321,7 +321,7 @@ pub trait BuckSubcommand {
     // Don't return an error, all logging will break if this fails.
     fn update_events_ctx(
         &self,
-        _matches: BuckArgMatches<'_>,
+        _matches: YakArgMatches<'_>,
         ctx: &ClientCommandContext,
         events_ctx: &mut EventsCtx,
     ) {

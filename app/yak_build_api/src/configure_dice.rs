@@ -19,9 +19,9 @@ use dice::PagableStorageBackend;
 use yak_common::dice::cells::SetCellResolver;
 use yak_common::dice::data::SetIoProvider;
 use yak_common::io::IoProvider;
-use yak_common::legacy_configs::configs::LegacyBuckConfig;
+use yak_common::legacy_configs::configs::LegacyYakConfig;
 use yak_common::legacy_configs::dice::SetLegacyConfigs;
-use yak_common::legacy_configs::key::BuckconfigKeyRef;
+use yak_common::legacy_configs::key::YakconfigKeyRef;
 use yak_core::rollout_percentage::RolloutPercentage;
 use yak_execute::digest_config::DigestConfig;
 use yak_execute::digest_config::SetDigestConfig;
@@ -32,10 +32,10 @@ use crate::build::detailed_aggregated_metrics::events::DetailedAggregatedMetrics
 
 /// Utility to configure the dice globals.
 /// One place to not forget to initialize something in all places.
-pub async fn configure_dice_for_buck(
+pub async fn configure_dice_for_yak(
     io: Arc<dyn IoProvider>,
     digest_config: DigestConfig,
-    root_config: Option<&LegacyBuckConfig>,
+    root_config: Option<&LegacyYakConfig>,
     detect_cycles: Option<DetectCycles>,
     // Path to open pagable DICE storage at, or `None` to leave paging disabled.
     dice_state_path: Option<&Path>,
@@ -46,7 +46,7 @@ pub async fn configure_dice_for_buck(
         || {
             root_config
                 .and_then(|c| {
-                    c.parse::<DetectCycles>(BuckconfigKeyRef {
+                    c.parse::<DetectCycles>(YakconfigKeyRef {
                         section: "yak",
                         property: "detect_cycles",
                     })
@@ -62,7 +62,7 @@ pub async fn configure_dice_for_buck(
     dice.set_digest_config(digest_config);
     let invalidation_tracking_enabled = match root_config {
         Some(c) => c
-            .parse::<RolloutPercentage>(BuckconfigKeyRef {
+            .parse::<RolloutPercentage>(YakconfigKeyRef {
                 section: "yak",
                 property: "invalidation_tracking_enabled",
             })?

@@ -18,7 +18,7 @@ use yak_execute::artifact_value::ArtifactValue;
 use yak_execute::directory::INTERNER;
 use yak_execute::entry::build_entry_from_disk;
 use yak_execute::materialize::materializer::CopiedArtifact;
-use yak_hash::BuckIndexMap;
+use yak_hash::YakIndexMap;
 
 /// Declares a copy materialization to copy the output BuildArtifact to the
 /// offline cache for use in an offline build. Returns the project-relative path
@@ -49,7 +49,7 @@ pub(crate) async fn declare_copy_from_offline_cache(
     ctx: &mut dyn ActionExecutionCtx,
     outputs: &[&BuildArtifact],
 ) -> yak_error::Result<ActionOutputs> {
-    let mut restored_outputs = BuckIndexMap::default();
+    let mut restored_outputs = YakIndexMap::default();
 
     // Restore all outputs - any cache miss = total failure
     for output in outputs {

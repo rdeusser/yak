@@ -9,10 +9,10 @@
 import asyncio
 from typing import Awaitable
 
-from e2e_util.api.buck import Buck
-from e2e_util.api.buck_result import BuckException, BuckResult
+from e2e_util.api.yak import Yak
+from e2e_util.api.yak_result import YakException, YakResult
 from e2e_util.asserts import expect_failure
-from e2e_util.buck_workspace import buck_test
+from e2e_util.yak_workspace import yak_test
 
 
 def check_load_cycle_stderr(stderr: str) -> None:
@@ -41,15 +41,15 @@ def check_cfg_toolchain_graph_cycle_stderr(stderr: str) -> None:
 
 # It's better to fail a test than to hit our test timeout. When cycle detection is not working, yak will just hang. So wrap these in a timeout.
 async def expect_cycle(
-    process: Awaitable[BuckResult],
-) -> BuckException:
+    process: Awaitable[YakResult],
+) -> YakException:
     return await asyncio.wait_for(expect_failure(process), timeout=200)
 
 
-@buck_test()
-async def test_detect_load_cycle(buck: Buck) -> None:
+@yak_test()
+async def test_detect_load_cycle(yak: Yak) -> None:
     failure = await expect_cycle(
-        buck.cquery(
+        yak.cquery(
             "//:top",
             "-c",
             "cycles.load=yes",
@@ -58,10 +58,10 @@ async def test_detect_load_cycle(buck: Buck) -> None:
     check_load_cycle_stderr(failure.stderr)
 
 
-@buck_test()
-async def test_detect_configured_graph_cycles(buck: Buck) -> None:
+@yak_test()
+async def test_detect_configured_graph_cycles(yak: Yak) -> None:
     failure = await expect_cycle(
-        buck.cquery(
+        yak.cquery(
             "//:top",
             "-c",
             "cycles.cfg_graph=yes",
@@ -70,12 +70,12 @@ async def test_detect_configured_graph_cycles(buck: Buck) -> None:
     check_cfg_graph_cycle_stderr(failure.stderr)
 
 
-@buck_test()
-async def test_detect_configured_graph_cycles_on_recompute(buck: Buck) -> None:
-    await buck.cquery("//:top")
+@yak_test()
+async def test_detect_configured_graph_cycles_on_recompute(yak: Yak) -> None:
+    await yak.cquery("//:top")
 
     failure = await expect_cycle(
-        buck.cquery(
+        yak.cquery(
             "//:top",
             "-c",
             "cycles.cfg_graph=yes",
@@ -85,10 +85,10 @@ async def test_detect_configured_graph_cycles_on_recompute(buck: Buck) -> None:
     check_cfg_graph_cycle_stderr(failure.stderr)
 
 
-@buck_test()
-async def test_detect_configured_graph_cycles_2(buck: Buck) -> None:
+@yak_test()
+async def test_detect_configured_graph_cycles_2(yak: Yak) -> None:
     failure = await expect_cycle(
-        buck.cquery(
+        yak.cquery(
             "//:top",
             "-c",
             "cycles.cfg_toolchain=yes",
@@ -97,12 +97,12 @@ async def test_detect_configured_graph_cycles_2(buck: Buck) -> None:
     check_cfg_toolchain_graph_cycle_stderr(failure.stderr)
 
 
-@buck_test()
-async def test_more_recompute_cases(buck: Buck) -> None:
-    await buck.cquery("//:top")
+@yak_test()
+async def test_more_recompute_cases(yak: Yak) -> None:
+    await yak.cquery("//:top")
 
     failure = await expect_cycle(
-        buck.cquery(
+        yak.cquery(
             "//:top",
             "-c",
             "cycles.load=yes",
@@ -111,7 +111,7 @@ async def test_more_recompute_cases(buck: Buck) -> None:
     check_load_cycle_stderr(failure.stderr)
 
     failure = await expect_cycle(
-        buck.cquery(
+        yak.cquery(
             "//:top",
             "-c",
             "cycles.cfg_graph=yes",

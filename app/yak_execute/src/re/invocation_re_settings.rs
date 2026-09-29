@@ -11,19 +11,19 @@
 use allocative::Allocative;
 use dice::UserComputationData;
 use dupe::Dupe;
-use yak_common::legacy_configs::key::BuckconfigKeyRef;
-use yak_common::legacy_configs::view::LegacyBuckConfigView;
+use yak_common::legacy_configs::key::YakconfigKeyRef;
+use yak_common::legacy_configs::view::LegacyYakConfigView;
 use yak_core::execution_types::executor_config::RemoteExecutorUseCase;
 
 /// The RE use case a yak invocation talks to the CAS as on its own behalf, unless
 /// overridden.
-pub const DEFAULT_RE_USE_CASE_KEY: BuckconfigKeyRef<'static> = BuckconfigKeyRef {
+pub const DEFAULT_RE_USE_CASE_KEY: YakconfigKeyRef<'static> = YakconfigKeyRef {
     section: "build",
     property: "default_remote_execution_use_case",
 };
 
 /// Replaces every RE use case in the daemon when set: the executors' and the invocation's own.
-pub const RE_USE_CASE_OVERRIDE_KEY: BuckconfigKeyRef<'static> = BuckconfigKeyRef {
+pub const RE_USE_CASE_OVERRIDE_KEY: YakconfigKeyRef<'static> = YakconfigKeyRef {
     section: "yak_re_client",
     property: "override_use_case",
 };
@@ -44,7 +44,7 @@ pub struct InvocationReSettings {
 /// The invocation's own RE use case as configured: [`RE_USE_CASE_OVERRIDE_KEY`] if set, else
 /// [`DEFAULT_RE_USE_CASE_KEY`], else yak's default.
 pub fn invocation_re_use_case(
-    mut config: impl LegacyBuckConfigView,
+    mut config: impl LegacyYakConfigView,
 ) -> yak_error::Result<RemoteExecutorUseCase> {
     let override_use_case: Option<RemoteExecutorUseCase> =
         config.parse(RE_USE_CASE_OVERRIDE_KEY)?;
@@ -52,7 +52,7 @@ pub fn invocation_re_use_case(
         Some(use_case) => use_case,
         None => config
             .parse(DEFAULT_RE_USE_CASE_KEY)?
-            .unwrap_or_else(RemoteExecutorUseCase::buck2_default),
+            .unwrap_or_else(RemoteExecutorUseCase::yak_default),
     })
 }
 

@@ -8,36 +8,36 @@
 
 import json
 
-from e2e_util.api.buck import Buck
-from e2e_util.buck_workspace import buck_test
+from e2e_util.api.yak import Yak
+from e2e_util.yak_workspace import yak_test
 
 
-@buck_test()
-async def test_cell_ordering(buck: Buck) -> None:
-    res = await buck.audit("cell")
+@yak_test()
+async def test_cell_ordering(yak: Yak) -> None:
+    res = await yak.audit("cell")
     # The repository should be in the list, not the alias
     assert "source:" in res.stdout
     assert "a:" not in res.stdout
     assert "z:" not in res.stdout
 
-    res = await buck.audit("cell", "--aliases")
+    res = await yak.audit("cell", "--aliases")
     assert "source:" in res.stdout
     assert "a:" in res.stdout
     assert "z:" in res.stdout
 
 
-@buck_test()
-async def test_bxl_audit_cell(buck: Buck) -> None:
-    result = await buck.bxl("//test_audit.bxl:audit_cell")
+@yak_test()
+async def test_bxl_audit_cell(yak: Yak) -> None:
+    result = await yak.bxl("//test_audit.bxl:audit_cell")
 
     # specify single cell
     outputs = result.stdout.splitlines()
     single_result = json.loads(outputs[0])
-    assert single_result["source"] == str(buck.cwd / "fbs")
+    assert single_result["source"] == str(yak.cwd / "fbs")
 
     # don't specify cell - should return all cell aliases
     all_result = json.loads(outputs[1])
-    assert all_result["a"] == str(buck.cwd / "fbs")
-    assert all_result["z"] == str(buck.cwd / "fbc")
-    assert all_result["code"] == str(buck.cwd / "fbc")
-    assert all_result["source"] == str(buck.cwd / "fbs")
+    assert all_result["a"] == str(yak.cwd / "fbs")
+    assert all_result["z"] == str(yak.cwd / "fbc")
+    assert all_result["code"] == str(yak.cwd / "fbc")
+    assert all_result["source"] == str(yak.cwd / "fbs")

@@ -2,7 +2,7 @@
 
 [<TIMESTAMP>] Starting new yak daemon...
 Command failed: Failed to connect to yak daemon.
-    Daemon process info from <BUCKD_INFO>
+    Daemon process info from <YAKD_INFO>
     daemon dir: <DAEMON_DIR>
     pid: <PID>
     endpoint: tcp:<PORT>

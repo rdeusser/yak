@@ -18,7 +18,7 @@ use yak_artifact::artifact::artifact_type::Artifact;
 use yak_artifact::artifact::artifact_type::OutputArtifact;
 use yak_core::deferred::key::DeferredHolderKey;
 use yak_core::target::configured_target_label::ConfiguredTargetLabel;
-use yak_error::BuckErrorOptionContext;
+use yak_error::YakErrorOptionContext;
 use yak_node::nodes::configured::ConfiguredTargetNode;
 
 use crate::actions::RegisteredAction;
@@ -80,7 +80,7 @@ impl Node {
     }
 }
 
-struct Graph<'a>(&'a yak_hash::BuckMutMap<DeferredHolderKey, OwnedDeferredHolder>);
+struct Graph<'a>(&'a yak_hash::YakMutMap<DeferredHolderKey, OwnedDeferredHolder>);
 
 impl<'a> Graph<'a> {
     pub(crate) fn lookup_deferred(
@@ -236,14 +236,14 @@ impl<'a> Graph<'a> {
 }
 
 struct TraversalState {
-    visited: yak_hash::BuckMutSet<Key>,
+    visited: yak_hash::YakMutSet<Key>,
     queue: Vec<Key>,
 }
 
 impl TraversalState {
     fn new() -> Self {
         Self {
-            visited: yak_hash::BuckMutSet::default(),
+            visited: yak_hash::YakMutSet::default(),
             queue: Vec::new(),
         }
     }
@@ -262,9 +262,9 @@ impl TraversalState {
 
 pub fn traverse_partial_action_graph<'a>(
     root_artifacts: impl IntoIterator<Item = &'a ArtifactGroup>,
-    state: &yak_hash::BuckMutMap<DeferredHolderKey, OwnedDeferredHolder>,
-) -> yak_error::Result<(bool, yak_hash::BuckMutSet<ActionKey>)> {
-    let mut actions = yak_hash::BuckMutSet::default();
+    state: &yak_hash::YakMutMap<DeferredHolderKey, OwnedDeferredHolder>,
+) -> yak_error::Result<(bool, yak_hash::YakMutSet<ActionKey>)> {
+    let mut actions = yak_hash::YakMutSet::default();
 
     let graph = Graph(state);
     let roots = graph.root_keys(root_artifacts)?;
@@ -286,7 +286,7 @@ pub fn traverse_target_graph(
     root: &ConfiguredTargetNode,
     mut visitor: impl FnMut(&ConfiguredTargetLabel),
 ) {
-    let mut visited = yak_hash::BuckMutSet::default();
+    let mut visited = yak_hash::YakMutSet::default();
     let mut queue = Vec::new();
     visited.insert(root.label());
     queue.push(root);

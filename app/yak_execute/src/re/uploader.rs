@@ -45,13 +45,13 @@ use yak_directory::directory::directory_iterator::DirectoryIteratorPathStack;
 use yak_directory::directory::directory_ref::FingerprintedDirectoryRef;
 use yak_directory::directory::entry::DirectoryEntry;
 use yak_directory::directory::fingerprinted_directory::FingerprintedDirectory;
-use yak_error::BuckErrorContext;
-use yak_error::BuckErrorOptionContext;
+use yak_error::YakErrorContext;
+use yak_error::YakErrorOptionContext;
 use yak_error::conversion::from_any_with_tag;
 use yak_events::dispatch::get_dispatcher;
 use yak_events::dispatch::with_dispatcher_async;
-use yak_hash::BuckMutMap;
-use yak_hash::BuckMutSet;
+use yak_hash::YakMutMap;
+use yak_hash::YakMutSet;
 use yak_hash::IntentionallyStdHashMap;
 
 use crate::digest::CasDigestFromReExt;
@@ -91,14 +91,14 @@ impl Uploader {
         deduplicate_get_digests_ttl_calls: bool,
     ) -> yak_error::Result<(
         Vec<InlinedBlobWithDigest>,
-        BuckMutSet<&'a TrackedCasDigest<FileDigestKind>>,
+        YakMutSet<&'a TrackedCasDigest<FileDigestKind>>,
     )> {
         let now = Timestamp::now();
         let ttl_wanted: i64 = 1;
         let ttl_deadline = now + SignedDuration::from_secs(ttl_wanted);
 
         // See if anything needs uploading
-        let mut input_digests = blobs.keys().collect::<BuckMutSet<_>>();
+        let mut input_digests = blobs.keys().collect::<YakMutSet<_>>();
         {
             // Collect the digests we need to upload
             for entry in input_dir.unordered_walk().without_paths() {
@@ -120,7 +120,7 @@ impl Uploader {
         };
 
         let mut upload_blobs = Vec::new();
-        let mut missing_digests = BuckMutSet::default();
+        let mut missing_digests = YakMutSet::default();
         add_injected_missing_digests(&input_digests, &mut missing_digests)?;
         let input_digests = input_digests.into_iter().collect::<Vec<_>>();
 
@@ -150,7 +150,7 @@ impl Uploader {
             let input_digests_ttls = fut.await?;
 
             struct DigestsWithTtlIterator<I> {
-                ttls: BuckMutMap<TrackedFileDigest, i64>,
+                ttls: YakMutMap<TrackedFileDigest, i64>,
                 inner: I,
             }
 
@@ -388,7 +388,7 @@ impl Uploader {
                     MaterializationPurpose::IntermediateOnly,
                 )
                 .await
-                .buck_error_context("Error materializing paths for upload")?;
+                .yak_error_context("Error materializing paths for upload")?;
         }
 
         // Compute stats of digests we're about to upload so we can report them
@@ -505,15 +505,15 @@ fn error_for_missing_file(
 /// This is used for tests. We allow an environment variable to be set to report that some digests
 /// are _always_ missing if they are required. This lets us test our upload paths more easily.
 fn add_injected_missing_digests<'a>(
-    input_digests: &BuckMutSet<&'a TrackedFileDigest>,
-    missing_digests: &mut BuckMutSet<&'a TrackedFileDigest>,
+    input_digests: &YakMutSet<&'a TrackedFileDigest>,
+    missing_digests: &mut YakMutSet<&'a TrackedFileDigest>,
 ) -> yak_error::Result<()> {
     fn convert_digests(val: &str) -> yak_error::Result<Vec<FileDigest>> {
         val.split(' ')
             .map(|digest| {
                 let digest = TDigest::from_str(digest)
                     .map_err(|e| from_any_with_tag(e, yak_error::ErrorTag::InvalidDigest))
-                    .with_buck_error_context(|| format!("Invalid digest: `{digest}`"))?;
+                    .with_yak_error_context(|| format!("Invalid digest: `{digest}`"))?;
                 // This code does not run in a test but it is only used for testing.
                 let digest = FileDigest::from_re(&digest, DigestConfig::testing_default())?;
                 yak_error::Ok(digest)
@@ -566,11 +566,11 @@ struct GetDigestsTtlDeduper<'s> {
     /// Maps a given (digest, use-case) to a request that will produce
     /// this digest (and possibly / likely others). The request is referenced
     /// as an ID that can be used to lookup in `queries`.
-    digests: BuckMutMap<(TrackedFileDigest, RemoteExecutorUseCase), RequestId>,
+    digests: YakMutMap<(TrackedFileDigest, RemoteExecutorUseCase), RequestId>,
     /// Maps a request to the actual future that will contain its results.
-    queries: BuckMutMap<
+    queries: YakMutMap<
         RequestId,
-        Shared<BoxFuture<'s, yak_error::Result<BuckMutMap<TrackedFileDigest, i64>>>>,
+        Shared<BoxFuture<'s, yak_error::Result<YakMutMap<TrackedFileDigest, i64>>>>,
     >,
 }
 
@@ -585,13 +585,13 @@ impl GetDigestsTtlDeduper<'static> {
         digest_config: DigestConfig,
         digests: impl IntoIterator<Item = &'a TrackedFileDigest>,
     ) -> (
-        impl Future<Output = yak_error::Result<BuckMutMap<TrackedFileDigest, i64>>> + 'static,
+        impl Future<Output = yak_error::Result<YakMutMap<TrackedFileDigest, i64>>> + 'static,
         usize,
         usize,
     ) {
         let mut guard = deduper.lock().expect("Poisoned lock");
 
-        let mut reqs = BuckMutSet::default();
+        let mut reqs = YakMutSet::default();
 
         let mut to_schedule = Vec::new();
 
@@ -665,7 +665,7 @@ fn query_digest_ttls<'s>(
     identity: Option<&ReActionIdentity<'_>>,
     digest_config: DigestConfig,
     input_digests: Vec<TrackedFileDigest>,
-) -> BoxFuture<'s, yak_error::Result<BuckMutMap<TrackedFileDigest, i64>>> {
+) -> BoxFuture<'s, yak_error::Result<YakMutMap<TrackedFileDigest, i64>>> {
     let client = client.dupe();
     let metadata = use_case.metadata(identity);
     let digests = input_digests.iter().map(|d| d.to_re()).collect();

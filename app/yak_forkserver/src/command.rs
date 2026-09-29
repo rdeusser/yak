@@ -16,7 +16,7 @@ use std::sync::Arc;
 use tokio::net::UnixListener;
 use tokio::net::UnixStream;
 use yak_core::logging::LogConfigurationReloadHandle;
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 use yak_forkserver_proto::forkserver_server;
 use yak_fs::paths::abs_norm_path::AbsNormPathBuf;
 use yak_grpc::DuplexChannel;
@@ -37,11 +37,11 @@ pub async fn run_forkserver(
         }
         (None, Some(socket_path)) => {
             let listener =
-                UnixListener::bind(socket_path).buck_error_context("Failed to bind unix socket")?;
+                UnixListener::bind(socket_path).yak_error_context("Failed to bind unix socket")?;
             let (stream, _addr) = listener
                 .accept()
                 .await
-                .buck_error_context("Failed to accept unix socket")?;
+                .yak_error_context("Failed to accept unix socket")?;
             stream
         }
         _ => {
@@ -55,7 +55,7 @@ pub async fn run_forkserver(
     };
 
     let service = UnixForkserverService::new(log_reload_handle, &state_dir)
-        .buck_error_context("Failed to create UnixForkserverService")?;
+        .yak_error_context("Failed to create UnixForkserverService")?;
 
     let router = yak_grpc::server_builder().add_service(
         forkserver_server::ForkserverServer::new(service)

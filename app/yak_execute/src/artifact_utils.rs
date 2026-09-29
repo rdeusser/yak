@@ -15,7 +15,7 @@ use yak_core::fs::project::ProjectRoot;
 use yak_core::fs::project_rel_path::ProjectRelativePath;
 use yak_core::fs::project_rel_path::ProjectRelativePathBuf;
 use yak_directory::directory::entry::DirectoryEntry;
-use yak_error::BuckErrorOptionContext;
+use yak_error::YakErrorOptionContext;
 use yak_fs::paths::RelativePathBuf;
 
 use crate::artifact_value::ArtifactValue;

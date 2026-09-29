@@ -68,5 +68,5 @@ rust_binary(
 )
 
 # `bin/memory_by_key.rs` reads jemalloc's statistics, and only the Cargo build
-# links jemalloc (`third-party/rust/fixups/tikv-jemalloc-sys` does not build it),
+# links jemalloc,
 # so the binary has no target here.

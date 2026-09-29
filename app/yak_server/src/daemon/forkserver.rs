@@ -8,25 +8,25 @@
  * above-listed licenses.
  */
 
-use yak_common::legacy_configs::configs::LegacyBuckConfig;
+use yak_common::legacy_configs::configs::LegacyYakConfig;
 use yak_execute_impl::executors::local::ForkserverAccess;
 use yak_fs::paths::abs_norm_path::AbsNormPath;
 use yak_fs::paths::file_name::FileNameBuf;
-use yak_resource_control::buck_cgroup_tree::BuckCgroupTree;
+use yak_resource_control::yak_cgroup_tree::YakCgroupTree;
 
 #[cfg(unix)]
 pub async fn maybe_launch_forkserver(
-    root_config: &LegacyBuckConfig,
+    root_config: &LegacyYakConfig,
     forkserver_state_dir: &AbsNormPath,
-    cgroup_tree: Option<&BuckCgroupTree>,
+    cgroup_tree: Option<&YakCgroupTree>,
     isolation_dir: &FileNameBuf,
 ) -> yak_error::Result<ForkserverAccess> {
-    use yak_common::legacy_configs::key::BuckconfigKeyRef;
+    use yak_common::legacy_configs::key::YakconfigKeyRef;
     use yak_core::rollout_percentage::RolloutPercentage;
-    use yak_error::BuckErrorContext;
+    use yak_error::YakErrorContext;
 
     let config = root_config
-        .parse::<RolloutPercentage>(BuckconfigKeyRef {
+        .parse::<RolloutPercentage>(YakconfigKeyRef {
             section: "yak",
             property: "forkserver",
         })?
@@ -36,7 +36,7 @@ pub async fn maybe_launch_forkserver(
         return Ok(ForkserverAccess::None);
     }
 
-    let exe = std::env::current_exe().buck_error_context("Cannot access current_exe")?;
+    let exe = std::env::current_exe().yak_error_context("Cannot access current_exe")?;
     Ok(ForkserverAccess::Client(
         yak_forkserver::launch::launch_forkserver(
             exe,
@@ -52,9 +52,9 @@ pub async fn maybe_launch_forkserver(
 
 #[cfg(not(unix))]
 pub async fn maybe_launch_forkserver(
-    _root_config: &LegacyBuckConfig,
+    _root_config: &LegacyYakConfig,
     _forkserver_state_dir: &AbsNormPath,
-    _cgroup_tree: Option<&BuckCgroupTree>,
+    _cgroup_tree: Option<&YakCgroupTree>,
     _isolation_dir: &FileNameBuf,
 ) -> yak_error::Result<ForkserverAccess> {
     Ok(ForkserverAccess::None)

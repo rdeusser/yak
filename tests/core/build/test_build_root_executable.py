@@ -7,8 +7,8 @@
 # above-listed licenses.
 
 import pytest
-from e2e_util.api.buck import Buck
-from e2e_util.buck_workspace import buck_test
+from e2e_util.api.yak import Yak
+from e2e_util.yak_workspace import yak_test
 
 """
 Test that when we render paths relative to the repo root, we prefix them with a
@@ -17,12 +17,12 @@ lookup for them.
 """
 
 
-@buck_test()
-async def test_build_root_executable_local(buck: Buck) -> None:
-    await buck.build(":top", "--local-only")
+@yak_test()
+async def test_build_root_executable_local(yak: Yak) -> None:
+    await yak.build(":top", "--local-only")
 
 
 @pytest.mark.remote_execution
-@buck_test()
-async def test_build_root_executable_remote(buck: Buck) -> None:
-    await buck.build(":top", "--remote-only")
+@yak_test()
+async def test_build_root_executable_remote(yak: Yak) -> None:
+    await yak.build(":top", "--remote-only")

@@ -17,7 +17,7 @@ use yak_cli_proto::ConfiguredTargetsRequest;
 use yak_cli_proto::ConfiguredTargetsResponse;
 use yak_common::pattern::parse_from_cli::parse_patterns_with_modifiers_from_cli_args;
 use yak_core::pattern::pattern_type::TargetPatternExtra;
-use yak_error::BuckErrorOptionContext;
+use yak_error::YakErrorOptionContext;
 use yak_node::load_patterns::MissingTargetBehavior;
 use yak_server_ctx::ctx::ServerCommandContextTrait;
 use yak_server_ctx::global_cfg_options::global_cfg_options_from_client_context;

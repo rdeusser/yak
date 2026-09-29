@@ -6,21 +6,21 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-from e2e_util.api.buck import Buck
-from e2e_util.buck_workspace import buck_test
+from e2e_util.api.yak import Yak
+from e2e_util.yak_workspace import yak_test
 from e2e_util.helper.utils import json_get
 
 
-@buck_test()
-async def test_no_dice_invalidation_on_root_directory_changes(buck: Buck) -> None:
-    await buck.build("root//dir:")
+@yak_test()
+async def test_no_dice_invalidation_on_root_directory_changes(yak: Yak) -> None:
+    await yak.build("root//dir:")
 
     # Add a file to the root directory
-    (buck.cwd / "file.txt").write_text("hello world")
+    (yak.cwd / "file.txt").write_text("hello world")
 
-    await buck.build("root//dir:")
+    await yak.build("root//dir:")
 
-    log = (await buck.log("show")).stdout.splitlines()
+    log = (await yak.log("show")).stdout.splitlines()
 
     for line in log:
         e = json_get(

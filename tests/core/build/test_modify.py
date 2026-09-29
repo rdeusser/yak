@@ -11,87 +11,87 @@ import os
 from pathlib import Path
 
 import pytest
-from e2e_util.api.buck import Buck
+from e2e_util.api.yak import Yak
 from e2e_util.asserts import expect_failure
-from e2e_util.buck_workspace import buck_test
+from e2e_util.yak_workspace import yak_test
 from e2e_util.helper.utils import random_string
 
 
-@buck_test(data_dir="modify")
-async def test_modify_genrule(buck: Buck) -> None:
-    result = await buck.build("//:writer")
+@yak_test(data_dir="modify")
+async def test_modify_genrule(yak: Yak) -> None:
+    result = await yak.build("//:writer")
     output = result.get_build_report().output_for_target("root//:writer")
     assert Path(output).read_text() == "HELLO\n"
 
     # Change "HELLO" in YAK.fixture to "GOODBYE"
-    with fileinput.input(buck.cwd / "YAK.fixture", inplace=True) as f:
+    with fileinput.input(yak.cwd / "YAK.fixture", inplace=True) as f:
         for line in f:
             print(line.replace("HELLO", "GOODBYE"), end="")
 
-    result = await buck.build("//:writer")
+    result = await yak.build("//:writer")
     output = result.get_build_report().output_for_target("root//:writer")
     assert Path(output).read_text() == "GOODBYE\n"
 
 
-@buck_test(data_dir="modify")
-async def test_modify_src(buck: Buck) -> None:
-    result = await buck.build("//:mysrcrule")
+@yak_test(data_dir="modify")
+async def test_modify_src(yak: Yak) -> None:
+    result = await yak.build("//:mysrcrule")
     output = result.get_build_report().output_for_target("root//:mysrcrule")
     assert Path(output).read_text() == "HELLO\n"
 
-    (buck.cwd / "src.txt").write_text("GOODBYE\n")
-    result = await buck.build("//:mysrcrule")
+    (yak.cwd / "src.txt").write_text("GOODBYE\n")
+    result = await yak.build("//:mysrcrule")
     output = result.get_build_report().output_for_target("root//:mysrcrule")
     assert Path(output).read_text() == "GOODBYE\n"
 
 
-@buck_test(data_dir="modify")
-async def test_modify_genrule_notify(buck: Buck) -> None:
-    with open(buck.cwd / ".yakconfig", "a") as buckconfig:
-        buckconfig.write("\n[yak]\nfile_watcher = notify")
-    await buck.kill()  # Ensure the config gets picked up
-    await test_modify_genrule(buck)
+@yak_test(data_dir="modify")
+async def test_modify_genrule_notify(yak: Yak) -> None:
+    with open(yak.cwd / ".yakconfig", "a") as yakconfig:
+        yakconfig.write("\n[yak]\nfile_watcher = notify")
+    await yak.kill()  # Ensure the config gets picked up
+    await test_modify_genrule(yak)
 
 
-@buck_test(data_dir="modify")
-async def test_modify_directory(buck: Buck) -> None:
+@yak_test(data_dir="modify")
+async def test_modify_directory(yak: Yak) -> None:
     # Checks that a build notices a directory that was deleted along with its file.
-    os.mkdir(buck.cwd / "a_dir")
-    with open(buck.cwd / "a_dir" / "test.txt", "w") as file:
+    os.mkdir(yak.cwd / "a_dir")
+    with open(yak.cwd / "a_dir" / "test.txt", "w") as file:
         file.write("test")
-    await buck.build("//:writer")
+    await yak.build("//:writer")
     # Remove a directory, and change a file, so the file gets spotted,
     # and we'd better note that the directory no longer exists
-    os.remove(buck.cwd / "a_dir" / "test.txt")
-    os.rmdir(buck.cwd / "a_dir")
-    await buck.build("//:writer")
+    os.remove(yak.cwd / "a_dir" / "test.txt")
+    os.rmdir(yak.cwd / "a_dir")
+    await yak.build("//:writer")
 
 
 @pytest.mark.remote_execution
-@buck_test(data_dir="modify_file_during_build")
-async def test_modify_file_during_build(buck: Buck) -> None:
+@yak_test(data_dir="modify_file_during_build")
+async def test_modify_file_during_build(yak: Yak) -> None:
     # We need to write some random stuff to the file first so that yak will
     # have to attempt to upload it to RE (which will fail because by that time
     # we will have overwritten it with other content).
-    with open(buck.cwd / "text", "w", encoding="utf-8") as f:
+    with open(yak.cwd / "text", "w", encoding="utf-8") as f:
         f.write(random_string())
 
     await expect_failure(
-        buck.build("//:check"),
+        yak.build("//:check"),
         stderr_regex="modified files while the build was in progress",
     )
 
 
 @pytest.mark.remote_execution
-@buck_test(data_dir="modify_file_during_build")
-async def test_file_notify(buck: Buck) -> None:
+@yak_test(data_dir="modify_file_during_build")
+async def test_file_notify(yak: Yak) -> None:
     # We need to write some random stuff to the file first so that yak will
     # have to attempt to upload it to RE (which will fail because by that time
     # we will have overwritten it with other content).
-    with open(buck.cwd / "text", "w", encoding="utf-8") as f:
+    with open(yak.cwd / "text", "w", encoding="utf-8") as f:
         f.write(random_string())
 
     await expect_failure(
-        buck.build("//:check"),
+        yak.build("//:check"),
         stderr_regex="modified files while the build was in progress",
     )

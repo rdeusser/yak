@@ -21,7 +21,7 @@ use windows_sys::Win32::System::Threading::OpenProcess;
 use windows_sys::Win32::System::Threading::PROCESS_QUERY_INFORMATION;
 use windows_sys::Win32::System::Threading::PROCESS_TERMINATE;
 use windows_sys::Win32::System::Threading::TerminateProcess;
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 
 use crate::pid::Pid;
 use crate::win::winapi_handle::WinapiHandle;
@@ -67,7 +67,7 @@ impl WinapiProcessHandle {
                     return Ok(());
                 }
 
-                Err(os_error).with_buck_error_context(|| format!("Failed to kill pid {}", self.pid))
+                Err(os_error).with_yak_error_context(|| format!("Failed to kill pid {}", self.pid))
             } else {
                 Ok(())
             }
@@ -91,7 +91,7 @@ impl WinapiProcessHandle {
         };
 
         if result == 0 {
-            return Err(io::Error::last_os_error()).with_buck_error_context(|| {
+            return Err(io::Error::last_os_error()).with_yak_error_context(|| {
                 format!("Failed to call GetProcessTimes for pid {}", self.pid)
             });
         }
@@ -115,7 +115,7 @@ impl WinapiProcessHandle {
             }
         }
 
-        Err(io::Error::last_os_error()).with_buck_error_context(|| {
+        Err(io::Error::last_os_error()).with_yak_error_context(|| {
             format!("Failed to call GetExitCodeProcess for pid {}", self.pid)
         })
     }

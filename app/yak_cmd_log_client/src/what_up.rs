@@ -21,9 +21,9 @@ use superconsole::DrawMode;
 use superconsole::Lines;
 use superconsole::components::DrawVertical;
 use tokio_stream::StreamExt;
-use yak_client_ctx::client_ctx::BuckSubcommand;
+use yak_client_ctx::client_ctx::YakSubcommand;
 use yak_client_ctx::client_ctx::ClientCommandContext;
-use yak_client_ctx::common::BuckArgMatches;
+use yak_client_ctx::common::YakArgMatches;
 use yak_client_ctx::event_log_options::EventLogOptions;
 use yak_client_ctx::events_ctx::EventsCtx;
 use yak_client_ctx::exit_result::ExitResult;
@@ -39,7 +39,7 @@ use yak_client_ctx::ticker::Tick;
 use yak_event_log::stream_value::StreamValue;
 use yak_event_observer::span_tracker::EventTimestamp;
 use yak_event_observer::verbosity::Verbosity;
-use yak_events::BuckEvent;
+use yak_events::YakEvent;
 
 /// Show the spans that were open when the log ended.
 #[derive(Debug, clap::Parser)]
@@ -56,12 +56,12 @@ pub struct WhatUpCommand {
     pub after: Option<u64>,
 }
 
-impl BuckSubcommand for WhatUpCommand {
+impl YakSubcommand for WhatUpCommand {
     const COMMAND_NAME: &'static str = "log-what-up";
 
     async fn exec_impl(
         self,
-        _matches: BuckArgMatches<'_>,
+        _matches: YakArgMatches<'_>,
         ctx: ClientCommandContext<'_>,
         _events_ctx: &mut EventsCtx,
     ) -> ExitResult {
@@ -105,7 +105,7 @@ impl BuckSubcommand for WhatUpCommand {
         while let Ok(Some(event)) = events.try_next().await {
             match event {
                 StreamValue::Event(event) => {
-                    let e = BuckEvent::try_from(event)?;
+                    let e = YakEvent::try_from(event)?;
 
                     match cutoff_time {
                         Some(cutoff_time) => {

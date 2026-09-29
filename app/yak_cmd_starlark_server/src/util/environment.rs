@@ -48,7 +48,7 @@ impl Environment {
             .await?
         {
             Some(prelude)
-                if path_type == StarlarkFileType::Buck || prelude.import_path().cell() != cell =>
+                if path_type == StarlarkFileType::Yak || prelude.import_path().cell() != cell =>
             {
                 Some(prelude)
             }
@@ -88,8 +88,8 @@ impl Environment {
             for x in m.env().names() {
                 names.insert(x.to_owned());
             }
-            if path_type == StarlarkFileType::Buck {
-                if let Some(native) = m.native_globals_for_buck_files()? {
+            if path_type == StarlarkFileType::Yak {
+                if let Some(native) = m.native_globals_for_yak_files()? {
                     for (name, _value) in native.value().iter() {
                         names.insert(name.as_str().to_owned());
                     }

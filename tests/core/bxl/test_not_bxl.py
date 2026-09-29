@@ -6,24 +6,24 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-from e2e_util.api.buck import Buck
+from e2e_util.api.yak import Yak
 from e2e_util.asserts import expect_failure
-from e2e_util.buck_workspace import buck_test
+from e2e_util.yak_workspace import yak_test
 
 
-@buck_test()
-async def test_not_bxl(buck: Buck) -> None:
+@yak_test()
+async def test_not_bxl(yak: Yak) -> None:
     await expect_failure(
-        buck.bxl(
+        yak.bxl(
             "//not_bxl.bxl:not_bxl",
         ),
         stderr_regex="Expected value of type `bxl` but got `function",
     )
 
 
-@buck_test()
-async def test_not_allowed_now(buck: Buck) -> None:
+@yak_test()
+async def test_not_allowed_now(yak: Yak) -> None:
     await expect_failure(
-        buck.build(":"),
+        yak.build(":"),
         stderr_regex="This function can only be called from Bxl",
     )

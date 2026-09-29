@@ -12,7 +12,7 @@ use std::fmt;
 
 use allocative::Allocative;
 use pagable::Pagable;
-use yak_error::BuckErrorOptionContext;
+use yak_error::YakErrorOptionContext;
 
 use crate::attrs::attr_type::AttrType;
 

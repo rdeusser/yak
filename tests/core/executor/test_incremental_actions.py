@@ -7,18 +7,18 @@
 # above-listed licenses.
 
 import pytest
-from e2e_util.api.buck import Buck
-from e2e_util.api.buck_result import BuckResult
-from e2e_util.buck_workspace import buck_test
+from e2e_util.api.yak import Yak
+from e2e_util.api.yak_result import YakResult
+from e2e_util.yak_workspace import yak_test
 from e2e_util.helper.utils import filter_events, random_string
 
 
 # Incremental actions use the output of previous actions, mimic this behavior by
 # appending a string - Note that this is not how incremental actions behave in practice
 async def basic_incremental_action_local_only_helper(
-    buck: Buck, use_content_based_path: bool
+    yak: Yak, use_content_based_path: bool
 ) -> None:
-    result = await buck.run(
+    result = await yak.run(
         "root//:basic_incremental_action",
         "--local-only",
         "-c",
@@ -28,7 +28,7 @@ async def basic_incremental_action_local_only_helper(
     )
     assert result.stdout == "foo"
 
-    result = await buck.run(
+    result = await yak.run(
         "root//:basic_incremental_action",
         "--local-only",
         "-c",
@@ -37,7 +37,7 @@ async def basic_incremental_action_local_only_helper(
         f"test.use_content_based_path={use_content_based_path}",
     )
     assert result.stdout == "foo bar"
-    result = await buck.run(
+    result = await yak.run(
         "root//:basic_incremental_action",
         "--local-only",
         "-c",
@@ -48,22 +48,22 @@ async def basic_incremental_action_local_only_helper(
     assert result.stdout == "foo bar bar"
 
 
-@buck_test()
-async def test_basic_incremental_action_local_only(buck: Buck) -> None:
-    await basic_incremental_action_local_only_helper(buck, use_content_based_path=False)
+@yak_test()
+async def test_basic_incremental_action_local_only(yak: Yak) -> None:
+    await basic_incremental_action_local_only_helper(yak, use_content_based_path=False)
 
 
-@buck_test()
+@yak_test()
 async def test_basic_incremental_action_local_only_with_content_based_path(
-    buck: Buck,
+    yak: Yak,
 ) -> None:
-    await basic_incremental_action_local_only_helper(buck, use_content_based_path=True)
+    await basic_incremental_action_local_only_helper(yak, use_content_based_path=True)
 
 
 async def incremental_action_from_remote_action_helper(
-    buck: Buck, use_content_based_path: bool
+    yak: Yak, use_content_based_path: bool
 ) -> None:
-    result = await buck.run(
+    result = await yak.run(
         "root//:basic_incremental_action",
         "--remote-only",
         "-c",
@@ -73,7 +73,7 @@ async def incremental_action_from_remote_action_helper(
     )
     assert result.stdout == "foo"
 
-    result = await buck.run(
+    result = await yak.run(
         "root//:basic_incremental_action",
         "--local-only",
         "-c",
@@ -85,27 +85,27 @@ async def incremental_action_from_remote_action_helper(
 
 
 @pytest.mark.remote_execution
-@buck_test()
-async def test_incremental_action_from_remote_action(buck: Buck) -> None:
+@yak_test()
+async def test_incremental_action_from_remote_action(yak: Yak) -> None:
     await incremental_action_from_remote_action_helper(
-        buck, use_content_based_path=False
+        yak, use_content_based_path=False
     )
 
 
 @pytest.mark.remote_execution
-@buck_test()
+@yak_test()
 async def test_incremental_action_from_remote_action_with_content_based_path(
-    buck: Buck,
+    yak: Yak,
 ) -> None:
     await incremental_action_from_remote_action_helper(
-        buck, use_content_based_path=True
+        yak, use_content_based_path=True
     )
 
 
 async def incremental_action_with_non_incremental_remote_action_inbetween_helper(
-    buck: Buck, use_content_based_path: bool
+    yak: Yak, use_content_based_path: bool
 ) -> None:
-    result = await buck.run(
+    result = await yak.run(
         "root//:basic_incremental_action",
         "-c",
         f"test.seed={random_string()}",
@@ -114,7 +114,7 @@ async def incremental_action_with_non_incremental_remote_action_inbetween_helper
     )
     assert result.stdout == "foo"
 
-    result = await buck.run(
+    result = await yak.run(
         "root//:basic_incremental_action",
         "--remote-only",
         "-c",
@@ -126,7 +126,7 @@ async def incremental_action_with_non_incremental_remote_action_inbetween_helper
     )
     assert result.stdout == "foo"
 
-    result = await buck.run(
+    result = await yak.run(
         "root//:basic_incremental_action",
         "--local-only",
         "-c",
@@ -138,29 +138,29 @@ async def incremental_action_with_non_incremental_remote_action_inbetween_helper
 
 
 @pytest.mark.remote_execution
-@buck_test()
+@yak_test()
 async def test_incremental_action_with_non_incremental_remote_action_inbetween(
-    buck: Buck,
+    yak: Yak,
 ) -> None:
     await incremental_action_with_non_incremental_remote_action_inbetween_helper(
-        buck, use_content_based_path=False
+        yak, use_content_based_path=False
     )
 
 
 @pytest.mark.remote_execution
-@buck_test()
+@yak_test()
 async def test_incremental_action_with_non_incremental_remote_action_inbetween_with_content_based_path(
-    buck: Buck,
+    yak: Yak,
 ) -> None:
     await incremental_action_with_non_incremental_remote_action_inbetween_helper(
-        buck, use_content_based_path=True
+        yak, use_content_based_path=True
     )
 
 
 async def incremental_action_with_non_incremental_local_action_inbetween_helper(
-    buck: Buck, use_content_based_path: bool
+    yak: Yak, use_content_based_path: bool
 ) -> None:
-    result = await buck.run(
+    result = await yak.run(
         "root//:basic_incremental_action",
         "-c",
         f"test.seed={random_string()}",
@@ -169,7 +169,7 @@ async def incremental_action_with_non_incremental_local_action_inbetween_helper(
     )
     assert result.stdout == "foo"
 
-    result = await buck.run(
+    result = await yak.run(
         "root//:basic_incremental_action",
         "--local-only",
         "-c",
@@ -181,7 +181,7 @@ async def incremental_action_with_non_incremental_local_action_inbetween_helper(
     )
     assert result.stdout == "foo"
 
-    result = await buck.run(
+    result = await yak.run(
         "root//:basic_incremental_action",
         "--local-only",
         "-c",
@@ -192,34 +192,34 @@ async def incremental_action_with_non_incremental_local_action_inbetween_helper(
     assert result.stdout == "foo bar"
 
 
-@buck_test()
+@yak_test()
 async def test_incremental_action_with_non_incremental_local_action_inbetween(
-    buck: Buck,
+    yak: Yak,
 ) -> None:
     await incremental_action_with_non_incremental_local_action_inbetween_helper(
-        buck, use_content_based_path=False
+        yak, use_content_based_path=False
     )
 
 
-@buck_test()
+@yak_test()
 async def test_incremental_action_with_non_incremental_local_action_inbetween_with_content_based_path(
-    buck: Buck,
+    yak: Yak,
 ) -> None:
     await incremental_action_with_non_incremental_local_action_inbetween_helper(
-        buck, use_content_based_path=True
+        yak, use_content_based_path=True
     )
 
 
 async def basic_incremental_action_cached_helper(
-    buck: Buck, use_content_based_path: bool
+    yak: Yak, use_content_based_path: bool
 ) -> None:
-    result = await buck.run(
+    result = await yak.run(
         "root//:basic_incremental_action",
         "--remote-only",
     )
     assert result.stdout == "foo"
 
-    result = await buck.run(
+    result = await yak.run(
         "root//:basic_incremental_action",
         "--local-only",
         "-c",
@@ -229,7 +229,7 @@ async def basic_incremental_action_cached_helper(
     # not re-executed because re-execution would have resulted in the output to be "foo bar". See below
     assert result.stdout == "foo"
 
-    result = await buck.run(
+    result = await yak.run(
         "root//:basic_incremental_action",
         "--local-only",
         "-c",
@@ -241,24 +241,24 @@ async def basic_incremental_action_cached_helper(
 
 
 @pytest.mark.remote_execution
-@buck_test()
-async def test_basic_incremental_action_cached(buck: Buck) -> None:
-    await basic_incremental_action_cached_helper(buck, use_content_based_path=False)
+@yak_test()
+async def test_basic_incremental_action_cached(yak: Yak) -> None:
+    await basic_incremental_action_cached_helper(yak, use_content_based_path=False)
 
 
 @pytest.mark.remote_execution
-@buck_test()
+@yak_test()
 async def test_basic_incremental_action_cached_with_content_based_path(
-    buck: Buck,
+    yak: Yak,
 ) -> None:
-    await basic_incremental_action_cached_helper(buck, use_content_based_path=True)
+    await basic_incremental_action_cached_helper(yak, use_content_based_path=True)
 
 
 async def basic_incremental_action_after_cache_hit_helper(
-    buck: Buck, use_content_based_path: bool
+    yak: Yak, use_content_based_path: bool
 ) -> None:
     # Populate the remote cache
-    result = await buck.run(
+    result = await yak.run(
         "root//:basic_incremental_action",
         "--remote-only",
         "-c",
@@ -266,10 +266,10 @@ async def basic_incremental_action_after_cache_hit_helper(
     )
     assert result.stdout == "foo"
 
-    await buck.clean()
+    await yak.clean()
 
     # Run again, and make sure we got an action cache hit
-    result = await buck.run(
+    result = await yak.run(
         "root//:basic_incremental_action",
         "-c",
         f"test.use_content_based_path={use_content_based_path}",
@@ -277,7 +277,7 @@ async def basic_incremental_action_after_cache_hit_helper(
     assert result.stdout == "foo"
 
     execution_kinds = await filter_events(
-        buck,
+        yak,
         "Event",
         "data",
         "SpanEnd",
@@ -288,7 +288,7 @@ async def basic_incremental_action_after_cache_hit_helper(
     ACTION_EXECUTION_KIND_ACTION_CACHE = 3
     assert execution_kinds[-1] == ACTION_EXECUTION_KIND_ACTION_CACHE
 
-    result = await buck.run(
+    result = await yak.run(
         "root//:basic_incremental_action",
         "--local-only",
         "-c",
@@ -301,27 +301,27 @@ async def basic_incremental_action_after_cache_hit_helper(
 
 
 @pytest.mark.remote_execution
-@buck_test()
-async def test_basic_incremental_action_after_cache_hit(buck: Buck) -> None:
+@yak_test()
+async def test_basic_incremental_action_after_cache_hit(yak: Yak) -> None:
     await basic_incremental_action_after_cache_hit_helper(
-        buck, use_content_based_path=False
+        yak, use_content_based_path=False
     )
 
 
 @pytest.mark.remote_execution
-@buck_test()
+@yak_test()
 async def test_basic_incremental_action_after_cache_hit_with_content_based_path(
-    buck: Buck,
+    yak: Yak,
 ) -> None:
     await basic_incremental_action_after_cache_hit_helper(
-        buck, use_content_based_path=True
+        yak, use_content_based_path=True
     )
 
 
 async def incremental_action_interleave_platforms_helper(
-    buck: Buck, platform: str, use_content_based_path: bool
-) -> BuckResult:
-    return await buck.run(
+    yak: Yak, platform: str, use_content_based_path: bool
+) -> YakResult:
+    return await yak.run(
         "root//:basic_incremental_action",
         "--target-platforms",
         platform,
@@ -333,144 +333,144 @@ async def incremental_action_interleave_platforms_helper(
     )
 
 
-@buck_test()
-async def test_incremental_action_interleave_platforms_aabb(buck: Buck) -> None:
+@yak_test()
+async def test_incremental_action_interleave_platforms_aabb(yak: Yak) -> None:
     result = await incremental_action_interleave_platforms_helper(
-        buck, "root//:p_default", use_content_based_path=False
+        yak, "root//:p_default", use_content_based_path=False
     )
     assert result.stdout == "foo"
     result = await incremental_action_interleave_platforms_helper(
-        buck, "root//:p_default", use_content_based_path=False
+        yak, "root//:p_default", use_content_based_path=False
     )
     assert result.stdout == "foo bar"
     result = await incremental_action_interleave_platforms_helper(
-        buck, "root//:p_cat", use_content_based_path=False
+        yak, "root//:p_cat", use_content_based_path=False
     )
     assert result.stdout == "foo"
     result = await incremental_action_interleave_platforms_helper(
-        buck, "root//:p_cat", use_content_based_path=False
-    )
-    assert result.stdout == "foo bar"
-
-
-@buck_test()
-async def test_incremental_action_different_platforms_abab(buck: Buck) -> None:
-    result = await incremental_action_interleave_platforms_helper(
-        buck, "root//:p_default", use_content_based_path=False
-    )
-    assert result.stdout == "foo"
-    result = await incremental_action_interleave_platforms_helper(
-        buck, "root//:p_cat", use_content_based_path=False
-    )
-    assert result.stdout == "foo"
-    result = await incremental_action_interleave_platforms_helper(
-        buck, "root//:p_default", use_content_based_path=False
-    )
-    assert result.stdout == "foo bar"
-    result = await incremental_action_interleave_platforms_helper(
-        buck, "root//:p_cat", use_content_based_path=False
+        yak, "root//:p_cat", use_content_based_path=False
     )
     assert result.stdout == "foo bar"
 
 
-@buck_test()
-async def test_incremental_action_different_platforms_abba(buck: Buck) -> None:
+@yak_test()
+async def test_incremental_action_different_platforms_abab(yak: Yak) -> None:
     result = await incremental_action_interleave_platforms_helper(
-        buck, "root//:p_default", use_content_based_path=False
+        yak, "root//:p_default", use_content_based_path=False
     )
     assert result.stdout == "foo"
     result = await incremental_action_interleave_platforms_helper(
-        buck, "root//:p_cat", use_content_based_path=False
+        yak, "root//:p_cat", use_content_based_path=False
     )
     assert result.stdout == "foo"
     result = await incremental_action_interleave_platforms_helper(
-        buck, "root//:p_cat", use_content_based_path=False
+        yak, "root//:p_default", use_content_based_path=False
     )
     assert result.stdout == "foo bar"
     result = await incremental_action_interleave_platforms_helper(
-        buck, "root//:p_default", use_content_based_path=False
+        yak, "root//:p_cat", use_content_based_path=False
     )
     assert result.stdout == "foo bar"
 
 
-@buck_test()
+@yak_test()
+async def test_incremental_action_different_platforms_abba(yak: Yak) -> None:
+    result = await incremental_action_interleave_platforms_helper(
+        yak, "root//:p_default", use_content_based_path=False
+    )
+    assert result.stdout == "foo"
+    result = await incremental_action_interleave_platforms_helper(
+        yak, "root//:p_cat", use_content_based_path=False
+    )
+    assert result.stdout == "foo"
+    result = await incremental_action_interleave_platforms_helper(
+        yak, "root//:p_cat", use_content_based_path=False
+    )
+    assert result.stdout == "foo bar"
+    result = await incremental_action_interleave_platforms_helper(
+        yak, "root//:p_default", use_content_based_path=False
+    )
+    assert result.stdout == "foo bar"
+
+
+@yak_test()
 async def test_incremental_action_interleave_platforms_aabb_with_content_based_path(
-    buck: Buck,
+    yak: Yak,
 ) -> None:
     result = await incremental_action_interleave_platforms_helper(
-        buck, "root//:p_default", use_content_based_path=True
+        yak, "root//:p_default", use_content_based_path=True
     )
     assert result.stdout == "foo"
     result = await incremental_action_interleave_platforms_helper(
-        buck, "root//:p_default", use_content_based_path=True
+        yak, "root//:p_default", use_content_based_path=True
     )
     assert result.stdout == "foo bar"
     result = await incremental_action_interleave_platforms_helper(
-        buck, "root//:p_cat", use_content_based_path=True
+        yak, "root//:p_cat", use_content_based_path=True
     )
     assert result.stdout == "foo"
     result = await incremental_action_interleave_platforms_helper(
-        buck, "root//:p_cat", use_content_based_path=True
+        yak, "root//:p_cat", use_content_based_path=True
     )
     assert result.stdout == "foo bar"
 
 
-@buck_test()
+@yak_test()
 async def test_incremental_action_interleave_platforms_abab_with_content_based_path(
-    buck: Buck,
+    yak: Yak,
 ) -> None:
     result = await incremental_action_interleave_platforms_helper(
-        buck, "root//:p_default", use_content_based_path=True
+        yak, "root//:p_default", use_content_based_path=True
     )
     assert result.stdout == "foo"
     result = await incremental_action_interleave_platforms_helper(
-        buck, "root//:p_cat", use_content_based_path=True
+        yak, "root//:p_cat", use_content_based_path=True
     )
     assert result.stdout == "foo"
     result = await incremental_action_interleave_platforms_helper(
-        buck, "root//:p_default", use_content_based_path=True
+        yak, "root//:p_default", use_content_based_path=True
     )
     assert result.stdout == "foo bar"
     result = await incremental_action_interleave_platforms_helper(
-        buck, "root//:p_cat", use_content_based_path=True
+        yak, "root//:p_cat", use_content_based_path=True
     )
     assert result.stdout == "foo bar"
 
 
-@buck_test()
+@yak_test()
 async def test_incremental_action_interleave_platforms_abba_with_content_based_path(
-    buck: Buck,
+    yak: Yak,
 ) -> None:
     result = await incremental_action_interleave_platforms_helper(
-        buck, "root//:p_default", use_content_based_path=True
+        yak, "root//:p_default", use_content_based_path=True
     )
     assert result.stdout == "foo"
     result = await incremental_action_interleave_platforms_helper(
-        buck, "root//:p_cat", use_content_based_path=True
+        yak, "root//:p_cat", use_content_based_path=True
     )
     assert result.stdout == "foo"
     result = await incremental_action_interleave_platforms_helper(
-        buck, "root//:p_cat", use_content_based_path=True
+        yak, "root//:p_cat", use_content_based_path=True
     )
     assert result.stdout == "foo bar"
     result = await incremental_action_interleave_platforms_helper(
-        buck, "root//:p_default", use_content_based_path=True
+        yak, "root//:p_default", use_content_based_path=True
     )
     assert result.stdout == "foo bar"
 
 
-@buck_test()
+@yak_test()
 async def test_incremental_action_with_metadata_opt_out(
-    buck: Buck,
+    yak: Yak,
 ) -> None:
-    await buck.build("root//:incremental_action_with_metadata_optout")
+    await yak.build("root//:incremental_action_with_metadata_optout")
 
 
 # We shouldn't lose the state from killing the daemon in between invocations
 async def incremental_action_persist_between_daemon_restart_helper(
-    buck: Buck, use_content_based_path: bool
+    yak: Yak, use_content_based_path: bool
 ) -> None:
-    result = await buck.run(
+    result = await yak.run(
         "root//:basic_incremental_action",
         "-c",
         f"test.seed={random_string()}",
@@ -479,9 +479,9 @@ async def incremental_action_persist_between_daemon_restart_helper(
     )
     assert result.stdout == "foo"
 
-    await buck.kill()
+    await yak.kill()
 
-    result = await buck.run(
+    result = await yak.run(
         "root//:basic_incremental_action",
         "--local-only",
         "-c",
@@ -492,30 +492,30 @@ async def incremental_action_persist_between_daemon_restart_helper(
     assert result.stdout == "foo bar"
 
 
-@buck_test()
+@yak_test()
 async def test_incremental_action_persist_between_daemon_restart(
-    buck: Buck,
+    yak: Yak,
 ) -> None:
     await incremental_action_persist_between_daemon_restart_helper(
-        buck, use_content_based_path=False
+        yak, use_content_based_path=False
     )
 
 
-@buck_test()
+@yak_test()
 async def test_incremental_action_persist_between_daemon_restart_with_content_based_path(
-    buck: Buck,
+    yak: Yak,
 ) -> None:
     await incremental_action_persist_between_daemon_restart_helper(
-        buck, use_content_based_path=True
+        yak, use_content_based_path=True
     )
 
 
 # If we haven't materialized the outputs, then we won't run incrementally on the first run
 # after a daemon restart
 async def unmaterialized_incremental_action_not_persist_between_daemon_restart_helper(
-    buck: Buck, use_content_based_path: bool
+    yak: Yak, use_content_based_path: bool
 ) -> None:
-    await buck.build(
+    await yak.build(
         "root//:basic_incremental_action",
         "--remote-only",
         "-c",
@@ -526,9 +526,9 @@ async def unmaterialized_incremental_action_not_persist_between_daemon_restart_h
         "none",
     )
 
-    await buck.kill()
+    await yak.kill()
 
-    result = await buck.run(
+    result = await yak.run(
         "root//:basic_incremental_action",
         "--local-only",
         "-c",
@@ -540,30 +540,30 @@ async def unmaterialized_incremental_action_not_persist_between_daemon_restart_h
 
 
 @pytest.mark.remote_execution
-@buck_test()
+@yak_test()
 async def test_unmaterialized_incremental_action_not_persist_between_daemon_restart(
-    buck: Buck,
+    yak: Yak,
 ) -> None:
     await unmaterialized_incremental_action_not_persist_between_daemon_restart_helper(
-        buck, use_content_based_path=False
+        yak, use_content_based_path=False
     )
 
 
 @pytest.mark.remote_execution
-@buck_test()
+@yak_test()
 async def test_unmaterialized_incremental_action_not_persist_between_daemon_restart_with_content_based_path(
-    buck: Buck,
+    yak: Yak,
 ) -> None:
     await unmaterialized_incremental_action_not_persist_between_daemon_restart_helper(
-        buck, use_content_based_path=True
+        yak, use_content_based_path=True
     )
 
 
 # Clean wipes yak-out, which should reset everything so incremental actions should start anew
 async def incremental_action_clean_resets_state_helper(
-    buck: Buck, use_content_based_path: bool
+    yak: Yak, use_content_based_path: bool
 ) -> None:
-    result = await buck.run(
+    result = await yak.run(
         "root//:basic_incremental_action",
         "-c",
         f"test.seed={random_string()}",
@@ -572,9 +572,9 @@ async def incremental_action_clean_resets_state_helper(
     )
     assert result.stdout == "foo"
 
-    await buck.clean()
+    await yak.clean()
 
-    result = await buck.run(
+    result = await yak.run(
         "root//:basic_incremental_action",
         "--local-only",
         "-c",
@@ -585,30 +585,30 @@ async def incremental_action_clean_resets_state_helper(
     assert result.stdout == "foo"
 
 
-@buck_test()
+@yak_test()
 async def test_incremental_action_clean_resets_state(
-    buck: Buck,
+    yak: Yak,
 ) -> None:
     await incremental_action_clean_resets_state_helper(
-        buck, use_content_based_path=False
+        yak, use_content_based_path=False
     )
 
 
-@buck_test()
+@yak_test()
 async def test_incremental_action_clean_resets_state_with_content_based_path(
-    buck: Buck,
+    yak: Yak,
 ) -> None:
     await incremental_action_clean_resets_state_helper(
-        buck, use_content_based_path=True
+        yak, use_content_based_path=True
     )
 
 
 # In practice, there will be multiple actions with multiple outputs running. This test
 # mimics that behavior a bit to ensure the states don't step over each other.
 async def incremental_action_multi_outputs_with_daemon_restart_helper(
-    buck: Buck, use_content_based_path: bool
+    yak: Yak, use_content_based_path: bool
 ) -> None:
-    result = await buck.run(
+    result = await yak.run(
         "root//:basic_incremental_action",
         "-c",
         f"test.seed={random_string()}",
@@ -617,9 +617,9 @@ async def incremental_action_multi_outputs_with_daemon_restart_helper(
     )
     assert result.stdout == "foo"
 
-    await buck.kill()
+    await yak.kill()
 
-    result = await buck.run(
+    result = await yak.run(
         "root//:incremental_action_with_multiple_outputs",
         "-c",
         f"test.seed={random_string()}",
@@ -628,9 +628,9 @@ async def incremental_action_multi_outputs_with_daemon_restart_helper(
     )
     assert result.stdout == "ab"
 
-    await buck.kill()
+    await yak.kill()
 
-    result = await buck.run(
+    result = await yak.run(
         "root//:basic_incremental_action",
         "--local-only",
         "-c",
@@ -640,9 +640,9 @@ async def incremental_action_multi_outputs_with_daemon_restart_helper(
     )
     assert result.stdout == "foo bar"
 
-    await buck.kill()
+    await yak.kill()
 
-    result = await buck.run(
+    result = await yak.run(
         "root//:incremental_action_with_multiple_outputs",
         "--local-only",
         "-c",
@@ -653,28 +653,28 @@ async def incremental_action_multi_outputs_with_daemon_restart_helper(
     assert result.stdout == "aabb"
 
 
-@buck_test()
+@yak_test()
 async def test_incremental_action_multi_outputs_with_daemon_restart(
-    buck: Buck,
+    yak: Yak,
 ) -> None:
     await incremental_action_multi_outputs_with_daemon_restart_helper(
-        buck, use_content_based_path=False
+        yak, use_content_based_path=False
     )
 
 
-@buck_test()
+@yak_test()
 async def test_incremental_action_multi_outputs_with_daemon_restart_and_content_based_path(
-    buck: Buck,
+    yak: Yak,
 ) -> None:
     await incremental_action_multi_outputs_with_daemon_restart_helper(
-        buck, use_content_based_path=True
+        yak, use_content_based_path=True
     )
 
 
-@buck_test(
-    extra_buck_config={"yak": {"sqlite_incremental_state": "false"}},
+@yak_test(
+    extra_yak_config={"yak": {"sqlite_incremental_state": "false"}},
 )
 async def test_incremental_action_db_disabled(
-    buck: Buck,
+    yak: Yak,
 ) -> None:
-    await basic_incremental_action_local_only_helper(buck, use_content_based_path=True)
+    await basic_incremental_action_local_only_helper(yak, use_content_based_path=True)

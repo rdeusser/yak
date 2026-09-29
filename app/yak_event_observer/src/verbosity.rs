@@ -9,7 +9,7 @@
  */
 
 use dupe::Dupe;
-use yak_hash::BuckMutSet;
+use yak_hash::YakMutSet;
 
 #[derive(Debug, yak_error::Error)]
 #[yak(tag = Input)]
@@ -69,7 +69,7 @@ pub enum VerbosityItem {
 }
 
 impl VerbosityLevel {
-    fn items(self) -> BuckMutSet<VerbosityItem> {
+    fn items(self) -> YakMutSet<VerbosityItem> {
         let items = match self {
             Self::Quiet => vec![],
             Self::Default => vec![VerbosityItem::Status, VerbosityItem::Success],
@@ -84,8 +84,8 @@ impl VerbosityLevel {
         self.add_to_previous(items)
     }
 
-    fn add_to_previous(self, items: Vec<VerbosityItem>) -> BuckMutSet<VerbosityItem> {
-        let mut items: BuckMutSet<_> = items.into_iter().collect();
+    fn add_to_previous(self, items: Vec<VerbosityItem>) -> YakMutSet<VerbosityItem> {
+        let mut items: YakMutSet<_> = items.into_iter().collect();
         if let Some(level) = self.previous() {
             items.extend(level.items());
         }
@@ -133,7 +133,7 @@ impl Verbosity {
     pub fn try_from_cli(value: &str) -> yak_error::Result<Verbosity> {
         let split: Vec<&str> = value.split(',').collect();
         let mut levels: Vec<VerbosityLevel> = Vec::new();
-        let mut items: BuckMutSet<VerbosityItem> = BuckMutSet::default();
+        let mut items: YakMutSet<VerbosityItem> = YakMutSet::default();
 
         for &value in &split {
             if let Ok(value) = value.parse::<i64>() {
@@ -154,7 +154,7 @@ impl Verbosity {
         Ok(Self::from_items(items))
     }
 
-    fn from_items(items: BuckMutSet<VerbosityItem>) -> Self {
+    fn from_items(items: YakMutSet<VerbosityItem>) -> Self {
         let mut array = [None; VERBOSITY_ITEM_VARIANTS];
         let vec: Vec<_> = items.into_iter().map(Some).collect();
         for (i, opt_item) in vec.into_iter().enumerate() {

@@ -13,7 +13,7 @@ use std::time::SystemTime;
 
 use dupe::Dupe;
 use itertools::Itertools;
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 use yak_fs::paths::abs_path::AbsPathBuf;
 use yak_wrapper_common::invocation_id::TraceId;
 
@@ -24,7 +24,7 @@ pub(crate) enum EventLogErrors {
     )]
     #[yak(tag = EventLogNotOpen)]
     LogNotOpen { serialized_event: String },
-    #[error("Reached End of File before reading BuckEvent in log `{0}`")]
+    #[error("Reached End of File before reading YakEvent in log `{0}`")]
     #[yak(tag = EventLogEof)]
     EndOfFile(String),
     #[error("No event log available for {idx}th last command (have latest {num_logfiles})")]
@@ -163,7 +163,7 @@ impl Invocation {
 
     pub(crate) fn parse_json_line(json: &str) -> yak_error::Result<Invocation> {
         let i = serde_json::from_str::<yak_data::Invocation>(json)
-            .with_buck_error_context(|| format!("Invalid header: {}", json.trim_end()))?;
+            .with_yak_error_context(|| format!("Invalid header: {}", json.trim_end()))?;
         Ok(Invocation::from_proto(i))
     }
 
@@ -254,11 +254,11 @@ mod tests {
     #[test]
     fn test_parse_json_line() {
         // Make sure serialization format is backwards compatible.
-        let line = r#"{"command_line_args":["/some/path/buck2","test","@//mode/mac","app/..."],"working_dir":"/Users/nga/dir45","trace_id":"281d1c16-8930-40cd-8fc1-7d71355c20f5"}"#;
+        let line = r#"{"command_line_args":["/some/path/yak","test","@//mode/mac","app/..."],"working_dir":"/Users/nga/dir45","trace_id":"281d1c16-8930-40cd-8fc1-7d71355c20f5"}"#;
         let line = Invocation::parse_json_line(line).unwrap();
         let expected = Invocation {
             command_line_args: vec![
-                "/some/path/buck2".to_owned(),
+                "/some/path/yak".to_owned(),
                 "test".to_owned(),
                 "@//mode/mac".to_owned(),
                 "app/...".to_owned(),

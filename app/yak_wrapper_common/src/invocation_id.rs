@@ -16,14 +16,14 @@ use std::str::FromStr;
 use allocative::Allocative;
 use dupe::Dupe;
 use uuid::Uuid;
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 
-use crate::BUCK_WRAPPER_UUID_ENV_VAR;
+use crate::YAK_WRAPPER_UUID_ENV_VAR;
 
 #[derive(Debug, yak_error::Error)]
 #[yak(tag = Environment)]
 enum TraceIdError {
-    #[error("`{}` environment variable is not UTF-8", BUCK_WRAPPER_UUID_ENV_VAR)]
+    #[error("`{}` environment variable is not UTF-8", YAK_WRAPPER_UUID_ENV_VAR)]
     EnvVarNotUtf8,
 }
 
@@ -95,9 +95,9 @@ impl TraceId {
 
     /// Fetch `TraceId` from environment variable or generate a new one.
     pub fn from_env_or_new() -> yak_error::Result<TraceId> {
-        match env::var(BUCK_WRAPPER_UUID_ENV_VAR) {
-            Ok(s) => Ok(TraceId::from_str(&s).with_buck_error_context(|| {
-                format!("Parsing yak invocation id from env variable {BUCK_WRAPPER_UUID_ENV_VAR}")
+        match env::var(YAK_WRAPPER_UUID_ENV_VAR) {
+            Ok(s) => Ok(TraceId::from_str(&s).with_yak_error_context(|| {
+                format!("Parsing yak invocation id from env variable {YAK_WRAPPER_UUID_ENV_VAR}")
             })?),
             Err(env::VarError::NotPresent) => Ok(TraceId::new()),
             Err(env::VarError::NotUnicode(_)) => Err(TraceIdError::EnvVarNotUtf8.into()),

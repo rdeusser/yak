@@ -11,11 +11,11 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 
 import pytest
-from e2e_util.api.buck import Buck
-from e2e_util.api.buck_result import BuckException, BuckResult
+from e2e_util.api.yak import Yak
+from e2e_util.api.yak_result import YakException, YakResult
 from e2e_util.api.process import Process
 from e2e_util.asserts import expect_failure
-from e2e_util.buck_workspace import buck_test
+from e2e_util.yak_workspace import yak_test
 from e2e_util.helper.golden import golden
 
 
@@ -33,17 +33,17 @@ PROFILERS = [
 ]
 
 
-@buck_test()
+@yak_test()
 @pytest.mark.parametrize(
     "profiler",
     PROFILERS,
 )
 async def test_profile_analysis_for_self_transition(
-    buck: Buck, tmp_path: Path, profiler: str
+    yak: Yak, tmp_path: Path, profiler: str
 ) -> None:
     file_path = tmp_path / "profile"
 
-    await buck.profile(
+    await yak.profile(
         "analysis",
         "--target-platforms=//self_transition:p",
         "--mode",
@@ -56,15 +56,15 @@ async def test_profile_analysis_for_self_transition(
     assert os.path.exists(file_path)
 
 
-@buck_test()
+@yak_test()
 @pytest.mark.parametrize(
     "profiler",
     PROFILERS,
 )
-async def test_profile_analysis_last(buck: Buck, tmp_path: Path, profiler: str) -> None:
+async def test_profile_analysis_last(yak: Yak, tmp_path: Path, profiler: str) -> None:
     file_path = tmp_path / "profile"
 
-    await buck.profile(
+    await yak.profile(
         "analysis",
         "--mode",
         profiler,
@@ -76,17 +76,17 @@ async def test_profile_analysis_last(buck: Buck, tmp_path: Path, profiler: str) 
     assert os.path.exists(file_path)
 
 
-@buck_test()
+@yak_test()
 @pytest.mark.parametrize(
     "profiler",
     PROFILERS,
 )
 async def test_profile_analysis_recursive(
-    buck: Buck, tmp_path: Path, profiler: str
+    yak: Yak, tmp_path: Path, profiler: str
 ) -> None:
     file_path = tmp_path / "profile"
 
-    command = buck.profile(
+    command = yak.profile(
         "analysis",
         "--mode",
         profiler,
@@ -98,17 +98,17 @@ async def test_profile_analysis_recursive(
     await assert_flame_outputs(command, file_path, profiler)
 
 
-@buck_test()
+@yak_test()
 @pytest.mark.parametrize(
     "profiler",
     PROFILERS,
 )
 async def test_profile_analysis_recursive_transition(
-    buck: Buck, tmp_path: Path, profiler: str
+    yak: Yak, tmp_path: Path, profiler: str
 ) -> None:
     file_path = tmp_path / "profile"
 
-    command = buck.profile(
+    command = yak.profile(
         "analysis",
         "--mode",
         profiler,
@@ -121,15 +121,15 @@ async def test_profile_analysis_recursive_transition(
     await assert_flame_outputs(command, file_path, profiler)
 
 
-@buck_test()
+@yak_test()
 @pytest.mark.parametrize(
     "profiler",
     PROFILERS,
 )
-async def test_profile_loading_last(buck: Buck, tmp_path: Path, profiler: str) -> None:
+async def test_profile_loading_last(yak: Yak, tmp_path: Path, profiler: str) -> None:
     file_path = tmp_path / "profile"
 
-    command = buck.profile(
+    command = yak.profile(
         "loading",
         "--mode",
         profiler,
@@ -141,15 +141,15 @@ async def test_profile_loading_last(buck: Buck, tmp_path: Path, profiler: str) -
     await _assertions_for_profile_without_frozen_module(command, file_path, profiler)
 
 
-@buck_test()
+@yak_test()
 @pytest.mark.parametrize(
     "profiler",
     PROFILERS,
 )
-async def test_query_profile(buck: Buck, tmp_path: Path, profiler: str) -> None:
+async def test_query_profile(yak: Yak, tmp_path: Path, profiler: str) -> None:
     file_path = tmp_path / "profile"
 
-    command = buck.cquery(
+    command = yak.cquery(
         "--profile-mode",
         profiler,
         "deps(//query/a:a)",
@@ -160,23 +160,23 @@ async def test_query_profile(buck: Buck, tmp_path: Path, profiler: str) -> None:
     await _assertions_for_profile_without_frozen_module(command, file_path, profiler)
 
     if not profiler.endswith("-retained"):
-        with open(buck.cwd / file_path / "targets.txt", "r") as f:
+        with open(yak.cwd / file_path / "targets.txt", "r") as f:
             lines = [x.rstrip() for x in sorted(f.readlines())]
             assert [
                 "load/root//query/a",
                 "load/root//query/b",
             ] == lines
     else:
-        assert not os.path.exists(buck.cwd / file_path)
+        assert not os.path.exists(yak.cwd / file_path)
 
 
-@buck_test()
-async def test_profile_loading_last_single_target(buck: Buck, tmp_path: Path) -> None:
+@yak_test()
+async def test_profile_loading_last_single_target(yak: Yak, tmp_path: Path) -> None:
     file_path = tmp_path / "profile"
 
     profiler = "statement"
 
-    command = buck.profile(
+    command = yak.profile(
         "loading",
         "--mode",
         profiler,
@@ -188,7 +188,7 @@ async def test_profile_loading_last_single_target(buck: Buck, tmp_path: Path) ->
     await _assertions_for_profile_without_frozen_module(command, file_path, profiler)
 
 
-@buck_test()
+@yak_test()
 @pytest.mark.parametrize(
     "profiler",
     PROFILERS,
@@ -198,11 +198,11 @@ async def test_profile_loading_last_single_target(buck: Buck, tmp_path: Path) ->
     [True, False],
 )
 async def test_profile_analysis_pattern(
-    buck: Buck, tmp_path: Path, profiler: str, recursive: bool
+    yak: Yak, tmp_path: Path, profiler: str, recursive: bool
 ) -> None:
     file_path = tmp_path / "profile"
 
-    command = buck.profile(
+    command = yak.profile(
         "analysis",
         "--mode",
         profiler,
@@ -215,17 +215,17 @@ async def test_profile_analysis_pattern(
     await assert_flame_outputs(command, file_path, profiler)
 
 
-@buck_test()
+@yak_test()
 @pytest.mark.parametrize(
     "profiler",
     PROFILERS,
 )
 async def test_profile_loading_recursive(
-    buck: Buck, tmp_path: Path, profiler: str
+    yak: Yak, tmp_path: Path, profiler: str
 ) -> None:
     file_path = tmp_path / "profile"
 
-    command = buck.profile(
+    command = yak.profile(
         "loading",
         "--mode",
         profiler,
@@ -241,17 +241,17 @@ async def test_profile_loading_recursive(
     )
 
 
-@buck_test()
+@yak_test()
 @pytest.mark.parametrize(
     "profiler",
     PROFILERS,
 )
 async def test_profile_bxl_with_actions(
-    buck: Buck, tmp_path: Path, profiler: str
+    yak: Yak, tmp_path: Path, profiler: str
 ) -> None:
     file_path = tmp_path / "profile"
 
-    command = buck.profile(
+    command = yak.profile(
         "bxl",
         "--mode",
         profiler,
@@ -263,17 +263,17 @@ async def test_profile_bxl_with_actions(
     await assert_flame_outputs(command, file_path, profiler)
 
 
-@buck_test()
+@yak_test()
 @pytest.mark.parametrize(
     "profiler",
     PROFILERS,
 )
 async def test_profile_bxl_without_actions(
-    buck: Buck, tmp_path: Path, profiler: str
+    yak: Yak, tmp_path: Path, profiler: str
 ) -> None:
     file_path = tmp_path / "profile"
 
-    command = buck.profile(
+    command = yak.profile(
         "bxl",
         "--mode",
         profiler,
@@ -285,14 +285,14 @@ async def test_profile_bxl_without_actions(
     await assert_flame_outputs(command, file_path, profiler)
 
 
-@buck_test()
-async def test_profile_no_buckd(
-    buck: Buck,
+@yak_test()
+async def test_profile_no_yakd(
+    yak: Yak,
     tmp_path: Path,
 ) -> None:
     file_path = tmp_path / "profile"
 
-    command = await buck.profile(
+    command = await yak.profile(
         "loading",
         "--mode",
         "statement",
@@ -306,14 +306,14 @@ async def test_profile_no_buckd(
     assert os.path.exists(file_path)
 
 
-@buck_test()
+@yak_test()
 async def test_profile_loading_recursive_target_pattern(
-    buck: Buck, tmp_path: Path
+    yak: Yak, tmp_path: Path
 ) -> None:
     file_path = tmp_path / "profile"
     profiler = "time-flame"
 
-    command = buck.profile(
+    command = yak.profile(
         "loading",
         "--mode",
         profiler,
@@ -325,12 +325,12 @@ async def test_profile_loading_recursive_target_pattern(
     await _assertions_for_profile_without_frozen_module(command, file_path, profiler)
 
 
-@buck_test(skip_for_os=["windows"])
-async def test_profile_patterns(buck: Buck, tmp_path: Path) -> None:
+@yak_test(skip_for_os=["windows"])
+async def test_profile_patterns(yak: Yak, tmp_path: Path) -> None:
     with TemporaryDirectory() as tmpdir:
         tmp_path = Path(tmpdir)
 
-        await buck.build(
+        await yak.build(
             "//simple/...",
             "--profile-patterns=.*",
             "--profile-patterns-mode=statement",
@@ -362,12 +362,12 @@ async def test_profile_patterns(buck: Buck, tmp_path: Path) -> None:
         golden(output="\n".join(output_lines), rel_path="profile_patterns.golden")
 
 
-@buck_test(skip_for_os=["windows"])
-async def test_profile_patterns_flame(buck: Buck, tmp_path: Path) -> None:
+@yak_test(skip_for_os=["windows"])
+async def test_profile_patterns_flame(yak: Yak, tmp_path: Path) -> None:
     with TemporaryDirectory() as tmpdir:
         tmp_path = Path(tmpdir)
 
-        await buck.build(
+        await yak.build(
             "//simple/...",
             "--profile-patterns=.*",
             "--profile-patterns-mode=time-flame",
@@ -400,7 +400,7 @@ async def test_profile_patterns_flame(buck: Buck, tmp_path: Path) -> None:
 
 
 async def _assertions_for_profile_without_frozen_module(
-    command: Process[BuckResult, BuckException],
+    command: Process[YakResult, YakException],
     file_path: Path,
     profiler: str,
 ) -> None:
@@ -414,7 +414,7 @@ async def _assertions_for_profile_without_frozen_module(
 
 
 async def assert_flame_outputs(
-    command: Process[BuckResult, BuckException],
+    command: Process[YakResult, YakException],
     file_path: Path,
     profiler: str,
 ) -> None:

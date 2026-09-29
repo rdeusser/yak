@@ -8,13 +8,13 @@
 
 load("@prelude//erlang:erlang_application.bzl", "StartTypeValues")
 load("@prelude//erlang:erlang_info.bzl", "ErlangAppIncludeInfo", "ErlangAppInfo", "ErlangAppOrTestInfo")
-load(":common.bzl", "buck", "prelude_rule")
+load(":common.bzl", "yak", "prelude_rule")
 load(":re_test_common.bzl", "re_test_common")
 load(":test_common.bzl", "test_common")
 
 common_attributes = (
-    buck.labels_arg()
-    | buck.contacts_arg()
+    yak.labels_arg()
+    | yak.contacts_arg()
     | {
         "os_env": attrs.option(
             attrs.dict(key = attrs.string(), value = attrs.string()),
@@ -38,10 +38,10 @@ common_shell_attributes = {
     ),
     "shell_libs": attrs.set(
         attrs.dep(providers = [ErlangAppInfo]),
-        default = ["prelude//erlang/shell:buck2_shell_utils"],
+        default = ["prelude//erlang/shell:yak_shell_utils"],
         doc = """
             This attribute allows to define additional dependencies for the shell. By default this is
-            set to `["prelude//erlang/shell:buck2_shell_utils"]` which includes a `user_default` module
+            set to `["prelude//erlang/shell:yak_shell_utils"]` which includes a `user_default` module
             that loads and compiles modules with yak mechanisms.
         """,
     ),

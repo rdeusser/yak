@@ -6,15 +6,15 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-from e2e_util.api.buck import Buck
+from e2e_util.api.yak import Yak
 from e2e_util.asserts import expect_failure
-from e2e_util.buck_workspace import buck_test
+from e2e_util.yak_workspace import yak_test
 from e2e_util.helper.utils import filter_events, random_string
 
 
-@buck_test(skip_for_os=["windows", "darwin"], disable_daemon_cgroup=False)
-async def test_orphan_pids_killed(buck: Buck) -> None:
-    await buck.build(
+@yak_test(skip_for_os=["windows", "darwin"], disable_daemon_cgroup=False)
+async def test_orphan_pids_killed(yak: Yak) -> None:
+    await yak.build(
         "root//:spawn_orphan",
         "--no-remote-cache",
         "--local-only",
@@ -23,7 +23,7 @@ async def test_orphan_pids_killed(buck: Buck) -> None:
     )
 
     events = await filter_events(
-        buck,
+        yak,
         "Event",
         "data",
         "Instant",
@@ -46,14 +46,14 @@ async def test_orphan_pids_killed(buck: Buck) -> None:
     )
 
 
-@buck_test(skip_for_os=["windows", "darwin"], disable_daemon_cgroup=False)
-async def test_no_orphan_same_pg_timeout(buck: Buck) -> None:
+@yak_test(skip_for_os=["windows", "darwin"], disable_daemon_cgroup=False)
+async def test_no_orphan_same_pg_timeout(yak: Yak) -> None:
     # Build a target that spawns a background process in the same process
     # group. The action has a short timeout, so it will be cancelled via
     # killpg, which kills the background process too. Cgroup cleanup should
     # find no remaining processes, so no OrphanProcessesKilled event.
     await expect_failure(
-        buck.build(
+        yak.build(
             "root//:spawn_same_pg_timeout",
             "--no-remote-cache",
             "--local-only",
@@ -64,7 +64,7 @@ async def test_no_orphan_same_pg_timeout(buck: Buck) -> None:
     )
 
     events = await filter_events(
-        buck,
+        yak,
         "Event",
         "data",
         "Instant",

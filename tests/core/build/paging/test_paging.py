@@ -13,9 +13,9 @@ from pathlib import Path
 from typing import Any
 
 import pytest
-from e2e_util.api.buck import Buck
-from e2e_util.api.buck_result import BuildResult
-from e2e_util.buck_workspace import buck_test, env
+from e2e_util.api.yak import Yak
+from e2e_util.api.yak_result import BuildResult
+from e2e_util.yak_workspace import yak_test, env
 
 # The fixture's `.yakconfig` sets two `DaemonStartupConfig`s:
 # `yak_hydration.enable_paging` (pagable DICE storage on disk) and
@@ -28,8 +28,8 @@ _PAGE_OUT_STARTED_DISABLED_AFTER_ERROR = 9
 _PAGE_OUT_STARTED_ALREADY_RAN = 10
 
 
-async def _build(buck: Buck) -> BuildResult:
-    return await buck.build("//:mysrcrule")
+async def _build(yak: Yak) -> BuildResult:
+    return await yak.build("//:mysrcrule")
 
 
 def _output(result: BuildResult) -> str:
@@ -37,17 +37,17 @@ def _output(result: BuildResult) -> str:
     return Path(output).read_text()
 
 
-async def _page_out(buck: Buck) -> dict[str, Any]:
+async def _page_out(yak: Yak) -> dict[str, Any]:
     # Page out, returning the `PageOutSummary` describing what moved.
-    out = (await buck.debug("hydration", "page-out")).stdout
+    out = (await yak.debug("hydration", "page-out")).stdout
     try:
         return json.loads(out)
     except json.JSONDecodeError as e:
         raise AssertionError(f"page-out did not print a JSON summary:\n{out}") from e
 
 
-async def _paged_out_count(buck: Buck) -> int:
-    out = (await buck.debug("hydration", "status")).stdout
+async def _paged_out_count(yak: Yak) -> int:
+    out = (await yak.debug("hydration", "status")).stdout
     match = re.search(r"(\d+) paged out", out)
     assert match is not None, f"unexpected status output:\n{out}"
     return int(match.group(1))
@@ -63,8 +63,8 @@ def _paged_in_count_for_key_type(result: BuildResult, key_type: str) -> int:
     return int(stats["count"]) if stats is not None else 0
 
 
-async def _hydration_counts_for_key_type(buck: Buck, key_type: str) -> tuple[int, int]:
-    out = (await buck.debug("hydration", "status")).stdout
+async def _hydration_counts_for_key_type(yak: Yak, key_type: str) -> tuple[int, int]:
+    out = (await yak.debug("hydration", "status")).stdout
     match = re.search(
         rf"^\s*(\d+)\s+(\d+)\s+{re.escape(key_type)}\s*$",
         out,
@@ -74,9 +74,9 @@ async def _hydration_counts_for_key_type(buck: Buck, key_type: str) -> tuple[int
     return int(match.group(1)), int(match.group(2))
 
 
-async def _analysis_activity(buck: Buck, result: BuildResult) -> tuple[int, int]:
+async def _analysis_activity(yak: Yak, result: BuildResult) -> tuple[int, int]:
     trace_id = result.invocation_record()["trace_id"]
-    event_log = (await buck.log("show", f"--trace-id={trace_id}")).stdout
+    event_log = (await yak.log("show", f"--trace-id={trace_id}")).stdout
     check_deps_started = 0
     compute_started = 0
     for line in event_log.splitlines():
@@ -101,21 +101,21 @@ def _target_output(result: BuildResult, target: str) -> str:
     return Path(output).read_text()
 
 
-def _disable_idle_page_out(buck: Buck) -> None:
+def _disable_idle_page_out(yak: Yak) -> None:
     # Through the settings layer: the fixture's `.yakconfig` sets
     # `page_out_on_idle = true` as a project config, which outranks the external
-    # config `extra_buck_config` writes - but settings outrank both, and
+    # config `extra_yak_config` writes - but settings outrank both, and
     # `page_out_on_idle` only falls back to yakconfig when settings leave it
     # unset. `enable_paging` stays unset here so the fixture still provides it.
-    (buck.get_settings_home_dir() / ".yaksettings.local.toml").write_text(
+    (yak.get_settings_home_dir() / ".yaksettings.local.toml").write_text(
         "[hydration]\npage_out_on_idle = false\n"
     )
 
 
-async def _wait_for_page_out_idle(buck: Buck) -> int:
+async def _wait_for_page_out_idle(yak: Yak) -> int:
     # `status --wait` blocks until any in-progress idle page-out finishes, so tests
     # observe the settled state without polling. Returns the paged-out node count.
-    out = (await buck.debug("hydration", "status", "--wait")).stdout
+    out = (await yak.debug("hydration", "status", "--wait")).stdout
     paged_out = re.search(r"(\d+) paged out", out)
     in_progress = re.search(r"page-out in progress: (yes|no)", out)
     assert (
@@ -126,8 +126,8 @@ async def _wait_for_page_out_idle(buck: Buck) -> int:
     return int(paged_out.group(1))
 
 
-@buck_test(data_dir="paging", write_invocation_record=True)
-async def test_incremental_build_after_page_out(buck: Buck) -> None:
+@yak_test(data_dir="paging", write_invocation_record=True)
+async def test_incremental_build_after_page_out(yak: Yak) -> None:
     # Incremental builds must stay correct after an explicit `yak debug
     # hydration page-out`, relying on on-demand page-in during the build. Page-in
     # is measured per command via `page_in_count` in the invocation record.
@@ -137,18 +137,18 @@ async def test_incremental_build_after_page_out(buck: Buck) -> None:
     #
     # Pagable storage is set up by `yak_hydration.enable_paging = true` in the
     # fixture `.yakconfig` (a `DaemonStartupConfig`).
-    (buck.cwd / "src.txt").write_text("content-0\n")
-    assert _output(await _build(buck)) == "content-0\n"
+    (yak.cwd / "src.txt").write_text("content-0\n")
+    assert _output(await _build(yak)) == "content-0\n"
 
     # Page the whole graph out to disk; in-memory values are evicted.
-    await buck.debug("hydration", "page-out")
-    assert await _paged_out_count(buck) > 0, (
+    await yak.debug("hydration", "page-out")
+    assert await _paged_out_count(yak) > 0, (
         "expected node values to actually be paged out"
     )
 
     # Rebuild with no changes: served by on-demand page-in of the paged-out
     # values. The per-command page-in total is in the invocation record.
-    result = await _build(buck)
+    result = await _build(yak)
     assert _output(result) == "content-0\n"
     paged_in = _paged_in_count(result)
     assert paged_in > 0, (
@@ -156,38 +156,38 @@ async def test_incremental_build_after_page_out(buck: Buck) -> None:
     )
 
     # Invalidate: dependent nodes recompute, the rest hydrate on demand.
-    (buck.cwd / "src.txt").write_text("content-1\n")
-    assert _output(await _build(buck)) == "content-1\n"
+    (yak.cwd / "src.txt").write_text("content-1\n")
+    assert _output(await _build(yak)) == "content-1\n"
 
     # Page out again (now including the recomputed values) and invalidate once
     # more, to confirm repeated page-out cycles keep producing correct results.
-    await buck.debug("hydration", "page-out")
-    assert await _paged_out_count(buck) > 0, (
+    await yak.debug("hydration", "page-out")
+    assert await _paged_out_count(yak) > 0, (
         "expected node values to be paged out again"
     )
-    (buck.cwd / "src.txt").write_text("content-2\n")
-    assert _output(await _build(buck)) == "content-2\n"
+    (yak.cwd / "src.txt").write_text("content-2\n")
+    assert _output(await _build(yak)) == "content-2\n"
 
 
-@buck_test(
+@yak_test(
     data_dir="paging",
     write_invocation_record=True,
-    extra_buck_config={"yak_hydration": {"page_out_on_idle": "false"}},
+    extra_yak_config={"yak_hydration": {"page_out_on_idle": "false"}},
 )
 @env("YAK_DICE_SNAPSHOT_INTERVAL_MS", "1")
-async def test_config_change_after_page_out_analysis_validation(buck: Buck) -> None:
-    await buck.build("//:analysis_root")
-    await buck.debug("hydration", "page-out")
-    assert await _paged_out_count(buck) > 0, "expected the analysis graph to page out"
+async def test_config_change_after_page_out_analysis_validation(yak: Yak) -> None:
+    await yak.build("//:analysis_root")
+    await yak.debug("hydration", "page-out")
+    assert await _paged_out_count(yak) > 0, "expected the analysis graph to page out"
     analysis_resident, analysis_paged_out = await _hydration_counts_for_key_type(
-        buck,
+        yak,
         "AnalysisKey",
     )
     assert analysis_resident == 0, "all AnalysisKey values should have been evicted"
     assert analysis_paged_out >= 3, "the three fixture AnalysisKeys should be paged out"
 
-    result = await buck.build("//:analysis_root", "-c", "test.unused=0")
-    analysis_checks, analysis_computes = await _analysis_activity(buck, result)
+    result = await yak.build("//:analysis_root", "-c", "test.unused=0")
+    analysis_checks, analysis_computes = await _analysis_activity(yak, result)
     analysis_page_ins = _paged_in_count_for_key_type(result, "AnalysisKey")
     assert analysis_checks > 0, (
         "expected the paged-out analysis graph to be revalidated after an "
@@ -208,9 +208,9 @@ async def test_config_change_after_page_out_analysis_validation(buck: Buck) -> N
     )
 
 
-@buck_test(data_dir="paging", write_invocation_record=True)
+@yak_test(data_dir="paging", write_invocation_record=True)
 async def test_page_out_frozen_value_into_already_paged_out_heap(
-    buck: Buck,
+    yak: Yak,
 ) -> None:
     # Regression test for a page-out serialization panic:
     #   FrozenValue pointer ... not found in any registered heap's chunk index
@@ -222,48 +222,48 @@ async def test_page_out_frozen_value_into_already_paged_out_heap(
     # the second must serialize the other target's `FrozenValue` into that
     # now-paged-out (unregistered) heap. A single page-out of a fresh graph never
     # trips it, because every reachable heap is still registered.
-    await buck.build("//:module_const_a")
-    await buck.debug("hydration", "page-out")
-    assert await _paged_out_count(buck) > 0, (
+    await yak.build("//:module_const_a")
+    await yak.debug("hydration", "page-out")
+    assert await _paged_out_count(yak) > 0, (
         "expected the first target's values (and the shared module heap) to page out"
     )
 
     # Analyze the second target, then page out again. Serializing its provider's
     # `FrozenValue` into the already-paged-out module heap must not crash.
-    await buck.build("//:module_const_b")
-    await buck.debug("hydration", "page-out")
+    await yak.build("//:module_const_b")
+    await yak.debug("hydration", "page-out")
 
     # The second page-out must leave module_const_b hydratable.
-    await buck.build("//:module_const_b")
+    await yak.build("//:module_const_b")
 
 
-@buck_test(data_dir="paging", write_invocation_record=True)
-async def test_page_out_bxl_dynamic_callback_after_page_in(buck: Buck) -> None:
+@yak_test(data_dir="paging", write_invocation_record=True)
+async def test_page_out_bxl_dynamic_callback_after_page_in(yak: Yak) -> None:
     # `page_out.bxl` creates a nested dynamic-output callback. The callback is
     # allocated on the BXL evaluation heap, but its compiler metadata lives on
     # the loaded `.bxl` module heap. Page-out must retain and serialize that
     # owning module heap instead of following an unowned `FrozenValue` pointer.
-    await buck.bxl("//page_out.bxl:main", "--", "--value", "first")
-    await buck.debug("hydration", "page-out")
+    await yak.bxl("//page_out.bxl:main", "--", "--value", "first")
+    await yak.debug("hydration", "page-out")
 
     # A distinct BXL key pages the module back in while computing a new root.
     # The restored module must be retained by that root's evaluation heap too.
-    await buck.bxl("//page_out.bxl:main", "--", "--value", "second")
-    await buck.debug("hydration", "page-out")
+    await yak.bxl("//page_out.bxl:main", "--", "--value", "second")
+    await yak.debug("hydration", "page-out")
 
 
-@buck_test(data_dir="paging", write_invocation_record=True)
-async def test_page_in_shared_anon_target(buck: Buck) -> None:
+@yak_test(data_dir="paging", write_invocation_record=True)
+async def test_page_in_shared_anon_target(yak: Yak) -> None:
     # Bound post-page-out commands because the old typetag mismatch hung hydration.
     command_timeout_seconds = 60
-    result = await buck.build("//:uses_anon_a")
+    result = await yak.build("//:uses_anon_a")
     assert _target_output(result, "uses_anon_a") == "anonymous target\n"
 
     await asyncio.wait_for(
-        buck.debug("hydration", "page-out"), timeout=command_timeout_seconds
+        yak.debug("hydration", "page-out"), timeout=command_timeout_seconds
     )
     paged_out_count = await asyncio.wait_for(
-        _paged_out_count(buck), timeout=command_timeout_seconds
+        _paged_out_count(yak), timeout=command_timeout_seconds
     )
     assert paged_out_count > 0, "expected the anonymous target analysis to be paged out"
 
@@ -271,7 +271,7 @@ async def test_page_in_shared_anon_target(buck: Buck) -> None:
     # no-op rebuild of the first parent, this has to load the paged-out anonymous
     # target analysis result before it can resolve the promise.
     result = await asyncio.wait_for(
-        buck.build("//:uses_anon_b"), timeout=command_timeout_seconds
+        yak.build("//:uses_anon_b"), timeout=command_timeout_seconds
     )
     assert _target_output(result, "uses_anon_b") == "anonymous target\n"
     assert _paged_in_count(result) > 0, (
@@ -279,13 +279,13 @@ async def test_page_in_shared_anon_target(buck: Buck) -> None:
     )
 
 
-@buck_test(data_dir="paging", write_invocation_record=True)
-async def test_page_out_on_idle(buck: Buck) -> None:
+@yak_test(data_dir="paging", write_invocation_record=True)
+async def test_page_out_on_idle(yak: Yak) -> None:
     # With `yak_hydration.page_out_on_idle`, the daemon pages the DICE graph out to
     # disk in a background task once it goes idle after a command. Subsequent
     # builds stay correct by paging values back in on demand.
-    (buck.cwd / "src.txt").write_text("content-0\n")
-    result = await _build(buck)
+    (yak.cwd / "src.txt").write_text("content-0\n")
+    result = await _build(yak)
     assert _output(result) == "content-0\n"
     # The sole active command triggers the idle page-out and records it.
     assert (
@@ -294,12 +294,12 @@ async def test_page_out_on_idle(buck: Buck) -> None:
 
     # Page-out runs in a detached background task once the daemon is idle. Wait
     # for it to finish, then confirm the graph was actually paged out.
-    assert await _wait_for_page_out_idle(buck) > 0, (
+    assert await _wait_for_page_out_idle(yak) > 0, (
         "expected idle page-out to actually page values out"
     )
 
     # The paged-out values must now be paged back in on the next build.
-    result = await _build(buck)
+    result = await _build(yak)
     assert _output(result) == "content-0\n"
     paged_in = _paged_in_count(result)
     assert paged_in > 0, (
@@ -308,22 +308,22 @@ async def test_page_out_on_idle(buck: Buck) -> None:
 
     # Incremental correctness across invalidations (each also schedules an idle
     # page-out): dependent nodes recompute, the rest hydrate on demand.
-    (buck.cwd / "src.txt").write_text("content-1\n")
-    assert _output(await _build(buck)) == "content-1\n"
+    (yak.cwd / "src.txt").write_text("content-1\n")
+    assert _output(await _build(yak)) == "content-1\n"
 
-    (buck.cwd / "src.txt").write_text("content-2\n")
-    assert _output(await _build(buck)) == "content-2\n"
+    (yak.cwd / "src.txt").write_text("content-2\n")
+    assert _output(await _build(yak)) == "content-2\n"
 
 
-@buck_test(data_dir="paging", write_invocation_record=True)
+@yak_test(data_dir="paging", write_invocation_record=True)
 @env("YAK_TEST_FAIL_PAGE_OUT", "true")
-async def test_idle_page_out_disabled_after_error(buck: Buck) -> None:
+async def test_idle_page_out_disabled_after_error(yak: Yak) -> None:
     # A failed idle page-out disables idle page-out for the rest of the daemon's
     # lifetime: the failure is likely persistent, so retrying at the end of every
     # command would repeat the work and re-log the error. `YAK_TEST_FAIL_PAGE_OUT`
     # injects the failure on the idle path only.
-    (buck.cwd / "src.txt").write_text("content-0\n")
-    result = await _build(buck)
+    (yak.cwd / "src.txt").write_text("content-0\n")
+    result = await _build(yak)
     assert _output(result) == "content-0\n"
     # The cold build computes values, so it schedules an idle page-out...
     assert (
@@ -333,12 +333,12 @@ async def test_idle_page_out_disabled_after_error(buck: Buck) -> None:
     # ...which then fails (injected). Wait for the background task to settle; it
     # sets the "disabled" flag before releasing the single-flight guard that
     # `status --wait` blocks on, so the flag is observable once this returns.
-    await _wait_for_page_out_idle(buck)
+    await _wait_for_page_out_idle(yak)
 
     # A rebuild that recomputes values would normally schedule another page-out,
     # but the prior failure has disabled idle page-out, so it must not.
-    (buck.cwd / "src.txt").write_text("content-1\n")
-    result = await _build(buck)
+    (yak.cwd / "src.txt").write_text("content-1\n")
+    result = await _build(yak)
     assert _output(result) == "content-1\n"
     assert (
         result.invocation_record().get("page_out_started")
@@ -346,47 +346,47 @@ async def test_idle_page_out_disabled_after_error(buck: Buck) -> None:
     ), "a prior idle page-out failure must disable idle page-out for future commands"
 
 
-@buck_test(
+@yak_test(
     data_dir="paging",
     write_invocation_record=True,
-    extra_buck_config={"yak_hydration": {"allow_multiple_idle_page_outs": "true"}},
+    extra_yak_config={"yak_hydration": {"allow_multiple_idle_page_outs": "true"}},
 )
-async def test_page_out_triggered_only_when_values_computed(buck: Buck) -> None:
+async def test_page_out_triggered_only_when_values_computed(yak: Yak) -> None:
     # A command triggers an idle page-out only when it computed values worth
     # paging out. The cold build does; a following no-op rebuild does not.
-    (buck.cwd / "src.txt").write_text("content-0\n")
-    result = await _build(buck)
+    (yak.cwd / "src.txt").write_text("content-0\n")
+    result = await _build(yak)
     assert _output(result) == "content-0\n"
     assert (
         result.invocation_record().get("page_out_started") == _PAGE_OUT_STARTED_STARTED
     ), "the cold build computes values, so it triggers a page-out"
-    await _wait_for_page_out_idle(buck)
+    await _wait_for_page_out_idle(yak)
 
-    result = await _build(buck)
+    result = await _build(yak)
     assert _output(result) == "content-0\n"
     assert (
         result.invocation_record().get("page_out_started") != _PAGE_OUT_STARTED_STARTED
     ), "a no-op rebuild computes nothing new, so it should not trigger a page-out"
 
 
-@buck_test(
+@yak_test(
     data_dir="paging",
     write_invocation_record=True,
-    extra_buck_config={"yak_hydration": {"allow_multiple_idle_page_outs": "true"}},
+    extra_yak_config={"yak_hydration": {"allow_multiple_idle_page_outs": "true"}},
 )
-async def test_page_out_at_most_once(buck: Buck) -> None:
+async def test_page_out_at_most_once(yak: Yak) -> None:
     # A value is paged out at most once: once an incremental build pages a value
     # back in (or recomputes it), it stays resident rather than being paged out
     # again.
-    (buck.cwd / "src.txt").write_text("content-0\n")
-    assert _output(await _build(buck)) == "content-0\n"
-    await _wait_for_page_out_idle(buck)
+    (yak.cwd / "src.txt").write_text("content-0\n")
+    assert _output(await _build(yak)) == "content-0\n"
+    await _wait_for_page_out_idle(yak)
 
     # This build pages its working set back in and recomputes the affected nodes.
     # Those values were already paged out once, so they stay resident: nothing new
     # to page out, so the build does not trigger a page-out.
-    (buck.cwd / "src.txt").write_text("content-1\n")
-    result = await _build(buck)
+    (yak.cwd / "src.txt").write_text("content-1\n")
+    result = await _build(yak)
     assert _output(result) == "content-1\n"
     # Precondition: this build actually paged values back in (otherwise the
     # assertion below would hold vacuously).
@@ -402,8 +402,8 @@ async def test_page_out_at_most_once(buck: Buck) -> None:
 
     # The working set stayed resident, so the next incremental build pages nothing
     # back in.
-    (buck.cwd / "src.txt").write_text("content-2\n")
-    result = await _build(buck)
+    (yak.cwd / "src.txt").write_text("content-2\n")
+    result = await _build(yak)
     assert _output(result) == "content-2\n"
     assert _paged_in_count(result) == 0, (
         f"expected the working set to stay resident, but {_paged_in_count(result)} "
@@ -411,38 +411,38 @@ async def test_page_out_at_most_once(buck: Buck) -> None:
     )
 
 
-@buck_test(data_dir="paging", write_invocation_record=True)
-async def test_idle_page_out_runs_once_per_daemon(buck: Buck) -> None:
-    first = await buck.build("//:module_const_a")
+@yak_test(data_dir="paging", write_invocation_record=True)
+async def test_idle_page_out_runs_once_per_daemon(yak: Yak) -> None:
+    first = await yak.build("//:module_const_a")
     assert (
         first.invocation_record().get("page_out_started") == _PAGE_OUT_STARTED_STARTED
     ), "expected the first eligible command to start an idle page-out"
-    await _wait_for_page_out_idle(buck)
+    await _wait_for_page_out_idle(yak)
 
-    second = await buck.build("//:module_const_b")
+    second = await yak.build("//:module_const_b")
     assert (
         second.invocation_record().get("page_out_started")
         == _PAGE_OUT_STARTED_ALREADY_RAN
     ), "expected the daemon to suppress a second idle page-out"
 
 
-@buck_test(
+@yak_test(
     data_dir="paging",
     write_invocation_record=True,
-    extra_buck_config={"yak_hydration": {"allow_multiple_idle_page_outs": "true"}},
+    extra_yak_config={"yak_hydration": {"allow_multiple_idle_page_outs": "true"}},
 )
-async def test_idle_page_out_rollout_config_allows_multiple_runs(buck: Buck) -> None:
-    first = await buck.build("//:module_const_a")
+async def test_idle_page_out_rollout_config_allows_multiple_runs(yak: Yak) -> None:
+    first = await yak.build("//:module_const_a")
     assert (
         first.invocation_record().get("page_out_started") == _PAGE_OUT_STARTED_STARTED
     ), "expected the first eligible command to start an idle page-out"
-    await _wait_for_page_out_idle(buck)
+    await _wait_for_page_out_idle(yak)
 
-    second = await buck.build("//:module_const_b")
+    second = await yak.build("//:module_const_b")
     assert (
         second.invocation_record().get("page_out_started") == _PAGE_OUT_STARTED_STARTED
     ), "expected the rollout config to allow a second idle page-out"
-    await _wait_for_page_out_idle(buck)
+    await _wait_for_page_out_idle(yak)
 
 
 def _data_key_io(result: BuildResult, prefix: str) -> dict[str, int]:
@@ -463,26 +463,26 @@ def _data_key_io(result: BuildResult, prefix: str) -> dict[str, int]:
     return fields
 
 
-@buck_test(data_dir="paging", write_invocation_record=True)
-async def test_data_key_io_in_invocation_record(buck: Buck) -> None:
+@yak_test(data_dir="paging", write_invocation_record=True)
+async def test_data_key_io_in_invocation_record(yak: Yak) -> None:
     # Two views reach the record: `paging_data_key_*` is this command's own work,
     # `paging_daemon_data_key_*` the daemon's running total.
     #
     # A value is paged out at most once per daemon, so an idle page-out would
     # leave nothing for the explicit one below. With it off, this test's own
     # page-out is the only one, and every counter it asserts on is its doing.
-    _disable_idle_page_out(buck)
-    (buck.cwd / "src.txt").write_text("content-0\n")
-    await _build(buck)
-    page_out = await _page_out(buck)
+    _disable_idle_page_out(yak)
+    (yak.cwd / "src.txt").write_text("content-0\n")
+    await _build(yak)
+    page_out = await _page_out(yak)
     assert page_out["data_key_bytes_out"] > 0, (
         f"expected the page-out to write DataKeys, got {page_out}"
     )
-    assert await _paged_out_count(buck) > 0, "expected values to be paged out"
+    assert await _paged_out_count(yak) > 0, "expected values to be paged out"
 
     # The rebuild pages those values back in. Page-out happened in earlier commands,
     # so only the running totals see bytes going out.
-    rebuild = await _build(buck)
+    rebuild = await _build(yak)
     delta = _data_key_io(rebuild, "paging_")
     cumulative = _data_key_io(rebuild, "paging_daemon_")
 
@@ -513,7 +513,7 @@ async def test_data_key_io_in_invocation_record(buck: Buck) -> None:
     # Everything is resident again, so a no-op rebuild moves nothing. Its delta
     # going to zero while the running totals hold steady is what distinguishes the
     # two views — a cumulative value reported in the delta fields would not.
-    settled = await _build(buck)
+    settled = await _build(yak)
     assert _data_key_io(settled, "paging_") == {
         "data_keys_out": 0,
         "data_key_bytes_out": 0,
@@ -529,16 +529,16 @@ async def test_data_key_io_in_invocation_record(buck: Buck) -> None:
     )
 
 
-@buck_test(data_dir="paging", write_invocation_record=True)
-async def test_page_out_command_reports_summary(buck: Buck) -> None:
+@yak_test(data_dir="paging", write_invocation_record=True)
+async def test_page_out_command_reports_summary(yak: Yak) -> None:
     # The manual page-out reports the same `PageOutSummary` the idle one logs.
     # Idle page-out is off: a value is paged out at most once per daemon, so an
     # idle one would leave nothing for the manual one this test is about.
-    _disable_idle_page_out(buck)
-    (buck.cwd / "src.txt").write_text("content-0\n")
-    await _build(buck)
+    _disable_idle_page_out(yak)
+    (yak.cwd / "src.txt").write_text("content-0\n")
+    await _build(yak)
 
-    summary = await _page_out(buck)
+    summary = await _page_out(yak)
 
     assert summary.get("error") is None, f"page-out reported an error: {summary}"
     assert not summary["cancelled"], (

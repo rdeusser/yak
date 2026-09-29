@@ -11,7 +11,7 @@
 use std::str::FromStr;
 
 use yak_client_ctx::client_ctx::ClientCommandContext;
-use yak_client_ctx::common::BuckArgMatches;
+use yak_client_ctx::common::YakArgMatches;
 use yak_client_ctx::immediate_config::ImmediateConfigContext;
 use yak_client_ctx::path_arg::PathArg;
 use yak_common::argv::Argv;
@@ -64,7 +64,7 @@ pub struct RootCommand {
 impl RootCommand {
     pub fn exec(
         self,
-        _matches: BuckArgMatches<'_>,
+        _matches: YakArgMatches<'_>,
         ctx: ClientCommandContext<'_>,
     ) -> yak_error::Result<()> {
         let root = if matches!(self.kind, RootKind::Daemon) {

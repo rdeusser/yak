@@ -20,7 +20,7 @@ use starlark::util::ArcStr;
 use starlark::values::type_repr::StarlarkTypeRepr;
 use starlark::values::typing::StarlarkCallableChecked;
 use starlark_map::small_map::SmallMap;
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 use yak_error::yak_error;
 
 use crate::dynamic::attrs::DynamicAttrType;
@@ -68,7 +68,7 @@ pub fn new_dynamic_actions_callable<'v>(
             None,
             &DynamicActionsCallbackReturnType::starlark_type_repr(),
         )
-        .buck_error_context("`impl` function must be callable with given params")?;
+        .yak_error_context("`impl` function must be callable with given params")?;
 
     let callable_ty = Ty::function(
         ParamSpec::new_named_only(attrs.iter().map(|(name, ty)| {

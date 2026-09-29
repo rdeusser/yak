@@ -14,18 +14,18 @@ use yak_test_api::protocol::TestExecutor;
 
 pub type SpecSender = UnboundedSender<ExternalRunnerSpec>;
 
-pub struct Buck2TestExecutor {
+pub struct YakTestExecutor {
     pub sender: SpecSender,
 }
 
-impl Buck2TestExecutor {
+impl YakTestExecutor {
     pub fn new(sender: SpecSender) -> Self {
         Self { sender }
     }
 }
 
 #[async_trait::async_trait]
-impl TestExecutor for Buck2TestExecutor {
+impl TestExecutor for YakTestExecutor {
     async fn external_runner_spec(&self, spec: ExternalRunnerSpec) -> yak_error::Result<()> {
         self.sender
             .clone()

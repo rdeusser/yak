@@ -15,7 +15,7 @@ Handle labels used to opt-out genrules from running remotely.
 # Some rules have to be run locally for various reasons listed next to the label.
 _GENRULE_LOCAL_LABELS = set([
     # Used for yak tests that want to run locally
-    "buck2_test_local_exec",
+    "yak_test_local_exec",
     # Split dwarf merge rules currently don't properly list their inputs.
     "dwp",
     # Bolt and hottext post-processing rules operate on a large statically
@@ -28,7 +28,7 @@ _GENRULE_LOCAL_LABELS = set([
     # control.
     "non_deterministic_build_info",
     # Some call "yak run" & "yak root" recursively.
-    "uses_buck_run",
+    "uses_yak_run",
     # Some antlir genrules use cpio for unpacking rpms
     "uses_cpio",
     # The Antlir core compiler uses sudo
@@ -55,17 +55,17 @@ _GENRULE_LOCAL_LABELS = set([
     "uses_mksquashfs",
     # Side effecting writes directly into yak-out on the local
     # filesystem
-    "writes_to_buck_out",
+    "writes_to_yak_out",
     # Side effecting writes directly to local filesystem outside of yak-out
     # Do not add or use in new rules, just for tagging existing rules for
     # better categorization.
-    "writes_outside_buck_out",
+    "writes_outside_yak_out",
     # Calculates and writes absolute paths in the local filesystem
     "uses_local_filesystem_abspaths",
     # Use local GPUs with latest Nvidia libs which are not available in RE yet
     "uses_lower_locally",
     # Makes recursive calls to yak
-    "uses_buck",
+    "uses_yak",
     # Uses files in the repo that it doesn't declare as dependencies
     "uses_undeclared_inputs",
     # When run on RE produces "Cache is out of space" (excessive disk/memory)

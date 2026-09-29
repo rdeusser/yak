@@ -10,7 +10,7 @@
 
 use yak_cli_proto::new_generic::NewGenericRequest;
 use yak_cli_proto::new_generic::NewGenericResponse;
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 use yak_server_ctx::late_bindings::DOCS_SERVER_COMMAND;
 use yak_server_ctx::late_bindings::OTHER_SERVER_COMMANDS;
 use yak_server_ctx::partial_result_dispatcher::NoPartialResult;
@@ -26,7 +26,7 @@ pub(crate) async fn new_generic_command(
 ) -> yak_error::Result<yak_cli_proto::NewGenericResponseMessage> {
     let req = req.new_generic_request;
     let req: NewGenericRequest = serde_json::from_str(&req)
-        .buck_error_context("Could not deserialize `NewGenericRequest`")?;
+        .yak_error_context("Could not deserialize `NewGenericRequest`")?;
     let resp = match req {
         NewGenericRequest::Materialize(m) => {
             NewGenericResponse::Materialize(materialize_command(context, m).await?)
@@ -54,7 +54,7 @@ pub(crate) async fn new_generic_command(
         ),
     };
     let resp = serde_json::to_string(&resp)
-        .buck_error_context("Could not serialize `NewGenericResponse`")?;
+        .yak_error_context("Could not serialize `NewGenericResponse`")?;
     Ok(yak_cli_proto::NewGenericResponseMessage {
         new_generic_response: resp,
     })

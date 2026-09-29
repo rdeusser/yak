@@ -69,17 +69,17 @@ func CWD() string {
 }
 
 // findProjectDirectory finds the absolute yak project directory
-func findProjectDirectory(ctx context.Context, bucker Bucker) (string, error) {
-	return bucker.Root(ctx)
+func findProjectDirectory(ctx context.Context, yaker Yaker) (string, error) {
+	return yaker.Root(ctx)
 }
 
 // newPlatform creates a new actual platform using system libraries and yak
-func newPlatform(ctx context.Context, bucker Bucker, req *packages.DriverRequest) (*realPlatform, error) {
+func newPlatform(ctx context.Context, yaker Yaker, req *packages.DriverRequest) (*realPlatform, error) {
 	rp := &realPlatform{
 		overlay: req.Overlay,
 	}
 
-	pd, err := findProjectDirectory(ctx, bucker)
+	pd, err := findProjectDirectory(ctx, yaker)
 	if err != nil || pd == "" {
 		return nil, fmt.Errorf("failed to find yak project directory: %w", err)
 	}

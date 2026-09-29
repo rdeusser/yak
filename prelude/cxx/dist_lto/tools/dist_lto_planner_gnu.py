@@ -405,7 +405,7 @@ def main(argv):
         "crtendS.o",
         "glibc/lib/crtn.o",
     ]
-    GENERATED_BUILD_INFO_OBJECT_BASENAME_PREFIX = "__buck2_generated_build_info.c"
+    GENERATED_BUILD_INFO_OBJECT_BASENAME_PREFIX = "__yak_generated_build_info.c"
     with open(index_path("index")) as indexfile:
         for line in indexfile:
             line = line.strip()

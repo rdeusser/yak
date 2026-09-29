@@ -7,15 +7,15 @@
 # above-listed licenses.
 
 
-from e2e_util.api.buck import Buck
-from e2e_util.buck_workspace import buck_test
+from e2e_util.api.yak import Yak
+from e2e_util.yak_workspace import yak_test
 
 
-@buck_test(write_invocation_record=True)
+@yak_test(write_invocation_record=True)
 async def test_representative_config_flags_disregards_run_args(
-    buck: Buck,
+    yak: Yak,
 ) -> None:
-    res = await buck.run(
+    res = await yak.run(
         "//:my_rule",
         "--config",
         "foo.bar=baz",
@@ -27,11 +27,11 @@ async def test_representative_config_flags_disregards_run_args(
     assert res.invocation_record()["representative_config_flags"] == ["-c foo.bar=baz"]
 
 
-@buck_test(write_invocation_record=True)
+@yak_test(write_invocation_record=True)
 async def test_representative_config_flags_includes_build_args(
-    buck: Buck,
+    yak: Yak,
 ) -> None:
-    res = await buck.build(
+    res = await yak.build(
         "--config",
         "foo.bar=baz",
         # For `build` commands, anything after `--` is a positional arg.

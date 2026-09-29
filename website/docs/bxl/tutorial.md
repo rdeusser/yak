@@ -22,7 +22,7 @@ This tutorial has 4 parts:
 ## Environment
 
 For all following tutorial, we assume you are in
-[`examples/bxl_tutorial`](https://github.com/rdeusser/buck2/tree/main/examples/bxl_tutorial)
+[`examples/bxl_tutorial`](https://github.com/rdeusser/yak/tree/main/examples/bxl_tutorial)
 folder.
 
 This folder contains a yak [project](../../concepts/glossary/#project) with
@@ -215,7 +215,7 @@ Note that `root//:data_a` is no longer in the list, since it's a resource
 target.
 
 You can find the complete code for this tutorial in
-[`part1.bxl`](https://github.com/rdeusser/buck2/blob/main/examples/bxl_tutorial/part1.bxl).
+[`part1.bxl`](https://github.com/rdeusser/yak/blob/main/examples/bxl_tutorial/part1.bxl).
 
 ## Part 2
 
@@ -277,7 +277,7 @@ You'll see output like this:
 ```
 
 You can find the complete code for this tutorial in
-[`part2.bxl`](https://github.com/rdeusser/buck2/blob/main/examples/bxl_tutorial/part2.bxl).
+[`part2.bxl`](https://github.com/rdeusser/yak/blob/main/examples/bxl_tutorial/part2.bxl).
 
 ## Part 3
 
@@ -337,7 +337,7 @@ ctx.output.ensure_multiple(index_outputs)
 Now we can confirm these index files are available on our disk.
 
 You can find the complete code for this tutorial in
-[`part3.bxl`](https://github.com/rdeusser/buck2/blob/main/examples/bxl_tutorial/part3.bxl).
+[`part3.bxl`](https://github.com/rdeusser/yak/blob/main/examples/bxl_tutorial/part3.bxl).
 
 ## Conclusion
 

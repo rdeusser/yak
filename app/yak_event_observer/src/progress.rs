@@ -23,12 +23,12 @@ use yak_data::local_stage;
 use yak_data::re_stage;
 use yak_data::span_end_event;
 use yak_data::span_start_event;
-use yak_events::BuckEvent;
+use yak_events::YakEvent;
 use yak_events::span::SpanId;
-use yak_hash::BuckMutMap;
+use yak_hash::YakMutMap;
 
 use crate::last_command_execution_kind::get_last_command_execution_time;
-use crate::unpack_event::UnpackedBuckEvent;
+use crate::unpack_event::UnpackedYakEvent;
 use crate::unpack_event::unpack_event;
 
 #[derive(Debug, Clone, Copy)]
@@ -40,7 +40,7 @@ enum State {
 
 #[derive(Debug, Default)]
 pub struct SpanMap<T> {
-    map: BuckMutMap<SpanId, (State, T)>,
+    map: YakMutMap<SpanId, (State, T)>,
     running: u64,
     finished: u64,
     cancelled: u64,
@@ -189,7 +189,7 @@ impl BuildProgressStateTracker {
         }
     }
 
-    pub fn handle_event(&mut self, event: &BuckEvent) -> yak_error::Result<()> {
+    pub fn handle_event(&mut self, event: &YakEvent) -> yak_error::Result<()> {
         let ev = unpack_event(event)?;
 
         self.handle_load(&ev)?;
@@ -197,7 +197,7 @@ impl BuildProgressStateTracker {
         self.handle_actions(&ev)?;
 
         match unpack_event(event)? {
-            UnpackedBuckEvent::Instant(_, _, instant_event::Data::DiceStateSnapshot(snapshot)) => {
+            UnpackedYakEvent::Instant(_, _, instant_event::Data::DiceStateSnapshot(snapshot)) => {
                 if let Some(read_dir_states) = snapshot.key_states.get("ReadDirKey") {
                     self.stats.dirs_read = read_dir_states.finished as u64;
                 }
@@ -233,8 +233,8 @@ impl BuildProgressStateTracker {
                     self.validations.min_finished = states.finished as u64;
                 }
             }
-            UnpackedBuckEvent::SpanEnd(
-                BuckEvent {
+            UnpackedYakEvent::SpanEnd(
+                YakEvent {
                     span_id: Some(span_id),
                     ..
                 },
@@ -255,10 +255,10 @@ impl BuildProgressStateTracker {
         Ok(())
     }
 
-    fn handle_load(&mut self, ev: &UnpackedBuckEvent) -> yak_error::Result<()> {
+    fn handle_load(&mut self, ev: &UnpackedYakEvent) -> yak_error::Result<()> {
         match ev {
-            UnpackedBuckEvent::SpanStart(
-                BuckEvent {
+            UnpackedYakEvent::SpanStart(
+                YakEvent {
                     span_id: Some(span_id),
                     ..
                 },
@@ -268,8 +268,8 @@ impl BuildProgressStateTracker {
                 self.loads.started(*span_id, TrackedLoadSpan {});
                 self.loads.running(*span_id);
             }
-            UnpackedBuckEvent::SpanEnd(
-                BuckEvent {
+            UnpackedYakEvent::SpanEnd(
+                YakEvent {
                     span_id: Some(span_id),
                     ..
                 },
@@ -287,10 +287,10 @@ impl BuildProgressStateTracker {
         Ok(())
     }
 
-    fn handle_analysis(&mut self, ev: &UnpackedBuckEvent) -> yak_error::Result<()> {
+    fn handle_analysis(&mut self, ev: &UnpackedYakEvent) -> yak_error::Result<()> {
         match ev {
-            UnpackedBuckEvent::SpanStart(
-                BuckEvent {
+            UnpackedYakEvent::SpanStart(
+                YakEvent {
                     span_id: Some(span_id),
                     ..
                 },
@@ -299,8 +299,8 @@ impl BuildProgressStateTracker {
             ) => {
                 self.analyses.started(*span_id, TrackedAnalysisSpan {});
             }
-            UnpackedBuckEvent::SpanStart(
-                BuckEvent {
+            UnpackedYakEvent::SpanStart(
+                YakEvent {
                     parent_id: Some(parent_id),
                     ..
                 },
@@ -311,8 +311,8 @@ impl BuildProgressStateTracker {
             ) => {
                 self.analyses.running(*parent_id);
             }
-            UnpackedBuckEvent::SpanEnd(
-                BuckEvent {
+            UnpackedYakEvent::SpanEnd(
+                YakEvent {
                     span_id: Some(span_id),
                     ..
                 },
@@ -341,10 +341,10 @@ impl BuildProgressStateTracker {
         }
     }
 
-    fn handle_actions(&mut self, ev: &UnpackedBuckEvent) -> yak_error::Result<()> {
+    fn handle_actions(&mut self, ev: &UnpackedYakEvent) -> yak_error::Result<()> {
         match ev {
-            UnpackedBuckEvent::SpanStart(
-                BuckEvent {
+            UnpackedYakEvent::SpanStart(
+                YakEvent {
                     span_id: Some(span_id),
                     ..
                 },
@@ -353,8 +353,8 @@ impl BuildProgressStateTracker {
             ) => {
                 self.actions.started(*span_id, TrackedActionSpan::default());
             }
-            UnpackedBuckEvent::SpanStart(
-                BuckEvent {
+            UnpackedYakEvent::SpanStart(
+                YakEvent {
                     parent_id: Some(parent_id),
                     ..
                 },
@@ -381,8 +381,8 @@ impl BuildProgressStateTracker {
                     _ => {}
                 };
             }
-            UnpackedBuckEvent::SpanEnd(
-                BuckEvent {
+            UnpackedYakEvent::SpanEnd(
+                YakEvent {
                     span_id: Some(span_id),
                     ..
                 },

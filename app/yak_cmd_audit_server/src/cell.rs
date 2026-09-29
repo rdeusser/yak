@@ -20,7 +20,7 @@ use yak_common::dice::cells::HasCellResolver;
 use yak_core::fs::project::ProjectRoot;
 use yak_core::fs::project_rel_path::ProjectRelativePath;
 use yak_fs::paths::abs_norm_path::AbsNormPathBuf;
-use yak_hash::BuckIndexMap;
+use yak_hash::YakIndexMap;
 use yak_server_ctx::ctx::ServerCommandContextTrait;
 use yak_server_ctx::ctx::ServerCommandDiceContext;
 use yak_server_ctx::partial_result_dispatcher::PartialResultDispatcher;
@@ -79,10 +79,10 @@ pub(crate) async fn audit_cell(
     aliases: bool,
     cwd: &ProjectRelativePath,
     fs: &ProjectRoot,
-) -> yak_error::Result<BuckIndexMap<String, AbsNormPathBuf>> {
+) -> yak_error::Result<YakIndexMap<String, AbsNormPathBuf>> {
     let cells = ctx.get_cell_resolver().await?;
     let this_resolver = ctx.get_cell_alias_resolver_for_dir(cwd).await?;
-    let mappings: BuckIndexMap<_, _> = {
+    let mappings: YakIndexMap<_, _> = {
         if aliases_to_resolve.is_empty() {
             if aliases {
                 this_resolver

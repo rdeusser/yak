@@ -25,7 +25,7 @@ load("@prelude//linking:execution_preference.bzl", "link_execution_preference_at
 load("@prelude//linking:link_info.bzl", "ArchiveContentsType", "LinkOrdering", "LinkStyle")
 load("@prelude//linking:types.bzl", "Linkage")
 load("@prelude//transitions:constraint_overrides.bzl", "constraint_overrides")
-load(":common.bzl", "CxxRuntimeType", "CxxSourceType", "HeadersAsRawHeadersMode", "buck", "prelude_rule")
+load(":common.bzl", "CxxRuntimeType", "CxxSourceType", "HeadersAsRawHeadersMode", "yak", "prelude_rule")
 load(":cxx_common.bzl", "cxx_common")
 load(":genrule_common.bzl", "genrule_common")
 load(":native_common.bzl", "native_common")
@@ -132,7 +132,7 @@ cxx_binary = prelude_rule(
         | native_common.link_group_deps()
         | native_common.link_group_public_deps_label()
         | native_common.transformation_spec_arg()
-        | buck.deps_query_arg()
+        | yak.deps_query_arg()
         | cxx_common.raw_headers_arg()
         | cxx_common.include_directories_arg()
         | cxx_common.raw_headers_as_headers_mode_arg()
@@ -161,10 +161,10 @@ cxx_binary = prelude_rule(
             "version_universe": attrs.option(attrs.string(), default = None),
             "weak_framework_names": attrs.list(attrs.string(), default = []),
         }
-        | buck.allow_cache_upload_arg()
-        | buck.licenses_arg()
-        | buck.labels_arg()
-        | buck.contacts_arg()
+        | yak.allow_cache_upload_arg()
+        | yak.licenses_arg()
+        | yak.labels_arg()
+        | yak.contacts_arg()
         | _cxx_binary_and_test_attrs()
     ),
     supports_incoming_transition = True,
@@ -356,9 +356,9 @@ cxx_genrule = prelude_rule(
             "outs": attrs.option(attrs.dict(key = attrs.string(), value = attrs.set(attrs.string(), sorted = False), sorted = False), default = None),
             "remote": attrs.option(attrs.bool(), default = None),
         }
-        | buck.licenses_arg()
-        | buck.labels_arg()
-        | buck.contacts_arg()
+        | yak.licenses_arg()
+        | yak.labels_arg()
+        | yak.contacts_arg()
         | core_args.optional_has_content_based_path_attr()
     ),
 )
@@ -488,10 +488,10 @@ library_attrs = (
         "version_universe": attrs.option(attrs.string(), default = None),
         "weak_framework_names": attrs.list(attrs.string(), default = []),
     }
-    | buck.allow_cache_upload_arg()
-    | buck.licenses_arg()
-    | buck.labels_arg()
-    | buck.contacts_arg()
+    | yak.allow_cache_upload_arg()
+    | yak.licenses_arg()
+    | yak.labels_arg()
+    | yak.contacts_arg()
 )
 
 cxx_library = prelude_rule(
@@ -704,9 +704,9 @@ cxx_precompiled_header = prelude_rule(
             "version_universe": attrs.option(attrs.string(), default = None),
         }
         | library_attrs
-        | buck.licenses_arg()
-        | buck.labels_arg()
-        | buck.contacts_arg()
+        | yak.licenses_arg()
+        | yak.labels_arg()
+        | yak.contacts_arg()
     ),
 )
 
@@ -754,8 +754,8 @@ windows_resource = prelude_rule(
         | {
             "deps": attrs.list(attrs.dep(), default = []),
         }
-        | buck.labels_arg()
-        | buck.contacts_arg()
+        | yak.labels_arg()
+        | yak.contacts_arg()
     ),
 )
 
@@ -779,7 +779,7 @@ cxx_test = prelude_rule(
     further = None,
     attrs = (
         # @unsorted-dict-items
-        buck.inject_test_env_arg()
+        yak.inject_test_env_arg()
         | cxx_common.srcs_arg()
         | cxx_common.headers_arg()
         | cxx_common.default_deps_arg()
@@ -787,7 +787,7 @@ cxx_test = prelude_rule(
         | cxx_common.compiler_flags_arg()
         | cxx_common.linker_flags_arg()
         | cxx_common.precompiled_header_arg()
-        | buck.deps_query_arg()
+        | yak.deps_query_arg()
         | {
             "resources": attrs.named_set(
                 attrs.source(),
@@ -843,8 +843,8 @@ cxx_test = prelude_rule(
             """,
             ),
         }
-        | buck.run_test_separately_arg(run_test_separately_type = attrs.option(attrs.bool(), default = None))
-        | buck.test_rule_timeout_ms()
+        | yak.run_test_separately_arg(run_test_separately_type = attrs.option(attrs.bool(), default = None))
+        | yak.test_rule_timeout_ms()
         | native_common.link_group_deps()
         | native_common.link_group_public_deps_label()
         | native_common.transformation_spec_arg()
@@ -887,10 +887,10 @@ cxx_test = prelude_rule(
             "version_universe": attrs.option(attrs.string(), default = None),
             "weak_framework_names": attrs.list(attrs.string(), default = []),
         }
-        | buck.allow_cache_upload_arg()
-        | buck.licenses_arg()
-        | buck.labels_arg()
-        | buck.contacts_arg()
+        | yak.allow_cache_upload_arg()
+        | yak.licenses_arg()
+        | yak.labels_arg()
+        | yak.contacts_arg()
         | test_common.attributes()
         | _cxx_binary_and_test_attrs()
     ),
@@ -1020,9 +1020,9 @@ cxx_toolchain = prelude_rule(
             "strip_non_global_flags": attrs.option(attrs.list(attrs.arg()), default = None),
             "use_header_map": attrs.bool(default = False),
         }
-        | buck.licenses_arg()
-        | buck.labels_arg()
-        | buck.contacts_arg()
+        | yak.licenses_arg()
+        | yak.labels_arg()
+        | yak.contacts_arg()
     ),
 )
 
@@ -1137,10 +1137,10 @@ prebuilt_cxx_library = prelude_rule(
             "soname": attrs.option(attrs.string(), default = None),
             "supports_shared_library_interface": attrs.bool(default = True),
         }
-        | buck.allow_cache_upload_arg()
-        | buck.licenses_arg()
-        | buck.labels_arg()
-        | buck.contacts_arg()
+        | yak.allow_cache_upload_arg()
+        | yak.licenses_arg()
+        | yak.labels_arg()
+        | yak.contacts_arg()
     ),
 )
 
@@ -1273,9 +1273,9 @@ prebuilt_cxx_library_group = prelude_rule(
             "include_dirs": attrs.list(attrs.source(allow_directory = True), default = []),
             "supports_shared_library_interface": attrs.bool(default = True),
         }
-        | buck.licenses_arg()
-        | buck.labels_arg()
-        | buck.contacts_arg()
+        | yak.licenses_arg()
+        | yak.labels_arg()
+        | yak.contacts_arg()
     ),
 )
 
@@ -1311,7 +1311,7 @@ llvm_link_bitcode = prelude_rule(
     attrs = (
         # @unsorted-dict-items
         cxx_common.srcs_arg()
-        | buck.deps_query_arg()
+        | yak.deps_query_arg()
         | {
             "deps": attrs.list(attrs.dep(), default = []),
         }

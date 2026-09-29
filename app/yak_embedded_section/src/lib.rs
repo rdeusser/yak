@@ -20,7 +20,7 @@ use std::io::Write;
 use object::Object;
 use object::ObjectSection;
 use object::ReadCache;
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 use yak_error::ErrorTag;
 use yak_error::yak_error;
 
@@ -55,7 +55,7 @@ impl EmbeddedSection<'_> {
     /// size of the payload.
     pub fn copy_to(&self, writer: &mut impl Write) -> yak_error::Result<()> {
         let file = File::open(SELF_EXE)
-            .buck_error_context("Error opening `/proc/self/exe` to read an embedded section")?;
+            .yak_error_context("Error opening `/proc/self/exe` to read an embedded section")?;
 
         // Only the headers are read here; `ReadCache` keeps us from paging in
         // the rest of the executable to find one section.
@@ -86,22 +86,22 @@ impl EmbeddedSection<'_> {
 
         let mut file = cache.into_inner();
         file.seek(SeekFrom::Start(offset))
-            .buck_error_context("Error seeking to an embedded section")?;
+            .yak_error_context("Error seeking to an embedded section")?;
         let mut payload = file.take(len);
 
         match self.encoding {
             SectionEncoding::Raw => {
                 std::io::copy(&mut payload, writer)
-                    .buck_error_context("Error reading an embedded section")?;
+                    .yak_error_context("Error reading an embedded section")?;
             }
             SectionEncoding::Zstd => {
                 zstd::stream::copy_decode(&mut payload, &mut *writer)
-                    .buck_error_context("Error decompressing an embedded section")?;
+                    .yak_error_context("Error decompressing an embedded section")?;
             }
         }
 
         writer
             .flush()
-            .buck_error_context("Error flushing an embedded section")
+            .yak_error_context("Error flushing an embedded section")
     }
 }

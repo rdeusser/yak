@@ -215,7 +215,7 @@ def _error_handler_arg():
                  Used in conjunction with `error_handler_stderr_errorformats` and `error_handler_stdout_errorformats`
                  when calling `ActionErrorCtx.parse_with_errorformat()` to categorize parsed errors.
 
-                 See https://rdeusser.github.io/buck2/docs/api/build/ActionErrorCtx/#actionerrorctxparse_with_errorformat for more details.
+                 See https://rdeusser.github.io/yak/docs/api/build/ActionErrorCtx/#actionerrorctxparse_with_errorformat for more details.
             """,
         ),
         "error_handler_stderr_errorformats": attrs.option(
@@ -229,7 +229,7 @@ def _error_handler_arg():
                  When a genrule fails, the error handler attempts to match the stderr
                  against these patterns.
 
-                 See https://rdeusser.github.io/buck2/docs/api/build/ActionErrorCtx/#actionerrorctxparse_with_errorformat for more details.
+                 See https://rdeusser.github.io/yak/docs/api/build/ActionErrorCtx/#actionerrorctxparse_with_errorformat for more details.
             """,
         ),
         "error_handler_stdout_errorformats": attrs.option(
@@ -238,7 +238,7 @@ def _error_handler_arg():
             doc = """
                 Same as `error_handler_stderr_errorformats`, but for stdout.
 
-                 See https://rdeusser.github.io/buck2/docs/api/build/ActionErrorCtx/#actionerrorctxparse_with_errorformat for more details.
+                 See https://rdeusser.github.io/yak/docs/api/build/ActionErrorCtx/#actionerrorctxparse_with_errorformat for more details.
             """,
         ),
     }

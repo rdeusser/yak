@@ -10,7 +10,7 @@
 
 use async_trait::async_trait;
 use dice::DiceTransaction;
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 use yak_error::internal_error;
 use yak_execute::materialize::materializer::CleanStaleArtifactsArgs;
 use yak_server_ctx::ctx::ServerCommandContextTrait;
@@ -79,7 +79,7 @@ impl ServerCommandTemplate for CleanStaleServerCommand {
                         tracked_only: self.req.tracked_only,
                     })
                     .await
-                    .buck_error_context("Failed to clean stale artifacts.")
+                    .yak_error_context("Failed to clean stale artifacts.")
             })
             .await
     }

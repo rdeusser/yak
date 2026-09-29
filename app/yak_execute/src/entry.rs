@@ -28,8 +28,8 @@ use yak_common::file_ops::metadata::FileMetadata;
 use yak_common::file_ops::metadata::FileType;
 use yak_common::file_ops::metadata::TrackedFileDigest;
 use yak_directory::directory::entry::DirectoryEntry;
-use yak_error::BuckErrorContext;
-use yak_error::BuckErrorOptionContext;
+use yak_error::YakErrorContext;
+use yak_error::YakErrorOptionContext;
 use yak_fs::async_fs_util::spawn_blocking;
 use yak_fs::error::IoResultExt;
 use yak_fs::fs_util;
@@ -133,7 +133,7 @@ pub async fn build_entry_from_disk(
         // removed later by the materializer). Ignoring failures here and
         // catching them later also allows the action executor to report stats
         // on the action execution prior to turnl If we returned an error here
-        // we'd cut that process short.  The BuckActionExecutor has a check for
+        // we'd cut that process short.  The YakActionExecutor has a check for
         // missing outputs. When `None` is returned here the output isn't listed
         // in the digested results, and that check will produce a missing
         // outputs error.
@@ -212,7 +212,7 @@ async fn build_dir_from_disk(
             .to_str()
             .internal_error("Filename is not UTF-8")
             .and_then(|f| FileNameBuf::try_from(f.to_owned()))
-            .with_buck_error_context(|| {
+            .with_yak_error_context(|| {
                 format!("Invalid filename: {}", disk_path.clone().display())
             })?;
 
@@ -305,7 +305,7 @@ fn create_symlink(
             .with_internal_error(|| format!("failed to get parent of {}", path.display()))?;
         let canonical_path = fs_util::canonicalize(directory_path)
             .categorize_internal()
-            .buck_error_context(format!(
+            .yak_error_context(format!(
                 "failed to get canonical path of {}",
                 directory_path.display()
             ))?;

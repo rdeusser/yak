@@ -115,7 +115,7 @@ impl LoadedModule {
     ///
     /// The result borrows this module; use [`OwnedFrozenRef::add_to_heap`] to read the members on
     /// another heap.
-    pub fn native_globals_for_buck_files(
+    pub fn native_globals_for_yak_files(
         &self,
     ) -> yak_error::Result<Option<OwnedFrozenRef<'_, StructRef<'static>>>> {
         let Some(native) = self
@@ -192,7 +192,7 @@ mod tests {
     use yak_error::yak_error;
 
     use super::*;
-    use crate::testing::Buck2TestHeapName;
+    use crate::testing::YakTestHeapName;
 
     struct TestLoadResolver {}
 
@@ -224,7 +224,7 @@ mod tests {
     fn env(name: StarlarkModulePath) -> FrozenModule {
         Module::with_temp_heap(|m| {
             m.set("name", m.heap().alloc(name.to_string()));
-            m.freeze_named(Buck2TestHeapName::frozen_heap_name())
+            m.freeze_named(YakTestHeapName::frozen_heap_name())
         })
         .unwrap()
     }

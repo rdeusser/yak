@@ -10,16 +10,16 @@ import re
 from pathlib import Path
 
 import pytest
-from e2e_util.api.buck import Buck
+from e2e_util.api.yak import Yak
 from e2e_util.asserts import expect_failure
-from e2e_util.buck_workspace import buck_test
+from e2e_util.yak_workspace import yak_test
 from e2e_util.helper.utils import filter_events, json_get, random_string
 
 HASH = r"[0-9a-fA-F]{16}"
 
 
-async def check_materialize_inputs_for_failed_actions(buck: Buck) -> None:
-    log = (await buck.log("show")).stdout.strip().splitlines()
+async def check_materialize_inputs_for_failed_actions(yak: Yak) -> None:
+    log = (await yak.log("show")).stdout.strip().splitlines()
 
     found_action_error = False
     found_materialize_failed_inputs_span = False
@@ -49,7 +49,7 @@ async def check_materialize_inputs_for_failed_actions(buck: Buck) -> None:
             found_action_error = True
             assert len(materialized_inputs_for_failed) == 1
             input = materialized_inputs_for_failed[0]
-            with open(Path(buck.cwd / input), "r") as materialized_input_path:
+            with open(Path(yak.cwd / input), "r") as materialized_input_path:
                 contents = materialized_input_path.read()
                 assert contents == "yay!"
 
@@ -60,10 +60,10 @@ async def check_materialize_inputs_for_failed_actions(buck: Buck) -> None:
 
 
 @pytest.mark.remote_execution
-@buck_test(data_dir="materialize_inputs_for_failed_actions")
-async def test_materialize_inputs_for_failed_actions(buck: Buck) -> None:
+@yak_test(data_dir="materialize_inputs_for_failed_actions")
+async def test_materialize_inputs_for_failed_actions(yak: Yak) -> None:
     await expect_failure(
-        buck.build(
+        yak.build(
             "//:action_fail",
             "--remote-only",
             "--no-remote-cache",
@@ -72,14 +72,14 @@ async def test_materialize_inputs_for_failed_actions(buck: Buck) -> None:
             f"test.cache_buster={random_string()}",
         ),
     )
-    await check_materialize_inputs_for_failed_actions(buck)
+    await check_materialize_inputs_for_failed_actions(yak)
 
 
 @pytest.mark.remote_execution
-@buck_test(data_dir="materialize_inputs_for_failed_actions")
-async def test_materialize_inputs_for_failed_actions_content_hash(buck: Buck) -> None:
+@yak_test(data_dir="materialize_inputs_for_failed_actions")
+async def test_materialize_inputs_for_failed_actions_content_hash(yak: Yak) -> None:
     await expect_failure(
-        buck.build(
+        yak.build(
             "//:action_fail",
             "--remote-only",
             "--no-remote-cache",
@@ -89,12 +89,12 @@ async def test_materialize_inputs_for_failed_actions_content_hash(buck: Buck) ->
             "test.use_content_based_path=true",
         ),
     )
-    await check_materialize_inputs_for_failed_actions(buck)
+    await check_materialize_inputs_for_failed_actions(yak)
 
 
-async def check_materialized_outputs_for_failed_action(buck: Buck) -> None:
+async def check_materialized_outputs_for_failed_action(yak: Yak) -> None:
     materialized = await filter_events(
-        buck,
+        yak,
         "Event",
         "data",
         "Instant",
@@ -114,12 +114,12 @@ async def check_materialized_outputs_for_failed_action(buck: Buck) -> None:
     assert len(materialized) == 1 and len(materialized[0]) == 2
 
     out1 = materialized[0][0]
-    with open(Path(buck.cwd / out1), "r") as materialized_input_path:
+    with open(Path(yak.cwd / out1), "r") as materialized_input_path:
         contents = materialized_input_path.read()
         assert contents == "json"
 
     out2 = materialized[0][1]
-    with open(Path(buck.cwd / out2), "r") as materialized_input_path:
+    with open(Path(yak.cwd / out2), "r") as materialized_input_path:
         contents = materialized_input_path.read()
         assert contents == "txt"
 
@@ -128,23 +128,23 @@ async def check_materialized_outputs_for_failed_action(buck: Buck) -> None:
 
 
 @pytest.mark.remote_execution
-@buck_test(skip_for_os=["windows"], data_dir="materialize_outputs_for_failed_actions")
-async def test_materialize_outputs_for_failed_actions(buck: Buck) -> None:
+@yak_test(skip_for_os=["windows"], data_dir="materialize_outputs_for_failed_actions")
+async def test_materialize_outputs_for_failed_actions(yak: Yak) -> None:
     await expect_failure(
-        buck.build(
+        yak.build(
             "//:action_fail",
             "--remote-only",
             "--materialize-failed-outputs",
         ),
     )
-    await check_materialized_outputs_for_failed_action(buck)
+    await check_materialized_outputs_for_failed_action(yak)
 
 
 @pytest.mark.remote_execution
-@buck_test(skip_for_os=["windows"], data_dir="materialize_outputs_for_failed_actions")
-async def test_materialize_outputs_for_failed_actions_content_hash(buck: Buck) -> None:
+@yak_test(skip_for_os=["windows"], data_dir="materialize_outputs_for_failed_actions")
+async def test_materialize_outputs_for_failed_actions_content_hash(yak: Yak) -> None:
     await expect_failure(
-        buck.build(
+        yak.build(
             "//:action_fail",
             "--remote-only",
             "--materialize-failed-outputs",
@@ -152,13 +152,13 @@ async def test_materialize_outputs_for_failed_actions_content_hash(buck: Buck) -
             "test.use_content_based_path=true",
         ),
     )
-    await check_materialized_outputs_for_failed_action(buck)
+    await check_materialized_outputs_for_failed_action(yak)
 
 
-@buck_test(data_dir="materialize_outputs_for_failed_actions")
-async def test_undeclared_outputs_to_materialize_will_fail(buck: Buck) -> None:
+@yak_test(data_dir="materialize_outputs_for_failed_actions")
+async def test_undeclared_outputs_to_materialize_will_fail(yak: Yak) -> None:
     await expect_failure(
-        buck.build(
+        yak.build(
             "//:undeclared_output",
             "--remote-only",
             "--no-remote-cache",
@@ -167,9 +167,9 @@ async def test_undeclared_outputs_to_materialize_will_fail(buck: Buck) -> None:
     )
 
 
-async def check_materialized_outputs_defined_by_run_action(buck: Buck) -> None:
+async def check_materialized_outputs_defined_by_run_action(yak: Yak) -> None:
     materialized = await filter_events(
-        buck,
+        yak,
         "Event",
         "data",
         "Instant",
@@ -190,7 +190,7 @@ async def check_materialized_outputs_defined_by_run_action(buck: Buck) -> None:
     assert len(materialized[0]) == 1
 
     out = materialized[0][0]
-    with open(Path(buck.cwd / out), "r") as materialized:
+    with open(Path(yak.cwd / out), "r") as materialized:
         contents = materialized.read()
         assert contents == "json"
 
@@ -198,25 +198,25 @@ async def check_materialized_outputs_defined_by_run_action(buck: Buck) -> None:
 
 
 @pytest.mark.remote_execution
-@buck_test(skip_for_os=["windows"], data_dir="materialize_outputs_for_failed_actions")
-async def test_materialize_outputs_defined_by_run_action(buck: Buck) -> None:
+@yak_test(skip_for_os=["windows"], data_dir="materialize_outputs_for_failed_actions")
+async def test_materialize_outputs_defined_by_run_action(yak: Yak) -> None:
     await expect_failure(
-        buck.build(
+        yak.build(
             "//:action_fail",
             "--remote-only",
             "--no-remote-cache",
         ),
     )
-    await check_materialized_outputs_defined_by_run_action(buck)
+    await check_materialized_outputs_defined_by_run_action(yak)
 
 
 @pytest.mark.remote_execution
-@buck_test(skip_for_os=["windows"], data_dir="materialize_outputs_for_failed_actions")
+@yak_test(skip_for_os=["windows"], data_dir="materialize_outputs_for_failed_actions")
 async def test_materialize_outputs_defined_by_run_action_content_hash(
-    buck: Buck,
+    yak: Yak,
 ) -> None:
     await expect_failure(
-        buck.build(
+        yak.build(
             "//:action_fail",
             "--remote-only",
             "--no-remote-cache",
@@ -224,4 +224,4 @@ async def test_materialize_outputs_defined_by_run_action_content_hash(
             "test.use_content_based_path=true",
         ),
     )
-    await check_materialized_outputs_defined_by_run_action(buck)
+    await check_materialized_outputs_defined_by_run_action(yak)

@@ -16,4 +16,4 @@ prelude = bundled
 execution_platforms = root//cfg:execution_platforms
 
 [test]
-enable_buckconfig_backed = true
+enable_yakconfig_backed = true

@@ -27,7 +27,7 @@ use pagable::ValueSerialize;
 use serde::Deserialize;
 use serde::Serialize;
 use strong_hash::StrongHash;
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 use yak_error::ContextValue;
 use yak_error::TypedContext;
 use yak_util::arc_str::ArcStr;
@@ -285,7 +285,7 @@ impl<T> ResultMaybeCompatible<T> {
     }
 
     #[track_caller]
-    pub fn buck_error_context<C: Into<ContextValue>>(self, context: C) -> ResultMaybeCompatible<T> {
+    pub fn yak_error_context<C: Into<ContextValue>>(self, context: C) -> ResultMaybeCompatible<T> {
         match self {
             Self::Err(e) => ResultMaybeCompatible::Err(e.context(context)),
             Self::Compatible(v) => ResultMaybeCompatible::Compatible(v),
@@ -303,7 +303,7 @@ impl<T> ResultMaybeCompatible<T> {
     }
 
     #[track_caller]
-    pub fn with_buck_error_context<C, F>(self, f: F) -> ResultMaybeCompatible<T>
+    pub fn with_yak_error_context<C, F>(self, f: F) -> ResultMaybeCompatible<T>
     where
         C: Into<ContextValue>,
         F: FnOnce() -> C,

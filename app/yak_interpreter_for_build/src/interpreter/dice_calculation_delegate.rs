@@ -32,7 +32,7 @@ use yak_common::dice::cycles::CycleGuard;
 use yak_common::file_ops::dice::DiceFileComputations;
 use yak_common::file_ops::error::FileReadErrorContext;
 use yak_common::legacy_configs::dice::HasLegacyConfigs;
-use yak_common::legacy_configs::dice::OpaqueLegacyBuckConfigOnDice;
+use yak_common::legacy_configs::dice::OpaqueLegacyYakConfigOnDice;
 use yak_common::package_boundary::HasPackageBoundaryExceptions;
 use yak_common::package_listing::dice::DicePackageListingResolver;
 use yak_common::package_listing::listing::PackageListing;
@@ -41,7 +41,7 @@ use yak_core::cells::build_file_cell::BuildFileCell;
 use yak_core::cells::cell_path::CellPath;
 use yak_core::package::PackageLabel;
 use yak_core::package::package_relative_path::PackageRelativePath;
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 use yak_error::internal_error;
 use yak_events::dispatch::span;
 use yak_events::dispatch::span_async_simple;
@@ -62,7 +62,7 @@ use yak_node::nodes::eval_result::EvaluationResult;
 use yak_node::super_package::SuperPackage;
 use yak_util::time_span::TimeSpan;
 
-use crate::interpreter::buckconfig::ConfigsOnDiceViewForStarlark;
+use crate::interpreter::yakconfig::ConfigsOnDiceViewForStarlark;
 use crate::interpreter::cell_info::InterpreterCellInfo;
 use crate::interpreter::check_starlark_stack_size::check_starlark_stack_size;
 use crate::interpreter::cycles::LoadCycleDescriptor;
@@ -192,9 +192,9 @@ pub(crate) enum BuildFileEvaluationMode {
 }
 
 impl<'c, 'd: 'c> DiceCalculationDelegate<'c, 'd> {
-    async fn get_legacy_buck_config_for_starlark(
+    async fn get_legacy_yak_config_for_starlark(
         &mut self,
-    ) -> yak_error::Result<OpaqueLegacyBuckConfigOnDice<'d>> {
+    ) -> yak_error::Result<OpaqueLegacyYakConfigOnDice<'d>> {
         self.ctx
             .get_legacy_config_on_dice(self.build_file_cell.name())
             .await
@@ -225,7 +225,7 @@ impl<'c, 'd: 'c> DiceCalculationDelegate<'c, 'd> {
             ctx.try_compute_join(modules, async |ctx, (span, import)| {
                 ctx.get_loaded_module(import.borrow())
                     .await
-                    .with_buck_error_context(|| {
+                    .with_yak_error_context(|| {
                         format!(
                             "From load at {}",
                             span.as_ref()
@@ -301,7 +301,7 @@ impl<'c, 'd: 'c> DiceCalculationDelegate<'c, 'd> {
             .with_package_context_information(path.path().to_string())?;
 
         let value: serde_json::Value = serde_json::from_str(&contents)
-            .with_buck_error_context(|| format!("Parsing {path}"))?;
+            .with_yak_error_context(|| format!("Parsing {path}"))?;
 
         // We expect these to be small + simple
         let frozen = Module::with_temp_heap(|module| {
@@ -329,7 +329,7 @@ impl<'c, 'd: 'c> DiceCalculationDelegate<'c, 'd> {
             .with_package_context_information(path.path().to_string())?;
 
         let value: toml::Value =
-            toml::from_str(&contents).with_buck_error_context(|| format!("Parsing {path}"))?;
+            toml::from_str(&contents).with_yak_error_context(|| format!("Parsing {path}"))?;
         let json_value = toml_value_to_json(value);
 
         // We expect these to be small + simple
@@ -355,8 +355,8 @@ impl<'c, 'd: 'c> DiceCalculationDelegate<'c, 'd> {
     ) -> yak_error::Result<LoadedModule> {
         let (ast, deps) = self.prepare_eval(starlark_file.into()).await?;
         let loaded_modules = deps.get_loaded_modules();
-        let buckconfig = self.get_legacy_buck_config_for_starlark().await?;
-        let root_buckconfig = self.ctx.get_legacy_root_config_on_dice().await?;
+        let yakconfig = self.get_legacy_yak_config_for_starlark().await?;
+        let root_yakconfig = self.ctx.get_legacy_root_config_on_dice().await?;
 
         let configs = self.configs;
         let ctx = &mut *self.ctx;
@@ -364,17 +364,17 @@ impl<'c, 'd: 'c> DiceCalculationDelegate<'c, 'd> {
         let eval_kind = StarlarkEvalKind::Load(Arc::new(starlark_file.to_owned()));
         let provider = StarlarkEvaluatorProvider::new(ctx, eval_kind).await?;
 
-        let mut buckconfigs = ConfigsOnDiceViewForStarlark::new(ctx, buckconfig, root_buckconfig);
+        let mut yakconfigs = ConfigsOnDiceViewForStarlark::new(ctx, yakconfig, root_yakconfig);
         let evaluation = configs
             .eval_module(
                 starlark_file,
-                &mut buckconfigs,
+                &mut yakconfigs,
                 ast,
                 loaded_modules.clone(),
                 provider,
                 cancellation,
             )
-            .with_buck_error_context(|| format!("Error evaluating module: `{}`", starlark_file))?;
+            .with_yak_error_context(|| format!("Error evaluating module: `{}`", starlark_file))?;
 
         Ok(LoadedModule::new(
             OwnedStarlarkModulePath::new(starlark_file),
@@ -498,8 +498,8 @@ impl<'c, 'd: 'c> DiceCalculationDelegate<'c, 'd> {
             }
         };
 
-        let buckconfig = self.get_legacy_buck_config_for_starlark().await?;
-        let root_buckconfig = self.ctx.get_legacy_root_config_on_dice().await?;
+        let yakconfig = self.get_legacy_yak_config_for_starlark().await?;
+        let root_yakconfig = self.ctx.get_legacy_root_config_on_dice().await?;
 
         let configs = self.configs;
         let ctx = &mut *self.ctx;
@@ -507,19 +507,19 @@ impl<'c, 'd: 'c> DiceCalculationDelegate<'c, 'd> {
         let eval_kind = StarlarkEvalKind::LoadPackageFile(path.dupe());
         let provider = StarlarkEvaluatorProvider::new(ctx, eval_kind).await?;
 
-        let mut buckconfigs = ConfigsOnDiceViewForStarlark::new(ctx, buckconfig, root_buckconfig);
+        let mut yakconfigs = ConfigsOnDiceViewForStarlark::new(ctx, yakconfig, root_yakconfig);
 
         configs
             .eval_package_file(
                 &package_file_path,
                 ast,
                 parent,
-                &mut buckconfigs,
+                &mut yakconfigs,
                 deps.get_loaded_modules(),
                 provider,
                 cancellation,
             )
-            .with_buck_error_context(|| format!("evaluating Starlark PACKAGE file `{path}`"))
+            .with_yak_error_context(|| format!("evaluating Starlark PACKAGE file `{path}`"))
     }
 
     pub(crate) async fn eval_package_file(
@@ -663,8 +663,8 @@ impl<'c, 'd: 'c> DiceCalculationDelegate<'c, 'd> {
                 .ctx
                 .has_package_boundary_exception(package.as_cell_path())
                 .await?;
-            let buckconfig = self.get_legacy_buck_config_for_starlark().await?;
-            let root_buckconfig = self.ctx.get_legacy_root_config_on_dice().await?;
+            let yakconfig = self.get_legacy_yak_config_for_starlark().await?;
+            let root_yakconfig = self.ctx.get_legacy_root_config_on_dice().await?;
             let module_id = build_file_path.to_string();
             let cell_str = build_file_path.cell().as_str().to_owned();
             let start_event = yak_data::LoadBuildFileStart {
@@ -677,14 +677,14 @@ impl<'c, 'd: 'c> DiceCalculationDelegate<'c, 'd> {
 
             now = Some(TimeSpan::start_now());
             let provider = StarlarkEvaluatorProvider::new(ctx, eval_kind).await?;
-            let mut buckconfigs =
-                ConfigsOnDiceViewForStarlark::new(ctx, buckconfig, root_buckconfig);
+            let mut yakconfigs =
+                ConfigsOnDiceViewForStarlark::new(ctx, yakconfig, root_yakconfig);
 
             let (profile_data, eval_result) = span(start_event, move || {
                 let result_with_stats = configs
                     .eval_build_file(
                         &build_file_path,
-                        &mut buckconfigs,
+                        &mut yakconfigs,
                         listing,
                         super_package,
                         package_boundary_exception,
@@ -694,7 +694,7 @@ impl<'c, 'd: 'c> DiceCalculationDelegate<'c, 'd> {
                         false,
                         cancellation,
                     )
-                    .with_buck_error_context(|| {
+                    .with_yak_error_context(|| {
                         format!("Error evaluating build file: `{}`", build_file_path)
                     });
                 let error = result_with_stats.as_ref().err().map(|e| format!("{e:#}"));

@@ -95,7 +95,7 @@ you will soon become very familiar with these patterns during daily development.
 <!--  TODO: change link to yak doc once available for macros -->
 
 - yak targets can be either build rules or
-  [macros](https://buck.build/extending/macros.html), which are
+  [macros](https://yak.build/extending/macros.html), which are
   wrappers/extensions around native build rules, macros are usually defined .bzl
   files.
 - yak uses [starlark](../../concepts/glossary/#starlark) language which is a

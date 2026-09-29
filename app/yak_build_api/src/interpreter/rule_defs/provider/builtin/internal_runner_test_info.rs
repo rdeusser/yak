@@ -37,8 +37,8 @@ use starlark::values::none::NoneType;
 use starlark::values::typing::StarlarkCallable;
 use yak_build_api_derive::internal_provider;
 use yak_core::provider::label::ConfiguredProvidersLabel;
-use yak_error::BuckErrorContext;
-use yak_error::BuckErrorOptionContext;
+use yak_error::YakErrorContext;
+use yak_error::YakErrorOptionContext;
 use yak_error::internal_error;
 use yak_error::yak_error;
 use yak_interpreter::types::configured_providers_label::StarlarkConfiguredProvidersLabel;
@@ -524,7 +524,7 @@ fn validate_internal_runner_test_info<'v>(
 
     let required_local_resources = info.required_local_resources.get();
     if !required_local_resources.is_none() {
-        for resource_type in iter_value(required_local_resources).buck_error_context("`required_local_resources` should be a list or a tuple of `RequiredTestLocalResource` objects")? {
+        for resource_type in iter_value(required_local_resources).yak_error_context("`required_local_resources` should be a list or a tuple of `RequiredTestLocalResource` objects")? {
             let resource_type = StarlarkRequiredTestLocalResource::from_value(resource_type)
                 .ok_or_else(|| yak_error!(yak_error::ErrorTag::Input, "`required_local_resources` should only contain `RequiredTestLocalResource` values, got {}", resource_type))?;
             if !provided_local_resources.contains_key(&resource_type.name as &str) {

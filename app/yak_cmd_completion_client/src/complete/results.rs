@@ -14,28 +14,28 @@ use std::sync::Arc;
 
 use yak_common::buildfiles::parse_buildfile_name;
 use yak_common::invocation_roots::InvocationRoots;
-use yak_common::legacy_configs::cells::BuckConfigBasedCells;
+use yak_common::legacy_configs::cells::YakConfigBasedCells;
 use yak_core::cells::name::CellName;
 use yak_fs::fs_util;
 use yak_fs::paths::abs_norm_path::AbsNormPath;
 use yak_fs::paths::file_name::FileNameBuf;
-use yak_hash::BuckMutMap;
+use yak_hash::YakMutMap;
 
 use super::path_sanitizer::SanitizedPath;
 
 pub(crate) struct CompletionResults<'a> {
     roots: &'a InvocationRoots,
-    cell_configs: Arc<BuckConfigBasedCells>,
-    buildfiles: BuckMutMap<CellName, Vec<FileNameBuf>>,
+    cell_configs: Arc<YakConfigBasedCells>,
+    buildfiles: YakMutMap<CellName, Vec<FileNameBuf>>,
     results: BTreeSet<String>,
 }
 
 impl<'a> CompletionResults<'a> {
-    pub(crate) fn new(roots: &'a InvocationRoots, cell_configs: Arc<BuckConfigBasedCells>) -> Self {
+    pub(crate) fn new(roots: &'a InvocationRoots, cell_configs: Arc<YakConfigBasedCells>) -> Self {
         Self {
             roots,
             cell_configs,
-            buildfiles: BuckMutMap::default(),
+            buildfiles: YakMutMap::default(),
             results: BTreeSet::<String>::new(),
         }
     }

@@ -14,7 +14,7 @@ use async_trait::async_trait;
 use yak_cli_proto::BxlRequest;
 use yak_client_ctx::client_ctx::ClientCommandContext;
 use yak_client_ctx::command_outcome::CommandOutcome;
-use yak_client_ctx::common::BuckArgMatches;
+use yak_client_ctx::common::YakArgMatches;
 use yak_client_ctx::common::CommonBuildConfigurationOptions;
 use yak_client_ctx::common::CommonCommandOptions;
 use yak_client_ctx::common::CommonEventLogOptions;
@@ -22,7 +22,7 @@ use yak_client_ctx::common::CommonStarlarkOptions;
 use yak_client_ctx::common::build::CommonBuildOptions;
 use yak_client_ctx::common::target_cfg::TargetCfgOptions;
 use yak_client_ctx::common::ui::CommonConsoleOptions;
-use yak_client_ctx::daemon::client::BuckdClientConnector;
+use yak_client_ctx::daemon::client::YakdClientConnector;
 use yak_client_ctx::daemon::client::StdoutPartialResultHandler;
 use yak_client_ctx::events_ctx::EventsCtx;
 use yak_client_ctx::exit_result::ExitResult;
@@ -98,13 +98,13 @@ impl StreamingCommand for BxlCommand {
 
     async fn exec_impl(
         self,
-        buckd: &mut BuckdClientConnector,
-        matches: BuckArgMatches<'_>,
+        yakd: &mut YakdClientConnector,
+        matches: YakArgMatches<'_>,
         ctx: &mut ClientCommandContext<'_>,
         events_ctx: &mut EventsCtx,
     ) -> ExitResult {
         let context = ctx.client_context(matches, &self)?;
-        let result = buckd
+        let result = yakd
             .with_flushing()
             .bxl(
                 BxlRequest {

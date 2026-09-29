@@ -11,16 +11,16 @@ import subprocess
 
 from core.common.io.file_watcher import FileWatcherEvent
 from core.common.io.utils import get_files
-from e2e_util.api.buck import Buck
+from e2e_util.api.yak import Yak
 
 
-def git(buck: Buck, *args: str) -> str:
+def git(yak: Yak, *args: str) -> str:
     """Runs git on the repository in the test project and returns its stdout.
 
     `--git-dir` pins git to that repository, and the user's git configuration
     is ignored so that hooks and signing settings do not apply.
     """
-    project = str(buck.cwd)
+    project = str(yak.cwd)
     result = subprocess.run(
         [
             "git",
@@ -45,23 +45,23 @@ def git(buck: Buck, *args: str) -> str:
     return result.stdout
 
 
-def git_commit(buck: Buck, message: str) -> str:
+def git_commit(yak: Yak, message: str) -> str:
     """Commits every change in the test project and returns the new commit."""
-    git(buck, "add", "--all")
-    git(buck, "commit", "--quiet", "--message", message)
-    return git(buck, "rev-parse", "HEAD").strip()
+    git(yak, "add", "--all")
+    git(yak, "commit", "--quiet", "--message", message)
+    return git(yak, "rev-parse", "HEAD").strip()
 
 
-async def setup_file_watcher_test(buck: Buck) -> None:
-    git(buck, "init", "--quiet", "--initial-branch=main")
-    (buck.cwd / ".gitignore").write_text("/yak-out\n")
-    git_commit(buck, "temp")
+async def setup_file_watcher_test(yak: Yak) -> None:
+    git(yak, "init", "--quiet", "--initial-branch=main")
+    (yak.cwd / ".gitignore").write_text("/yak-out\n")
+    git_commit(yak, "temp")
 
-    status = git(buck, "status", "--porcelain")
+    status = git(yak, "status", "--porcelain")
     assert status == "", (
         f"Expected clean working directory, but `git status` returned:\n{status}"
     )
-    assert (await get_files(buck)) == ["files/abc", "files/d/empty"]
+    assert (await get_files(yak)) == ["files/abc", "files/d/empty"]
 
 
 def verify_results(
@@ -75,12 +75,12 @@ def verify_results(
             assert req in results, "required not in results"
 
 
-async def run_aba_test(buck: Buck) -> None:
-    await setup_file_watcher_test(buck)
+async def run_aba_test(yak: Yak) -> None:
+    await setup_file_watcher_test(yak)
 
-    git(buck, "mv", "files/abc", "files/d/")
-    assert (await get_files(buck)) == ["files/d/abc", "files/d/empty"]
+    git(yak, "mv", "files/abc", "files/d/")
+    assert (await get_files(yak)) == ["files/d/abc", "files/d/empty"]
 
     # Sets the move aside, which restores the committed files.
-    git(buck, "stash", "--quiet")
-    assert (await get_files(buck)) == ["files/abc", "files/d/empty"]
+    git(yak, "stash", "--quiet")
+    assert (await get_files(yak)) == ["files/abc", "files/d/empty"]

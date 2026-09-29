@@ -19,8 +19,8 @@ use yak_core::content_hash::ContentBasedPathHash;
 use yak_core::fs::project_rel_path::ProjectRelativePath;
 use yak_core::fs::project_rel_path::ProjectRelativePathBuf;
 use yak_execute::artifact::fs::ExecutorFs;
-use yak_hash::BuckIndexSet;
-use yak_hash::BuckMutMap;
+use yak_hash::YakIndexSet;
+use yak_hash::YakMutMap;
 use yak_interpreter::types::cell_root::CellRoot;
 use yak_interpreter::types::configured_providers_label::StarlarkConfiguredProvidersLabel;
 use yak_interpreter::types::project_root::StarlarkProjectRoot;
@@ -66,17 +66,17 @@ pub trait CommandLineArtifactVisitor<'v> {
 
 /// A CommandLineArtifactVisitor that gathers inputs and outputs.
 pub struct SimpleCommandLineArtifactVisitor<'v> {
-    pub inputs: BuckIndexSet<ArtifactGroup>,
-    pub declared_outputs: BuckIndexSet<OutputArtifact<'v>>,
-    pub frozen_outputs: BuckIndexSet<Artifact>,
+    pub inputs: YakIndexSet<ArtifactGroup>,
+    pub declared_outputs: YakIndexSet<OutputArtifact<'v>>,
+    pub frozen_outputs: YakIndexSet<Artifact>,
 }
 
 impl SimpleCommandLineArtifactVisitor<'_> {
     pub fn new() -> Self {
         Self {
-            inputs: BuckIndexSet::default(),
-            declared_outputs: BuckIndexSet::default(),
-            frozen_outputs: BuckIndexSet::default(),
+            inputs: YakIndexSet::default(),
+            declared_outputs: YakIndexSet::default(),
+            frozen_outputs: YakIndexSet::default(),
         }
     }
 
@@ -126,14 +126,14 @@ pub trait ArtifactPathMapper {
     fn get(&self, artifact: &Artifact) -> Option<&ContentBasedPathHash>;
 }
 
-impl ArtifactPathMapper for BuckMutMap<&Artifact, ContentBasedPathHash> {
+impl ArtifactPathMapper for YakMutMap<&Artifact, ContentBasedPathHash> {
     fn get(&self, artifact: &Artifact) -> Option<&ContentBasedPathHash> {
         self.get(artifact)
     }
 }
 
 pub struct ArtifactPathMapperImpl<'a> {
-    pub map: BuckMutMap<&'a Artifact, ContentBasedPathHash>,
+    pub map: YakMutMap<&'a Artifact, ContentBasedPathHash>,
 }
 
 impl<'a> From<&'a Vec<(ArtifactGroup, ArtifactGroupValues)>> for ArtifactPathMapperImpl<'a> {

@@ -8,36 +8,36 @@
 
 import asyncio
 
-from e2e_util.api.buck import Buck
-from e2e_util.api.buck_result import ExitCode
+from e2e_util.api.yak import Yak
+from e2e_util.api.yak_result import ExitCode
 from e2e_util.asserts import expect_failure
-from e2e_util.buck_workspace import buck_test, env
+from e2e_util.yak_workspace import yak_test, env
 
 
-@buck_test()
-async def test_exit_code_build_success(buck: Buck) -> None:
-    result = await buck.build(":build_success")
+@yak_test()
+async def test_exit_code_build_success(yak: Yak) -> None:
+    result = await yak.build(":build_success")
     assert result.process.returncode == ExitCode.SUCCESS.value
 
 
-@buck_test()
-async def test_exit_code_build_fail(buck: Buck) -> None:
+@yak_test()
+async def test_exit_code_build_fail(yak: Yak) -> None:
     # TODO(nga): check non-existing command
     # TODO(nga): check local vs RE
-    await expect_failure(buck.build(":build_fail"), exit_code=ExitCode.USER_ERROR)
+    await expect_failure(yak.build(":build_fail"), exit_code=ExitCode.USER_ERROR)
 
 
 # Deliberately cause a daemon connection failure.
-@buck_test()
+@yak_test()
 @env("YAK_TEST_FAIL_YAKD_AUTH", "true")
 # This test case spawns a loose daemon that we can't connect to. On windows
 # this loose daemon will keep holding onto yak-out files after test case finishes
 # and prevent other processes from changing them, so set a termination timeout
 # of 20 seconds so that this loose daemon gets killed before test case finishes.
 @env("YAK_TERMINATE_AFTER", "15")
-async def test_exit_code_fail_buckd_auth_for_unknown_reason(buck: Buck) -> None:
+async def test_exit_code_fail_yakd_auth_for_unknown_reason(yak: Yak) -> None:
     await expect_failure(
-        buck.build(":build_success"), exit_code=ExitCode.CONNECT_ERROR
+        yak.build(":build_success"), exit_code=ExitCode.CONNECT_ERROR
     )
     await asyncio.sleep(
         20

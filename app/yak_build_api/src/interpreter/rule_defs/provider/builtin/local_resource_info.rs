@@ -30,7 +30,7 @@ use starlark::values::float::UnpackFloat;
 use starlark::values::none::NoneOr;
 use yak_build_api_derive::internal_provider;
 use yak_error::internal_error;
-use yak_hash::BuckIndexMap;
+use yak_hash::YakIndexMap;
 
 use crate as yak_build_api;
 use crate::interpreter::rule_defs::cmd_args::CommandLineArgLike;
@@ -144,7 +144,7 @@ pub type OwnedLocalResourceInfo = OwnedFrozen<ValueTyped<'static, LocalResourceI
 impl<'v> LocalResourceInfo<'v> {
     /// Mapping from keys in setup command JSON output to environment variables keys which
     /// should be appended to execution commands dependent on this local resource.
-    pub fn env_var_mapping(&self) -> BuckIndexMap<String, String> {
+    pub fn env_var_mapping(&self) -> YakIndexMap<String, String> {
         let env_vars = DictRef::from_value(self.resource_env_vars.get()).unwrap();
         env_vars
             .iter()

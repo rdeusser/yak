@@ -515,7 +515,7 @@ class TestSelection(unittest.TestCase):
             provisioning_profiles=[profile],
             entitlements={
                 # Force included key, even if not present in the profile
-                "application-identifier": "AAAAAAAAAA.com.example.BuckApp",
+                "application-identifier": "AAAAAAAAAA.com.example.YakApp",
                 "keychain-access-groups": ["AAAAAAAAAA.*"],
                 "aps-environment": "production",
             },
@@ -550,7 +550,7 @@ class TestSelection(unittest.TestCase):
             entitlements={
                 "keychain-access-groups": ["AAAAAAAAAA.*"],
                 "aps-environment": "production",
-                "com.made.up.entitlement": "buck",
+                "com.made.up.entitlement": "yak",
             },
             platform=ApplePlatform.ios_device,
             strict_search=False,
@@ -559,7 +559,7 @@ class TestSelection(unittest.TestCase):
         self.assertIsNone(selected)
         self.verify_diagnostic_info_candidate_profile(
             diagnostic_info,
-            "Expected entitlement item key `com.made.up.entitlement` with value `buck` not found in provisioning profile.",
+            "Expected entitlement item key `com.made.up.entitlement` with value `yak` not found in provisioning profile.",
         )
 
     def test_wildcard_app_entitlement_matches_any_value(self):

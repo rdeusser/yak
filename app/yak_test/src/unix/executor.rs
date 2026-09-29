@@ -14,14 +14,14 @@ use std::path::Path;
 use std::process::Stdio;
 
 use tokio::net::UnixStream;
-use yak_error::BuckErrorContext as _;
+use yak_error::YakErrorContext as _;
 use yak_util::process::async_background_command;
 
 use crate::executor_launcher::ExecutorFuture;
 
 /// Environment variable used to pass the actual username from yak client to the test executor.
 /// This is necessary because in some scenarios yakd may run as a different user than the user who invoked `yak test`.
-const BUCK2_TEST_EXECUTOR_USER_ENV_VAR: &str = "YAK_TEST_EXECUTOR_USER";
+const YAK_TEST_EXECUTOR_USER_ENV_VAR: &str = "YAK_TEST_EXECUTOR_USER";
 
 pub(crate) async fn spawn(
     executable: &Path,
@@ -29,21 +29,21 @@ pub(crate) async fn spawn(
     executor_args: Vec<String>,
 ) -> yak_error::Result<(ExecutorFuture, UnixStream, UnixStream)> {
     let (executor_client_async_io, executor_server_async_io) =
-        UnixStream::pair().buck_error_context("Failed to create executor channel")?;
+        UnixStream::pair().yak_error_context("Failed to create executor channel")?;
 
     let (orchestrator_client_async_io, orchestrator_server_async_io) =
-        UnixStream::pair().buck_error_context("Failed to create orchestrator channel")?;
+        UnixStream::pair().yak_error_context("Failed to create orchestrator channel")?;
 
     let executor_client_io = executor_client_async_io;
     let executor_server_io = executor_server_async_io
         .into_std()
-        .buck_error_context("Failed to convert executor_server_io to std")?;
+        .yak_error_context("Failed to convert executor_server_io to std")?;
     let executor_server_fd = executor_server_io.as_raw_fd().to_string();
 
     let orchestrator_server_io = orchestrator_server_async_io;
     let orchestrator_client_io = orchestrator_client_async_io
         .into_std()
-        .buck_error_context("Failed to convert orchestrator_client_io to std")?;
+        .yak_error_context("Failed to convert orchestrator_client_io to std")?;
     let orchestrator_client_fd = orchestrator_client_io.as_raw_fd().to_string();
 
     let mut command = async_background_command(executable);
@@ -60,7 +60,7 @@ pub(crate) async fn spawn(
         .args(executor_args);
 
     if let Some(user) = std::env::var_os("USER") {
-        command.env(BUCK2_TEST_EXECUTOR_USER_ENV_VAR, user);
+        command.env(YAK_TEST_EXECUTOR_USER_ENV_VAR, user);
     }
 
     let fds = [
@@ -89,7 +89,7 @@ pub(crate) async fn spawn(
         });
     }
 
-    let proc = command.spawn().with_buck_error_context(|| {
+    let proc = command.spawn().with_yak_error_context(|| {
         format!(
             "Failed to start {} for OutOfProcessTestExecutor",
             executable.display()

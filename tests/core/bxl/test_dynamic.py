@@ -10,9 +10,9 @@ import json
 import re
 from pathlib import Path
 
-from e2e_util.api.buck import Buck
+from e2e_util.api.yak import Yak
 from e2e_util.asserts import expect_failure
-from e2e_util.buck_workspace import buck_test
+from e2e_util.yak_workspace import yak_test
 from e2e_util.helper.golden import golden
 
 
@@ -20,18 +20,18 @@ def _replace_hash(s: str) -> str:
     return re.sub(r"\b[0-9a-f]{16}\b", "<HASH>", s)
 
 
-@buck_test()
-async def test_bxl_dynamic_action(buck: Buck) -> None:
-    result = await buck.bxl(
+@yak_test()
+async def test_bxl_dynamic_action(yak: Yak) -> None:
+    result = await yak.bxl(
         "//:dynamic.bxl:dynamic_test",
     )
     outputs = result.stdout.strip()
     assert Path(outputs).read_text() == "content"
 
 
-@buck_test()
-async def test_bxl_dynamic_with_bxl_ctx(buck: Buck) -> None:
-    result = await buck.bxl(
+@yak_test()
+async def test_bxl_dynamic_with_bxl_ctx(yak: Yak) -> None:
+    result = await yak.bxl(
         "//:dynamic.bxl:dynamic_test_with_bxl_ctx",
     )
 
@@ -48,19 +48,19 @@ async def test_bxl_dynamic_with_bxl_ctx(buck: Buck) -> None:
 
 # A dynamic action cannot read the exec_deps or toolchains of the bxl_ctx that
 # created it (`bxl_acessing_exec_platform` is a hard error).
-@buck_test()
-async def test_bxl_dynamic_execution_resolution(buck: Buck) -> None:
+@yak_test()
+async def test_bxl_dynamic_execution_resolution(yak: Yak) -> None:
     await expect_failure(
-        buck.bxl(
+        yak.bxl(
             "//:dynamic.bxl:dynamic_test_execution_resolution",
         ),
         stderr_regex="Anon target or dynamic action accesses bxl.Actions.exec_deps",
     )
 
 
-@buck_test()
-async def test_bxl_dynamic_incompatible_targets(buck: Buck) -> None:
-    result = await buck.bxl(
+@yak_test()
+async def test_bxl_dynamic_incompatible_targets(yak: Yak) -> None:
+    result = await yak.bxl(
         "//:dynamic.bxl:dynamic_test_incompatible_targets",
     )
 

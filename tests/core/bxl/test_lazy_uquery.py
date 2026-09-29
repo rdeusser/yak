@@ -6,19 +6,19 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-from e2e_util.api.buck import Buck
-from e2e_util.buck_workspace import buck_test
+from e2e_util.api.yak import Yak
+from e2e_util.yak_workspace import yak_test
 
 
-@buck_test()
-async def test_testsof(buck: Buck) -> None:
-    await buck.bxl(
+@yak_test()
+async def test_testsof(yak: Yak) -> None:
+    await yak.bxl(
         "//:lazy_uquery.bxl:tests_of",
     )
 
 
-@buck_test()
-async def test_testsof_fail(buck: Buck) -> None:
-    await buck.bxl(
+@yak_test()
+async def test_testsof_fail(yak: Yak) -> None:
+    await yak.bxl(
         "//:lazy_uquery.bxl:tests_of_fail",
     )

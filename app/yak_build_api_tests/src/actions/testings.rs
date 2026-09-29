@@ -35,7 +35,7 @@ use yak_execute::execute::request::CommandExecutionOutput;
 use yak_execute::execute::request::CommandExecutionPaths;
 use yak_execute::execute::request::CommandExecutionRequest;
 use yak_execute::execute::request::OutputType;
-use yak_hash::BuckIndexSet;
+use yak_hash::YakIndexSet;
 
 /// A simple unregistered action that will eventually be resolved into an action that runs the
 /// given cmd as the action execution command. Used for testing
@@ -44,7 +44,7 @@ use yak_hash::BuckIndexSet;
 /// modules
 #[derive(Allocative, Clone, PartialEq)]
 pub(crate) struct SimpleUnregisteredAction {
-    inputs: BuckIndexSet<ArtifactGroup>,
+    inputs: YakIndexSet<ArtifactGroup>,
     cmd: Vec<String>,
     category: Category,
     identifier: Option<String>,
@@ -52,7 +52,7 @@ pub(crate) struct SimpleUnregisteredAction {
 
 impl SimpleUnregisteredAction {
     pub(crate) fn new(
-        inputs: BuckIndexSet<ArtifactGroup>,
+        inputs: YakIndexSet<ArtifactGroup>,
         cmd: Vec<String>,
         category: Category,
         identifier: Option<String>,
@@ -79,8 +79,8 @@ pub(crate) struct SimpleAction {
 
 impl SimpleAction {
     pub(crate) fn new(
-        inputs: BuckIndexSet<ArtifactGroup>,
-        outputs: BuckIndexSet<BuildArtifact>,
+        inputs: YakIndexSet<ArtifactGroup>,
+        outputs: YakIndexSet<BuildArtifact>,
         cmd: Vec<String>,
         category: Category,
         identifier: Option<String>,
@@ -98,7 +98,7 @@ impl SimpleAction {
 impl UnregisteredAction for SimpleUnregisteredAction {
     fn register(
         self: Box<Self>,
-        outputs: BuckIndexSet<BuildArtifact>,
+        outputs: YakIndexSet<BuildArtifact>,
         _starlark_data: Option<OwnedFrozen<Value<'static>>>,
         _error_handler: Option<OwnedFrozen<Value<'static>>>,
     ) -> yak_error::Result<Box<dyn Action>> {

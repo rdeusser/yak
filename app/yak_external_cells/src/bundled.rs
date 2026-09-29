@@ -41,7 +41,7 @@ use yak_core::cells::name::CellName;
 use yak_core::cells::paths::CellRelativePath;
 use yak_core::cells::paths::CellRelativePathBuf;
 use yak_core::directory_digest::DirectoryDigest;
-use yak_core::fs::buck_out_path::BuckOutPathKind;
+use yak_core::fs::yak_out_path::YakOutPathKind;
 use yak_core::fs::project_rel_path::ProjectRelativePathBuf;
 use yak_directory::directory::builder::DirectoryBuilder;
 use yak_directory::directory::directory::Directory;
@@ -53,8 +53,8 @@ use yak_directory::directory::entry::DirectoryEntry;
 use yak_directory::directory::find::DirectoryFindError;
 use yak_directory::directory::find::find;
 use yak_directory::directory::immutable_directory::ImmutableDirectory;
-use yak_error::BuckErrorContext;
-use yak_error::BuckErrorOptionContext;
+use yak_error::YakErrorContext;
+use yak_error::YakErrorOptionContext;
 use yak_error::conversion::from_any_with_tag;
 use yak_error::yak_error;
 use yak_execute::digest_config::DigestConfig;
@@ -76,7 +76,7 @@ use yak_util::strong_hasher::Blake3StrongHasher;
 fn load_nano_prelude() -> yak_error::Result<BundledCell> {
     let path = env::var("NANO_PRELUDE")
         .map_err(|e| from_any_with_tag(e, yak_error::ErrorTag::Input))
-        .buck_error_context(
+        .yak_error_context(
             "NANO_PRELUDE env var must be set to the location of nano prelude\n\
         Consider `export NANO_PRELUDE=<yak repository>/tests/e2e_util/nano_prelude`",
         )?;
@@ -87,7 +87,7 @@ fn load_nano_prelude() -> yak_error::Result<BundledCell> {
         ));
     }
     let path = AbsPathBuf::new(Path::new(&path))
-        .buck_error_context("NANO_PRELUDE env var must point to absolute path")?;
+        .yak_error_context("NANO_PRELUDE env var must point to absolute path")?;
 
     let mut files = Vec::new();
     let mut dir_stack = Vec::new();
@@ -129,7 +129,7 @@ fn load_nano_prelude() -> yak_error::Result<BundledCell> {
 fn nano_prelude() -> yak_error::Result<BundledCell> {
     static NANO_PRELUDE: OnceLock<BundledCell> = OnceLock::new();
     Ok(*NANO_PRELUDE
-        .get_or_try_init(|| load_nano_prelude().buck_error_context("loading nano_prelude"))?)
+        .get_or_try_init(|| load_nano_prelude().yak_error_context("loading nano_prelude"))?)
 }
 
 pub(crate) fn find_bundled_data(cell_name: CellName) -> yak_error::Result<BundledCell> {
@@ -422,10 +422,10 @@ async fn declare_all_source_artifacts(
 ) -> yak_error::Result<()> {
     let mut requests = Vec::new();
     let artifact_fs = ctx.get_artifact_fs().await?;
-    let buck_out_resolver = artifact_fs.buck_out_path_resolver();
+    let yak_out_resolver = artifact_fs.yak_out_path_resolver();
 
     for (path, entry) in ops.dir.unordered_walk_leaves().with_paths() {
-        let path = buck_out_resolver.resolve_external_cell_source(
+        let path = yak_out_resolver.resolve_external_cell_source(
             CellRelativePath::new(path.as_ref()),
             ExternalCellOrigin::Bundled(cell_name),
         );
@@ -433,7 +433,7 @@ async fn declare_all_source_artifacts(
             path,
             content: entry.contents.to_vec(),
             is_executable: entry.metadata.is_executable,
-            path_kind: BuckOutPathKind::Configuration,
+            path_kind: YakOutPathKind::Configuration,
         });
     }
 
@@ -499,13 +499,13 @@ pub(crate) async fn materialize_all(
     cell: CellName,
 ) -> yak_error::Result<ProjectRelativePathBuf> {
     let artifact_fs = ctx.get_artifact_fs().await?;
-    let buck_out_resolver = artifact_fs.buck_out_path_resolver();
+    let yak_out_resolver = artifact_fs.yak_out_path_resolver();
 
     let ops = get_file_ops_delegate(ctx, cell).await?;
     let materializer = ctx.per_transaction_data().get_materializer();
     let mut paths = Vec::new();
     for (path, _entry) in ops.dir.unordered_walk_leaves().with_paths() {
-        let path = buck_out_resolver.resolve_external_cell_source(
+        let path = yak_out_resolver.resolve_external_cell_source(
             CellRelativePath::new(path.as_ref()),
             ExternalCellOrigin::Bundled(cell),
         );
@@ -515,7 +515,7 @@ pub(crate) async fn materialize_all(
     materializer
         .ensure_materialized(paths, MaterializationPurpose::IntermediateOnly)
         .await?;
-    Ok(buck_out_resolver.resolve_external_cell_source(
+    Ok(yak_out_resolver.resolve_external_cell_source(
         CellRelativePath::unchecked_new(""),
         ExternalCellOrigin::Bundled(cell),
     ))

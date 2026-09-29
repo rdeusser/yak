@@ -31,8 +31,8 @@ use starlark::values::Trace;
 use starlark::values::Value;
 use starlark::values::none::NoneType;
 use starlark_map::small_map::SmallMap;
-use yak_error::BuckErrorContext;
-use yak_error::BuckErrorOptionContext;
+use yak_error::YakErrorContext;
+use yak_error::YakErrorOptionContext;
 use yak_error::conversion::from_any_with_tag;
 use yak_interpreter::file_type::StarlarkFileType;
 use yak_node::metadata::key::MetadataKey;
@@ -130,7 +130,7 @@ pub struct OwnedFrozenStarlarkPackageValue(OwnedFrozen<Value<'static>>);
 
 impl<'v> StarlarkPackageValue<'v> {
     pub(crate) fn new(value: Value<'v>) -> yak_error::Result<StarlarkPackageValue<'v>> {
-        serde_json::to_writer(io::sink(), &value).buck_error_context(
+        serde_json::to_writer(io::sink(), &value).yak_error_context(
             "Value must be serializable to JSON to be stored as package value",
         )?;
         Ok(StarlarkPackageValue(value))

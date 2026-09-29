@@ -16,9 +16,9 @@ use futures::TryStreamExt;
 use serde::Serialize;
 use similar::ChangeTag;
 use similar::TextDiff;
-use yak_client_ctx::client_ctx::BuckSubcommand;
+use yak_client_ctx::client_ctx::YakSubcommand;
 use yak_client_ctx::client_ctx::ClientCommandContext;
-use yak_client_ctx::common::BuckArgMatches;
+use yak_client_ctx::common::YakArgMatches;
 use yak_client_ctx::events_ctx::EventsCtx;
 use yak_client_ctx::exit_result::ExitResult;
 use yak_event_log::stream_value::StreamValue;
@@ -83,19 +83,19 @@ fn insert_config_values(
         .for_each(|config_value| insert_config_value(dict, order, config_value))
 }
 
-fn process_buckconfig_data(
+fn process_yakconfig_data(
     dict: &mut BTreeMap<String, String>,
     order: &mut Vec<String>,
-    event: &yak_data::BuckEvent,
+    event: &yak_data::YakEvent,
 ) {
-    use yak_data::buckconfig_component::Data::ConfigFile;
-    use yak_data::buckconfig_component::Data::ConfigValue;
-    use yak_data::buckconfig_component::Data::GlobalExternalConfigFile;
+    use yak_data::yakconfig_component::Data::ConfigFile;
+    use yak_data::yakconfig_component::Data::ConfigValue;
+    use yak_data::yakconfig_component::Data::GlobalExternalConfigFile;
     use yak_data::config_file::Data::GlobalExternalConfig;
     use yak_data::config_file::Data::ProjectRelativePath;
 
-    if let Some(yak_data::buck_event::Data::Instant(end)) = event.data.as_ref() {
-        if let Some(yak_data::instant_event::Data::BuckconfigInputValues(input)) = end.data.as_ref()
+    if let Some(yak_data::yak_event::Data::Instant(end)) = event.data.as_ref() {
+        if let Some(yak_data::instant_event::Data::YakconfigInputValues(input)) = end.data.as_ref()
         {
             input
                 .components
@@ -126,14 +126,14 @@ fn process_buckconfig_data(
     }
 }
 
-async fn get_external_buckconfig_dict(
+async fn get_external_yakconfig_dict(
     mut events: impl Stream<Item = yak_error::Result<StreamValue>> + Unpin + Send,
 ) -> yak_error::Result<(BTreeMap<String, String>, Vec<String>)> {
     let mut dict: BTreeMap<String, String> = BTreeMap::new();
     let mut order: Vec<String> = Vec::new();
     while let Some(event) = events.try_next().await? {
         if let StreamValue::Event(event) = event {
-            process_buckconfig_data(&mut dict, &mut order, &event);
+            process_yakconfig_data(&mut dict, &mut order, &event);
         }
     }
     Ok((dict, order))
@@ -199,12 +199,12 @@ impl Display for DiffType<'_> {
     }
 }
 
-impl BuckSubcommand for ExternalConfigDiffCommand {
-    const COMMAND_NAME: &'static str = "log-diff-buckconfig";
+impl YakSubcommand for ExternalConfigDiffCommand {
+    const COMMAND_NAME: &'static str = "log-diff-yakconfig";
 
     async fn exec_impl(
         self,
-        _matches: BuckArgMatches<'_>,
+        _matches: YakArgMatches<'_>,
         ctx: ClientCommandContext<'_>,
         _events_ctx: &mut EventsCtx,
     ) -> ExitResult {
@@ -226,8 +226,8 @@ impl BuckSubcommand for ExternalConfigDiffCommand {
 
         // External yakconfigs are stored in the event log in order and can have overrides
         // We first resolve them into a single dict
-        let (dict1, order1) = get_external_buckconfig_dict(events1).await?;
-        let (dict2, order2) = get_external_buckconfig_dict(events2).await?;
+        let (dict1, order1) = get_external_yakconfig_dict(events1).await?;
+        let (dict2, order2) = get_external_yakconfig_dict(events2).await?;
         let mut diffs = Vec::new();
         for (key, value) in dict1.iter() {
             if let Some(new_value) = dict2.get(key) {

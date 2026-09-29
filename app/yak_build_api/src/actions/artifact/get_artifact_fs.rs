@@ -54,12 +54,12 @@ impl Key for ArtifactFsKey {
         ctx: &mut DiceComputations,
         _cancellations: &CancellationContext,
     ) -> Self::Value {
-        let buck_out_path_resolver = ctx.get_buck_out_path().await?.dupe();
+        let yak_out_path_resolver = ctx.get_yak_out_path().await?.dupe();
         let cell_resolver = ctx.get_cell_resolver().await?.dupe();
         let project_filesystem = ctx.global_data().get_io_provider().project_root().dupe();
         Ok(ArtifactFs::new(
             cell_resolver,
-            buck_out_path_resolver,
+            yak_out_path_resolver,
             project_filesystem,
         ))
     }

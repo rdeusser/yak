@@ -14,9 +14,9 @@ use humantime::format_duration;
 use walkdir::WalkDir;
 use yak_cli_proto::StatusResponse;
 use yak_client_ctx::client_ctx::ClientCommandContext;
-use yak_client_ctx::common::BuckArgMatches;
-use yak_client_ctx::daemon::client::connect::BuckdConnectOptions;
-use yak_client_ctx::daemon::client::connect::connect_buckd;
+use yak_client_ctx::common::YakArgMatches;
+use yak_client_ctx::daemon::client::connect::YakdConnectOptions;
+use yak_client_ctx::daemon::client::connect::connect_yakd;
 use yak_client_ctx::daemon::client::connect::establish_connection_existing;
 use yak_client_ctx::events_ctx::EventsCtx;
 use yak_client_ctx::subscribers::stdout_stderr_forwarder::StdoutStderrForwarder;
@@ -27,7 +27,7 @@ use yak_error::conversion::from_any_with_tag;
 use yak_error::internal_error;
 
 #[derive(Debug, clap::Parser)]
-#[clap(about = "Buckd status")]
+#[clap(about = "Yakd status")]
 pub struct StatusCommand {
     #[clap(long, help = "Whether to include a state snapshot in the output.")]
     snapshot: bool,
@@ -40,14 +40,14 @@ pub struct StatusCommand {
 impl StatusCommand {
     pub fn exec(
         self,
-        _matches: BuckArgMatches<'_>,
+        _matches: YakArgMatches<'_>,
         ctx: ClientCommandContext<'_>,
     ) -> yak_error::Result<()> {
         ctx.with_runtime(|ctx| async move {
             let mut events_ctx = EventsCtx::new(None, vec![Box::new(StdoutStderrForwarder)]);
             if self.all {
                 let mut daemon_dirs = Vec::new();
-                let root = ctx.paths()?.roots.common_buckd_dir()?;
+                let root = ctx.paths()?.roots.common_yakd_dir()?;
                 let walker = WalkDir::new(&root).follow_links(false).into_iter();
                 for entry in walker {
                     let entry =
@@ -57,7 +57,7 @@ impl StatusCommand {
                             path: entry.into_path().try_into()?,
                         };
 
-                        if dir.buckd_info().exists() {
+                        if dir.yakd_info().exists() {
                             daemon_dirs.push(dir);
                         }
                     }
@@ -82,8 +82,8 @@ impl StatusCommand {
 
                 yak_client_ctx::println!("{}", serde_json::to_string_pretty(&statuses)?)?;
             } else {
-                match connect_buckd(
-                    BuckdConnectOptions::ExistingOnly,
+                match connect_yakd(
+                    YakdConnectOptions::ExistingOnly,
                     &mut events_ctx,
                     ctx.paths()?,
                 )

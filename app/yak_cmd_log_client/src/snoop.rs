@@ -19,16 +19,16 @@ use tokio::sync::mpsc;
 use tokio::sync::watch;
 use yak_cli_proto::ClientContext;
 use yak_cli_proto::SubscriptionRequestWrapper;
-use yak_client_ctx::client_ctx::BuckSubcommand;
+use yak_client_ctx::client_ctx::YakSubcommand;
 use yak_client_ctx::client_ctx::ClientCommandContext;
 use yak_client_ctx::command_outcome::CommandOutcome;
-use yak_client_ctx::common::BuckArgMatches;
+use yak_client_ctx::common::YakArgMatches;
 use yak_client_ctx::common::ui::CommonConsoleOptions;
 use yak_client_ctx::common::ui::get_console_with_root;
-use yak_client_ctx::daemon::client::BuckdClientConnector;
+use yak_client_ctx::daemon::client::YakdClientConnector;
 use yak_client_ctx::daemon::client::NoPartialResultHandler;
-use yak_client_ctx::daemon::client::connect::BuckdConnectOptions;
-use yak_client_ctx::daemon::client::connect::connect_buckd;
+use yak_client_ctx::daemon::client::connect::YakdConnectOptions;
+use yak_client_ctx::daemon::client::connect::connect_yakd;
 use yak_client_ctx::event_log_options::EventLogOptions;
 use yak_client_ctx::events_ctx::DaemonEventsCtx;
 use yak_client_ctx::events_ctx::EventsCtx;
@@ -85,12 +85,12 @@ pub struct SnoopCommand {
     console_opts: CommonConsoleOptions,
 }
 
-impl BuckSubcommand for SnoopCommand {
+impl YakSubcommand for SnoopCommand {
     const COMMAND_NAME: &'static str = "log-snoop";
 
     async fn exec_impl(
         self,
-        _matches: BuckArgMatches<'_>,
+        _matches: YakArgMatches<'_>,
         mut ctx: ClientCommandContext<'_>,
         events_ctx: &mut EventsCtx,
     ) -> ExitResult {
@@ -110,12 +110,12 @@ impl BuckSubcommand for SnoopCommand {
         let client_context = ctx.empty_client_context("log-snoop")?;
         let paths = ctx.paths()?.clone();
         // Only watch a daemon that already exists; snooping must not spawn one.
-        let buckd = connect_buckd(BuckdConnectOptions::ExistingOnly, events_ctx, &paths)
+        let yakd = connect_yakd(YakdConnectOptions::ExistingOnly, events_ctx, &paths)
             .await
             .ok();
-        let daemon_available = buckd.is_some();
+        let daemon_available = yakd.is_some();
         let subscription =
-            subscribe_to_active_commands(buckd, paths, client_context, events_ctx, live.clone());
+            subscribe_to_active_commands(yakd, paths, client_context, events_ctx, live.clone());
         pin!(subscription);
 
         if daemon_available {
@@ -210,27 +210,27 @@ const SUBSCRIPTION_RETRY_INTERVAL: Duration = Duration::from_secs(2);
 /// retried, so a daemon that appears or restarts while snoop runs is picked up; whenever
 /// no subscription is up, `live` reverts to unknown.
 async fn subscribe_to_active_commands(
-    mut buckd: Option<BuckdClientConnector>,
+    mut yakd: Option<YakdClientConnector>,
     paths: InvocationPaths,
     client_context: ClientContext,
     events_ctx: &mut EventsCtx,
     live: LiveCommands,
 ) {
     loop {
-        if let Some(mut buckd) = buckd.take() {
-            subscription_impl(&mut buckd, client_context.clone(), &live).await;
+        if let Some(mut yakd) = yakd.take() {
+            subscription_impl(&mut yakd, client_context.clone(), &live).await;
             *live.lock().expect(LOCK_MSG) = None;
         }
         tokio::time::sleep(SUBSCRIPTION_RETRY_INTERVAL).await;
         // Only watch a daemon that already exists; snooping must not spawn one.
-        buckd = connect_buckd(BuckdConnectOptions::ExistingOnly, events_ctx, &paths)
+        yakd = connect_yakd(YakdConnectOptions::ExistingOnly, events_ctx, &paths)
             .await
             .ok();
     }
 }
 
 async fn subscription_impl(
-    buckd: &mut BuckdClientConnector,
+    yakd: &mut YakdClientConnector,
     client_context: ClientContext,
     live: &LiveCommands,
 ) {
@@ -246,7 +246,7 @@ async fn subscription_impl(
         live: live.clone(),
         own_trace_id: client_context.trace_id.clone(),
     };
-    let _ignored = buckd
+    let _ignored = yakd
         .with_flushing()
         .subscription(client_context, requests, &mut events_ctx, &mut handler)
         .await;

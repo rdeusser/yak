@@ -10,19 +10,19 @@ import json
 import tempfile
 import typing
 
-from e2e_util.api.buck import Buck
-from e2e_util.buck_workspace import buck_test
+from e2e_util.api.yak import Yak
+from e2e_util.yak_workspace import yak_test
 from e2e_util.helper.utils import filter_events
 
 
-def with_buck2_output(output: str) -> typing.List[str]:
+def with_yak_output(output: str) -> typing.List[str]:
     return [
         "-c",
-        f"test.buck2_output={output}",
+        f"test.yak_output={output}",
     ]
 
 
-def with_buck2_key_value(key: str, value: str) -> typing.List[str]:
+def with_yak_key_value(key: str, value: str) -> typing.List[str]:
     return [
         "-c",
         f"test.{key}={value}",
@@ -35,26 +35,26 @@ def parse_json_diffs(stdout: str) -> typing.List[dict]:
     return [json.loads(line) for line in lines if line.strip()]
 
 
-@buck_test()
-async def test_no_action_divergence_command(buck: Buck) -> None:
-    await buck.build("//:simple", *with_buck2_output("foo"))
-    out1 = await buck.log("last")
+@yak_test()
+async def test_no_action_divergence_command(yak: Yak) -> None:
+    await yak.build("//:simple", *with_yak_output("foo"))
+    out1 = await yak.log("last")
     path1 = out1.stdout.strip()
-    await buck.build("//:simple", *with_buck2_output("foo"))
-    out2 = await buck.log("last")
+    await yak.build("//:simple", *with_yak_output("foo"))
+    out2 = await yak.log("last")
     path2 = out2.stdout.strip()
-    out = await buck.log(
+    out = await yak.log(
         "diff", "action-divergence", "--path1", path1, "--path2", path2
     )
 
     assert "No divergent actions found." in out.stdout
 
 
-@buck_test()
-async def test_action_divergence_command(buck: Buck) -> None:
-    await buck.build("//:non_det", *with_buck2_output("foo"))
-    await buck.build("//:non_det", *with_buck2_output("bar"))
-    out = await buck.log(
+@yak_test()
+async def test_action_divergence_command(yak: Yak) -> None:
+    await yak.build("//:non_det", *with_yak_output("foo"))
+    await yak.build("//:non_det", *with_yak_output("bar"))
+    out = await yak.log(
         "diff", "action-divergence", "--recent1", "0", "--recent2", "1"
     )
 
@@ -64,15 +64,15 @@ async def test_action_divergence_command(buck: Buck) -> None:
     )
 
 
-@buck_test()
-async def test_no_config_diff_command(buck: Buck) -> None:
-    await buck.build("//:simple", *with_buck2_output("foo"))
-    out1 = await buck.log("last")
+@yak_test()
+async def test_no_config_diff_command(yak: Yak) -> None:
+    await yak.build("//:simple", *with_yak_output("foo"))
+    out1 = await yak.log("last")
     path1 = out1.stdout.strip()
-    await buck.build("//:simple", *with_buck2_output("foo"))
-    out2 = await buck.log("last")
+    await yak.build("//:simple", *with_yak_output("foo"))
+    out2 = await yak.log("last")
     path2 = out2.stdout.strip()
-    out = await buck.log(
+    out = await yak.log(
         "diff",
         "external-configs",
         "--path1",
@@ -85,25 +85,25 @@ async def test_no_config_diff_command(buck: Buck) -> None:
     assert len(diffs) == 0
 
 
-@buck_test()
-async def test_diff_order_config_diff_command(buck: Buck) -> None:
-    await buck.build(
+@yak_test()
+async def test_diff_order_config_diff_command(yak: Yak) -> None:
+    await yak.build(
         "//:simple",
-        *with_buck2_output("out"),
-        *with_buck2_key_value("key_a", "1"),
-        *with_buck2_key_value("key_b", "2"),
+        *with_yak_output("out"),
+        *with_yak_key_value("key_a", "1"),
+        *with_yak_key_value("key_b", "2"),
     )
-    out1 = await buck.log("last")
+    out1 = await yak.log("last")
     path1 = out1.stdout.strip()
-    await buck.build(
+    await yak.build(
         "//:simple",
-        *with_buck2_output("out"),
-        *with_buck2_key_value("key_b", "2"),
-        *with_buck2_key_value("key_a", "1"),
+        *with_yak_output("out"),
+        *with_yak_key_value("key_b", "2"),
+        *with_yak_key_value("key_a", "1"),
     )
-    out2 = await buck.log("last")
+    out2 = await yak.log("last")
     path2 = out2.stdout.strip()
-    out = await buck.log(
+    out = await yak.log(
         "diff",
         "external-configs",
         "--path1",
@@ -131,29 +131,29 @@ async def test_diff_order_config_diff_command(buck: Buck) -> None:
     assert new_order == ["test.key_b=2", "test.key_a=1"]
 
 
-@buck_test()
-async def test_config_diff_command_command_line(buck: Buck) -> None:
-    await buck.build(
+@yak_test()
+async def test_config_diff_command_command_line(yak: Yak) -> None:
+    await yak.build(
         "//:simple",
-        *with_buck2_output("changed_old"),
-        *with_buck2_key_value("first", "x"),
-        *with_buck2_key_value("first", "overwrite_x"),
+        *with_yak_output("changed_old"),
+        *with_yak_key_value("first", "x"),
+        *with_yak_key_value("first", "overwrite_x"),
     )
-    out1 = await buck.log("last")
+    out1 = await yak.log("last")
     path1 = out1.stdout.strip()
     with tempfile.NamedTemporaryFile("w", delete=False) as f:
         f.write("[test]\n")
         f.write("second = x\n")
         f.close()
-    await buck.build(
+    await yak.build(
         "//:simple",
-        *with_buck2_output("changed_new"),
+        *with_yak_output("changed_new"),
         "--config-file",
         f.name,
     )
-    out2 = await buck.log("last")
+    out2 = await yak.log("last")
     path2 = out2.stdout.strip()
-    out = await buck.log(
+    out = await yak.log(
         "diff",
         "external-configs",
         "--path1",
@@ -166,7 +166,7 @@ async def test_config_diff_command_command_line(buck: Buck) -> None:
     assert len(summary_diffs) == 3
 
     assert (
-        summary_diffs[0]["Changed"]["key"] == "test.buck2_output"
+        summary_diffs[0]["Changed"]["key"] == "test.yak_output"
         and summary_diffs[0]["Changed"]["old_value"] == "changed_old"
         and summary_diffs[0]["Changed"]["new_value"] == "changed_new"
     )
@@ -181,26 +181,26 @@ async def test_config_diff_command_command_line(buck: Buck) -> None:
     )
 
 
-@buck_test()
-async def test_config_diff_command_project_relative(buck: Buck) -> None:
-    await buck.build(
+@yak_test()
+async def test_config_diff_command_project_relative(yak: Yak) -> None:
+    await yak.build(
         "//:simple",
-        *with_buck2_output("out"),
+        *with_yak_output("out"),
         "@root//mode/my_mode_a",
         "@root//mode/my_mode_c",
     )
-    out1 = await buck.log("last")
+    out1 = await yak.log("last")
     path1 = out1.stdout.strip()
-    await buck.build(
+    await yak.build(
         "//:simple",
-        *with_buck2_output("out"),
+        *with_yak_output("out"),
         "@root//mode/my_mode_b",
         "@root//mode/my_mode_c",
         "@root//mode/my_mode_b",
     )
-    out2 = await buck.log("last")
+    out2 = await yak.log("last")
     path2 = out2.stdout.strip()
-    out = await buck.log(
+    out = await yak.log(
         "diff",
         "external-configs",
         "--path1",
@@ -219,40 +219,40 @@ async def test_config_diff_command_project_relative(buck: Buck) -> None:
     assert second_only == {"my_mode_b.bcfg"}
 
 
-@buck_test(write_invocation_record=True)
-async def test_config_diff_tracker_modfile_change(buck: Buck) -> None:
-    await buck.build(
+@yak_test(write_invocation_record=True)
+async def test_config_diff_tracker_modfile_change(yak: Yak) -> None:
+    await yak.build(
         "//:simple",
-        *with_buck2_output("out"),
+        *with_yak_output("out"),
         "@root//mode/my_mode_a",
     )
-    res = await buck.build(
+    res = await yak.build(
         "//:simple",
-        *with_buck2_output("out"),
+        *with_yak_output("out"),
         "@root//mode/my_mode_b",
     )
     cell_config_diffs = await filter_events(
-        buck, "Event", "data", "Instant", "data", "CellHasNewConfigs"
+        yak, "Event", "data", "Instant", "data", "CellHasNewConfigs"
     )
     assert len(cell_config_diffs) == 1 and cell_config_diffs[0]["cell"] == "prelude"
 
     assert res.invocation_record()["new_configs_used"] == 1
 
 
-@buck_test(write_invocation_record=True)
-async def test_config_diff_tracker_no_change(buck: Buck) -> None:
-    await buck.build(
+@yak_test(write_invocation_record=True)
+async def test_config_diff_tracker_no_change(yak: Yak) -> None:
+    await yak.build(
         "//:simple",
-        *with_buck2_output("out"),
+        *with_yak_output("out"),
         "@root//mode/my_mode_a",
     )
-    res = await buck.build(
+    res = await yak.build(
         "//:simple",
-        *with_buck2_output("out"),
+        *with_yak_output("out"),
         "@root//mode/my_mode_a",
     )
     cell_config_diffs = await filter_events(
-        buck, "Event", "data", "Instant", "data", "CellHasNewConfigs"
+        yak, "Event", "data", "Instant", "data", "CellHasNewConfigs"
     )
     assert len(cell_config_diffs) == 0
     assert res.invocation_record()["new_configs_used"] == 0

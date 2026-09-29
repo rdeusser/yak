@@ -12,8 +12,8 @@ import re
 import sys
 
 import pytest
-from e2e_util.api.buck import Buck
-from e2e_util.buck_workspace import buck_test
+from e2e_util.api.yak import Yak
+from e2e_util.yak_workspace import yak_test
 
 
 def _normalize_path(p: str) -> str:
@@ -33,10 +33,10 @@ def _find_file(dir, name: str) -> str:
     return f
 
 
-@buck_test()
+@yak_test()
 @pytest.mark.parametrize("fingerprint", ["true", "false"])
-async def test_xxx(buck: Buck, fingerprint: str) -> None:
-    result = await buck.build(
+async def test_xxx(yak: Yak, fingerprint: str) -> None:
+    result = await yak.build(
         "//:test_rule",
         "-c",
         f"test.dep_files_fingerprint_using_canonical_paths={fingerprint}",
@@ -69,25 +69,25 @@ async def test_xxx(buck: Buck, fingerprint: str) -> None:
     assert "@../__macros/<HASH>/2.macro" == _normalize_path(c)
     assert "@../__macros/<HASH>/3.macro" == _normalize_path(d)
 
-    buck_out = buck.cwd / "yak-out"
-    a_x = _find_file(buck_out, "0.macro")
+    yak_out = yak.cwd / "yak-out"
+    a_x = _find_file(yak_out, "0.macro")
     with open(a_x) as f:
         a_contents = _normalize_path(f.read())
         assert "yak-out/v2/art/root/<HASH>/__write_file__/write_file.txt" == a_contents
 
     # TODO(nga): contents of `{1,2,3}.macro` should be identical.
 
-    b_x = _find_file(buck_out, "1.macro")
+    b_x = _find_file(yak_out, "1.macro")
     with open(b_x) as f:
         b_contents = _normalize_path(f.read())
         assert "yak-out/v2/art/root/<HASH>/__write_file__/write_file.txt" == b_contents
 
-    c_x = _find_file(buck_out, "2.macro")
+    c_x = _find_file(yak_out, "2.macro")
     with open(c_x) as f:
         c_contents = _normalize_path(f.read())
         assert "../../__write_file__/write_file.txt" == c_contents
 
-    d_x = _find_file(buck_out, "3.macro")
+    d_x = _find_file(yak_out, "3.macro")
     with open(d_x) as f:
         d_contents = _normalize_path(f.read())
         assert "../../__write_file__/write_file.txt" == d_contents

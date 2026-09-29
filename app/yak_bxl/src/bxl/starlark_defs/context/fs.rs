@@ -302,7 +302,7 @@ fn fs_operations(builder: &mut MethodsBuilder) {
         #[starlark(default = NoneOr::None)] target_hint: NoneOr<ValueOf<'v, TargetListExprArg<'v>>>,
         eval: &mut Evaluator<'v, '_, '_>,
     ) -> starlark::Result<ValueTyped<'v, StarlarkArtifact>> {
-        let buck_path = this.ctx.via_dice(eval, |dice| {
+        let yak_path = this.ctx.via_dice(eval, |dice| {
             dice.via(|dice| {
                 async {
                     let file_path_as_cell_path = expr.get(dice, this.cell()?).await?;
@@ -359,6 +359,6 @@ fn fs_operations(builder: &mut MethodsBuilder) {
 
         Ok(eval
             .heap()
-            .alloc_typed(StarlarkArtifact::new(SourceArtifact::new(buck_path).into())))
+            .alloc_typed(StarlarkArtifact::new(SourceArtifact::new(yak_path).into())))
     }
 }

@@ -27,8 +27,8 @@ use yak_directory::directory::directory_iterator::DirectoryIterator;
 use yak_directory::directory::directory_ref::DirectoryRef;
 use yak_directory::directory::entry::DirectoryEntry;
 use yak_directory::directory::walk::unordered_entry_walk;
-use yak_error::BuckErrorContext;
-use yak_error::BuckErrorOptionContext;
+use yak_error::YakErrorContext;
+use yak_error::YakErrorOptionContext;
 use yak_error::internal_error;
 use yak_execute::digest_config::DigestConfig;
 use yak_execute::directory::ActionDirectoryEntry;
@@ -578,7 +578,7 @@ impl ArtifactTree {
             sqlite_db
                 .materializer_state_table()
                 .delete(invalidated_paths)
-                .buck_error_context("Error invalidating paths in materializer state")?;
+                .yak_error_context("Error invalidating paths in materializer state")?;
         }
 
         Ok(futs)
@@ -680,7 +680,7 @@ impl ArtifactTree {
         sqlite_db
             .materializer_state_table()
             .delete(eligible.iter().map(|(path, _, _)| path.clone()).collect())
-            .buck_error_context("Error unmaterializing paths in materializer state")?;
+            .yak_error_context("Error unmaterializing paths in materializer state")?;
 
         result.unmaterialized = eligible
             .into_iter()
@@ -731,7 +731,7 @@ impl ArtifactTree {
         sqlite_db
             .materializer_state_table()
             .delete(vec![upload.path])
-            .buck_error_context("Error unmaterializing uploaded path in materializer state")?;
+            .yak_error_context("Error unmaterializing uploaded path in materializer state")?;
         data.stage = ArtifactMaterializationStage::Declared {
             entry: upload.entry,
             method: Arc::new(ArtifactMaterializationMethod::CasDownload { info }),

@@ -12,14 +12,14 @@ use async_trait::async_trait;
 use yak_cli_proto::CqueryRequest;
 use yak_cli_proto::CqueryResponse;
 use yak_client_ctx::client_ctx::ClientCommandContext;
-use yak_client_ctx::common::BuckArgMatches;
+use yak_client_ctx::common::YakArgMatches;
 use yak_client_ctx::common::CommonBuildConfigurationOptions;
 use yak_client_ctx::common::CommonCommandOptions;
 use yak_client_ctx::common::CommonEventLogOptions;
 use yak_client_ctx::common::CommonStarlarkOptions;
 use yak_client_ctx::common::target_cfg::TargetCfgWithUniverseOptions;
 use yak_client_ctx::common::ui::CommonConsoleOptions;
-use yak_client_ctx::daemon::client::BuckdClientConnector;
+use yak_client_ctx::daemon::client::YakdClientConnector;
 use yak_client_ctx::daemon::client::StdoutPartialResultHandler;
 use yak_client_ctx::events_ctx::EventsCtx;
 use yak_client_ctx::exit_result::ExitResult;
@@ -47,7 +47,7 @@ target literal in the `cquery`.
 
 Run `yak docs cquery` or
 "#,
-        "https://rdeusser.github.io/buck2/docs/users/query/cquery/",
+        "https://rdeusser.github.io/yak/docs/users/query/cquery/",
         r#"
 for more documentation about the functions available in cquery
 expressions.
@@ -101,8 +101,8 @@ impl StreamingCommand for CqueryCommand {
 
     async fn exec_impl(
         self,
-        buckd: &mut BuckdClientConnector,
-        matches: BuckArgMatches<'_>,
+        yakd: &mut YakdClientConnector,
+        matches: YakArgMatches<'_>,
         ctx: &mut ClientCommandContext<'_>,
         events_ctx: &mut EventsCtx,
     ) -> ExitResult {
@@ -111,7 +111,7 @@ impl StreamingCommand for CqueryCommand {
         let output_attributes = self.query_common.attributes.get();
         let context = ctx.client_context(matches, &self)?;
 
-        let CqueryResponse {} = buckd
+        let CqueryResponse {} = yakd
             .with_flushing()
             .cquery(
                 CqueryRequest {

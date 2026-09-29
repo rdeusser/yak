@@ -24,7 +24,7 @@ use remote_execution::TCode;
 use yak_common::file_ops::metadata::FileMetadata;
 use yak_core::deferred::base_deferred_key::BaseDeferredKey;
 use yak_core::execution_types::executor_config::RemoteExecutorUseCase;
-use yak_core::fs::buck_out_path::BuckOutPathKind;
+use yak_core::fs::yak_out_path::YakOutPathKind;
 use yak_core::fs::project_rel_path::ProjectRelativePathBuf;
 use yak_directory::directory::directory_iterator::DirectoryIterator;
 use yak_directory::directory::entry::DirectoryEntry;
@@ -45,7 +45,7 @@ pub struct WriteRequest {
     pub path: ProjectRelativePathBuf,
     pub content: Vec<u8>,
     pub is_executable: bool,
-    pub path_kind: BuckOutPathKind,
+    pub path_kind: YakOutPathKind,
 }
 
 #[cold]

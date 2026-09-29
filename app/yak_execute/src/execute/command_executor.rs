@@ -26,7 +26,7 @@ use yak_core::fs::project_rel_path::ProjectRelativePath;
 use yak_core::fs::project_rel_path::ProjectRelativePathBuf;
 use yak_data::NetworkAccess;
 use yak_directory::directory::fingerprinted_directory::FingerprintedDirectory;
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 use yak_error::yak_error;
 
 use super::cache_uploader::CacheUploadResults;
@@ -292,7 +292,7 @@ fn re_create_action(
             timeout: timeout
                 .map(|t| t.try_into())
                 .transpose()
-                .buck_error_context("Cannot convert timeout to GRPC")?,
+                .yak_error_context("Cannot convert timeout to GRPC")?,
             do_not_cache,
             ..Default::default()
         };
@@ -362,7 +362,7 @@ fn re_create_action(
         timeout: timeout
             .map(|t| t.try_into())
             .transpose()
-            .buck_error_context("Cannot convert timeout to GRPC")?,
+            .yak_error_context("Cannot convert timeout to GRPC")?,
         do_not_cache,
         ..Default::default()
     };

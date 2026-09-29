@@ -9,7 +9,7 @@
  */
 
 pub mod artifact_path_resolver;
-pub mod buck_out_path;
+pub mod yak_out_path;
 pub mod dynamic_actions_action_key;
 mod paths_cmp_ext;
 pub mod project;

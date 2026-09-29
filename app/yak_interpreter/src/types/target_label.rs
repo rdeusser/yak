@@ -40,7 +40,7 @@ use yak_core::provider::label::ProvidersLabel;
 use yak_core::provider::label::ProvidersName;
 use yak_core::target::configured_target_label::ConfiguredTargetLabel;
 use yak_core::target::label::label::TargetLabel;
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 
 use crate::types::cell_path::StarlarkCellPath;
 use crate::types::configuration::StarlarkConfiguration;
@@ -316,13 +316,13 @@ fn value_to_providers_name(subtarget_name: SubtargetNameArg) -> yak_error::Resul
             .items
             .into_iter()
             .map(|name| {
-                ProviderName::new(name).buck_error_context("for parameter `subtarget_name`")
+                ProviderName::new(name).yak_error_context("for parameter `subtarget_name`")
             })
             .collect::<yak_error::Result<Vec<_>>>()?,
         SubtargetNameArg::Str(str) => {
             vec![
                 ProviderName::new(str.to_owned())
-                    .buck_error_context("for parameter `subtarget_name`")?,
+                    .yak_error_context("for parameter `subtarget_name`")?,
             ]
         }
     };

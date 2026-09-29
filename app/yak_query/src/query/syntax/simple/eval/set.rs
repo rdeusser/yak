@@ -17,7 +17,7 @@ use dupe::IterDupedExt;
 use fancy_regex::Regex;
 use fancy_regex::RegexBuilder;
 use pagable::Pagable;
-use yak_hash::BuckIndexSet;
+use yak_hash::YakIndexSet;
 
 use crate::query::environment::QueryTarget;
 use crate::query::syntax::simple::eval::file_set::FileNode;
@@ -73,7 +73,7 @@ impl<T: QueryTarget> TargetSet<T> {
     }
 
     pub fn buildfile(&self) -> FileSet {
-        let mut files = BuckIndexSet::default();
+        let mut files = YakIndexSet::default();
         for target in self.targets.iter() {
             files.insert(FileNode(target.buildfile_path().path()));
         }
@@ -81,7 +81,7 @@ impl<T: QueryTarget> TargetSet<T> {
     }
 
     pub fn inputs(&self) -> yak_error::Result<FileSet> {
-        let mut files = BuckIndexSet::default();
+        let mut files = YakIndexSet::default();
         for target in self.targets.iter() {
             target.inputs_for_each(|file| {
                 files.insert(FileNode(file));

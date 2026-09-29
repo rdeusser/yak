@@ -6,7 +6,7 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-load("@prelude//utils:buckconfig.bzl", "read_bool")
+load("@prelude//utils:yakconfig.bzl", "read_bool")
 
 # Read at load time: rule implementations cannot call read_config.
 TARGET_STATS_ENABLED = read_bool("target_stats", "enabled", default = False, root_cell = True)

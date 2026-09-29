@@ -2,7 +2,7 @@ load("@prelude//toolchains:cxx.bzl", "cxx_tools_info_toolchain")
 load("@prelude//toolchains:python.bzl", "system_python_bootstrap_toolchain")
 load("@prelude//toolchains/cxx/clang:tools.bzl", "path_clang_tools")
 load("@prelude//toolchains/msvc:tools.bzl", "find_msvc_tools")
-load("@root//buck2_utils/platforms:defs.bzl", "is_remote_enabled")
+load("@root//yak_utils/platforms:defs.bzl", "is_remote_enabled")
 
 find_msvc_tools(
     name = "msvc_tools",
@@ -41,13 +41,13 @@ cxx_tools_info_toolchain(
             "/permissive-",
             "/TC",
         ] + select({
-            "root//buck2_utils/configuration:configuration[debug]": [
+            "root//yak_utils/configuration:configuration[debug]": [
                 "/Od",
                 "/D_DEBUG",
                 "/RTC1",
                 "/MDd",
             ],
-            "root//buck2_utils/configuration:configuration[release]": [
+            "root//yak_utils/configuration:configuration[release]": [
                 "/O2",
                 "/Oi",
                 "/GL",
@@ -84,13 +84,13 @@ cxx_tools_info_toolchain(
             "/permissive-",
             "/TP",
         ] + select({
-            "root//buck2_utils/configuration:configuration[debug]": [
+            "root//yak_utils/configuration:configuration[debug]": [
                 "/Od",
                 "/D_DEBUG",
                 "/RTC1",
                 "/MDd",
             ],
-            "root//buck2_utils/configuration:configuration[release]": [
+            "root//yak_utils/configuration:configuration[release]": [
                 "/O2",
                 "/Oi",
                 "/GL",
@@ -115,9 +115,9 @@ cxx_tools_info_toolchain(
             "/DEBUG",
             "/INCREMENTAL:NO",
         ] + select({
-            "root//buck2_utils/configuration:configuration[debug]": [],
+            "root//yak_utils/configuration:configuration[debug]": [],
             # Converted /LTCG:incremental to /LTCG because I'm guessing incremental actions won't work well with yak
-            "root//buck2_utils/configuration:configuration[release]": [
+            "root//yak_utils/configuration:configuration[release]": [
                 "/OPT:REF",
                 "/OPT:ICF",
                 "/LTCG",

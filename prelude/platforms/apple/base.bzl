@@ -53,11 +53,11 @@ def is_mobile_platform(platform):
     # These build modes are primarily used in mobile code.
     return platform in _MOBILE_PLATFORMS
 
-def is_buck2_mac_platform(platform):
+def is_yak_mac_platform(platform):
     return platform in _MAC_PLATFORMS
 
 def _get_generated_name(name, platform, build_mode):
-    if is_mobile_platform(platform) or is_buck2_mac_platform(platform):
+    if is_mobile_platform(platform) or is_yak_mac_platform(platform):
         return "{}-{}".format(name, build_mode)
     else:
         return name

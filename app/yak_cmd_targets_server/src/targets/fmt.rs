@@ -28,7 +28,7 @@ use yak_core::cells::cell_path::CellPath;
 use yak_core::configuration::compatibility::IncompatiblePlatformReason;
 use yak_core::configuration::compatibility::IncompatiblePlatformReasonCause;
 use yak_core::package::PackageLabel;
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 use yak_error::conversion::from_any_with_tag;
 use yak_error::internal_error;
 use yak_node::attrs::hacks::configured_value_to_json;
@@ -48,11 +48,11 @@ use yak_node::super_package::SuperPackage;
 use yak_util::indent::indent;
 
 use crate::json::QuotedJson;
-use crate::target_hash::BuckTargetHash;
+use crate::target_hash::YakTargetHash;
 
 pub(crate) struct TargetInfo<'a> {
     pub(crate) node: TargetNodeRef<'a>,
-    pub(crate) target_hash: Option<BuckTargetHash>,
+    pub(crate) target_hash: Option<YakTargetHash>,
     pub(crate) super_package: &'a SuperPackage,
 }
 
@@ -315,13 +315,13 @@ impl TargetFormatter for JsonFormat {
         self.writer.entry_item(
             buffer,
             &mut first,
-            "buck.file",
+            "yak.file",
             QuotedJson::quote_str(&source.to_string()),
         );
         self.writer.entry_item(
             buffer,
             &mut first,
-            "buck.imports",
+            "yak.imports",
             QuotedJson::list(imports.map(|d| QuotedJson::quote_display(d.path()))),
         );
         self.writer.entry_end(buffer, first);
@@ -349,7 +349,7 @@ impl TargetFormatter for JsonFormat {
         self.writer.entry_item(
             stdout,
             &mut first,
-            "buck.error",
+            "yak.error",
             QuotedJson::quote_str(&format!("{error:?}")),
         );
         self.writer.entry_end(stdout, first);
@@ -377,7 +377,7 @@ impl ConfiguredTargetFormatter for JsonFormat {
         self.writer.entry_start(buffer);
         let mut is_first_entry = true;
 
-        self.print_attr(buffer, &mut is_first_entry, "buck.target", || {
+        self.print_attr(buffer, &mut is_first_entry, "yak.target", || {
             QuotedJson::quote_display(target_node.label().unconfigured())
         });
 
@@ -449,7 +449,7 @@ impl ConfiguredTargetFormatter for JsonFormat {
         self.writer.entry_item(
             stdout,
             &mut first,
-            "buck.error",
+            "yak.error",
             QuotedJson::quote_str(&format!("{error:?}")),
         );
         self.writer.entry_end(stdout, first);
@@ -465,7 +465,7 @@ impl ConfiguredTargetFormatter for JsonFormat {
         self.writer.entry_item(
             stdout,
             &mut first,
-            "buck.error",
+            "yak.error",
             QuotedJson::quote_str(&format!("{error:?}")),
         );
         self.writer.entry_end(stdout, first);
@@ -659,7 +659,7 @@ impl JsonReportFormat {
         self.json_format.writer.entry_item(
             output,
             &mut is_first_entry,
-            "buck.target",
+            "yak.target",
             QuotedJson::quote_display(reason.target.unconfigured()),
         );
 
@@ -671,14 +671,14 @@ impl JsonReportFormat {
         self.json_format.writer.entry_item(
             output,
             &mut is_first_entry,
-            "buck.incompatible.cause",
+            "yak.incompatible.cause",
             QuotedJson::quote_str(cause_str),
         );
 
         self.json_format.writer.entry_item(
             output,
             &mut is_first_entry,
-            "buck.incompatible.reason",
+            "yak.incompatible.reason",
             QuotedJson::quote_str(&format!("{:#}", reason)),
         );
 

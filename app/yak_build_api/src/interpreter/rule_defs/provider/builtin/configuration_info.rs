@@ -38,7 +38,7 @@ use yak_build_api_derive::internal_provider;
 use yak_common::legacy_configs::configs::parse_config_section_and_key;
 use yak_core::configuration::config_setting::ConfigSettingData;
 use yak_core::configuration::data::ConfigurationDataData;
-use yak_hash::BuckMutSet;
+use yak_hash::YakMutSet;
 use yak_interpreter::types::configured_providers_label::StarlarkProvidersLabel;
 use yak_interpreter::types::target_label::StarlarkTargetLabel;
 
@@ -99,19 +99,19 @@ impl<'v> ConfigurationInfo<'v> {
 
         ConfigSettingData {
             constraints: converted_constraints,
-            buckconfigs: converted_values,
-            root_buckconfigs: converted_root_values,
+            yakconfigs: converted_values,
+            root_yakconfigs: converted_root_values,
         }
     }
 
     pub fn to_configuration_data(&self) -> yak_error::Result<ConfigurationDataData> {
         let ConfigSettingData {
             constraints,
-            buckconfigs,
-            root_buckconfigs,
+            yakconfigs,
+            root_yakconfigs,
         } = self.to_config_setting_data();
-        if !buckconfigs.is_empty() || !root_buckconfigs.is_empty() {
-            return Err(ConfigurationInfoError::BuckConfigsNotAllowed.into());
+        if !yakconfigs.is_empty() || !root_yakconfigs.is_empty() {
+            return Err(ConfigurationInfoError::YakConfigsNotAllowed.into());
         }
         Ok(ConfigurationDataData { constraints })
     }
@@ -158,7 +158,7 @@ enum ConfigurationInfoError {
     #[error(
         "`ConfigurationInfo` cannot have yakconfigs or root yakconfigs when it is used to create a platform"
     )]
-    BuckConfigsNotAllowed,
+    YakConfigsNotAllowed,
     #[error(
         "key `{0}` appears in both `values` and `root_values`; a yakconfig may only be checked in one cell"
     )]
@@ -227,7 +227,7 @@ fn configuration_info_creator(globals: &mut GlobalsBuilder) {
             parse_config_section_and_key(k, None)?;
         }
 
-        let value_keys: BuckMutSet<&str> = values.typed.entries.iter().map(|(k, _)| *k).collect();
+        let value_keys: YakMutSet<&str> = values.typed.entries.iter().map(|(k, _)| *k).collect();
         for (k, _) in &root_values.typed.entries {
             if value_keys.contains(k) {
                 return Err(yak_error::Error::from(
@@ -492,7 +492,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn to_configuration_data_rejects_root_buckconfigs_with_clear_error() {
+    fn to_configuration_data_rejects_root_yakconfigs_with_clear_error() {
         Heap::temp(|heap| {
             let info = ConfigurationInfo {
                 constraints: ValueOfUnchecked::new(heap.alloc(SmallMap::<Value, Value>::new())),

@@ -48,9 +48,9 @@ pub(crate) fn spawn_background_process_on_windows<'a>(
     use windows_sys::Win32::System::Threading::DETACHED_PROCESS;
     use windows_sys::Win32::System::Threading::PROCESS_INFORMATION;
     use windows_sys::Win32::System::Threading::STARTUPINFOW;
-    use yak_error::BuckErrorContext;
+    use yak_error::YakErrorContext;
     use yak_error::yak_error;
-    use yak_hash::BuckMutMap;
+    use yak_hash::YakMutMap;
     use yak_util::os::win::os_str::os_str_to_wide_null_term;
 
     // We have to call CreateProcessW manually because std::process::Command
@@ -136,7 +136,7 @@ pub(crate) fn spawn_background_process_on_windows<'a>(
         if extra_env_vars.is_empty() {
             Ok((ptr::null_mut(), Box::new([])))
         } else {
-            let mut env: BuckMutMap<_, _> = std::env::vars_os().collect();
+            let mut env: YakMutMap<_, _> = std::env::vars_os().collect();
             for (key, val) in extra_env_vars.iter() {
                 env.insert(OsString::from(key), OsString::from(val));
             }
@@ -148,13 +148,13 @@ pub(crate) fn spawn_background_process_on_windows<'a>(
             for (k, v) in env.into_iter() {
                 blk.extend(
                     ensure_no_nuls(&k)
-                        .with_buck_error_context(|| format!("Reading environment variable {k:?}"))?
+                        .with_yak_error_context(|| format!("Reading environment variable {k:?}"))?
                         .encode_wide(),
                 );
                 blk.push('=' as u16);
                 blk.extend(
                     ensure_no_nuls(&v)
-                        .with_buck_error_context(|| {
+                        .with_yak_error_context(|| {
                             format!("Reading value {v:?} of environment variable {k:?}")
                         })?
                         .encode_wide(),

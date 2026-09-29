@@ -66,8 +66,8 @@ def _main(bxl_ctx):
     Then we can use a dynamic function to continue the generation progress.
 
     References:
-    https://rdeusser.github.io/buck2/docs/api/bxl/bxl.ConfiguredTargetNode/#bxlconfiguredtargetnoderesolved_attrs_eager
-    https://rdeusser.github.io/buck2/docs/rule_authors/dynamic_dependencies/
+    https://rdeusser.github.io/yak/docs/api/bxl/bxl.ConfiguredTargetNode/#bxlconfiguredtargetnoderesolved_attrs_eager
+    https://rdeusser.github.io/yak/docs/rule_authors/dynamic_dependencies/
     """
     actions = bxl_ctx.bxl_actions().actions
     targets = []  # list[ConfiguredTargetNode]. Configured target list from command line after target pattern expansion.
@@ -179,16 +179,16 @@ def _main(bxl_ctx):
 
     # This lambda function gets executed after attrs are written into the json files and then loads them back to get resolved macro values.
     # Params:
-    # ctx, artifacts, outputs: required params by a dynamic output lambda function(see https://rdeusser.github.io/buck2/docs/rule_authors/dynamic_dependencies/)
+    # ctx, artifacts, outputs: required params by a dynamic output lambda function(see https://rdeusser.github.io/yak/docs/rule_authors/dynamic_dependencies/)
     # cli_args: bxl_ctx.cli_args, this is not available inside the lambda function so we have to pass them in as param
-    # buck_root: bxl_ctx.buck_root(), same as above
+    # yak_root: bxl_ctx.yak_root(), same as above
     def gen_vcxproj_files(
         ctx,
         artifacts,
         outputs,
         # additional arguments that needs binding.
         cli_args = bxl_ctx.cli_args,
-        buck_root = bxl_ctx.root(),
+        yak_root = bxl_ctx.root(),
     ):
         # Read in the attrs json file contents. target label => attrs.
         attrs_content_dict = {dep.label: artifacts[attrs_artifact_dict[dep.label]].read_json() for dep in deps}
@@ -206,11 +206,11 @@ def _main(bxl_ctx):
         for dep in deps:
             attrs = attrs_content_dict[dep.label]
             toolchain = get_cxx_toolchain(dep, ctx)
-            vs_settings = get_vs_settings(dep, toolchain, attrs, vs_settings_dict, cli_args, buck_root, ctx)
+            vs_settings = get_vs_settings(dep, toolchain, attrs, vs_settings_dict, cli_args, yak_root, ctx)
             vs_settings_dict[dep.label] = vs_settings
 
             if dep.label.raw_target() in deps_with_vcxproj:
-                vcxproj_content = gen_vcxproj(dep, vs_settings, cli_args, buck_root)
+                vcxproj_content = gen_vcxproj(dep, vs_settings, cli_args, yak_root)
                 ctx.bxl_actions().actions.write(outputs[vcxproj_artifact_dict[dep.label]].as_output(), vcxproj_content, allow_args = True)
                 filters_content = gen_filters(vs_settings)
                 ctx.bxl_actions().actions.write(outputs[filters_artifact_dict[dep.label]].as_output(), filters_content, allow_args = True)
@@ -264,12 +264,12 @@ main = bxl_main(
             cli_args.json(),
             doc = "Override target debug settings. Takes in JSON string of shape target_label => debug_settings.",
         ),
-        "extra_buck_options": cli_args.list(
+        "extra_yak_options": cli_args.list(
             cli_args.string(),
             default = [],
             doc = "Extra options passed to yak build command of generated project(s) build settings. Escape `-` with `\\-`.",
         ),
-        "immediate_buck_options": cli_args.list(
+        "immediate_yak_options": cli_args.list(
             cli_args.string(),
             default = [],
             doc = "Immediate options passed to yak build command of generated project(s) build settings. Escape `-` with `\\-`.",

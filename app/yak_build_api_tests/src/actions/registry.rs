@@ -28,12 +28,12 @@ use yak_core::deferred::key::DeferredHolderKey;
 use yak_core::execution_types::execution::ExecutionPlatform;
 use yak_core::execution_types::execution::ExecutionPlatformResolution;
 use yak_core::execution_types::executor_config::CommandExecutorConfig;
-use yak_core::fs::buck_out_path::BuckOutPathKind;
-use yak_core::fs::buck_out_path::BuildArtifactPath;
+use yak_core::fs::yak_out_path::YakOutPathKind;
+use yak_core::fs::yak_out_path::BuildArtifactPath;
 use yak_core::target::configured_target_label::ConfiguredTargetLabel;
 use yak_execute::execute::request::OutputType;
 use yak_fs::paths::forward_rel_path::ForwardRelativePathBuf;
-use yak_hash::buck_indexset;
+use yak_hash::yak_indexset;
 
 use crate::actions::testings::SimpleUnregisteredAction;
 
@@ -49,33 +49,33 @@ fn declaring_artifacts() -> yak_error::Result<()> {
             ExecutionPlatformResolution::unspecified(),
         );
         let out1 = ForwardRelativePathBuf::unchecked_new("bar.out".into());
-        let buckout1 =
-            BuildArtifactPath::new(base.dupe(), out1.clone(), BuckOutPathKind::default());
+        let yakout1 =
+            BuildArtifactPath::new(base.dupe(), out1.clone(), YakOutPathKind::default());
         let declared1 = actions.declare_artifact(
             None,
             out1.clone(),
             OutputType::File,
             None,
-            BuckOutPathKind::default(),
+            YakOutPathKind::default(),
             heap,
         )?;
         declared1
             .get_path()
-            .with_full_path(|p| assert_eq!(p, buckout1.path()));
+            .with_full_path(|p| assert_eq!(p, yakout1.path()));
 
         let out2 = ForwardRelativePathBuf::unchecked_new("bar2.out".into());
-        let buckout2 = BuildArtifactPath::new(base, out2.clone(), BuckOutPathKind::default());
+        let yakout2 = BuildArtifactPath::new(base, out2.clone(), YakOutPathKind::default());
         let declared2 = actions.declare_artifact(
             None,
             out2,
             OutputType::File,
             None,
-            BuckOutPathKind::default(),
+            YakOutPathKind::default(),
             heap,
         )?;
         declared2
             .get_path()
-            .with_full_path(|p| assert_eq!(p, buckout2.path()));
+            .with_full_path(|p| assert_eq!(p, yakout2.path()));
 
         if actions
             .declare_artifact(
@@ -83,7 +83,7 @@ fn declaring_artifacts() -> yak_error::Result<()> {
                 out1,
                 OutputType::File,
                 None,
-                BuckOutPathKind::default(),
+                YakOutPathKind::default(),
                 heap,
             )
             .is_ok()
@@ -162,11 +162,11 @@ fn register_actions() -> yak_error::Result<()> {
             out,
             OutputType::File,
             None,
-            BuckOutPathKind::default(),
+            YakOutPathKind::default(),
             heap,
         )?;
 
-        let inputs = buck_indexset![ArtifactGroup::Artifact(
+        let inputs = yak_indexset![ArtifactGroup::Artifact(
             BuildArtifact::testing_new(
                 base.unpack_target_label().unwrap().dupe(),
                 "input",
@@ -174,7 +174,7 @@ fn register_actions() -> yak_error::Result<()> {
             )
             .into()
         )];
-        let outputs = buck_indexset![declared.as_output()];
+        let outputs = yak_indexset![declared.as_output()];
 
         let unregistered_action = SimpleUnregisteredAction::new(
             inputs,
@@ -219,11 +219,11 @@ fn finalizing_actions() -> yak_error::Result<()> {
             out,
             OutputType::File,
             None,
-            BuckOutPathKind::default(),
+            YakOutPathKind::default(),
             heap,
         )?;
 
-        let inputs = buck_indexset![ArtifactGroup::Artifact(
+        let inputs = yak_indexset![ArtifactGroup::Artifact(
             BuildArtifact::testing_new(
                 base.unpack_target_label().unwrap().dupe(),
                 "input",
@@ -231,7 +231,7 @@ fn finalizing_actions() -> yak_error::Result<()> {
             )
             .into()
         )];
-        let outputs = buck_indexset![declared.as_output()];
+        let outputs = yak_indexset![declared.as_output()];
 
         let unregistered_action = SimpleUnregisteredAction::new(
             inputs,
@@ -301,13 +301,13 @@ fn category_identifier_test(
     );
     for (category, identifier) in action_names {
         let unregistered_action = SimpleUnregisteredAction::new(
-            buck_indexset![],
+            yak_indexset![],
             vec![],
             Category::new((*category).to_owned()).unwrap(),
             identifier.map(|i| i.to_owned()),
         );
 
-        actions.register(&base, buck_indexset![], unregistered_action)?;
+        actions.register(&base, yak_indexset![], unregistered_action)?;
     }
 
     (actions.finalize()?)(&AnalysisValueFetcher::testing_new(base))?;

@@ -99,9 +99,9 @@ fn do_render(
     const RSS_FIELD_WIDTH: usize = "RSS = ".len() + HumanizedBytes::FIXED_WIDTH_WIDTH;
 
     let mut allocator = Vec::new();
-    if let Some(rss) = snapshot.buck2_rss {
+    if let Some(rss) = snapshot.yak_rss {
         allocator.push(format!("RSS = {}", HumanizedBytes::fixed_width(rss)));
-    } else if snapshot.buck2_max_rss > 0
+    } else if snapshot.yak_max_rss > 0
         && (snapshot.malloc_bytes_active.is_some() || snapshot.malloc_bytes_allocated.is_some())
     {
         allocator.push(" ".repeat(RSS_FIELD_WIDTH));
@@ -142,12 +142,12 @@ fn do_render(
 
     let mut allocator_max = Vec::new();
     // Current RSS is unavailable on non-Linux Unix platforms, so keep max RSS independent of it.
-    if snapshot.buck2_max_rss > 0 {
+    if snapshot.yak_max_rss > 0 {
         allocator_max.push(format!(
             "RSS = {}",
-            HumanizedBytes::fixed_width(snapshot.buck2_max_rss)
+            HumanizedBytes::fixed_width(snapshot.yak_max_rss)
         ));
-    } else if snapshot.buck2_rss.is_some()
+    } else if snapshot.yak_rss.is_some()
         && (two_snapshots.max_malloc_bytes_active.is_some()
             || two_snapshots.max_malloc_bytes_allocated.is_some())
     {

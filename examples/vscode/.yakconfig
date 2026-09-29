@@ -11,10 +11,10 @@ config = prelude
 
 
 [parser]
-target_platform_detector_spec = target:root//...->root//buck2_utils/platforms:windows_debug
+target_platform_detector_spec = target:root//...->root//yak_utils/platforms:windows_debug
 
 [build]
-execution_platforms = root//buck2_utils/platforms:default
+execution_platforms = root//yak_utils/platforms:default
 
 [yak_re_client]
 action_cache_address = grpc://localhost:8980

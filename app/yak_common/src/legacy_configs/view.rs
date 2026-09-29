@@ -12,28 +12,28 @@ use std::fmt::Debug;
 use std::str::FromStr;
 use std::sync::Arc;
 
-use crate::legacy_configs::configs::LegacyBuckConfig;
-use crate::legacy_configs::key::BuckconfigKeyRef;
+use crate::legacy_configs::configs::LegacyYakConfig;
+use crate::legacy_configs::key::YakconfigKeyRef;
 
 /// yakconfig trait.
 ///
 /// There are two implementations:
 /// * simple implementation which is backed by a yakconfig object, used in tests
 /// * DICE-backed implementation which records a dependency on yakconfig property in DICE
-pub trait LegacyBuckConfigView: Debug {
-    fn get(&mut self, key: BuckconfigKeyRef) -> yak_error::Result<Option<Arc<str>>>;
+pub trait LegacyYakConfigView: Debug {
+    fn get(&mut self, key: YakconfigKeyRef) -> yak_error::Result<Option<Arc<str>>>;
 
-    fn parse<T: FromStr>(&mut self, key: BuckconfigKeyRef) -> yak_error::Result<Option<T>>
+    fn parse<T: FromStr>(&mut self, key: YakconfigKeyRef) -> yak_error::Result<Option<T>>
     where
         yak_error::Error: From<<T as FromStr>::Err>,
     {
-        LegacyBuckConfig::parse_value(key, self.get(key)?.as_deref())
+        LegacyYakConfig::parse_value(key, self.get(key)?.as_deref())
     }
 
-    fn parse_list<T: FromStr>(&mut self, key: BuckconfigKeyRef) -> yak_error::Result<Option<Vec<T>>>
+    fn parse_list<T: FromStr>(&mut self, key: YakconfigKeyRef) -> yak_error::Result<Option<Vec<T>>>
     where
         yak_error::Error: From<<T as FromStr>::Err>,
     {
-        LegacyBuckConfig::parse_list_value(key, self.get(key)?.as_deref())
+        LegacyYakConfig::parse_list_value(key, self.get(key)?.as_deref())
     }
 }

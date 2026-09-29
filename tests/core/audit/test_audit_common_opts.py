@@ -7,15 +7,15 @@
 # above-listed licenses.
 
 import pytest
-from e2e_util.api.buck import Buck
-from e2e_util.buck_workspace import buck_test
+from e2e_util.api.yak import Yak
+from e2e_util.yak_workspace import yak_test
 
 # TODO(iguridi) or TODO(raulgarcia4):
 # New `audit` commands have been added since these tests were created.
 # Test them if necessary.
 
 
-@buck_test()
+@yak_test()
 @pytest.mark.parametrize(  # type: ignore
     "cmd",
     [
@@ -25,12 +25,12 @@ from e2e_util.buck_workspace import buck_test
         "audit_visibility",
     ],
 )
-async def test_pass_common_opts_func(buck: Buck, cmd: str) -> None:
-    cmd_call = getattr(buck, cmd)
+async def test_pass_common_opts_func(yak: Yak, cmd: str) -> None:
+    cmd_call = getattr(yak, cmd)
     await cmd_call("--client-metadata", "id=placeholder_id")
 
 
-@buck_test()
+@yak_test()
 @pytest.mark.parametrize(  # type: ignore
     "cmd",
     [
@@ -43,10 +43,10 @@ async def test_pass_common_opts_func(buck: Buck, cmd: str) -> None:
         "subtargets",
     ],
 )
-async def test_pass_common_opts(buck: Buck, cmd: str) -> None:
+async def test_pass_common_opts(yak: Yak, cmd: str) -> None:
     commands_requiring_target_pattern_arg_value = {"providers", "subtargets"}
 
     if cmd in commands_requiring_target_pattern_arg_value:
-        await buck.audit(cmd, "//:dummy", "--client-metadata", "id=placeholder_id")
+        await yak.audit(cmd, "//:dummy", "--client-metadata", "id=placeholder_id")
     else:
-        await buck.audit(cmd, "--client-metadata", "id=placeholder_id")
+        await yak.audit(cmd, "--client-metadata", "id=placeholder_id")

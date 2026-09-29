@@ -625,7 +625,7 @@ mod tests {
     fn test_leading_underscore_key_stays_after_uppercase_key() {
         let source = indoc! {r#"
             A = {
-                "B": "project/buck2/**",
+                "B": "project/yak/**",
                 "_A": "project/antlir/**",
             }
         "#};
@@ -1190,7 +1190,7 @@ mod tests {
 
     #[test]
     fn test_select_default_none_without_trailing_comma() {
-        // Mirrors the reported BUCKFORMAT crash: a select() dict with a `None`
+        // Mirrors the reported YAKFORMAT crash: a select() dict with a `None`
         // value and no trailing comma on the relocated entry.
         let source = indoc! {r#"
             exec_compatible_with = select({

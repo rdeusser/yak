@@ -176,7 +176,7 @@ Imagine that as our application grows, we realize we want to log information
 about what's happening inside our functions. This is a common need for debugging
 or just understanding the flow. To help with this, let's say we've prepared a
 simple, shared logging library for you. You can find it at
-https://github.com/rdeusser/buck2/tree/main/website/docs/yak_lab/logging_lib
+https://github.com/rdeusser/yak/tree/main/website/docs/yak_lab/logging_lib
 and copy the folder into `yak_lab` folder.
 
 Our first step is to make our existing greeter_lib use this new logging_lib.

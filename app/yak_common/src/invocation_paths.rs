@@ -81,29 +81,29 @@ impl TenantPaths {
     }
 
     /// Top-level directory name under the project root used for yak outputs.
-    pub fn buck_out_dir_prefix() -> &'static ProjectRelativePath {
+    pub fn yak_out_dir_prefix() -> &'static ProjectRelativePath {
         ProjectRelativePath::unchecked_new("yak-out")
     }
 
     /// Project-relative output directory for this tenant.
-    pub fn buck_out_dir(&self) -> ProjectRelativePathBuf {
-        Self::buck_out_dir_prefix().join(&self.isolation)
+    pub fn yak_out_dir(&self) -> ProjectRelativePathBuf {
+        Self::yak_out_dir_prefix().join(&self.isolation)
     }
 
     /// Absolute output directory for this tenant.
-    pub fn buck_out_path(&self) -> AbsNormPathBuf {
-        self.project_root.root().join(self.buck_out_dir())
+    pub fn yak_out_path(&self) -> AbsNormPathBuf {
+        self.project_root.root().join(self.yak_out_dir())
     }
 
     /// Project-relative cache directory for this tenant.
     pub fn cache_dir(&self) -> ProjectRelativePathBuf {
-        self.buck_out_dir()
+        self.yak_out_dir()
             .join(ForwardRelativePath::unchecked_new("cache"))
     }
 
     /// Project-relative paranoid-download cache directory for this tenant.
     pub fn paranoid_cache_dir(&self) -> ProjectRelativePathBuf {
-        self.buck_out_dir()
+        self.yak_out_dir()
             .join(ForwardRelativePath::unchecked_new("paranoid"))
     }
 
@@ -174,7 +174,7 @@ impl InvocationPaths {
 
         let path = self
             .roots
-            .common_buckd_dir()?
+            .common_yakd_dir()?
             .join(root_relative.as_ref())
             .join(&self.isolation);
 
@@ -186,46 +186,46 @@ impl InvocationPaths {
     }
 
     pub fn log_dir(&self) -> AbsNormPathBuf {
-        self.buck_out_path()
+        self.yak_out_path()
             .join(ForwardRelativePath::unchecked_new("log"))
     }
 
     pub fn tmp_dir(&self) -> AbsNormPathBuf {
-        self.buck_out_path()
+        self.yak_out_path()
             .join(ForwardRelativePath::unchecked_new("tmp"))
     }
 
     pub fn build_count_dir(&self) -> AbsNormPathBuf {
-        self.buck_out_path()
+        self.yak_out_path()
             .join(ForwardRelativePath::unchecked_new("build_count"))
     }
 
     pub fn dice_dump_dir(&self) -> AbsNormPathBuf {
-        self.buck_out_path()
+        self.yak_out_path()
             .join(ForwardRelativePath::unchecked_new("dice_dump"))
     }
 
-    pub fn buck_out_dir_prefix() -> &'static ProjectRelativePath {
-        TenantPaths::buck_out_dir_prefix()
+    pub fn yak_out_dir_prefix() -> &'static ProjectRelativePath {
+        TenantPaths::yak_out_dir_prefix()
     }
 
-    pub fn buck_out_dir(&self) -> ProjectRelativePathBuf {
-        Self::buck_out_dir_prefix().join(&self.isolation)
+    pub fn yak_out_dir(&self) -> ProjectRelativePathBuf {
+        Self::yak_out_dir_prefix().join(&self.isolation)
     }
 
-    pub fn buck_out_path(&self) -> AbsNormPathBuf {
-        self.roots.project_root.root().join(self.buck_out_dir())
+    pub fn yak_out_path(&self) -> AbsNormPathBuf {
+        self.roots.project_root.root().join(self.yak_out_dir())
     }
 
     /// Directory containing on-disk cache
     pub fn cache_dir(&self) -> ProjectRelativePathBuf {
-        self.buck_out_dir()
+        self.yak_out_dir()
             .join(ForwardRelativePath::unchecked_new("cache"))
     }
 
     /// Temporary directory for paranoid downloads.
     pub fn paranoid_cache_dir(&self) -> ProjectRelativePathBuf {
-        self.buck_out_dir()
+        self.yak_out_dir()
             .join(ForwardRelativePath::unchecked_new("paranoid"))
     }
 
@@ -278,7 +278,7 @@ impl InvocationPaths {
     /// temporary files used by miniperf. We put this in yak-out because that directory gets
     /// allowlisted for execution (because we write lots of tools there).
     pub fn forkserver_state_dir(&self) -> AbsNormPathBuf {
-        self.buck_out_path()
+        self.yak_out_path()
             .join(ForwardRelativePath::unchecked_new("forkserver"))
     }
 
@@ -315,8 +315,8 @@ impl InvocationPaths {
         self.roots
             .project_root
             .root()
-            .join(Self::buck_out_dir_prefix())
-            .join(ForwardRelativePath::unchecked_new(RESERVED_BUCK_OUT_PREFIX))
+            .join(Self::yak_out_dir_prefix())
+            .join(ForwardRelativePath::unchecked_new(RESERVED_YAK_OUT_PREFIX))
             .join(ForwardRelativePath::unchecked_new("trash"))
     }
 }
@@ -329,7 +329,7 @@ impl InvocationPaths {
 /// for tooling (e.g. compiler wrappers invoked outside of a yak action) that needs a temp
 /// location under yak-out. yak never stores its own state there, and `clean --all` deletes
 /// it like any other reserved entry, so contents must be disposable.
-pub const RESERVED_BUCK_OUT_PREFIX: &str = "._yak";
+pub const RESERVED_YAK_OUT_PREFIX: &str = "._yak";
 
 #[cfg(test)]
 mod tests {
@@ -389,7 +389,7 @@ mod tests {
         );
 
         assert_eq!(
-            paths.buck_out_dir(),
+            paths.yak_out_dir(),
             ProjectRelativePathBuf::unchecked_new("yak-out/isolation".to_owned())
         );
         let expected_path = if cfg!(windows) {
@@ -397,7 +397,7 @@ mod tests {
         } else {
             "/my/project/yak-out/isolation"
         };
-        assert_eq!(paths.buck_out_path().as_os_str(), OsStr::new(expected_path));
+        assert_eq!(paths.yak_out_path().as_os_str(), OsStr::new(expected_path));
 
         let expected_path = if cfg!(windows) {
             "C:\\my\\project\\yak-out\\isolation\\log"
@@ -430,8 +430,8 @@ mod tests {
         let tenant_paths = paths.tenant_paths();
         assert_eq!(tenant_paths.project_root(), paths.project_root());
         assert_eq!(tenant_paths.isolation().as_str(), paths.isolation.as_str());
-        assert_eq!(tenant_paths.buck_out_dir(), paths.buck_out_dir());
-        assert_eq!(tenant_paths.buck_out_path(), paths.buck_out_path());
+        assert_eq!(tenant_paths.yak_out_dir(), paths.yak_out_dir());
+        assert_eq!(tenant_paths.yak_out_path(), paths.yak_out_path());
         assert_eq!(tenant_paths.cache_dir(), paths.cache_dir());
         assert_eq!(
             tenant_paths.paranoid_cache_dir(),

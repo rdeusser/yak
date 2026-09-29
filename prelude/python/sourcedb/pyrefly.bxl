@@ -11,11 +11,11 @@
 
 # Missing features:
 #
-# * Manifests for prebuilt library (i.e. 3p python libraries). I think getting those would actually require some extracting and reading from disk (https://github.com/facebook/buck2/blob/2b6c84ef285519a86ad793800296b3cda17e85dd/prelude/python/prebuilt_python_library.bzl#L56)
+# * Manifests for prebuilt library (i.e. 3p python libraries). I think getting those would actually require some extracting and reading from disk (https://github.com/facebook/yak/blob/2b6c84ef285519a86ad793800296b3cda17e85dd/prelude/python/prebuilt_python_library.bzl#L56)
 # * Anything logic that tries to inject / alter srcs or deps within the python rule need to be replicated, e.g.
-#   + https://github.com/facebook/buck2/blob/2b6c84ef285519a86ad793800296b3cda17e85dd/prelude/python/python_library.bzl#L188-L192
-#   + https://github.com/facebook/buck2/blob/2b6c84ef285519a86ad793800296b3cda17e85dd/prelude/python/python_library.bzl#L339-L341
-#   + https://github.com/facebook/buck2/blob/2b6c84ef285519a86ad793800296b3cda17e85dd/prelude/python/python_library.bzl#L290-L306
+#   + https://github.com/facebook/yak/blob/2b6c84ef285519a86ad793800296b3cda17e85dd/prelude/python/python_library.bzl#L188-L192
+#   + https://github.com/facebook/yak/blob/2b6c84ef285519a86ad793800296b3cda17e85dd/prelude/python/python_library.bzl#L339-L341
+#   + https://github.com/facebook/yak/blob/2b6c84ef285519a86ad793800296b3cda17e85dd/prelude/python/python_library.bzl#L290-L306
 
 load("@prelude//python:typing.bzl", "DEFAULT_PY_VERSION")
 
@@ -114,9 +114,9 @@ def _set_entry_common_fields(
     # TODO(connernilsen): replace with actual platform later
     entry["python_platform"] = "linux"
 
-    # Get buck.deps first, then fall back to deps. buck.deps might
+    # Get yak.deps first, then fall back to deps. yak.deps might
     # have extra targets we eventually exclude or stop processing, which is fine.
-    attr_deps = attrs.get("buck.deps") or attrs.get("deps")
+    attr_deps = attrs.get("yak.deps") or attrs.get("deps")
     if attr_deps == None:
         fail(target.rule_type)
     attr_deps = attr_deps.value()

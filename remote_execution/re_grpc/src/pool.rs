@@ -35,7 +35,7 @@ use tonic::transport::Identity;
 use tonic::transport::Uri;
 use tonic::transport::channel::ClientTlsConfig;
 use tower::Service;
-use yak_re_configuration::Buck2OssReConfiguration;
+use yak_re_configuration::YakOssReConfiguration;
 
 use crate::stats::CountingConnector;
 
@@ -89,7 +89,7 @@ fn substitute_env_vars_impl(
 }
 
 impl ChannelConfig {
-    pub async fn new(opts: &Buck2OssReConfiguration) -> anyhow::Result<Self> {
+    pub async fn new(opts: &YakOssReConfiguration) -> anyhow::Result<Self> {
         let tls_config = if opts.tls {
             Some(Self::create_tls_config(opts).await?)
         } else {
@@ -104,7 +104,7 @@ impl ChannelConfig {
         })
     }
 
-    async fn create_tls_config(opts: &Buck2OssReConfiguration) -> anyhow::Result<ClientTlsConfig> {
+    async fn create_tls_config(opts: &YakOssReConfiguration) -> anyhow::Result<ClientTlsConfig> {
         let config = ClientTlsConfig::new().with_enabled_roots();
 
         let config = match opts.tls_ca_certs.as_ref() {

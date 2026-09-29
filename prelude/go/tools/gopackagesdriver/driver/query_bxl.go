@@ -37,7 +37,7 @@ const cgoGenFileNameExt = ".cgo1.go"
 func queryBXL(
 	ctx context.Context,
 	req *packages.DriverRequest,
-	bucker Bucker,
+	yaker Yaker,
 	patterns []string,
 	files []string,
 ) (*packages.DriverResponse, error) {
@@ -47,7 +47,7 @@ func queryBXL(
 
 	bxlArgs := buildBXLArgs(req, patterns, files)
 
-	bxlOut, err := bucker.BXL(ctx, "prelude//go/tools/gopackagesdriver:driver.bxl:driver", bxlArgs)
+	bxlOut, err := yaker.BXL(ctx, "prelude//go/tools/gopackagesdriver:driver.bxl:driver", bxlArgs)
 	if err != nil {
 		var ee *exec.ExitError
 		if errors.As(err, &ee) {

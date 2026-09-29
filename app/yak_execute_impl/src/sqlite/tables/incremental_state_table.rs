@@ -16,9 +16,9 @@ use parking_lot::Mutex;
 use rusqlite::Connection;
 use starlark_map::small_map::SmallMap;
 use yak_core::fs::project_rel_path::ProjectRelativePathBuf;
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 use yak_fs::paths::forward_rel_path::ForwardRelativePathBuf;
-use yak_hash::BuckDashMap;
+use yak_hash::YakDashMap;
 
 use crate::incremental_actions_helper::IncrementalPathMap;
 use crate::sqlite::incremental_state_db::IncrementalState;
@@ -67,7 +67,7 @@ fn convert_incremental_state_to_sqlite_entries<'a>(
 fn convert_sqlite_entries_to_incremental_state(
     entries: Vec<SqliteEntry>,
 ) -> yak_error::Result<IncrementalState> {
-    let incremental_state: BuckDashMap<String, Arc<IncrementalPathMap>> = BuckDashMap::default();
+    let incremental_state: YakDashMap<String, Arc<IncrementalPathMap>> = YakDashMap::default();
 
     for entry in entries {
         let run_action_key = entry.run_action_key.to_string();
@@ -113,7 +113,7 @@ impl IncrementalStateSqliteTable {
         self.connection
             .lock()
             .execute(&sql, [])
-            .with_buck_error_context(|| format!("creating sqlite table {STATE_TABLE_NAME}"))?;
+            .with_yak_error_context(|| format!("creating sqlite table {STATE_TABLE_NAME}"))?;
         Ok(())
     }
 
@@ -137,7 +137,7 @@ impl IncrementalStateSqliteTable {
                 &SQL,
                 rusqlite::params![entry.run_action_key, entry.short_path, entry.content_path,],
             )
-            .with_buck_error_context(|| {
+            .with_yak_error_context(|| {
                 format!(
                     "inserting `{}` into sqlite table {STATE_TABLE_NAME}",
                     entry.run_action_key
@@ -149,7 +149,7 @@ impl IncrementalStateSqliteTable {
     }
 
     pub(crate) fn read_incremental_state(&self) -> yak_error::Result<IncrementalState> {
-        let entries = self.read_all_entries().with_buck_error_context(|| {
+        let entries = self.read_all_entries().with_yak_error_context(|| {
             format!("error reading row of sqlite table {STATE_TABLE_NAME}")
         })?;
         convert_sqlite_entries_to_incremental_state(entries)
@@ -168,7 +168,7 @@ impl IncrementalStateSqliteTable {
             Ok(SqliteEntry::new(row.get(0)?, &short_path, &content_path))
         })?
         .collect::<Result<Vec<_>, _>>()
-        .with_buck_error_context(|| format!("reading from sqlite table {STATE_TABLE_NAME}"))
+        .with_yak_error_context(|| format!("reading from sqlite table {STATE_TABLE_NAME}"))
     }
 
     pub(crate) fn delete(&self, run_action_key: String) -> yak_error::Result<usize> {
@@ -179,7 +179,7 @@ impl IncrementalStateSqliteTable {
         self.connection
             .lock()
             .execute(&sql, rusqlite::params![run_action_key])
-            .with_buck_error_context(|| {
+            .with_yak_error_context(|| {
                 format!("deleting artifact rows from sqlite table {STATE_TABLE_NAME}")
             })
     }

@@ -6,18 +6,18 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-from e2e_util.api.buck import Buck
+from e2e_util.api.yak import Yak
 from e2e_util.asserts import expect_failure
-from e2e_util.buck_workspace import buck_test
+from e2e_util.yak_workspace import yak_test
 
 
-@buck_test()
-async def test_no_executor(buck: Buck) -> None:
-    await buck.cquery(
+@yak_test()
+async def test_no_executor(yak: Yak) -> None:
+    await yak.cquery(
         "root//:run_action",
     )
 
     await expect_failure(
-        buck.build("root//:run_action"),
+        yak.build("root//:run_action"),
         stderr_regex=".*incompatible with the executor config.*",
     )

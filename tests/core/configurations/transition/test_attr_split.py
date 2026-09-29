@@ -6,21 +6,21 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-from e2e_util.api.buck import Buck
-from e2e_util.buck_workspace import buck_test
+from e2e_util.api.yak import Yak
+from e2e_util.yak_workspace import yak_test
 
 
-@buck_test()
-async def test_configuration_transition_attr_split_cquery(buck: Buck) -> None:
-    result = await buck.cquery("deps(root//:bb)")
+@yak_test()
+async def test_configuration_transition_attr_split_cquery(yak: Yak) -> None:
+    result = await yak.cquery("deps(root//:bb)")
     result.check_returncode()
     # Check both transitioned deps are present.
     assert "root//:code (arm64#" in result.stdout
     assert "root//:code (arm32#" in result.stdout
 
 
-@buck_test()
-async def test_configuration_transition_attr_split_build(buck: Buck) -> None:
-    result = await buck.build("root//:bb")
+@yak_test()
+async def test_configuration_transition_attr_split_build(yak: Yak) -> None:
+    result = await yak.build("root//:bb")
     result.check_returncode()
     # Rule implementations do the assertions.

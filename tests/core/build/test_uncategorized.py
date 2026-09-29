@@ -13,31 +13,31 @@ import string
 from pathlib import Path
 
 import pytest
-from e2e_util.api.buck import Buck
-from e2e_util.api.buck_result import BuckException
+from e2e_util.api.yak import Yak
+from e2e_util.api.yak_result import YakException
 from e2e_util.asserts import expect_failure
-from e2e_util.buck_workspace import buck_test
+from e2e_util.yak_workspace import yak_test
 from e2e_util.helper.utils import json_get, read_what_ran
 
 
-@buck_test(data_dir="anon_exec_deps")
-async def test_anon_target_exec_deps(buck: Buck) -> None:
-    await buck.build("//tests:exec_dep_good", "--remote-only")
+@yak_test(data_dir="anon_exec_deps")
+async def test_anon_target_exec_deps(yak: Yak) -> None:
+    await yak.build("//tests:exec_dep_good", "--remote-only")
 
     await expect_failure(
-        buck.build("//tests:exec_dep_bad", "--local-only"),
+        yak.build("//tests:exec_dep_bad", "--local-only"),
         stderr_regex="Exec deps and the current anon target must have the same execution platform resolution",
     )
 
     await expect_failure(
-        buck.build("//tests:exec_dep_rejects_dep"),
+        yak.build("//tests:exec_dep_rejects_dep"),
         stderr_regex="exec dep is missing the execution platform resolution",
     )
 
 
-@buck_test(data_dir="args")
-async def test_args(buck: Buck) -> None:
-    result = await buck.build("//:bin")
+@yak_test(data_dir="args")
+async def test_args(yak: Yak) -> None:
+    result = await yak.build("//:bin")
     output = result.get_build_report().output_for_target("//:bin")
     assert (
         output.read_text().rstrip()
@@ -45,17 +45,17 @@ async def test_args(buck: Buck) -> None:
     )
 
 
-@buck_test(data_dir="prelude_import")
-async def test_prelude_imported_once(buck: Buck) -> None:
+@yak_test(data_dir="prelude_import")
+async def test_prelude_imported_once(yak: Yak) -> None:
     # See the comments in the relevant targets files: they explain how this
     # test works.
-    await buck.build("cell1//...", "cell2//...")
+    await yak.build("cell1//...", "cell2//...")
 
 
-def read_all_outputs(buck: Buck, report: str) -> list[str]:
+def read_all_outputs(yak: Yak, report: str) -> list[str]:
     ret = []
 
-    with open(buck.cwd / report) as f:
+    with open(yak.cwd / report) as f:
         report = json.load(f)
         for _target, state in report["results"].items():
             for configured in state["configured"].values():
@@ -65,9 +65,9 @@ def read_all_outputs(buck: Buck, report: str) -> list[str]:
     return ret
 
 
-@buck_test(data_dir="build_providers")
-async def test_build_providers(buck: Buck) -> None:
-    await buck.build(
+@yak_test(data_dir="build_providers")
+async def test_build_providers(yak: Yak) -> None:
+    await yak.build(
         "//:target",
         "--build-default-info",
         "--skip-run-info",
@@ -76,12 +76,12 @@ async def test_build_providers(buck: Buck) -> None:
         "report",
     )
 
-    outputs = read_all_outputs(buck, "report")
+    outputs = read_all_outputs(yak, "report")
     assert any("/build" in o for o in outputs)
     assert all("/run" not in o for o in outputs)
     assert all("/test" not in o for o in outputs)
 
-    await buck.build(
+    await yak.build(
         "//:target",
         "--skip-default-info",
         "--build-run-info",
@@ -90,11 +90,11 @@ async def test_build_providers(buck: Buck) -> None:
         "report",
     )
 
-    outputs = read_all_outputs(buck, "report")
+    outputs = read_all_outputs(yak, "report")
     assert all("/build" not in o for o in outputs)
     assert all("/test" not in o for o in outputs)
 
-    await buck.build(
+    await yak.build(
         "//:target",
         "--skip-default-info",
         "--skip-run-info",
@@ -103,12 +103,12 @@ async def test_build_providers(buck: Buck) -> None:
         "report",
     )
 
-    outputs = read_all_outputs(buck, "report")
+    outputs = read_all_outputs(yak, "report")
     assert all("/build" not in o for o in outputs)
     assert all("/run" not in o for o in outputs)
 
 
-@buck_test(data_dir="projected_artifacts")
+@yak_test(data_dir="projected_artifacts")
 @pytest.mark.parametrize(
     "target",
     [
@@ -119,87 +119,87 @@ async def test_build_providers(buck: Buck) -> None:
         "//:check_c_b_local",
     ],
 )
-async def test_projected_artifacts(buck: Buck, target: str) -> None:
-    await buck.build(target)
+async def test_projected_artifacts(yak: Yak, target: str) -> None:
+    await yak.build(target)
 
 
-@buck_test(data_dir="buckroot")
-async def test_buckroot(buck: Buck) -> None:
+@yak_test(data_dir="yakroot")
+async def test_yakroot(yak: Yak) -> None:
     # Test that .yakroot files work
-    await buck.build(":inner", rel_cwd=Path("rooted/cell"))
+    await yak.build(":inner", rel_cwd=Path("rooted/cell"))
 
 
-@buck_test(data_dir="cell_delete")
-async def test_cell_deletion(buck: Buck) -> None:
+@yak_test(data_dir="cell_delete")
+async def test_cell_deletion(yak: Yak) -> None:
     """
-    This is a regression test for https://github.com/facebook/buck2/pull/43,
+    This is a regression test for https://github.com/facebook/yak/pull/43,
     including the similar issue with directories that was fixed first.
     """
-    await buck.targets(":")
-    (buck.cwd / "hello").mkdir()
-    await buck.targets(":")
-    (buck.cwd / "hello").rmdir()
-    await buck.targets(":")
+    await yak.targets(":")
+    (yak.cwd / "hello").mkdir()
+    await yak.targets(":")
+    (yak.cwd / "hello").rmdir()
+    await yak.targets(":")
 
 
 @pytest.mark.xfail(
     reason="the fs_hash_crawler file watcher that tests use fails the command on a file name that contains a backslash",
     strict=True,
 )
-@buck_test(
+@yak_test(
     data_dir="invalid_file_invalidation",
     skip_for_os=["windows"],
 )
-async def test_invalid_file_invalidation(buck: Buck) -> None:
+async def test_invalid_file_invalidation(yak: Yak) -> None:
     """
     Checks that files and directories with invalid names do not break later builds.
     """
 
-    await buck.build(":root")
+    await yak.build(":root")
 
-    src = buck.cwd / "src"
+    src = yak.cwd / "src"
     invalid = src / "\\"
     invalid_nested = src / "\\" / "a"
     invalid_nested_invalid = src / "\\" / "\\"
 
     # Create an invalid file. Build should work.
     invalid.touch()
-    output = await buck.build(":root")
+    output = await yak.build(":root")
     assert "is not valid. Add the path to" in output.stderr
 
     # Delete it, build should work.
     invalid.unlink()
-    await buck.build(":root")
+    await yak.build(":root")
 
     # Create an invalid dir. Build should still work.
     invalid_nested.mkdir(parents=True)
-    output = await buck.build(":root")
+    output = await yak.build(":root")
     assert "is not valid. Add the path to" in output.stderr
 
     # And delete it. Things should work.
     invalid_nested.rmdir()
     invalid.rmdir()
-    await buck.build(":root")
+    await yak.build(":root")
 
     # Finally, do an invalid file inside an invalid dir...
     invalid_nested_invalid.mkdir(parents=True)
-    output = await buck.build(":root")
+    output = await yak.build(":root")
     assert "is not valid. Add the path to" in output.stderr
 
     # And delete it. Things should again.
     invalid_nested_invalid.rmdir()
     invalid.rmdir()
-    await buck.build(":root")
+    await yak.build(":root")
 
 
-@buck_test(data_dir="concurrency")
-async def test_concurrency(buck: Buck) -> None:
-    await buck.build("//:weight", "--local-only", "--no-remote-cache")
+@yak_test(data_dir="concurrency")
+async def test_concurrency(yak: Yak) -> None:
+    await yak.build("//:weight", "--local-only", "--no-remote-cache")
 
     # Now, since our commands request 20% of resources, check that a no point
     # we had more than 5 running commands. Also check that we found the right
     # amount of commands.
-    log = (await buck.log("show")).stdout.strip().splitlines()
+    log = (await yak.log("show")).stdout.strip().splitlines()
 
     running_execs = {}
     execs_done = 0
@@ -243,10 +243,10 @@ async def test_concurrency(buck: Buck) -> None:
     assert execs_done == 10
 
 
-@buck_test(data_dir="fail_fast")
-async def test_fail_fast(buck: Buck) -> None:
-    with pytest.raises(BuckException) as exc:
-        await buck.build(
+@yak_test(data_dir="fail_fast")
+async def test_fail_fast(yak: Yak) -> None:
+    with pytest.raises(YakException) as exc:
+        await yak.build(
             "root//:mixed",
             "root//:slow",
             "--local-only",
@@ -257,8 +257,8 @@ async def test_fail_fast(buck: Buck) -> None:
     assert "slow_default_output" in exc.value.stderr
     assert "slow_other_output" in exc.value.stderr
 
-    with pytest.raises(BuckException) as exc:
-        await buck.build(
+    with pytest.raises(YakException) as exc:
+        await yak.build(
             "root//:mixed",
             "root//:slow",
             "--local-only",
@@ -271,10 +271,10 @@ async def test_fail_fast(buck: Buck) -> None:
     assert "slow_other_output" not in exc.value.stderr
 
 
-@buck_test(data_dir="keep_going_build")
-async def test_keep_going(buck: Buck) -> None:
-    with pytest.raises(BuckException) as exc:
-        await buck.build(
+@yak_test(data_dir="keep_going_build")
+async def test_keep_going(yak: Yak) -> None:
+    with pytest.raises(YakException) as exc:
+        await yak.build(
             "root//:top",
             "--local-only",
             "--no-remote-cache",
@@ -285,10 +285,10 @@ async def test_keep_going(buck: Buck) -> None:
 
     # Dont want to re-attach to the ongoing evaluation for slow_action.
     # Normally that gets cancelled, but even so that's still a race.
-    await buck.kill()
+    await yak.kill()
 
-    with pytest.raises(BuckException) as exc:
-        await buck.build(
+    with pytest.raises(YakException) as exc:
+        await yak.build(
             "root//:top", "--local-only", "--no-remote-cache", "--keep-going"
         )
 
@@ -296,11 +296,11 @@ async def test_keep_going(buck: Buck) -> None:
     assert "slow_action" in exc.value.stderr
 
 
-@buck_test(data_dir="cleanup")
-async def test_cleanup(buck: Buck) -> None:
+@yak_test(data_dir="cleanup")
+async def test_cleanup(yak: Yak) -> None:
     # Checks that yak cleans up outputs whose parent directories became files.
     target_pattern = "//:cleanup"
-    result = await buck.build(target_pattern)
+    result = await yak.build(target_pattern)
     output = result.get_build_report().output_for_target(target_pattern)
 
     # The output should be something like path/__cleanup__/out/dir1/dir2/output.txt
@@ -308,21 +308,21 @@ async def test_cleanup(buck: Buck) -> None:
     output.unlink()
     output.parent.rmdir()
     output.parent.write_text("File that must be deleted")
-    await buck.kill()
-    await buck.build(target_pattern)
+    await yak.kill()
+    await yak.build(target_pattern)
 
     output.unlink()
     output.parent.rmdir()
     output.parent.parent.rmdir()
     output.parent.parent.write_text("File that must be deleted")
-    await buck.build(target_pattern)
+    await yak.build(target_pattern)
 
 
 @pytest.mark.remote_execution
-@buck_test(data_dir="log_action_keys")
-async def test_log_action_keys(buck: Buck) -> None:
+@yak_test(data_dir="log_action_keys")
+async def test_log_action_keys(yak: Yak) -> None:
     async def read_action_keys() -> list[tuple[str, str]]:
-        out = await read_what_ran(buck)
+        out = await read_what_ran(yak)
         return [
             (
                 line["reproducer"]["executor"],
@@ -335,24 +335,24 @@ async def test_log_action_keys(buck: Buck) -> None:
     action_key = "executor root//:test (<unspecified>) touch"
 
     # Run on RE
-    await buck.build(
+    await yak.build(
         ":test", "-c", f"test.seed={seed}", "-c", "yak.log_action_keys=true"
     )
     assert await read_action_keys() == [("Re", action_key)]
 
-    await buck.kill()
+    await yak.kill()
 
     # Run on RE again, get a cache hit this time
-    await buck.build(
+    await yak.build(
         ":test", "-c", f"test.seed={seed}", "-c", "yak.log_action_keys=true"
     )
 
     assert await read_action_keys() == [("Cache", action_key)]
 
 
-@buck_test(data_dir="roots")
-async def test_roots(buck: Buck) -> None:
-    res = await buck.build("root//:test", "other//:test")
+@yak_test(data_dir="roots")
+async def test_roots(yak: Yak) -> None:
+    res = await yak.build("root//:test", "other//:test")
 
     is_windows: bool = platform.system() == "Windows"
 
@@ -365,8 +365,8 @@ async def test_roots(buck: Buck) -> None:
     with open(output) as f:
         j = json.load(f)
         print(j)
-        assert (buck.cwd / j["fixture_relative_to_cell"]).exists()
-        assert (buck.cwd / j["fixture_relative_to_project"]).exists()
+        assert (yak.cwd / j["fixture_relative_to_cell"]).exists()
+        assert (yak.cwd / j["fixture_relative_to_project"]).exists()
 
         assert j["cell_relative_to_fixture"] == platformify("../../../../../../..")
         assert j["project_relative_to_fixture"] == platformify("../../../../../../..")
@@ -374,8 +374,8 @@ async def test_roots(buck: Buck) -> None:
     output = res.get_build_report().output_for_target("other//:test")
     with open(output) as f:
         j = json.load(f)
-        assert (buck.cwd / "other" / j["fixture_relative_to_cell"]).exists()
-        assert (buck.cwd / j["fixture_relative_to_project"]).exists()
+        assert (yak.cwd / "other" / j["fixture_relative_to_cell"]).exists()
+        assert (yak.cwd / j["fixture_relative_to_project"]).exists()
 
         assert j["cell_relative_to_fixture"] == platformify(
             "../../../../../../../other"
@@ -383,18 +383,18 @@ async def test_roots(buck: Buck) -> None:
         assert j["project_relative_to_fixture"] == platformify("../../../../../../..")
 
 
-@buck_test(data_dir="tmpdir")
-async def test_tmpdir(buck: Buck) -> None:
-    await buck.build("root//:")
+@yak_test(data_dir="tmpdir")
+async def test_tmpdir(yak: Yak) -> None:
+    await yak.build("root//:")
 
 
 def random_string() -> str:
     return "".join(random.choice(string.ascii_lowercase) for i in range(256))
 
 
-@buck_test(data_dir="artifact_consistency")
-async def test_artifact_consistency(buck: Buck) -> None:
-    out = await buck.build_without_report(
+@yak_test(data_dir="artifact_consistency")
+async def test_artifact_consistency(yak: Yak) -> None:
+    out = await yak.build_without_report(
         ":gen[file3]",
         "--local-only",
         "--out=-",
@@ -402,7 +402,7 @@ async def test_artifact_consistency(buck: Buck) -> None:
 
     assert out.stdout == "This is file3"
 
-    out = await buck.build_without_report(
+    out = await yak.build_without_report(
         "-c",
         "gen.idx=2",
         ":gen[file3]",

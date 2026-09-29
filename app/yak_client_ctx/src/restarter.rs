@@ -8,7 +8,7 @@
  * above-listed licenses.
  */
 
-use crate::daemon::client::BuckdClientConnector;
+use crate::daemon::client::YakdClientConnector;
 use crate::daemon::client::connect::DaemonConstraintsRequest;
 use crate::events_ctx::EventsCtx;
 
@@ -29,9 +29,9 @@ impl Restarter {
         }
     }
 
-    /// Observe our BuckdClientConnector after execution to decide whether we should be
+    /// Observe our YakdClientConnector after execution to decide whether we should be
     /// restarting.
-    pub fn observe(&mut self, client: &BuckdClientConnector, events_ctx: &mut EventsCtx) {
+    pub fn observe(&mut self, client: &YakdClientConnector, events_ctx: &mut EventsCtx) {
         for obs in events_ctx.error_observers() {
             if obs.daemon_in_memory_state_is_corrupted() {
                 self.reject_daemon = Some(client.daemon_constraints().daemon_id.clone());

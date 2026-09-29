@@ -160,7 +160,7 @@ struct HydrationSectionData {
 
 #[derive(Debug, Default, Deserialize, Serialize, PartialEq, Eq, Allocative)]
 #[serde(deny_unknown_fields)]
-pub(crate) struct BuckSettingsData {
+pub(crate) struct YakSettingsData {
     #[serde(default)]
     hydration: HydrationSectionData,
     #[serde(default)]
@@ -231,15 +231,15 @@ impl LogDownloadSection {
 
 #[derive(Clone, Dupe, Debug, Serialize, Deserialize, PartialEq, Eq, Allocative)]
 #[serde(deny_unknown_fields)]
-pub struct BuckSettings {
+pub struct YakSettings {
     #[serde(default)]
     pub hydration: HydrationSection,
     #[serde(default)]
     pub log_download: LogDownloadSection,
 }
 
-impl From<BuckSettingsData> for BuckSettings {
-    fn from(data: BuckSettingsData) -> Self {
+impl From<YakSettingsData> for YakSettings {
+    fn from(data: YakSettingsData) -> Self {
         Self {
             hydration: HydrationSection(Arc::new(data.hydration)),
             log_download: LogDownloadSection(Arc::new(data.log_download)),
@@ -247,13 +247,13 @@ impl From<BuckSettingsData> for BuckSettings {
     }
 }
 
-impl Default for BuckSettings {
+impl Default for YakSettings {
     fn default() -> Self {
-        BuckSettingsData::default().into()
+        YakSettingsData::default().into()
     }
 }
 
-impl BuckSettings {
+impl YakSettings {
     pub fn empty() -> Self {
         Self::default()
     }
@@ -265,7 +265,7 @@ pub(crate) mod testing {
 
     #[derive(Debug, Deserialize, PartialEq)]
     #[serde(deny_unknown_fields)]
-    pub struct TestBuckSettingsData {
+    pub struct TestYakSettingsData {
         pub test_section: Option<TestSection>,
     }
 
@@ -295,7 +295,7 @@ mod tests {
 
     #[test]
     fn test_default_hydration_settings() {
-        let hydration = BuckSettings::empty().hydration;
+        let hydration = YakSettings::empty().hydration;
         assert_eq!(hydration.enable_paging(), None);
         assert_eq!(hydration.page_out_on_idle(), None);
         assert!(
@@ -370,7 +370,7 @@ mod tests {
 
     #[test]
     fn test_all_settings_are_registered() {
-        // Remove once buck_settings! macro generates both BuckSettingsData and registry
+        // Remove once yak_settings! macro generates both YakSettingsData and registry
         fn collect_fields(prefix: Option<&str>, value: &serde_json::Value) -> BTreeSet<String> {
             value
                 .as_object()
@@ -390,8 +390,8 @@ mod tests {
                 .collect()
         }
 
-        let serialized = serde_json::to_value(BuckSettingsData::default())
-            .expect("`BuckSettingsData` should serialize");
+        let serialized = serde_json::to_value(YakSettingsData::default())
+            .expect("`YakSettingsData` should serialize");
         let fields = collect_fields(None, &serialized);
         let registered: BTreeSet<String> = ALL_SETTING_METADATA
             .iter()
@@ -399,7 +399,7 @@ mod tests {
             .collect();
         assert_eq!(
             fields, registered,
-            "Every `BuckSettingsData` field must be registered in `ALL_SETTING_METADATA`, and vice versa"
+            "Every `YakSettingsData` field must be registered in `ALL_SETTING_METADATA`, and vice versa"
         );
     }
 }

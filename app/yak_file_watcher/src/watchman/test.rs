@@ -22,8 +22,8 @@ use tokio::process::Child;
 use watchman_client::expr::Expr;
 use watchman_client::prelude::Connector;
 use watchman_client::prelude::FileType;
-use yak_error::BuckErrorContext;
-use yak_error::BuckErrorOptionContext;
+use yak_error::YakErrorContext;
+use yak_error::YakErrorOptionContext;
 use yak_error::yak_error;
 use yak_util::process::async_background_command;
 
@@ -104,7 +104,7 @@ impl WatchmanInstance {
         child
             .kill()
             .await
-            .buck_error_context("Failed to kill Watchman")?;
+            .yak_error_context("Failed to kill Watchman")?;
 
         // Everything went well. Remove the child so we don't log on Drop.
         self.child.take();
@@ -123,7 +123,7 @@ impl Drop for WatchmanInstance {
         // If we get here, something went wrong and we didn't stop Watchman properly. Log debug
         // info.
         eprintln!("WatchmanInstance did not exit cleanly!");
-        let log = std::fs::read_to_string(&self.log).with_buck_error_context(|| {
+        let log = std::fs::read_to_string(&self.log).with_yak_error_context(|| {
             format!("Failed to read log file at {}", self.log.display())
         });
         match log {
@@ -171,7 +171,7 @@ async fn spawn_watchman(watchman_dir: &Path) -> yak_error::Result<WatchmanInstan
 
     wait_for_watchman(&watchman_sock)
         .await
-        .buck_error_context("Waiting for Watchman to start")?;
+        .yak_error_context("Waiting for Watchman to start")?;
 
     Ok(WatchmanInstance {
         child: Some(watchman),

@@ -8,7 +8,7 @@
 
 load(
     ":common.bzl",
-    "apply_buckconfig_backed_modifiers",
+    "apply_yakconfig_backed_modifiers",
     "get_and_insert_modifier_info",
     "json_to_tagged_modifiers",
     "modifier_to_refs",
@@ -17,7 +17,7 @@ load(
 )
 load(
     ":types.bzl",
-    "BuckconfigBackedModifierInfo",
+    "YakconfigBackedModifierInfo",
     "Modifier",  # @unused
     "ModifierCliLocation",
     "ModifierTargetLocation",
@@ -33,16 +33,16 @@ PostConstraintAnalysisParams = record(
     configuring_exec_dep = bool,
 )
 
-def _get_buckconfig_backed_modifiers(extra_data: struct, configuring_exec_dep: bool) -> str | None:
+def _get_yakconfig_backed_modifiers(extra_data: struct, configuring_exec_dep: bool) -> str | None:
     # If we are configuring an exec dep, we don't want to apply any modifiers from yakconfig.
     if configuring_exec_dep:
         return None
-    return getattr(extra_data, "buckconfig_backed_modifiers", None)
+    return getattr(extra_data, "yakconfig_backed_modifiers", None)
 
-def _has_buckconfig_backed_modifiers(refs: dict[str, ProviderCollection], target: str | None) -> bool:
+def _has_yakconfig_backed_modifiers(refs: dict[str, ProviderCollection], target: str | None) -> bool:
     if not target:
         return False
-    info = refs[target][BuckconfigBackedModifierInfo]
+    info = refs[target][YakconfigBackedModifierInfo]
     return bool(info.pre_platform_modifiers or info.post_platform_modifiers or info.pre_cli_modifiers)
 
 def cfg_constructor_pre_constraint_analysis(
@@ -98,9 +98,9 @@ def cfg_constructor_pre_constraint_analysis(
     cli_modifiers = [resolved_modifier for modifier in cli_modifiers for resolved_modifier in resolve_alias(modifier, aliases)]
 
     refs = []
-    buckconfig_backed_modifiers = _get_buckconfig_backed_modifiers(extra_data, configuring_exec_dep)
-    if buckconfig_backed_modifiers:
-        refs.append(buckconfig_backed_modifiers)
+    yakconfig_backed_modifiers = _get_yakconfig_backed_modifiers(extra_data, configuring_exec_dep)
+    if yakconfig_backed_modifiers:
+        refs.append(yakconfig_backed_modifiers)
 
     for tagged_modifiers in package_modifiers:
         for modifier in tagged_modifiers.modifiers:
@@ -130,8 +130,8 @@ def cfg_constructor_post_constraint_analysis(*, refs: dict[str, ProviderCollecti
     Returns a PlatformInfo
     """
 
-    buckconfig_backed_modifiers = _get_buckconfig_backed_modifiers(params.extra_data, params.configuring_exec_dep)
-    if not (params.package_modifiers or params.target_modifiers or params.cli_modifiers or _has_buckconfig_backed_modifiers(refs, buckconfig_backed_modifiers)):
+    yakconfig_backed_modifiers = _get_yakconfig_backed_modifiers(params.extra_data, params.configuring_exec_dep)
+    if not (params.package_modifiers or params.target_modifiers or params.cli_modifiers or _has_yakconfig_backed_modifiers(refs, yakconfig_backed_modifiers)):
         # If there is no modifier and legacy platform is specified,
         # then return the legacy platform as is without changing the label or
         # configuration.
@@ -146,18 +146,18 @@ def cfg_constructor_post_constraint_analysis(*, refs: dict[str, ProviderCollecti
 
     constraint_setting_to_modifier_infos = {}
 
-    if buckconfig_backed_modifiers:
-        apply_buckconfig_backed_modifiers(
-            constraint_setting_to_modifier_infos, refs[buckconfig_backed_modifiers][BuckconfigBackedModifierInfo].pre_platform_modifiers
+    if yakconfig_backed_modifiers:
+        apply_yakconfig_backed_modifiers(
+            constraint_setting_to_modifier_infos, refs[yakconfig_backed_modifiers][YakconfigBackedModifierInfo].pre_platform_modifiers
         )
 
     if params.legacy_platform:
         for constraint_setting, constraint_value_info in params.legacy_platform.configuration.constraints.items():
             constraint_setting_to_modifier_infos[constraint_setting] = [constraint_value_info]
 
-    if buckconfig_backed_modifiers:
-        apply_buckconfig_backed_modifiers(
-            constraint_setting_to_modifier_infos, refs[buckconfig_backed_modifiers][BuckconfigBackedModifierInfo].post_platform_modifiers
+    if yakconfig_backed_modifiers:
+        apply_yakconfig_backed_modifiers(
+            constraint_setting_to_modifier_infos, refs[yakconfig_backed_modifiers][YakconfigBackedModifierInfo].post_platform_modifiers
         )
 
     for tagged_modifiers in params.package_modifiers:
@@ -179,9 +179,9 @@ def cfg_constructor_post_constraint_analysis(*, refs: dict[str, ProviderCollecti
                 location = ModifierTargetLocation(),
             )
 
-    if buckconfig_backed_modifiers:
-        apply_buckconfig_backed_modifiers(
-            constraint_setting_to_modifier_infos, refs[buckconfig_backed_modifiers][BuckconfigBackedModifierInfo].pre_cli_modifiers
+    if yakconfig_backed_modifiers:
+        apply_yakconfig_backed_modifiers(
+            constraint_setting_to_modifier_infos, refs[yakconfig_backed_modifiers][YakconfigBackedModifierInfo].pre_cli_modifiers
         )
 
     for modifier in params.cli_modifiers:

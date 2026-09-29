@@ -20,7 +20,7 @@ load(
     "go_stdlib_transition",
     "go_test_transition",
 )
-load(":common.bzl", "buck", "prelude_rule")
+load(":common.bzl", "yak", "prelude_rule")
 load(":cxx_common.bzl", "cxx_common")
 load(":go_common.bzl", "go_common")
 load(":re_test_common.bzl", "re_test_common")
@@ -118,9 +118,9 @@ go_binary = prelude_rule(
             """,
             ),
         }
-        | buck.licenses_arg()
-        | buck.labels_arg()
-        | buck.contacts_arg()
+        | yak.licenses_arg()
+        | yak.labels_arg()
+        | yak.contacts_arg()
     ),
     cfg = go_binary_transition,
 )
@@ -210,9 +210,9 @@ go_exported_library = prelude_rule(
             """,
             ),
         }
-        | buck.licenses_arg()
-        | buck.labels_arg()
-        | buck.contacts_arg()
+        | yak.licenses_arg()
+        | yak.labels_arg()
+        | yak.contacts_arg()
     ),
     cfg = go_exported_library_transition,
 )
@@ -256,9 +256,9 @@ go_library = prelude_rule(
         | go_common.coverage_enabled_arg()
         | go_common.generate_exported_header()
         | {}
-        | buck.licenses_arg()
-        | buck.labels_arg()
-        | buck.contacts_arg()
+        | yak.licenses_arg()
+        | yak.labels_arg()
+        | yak.contacts_arg()
     ),
     cfg = go_library_transition,
 )
@@ -320,7 +320,7 @@ go_test = prelude_rule(
     further = None,
     attrs = (
         # @unsorted-dict-items
-        buck.inject_test_env_arg()
+        yak.inject_test_env_arg()
         | go_common.srcs_arg()
         | {
             "coverage_mode": attrs.option(
@@ -388,8 +388,8 @@ go_test = prelude_rule(
             """,
             ),
         }
-        | buck.test_label_arg()
-        | buck.test_rule_timeout_ms()
+        | yak.test_label_arg()
+        | yak.test_rule_timeout_ms()
         | {
             "env": attrs.dict(
                 key = attrs.string(),
@@ -401,7 +401,7 @@ go_test = prelude_rule(
             """,
             ),
         }
-        | buck.run_test_separately_arg(
+        | yak.run_test_separately_arg(
             run_test_separately_type = attrs.bool(
                 default = False,
                 doc = """
@@ -417,8 +417,8 @@ go_test = prelude_rule(
             "runner": attrs.option(attrs.dep(), default = None),
             "specs": attrs.option(attrs.arg(json = True), default = None),
         }
-        | buck.licenses_arg()
-        | buck.contacts_arg()
+        | yak.licenses_arg()
+        | yak.contacts_arg()
         | re_test_common.test_args()
         | test_common.attributes()
     ),
@@ -439,8 +439,8 @@ go_bootstrap_binary = prelude_rule(
             "build_args": attrs.list(attrs.string(), default = [], doc = """Package name, file names and build flags"""),
             "workdir": attrs.string(default = "", doc = """Change to subdir before running the command"""),
         }
-        | buck.labels_arg()
-        | buck.contacts_arg()
+        | yak.labels_arg()
+        | yak.contacts_arg()
     ),
 )
 

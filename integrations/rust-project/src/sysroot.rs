@@ -14,8 +14,8 @@ use std::process::Stdio;
 
 use tracing::instrument;
 
-use crate::buck::truncate_line_ending;
-use crate::buck::utf8_output;
+use crate::yak::truncate_line_ending;
+use crate::yak::utf8_output;
 use crate::project_json::Sysroot;
 
 #[derive(Debug)]

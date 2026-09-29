@@ -14,7 +14,7 @@
 #![feature(used_with_arg)]
 
 pub mod argv;
-pub mod buckd_connection;
+pub mod yakd_connection;
 pub mod build_count;
 pub mod buildfiles;
 pub mod cas_digest;
@@ -27,7 +27,7 @@ pub mod external_cells;
 pub mod external_symlink;
 pub mod file_ops;
 pub mod find_buildfile;
-pub mod home_buck_tmp;
+pub mod home_yak_tmp;
 pub mod http;
 pub mod ignores;
 pub mod init;

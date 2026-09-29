@@ -20,21 +20,21 @@ use yak_common::invocation_paths::InvocationPaths;
 use yak_error::ExitCode;
 use yak_event_observer::span_tracker::EventTimestamp;
 
-use crate::client_ctx::BuckSubcommand;
+use crate::client_ctx::YakSubcommand;
 use crate::client_ctx::ClientCommandContext;
-use crate::common::BuckArgMatches;
+use crate::common::YakArgMatches;
 use crate::common::CommonBuildConfigurationOptions;
 use crate::common::CommonEventLogOptions;
 use crate::common::CommonStarlarkOptions;
 use crate::common::ui::CommonConsoleOptions;
 use crate::common::ui::get_console_with_root;
-use crate::daemon::client::BuckdClientConnector;
-use crate::daemon::client::connect::BuckdConnectDaemonOptions;
-use crate::daemon::client::connect::BuckdConnectOptions;
+use crate::daemon::client::YakdClientConnector;
+use crate::daemon::client::connect::YakdConnectDaemonOptions;
+use crate::daemon::client::connect::YakdConnectOptions;
 use crate::daemon::client::connect::DaemonConstraintsRequest;
 use crate::daemon::client::connect::DaemonStartupMode;
 use crate::daemon::client::connect::DesiredTraceIoState;
-use crate::daemon::client::connect::connect_buckd;
+use crate::daemon::client::connect::connect_yakd;
 use crate::events_ctx::EventsCtx;
 use crate::exit_result::ExitResult;
 use crate::path_arg::PathArg;
@@ -48,7 +48,7 @@ use crate::subscribers::test_id_writer::TestIdWriter;
 
 fn update_events_ctx<T: StreamingCommand>(
     cmd: &T,
-    matches: BuckArgMatches<'_>,
+    matches: YakArgMatches<'_>,
     ctx: &ClientCommandContext,
     events_ctx: &mut EventsCtx,
 ) {
@@ -125,8 +125,8 @@ pub trait StreamingCommand: Sized + Send + Sync {
     /// Run the command.
     async fn exec_impl(
         self,
-        buckd: &mut BuckdClientConnector,
-        matches: BuckArgMatches<'_>,
+        yakd: &mut YakdClientConnector,
+        matches: YakArgMatches<'_>,
         ctx: &mut ClientCommandContext<'_>,
         events_ctx: &mut EventsCtx,
     ) -> ExitResult;
@@ -180,59 +180,59 @@ pub trait StreamingCommand: Sized + Send + Sync {
     }
 }
 
-impl<T: StreamingCommand> BuckSubcommand for T {
+impl<T: StreamingCommand> YakSubcommand for T {
     const COMMAND_NAME: &'static str = T::COMMAND_NAME;
 
     /// Actual call that runs a `StreamingCommand`.
     /// Handles the business of setting up a server connection for streaming.
     async fn exec_impl(
         self,
-        matches: BuckArgMatches<'_>,
+        matches: YakArgMatches<'_>,
         mut ctx: ClientCommandContext<'_>,
         events_ctx: &mut EventsCtx,
     ) -> ExitResult {
         let work = async {
             let mut connect_options = if T::existing_only() {
-                BuckdConnectOptions::ExistingOnly
+                YakdConnectOptions::ExistingOnly
             } else {
                 let mut req =
                     DaemonConstraintsRequest::new(ctx.immediate_config, T::trace_io(&self))?;
                 ctx.restarter.apply_to_constraints(&mut req);
-                BuckdConnectOptions::Options(BuckdConnectDaemonOptions {
+                YakdConnectOptions::Options(YakdConnectDaemonOptions {
                     constraints: req,
                     daemon_startup_mode: T::daemon_startup_mode(),
                 })
             };
-            let buckd = match ctx.start_in_process_daemon.take() {
-                None => connect_buckd(connect_options, events_ctx, ctx.paths()?).await,
+            let yakd = match ctx.start_in_process_daemon.take() {
+                None => connect_yakd(connect_options, events_ctx, ctx.paths()?).await,
                 Some(start_in_process_daemon) => {
                     // Start in-process daemon, wait until it is ready to accept connections.
                     start_in_process_daemon()?;
 
                     // Do not attempt to spawn a daemon if connect failed.
                     // Connect should not fail.
-                    connect_options = BuckdConnectOptions::ExistingOnly;
+                    connect_options = YakdConnectOptions::ExistingOnly;
 
-                    connect_buckd(connect_options, events_ctx, ctx.paths()?).await
+                    connect_yakd(connect_options, events_ctx, ctx.paths()?).await
                 }
             };
 
-            let mut buckd = match buckd {
-                Ok(buckd) => buckd,
+            let mut yakd = match yakd {
+                Ok(yakd) => yakd,
                 Err(e) => {
                     return ExitResult::err_with_exit_code(e, ExitCode::ConnectError);
                 }
             };
 
-            events_ctx.daemon_pid = Some(buckd.daemon_pid);
-            events_ctx.cgroup_path_of_buck2_daemon = buckd.cgroup_path_of_buck2_daemon.clone();
-            events_ctx.daemon_start_instant = buckd.daemon_start_instant;
+            events_ctx.daemon_pid = Some(yakd.daemon_pid);
+            events_ctx.cgroup_path_of_yak_daemon = yakd.cgroup_path_of_yak_daemon.clone();
+            events_ctx.daemon_start_instant = yakd.daemon_start_instant;
 
             let command_result = self
-                .exec_impl(&mut buckd, matches, &mut ctx, events_ctx)
+                .exec_impl(&mut yakd, matches, &mut ctx, events_ctx)
                 .await;
 
-            ctx.restarter.observe(&buckd, events_ctx);
+            ctx.restarter.observe(&yakd, events_ctx);
 
             command_result
         };
@@ -245,7 +245,7 @@ impl<T: StreamingCommand> BuckSubcommand for T {
 
     fn update_events_ctx(
         &self,
-        matches: BuckArgMatches<'_>,
+        matches: YakArgMatches<'_>,
         ctx: &ClientCommandContext,
         events_ctx: &mut EventsCtx,
     ) {

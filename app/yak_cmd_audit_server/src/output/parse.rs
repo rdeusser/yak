@@ -17,8 +17,8 @@ use yak_server_ctx::ctx::ServerCommandContextTrait;
 use yak_server_ctx::ctx::ServerCommandDiceContext;
 use yak_server_ctx::partial_result_dispatcher::PartialResultDispatcher;
 
-use super::buck_out_path_parser::BuckOutPathParser;
-use super::buck_out_path_type_printer::BuckOutPathTypePrinter;
+use super::yak_out_path_parser::YakOutPathParser;
+use super::yak_out_path_type_printer::YakOutPathTypePrinter;
 use crate::ServerAuditSubcommand;
 
 #[async_trait]
@@ -32,10 +32,10 @@ impl ServerAuditSubcommand for AuditParseCommand {
         server_ctx
             .with_dice_ctx(|_server_ctx, dice_ctx| async move {
                 let cell_resolver = dice_ctx.ctx().get_cell_resolver().await?;
-                let buck_out_parser = BuckOutPathParser::new(cell_resolver.dupe());
-                let parsed_path = buck_out_parser.parse(&self.output_path)?;
+                let yak_out_parser = YakOutPathParser::new(cell_resolver.dupe());
+                let parsed_path = yak_out_parser.parse(&self.output_path)?;
 
-                let printer = BuckOutPathTypePrinter::new(self.json, &self.output_attribute)?;
+                let printer = YakOutPathTypePrinter::new(self.json, &self.output_attribute)?;
 
                 let stdout = stdout.as_writer();
 

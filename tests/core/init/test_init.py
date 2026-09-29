@@ -6,11 +6,11 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-from e2e_util.api.buck import Buck
-from e2e_util.buck_workspace import buck_test
+from e2e_util.api.yak import Yak
+from e2e_util.yak_workspace import yak_test
 
 
-@buck_test()
-async def test_init_builds(buck: Buck) -> None:
-    await buck.init()
-    await buck.build("root//...")
+@yak_test()
+async def test_init_builds(yak: Yak) -> None:
+    await yak.init()
+    await yak.build("root//...")

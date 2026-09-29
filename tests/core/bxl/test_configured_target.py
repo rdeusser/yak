@@ -6,27 +6,27 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-from e2e_util.api.buck import Buck
-from e2e_util.buck_workspace import buck_test
+from e2e_util.api.yak import Yak
+from e2e_util.yak_workspace import yak_test
 
 
-@buck_test(data_dir="")
-async def test_unwrap_forward(buck: Buck) -> None:
-    await buck.bxl("//bxl/configured_target.bxl:unwrap_forward")
+@yak_test(data_dir="")
+async def test_unwrap_forward(yak: Yak) -> None:
+    await yak.bxl("//bxl/configured_target.bxl:unwrap_forward")
 
 
-@buck_test(data_dir="")
-async def test_configured_targets_with_modifiers(buck: Buck) -> None:
-    result = await buck.bxl(
+@yak_test(data_dir="")
+async def test_configured_targets_with_modifiers(yak: Yak) -> None:
+    result = await yak.bxl(
         "//bxl/configured_target.bxl:configured_targets_with_modifiers"
     )
     configurations = [line.strip() for line in result.stdout.splitlines()]
-    linux_cfg = await buck.audit_configurations(configurations[0])
+    linux_cfg = await yak.audit_configurations(configurations[0])
     assert "root//:linux" in linux_cfg.stdout
-    macos_cfg = await buck.audit_configurations(configurations[1])
+    macos_cfg = await yak.audit_configurations(configurations[1])
     assert "root//:macos" in macos_cfg.stdout
 
 
-@buck_test(data_dir="")
-async def test_strip_cfg(buck: Buck) -> None:
-    await buck.bxl("//bxl/configured_target.bxl:strip_cfg")
+@yak_test(data_dir="")
+async def test_strip_cfg(yak: Yak) -> None:
+    await yak.bxl("//bxl/configured_target.bxl:strip_cfg")

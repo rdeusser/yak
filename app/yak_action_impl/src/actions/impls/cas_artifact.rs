@@ -39,8 +39,8 @@ use yak_common::io::trace::TracingIoProvider;
 use yak_core::category::CategoryRef;
 use yak_core::execution_types::executor_config::RemoteExecutorUseCase;
 use yak_core::soft_error;
-use yak_error::BuckErrorContext;
-use yak_error::BuckErrorOptionContext;
+use yak_error::YakErrorContext;
+use yak_error::YakErrorOptionContext;
 use yak_error::internal_error;
 use yak_execute::artifact_value::ArtifactValue;
 use yak_execute::digest::CasDigestToReExt;
@@ -51,7 +51,7 @@ use yak_execute::directory::re_tree_to_directory;
 use yak_execute::execute::command_executor::ActionExecutionTimingData;
 use yak_execute::materialize::materializer::CasDownloadInfo;
 use yak_execute::materialize::materializer::DeclareArtifactPayload;
-use yak_hash::BuckIndexSet;
+use yak_hash::YakIndexSet;
 
 use crate::actions::impls::offline;
 
@@ -109,7 +109,7 @@ pub(crate) struct UnregisteredCasArtifactAction {
 impl UnregisteredAction for UnregisteredCasArtifactAction {
     fn register(
         self: Box<Self>,
-        outputs: BuckIndexSet<BuildArtifact>,
+        outputs: YakIndexSet<BuildArtifact>,
         _starlark_data: Option<OwnedFrozen<Value<'static>>>,
         _error_handler: Option<OwnedFrozen<Value<'static>>>,
     ) -> yak_error::Result<Box<dyn Action>> {
@@ -125,7 +125,7 @@ struct CasArtifactAction {
 
 impl CasArtifactAction {
     fn new(
-        outputs: BuckIndexSet<BuildArtifact>,
+        outputs: YakIndexSet<BuildArtifact>,
         inner: UnregisteredCasArtifactAction,
     ) -> yak_error::Result<Self> {
         let outputs_len = outputs.len();
@@ -210,7 +210,7 @@ impl Action for CasArtifactAction {
                         cas_download_info.as_ref(),
                     )
                     .await
-                    .with_buck_error_context(|| {
+                    .with_yak_error_context(|| {
                         format!(
                             "Error accessing digest expiration for: `{}`",
                             self.inner.digest,
@@ -280,7 +280,7 @@ impl Action for CasArtifactAction {
                                 .next()
                                 .internal_error("RE response was empty")
                         })
-                        .with_buck_error_context(|| {
+                        .with_yak_error_context(|| {
                             format!("Error downloading tree: {}", self.inner.digest)
                         })?,
                     DirectoryKind::Directory => {
@@ -296,7 +296,7 @@ impl Action for CasArtifactAction {
                                     .next()
                                     .internal_error("RE response was empty")
                             })
-                            .with_buck_error_context(|| {
+                            .with_yak_error_context(|| {
                                 format!("Error downloading dir: {}", self.inner.digest)
                             })?;
                         re_directory_to_re_tree(
@@ -318,7 +318,7 @@ impl Action for CasArtifactAction {
                     ctx.output_trees_download_config()
                         .fingerprint_re_output_trees_eagerly(),
                 )
-                .buck_error_context("Invalid directory")?;
+                .yak_error_context("Invalid directory")?;
 
                 ArtifactValue::new(
                     ActionDirectoryEntry::Dir(
@@ -366,7 +366,7 @@ impl Action for CasArtifactAction {
             let offline_cache_path =
                 offline::declare_copy_to_offline_output_cache(ctx, &self.output, value.dupe())
                     .await?;
-            tracer.add_buck_out_entry(offline_cache_path);
+            tracer.add_yak_out_entry(offline_cache_path);
         }
 
         Ok((

@@ -44,7 +44,7 @@ pub(crate) fn register_path(builder: &mut GlobalsBuilder) {
     /// The `glob()` call is evaluated against the list of files owned by this `YAK` file.
     /// A file is owned by whichever `YAK` file is closest above it - so given `foo/YAK` and
     /// `foo/bar/YAK` the file `foo/file.txt` would be owned by `foo/YAK` (and available from
-    /// its `glob` results) but the file `foo/bar/file.txt` would be owned by `foo/bar/BUCk`
+    /// its `glob` results) but the file `foo/bar/file.txt` would be owned by `foo/bar/YAk`
     /// and _not_ appear in the glob result of `foo/YAK`, even if you write `glob(["bar/file.txt"])`.
     /// As a consequence of this rule, `glob(["../foo.txt"])` will always return an empty list of files.
     ///

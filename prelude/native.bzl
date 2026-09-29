@@ -39,10 +39,10 @@ load("@prelude//rust:sources.bzl", "RustSources")
 load("@prelude//rust:with_workspace.bzl", "with_rust_workspace")
 load("@prelude//user:all.bzl", _user_rules = "rules")
 load(
-    "@prelude//utils:buckconfig.bzl",
+    "@prelude//utils:yakconfig.bzl",
     _read_config = "read_config_with_logging",
     _read_root_config = "read_root_config_with_logging",
-    log_buckconfigs = "LOG_BUCKCONFIGS",
+    log_yakconfigs = "LOG_YAKCONFIGS",
 )
 load("@prelude//utils:selects.bzl", "selects")
 
@@ -189,11 +189,11 @@ __overridden_builtins__ = (
         "read_config": _read_config,
         "read_root_config": _read_root_config,
     }
-    if log_buckconfigs
+    if log_yakconfigs
     else {}
 )
 
-__shimmed_native__ = __struct_to_dict(__buck2_builtins__)
+__shimmed_native__ = __struct_to_dict(__yak_builtins__)
 __shimmed_native__.update(__overridden_builtins__)
 __shimmed_native__.update(__rules__)
 __shimmed_native__.update(_user_rules)

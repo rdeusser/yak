@@ -35,8 +35,8 @@ use yak_core::execution_types::executor_config::RemoteExecutorUseCase;
 use yak_core::fs::project::ProjectRoot;
 use yak_core::fs::project_rel_path::ProjectRelativePath;
 use yak_core::yak_env;
-use yak_error::BuckErrorContext;
-use yak_error::BuckErrorOptionContext;
+use yak_error::YakErrorContext;
+use yak_error::YakErrorOptionContext;
 use yak_error::conversion::from_any_with_tag;
 use yak_re_configuration::RemoteExecutionStaticMetadata;
 use yak_re_configuration::RemoteExecutionStaticMetadataImpl;
@@ -230,7 +230,7 @@ impl ReConnectionManager {
     pub fn get_network_stats(&self) -> yak_error::Result<RemoteExecutionClientStats> {
         let client_stats = RE::get_network_stats()
             .map_err(|e| from_any_with_tag(e, yak_error::ErrorTag::Tier0))
-            .buck_error_context("Error getting RE network stats")?;
+            .yak_error_context("Error getting RE network stats")?;
 
         // Those two fields come from RE and are always available.
         let mut res = RemoteExecutionClientStats {

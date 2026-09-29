@@ -9,11 +9,11 @@
 [License]:
   https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-blueviolet.svg
 [Build Status]:
-  https://github.com/rdeusser/buck2/actions/workflows/build-and-test.yml/badge.svg
-[CI]: https://github.com/rdeusser/buck2/actions/workflows/build-and-test.yml
+  https://github.com/rdeusser/yak/actions/workflows/build-and-test.yml/badge.svg
+[CI]: https://github.com/rdeusser/yak/actions/workflows/build-and-test.yml
 
 <strong>
-  <a href="https://rdeusser.github.io/buck2/">Homepage</a>&nbsp;&nbsp;&bull;&nbsp;&nbsp;<a href="https://rdeusser.github.io/buck2/docs/getting_started/">Getting Started</a>&nbsp;&nbsp;&bull;&nbsp;&nbsp;<a href="./CONTRIBUTING.md">Contributing</a>
+  <a href="https://rdeusser.github.io/yak/">Homepage</a>&nbsp;&nbsp;&bull;&nbsp;&nbsp;<a href="https://rdeusser.github.io/yak/docs/getting_started/">Getting Started</a>&nbsp;&nbsp;&bull;&nbsp;&nbsp;<a href="./CONTRIBUTING.md">Contributing</a>
 </strong>
 
 ---
@@ -21,7 +21,7 @@
 </div>
 
 yak is a fast, hermetic, multi-language build system. It is an independent
-open-source fork of Buck2, which Meta created.
+open-source fork of Yak, which Meta created.
 
 But what do those words really mean for a build system &mdash; and why might
 they interest you? "But why yak?" you might ask, when so many build systems
@@ -62,7 +62,7 @@ If you're familiar with systems like [Bazel](https://bazel.build/) or
 [Pants](https://www.pantsbuild.org/) &mdash; then yak will feel warm and cozy,
 and these ideas will be familiar. But then why create yak if those already
 exist? Because that isn't all &mdash; the page
-_["Why yak?"](https://rdeusser.github.io/buck2/docs/about/why/)_ on our website goes into
+_["Why yak?"](https://rdeusser.github.io/yak/docs/about/why/)_ on our website goes into
 more detail on several other important design criteria that separate yak from
 the rest of the pack, including:
 
@@ -83,7 +83,7 @@ the rest of the pack, including:
 - And more!
 
 If these headline features make you interested &mdash; check out the
-[Getting Started](https://rdeusser.github.io/buck2/docs/getting_started/) guide!
+[Getting Started](https://rdeusser.github.io/yak/docs/getting_started/) guide!
 
 ## 🚧🚧🚧 **Warning** 🚧🚧🚧 &mdash; rough terrain lies ahead
 
@@ -96,13 +96,13 @@ probably have to fiddle with things more than necessary to get it nice and
 polished.
 
 Please provide feedback by submitting
-[issues and questions!](https://github.com/rdeusser/buck2/issues)
+[issues and questions!](https://github.com/rdeusser/yak/issues)
 
 ## Installing yak
 
 You can get started by downloading a
-[tagged version](https://github.com/rdeusser/buck2/tags) or the
-[latest](https://github.com/rdeusser/buck2/releases/tag/latest) built binary for
+[tagged version](https://github.com/rdeusser/yak/tags) or the
+[latest](https://github.com/rdeusser/yak/releases/tag/latest) built binary for
 your platform. The `latest` tag always refers to a recent commit; it is updated
 on every single push to the GitHub repository, so it will always be a recent
 version.
@@ -112,12 +112,12 @@ releases where it's easy to deploy into a repo with a single text file and auto
 pull the correct platform as needed.
 
 You can also compile yak from source, if a binary isn't immediately available for your use; check
-out the [docs](https://rdeusser.github.io/buck2/docs/getting_started/install/) for information.
+out the [docs](https://rdeusser.github.io/yak/docs/getting_started/install/) for information.
 
 ## Terminology conventions
 
 Frequently used terms and their definitions can be found on the
-[glossary page](https://rdeusser.github.io/buck2/docs/concepts/glossary/).
+[glossary page](https://rdeusser.github.io/yak/docs/concepts/glossary/).
 
 ## License
 

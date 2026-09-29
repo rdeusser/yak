@@ -9,15 +9,15 @@
 import os
 
 from e2e_util import asserts
-from e2e_util.api.buck import Buck
+from e2e_util.api.yak import Yak
 from e2e_util.asserts import expect_failure
-from e2e_util.buck_workspace import buck_test
+from e2e_util.yak_workspace import yak_test
 from e2e_util.helper.utils import filter_events
 
 
-@buck_test(data_dir="write")
-async def test_write_files(buck: Buck) -> None:
-    result = await buck.build(
+@yak_test(data_dir="write")
+async def test_write_files(yak: Yak) -> None:
+    result = await yak.build(
         "//:simple",
         "//:uses_declared_output",
         "//:uses_declared_output_as_output",
@@ -68,28 +68,28 @@ async def test_write_files(buck: Buck) -> None:
     assert os.path.isabs(output.read_text().strip())
 
 
-@buck_test(data_dir="write_fails")
-async def test_write_files_fails_invalid_content(buck: Buck) -> None:
+@yak_test(data_dir="write_fails")
+async def test_write_files_fails_invalid_content(yak: Yak) -> None:
     await expect_failure(
-        buck.build("//:fails_on_invalid_contents"),
+        yak.build("//:fails_on_invalid_contents"),
         stderr_regex="Type of parameter `content`",
     )
 
 
-@buck_test(data_dir="write_fails")
-async def test_write_files_fails_invalid_output(buck: Buck) -> None:
+@yak_test(data_dir="write_fails")
+async def test_write_files_fails_invalid_output(yak: Yak) -> None:
     await expect_failure(
-        buck.build("//:fails_on_invalid_output"),
+        yak.build("//:fails_on_invalid_output"),
         stderr_regex="Type of parameter `output`",
     )
 
 
-@buck_test(data_dir="write")
-async def test_output_size(buck: Buck) -> None:
-    await buck.build("//:simple")
+@yak_test(data_dir="write")
+async def test_output_size(yak: Yak) -> None:
+    await yak.build("//:simple")
 
     output_size = await filter_events(
-        buck,
+        yak,
         "Event",
         "data",
         "SpanEnd",

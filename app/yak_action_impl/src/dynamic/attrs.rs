@@ -35,7 +35,7 @@ use yak_build_api::interpreter::rule_defs::artifact::starlark_output_artifact::S
 use yak_build_api::interpreter::rule_defs::artifact::unpack_artifact::UnpackNonPromiseInputArtifact;
 use yak_core::deferred::dynamic::DynamicLambdaResultsKey;
 use yak_error::yak_error;
-use yak_hash::BuckIndexSet;
+use yak_hash::YakIndexSet;
 use yak_util::size_assert;
 
 use crate::context::dynamic_output::DynamicActionsOutputArtifactBinder;
@@ -189,7 +189,7 @@ impl<'v> DynamicAttrValue<'v> {
 pub fn dedupe_output_artifacts<'v>(
     v: Vec<ValueTyped<'v, StarlarkOutputArtifact<'v>>>,
 ) -> Box<[ValueTyped<'v, StarlarkOutputArtifact<'v>>]> {
-    let mut found = BuckIndexSet::default();
+    let mut found = YakIndexSet::default();
     let mut outputs = Vec::new();
     for i in v {
         if found.insert(i.artifact()) {
@@ -220,7 +220,7 @@ impl<'v> DynamicAttrValues<'v> {
     }
 
     pub(crate) fn artifact_values(&self) -> Box<[Artifact]> {
-        let mut artifact_values = BuckIndexSet::default();
+        let mut artifact_values = YakIndexSet::default();
         self.for_each_node(&mut |value| {
             if let DynamicAttrValue::ArtifactValue(artifact) = value {
                 artifact_values.insert(artifact.dupe());

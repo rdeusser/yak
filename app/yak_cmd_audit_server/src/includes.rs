@@ -37,7 +37,7 @@ use yak_fs::fs_util;
 use yak_fs::paths::abs_norm_path::AbsNormPath;
 use yak_fs::paths::abs_norm_path::AbsNormPathBuf;
 use yak_fs::paths::file_name::FileNameBuf;
-use yak_hash::buck_indexmap;
+use yak_hash::yak_indexmap;
 use yak_interpreter::file_loader::LoadedModule;
 use yak_interpreter::load_module::InterpreterCalculation;
 use yak_interpreter::paths::module::StarlarkModulePath;
@@ -266,11 +266,11 @@ impl ServerAuditSubcommand for AuditIncludesCommand {
                             match includes {
                                 Ok(includes) => map.serialize_entry(
                                     path,
-                                    &buck_indexmap! {"includes" => &includes},
+                                    &yak_indexmap! {"includes" => &includes},
                                 )?,
                                 Err(e) => map.serialize_entry(
                                     path,
-                                    &buck_indexmap! {"$error" => format!("{:#}", e)},
+                                    &yak_indexmap! {"$error" => format!("{:#}", e)},
                                 )?,
                             }
                         }

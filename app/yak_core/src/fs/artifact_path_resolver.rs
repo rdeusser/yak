@@ -15,8 +15,8 @@ use pagable::Pagable;
 use crate::cells::CellResolver;
 use crate::cells::cell_path::CellPathRef;
 use crate::content_hash::ContentBasedPathHash;
-use crate::fs::buck_out_path::BuckOutPathResolver;
-use crate::fs::buck_out_path::BuildArtifactPath;
+use crate::fs::yak_out_path::YakOutPathResolver;
+use crate::fs::yak_out_path::BuildArtifactPath;
 use crate::fs::project::ProjectRoot;
 use crate::fs::project_rel_path::ProjectRelativePathBuf;
 use crate::package::source_path::SourcePathRef;
@@ -24,19 +24,19 @@ use crate::package::source_path::SourcePathRef;
 #[derive(Clone, Dupe, PartialEq, Allocative, Pagable)]
 pub struct ArtifactFs {
     cell_resolver: CellResolver,
-    buck_out_path_resolver: BuckOutPathResolver,
+    yak_out_path_resolver: YakOutPathResolver,
     project_filesystem: ProjectRoot,
 }
 
 impl ArtifactFs {
     pub fn new(
         cell_resolver: CellResolver,
-        buck_out_path_resolver: BuckOutPathResolver,
+        yak_out_path_resolver: YakOutPathResolver,
         project_filesystem: ProjectRoot,
     ) -> Self {
         Self {
             cell_resolver,
-            buck_out_path_resolver,
+            yak_out_path_resolver,
             project_filesystem,
         }
     }
@@ -45,7 +45,7 @@ impl ArtifactFs {
         &self,
         path: &BuildArtifactPath,
     ) -> Option<ProjectRelativePathBuf> {
-        self.buck_out_path_resolver.unhashed_gen(path)
+        self.yak_out_path_resolver.unhashed_gen(path)
     }
 
     pub fn resolve_build(
@@ -53,14 +53,14 @@ impl ArtifactFs {
         path: &BuildArtifactPath,
         content_hash: Option<&ContentBasedPathHash>,
     ) -> yak_error::Result<ProjectRelativePathBuf> {
-        self.buck_out_path_resolver.resolve_gen(path, content_hash)
+        self.yak_out_path_resolver.resolve_gen(path, content_hash)
     }
 
     pub fn resolve_build_configuration_hash_path(
         &self,
         path: &BuildArtifactPath,
     ) -> yak_error::Result<ProjectRelativePathBuf> {
-        self.buck_out_path_resolver
+        self.yak_out_path_resolver
             .resolve_gen_configuration_hash_path(path)
     }
 
@@ -80,7 +80,7 @@ impl ArtifactFs {
             .get(source_artifact_path.package().cell_name())?
             .external()
         {
-            Ok(self.buck_out_path_resolver.resolve_external_cell_source(
+            Ok(self.yak_out_path_resolver.resolve_external_cell_source(
                 source_artifact_path.to_cell_path().path(),
                 origin.dupe(),
             ))
@@ -95,15 +95,15 @@ impl ArtifactFs {
         &self,
         path: &BuildArtifactPath,
     ) -> yak_error::Result<ProjectRelativePathBuf> {
-        self.buck_out_path_resolver.resolve_offline_cache(path)
+        self.yak_out_path_resolver.resolve_offline_cache(path)
     }
 
     pub fn fs(&self) -> &ProjectRoot {
         &self.project_filesystem
     }
 
-    pub fn buck_out_path_resolver(&self) -> &BuckOutPathResolver {
-        &self.buck_out_path_resolver
+    pub fn yak_out_path_resolver(&self) -> &YakOutPathResolver {
+        &self.yak_out_path_resolver
     }
 
     pub fn cell_resolver(&self) -> &CellResolver {

@@ -16,7 +16,7 @@ use async_trait::async_trait;
 use yak_core::cells::cell_path::CellPath;
 use yak_core::fs::project::ProjectRoot;
 use yak_core::fs::project_rel_path::ProjectRelativePathBuf;
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 use yak_error::ErrorTag;
 
 use crate::file_ops::metadata::RawDirEntry;

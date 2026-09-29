@@ -10,9 +10,9 @@ import asyncio
 import json
 
 import pytest
-from e2e_util.api.buck import Buck
-from e2e_util.api.buck_result import BuckException
-from e2e_util.buck_workspace import buck_test, env
+from e2e_util.api.yak import Yak
+from e2e_util.api.yak_result import YakException
+from e2e_util.yak_workspace import yak_test, env
 
 
 # Length-prefixed protobuf frame for:
@@ -25,32 +25,32 @@ from e2e_util.buck_workspace import buck_test, env
 SUBSCRIBE_TO_ACTIVE_COMMANDS_REQUEST = b"\x02\x22\x00"
 
 
-@buck_test()
-async def test_active_commands(buck: Buck) -> None:
-    async with await buck.subscribe("--active-commands") as subscribe:
+@yak_test()
+async def test_active_commands(yak: Yak) -> None:
+    async with await yak.subscribe("--active-commands") as subscribe:
         msg = await subscribe.read_message()
         commands = msg["response"]["ActiveCommandsSnapshot"]["active_commands"]
         assert len(commands) == 1
         assert "subscribe" in commands[0]["argv"]
 
 
-@buck_test()
-async def test_disconnect_eof(buck: Buck) -> None:
-    async with await buck.subscribe() as subscribe:
+@yak_test()
+async def test_disconnect_eof(yak: Yak) -> None:
+    async with await yak.subscribe() as subscribe:
         subscribe.stdin.close()
         msg = await subscribe.read_message()
         assert "EOF" in msg["response"]["Goodbye"]["reason"]
 
 
-@buck_test()
+@yak_test()
 @env("YAK_TESTING_INACTIVITY_TIMEOUT", "true")
-async def test_requests_keep_daemon_alive(buck: Buck) -> None:
-    async with await buck.subscribe() as subscribe:
+async def test_requests_keep_daemon_alive(yak: Yak) -> None:
+    async with await yak.subscribe() as subscribe:
         subscribe.stdin.write(SUBSCRIBE_TO_ACTIVE_COMMANDS_REQUEST)
         await subscribe.stdin.drain()
         await subscribe.read_message()
 
-        pid = json.loads((await buck.status()).stdout)["process_info"]["pid"]
+        pid = json.loads((await yak.status()).stdout)["process_info"]["pid"]
 
         for _ in range(3):
             await asyncio.sleep(0.6)
@@ -58,23 +58,23 @@ async def test_requests_keep_daemon_alive(buck: Buck) -> None:
             await subscribe.stdin.drain()
             await subscribe.read_message()
 
-        status = json.loads((await buck.status()).stdout)
+        status = json.loads((await yak.status()).stdout)
         assert status["process_info"]["pid"] == pid
         assert subscribe._process.returncode is None
 
 
-@buck_test()
-async def test_disconnect_error(buck: Buck) -> None:
-    with pytest.raises(BuckException):
-        async with await buck.subscribe() as subscribe:
+@yak_test()
+async def test_disconnect_error(yak: Yak) -> None:
+    with pytest.raises(YakException):
+        async with await yak.subscribe() as subscribe:
             subscribe.stdin.write(b"x")
             subscribe.stdin.close()
             msg = await subscribe.read_message()
             assert "Error parsing request" in msg["response"]["Goodbye"]["reason"]
 
 
-@buck_test()
-async def test_unknown_request_error(buck: Buck) -> None:
-    with pytest.raises(BuckException):
-        async with await buck.subscribe() as subscribe:
+@yak_test()
+async def test_unknown_request_error(yak: Yak) -> None:
+    with pytest.raises(YakException):
+        async with await yak.subscribe() as subscribe:
             subscribe.stdin.write(b"\x00")  # Would decode to a None request

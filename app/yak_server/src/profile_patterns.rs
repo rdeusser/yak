@@ -13,13 +13,13 @@ use std::sync::Mutex;
 
 use dupe::Dupe;
 use itertools::Itertools;
-use yak_error::BuckErrorOptionContext;
+use yak_error::YakErrorOptionContext;
 use yak_fs::error::IoResultExt;
 use yak_fs::fs_util;
 use yak_fs::paths::abs_path::AbsPathBuf;
 use yak_fs::paths::file_name::FileName;
 use yak_fs::paths::forward_rel_path::ForwardRelativePathBuf;
-use yak_hash::BuckMutMap;
+use yak_hash::YakMutMap;
 use yak_interpreter::dice::starlark_provider::StarlarkEvalKind;
 use yak_interpreter::factory::ProfileEventListener;
 use yak_interpreter::starlark_profiler::data::StarlarkProfileDataAndStats;
@@ -31,7 +31,7 @@ pub(crate) struct FileWritingProfileEventListener {
 }
 
 struct State {
-    written: BuckMutMap<ForwardRelativePathBuf, usize>,
+    written: YakMutMap<ForwardRelativePathBuf, usize>,
     errors: Vec<yak_error::Error>,
     profiles: Vec<Arc<StarlarkProfileDataAndStats>>,
 }
@@ -41,7 +41,7 @@ impl FileWritingProfileEventListener {
         Self {
             base_path,
             state: Mutex::new(State {
-                written: BuckMutMap::default(),
+                written: YakMutMap::default(),
                 errors: Vec::new(),
                 profiles: Vec::new(),
             }),

@@ -26,7 +26,7 @@ pub fn init_late_bindings() {
     static ONCE: Once = Once::new();
     ONCE.call_once(|| {
         starlark::eval::set_global_soft_error_handler(
-            &yak_interpreter::soft_error::Buck2StarlarkSoftErrorHandler,
+            &yak_interpreter::soft_error::YakStarlarkSoftErrorHandler,
         );
         attrs::attrs_global::init_coerce_providers_label_for_bzl();
         interpreter::calculation::init_interpreter_calculation_impl();

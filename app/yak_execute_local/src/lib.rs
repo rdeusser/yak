@@ -32,8 +32,8 @@ use futures::stream::TryStreamExt;
 use pin_project::pin_project;
 use tokio_util::codec::BytesCodec;
 use tokio_util::codec::FramedRead;
-use yak_error::BuckErrorContext;
-use yak_error::BuckErrorOptionContext;
+use yak_error::YakErrorContext;
+use yak_error::YakErrorOptionContext;
 use yak_fs::fs_util;
 use yak_fs::paths::abs_norm_path::AbsNormPathBuf;
 use yak_fs::paths::abs_path::AbsPath;
@@ -316,19 +316,19 @@ where
                 kill_process
                     .kill(&mut process_group)
                     .await
-                    .buck_error_context("Failed to terminate child after timeout")?;
+                    .yak_error_context("Failed to terminate child after timeout")?;
 
                 decoder
                     .cancel()
                     .await
-                    .buck_error_context("Failed to cancel status decoder after timeout")?;
+                    .yak_error_context("Failed to cancel status decoder after timeout")?;
 
                 // We just killed the child, so this should finish immediately. We should still call
                 // this to release any process.
                 let (_status, orphans) = process_group
                     .wait(futures::stream::pending())
                     .await
-                    .buck_error_context("Failed to await child after kill")?;
+                    .yak_error_context("Failed to await child after kill")?;
 
                 (res, orphans)
             }
@@ -419,7 +419,7 @@ pub fn maybe_absolutize_exe<'a>(
     let exe = exe.as_ref();
 
     let abs = spawned_process_cwd.join(exe);
-    if fs_util::try_exists(&abs).buck_error_context("Error absolute-izing executable")? {
+    if fs_util::try_exists(&abs).yak_error_context("Error absolute-izing executable")? {
         return Ok(abs.into_path_buf().into());
     }
 

@@ -24,7 +24,7 @@ use yak_interpreter::types::provider::callable::ProviderCallableLike;
 use crate::interpreter::rule_defs::provider::ProviderLike;
 use crate::interpreter::rule_defs::provider::ty::provider::ty_provider;
 use crate::interpreter::rule_defs::provider::ty::provider_callable::ty_provider_callable;
-use crate::interpreter::rule_defs::type_id_domain::Buck2TypeIdDomain;
+use crate::interpreter::rule_defs::type_id_domain::YakTypeIdDomain;
 
 /// Types associated with builtin providers.
 pub struct BuiltinProviderTy<
@@ -68,7 +68,7 @@ impl<'v, P: StarlarkValue<'v> + ProviderLike<'v>, C: StarlarkValue<'v> + Provide
                 ty_provider(
                     P::TYPE,
                     TypeInstanceId::from_identity(
-                        Buck2TypeIdDomain::BuiltinProvider,
+                        YakTypeIdDomain::BuiltinProvider,
                         &(P::TYPE, "instance"),
                     ),
                     TyStarlarkValue::new::<P>(),

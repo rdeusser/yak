@@ -23,7 +23,7 @@ GENRULE_OUT_DIR = "out"
 # TODO: Roll out root based genrules everywhere and flip the default to get rid of this logic.
 _BUILD_ROOT_LABELS = set([
     # The yak test suite
-    "buck2_test_build_root",
+    "yak_test_build_root",
     "rust_bindgen",
     "haskell_hsc",
     "clang-module",
@@ -52,7 +52,7 @@ def _prefers_local(ctx: AnalysisContext) -> bool:
     return genrule_labels_prefer_local(ctx.attrs.labels)
 
 def _ignore_artifacts(ctx: AnalysisContext) -> bool:
-    return "buck2_ignore_artifacts" in ctx.attrs.labels
+    return "yak_ignore_artifacts" in ctx.attrs.labels
 
 def _requires_no_srcs_environment(ctx: AnalysisContext) -> bool:
     return _NO_SRCS_ENVIRONMENT_LABEL in ctx.attrs.labels
@@ -272,11 +272,11 @@ def process_genrule(
     # again (thus making the label useless). So, when a local-only label is
     # set, we make the action *different*.
     if local_only:
-        env_vars["__BUCK2_LOCAL_ONLY_CACHE_BUSTER"] = ""
+        env_vars["__YAK_LOCAL_ONLY_CACHE_BUSTER"] = ""
 
     # see comment above
     if prefer_local:
-        env_vars["__BUCK2_PREFER_LOCAL_CACHE_BUSTER"] = ""
+        env_vars["__YAK_PREFER_LOCAL_CACHE_BUSTER"] = ""
 
     if _requires_no_srcs_environment(ctx):
         env_vars.pop("SRCS")

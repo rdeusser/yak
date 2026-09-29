@@ -21,7 +21,7 @@ use starlark::values::Trace;
 use starlark::values::UnpackValue;
 use starlark::values::ValueTyped;
 use starlark::values::type_repr::StarlarkTypeRepr;
-use yak_interpreter::types::regex::StarlarkBuckRegex;
+use yak_interpreter::types::regex::StarlarkYakRegex;
 
 /// Regex argument for `cmd_args.replace_regex`.
 #[derive(
@@ -41,7 +41,7 @@ pub(crate) enum CmdArgsRegex<'v> {
     /// Deprecated.
     // TODO(nga): migrate, soft error, remove.
     Str(StringValue<'v>),
-    Regex(ValueTyped<'v, StarlarkBuckRegex>),
+    Regex(ValueTyped<'v, StarlarkYakRegex>),
 }
 
 impl<'v> CmdArgsRegex<'v> {

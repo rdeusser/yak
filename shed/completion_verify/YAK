@@ -16,7 +16,7 @@ rust_binary(
         },
     }),
     deps = [
-        "//third-party/rust:buck-resources",
+        "//third-party/rust:yak-resources",
         "//third-party/rust:clap",
         "//third-party/rust:ptyprocess",
         "//third-party/rust:tempfile",

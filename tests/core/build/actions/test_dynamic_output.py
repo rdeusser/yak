@@ -10,34 +10,34 @@ import asyncio
 import fileinput
 import time
 
-from e2e_util.api.buck import Buck
+from e2e_util.api.yak import Yak
 from e2e_util.asserts import expect_failure
-from e2e_util.buck_workspace import buck_test
+from e2e_util.yak_workspace import yak_test
 from e2e_util.helper.golden import golden, sanitize_stderr
 
 
-@buck_test(data_dir="everything")
-async def test_dynamic_output(buck: Buck) -> None:
-    await buck.build("root//:")
+@yak_test(data_dir="everything")
+async def test_dynamic_output(yak: Yak) -> None:
+    await yak.build("root//:")
 
 
-@buck_test(data_dir="everything_new")
-async def test_dynamic_output_new(buck: Buck) -> None:
-    await buck.build("root//:")
+@yak_test(data_dir="everything_new")
+async def test_dynamic_output_new(yak: Yak) -> None:
+    await yak.build("root//:")
 
 
-@buck_test(data_dir="empty_dynamic_list")
-async def test_empty_dynamic_list(buck: Buck) -> None:
-    await buck.build("root//:empty_test")
+@yak_test(data_dir="empty_dynamic_list")
+async def test_empty_dynamic_list(yak: Yak) -> None:
+    await yak.build("root//:empty_test")
 
 
-@buck_test(data_dir="artifact_eq_bug")
-async def test_artifact_eq_bug(buck: Buck) -> None:
-    await buck.build("root//:bug")
+@yak_test(data_dir="artifact_eq_bug")
+async def test_artifact_eq_bug(yak: Yak) -> None:
+    await yak.build("root//:bug")
 
 
-@buck_test(data_dir="many_rebound_outputs", skip_for_os=["windows"])
-async def test_many_rebound_outputs_incremental_rebuild(buck: Buck) -> None:
+@yak_test(data_dir="many_rebound_outputs", skip_for_os=["windows"])
+async def test_many_rebound_outputs_incremental_rebuild(yak: Yak) -> None:
     """
     Every artifact re-bound through a dynamic_output gets its own action key
     that redirects to the producing action and stores that action's *entire*
@@ -54,13 +54,13 @@ async def test_many_rebound_outputs_incremental_rebuild(buck: Buck) -> None:
     instead.
     """
     start = time.monotonic()
-    await buck.build("root//:check")
+    await yak.build("root//:check")
     first = time.monotonic() - start
 
     # Invalidate the analysis (and with it every action key). The seed changes
     # the content of exactly one of the dynamic action's outputs (see the
     # fixture for why that matters).
-    with fileinput.input(buck.cwd / "YAK.fixture", inplace=True) as f:
+    with fileinput.input(yak.cwd / "YAK.fixture", inplace=True) as f:
         for line in f:
             print(line.replace('seed = "A"', 'seed = "B"'), end="")
 
@@ -72,10 +72,10 @@ async def test_many_rebound_outputs_incremental_rebuild(buck: Buck) -> None:
     start = time.monotonic()
     timed_out = False
     try:
-        await asyncio.wait_for(buck.build("root//:check"), timeout=threshold)
+        await asyncio.wait_for(yak.build("root//:check"), timeout=threshold)
     except asyncio.TimeoutError:
         timed_out = True
-        await buck.kill()
+        await yak.kill()
     second = time.monotonic() - start
 
     assert not timed_out and second < threshold, (
@@ -84,10 +84,10 @@ async def test_many_rebound_outputs_incremental_rebuild(buck: Buck) -> None:
     )
 
 
-@buck_test(data_dir="analysis_failure")
-async def test_dynamic_output_analysis_failure(buck: Buck) -> None:
+@yak_test(data_dir="analysis_failure")
+async def test_dynamic_output_analysis_failure(yak: Yak) -> None:
     result = await expect_failure(
-        buck.build("root//:analysis_failure"),
+        yak.build("root//:analysis_failure"),
         stderr_regex="Analysis failed: this is a test failure message",
     )
     golden(

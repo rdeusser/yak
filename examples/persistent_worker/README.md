@@ -122,7 +122,7 @@ command-line arguments in an argument file specified as `@argfile`,
 ### Local Persistent Worker
 
 A locally executed yak persistent worker falls under the
-[yak persistent worker protocol](./proto/buck2/worker.proto): It is started
+[yak persistent worker protocol](./proto/yak_worker/worker.proto): It is started
 and managed by yak and passed a file path in the `WORKER_SOCKET` environment
 variable where it should create a gRPC Unix domain socket to serve worker
 requests over. Multiple requests may be sent in parallel and expected to be

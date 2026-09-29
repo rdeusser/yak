@@ -8,14 +8,14 @@
 
 from pathlib import Path
 
-from e2e_util.api.buck import Buck
-from e2e_util.buck_workspace import buck_test
+from e2e_util.api.yak import Yak
+from e2e_util.yak_workspace import yak_test
 
 
-@buck_test()
-async def test_chrome_trace(buck: Buck, tmp_path: Path) -> None:
+@yak_test()
+async def test_chrome_trace(yak: Yak, tmp_path: Path) -> None:
     # Just check it at least runs. More thorough coverage lives in the
     # yak_log_common unit tests shared with `yak debug chrome-trace`.
-    await buck.build("//...")
-    await buck.log("chrome-trace", "--trace-path", str(tmp_path / "trace.json"))
+    await yak.build("//...")
+    await yak.log("chrome-trace", "--trace-path", str(tmp_path / "trace.json"))
     assert (tmp_path / "trace.json").exists()

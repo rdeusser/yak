@@ -288,7 +288,7 @@ xs[1] += 1
 #[test]
 fn test_radd() {
     // We want select append to always produce a select, much like the
-    // Bazel/Buck `select` function.
+    // Bazel/Yak `select` function.
     #[derive(
         Debug,
         Display,

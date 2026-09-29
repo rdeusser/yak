@@ -22,8 +22,8 @@ use yak_core::deferred::base_deferred_key::BaseDeferredKeyBxl;
 use yak_core::deferred::dynamic::DynamicLambdaResultsKey;
 use yak_execute::artifact_value::ArtifactValue;
 use yak_execute::digest_config::DigestConfig;
-use yak_hash::BuckIndexMap;
-use yak_hash::BuckMutMap;
+use yak_hash::YakIndexMap;
+use yak_hash::YakMutMap;
 use yak_util::late_binding::LateBinding;
 
 use crate::dynamic::deferred::InputArtifactsMaterialized;
@@ -36,8 +36,8 @@ pub static EVAL_BXL_FOR_DYNAMIC_OUTPUT: LateBinding<
         OwnedFrozenRef<'v, &'static FrozenDynamicLambdaParams<'static>>,
         &'v mut DiceComputations,
         InputArtifactsMaterialized,
-        &'v BuckIndexMap<&Artifact, &ArtifactValue>,
-        BuckMutMap<DynamicValue, FrozenProviderCollectionValue>,
+        &'v YakIndexMap<&Artifact, &ArtifactValue>,
+        YakMutMap<DynamicValue, FrozenProviderCollectionValue>,
         DigestConfig,
         CancellationObserver,
     ) -> Pin<
@@ -51,8 +51,8 @@ pub(crate) async fn eval_bxl_for_dynamic_output<'v>(
     dynamic_lambda: OwnedFrozenRef<'_, &'static FrozenDynamicLambdaParams<'static>>,
     dice_ctx: &'v mut DiceComputations<'_>,
     input_artifacts_materialized: InputArtifactsMaterialized,
-    ensured_artifacts: &'v BuckIndexMap<&Artifact, &ArtifactValue>,
-    resolved_dynamic_values: BuckMutMap<DynamicValue, FrozenProviderCollectionValue>,
+    ensured_artifacts: &'v YakIndexMap<&Artifact, &ArtifactValue>,
+    resolved_dynamic_values: YakMutMap<DynamicValue, FrozenProviderCollectionValue>,
     digest_config: DigestConfig,
     liveness: CancellationObserver,
 ) -> yak_error::Result<RecordedAnalysisValues> {

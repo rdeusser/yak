@@ -10,9 +10,9 @@
 
 use std::sync::Arc;
 
-use yak_error::BuckErrorOptionContext;
+use yak_error::YakErrorOptionContext;
 use yak_error::internal_error;
-use yak_events::BuckEvent;
+use yak_events::YakEvent;
 use yak_wrapper_common::invocation_id::TraceId;
 
 use crate::action_stats::ActionStats;
@@ -21,13 +21,13 @@ use crate::dice_state::DiceState;
 use crate::progress::BuildProgressStateTracker;
 use crate::re_state::ReState;
 use crate::session_info::SessionInfo;
-use crate::span_tracker::BuckEventSpanTracker;
+use crate::span_tracker::YakEventSpanTracker;
 use crate::starlark_debug::StarlarkDebuggerState;
 use crate::test_state::TestState;
 use crate::two_snapshots::TwoSnapshots;
 
 pub struct EventObserver<E> {
-    pub span_tracker: BuckEventSpanTracker,
+    pub span_tracker: YakEventSpanTracker,
     pub action_stats: ActionStats,
     re_state: ReState,
     two_snapshots: TwoSnapshots, // NOTE: We got many more copies of this than we should.
@@ -47,7 +47,7 @@ where
 {
     pub fn new(trace_id: TraceId) -> Self {
         Self {
-            span_tracker: BuckEventSpanTracker::new(),
+            span_tracker: YakEventSpanTracker::new(),
             action_stats: ActionStats::default(),
             re_state: ReState::new(),
             two_snapshots: TwoSnapshots::default(),
@@ -64,11 +64,11 @@ where
         }
     }
 
-    pub async fn observe(&mut self, event: &Arc<BuckEvent>) -> yak_error::Result<()> {
+    pub async fn observe(&mut self, event: &Arc<YakEvent>) -> yak_error::Result<()> {
         self.span_tracker.handle_event(event)?;
 
         {
-            use yak_data::buck_event::Data::*;
+            use yak_data::yak_event::Data::*;
 
             match event.data() {
                 SpanEnd(end) => {
@@ -141,7 +141,7 @@ where
         Ok(())
     }
 
-    pub fn spans(&self) -> &BuckEventSpanTracker {
+    pub fn spans(&self) -> &YakEventSpanTracker {
         &self.span_tracker
     }
 
@@ -185,7 +185,7 @@ where
 pub trait EventObserverExtra: Send {
     fn new() -> Self;
 
-    fn observe(&mut self, event: &Arc<BuckEvent>) -> yak_error::Result<()>;
+    fn observe(&mut self, event: &Arc<YakEvent>) -> yak_error::Result<()>;
 }
 
 /// This has more fields for debug info. We don't always capture those.
@@ -202,7 +202,7 @@ impl EventObserverExtra for DebugEventObserverExtra {
         }
     }
 
-    fn observe(&mut self, event: &Arc<BuckEvent>) -> yak_error::Result<()> {
+    fn observe(&mut self, event: &Arc<YakEvent>) -> yak_error::Result<()> {
         self.debug_events.handle_event(event)?;
         self.progress_state.handle_event(event)?;
 
@@ -227,7 +227,7 @@ impl EventObserverExtra for NoopEventObserverExtra {
         Self
     }
 
-    fn observe(&mut self, _event: &Arc<BuckEvent>) -> yak_error::Result<()> {
+    fn observe(&mut self, _event: &Arc<YakEvent>) -> yak_error::Result<()> {
         // Noop
         Ok(())
     }

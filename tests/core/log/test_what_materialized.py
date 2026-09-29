@@ -10,18 +10,18 @@ import csv
 import json
 
 import pytest
-from e2e_util.api.buck import Buck
-from e2e_util.buck_workspace import buck_test
+from e2e_util.api.yak import Yak
+from e2e_util.yak_workspace import yak_test
 
 # yak records a materialization when it downloads an output from a Remote
 # Execution backend. An output that a local action wrote needs none.
 pytestmark = pytest.mark.remote_execution
 
 
-@buck_test()
-async def test_what_materialized_csv(buck: Buck) -> None:
-    await buck.build("//:my_rule")
-    out = await buck.log("what-materialized", "--format", "csv")
+@yak_test()
+async def test_what_materialized_csv(yak: Yak) -> None:
+    await yak.build("//:my_rule")
+    out = await yak.log("what-materialized", "--format", "csv")
     header = ["path", "method", "file_count", "total_bytes"]
     out = [
         dict(zip(header, record))
@@ -37,10 +37,10 @@ async def test_what_materialized_csv(buck: Buck) -> None:
     )
 
 
-@buck_test()
-async def test_what_materialized_sorted(buck: Buck) -> None:
-    await buck.build("//:my_rule")
-    out = await buck.log("what-materialized", "--format", "json", "--sort-by-size")
+@yak_test()
+async def test_what_materialized_sorted(yak: Yak) -> None:
+    await yak.build("//:my_rule")
+    out = await yak.log("what-materialized", "--format", "json", "--sort-by-size")
     out = [json.loads(line) for line in out.stdout.splitlines() if line]
     assert len(out) > 0, "out should have some materializations"
     assert all(
@@ -48,12 +48,12 @@ async def test_what_materialized_sorted(buck: Buck) -> None:
     ), "should be sorted by size"
 
 
-@buck_test()
-async def test_what_materialized_aggregated(buck: Buck) -> None:
-    await buck.build("//:my_rule")
+@yak_test()
+async def test_what_materialized_aggregated(yak: Yak) -> None:
+    await yak.build("//:my_rule")
     # yak log what-materialized --aggregate-by-ext has the following output:
     # <empty>	cas	1	1
-    out = await buck.log("what-materialized", "--aggregate-by-ext")
+    out = await yak.log("what-materialized", "--aggregate-by-ext")
     out = [line.split() for line in out.stdout.splitlines() if line]
     assert len(out) > 0, "out should have some materializations"
     assert out[0][0] == "<empty>"

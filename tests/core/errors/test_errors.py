@@ -8,25 +8,25 @@
 
 import re
 
-from e2e_util.api.buck import Buck
+from e2e_util.api.yak import Yak
 from e2e_util.asserts import expect_failure
-from e2e_util.buck_workspace import buck_test, env
+from e2e_util.yak_workspace import yak_test, env
 from e2e_util.helper.golden import golden, strip_glog_lines
 
 
-@buck_test()
-async def test_soft_error(buck: Buck) -> None:
+@yak_test()
+async def test_soft_error(yak: Yak) -> None:
     await expect_failure(
-        buck.targets(":"), stderr_regex="starlark_raised_soft_error.*Will be reported"
+        yak.targets(":"), stderr_regex="starlark_raised_soft_error.*Will be reported"
     )
 
 
-@buck_test(
+@yak_test(
     # windows errors are slightly different, just skip for now
     skip_for_os=["windows"],
 )
 @env("YAK_HARD_ERROR", "false")
-async def test_package_listing_errors(buck: Buck) -> None:
+async def test_package_listing_errors(yak: Yak) -> None:
     outs = []
     for target in [
         # //package_listing/missing does not exist
@@ -47,7 +47,7 @@ async def test_package_listing_errors(buck: Buck) -> None:
         # Missing directory due to being in the wrong cell
         "//something:",
     ]:
-        out = await expect_failure(buck.uquery(target, "-v=0", "--console=none"))
+        out = await expect_failure(yak.uquery(target, "-v=0", "--console=none"))
         stripped_stderr = re.sub(
             "read_dir(.*)", "read_dir(<stripped absolute path>)", out.stderr
         )
@@ -59,13 +59,13 @@ async def test_package_listing_errors(buck: Buck) -> None:
     )
 
 
-@buck_test(
+@yak_test(
     # windows errors are slightly different, just skip for now
     skip_for_os=["windows"],
 )
-async def test_configured_graph_deps_collapsed_in_errors(buck: Buck) -> None:
+async def test_configured_graph_deps_collapsed_in_errors(yak: Yak) -> None:
     out = await expect_failure(
-        buck.cquery(
+        yak.cquery(
             "//deps_collapsed:top",
             "-v=0",
             "--console=none",
@@ -77,13 +77,13 @@ async def test_configured_graph_deps_collapsed_in_errors(buck: Buck) -> None:
     golden(output=stderr, rel_path="deps_collapsed/expected.golden.out")
 
 
-@buck_test(
+@yak_test(
     # windows errors are slightly different, just skip for now
     skip_for_os=["windows"],
 )
-async def test_configured_graph_deps_collapsed_in_errors_2(buck: Buck) -> None:
+async def test_configured_graph_deps_collapsed_in_errors_2(yak: Yak) -> None:
     out = await expect_failure(
-        buck.cquery(
+        yak.cquery(
             "//deps_collapsed:top",
             "-v=0",
             "--console=none",

@@ -115,7 +115,7 @@ def _labels_arg():
             attrs.string(),
             default = [],
             doc = """
-    Set of arbitrary strings which allow you to annotate a [build rule](https://rdeusser.github.io/buck2/docs/concepts/build_rule/) with tags
+    Set of arbitrary strings which allow you to annotate a [build rule](https://rdeusser.github.io/yak/docs/concepts/build_rule/) with tags
     that can be searched for over an entire dependency tree using `yak query()`.
 """,
         ),
@@ -207,7 +207,7 @@ def _licenses_arg():
             default = [],
             doc = """
             Set of license files for this library. To get the list of license files for a given build rule and
-            all of its dependencies, you can use [yak query](https://rdeusser.github.io/buck2/docs/users/commands/query/)
+            all of its dependencies, you can use [yak query](https://rdeusser.github.io/yak/docs/users/commands/query/)
         """,
         ),
     }
@@ -228,7 +228,7 @@ def _contacts_arg():
         ),
     }
 
-buck = struct(
+yak = struct(
     name_arg = _name_arg,
     deps_query_arg = _deps_query_arg,
     exec_os_type_arg = _exec_os_type_arg,

@@ -9,8 +9,8 @@
 import json
 import re
 
-from e2e_util.api.buck import Buck
-from e2e_util.buck_workspace import buck_test
+from e2e_util.api.yak import Yak
+from e2e_util.yak_workspace import yak_test
 from e2e_util.helper.utils import filter_events
 
 
@@ -18,10 +18,10 @@ def _replace_hash(s: str) -> str:
     return re.sub(r"\b[0-9a-f]{16}\b", "<HASH>", s)
 
 
-@buck_test()
-async def test_configuration_transition_rule_cquery(buck: Buck) -> None:
+@yak_test()
+async def test_configuration_transition_rule_cquery(yak: Yak) -> None:
     # The cquery output contains a "forward" node.
-    result = await buck.cquery("deps(root//:the-test)")
+    result = await yak.cquery("deps(root//:the-test)")
     result.check_returncode()
     # Watchos resource should be present twice: as forward and as transitioned.
     assert result.stdout.count(":watchos-resource") == 2
@@ -29,9 +29,9 @@ async def test_configuration_transition_rule_cquery(buck: Buck) -> None:
     assert result.stdout.count(":default-resource") == 1
 
 
-@buck_test()
-async def test_configuration_transition_rule_cquery_actual_attr(buck: Buck) -> None:
-    result = await buck.cquery(
+@yak_test()
+async def test_configuration_transition_rule_cquery_actual_attr(yak: Yak) -> None:
+    result = await yak.cquery(
         "--target-platforms=root//:iphoneos-p",
         "root//:watchos-resource",
         "--output-attribute=actual",
@@ -58,20 +58,20 @@ async def test_configuration_transition_rule_cquery_actual_attr(buck: Buck) -> N
     assert config_transition_has_no_attributes
 
 
-@buck_test()
-async def test_configuration_transition_rule_build(buck: Buck) -> None:
+@yak_test()
+async def test_configuration_transition_rule_build(yak: Yak) -> None:
     # Rule implementations do the assertions.
-    result = await buck.build("root//:the-test")
+    result = await yak.build("root//:the-test")
     result.check_returncode()
 
 
-@buck_test()
+@yak_test()
 async def test_configuration_transition_yields_multiple_configurations_created_events(
-    buck: Buck,
+    yak: Yak,
 ) -> None:
-    await buck.build("root//:the-test")
+    await yak.build("root//:the-test")
     configuration_created_events = await filter_events(
-        buck, "Event", "data", "Instant", "data", "ConfigurationCreated", "cfg"
+        yak, "Event", "data", "Instant", "data", "ConfigurationCreated", "cfg"
     )
 
     assert len(configuration_created_events) == 2

@@ -52,7 +52,7 @@ use yak_core::provider::label::ProvidersName;
 use yak_core::target::configured_target_label::ConfiguredTargetLabel;
 use yak_data::ErrorReport;
 use yak_directory::directory::entry::DirectoryEntry;
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 use yak_error::UniqueRootId;
 use yak_error::classify::ErrorLike;
 use yak_error::classify::Tier;
@@ -64,8 +64,8 @@ use yak_execute::directory::ActionSharedDirectory;
 use yak_fs::error::IoResultExt;
 use yak_fs::fs_util;
 use yak_fs::paths::abs_norm_path::AbsNormPathBuf;
-use yak_hash::BuckMutMap;
-use yak_hash::BuckMutSet;
+use yak_hash::YakMutMap;
+use yak_hash::YakMutSet;
 use yak_sketches::DependencyGraphSketch;
 use yak_wrapper_common::invocation_id::TraceId;
 
@@ -100,7 +100,7 @@ enum BuildOutcome {
 /// DO NOT UPDATE WITHOUT UPDATING `website/docs/users/build_observability/build_report.md`!
 ///
 /// Serialization of the report must be deterministic, so any map reachable from here has to
-/// iterate in a deterministic order - `BTreeMap`, not `BuckMutMap`.
+/// iterate in a deterministic order - `BTreeMap`, not `YakMutMap`.
 #[derive(Debug, Serialize)]
 pub struct BuildReport {
     trace_id: TraceId,
@@ -275,7 +275,7 @@ pub struct BuildReportCollector<'a> {
     artifact_fs: &'a ArtifactFs,
     cell_resolver: &'a CellResolver,
     overall_success: bool,
-    error_cause_cache: BuckMutMap<yak_error::UniqueRootId, usize>,
+    error_cause_cache: YakMutMap<yak_error::UniqueRootId, usize>,
     next_cause_index: usize,
     strings: BTreeMap<String, String>,
     include_package_project_relative_paths: bool,
@@ -318,7 +318,7 @@ impl<'a> BuildReportCollector<'a> {
             artifact_fs,
             cell_resolver,
             overall_success: true,
-            error_cause_cache: BuckMutMap::default(),
+            error_cause_cache: YakMutMap::default(),
             next_cause_index: 0,
             strings: BTreeMap::default(),
             include_package_project_relative_paths,
@@ -346,7 +346,7 @@ impl<'a> BuildReportCollector<'a> {
         exclude_action_error_diagnostics: bool,
         truncate_error_content: bool,
         configured: &BTreeMap<ConfiguredProvidersLabel, Option<ConfiguredBuildTargetResult>>,
-        configured_to_pattern_modifiers: &BuckMutMap<ConfiguredProvidersLabel, BTreeSet<Modifiers>>,
+        configured_to_pattern_modifiers: &YakMutMap<ConfiguredProvidersLabel, BTreeSet<Modifiers>>,
         other_errors: &BTreeMap<Option<ProvidersLabel>, Vec<yak_error::Error>>,
         detailed_metrics: Option<DetailedAggregatedMetrics>,
         action_graph_sketch_result: Option<ActionGraphSketchResult>,
@@ -370,26 +370,26 @@ impl<'a> BuildReportCollector<'a> {
             this.overall_success = false;
         }
 
-        let mut metrics_by_configured: BuckMutMap<
+        let mut metrics_by_configured: YakMutMap<
             ConfiguredProvidersLabel,
             Arc<TargetBuildMetrics>,
-        > = BuckMutMap::default();
-        let mut action_graph_sketches_by_configured: BuckMutMap<ConfiguredProvidersLabel, String> =
-            BuckMutMap::default();
-        let mut artifact_count_sketches_by_configured: BuckMutMap<
+        > = YakMutMap::default();
+        let mut action_graph_sketches_by_configured: YakMutMap<ConfiguredProvidersLabel, String> =
+            YakMutMap::default();
+        let mut artifact_count_sketches_by_configured: YakMutMap<
             ConfiguredProvidersLabel,
             String,
-        > = BuckMutMap::default();
-        let mut artifact_size_sketches_by_configured: BuckMutMap<ConfiguredProvidersLabel, String> =
-            BuckMutMap::default();
-        let mut artifact_count_cardinalities_by_configured: BuckMutMap<
+        > = YakMutMap::default();
+        let mut artifact_size_sketches_by_configured: YakMutMap<ConfiguredProvidersLabel, String> =
+            YakMutMap::default();
+        let mut artifact_count_cardinalities_by_configured: YakMutMap<
             ConfiguredProvidersLabel,
             f64,
-        > = BuckMutMap::default();
-        let mut artifact_size_cardinalities_by_configured: BuckMutMap<
+        > = YakMutMap::default();
+        let mut artifact_size_cardinalities_by_configured: YakMutMap<
             ConfiguredProvidersLabel,
             f64,
-        > = BuckMutMap::default();
+        > = YakMutMap::default();
         if let Some(detailed_metrics) = detailed_metrics.as_ref() {
             for top_level_metrics in &detailed_metrics.top_level_target_metrics {
                 metrics_by_configured.insert(
@@ -682,12 +682,12 @@ impl<'a> BuildReportCollector<'a> {
             ),
         >,
         errors: &[yak_error::Error],
-        metrics: &mut BuckMutMap<ConfiguredProvidersLabel, Arc<TargetBuildMetrics>>,
-        action_graph_sketches: &BuckMutMap<ConfiguredProvidersLabel, String>,
-        artifact_count_sketches: &BuckMutMap<ConfiguredProvidersLabel, String>,
-        artifact_size_sketches: &BuckMutMap<ConfiguredProvidersLabel, String>,
-        artifact_count_cardinalities: &BuckMutMap<ConfiguredProvidersLabel, f64>,
-        artifact_size_cardinalities: &BuckMutMap<ConfiguredProvidersLabel, f64>,
+        metrics: &mut YakMutMap<ConfiguredProvidersLabel, Arc<TargetBuildMetrics>>,
+        action_graph_sketches: &YakMutMap<ConfiguredProvidersLabel, String>,
+        artifact_count_sketches: &YakMutMap<ConfiguredProvidersLabel, String>,
+        artifact_size_sketches: &YakMutMap<ConfiguredProvidersLabel, String>,
+        artifact_count_cardinalities: &YakMutMap<ConfiguredProvidersLabel, f64>,
+        artifact_size_cardinalities: &YakMutMap<ConfiguredProvidersLabel, f64>,
         all_error_reports: &mut Vec<ErrorReport>,
     ) -> yak_error::Result<BuildReportEntry> {
         // NOTE: if we're actually building a thing, then the package path must exist, but be
@@ -739,12 +739,12 @@ impl<'a> BuildReportCollector<'a> {
                 &'b ConfiguredBuildTargetResult,
             ),
         >,
-        metrics: &mut BuckMutMap<ConfiguredProvidersLabel, Arc<TargetBuildMetrics>>,
-        action_graph_sketches: &BuckMutMap<ConfiguredProvidersLabel, String>,
-        artifact_count_sketches: &BuckMutMap<ConfiguredProvidersLabel, String>,
-        artifact_size_sketches: &BuckMutMap<ConfiguredProvidersLabel, String>,
-        artifact_count_cardinalities: &BuckMutMap<ConfiguredProvidersLabel, f64>,
-        artifact_size_cardinalities: &BuckMutMap<ConfiguredProvidersLabel, f64>,
+        metrics: &mut YakMutMap<ConfiguredProvidersLabel, Arc<TargetBuildMetrics>>,
+        action_graph_sketches: &YakMutMap<ConfiguredProvidersLabel, String>,
+        artifact_count_sketches: &YakMutMap<ConfiguredProvidersLabel, String>,
+        artifact_size_sketches: &YakMutMap<ConfiguredProvidersLabel, String>,
+        artifact_count_cardinalities: &YakMutMap<ConfiguredProvidersLabel, f64>,
+        artifact_size_cardinalities: &YakMutMap<ConfiguredProvidersLabel, f64>,
         all_error_reports: &mut Vec<ErrorReport>,
     ) -> yak_error::Result<ConfiguredBuildReportEntry> {
         let mut configured_report = ConfiguredBuildReportEntry::default();
@@ -926,7 +926,7 @@ impl<'a> BuildReportCollector<'a> {
         // are all top level artifacts that get their own `BuildEvent`, if they all fail, they
         // all get their own error in the build report. Completing the migration to artifact
         // groups would likely let us get rid of this.
-        let mut found_roots = BuckMutSet::default();
+        let mut found_roots = YakMutSet::default();
         temp.retain(|info| found_roots.insert(info.root));
 
         let mut out = Vec::with_capacity(temp.len());
@@ -1058,7 +1058,7 @@ fn write_or_serialize_build_report(
         }
         let file = fs_util::create_file(path.clone())
             .categorize_internal()
-            .buck_error_context("Error writing build report")?;
+            .yak_error_context("Error writing build report")?;
         let mut file = BufWriter::new(file);
         serde_json::to_writer_pretty(&mut file, build_report)?
     } else {
@@ -1076,7 +1076,7 @@ pub fn write_build_report(
     cwd: &ProjectRelativePath,
     trace_id: &TraceId,
     configured: &BTreeMap<ConfiguredProvidersLabel, Option<ConfiguredBuildTargetResult>>,
-    configured_to_pattern_modifiers: &BuckMutMap<ConfiguredProvidersLabel, BTreeSet<Modifiers>>,
+    configured_to_pattern_modifiers: &YakMutMap<ConfiguredProvidersLabel, BTreeSet<Modifiers>>,
     other_errors: &BTreeMap<Option<ProvidersLabel>, Vec<yak_error::Error>>,
     detailed_metrics: Option<DetailedAggregatedMetrics>,
     action_graph_sketch_result: Option<ActionGraphSketchResult>,
@@ -1154,7 +1154,7 @@ pub fn stream_build_report(
     cwd: &ProjectRelativePath,
     trace_id: &TraceId,
     configured: &BTreeMap<ConfiguredProvidersLabel, Option<ConfiguredBuildTargetResult>>,
-    configured_to_pattern_modifiers: &BuckMutMap<ConfiguredProvidersLabel, BTreeSet<Modifiers>>,
+    configured_to_pattern_modifiers: &YakMutMap<ConfiguredProvidersLabel, BTreeSet<Modifiers>>,
     other_errors: &BTreeMap<Option<ProvidersLabel>, Vec<yak_error::Error>>,
     detailed_metrics: Option<DetailedAggregatedMetrics>,
     action_graph_sketch_result: Option<ActionGraphSketchResult>,
@@ -1189,7 +1189,7 @@ pub fn stream_build_report(
         .create(true)
         .append(true)
         .open(path.clone())
-        .buck_error_context("Error opening streaming build report file for appending")?;
+        .yak_error_context("Error opening streaming build report file for appending")?;
     let mut file = BufWriter::new(file);
     file.write_all(serialized_build_report.as_ref().unwrap().as_bytes())?;
     file.write_all(b"\n")?;
@@ -1213,7 +1213,7 @@ pub fn initialize_streaming_build_report(
     // create and clear the file
     let _file = fs_util::create_file(path.clone())
         .categorize_internal()
-        .buck_error_context("Error initializing streaming build report")?;
+        .yak_error_context("Error initializing streaming build report")?;
 
     Ok(())
 }

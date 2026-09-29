@@ -276,7 +276,7 @@ def main(argv: List[str]) -> int:
     #   2. the fbcc wrapper script path
     #   3. the "--cc" arg pointing to the compiler we use
     #   4. (optional) fbcc-consumed args like "--log-fbcc"
-    #   5. (optional) pass-through args like "--target=" (from buckified toolchains)
+    #   5. (optional) pass-through args like "--target=" (from yakified toolchains)
     # EXAMPLE: ['--', 'path/to/fbcc', '--cc=path/to/clang++', '--log-fbcc=False', '--target=x86_64-redhat-linux-gnu', ...]
     clang_cc1_flags = _cleanup_flags(args.opt_args[2:] + clang_opt_flags)
     if clang_cc1_flags is None:

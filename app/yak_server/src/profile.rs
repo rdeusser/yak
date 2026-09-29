@@ -25,8 +25,8 @@ use yak_core::package::PackageLabel;
 use yak_core::pattern::pattern_type::ConfiguredProvidersPatternExtra;
 use yak_core::pattern::pattern_type::TargetPatternExtra;
 use yak_core::target::configured_target_label::ConfiguredTargetLabel;
-use yak_error::BuckErrorContext;
-use yak_error::BuckErrorOptionContext;
+use yak_error::YakErrorContext;
+use yak_error::YakErrorOptionContext;
 use yak_error::internal_error;
 use yak_fs::paths::abs_path::AbsPath;
 use yak_interpreter::dice::starlark_provider::StarlarkEvalKind;
@@ -74,7 +74,7 @@ async fn generate_profile_analysis(
         StarlarkProfilerConfiguration::ProfileAnalysis(..) => {
             profile_analysis(&mut ctx.ctx(), &configured_targets)
                 .await
-                .buck_error_context("Recursive profile analysis failed")
+                .yak_error_context("Recursive profile analysis failed")
                 .map(Arc::new)
         }
         _ => Err(internal_error!("Incorrect profile mode")),
@@ -144,7 +144,7 @@ impl ServerCommandTemplate for ProfileServerCommand {
         {
             ProfileOpts::TargetProfile(opts) => {
                 let action = yak_cli_proto::target_profile::Action::try_from(opts.action)
-                    .buck_error_context("Invalid action")?;
+                    .yak_error_context("Invalid action")?;
 
                 let profile_data = generate_profile(
                     server_ctx,

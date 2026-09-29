@@ -14,7 +14,7 @@ use std::process::Stdio;
 
 use tokio::io::AsyncReadExt;
 use tokio::process::Child;
-use yak_error::BuckErrorOptionContext;
+use yak_error::YakErrorOptionContext;
 use yak_error::internal_error;
 
 use crate::process::async_background_command;

@@ -105,14 +105,14 @@ mod tests {
     use assert_matches::assert_matches;
     use futures::stream::StreamExt;
     use futures::stream::poll_fn;
-    use yak_data::BuckEvent;
+    use yak_data::YakEvent;
 
     use super::*;
 
     fn event(span_id: u64) -> CommandProgress {
         CommandProgress {
             progress: Some(yak_cli_proto::command_progress::Progress::Event(Box::new(
-                BuckEvent {
+                YakEvent {
                     span_id,
                     ..Default::default()
                 },

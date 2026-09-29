@@ -20,13 +20,13 @@ use yak_common::local_resource_state::LocalResourceState;
 use yak_core::target::configured_target_label::ConfiguredTargetLabel;
 use yak_data::ReleaseLocalResourcesEnd;
 use yak_data::ReleaseLocalResourcesStart;
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 use yak_events::dispatch::span_async_simple;
-use yak_hash::BuckMutMap;
+use yak_hash::YakMutMap;
 
 #[derive(Default)]
 pub struct LocalResourceRegistry(
-    pub Arc<Mutex<BuckMutMap<ConfiguredTargetLabel, yak_error::Result<LocalResourceState>>>>,
+    pub Arc<Mutex<YakMutMap<ConfiguredTargetLabel, yak_error::Result<LocalResourceState>>>>,
 );
 
 impl LocalResourceRegistry {
@@ -48,7 +48,7 @@ impl LocalResourceRegistry {
                     let pid = s.owning_pid().unwrap();
                     try_terminate_process_gracefully(pid, Duration::from_secs(20))
                         .await
-                        .buck_error_context(format!(
+                        .yak_error_context(format!(
                             "Failed to kill a process with `{}` PID to release local resource `{}`",
                             pid,
                             s.source_target()

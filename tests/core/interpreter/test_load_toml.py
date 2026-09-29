@@ -9,8 +9,8 @@
 import ast
 from typing import Any
 
-from e2e_util.api.buck import Buck
-from e2e_util.buck_workspace import buck_test
+from e2e_util.api.yak import Yak
+from e2e_util.yak_workspace import yak_test
 
 
 def extract_test_output(stderr: str) -> dict[str, Any]:
@@ -47,9 +47,9 @@ def assert_common_fruits(data: dict[str, Any]) -> None:
     assert fruits[1]["name"] == "banana"
 
 
-@buck_test()
-async def test_load_toml(buck: Buck) -> None:
-    result = await buck.targets("root//:")
+@yak_test()
+async def test_load_toml(yak: Yak) -> None:
+    result = await yak.targets("root//:")
     data = extract_test_output(result.stderr)
 
     assert_common_types(data["types"])

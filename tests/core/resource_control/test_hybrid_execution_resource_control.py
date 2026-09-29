@@ -13,27 +13,27 @@ import os
 from pathlib import Path
 
 import pytest
-from e2e_util.api.buck import Buck
-from e2e_util.buck_workspace import buck_test
+from e2e_util.api.yak import Yak
+from e2e_util.yak_workspace import yak_test
 from e2e_util.helper.utils import filter_events
 
 
-def _use_some_memory_args(buck: Buck) -> list[str]:
+def _use_some_memory_args(yak: Yak) -> list[str]:
     return [
         "-c",
         f"use_some_memory.path={os.environ['USE_SOME_MEMORY_BIN']}",
     ]
 
 
-@buck_test(skip_for_os=["darwin", "windows"], disable_daemon_cgroup=False)
+@yak_test(skip_for_os=["darwin", "windows"], disable_daemon_cgroup=False)
 async def test_memory_pressure_telemetry(
-    buck: Buck,
+    yak: Yak,
 ) -> None:
-    with open(buck.cwd / ".yakconfig.local", "w") as f:
+    with open(yak.cwd / ".yakconfig.local", "w") as f:
         f.write("[yak_resource_control]\n")
         f.write("memory_high_per_action = 1048576\n")  # 1 MiB
 
-    await buck.build(
+    await yak.build(
         ":allocate_10_10M",
         "--no-remote-cache",
         "-c",
@@ -43,7 +43,7 @@ async def test_memory_pressure_telemetry(
     )
 
     resource_control_events = await filter_events(
-        buck, "Event", "data", "Instant", "data", "ResourceControlEvent"
+        yak, "Event", "data", "Instant", "data", "ResourceControlEvent"
     )
 
     # We can't reliably predict how many events will be fired and how high the pressure % will reach,
@@ -57,18 +57,18 @@ async def test_memory_pressure_telemetry(
 
 
 @pytest.mark.needs_binary("USE_SOME_MEMORY_BIN")
-@buck_test(skip_for_os=["darwin", "windows"], disable_daemon_cgroup=False)
+@yak_test(skip_for_os=["darwin", "windows"], disable_daemon_cgroup=False)
 async def test_resource_control_events_created(
-    buck: Buck,
+    yak: Yak,
 ) -> None:
-    with open(buck.cwd / ".yakconfig.local", "w") as f:
+    with open(yak.cwd / ".yakconfig.local", "w") as f:
         f.write("[yak_resource_control]\n")
         f.write("status = required\n")
         f.write("enable_action_cgroup_pool_v2 = true\n")
         f.write(f"memory_high_actions = {200 * 1024 * 1024}\n")  # 200 MiB
         f.write("enable_suspension = true\n")
 
-    await buck.build(
+    await yak.build(
         "prelude//:freeze_unfreeze_target",
         "--no-remote-cache",
         "-c",
@@ -76,11 +76,11 @@ async def test_resource_control_events_created(
         "-c",
         "build.execution_platforms=//:platforms",
         "--local-only",
-        *_use_some_memory_args(buck),
+        *_use_some_memory_args(yak),
     )
 
     event = await filter_events(
-        buck,
+        yak,
         "Event",
         "data",
         "Instant",
@@ -107,11 +107,11 @@ def get_daemon_cgroup_path(pid: int) -> Path:
     raise Exception(f"Could not find cgroup v2 entry for PID {pid}")
 
 
-@buck_test(skip_for_os=["darwin", "windows"], disable_daemon_cgroup=False)
-async def test_daemon_id_in_cgroup_path(buck: Buck) -> None:
-    await buck.server()
+@yak_test(skip_for_os=["darwin", "windows"], disable_daemon_cgroup=False)
+async def test_daemon_id_in_cgroup_path(yak: Yak) -> None:
+    await yak.server()
 
-    result = await buck.status()
+    result = await yak.status()
     status = json.loads(result.stdout)
     daemon_id = status["daemon_constraints"]["daemon_id"]
 

@@ -12,9 +12,9 @@ use std::sync::Arc;
 
 use parking_lot::Mutex;
 use yak_common::file_ops::metadata::FileMetadata;
-use yak_core::fs::buck_out_path::BuckOutPathKind;
+use yak_core::fs::yak_out_path::YakOutPathKind;
 use yak_core::fs::project_rel_path::ProjectRelativePath;
-use yak_error::BuckErrorOptionContext;
+use yak_error::YakErrorOptionContext;
 use yak_error::internal_error;
 use yak_execute::digest_config::DigestConfig;
 use yak_execute::directory::ActionDirectoryBuilder;
@@ -23,8 +23,8 @@ use yak_execute::materialize::materializer::CleanStaleArtifactsArgs;
 use yak_execute::materialize::materializer::CleanStaleArtifactsPolicy;
 use yak_execute::materialize::materializer::DeclareArtifactPayload;
 use yak_fs::paths::forward_rel_path::ForwardRelativePath;
-use yak_hash::BuckMutMap;
-use yak_hash::BuckMutSet;
+use yak_hash::YakMutMap;
+use yak_hash::YakMutSet;
 
 use super::*;
 
@@ -129,9 +129,9 @@ fn test_find_artifacts() -> yak_error::Result<()> {
     tree.insert(artifact3.iter().map(|f| f.to_owned()), ());
     tree.insert(artifact4.iter().map(|f| f.to_owned()), ());
 
-    let expected_artifacts: BuckMutSet<_> =
+    let expected_artifacts: YakMutSet<_> =
         vec![artifact1, artifact2, artifact3].into_iter().collect();
-    let found_artifacts: BuckMutSet<_> = tree.find_artifacts(&builder).into_iter().collect();
+    let found_artifacts: YakMutSet<_> = tree.find_artifacts(&builder).into_iter().collect();
     assert_eq!(found_artifacts, expected_artifacts);
     Ok(())
 }
@@ -153,8 +153,8 @@ fn test_remove_path() {
     insert(&mut tree, "a/c");
 
     let removed_subtree = tree.remove_path(ProjectRelativePath::unchecked_new("a/b"));
-    // Convert to BuckMutMap<String, String> so it's easier to test
-    let removed_subtree: BuckMutMap<String, String> = removed_subtree
+    // Convert to YakMutMap<String, String> so it's easier to test
+    let removed_subtree: YakMutMap<String, String> = removed_subtree
         .map(|(k, v)| (k.as_str().to_owned(), v))
         .collect();
 
@@ -185,7 +185,7 @@ mod state_machine {
     use yak_core::error::SoftErrorContext;
     use yak_core::execution_types::executor_config::RemoteExecutorUseCase;
     use yak_core::fs::project::ProjectRootTemp;
-    use yak_error::BuckErrorContext;
+    use yak_error::YakErrorContext;
     use yak_error::yak_error;
     use yak_events::daemon_id::DaemonId;
     use yak_events::dispatch::with_dispatcher_async;
@@ -230,13 +230,13 @@ mod state_machine {
         fail_next_invalidated_cleans: Mutex<usize>,
         invalidated_clean_attempts: Mutex<usize>,
         // If set, add a sleep when materializing to simulate a long materialization period
-        materialization_config: BuckMutMap<ProjectRelativePathBuf, TokioDuration>,
+        materialization_config: YakMutMap<ProjectRelativePathBuf, TokioDuration>,
         #[allocative(skip)]
         read_dir_barriers: Option<Arc<(Barrier, Barrier)>>,
         #[allocative(skip)]
         clean_barriers: Option<Arc<(Barrier, Barrier)>>,
         digest_config: DigestConfig,
-        buck_out_path: ProjectRelativePathBuf,
+        yak_out_path: ProjectRelativePathBuf,
         fs: ProjectRoot,
     }
 
@@ -299,18 +299,18 @@ mod state_machine {
                 fail_read_dirs: Default::default(),
                 fail_next_invalidated_cleans: Default::default(),
                 invalidated_clean_attempts: Default::default(),
-                materialization_config: BuckMutMap::default(),
+                materialization_config: YakMutMap::default(),
                 read_dir_barriers: None,
                 clean_barriers: None,
                 digest_config: DigestConfig::testing_default(),
-                buck_out_path: make_path("yak-out/v2"),
+                yak_out_path: make_path("yak-out/v2"),
                 fs,
             }
         }
 
         pub fn with_materialization_config(
             mut self,
-            materialization_config: BuckMutMap<ProjectRelativePathBuf, TokioDuration>,
+            materialization_config: YakMutMap<ProjectRelativePathBuf, TokioDuration>,
         ) -> Self {
             self.materialization_config = materialization_config;
             self
@@ -333,7 +333,7 @@ mod state_machine {
     impl StubIoHandler {
         fn actually_write(self: &Arc<Self>, path: &ProjectRelativePathBuf, write: &Arc<WriteFile>) {
             let data = zstd::bulk::decompress(&write.compressed_data, write.decompressed_size)
-                .buck_error_context("Error decompressing data")
+                .yak_error_context("Error decompressing data")
                 .unwrap();
             self.fs.write_file(path, data, write.is_executable).unwrap();
         }
@@ -461,8 +461,8 @@ mod state_machine {
             fs_util::read_dir(path)
         }
 
-        fn buck_out_path(&self) -> &ProjectRelativePathBuf {
-            &self.buck_out_path
+        fn yak_out_path(&self) -> &ProjectRelativePathBuf {
+            &self.yak_out_path
         }
 
         fn re_client_manager(&self) -> &Arc<ReConnectionManager> {
@@ -536,7 +536,7 @@ mod state_machine {
                 path: path.clone(),
                 content: contents.to_vec(),
                 is_executable: false,
-                path_kind: BuckOutPathKind::Configuration,
+                path_kind: YakOutPathKind::Configuration,
             }])
         }))
         .await?;
@@ -560,7 +560,7 @@ mod state_machine {
             ))?;
             if receiver
                 .await
-                .buck_error_context("No response from materializer")?
+                .yak_error_context("No response from materializer")?
             {
                 return Ok(());
             }
@@ -632,7 +632,7 @@ mod state_machine {
     }
 
     fn make_processor(
-        materialization_config: BuckMutMap<ProjectRelativePathBuf, TokioDuration>,
+        materialization_config: YakMutMap<ProjectRelativePathBuf, TokioDuration>,
     ) -> (
         DeferredMaterializerCommandProcessor<StubIoHandler>,
         MaterializerReceiver<StubIoHandler>,
@@ -678,7 +678,7 @@ mod state_machine {
                 ));
             }
         })
-        .buck_error_context("Cannot start materializer thread")
+        .yak_error_context("Cannot start materializer thread")
         .unwrap();
 
         (
@@ -701,8 +701,8 @@ mod state_machine {
     fn receive_clean_result(events: &mut ChannelEventSource) -> yak_data::CleanStaleResult {
         loop {
             let event = events.receive().expect("clean-stale event should be sent");
-            if let yak_data::buck_event::Data::Instant(instant) = event
-                .unpack_buck()
+            if let yak_data::yak_event::Data::Instant(instant) = event
+                .unpack_yak()
                 .expect("event should be a yak event")
                 .data()
                 && let Some(yak_data::instant_event::Data::CleanStaleResult(result)) =
@@ -828,7 +828,7 @@ mod state_machine {
     fn cas_method() -> Box<ArtifactMaterializationMethod> {
         Box::new(ArtifactMaterializationMethod::CasDownload {
             info: Arc::new(CasDownloadInfo::new_declared(
-                RemoteExecutorUseCase::buck2_default(),
+                RemoteExecutorUseCase::yak_default(),
             )),
         })
     }
@@ -1275,7 +1275,7 @@ mod state_machine {
             let target_path = make_path("foo/bar_target");
             let target_from_symlink = RelativePathBuf::from_system_path(Path::new("bar_target"))?;
 
-            let mut materialization_config = BuckMutMap::default();
+            let mut materialization_config = YakMutMap::default();
             // Materialize the symlink target slowly so that we actually hit the logic point where we
             // await for symlink targets and the entry materialization
             materialization_config.insert(target_path.clone(), TokioDuration::from_millis(100));
@@ -1341,7 +1341,7 @@ mod state_machine {
             let target_path = make_path("foo/bar_target");
             let target_from_symlink = RelativePathBuf::from_system_path(Path::new("bar_target"))?;
 
-            let mut materialization_config = BuckMutMap::default();
+            let mut materialization_config = YakMutMap::default();
             // Materialize the symlink target slowly so that we actually hit the logic point where we
             // await for symlink targets and the entry materialization
             materialization_config.insert(target_path.clone(), TokioDuration::from_millis(100));
@@ -1586,12 +1586,12 @@ mod state_machine {
         }).await
     }
 
-    const SAMPLE_BUCK_OUT_PATH: &str = "yak-out/v2/art/foo/bar";
+    const SAMPLE_YAK_OUT_PATH: &str = "yak-out/v2/art/foo/bar";
 
     #[tokio::test]
     async fn test_clean_stale() -> yak_error::Result<()> {
         ignore_stack_overflow_checks_for_future(async {
-            let path = make_path(SAMPLE_BUCK_OUT_PATH);
+            let path = make_path(SAMPLE_YAK_OUT_PATH);
             let project_root = temp_root();
             let io = Arc::new(StubIoHandler::new(project_root.clone()));
             let (dm, _) = make_materializer(io.dupe(), None).await;
@@ -1680,7 +1680,7 @@ mod state_machine {
     #[tokio::test]
     async fn test_clean_stale_records_sizes_after_cleanup_finishes() -> yak_error::Result<()> {
         ignore_stack_overflow_checks_for_future(async {
-            let path = make_path(SAMPLE_BUCK_OUT_PATH);
+            let path = make_path(SAMPLE_YAK_OUT_PATH);
             let project_root = temp_root();
             let io = Arc::new(StubIoHandler::new(project_root.clone()));
             let (dm, _) = make_materializer(io, None).await;
@@ -1842,7 +1842,7 @@ mod state_machine {
     #[tokio::test]
     async fn test_clean_stale_skips_unreadable() -> yak_error::Result<()> {
         ignore_stack_overflow_checks_for_future(async {
-            let path = make_path(SAMPLE_BUCK_OUT_PATH);
+            let path = make_path(SAMPLE_YAK_OUT_PATH);
             let project_root = temp_root();
             let io = Arc::new(StubIoHandler::new(project_root.clone()));
             let (dm, _) = make_materializer(io.dupe(), None).await;
@@ -2009,7 +2009,7 @@ mod state_machine {
     #[tokio::test]
     async fn test_clean_stale_interrupt() -> yak_error::Result<()> {
         ignore_stack_overflow_checks_for_future(async {
-            let path = make_path(SAMPLE_BUCK_OUT_PATH);
+            let path = make_path(SAMPLE_YAK_OUT_PATH);
             let project_root = temp_root();
             let io = Arc::new(StubIoHandler::new(project_root.clone()));
             let (dm, _) = make_materializer(io.dupe(), None).await;
@@ -2118,7 +2118,7 @@ mod state_machine {
     #[tokio::test]
     async fn test_clean_stale_schedule() -> yak_error::Result<()> {
         ignore_stack_overflow_checks_for_future(async {
-            let path = make_path(SAMPLE_BUCK_OUT_PATH);
+            let path = make_path(SAMPLE_YAK_OUT_PATH);
             let project_root = temp_root();
             // dry run because it's easier and since this is only testing that cleans are triggered by the materializer
             let clean_stale_config = CleanStaleConfig {

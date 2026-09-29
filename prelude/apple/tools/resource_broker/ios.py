@@ -29,7 +29,7 @@ class SimulatorSpec:
 
 
 def _device_set_path() -> str:
-    return os.path.expanduser("~/Library/Developer/Buck2IdbDeviceSet")
+    return os.path.expanduser("~/Library/Developer/YakIdbDeviceSet")
 
 
 def _list_managed_simulators_command(simulator_manager: str) -> list[str]:

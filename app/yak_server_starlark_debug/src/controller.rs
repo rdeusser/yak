@@ -18,7 +18,7 @@ use yak_interpreter::starlark_debug::StarlarkDebugController;
 
 use crate::HookId;
 use crate::error::StarlarkDebuggerInternalError;
-use crate::server::BuckStarlarkDebuggerServer;
+use crate::server::YakStarlarkDebuggerServer;
 
 /// The debug controller is created once for each starlark evaluation. It adds the hooks to the
 /// starlark Evaluator needed for debugging. Internally, the server will send and receive messages
@@ -27,9 +27,9 @@ use crate::server::BuckStarlarkDebuggerServer;
 /// When evaluation finishes and the debug  controller is dropped, it will notify the server that it
 /// has been dropped.
 #[derive(Debug)]
-pub struct BuckStarlarkDebugController {
+pub struct YakStarlarkDebugController {
     eval_wrapper: EvalWrapperHolder,
-    server: Arc<BuckStarlarkDebuggerServer>,
+    server: Arc<YakStarlarkDebuggerServer>,
     hook_id: HookId,
     description: String,
     _permit: OwnedSemaphorePermit,
@@ -40,7 +40,7 @@ pub struct BuckStarlarkDebugController {
     _unsend: std::marker::PhantomData<*mut ()>,
 }
 
-impl StarlarkDebugController for BuckStarlarkDebugController {
+impl StarlarkDebugController for YakStarlarkDebugController {
     /// Initializes the Evaluator. This can only be used once for a particular controller.
     fn initialize(&mut self, eval: &mut starlark::eval::Evaluator) -> yak_error::Result<()> {
         match self.eval_wrapper.take()? {
@@ -56,12 +56,12 @@ impl StarlarkDebugController for BuckStarlarkDebugController {
     }
 }
 
-impl BuckStarlarkDebugController {
+impl YakStarlarkDebugController {
     pub(crate) fn new(
         eval_wrapper: Option<Box<dyn DapAdapterEvalHook>>,
         hook_id: HookId,
         description: &str,
-        server: &Arc<BuckStarlarkDebuggerServer>,
+        server: &Arc<YakStarlarkDebuggerServer>,
         permit: tokio::sync::OwnedSemaphorePermit,
     ) -> Self {
         Self {
@@ -78,7 +78,7 @@ impl BuckStarlarkDebugController {
     }
 }
 
-impl Drop for BuckStarlarkDebugController {
+impl Drop for YakStarlarkDebugController {
     fn drop(&mut self) {
         self.server.drop_hook(self.hook_id)
     }

@@ -9,19 +9,19 @@
 import json
 import typing
 
-from e2e_util.api.buck import Buck
-from e2e_util.buck_workspace import buck_test
+from e2e_util.api.yak import Yak
+from e2e_util.yak_workspace import yak_test
 
 
-@buck_test(skip_for_os=["darwin", "windows"])
-async def test_default_output(buck: Buck) -> None:
-    status = await start_daemon_and_get_status(buck)
+@yak_test(skip_for_os=["darwin", "windows"])
+async def test_default_output(yak: Yak) -> None:
+    status = await start_daemon_and_get_status(yak)
     assert "tokio_runtime_metrics" not in status
 
 
-@buck_test(skip_for_os=["darwin", "windows"])
-async def test_includes_tokio(buck: Buck) -> None:
-    status = await start_daemon_and_get_status(buck, include_tokio_runtime_metrics=True)
+@yak_test(skip_for_os=["darwin", "windows"])
+async def test_includes_tokio(yak: Yak) -> None:
+    status = await start_daemon_and_get_status(yak, include_tokio_runtime_metrics=True)
     assert "tokio_runtime_metrics" in status
     metrics = status["tokio_runtime_metrics"]
     assert "global_queue_depth" in metrics
@@ -29,21 +29,21 @@ async def test_includes_tokio(buck: Buck) -> None:
     assert "num_workers" in metrics
 
 
-@buck_test(skip_for_os=["darwin", "windows"])
-async def test_notices_tokio_worker_override(buck: Buck) -> None:
-    append_tokio_workers_config(buck)
-    status = await start_daemon_and_get_status(buck, include_tokio_runtime_metrics=True)
+@yak_test(skip_for_os=["darwin", "windows"])
+async def test_notices_tokio_worker_override(yak: Yak) -> None:
+    append_tokio_workers_config(yak)
+    status = await start_daemon_and_get_status(yak, include_tokio_runtime_metrics=True)
     assert "tokio_runtime_metrics" in status
     metrics = status["tokio_runtime_metrics"]
     assert "num_workers" in metrics
     assert metrics["num_workers"] == 42  # from modification below
 
 
-@buck_test()
-async def test_snapshot_events_carry_tokio_runtime_stats(buck: Buck) -> None:
+@yak_test()
+async def test_snapshot_events_carry_tokio_runtime_stats(yak: Yak) -> None:
     # Snapshots should always include tokio_runtime_stats — there's no toggle.
-    await buck.targets(":")
-    snapshots = await _snapshot_events(buck)
+    await yak.targets(":")
+    snapshots = await _snapshot_events(yak)
     assert len(snapshots) > 0, "expected at least one snapshot event in the log"
     populated = [s for s in snapshots if s.get("tokio_runtime_stats")]
     assert len(populated) > 0, (
@@ -61,9 +61,9 @@ async def test_snapshot_events_carry_tokio_runtime_stats(buck: Buck) -> None:
     )
 
 
-async def _snapshot_events(buck: Buck) -> list[dict[str, typing.Any]]:
+async def _snapshot_events(yak: Yak) -> list[dict[str, typing.Any]]:
     """Returns the Snapshot payloads from the most recent invocation's log."""
-    out = await buck.log("show")
+    out = await yak.log("show")
     snapshots: list[dict[str, typing.Any]] = []
     for line in out.stdout.splitlines():
         if not line:
@@ -77,22 +77,22 @@ async def _snapshot_events(buck: Buck) -> list[dict[str, typing.Any]]:
     return snapshots
 
 
-def append_tokio_workers_config(buck: Buck) -> None:
-    with open(buck.cwd / ".yakconfig", "a") as buckconfig:
-        buckconfig.write("[build]\n")
-        buckconfig.write("num_tokio_workers = 42")
+def append_tokio_workers_config(yak: Yak) -> None:
+    with open(yak.cwd / ".yakconfig", "a") as yakconfig:
+        yakconfig.write("[build]\n")
+        yakconfig.write("num_tokio_workers = 42")
 
 
 async def start_daemon_and_get_status(
-    buck: Buck, include_tokio_runtime_metrics: bool = False
+    yak: Yak, include_tokio_runtime_metrics: bool = False
 ) -> dict[str, typing.Any]:
     # Start the daemon
-    await buck.targets(":")
+    await yak.targets(":")
 
     status_result = await (
-        buck.status("--include-tokio-runtime-metrics")
+        yak.status("--include-tokio-runtime-metrics")
         if include_tokio_runtime_metrics
-        else buck.status()
+        else yak.status()
     )
     status_data = json.loads(status_result.stdout)
     return status_data

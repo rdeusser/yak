@@ -30,7 +30,7 @@ def get_mode_hashes(
     sample_target,
     explicit_targets,
     mode_files,
-    extra_buck_options,
+    extra_yak_options,
     debug,
     subprocess_cwd=None,
 ):
@@ -53,7 +53,7 @@ def get_mode_hashes(
                 "@" + mode_file,
                 "prelude//ide_integrations/visual_studio/get_mode_hashes.bxl:main",
             ]
-            + extra_buck_options
+            + extra_yak_options
             + ["--", "--target", sample_target]
             + explicit_targets
         )
@@ -131,7 +131,7 @@ def main(
     targets,
     mode_files,
     extra_bxl_options,
-    extra_buck_options,
+    extra_yak_options,
     generated_folder,
     recursive_target_types,
     target_exclude_patterns,
@@ -175,10 +175,10 @@ def main(
         + ["--mode_files"]
         + mode_files
     )
-    if extra_buck_options:
+    if extra_yak_options:
         # Pass extra yak options verbatim so that run/debug invokes yak using the same options beside target and mode file.
-        bxl_cmds += ["--extra_buck_options"] + [
-            _escape_arg(o) for o in extra_buck_options
+        bxl_cmds += ["--extra_yak_options"] + [
+            _escape_arg(o) for o in extra_yak_options
         ]
     bxl_cmds += ["--mode_hashes", json.dumps(mode_hashes, separators=(",", ":"))]
     if recursive_target_types:
@@ -293,9 +293,9 @@ generating and loading):
         default=[],
     )
     parser.add_argument(
-        "--extra_buck_options",
+        "--extra_yak_options",
         nargs="+",
-        help="extra options when running yak from generated project settings. Note '-' within option value needs to be escaped, e.g., `vsgo //third-party/semver:basic_example --extra_buck_options '\\-\\-out' 'C:\\open\\temp-out' '\\-\\-local-only'`",
+        help="extra options when running yak from generated project settings. Note '-' within option value needs to be escaped, e.g., `vsgo //third-party/semver:basic_example --extra_yak_options '\\-\\-out' 'C:\\open\\temp-out' '\\-\\-local-only'`",
         default=[],
     )
     parser.add_argument(
@@ -364,7 +364,7 @@ generating and loading):
         targets=args.targets,
         mode_files=args.mode_files,
         extra_bxl_options=args.extra_bxl_options,
-        extra_buck_options=args.extra_buck_options,
+        extra_yak_options=args.extra_yak_options,
         generated_folder=args.generated_folder,
         recursive_target_types=args.recursive_target_types,
         target_exclude_patterns=args.target_exclude_patterns,

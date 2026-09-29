@@ -12,17 +12,17 @@ use async_trait::async_trait;
 use yak_cli_proto::HydrationRequest;
 use yak_cli_proto::HydrationSubcommand;
 use yak_client_ctx::client_ctx::ClientCommandContext;
-use yak_client_ctx::common::BuckArgMatches;
+use yak_client_ctx::common::YakArgMatches;
 use yak_client_ctx::common::CommonBuildConfigurationOptions;
 use yak_client_ctx::common::CommonEventLogOptions;
 use yak_client_ctx::common::CommonStarlarkOptions;
 use yak_client_ctx::common::ui::CommonConsoleOptions;
-use yak_client_ctx::daemon::client::BuckdClientConnector;
+use yak_client_ctx::daemon::client::YakdClientConnector;
 use yak_client_ctx::daemon::client::NoPartialResultHandler;
 use yak_client_ctx::events_ctx::EventsCtx;
 use yak_client_ctx::exit_result::ExitResult;
 use yak_client_ctx::streaming::StreamingCommand;
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 
 /// Subcommands for `yak debug hydration`.
 #[derive(Debug, clap::Parser)]
@@ -84,13 +84,13 @@ impl StreamingCommand for HydrationCommand {
 
     async fn exec_impl(
         self,
-        buckd: &mut BuckdClientConnector,
-        _matches: BuckArgMatches<'_>,
+        yakd: &mut YakdClientConnector,
+        _matches: YakArgMatches<'_>,
         ctx: &mut ClientCommandContext<'_>,
         events_ctx: &mut EventsCtx,
     ) -> ExitResult {
         let context = ctx.empty_client_context("debug-hydration")?;
-        let response = buckd
+        let response = yakd
             .with_flushing()
             .hydration(
                 HydrationRequest {
@@ -108,10 +108,10 @@ impl StreamingCommand for HydrationCommand {
         if let Some(summary) = response.summary {
             yak_client_ctx::println!("{}", summary.trim_end())?;
         }
-        // JSON consumed by tests and tooling, fields match the `buck2_page_outs` columns.
+        // JSON consumed by tests and tooling, fields match the `yak_page_outs` columns.
         if let Some(page_out_summary) = response.page_out_summary {
             let json = serde_json::to_string_pretty(&page_out_summary)
-                .buck_error_context("Failed to serialize page-out summary")?;
+                .yak_error_context("Failed to serialize page-out summary")?;
             yak_client_ctx::println!("{}", json)?;
         }
         ExitResult::success()

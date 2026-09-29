@@ -50,15 +50,15 @@ use yak_directory::directory::immutable_directory::ImmutableDirectory;
 use yak_directory::directory::shared_directory::SharedDirectory;
 use yak_directory::directory::shared_directory::SharedDirectoryInternable;
 use yak_directory::directory::walk::unordered_entry_walk;
-use yak_error::BuckErrorOptionContext;
+use yak_error::YakErrorOptionContext;
 use yak_error::internal_error;
 use yak_fs::paths::RelativePathBuf;
 use yak_fs::paths::file_name::FileName;
 use yak_fs::paths::file_name::FileNameBuf;
 use yak_fs::paths::forward_rel_path::ForwardRelativePath;
 use yak_fs::paths::forward_rel_path::ForwardRelativePathBuf;
-use yak_hash::BuckMutMap;
-use yak_hash::BuckMutSet;
+use yak_hash::YakMutMap;
+use yak_hash::YakMutSet;
 
 use crate::artifact_value::ArtifactValue;
 use crate::digest::CasDigestFromReExt;
@@ -350,7 +350,7 @@ pub fn re_tree_to_directory(
     /// but the pointers are hashes, so we need to first see a hash before we can work out what
     /// hashing mechanism to use here.
     struct DirMap<'a> {
-        by_kind: SmallMap<DigestAlgorithm, BuckMutMap<FileDigest, &'a RE::Directory>>,
+        by_kind: SmallMap<DigestAlgorithm, YakMutMap<FileDigest, &'a RE::Directory>>,
         directories: &'a [RE::Directory],
     }
 
@@ -728,7 +728,7 @@ pub fn expand_selector_for_dependencies(
     // thing.
     let mut paths_to_visit = paths_to_take.clone();
 
-    let mut all_known_symlinks = BuckMutSet::default();
+    let mut all_known_symlinks = YakMutSet::default();
 
     while !paths_to_visit.is_empty() {
         let mut next_paths_to_visit = DirectorySelector::empty();

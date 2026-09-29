@@ -14,8 +14,8 @@ use std::io;
 fn main() -> io::Result<()> {
     let proto_files = &["forkserver.proto"];
 
-    let buck_proto_srcs = env::var("YAK_PROTO_SRCS");
-    let includes = if let Ok(path) = &buck_proto_srcs {
+    let yak_proto_srcs = env::var("YAK_PROTO_SRCS");
+    let includes = if let Ok(path) = &yak_proto_srcs {
         vec![path.as_str()]
     } else {
         vec![".", "../yak_data", "../yak_host_sharing_proto"]
@@ -24,17 +24,17 @@ fn main() -> io::Result<()> {
     let builder = yak_protoc_dev::configure();
     unsafe { builder.setup_protoc() }
         .type_attribute(
-            "buck.forkserver.RequestEvent.data",
+            "yak.forkserver.RequestEvent.data",
             "#[derive(::derive_more::From, ::gazebo::variants::VariantName, ::gazebo::variants::UnpackVariants)]",
         )
         .type_attribute(
-            "buck.forkserver.EnvDirective.data",
+            "yak.forkserver.EnvDirective.data",
             "#[derive(::derive_more::From, ::gazebo::variants::VariantName, ::gazebo::variants::UnpackVariants)]",
         )
         .type_attribute(
-            "buck.forkserver.RequestEvent.data",
+            "yak.forkserver.RequestEvent.data",
             "#[allow(clippy::large_enum_variant)]",
         )
-        .extern_path(".buck.data", "::yak_data")
+        .extern_path(".yak.data", "::yak_data")
         .compile(proto_files, &includes)
 }

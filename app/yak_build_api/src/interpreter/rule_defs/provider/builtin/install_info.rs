@@ -25,7 +25,7 @@ use starlark::values::dict::DictType;
 use yak_artifact::artifact::artifact_type::Artifact;
 use yak_build_api_derive::internal_provider;
 use yak_core::provider::label::ConfiguredProvidersLabel;
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 use yak_interpreter::types::configured_providers_label::StarlarkConfiguredProvidersLabel;
 
 use crate as yak_build_api;
@@ -99,7 +99,7 @@ impl<'v> InstallInfo<'v> {
                 Ok((
                     k.to_owned(),
                     v.0.get_bound_artifact()
-                        .with_buck_error_context(|| format!("For key `{k}`"))?,
+                        .with_yak_error_context(|| format!("For key `{k}`"))?,
                 ))
             })
             .collect()

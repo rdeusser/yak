@@ -17,7 +17,7 @@ use std::sync::Arc;
 
 use dupe::Dupe;
 use hashbrown::HashTable;
-use yak_hash::BuckHasher;
+use yak_hash::YakHasher;
 use yak_util::arc_str::ArcSlice;
 use yak_util::arc_str::ArcStr;
 
@@ -25,7 +25,7 @@ use yak_util::arc_str::ArcStr;
 /// Things specific about this interner:
 /// - Requires interned values to be Dupe, so that you can intern both Arc<...> and specific Arc types like ArcStr.
 /// - Interner is not static, so it's not required to take up memory for the entire duration of the program.
-pub(crate) struct AttrCoercionInterner<T: Dupe + Hash + Eq, H = BuckHasher> {
+pub(crate) struct AttrCoercionInterner<T: Dupe + Hash + Eq, H = YakHasher> {
     cache: RefCell<HashTable<(u64, T)>>,
     _marker: marker::PhantomData<H>,
 }

@@ -230,11 +230,11 @@ pub struct AnyKey {
 
 /// Shorten a type name like
 /// ```ignore
-/// <dice::ctx::DiceComputations as yak_interpreter::extra::buckconfig::HasLegacyBuckConfigForStarlark>
-///     ::get_legacy_buck_config_for_starlark::{{closure}}::LegacyBuckConfigForStarlarkKey
+/// <dice::ctx::DiceComputations as yak_interpreter::extra::yakconfig::HasLegacyYakConfigForStarlark>
+///     ::get_legacy_yak_config_for_starlark::{{closure}}::LegacyYakConfigForStarlarkKey
 /// ```
 /// to
-/// `LegacyBuckConfigForStarlarkKey`.
+/// `LegacyYakConfigForStarlarkKey`.
 pub fn short_type_name(type_name: &str) -> &str {
     type_name
         .rsplit("::")

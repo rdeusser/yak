@@ -17,7 +17,7 @@ use http::Uri;
 use hyper::Request;
 use hyper::Response;
 use hyper::StatusCode;
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 
 use crate::HttpError;
 
@@ -43,7 +43,7 @@ impl UriWithRedirect for Uri {
         }
         redirected
             .build()
-            .buck_error_context("Building redirected URI")
+            .yak_error_context("Building redirected URI")
     }
 
     /// Returns whether this Uri is the same host as represented by 'other'.
@@ -81,7 +81,7 @@ impl PendingRequest {
             .expect("Request builder should not error here") = self.headers.clone();
         builder
             .body(self.body.clone())
-            .buck_error_context("building redirected request")
+            .yak_error_context("building redirected request")
     }
 }
 

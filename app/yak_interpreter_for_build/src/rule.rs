@@ -53,7 +53,7 @@ use starlark::values::typing::StarlarkCallable;
 use starlark::values::typing::StarlarkCallableChecked;
 use starlark_map::small_map::SmallMap;
 use yak_core::plugins::PluginKind;
-use yak_error::BuckErrorOptionContext;
+use yak_error::YakErrorOptionContext;
 use yak_interpreter::late_binding_ty::AnalysisContextReprLate;
 use yak_interpreter::late_binding_ty::ProviderReprLate;
 use yak_interpreter::late_binding_ty::TransitionReprLate;

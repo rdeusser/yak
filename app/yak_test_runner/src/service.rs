@@ -10,13 +10,13 @@
 
 use tokio::io::AsyncRead;
 use tokio::io::AsyncWrite;
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 use yak_grpc::DuplexChannel;
 use yak_test_api::grpc::TestOrchestratorClient;
 use yak_test_api::grpc::spawn_executor_server;
 
-use crate::executor::Buck2TestExecutor;
-use crate::runner::Buck2TestRunner;
+use crate::executor::YakTestExecutor;
+use crate::runner::YakTestRunner;
 
 pub async fn run<OC, ER, EW>(
     orchestrator_channel: OC,
@@ -31,20 +31,20 @@ where
     let (spec_sender, spec_receiver) = futures::channel::mpsc::unbounded();
 
     let executor_server =
-        spawn_executor_server(executor_channel, Buck2TestExecutor::new(spec_sender));
+        spawn_executor_server(executor_channel, YakTestExecutor::new(spec_sender));
 
     let orchestrator_client = TestOrchestratorClient::new(orchestrator_channel)
         .await
-        .buck_error_context("Failed to TestOrchestratorClient")?;
+        .yak_error_context("Failed to TestOrchestratorClient")?;
 
-    let runner = Buck2TestRunner::new(orchestrator_client, spec_receiver, args)?;
+    let runner = YakTestRunner::new(orchestrator_client, spec_receiver, args)?;
 
     runner.run_all_tests().await?;
 
     executor_server
         .shutdown()
         .await
-        .buck_error_context("Failed to shutdown server")?;
+        .yak_error_context("Failed to shutdown server")?;
 
     Ok(())
 }

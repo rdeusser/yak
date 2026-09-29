@@ -13,7 +13,7 @@ use yak_util::late_binding::LateBinding;
 /// A trait that exposes only the yak_data-dependent bits of an EventDispatcher.
 ///
 /// This is so we can use a `LateBinding` and dispatch events from yak_core,
-/// which can't take a depndency on buck2_event (where `EventDispatcher` is defined).
+/// which can't take a depndency on yak_event (where `EventDispatcher` is defined).
 pub trait EventDispatch: Send + Sync {
     fn emit_instant_event_for_data(&self, data: yak_data::instant_event::Data);
 }

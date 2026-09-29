@@ -17,9 +17,9 @@ use std::path::Path;
 
 use serde::Serialize;
 use tokio_stream::StreamExt;
-use yak_client_ctx::client_ctx::BuckSubcommand;
+use yak_client_ctx::client_ctx::YakSubcommand;
 use yak_client_ctx::client_ctx::ClientCommandContext;
-use yak_client_ctx::common::BuckArgMatches;
+use yak_client_ctx::common::YakArgMatches;
 use yak_client_ctx::event_log_options::EventLogOptions;
 use yak_client_ctx::events_ctx::EventsCtx;
 use yak_client_ctx::exit_result::ClientIoError;
@@ -166,12 +166,12 @@ fn get_record(materialization: &yak_data::MaterializationEnd) -> Record {
     }
 }
 
-impl BuckSubcommand for WhatMaterializedCommand {
+impl YakSubcommand for WhatMaterializedCommand {
     const COMMAND_NAME: &'static str = "log-what-materialized";
 
     async fn exec_impl(
         self,
-        _matches: BuckArgMatches<'_>,
+        _matches: YakArgMatches<'_>,
         ctx: ClientCommandContext<'_>,
         _events_ctx: &mut EventsCtx,
     ) -> ExitResult {
@@ -196,7 +196,7 @@ impl BuckSubcommand for WhatMaterializedCommand {
             while let Some(event) = events.try_next().await? {
                 match event {
                     StreamValue::Event(event) => match &event.data {
-                        Some(yak_data::buck_event::Data::SpanEnd(yak_data::SpanEndEvent {
+                        Some(yak_data::yak_event::Data::SpanEnd(yak_data::SpanEndEvent {
                             data: Some(yak_data::span_end_event::Data::Materialization(m)),
                             ..
                         })) if m.success =>

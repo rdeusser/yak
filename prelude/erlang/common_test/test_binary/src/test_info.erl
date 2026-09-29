@@ -12,7 +12,7 @@
 -export([load_from_file/1, write_to_file/2, try_make_path_relative/1]).
 -export_type([test_info/0]).
 
--include_lib("common/include/buck_ct_records.hrl").
+-include_lib("common/include/yak_ct_records.hrl").
 
 -type test_info() :: #test_info{}.
 
@@ -36,10 +36,10 @@ load_from_file(TestInfoFile) ->
         <<"raw_target">> := RawTarget,
         <<"trampolines">> := Trampolines
     } = json:decode(Content),
-    Providers1 = buck_ct_parser:parse_str(Providers),
+    Providers1 = yak_ct_parser:parse_str(Providers),
     CtOpts1 = make_ct_opts(
-        buck_ct_parser:parse_str(CtOpts),
-        [buck_ct_parser:parse_str(CTH) || CTH <- ExtraCtHooks]
+        yak_ct_parser:parse_str(CtOpts),
+        [yak_ct_parser:parse_str(CTH) || CTH <- ExtraCtHooks]
     ),
     {ok, ParsedArtifactAnnotationMFA} = parse_mfa(ArtifactAnnotationMFA),
     #test_info{

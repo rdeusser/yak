@@ -217,12 +217,12 @@ fn random_obstacle_kind(rng: &mut impl Rng, tick: u32) -> ObstacleKind {
     }
 }
 
-fn check_collision(buck_y: f32, obstacles: &[Obstacle], tick: u32) -> bool {
-    // Buck hitbox with 2px insets
+fn check_collision(yak_y: f32, obstacles: &[Obstacle], tick: u32) -> bool {
+    // Yak hitbox with 2px insets
     let bx1 = 14;
-    let by1 = buck_y as i32 + 2;
+    let by1 = yak_y as i32 + 2;
     let bx2 = 26;
-    let by2 = buck_y as i32 + 14;
+    let by2 = yak_y as i32 + 14;
 
     for obs in obstacles {
         let oy = obs.effective_y(tick);
@@ -253,8 +253,8 @@ fn compute_next_spawn_delay(current_kind: ObstacleKind, next_kind: ObstacleKind,
 pub struct Game {
     framebuffer: FrameBuffer,
     sprites: Sprites,
-    buck_y: f32,
-    buck_vy: f32,
+    yak_y: f32,
+    yak_vy: f32,
     on_ground: bool,
     obstacles: Vec<Obstacle>,
     next_kind: ObstacleKind,
@@ -271,8 +271,8 @@ impl Game {
         Self {
             framebuffer: FrameBuffer::new(),
             sprites: Sprites::load(),
-            buck_y: GROUND_Y,
-            buck_vy: 0.0,
+            yak_y: GROUND_Y,
+            yak_vy: 0.0,
             on_ground: true,
             obstacles: Vec::new(),
             next_kind,
@@ -290,8 +290,8 @@ impl Game {
 
 #[derive(Serialize, Deserialize)]
 struct GameState {
-    buck_y: f32,
-    buck_vy: f32,
+    yak_y: f32,
+    yak_vy: f32,
     on_ground: bool,
     obstacles: Vec<ObstacleSave>,
     next_kind: ObstacleKind,
@@ -319,11 +319,11 @@ impl super::Game for Game {
 
         // Update jump physics
         if !self.on_ground {
-            self.buck_vy += GRAVITY;
-            self.buck_y += self.buck_vy;
-            if self.buck_y <= GROUND_Y {
-                self.buck_y = GROUND_Y;
-                self.buck_vy = 0.0;
+            self.yak_vy += GRAVITY;
+            self.yak_y += self.yak_vy;
+            if self.yak_y <= GROUND_Y {
+                self.yak_y = GROUND_Y;
+                self.yak_vy = 0.0;
                 self.on_ground = true;
             }
         }
@@ -362,7 +362,7 @@ impl super::Game for Game {
         }
 
         // Check collision
-        if check_collision(self.buck_y, &self.obstacles, tick_count) {
+        if check_collision(self.yak_y, &self.obstacles, tick_count) {
             self.alive = false;
         }
 
@@ -381,7 +381,7 @@ impl super::Game for Game {
             draw_obstacle(&mut self.framebuffer, &self.sprites, obs, tick_count);
         }
 
-        let buck_frame = if self.on_ground {
+        let yak_frame = if self.on_ground {
             (tc / 4) % 6
         } else {
             // Use a fixed frame while airborne (frame 1 = legs together)
@@ -389,9 +389,9 @@ impl super::Game for Game {
         };
         self.framebuffer.render_image(
             12,
-            self.buck_y as i32,
+            self.yak_y as i32,
             0,
-            &self.sprites.buck[buck_frame as usize],
+            &self.sprites.yak[yak_frame as usize],
         );
 
         super::TickResult {
@@ -416,7 +416,7 @@ impl super::Game for Game {
         match &input {
             Control::Up | Control::Char('w') | Control::Char(' ') => {
                 if self.on_ground {
-                    self.buck_vy = JUMP_VY;
+                    self.yak_vy = JUMP_VY;
                     self.on_ground = false;
                 }
                 None
@@ -433,8 +433,8 @@ impl super::Game for Game {
 
     fn save_state(&self) -> Option<String> {
         let state = GameState {
-            buck_y: self.buck_y,
-            buck_vy: self.buck_vy,
+            yak_y: self.yak_y,
+            yak_vy: self.yak_vy,
             on_ground: self.on_ground,
             obstacles: self
                 .obstacles
@@ -455,8 +455,8 @@ impl super::Game for Game {
 
     fn load_state(&mut self, json: &str) -> bool {
         if let Ok(state) = serde_json::from_str::<GameState>(json) {
-            self.buck_y = state.buck_y;
-            self.buck_vy = state.buck_vy;
+            self.yak_y = state.yak_y;
+            self.yak_vy = state.yak_vy;
             self.on_ground = state.on_ground;
             self.obstacles = state
                 .obstacles

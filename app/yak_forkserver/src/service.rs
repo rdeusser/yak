@@ -31,8 +31,8 @@ use tonic::Status;
 use tonic::Streaming;
 use yak_common::convert::ProstDurationExt;
 use yak_core::logging::LogConfigurationReloadHandle;
-use yak_error::BuckErrorContext;
-use yak_error::BuckErrorOptionContext;
+use yak_error::YakErrorContext;
+use yak_error::YakErrorOptionContext;
 use yak_error::internal_error;
 use yak_execute_local::DefaultKillProcess;
 use yak_execute_local::GatherOutputStatus;
@@ -93,12 +93,12 @@ impl ValidatedCommand {
 
         let exe = OsStr::from_bytes(&exe);
         let cwd = OsStr::from_bytes(&cwd.as_ref().internal_error("Missing cwd")?.path);
-        let cwd = AbsPath::new(Path::new(cwd)).buck_error_context("Invalid cwd")?;
+        let cwd = AbsPath::new(Path::new(cwd)).yak_error_context("Invalid cwd")?;
 
         let timeout = timeout
             .map(|t| t.try_into_duration())
             .transpose()
-            .buck_error_context("Invalid timeout")?;
+            .yak_error_context("Invalid timeout")?;
 
         let exe = maybe_absolutize_exe(exe, cwd)?;
 
@@ -373,7 +373,7 @@ impl Forkserver for UnixForkserverService {
     ) -> Result<Response<SetLogFilterResponse>, Status> {
         self.log_reload_handle
             .update_log_filter(&req.get_ref().log_filter)
-            .buck_error_context("Error updating forkserver filter")
+            .yak_error_context("Error updating forkserver filter")
             .map_err(|e| Status::invalid_argument(format!("{e:#}")))?;
 
         Ok(Response::new(SetLogFilterResponse {}))

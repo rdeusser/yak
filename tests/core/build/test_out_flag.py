@@ -10,83 +10,83 @@ import os
 import tempfile
 from pathlib import Path
 
-from e2e_util.api.buck import Buck
+from e2e_util.api.yak import Yak
 from e2e_util.asserts import expect_failure
-from e2e_util.buck_workspace import buck_test
+from e2e_util.yak_workspace import yak_test
 
 
-@buck_test()
-async def test_out_single_default_output(buck: Buck) -> None:
+@yak_test()
+async def test_out_single_default_output(yak: Yak) -> None:
     with tempfile.TemporaryDirectory() as out:
         output = os.path.join(out, "output")
-        await buck.build("//:a", "--out", output)
+        await yak.build("//:a", "--out", output)
         with open(output) as readable:
             assert readable.read() == "a\n"
 
 
-@buck_test()
-async def test_out_overwrite(buck: Buck) -> None:
+@yak_test()
+async def test_out_overwrite(yak: Yak) -> None:
     with tempfile.TemporaryDirectory() as out:
         output = os.path.join(out, "output")
-        await buck.build("//:a", "--out", output)
-        await buck.build("//:a", "--out", output)
+        await yak.build("//:a", "--out", output)
+        await yak.build("//:a", "--out", output)
 
 
-@buck_test()
-async def test_out_parent_not_exist(buck: Buck) -> None:
+@yak_test()
+async def test_out_parent_not_exist(yak: Yak) -> None:
     with tempfile.TemporaryDirectory() as out:
         output = os.path.join(out, "notexist", "output")
-        await buck.build("//:a", "--out", output)
+        await yak.build("//:a", "--out", output)
         with open(output) as readable:
             assert readable.read() == "a\n"
 
 
-@buck_test()
-async def test_out_single_default_output_to_dir(buck: Buck) -> None:
+@yak_test()
+async def test_out_single_default_output_to_dir(yak: Yak) -> None:
     with tempfile.TemporaryDirectory() as out:
-        await buck.build("//:a", "--out", out)
+        await yak.build("//:a", "--out", out)
         with open(Path(out) / "a.txt") as readable:
             assert readable.read() == "a\n"
 
 
-@buck_test()
-async def test_out_no_outputs(buck: Buck) -> None:
+@yak_test()
+async def test_out_no_outputs(yak: Yak) -> None:
     with tempfile.NamedTemporaryFile("w") as out:
         await expect_failure(
-            buck.build("//:none", "--out", out.name),
+            yak.build("//:none", "--out", out.name),
             stderr_regex="produced zero default outputs",
         )
 
 
-@buck_test()
-async def test_out_multiple_outputs(buck: Buck) -> None:
+@yak_test()
+async def test_out_multiple_outputs(yak: Yak) -> None:
     with tempfile.NamedTemporaryFile("w") as out:
         await expect_failure(
-            buck.build("//:ab", "--out", out.name),
+            yak.build("//:ab", "--out", out.name),
             stderr_regex="produced 2 outputs",
         )
 
 
-@buck_test()
-async def test_out_multiple_targets(buck: Buck) -> None:
+@yak_test()
+async def test_out_multiple_targets(yak: Yak) -> None:
     with tempfile.NamedTemporaryFile("w") as out:
         await expect_failure(
-            buck.build("//:a", "//:b", "--out", out.name),
+            yak.build("//:a", "//:b", "--out", out.name),
             stderr_regex="command built multiple top-level targets",
         )
 
 
-@buck_test()
-async def test_out_directory(buck: Buck) -> None:
+@yak_test()
+async def test_out_directory(yak: Yak) -> None:
     with tempfile.TemporaryDirectory() as out:
-        await buck.build("//:dir", "--out", out)
+        await yak.build("//:dir", "--out", out)
         assert (Path(out) / "b.txt").exists()
         assert (Path(out) / "nested_dir" / "a.txt").exists()
 
 
-@buck_test()
-async def test_out_stdout_multiple(buck: Buck) -> None:
-    result = await buck.build("//:a", "//:b", "--out", "-")
+@yak_test()
+async def test_out_stdout_multiple(yak: Yak) -> None:
+    result = await yak.build("//:a", "//:b", "--out", "-")
 
     # The e2e test runner adds a `--build-report` flag in order to be able
     # to parse out failures. In normal usage of `--out -` there wouldn't be this
@@ -97,14 +97,14 @@ async def test_out_stdout_multiple(buck: Buck) -> None:
     assert trailing == ""
 
 
-@buck_test()
-async def test_out_stdout_none(buck: Buck) -> None:
-    await buck.build("--out", "-")
+@yak_test()
+async def test_out_stdout_none(yak: Yak) -> None:
+    await yak.build("--out", "-")
 
 
-@buck_test()
-async def test_out_stdout_directory(buck: Buck) -> None:
+@yak_test()
+async def test_out_stdout_directory(yak: Yak) -> None:
     await expect_failure(
-        buck.build("//:dir", "--out", "-"),
+        yak.build("//:dir", "--out", "-"),
         stderr_regex="produces a default output that is a directory, and cannot be sent to stdout",
     )

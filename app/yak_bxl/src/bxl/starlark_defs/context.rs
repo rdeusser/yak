@@ -39,7 +39,7 @@ use yak_build_api::analysis::registry::AnalysisRegistry;
 use yak_build_api::interpreter::rule_defs::context::AnalysisActions;
 use yak_common::dice::cells::HasCellResolver;
 use yak_common::dice::data::HasIoProvider;
-use yak_common::target_aliases::BuckConfigTargetAliasResolver;
+use yak_common::target_aliases::YakConfigTargetAliasResolver;
 use yak_common::target_aliases::HasTargetAliasResolver;
 use yak_core::cells::CellAliasResolver;
 use yak_core::cells::CellResolver;
@@ -53,7 +53,7 @@ use yak_core::global_cfg_options::GlobalCfgOptions;
 use yak_core::pattern::query_file_literal::parse_query_file_literal;
 use yak_core::provider::label::ConfiguredProvidersLabel;
 use yak_core::target::label::label::TargetLabel;
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 use yak_error::yak_error;
 use yak_events::dispatch::console_message;
 use yak_execute::digest_config::DigestConfig;
@@ -194,7 +194,7 @@ impl<'v> Deref for BxlContext<'v> {
 pub(crate) struct BxlContextCoreData {
     current_bxl: BxlKey,
     #[derivative(Debug = "ignore")]
-    target_alias_resolver: BuckConfigTargetAliasResolver,
+    target_alias_resolver: YakConfigTargetAliasResolver,
     cell_name: CellName,
     cell_root_abs: AbsNormPathBuf,
     #[derivative(Debug = "ignore")]
@@ -216,7 +216,7 @@ impl BxlContextCoreData {
         let cell = label.bxl_path.cell();
         let bxl_cell = cell_resolver
             .get(cell)
-            .with_buck_error_context(|| format!("Cell does not exist: `{cell}`"))?
+            .with_yak_error_context(|| format!("Cell does not exist: `{cell}`"))?
             .dupe();
         let cell_name = bxl_cell.name();
         let target_alias_resolver = dice.target_alias_resolver().await?.dupe();
@@ -255,7 +255,7 @@ impl BxlContextCoreData {
         self.current_bxl.global_cfg_options()
     }
 
-    pub(crate) fn target_alias_resolver(&self) -> &BuckConfigTargetAliasResolver {
+    pub(crate) fn target_alias_resolver(&self) -> &YakConfigTargetAliasResolver {
         &self.target_alias_resolver
     }
 

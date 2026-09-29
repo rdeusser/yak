@@ -26,8 +26,8 @@ use yak_common::file_ops::dice::DiceFileComputations;
 use yak_common::file_ops::error::FileReadErrorContext;
 use yak_common::file_ops::metadata::RawPathMetadata;
 use yak_common::legacy_configs::dice::HasLegacyConfigs;
-use yak_common::legacy_configs::key::BuckconfigKeyRef;
-use yak_common::legacy_configs::view::LegacyBuckConfigView;
+use yak_common::legacy_configs::key::YakconfigKeyRef;
+use yak_common::legacy_configs::view::LegacyYakConfigView;
 use yak_core::cells::CellAliasResolver;
 use yak_core::cells::cell_path::CellPath;
 use yak_core::cells::cell_path_with_allowed_relative_dir::CellPathWithAllowedRelativeDir;
@@ -91,7 +91,7 @@ impl<'d> HasAllowRelativePaths<'d> for DiceComputations<'d> {
 
                 let allowed_relative_dirs_for_current_dir = config
                     .view(ctx)
-                    .parse_list::<String>(BuckconfigKeyRef {
+                    .parse_list::<String>(YakconfigKeyRef {
                         section: "yak",
                         property: "directories_to_allow_relative_paths",
                     })?

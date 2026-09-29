@@ -33,7 +33,7 @@ pub(crate) enum FileOpsError {
 
 pub enum FileReadError {
     NotFound(String),
-    Buck(yak_error::Error),
+    Yak(yak_error::Error),
 }
 
 impl FileReadError {
@@ -43,14 +43,14 @@ impl FileReadError {
                 "`{path}`.\n     Included in `{package_path}` but does not exist"
             ))
             .into(),
-            FileReadError::Buck(err) => err.dupe(),
+            FileReadError::Yak(err) => err.dupe(),
         }
     }
 
     pub fn without_package_context_information(self) -> yak_error::Error {
         match self {
             FileReadError::NotFound(path) => FileOpsError::FileNotFound(path).into(),
-            FileReadError::Buck(err) => err.dupe(),
+            FileReadError::Yak(err) => err.dupe(),
         }
     }
 }

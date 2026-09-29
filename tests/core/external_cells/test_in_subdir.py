@@ -6,23 +6,23 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-from e2e_util.api.buck import Buck
+from e2e_util.api.yak import Yak
 from e2e_util.asserts import expect_failure
-from e2e_util.buck_workspace import buck_test
+from e2e_util.yak_workspace import yak_test
 
 
-@buck_test()
-async def test_in_subdir(buck: Buck) -> None:
+@yak_test()
+async def test_in_subdir(yak: Yak) -> None:
     err = "No such file or directory"
     await expect_failure(
-        buck.targets("test_bundled_cell//dir:"),
+        yak.targets("test_bundled_cell//dir:"),
         stderr_regex=err,
     )
     await expect_failure(
-        buck.cquery("root//:"),
+        yak.cquery("root//:"),
         stderr_regex=err,
     )
     # FIXME(JakobDegen): Decide if this is a bug or not
-    (buck.cwd / "somedir").mkdir()
-    await buck.targets("test_bundled_cell//dir:")
-    await buck.cquery("root//:")
+    (yak.cwd / "somedir").mkdir()
+    await yak.targets("test_bundled_cell//dir:")
+    await yak.cquery("root//:")

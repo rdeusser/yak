@@ -16,7 +16,7 @@ use starlark::syntax::DialectTypes;
 pub enum StarlarkFileType {
     Bzl,
     Bxl,
-    Buck,
+    Yak,
     Package,
     Json,
     Toml,
@@ -25,7 +25,7 @@ pub enum StarlarkFileType {
 /// What type of file are we parsing - a `.bzl` file, `.bxl` file, or a `YAK` file.
 impl StarlarkFileType {
     pub fn dialect(&self, disable_starlark_types: bool) -> Dialect {
-        let buck_dialect: Dialect = Dialect {
+        let yak_dialect: Dialect = Dialect {
             enable_def: false,
             enable_lambda: true,
             enable_load: true,
@@ -80,7 +80,7 @@ impl StarlarkFileType {
 
         match self {
             Self::Bzl => bzl_dialect,
-            Self::Buck => buck_dialect,
+            Self::Yak => yak_dialect,
             Self::Package => package_dialect,
             Self::Bxl => bxl_dialect,
             Self::Json | Self::Toml => Dialect::Standard,

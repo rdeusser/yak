@@ -35,7 +35,7 @@ prelude.filegroup(
     srcs = {
         "": ":files",
         # explicitly include files that fall off the glob due to package boundary violations
-        "cfg/exec_platform/marker/YAK": "//cfg/exec_platform/marker:buck_file",
+        "cfg/exec_platform/marker/YAK": "//cfg/exec_platform/marker:yak_file",
         "rust/tools/attrs.bzl": "//rust/tools:attrs.bzl",
     },
     visibility = ["PUBLIC"],

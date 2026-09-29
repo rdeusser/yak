@@ -34,7 +34,7 @@ use tokio_stream::wrappers::UnboundedReceiverStream;
 use yak_core::fs::project_rel_path::ProjectRelativePathBuf;
 use yak_data::clean_stale_result::PolicyMode;
 use yak_data::clean_stale_result::Trigger;
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 use yak_events::dispatch::EventDispatcher;
 use yak_events::dispatch::get_dispatcher;
 use yak_events::dispatch::get_dispatcher_opt;
@@ -384,7 +384,7 @@ impl<T: IoHandler> DeferredMaterializerAccessor<T> {
         ))?;
         receiver
             .await
-            .buck_error_context("No response from materializer")
+            .yak_error_context("No response from materializer")
     }
 
     pub(super) fn fsck_impl(
@@ -406,11 +406,11 @@ impl<T: IoHandler> DeferredMaterializerAccessor<T> {
         ))?;
         if let Some(task) = receiver
             .await
-            .buck_error_context("No response from materializer")?
+            .yak_error_context("No response from materializer")?
         {
             task.await
-                .buck_error_context("Refresh task aborted")?
-                .buck_error_context("Refresh failed")?;
+                .yak_error_context("Refresh task aborted")?
+                .yak_error_context("Refresh failed")?;
         }
         Ok(())
     }
@@ -423,7 +423,7 @@ impl<T: IoHandler> DeferredMaterializerAccessor<T> {
         ))?;
         receiver
             .await
-            .buck_error_context("No response from materializer")
+            .yak_error_context("No response from materializer")
     }
 
     pub(super) async fn clean_stale_artifacts_impl(
@@ -505,7 +505,7 @@ impl<T: IoHandler> DeferredMaterializerAccessor<T> {
         ))?;
         receiver
             .await
-            .buck_error_context("No response from materializer")
+            .yak_error_context("No response from materializer")
     }
 
     pub(super) async fn flush_all_access_times_impl(&self) -> yak_error::Result<String> {
@@ -516,6 +516,6 @@ impl<T: IoHandler> DeferredMaterializerAccessor<T> {
         ))?;
         receiver
             .await
-            .buck_error_context("No response from materializer")
+            .yak_error_context("No response from materializer")
     }
 }

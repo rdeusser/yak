@@ -6,8 +6,8 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-from e2e_util.api.buck import Buck
-from e2e_util.buck_workspace import buck_test
+from e2e_util.api.yak import Yak
+from e2e_util.yak_workspace import yak_test
 from e2e_util.helper.golden import (
     golden,
     golden_replace_cfg_hash,
@@ -15,10 +15,10 @@ from e2e_util.helper.golden import (
 )
 
 
-@buck_test()
-async def test_ctargets_json_report_basic(buck: Buck) -> None:
+@yak_test()
+async def test_ctargets_json_report_basic(yak: Yak) -> None:
     """Test basic --json-report with only compatible targets"""
-    result = await buck.ctargets(
+    result = await yak.ctargets(
         "//a:target1",
         "//a:target2",
         "--target-platforms=root//:p",
@@ -35,10 +35,10 @@ async def test_ctargets_json_report_basic(buck: Buck) -> None:
     )
 
 
-@buck_test()
-async def test_ctargets_json_report_with_incompatible(buck: Buck) -> None:
+@yak_test()
+async def test_ctargets_json_report_with_incompatible(yak: Yak) -> None:
     """Test --json-report with incompatible targets"""
-    result = await buck.ctargets(
+    result = await yak.ctargets(
         "//a:target1",
         "//a:macos_only",
         "//a:target2",
@@ -56,10 +56,10 @@ async def test_ctargets_json_report_with_incompatible(buck: Buck) -> None:
     )
 
 
-@buck_test()
-async def test_ctargets_json_report_with_transitive_incompatible(buck: Buck) -> None:
+@yak_test()
+async def test_ctargets_json_report_with_transitive_incompatible(yak: Yak) -> None:
     """Test --json-report with transitively incompatible targets"""
-    result = await buck.ctargets(
+    result = await yak.ctargets(
         "//a:target1",
         "//c:depends_on_incompatible",
         "//a:target2",
@@ -78,10 +78,10 @@ async def test_ctargets_json_report_with_transitive_incompatible(buck: Buck) -> 
     )
 
 
-@buck_test()
-async def test_ctargets_json_report_with_errors_and_keep_going(buck: Buck) -> None:
+@yak_test()
+async def test_ctargets_json_report_with_errors_and_keep_going(yak: Yak) -> None:
     """Test --json-report with errors (should only appear in stderr, not JSON)"""
-    result = await buck.ctargets(
+    result = await yak.ctargets(
         "//a:target1",
         "//b:any",
         "//a:target2",
@@ -100,10 +100,10 @@ async def test_ctargets_json_report_with_errors_and_keep_going(buck: Buck) -> No
     )
 
 
-@buck_test()
-async def test_ctargets_json_report_mixed(buck: Buck) -> None:
+@yak_test()
+async def test_ctargets_json_report_mixed(yak: Yak) -> None:
     """Test --json-report with mix of compatible, incompatible, and errors"""
-    result = await buck.ctargets(
+    result = await yak.ctargets(
         "//a:target1",
         "//a:macos_only",
         "//b:any",
@@ -124,10 +124,10 @@ async def test_ctargets_json_report_mixed(buck: Buck) -> None:
     )
 
 
-@buck_test()
-async def test_ctargets_json_report_only_incompatible(buck: Buck) -> None:
+@yak_test()
+async def test_ctargets_json_report_only_incompatible(yak: Yak) -> None:
     """Test --json-report when all targets are incompatible"""
-    result = await buck.ctargets(
+    result = await yak.ctargets(
         "//a:macos_only",
         "--target-platforms=root//:linux_platform",
         "--json-report",
@@ -143,10 +143,10 @@ async def test_ctargets_json_report_only_incompatible(buck: Buck) -> None:
     )
 
 
-@buck_test()
-async def test_ctargets_json_report_with_attributes(buck: Buck) -> None:
+@yak_test()
+async def test_ctargets_json_report_with_attributes(yak: Yak) -> None:
     """Test --json-report with attribute filtering"""
-    result = await buck.ctargets(
+    result = await yak.ctargets(
         "//a:target1",
         "//a:target2",
         "--target-platforms=root//:p",

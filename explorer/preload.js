@@ -12,12 +12,12 @@ const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('api', {
     // Get/set the current directory
-    current_buck_dir: () => ipcRenderer.invoke('current-buck-dir'),
-    select_buck_dir: () => ipcRenderer.invoke('select-buck-dir'),
+    current_yak_dir: () => ipcRenderer.invoke('current-yak-dir'),
+    select_yak_dir: () => ipcRenderer.invoke('select-yak-dir'),
 
     // Run yak <action>
-    status: () => ipcRenderer.invoke('buck2-status'),
-    targets: (target, host) => ipcRenderer.invoke('buck2-targets', target, host),
-    attributes: (target, host) => ipcRenderer.invoke('buck2-attributes', target, host),
-    providers: (target, host) => ipcRenderer.invoke('buck2-providers', target, host),
+    status: () => ipcRenderer.invoke('yak-status'),
+    targets: (target, host) => ipcRenderer.invoke('yak-targets', target, host),
+    attributes: (target, host) => ipcRenderer.invoke('yak-attributes', target, host),
+    providers: (target, host) => ipcRenderer.invoke('yak-providers', target, host),
 });

@@ -15,7 +15,7 @@ use rustls::ClientConfig;
 use rustls::RootCertStore;
 use rustls_pki_types::CertificateDer;
 use rustls_pki_types::pem::PemObject;
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 use yak_error::yak_error;
 
 pub fn maybe_setup_cryptography() {
@@ -46,7 +46,7 @@ async fn load_system_root_certs() -> yak_error::Result<RootCertStore> {
 async fn load_root_certs_from_path(path: &Path) -> yak_error::Result<RootCertStore> {
     let root_certs = load_certs(path)
         .await
-        .with_buck_error_context(|| format!("Loading root certs from: {}", path.display()))?;
+        .with_yak_error_context(|| format!("Loading root certs from: {}", path.display()))?;
     root_cert_store_from_certs(root_certs)
 }
 
@@ -54,7 +54,7 @@ async fn load_native_system_root_certs() -> yak_error::Result<RootCertStore> {
     let mut native_certs_results =
         tokio::task::spawn_blocking(rustls_native_certs::load_native_certs)
             .await
-            .buck_error_context("Loading native system root certificates")?;
+            .yak_error_context("Loading native system root certificates")?;
 
     let root_certs = if !native_certs_results.certs.is_empty() {
         Ok(native_certs_results.certs)
@@ -113,7 +113,7 @@ async fn load_certs<P: AsRef<Path>>(
 
     let cert_data = tokio::fs::read(cert_path)
         .await
-        .with_buck_error_context(|| {
+        .with_yak_error_context(|| {
             format!("Error reading certificate file `{}`", cert_path.display())
         })?;
 
@@ -123,7 +123,7 @@ async fn load_certs<P: AsRef<Path>>(
     let certs: Result<Vec<CertificateDer<'static>>, rustls_pki_types::pem::Error> =
         cert_results.into_iter().collect();
 
-    certs.with_buck_error_context(|| {
+    certs.with_yak_error_context(|| {
         format!("Error reading certificate file `{}`", cert_path.display())
     })
 }

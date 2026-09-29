@@ -22,8 +22,8 @@ use yak_build_api::interpreter::rule_defs::resolved_macro::ResolvedStringWithMac
 use yak_core::package::PackageLabel;
 use yak_core::package::source_path::SourcePath;
 use yak_core::provider::label::ConfiguredProvidersLabel;
-use yak_error::BuckErrorContext;
-use yak_error::BuckErrorOptionContext;
+use yak_error::YakErrorContext;
+use yak_error::YakErrorOptionContext;
 use yak_node::attrs::attr_type::arg::ConfiguredMacro;
 use yak_node::attrs::attr_type::arg::ConfiguredStringWithMacros;
 use yak_node::attrs::attr_type::arg::ConfiguredStringWithMacrosPart;
@@ -88,7 +88,7 @@ impl ConfiguredStringWithMacrosExt for ConfiguredStringWithMacros {
                         ConfiguredStringWithMacrosPart::Macro(write_to_file, m) => {
                             resolved_parts.push(ResolvedStringWithMacrosPart::Macro(
                                 *write_to_file,
-                                resolve_configured_macro(m, ctx, pkg).with_buck_error_context(
+                                resolve_configured_macro(m, ctx, pkg).with_yak_error_context(
                                     || format!("Error resolving `{part}`."),
                                 )?,
                             ));
@@ -141,8 +141,8 @@ fn resolve_configured_macro<'v>(
             Ok(ResolvedMacro::ArgLike(CommandLineArg::new(run_info)?))
         }
         ConfiguredMacro::Source(p) => {
-            let buck_path = SourcePath::new(pkg.dupe(), p.path().dupe());
-            Ok(ResolvedMacro::Source(SourceArtifact::new(buck_path).into()))
+            let yak_path = SourcePath::new(pkg.dupe(), p.path().dupe());
+            Ok(ResolvedMacro::Source(SourceArtifact::new(yak_path).into()))
         }
         ConfiguredMacro::UserUnkeyedPlaceholder(name) => {
             let provider = ctx.resolve_unkeyed_placeholder(name)?.ok_or_else(|| {

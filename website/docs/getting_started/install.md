@@ -6,7 +6,7 @@ title: Installing yak
 ## Installing yak
 
 The latest set of `yak` executables can be found under the
-[`latest` release page](https://github.com/rdeusser/buck2/releases/tag/latest).
+[`latest` release page](https://github.com/rdeusser/yak/releases/tag/latest).
 
 Additionally, for each bi-monthly release there is a
 [dotslash](https://dotslash-cli.com) file that is appropriate for committing to
@@ -25,7 +25,7 @@ you. Once it's installed, build and install `yak` directly from GitHub:
 
 ```bash
 rustup install nightly-2026-07-05
-cargo +nightly-2026-07-05 install --git https://github.com/rdeusser/buck2.git buck2
+cargo +nightly-2026-07-05 install --git https://github.com/rdeusser/yak.git yak
 ```
 
 This installs `yak` into a suitable directory such as `$HOME/.cargo/bin`,
@@ -48,8 +48,8 @@ Verify the install with `yak --help`.
 To hack on yak, build from a clone of the repo instead:
 
 ```sh
-git clone https://github.com/rdeusser/buck2.git
-cd buck2/
+git clone https://github.com/rdeusser/yak.git
+cd yak/
 cargo install --path=app/yak
 ```
 
@@ -60,13 +60,13 @@ itself, rather than rustup. The yak source ships a `flake.nix` that exposes a
 `cargo`/`rustc` development shell:
 
 ```sh
-git clone https://github.com/rdeusser/buck2.git
-cd buck2/
+git clone https://github.com/rdeusser/yak.git
+cd yak/
 nix develop . # add 'rustc' and 'cargo' to $PATH
 cargo build --release --bin=yak
 ```
 
-A Nix package (e.g. `nix build .#yak`) does not yet exist; the `buck2` package
+A Nix package (e.g. `nix build .#yak`) does not yet exist; the `yak` package
 in nixpkgs shows how to write one. An `.envrc` using the Nix flake is
 provided for `direnv` users — `direnv allow` will give a usable development
 environment.
@@ -97,10 +97,8 @@ export YAK_BUILD_PROTOC_INCLUDE=/opt/protobuf/include
 
 ### Building yak with yak
 
-See [Bootstrapping](../about/bootstrapping.md) for details. The gist:
+Cargo builds yak:
 
 ```sh
 cargo build --bin=yak
-reindeer --third-party-dir third-party/rust buckify
-target/debug/yak build //:yak
 ```

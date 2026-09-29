@@ -48,14 +48,14 @@ use starlark::values::typing::TypeInstanceId;
 use starlark::values::typing::TypeMatcherFactory;
 use strong_hash::StrongHash;
 use yak_core::bzl::ImportPath;
-use yak_error::BuckErrorOptionContext;
+use yak_error::YakErrorOptionContext;
 use yak_interpreter::build_context::starlark_path_from_build_context;
 use yak_interpreter::paths::path::StarlarkPath;
 
 use crate::interpreter::rule_defs::transitive_set::TransitiveSet;
 use crate::interpreter::rule_defs::transitive_set::TransitiveSetError;
 use crate::interpreter::rule_defs::transitive_set::transitive_set::TransitiveSetMatcher;
-use crate::interpreter::rule_defs::type_id_domain::Buck2TypeIdDomain;
+use crate::interpreter::rule_defs::type_id_domain::YakTypeIdDomain;
 
 #[derive(Debug, yak_error::Error)]
 #[yak(tag = Input)]
@@ -251,7 +251,7 @@ impl<'v> StarlarkValue<'v> for TransitiveSetDefinition<'v> {
                 name: variable_name.to_owned(),
             });
             let set_type_instance_id =
-                TypeInstanceId::from_identity(Buck2TypeIdDomain::TransitiveSet, &*id);
+                TypeInstanceId::from_identity(YakTypeIdDomain::TransitiveSet, &*id);
             let set_ty = Ty::custom(TyUser::new(
                 variable_name.to_owned(),
                 TyStarlarkValue::new::<TransitiveSet>(),

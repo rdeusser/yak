@@ -6,15 +6,15 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-from e2e_util.api.buck import Buck
+from e2e_util.api.yak import Yak
 from e2e_util.asserts import expect_failure
-from e2e_util.buck_workspace import buck_test
+from e2e_util.yak_workspace import yak_test
 
 
-@buck_test()
-async def test_unstable_typecheck(buck: Buck) -> None:
-    await buck.cquery("//:x")
+@yak_test()
+async def test_unstable_typecheck(yak: Yak) -> None:
+    await yak.cquery("//:x")
     await expect_failure(
-        buck.cquery("//:x", "--unstable-typecheck"),
+        yak.cquery("//:x", "--unstable-typecheck"),
         stderr_regex="Expected type `int` but got `str`",
     )

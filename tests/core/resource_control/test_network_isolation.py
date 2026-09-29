@@ -6,18 +6,18 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-from e2e_util.api.buck import Buck
+from e2e_util.api.yak import Yak
 from e2e_util.asserts import expect_failure
-from e2e_util.buck_workspace import buck_test
+from e2e_util.yak_workspace import yak_test
 
 
-@buck_test(skip_for_os=["windows", "darwin"], disable_daemon_cgroup=False)
-async def test_network_isolated(buck: Buck) -> None:
+@yak_test(skip_for_os=["windows", "darwin"], disable_daemon_cgroup=False)
+async def test_network_isolated(yak: Yak) -> None:
     """Verify that network_access='none' blocks network in a new network namespace."""
     # The test command tries to bind to localhost. With network isolation the
     # loopback interface is DOWN, so the bind fails and the test exits non-zero.
     await expect_failure(
-        buck.test(
+        yak.test(
             "root//:network_isolated",
             "--local-only",
             "--no-remote-cache",
@@ -25,22 +25,22 @@ async def test_network_isolated(buck: Buck) -> None:
     )
 
 
-@buck_test(skip_for_os=["windows", "darwin"], disable_daemon_cgroup=False)
-async def test_network_accessible(buck: Buck) -> None:
+@yak_test(skip_for_os=["windows", "darwin"], disable_daemon_cgroup=False)
+async def test_network_accessible(yak: Yak) -> None:
     """Control: verify network works when network_access is not set."""
-    await buck.test(
+    await yak.test(
         "root//:network_accessible",
         "--local-only",
         "--no-remote-cache",
     )
 
 
-@buck_test(skip_for_os=["windows", "darwin"])
-async def test_network_isolated_without_cgroups(buck: Buck) -> None:
+@yak_test(skip_for_os=["windows", "darwin"])
+async def test_network_isolated_without_cgroups(yak: Yak) -> None:
     """Isolation applies even when daemon cgroups are off."""
     # disable_daemon_cgroup defaults to True — no daemon-level cgroups.
     await expect_failure(
-        buck.test(
+        yak.test(
             "root//:network_isolated",
             "--local-only",
             "--no-remote-cache",

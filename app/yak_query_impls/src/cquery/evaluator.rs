@@ -18,7 +18,7 @@ use futures::StreamExt;
 use futures::stream::FuturesUnordered;
 use gazebo::prelude::*;
 use yak_common::events::HasEvents;
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 use yak_error::conversion::from_any_with_tag;
 use yak_error::internal_error;
 use yak_events::dispatch::console_message;

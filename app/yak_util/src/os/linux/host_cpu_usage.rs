@@ -12,7 +12,7 @@
 
 use std::fs;
 
-use yak_error::BuckErrorOptionContext;
+use yak_error::YakErrorOptionContext;
 use yak_error::yak_error;
 
 use crate::os::host_cpu_usage::HostCpuUsage;

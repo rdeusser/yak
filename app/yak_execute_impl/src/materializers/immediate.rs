@@ -17,7 +17,7 @@ use remote_execution::NamedDigest;
 use remote_execution::NamedDigestWithPermissions;
 use yak_common::file_ops::metadata::FileMetadata;
 use yak_common::file_ops::metadata::TrackedFileDigest;
-use yak_core::fs::buck_out_path::BuckOutPathKind;
+use yak_core::fs::yak_out_path::YakOutPathKind;
 use yak_core::fs::project::ProjectRoot;
 use yak_core::fs::project_rel_path::ProjectRelativePath;
 use yak_core::fs::project_rel_path::ProjectRelativePathBuf;
@@ -26,7 +26,7 @@ use yak_directory::directory::directory_iterator::DirectoryIterator;
 use yak_directory::directory::directory_iterator::DirectoryIteratorPathStack;
 use yak_directory::directory::entry::DirectoryEntry;
 use yak_directory::directory::walk::unordered_entry_walk;
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 use yak_error::internal_error;
 use yak_execute::artifact_value::ArtifactValue;
 use yak_execute::digest::CasDigestToReExt;
@@ -186,11 +186,11 @@ pub(crate) fn maybe_locked_write(
     path: &ProjectRelativePath,
     content: &[u8],
     is_executable: bool,
-    path_kind: BuckOutPathKind,
+    path_kind: YakOutPathKind,
 ) -> yak_error::Result<()> {
     let _guard = match path_kind {
-        BuckOutPathKind::ContentHash => Some(write_lock(path)),
-        BuckOutPathKind::Configuration => None,
+        YakOutPathKind::ContentHash => Some(write_lock(path)),
+        YakOutPathKind::Configuration => None,
     };
 
     let Err(first_attempt) = write_via_atomic_rename(fs, path, content, is_executable) else {
@@ -266,9 +266,9 @@ fn write_via_atomic_rename(
     }
     let mut temp = builder
         .tempfile_in(&dest_dir)
-        .with_buck_error_context(|| format!("creating temp file for `{path}`"))?;
+        .with_yak_error_context(|| format!("creating temp file for `{path}`"))?;
     temp.write_all(content)
-        .with_buck_error_context(|| format!("writing temp file for `{path}`"))?;
+        .with_yak_error_context(|| format!("writing temp file for `{path}`"))?;
 
     let temp_path = temp.into_temp_path();
     let temp_abs = AbsPath::new(&*temp_path)?;
@@ -395,7 +395,7 @@ mod tests {
     use std::time::Duration;
     use std::time::Instant;
 
-    use yak_core::fs::buck_out_path::BuckOutPathKind;
+    use yak_core::fs::yak_out_path::YakOutPathKind;
     use yak_core::fs::project::ProjectRootTemp;
     use yak_core::fs::project_rel_path::ProjectRelativePath;
     use yak_core::fs::project_rel_path::ProjectRelativePathBuf;
@@ -419,7 +419,7 @@ mod tests {
             path,
             content,
             false,
-            BuckOutPathKind::ContentHash,
+            YakOutPathKind::ContentHash,
         )?;
 
         let stop = AtomicBool::new(false);
@@ -434,7 +434,7 @@ mod tests {
                             path,
                             content,
                             false,
-                            BuckOutPathKind::ContentHash,
+                            YakOutPathKind::ContentHash,
                         )
                         .is_err()
                         {
@@ -513,7 +513,7 @@ mod tests {
                             path,
                             content,
                             false,
-                            BuckOutPathKind::ContentHash,
+                            YakOutPathKind::ContentHash,
                         )
                         .is_err()
                         {
@@ -565,7 +565,7 @@ mod tests {
             path,
             content,
             false,
-            BuckOutPathKind::ContentHash,
+            YakOutPathKind::ContentHash,
         )?;
 
         let abs = project.path().resolve(path);
@@ -592,7 +592,7 @@ mod tests {
             path,
             content,
             false,
-            BuckOutPathKind::ContentHash,
+            YakOutPathKind::ContentHash,
         );
         fs_util::set_permissions(dir, std::fs::Permissions::from_mode(0o755))
             .categorize_internal()?;
@@ -623,7 +623,7 @@ mod tests {
             &path,
             content,
             false,
-            BuckOutPathKind::ContentHash,
+            YakOutPathKind::ContentHash,
         )?;
 
         assert_eq!(
@@ -656,7 +656,7 @@ mod tests {
             path,
             content,
             false,
-            BuckOutPathKind::Configuration,
+            YakOutPathKind::Configuration,
         )?;
 
         assert_eq!(

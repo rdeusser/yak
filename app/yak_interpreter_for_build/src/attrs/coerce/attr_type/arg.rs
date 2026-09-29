@@ -16,7 +16,7 @@ use starlark::typing::Ty;
 use starlark::values::Value;
 use yak_core::provider::label::ProvidersLabel;
 use yak_core::soft_error;
-use yak_hash::BuckMutSet;
+use yak_hash::YakMutSet;
 use yak_node::attrs::attr_type::arg::ArgAttrType;
 use yak_node::attrs::attr_type::arg::MacroBase;
 use yak_node::attrs::attr_type::arg::MacroDepKind;
@@ -41,8 +41,8 @@ use crate::attrs::coerce::attr_type::ty_maybe_select::TyMaybeSelect;
 // These are the macros we haven't yet implemented yet, we should make sure not
 // to try and resolve them to user defined macros with a target parameter,
 // because some of them don't take a target.
-// Taken from https://buck.build/function/string_parameter_macros.html.
-static UNIMPLEMENTED_MACROS: LazyLock<BuckMutSet<&'static str>> = LazyLock::new(|| {
+// Taken from https://yak.build/function/string_parameter_macros.html.
+static UNIMPLEMENTED_MACROS: LazyLock<YakMutSet<&'static str>> = LazyLock::new(|| {
     ["classpath_abi", "maven_coords", "output", "query_paths"]
         .into_iter()
         .collect()

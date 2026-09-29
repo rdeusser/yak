@@ -23,7 +23,7 @@ use tonic::transport::Endpoint;
 use tonic::transport::Uri;
 use tonic::transport::server::Connected;
 use tower::service_fn;
-use yak_error::BuckErrorContext as _;
+use yak_error::YakErrorContext as _;
 
 use crate::flow_control::configure_endpoint;
 
@@ -98,7 +98,7 @@ where
     // NOTE: The uri here is only used to populate the requests we send. We don't actually connect
     // anywhere since we already have an I/O channel on hand.
     let endpoint = Endpoint::try_from(format!("http://{name}.invalid"))
-        .buck_error_context("Invalid endpoint")?;
+        .yak_error_context("Invalid endpoint")?;
     let channel = configure_endpoint(endpoint)
         .connect_with_connector(service_fn(move |_: Uri| {
             let io = io
@@ -109,7 +109,7 @@ where
             future::ready(io)
         }))
         .await
-        .buck_error_context("Failed to create channel")?;
+        .yak_error_context("Failed to create channel")?;
 
     Ok(channel)
 }

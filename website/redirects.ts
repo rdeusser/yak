@@ -14,10 +14,6 @@ const baseRedirects = [
       from: '/docs/why',
     },
     {
-      to: '/docs/about/bootstrapping',
-      from: '/docs/bootstrapping',
-    },
-    {
       to: '/docs/prelude/rules',
       from: '/docs/api/rules',
     },
@@ -46,7 +42,7 @@ const globalsBasedApiDocs = [
     to: '/docs/api/build/Artifact',
   },
   {
-    from: ['/docs/api/build/buck_regex', '/docs/api/bxl/buck_regex'],
+    from: ['/docs/api/build/yak_regex', '/docs/api/bxl/yak_regex'],
     to: '/docs/api/build/regex',
   },
   {

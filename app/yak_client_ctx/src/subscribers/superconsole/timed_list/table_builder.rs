@@ -23,7 +23,7 @@ use superconsole::style::style;
 use yak_event_observer::display;
 use yak_event_observer::display::TargetDisplayOptions;
 use yak_event_observer::fmt_duration;
-use yak_event_observer::span_tracker::BuckEventSpanInfo;
+use yak_event_observer::span_tracker::YakEventSpanInfo;
 
 use crate::subscribers::superconsole::timed_list::Cutoffs;
 use crate::subscribers::superconsole::timekeeper::Timekeeper;
@@ -157,7 +157,7 @@ pub(crate) struct TimedRow {
 impl TimedRow {
     pub(crate) fn span(
         padding: usize,
-        span: &BuckEventSpanInfo,
+        span: &YakEventSpanInfo,
         timekeeper: &Timekeeper,
         cutoffs: &Cutoffs,
         display_platform: bool,

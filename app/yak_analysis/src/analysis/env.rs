@@ -39,17 +39,17 @@ use yak_core::execution_types::execution::ExecutionPlatformResolution;
 use yak_core::provider::label::ConfiguredProvidersLabel;
 use yak_core::target::configured_target_label::ConfiguredTargetLabel;
 use yak_core::unsafe_send_future::UnsafeSendFuture;
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 use yak_error::conversion::from_any_with_tag;
 use yak_events::dispatch::get_dispatcher;
 use yak_execute::digest_config::HasDigestConfig;
-use yak_hash::BuckMutMap;
-use yak_hash::StdBuckHashMap;
+use yak_hash::YakMutMap;
+use yak_hash::StdYakHashMap;
 use yak_interpreter::dice::starlark_provider::StarlarkEvalKind;
-use yak_interpreter::factory::BuckStarlarkModule;
+use yak_interpreter::factory::YakStarlarkModule;
 use yak_interpreter::factory::StarlarkEvaluatorProvider;
 use yak_interpreter::print_handler::EventDispatcherPrintHandler;
-use yak_interpreter::soft_error::Buck2StarlarkSoftErrorHandler;
+use yak_interpreter::soft_error::YakStarlarkSoftErrorHandler;
 use yak_interpreter::types::rule::FROZEN_PROMISE_ARTIFACT_MAPPINGS_GET_IMPL;
 use yak_interpreter::types::rule::FROZEN_RULE_GET_IMPL;
 use yak_node::nodes::configured::ConfiguredTargetNodeRef;
@@ -76,8 +76,8 @@ enum AnalysisError {
 // that are NOT tied to that module. Must claim ownership of them via `add_reference` before returning them.
 pub struct RuleAnalysisAttrResolutionContext<'a, 'v> {
     pub module: &'a Module<'v>,
-    pub dep_analysis_results: BuckMutMap<ConfiguredTargetLabel, FrozenProviderCollectionValue>,
-    pub query_results: BuckMutMap<String, Arc<AnalysisQueryResult>>,
+    pub dep_analysis_results: YakMutMap<ConfiguredTargetLabel, FrozenProviderCollectionValue>,
+    pub query_results: YakMutMap<String, Arc<AnalysisQueryResult>>,
     pub execution_platform_resolution: ExecutionPlatformResolution,
 }
 
@@ -114,7 +114,7 @@ impl<'a, 'v> AttrResolutionContext<'v> for &'_ RuleAnalysisAttrResolutionContext
 }
 
 pub fn get_dep<'v>(
-    dep_analysis_results: &BuckMutMap<ConfiguredTargetLabel, FrozenProviderCollectionValue>,
+    dep_analysis_results: &YakMutMap<ConfiguredTargetLabel, FrozenProviderCollectionValue>,
     target: &ConfiguredProvidersLabel,
     module: &Module<'v>,
 ) -> yak_error::Result<FrozenValueTyped<'v, ProviderCollection<'v>>> {
@@ -129,7 +129,7 @@ pub fn get_dep<'v>(
 }
 
 pub fn resolve_unkeyed_placeholder<'v>(
-    dep_analysis_results: &BuckMutMap<ConfiguredTargetLabel, FrozenProviderCollectionValue>,
+    dep_analysis_results: &YakMutMap<ConfiguredTargetLabel, FrozenProviderCollectionValue>,
     name: &str,
     module: &Module<'v>,
 ) -> Option<CommandLineArg<'v>> {
@@ -152,7 +152,7 @@ pub fn resolve_unkeyed_placeholder<'v>(
 }
 
 pub fn resolve_query(
-    query_results: &BuckMutMap<String, Arc<AnalysisQueryResult>>,
+    query_results: &YakMutMap<String, Arc<AnalysisQueryResult>>,
     query: &str,
     module: &Module,
 ) -> yak_error::Result<Arc<AnalysisQueryResult>> {
@@ -185,7 +185,7 @@ pub trait RuleSpec: Sync {
 struct AnalysisEnv<'a> {
     rule_spec: &'a dyn RuleSpec,
     deps: Vec<(&'a ConfiguredTargetLabel, AnalysisResult)>,
-    query_results: BuckMutMap<String, Arc<AnalysisQueryResult>>,
+    query_results: YakMutMap<String, Arc<AnalysisQueryResult>>,
     execution_platform: &'a ExecutionPlatformResolution,
     label: ConfiguredTargetLabel,
     cancellation: &'a CancellationContext,
@@ -195,7 +195,7 @@ pub(crate) async fn run_analysis<'a>(
     dice: &'a mut DiceComputations<'_>,
     label: &ConfiguredTargetLabel,
     results: Vec<(&'a ConfiguredTargetLabel, AnalysisResult)>,
-    query_results: BuckMutMap<String, Arc<AnalysisQueryResult>>,
+    query_results: YakMutMap<String, Arc<AnalysisQueryResult>>,
     execution_platform: &'a ExecutionPlatformResolution,
     rule_spec: &'a dyn RuleSpec,
     node: ConfiguredTargetNodeRef<'a>,
@@ -214,11 +214,11 @@ pub(crate) async fn run_analysis<'a>(
 
 pub fn get_deps_from_analysis_results(
     results: Vec<(&ConfiguredTargetLabel, AnalysisResult)>,
-) -> yak_error::Result<BuckMutMap<ConfiguredTargetLabel, FrozenProviderCollectionValue>> {
+) -> yak_error::Result<YakMutMap<ConfiguredTargetLabel, FrozenProviderCollectionValue>> {
     results
         .into_iter()
         .map(|(label, result)| Ok((label.dupe(), result.providers()?.to_owned())))
-        .collect::<yak_error::Result<BuckMutMap<ConfiguredTargetLabel, FrozenProviderCollectionValue>>>()
+        .collect::<yak_error::Result<YakMutMap<ConfiguredTargetLabel, FrozenProviderCollectionValue>>>()
 }
 
 // Used to express that the impl Future below captures multiple named lifetimes.
@@ -242,7 +242,7 @@ async fn run_analysis_with_env_underlying(
     analysis_env: AnalysisEnv<'_>,
     node: ConfiguredTargetNodeRef<'_>,
 ) -> yak_error::Result<(AnalysisResult, Option<AnalysisSplitInstants>)> {
-    BuckStarlarkModule::with_profiling_async(async move |env| {
+    YakStarlarkModule::with_profiling_async(async move |env| {
         let print = EventDispatcherPrintHandler(get_dispatcher());
 
         let validations_from_deps = analysis_env
@@ -283,7 +283,7 @@ async fn run_analysis_with_env_underlying(
 
         let (ctx, list_res) = reentrant_eval.with_evaluator(|eval| {
             eval.set_print_handler(&print);
-            eval.set_soft_error_handler(&Buck2StarlarkSoftErrorHandler);
+            eval.set_soft_error_handler(&YakStarlarkSoftErrorHandler);
 
             let ctx = AnalysisContext::prepare(
                 eval.heap(),
@@ -343,7 +343,7 @@ async fn run_analysis_with_env_underlying(
                 AnalysisResult::new(
                     recorded_values,
                     profile_data,
-                    StdBuckHashMap::default(),
+                    StdYakHashMap::default(),
                     declared_actions,
                     declared_artifacts,
                     validations,
@@ -383,7 +383,7 @@ pub fn get_rule_callable<'v>(
     let rule_callable = module
         .get_any_visibility(name)
         .map_err(|e| from_any_with_tag(e, yak_error::ErrorTag::Tier0))
-        .with_buck_error_context(|| format!("Couldn't find rule `{name}`"))?
+        .with_yak_error_context(|| format!("Couldn't find rule `{name}`"))?
         .0;
     Ok(rule_callable.add_to_heap(eval.heap()))
 }

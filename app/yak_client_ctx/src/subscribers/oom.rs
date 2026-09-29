@@ -58,11 +58,11 @@ impl OomEvidence {
 
 pub(crate) async fn find_daemon_oom_evidence(
     daemon_pid: i64,
-    cgroup_path_of_buck2_daemon: Option<&str>,
+    cgroup_path_of_yak_daemon: Option<&str>,
     daemon_start_instant: Option<Instant>,
 ) -> yak_error::Result<Option<OomEvidence>> {
-    let cgroup_path_of_buck2_daemon =
-        cgroup_path_of_buck2_daemon.and_then(|path| match path.strip_prefix("/sys/fs/cgroup/") {
+    let cgroup_path_of_yak_daemon =
+        cgroup_path_of_yak_daemon.and_then(|path| match path.strip_prefix("/sys/fs/cgroup/") {
             Some(rel) => Some(rel),
             None => {
                 let _unused = soft_error!(
@@ -147,7 +147,7 @@ pub(crate) async fn find_daemon_oom_evidence(
     if let Some(evidence) = find_matching_oom_kill(
         &stdout_str,
         daemon_pid,
-        cgroup_path_of_buck2_daemon,
+        cgroup_path_of_yak_daemon,
         lower_bound,
     ) {
         tracing::debug!("OOM detection matched dmesg line: {:?}", evidence.line());
@@ -208,10 +208,10 @@ fn monotonic_now() -> yak_error::Result<Duration> {
 fn find_matching_oom_kill(
     dmesg: &str,
     daemon_pid: i64,
-    cgroup_path_of_buck2_daemon: Option<&str>,
+    cgroup_path_of_yak_daemon: Option<&str>,
     lower_bound: Duration,
 ) -> Option<OomEvidence> {
-    let cgroup_matcher = cgroup_path_of_buck2_daemon.map(Buck2CgroupMatcher::new);
+    let cgroup_matcher = cgroup_path_of_yak_daemon.map(YakCgroupMatcher::new);
     for line in dmesg.lines().rev() {
         let Some(event_time) = parse_dmesg_timestamp(line) else {
             continue;
@@ -280,7 +280,7 @@ fn parse_dmesg_timestamp(line: &str) -> Option<Duration> {
     Some(Duration::new(seconds, nanoseconds))
 }
 
-/// FNV prime, used as the polynomial base in `Buck2CgroupMatcher`.
+/// FNV prime, used as the polynomial base in `YakCgroupMatcher`.
 const NAMESPACE_HASH_BASE: u64 = 0x100000001b3;
 
 fn hash_component(s: &str) -> u64 {
@@ -291,8 +291,8 @@ fn hash_component(s: &str) -> u64 {
 
 /// Pre-computed view of a yak daemon cgroup path used to test dmesg lines
 /// against many candidate killed cgroups without re-splitting or re-hashing
-/// `buck2_cgroup` each time.
-struct Buck2CgroupMatcher<'a> {
+/// `yak_cgroup` each time.
+struct YakCgroupMatcher<'a> {
     components: Vec<&'a str>,
     /// `prefix_hashes[k]` is the polynomial rolling hash of `components[..k]`,
     /// i.e. `sum_{j<k} h(components[j]) * BASE^j`, under the recurrence
@@ -301,9 +301,9 @@ struct Buck2CgroupMatcher<'a> {
     prefix_hashes: Box<[u64]>,
 }
 
-impl<'a> Buck2CgroupMatcher<'a> {
-    fn new(buck2_cgroup: &'a str) -> Self {
-        let components: Vec<&'a str> = buck2_cgroup.split('/').collect();
+impl<'a> YakCgroupMatcher<'a> {
+    fn new(yak_cgroup: &'a str) -> Self {
+        let components: Vec<&'a str> = yak_cgroup.split('/').collect();
         let prefix_hashes: Box<[u64]> = std::iter::once(0u64)
             .chain(components.iter().scan((0u64, 1u64), |(h, power), c| {
                 *h = h.wrapping_add(hash_component(c).wrapping_mul(*power));
@@ -389,7 +389,7 @@ fn parse_systemd_oomd_kill_cgroup(line: &str) -> Option<&str> {
 mod tests {
     use std::time::Duration;
 
-    use super::Buck2CgroupMatcher;
+    use super::YakCgroupMatcher;
     use super::OomEvidence;
     use super::dmesg_lower_bound_at;
     use super::find_matching_oom_kill;
@@ -400,7 +400,7 @@ mod tests {
     #[test]
     fn test_oomd_cgroup_must_contain_daemon() {
         let daemon = "user.slice/user-190155.slice/user@190155.service/yak.slice/yak_daemon.scope";
-        let matcher = Buck2CgroupMatcher::new(daemon);
+        let matcher = YakCgroupMatcher::new(daemon);
 
         assert!(matcher.killed_cgroup_contains_daemon(daemon));
         assert!(matcher.killed_cgroup_contains_daemon(
@@ -418,7 +418,7 @@ mod tests {
     fn test_oomd_cgroup_namespace_prefix_contains_daemon() {
         let daemon =
             "task/user.slice/user-29230.slice/user@29230.service/yak.slice/yak_daemon.scope/daemon";
-        let matcher = Buck2CgroupMatcher::new(daemon);
+        let matcher = YakCgroupMatcher::new(daemon);
 
         assert!(matcher.killed_cgroup_contains_daemon(
             "workload.slice/workload-container.slice/task/user.slice/user-29230.slice/user@29230.service/yak.slice"
@@ -517,8 +517,8 @@ mod tests {
         let triggering_task = "<6>[100.000000] oom-kill:constraint=CONSTRAINT_MEMCG,task_memcg=/user.slice/yak.slice/yak_daemon.scope,task=yak,pid=1234,uid=1000";
         let wrong_pid_victim = "<6>[100.500000] Memory cgroup out of memory: Killed process 5678 (yak) total-vm:1000kB";
         let wrong_comm_victim = "<6>[102.000000] Memory cgroup out of memory: Killed process 1234 (other) total-vm:1000kB";
-        let buck2_victim = "<6>[103.000000] Memory cgroup out of memory: Killed process 1234 (yak) total-vm:1000kB";
-        let buck2_daemon_victim = "<6>[104.000000] Memory cgroup out of memory: Killed process 1234 (yak-daemon) total-vm:1000kB";
+        let yak_victim = "<6>[103.000000] Memory cgroup out of memory: Killed process 1234 (yak) total-vm:1000kB";
+        let yak_daemon_victim = "<6>[104.000000] Memory cgroup out of memory: Killed process 1234 (yak-daemon) total-vm:1000kB";
 
         assert_eq!(
             None,
@@ -532,7 +532,7 @@ mod tests {
             None,
             find_matching_oom_kill(wrong_comm_victim, 1234, None, lower_bound)
         );
-        for daemon_victim in [buck2_victim, buck2_daemon_victim] {
+        for daemon_victim in [yak_victim, yak_daemon_victim] {
             assert!(matches!(
                 find_matching_oom_kill(daemon_victim, 1234, None, lower_bound),
                 Some(OomEvidence::KernelVictim { pid: 1234, .. })

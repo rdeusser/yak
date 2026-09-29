@@ -7,12 +7,12 @@
 # above-listed licenses.
 
 import pytest
-from e2e_util.api.buck import Buck
+from e2e_util.api.yak import Yak
 from e2e_util.asserts import expect_failure
-from e2e_util.buck_workspace import buck_test
+from e2e_util.yak_workspace import yak_test
 
 
-@buck_test()
+@yak_test()
 @pytest.mark.parametrize(
     "rule, passes",
     [
@@ -28,12 +28,12 @@ from e2e_util.buck_workspace import buck_test
         ("self//:fail6", False),
     ],
 )
-async def test_audit_visibility(buck: Buck, rule: str, passes: bool) -> None:
+async def test_audit_visibility(yak: Yak, rule: str, passes: bool) -> None:
     if passes:
-        out = await buck.audit_visibility(rule)
+        out = await yak.audit_visibility(rule)
         assert out.stdout == ""
     else:
         await expect_failure(
-            buck.audit_visibility(rule),
+            yak.audit_visibility(rule),
             stderr_regex=f"not visible to `{rule}`",
         )

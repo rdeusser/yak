@@ -130,7 +130,7 @@ mod tests {
 
     #[test]
     fn test_truncate_span_in_middle() {
-        let error = "rdeps(set(root//buck2/... other//tools/buck2/..., other//apple/buck2/...), root//buck2/cli:buck2)";
+        let error = "rdeps(set(root//yak/... other//tools/yak/..., other//apple/yak/...), root//yak/cli:yak)";
         let span = Spanned {
             position: 0..error.len(),
             value: false,
@@ -141,7 +141,7 @@ mod tests {
             context_lines,
             [
                 "",
-                "    rdeps(set(root//buck2/... other//t<<omitted>>buck2/...), root//buck2/cli:buck2)",
+                "    rdeps(set(root//yak/... other//t<<omitted>>yak/...), root//yak/cli:yak)",
                 "    ^-----------------------------------------------------------------------------^",
                 "",
             ]

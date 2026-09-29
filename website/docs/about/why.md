@@ -16,7 +16,7 @@ variety of programming languages, including C++, Python, Rust, Go, Swift,
 Objective-C, Haskell, OCaml, and more.
 
 These large scale and multi-language repositories are generally beyond the
-capabilities of traditional build systems like `make`. yak is a fork of Buck2,
+capabilities of traditional build systems like `make`. yak is a fork of Yak,
 which Meta wrote for such a repository. Its design borrows ideas from
 [academic](https://ndmitchell.com/#shake_10_sep_2012)
 [research](https://ndmitchell.com/#shake_21_apr_2020) and build systems,
@@ -84,11 +84,11 @@ systems, including Bazel, do not have:
   providing a reduction in the size of the dependency graph.
 - **yak is not phased** - there are no target graph/action graph phases, just
   a series of dependencies in a
-  [single graph on DICE](https://github.com/rdeusser/buck2/blob/main/dice/dice/docs/index.md)
+  [single graph on DICE](https://github.com/rdeusser/yak/blob/main/dice/dice/docs/index.md)
   that result in whatever the user requested. That means that yak can
   sometimes parallelise different phases and track changes very precisely.
 - **The yak Starlark implementation is available
-  [as a standalone library](https://github.com/rdeusser/buck2/tree/main/starlark-rust)** -
+  [as a standalone library](https://github.com/rdeusser/yak/tree/main/starlark-rust)** -
   this provides features such as IDE integration (both LSP and DAP bindings),
   linters, typecheckers, and more. These features are integrated into yak to
   give a better developer experience (which is still evolving).
@@ -101,7 +101,7 @@ systems, including Bazel, do not have:
 
 It would be delightful if you tried out yak! But it is early-stage software,
 so users may run into unexpected issues. If you encounter an issue, please
-report it via [GitHub issues](https://github.com/rdeusser/buck2/issues).
+report it via [GitHub issues](https://github.com/rdeusser/yak/issues).
 
 There are some things that aren't quite yet finished:
 

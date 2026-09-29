@@ -18,7 +18,7 @@ use smallvec::SmallVec;
 use smallvec::smallvec;
 use yak_artifact::artifact::artifact_type::Artifact;
 use yak_core::fs::artifact_path_resolver::ArtifactFs;
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 use yak_error::internal_error;
 use yak_execute::artifact::artifact_dyn::ArtifactDyn;
 use yak_execute::artifact::group::artifact_group_values_dyn::ArtifactGroupValuesDyn;
@@ -28,7 +28,7 @@ use yak_execute::directory::ActionSharedDirectory;
 use yak_execute::directory::INTERNER;
 use yak_execute::directory::LazyActionDirectoryBuilder;
 use yak_execute::directory::insert_artifact_lazy;
-use yak_hash::BuckMutSet;
+use yak_hash::YakMutSet;
 
 /// The [`ArtifactValue`]s for an [`crate::artifact_groups::ArtifactGroup`].
 #[derive(Clone, Dupe, Allocative, Pagable)]
@@ -49,12 +49,12 @@ impl ArtifactGroupValues {
             if artifact.path_resolution_requires_artifact_value() {
                 let path = artifact
                     .resolve_path(artifact_fs, Some(&value.content_based_path_hash()))
-                    .buck_error_context("Invalid artifact")?;
+                    .yak_error_context("Invalid artifact")?;
                 insert_artifact_lazy(&mut builder, path, value)?;
             } else {
                 let path = artifact
                     .resolve_path(artifact_fs, None)
-                    .buck_error_context("Invalid artifact")?;
+                    .yak_error_context("Invalid artifact")?;
                 insert_artifact_lazy(&mut builder, path, value)?;
             }
         }
@@ -70,7 +70,7 @@ impl ArtifactGroupValues {
 
             builder
                 .merge(child_dir.dupe())
-                .buck_error_context("Merge failed")?;
+                .yak_error_context("Merge failed")?;
         }
 
         let directory = builder
@@ -186,7 +186,7 @@ trait TransitiveSetContainer: Sized {
 struct TransitiveSetIterator<'a, C, V, I> {
     values: &'a [V],
     queue: Vec<&'a C>,
-    seen: BuckMutSet<I>,
+    seen: YakMutSet<I>,
 }
 
 impl<'a, C>
@@ -203,7 +203,7 @@ where
         let mut ret = Self {
             values: container.values(),
             queue: Vec::new(),
-            seen: BuckMutSet::default(),
+            seen: YakMutSet::default(),
         };
         ret.enqueue_children(container.children());
         ret
@@ -213,7 +213,7 @@ where
         let mut ret = Self {
             values: &[],
             queue: Vec::new(),
-            seen: BuckMutSet::default(),
+            seen: YakMutSet::default(),
         };
         ret.enqueue_roots(containers);
         ret

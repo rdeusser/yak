@@ -16,7 +16,7 @@ use yak_common::dice::cells::HasCellResolver;
 use yak_core::bzl::ImportPath;
 use yak_core::pattern::parse_package::parse_package;
 use yak_error::yak_error;
-use yak_hash::BuckMutSet;
+use yak_hash::YakMutSet;
 use yak_interpreter::file_loader::LoadedModule;
 use yak_interpreter::load_module::INTERPRETER_CALCULATION_IMPL;
 use yak_interpreter::paths::module::StarlarkModulePath;
@@ -51,7 +51,7 @@ pub(crate) async fn server_execute(
 
             struct Printer {
                 first: bool,
-                visited: BuckMutSet<ImportPath>,
+                visited: YakMutSet<ImportPath>,
             }
 
             impl Printer {
@@ -93,7 +93,7 @@ pub(crate) async fn server_execute(
 
             let mut printer = Printer {
                 first: true,
-                visited: BuckMutSet::default(),
+                visited: YakMutSet::default(),
             };
 
             for module in module_deps.0.into_iter() {

@@ -8,36 +8,36 @@
 
 from pathlib import Path
 
-from e2e_util.api.buck import Buck
-from e2e_util.buck_workspace import buck_test
+from e2e_util.api.yak import Yak
+from e2e_util.yak_workspace import yak_test
 
 
-@buck_test(
-    extra_buck_config={
+@yak_test(
+    extra_yak_config={
         "test": {
             "foo": "bar",
         }
     },
 )
-async def test_extra_buck_config(buck: Buck) -> None:
+async def test_extra_yak_config(yak: Yak) -> None:
     """
     Assert that our testing framework works as expected.
     """
 
-    cfg = (await buck.audit_config("--style=json")).get_json()
+    cfg = (await yak.audit_config("--style=json")).get_json()
     assert cfg.get("test.foo") == "bar"
 
 
-@buck_test()
-async def test_audit_config_json(buck: Buck) -> None:
-    result = await buck.audit_config("--style=json")
+@yak_test()
+async def test_audit_config_json(yak: Yak) -> None:
+    result = await yak.audit_config("--style=json")
     result_json = result.get_json()
     assert result_json is not None
 
 
-@buck_test()
-async def test_audit_config_cell_json(buck: Buck) -> None:
-    out = await buck.audit_config(
+@yak_test()
+async def test_audit_config_cell_json(yak: Yak) -> None:
+    out = await yak.audit_config(
         "--style",
         "json",
     )
@@ -45,12 +45,12 @@ async def test_audit_config_cell_json(buck: Buck) -> None:
     assert out_json.get("test.is_root") == "yes"
     assert out_json.get("test.is_code") is None
 
-    out = await buck.audit_config("--style", "json", "--cell", "code")
+    out = await yak.audit_config("--style", "json", "--cell", "code")
     out_json = out.get_json() or {}
     assert out_json.get("test.is_code") == "yes"
     assert out_json.get("test.is_root") is None
 
-    out = await buck.audit_config(
+    out = await yak.audit_config(
         "--style",
         "json",
         rel_cwd=Path("code"),
@@ -60,9 +60,9 @@ async def test_audit_config_cell_json(buck: Buck) -> None:
     assert out_json.get("test.is_root") is None
 
 
-@buck_test()
-async def test_audit_config_all_cells(buck: Buck) -> None:
-    out = await buck.audit_config(
+@yak_test()
+async def test_audit_config_all_cells(yak: Yak) -> None:
+    out = await yak.audit_config(
         "--all-cells",
         "--style",
         "json",
@@ -74,7 +74,7 @@ async def test_audit_config_all_cells(buck: Buck) -> None:
     assert out_json.get("root//bar.a") == "1"
     assert out_json.get("b//bar.a") is None
 
-    out = await buck.audit_config(
+    out = await yak.audit_config(
         "--all-cells",
         "--style",
         "json",
@@ -84,15 +84,15 @@ async def test_audit_config_all_cells(buck: Buck) -> None:
     assert out_json.get("code//bar.a") == "2"
     assert out_json.get("source//bar.a") is None
 
-    out = await buck.audit_config(
+    out = await yak.audit_config(
         "--all-cells",
     )
     assert "# Cell: source\n[bar]\n    a = 1\n" in out.stdout
 
 
-@buck_test()
-async def test_audit_config_with_config_value(buck: Buck) -> None:
-    result_config = await buck.audit_config(
+@yak_test()
+async def test_audit_config_with_config_value(yak: Yak) -> None:
+    result_config = await yak.audit_config(
         "python",
         "--style",
         "json",
@@ -103,12 +103,12 @@ async def test_audit_config_with_config_value(buck: Buck) -> None:
     assert result_config_json.get("python.helpers") == "true"
 
 
-@buck_test()
-async def test_audit_config_with_config_file(buck: Buck, tmp_path: Path) -> None:
+@yak_test()
+async def test_audit_config_with_config_file(yak: Yak, tmp_path: Path) -> None:
     configfile = tmp_path / "config.bcfg"
     configfile.write_text("[python]\n  helpers = true\n")
 
-    result_file = await buck.audit_config(
+    result_file = await yak.audit_config(
         "--config-file",
         str(configfile),
         "--style",
@@ -118,9 +118,9 @@ async def test_audit_config_with_config_file(buck: Buck, tmp_path: Path) -> None
     assert result_file.get_json().get("python.helpers") == "true"
 
 
-@buck_test()
-async def test_audit_config_location_extended(buck: Buck) -> None:
-    result = await buck.audit_config(
+@yak_test()
+async def test_audit_config_location_extended(yak: Yak) -> None:
+    result = await yak.audit_config(
         "bar.a",
         "--location=extended",
     )
@@ -128,9 +128,9 @@ async def test_audit_config_location_extended(buck: Buck) -> None:
     assert "included.bcfg:2" in result.stdout
 
 
-@buck_test()
-async def test_audit_config_with_cell_syntax(buck: Buck) -> None:
-    result_file = await buck.audit_config(
+@yak_test()
+async def test_audit_config_with_cell_syntax(yak: Yak) -> None:
+    result_file = await yak.audit_config(
         "code//test.is_code",
         "--style",
         "json",
@@ -140,9 +140,9 @@ async def test_audit_config_with_cell_syntax(buck: Buck) -> None:
     assert result_file_json.get("code//test.is_code") == "yes"
 
 
-@buck_test()
-async def test_cell_relative_configs(buck: Buck) -> None:
-    result_root_cell = await buck.audit_config(
+@yak_test()
+async def test_cell_relative_configs(yak: Yak) -> None:
+    result_root_cell = await yak.audit_config(
         "--config",
         "root//bar.a=5",
         "--style",
@@ -153,7 +153,7 @@ async def test_cell_relative_configs(buck: Buck) -> None:
     assert result_root_cell_json is not None
     assert result_root_cell_json.get("foo.b") == "5"
 
-    result_nonroot_cell = await buck.audit_config(
+    result_nonroot_cell = await yak.audit_config(
         "foo",
         "--config",
         "code//bar.a=5",
@@ -167,7 +167,7 @@ async def test_cell_relative_configs(buck: Buck) -> None:
     assert result_nonroot_cell_json is not None
     assert result_nonroot_cell_json.get("foo.b") == "5"
 
-    result_diff_cell = await buck.audit_config(
+    result_diff_cell = await yak.audit_config(
         "foo",
         "--config",
         "code//bar.a=5",
@@ -181,7 +181,7 @@ async def test_cell_relative_configs(buck: Buck) -> None:
     assert result_diff_cell_json is not None
     assert result_diff_cell_json.get("foo.b") == "1"
 
-    result_all_cell = await buck.audit_config(
+    result_all_cell = await yak.audit_config(
         "foo",
         "--config",
         "bar.a=5",

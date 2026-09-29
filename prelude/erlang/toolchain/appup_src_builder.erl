@@ -25,7 +25,7 @@ appup_info.json format:
 The .appup.src template is expected to contain a single Erlang term of the form
 `{Vsn, UpInstructions, DownInstructions}`. When `Vsn` matches the configured
 placeholder (either as an atom or as a string), it is substituted with the
-buck-supplied `version`. Otherwise it must already equal `version`.
+yak-supplied `version`. Otherwise it must already equal `version`.
 """.
 
 -export([main/1]).

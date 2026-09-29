@@ -8,17 +8,17 @@
 
 import sys
 
-from e2e_util.api.buck import Buck
+from e2e_util.api.yak import Yak
 from e2e_util.asserts import expect_failure
-from e2e_util.buck_workspace import buck_test, env
+from e2e_util.yak_workspace import yak_test, env
 
 
-@buck_test()
+@yak_test()
 @env("YAK_TEST_EXECUTOR_USE_TCP", "true")
-async def test_tcp_startup_fail(buck: Buck) -> None:
+async def test_tcp_startup_fail(yak: Yak) -> None:
     # Python is a binary that will just fail when we give it our executor args
     # but works on any platform. It's a bit dumb but it'll do
     await expect_failure(
-        buck.test("...", test_executor=sys.executable),
+        yak.test("...", test_executor=sys.executable),
         stderr_regex="Executor exited before connecting",
     )

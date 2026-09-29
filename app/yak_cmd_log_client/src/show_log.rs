@@ -9,9 +9,9 @@
  */
 
 use tokio_stream::StreamExt;
-use yak_client_ctx::client_ctx::BuckSubcommand;
+use yak_client_ctx::client_ctx::YakSubcommand;
 use yak_client_ctx::client_ctx::ClientCommandContext;
-use yak_client_ctx::common::BuckArgMatches;
+use yak_client_ctx::common::YakArgMatches;
 use yak_client_ctx::event_log_options::EventLogOptions;
 use yak_client_ctx::events_ctx::EventsCtx;
 use yak_client_ctx::exit_result::ExitResult;
@@ -24,12 +24,12 @@ pub struct ShowLogCommand {
     event_log: EventLogOptions,
 }
 
-impl BuckSubcommand for ShowLogCommand {
+impl YakSubcommand for ShowLogCommand {
     const COMMAND_NAME: &'static str = "log-show";
 
     async fn exec_impl(
         self,
-        _matches: BuckArgMatches<'_>,
+        _matches: YakArgMatches<'_>,
         ctx: ClientCommandContext<'_>,
         _events_ctx: &mut EventsCtx,
     ) -> ExitResult {

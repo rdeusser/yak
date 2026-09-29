@@ -17,7 +17,7 @@ use std::env;
 use std::fmt::Write;
 use std::fs;
 
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 
 const REGENERATE_VAR_NAME: &str = "YAK_RUST_REGENERATE_GOLDEN_TESTS";
 
@@ -46,11 +46,11 @@ pub fn golden_test_template(golden_rel_path: &str, output: &str) {
 
     if env::var(REGENERATE_VAR_NAME).is_ok() {
         fs::write(&golden_file_path, &output_with_prefix)
-            .with_buck_error_context(|| format!("Writing `{golden_file_path}`"))
+            .with_yak_error_context(|| format!("Writing `{golden_file_path}`"))
             .unwrap();
     } else {
         let expected = fs::read_to_string(&golden_file_path)
-            .with_buck_error_context(|| format!("Reading `{golden_file_path}`"))
+            .with_yak_error_context(|| format!("Reading `{golden_file_path}`"))
             .unwrap();
 
         let expected = if cfg!(windows) {

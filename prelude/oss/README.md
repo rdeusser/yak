@@ -1,7 +1,7 @@
 # yak Prelude
 
 The prelude is the library of Starlark rules and toolchains that yak embeds.
-It is developed in <https://github.com/rdeusser/buck2> under the `prelude/`
+It is developed in <https://github.com/rdeusser/yak> under the `prelude/`
 directory, and issues and pull requests belong there.
 
 ## License

@@ -30,13 +30,13 @@ use yak_build_api::interpreter::rule_defs::provider::builtin::platform_info::Pla
 use yak_common::dice::cells::HasCellResolver;
 use yak_common::legacy_configs::configs::parse_config_section_and_key;
 use yak_common::legacy_configs::dice::HasLegacyConfigs;
-use yak_common::legacy_configs::key::BuckconfigKeyRef;
+use yak_common::legacy_configs::key::YakconfigKeyRef;
 use yak_core::configuration::config_setting::ConfigSettingData;
 use yak_core::configuration::data::ConfigurationData;
 use yak_core::configuration::pair::ConfigurationNoExec;
 use yak_core::provider::label::ProvidersLabel;
 use yak_core::target::label::label::TargetLabel;
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 use yak_node::attrs::attr_type::configuration_dep::ConfigurationDepKind;
 use yak_node::configuration::calculation::CONFIGURATION_CALCULATION;
 use yak_node::configuration::calculation::CellNameForConfigurationResolution;
@@ -98,12 +98,12 @@ async fn configuration_matches(
 
     // Cell used for yakconfigs is set to cell of target that applies select.
     // Eventually, we want this to be the cell of the platform instead.
-    for (raw_section_and_key, config_value) in &constraints_and_configs.buckconfigs {
+    for (raw_section_and_key, config_value) in &constraints_and_configs.yakconfigs {
         let config_section_and_key = parse_config_section_and_key(raw_section_and_key, None)?;
         let v = ctx
             .get_legacy_config_property(
                 target_node_cell.0,
-                BuckconfigKeyRef {
+                YakconfigKeyRef {
                     section: &config_section_and_key.section,
                     property: &config_section_and_key.key,
                 },
@@ -115,14 +115,14 @@ async fn configuration_matches(
         }
     }
 
-    if !constraints_and_configs.root_buckconfigs.is_empty() {
+    if !constraints_and_configs.root_yakconfigs.is_empty() {
         let root_config = ctx.get_legacy_root_config_on_dice().await?;
 
-        for (raw_section_and_key, config_value) in &constraints_and_configs.root_buckconfigs {
+        for (raw_section_and_key, config_value) in &constraints_and_configs.root_yakconfigs {
             let config_section_and_key = parse_config_section_and_key(raw_section_and_key, None)?;
             let v = root_config.lookup(
                 ctx,
-                BuckconfigKeyRef {
+                YakconfigKeyRef {
                     section: &config_section_and_key.section,
                     property: &config_section_and_key.key,
                 },
@@ -191,7 +191,7 @@ async fn compute_platform_configuration(
         &cell_resolver,
         &cell_alias_resolver,
     )
-    .buck_error_context(
+    .yak_error_context(
         "`PlatformInfo` label for `platform()` rule should be a valid target label",
     )?;
 
@@ -204,7 +204,7 @@ async fn compute_platform_configuration(
             &parsed_target,
         )
         .await
-        .buck_error_context(
+        .yak_error_context(
             "Checking whether label of returned `PlatformInfo` resolves to the same configuration",
         )?;
         if cfg_again != configuration_data {
@@ -271,7 +271,7 @@ async fn get_configuration_node(
     })
     .await?
     .dupe()
-    .with_buck_error_context(|| {
+    .with_yak_error_context(|| {
         format!(
             "Error getting configuration node of `{cfg_target}` within the `{target_cfg}` configuration",
         )
@@ -463,7 +463,7 @@ mod tests {
     use super::*;
 
     #[tokio::test]
-    async fn configuration_matches_buckconfigs_from_target_and_root_cells() -> yak_error::Result<()>
+    async fn configuration_matches_yakconfigs_from_target_and_root_cells() -> yak_error::Result<()>
     {
         let root_config = parse(
             &[(
@@ -508,11 +508,11 @@ mod tests {
                 target_cell,
                 &ConfigSettingData {
                     constraints: BTreeMap::new(),
-                    buckconfigs: BTreeMap::from_iter([(
+                    yakconfigs: BTreeMap::from_iter([(
                         "cell_scope.key".to_owned(),
                         "target-value".to_owned(),
                     )]),
-                    root_buckconfigs: BTreeMap::new(),
+                    root_yakconfigs: BTreeMap::new(),
                 },
             )
             .await?
@@ -524,11 +524,11 @@ mod tests {
                 target_cell,
                 &ConfigSettingData {
                     constraints: BTreeMap::new(),
-                    buckconfigs: BTreeMap::from_iter([(
+                    yakconfigs: BTreeMap::from_iter([(
                         "cell_scope.key".to_owned(),
                         "root-value".to_owned(),
                     )]),
-                    root_buckconfigs: BTreeMap::new(),
+                    root_yakconfigs: BTreeMap::new(),
                 },
             )
             .await?
@@ -540,8 +540,8 @@ mod tests {
                 target_cell,
                 &ConfigSettingData {
                     constraints: BTreeMap::new(),
-                    buckconfigs: BTreeMap::new(),
-                    root_buckconfigs: BTreeMap::from_iter([(
+                    yakconfigs: BTreeMap::new(),
+                    root_yakconfigs: BTreeMap::from_iter([(
                         "root_scope.key".to_owned(),
                         "root-value".to_owned(),
                     )]),
@@ -556,8 +556,8 @@ mod tests {
                 target_cell,
                 &ConfigSettingData {
                     constraints: BTreeMap::new(),
-                    buckconfigs: BTreeMap::new(),
-                    root_buckconfigs: BTreeMap::from_iter([(
+                    yakconfigs: BTreeMap::new(),
+                    root_yakconfigs: BTreeMap::from_iter([(
                         "root_scope.key".to_owned(),
                         "target-value".to_owned(),
                     )]),
@@ -572,11 +572,11 @@ mod tests {
                 target_cell,
                 &ConfigSettingData {
                     constraints: BTreeMap::new(),
-                    buckconfigs: BTreeMap::from_iter([(
+                    yakconfigs: BTreeMap::from_iter([(
                         "cell_scope.key".to_owned(),
                         "target-value".to_owned(),
                     )]),
-                    root_buckconfigs: BTreeMap::from_iter([(
+                    root_yakconfigs: BTreeMap::from_iter([(
                         "root_scope.key".to_owned(),
                         "root-value".to_owned(),
                     )]),

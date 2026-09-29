@@ -31,7 +31,7 @@ use yak_core::pattern::pattern::Modifiers;
 use yak_core::provider::label::ConfiguredProvidersLabel;
 use yak_execute::artifact::artifact_dyn::ArtifactDyn;
 use yak_execute::artifact::fs::ExecutorFs;
-use yak_hash::BuckMutMap;
+use yak_hash::YakMutMap;
 
 mod proto {
     pub(crate) use yak_cli_proto::BuildTarget;
@@ -118,7 +118,7 @@ impl<'a> ResultReporter<'a> {
             .iter()
             .filter_map(|output| output.inner.as_ref().ok());
 
-        let mut artifact_path_mapping = BuckMutMap::default();
+        let mut artifact_path_mapping = YakMutMap::default();
 
         // NOTE: We use an SmallMap here to preserve the order the rule author wrote, all
         // the while avoiding duplicates.
@@ -273,13 +273,13 @@ impl<'a> ResultReporter<'a> {
 }
 
 struct ErrorCountingArtifactPathMapperImpl<'a> {
-    pub map: BuckMutMap<&'a Artifact, ContentBasedPathHash>,
+    pub map: YakMutMap<&'a Artifact, ContentBasedPathHash>,
     pub content_based_paths_with_no_hash: Cell<usize>,
     pub scratch_content_based_path_hash: ContentBasedPathHash,
 }
 
 impl<'a> ErrorCountingArtifactPathMapperImpl<'a> {
-    pub fn new(map: BuckMutMap<&'a Artifact, ContentBasedPathHash>) -> Self {
+    pub fn new(map: YakMutMap<&'a Artifact, ContentBasedPathHash>) -> Self {
         Self {
             map,
             content_based_paths_with_no_hash: Cell::new(0),

@@ -14,7 +14,7 @@ use std::sync::Arc;
 use gazebo::prelude::VecExt;
 use yak_core::cells::cell_path::CellPath;
 use yak_fs::paths::abs_norm_path::AbsNormPathBuf;
-use yak_hash::BuckMutSet;
+use yak_hash::YakMutSet;
 
 /// Argv contains the bare process argv and the "expanded" argv. The expanded argv is
 /// the argv after processing flagfiles (args like @mode/opt and --flagfile mode/opt)
@@ -79,7 +79,7 @@ impl ExpandedArgv {
         }
     }
 
-    fn redacted(self, to_redact: &BuckMutSet<&String>) -> ExpandedArgv {
+    fn redacted(self, to_redact: &YakMutSet<&String>) -> ExpandedArgv {
         Self {
             args: self
                 .args
@@ -312,7 +312,7 @@ impl Argv {
         }
     }
 
-    pub fn redacted(self, to_redact: BuckMutSet<&String>) -> SanitizedArgv {
+    pub fn redacted(self, to_redact: YakMutSet<&String>) -> SanitizedArgv {
         SanitizedArgv {
             argv: self
                 .argv

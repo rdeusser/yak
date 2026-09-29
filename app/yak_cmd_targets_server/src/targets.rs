@@ -28,8 +28,8 @@ use yak_cli_proto::targets_request::TargetHashGraphType;
 use yak_common::dice::cells::HasCellResolver;
 use yak_common::pattern::parse_from_cli::parse_patterns_from_cli_args;
 use yak_core::pattern::pattern_type::TargetPatternExtra;
-use yak_error::BuckErrorContext;
-use yak_error::BuckErrorOptionContext;
+use yak_error::YakErrorContext;
+use yak_error::YakErrorOptionContext;
 use yak_error::internal_error;
 use yak_server_ctx::ctx::ServerCommandContextTrait;
 use yak_server_ctx::global_cfg_options::global_cfg_options_from_client_context;
@@ -97,7 +97,7 @@ fn outputter<'a, W: Write + Send + 'a>(
     let (output_type, output): (_, Box<dyn Compressor>) = match &request.output {
         None => (OutputType::Stdout, Box::new(UncompressedCompressor(stdout))),
         Some(file) => {
-            let file = BufWriter::new(File::create(file).with_buck_error_context(|| {
+            let file = BufWriter::new(File::create(file).with_yak_error_context(|| {
                 format!("Failed to open file `{file}` for `targets` output ")
             })?);
             (OutputType::File, Box::new(UncompressedCompressor(file)))

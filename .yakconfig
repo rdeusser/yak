@@ -10,9 +10,7 @@ config = prelude
 prelude = bundled
 
 [buildfile]
-# `third-party/rust/YAK.missing` stands in for `third-party/rust/YAK` and
-# explains how to generate it with `reindeer buckify`.
-name = YAK,YAK.missing
+name = YAK
 
 [build]
 execution_platforms = prelude//platforms:default

@@ -52,17 +52,17 @@ impl TwoSnapshots {
 
     /// User + system CPU time between two snapshots in percents.
     pub fn cpu_percents(&self) -> Option<u64> {
-        self.per_micro_second(|s| (s.buck2_user_cpu_us + s.buck2_system_cpu_us) * 100)
+        self.per_micro_second(|s| (s.yak_user_cpu_us + s.yak_system_cpu_us) * 100)
     }
 
     /// User CPU time between two snapshots in percents.
     pub fn user_cpu_percents(&self) -> Option<u64> {
-        self.per_micro_second(|s| s.buck2_user_cpu_us * 100)
+        self.per_micro_second(|s| s.yak_user_cpu_us * 100)
     }
 
     /// System CPU time between two snapshots in percents.
     pub fn system_cpu_percents(&self) -> Option<u64> {
-        self.per_micro_second(|s| s.buck2_system_cpu_us * 100)
+        self.per_micro_second(|s| s.yak_system_cpu_us * 100)
     }
 
     /// Measure bytes-per-second rate between two snapshots for some field.
@@ -102,8 +102,8 @@ mod tests {
         two_snapshots.update(
             t0,
             &yak_data::Snapshot {
-                buck2_user_cpu_us: 100,
-                buck2_system_cpu_us: 200,
+                yak_user_cpu_us: 100,
+                yak_system_cpu_us: 200,
                 ..Default::default()
             },
         );
@@ -113,8 +113,8 @@ mod tests {
         two_snapshots.update(
             t0.add(Duration::from_secs(2)),
             &yak_data::Snapshot {
-                buck2_user_cpu_us: 6_000_100,
-                buck2_system_cpu_us: 8_000_200,
+                yak_user_cpu_us: 6_000_100,
+                yak_system_cpu_us: 8_000_200,
                 ..Default::default()
             },
         );

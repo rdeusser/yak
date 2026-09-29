@@ -38,7 +38,7 @@ User-Facing library for quick-iteration testing of Common Test
     list_impl/1
 ]).
 
--include_lib("common/include/buck_ct_records.hrl").
+-include_lib("common/include/yak_ct_records.hrl").
 
 -define(raw_file_access, prim_file).
 
@@ -200,7 +200,7 @@ run(RegExOrId) ->
             {0, 0};
         ToRun ->
             Suites = [maps:get(suite, TestMap) || TestMap <- ToRun],
-            case shell_buck2_utils:rebuild_modules(Suites) of
+            case shell_yak_utils:rebuild_modules(Suites) of
                 ok ->
                     io:format("Reloading all changed modules... "),
                     case ct_daemon:load_changed() of
@@ -321,7 +321,7 @@ init_common_app_env(CommonAppEnv) ->
                     % Only set the env if it's not already set to allow cli overrides
                     case application:get_env(common, KeyAtom) of
                         undefined ->
-                            ValueTerm = buck_ct_parser:parse_str(Value),
+                            ValueTerm = yak_ct_parser:parse_str(Value),
                             application:set_env(common, KeyAtom, ValueTerm);
                         _ ->
                             ok

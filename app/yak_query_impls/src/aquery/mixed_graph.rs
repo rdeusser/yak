@@ -28,8 +28,8 @@ use yak_build_api::actions::query::ActionQueryNodeData;
 use yak_build_api::actions::query::ActionQueryNodeRef;
 use yak_build_api::actions::query::SetProjectionInputs;
 use yak_build_api::artifact_groups::TransitiveSetProjectionKey;
-use yak_hash::BuckMutMap;
-use yak_hash::BuckMutSet;
+use yak_hash::YakMutMap;
+use yak_hash::YakMutSet;
 use yak_query::query::environment::QueryEnvironment;
 use yak_query::query::graph::async_bfs::async_bfs_find_path;
 use yak_query::query::graph::node::LabeledNode;
@@ -83,8 +83,8 @@ pub(crate) async fn aquery_deps_bounded_unfiltered(
     depth: u32,
 ) -> yak_error::Result<TargetSet<ActionQueryNode>> {
     let mut deps = TargetSet::new();
-    let mut visited: BuckMutSet<ActionQueryNodeRef> = BuckMutSet::default();
-    let mut expanded_tsets: BuckMutSet<SetProjectionInputs> = BuckMutSet::default();
+    let mut visited: YakMutSet<ActionQueryNodeRef> = YakMutSet::default();
+    let mut expanded_tsets: YakMutSet<SetProjectionInputs> = YakMutSet::default();
 
     let mut frontier: Vec<ActionQueryNode> = Vec::new();
     for node in targets.iter() {
@@ -267,7 +267,7 @@ fn for_each_child_key(
 /// and newly walked ones are added to it.
 fn for_each_child_action(
     node: &ActionQueryNode,
-    expanded_tsets: &mut BuckMutSet<SetProjectionInputs>,
+    expanded_tsets: &mut YakMutSet<SetProjectionInputs>,
     mut f: impl FnMut(&ActionQueryNodeRef),
 ) {
     let data = match node.data() {
@@ -347,7 +347,7 @@ impl AsyncNodeLookup<AqueryMixedNode> for MixedLookup<'_, '_> {
 /// The mixed graph of a universe's closure, with nodes and edges resolved to indices.
 struct MixedGraph {
     nodes: Vec<AqueryMixedNode>,
-    key_to_index: BuckMutMap<AqueryMixedKey, u32>,
+    key_to_index: YakMutMap<AqueryMixedKey, u32>,
     children: Vec<Vec<u32>>,
 }
 
@@ -362,7 +362,7 @@ impl MixedGraph {
             .collect();
 
         let mut nodes: Vec<AqueryMixedNode> = Vec::new();
-        let mut key_to_index: BuckMutMap<AqueryMixedKey, u32> = BuckMutMap::default();
+        let mut key_to_index: YakMutMap<AqueryMixedKey, u32> = YakMutMap::default();
         async_depth_first_postorder_traversal(
             &MixedLookup {
                 roots: universe,

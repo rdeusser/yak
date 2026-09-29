@@ -6,19 +6,19 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-from e2e_util.api.buck import Buck
+from e2e_util.api.yak import Yak
 from e2e_util.asserts import expect_failure
-from e2e_util.buck_workspace import buck_test
+from e2e_util.yak_workspace import yak_test
 
 
-@buck_test()
-async def test_stack_overflow(buck: Buck) -> None:
+@yak_test()
+async def test_stack_overflow(yak: Yak) -> None:
     await expect_failure(
-        buck.uquery("bad//:"), stderr_regex="Starlark call stack overflow"
+        yak.uquery("bad//:"), stderr_regex="Starlark call stack overflow"
     )
 
 
-@buck_test()
-async def test_callstack_size(buck: Buck) -> None:
-    output = await buck.uquery("good//:")
+@yak_test()
+async def test_callstack_size(yak: Yak) -> None:
+    output = await yak.uquery("good//:")
     assert "TEST PASSED" in output.stderr

@@ -10,7 +10,7 @@ These pytest tests run a `yak` binary against small projects and check its outpu
 | `e2e/` | Tests that combine yak with the prelude and other integrations. |
 | `prelude/` | Tests of prelude rules. |
 | `select_type_params/`, `tools/` | Tests of smaller pieces. |
-| `e2e_util/` | The harness. It holds the `buck` fixture, the `Buck` command wrapper, assertions, golden file helpers, and `nano_prelude`. |
+| `e2e_util/` | The harness. It holds the `yak` fixture, the `Yak` command wrapper, assertions, golden file helpers, and `nano_prelude`. |
 
 `nano_prelude` is a small prelude for projects that do not need the real one.
 
@@ -51,7 +51,7 @@ Some tests need resources that a developer machine usually lacks. They carry a m
 | Marker | Needs | Runs when |
 | --- | --- | --- |
 | `remote_execution` | A Remote Execution backend. | `YAK_TEST_RE_CONFIG` names a yakconfig file with the backend's `[yak_re_client]` settings. The harness appends the file to every test project's `.yakconfig`. |
-| `cgroups` | Linux with a systemd user session that delegates cgroups, because the daemon moves itself into a cgroup with `systemd-run --user`. `@buck_test(disable_daemon_cgroup=False)` adds this marker. | `YAK_TEST_CGROUPS=1` is set. |
+| `cgroups` | Linux with a systemd user session that delegates cgroups, because the daemon moves itself into a cgroup with `systemd-run --user`. `@yak_test(disable_daemon_cgroup=False)` adds this marker. | `YAK_TEST_CGROUPS=1` is set. |
 | `needs_binary` | Helper programs named by environment variables. | Every variable that the marker names is set. |
 
 This repository has no Remote Execution backend to test against, so the `remote_execution` tests are unverified. Some of them build a project that declares no execution platforms, and yak does not run the actions of such a project remotely even when a backend is configured. Those projects need a remote-enabled execution platform before their tests can pass.
@@ -68,7 +68,7 @@ The helper programs:
 
 The Watchman tests in `core/io/` skip when `watchman` is not on `PATH`. The Go tests in `prelude/` skip when `go` is not on `PATH`.
 
-Tests can also skip an operating system with `@buck_test(skip_for_os=[...])`.
+Tests can also skip an operating system with `@yak_test(skip_for_os=[...])`.
 
 ## Golden files
 
@@ -85,18 +85,18 @@ The update accepts whatever the binary printed, so review the diff of the golden
 Copy an existing test and its data directory, and change them. A test module `test_foo.py` reads its projects from `test_foo_data/` next to it:
 
 ```python
-from e2e_util.api.buck import Buck
-from e2e_util.buck_workspace import buck_test
+from e2e_util.api.yak import Yak
+from e2e_util.yak_workspace import yak_test
 
 
-@buck_test()
-async def test_build_writes_output(buck: Buck) -> None:
-    result = await buck.build("root//:target")
+@yak_test()
+async def test_build_writes_output(yak: Yak) -> None:
+    result = await yak.build("root//:target")
     output = result.get_build_report().output_for_target("root//:target")
     assert output.read_text() == "hello\n"
 ```
 
-`@buck_test()` copies the data directory into the temporary project, and `data_dir="name"` copies only its subdirectory `name`. Its other arguments add yakconfig values, allow soft errors, and skip operating systems. The docstring of `buck_test` in `e2e_util/buck_workspace.py` lists them.
+`@yak_test()` copies the data directory into the temporary project, and `data_dir="name"` copies only its subdirectory `name`. Its other arguments add yakconfig values, allow soft errors, and skip operating systems. The docstring of `yak_test` in `e2e_util/yak_workspace.py` lists them.
 
 The data directories name their build files `YAK.fixture` through `[buildfile] name` in the project's `.yakconfig`. That name keeps this repository's own yak build from reading them. `PACKAGE` files keep their usual name.
 

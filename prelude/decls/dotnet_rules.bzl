@@ -11,7 +11,7 @@
 # the generated docs, and so those should be verified to be accurate and
 # well-formatted (and then delete this TODO)
 
-load(":common.bzl", "buck", "prelude_rule")
+load(":common.bzl", "yak", "prelude_rule")
 
 FrameworkVersion = ["net35", "net40", "net45", "net46"]
 
@@ -100,9 +100,9 @@ csharp_library = prelude_rule(
             """,
             ),
         }
-        | buck.licenses_arg()
-        | buck.labels_arg()
-        | buck.contacts_arg()
+        | yak.licenses_arg()
+        | yak.labels_arg()
+        | yak.contacts_arg()
     ),
 )
 
@@ -142,9 +142,9 @@ prebuilt_dotnet_library = prelude_rule(
             """
             ),
         }
-        | buck.licenses_arg()
-        | buck.labels_arg()
-        | buck.contacts_arg()
+        | yak.licenses_arg()
+        | yak.labels_arg()
+        | yak.contacts_arg()
     ),
 )
 

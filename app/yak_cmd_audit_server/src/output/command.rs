@@ -31,8 +31,8 @@ use yak_server_ctx::global_cfg_options::global_cfg_options_from_client_context;
 use yak_server_ctx::partial_result_dispatcher::PartialResultDispatcher;
 
 use crate::ServerAuditSubcommand;
-use crate::output::buck_out_path_parser::BuckOutPathParser;
-use crate::output::buck_out_path_parser::BuckOutPathType;
+use crate::output::yak_out_path_parser::YakOutPathParser;
+use crate::output::yak_out_path_parser::YakOutPathType;
 
 #[derive(Debug, yak_error::Error)]
 #[yak(tag = Input)]
@@ -56,11 +56,11 @@ async fn audit_output<'v>(
     dice_ctx: &'v mut DiceComputations<'_>,
     global_cfg_options: &'v GlobalCfgOptions,
 ) -> yak_error::Result<Option<AuditOutputResult>> {
-    let buck_out_parser = BuckOutPathParser::new(cell_resolver);
-    let parsed = buck_out_parser.parse(output_path)?;
+    let yak_out_parser = YakOutPathParser::new(cell_resolver);
+    let parsed = yak_out_parser.parse(output_path)?;
 
     let (target_label, config_hash, content_hash, short_path) = match parsed {
-        BuckOutPathType::RuleOutput {
+        YakOutPathType::RuleOutput {
             target_label,
             common_attrs,
             short_path,

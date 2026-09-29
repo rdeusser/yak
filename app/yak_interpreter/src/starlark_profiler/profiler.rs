@@ -15,8 +15,8 @@ use starlark::environment::FrozenModule;
 use starlark::eval::Evaluator;
 use starlark::eval::ProfileData;
 use starlark::eval::ProfileMode;
-use yak_error::BuckErrorContext;
-use yak_error::BuckErrorOptionContext;
+use yak_error::YakErrorContext;
+use yak_error::YakErrorOptionContext;
 use yak_error::conversion::from_any_with_tag;
 use yak_error::internal_error;
 

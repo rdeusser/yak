@@ -24,7 +24,7 @@ use starlark::values::ValueTyped;
 use starlark::values::list::ListRef;
 use starlark::values::list::ListType;
 use yak_build_api_derive::internal_provider;
-use yak_hash::BuckMutSet;
+use yak_hash::YakMutSet;
 
 use crate as yak_build_api;
 use crate::interpreter::rule_defs::validation_spec::StarlarkValidationSpec;
@@ -75,7 +75,7 @@ enum ValidationInfoError {
 ///     ]
 /// ```
 ///
-/// See the [Validations guide](https://rdeusser.github.io/buck2/docs/rule_authors/validation/)
+/// See the [Validations guide](https://rdeusser.github.io/yak/docs/rule_authors/validation/)
 /// for the end-to-end story.
 #[internal_provider(validation_info_creator)]
 #[derive(
@@ -93,7 +93,7 @@ pub struct ValidationInfo<'v> {
     /// Non-empty list of `ValidationSpec` values, each representing a single
     /// validation. Spec names must be unique within this provider.
     ///
-    /// See the [Validations guide](https://rdeusser.github.io/buck2/docs/rule_authors/validation/)
+    /// See the [Validations guide](https://rdeusser.github.io/yak/docs/rule_authors/validation/)
     /// for how to declare validations end-to-end and write the validator
     /// action that produces each spec's `validation_result`.
     validations: ValueOfUnchecked<'v, Vec<StarlarkValidationSpec<'static>>>,
@@ -105,7 +105,7 @@ fn validate_validation_info<'v>(info: &ValidationInfo<'v>) -> yak_error::Result<
             ValidationInfoError::ValidationsAreNotListOfSpecs,
         ))?
         .iter();
-    let mut spec_names = BuckMutSet::default();
+    let mut spec_names = YakMutSet::default();
     for value in values {
         let wrong_type_error = || ValidationInfoError::WrongSpecType(format!("{value}"));
         let name = value

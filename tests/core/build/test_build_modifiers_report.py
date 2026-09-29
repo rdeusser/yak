@@ -9,9 +9,9 @@
 import json
 from pathlib import Path
 
-from e2e_util.api.buck import Buck
+from e2e_util.api.yak import Yak
 from e2e_util.asserts import expect_failure
-from e2e_util.buck_workspace import buck_test
+from e2e_util.yak_workspace import yak_test
 from e2e_util.helper.golden import (
     golden,
     GOLDEN_DIRECTORY,
@@ -25,14 +25,14 @@ def build_report_test(
     command: list[str],
     expect_error: bool = False,
 ) -> None:
-    async def impl(buck: Buck, tmp_path: Path) -> None:
+    async def impl(yak: Yak, tmp_path: Path) -> None:
         report = tmp_path / "build-report.json"
         command.extend(["--build-report", str(report)])
 
         if expect_error:
-            await expect_failure(buck.build(*command))
+            await expect_failure(yak.build(*command))
         else:
-            await buck.build(*command)
+            await yak.build(*command)
 
         with open(report) as file:
             report = json.loads(file.read())
@@ -46,7 +46,7 @@ def build_report_test(
 
     globals()[name] = impl
 
-    return buck_test()(impl)
+    return yak_test()(impl)
 
 
 build_report_test(
@@ -93,12 +93,12 @@ build_report_test(
 )
 
 
-@buck_test()
-async def test_build_modifiers_that_lead_to_same_configured(buck: Buck) -> None:
+@yak_test()
+async def test_build_modifiers_that_lead_to_same_configured(yak: Yak) -> None:
     mac_first = "root//:target?root//:macos+root//:arm"
     arm_first = "root//:target?root//:arm+root//:macos"
 
-    result = await buck.build(
+    result = await yak.build(
         mac_first,
         arm_first,
         "-c",

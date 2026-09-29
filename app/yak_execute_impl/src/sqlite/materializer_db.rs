@@ -204,7 +204,7 @@ mod tests {
     use yak_execute::directory::ActionDirectoryMember;
     use yak_execute::directory::new_symlink;
     use yak_fs::paths::forward_rel_path::ForwardRelativePath;
-    use yak_hash::BuckMutMap;
+    use yak_hash::YakMutMap;
 
     use super::*;
 
@@ -325,7 +325,7 @@ mod tests {
                 classification: ArtifactClassification::IntermediateOnly,
             },
         ];
-        let mut artifacts: BuckMutMap<_, _> =
+        let mut artifacts: YakMutMap<_, _> =
             artifacts.into_iter().map(|x| (x.path.clone(), x)).collect();
 
         for (path, entry) in artifacts.iter() {
@@ -341,7 +341,7 @@ mod tests {
 
         let check_materializer_state_expected =
             |state: &MaterializerState,
-             artifacts: &BuckMutMap<ProjectRelativePathBuf, MaterializerStateEntry>| {
+             artifacts: &YakMutMap<ProjectRelativePathBuf, MaterializerStateEntry>| {
                 let expected_values = artifacts.values().sorted_by_key(|x| x.path.as_str());
                 let result_values = state.iter().sorted_by_key(|x| x.path.as_str());
                 assert!(expected_values.eq(result_values));

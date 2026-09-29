@@ -7,7 +7,7 @@
 # above-listed licenses.
 
 """
-This file exports utilities for building third-party code with reindeer.
+This file exports utilities for building third-party Rust code from Cargo packages.
 These are not used anywhere else in prelude and are not exported as prelude globals.
 
 These should not be used for first-party code where lints are desired.
@@ -17,43 +17,43 @@ load("@prelude//:prelude.bzl", "native")
 load("@prelude//utils:selects.bzl", "selects")
 load("@prelude//utils:type_defs.bzl", "is_dict", "is_list")
 
-def set_reindeer_platforms(platforms) -> None:
+def set_cargo_platforms(platforms) -> None:
     """
     Call from a PACKAGE or YAK_TREE file to make the macros in this file
     recognize your own non-default platforms.
 
-        load("@prelude//rust:cargo_package.bzl", "DEFAULT_REINDEER_PLATFORMS", "set_reindeer_platforms")
+        load("@prelude//rust:cargo_package.bzl", "DEFAULT_CARGO_PLATFORMS", "set_cargo_platforms")
 
-        set_reindeer_platforms(select({
-            "DEFAULT": DEFAULT_REINDEER_PLATFORMS,  # (optional)
+        set_cargo_platforms(select({
+            "DEFAULT": DEFAULT_CARGO_PLATFORMS,  # (optional)
             "//platforms:arm32-embedded-fpu": "thumbv7em-none-eabihf",
         }))
     """
 
     native.write_package_value(
-        "rust.reindeer_platforms",
+        "rust.cargo_platforms",
         platforms,
         overwrite = True,
     )
     native.write_package_value(
-        "rust.reindeer_platform_names",
-        _reindeer_platform_names(platforms),
+        "rust.cargo_platform_names",
+        _cargo_platform_names(platforms),
         overwrite = True,
     )
 
-def get_reindeer_platforms():
-    platforms = native.read_package_value("rust.reindeer_platforms")
+def get_cargo_platforms():
+    platforms = native.read_package_value("rust.cargo_platforms")
     if platforms != None:
         return platforms
-    return DEFAULT_REINDEER_PLATFORMS
+    return DEFAULT_CARGO_PLATFORMS
 
-def get_reindeer_platform_names() -> set[str]:
-    platform_names = native.read_package_value("rust.reindeer_platform_names")
+def get_cargo_platform_names() -> set[str]:
+    platform_names = native.read_package_value("rust.cargo_platform_names")
     if platform_names != None:
         return platform_names
-    return _DEFAULT_REINDEER_PLATFORM_NAMES
+    return _DEFAULT_CARGO_PLATFORM_NAMES
 
-DEFAULT_REINDEER_PLATFORMS = select({
+DEFAULT_CARGO_PLATFORMS = select({
     "DEFAULT": None,
     "prelude//os:linux": select({
         "DEFAULT": None,
@@ -81,7 +81,7 @@ DEFAULT_REINDEER_PLATFORMS = select({
     }),
 })
 
-def _reindeer_platform_names(platform_select) -> set[str]:
+def _cargo_platform_names(platform_select) -> set[str]:
     names = set()
     selects.apply(
         platform_select,
@@ -89,11 +89,11 @@ def _reindeer_platform_names(platform_select) -> set[str]:
     )
     return names
 
-_DEFAULT_REINDEER_PLATFORM_NAMES = _reindeer_platform_names(DEFAULT_REINDEER_PLATFORMS)
+_DEFAULT_CARGO_PLATFORM_NAMES = _cargo_platform_names(DEFAULT_CARGO_PLATFORMS)
 
 def apply_platform_attrs(platform_attrs, universal_attrs, platform_select = None):
     if platform_select == None:
-        platform_select = get_reindeer_platforms()
+        platform_select = get_cargo_platforms()
 
     platform_attr_defaults = {}
     for attrs in platform_attrs.values():
@@ -128,15 +128,15 @@ def apply_platform_attrs_for_buildscript_build(platform_attrs, universal_attrs):
         universal_attrs,
         select(
             {
-                "DEFAULT": get_reindeer_platforms(),
+                "DEFAULT": get_cargo_platforms(),
             }
-            | {"prelude//rust/buildscript:buildscript_for_platform[{}]".format(i): plat for i, plat in enumerate(get_reindeer_platform_names())}
+            | {"prelude//rust/buildscript:buildscript_for_platform[{}]".format(i): plat for i, plat in enumerate(get_cargo_platform_names())}
         ),
     )
 
 def _cargo_rust_binary(name, crate = None, platform = {}, **kwargs):
     """
-    Build a third-party rust binary for reindeer, suppressing lints.
+    Build a third-party rust binary, suppressing lints.
     """
 
     if crate == "build_script_build":
@@ -151,7 +151,7 @@ def _cargo_rust_binary(name, crate = None, platform = {}, **kwargs):
 
 def _cargo_rust_library(name, platform = {}, **kwargs):
     """
-    Build a third-party rust library for reindeer, suppressing lints.
+    Build a third-party rust library, suppressing lints.
     """
 
     kwargs = apply_platform_attrs(platform, kwargs)
@@ -161,7 +161,7 @@ def _cargo_rust_library(name, platform = {}, **kwargs):
 
     kwargs.setdefault("doctests", False)
 
-    # Support for reindeer's `python_ext` fixup is not implemented yet.
+    # Support for a `python_ext` fixup is not implemented yet.
     kwargs.pop("dlopen_enable", None)
     kwargs.pop("linkable_alias", None)
 
@@ -170,12 +170,12 @@ def _cargo_rust_library(name, platform = {}, **kwargs):
 def alias(name, actual, platforms = None, visibility = None):
     if platforms == None:
         target_compatible_with = selects.apply(
-            get_reindeer_platforms(),
+            get_cargo_platforms(),
             lambda plat: ["prelude//:none"] if plat == None else [],
         )
     else:
         target_compatible_with = selects.apply(
-            get_reindeer_platforms(),
+            get_cargo_platforms(),
             lambda plat: [] if plat in platforms else ["prelude//:none"],
         )
 

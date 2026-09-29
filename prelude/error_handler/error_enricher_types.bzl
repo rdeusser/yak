@@ -13,7 +13,7 @@ Type definitions for the unified error enrichment framework.
 ErrorEnricher = record(
     # Pattern to match against the error message.
     # str performs a case-sensitive substring match.
-    matcher = str | BuckRegex,
+    matcher = str | YakRegex,
     # If specified, matcher will only run if the filepath contains this string.
     file_matcher = field([str, None], default = None),
     # Category to set on the error when matched.

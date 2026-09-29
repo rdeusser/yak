@@ -48,9 +48,9 @@ use yak_fs::error::IoResultExt;
 use yak_fs::fs_util;
 use yak_fs::paths::abs_norm_path::AbsNormPathBuf;
 use yak_fs::paths::file_name::FileName;
-use yak_hash::BuckDashMap;
-use yak_hash::BuckIndexMap;
-use yak_hash::BuckMutMap;
+use yak_hash::YakDashMap;
+use yak_hash::YakIndexMap;
+use yak_hash::YakMutMap;
 use yak_util::time_span::TimeSpan;
 use yak_worker_proto::ExecuteCommand;
 use yak_worker_proto::ExecuteCommandStream;
@@ -116,7 +116,7 @@ impl WorkerInitError {
                 // implies that it is the primary command and that exit code != 0
                 manager.failure(
                     execution_kind,
-                    BuckIndexMap::default(),
+                    YakIndexMap::default(),
                     std_streams,
                     *exit_code,
                     CommandExecutionMetadata::empty(TimeSpan::empty_now()),
@@ -127,7 +127,7 @@ impl WorkerInitError {
             WorkerInitError::ConnectionTimeout(..) | WorkerInitError::SpawnFailed(..) => manager
                 .failure(
                     execution_kind,
-                    BuckIndexMap::default(),
+                    YakIndexMap::default(),
                     CommandStdStreams::Local {
                         stdout: Default::default(),
                         stderr: format!("Error initializing worker: {self}").into_bytes(),
@@ -360,8 +360,8 @@ async fn spawn_worker(
 type WorkerFuture = Shared<BoxFuture<'static, Result<Arc<WorkerHandle>, Arc<WorkerInitError>>>>;
 
 pub struct WorkerPool {
-    workers: Arc<parking_lot::Mutex<BuckMutMap<WorkerId, WorkerFuture>>>,
-    brokers: Arc<parking_lot::Mutex<BuckMutMap<WorkerId, Arc<HostSharingBroker>>>>,
+    workers: Arc<parking_lot::Mutex<YakMutMap<WorkerId, WorkerFuture>>>,
+    brokers: Arc<parking_lot::Mutex<YakMutMap<WorkerId, Arc<HostSharingBroker>>>>,
     graceful_shutdown_timeout_s: Option<u32>,
 }
 
@@ -369,8 +369,8 @@ impl WorkerPool {
     pub fn new(graceful_shutdown_timeout_s: Option<u32>) -> WorkerPool {
         tracing::info!("Creating new WorkerPool");
         WorkerPool {
-            workers: Arc::new(parking_lot::Mutex::new(BuckMutMap::default())),
-            brokers: Arc::new(parking_lot::Mutex::new(BuckMutMap::default())),
+            workers: Arc::new(parking_lot::Mutex::new(YakMutMap::default())),
+            brokers: Arc::new(parking_lot::Mutex::new(YakMutMap::default())),
             graceful_shutdown_timeout_s,
         }
     }
@@ -441,7 +441,7 @@ enum WorkerClient {
         ids: Arc<AtomicU64>,
         stream: UnboundedSender<ExecuteCommandStream>,
         stream_closed_observer: Arc<dyn LivelinessObserver>,
-        waiters: Arc<BuckDashMap<u64, tokio::sync::oneshot::Sender<ExecuteResponseStream>>>,
+        waiters: Arc<YakDashMap<u64, tokio::sync::oneshot::Sender<ExecuteResponseStream>>>,
     },
 }
 
@@ -462,7 +462,7 @@ impl WorkerClient {
         let stream = client
             .execute_stream(tonic::Request::new(UnboundedReceiverStream::new(rx)))
             .await?;
-        let waiters: Arc<BuckDashMap<u64, tokio::sync::oneshot::Sender<ExecuteResponseStream>>> =
+        let waiters: Arc<YakDashMap<u64, tokio::sync::oneshot::Sender<ExecuteResponseStream>>> =
             Default::default();
         let (stream_closed_observer, stream_closed_guard) = LivelinessGuard::create();
         {

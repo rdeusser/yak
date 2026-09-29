@@ -17,7 +17,7 @@ use indoc::indoc;
 use yak_common::dice::cells::SetCellResolver;
 use yak_common::dice::data::testing::SetTestingIoProvider;
 use yak_common::file_ops::io::initialize_read_dir_cache;
-use yak_common::legacy_configs::cells::ExternalBuckconfigData;
+use yak_common::legacy_configs::cells::ExternalYakconfigData;
 use yak_common::legacy_configs::dice::SetLegacyConfigs;
 use yak_core::bzl::ImportPath;
 use yak_core::cells::CellResolver;
@@ -70,7 +70,7 @@ pub(crate) async fn calculation(fs: &ProjectRootTemp) -> DiceTransaction {
         .unwrap(),
     )
     .unwrap();
-    ctx.set_legacy_config_external_data(ExternalBuckconfigData::testing_default())
+    ctx.set_legacy_config_external_data(ExternalYakconfigData::testing_default())
         .unwrap();
     ctx.set_starlark_profiler_configuration(StarlarkProfilerConfiguration::default())
         .unwrap();

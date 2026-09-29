@@ -38,7 +38,7 @@ use yak_data::FileWatcherKind;
 use yak_error::conversion::from_any_with_tag;
 use yak_events::dispatch::span_async;
 use yak_fs::paths::abs_norm_path::AbsNormPath;
-use yak_hash::StdBuckHashMap;
+use yak_hash::StdYakHashMap;
 
 use crate::file_watcher::FileWatcher;
 use crate::mergebase::Mergebase;
@@ -79,7 +79,7 @@ impl NotifyFileData {
         event: notify::Result<notify::Event>,
         root: &ProjectRoot,
         cells: &CellResolver,
-        ignore_specs: &StdBuckHashMap<CellName, IgnoreSet>,
+        ignore_specs: &StdYakHashMap<CellName, IgnoreSet>,
     ) -> yak_error::Result<()> {
         let event = event.map_err(|e| from_any_with_tag(e, yak_error::ErrorTag::NotifyWatcher))?;
 
@@ -100,7 +100,7 @@ impl NotifyFileData {
             // We also ignore other yak-out directories, as if you have two isolation dirs running at once, they are not interesting.
             // We do this in the notify-watcher, rather than a generic layer, as watchman users should configure
             // to ignore yak-out, to reduce the number of events, rather than hiding them later.
-            if path.starts_with(InvocationPaths::buck_out_dir_prefix()) {
+            if path.starts_with(InvocationPaths::yak_out_dir_prefix()) {
                 // We don't want to event add them as ignored events, since they are super common
                 // and very boring
                 continue;
@@ -280,7 +280,7 @@ impl NotifyFileWatcher {
     pub fn new(
         root: &ProjectRoot,
         cells: CellResolver,
-        ignore_specs: StdBuckHashMap<CellName, IgnoreSet>,
+        ignore_specs: StdYakHashMap<CellName, IgnoreSet>,
     ) -> yak_error::Result<Self> {
         let data = Arc::new(Mutex::new(Ok(NotifyFileData::new())));
         let data2 = data.dupe();
@@ -359,7 +359,7 @@ mod tests {
     fn fixture() -> (
         ProjectRoot,
         CellResolver,
-        StdBuckHashMap<CellName, IgnoreSet>,
+        StdYakHashMap<CellName, IgnoreSet>,
         tempfile::TempDir,
     ) {
         let cells = CellResolver::testing_with_name_and_path(
@@ -370,7 +370,7 @@ mod tests {
         let root_path =
             fs_util::canonicalize(AbsNormPathBuf::new(tempdir.path().to_owned()).unwrap()).unwrap();
         let root = ProjectRoot::new(root_path).unwrap();
-        (root, cells, StdBuckHashMap::default(), tempdir)
+        (root, cells, StdYakHashMap::default(), tempdir)
     }
 
     /// The kernel-overflow signal can arrive as a rescan-flagged event with no paths attached

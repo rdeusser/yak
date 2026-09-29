@@ -8,13 +8,13 @@
  * above-listed licenses.
  */
 
-use yak_client_ctx::client_ctx::BuckSubcommand;
+use yak_client_ctx::client_ctx::YakSubcommand;
 use yak_client_ctx::client_ctx::ClientCommandContext;
-use yak_client_ctx::common::BuckArgMatches;
+use yak_client_ctx::common::YakArgMatches;
 use yak_client_ctx::common::CommonEventLogOptions;
 use yak_client_ctx::events_ctx::EventsCtx;
 use yak_client_ctx::exit_result::ExitResult;
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 use yak_fs::fs_util::uncategorized as fs_util;
 use yak_wrapper_common::KillallFilter;
 
@@ -42,12 +42,12 @@ pub struct KillallCommand {
     pub(crate) event_log_opts: CommonEventLogOptions,
 }
 
-impl BuckSubcommand for KillallCommand {
+impl YakSubcommand for KillallCommand {
     const COMMAND_NAME: &'static str = "killall";
 
     async fn exec_impl(
         self,
-        _matches: BuckArgMatches<'_>,
+        _matches: YakArgMatches<'_>,
         ctx: ClientCommandContext<'_>,
         _events_ctx: &mut EventsCtx,
     ) -> ExitResult {
@@ -58,7 +58,7 @@ impl BuckSubcommand for KillallCommand {
                 // canonicalize the root to make the comparison symlink-insensitive.
                 let paths = ctx
                     .paths()
-                    .buck_error_context("`--repo` requires running from within a repository")?;
+                    .yak_error_context("`--repo` requires running from within a repository")?;
                 yak_error::Ok(fs_util::canonicalize(paths.project_root().root())?.into_path_buf())
             })
             .transpose()?;

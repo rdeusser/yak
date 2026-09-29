@@ -20,8 +20,8 @@ use yak_fs::paths::abs_norm_path::AbsNormPath;
 use yak_util::process;
 use yak_util::process::async_background_command;
 
-use crate::buck_cgroup_tree::parse_procfs_cgroup_output;
-use crate::buck_cgroup_tree::read_current_cgroup;
+use crate::yak_cgroup_tree::parse_procfs_cgroup_output;
+use crate::yak_cgroup_tree::read_current_cgroup;
 #[cfg(unix)]
 use crate::cgroup::Cgroup;
 #[cfg(unix)]
@@ -151,7 +151,7 @@ pub async fn create_daemon_spawn_command(
         )),
         #[cfg(unix)]
         DaemonSpawner::Cgroup(parent) => {
-            use yak_error::BuckErrorContext;
+            use yak_error::YakErrorContext;
             use yak_fs::paths::file_name::FileName;
 
             // The daemon treats this cgroup the same way it treats a systemd scope: it builds its

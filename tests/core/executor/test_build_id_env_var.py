@@ -7,14 +7,14 @@
 # above-listed licenses.
 
 import pytest
-from e2e_util.api.buck import Buck
-from e2e_util.buck_workspace import buck_test
+from e2e_util.api.yak import Yak
+from e2e_util.yak_workspace import yak_test
 from e2e_util.helper.utils import random_string
 
 
-@buck_test()
-async def test_build_id_env_var_is_set_locally(buck: Buck) -> None:
-    result = await buck.build(
+@yak_test()
+async def test_build_id_env_var_is_set_locally(yak: Yak) -> None:
+    result = await yak.build(
         "root//:top",
         "--local-only",
         "--no-remote-cache",
@@ -25,13 +25,13 @@ async def test_build_id_env_var_is_set_locally(buck: Buck) -> None:
     output = result.get_build_report().output_for_target("root//:top")
     assert output.exists()
     with open(output) as f:
-        assert f.read().strip() == result.buck_build_id
+        assert f.read().strip() == result.yak_build_id
 
 
 @pytest.mark.remote_execution
-@buck_test()
-async def test_build_id_env_var_is_set_remotely(buck: Buck) -> None:
-    result = await buck.build(
+@yak_test()
+async def test_build_id_env_var_is_set_remotely(yak: Yak) -> None:
+    result = await yak.build(
         "root//:top",
         "--remote-only",
         "--no-remote-cache",
@@ -42,4 +42,4 @@ async def test_build_id_env_var_is_set_remotely(buck: Buck) -> None:
     output = result.get_build_report().output_for_target("root//:top")
     assert output.exists()
     with open(output) as f:
-        assert f.read().strip() == result.buck_build_id
+        assert f.read().strip() == result.yak_build_id

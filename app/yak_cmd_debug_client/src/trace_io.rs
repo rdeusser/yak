@@ -14,12 +14,12 @@ use yak_cli_proto::TraceIoResponse;
 use yak_cli_proto::trace_io_request;
 use yak_client_ctx::client_ctx::ClientCommandContext;
 use yak_client_ctx::command_outcome::CommandOutcome;
-use yak_client_ctx::common::BuckArgMatches;
+use yak_client_ctx::common::YakArgMatches;
 use yak_client_ctx::common::CommonBuildConfigurationOptions;
 use yak_client_ctx::common::CommonEventLogOptions;
 use yak_client_ctx::common::CommonStarlarkOptions;
 use yak_client_ctx::common::ui::CommonConsoleOptions;
-use yak_client_ctx::daemon::client::BuckdClientConnector;
+use yak_client_ctx::daemon::client::YakdClientConnector;
 use yak_client_ctx::daemon::client::NoPartialResultHandler;
 use yak_client_ctx::daemon::client::connect::DesiredTraceIoState;
 use yak_client_ctx::events_ctx::EventsCtx;
@@ -27,7 +27,7 @@ use yak_client_ctx::exit_result::ExitResult;
 use yak_client_ctx::path_arg::PathArg;
 use yak_client_ctx::streaming::StreamingCommand;
 use yak_core::fs::project_rel_path::ProjectRelativePathBuf;
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 use yak_fs::error::IoResultExt;
 use yak_fs::fs_util;
 use yak_fs::paths::abs_norm_path::AbsNormPathBuf;
@@ -66,11 +66,11 @@ impl TraceIoCommand {
     async fn send_request(
         &self,
         req: TraceIoRequest,
-        buckd: &mut BuckdClientConnector,
+        yakd: &mut YakdClientConnector,
         events_ctx: &mut EventsCtx,
         ctx: &mut ClientCommandContext<'_>,
     ) -> yak_error::Result<CommandOutcome<TraceIoResponse>> {
-        buckd
+        yakd
             .with_flushing()
             .trace_io(
                 req,
@@ -88,8 +88,8 @@ impl StreamingCommand for TraceIoCommand {
 
     async fn exec_impl(
         self,
-        buckd: &mut BuckdClientConnector,
-        matches: BuckArgMatches<'_>,
+        yakd: &mut YakdClientConnector,
+        matches: YakArgMatches<'_>,
         ctx: &mut ClientCommandContext<'_>,
         events_ctx: &mut EventsCtx,
     ) -> ExitResult {
@@ -100,7 +100,7 @@ impl StreamingCommand for TraceIoCommand {
                     context: Some(context),
                     read_state: Some(trace_io_request::ReadIoTracingState { with_trace: false }),
                 };
-                let resp = self.send_request(req, buckd, events_ctx, ctx).await??;
+                let resp = self.send_request(req, yakd, events_ctx, ctx).await??;
                 yak_client_ctx::println!("I/O tracing status: {}", resp.enabled)?;
             }
             Subcommand::ExportManifest { out } => {
@@ -108,7 +108,7 @@ impl StreamingCommand for TraceIoCommand {
                     context: Some(context),
                     read_state: Some(trace_io_request::ReadIoTracingState { with_trace: true }),
                 };
-                let resp = self.send_request(req, buckd, events_ctx, ctx).await??;
+                let resp = self.send_request(req, yakd, events_ctx, ctx).await??;
 
                 let manifest = OfflineArchiveManifest {
                     paths: resp
@@ -146,15 +146,15 @@ impl StreamingCommand for TraceIoCommand {
                         })
                         .collect(),
                     repository: RepositoryMetadata::from_cwd()
-                        .buck_error_context("creating repository metadata")?,
+                        .yak_error_context("creating repository metadata")?,
                 };
                 let serialized = serde_json::to_string(&manifest)
-                    .buck_error_context("serializing offline archive manifest to json")?;
+                    .yak_error_context("serializing offline archive manifest to json")?;
                 if let Some(output_path) = &out {
                     // input path from --export-manifest
                     fs_util::write(output_path.resolve(&ctx.working_dir), &serialized)
                         .categorize_input()
-                        .buck_error_context("writing offline archive manifest")?;
+                        .yak_error_context("writing offline archive manifest")?;
                 } else {
                     yak_client_ctx::println!("{}", serialized)?;
                 }

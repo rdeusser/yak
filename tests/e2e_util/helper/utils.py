@@ -21,8 +21,8 @@ from pathlib import Path
 
 import psutil
 from aiohttp import web
-from e2e_util.api.buck import Buck
-from e2e_util.api.buck_result import InvocationRecord
+from e2e_util.api.yak import Yak
+from e2e_util.api.yak_result import InvocationRecord
 
 
 def daemon_is_alive(pid: int) -> bool:
@@ -68,13 +68,13 @@ async def serve_file(content: bytes) -> typing.AsyncIterator[ServedFile]:
             await runner.cleanup()
 
 
-def configure_served_file(buck: Buck, served: ServedFile) -> None:
+def configure_served_file(yak: Yak, served: ServedFile) -> None:
     """Appends the URL and checksums of `served` to the project's .yakconfig.
 
     Test data reads them as `test.download_url`, `test.download_sha1`, and
     `test.download_sha256`.
     """
-    with open(buck.cwd / ".yakconfig", "a") as f:
+    with open(yak.cwd / ".yakconfig", "a") as f:
         f.write(
             "\n[test]\n"
             f"  download_url = {served.url}\n"
@@ -93,8 +93,8 @@ def replace_in_file(old: str, new: str, file: Path, encoding: str = "utf-8") -> 
         f.write(file_content)
 
 
-async def read_what_ran(buck: Buck, *args) -> typing.List[typing.Dict[str, typing.Any]]:
-    out = await buck.log("what-ran", "--format", "json", *args)
+async def read_what_ran(yak: Yak, *args) -> typing.List[typing.Dict[str, typing.Any]]:
+    out = await yak.log("what-ran", "--format", "json", *args)
     out = [line.strip() for line in out.stdout.splitlines()]
     out = [json.loads(line) for line in out if line]
     return out
@@ -106,8 +106,8 @@ def timestamp_ms(s: int, ns: int) -> int:
     return s * 1000 + f
 
 
-async def read_timestamps(buck: Buck, *args) -> typing.List[int]:
-    log = (await buck.log("show")).stdout.strip().splitlines()
+async def read_timestamps(yak: Yak, *args) -> typing.List[int]:
+    log = (await yak.log("show")).stdout.strip().splitlines()
     return [
         timestamp_ms(*json.loads(line)["Event"]["timestamp"])
         for line in log
@@ -141,18 +141,18 @@ def get_targets_from_what_ran(
     return targets
 
 
-async def expect_exec_count(buck: Buck, n: int) -> None:
-    out = await read_what_ran(buck)
+async def expect_exec_count(yak: Yak, n: int) -> None:
+    out = await read_what_ran(yak)
     assert len(out) == n, "unexpected actions: %s" % (out,)
 
 
 async def filter_events(
-    buck: Buck,
+    yak: Yak,
     *args: str,
     rel_cwd: typing.Optional[Path] = None,
     return_root: bool = False,
 ) -> typing.List[typing.Any]:
-    log = (await buck.log("show", rel_cwd=rel_cwd)).stdout.strip().splitlines()
+    log = (await yak.log("show", rel_cwd=rel_cwd)).stdout.strip().splitlines()
     found = []
     for line in log:
         e = json_get(line, *args, return_root_on_match=return_root)
@@ -195,7 +195,7 @@ def read_invocation_record(record: Path) -> InvocationRecord:
 
 
 async def get_last_execution_kind(
-    buck: Buck,
+    yak: Yak,
     category: typing.Optional[str] = None,
     excluded_execution_kinds: typing.Optional[typing.List[int]] = None,
     target_name: typing.Optional[str] = None,
@@ -203,7 +203,7 @@ async def get_last_execution_kind(
     if excluded_execution_kinds is None:
         excluded_execution_kinds = []
     action_executions = await filter_events(
-        buck,
+        yak,
         "Event",
         "data",
         "SpanEnd",

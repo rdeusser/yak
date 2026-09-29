@@ -17,7 +17,7 @@ use dupe::Clone_;
 use dupe::Dupe;
 use dupe::Dupe_;
 use yak_core::directory_digest::DirectoryDigest;
-use yak_hash::BuckDashMap;
+use yak_hash::YakDashMap;
 
 use crate::directory::exhaustiveness::ExhaustivenessHash;
 use crate::directory::shared_directory::SharedDirectory;
@@ -37,7 +37,7 @@ pub struct DashMapDirectoryInterner<L, H>
 where
     H: DirectoryDigest,
 {
-    inner: Arc<BuckDashMap<H, Weak<SharedDirectoryInner<L, H>>>>,
+    inner: Arc<YakDashMap<H, Weak<SharedDirectoryInner<L, H>>>>,
 }
 
 impl<L, H> DashMapDirectoryInterner<L, H>
@@ -46,7 +46,7 @@ where
 {
     pub fn new() -> Self {
         Self {
-            inner: Arc::new(BuckDashMap::default()),
+            inner: Arc::new(YakDashMap::default()),
         }
     }
 

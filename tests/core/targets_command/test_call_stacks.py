@@ -8,18 +8,18 @@
 
 import json
 
-from e2e_util.api.buck import Buck
-from e2e_util.buck_workspace import buck_test
+from e2e_util.api.yak import Yak
+from e2e_util.yak_workspace import yak_test
 
 
-@buck_test()
-async def test_target_call_stacks_json(buck: Buck) -> None:
-    out = await buck.targets(
+@yak_test()
+async def test_target_call_stacks_json(yak: Yak) -> None:
+    out = await yak.targets(
         "--stack",
         "--output-attribute=.*",
         "root//:test",
     )
 
     out = json.loads(out.stdout)
-    call_stack = out[0]["buck.target_call_stack"]
+    call_stack = out[0]["yak.target_call_stack"]
     assert "stub" in call_stack

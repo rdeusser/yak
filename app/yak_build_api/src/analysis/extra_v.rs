@@ -23,7 +23,7 @@ use starlark::values::OwnedFrozen;
 use starlark::values::Trace;
 use starlark::values::ValueTyped;
 use starlark::values::any_complex::StarlarkAnyComplex;
-use yak_error::BuckErrorOptionContext;
+use yak_error::YakErrorOptionContext;
 use yak_error::conversion::from_any_with_tag;
 
 use crate::analysis::registry::AnalysisValueStorage;

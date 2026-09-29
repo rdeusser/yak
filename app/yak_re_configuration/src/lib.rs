@@ -11,14 +11,14 @@
 use std::str::FromStr;
 
 use allocative::Allocative;
-use yak_common::legacy_configs::configs::LegacyBuckConfig;
-use yak_common::legacy_configs::key::BuckconfigKeyRef;
+use yak_common::legacy_configs::configs::LegacyYakConfig;
+use yak_common::legacy_configs::key::YakconfigKeyRef;
 
-static BUCK2_RE_CLIENT_CFG_SECTION: &str = "yak_re_client";
+static YAK_RE_CLIENT_CFG_SECTION: &str = "yak_re_client";
 
 /// Settings every remote execution configuration provides.
 pub trait RemoteExecutionStaticMetadataImpl: Sized {
-    fn from_legacy_config(legacy_config: &LegacyBuckConfig) -> yak_error::Result<Self>;
+    fn from_legacy_config(legacy_config: &LegacyYakConfig) -> yak_error::Result<Self>;
     /// Whether there is a CAS to talk to at all. Independent of any executor configuration: a
     /// command that runs nothing remotely still has one, and asks it about blobs.
     fn cas_configured(&self) -> bool;
@@ -29,11 +29,11 @@ pub trait RemoteExecutionStaticMetadataImpl: Sized {
 
 /// Metadata that doesn't change between executions
 #[derive(Clone, Debug, Default, Allocative)]
-pub struct RemoteExecutionStaticMetadata(pub Buck2OssReConfiguration);
+pub struct RemoteExecutionStaticMetadata(pub YakOssReConfiguration);
 
 impl RemoteExecutionStaticMetadataImpl for RemoteExecutionStaticMetadata {
-    fn from_legacy_config(legacy_config: &LegacyBuckConfig) -> yak_error::Result<Self> {
-        Ok(Self(Buck2OssReConfiguration::from_legacy_config(
+    fn from_legacy_config(legacy_config: &LegacyYakConfig) -> yak_error::Result<Self> {
+        Ok(Self(YakOssReConfiguration::from_legacy_config(
             legacy_config,
         )?))
     }
@@ -59,7 +59,7 @@ impl RemoteExecutionStaticMetadataImpl for RemoteExecutionStaticMetadata {
 
 /// The remote execution configuration, read from the `yak_re_client` yakconfig section.
 #[derive(Clone, Debug, Default, Allocative)]
-pub struct Buck2OssReConfiguration {
+pub struct YakOssReConfiguration {
     /// Address for RBE Content Addresable Storage service (including bytestream uploads service).
     pub cas_address: Option<String>,
     /// Address for RBE Engine service (including capabilities service).
@@ -146,108 +146,108 @@ impl FromStr for HttpHeader {
     }
 }
 
-impl Buck2OssReConfiguration {
-    pub fn from_legacy_config(legacy_config: &LegacyBuckConfig) -> yak_error::Result<Self> {
+impl YakOssReConfiguration {
+    pub fn from_legacy_config(legacy_config: &LegacyYakConfig) -> yak_error::Result<Self> {
         // this is used for all three services by default, if given; if one of
         // them has an explicit address given as well though, use that instead
-        let default_address: Option<String> = legacy_config.parse(BuckconfigKeyRef {
-            section: BUCK2_RE_CLIENT_CFG_SECTION,
+        let default_address: Option<String> = legacy_config.parse(YakconfigKeyRef {
+            section: YAK_RE_CLIENT_CFG_SECTION,
             property: "address",
         })?;
 
         Ok(Self {
             cas_address: legacy_config
-                .parse(BuckconfigKeyRef {
-                    section: BUCK2_RE_CLIENT_CFG_SECTION,
+                .parse(YakconfigKeyRef {
+                    section: YAK_RE_CLIENT_CFG_SECTION,
                     property: "cas_address",
                 })?
                 .or(default_address.clone()),
             engine_address: legacy_config
-                .parse(BuckconfigKeyRef {
-                    section: BUCK2_RE_CLIENT_CFG_SECTION,
+                .parse(YakconfigKeyRef {
+                    section: YAK_RE_CLIENT_CFG_SECTION,
                     property: "engine_address",
                 })?
                 .or(default_address.clone()),
             action_cache_address: legacy_config
-                .parse(BuckconfigKeyRef {
-                    section: BUCK2_RE_CLIENT_CFG_SECTION,
+                .parse(YakconfigKeyRef {
+                    section: YAK_RE_CLIENT_CFG_SECTION,
                     property: "action_cache_address",
                 })?
                 .or(default_address),
             tls: legacy_config
-                .parse(BuckconfigKeyRef {
-                    section: BUCK2_RE_CLIENT_CFG_SECTION,
+                .parse(YakconfigKeyRef {
+                    section: YAK_RE_CLIENT_CFG_SECTION,
                     property: "tls",
                 })?
                 .unwrap_or(true),
-            tls_ca_certs: legacy_config.parse(BuckconfigKeyRef {
-                section: BUCK2_RE_CLIENT_CFG_SECTION,
+            tls_ca_certs: legacy_config.parse(YakconfigKeyRef {
+                section: YAK_RE_CLIENT_CFG_SECTION,
                 property: "tls_ca_certs",
             })?,
-            tls_client_cert: legacy_config.parse(BuckconfigKeyRef {
-                section: BUCK2_RE_CLIENT_CFG_SECTION,
+            tls_client_cert: legacy_config.parse(YakconfigKeyRef {
+                section: YAK_RE_CLIENT_CFG_SECTION,
                 property: "tls_client_cert",
             })?,
             http_headers: legacy_config
-                .parse_list(BuckconfigKeyRef {
-                    section: BUCK2_RE_CLIENT_CFG_SECTION,
+                .parse_list(YakconfigKeyRef {
+                    section: YAK_RE_CLIENT_CFG_SECTION,
                     property: "http_headers",
                 })?
                 .unwrap_or_default(), // Empty list is as good None.
-            capabilities: legacy_config.parse(BuckconfigKeyRef {
-                section: BUCK2_RE_CLIENT_CFG_SECTION,
+            capabilities: legacy_config.parse(YakconfigKeyRef {
+                section: YAK_RE_CLIENT_CFG_SECTION,
                 property: "capabilities",
             })?,
-            instance_name: legacy_config.parse(BuckconfigKeyRef {
-                section: BUCK2_RE_CLIENT_CFG_SECTION,
+            instance_name: legacy_config.parse(YakconfigKeyRef {
+                section: YAK_RE_CLIENT_CFG_SECTION,
                 property: "instance_name",
             })?,
-            max_decoding_message_size: legacy_config.parse(BuckconfigKeyRef {
-                section: BUCK2_RE_CLIENT_CFG_SECTION,
+            max_decoding_message_size: legacy_config.parse(YakconfigKeyRef {
+                section: YAK_RE_CLIENT_CFG_SECTION,
                 property: "max_decoding_message_size",
             })?,
-            max_total_batch_size: legacy_config.parse(BuckconfigKeyRef {
-                section: BUCK2_RE_CLIENT_CFG_SECTION,
+            max_total_batch_size: legacy_config.parse(YakconfigKeyRef {
+                section: YAK_RE_CLIENT_CFG_SECTION,
                 property: "max_total_batch_size",
             })?,
-            max_concurrent_uploads_per_action: legacy_config.parse(BuckconfigKeyRef {
-                section: BUCK2_RE_CLIENT_CFG_SECTION,
+            max_concurrent_uploads_per_action: legacy_config.parse(YakconfigKeyRef {
+                section: YAK_RE_CLIENT_CFG_SECTION,
                 property: "max_concurrent_uploads_per_action",
             })?,
-            find_missing_blobs_batch_size: legacy_config.parse(BuckconfigKeyRef {
-                section: BUCK2_RE_CLIENT_CFG_SECTION,
+            find_missing_blobs_batch_size: legacy_config.parse(YakconfigKeyRef {
+                section: YAK_RE_CLIENT_CFG_SECTION,
                 property: "find_missing_blobs_batch_size",
             })?,
-            cas_ttl_secs: legacy_config.parse(BuckconfigKeyRef {
-                section: BUCK2_RE_CLIENT_CFG_SECTION,
+            cas_ttl_secs: legacy_config.parse(YakconfigKeyRef {
+                section: YAK_RE_CLIENT_CFG_SECTION,
                 property: "cas_ttl_secs",
             })?,
-            grpc_keepalive_time_secs: legacy_config.parse(BuckconfigKeyRef {
-                section: BUCK2_RE_CLIENT_CFG_SECTION,
+            grpc_keepalive_time_secs: legacy_config.parse(YakconfigKeyRef {
+                section: YAK_RE_CLIENT_CFG_SECTION,
                 property: "grpc_keepalive_time_secs",
             })?,
-            grpc_keepalive_timeout_secs: legacy_config.parse(BuckconfigKeyRef {
-                section: BUCK2_RE_CLIENT_CFG_SECTION,
+            grpc_keepalive_timeout_secs: legacy_config.parse(YakconfigKeyRef {
+                section: YAK_RE_CLIENT_CFG_SECTION,
                 property: "grpc_keepalive_timeout_secs",
             })?,
-            grpc_keepalive_while_idle: legacy_config.parse(BuckconfigKeyRef {
-                section: BUCK2_RE_CLIENT_CFG_SECTION,
+            grpc_keepalive_while_idle: legacy_config.parse(YakconfigKeyRef {
+                section: YAK_RE_CLIENT_CFG_SECTION,
                 property: "grpc_keepalive_while_idle",
             })?,
-            execution_concurrency_limit: legacy_config.parse(BuckconfigKeyRef {
-                section: BUCK2_RE_CLIENT_CFG_SECTION,
+            execution_concurrency_limit: legacy_config.parse(YakconfigKeyRef {
+                section: YAK_RE_CLIENT_CFG_SECTION,
                 property: "execution_concurrency_limit",
             })?,
-            min_connections: legacy_config.parse(BuckconfigKeyRef {
-                section: BUCK2_RE_CLIENT_CFG_SECTION,
+            min_connections: legacy_config.parse(YakconfigKeyRef {
+                section: YAK_RE_CLIENT_CFG_SECTION,
                 property: "min_connections",
             })?,
-            max_connections: legacy_config.parse(BuckconfigKeyRef {
-                section: BUCK2_RE_CLIENT_CFG_SECTION,
+            max_connections: legacy_config.parse(YakconfigKeyRef {
+                section: YAK_RE_CLIENT_CFG_SECTION,
                 property: "max_connections",
             })?,
-            max_concurrency_per_connection: legacy_config.parse(BuckconfigKeyRef {
-                section: BUCK2_RE_CLIENT_CFG_SECTION,
+            max_concurrency_per_connection: legacy_config.parse(YakconfigKeyRef {
+                section: YAK_RE_CLIENT_CFG_SECTION,
                 property: "max_concurrency_per_connection",
             })?,
         })

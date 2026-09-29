@@ -18,7 +18,7 @@ use crate::interpreter::module_internals::ModuleInternals;
 #[derive(yak_error::Error, Debug)]
 #[error("Fail: {0}")]
 #[yak(tag = Tier0)]
-struct BuckFail(String);
+struct YakFail(String);
 
 /// Registers functions that are only available in the `__internal__` global and not meant to be
 /// stable.
@@ -26,8 +26,8 @@ struct BuckFail(String);
 pub(crate) fn register_internals(builder: &mut GlobalsBuilder) {
     /// `fail()` but implemented using a yak error type instead of starlark's, for testing
     /// purposes.
-    fn buck2_fail<'v>(msg: &str, _eval: &mut Evaluator<'v, '_, '_>) -> starlark::Result<NoneType> {
-        Err(yak_error::Error::from(BuckFail(msg.to_owned())).into())
+    fn yak_fail<'v>(msg: &str, _eval: &mut Evaluator<'v, '_, '_>) -> starlark::Result<NoneType> {
+        Err(yak_error::Error::from(YakFail(msg.to_owned())).into())
     }
 
     /// Returns a list of direct subpackage relative paths of current package.

@@ -12,14 +12,14 @@ use async_trait::async_trait;
 use yak_cli_proto::UqueryRequest;
 use yak_cli_proto::UqueryResponse;
 use yak_client_ctx::client_ctx::ClientCommandContext;
-use yak_client_ctx::common::BuckArgMatches;
+use yak_client_ctx::common::YakArgMatches;
 use yak_client_ctx::common::CommonBuildConfigurationOptions;
 use yak_client_ctx::common::CommonCommandOptions;
 use yak_client_ctx::common::CommonEventLogOptions;
 use yak_client_ctx::common::CommonStarlarkOptions;
 use yak_client_ctx::common::target_cfg::TargetCfgUnusedOptions;
 use yak_client_ctx::common::ui::CommonConsoleOptions;
-use yak_client_ctx::daemon::client::BuckdClientConnector;
+use yak_client_ctx::daemon::client::YakdClientConnector;
 use yak_client_ctx::daemon::client::StdoutPartialResultHandler;
 use yak_client_ctx::events_ctx::EventsCtx;
 use yak_client_ctx::exit_result::ExitResult;
@@ -43,7 +43,7 @@ branches of `select()` dictionaries will be treated as dependencies.
 
 Run `yak docs uquery` or
 ",
-        "https://rdeusser.github.io/buck2/docs/users/query/uquery/",
+        "https://rdeusser.github.io/yak/docs/users/query/uquery/",
         r#"
 for more documentation about the functions available in uquery
 expressions.
@@ -106,8 +106,8 @@ impl StreamingCommand for UqueryCommand {
 
     async fn exec_impl(
         mut self,
-        buckd: &mut BuckdClientConnector,
-        matches: BuckArgMatches<'_>,
+        yakd: &mut YakdClientConnector,
+        matches: YakArgMatches<'_>,
         ctx: &mut ClientCommandContext<'_>,
         events_ctx: &mut EventsCtx,
     ) -> ExitResult {
@@ -116,7 +116,7 @@ impl StreamingCommand for UqueryCommand {
         let output_attributes = self.query_common.attributes.get();
         let context = ctx.client_context(matches, &self)?;
 
-        let UqueryResponse {} = buckd
+        let UqueryResponse {} = yakd
             .with_flushing()
             .uquery(
                 UqueryRequest {

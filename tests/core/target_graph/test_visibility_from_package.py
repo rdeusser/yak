@@ -6,14 +6,14 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-from e2e_util.api.buck import Buck
-from e2e_util.buck_workspace import buck_test
+from e2e_util.api.yak import Yak
+from e2e_util.yak_workspace import yak_test
 from e2e_util.helper.golden import golden
 
 
-@buck_test()
-async def test_visibility_from_package_simple(buck: Buck) -> None:
-    result = await buck.uquery(
+@yak_test()
+async def test_visibility_from_package_simple(yak: Yak) -> None:
+    result = await yak.uquery(
         "root//simple:", "--output-attribute=visibility|within_view"
     )
     golden(
@@ -22,9 +22,9 @@ async def test_visibility_from_package_simple(buck: Buck) -> None:
     )
 
 
-@buck_test()
-async def test_visibility_from_package_inherit(buck: Buck) -> None:
-    result = await buck.uquery(
+@yak_test()
+async def test_visibility_from_package_inherit(yak: Yak) -> None:
+    result = await yak.uquery(
         "root//inherit/...", "--output-attribute=visibility|within_view"
     )
     golden(
@@ -33,9 +33,9 @@ async def test_visibility_from_package_inherit(buck: Buck) -> None:
     )
 
 
-@buck_test()
-async def test_visibility_from_package_override(buck: Buck) -> None:
-    result = await buck.uquery(
+@yak_test()
+async def test_visibility_from_package_override(yak: Yak) -> None:
+    result = await yak.uquery(
         "root//override/...", "--output-attribute=visibility|within_view"
     )
     golden(
@@ -44,9 +44,9 @@ async def test_visibility_from_package_override(buck: Buck) -> None:
     )
 
 
-@buck_test()
-async def test_visibility_from_package_public(buck: Buck) -> None:
-    result = await buck.uquery(
+@yak_test()
+async def test_visibility_from_package_public(yak: Yak) -> None:
+    result = await yak.uquery(
         "root//public/...", "--output-attribute=visibility|within_view"
     )
     golden(

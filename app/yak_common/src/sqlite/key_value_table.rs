@@ -13,7 +13,7 @@ use std::sync::Arc;
 use itertools::Itertools;
 use parking_lot::Mutex;
 use rusqlite::Connection;
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 use yak_hash::IntentionallyStdHashMap;
 
 /// A generic sqlite table for storing string key-value pairs.
@@ -42,7 +42,7 @@ impl KeyValueSqliteTable {
         self.connection
             .lock()
             .execute(&sql, [])
-            .with_buck_error_context(|| format!("creating sqlite table {}", self.table_name))?;
+            .with_yak_error_context(|| format!("creating sqlite table {}", self.table_name))?;
         Ok(())
     }
 
@@ -65,7 +65,7 @@ impl KeyValueSqliteTable {
                 &sql,
                 rusqlite::params_from_iter(map.into_iter().flat_map(<[_; 2]>::from)),
             )
-            .with_buck_error_context(|| {
+            .with_yak_error_context(|| {
                 format!("inserting into sqlite table {}", self.table_name)
             })?;
         Ok(())
@@ -79,7 +79,7 @@ impl KeyValueSqliteTable {
         let map = stmt
             .query_map([], |row| Ok((row.get(0)?, row.get(1)?)))?
             .collect::<Result<IntentionallyStdHashMap<String, String>, _>>()
-            .with_buck_error_context(|| format!("reading from sqlite table {}", self.table_name))?;
+            .with_yak_error_context(|| format!("reading from sqlite table {}", self.table_name))?;
         Ok(map)
     }
 
@@ -92,7 +92,7 @@ impl KeyValueSqliteTable {
             .query_map([key], |row| row.get(0))?
             .next()
             .transpose()
-            .with_buck_error_context(|| {
+            .with_yak_error_context(|| {
                 format!("reading `{}` from sqlite table {}", key, self.table_name)
             })?;
         Ok(row)

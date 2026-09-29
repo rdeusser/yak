@@ -12,21 +12,21 @@ import platform
 import signal
 from pathlib import Path
 
-from e2e_util.api.buck import Buck
+from e2e_util.api.yak import Yak
 from e2e_util.asserts import expect_failure
-from e2e_util.buck_workspace import buck_test
+from e2e_util.yak_workspace import yak_test
 from e2e_util.helper.golden import golden, sanitize_stderr
 from e2e_util.helper.utils import read_invocation_record
 
 # FIXME(JakobDegen): Flakey in CI
 if False:
 
-    @buck_test(skip_for_os=["windows"])
-    async def test_has_end_of_stream_false(buck: Buck, tmp_path: Path) -> None:
+    @yak_test(skip_for_os=["windows"])
+    async def test_has_end_of_stream_false(yak: Yak, tmp_path: Path) -> None:
         hang_path = tmp_path / "hang_path"
         record = tmp_path / "record.json"
 
-        cmd = await buck.build(
+        cmd = await yak.build(
             ":hang",
             "-c",
             f"test.hang_path={hang_path}",
@@ -53,27 +53,27 @@ if False:
         assert not record["has_command_result"]
 
 
-@buck_test(write_invocation_record=True)
-async def test_has_end_of_stream_true(buck: Buck) -> None:
-    res = await buck.build(":pass")
+@yak_test(write_invocation_record=True)
+async def test_has_end_of_stream_true(yak: Yak) -> None:
+    res = await yak.build(":pass")
 
     record = res.invocation_record()
 
     assert record["has_end_of_stream"]
     assert record["has_command_result"]
-    assert record["repo_path"] == str(buck.cwd)
+    assert record["repo_path"] == str(yak.cwd)
 
 
-@buck_test(skip_for_os=["windows"], write_invocation_record=True)
-async def test_has_no_command_result(buck: Buck) -> None:
+@yak_test(skip_for_os=["windows"], write_invocation_record=True)
+async def test_has_no_command_result(yak: Yak) -> None:
     # Start the daemon
-    await buck.build()
+    await yak.build()
 
-    status = json.loads((await buck.status()).stdout)
+    status = json.loads((await yak.status()).stdout)
     pid = status["process_info"]["pid"]
 
     result = await expect_failure(
-        buck.build(
+        yak.build(
             ":kill",
             "-c",
             f"test.pid={pid}",
@@ -94,10 +94,10 @@ async def test_has_no_command_result(buck: Buck) -> None:
     )
 
 
-@buck_test(skip_for_os=["windows"], write_invocation_record=True)
-async def test_metadata(buck: Buck) -> None:
+@yak_test(skip_for_os=["windows"], write_invocation_record=True)
+async def test_metadata(yak: Yak) -> None:
     # Start the daemon
-    res = await buck.build()
+    res = await yak.build()
 
     record = res.invocation_record()
 
@@ -106,10 +106,10 @@ async def test_metadata(buck: Buck) -> None:
     assert "username" not in metadata
 
 
-@buck_test(skip_for_os=["windows"], write_invocation_record=True)
-async def test_client_metadata(buck: Buck) -> None:
+@yak_test(skip_for_os=["windows"], write_invocation_record=True)
+async def test_client_metadata(yak: Yak) -> None:
     # Start the daemon
-    res = await buck.build(
+    res = await yak.build(
         "--client-metadata=foo=bar",
         "--client-metadata=id=baz",
     )
@@ -124,10 +124,10 @@ async def test_client_metadata(buck: Buck) -> None:
     assert record["metadata"]["strings"]["client"] == "baz"
 
 
-@buck_test(skip_for_os=["windows"], write_invocation_record=True)
-async def test_client_metadata_env(buck: Buck) -> None:
+@yak_test(skip_for_os=["windows"], write_invocation_record=True)
+async def test_client_metadata_env(yak: Yak) -> None:
     # Start the daemon
-    res = await buck.build(
+    res = await yak.build(
         "--client-metadata=foo=bar",
         "--client-metadata=id=baz",
         env={"YAK_CLIENT_METADATA": "env_foo=env_bar,id=foobar"},
@@ -145,10 +145,10 @@ async def test_client_metadata_env(buck: Buck) -> None:
     assert record["metadata"]["strings"]["client"] == "baz"
 
 
-@buck_test(skip_for_os=["windows"], write_invocation_record=True)
-async def test_client_metadata_clean(buck: Buck) -> None:
+@yak_test(skip_for_os=["windows"], write_invocation_record=True)
+async def test_client_metadata_clean(yak: Yak) -> None:
     # Start the daemon
-    res = await buck.clean(
+    res = await yak.clean(
         "--client-metadata=foo=bar",
         "--client-metadata=id=baz",
     )
@@ -163,12 +163,12 @@ async def test_client_metadata_clean(buck: Buck) -> None:
     assert record["metadata"]["strings"]["client"] == "baz"
 
 
-@buck_test(skip_for_os=["windows"], write_invocation_record=True)
-async def test_client_metadata_debug(buck: Buck) -> None:
-    # buck.debug() doesn't start the daemon, so we need to start it with a build
-    await buck.build()
+@yak_test(skip_for_os=["windows"], write_invocation_record=True)
+async def test_client_metadata_debug(yak: Yak) -> None:
+    # yak.debug() doesn't start the daemon, so we need to start it with a build
+    await yak.build()
 
-    res = await buck.debug(
+    res = await yak.debug(
         "hydration",
         "status",
         "--client-metadata=foo=bar",
@@ -185,9 +185,9 @@ async def test_client_metadata_debug(buck: Buck) -> None:
     assert record["metadata"]["strings"]["client"] == "baz"
 
 
-@buck_test(write_invocation_record=True)
-async def test_action_error_message_in_record(buck: Buck) -> None:
-    res = await expect_failure(buck.build(":fail"))
+@yak_test(write_invocation_record=True)
+async def test_action_error_message_in_record(yak: Yak) -> None:
+    res = await expect_failure(yak.build(":fail"))
 
     record = res.invocation_record()
 
@@ -199,9 +199,9 @@ async def test_action_error_message_in_record(buck: Buck) -> None:
     assert "Hi from stderr!" in record["errors"][0]["telemetry_message"]
 
 
-@buck_test(write_invocation_record=True)
-async def test_non_action_error_message_in_record(buck: Buck) -> None:
-    res = await expect_failure(buck.build(":missing_target"))
+@yak_test(write_invocation_record=True)
+async def test_non_action_error_message_in_record(yak: Yak) -> None:
+    res = await expect_failure(yak.build(":missing_target"))
 
     record = res.invocation_record()
 
@@ -211,10 +211,10 @@ async def test_non_action_error_message_in_record(buck: Buck) -> None:
     )
 
 
-@buck_test(skip_for_os=["windows"], write_invocation_record=True)
-async def test_rule_type_names_ci(buck: Buck) -> None:
+@yak_test(skip_for_os=["windows"], write_invocation_record=True)
+async def test_rule_type_names_ci(yak: Yak) -> None:
     # Start the daemon
-    res = await buck.build(
+    res = await yak.build(
         ":duplicate",
         ":and_a_two",
         ":last_three",
@@ -231,10 +231,10 @@ async def test_rule_type_names_ci(buck: Buck) -> None:
     ]
 
 
-@buck_test(skip_for_os=["windows"], write_invocation_record=True)
-async def test_rule_type_names_user(buck: Buck) -> None:
+@yak_test(skip_for_os=["windows"], write_invocation_record=True)
+async def test_rule_type_names_user(yak: Yak) -> None:
     # Start the daemon
-    res = await buck.build(
+    res = await yak.build(
         ":and_a_two",
         ":last_three",
         ":a_one",
@@ -249,11 +249,11 @@ async def test_rule_type_names_user(buck: Buck) -> None:
     ]
 
 
-@buck_test(skip_for_os=["windows"], write_invocation_record=True)
-async def test_rule_type_names_on_failure(buck: Buck) -> None:
+@yak_test(skip_for_os=["windows"], write_invocation_record=True)
+async def test_rule_type_names_on_failure(yak: Yak) -> None:
     # Start the daemon
     res = await expect_failure(
-        buck.build(
+        yak.build(
             ":fail",
             ":last_three",
             ":a_one",
@@ -269,20 +269,20 @@ async def test_rule_type_names_on_failure(buck: Buck) -> None:
     ]
 
 
-@buck_test(write_invocation_record=True)
-async def test_active_networks_kinds(buck: Buck) -> None:
+@yak_test(write_invocation_record=True)
+async def test_active_networks_kinds(yak: Yak) -> None:
     # Start the daemon
-    res = await buck.build()
+    res = await yak.build()
 
     record = res.invocation_record()
 
     assert "active_networks_kinds" in record
 
 
-@buck_test(write_invocation_record=True)
-async def test_peak_memory_and_disk(buck: Buck) -> None:
+@yak_test(write_invocation_record=True)
+async def test_peak_memory_and_disk(yak: Yak) -> None:
     # Start the daemon
-    res = await buck.build()
+    res = await yak.build()
 
     record = res.invocation_record()
 
@@ -291,9 +291,9 @@ async def test_peak_memory_and_disk(buck: Buck) -> None:
     )
 
 
-@buck_test(write_invocation_record=True)
-async def test_peak_stats(buck: Buck) -> None:
-    res = await buck.build(
+@yak_test(write_invocation_record=True)
+async def test_peak_stats(yak: Yak) -> None:
+    res = await yak.build(
         ":run",
         "--no-remote-cache",
         "--local-only",
@@ -307,14 +307,14 @@ async def test_peak_stats(buck: Buck) -> None:
     assert record["max_in_progress_remote_uploads"] == 0
 
 
-@buck_test(write_invocation_record=True)
-async def test_parallelism_logging(buck: Buck) -> None:
+@yak_test(write_invocation_record=True)
+async def test_parallelism_logging(yak: Yak) -> None:
     # Test multiple parallelism values
     parallelism_values = [1, 4, 8]
 
     for parallelism in parallelism_values:
         # Test with different -j values to control concurrency
-        res = await buck.build(
+        res = await yak.build(
             ":pass",
             "-j",
             str(parallelism),
@@ -337,7 +337,7 @@ async def test_parallelism_logging(buck: Buck) -> None:
         assert command_options["available_parallelism"] > 0
 
     # Test without -j flag - configured_parallelism should be null
-    res_no_j = await buck.build(
+    res_no_j = await yak.build(
         ":pass",
     )
 

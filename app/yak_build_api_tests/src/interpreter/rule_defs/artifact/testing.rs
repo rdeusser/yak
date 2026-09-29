@@ -37,8 +37,8 @@ use yak_core::deferred::key::DeferredHolderKey;
 use yak_core::execution_types::execution::ExecutionPlatformResolution;
 use yak_core::execution_types::executor_config::PathSeparatorKind;
 use yak_core::fs::artifact_path_resolver::ArtifactFs;
-use yak_core::fs::buck_out_path::BuckOutPathKind;
-use yak_core::fs::buck_out_path::BuckOutPathResolver;
+use yak_core::fs::yak_out_path::YakOutPathKind;
+use yak_core::fs::yak_out_path::YakOutPathResolver;
 use yak_core::fs::project::ProjectRoot;
 use yak_core::fs::project_rel_path::ProjectRelativePathBuf;
 use yak_core::package::PackageLabel;
@@ -52,8 +52,8 @@ use yak_execute::artifact::fs::ExecutorFs;
 use yak_execute::execute::request::OutputType;
 use yak_fs::paths::abs_norm_path::AbsNormPathBuf;
 use yak_fs::paths::forward_rel_path::ForwardRelativePathBuf;
-use yak_hash::BuckMutMap;
-use yak_hash::buck_indexset;
+use yak_hash::YakMutMap;
+use yak_hash::yak_indexset;
 use yak_interpreter_for_build::interpreter::build_context::BuildContext;
 use yak_interpreter_for_build::interpreter::testing::cells;
 use yak_util::arc_str::ArcS;
@@ -117,7 +117,7 @@ pub(crate) fn artifactory(builder: &mut GlobalsBuilder) {
             ForwardRelativePathBuf::try_from(path.to_owned()).unwrap(),
             OutputType::File,
             None,
-            BuckOutPathKind::default(),
+            YakOutPathKind::default(),
             eval.heap(),
         )?;
         Ok(StarlarkDeclaredArtifact::new(
@@ -142,15 +142,15 @@ pub(crate) fn artifactory(builder: &mut GlobalsBuilder) {
             ForwardRelativePathBuf::try_from(path.to_owned()).unwrap(),
             OutputType::File,
             None,
-            BuckOutPathKind::default(),
+            YakOutPathKind::default(),
             eval.heap(),
         )?;
-        let outputs = buck_indexset![artifact.as_output()];
+        let outputs = yak_indexset![artifact.as_output()];
         registry.register(
             &DeferredHolderKey::Base(BaseDeferredKey::TargetLabel(target_label.dupe())),
             outputs,
             SimpleUnregisteredAction::new(
-                buck_indexset![],
+                yak_indexset![],
                 vec![],
                 CategoryRef::new("fake_action").unwrap().to_owned(),
                 None,
@@ -170,14 +170,14 @@ pub(crate) fn artifactory(builder: &mut GlobalsBuilder) {
                 .unwrap();
         let fs = ArtifactFs::new(
             cell_info.1,
-            BuckOutPathResolver::new(ProjectRelativePathBuf::unchecked_new(
+            YakOutPathResolver::new(ProjectRelativePathBuf::unchecked_new(
                 "yak-out/v2".to_owned(),
             )),
             project_fs,
         );
         let executor_fs = ExecutorFs::new(&fs, PathSeparatorKind::Unix);
         let mut cli = Vec::<String>::new();
-        let artifact_path_mapping = BuckMutMap::default();
+        let artifact_path_mapping = YakMutMap::default();
         let mut fmt = CommandLineBuilder::new(&mut cli, &artifact_path_mapping, &executor_fs);
         artifact
             .0
@@ -217,9 +217,9 @@ pub(crate) fn artifactory(builder: &mut GlobalsBuilder) {
 
         actions_registry.register(
             &DeferredHolderKey::Base(BaseDeferredKey::TargetLabel(target_label.dupe())),
-            buck_indexset![output_artifact],
+            yak_indexset![output_artifact],
             SimpleUnregisteredAction::new(
-                buck_indexset![],
+                yak_indexset![],
                 vec![],
                 CategoryRef::new("fake_action").unwrap().to_owned(),
                 None,

@@ -23,9 +23,9 @@ use tokio::sync::mpsc::UnboundedSender;
 use tokio::sync::oneshot;
 use tokio::time::Instant;
 use tokio_stream::wrappers::UnboundedReceiverStream;
-use yak_client_ctx::client_ctx::BuckSubcommand;
+use yak_client_ctx::client_ctx::YakSubcommand;
 use yak_client_ctx::client_ctx::ClientCommandContext;
-use yak_client_ctx::common::BuckArgMatches;
+use yak_client_ctx::common::YakArgMatches;
 use yak_client_ctx::common::ui::CommonConsoleOptions;
 use yak_client_ctx::common::ui::get_console_with_root;
 use yak_client_ctx::daemon::client::NoPartialResultHandler;
@@ -96,12 +96,12 @@ pub struct ReplayCommand {
     console_opts: CommonConsoleOptions,
 }
 
-impl BuckSubcommand for ReplayCommand {
+impl YakSubcommand for ReplayCommand {
     const COMMAND_NAME: &'static str = "log-replay";
 
     async fn exec_impl(
         self,
-        _matches: BuckArgMatches<'_>,
+        _matches: YakArgMatches<'_>,
         mut ctx: ClientCommandContext<'_>,
         _events_ctx: &mut EventsCtx,
     ) -> ExitResult {
@@ -371,8 +371,8 @@ async fn find_next_event_with_delay(
     min_timestamp: Option<prost_types::Timestamp>,
 ) -> Option<(yak_error::Result<StreamValue>, prost_types::Timestamp)> {
     while let Some(event) = events.next().await {
-        if let Ok(StreamValue::Event(buck_event)) = &event {
-            let ts = buck_event.timestamp.unwrap();
+        if let Ok(StreamValue::Event(yak_event)) = &event {
+            let ts = yak_event.timestamp.unwrap();
             if min_timestamp.is_none_or(|min_timestamp| cmp_timestamps(min_timestamp, ts).is_le()) {
                 return Some((event, ts));
             }

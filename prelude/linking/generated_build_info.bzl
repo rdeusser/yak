@@ -209,7 +209,7 @@ def generate_build_info(
     data = _generate_build_info_data(ctx, spec, tool, generator_args, invalidation_inputs)
 
     output_dir = GENERATED_BUILD_INFO_OUTPUT_DIR
-    source = ctx.actions.declare_output(output_dir, "__buck2_generated_build_info.c")
+    source = ctx.actions.declare_output(output_dir, "__yak_generated_build_info.c")
 
     ctx.actions.run(
         cmd_args(

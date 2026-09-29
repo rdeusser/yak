@@ -28,20 +28,20 @@ use tokio::io::AsyncRead;
 use tokio::io::AsyncWrite;
 use tokio::process::Child;
 use yak_core::yak_env;
-use yak_error::BuckErrorContext as _;
+use yak_error::YakErrorContext as _;
 use yak_events::dispatch::EventDispatcher;
 use yak_grpc::DuplexChannel;
 use yak_grpc::ServerHandle;
-use yak_hash::BuckMutMap;
+use yak_hash::YakMutMap;
 use yak_test_api::grpc::TestExecutorClient;
 use yak_test_api::grpc::spawn_orchestrator_server;
 use yak_test_api::protocol::TestExecutor;
 
-use crate::downward_api::BuckTestDownwardApi;
-use crate::orchestrator::BuckTestOrchestrator;
+use crate::downward_api::YakTestDownwardApi;
+use crate::orchestrator::YakTestOrchestrator;
 
-static TEST_EXECUTOR_CLIENTS: LazyLock<Mutex<BuckMutMap<u16, Arc<dyn TestExecutor>>>> =
-    LazyLock::new(|| Mutex::new(BuckMutMap::default()));
+static TEST_EXECUTOR_CLIENTS: LazyLock<Mutex<YakMutMap<u16, Arc<dyn TestExecutor>>>> =
+    LazyLock::new(|| Mutex::new(YakMutMap::default()));
 
 pub struct TestExecutorClientWrapper(u16);
 impl TestExecutorClientWrapper {
@@ -73,7 +73,7 @@ pub struct ExecutorLaunch {
     pub handle: ExecutorFuture,
     pub client: TestExecutorClient,
     pub make_server:
-        Box<dyn FnOnce(BuckTestOrchestrator<'static>, BuckTestDownwardApi) -> ServerHandle + Send>,
+        Box<dyn FnOnce(YakTestOrchestrator<'static>, YakTestDownwardApi) -> ServerHandle + Send>,
 }
 
 pub struct ExecutorFuture {
@@ -88,7 +88,7 @@ impl ExecutorFuture {
 
             let (status, stdout, stderr) = try_join3(child.wait(), stdout_fut, stderr_fut)
                 .await
-                .buck_error_context("Failed to run OutOfProcessTestExecutor")?;
+                .yak_error_context("Failed to run OutOfProcessTestExecutor")?;
 
             // Preserve the distinction between an orderly non-zero exit and a signal
             // death (crash or OOM kill): `code()` is `None` when the process was
@@ -205,7 +205,7 @@ async fn spawn_orchestrator<T: AsyncRead + AsyncWrite + Send + Sync + Unpin + 's
 ) -> yak_error::Result<ExecutorLaunch> {
     let client = TestExecutorClient::new(executor_client_io)
         .await
-        .buck_error_context("Failed to create TestExecutorClient")?;
+        .yak_error_context("Failed to create TestExecutorClient")?;
 
     let make_server = Box::new(move |orchestrator, downward_api| {
         let (read, write) = tokio::io::split(orchestrator_server_io);

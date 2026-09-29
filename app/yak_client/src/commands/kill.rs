@@ -10,11 +10,11 @@
 
 use std::time::Duration;
 
-use yak_client_ctx::client_ctx::BuckSubcommand;
+use yak_client_ctx::client_ctx::YakSubcommand;
 use yak_client_ctx::client_ctx::ClientCommandContext;
-use yak_client_ctx::common::BuckArgMatches;
+use yak_client_ctx::common::YakArgMatches;
 use yak_client_ctx::common::CommonEventLogOptions;
-use yak_client_ctx::daemon::client::BuckdLifecycleLock;
+use yak_client_ctx::daemon::client::YakdLifecycleLock;
 use yak_client_ctx::events_ctx::EventsCtx;
 use yak_client_ctx::exit_result::ExitResult;
 use yak_client_ctx::startup_deadline::StartupDeadline;
@@ -32,18 +32,18 @@ pub struct KillCommand {
     pub(crate) event_log_opts: CommonEventLogOptions,
 }
 
-impl BuckSubcommand for KillCommand {
+impl YakSubcommand for KillCommand {
     const COMMAND_NAME: &'static str = "kill";
 
     async fn exec_impl(
         self,
-        _matches: BuckArgMatches<'_>,
+        _matches: YakArgMatches<'_>,
         ctx: ClientCommandContext<'_>,
         _events_ctx: &mut EventsCtx,
     ) -> ExitResult {
         let daemon_dir = ctx.paths()?.daemon_dir()?;
 
-        let lifecycle_lock = BuckdLifecycleLock::lock_with_timeout(
+        let lifecycle_lock = YakdLifecycleLock::lock_with_timeout(
             daemon_dir.clone(),
             StartupDeadline::duration_from_now(Duration::from_secs(10))?,
         )

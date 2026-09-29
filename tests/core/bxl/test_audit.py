@@ -6,41 +6,41 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-from e2e_util.api.buck import Buck
+from e2e_util.api.yak import Yak
 from e2e_util.asserts import expect_failure
-from e2e_util.buck_workspace import buck_test
+from e2e_util.yak_workspace import yak_test
 
 
-@buck_test()
-async def test_bxl_audit_output(buck: Buck) -> None:
-    await buck.bxl(
+@yak_test()
+async def test_bxl_audit_output(yak: Yak) -> None:
+    await yak.bxl(
         "//audit.bxl:audit_output_action_exists",
     )
 
-    await buck.bxl(
+    await yak.bxl(
         "//audit.bxl:audit_output_config_not_match",
     )
 
     await expect_failure(
-        buck.bxl(
+        yak.bxl(
             "//audit.bxl:audit_output_invalid_path",
         ),
         stderr_regex="Malformed yak-out path",
     )
 
 
-@buck_test()
-async def test_bxl_audit_content_based_output(buck: Buck) -> None:
+@yak_test()
+async def test_bxl_audit_content_based_output(yak: Yak) -> None:
     label = "root//:with_content_based_output"
-    result = await buck.build(label, "--show-output")
+    result = await yak.build(label, "--show-output")
     path = result.get_build_report().output_for_target(label)
 
     # resolve the symlink that we get as the output from yak to find the underlying content-based path.
-    path = (buck.cwd / path).resolve()
+    path = (yak.cwd / path).resolve()
     # make it a relative path again
-    path = path.relative_to(buck.cwd)
+    path = path.relative_to(yak.cwd)
 
-    await buck.bxl(
+    await yak.bxl(
         "//audit.bxl:audit_content_based_output_action_exists",
         "--",
         "--label",

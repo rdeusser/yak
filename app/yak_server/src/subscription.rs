@@ -12,7 +12,7 @@ use std::time::Duration;
 
 use futures::future::FutureExt;
 use tokio::time::MissedTickBehavior;
-use yak_error::BuckErrorOptionContext;
+use yak_error::YakErrorOptionContext;
 use yak_error::ErrorTag;
 use yak_error::yak_error;
 use yak_events::dispatch::span_async;

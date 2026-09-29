@@ -34,10 +34,10 @@ use tokio_stream::wrappers::LinesStream;
 use tokio_util::codec::FramedRead;
 use yak_cli_proto::protobuf_util::ProtobufSplitter;
 use yak_cli_proto::*;
-use yak_error::BuckErrorContext;
-use yak_error::BuckErrorOptionContext;
+use yak_error::YakErrorContext;
+use yak_error::YakErrorOptionContext;
 use yak_error::ErrorTag;
-use yak_events::BuckEvent;
+use yak_events::YakEvent;
 use yak_fs::async_fs_util;
 use yak_fs::error::IoResultExt;
 use yak_fs::paths::abs_path::AbsPath;
@@ -196,7 +196,7 @@ impl EventLogPathBuf {
             .find(name)
             .ok_or(EventLogInferenceError::NoUuidInFilename(self.path.clone()))?
             .as_str();
-        TraceId::from_str(uuid).buck_error_context("Failed to create TraceId from uuid")
+        TraceId::from_str(uuid).yak_error_context("Failed to create TraceId from uuid")
     }
 
     // TODO iguridi: this should be done by parsing file header
@@ -244,14 +244,14 @@ impl EventLogPathBuf {
         let header = log_lines
             .next_line()
             .await
-            .buck_error_context("Error reading header line")?
+            .yak_error_context("Error reading header line")?
             .internal_error("No header line")?;
         let invocation = Invocation::parse_json_line(&header)?;
 
         let events = LinesStream::new(log_lines).map(|line| {
-            let line = line.buck_error_context("Error reading next line")?;
+            let line = line.yak_error_context("Error reading next line")?;
             serde_json::from_str::<StreamValue>(&line)
-                .with_buck_error_context(|| format!("Invalid line: {}", line.trim_end()))
+                .with_yak_error_context(|| format!("Invalid line: {}", line.trim_end()))
         });
 
         // Wrap in tolerant_of_truncation to handle in-progress logs
@@ -275,12 +275,12 @@ impl EventLogPathBuf {
             .await?
             .internal_error("No invocation found")?;
         let invocation = yak_data::Invocation::decode_length_delimited(invocation)
-            .buck_error_context("Invalid Invocation")?;
+            .yak_error_context("Invalid Invocation")?;
         let invocation = Invocation::from_proto(invocation);
 
         let events = stream.and_then(|data| async move {
             let val = yak_cli_proto::CommandProgress::decode_length_delimited(data)
-                .buck_error_context("Invalid CommandProgress")?;
+                .yak_error_context("Invalid CommandProgress")?;
             match val.progress {
                 Some(command_progress::Progress::Event(event)) => Ok(StreamValue::Event(event)),
                 Some(command_progress::Progress::Result(result)) => Ok(StreamValue::Result(result)),
@@ -394,21 +394,21 @@ impl EventLogPathBuf {
 
     pub async fn get_summary(&self) -> yak_error::Result<EventLogSummary> {
         let (invocation, events) = self.unpack_stream().await?;
-        let buck_event: BuckEvent = events
+        let yak_event: YakEvent = events
             .try_filter_map(|log| {
-                let maybe_buck_event = match log {
+                let maybe_yak_event = match log {
                     StreamValue::Result(_) | StreamValue::PartialResult(_) => None,
-                    StreamValue::Event(buck_event) => Some(buck_event),
+                    StreamValue::Event(yak_event) => Some(yak_event),
                 };
-                futures::future::ready(Ok(maybe_buck_event))
+                futures::future::ready(Ok(maybe_yak_event))
             })
             .try_next()
             .await?
             .ok_or_else(|| EventLogErrors::EndOfFile(self.path.to_str().unwrap().to_owned()))?
             .try_into()?;
         Ok(EventLogSummary {
-            trace_id: buck_event.trace_id()?,
-            timestamp: buck_event.timestamp(),
+            trace_id: yak_event.trace_id()?,
+            timestamp: yak_event.timestamp(),
             invocation,
         })
     }
@@ -431,7 +431,7 @@ mod tests {
     #[test]
     fn test_get_uuid_from_logfile_name() -> yak_error::Result<()> {
         // Create a test log path.
-        let event = buck_event()?;
+        let event = yak_event()?;
         let file_name = &get_logfile_name(&event, Encoding::PROTO_ZSTD, "bzl")?;
         let path = EventLogPathBuf {
             path: logdir().as_abs_path().join(file_name),
@@ -445,8 +445,8 @@ mod tests {
         Ok(())
     }
 
-    fn buck_event() -> Result<BuckEvent, yak_error::Error> {
-        let event = BuckEvent::new(
+    fn yak_event() -> Result<YakEvent, yak_error::Error> {
+        let event = YakEvent::new(
             SystemTime::now(),
             TraceId::from_str("7b797fa8-62f1-4123-85f9-875cd74b0a63")?,
             Some(SpanId::next()),

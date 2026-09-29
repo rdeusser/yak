@@ -9,8 +9,8 @@
 import subprocess
 from pathlib import Path
 
-from e2e_util.api.buck import Buck
-from e2e_util.buck_workspace import buck_test
+from e2e_util.api.yak import Yak
+from e2e_util.yak_workspace import yak_test
 
 
 def _git(args: list[str], cwd: Path) -> str:
@@ -44,36 +44,36 @@ def _init_repo(cwd: Path) -> str:
     return rev
 
 
-@buck_test()
-async def test_fetches_the_work_tree(buck: Buck) -> None:
-    _init_repo(cwd=buck.cwd)
+@yak_test()
+async def test_fetches_the_work_tree(yak: Yak) -> None:
+    _init_repo(cwd=yak.cwd)
 
-    res = await buck.build_without_report(
+    res = await yak.build_without_report(
         "root//:fetch.git", "--show-full-simple-output"
     )
     assert (Path(res.stdout.strip()) / "hello.txt").read_text() == "hello\n"
 
 
-@buck_test()
-async def test_requested_paths_are_sub_targets(buck: Buck) -> None:
-    _init_repo(cwd=buck.cwd)
+@yak_test()
+async def test_requested_paths_are_sub_targets(yak: Yak) -> None:
+    _init_repo(cwd=yak.cwd)
 
-    res = await buck.build_without_report(
+    res = await yak.build_without_report(
         "root//:fetch.git[subdir]", "--show-full-simple-output"
     )
     assert (Path(res.stdout.strip()) / "nested.txt").read_text() == "nested\n"
 
 
-@buck_test()
-async def test_git_dir_sub_target_is_a_repository(buck: Buck) -> None:
-    rev = _init_repo(cwd=buck.cwd)
+@yak_test()
+async def test_git_dir_sub_target_is_a_repository(yak: Yak) -> None:
+    rev = _init_repo(cwd=yak.cwd)
 
-    res = await buck.build_without_report(
+    res = await yak.build_without_report(
         "root//:fetch.git[.git]", "--show-full-simple-output"
     )
     git_dir = Path(res.stdout.strip())
 
     # Validate this is a proper .git tree
-    assert _git(["--git-dir", str(git_dir), "cat-file", "-t", rev], cwd=buck.cwd) == (
+    assert _git(["--git-dir", str(git_dir), "cat-file", "-t", rev], cwd=yak.cwd) == (
         "commit"
     )

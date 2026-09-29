@@ -6,52 +6,52 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-from e2e_util.api.buck import Buck
-from e2e_util.buck_workspace import buck_test
+from e2e_util.api.yak import Yak
+from e2e_util.yak_workspace import yak_test
 
 
-@buck_test()
-async def test_get_package_path(buck: Buck) -> None:
-    await buck.bxl(
+@yak_test()
+async def test_get_package_path(yak: Yak) -> None:
+    await yak.bxl(
         "//package.bxl:get_package_path",
     )
 
 
-@buck_test()
-async def test_read_package_value(buck: Buck) -> None:
-    await buck.bxl("//package.bxl:read_package_value")
+@yak_test()
+async def test_read_package_value(yak: Yak) -> None:
+    await yak.bxl("//package.bxl:read_package_value")
 
 
-@buck_test()
-async def test_read_package_value_from_string(buck: Buck) -> None:
-    await buck.bxl("//package.bxl:read_package_value_from_string")
+@yak_test()
+async def test_read_package_value_from_string(yak: Yak) -> None:
+    await yak.bxl("//package.bxl:read_package_value_from_string")
 
 
-@buck_test()
-async def test_read_override_package_value(buck: Buck) -> None:
-    await buck.bxl("//package.bxl:read_override_package_value")
+@yak_test()
+async def test_read_override_package_value(yak: Yak) -> None:
+    await yak.bxl("//package.bxl:read_override_package_value")
 
 
-@buck_test()
-async def test_read_package_value_not_found(buck: Buck) -> None:
-    await buck.bxl("//package.bxl:read_package_value_not_found")
+@yak_test()
+async def test_read_package_value_not_found(yak: Yak) -> None:
+    await yak.bxl("//package.bxl:read_package_value_not_found")
 
 
-@buck_test()
-async def test_read_package_visibility(buck: Buck) -> None:
-    await buck.bxl("//package.bxl:read_package_visibility")
+@yak_test()
+async def test_read_package_visibility(yak: Yak) -> None:
+    await yak.bxl("//package.bxl:read_package_visibility")
 
 
-@buck_test()
-async def test_read_package_within_view(buck: Buck) -> None:
-    await buck.bxl("//package.bxl:read_package_within_view")
+@yak_test()
+async def test_read_package_within_view(yak: Yak) -> None:
+    await yak.bxl("//package.bxl:read_package_within_view")
 
 
-@buck_test()
-async def test_read_package_visibility_cap(buck: Buck) -> None:
-    await buck.bxl("//package.bxl:read_package_visibility_cap")
+@yak_test()
+async def test_read_package_visibility_cap(yak: Yak) -> None:
+    await yak.bxl("//package.bxl:read_package_visibility_cap")
 
 
-@buck_test()
-async def test_read_package_within_view_cap(buck: Buck) -> None:
-    await buck.bxl("//package.bxl:read_package_within_view_cap")
+@yak_test()
+async def test_read_package_within_view_cap(yak: Yak) -> None:
+    await yak.bxl("//package.bxl:read_package_within_view_cap")

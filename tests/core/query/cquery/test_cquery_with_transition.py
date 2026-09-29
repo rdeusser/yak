@@ -8,102 +8,102 @@
 
 import re
 
-from e2e_util.api.buck import Buck
-from e2e_util.buck_workspace import buck_test
+from e2e_util.api.yak import Yak
+from e2e_util.yak_workspace import yak_test
 
 
 def _replace_hash(s: str) -> str:
     return re.sub(r"\b[0-9a-f]{16}\b", "<HASH>", s)
 
 
-@buck_test()
-async def test_cquery_transition_without_target_universe(buck: Buck) -> None:
-    result = await buck.cquery(
-        "root//:buck",
+@yak_test()
+async def test_cquery_transition_without_target_universe(yak: Yak) -> None:
+    result = await yak.cquery(
+        "root//:yak",
         "--target-platforms=root//:p",
     )
 
     # Both configurations for the target are returned: the default, and the transition
     lines = result.stdout.splitlines()
     assert 2 == len(lines)
-    assert _replace_hash(lines[0]) == "root//:buck (root//:p#<HASH>)"
-    assert _replace_hash(lines[1]) == "root//:buck (transitioned-to-reindeer#<HASH>)"
+    assert _replace_hash(lines[0]) == "root//:yak (root//:p#<HASH>)"
+    assert _replace_hash(lines[1]) == "root//:yak (transitioned-to-elk#<HASH>)"
 
     # Test cquery with "%s".
-    result = await buck.cquery(
+    result = await yak.cquery(
         "%s",
-        "root//:buck",
+        "root//:yak",
         "root//:moose",
         "--target-platforms=root//:p",
     )
 
     lines = result.stdout.splitlines()
     assert 4 == len(lines)
-    assert _replace_hash(lines[0]) == "root//:buck (root//:p#<HASH>)"
-    assert _replace_hash(lines[1]) == "root//:buck (transitioned-to-reindeer#<HASH>)"
+    assert _replace_hash(lines[0]) == "root//:yak (root//:p#<HASH>)"
+    assert _replace_hash(lines[1]) == "root//:yak (transitioned-to-elk#<HASH>)"
     assert _replace_hash(lines[2]) == "root//:moose (root//:p#<HASH>)"
-    assert _replace_hash(lines[3]) == "root//:moose (transitioned-to-reindeer#<HASH>)"
+    assert _replace_hash(lines[3]) == "root//:moose (transitioned-to-elk#<HASH>)"
 
     # Test cquery with "%Ss"
-    result = await buck.cquery(
+    result = await yak.cquery(
         "%Ss",
-        "root//:buck",
+        "root//:yak",
         "root//:moose",
         "--target-platforms=root//:p",
     )
 
     lines = result.stdout.splitlines()
     assert 4 == len(lines)
-    assert _replace_hash(lines[0]) == "root//:buck (root//:p#<HASH>)"
-    assert _replace_hash(lines[1]) == "root//:buck (transitioned-to-reindeer#<HASH>)"
+    assert _replace_hash(lines[0]) == "root//:yak (root//:p#<HASH>)"
+    assert _replace_hash(lines[1]) == "root//:yak (transitioned-to-elk#<HASH>)"
     assert _replace_hash(lines[2]) == "root//:moose (root//:p#<HASH>)"
-    assert _replace_hash(lines[3]) == "root//:moose (transitioned-to-reindeer#<HASH>)"
+    assert _replace_hash(lines[3]) == "root//:moose (transitioned-to-elk#<HASH>)"
 
 
-@buck_test()
-async def test_cquery_transition_with_target_universe(buck: Buck) -> None:
-    result = await buck.cquery(
-        "root//:buck",
+@yak_test()
+async def test_cquery_transition_with_target_universe(yak: Yak) -> None:
+    result = await yak.cquery(
+        "root//:yak",
         "--target-platforms=root//:p",
         "--target-universe",
-        "root//:buck",
+        "root//:yak",
     )
 
     lines = result.stdout.splitlines()
     assert 2 == len(lines)
-    assert _replace_hash(lines[0]) == "root//:buck (root//:p#<HASH>)"
-    assert _replace_hash(lines[1]) == "root//:buck (transitioned-to-reindeer#<HASH>)"
+    assert _replace_hash(lines[0]) == "root//:yak (root//:p#<HASH>)"
+    assert _replace_hash(lines[1]) == "root//:yak (transitioned-to-elk#<HASH>)"
 
     # Test cquery with "%s".
-    result = await buck.cquery(
+    result = await yak.cquery(
         "%s",
-        "root//:buck",
+        "root//:yak",
         "root//:moose",
         "--target-platforms=root//:p",
         "--target-universe",
-        "root//:buck,root//:moose",
+        "root//:yak,root//:moose",
     )
 
     lines = result.stdout.splitlines()
     assert 4 == len(lines)
-    assert _replace_hash(lines[0]) == "root//:buck (root//:p#<HASH>)"
-    assert _replace_hash(lines[1]) == "root//:buck (transitioned-to-reindeer#<HASH>)"
+    assert _replace_hash(lines[0]) == "root//:yak (root//:p#<HASH>)"
+    assert _replace_hash(lines[1]) == "root//:yak (transitioned-to-elk#<HASH>)"
     assert _replace_hash(lines[2]) == "root//:moose (root//:p#<HASH>)"
-    assert _replace_hash(lines[3]) == "root//:moose (transitioned-to-reindeer#<HASH>)"
+    assert _replace_hash(lines[3]) == "root//:moose (transitioned-to-elk#<HASH>)"
 
     # Test cquery with "%Ss".
-    result = await buck.cquery(
+    result = await yak.cquery(
         "%Ss",
-        "root//:buck",
+        "root//:yak",
         "root//:moose",
         "--target-platforms=root//:p",
         "--target-universe",
-        "root//:buck,root//:moose",
+        "root//:yak,root//:moose",
     )
 
     lines = result.stdout.splitlines()
     assert 4 == len(lines)
-    assert _replace_hash(lines[0]) == "root//:buck (root//:p#<HASH>)"
-    assert _replace_hash(lines[1]) == "root//:buck (transitioned-to-reindeer#<HASH>)"
+    assert _replace_hash(lines[0]) == "root//:yak (root//:p#<HASH>)"
+    assert _replace_hash(lines[1]) == "root//:yak (transitioned-to-elk#<HASH>)"
     assert _replace_hash(lines[2]) == "root//:moose (root//:p#<HASH>)"
-    assert _replace_hash(lines[3]) == "root//:moose (transitioned-to-reindeer#<HASH>)"
+    assert _replace_hash(lines[3]) == "root//:moose (transitioned-to-elk#<HASH>)"

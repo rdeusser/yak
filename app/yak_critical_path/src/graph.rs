@@ -297,7 +297,7 @@ pub struct PathCost {
 
 #[cfg(test)]
 mod tests {
-    use yak_hash::BuckMutSet;
+    use yak_hash::YakMutSet;
 
     use super::*;
     use crate::builder::GraphBuilder;
@@ -403,7 +403,7 @@ mod tests {
 
         match graph.topo_sort() {
             Err(TopoSortError::Cycle(cycle)) => {
-                let cycle_set: BuckMutSet<_> = cycle.iter().copied().collect();
+                let cycle_set: YakMutSet<_> = cycle.iter().copied().collect();
                 assert_eq!(cycle_set.len(), 2, "cycle should contain exactly b and c");
                 assert!(cycle_set.contains(&vb), "cycle should contain b");
                 assert!(cycle_set.contains(&vc), "cycle should contain c");

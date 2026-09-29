@@ -248,7 +248,7 @@ mod tests {
     use gazebo::prelude::*;
     use yak_core::build_file_path::BuildFilePath;
     use yak_core::cells::cell_path::CellPath;
-    use yak_hash::BuckMutMap;
+    use yak_hash::YakMutMap;
 
     use super::*;
     use crate::query::environment::QueryTarget;
@@ -370,7 +370,7 @@ mod tests {
         }
     }
 
-    struct Graph(BuckMutMap<Ref, Node>);
+    struct Graph(YakMutMap<Ref, Node>);
 
     impl Graph {
         fn child_visitor<'a>(&self) -> impl AsyncChildVisitor<Node> + use<'a> {
@@ -416,7 +416,7 @@ mod tests {
     }
 
     fn make_graph(nodes: &[(i64, &[i64])]) -> yak_error::Result<Graph> {
-        let mut map = BuckMutMap::default();
+        let mut map = YakMutMap::default();
         for (n, deps) in nodes {
             map.insert(Ref(*n), Node(Ref(*n), deps.map(|v| Ref(*v))));
         }

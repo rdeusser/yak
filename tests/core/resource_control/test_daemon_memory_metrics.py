@@ -9,23 +9,23 @@
 import json
 import typing
 
-from e2e_util.api.buck import Buck
-from e2e_util.buck_workspace import buck_test
+from e2e_util.api.yak import Yak
+from e2e_util.yak_workspace import yak_test
 from e2e_util.helper.utils import filter_events
 
 
-@buck_test(skip_for_os=["darwin", "windows"], disable_daemon_cgroup=False)
-async def test_metrics_cgroup_no_resource_control(buck: Buck) -> None:
-    write_config(buck, resource_control=False)
-    snapshot = await start_daemon_and_get_snapshot(buck)
+@yak_test(skip_for_os=["darwin", "windows"], disable_daemon_cgroup=False)
+async def test_metrics_cgroup_no_resource_control(yak: Yak) -> None:
+    write_config(yak, resource_control=False)
+    snapshot = await start_daemon_and_get_snapshot(yak)
     assert snapshot["allprocs_cgroup"] is None
     assert snapshot["forkserver_actions_cgroup"] is None
 
 
-@buck_test(skip_for_os=["darwin", "windows"], disable_daemon_cgroup=False)
-async def test_metrics_cgroup_resource_control(buck: Buck) -> None:
-    write_config(buck, resource_control=True)
-    snapshot = await start_daemon_and_get_snapshot(buck)
+@yak_test(skip_for_os=["darwin", "windows"], disable_daemon_cgroup=False)
+async def test_metrics_cgroup_resource_control(yak: Yak) -> None:
+    write_config(yak, resource_control=True)
+    snapshot = await start_daemon_and_get_snapshot(yak)
     # Daemon should have allocated at least 500KB of anon memory
     assert snapshot["allprocs_cgroup"]["anon"] >= (
         snapshot["forkserver_actions_cgroup"]["anon"] + 500000
@@ -40,30 +40,30 @@ async def test_metrics_cgroup_resource_control(buck: Buck) -> None:
     )
 
 
-@buck_test(
+@yak_test(
     skip_for_os=["darwin", "windows"],
 )
-async def test_cgroup_path_tag(buck: Buck) -> None:
-    await buck.targets(":")
-    events = await filter_events(buck, "Event", "data", "Instant", "data", "SystemInfo")
+async def test_cgroup_path_tag(yak: Yak) -> None:
+    await yak.targets(":")
+    events = await filter_events(yak, "Event", "data", "Instant", "data", "SystemInfo")
     assert len(events) >= 1
     path = events[0]["daemon_cgroup_slice_path"]
     assert path is not None
     assert path.startswith("/sys/fs/cgroup/")
 
 
-def write_config(buck: Buck, *, resource_control: bool) -> None:
-    with open(buck.cwd / ".yakconfig", "a") as buckconfig:
-        buckconfig.write("[yak_resource_control]\n")
-        buckconfig.write(f"status = {'required' if resource_control else 'off'}\n")
+def write_config(yak: Yak, *, resource_control: bool) -> None:
+    with open(yak.cwd / ".yakconfig", "a") as yakconfig:
+        yakconfig.write("[yak_resource_control]\n")
+        yakconfig.write(f"status = {'required' if resource_control else 'off'}\n")
 
 
-async def start_daemon_and_get_snapshot(buck: Buck) -> dict[str, typing.Any]:
+async def start_daemon_and_get_snapshot(yak: Yak) -> dict[str, typing.Any]:
     # Start the daemon
-    await buck.targets(":")
+    await yak.targets(":")
 
     # Get the snapshot
-    status_result = await buck.status("--snapshot")
+    status_result = await yak.status("--snapshot")
     status_data = json.loads(status_result.stdout)
     snapshot = status_data["snapshot"]
     return snapshot

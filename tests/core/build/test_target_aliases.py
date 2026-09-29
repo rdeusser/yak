@@ -8,82 +8,82 @@
 
 import json
 
-from e2e_util.api.buck import Buck
+from e2e_util.api.yak import Yak
 from e2e_util.asserts import expect_failure
-from e2e_util.buck_workspace import buck_test
+from e2e_util.yak_workspace import yak_test
 
 
-@buck_test()
-async def test_target_aliases(buck: Buck) -> None:
-    await buck.targets("alias")
-    await buck.cquery("deps(alias)")
+@yak_test()
+async def test_target_aliases(yak: Yak) -> None:
+    await yak.targets("alias")
+    await yak.cquery("deps(alias)")
 
-    await buck.targets("chain")
-    await buck.cquery("deps(chain)")
+    await yak.targets("chain")
+    await yak.cquery("deps(chain)")
 
-    res = await buck.targets("--resolve-alias", "alias", "chain", "//targets:target")
+    res = await yak.targets("--resolve-alias", "alias", "chain", "//targets:target")
     assert [line.strip() for line in res.stdout.splitlines()] == [
         "root//targets:target"
     ] * 3
 
     # Following a broken alias should fail
     await expect_failure(
-        buck.targets("--resolve-alias", "bad"), stderr_regex="Invalid alias: `bad`"
+        yak.targets("--resolve-alias", "bad"), stderr_regex="Invalid alias: `bad`"
     )
 
     # Asking for a non-existent alias / target should also fail. Note that
     # we're not capable of telling the difference between an alias that doesn't
     # exist vs. one that is broken.
     await expect_failure(
-        buck.targets("--resolve-alias", "oops"), stderr_regex="Invalid alias: `oops`"
+        yak.targets("--resolve-alias", "oops"), stderr_regex="Invalid alias: `oops`"
     )
 
     await expect_failure(
-        buck.targets("--resolve-alias", "targets:not_existent"),
+        yak.targets("--resolve-alias", "targets:not_existent"),
         stderr_regex="Invalid alias:.*Target does not exist in package",
     )
     await expect_failure(
-        buck.targets("--resolve-alias", "broken:broken"),
+        yak.targets("--resolve-alias", "broken:broken"),
         stderr_regex="Invalid alias:.*Package cannot be evaluated.*Parse error",
     )
     await expect_failure(
-        buck.targets("--resolve-alias", "not_existent:not_existent"),
+        yak.targets("--resolve-alias", "not_existent:not_existent"),
         stderr_regex="Invalid alias:.*Package cannot be evaluated.*does not exist",
     )
     await expect_failure(
-        buck.targets("--resolve-alias", "..."),
+        yak.targets("--resolve-alias", "..."),
         stderr_regex="Invalid alias.*does not expand to a single target",
     )
 
 
-@buck_test()
-async def test_resolve_alias_json(buck: Buck) -> None:
-    res = await buck.targets(
+@yak_test()
+async def test_resolve_alias_json(yak: Yak) -> None:
+    res = await yak.targets(
         "--resolve-alias", "alias", "chain", "//targets:target", "--json"
     )
 
     assert json.loads(res.stdout) == [
         {
             "alias": "alias",
-            "buck.package": "root//targets",
+            "yak.package": "root//targets",
             "name": "target",
         },
         {
             "alias": "chain",
-            "buck.package": "root//targets",
+            "yak.package": "root//targets",
             "name": "target",
         },
         {
             "alias": "//targets:target",
-            "buck.package": "root//targets",
+            "yak.package": "root//targets",
             "name": "target",
         },
     ]
 
 
-@buck_test()
-async def test_resolve_alias_json_lines(buck: Buck) -> None:
-    res = await buck.targets(
+@yak_test()
+async def test_resolve_alias_json_lines(yak: Yak) -> None:
+    res = await yak.targets(
         "--resolve-alias", "alias", "chain", "//targets:target", "--json-lines"
     )
 
@@ -93,17 +93,17 @@ async def test_resolve_alias_json_lines(buck: Buck) -> None:
     assert [json.loads(line) for line in res.stdout.splitlines()] == [
         {
             "alias": "alias",
-            "buck.package": "root//targets",
+            "yak.package": "root//targets",
             "name": "target",
         },
         {
             "alias": "chain",
-            "buck.package": "root//targets",
+            "yak.package": "root//targets",
             "name": "target",
         },
         {
             "alias": "//targets:target",
-            "buck.package": "root//targets",
+            "yak.package": "root//targets",
             "name": "target",
         },
     ]

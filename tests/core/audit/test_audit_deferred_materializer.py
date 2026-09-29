@@ -6,16 +6,16 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-from e2e_util.api.buck import Buck
-from e2e_util.buck_workspace import buck_test
+from e2e_util.api.yak import Yak
+from e2e_util.yak_workspace import yak_test
 
 
-@buck_test()
-async def test_audit_deferred_materializer_list(buck: Buck) -> None:
-    res = await buck.audit("deferred-materializer", "list")
+@yak_test()
+async def test_audit_deferred_materializer_list(yak: Yak) -> None:
+    res = await yak.audit("deferred-materializer", "list")
     assert res.stdout.strip() == ""
 
-    await buck.build("//:simple")
+    await yak.build("//:simple")
 
-    res = await buck.audit("deferred-materializer", "list")
+    res = await yak.audit("deferred-materializer", "list")
     assert "__simple__" in res.stdout.strip()

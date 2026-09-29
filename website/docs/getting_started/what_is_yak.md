@@ -19,7 +19,7 @@ Here are a few key things to know about yak:
   more.
 - **Designed for Large Monorepos**
 - **Open Source**: You can find its source code and contribute at
-  [https://github.com/rdeusser/buck2](https://github.com/rdeusser/buck2).
+  [https://github.com/rdeusser/yak](https://github.com/rdeusser/yak).
 - **Correctness**: yak enforces hermeticity to ensure builds are correct by
   default.
 - **Extensible**: Allows developers to easily extend and customize their build

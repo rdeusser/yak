@@ -39,7 +39,7 @@ use starlark::values::starlark_value;
     Allocative,
     starlark::StarlarkPagable
 )]
-pub enum StarlarkBuckRegex {
+pub enum StarlarkYakRegex {
     // TODO(nga): do not skip.
     //   And this is important because regex can have a lot of cache.
     Regular(
@@ -56,18 +56,18 @@ pub enum StarlarkBuckRegex {
     ),
 }
 
-impl StarlarkBuckRegex {
+impl StarlarkYakRegex {
     pub fn as_str(&self) -> &str {
         match self {
-            StarlarkBuckRegex::Regular(r) => r.as_str(),
-            StarlarkBuckRegex::Fancy(r) => r.as_str(),
+            StarlarkYakRegex::Regular(r) => r.as_str(),
+            StarlarkYakRegex::Fancy(r) => r.as_str(),
         }
     }
 
     fn is_match(&self, s: &str) -> yak_error::Result<bool> {
         match self {
-            StarlarkBuckRegex::Regular(r) => Ok(r.is_match(s)),
-            StarlarkBuckRegex::Fancy(r) => Ok(r.is_match(s)?),
+            StarlarkYakRegex::Regular(r) => Ok(r.is_match(s)),
+            StarlarkYakRegex::Fancy(r) => Ok(r.is_match(s)?),
         }
     }
 
@@ -91,16 +91,16 @@ impl StarlarkBuckRegex {
 
     pub fn replace_all<'a>(&self, haystack: &'a str, rep: &str) -> Cow<'a, str> {
         match self {
-            StarlarkBuckRegex::Regular(r) => r.replace_all(haystack, rep),
-            StarlarkBuckRegex::Fancy(r) => r.replace_all(haystack, rep),
+            StarlarkYakRegex::Regular(r) => r.replace_all(haystack, rep),
+            StarlarkYakRegex::Fancy(r) => r.replace_all(haystack, rep),
         }
     }
 }
 
 starlark::methods_static!(REGEX_METHODS = regex_methods);
 
-#[starlark_value(type = "BuckRegex")] // "regex" is used for "experimental_regex" in starlark-rust.
-impl<'v> StarlarkValue<'v> for StarlarkBuckRegex {
+#[starlark_value(type = "YakRegex")] // "regex" is used for "experimental_regex" in starlark-rust.
+impl<'v> StarlarkValue<'v> for StarlarkYakRegex {
     fn get_methods() -> Option<&'static Methods> {
         Some(REGEX_METHODS.methods())
     }
@@ -110,21 +110,21 @@ impl<'v> StarlarkValue<'v> for StarlarkBuckRegex {
     }
 }
 
-impl Display for StarlarkBuckRegex {
+impl Display for StarlarkYakRegex {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         // TODO(nga): should use starlark string repr.
         write!(f, "regex({:?})", self.as_str())
     }
 }
 
-starlark_simple_value!(StarlarkBuckRegex);
+starlark_simple_value!(StarlarkYakRegex);
 
 /// Type created by the [`regex`](../regex) function.
 #[starlark_module]
 fn regex_methods(builder: &mut MethodsBuilder) {
     /// Determine if the regex matches any substring of the given string.
     fn r#match(
-        this: &StarlarkBuckRegex,
+        this: &StarlarkYakRegex,
         #[starlark(require = pos)] str: &str,
     ) -> starlark::Result<bool> {
         Ok(this.is_match(str)?)
@@ -137,7 +137,7 @@ fn regex_methods(builder: &mut MethodsBuilder) {
     /// Behaves like calling `match` on each element, but is significantly faster on large
     /// lists because it crosses from Starlark into native code only once.
     fn any_match<'v>(
-        this: &StarlarkBuckRegex,
+        this: &StarlarkYakRegex,
         #[starlark(require = pos)] strings: ValueOfUnchecked<'v, ListType<&'v str>>,
     ) -> starlark::Result<bool> {
         this.multi_match(strings, true)
@@ -150,7 +150,7 @@ fn regex_methods(builder: &mut MethodsBuilder) {
     /// Behaves like calling `match` on each element, but is significantly faster on large
     /// lists because it crosses from Starlark into native code only once.
     fn all_match<'v>(
-        this: &StarlarkBuckRegex,
+        this: &StarlarkYakRegex,
         #[starlark(require = pos)] strings: ValueOfUnchecked<'v, ListType<&'v str>>,
     ) -> starlark::Result<bool> {
         this.multi_match(strings, false)
@@ -170,7 +170,7 @@ fn regex_methods(builder: &mut MethodsBuilder) {
     /// ```
     /// `result` equals `"baz bar baz"` in this example
     fn r#replace_all(
-        this: &StarlarkBuckRegex,
+        this: &StarlarkYakRegex,
         #[starlark(require = pos)] haystack: &str,
         #[starlark(require = pos)] replacement: &str,
     ) -> starlark::Result<String> {
@@ -179,8 +179,8 @@ fn regex_methods(builder: &mut MethodsBuilder) {
 }
 
 #[starlark_module]
-#[starlark_types(StarlarkBuckRegex as BuckRegex)]
-pub fn register_buck_regex(builder: &mut GlobalsBuilder) {
+#[starlark_types(StarlarkYakRegex as YakRegex)]
+pub fn register_yak_regex(builder: &mut GlobalsBuilder) {
     /// Compile a regular expression from a string.
     ///
     /// ## Fanciness
@@ -196,16 +196,16 @@ pub fn register_buck_regex(builder: &mut GlobalsBuilder) {
     ///   crate](https://docs.rs/fancy-regex/latest/fancy_regex/#syntax) is used, which does support
     ///   look-around and backreferences, but is slower to match (exponential time in the worst
     ///   case).
-    #[starlark(as_type = StarlarkBuckRegex)]
+    #[starlark(as_type = StarlarkYakRegex)]
     fn regex<'v>(
         #[starlark(require = pos)] regex: &str,
         #[starlark(require = named, default = false)] fancy: bool,
-    ) -> starlark::Result<StarlarkBuckRegex> {
+    ) -> starlark::Result<StarlarkYakRegex> {
         match fancy {
-            false => Ok(StarlarkBuckRegex::Regular(
+            false => Ok(StarlarkYakRegex::Regular(
                 regex::Regex::new(regex).map_err(yak_error::Error::from)?,
             )),
-            true => Ok(StarlarkBuckRegex::Fancy(
+            true => Ok(StarlarkYakRegex::Fancy(
                 fancy_regex::Regex::new(regex).map_err(yak_error::Error::from)?,
             )),
         }
@@ -216,12 +216,12 @@ pub fn register_buck_regex(builder: &mut GlobalsBuilder) {
 mod tests {
     use starlark::assert::Assert;
 
-    use crate::types::regex::register_buck_regex;
+    use crate::types::regex::register_yak_regex;
 
     #[test]
     fn test_match() {
         let mut a = Assert::new();
-        a.globals_add(register_buck_regex);
+        a.globals_add(register_yak_regex);
 
         a.is_true("regex('abc|def|ghi').match('abc')");
         a.is_true("regex('x').match('aaaxbbb')");
@@ -230,7 +230,7 @@ mod tests {
     #[test]
     fn test_any_match() {
         let mut a = Assert::new();
-        a.globals_add(register_buck_regex);
+        a.globals_add(register_yak_regex);
 
         a.is_true("regex('abc|def|ghi').any_match(['none', 'def'])");
         a.is_false("regex('abc|def|ghi').any_match(['none', 'other'])");
@@ -244,7 +244,7 @@ mod tests {
     #[test]
     fn test_all_match() {
         let mut a = Assert::new();
-        a.globals_add(register_buck_regex);
+        a.globals_add(register_yak_regex);
 
         a.is_true("regex('abc|def|ghi').all_match(['xdefy', 'abc'])");
         a.is_false("regex('abc|def|ghi').all_match(['def', 'other'])");
@@ -258,7 +258,7 @@ mod tests {
     #[test]
     fn test_str() {
         let mut a = Assert::new();
-        a.globals_add(register_buck_regex);
+        a.globals_add(register_yak_regex);
         a.is_true(
             r#"
 str(regex("foo")) == 'regex("foo")'
@@ -269,7 +269,7 @@ str(regex("foo")) == 'regex("foo")'
     #[test]
     fn test_fancy() {
         let mut a = Assert::new();
-        a.globals_add(register_buck_regex);
+        a.globals_add(register_yak_regex);
 
         a.fail(r"regex('(?=x)')", "not supported");
         a.pass(r"regex('(?=x)', fancy=True)");
@@ -282,7 +282,7 @@ str(regex("foo")) == 'regex("foo")'
     #[test]
     fn test_as_type() {
         let mut a = Assert::new();
-        a.globals_add(register_buck_regex);
+        a.globals_add(register_yak_regex);
         a.is_true("isinstance(regex('foo'), regex)");
         a.is_false("isinstance(1, regex)");
     }
@@ -290,7 +290,7 @@ str(regex("foo")) == 'regex("foo")'
     #[test]
     fn test_replace_all() {
         let mut a = Assert::new();
-        a.globals_add(register_buck_regex);
+        a.globals_add(register_yak_regex);
 
         // Simple replacement
         a.eq(

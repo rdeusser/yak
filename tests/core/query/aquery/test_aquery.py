@@ -6,14 +6,14 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-from e2e_util.api.buck import Buck
-from e2e_util.buck_workspace import buck_test
+from e2e_util.api.yak import Yak
+from e2e_util.yak_workspace import yak_test
 from e2e_util.helper.golden import golden
 
 
-@buck_test()
-async def test_target(buck: Buck) -> None:
-    stdout = (await buck.aquery("//:test", "-a", "identifier")).stdout
+@yak_test()
+async def test_target(yak: Yak) -> None:
+    stdout = (await yak.aquery("//:test", "-a", "identifier")).stdout
 
     golden(
         output=stdout,
@@ -21,9 +21,9 @@ async def test_target(buck: Buck) -> None:
     )
 
 
-@buck_test()
-async def test_all_outputs(buck: Buck) -> None:
-    stdout = (await buck.aquery("all_outputs(//:test)", "-a", "identifier")).stdout
+@yak_test()
+async def test_all_outputs(yak: Yak) -> None:
+    stdout = (await yak.aquery("all_outputs(//:test)", "-a", "identifier")).stdout
 
     golden(
         output=stdout,
@@ -31,9 +31,9 @@ async def test_all_outputs(buck: Buck) -> None:
     )
 
 
-@buck_test()
-async def test_all_actions(buck: Buck) -> None:
-    stdout = (await buck.aquery("all_actions(//:test)", "-a", "identifier")).stdout
+@yak_test()
+async def test_all_actions(yak: Yak) -> None:
+    stdout = (await yak.aquery("all_actions(//:test)", "-a", "identifier")).stdout
 
     golden(
         output=stdout,
@@ -41,10 +41,10 @@ async def test_all_actions(buck: Buck) -> None:
     )
 
 
-@buck_test()
-async def test_all_outputs_subtarget(buck: Buck) -> None:
+@yak_test()
+async def test_all_outputs_subtarget(yak: Yak) -> None:
     stdout = (
-        await buck.aquery("all_outputs('//:test[sub]')", "-a", "identifier")
+        await yak.aquery("all_outputs('//:test[sub]')", "-a", "identifier")
     ).stdout
 
     golden(
@@ -53,10 +53,10 @@ async def test_all_outputs_subtarget(buck: Buck) -> None:
     )
 
 
-@buck_test()
-async def test_filter(buck: Buck) -> None:
+@yak_test()
+async def test_filter(yak: Yak) -> None:
     stdout = (
-        await buck.aquery(
+        await yak.aquery(
             "attrfilter('identifier', 'other', all_actions('//:test[sub]'))",
             "-a",
             "identifier",
@@ -69,9 +69,9 @@ async def test_filter(buck: Buck) -> None:
     )
 
 
-@buck_test()
-async def test_deps(buck: Buck) -> None:
-    stdout = (await buck.aquery("deps(//:test)", "-a", "identifier")).stdout
+@yak_test()
+async def test_deps(yak: Yak) -> None:
+    stdout = (await yak.aquery("deps(//:test)", "-a", "identifier")).stdout
 
     golden(
         output=stdout,
@@ -79,9 +79,9 @@ async def test_deps(buck: Buck) -> None:
     )
 
 
-@buck_test()
-async def test_deps_bounded(buck: Buck) -> None:
-    stdout = (await buck.aquery("deps(//:test, 1)", "-a", "identifier")).stdout
+@yak_test()
+async def test_deps_bounded(yak: Yak) -> None:
+    stdout = (await yak.aquery("deps(//:test, 1)", "-a", "identifier")).stdout
 
     golden(
         output=stdout,
@@ -89,12 +89,12 @@ async def test_deps_bounded(buck: Buck) -> None:
     )
 
 
-@buck_test()
-async def test_rdeps(buck: Buck) -> None:
+@yak_test()
+async def test_rdeps(yak: Yak) -> None:
     # The universe contains an analysis node (from the target literal), which the
     # flattened-graph rdeps used to fail on with `Not an action`.
     stdout = (
-        await buck.aquery("rdeps(deps(//:test), deps(//:test))", "-a", "identifier")
+        await yak.aquery("rdeps(deps(//:test), deps(//:test))", "-a", "identifier")
     ).stdout
 
     golden(
@@ -103,18 +103,18 @@ async def test_rdeps(buck: Buck) -> None:
     )
 
 
-@buck_test()
-async def test_bxl_aquery_target(buck: Buck) -> None:
-    stdout = (await buck.bxl("//:aquery.bxl:target")).stdout
+@yak_test()
+async def test_bxl_aquery_target(yak: Yak) -> None:
+    stdout = (await yak.bxl("//:aquery.bxl:target")).stdout
     golden(
         output=stdout,
         rel_path="bxl_target.golden.json",
     )
 
 
-@buck_test()
-async def test_bxl_aquery_all_outputs(buck: Buck) -> None:
-    stdout = (await buck.bxl("//:aquery.bxl:all_outputs")).stdout
+@yak_test()
+async def test_bxl_aquery_all_outputs(yak: Yak) -> None:
+    stdout = (await yak.bxl("//:aquery.bxl:all_outputs")).stdout
 
     golden(
         output=stdout,
@@ -122,9 +122,9 @@ async def test_bxl_aquery_all_outputs(buck: Buck) -> None:
     )
 
 
-@buck_test()
-async def test_bxl_aquery_all_actions(buck: Buck) -> None:
-    stdout = (await buck.bxl("//:aquery.bxl:all_actions")).stdout
+@yak_test()
+async def test_bxl_aquery_all_actions(yak: Yak) -> None:
+    stdout = (await yak.bxl("//:aquery.bxl:all_actions")).stdout
 
     golden(
         output=stdout,
@@ -132,9 +132,9 @@ async def test_bxl_aquery_all_actions(buck: Buck) -> None:
     )
 
 
-@buck_test()
-async def test_bxl_aquery_all_outputs_subtarget(buck: Buck) -> None:
-    stdout = (await buck.bxl("//:aquery.bxl:all_outputs_subtarget")).stdout
+@yak_test()
+async def test_bxl_aquery_all_outputs_subtarget(yak: Yak) -> None:
+    stdout = (await yak.bxl("//:aquery.bxl:all_outputs_subtarget")).stdout
 
     golden(
         output=stdout,
@@ -142,9 +142,9 @@ async def test_bxl_aquery_all_outputs_subtarget(buck: Buck) -> None:
     )
 
 
-@buck_test()
-async def test_bxl_aquery_attrfilter(buck: Buck) -> None:
-    stdout = (await buck.bxl("//:aquery.bxl:attrfilter")).stdout
+@yak_test()
+async def test_bxl_aquery_attrfilter(yak: Yak) -> None:
+    stdout = (await yak.bxl("//:aquery.bxl:attrfilter")).stdout
 
     golden(
         output=stdout,
@@ -152,9 +152,9 @@ async def test_bxl_aquery_attrfilter(buck: Buck) -> None:
     )
 
 
-@buck_test()
-async def test_bxl_aquery_deps(buck: Buck) -> None:
-    stdout = (await buck.bxl("//:aquery.bxl:deps")).stdout
+@yak_test()
+async def test_bxl_aquery_deps(yak: Yak) -> None:
+    stdout = (await yak.bxl("//:aquery.bxl:deps")).stdout
 
     golden(
         output=stdout,
@@ -162,9 +162,9 @@ async def test_bxl_aquery_deps(buck: Buck) -> None:
     )
 
 
-@buck_test()
-async def test_bxl_aquery_eval(buck: Buck) -> None:
-    stdout = (await buck.bxl("//:aquery.bxl:eval")).stdout
+@yak_test()
+async def test_bxl_aquery_eval(yak: Yak) -> None:
+    stdout = (await yak.bxl("//:aquery.bxl:eval")).stdout
 
     golden(
         output=stdout,
@@ -172,19 +172,19 @@ async def test_bxl_aquery_eval(buck: Buck) -> None:
     )
 
 
-@buck_test()
-async def test_bxl_aquery_action_query_node(buck: Buck) -> None:
-    await buck.bxl("//:aquery.bxl:action_query_node")
+@yak_test()
+async def test_bxl_aquery_action_query_node(yak: Yak) -> None:
+    await yak.bxl("//:aquery.bxl:action_query_node")
 
 
 # Tests for bxl.Action support in aquery operations
-@buck_test()
-async def test_bxl_action_deps_0(buck: Buck) -> None:
+@yak_test()
+async def test_bxl_action_deps_0(yak: Yak) -> None:
     """Test passing a bxl.Action to aquery.deps() with depth=0 returns itself"""
-    await buck.bxl("//:aquery.bxl:action_deps_0")
+    await yak.bxl("//:aquery.bxl:action_deps_0")
 
 
-@buck_test()
-async def test_bxl_action_deps(buck: Buck) -> None:
+@yak_test()
+async def test_bxl_action_deps(yak: Yak) -> None:
     """Test that you can isolate the deps of one action by itself"""
-    await buck.bxl("//:aquery.bxl:action_deps")
+    await yak.bxl("//:aquery.bxl:action_deps")

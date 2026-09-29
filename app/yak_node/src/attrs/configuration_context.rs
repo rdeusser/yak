@@ -25,7 +25,7 @@ use yak_core::provider::label::ConfiguredProvidersLabel;
 use yak_core::provider::label::ProvidersLabel;
 use yak_core::target::configured_target_label::ConfiguredTargetLabel;
 use yak_core::target::label::label::TargetLabel;
-use yak_error::BuckErrorOptionContext;
+use yak_error::YakErrorOptionContext;
 
 use crate::configuration::resolved::MatchedConfigurationSettingKeys;
 use crate::configuration::resolved::MatchedConfigurationSettingKeysWithCfg;

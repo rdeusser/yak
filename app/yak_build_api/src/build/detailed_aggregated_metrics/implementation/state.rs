@@ -16,10 +16,10 @@ use yak_artifact::actions::key::ActionKey;
 use yak_core::deferred::key::DeferredHolderKey;
 use yak_core::soft_error;
 use yak_core::target::configured_target_label::ConfiguredTargetLabel;
-use yak_error::BuckErrorOptionContext;
+use yak_error::YakErrorOptionContext;
 use yak_events::dispatch::with_dispatcher_opt_async;
 use yak_fs::async_fs_util::spawn_blocking;
-use yak_hash::BuckMutSet;
+use yak_hash::YakMutSet;
 
 use crate::build::detailed_aggregated_metrics::FxMultiMap;
 use crate::build::detailed_aggregated_metrics::events::DetailedAggregatedMetricsEvent;
@@ -48,8 +48,8 @@ use crate::deferred::calculation::OwnedDeferredHolder;
 /// build it occurred in. We expect the user to track which executions are relevant to the current build,
 /// and use that later to compute metrics both over the whole graph and just specific to the current build.
 pub struct DetailedAggregatedMetricsStateTracker {
-    observed_executions: yak_hash::BuckMutMap<ActionKey, ActionExecutionMetrics>,
-    analysis_nodes: Arc<yak_hash::BuckMutMap<DeferredHolderKey, OwnedDeferredHolder>>,
+    observed_executions: yak_hash::YakMutMap<ActionKey, ActionExecutionMetrics>,
+    analysis_nodes: Arc<yak_hash::YakMutMap<DeferredHolderKey, OwnedDeferredHolder>>,
 }
 
 impl DetailedAggregatedMetricsStateTracker {
@@ -73,8 +73,8 @@ impl DetailedAggregatedMetricsStateTracker {
 
     fn new() -> Self {
         Self {
-            analysis_nodes: Arc::new(yak_hash::BuckMutMap::default()),
-            observed_executions: yak_hash::BuckMutMap::default(),
+            analysis_nodes: Arc::new(yak_hash::YakMutMap::default()),
+            observed_executions: yak_hash::YakMutMap::default(),
         }
     }
 
@@ -126,7 +126,7 @@ impl DetailedAggregatedMetricsStateTracker {
                 let analysis_nodes = self.analysis_nodes.dupe();
                 let rule_type_name = spec.target.rule_type().name().to_owned();
                 spawn_blocking(move || {
-                    let mut target_graph = BuckMutSet::default();
+                    let mut target_graph = YakMutSet::default();
                     traverse_target_graph(&spec.target, |target| {
                         target_graph.insert(target.dupe());
                     });

@@ -16,7 +16,7 @@ use tracing_subscriber::fmt::MakeWriter;
 use tracing_subscriber::prelude::*;
 use tracing_subscriber::reload;
 use tracing_subscriber::reload::Handle;
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 use yak_error::conversion::from_any_with_tag;
 
 use crate::yak_env;
@@ -49,10 +49,10 @@ where
     fn update_log_filter(&self, raw: &str) -> yak_error::Result<()> {
         let filter = EnvFilter::try_new(raw)
             .map_err(|e| from_any_with_tag(e, yak_error::ErrorTag::LogFilter))
-            .buck_error_context("Invalid log filter")?;
+            .yak_error_context("Invalid log filter")?;
         self.modify(|layer| *layer.filter_mut() = filter)
             .map_err(|e| from_any_with_tag(e, yak_error::ErrorTag::LogFilter))
-            .buck_error_context("Error updating log filter")?;
+            .yak_error_context("Error updating log filter")?;
         tracing::debug!("Log filter was updated to: `{}`", raw);
         Ok(())
     }
@@ -71,7 +71,7 @@ where
     let filter = match yak_env!(ENV_VAR)? {
         Some(v) => EnvFilter::try_new(v)
             .map_err(|e| from_any_with_tag(e, yak_error::ErrorTag::LogFilter))
-            .with_buck_error_context(|| format!("Failed to parse ${ENV_VAR} as a filter"))?,
+            .with_yak_error_context(|| format!("Failed to parse ${ENV_VAR} as a filter"))?,
         // daemon_listener is all emitted before the client starts tailing, which is why we log
         // those by default.
         None => EnvFilter::new("warn,[daemon_listener]=info"),

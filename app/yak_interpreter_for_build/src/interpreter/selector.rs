@@ -37,7 +37,7 @@ use starlark::values::dict::DictRef;
 use starlark::values::dict::DictType;
 use starlark::values::none::NoneOr;
 use starlark::values::starlark_value;
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 use yak_interpreter::types::select_fail::StarlarkSelectFail;
 use yak_interpreter::types::select_incompatible::StarlarkSelectIncompatible;
 

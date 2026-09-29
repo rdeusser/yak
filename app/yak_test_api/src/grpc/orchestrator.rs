@@ -29,15 +29,15 @@ use yak_downward_api_proto::ExternalEventRequest;
 use yak_downward_api_proto::LogRequest;
 use yak_downward_api_proto::downward_api_client;
 use yak_downward_api_proto::downward_api_server;
-use yak_error::BuckErrorContext;
-use yak_error::BuckErrorOptionContext;
+use yak_error::YakErrorContext;
+use yak_error::YakErrorOptionContext;
 use yak_events::dispatch::EventDispatcher;
 use yak_events::dispatch::with_dispatcher_async;
 use yak_grpc::ServerHandle;
 use yak_grpc::make_channel;
 use yak_grpc::spawn_oneshot;
 use yak_grpc::to_tonic;
-use yak_hash::BuckMutMap;
+use yak_hash::YakMutMap;
 use yak_test_proto::AttachInfoMessageRequest;
 use yak_test_proto::Empty;
 use yak_test_proto::EndOfTestResultsRequest;
@@ -98,7 +98,7 @@ impl TestOrchestratorClient {
 #[async_trait::async_trait]
 impl DownwardApi for TestOrchestratorClient {
     async fn console(&self, level: Level, message: String) -> yak_error::Result<()> {
-        let level = level.try_into().buck_error_context("Invalid `level`")?;
+        let level = level.try_into().yak_error_context("Invalid `level`")?;
 
         self.downward_api_client
             .clone()
@@ -112,7 +112,7 @@ impl DownwardApi for TestOrchestratorClient {
     }
 
     async fn log(&self, level: Level, message: String) -> yak_error::Result<()> {
-        let level = level.try_into().buck_error_context("Invalid `level`")?;
+        let level = level.try_into().yak_error_context("Invalid `level`")?;
 
         self.downward_api_client
             .clone()
@@ -125,7 +125,7 @@ impl DownwardApi for TestOrchestratorClient {
         Ok(())
     }
 
-    async fn external(&self, data: BuckMutMap<String, String>) -> yak_error::Result<()> {
+    async fn external(&self, data: YakMutMap<String, String>) -> yak_error::Result<()> {
         let event = data.into();
 
         self.downward_api_client
@@ -170,7 +170,7 @@ impl TestOrchestratorClient {
 
         let req: yak_test_proto::ExecuteRequest2 = req
             .try_into()
-            .buck_error_context("Invalid execute request")?;
+            .yak_error_context("Invalid execute request")?;
 
         let ExecuteResponse2 { response } = self
             .test_orchestrator_client
@@ -181,7 +181,7 @@ impl TestOrchestratorClient {
 
         let response = match response.internal_error("Missing `response`")? {
             yak_test_proto::execute_response2::Response::Result(res) => {
-                ExecuteResponse::Result(res.try_into().buck_error_context("Invalid `result`")?)
+                ExecuteResponse::Result(res.try_into().yak_error_context("Invalid `result`")?)
             }
             yak_test_proto::execute_response2::Response::Cancelled(yak_test_proto::Cancelled {
                 reason,
@@ -207,7 +207,7 @@ impl TestOrchestratorClient {
     }
 
     pub async fn report_test_result(&self, result: TestResult) -> yak_error::Result<()> {
-        let result = result.try_into().buck_error_context("Invalid `result`")?;
+        let result = result.try_into().yak_error_context("Invalid `result`")?;
 
         self.test_orchestrator_client
             .clone()
@@ -225,7 +225,7 @@ impl TestOrchestratorClient {
         suite: String,
         tests: Vec<String>,
     ) -> yak_error::Result<()> {
-        let target = target.try_into().buck_error_context("Invalid `target`")?;
+        let target = target.try_into().yak_error_context("Invalid `target`")?;
 
         self.test_orchestrator_client
             .clone()
@@ -287,7 +287,7 @@ impl TestOrchestratorClient {
 
         let executable: yak_test_proto::TestExecutable = executable
             .try_into()
-            .buck_error_context("Invalid prepare_for_local_execution request")?;
+            .yak_error_context("Invalid prepare_for_local_execution request")?;
 
         let request = yak_test_proto::PrepareForLocalExecutionRequest {
             test_executable: Some(executable),
@@ -299,7 +299,7 @@ impl TestOrchestratorClient {
             .await?
             .into_inner()
             .try_into()
-            .buck_error_context("Invalid `result`")
+            .yak_error_context("Invalid `result`")
     }
 
     pub async fn attach_info_message(&self, message: String) -> yak_error::Result<()> {
@@ -453,7 +453,7 @@ where
             } = request
                 .into_inner()
                 .try_into()
-                .buck_error_context("Invalid execute2 request")?;
+                .yak_error_context("Invalid execute2 request")?;
 
             let TestExecutable {
                 stage,
@@ -478,12 +478,12 @@ where
                     disable_test_execution_caching,
                 )
                 .await
-                .buck_error_context("Execution failed")?;
+                .yak_error_context("Execution failed")?;
 
             let response = match response {
                 ExecuteResponse::Result(r) => yak_test_proto::execute_response2::Response::Result(
                     r.try_into()
-                        .buck_error_context("Failed to serialize result")?,
+                        .yak_error_context("Failed to serialize result")?,
                 ),
                 ExecuteResponse::Cancelled(reason) => {
                     let reason = if let Some(reason) = reason {
@@ -521,7 +521,7 @@ where
             self.inner
                 .end_of_test_results(exit_code)
                 .await
-                .buck_error_context("Failed to report end-of-tests")?;
+                .yak_error_context("Failed to report end-of-tests")?;
 
             Ok(Empty {})
         })
@@ -538,12 +538,12 @@ where
             let result = result
                 .internal_error("Missing `result`")?
                 .try_into()
-                .buck_error_context("Invalid `result`")?;
+                .yak_error_context("Invalid `result`")?;
 
             self.inner
                 .report_test_result(result)
                 .await
-                .buck_error_context("Failed to report end-of-tests")?;
+                .yak_error_context("Failed to report end-of-tests")?;
 
             Ok(Empty {})
         })
@@ -560,7 +560,7 @@ where
             let target = target
                 .internal_error("Missing `target`")?
                 .try_into()
-                .buck_error_context("Invalid `target`")?;
+                .yak_error_context("Invalid `target`")?;
 
             let Testing {
                 suite, testcases, ..
@@ -569,7 +569,7 @@ where
             self.inner
                 .report_tests_discovered(target, suite, testcases)
                 .await
-                .buck_error_context("Failed to report end-of-tests")?;
+                .yak_error_context("Failed to report end-of-tests")?;
 
             Ok(Empty {})
         })
@@ -589,7 +589,7 @@ where
             self.inner
                 .report_test_session(session_info, test_session_id)
                 .await
-                .buck_error_context("Failed to report test session summary")?;
+                .yak_error_context("Failed to report test session summary")?;
 
             Ok(Empty {})
         })
@@ -618,18 +618,18 @@ where
             } = test_executable
                 .internal_error("Missing `test_executable`")?
                 .try_into()
-                .buck_error_context("Invalid `test_executable`")
-                .buck_error_context("Invalid prepare_for_local_execution request")?;
+                .yak_error_context("Invalid `test_executable`")
+                .yak_error_context("Invalid prepare_for_local_execution request")?;
 
             let result = self
                 .inner
                 .prepare_for_local_execution(stage, target, cmd, env, pre_create_dirs, resources)
                 .await
-                .buck_error_context("Prepare for local execution failed")?;
+                .yak_error_context("Prepare for local execution failed")?;
 
             result
                 .try_into()
-                .buck_error_context("Failed to serialize result")
+                .yak_error_context("Failed to serialize result")
         })
         .await
     }
@@ -644,7 +644,7 @@ where
             self.inner
                 .attach_info_message(message)
                 .await
-                .buck_error_context("Failed to attach info messages")?;
+                .yak_error_context("Failed to attach info messages")?;
 
             Ok(Empty {})
         })
@@ -667,7 +667,7 @@ where
                 .inner
                 .upload_to_cas(local_path, ttl_config.ttl_seconds, ttl_config.use_case)
                 .await
-                .buck_error_context("Failed to upload file to CAS")?;
+                .yak_error_context("Failed to upload file to CAS")?;
 
             Ok(UploadFileToCasResponse {
                 digest: Some(digest),
@@ -696,12 +696,12 @@ where
             let level = level
                 .internal_error("Missing `level`")?
                 .try_into()
-                .buck_error_context("Invalid `level`")?;
+                .yak_error_context("Invalid `level`")?;
 
             self.inner
                 .console(level, message)
                 .await
-                .buck_error_context("Failed to console")?;
+                .yak_error_context("Failed to console")?;
 
             Ok(yak_downward_api_proto::Empty {})
         })
@@ -718,12 +718,12 @@ where
             let level = level
                 .internal_error("Missing `level`")?
                 .try_into()
-                .buck_error_context("Invalid `level`")?;
+                .yak_error_context("Invalid `level`")?;
 
             self.inner
                 .log(level, message)
                 .await
-                .buck_error_context("Failed to log")?;
+                .yak_error_context("Failed to log")?;
 
             Ok(yak_downward_api_proto::Empty {})
         })
@@ -740,12 +740,12 @@ where
             let event = event
                 .internal_error("Missing `event`")?
                 .try_into()
-                .buck_error_context("Invalid `event`")?;
+                .yak_error_context("Invalid `event`")?;
 
             self.inner
                 .external(event)
                 .await
-                .buck_error_context("Failed to deliver event")?;
+                .yak_error_context("Failed to deliver event")?;
 
             Ok(yak_downward_api_proto::Empty {})
         })

@@ -46,7 +46,7 @@ Re-generate by running `website/gen_docs.py`.
     )
 
 
-def buck_command(args: argparse.Namespace) -> str:
+def yak_command(args: argparse.Namespace) -> str:
     if args.yak:
         return args.yak
     elif args.prod:
@@ -57,14 +57,14 @@ def buck_command(args: argparse.Namespace) -> str:
         return "./yak.py"
 
 
-def generate_prelude_rules_docs(buck: str) -> None:
+def generate_prelude_rules_docs(yak: str) -> None:
     with tempfile.TemporaryDirectory() as tmp:
         base_dir = DOCS_DIR / "prelude" / "rules"
         setup_gen_dir(base_dir)
         # Actually generate the docs
         print("Running yak...")
         subprocess.run(
-            buck
+            yak
             + " docs starlark --format=markdown_files --output-dir="
             + tmp
             + " prelude//docs:rules.bzl",
@@ -88,12 +88,12 @@ def generate_prelude_rules_docs(buck: str) -> None:
         write_file(base_dir / "index.md", index_file_content)
 
 
-def generate_api_docs(buck: str) -> None:
+def generate_api_docs(yak: str) -> None:
     with tempfile.TemporaryDirectory() as tmp:
         base_dir = DOCS_DIR / "api"
         setup_gen_dir(base_dir)
         subprocess.run(
-            buck + " docs starlark-builtins --output-dir " + tmp,
+            yak + " docs starlark-builtins --output-dir " + tmp,
             shell=True,
             check=True,
         )
@@ -105,7 +105,7 @@ def generate_api_docs(buck: str) -> None:
             shutil.copyfile(orig, dest)
 
 
-def generate_bxl_utils_api_docs(buck: str) -> None:
+def generate_bxl_utils_api_docs(yak: str) -> None:
     with tempfile.TemporaryDirectory() as tmp:
         base_dir = DOCS_DIR / "api" / "bxl_utils"
         setup_gen_dir(base_dir)
@@ -119,16 +119,16 @@ def generate_bxl_utils_api_docs(buck: str) -> None:
             relative_folder_name = (
                 "" if file.parent == bxl_utils_foler else str(relative_file.parent)
             )
-            buck_bxl_file_name = (
+            yak_bxl_file_name = (
                 bxl_utils_file_prefix + relative_folder_name + ":" + relative_file.name
             )
 
             subprocess.run(
-                buck
+                yak
                 + " docs starlark --format=markdown_files --output-dir="
                 + tmp
                 + " "
-                + buck_bxl_file_name,
+                + yak_bxl_file_name,
                 shell=True,
                 check=True,
             )
@@ -140,8 +140,8 @@ def generate_bxl_utils_api_docs(buck: str) -> None:
             # Remove the first line of the file, which is the file path of the bxl file
             content = "\n".join(content.splitlines()[1:])
 
-            prefix = f"""# {file.stem} \n\nThe following functions are defined in the bxl file: `{buck_bxl_file_name}`. \
-            You can import them in your bxl file by using `load("@{buck_bxl_file_name}", "function_name")`\n\n"""
+            prefix = f"""# {file.stem} \n\nThe following functions are defined in the bxl file: `{yak_bxl_file_name}`. \
+            You can import them in your bxl file by using `load("@{yak_bxl_file_name}", "function_name")`\n\n"""
 
             dest = base_dir / (str(relative_file.with_suffix(".md")))
 
@@ -161,15 +161,15 @@ def parse_subcommands(output: str) -> List[str]:
     return res
 
 
-def generate_help_docs_subcommand(buck: str, args: List[str]) -> str:
-    cmd = buck + " docs markdown-help-doc " + " ".join(args)
+def generate_help_docs_subcommand(yak: str, args: List[str]) -> str:
+    cmd = yak + " docs markdown-help-doc " + " ".join(args)
     print("Running " + cmd + " ...")
     res = subprocess.run(cmd, shell=True, check=True, stdout=subprocess.PIPE)
     return res.stdout.decode()
 
 
-def generate_subcommand_short_help(buck: str, args: List[str]) -> str:
-    cmd = buck + " " + " ".join(args) + " -h"
+def generate_subcommand_short_help(yak: str, args: List[str]) -> str:
+    cmd = yak + " " + " ".join(args) + " -h"
     print("Running " + cmd + " ...")
     res = subprocess.run(cmd, shell=True, check=True, stdout=subprocess.PIPE)
     output = res.stdout.decode()
@@ -177,7 +177,7 @@ def generate_subcommand_short_help(buck: str, args: List[str]) -> str:
     return output.splitlines()[0]
 
 
-def generate_help_docs_index_page(buck: str, subcommands: List[str]) -> str:
+def generate_help_docs_index_page(yak: str, subcommands: List[str]) -> str:
     # Table header
     titile = """\
 ---
@@ -197,7 +197,7 @@ For common options available across multiple commands, see [Common Options](./co
     for sub in subcommands:
         full_cmd = f"`yak {sub}`"
         cmd_with_link = f"[{full_cmd}](./{sub})"
-        short_help = generate_subcommand_short_help(buck, [sub])
+        short_help = generate_subcommand_short_help(yak, [sub])
         # Escape any pipe characters in the help text
         safe_help = short_help.replace("|", "\\|")
         lines.append(f"| {cmd_with_link} | {safe_help} |")
@@ -205,33 +205,33 @@ For common options available across multiple commands, see [Common Options](./co
     return titile + common_options_section + "\n".join(lines)
 
 
-def generate_help_docs(buck: str) -> None:
+def generate_help_docs(yak: str) -> None:
     base_dir = DOCS_DIR / "users" / "commands"
     setup_gen_dir(base_dir)
 
-    cmd = buck + " --help"
+    cmd = yak + " --help"
     print("Running " + cmd + " ...")
     res = subprocess.run(cmd, shell=True, check=True, capture_output=True)
     subcommands = parse_subcommands(res.stdout.decode())
     # Use addtional common-options subcommand to generate the common options page
     for sub in subcommands + ["common-options"]:
-        output = generate_help_docs_subcommand(buck, [sub])
+        output = generate_help_docs_subcommand(yak, [sub])
         write_file(
             base_dir / (sub + ".generated.md"),
             "---\nid: " + sub + "\ntitle: " + sub + "\n---\n\n" + output,
         )
 
     # No need to generate a row for the "common-options"
-    index_page_content = generate_help_docs_index_page(buck, subcommands)
+    index_page_content = generate_help_docs_index_page(yak, subcommands)
     write_file(base_dir / "index.md", index_page_content)
 
 
-def generate_query_docs(buck: str) -> None:
+def generate_query_docs(yak: str) -> None:
     base_dir = DOCS_DIR / "users" / "query"
     setup_gen_dir(base_dir)
 
     for x in ["uquery", "cquery", "aquery"]:
-        cmd = buck + " docs " + x + " --format=markdown"
+        cmd = yak + " docs " + x + " --format=markdown"
         print("Running " + cmd + " ...")
         res = subprocess.run(cmd, shell=True, check=True, capture_output=True)
         write_file(
@@ -275,12 +275,12 @@ def main() -> None:
     for x in DOCS_DIR.rglob("*.generated.md"):
         os.remove(x)
 
-    buck = buck_command(args)
-    generate_prelude_rules_docs(buck)
-    generate_api_docs(buck)
-    generate_bxl_utils_api_docs(buck)
-    generate_help_docs(buck)
-    generate_query_docs(buck)
+    yak = yak_command(args)
+    generate_prelude_rules_docs(yak)
+    generate_api_docs(yak)
+    generate_bxl_utils_api_docs(yak)
+    generate_help_docs(yak)
+    generate_query_docs(yak)
 
 
 if __name__ == "__main__":

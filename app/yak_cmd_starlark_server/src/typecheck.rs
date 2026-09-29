@@ -24,9 +24,9 @@ use yak_common::dice::data::HasIoProvider;
 use yak_common::io::IoProvider;
 use yak_core::cells::CellResolver;
 use yak_core::cells::name::CellName;
-use yak_error::BuckErrorOptionContext;
+use yak_error::YakErrorOptionContext;
 use yak_error::yak_error;
-use yak_hash::BuckMutMap;
+use yak_hash::YakMutMap;
 use yak_hash::IntentionallyStdHashMap;
 use yak_interpreter::file_type::StarlarkFileType;
 use yak_interpreter::paths::module::OwnedStarlarkModulePath;
@@ -50,8 +50,8 @@ struct Cache<'a> {
     stdout: &'a mut (dyn Write + Send + Sync),
     stderr: &'a mut (dyn Write + Send + Sync),
     // Our accumulated state
-    oracle: BuckMutMap<(CellName, StarlarkFileType), Globals>,
-    cache: BuckMutMap<OwnedStarlarkModulePath, Interface>,
+    oracle: YakMutMap<(CellName, StarlarkFileType), Globals>,
+    cache: YakMutMap<OwnedStarlarkModulePath, Interface>,
 }
 
 impl Cache<'_> {
@@ -173,8 +173,8 @@ impl StarlarkServerSubcommand for StarlarkTypecheckCommand {
                     cell_resolver,
                     stdout: &mut stdout,
                     stderr: &mut stderr,
-                    oracle: BuckMutMap::default(),
-                    cache: BuckMutMap::default(),
+                    oracle: YakMutMap::default(),
+                    cache: YakMutMap::default(),
                 };
                 for file in files {
                     cache.typecheck(file).await?;

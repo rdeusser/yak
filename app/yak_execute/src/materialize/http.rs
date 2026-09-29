@@ -33,13 +33,13 @@ use yak_common::file_ops::metadata::FileDigest;
 use yak_common::file_ops::metadata::TrackedFileDigest;
 use yak_core::fs::project::ProjectRoot;
 use yak_core::fs::project_rel_path::ProjectRelativePath;
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 use yak_fs::error::IoResultExt;
 use yak_fs::fs_util;
 use yak_http::HttpClient;
 use yak_http::retries::HttpError;
 use yak_http::retries::HttpErrorForRetry;
-use yak_http::retries::IntoBuck2Error;
+use yak_http::retries::IntoYakError;
 use yak_http::retries::http_retry;
 
 use crate::digest_config::DigestConfig;
@@ -208,14 +208,14 @@ impl HttpErrorForRetry for HttpDownloadError {
     }
 }
 
-impl IntoBuck2Error for HttpHeadError {
-    fn into_buck2_error(self) -> yak_error::Error {
+impl IntoYakError for HttpHeadError {
+    fn into_yak_error(self) -> yak_error::Error {
         yak_error::Error::from(self)
     }
 }
 
-impl IntoBuck2Error for HttpDownloadError {
-    fn into_buck2_error(self) -> yak_error::Error {
+impl IntoYakError for HttpDownloadError {
+    fn into_yak_error(self) -> yak_error::Error {
         yak_error::Error::from(self)
     }
 }
@@ -343,7 +343,7 @@ async fn copy_and_hash(
 
         writer
             .write(&chunk)
-            .with_buck_error_context(|| format!("write({abs_path})"))
+            .with_yak_error_context(|| format!("write({abs_path})"))
             .map_err(HttpDownloadError::IoError)?;
 
         digester.update(&chunk);
@@ -355,7 +355,7 @@ async fn copy_and_hash(
     }
     writer
         .flush()
-        .with_buck_error_context(|| format!("flush({abs_path})"))
+        .with_yak_error_context(|| format!("flush({abs_path})"))
         .map_err(HttpDownloadError::IoError)?;
 
     let digest = digester.finalize();

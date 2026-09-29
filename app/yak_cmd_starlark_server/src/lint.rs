@@ -27,8 +27,8 @@ use yak_common::dice::data::HasIoProvider;
 use yak_common::io::IoProvider;
 use yak_core::cells::CellResolver;
 use yak_core::cells::name::CellName;
-use yak_error::BuckErrorOptionContext;
-use yak_hash::BuckMutMap;
+use yak_error::YakErrorOptionContext;
+use yak_hash::YakMutMap;
 use yak_hash::IntentionallyStdHashSet;
 use yak_interpreter::file_type::StarlarkFileType;
 use yak_interpreter::paths::path::StarlarkPath;
@@ -43,14 +43,14 @@ use crate::util::paths::starlark_files;
 /// The cache of names for a path, keyed by its CellName and its path type.
 struct Cache<'a> {
     dice: &'a DiceTransaction,
-    cached: BuckMutMap<(CellName, StarlarkFileType), Arc<IntentionallyStdHashSet<String>>>,
+    cached: YakMutMap<(CellName, StarlarkFileType), Arc<IntentionallyStdHashSet<String>>>,
 }
 
 impl<'a> Cache<'a> {
     pub(crate) fn new(dice: &'a DiceTransaction) -> Cache<'a> {
         Self {
             dice,
-            cached: BuckMutMap::default(),
+            cached: YakMutMap::default(),
         }
     }
 

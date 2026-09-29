@@ -59,11 +59,11 @@ use yak_build_api::interpreter::rule_defs::provider::builtin::platform_info::Pla
 use yak_core::bzl::ImportPath;
 use yak_core::configuration::transition::id::TransitionId;
 use yak_core::provider::label::ProvidersLabel;
-use yak_error::BuckErrorContext;
-use yak_hash::BuckMutSet;
+use yak_error::YakErrorContext;
+use yak_hash::YakMutSet;
 use yak_interpreter::build_context::starlark_path_from_build_context;
 use yak_interpreter::coerce::COERCE_PROVIDERS_LABEL_FOR_BZL;
-use yak_interpreter::downstream_crate_starlark_defs::REGISTER_BUCK2_TRANSITION_GLOBALS;
+use yak_interpreter::downstream_crate_starlark_defs::REGISTER_YAK_TRANSITION_GLOBALS;
 use yak_interpreter::late_binding_ty::TransitionReprLate;
 use yak_interpreter::types::transition::TransitionValue;
 
@@ -313,7 +313,7 @@ fn validate_transition_impl(
             None,
             &expected_return_type,
         )
-        .buck_error_context("`impl` function signature is incorrect")
+        .yak_error_context("`impl` function signature is incorrect")
 }
 
 #[starlark_module]
@@ -348,7 +348,7 @@ fn register_transition_function(builder: &mut GlobalsBuilder) {
         .clone();
 
         if let Some(attrs) = &attrs {
-            let attrs_set: BuckMutSet<StringValue> = attrs.items.iter().copied().collect();
+            let attrs_set: YakMutSet<StringValue> = attrs.items.iter().copied().collect();
             if attrs_set.len() != attrs.items.len() {
                 return Err(yak_error::Error::from(TransitionError::NonUniqueAttrs).into());
             }
@@ -368,6 +368,6 @@ fn register_transition_function(builder: &mut GlobalsBuilder) {
 }
 
 pub(crate) fn init_register_transition() {
-    REGISTER_BUCK2_TRANSITION_GLOBALS.init(register_transition_function);
+    REGISTER_YAK_TRANSITION_GLOBALS.init(register_transition_function);
     TransitionReprLate::init(Transition::starlark_type_repr());
 }

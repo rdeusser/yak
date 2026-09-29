@@ -6,20 +6,20 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-from e2e_util.api.buck import Buck
-from e2e_util.buck_workspace import buck_test
+from e2e_util.api.yak import Yak
+from e2e_util.yak_workspace import yak_test
 from e2e_util.helper.utils import filter_events
 
 
-@buck_test()
+@yak_test()
 async def test_dice_is_not_invalidated_on_changes_in_ignored_directories(
-    buck: Buck,
+    yak: Yak,
 ) -> None:
-    await buck.targets("root//...")
-    (buck.cwd / "dir" / "fignore").write_text("xyz")
-    await buck.targets("root//...")
+    await yak.targets("root//...")
+    (yak.cwd / "dir" / "fignore").write_text("xyz")
+    await yak.targets("root//...")
     dice_equal = await filter_events(
-        buck,
+        yak,
         "Event",
         "data",
         "Instant",

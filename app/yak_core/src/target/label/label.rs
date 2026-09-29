@@ -39,7 +39,7 @@ use serde::Serializer;
 use strong_hash::StrongHash;
 use yak_data::ToProtoMessage;
 use yak_fs::paths::forward_rel_path::ForwardRelativePath;
-use yak_hash::BuckHasher;
+use yak_hash::YakHasher;
 
 use crate::cells::CellAliasResolver;
 use crate::cells::CellResolver;
@@ -154,7 +154,7 @@ impl OwnedTargetLabel {
     /// hashes (`TargetNode::target_hash`), which are compared across daemons.
     pub(crate) fn label_hash(pkg: PackageLabel, name: &TargetNameRef) -> u64 {
         let key = &(pkg.dupe(), &name);
-        let mut hasher = BuckHasher::default();
+        let mut hasher = YakHasher::default();
         key.hash(&mut hasher);
         hasher.finish()
     }

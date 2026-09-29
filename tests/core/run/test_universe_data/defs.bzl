@@ -19,12 +19,12 @@ run_python = rule(
     },
 )
 
-def _transition_to_reindeer_impl(platform, refs):
+def _transition_to_elk_impl(platform, refs):
     _ignore = (platform, refs)  # buildifier: disable=unused-variable
-    return PlatformInfo(label = "transitioned-to-reindeer", configuration = ConfigurationInfo(constraints = {}, values = {}))
+    return PlatformInfo(label = "transitioned-to-elk", configuration = ConfigurationInfo(constraints = {}, values = {}))
 
-transition_to_reindeer = transition(
-    impl = _transition_to_reindeer_impl,
+transition_to_elk = transition(
+    impl = _transition_to_elk_impl,
     refs = {},
 )
 
@@ -40,5 +40,5 @@ transitioned = rule(
         "script": attrs.string(),
     },
     # The configuration transition.
-    cfg = transition_to_reindeer,
+    cfg = transition_to_elk,
 )

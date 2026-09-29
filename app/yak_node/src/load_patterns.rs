@@ -32,7 +32,7 @@ use yak_core::pattern::pattern::ParsedPatternWithModifiers;
 use yak_core::pattern::pattern_type::PatternType;
 use yak_core::target::name::TargetName;
 use yak_events::dispatch::console_message;
-use yak_hash::BuckMutSet;
+use yak_hash::YakMutSet;
 
 use crate::nodes::eval_result::EvaluationResult;
 use crate::nodes::frontend::TargetGraphCalculation;
@@ -49,7 +49,7 @@ enum BuildErrors {
 
 struct Builder<'c, 'd> {
     ctx: LinearRecomputeDiceComputations<'c, 'd>,
-    already_loading: BuckMutSet<PackageLabel>,
+    already_loading: YakMutSet<PackageLabel>,
     load_package_futs:
         FuturesUnordered<BoxFuture<'c, (PackageLabel, yak_error::Result<Arc<EvaluationResult>>)>>,
 }
@@ -58,7 +58,7 @@ impl Builder<'_, '_> {
     pub fn new<'c, 'd>(ctx: LinearRecomputeDiceComputations<'c, 'd>) -> Builder<'c, 'd> {
         Builder {
             ctx,
-            already_loading: BuckMutSet::default(),
+            already_loading: YakMutSet::default(),
             load_package_futs: FuturesUnordered::new(),
         }
     }

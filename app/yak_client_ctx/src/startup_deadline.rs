@@ -14,8 +14,8 @@ use std::time::Duration;
 use std::time::Instant;
 
 use yak_common::client_utils::retrying;
-use yak_error::BuckErrorContext;
-use yak_error::BuckErrorOptionContext;
+use yak_error::YakErrorContext;
+use yak_error::YakErrorOptionContext;
 
 /// Utility to time out properly with context during yak client startup.
 ///
@@ -144,6 +144,6 @@ impl StartupDeadline {
     {
         retrying(initial_delay, max_delay, self.rem_duration(op)?, f)
             .await
-            .with_buck_error_context(|| op.to_owned())
+            .with_yak_error_context(|| op.to_owned())
     }
 }

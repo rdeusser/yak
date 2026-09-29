@@ -46,7 +46,7 @@ use yak_cli_proto::build_request::Uploads;
 use yak_cli_proto::build_request::build_providers::Action as BuildProviderAction;
 use yak_common::dice::cells::HasCellResolver;
 use yak_common::legacy_configs::dice::HasLegacyConfigs;
-use yak_common::legacy_configs::key::BuckconfigKeyRef;
+use yak_common::legacy_configs::key::YakconfigKeyRef;
 use yak_common::liveliness_observer::LivelinessObserver;
 use yak_common::liveliness_observer::TimeoutLivelinessObserver;
 use yak_common::pattern::parse_from_cli::parse_patterns_with_modifiers_from_cli_args;
@@ -67,15 +67,15 @@ use yak_core::soft_error;
 use yak_core::target::label::label::TargetLabel;
 use yak_data::BuildResult;
 use yak_data::ToProtoMessage;
-use yak_error::BuckErrorContext;
-use yak_error::BuckErrorOptionContext;
+use yak_error::YakErrorContext;
+use yak_error::YakErrorOptionContext;
 use yak_error::internal_error;
 use yak_events::dispatch::console_message;
 use yak_events::dispatch::instant_event;
 use yak_events::dispatch::span_async;
 use yak_execute::digest_config::HasDigestConfig;
 use yak_execute::materialize::materializer::HasMaterializer;
-use yak_hash::BuckMutSet;
+use yak_hash::YakMutSet;
 use yak_node::configured_universe::CqueryUniverse;
 use yak_node::load_patterns::MissingTargetBehavior;
 use yak_node::nodes::frontend::TargetGraphCalculation;
@@ -176,7 +176,7 @@ async fn build(
         .as_ref()
         .map(|t| (*t).try_into())
         .transpose()
-        .with_buck_error_context(|| "Invalid `duration`")?;
+        .with_yak_error_context(|| "Invalid `duration`")?;
 
     let timeout_observer = timeout.map(|timeout| {
         Arc::new(TimeoutLivelinessObserver::new(timeout)) as Arc<dyn LivelinessObserver>
@@ -230,16 +230,16 @@ async fn build(
 
     let final_artifact_materializations =
         Materializations::try_from(request.final_artifact_materializations)
-            .with_buck_error_context(|| "Invalid final_artifact_materializations")?;
+            .with_yak_error_context(|| "Invalid final_artifact_materializations")?;
     let final_artifact_uploads = Uploads::try_from(request.final_artifact_uploads)
-        .with_buck_error_context(|| "Invalid final_artifact_uploads")
+        .with_yak_error_context(|| "Invalid final_artifact_uploads")
         .unwrap();
 
     let want_configured_graph_size = ctx
         .ctx()
         .parse_legacy_config_property(
             cell_resolver.root_cell(),
-            BuckconfigKeyRef {
+            YakconfigKeyRef {
                 section: "yak",
                 property: "log_configured_graph_size",
             },
@@ -251,7 +251,7 @@ async fn build(
         .ctx()
         .parse_legacy_config_property(
             cell_resolver.root_cell(),
-            BuckconfigKeyRef {
+            YakconfigKeyRef {
                 section: "yak",
                 property: "log_configured_graph_sketch",
             },
@@ -263,7 +263,7 @@ async fn build(
         .ctx()
         .parse_legacy_config_property(
             cell_resolver.root_cell(),
-            BuckconfigKeyRef {
+            YakconfigKeyRef {
                 section: "yak",
                 property: "log_total_configured_graph_sketch",
             },
@@ -275,7 +275,7 @@ async fn build(
         .ctx()
         .parse_legacy_config_property(
             cell_resolver.root_cell(),
-            BuckconfigKeyRef {
+            YakconfigKeyRef {
                 section: "yak",
                 property: "log_retained_analysis_memory_sketch",
             },
@@ -287,7 +287,7 @@ async fn build(
         .ctx()
         .parse_legacy_config_property(
             cell_resolver.root_cell(),
-            BuckconfigKeyRef {
+            YakconfigKeyRef {
                 section: "yak",
                 property: "log_action_graph_sketch",
             },
@@ -299,7 +299,7 @@ async fn build(
         .ctx()
         .parse_legacy_config_property(
             cell_resolver.root_cell(),
-            BuckconfigKeyRef {
+            YakconfigKeyRef {
                 section: "yak",
                 property: "log_peak_analysis_memory_sketch",
             },
@@ -311,7 +311,7 @@ async fn build(
         .ctx()
         .parse_legacy_config_property(
             cell_resolver.root_cell(),
-            BuckconfigKeyRef {
+            YakconfigKeyRef {
                 section: "yak",
                 property: "log_peak_load_memory_sketch",
             },
@@ -323,7 +323,7 @@ async fn build(
         .ctx()
         .parse_legacy_config_property(
             cell_resolver.root_cell(),
-            BuckconfigKeyRef {
+            YakconfigKeyRef {
                 section: "yak",
                 property: "log_artifact_count_sketch",
             },
@@ -335,7 +335,7 @@ async fn build(
         .ctx()
         .parse_legacy_config_property(
             cell_resolver.root_cell(),
-            BuckconfigKeyRef {
+            YakconfigKeyRef {
                 section: "yak",
                 property: "log_artifact_size_sketch",
             },
@@ -347,7 +347,7 @@ async fn build(
         .ctx()
         .parse_legacy_config_property(
             cell_resolver.root_cell(),
-            BuckconfigKeyRef {
+            YakconfigKeyRef {
                 section: "yak",
                 property: "log_sketch_cardinalities",
             },
@@ -368,11 +368,11 @@ async fn build(
         log_sketch_cardinalities: want_log_sketch_cardinalities,
     };
 
-    let providers_to_skip_in_artifact_path_sketch: BuckMutSet<BuildProviderType> = ctx
+    let providers_to_skip_in_artifact_path_sketch: YakMutSet<BuildProviderType> = ctx
         .ctx()
         .parse_legacy_config_list_property::<SkipProvider>(
             cell_resolver.root_cell(),
-            BuckconfigKeyRef {
+            YakconfigKeyRef {
                 section: "yak",
                 property: "providers_to_skip_in_artifact_path_sketch",
             },
@@ -440,7 +440,7 @@ async fn build(
         .ctx()
         .parse_legacy_config_property(
             cell_resolver.root_cell(),
-            BuckconfigKeyRef {
+            YakconfigKeyRef {
                 section: "yak",
                 property: "detailed_aggregated_metrics",
             },
@@ -480,7 +480,7 @@ async fn build(
             // target that hit the `--overall-timeout` deadline that would re-demand (and, via
             // DICE, restart) an action the deadline just cancelled, hanging the command past its
             // timeout. Those targets never finished building, so skip sketching them.
-            let timed_out_targets: BuckMutSet<ConfiguredProvidersLabel> = build_result
+            let timed_out_targets: YakMutSet<ConfiguredProvidersLabel> = build_result
                 .configured
                 .iter()
                 .filter_map(|(label, result)| {
@@ -605,7 +605,7 @@ async fn process_build_result(
         .ctx()
         .parse_legacy_config_property(
             cell_resolver.root_cell(),
-            BuckconfigKeyRef {
+            YakconfigKeyRef {
                 section: "yak",
                 property: "create_unhashed_links",
             },
@@ -669,7 +669,7 @@ async fn build_targets(
         AsyncBuildTargetResultBuilder::new(streaming_build_result_tx, build_start);
     let fut = match target_resolution_config {
         TargetResolutionConfig::Default(global_cfg_options) => {
-            let spec = spec.convert_pattern().buck_error_context(
+            let spec = spec.convert_pattern().yak_error_context(
                 "Targets with explicit configuration can only be built when the `--target-universe=` flag is provided",
             )?;
             build_targets_with_global_target_platform(

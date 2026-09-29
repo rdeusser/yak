@@ -18,7 +18,7 @@ use http::uri::Scheme;
 use hyper_http_proxy::Intercept;
 use hyper_http_proxy::Proxy;
 use ipnetwork::IpNetwork;
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 
 /// Lookup environment variable and return string value. Checks first for uppercase
 /// and falls back to lowercase if unset.
@@ -58,7 +58,7 @@ fn proxy_from_env(name: &'static str, scheme: Scheme) -> yak_error::Result<Optio
     };
     let uri: DefaultSchemeUri = value
         .parse()
-        .with_buck_error_context(|| format!("Invalid {name} uri: {value}"))?;
+        .with_yak_error_context(|| format!("Invalid {name} uri: {value}"))?;
     let no_proxy = noproxy_from_env(scheme.clone())?;
     let intercept = if let Some(no_proxy) = no_proxy {
         no_proxy.into_proxy_intercept()

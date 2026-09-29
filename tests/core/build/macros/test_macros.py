@@ -8,30 +8,30 @@
 
 import platform
 
-from e2e_util.api.buck import Buck
+from e2e_util.api.yak import Yak
 from e2e_util.asserts import expect_failure
-from e2e_util.buck_workspace import buck_test
+from e2e_util.yak_workspace import yak_test
 
 
-@buck_test()
-async def test_run_with_source_macros(buck: Buck) -> None:
+@yak_test()
+async def test_run_with_source_macros(yak: Yak) -> None:
     sep = "\\" if platform.system() == "Windows" else "/"
-    result = await buck.run("//source:echo_file")
+    result = await yak.run("//source:echo_file")
     assert result.stdout.endswith(f"source{sep}foo.txt\n")
 
-    result = await buck.run("//source:echo_dir")
+    result = await yak.run("//source:echo_dir")
     assert result.stdout.endswith(f"source{sep}bar\n")
 
-    result = await buck.run("//source:cat_file")
+    result = await yak.run("//source:cat_file")
     assert result.stdout == "foo file\n"
 
-    result = await buck.run("//source:cat_dir")
+    result = await yak.run("//source:cat_dir")
     assert result.stdout == "bar file\n"
 
 
-@buck_test()
-async def test_no_dep_in_source(buck: Buck) -> None:
+@yak_test()
+async def test_no_dep_in_source(yak: Yak) -> None:
     await expect_failure(
-        buck.build("//dep_as_source:uses_dep"),
+        yak.build("//dep_as_source:uses_dep"),
         stderr_regex="Source file `:trivial` does not exist",
     )

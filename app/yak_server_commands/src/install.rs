@@ -74,8 +74,8 @@ use yak_data::BuildResult;
 use yak_data::InstallEventInfoEnd;
 use yak_data::InstallEventInfoStart;
 use yak_directory::directory::entry::DirectoryEntry;
-use yak_error::BuckErrorContext;
-use yak_error::BuckErrorOptionContext;
+use yak_error::YakErrorContext;
+use yak_error::YakErrorOptionContext;
 use yak_error::ErrorTag;
 use yak_events::dispatch::get_dispatcher;
 use yak_events::dispatch::span_async;
@@ -88,8 +88,8 @@ use yak_fs::fs_util;
 use yak_fs::paths::abs_norm_path::AbsNormPathBuf;
 use yak_fs::paths::file_name::FileName;
 use yak_fs::paths::forward_rel_path::ForwardRelativePathBuf;
-use yak_hash::BuckMutMap;
-use yak_hash::BuckMutSet;
+use yak_hash::YakMutMap;
+use yak_hash::YakMutSet;
 use yak_install_proto::DeviceMetadata;
 use yak_install_proto::FileReadyRequest;
 use yak_install_proto::InstallInfoRequest;
@@ -149,12 +149,12 @@ async fn get_installer_log_directory(
     server_ctx: &dyn ServerCommandContextTrait,
     ctx: &mut DiceComputations<'_>,
 ) -> yak_error::Result<AbsNormPathBuf> {
-    let out_path = ctx.get_buck_out_path().await?;
+    let out_path = ctx.get_yak_out_path().await?;
     let filesystem = server_ctx.project_root();
-    let buck_out_path = filesystem
+    let yak_out_path = filesystem
         .root()
         .join(out_path.root().as_forward_relative_path());
-    let install_log_dir = buck_out_path.join(ForwardRelativePathBuf::unchecked_new(
+    let install_log_dir = yak_out_path.join(ForwardRelativePathBuf::unchecked_new(
         "installer".to_owned(),
     ));
     fs_util::create_dir_all(&install_log_dir)?;
@@ -234,7 +234,7 @@ async fn install(
     // consumed by the install pipeline below. Deduped to keep
     // `get_target_rule_type_name` work proportional to unique targets.
     let installed_target_labels: Vec<ConfiguredTargetLabel> = {
-        let mut seen = BuckMutSet::default();
+        let mut seen = YakMutSet::default();
         let mut out = Vec::new();
         for data in &install_request_data_vec {
             for (label, _) in &data.installed_targets {
@@ -264,7 +264,7 @@ async fn install(
     let install_requests = dice.compute_many(install_requests);
     try_join_all(install_requests)
         .await
-        .buck_error_context("Interaction with installer failed.")?;
+        .yak_error_context("Interaction with installer failed.")?;
 
     // Best-effort telemetry: a successful install must not be reported as failed
     // because rule-type lookup hit an error (DICE failure, unbound late binding, etc).
@@ -319,9 +319,9 @@ async fn collect_install_request_data(
 
     let resolved_pattern = resolved_pattern
         .convert_pattern()
-        .buck_error_context("Install with explicit configuration pattern is not supported yet")?;
+        .yak_error_context("Install with explicit configuration pattern is not supported yet")?;
 
-    let mut installer_to_files_map = BuckMutMap::default();
+    let mut installer_to_files_map = YakMutMap::default();
     for (package_with_modifiers, spec) in resolved_pattern.specs {
         let PackageLabelWithModifiers { package, modifiers } = package_with_modifiers;
 
@@ -480,7 +480,7 @@ impl<'a> ConnectedInstaller<'a> {
                 tokio::select! {
                     result = connect_fut => {
                         let channel = result
-                            .buck_error_context("Failed to connect to the installer using TCP")?;
+                            .yak_error_context("Failed to connect to the installer using TCP")?;
                         Ok(InstallerClient::new(channel)
                             .max_encoding_message_size(usize::MAX)
                             .max_decoding_message_size(usize::MAX))
@@ -530,7 +530,7 @@ impl<'a> ConnectedInstaller<'a> {
         }
 
         self.install_result(
-            send_files_result.buck_error_context("Interaction with installer failed"),
+            send_files_result.yak_error_context("Interaction with installer failed"),
         )
     }
 
@@ -897,7 +897,7 @@ async fn build_launch_installer(
                 .map(|value| (input, value))
             })
             .await
-            .buck_error_context("Failed to build installer")?;
+            .yak_error_context("Failed to build installer")?;
 
         // Produce arguments for local platform.
         let path_separator = if cfg!(windows) {
@@ -937,7 +937,7 @@ async fn build_launch_installer(
             .env("YAK_UUID", build_id)
             .stderr(stderr)
             .spawn()
-            .buck_error_context("Failed to spawn installer")?;
+            .yak_error_context("Failed to spawn installer")?;
 
         Ok(child)
     } else {

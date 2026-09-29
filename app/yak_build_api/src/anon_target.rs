@@ -22,8 +22,8 @@ use yak_artifact::artifact::artifact_type::Artifact;
 use yak_core::deferred::base_deferred_key::BaseDeferredKey;
 use yak_core::execution_types::execution::ExecutionPlatformResolution;
 use yak_core::target::configured_target_label::ConfiguredTargetLabel;
-use yak_hash::BuckMutMap;
-use yak_hash::StdBuckHashMap;
+use yak_hash::YakMutMap;
+use yak_hash::StdYakHashMap;
 use yak_interpreter::dice::starlark_provider::StarlarkEvalKind;
 use yak_node::attrs::spec::AttributeSpec;
 use yak_node::rule_type::StarlarkRuleType;
@@ -45,7 +45,7 @@ pub trait AnonTargetDyn: Send + Sync + Display {
         promise_artifact_mappings: SmallMap<String, Value<'v>>,
         anon_target_result: Value<'v>,
         eval: &mut Evaluator<'v, '_, '_>,
-    ) -> yak_error::Result<StdBuckHashMap<PromiseArtifactId, Artifact>>;
+    ) -> yak_error::Result<StdYakHashMap<PromiseArtifactId, Artifact>>;
 
     /// `attrs_spec` must be the spec of the rule this anon target was
     /// defined with: attribute names are not stored in the target and are
@@ -62,7 +62,7 @@ pub trait AnonTargetDyn: Send + Sync + Display {
 // Container for analysis results of the anon target dependents.
 pub struct AnonTargetDependentAnalysisResults<'v> {
     pub dep_analysis_results: Vec<(&'v ConfiguredTargetLabel, AnalysisResult)>,
-    pub promised_artifacts: BuckMutMap<&'v PromiseArtifactAttr, Artifact>,
+    pub promised_artifacts: YakMutMap<&'v PromiseArtifactAttr, Artifact>,
 }
 
 impl<'v> AnonTargetDependentAnalysisResults<'v> {

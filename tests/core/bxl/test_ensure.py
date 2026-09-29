@@ -12,9 +12,9 @@ import re
 from pathlib import Path
 
 import pytest
-from e2e_util.api.buck import Buck
+from e2e_util.api.yak import Yak
 from e2e_util.asserts import expect_failure
-from e2e_util.buck_workspace import buck_test
+from e2e_util.yak_workspace import yak_test
 from e2e_util.helper.golden import (
     golden,
     sanitize_build_report,
@@ -26,31 +26,31 @@ def _replace_hash(s: str) -> str:
     return re.sub(r"\b[0-9a-f]{16}\b", "<HASH>", s)
 
 
-BUCK_OUT_ROOT_REL_PATH = "yak-out/v2/art/root"
+YAK_OUT_ROOT_REL_PATH = "yak-out/v2/art/root"
 
 
 @pytest.mark.remote_execution
-@buck_test()
-async def test_bxl_ensure_no_materialization(buck: Buck) -> None:
-    result = await buck.bxl(
+@yak_test()
+async def test_bxl_ensure_no_materialization(yak: Yak) -> None:
+    result = await yak.bxl(
         "//no_materialization_bxl_build/remote_text.bxl:ensure",
         "--materializations=none",
     )
 
     [output] = result.stdout.splitlines()
-    assert os.path.exists(buck.cwd / Path(output)) is False
+    assert os.path.exists(yak.cwd / Path(output)) is False
 
-    result = await buck.bxl(
+    result = await yak.bxl(
         "//no_materialization_bxl_build/remote_text.bxl:ensure",
     )
 
     [output] = result.stdout.splitlines()
-    assert os.path.exists(buck.cwd / Path(output)) is True
+    assert os.path.exists(yak.cwd / Path(output)) is True
 
 
-@buck_test()
-async def test_bxl_ensure(buck: Buck) -> None:
-    result = await buck.bxl(
+@yak_test()
+async def test_bxl_ensure(yak: Yak) -> None:
+    result = await yak.bxl(
         "//ensure.bxl:ensure_build_result_test",
         "--",
         "--target",
@@ -58,23 +58,23 @@ async def test_bxl_ensure(buck: Buck) -> None:
     )
 
     outputs = json.loads(result.stdout)
-    [buck_out] = [v for (k, v) in outputs.items() if k.startswith("root//:buildable")][
+    [yak_out] = [v for (k, v) in outputs.items() if k.startswith("root//:buildable")][
         0
     ]
-    assert (buck.cwd / Path(buck_out)).read_text() == "abcd"
+    assert (yak.cwd / Path(yak_out)).read_text() == "abcd"
 
-    result = await buck.bxl(
+    result = await yak.bxl(
         "//ensure.bxl:ensure_cmd_line_test",
     )
 
     lines = sorted(result.stdout.splitlines())
-    assert (buck.cwd / Path(lines[0])).read_text() == "run_info_out"
-    assert (buck.cwd / Path(lines[1])).read_text() == "target_with_tset\n"
-    assert (buck.cwd / Path(lines[2])).read_text() == "tset1\n"
-    assert (buck.cwd / Path(lines[3])).read_text() == "tset2\n"
-    assert (buck.cwd / Path(lines[4])).read_text() == "tset3\n"
+    assert (yak.cwd / Path(lines[0])).read_text() == "run_info_out"
+    assert (yak.cwd / Path(lines[1])).read_text() == "target_with_tset\n"
+    assert (yak.cwd / Path(lines[2])).read_text() == "tset1\n"
+    assert (yak.cwd / Path(lines[3])).read_text() == "tset2\n"
+    assert (yak.cwd / Path(lines[4])).read_text() == "tset3\n"
 
-    result = await buck.bxl(
+    result = await yak.bxl(
         "//ensure.bxl:ensure_cmd_line_json_output",
     )
 
@@ -85,9 +85,9 @@ async def test_bxl_ensure(buck: Buck) -> None:
     assert "tset3" in json_array[3]
 
 
-@buck_test(skip_for_os=["windows"])
-async def test_bxl_artifact_path(buck: Buck) -> None:
-    result = await buck.bxl(
+@yak_test(skip_for_os=["windows"])
+async def test_bxl_artifact_path(yak: Yak) -> None:
+    result = await yak.bxl(
         "//artifacts.bxl:artifact_path_test",
     )
 
@@ -98,9 +98,9 @@ async def test_bxl_artifact_path(buck: Buck) -> None:
     assert outputs["source_artifact_project_rel_path"] == "artifacts/DATA"
 
     # Abs path for the source artifact. The path should exist on the filesystem.
-    assert outputs["source_artifact_abs_path"] == str(buck.cwd / Path("artifacts/DATA"))
+    assert outputs["source_artifact_abs_path"] == str(yak.cwd / Path("artifacts/DATA"))
     assert (
-        os.path.exists((buck.cwd / Path(outputs["source_artifact_abs_path"]))) is True
+        os.path.exists((yak.cwd / Path(outputs["source_artifact_abs_path"]))) is True
     )
 
     assert (
@@ -108,7 +108,7 @@ async def test_bxl_artifact_path(buck: Buck) -> None:
         in outputs["build_artifact"]
     )
 
-    prefix = BUCK_OUT_ROOT_REL_PATH + "/"
+    prefix = YAK_OUT_ROOT_REL_PATH + "/"
 
     # The project relative path to the yak-out directory with the output
     assert outputs["build_artifact_project_rel_path"].startswith(prefix)
@@ -119,30 +119,30 @@ async def test_bxl_artifact_path(buck: Buck) -> None:
 
     # Abs path for the build artifact. Path should not exist on the filesystem since it's not materialized.
     assert outputs["build_artifact_abs_path"] == str(
-        buck.cwd / Path(outputs["build_artifact_project_rel_path"])
+        yak.cwd / Path(outputs["build_artifact_project_rel_path"])
     )
 
     assert (
-        os.path.exists((buck.cwd / Path(outputs["build_artifact_abs_path"]))) is False
+        os.path.exists((yak.cwd / Path(outputs["build_artifact_abs_path"]))) is False
     )
 
 
-@buck_test(skip_for_os=["windows"])
-async def test_bxl_artifact_path_cmd_args(buck: Buck) -> None:
-    result = await buck.bxl(
+@yak_test(skip_for_os=["windows"])
+async def test_bxl_artifact_path_cmd_args(yak: Yak) -> None:
+    result = await yak.bxl(
         "//artifacts.bxl:cmd_args_artifact_path_test",
     )
 
     outputs = json.loads(result.stdout)
     _test_bxl_artifact_path_cmd_args_helper(
-        buck,
+        yak,
         "kind/__target_with_outputs__/run_info_out",
         outputs["target_with_outputs_rel_paths"][0],
         False,
     )
 
     _test_bxl_artifact_path_cmd_args_helper(
-        buck,
+        yak,
         "kind/__target_with_outputs__/run_info_out",
         outputs["target_with_outputs_abs_paths"][0],
         True,
@@ -151,25 +151,25 @@ async def test_bxl_artifact_path_cmd_args(buck: Buck) -> None:
     assert len(outputs["target_with_tset_rel_paths"]) == 4
 
     _test_bxl_artifact_path_cmd_args_helper(
-        buck,
+        yak,
         "kind/__target_with_tset__/out.txt",
         outputs["target_with_tset_rel_paths"][0],
         False,
     )
     _test_bxl_artifact_path_cmd_args_helper(
-        buck,
+        yak,
         "kind/__tset1__/out.txt",
         outputs["target_with_tset_rel_paths"][1],
         False,
     )
     _test_bxl_artifact_path_cmd_args_helper(
-        buck,
+        yak,
         "kind/__tset2__/out.txt",
         outputs["target_with_tset_rel_paths"][2],
         False,
     )
     _test_bxl_artifact_path_cmd_args_helper(
-        buck,
+        yak,
         "kind/__tset3__/out.txt",
         outputs["target_with_tset_rel_paths"][3],
         False,
@@ -178,25 +178,25 @@ async def test_bxl_artifact_path_cmd_args(buck: Buck) -> None:
     assert len(outputs["target_with_tset_abs_paths"]) == 4
 
     _test_bxl_artifact_path_cmd_args_helper(
-        buck,
+        yak,
         "kind/__target_with_tset__/out.txt",
         outputs["target_with_tset_abs_paths"][0],
         True,
     )
     _test_bxl_artifact_path_cmd_args_helper(
-        buck,
+        yak,
         "kind/__tset1__/out.txt",
         outputs["target_with_tset_abs_paths"][1],
         True,
     )
     _test_bxl_artifact_path_cmd_args_helper(
-        buck,
+        yak,
         "kind/__tset2__/out.txt",
         outputs["target_with_tset_abs_paths"][2],
         True,
     )
     _test_bxl_artifact_path_cmd_args_helper(
-        buck,
+        yak,
         "kind/__tset3__/out.txt",
         outputs["target_with_tset_abs_paths"][3],
         True,
@@ -204,25 +204,25 @@ async def test_bxl_artifact_path_cmd_args(buck: Buck) -> None:
 
 
 def _test_bxl_artifact_path_cmd_args_helper(
-    buck: Buck, part_to_validate: str, full_path: str, is_abs: bool
+    yak: Yak, part_to_validate: str, full_path: str, is_abs: bool
 ) -> None:
-    assert BUCK_OUT_ROOT_REL_PATH in full_path
+    assert YAK_OUT_ROOT_REL_PATH in full_path
     assert part_to_validate in full_path
     if is_abs:
-        assert str((buck.cwd / Path(BUCK_OUT_ROOT_REL_PATH))) in full_path
+        assert str((yak.cwd / Path(YAK_OUT_ROOT_REL_PATH))) in full_path
         assert os.path.exists(full_path) is False
     else:
-        assert str(buck.cwd) not in full_path
-        assert os.path.exists((buck.cwd / Path(full_path))) is False
+        assert str(yak.cwd) not in full_path
+        assert os.path.exists((yak.cwd / Path(full_path))) is False
 
 
-@buck_test(allow_soft_errors=True, skip_for_os=["darwin", "windows"])
-async def test_bxl_ensure_failures(buck: Buck, tmp_path: Path) -> None:
+@yak_test(allow_soft_errors=True, skip_for_os=["darwin", "windows"])
+async def test_bxl_ensure_failures(yak: Yak, tmp_path: Path) -> None:
     """Test that BXL fails when trying to ensure a failed build artifact."""
     report = tmp_path / "build-report.json"
 
     await expect_failure(
-        buck.bxl(
+        yak.bxl(
             "//ensure.bxl:ensure_failures",
             "--build-report",
             str(report),

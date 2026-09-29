@@ -21,8 +21,8 @@ use pagable::Pagable;
 use tokio::sync::Semaphore;
 use yak_core::fs::project::ProjectRoot;
 use yak_core::fs::project_rel_path::ProjectRelativePathBuf;
-use yak_error::BuckErrorContext;
-use yak_error::BuckErrorOptionContext;
+use yak_error::YakErrorContext;
+use yak_error::YakErrorOptionContext;
 use yak_fs::IoResultExt;
 use yak_fs::async_fs_util::spawn_blocking;
 use yak_fs::fs_util;
@@ -137,7 +137,7 @@ impl IoProvider for FsIoProvider {
             let mut entries = Vec::new();
 
             for entry in dir_entries {
-                let e = entry.buck_error_context("Error accessing directory entry")?;
+                let e = entry.yak_error_context("Error accessing directory entry")?;
                 let file_name = e.file_name();
                 let file_name = file_name
                     .to_str()
@@ -151,7 +151,7 @@ impl IoProvider for FsIoProvider {
             yak_error::Ok(entries)
         })
         .await?
-        .buck_error_context("Error listing directory")
+        .yak_error_context("Error listing directory")
     }
 
     async fn read_path_metadata_if_exists_impl(
@@ -263,7 +263,7 @@ fn convert_metadata(
         RawPathMetadata::Directory
     } else {
         let digest = FileDigest::from_file(&path.abspath, file_digest_config)
-            .with_buck_error_context(|| {
+            .with_yak_error_context(|| {
                 format!("Error collecting file digest for `{}`", path.path)
             })?;
         let digest = TrackedFileDigest::new(digest, file_digest_config.as_cas_digest_config());
@@ -297,7 +297,7 @@ impl ExactPathMetadata {
                         .parent()
                         .expect("We pushed a component to this so it cannot be empty")
                         .join_system_normalized(&dest)
-                        .with_buck_error_context(|| {
+                        .with_yak_error_context(|| {
                             format!("Invalid symlink at `{}`: `{}`", curr.path, dest.display())
                         })?;
 

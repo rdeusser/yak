@@ -269,7 +269,7 @@ impl fmt::Display for CasDigestConfig {
 
 static_interner::interner!(
     CAS_DIGEST_CONFIG_INTERNER,
-    yak_hash::BuckHasher,
+    yak_hash::YakHasher,
     CasDigestConfigInner
 );
 

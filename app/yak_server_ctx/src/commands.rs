@@ -10,7 +10,7 @@
 
 use yak_core::provider::label::ConfiguredProvidersLabel;
 use yak_events::dispatch::EventDispatcher;
-use yak_hash::BuckMutSet;
+use yak_hash::YakMutSet;
 
 /// Common code executed in the end of command to produce `CommandEnd`.
 pub fn command_end<R, D>(result: &yak_error::Result<R>, data: D) -> yak_data::CommandEnd
@@ -42,7 +42,7 @@ pub fn send_target_cfg_event(
     conf_labels: impl IntoIterator<Item = &ConfiguredProvidersLabel>,
     target_cfg: &Option<yak_cli_proto::TargetCfg>,
 ) {
-    let mut target_platforms = BuckMutSet::default();
+    let mut target_platforms = YakMutSet::default();
     for conf in conf_labels {
         // cfg can be unbound
         if let Ok(label) = conf.cfg().label() {

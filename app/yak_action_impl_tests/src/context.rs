@@ -31,7 +31,7 @@ use yak_core::target::label::label::TargetLabel;
 use yak_execute::digest_config::DigestConfig;
 use yak_interpreter::file_type::StarlarkFileType;
 use yak_interpreter::from_freeze::from_freeze_error;
-use yak_interpreter::testing::Buck2TestHeapName;
+use yak_interpreter::testing::YakTestHeapName;
 
 fn run_ctx_test(
     content: &str,
@@ -59,7 +59,7 @@ fn run_ctx_test(
             eval.eval_module(ast, &globals).unwrap();
         };
         let frozen_func_mod = func_mod
-            .freeze_named(Buck2TestHeapName::frozen_heap_name())
+            .freeze_named(YakTestHeapName::frozen_heap_name())
             .map_err(from_freeze_error)?;
         let test_function = frozen_func_mod.get("test").unwrap();
 

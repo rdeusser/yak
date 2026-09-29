@@ -26,18 +26,18 @@ use yak_core::cells::name::CellName;
 use yak_fs::paths::file_name::FileNameBuf;
 
 use crate::legacy_configs::dice::HasLegacyConfigs;
-use crate::legacy_configs::key::BuckconfigKeyRef;
-use crate::legacy_configs::view::LegacyBuckConfigView;
+use crate::legacy_configs::key::YakconfigKeyRef;
+use crate::legacy_configs::view::LegacyYakConfigView;
 
 const DEFAULT_BUILDFILES: &[&str] = &["YAK"];
 
 /// parse_buildfile_name returns the build file names of a cell: the list in `buildfile.name`, or
 /// `YAK` when the key is unset, followed by `buildfile.extra_for_test` when it is set.
 pub fn parse_buildfile_name(
-    mut config: impl LegacyBuckConfigView,
+    mut config: impl LegacyYakConfigView,
 ) -> yak_error::Result<Vec<FileNameBuf>> {
     let mut base = if let Some(buildfiles_value) =
-        config.parse_list::<String>(BuckconfigKeyRef {
+        config.parse_list::<String>(YakconfigKeyRef {
             section: "buildfile",
             property: "name",
         })? {
@@ -46,7 +46,7 @@ pub fn parse_buildfile_name(
         DEFAULT_BUILDFILES.map(|&n| FileNameBuf::try_from(n.to_owned()).unwrap())
     };
 
-    if let Some(buildfile) = config.parse::<String>(BuckconfigKeyRef {
+    if let Some(buildfile) = config.parse::<String>(YakconfigKeyRef {
         section: "buildfile",
         property: "extra_for_test",
     })? {
@@ -121,7 +121,7 @@ mod tests {
     use yak_core::cells::name::CellName;
 
     use crate::buildfiles::parse_buildfile_name;
-    use crate::legacy_configs::cells::BuckConfigBasedCells;
+    use crate::legacy_configs::cells::YakConfigBasedCells;
     use crate::legacy_configs::configs::testing::TestConfigParserFileOps;
 
     #[tokio::test]
@@ -151,7 +151,7 @@ mod tests {
             ),
         ])?;
 
-        let cells = BuckConfigBasedCells::testing_parse_with_file_ops(&mut file_ops, &[]).await?;
+        let cells = YakConfigBasedCells::testing_parse_with_file_ops(&mut file_ops, &[]).await?;
 
         let config = cells
             .parse_single_cell_with_file_ops(CellName::testing_new("root"), &mut file_ops)

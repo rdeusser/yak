@@ -32,7 +32,7 @@ pub fn inputs_directory(
             }
             CommandExecutionInput::ActionMetadata(metadata) => {
                 let path = fs
-                    .buck_out_path_resolver()
+                    .yak_out_path_resolver()
                     .resolve_gen(&metadata.path, Some(&metadata.content_hash))?;
                 builder.insert(
                     path.into(),
@@ -43,7 +43,7 @@ pub fn inputs_directory(
                 )?;
             }
             CommandExecutionInput::ScratchPath(path) => {
-                let path = fs.buck_out_path_resolver().resolve_scratch(path)?;
+                let path = fs.yak_out_path_resolver().resolve_scratch(path)?;
                 // Exhaustively empty is the scratch contract: `prep_scratch_path` wipes the
                 // dir before every local run, and RE sandboxes start it fresh.
                 builder.insert(

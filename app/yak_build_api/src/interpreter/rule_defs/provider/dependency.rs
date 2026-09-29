@@ -35,7 +35,7 @@ use starlark_map::StarlarkHasher;
 use yak_core::execution_types::execution::ExecutionPlatformResolution;
 use yak_core::provider::label::ConfiguredProvidersLabel;
 use yak_core::provider::label::ProviderName;
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 use yak_interpreter::types::configured_providers_label::StarlarkConfiguredProvidersLabel;
 
 use crate::interpreter::rule_defs::provider::collection::ProviderCollection;
@@ -134,7 +134,7 @@ impl<'v> StarlarkValue<'v> for Dependency<'v> {
         self.provider_collection
             .to_value()
             .at(index, heap)
-            .with_buck_error_context(|| format!("Error accessing dependencies of `{}`", self.label))
+            .with_yak_error_context(|| format!("Error accessing dependencies of `{}`", self.label))
             .map_err(Into::into)
     }
 
@@ -269,7 +269,7 @@ fn dependency_methods(builder: &mut MethodsBuilder) {
         this: &Dependency<'v>,
         index: Value<'v>,
     ) -> starlark::Result<NoneOr<ValueOfUnchecked<'v, AbstractProvider>>> {
-        Ok(this.collection().get(index).with_buck_error_context(|| {
+        Ok(this.collection().get(index).with_yak_error_context(|| {
             format!("Error accessing dependencies of `{}`", this.label)
         })?)
     }

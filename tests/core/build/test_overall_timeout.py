@@ -10,18 +10,18 @@ import asyncio
 import json
 from pathlib import Path
 
-from e2e_util.api.buck import Buck
-from e2e_util.api.buck_result import ExitCode
+from e2e_util.api.yak import Yak
+from e2e_util.api.yak_result import ExitCode
 from e2e_util.asserts import expect_failure
-from e2e_util.buck_workspace import buck_test
+from e2e_util.yak_workspace import yak_test
 
 
-@buck_test()
-async def test_overall_timeout(buck: Buck, tmp_path: Path) -> None:
+@yak_test()
+async def test_overall_timeout(yak: Yak, tmp_path: Path) -> None:
     build_report = tmp_path / "build-report.json"
 
     await expect_failure(
-        buck.build(
+        yak.build(
             ":slow",
             "--overall-timeout",
             "1s",
@@ -42,9 +42,9 @@ async def test_overall_timeout(buck: Buck, tmp_path: Path) -> None:
         assert configured["errors"][0]["error_tags"] == ["BUILD_DEADLINE_EXPIRED"]
 
 
-@buck_test()
+@yak_test()
 async def test_overall_timeout_with_artifact_path_sketch(
-    buck: Buck, tmp_path: Path
+    yak: Yak, tmp_path: Path
 ) -> None:
     # Artifact path sketching runs *after* the build and re-`ensure_artifact_group`s every
     # top-level output. When the deadline fires mid-build, that post-build re-ensure must not
@@ -57,7 +57,7 @@ async def test_overall_timeout_with_artifact_path_sketch(
     try:
         await asyncio.wait_for(
             expect_failure(
-                buck.build(
+                yak.build(
                     ":slow",
                     "--overall-timeout",
                     "1s",

@@ -31,12 +31,12 @@ fn test_host_info() -> yak_error::Result<()> {
 }
 
 #[test]
-fn test_no_buck_version_fields() -> yak_error::Result<()> {
+fn test_no_yak_version_fields() -> yak_error::Result<()> {
     let mut tester = Tester::new().unwrap();
     tester.run_starlark_test(indoc!(
         r#"
             def test():
-                assert_eq(False, hasattr(host_info(), "buck2"))
+                assert_eq(False, hasattr(host_info(), "yak"))
         "#
     ))?;
     Ok(())

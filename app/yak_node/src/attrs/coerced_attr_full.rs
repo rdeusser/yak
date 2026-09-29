@@ -10,7 +10,7 @@
 
 use yak_core::configuration::compatibility::ResultMaybeCompatible;
 use yak_core::package::PackageLabel;
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 
 use crate::attrs::attr::Attribute;
 use crate::attrs::coerced_attr::CoercedAttr;
@@ -37,7 +37,7 @@ impl<'a> CoercedAttrFull<'a> {
                 attr: self.attr,
                 value: v,
             })
-            .with_buck_error_context(|| format!("configuring attr `{}`", self.name))
+            .with_yak_error_context(|| format!("configuring attr `{}`", self.name))
     }
 
     pub fn traverse(
@@ -47,6 +47,6 @@ impl<'a> CoercedAttrFull<'a> {
     ) -> yak_error::Result<()> {
         self.value
             .traverse(self.attr.coercer(), Some(pkg), traversal)
-            .with_buck_error_context(|| format!("traversing attribute `{}`", self.name))
+            .with_yak_error_context(|| format!("traversing attribute `{}`", self.name))
     }
 }

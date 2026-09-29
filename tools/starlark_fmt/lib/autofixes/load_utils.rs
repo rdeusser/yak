@@ -8,7 +8,7 @@
  * above-listed licenses.
  */
 
-//! Shared utilities for working with load() statements in Starlark/Buck files.
+//! Shared utilities for working with load() statements in Starlark/Yak files.
 //!
 //! Provides common types and functions for parsing and manipulating load statements,
 //! used by both `unused_loads` and `sort_loads` autofixes.

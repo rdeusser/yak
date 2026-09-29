@@ -47,7 +47,7 @@ use yak_build_api::build::detailed_aggregated_metrics::dice::SetDetailedAggregat
 use yak_build_api::build::detailed_aggregated_metrics::events::DetailedAggregatedMetricsHandle;
 use yak_build_api::context::SetBuildContextData;
 use yak_build_api::keep_going::HasKeepGoing;
-use yak_build_api::spawner::BuckSpawner;
+use yak_build_api::spawner::YakSpawner;
 use yak_common::dice::cells::SetCellResolver;
 use yak_common::dice::data::testing::SetTestingIoProvider;
 use yak_common::external_symlink::ExternalSymlink;
@@ -55,7 +55,7 @@ use yak_common::file_ops::metadata::FileMetadata;
 use yak_common::file_ops::metadata::TrackedFileDigest;
 use yak_common::file_ops::testing::TestFileOps;
 use yak_common::http::SetHttpClient;
-use yak_common::legacy_configs::configs::LegacyBuckConfig;
+use yak_common::legacy_configs::configs::LegacyYakConfig;
 use yak_common::legacy_configs::dice::inject_legacy_config_for_test;
 use yak_configured::nodes::ConfiguredTargetNodeKey;
 use yak_core::category::CategoryRef;
@@ -107,8 +107,8 @@ use yak_file_watcher::dep_files::SetDepFileCache;
 use yak_file_watcher::dep_files::create_dep_file_cache;
 use yak_file_watcher::mergebase::SetMergebase;
 use yak_fs::paths::forward_rel_path::ForwardRelativePathBuf;
-use yak_hash::StdBuckHashMap;
-use yak_hash::buck_indexset;
+use yak_hash::StdYakHashMap;
+use yak_hash::yak_indexset;
 use yak_http::HttpClientBuilder;
 use yak_node::nodes::configured::ConfiguredTargetNode;
 use yak_util::time_span::TimeSpan;
@@ -166,7 +166,7 @@ fn mock_analysis_for_action_resolution(
                 actions,
             ),
             None,
-            StdBuckHashMap::default(),
+            StdYakHashMap::default(),
             0,
             0,
             None,
@@ -248,7 +248,7 @@ async fn make_default_dice_state(
     )?));
     extra.set_re_client(UnconfiguredRemoteExecutionClient::testing_new_dummy());
     extra.set_invocation_re_settings(InvocationReSettings {
-        use_case: RemoteExecutorUseCase::buck2_default(),
+        use_case: RemoteExecutorUseCase::yak_default(),
         cas_configured: false,
     });
     extra.set_http_client(HttpClientBuilder::https_with_system_roots().await?.build());
@@ -256,15 +256,15 @@ async fn make_default_dice_state(
     extra.set_mergebase(Default::default());
     extra.data.set(EventDispatcher::null());
     extra.data.set(RunActionKnobs::default());
-    extra.spawner = Arc::new(BuckSpawner::current_runtime().unwrap());
+    extra.spawner = Arc::new(YakSpawner::current_runtime().unwrap());
 
     let mut computations = dice_builder.build(extra).unwrap();
     inject_legacy_config_for_test(
         &mut computations,
         CellName::testing_new("root"),
-        LegacyBuckConfig::empty(),
+        LegacyYakConfig::empty(),
     )?;
-    computations.set_buck_out_path(Some(output_path))?;
+    computations.set_yak_out_path(Some(output_path))?;
     computations.set_cell_resolver(cell_resolver)?;
 
     Ok(computations.commit().await)
@@ -277,8 +277,8 @@ async fn test_get_action_for_artifact() -> yak_error::Result<()> {
     let registered_action = registered_action(
         build_artifact.dupe(),
         Box::new(SimpleAction::new(
-            buck_indexset![],
-            buck_indexset![build_artifact.dupe()],
+            yak_indexset![],
+            yak_indexset![build_artifact.dupe()],
             vec![],
             CategoryRef::new("fake_action").unwrap().to_owned(),
             None,
@@ -314,8 +314,8 @@ async fn test_build_action() -> yak_error::Result<()> {
     let registered_action = registered_action(
         build_artifact.dupe(),
         Box::new(SimpleAction::new(
-            buck_indexset![],
-            buck_indexset![build_artifact.dupe()],
+            yak_indexset![],
+            yak_indexset![build_artifact.dupe()],
             vec!["foo".to_owned(), "cmd".to_owned()],
             CategoryRef::new("fake_action").unwrap().to_owned(),
             None,
@@ -365,8 +365,8 @@ async fn test_build_artifact() -> yak_error::Result<()> {
     let registered_action = registered_action(
         build_artifact.dupe(),
         Box::new(SimpleAction::new(
-            buck_indexset![],
-            buck_indexset![build_artifact.dupe()],
+            yak_indexset![],
+            yak_indexset![build_artifact.dupe()],
             vec!["bar".to_owned(), "cmd".to_owned()],
             CategoryRef::new("fake_action").unwrap().to_owned(),
             None,
@@ -413,8 +413,8 @@ async fn test_ensure_artifact_build_artifact() -> yak_error::Result<()> {
     let registered_action = registered_action(
         build_artifact.dupe(),
         Box::new(SimpleAction::new(
-            buck_indexset![],
-            buck_indexset![build_artifact.dupe()],
+            yak_indexset![],
+            yak_indexset![build_artifact.dupe()],
             vec!["ensure".to_owned(), "cmd".to_owned()],
             CategoryRef::new("fake_action").unwrap().to_owned(),
             None,

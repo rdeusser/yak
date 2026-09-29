@@ -8,22 +8,22 @@
 
 from pathlib import Path
 
-from e2e_util.api.buck import Buck
+from e2e_util.api.yak import Yak
 from e2e_util.asserts import expect_failure
-from e2e_util.buck_workspace import buck_test
+from e2e_util.yak_workspace import yak_test
 
 
-async def _build_output(buck: Buck, target: str) -> Path:
-    result = await buck.build(target, "--show-output")
+async def _build_output(yak: Yak, target: str) -> Path:
+    result = await yak.build(target, "--show-output")
     path = result.get_target_to_build_output().get(target)
     assert path is not None
-    return buck.cwd / path
+    return yak.cwd / path
 
 
 # Symlink materialization assertions are unreliable on Windows.
-@buck_test(skip_for_os=["windows"])
-async def test_assembled_dir_mixes_copies_and_symlinks(buck: Buck) -> None:
-    out = await _build_output(buck, "root//:mixed")
+@yak_test(skip_for_os=["windows"])
+async def test_assembled_dir_mixes_copies_and_symlinks(yak: Yak) -> None:
+    out = await _build_output(yak, "root//:mixed")
     assert out.is_dir()
 
     # `assembled_dir.copy` entries are materialized as real files, with the
@@ -54,35 +54,35 @@ async def test_assembled_dir_mixes_copies_and_symlinks(buck: Buck) -> None:
     assert (res_dir / "data.txt").read_text() == "resource-bytes"
 
 
-@buck_test(skip_for_os=["windows"])
-async def test_assembled_dir_is_a_usable_input(buck: Buck) -> None:
+@yak_test(skip_for_os=["windows"])
+async def test_assembled_dir_is_a_usable_input(yak: Yak) -> None:
     # A downstream action can read both copied and symlinked entries through
     # the assembled dir (i.e. the entries' sources are tracked as inputs).
-    out = await _build_output(buck, "root//:consumed")
+    out = await _build_output(yak, "root//:consumed")
     assert out.read_text() == "exe-bytes|source-file-bytes\n"
 
 
-@buck_test()
-async def test_assembled_dir_rejects_overlapping_paths(buck: Buck) -> None:
+@yak_test()
+async def test_assembled_dir_rejects_overlapping_paths(yak: Yak) -> None:
     await expect_failure(
-        buck.build("root//:overlap_fail"),
+        yak.build("root//:overlap_fail"),
         stderr_regex="must be non-overlapping",
     )
 
 
-@buck_test()
-async def test_assembled_dir_rejects_empty_path(buck: Buck) -> None:
+@yak_test()
+async def test_assembled_dir_rejects_empty_path(yak: Yak) -> None:
     await expect_failure(
-        buck.build("root//:empty_path_fail"),
+        yak.build("root//:empty_path_fail"),
         stderr_regex="must not be empty",
     )
 
 
-@buck_test()
-async def test_assembled_dir_rejects_untyped_entries(buck: Buck) -> None:
+@yak_test()
+async def test_assembled_dir_rejects_untyped_entries(yak: Yak) -> None:
     # A bare artifact is not a valid entry: contents values must be built
     # with `assembled_dir.copy(...)` / `assembled_dir.symlink(...)`.
     await expect_failure(
-        buck.build("root//:untyped_entry_fail"),
+        yak.build("root//:untyped_entry_fail"),
         stderr_regex="AssembledDirEntry",
     )

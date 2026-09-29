@@ -20,7 +20,7 @@ from core.common.io.file_watcher_tests import (
     verify_results,
 )
 from core.common.io.utils import get_files
-from e2e_util.api.buck import Buck
+from e2e_util.api.yak import Yak
 
 
 def symlink_file_type(file_watcher_provider: FileWatcherProvider) -> FileWatcherKind:
@@ -33,15 +33,15 @@ def symlink_file_type(file_watcher_provider: FileWatcherProvider) -> FileWatcher
 
 
 async def run_create_symlink_test(
-    buck: Buck,
+    yak: Yak,
     file_watcher_provider: FileWatcherProvider,
 ) -> None:
-    await setup_file_watcher_test(buck)
-    (buck.cwd / "target").write_text("")
+    await setup_file_watcher_test(yak)
+    (yak.cwd / "target").write_text("")
 
-    await get_files(buck)
+    await get_files(yak)
 
-    path = buck.cwd / "files" / "def"
+    path = yak.cwd / "files" / "def"
     path.symlink_to(Path("..") / "target")
 
     required = [
@@ -52,20 +52,20 @@ async def run_create_symlink_test(
         ),
     ]
 
-    is_fresh_instance, results = await get_file_watcher_events(buck)
+    is_fresh_instance, results = await get_file_watcher_events(yak)
     assert not is_fresh_instance
     verify_results(results, required)
 
 
 async def run_replace_file_with_symlink_test(
-    buck: Buck,
+    yak: Yak,
     file_watcher_provider: FileWatcherProvider,
 ) -> None:
-    await setup_file_watcher_test(buck)
-    path = buck.cwd / "files" / "def"
+    await setup_file_watcher_test(yak)
+    path = yak.cwd / "files" / "def"
     path.write_text("")
-    (buck.cwd / "target").write_text("")
-    await get_files(buck)
+    (yak.cwd / "target").write_text("")
+    await get_files(yak)
 
     path.unlink()
     path.symlink_to(Path("..") / "target")
@@ -93,21 +93,21 @@ async def run_replace_file_with_symlink_test(
             ),
         ]
 
-    is_fresh_instance, results = await get_file_watcher_events(buck)
+    is_fresh_instance, results = await get_file_watcher_events(yak)
     assert not is_fresh_instance
     verify_results(results, required)
 
 
 async def run_change_symlink_target_test(
-    buck: Buck,
+    yak: Yak,
     file_watcher_provider: FileWatcherProvider,
 ) -> None:
-    await setup_file_watcher_test(buck)
-    (buck.cwd / "target1").write_text("")
-    (buck.cwd / "target2").write_text("")
-    path = buck.cwd / "files" / "def"
+    await setup_file_watcher_test(yak)
+    (yak.cwd / "target1").write_text("")
+    (yak.cwd / "target2").write_text("")
+    path = yak.cwd / "files" / "def"
     path.symlink_to(Path("..") / "target1")
-    await get_files(buck)
+    await get_files(yak)
 
     path.unlink()
     path.symlink_to(Path("..") / "target2")
@@ -137,6 +137,6 @@ async def run_change_symlink_target_test(
             ),
         ]
 
-    is_fresh_instance, results = await get_file_watcher_events(buck)
+    is_fresh_instance, results = await get_file_watcher_events(yak)
     assert not is_fresh_instance
     verify_results(results, required)

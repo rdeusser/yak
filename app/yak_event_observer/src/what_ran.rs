@@ -72,9 +72,9 @@ pub enum WhatRanRelevantAction {
 
 impl WhatRanRelevantAction {
     /// Extract a relevant action from an event's data, if we can find one.
-    pub fn from_buck_data(data: &yak_data::buck_event::Data) -> Option<Self> {
+    pub fn from_yak_data(data: &yak_data::yak_event::Data) -> Option<Self> {
         match data {
-            yak_data::buck_event::Data::SpanStart(span) => match &span.data {
+            yak_data::yak_event::Data::SpanStart(span) => match &span.data {
                 Some(yak_data::span_start_event::Data::ActionExecution(action)) => {
                     Some(Self::ActionExecution(action.clone()))
                 }
@@ -253,11 +253,11 @@ impl CommandReproducer {
         }
     }
 
-    pub fn from_buck_data(
-        data: &yak_data::buck_event::Data,
+    pub fn from_yak_data(
+        data: &yak_data::yak_event::Data,
         options: &WhatRanOptions,
     ) -> Option<Self> {
-        if let yak_data::buck_event::Data::SpanStart(span) = data
+        if let yak_data::yak_event::Data::SpanStart(span) = data
             && let Some(yak_data::span_start_event::Data::ExecutorStage(executor_stage)) =
                 &span.data
         {

@@ -6,26 +6,26 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-from e2e_util.api.buck import Buck
+from e2e_util.api.yak import Yak
 from e2e_util.asserts import expect_failure
-from e2e_util.buck_workspace import buck_test
+from e2e_util.yak_workspace import yak_test
 
 
-@buck_test()
-async def test_run_executable(buck: Buck) -> None:
-    result = await buck.run("root//:print_animal_hello")
+@yak_test()
+async def test_run_executable(yak: Yak) -> None:
+    result = await yak.run("root//:print_animal_hello")
     assert result.stdout.strip() == "hello dog"
 
-    result = await buck.run(
+    result = await yak.run(
         "root//:print_animal_hello", "--target-universe", "root//:cat_universe"
     )
     assert result.stdout.strip() == "hello cat"
 
 
-@buck_test()
-async def test_run_with_transition_without_target_universe(buck: Buck) -> None:
-    result = await buck.run(
-        "root//:buck",
+@yak_test()
+async def test_run_with_transition_without_target_universe(yak: Yak) -> None:
+    result = await yak.run(
+        "root//:yak",
         "--target-platforms=root//:p_cat",
     )
 
@@ -34,13 +34,13 @@ async def test_run_with_transition_without_target_universe(buck: Buck) -> None:
     assert result.stdout.strip() == "hello yak"
 
 
-@buck_test()
-async def test_run_with_transition_with_target_universe(buck: Buck) -> None:
-    result = await buck.run(
-        "root//:buck",
+@yak_test()
+async def test_run_with_transition_with_target_universe(yak: Yak) -> None:
+    result = await yak.run(
+        "root//:yak",
         "--target-platforms=root//:p_cat",
         "--target-universe",
-        "root//:buck",
+        "root//:yak",
     )
 
     # The transition (deliberately) loses the configuration so that we get the
@@ -48,10 +48,10 @@ async def test_run_with_transition_with_target_universe(buck: Buck) -> None:
     assert result.stdout.strip() == "hello yak"
 
 
-@buck_test()
-async def test_run_target_not_in_universe(buck: Buck) -> None:
+@yak_test()
+async def test_run_target_not_in_universe(yak: Yak) -> None:
     await expect_failure(
-        buck.run(
+        yak.run(
             "root//:print_animal_hello",
             "--target-universe",
             "root//:print_animal_goodbye",

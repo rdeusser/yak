@@ -8,7 +8,7 @@
  * above-listed licenses.
  */
 
-//! Generate source file containing buck2/prelude tree with contents.
+//! Generate source file containing yak/prelude tree with contents.
 
 use std::io;
 use std::path::Path;

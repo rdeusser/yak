@@ -8,7 +8,7 @@
  * above-listed licenses.
  */
 
-pub(crate) mod buck_out_path_parser;
-pub(crate) mod buck_out_path_type_printer;
+pub(crate) mod yak_out_path_parser;
+pub(crate) mod yak_out_path_type_printer;
 pub mod command;
 pub mod parse;

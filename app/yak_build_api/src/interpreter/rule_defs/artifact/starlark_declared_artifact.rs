@@ -38,7 +38,7 @@ use yak_artifact::artifact::artifact_type::Artifact;
 use yak_artifact::artifact::artifact_type::DeclaredArtifact;
 use yak_artifact::artifact::artifact_type::OutputArtifact;
 use yak_core::deferred::base_deferred_key::BaseDeferredKey;
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 use yak_error::yak_error;
 use yak_execute::path::artifact_path::ArtifactPath;
 use yak_fs::paths::file_name::FileName;

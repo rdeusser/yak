@@ -270,13 +270,13 @@ def main():
         # module validation errors to fail builds.
         # https://github.com/llvm/llvm-project/blob/main/clang/lib/Driver/ToolChains/Clang.cpp#L3709
         env["CLANG_MODULE_CACHE_PATH"] = os.path.join(
-            env[_RE_TMPDIR_ENV_VAR], "buck-module-cache"
+            env[_RE_TMPDIR_ENV_VAR], "yak-module-cache"
         )
     else:
         # For local actions use a shared module cache location.
         # This should be safe to share across the other local
         # compilation actions.
-        env["CLANG_MODULE_CACHE_PATH"] = "/tmp/buck-module-cache"
+        env["CLANG_MODULE_CACHE_PATH"] = "/tmp/yak-module-cache"
 
     # Separate the driver args from the wrapper args
     command, wrapper_args = _parse_wrapper_args(sys.argv[1:])

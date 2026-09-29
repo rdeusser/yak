@@ -80,7 +80,7 @@ go_toolchain(
 ```
 
 For a complete example using `http_archive`, see
-[examples/toolchains/go_toolchain](https://github.com/rdeusser/buck2/blob/main/examples/toolchains/go_toolchain/toolchains/BUCK).
+[examples/toolchains/go_toolchain](https://github.com/rdeusser/yak/blob/main/examples/toolchains/go_toolchain/toolchains/YAK).
 
 ### Advanced: Multi-platform Toolchains
 

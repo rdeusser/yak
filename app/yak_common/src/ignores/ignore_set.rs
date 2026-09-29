@@ -74,8 +74,8 @@ impl IgnoreSet {
         // `**/*x*x*`: just some general glob on the filename alone, can merge these into one GlobSet that just needs to check against the filename.
         // `some/prefix/**`: a directory prefix. These can all be merged into one trie lookup.
         let mut patterns = Vec::new();
-        let buck_out = if root_cell { Some("yak-out") } else { None };
-        for val in buck_out.into_iter().chain(spec.split(',')) {
+        let yak_out = if root_cell { Some("yak-out") } else { None };
+        for val in yak_out.into_iter().chain(spec.split(',')) {
             let val = val.trim();
             if val.is_empty() {
                 continue;

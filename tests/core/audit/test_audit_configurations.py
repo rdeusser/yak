@@ -8,8 +8,8 @@
 
 import re
 
-from e2e_util.api.buck import Buck
-from e2e_util.buck_workspace import buck_test
+from e2e_util.api.yak import Yak
+from e2e_util.yak_workspace import yak_test
 
 
 def _replace_hash(s: str) -> str:
@@ -20,27 +20,27 @@ def _parse_audit_configurations(output: str) -> list[str]:
     return [x.rstrip(":") for x in output.splitlines() if not x.startswith(" ")]
 
 
-@buck_test()
-async def test_audit_configurations_all(buck: Buck) -> None:
+@yak_test()
+async def test_audit_configurations_all(yak: Yak) -> None:
     # Evaluate a target to make sure configuration is loaded.
-    await buck.cquery("//:genrule")
+    await yak.cquery("//:genrule")
 
-    result = await buck.audit("configurations")
+    result = await yak.audit("configurations")
     configurations = _parse_audit_configurations(result.stdout)
     configurations = [_replace_hash(x) for x in configurations]
     assert "root//:p#<HASH>" in configurations
 
 
-@buck_test()
-async def test_audit_configurations_specific(buck: Buck) -> None:
+@yak_test()
+async def test_audit_configurations_specific(yak: Yak) -> None:
     # Evaluate a target to make sure configuration is loaded.
-    await buck.cquery("//:genrule")
+    await yak.cquery("//:genrule")
 
     # Load configurations so we can learn the hash.
-    result = await buck.audit("configurations")
+    result = await yak.audit("configurations")
     configurations = _parse_audit_configurations(result.stdout)
     [configuration] = [c for c in configurations if c.startswith("root//:p#")]
 
     # Now audit the specific configuration.
-    result = await buck.audit("configurations", configuration)
+    result = await yak.audit("configurations", configuration)
     assert [configuration] == _parse_audit_configurations(result.stdout)

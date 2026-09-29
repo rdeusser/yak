@@ -78,7 +78,7 @@ use yak_build_signals::env::WaitingData;
 use yak_common::dice::cells::HasCellResolver;
 use yak_common::events::HasEvents;
 use yak_common::legacy_configs::dice::HasLegacyConfigs;
-use yak_common::legacy_configs::key::BuckconfigKeyRef;
+use yak_common::legacy_configs::key::YakconfigKeyRef;
 use yak_common::liveliness_observer::LivelinessObserver;
 use yak_common::local_resource_state::LocalResourceState;
 use yak_core::cells::cell_root_path::CellRootPathBuf;
@@ -88,7 +88,7 @@ use yak_core::execution_types::executor_config::Executor;
 use yak_core::execution_types::executor_config::LocalExecutorOptions;
 use yak_core::execution_types::executor_config::PathSeparatorKind;
 use yak_core::fs::artifact_path_resolver::ArtifactFs;
-use yak_core::fs::buck_out_path::BuckOutTestPath;
+use yak_core::fs::yak_out_path::YakOutTestPath;
 use yak_core::fs::project_rel_path::ProjectRelativePathBuf;
 use yak_core::provider::label::ConfiguredProvidersLabel;
 use yak_core::target::configured_target_label::ConfiguredTargetLabel;
@@ -103,8 +103,8 @@ use yak_data::TestRunStart;
 use yak_data::TestSessionInfo;
 use yak_data::TestSuite;
 use yak_data::ToProtoMessage;
-use yak_error::BuckErrorContext;
-use yak_error::BuckErrorOptionContext;
+use yak_error::YakErrorContext;
+use yak_error::YakErrorOptionContext;
 use yak_error::ErrorTag;
 use yak_error::conversion::from_any_with_tag;
 use yak_error::internal_error;
@@ -146,11 +146,11 @@ use yak_execute_impl::executors::local::materialize_inputs;
 use yak_execute_impl::executors::local::prep_scratch_path;
 use yak_fs::paths::forward_rel_path::ForwardRelativePath;
 use yak_fs::paths::forward_rel_path::ForwardRelativePathBuf;
-use yak_hash::BuckIndexMap;
-use yak_hash::BuckIndexSet;
-use yak_hash::BuckMutMap;
-use yak_hash::BuckMutSet;
-use yak_hash::buck_indexset;
+use yak_hash::YakIndexMap;
+use yak_hash::YakIndexSet;
+use yak_hash::YakMutMap;
+use yak_hash::YakMutSet;
+use yak_hash::yak_indexset;
 use yak_node::nodes::configured::ConfiguredTargetNode;
 use yak_node::nodes::configured_frontend::ConfiguredTargetNodeCalculation;
 use yak_resource_control::HasResourceControl;
@@ -240,14 +240,14 @@ impl OwnedTestInfo {
         }
     }
 
-    fn env_args<'v>(&'v self) -> BuckMutMap<&'v str, &'v dyn CommandLineArgLike<'v>> {
+    fn env_args<'v>(&'v self) -> YakMutMap<&'v str, &'v dyn CommandLineArgLike<'v>> {
         match self {
             Self::External(info) => info.as_ref().value().as_ref().env().collect(),
             Self::Internal(info) => info.as_ref().value().as_ref().env().collect(),
         }
     }
 
-    fn local_resources(&self) -> BuckIndexMap<&str, Option<&ConfiguredProvidersLabel>> {
+    fn local_resources(&self) -> YakIndexMap<&str, Option<&ConfiguredProvidersLabel>> {
         match self {
             Self::External(info) => info.as_ref().value().as_ref().local_resources(),
             Self::Internal(info) => info.as_ref().value().as_ref().local_resources(),
@@ -350,7 +350,7 @@ pub enum ExecutorMessage {
     InfoMessage(String),
 }
 
-pub struct BuckTestOrchestrator<'a: 'static> {
+pub struct YakTestOrchestrator<'a: 'static> {
     dice: DiceTransaction,
     session: Arc<TestSession>,
     results_channel: UnboundedSender<yak_error::Result<ExecutorMessage>>,
@@ -361,7 +361,7 @@ pub struct BuckTestOrchestrator<'a: 'static> {
     internal_runner_config: InternalRunnerConfig,
 }
 
-impl<'a> BuckTestOrchestrator<'a> {
+impl<'a> YakTestOrchestrator<'a> {
     pub(crate) async fn new(
         dice: DiceTransaction,
         session: Arc<TestSession>,
@@ -369,7 +369,7 @@ impl<'a> BuckTestOrchestrator<'a> {
         results_channel: UnboundedSender<yak_error::Result<ExecutorMessage>>,
         cancellations: &'a CancellationContext,
         internal_runner_config: InternalRunnerConfig,
-    ) -> yak_error::Result<BuckTestOrchestrator<'a>> {
+    ) -> yak_error::Result<YakTestOrchestrator<'a>> {
         let events = dice.per_transaction_data().get_dispatcher().dupe();
         let re_client = Arc::new(remote_storage::ReClientWithCache::new(
             dice.per_transaction_data().get_re_client().dupe(),
@@ -395,7 +395,7 @@ impl<'a> BuckTestOrchestrator<'a> {
         cancellations: &'a CancellationContext,
         re_client: Arc<remote_storage::ReClientWithCache>,
         internal_runner_config: InternalRunnerConfig,
-    ) -> BuckTestOrchestrator<'a> {
+    ) -> YakTestOrchestrator<'a> {
         Self {
             dice,
             session,
@@ -483,13 +483,13 @@ impl<'a> BuckTestOrchestrator<'a> {
 
         Self::require_alive(self.liveliness_observer.dupe()).await?;
 
-        let mut output_map = BuckMutMap::default();
+        let mut output_map = YakMutMap::default();
         let mut paths_to_materialize = vec![];
 
         let remote_storage_config_update_futures = FuturesUnordered::new();
 
         for (test_path, artifact) in outputs {
-            let project_relative_path = fs.buck_out_path_resolver().resolve_test(&test_path);
+            let project_relative_path = fs.yak_out_path_resolver().resolve_test(&test_path);
             let output_name = test_path.into_path().into();
             // It's OK to search iteratively here because there will be few entries in `pre_create_dirs`
             let remote_storage_config = pre_create_dirs
@@ -540,7 +540,7 @@ impl<'a> BuckTestOrchestrator<'a> {
                 MaterializationPurpose::IntermediateOnly,
             )
             .await
-            .buck_error_context("Error materializing test outputs")?;
+            .yak_error_context("Error materializing test outputs")?;
 
         Ok(ExecutionResult2 {
             status,
@@ -622,7 +622,7 @@ impl<'a> BuckTestOrchestrator<'a> {
                 agv.iter()
                     .filter_map(|(artifact, _)| artifact.action_key().map(|k| k.dupe()))
             })
-            .collect::<BuckMutSet<_>>() // dedupe
+            .collect::<YakMutSet<_>>() // dedupe
             .into_iter()
             .collect();
 
@@ -634,7 +634,7 @@ impl<'a> BuckTestOrchestrator<'a> {
             let setup_local_resources_executor = Self::get_local_executor(dice, fs)?;
             let simple_stage = stage.as_ref().into();
 
-            let available_resources: BuckMutMap<_, _> =
+            let available_resources: YakMutMap<_, _> =
                 test_info.local_resources().into_iter().collect();
             let rule_required_names =
                 test_info.required_local_resource_names_for_stage(&simple_stage);
@@ -758,7 +758,7 @@ impl Key for TestExecutionKey {
         let config = InternalRunnerConfig::parse(
             ctx.get_legacy_config_property(
                 cell_resolver.root_cell(),
-                BuckconfigKeyRef {
+                YakconfigKeyRef {
                     section: "test",
                     property: "use_internal_runner",
                 },
@@ -770,7 +770,7 @@ impl Key for TestExecutionKey {
         cancellations
             .with_structured_cancellation(|observer| {
                 async move {
-                    BuckTestOrchestrator::prepare_and_execute_no_dice(
+                    YakTestOrchestrator::prepare_and_execute_no_dice(
                         ctx,
                         self.dupe(),
                         Arc::new(observer),
@@ -821,7 +821,7 @@ async fn prepare_and_execute(
         }?;
         Ok((*result).clone())
     } else {
-        Ok(BuckTestOrchestrator::prepare_and_execute_no_dice(
+        Ok(YakTestOrchestrator::prepare_and_execute_no_dice(
             ctx,
             key,
             liveliness_observer,
@@ -874,7 +874,7 @@ impl Display for TestExecutionKey {
 struct PreparedLocalResourceSetupContext {
     pub target: ConfiguredTargetLabel,
     pub execution_request: CommandExecutionRequest,
-    pub env_var_mapping: BuckIndexMap<String, String>,
+    pub env_var_mapping: YakIndexMap<String, String>,
 }
 
 #[derive(Clone, Dupe, Allocative)]
@@ -896,7 +896,7 @@ enum ExecuteError {
 }
 
 #[async_trait]
-impl TestOrchestrator for BuckTestOrchestrator<'_> {
+impl TestOrchestrator for YakTestOrchestrator<'_> {
     async fn execute2(
         &self,
         stage: TestStage,
@@ -910,7 +910,7 @@ impl TestOrchestrator for BuckTestOrchestrator<'_> {
         required_local_resources: RequiredLocalResources,
         disable_test_execution_caching: bool,
     ) -> yak_error::Result<ExecuteResponse> {
-        let res = BuckTestOrchestrator::execute2(
+        let res = YakTestOrchestrator::execute2(
             self,
             stage,
             test_target,
@@ -1025,7 +1025,7 @@ impl TestOrchestrator for BuckTestOrchestrator<'_> {
         // We leave that decision to actual local execution runner that requests local execution preparation.
         let setup_local_resources_executor =
             Self::get_local_executor(&mut self.dice.dupe().ctx(), fs)?;
-        let available_resources: BuckMutMap<_, _> =
+        let available_resources: YakMutMap<_, _> =
             test_info.local_resources().into_iter().collect();
         let rule_required_names = test_info.execution_required_local_resource_names();
         let providers = {
@@ -1181,11 +1181,11 @@ struct ExecuteData {
     pub status: ExecutionStatus,
     pub timing: CommandExecutionMetadata,
     pub execution_kind: Option<CommandExecutionKind>,
-    pub outputs: Vec<(BuckOutTestPath, ArtifactValue)>,
+    pub outputs: Vec<(YakOutTestPath, ArtifactValue)>,
     pub command_execution: Option<yak_data::CommandExecution>,
 }
 
-impl BuckTestOrchestrator<'_> {
+impl YakTestOrchestrator<'_> {
     fn executor_preference(
         opts: TestSessionOptions,
         test_supports_re: bool,
@@ -1391,7 +1391,7 @@ impl BuckTestOrchestrator<'_> {
         let std_streams = std_streams
             .into_bytes()
             .await
-            .buck_error_context("Error accessing test output")?;
+            .yak_error_context("Error accessing test output")?;
         let stdout = ExecutionStream::Inline(std_streams.stdout);
         let stderr = ExecutionStream::Inline(std_streams.stderr);
 
@@ -1474,7 +1474,7 @@ impl BuckTestOrchestrator<'_> {
             None => test_target_node
                 .execution_platform_resolution()
                 .executor_config()
-                .buck_error_context("Error accessing executor config")?,
+                .yak_error_context("Error accessing executor config")?,
         };
 
         if let TestStage::Listing { .. } = &stage {
@@ -1633,7 +1633,7 @@ impl BuckTestOrchestrator<'_> {
                     .ok_or_else(|| {
                         internal_error!("The `executor_override` provided does not exist")
                     })
-                    .with_buck_error_context(|| {
+                    .with_yak_error_context(|| {
                         format!(
                             "Error processing `executor_override`: `{}`",
                             executor_override.name
@@ -1664,7 +1664,7 @@ impl BuckTestOrchestrator<'_> {
             stage,
             supports_test_execution_caching,
         )
-        .buck_error_context("Error constructing CommandExecutor")?;
+        .yak_error_context("Error constructing CommandExecutor")?;
 
         Ok(TestExecutor {
             test_executor: executor,
@@ -1685,7 +1685,7 @@ impl BuckTestOrchestrator<'_> {
     ) -> yak_error::Result<ExpandedTestExecutable> {
         let output_root = resolve_output_root(dice, test_target, stage).await?;
 
-        let mut declared_outputs = BuckIndexMap::<BuckOutTestPath, OutputCreationBehavior>::new();
+        let mut declared_outputs = YakIndexMap::<YakOutTestPath, OutputCreationBehavior>::new();
 
         let mut supports_re = true;
 
@@ -1734,7 +1734,7 @@ impl BuckTestOrchestrator<'_> {
         };
 
         for output in pre_create_dirs.into_owned() {
-            let test_path = BuckOutTestPath::new(output_root.clone(), output.name.into());
+            let test_path = YakOutTestPath::new(output_root.clone(), output.name.into());
             declared_outputs.insert(test_path, OutputCreationBehavior::Create);
         }
 
@@ -1755,7 +1755,7 @@ impl BuckTestOrchestrator<'_> {
         cmd: Vec<String>,
         env: SortedVectorMap<String, String>,
         ensured_inputs: Vec<(ArtifactGroup, ArtifactGroupValues)>,
-        declared_outputs: BuckIndexMap<BuckOutTestPath, OutputCreationBehavior>,
+        declared_outputs: YakIndexMap<YakOutTestPath, OutputCreationBehavior>,
         fs: &ArtifactFs,
         timeout: Option<Duration>,
         host_sharing_requirements: Option<Arc<HostSharingRequirements>>,
@@ -1870,7 +1870,7 @@ impl BuckTestOrchestrator<'_> {
                 async move {
                     (
                         missing_target.dupe(),
-                        setup.await.with_buck_error_context(|| {
+                        setup.await.with_yak_error_context(|| {
                             format!(
                                 "Error setting up local resource declared in `{missing_target}`"
                             )
@@ -1917,7 +1917,7 @@ impl BuckTestOrchestrator<'_> {
             .await?;
 
         let info = provider.as_ref().value().as_ref();
-        let artifact_path_mapping: BuckMutMap<_, _> = inputs
+        let artifact_path_mapping: YakMutMap<_, _> = inputs
             .iter()
             .flat_map(|v| v.iter())
             .map(|(a, v)| (a, v.content_based_path_hash()))
@@ -1936,7 +1936,7 @@ impl BuckTestOrchestrator<'_> {
             .collect();
         let paths = CommandExecutionPaths::new(
             inputs,
-            buck_indexset![],
+            yak_indexset![],
             fs,
             digest_config,
             dice.per_transaction_data()
@@ -2006,7 +2006,7 @@ impl BuckTestOrchestrator<'_> {
         let std_streams = std_streams
             .into_bytes()
             .await
-            .buck_error_context("Error accessing setup local resource output")?;
+            .yak_error_context("Error accessing setup local resource output")?;
 
         match status {
             CommandExecutionStatus::Success { .. } => {}
@@ -2042,7 +2042,7 @@ impl BuckTestOrchestrator<'_> {
 
         let string_content = String::from_utf8_lossy(&std_streams.stdout);
         let data: LocalResourcesSetupResult = serde_json::from_str(&string_content)
-            // .buck_error_context("Error parsing local resource setup command output")
+            // .yak_error_context("Error parsing local resource setup command output")
             .map_err(|e| from_any_with_tag(e, ErrorTag::LocalResourceSetup))?;
         let state = data.into_state(context.target.dupe(), &context.env_var_mapping)?;
 
@@ -2050,14 +2050,14 @@ impl BuckTestOrchestrator<'_> {
     }
 }
 
-impl Drop for BuckTestOrchestrator<'_> {
+impl Drop for YakTestOrchestrator<'_> {
     fn drop(&mut self) {
         // If we didn't close the sender yet, then notify the receiver that our stream is
         // incomplete.
         let _ignored = self
             .results_channel
             .unbounded_send(Err(yak_error::internal_error!(
-                "BuckTestOrchestrator exited before end-of-tests was received",
+                "YakTestOrchestrator exited before end-of-tests was received",
             )));
     }
 }
@@ -2066,7 +2066,7 @@ struct Execute2RequestExpander<'a> {
     test_info: &'a OwnedTestInfo,
     stage: &'a TestStage,
     output_root: &'a ForwardRelativePath,
-    declared_outputs: &'a mut BuckIndexMap<BuckOutTestPath, OutputCreationBehavior>,
+    declared_outputs: &'a mut YakIndexMap<YakOutTestPath, OutputCreationBehavior>,
     fs: &'a ExecutorFs<'a>,
     cmd: Cow<'a, [ArgValue]>,
     env: Cow<'a, SortedVectorMap<String, ArgValue>>,
@@ -2075,7 +2075,7 @@ struct Execute2RequestExpander<'a> {
 
 fn make_visit_arg_artifacts<'v>(
     cli_args_for_interpolation: Vec<&'v dyn CommandLineArgLike<'v>>,
-    env_for_interpolation: BuckMutMap<&'v str, &'v dyn CommandLineArgLike<'v>>,
+    env_for_interpolation: YakMutMap<&'v str, &'v dyn CommandLineArgLike<'v>>,
 ) -> impl for<'a> Fn(&'a mut dyn CommandLineArtifactVisitor<'v>, &'a ArgValue) -> yak_error::Result<()>
 {
     move |artifact_visitor: &mut dyn CommandLineArtifactVisitor<'_>, value: &ArgValue| {
@@ -2100,7 +2100,7 @@ fn make_visit_arg_artifacts<'v>(
 }
 
 impl<'a> Execute2RequestExpander<'a> {
-    fn get_inputs(&self) -> yak_error::Result<BuckIndexSet<ArtifactGroup>> {
+    fn get_inputs(&self) -> yak_error::Result<YakIndexSet<ArtifactGroup>> {
         let Execute2RequestExpander {
             test_info,
             stage,
@@ -2132,10 +2132,10 @@ impl<'a> Execute2RequestExpander<'a> {
 
     fn expand_arg_value<'v>(
         fmt: &mut CommandLineBuilder<'v, '_>,
-        declared_outputs: &mut BuckIndexMap<BuckOutTestPath, OutputCreationBehavior>,
+        declared_outputs: &mut YakIndexMap<YakOutTestPath, OutputCreationBehavior>,
         value: &'v ArgValue,
         cli_args_for_interpolation: &[&dyn CommandLineArgLike<'v>],
-        env_for_interpolation: &BuckMutMap<&str, &dyn CommandLineArgLike<'v>>,
+        env_for_interpolation: &YakMutMap<&str, &dyn CommandLineArgLike<'v>>,
         output_root: &ForwardRelativePath,
         fs: &ExecutorFs<'_>,
     ) -> yak_error::Result<()> {
@@ -2162,8 +2162,8 @@ impl<'a> Execute2RequestExpander<'a> {
                 arg.add_to_command_line(fmt)?;
             }
             ArgValueContent::DeclaredOutput(output) => {
-                let test_path = BuckOutTestPath::new(output_root.to_owned(), output.name.clone());
-                let path = fs.fs().buck_out_path_resolver().resolve_test(&test_path);
+                let test_path = YakOutTestPath::new(output_root.to_owned(), output.name.clone());
+                let path = fs.fs().yak_out_path_resolver().resolve_test(&test_path);
                 fmt.push_project_path(path)?;
                 declared_outputs.insert(test_path, OutputCreationBehavior::Parent);
             }
@@ -2279,7 +2279,7 @@ impl<'a> Execute2RequestExpander<'a> {
                     // TODO(ianc): Support input_paths on test workers
                     input_paths: CommandExecutionPaths::new(
                         vec![],
-                        buck_indexset![],
+                        yak_indexset![],
                         fs.fs(),
                         digest_config,
                         None,
@@ -2298,7 +2298,7 @@ async fn resolve_output_root(
     test_target: &ConfiguredProvidersLabel,
     stage: &TestStage,
 ) -> Result<ForwardRelativePathBuf, yak_error::Error> {
-    let resolver = dice.get_buck_out_path().await?;
+    let resolver = dice.get_yak_out_path().await?;
 
     let output_root = match stage {
         TestStage::Listing { .. } => resolver
@@ -2333,7 +2333,7 @@ struct ExpandedTestExecutable {
     env: SortedVectorMap<String, String>,
     ensured_inputs: Vec<(ArtifactGroup, ArtifactGroupValues)>,
     supports_re: bool,
-    declared_outputs: BuckIndexMap<BuckOutTestPath, OutputCreationBehavior>,
+    declared_outputs: YakIndexMap<YakOutTestPath, OutputCreationBehavior>,
     worker: Option<WorkerSpec>,
 }
 
@@ -2560,7 +2560,7 @@ mod tests {
     use super::*;
 
     async fn make() -> yak_error::Result<(
-        BuckTestOrchestrator<'static>,
+        YakTestOrchestrator<'static>,
         UnboundedReceiver<yak_error::Result<ExecutorMessage>>,
     )> {
         let fs = ProjectRootTemp::new().unwrap();
@@ -2569,12 +2569,12 @@ mod tests {
             CellName::testing_new("cell"),
             CellRootPathBuf::new(ProjectRelativePathBuf::unchecked_new("cell".to_owned())),
         );
-        let buckout_path = ProjectRelativePathBuf::unchecked_new("buck_out/v2".into());
+        let yakout_path = ProjectRelativePathBuf::unchecked_new("yak_out/v2".into());
         let mut dice = DiceBuilder::new()
             .set_data(|d| d.set_testing_io_provider(&fs))
             .build(UserComputationData::new())
             .unwrap();
-        dice.set_buck_out_path(Some(buckout_path))?;
+        dice.set_yak_out_path(Some(yakout_path))?;
         dice.set_cell_resolver(cell_resolver)?;
 
         let dice = dice.commit().await;
@@ -2586,7 +2586,7 @@ mod tests {
         ));
 
         Ok((
-            BuckTestOrchestrator::from_parts(
+            YakTestOrchestrator::from_parts(
                 dice,
                 Arc::new(TestSession::new(Default::default())),
                 NoopLivelinessObserver::create(),

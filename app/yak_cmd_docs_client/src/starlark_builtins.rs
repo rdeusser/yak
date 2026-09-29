@@ -12,13 +12,13 @@ use yak_cli_proto::new_generic::DocsRequest;
 use yak_cli_proto::new_generic::DocsResponse;
 use yak_cli_proto::new_generic::DocsStarlarkBuiltinsRequest;
 use yak_client_ctx::client_ctx::ClientCommandContext;
-use yak_client_ctx::common::BuckArgMatches;
+use yak_client_ctx::common::YakArgMatches;
 use yak_client_ctx::common::CommonBuildConfigurationOptions;
 use yak_client_ctx::common::CommonCommandOptions;
 use yak_client_ctx::common::CommonEventLogOptions;
 use yak_client_ctx::common::CommonStarlarkOptions;
 use yak_client_ctx::common::ui::CommonConsoleOptions;
-use yak_client_ctx::daemon::client::BuckdClientConnector;
+use yak_client_ctx::daemon::client::YakdClientConnector;
 use yak_client_ctx::events_ctx::EventsCtx;
 use yak_client_ctx::exit_result::ExitResult;
 use yak_client_ctx::path_arg::PathArg;
@@ -43,8 +43,8 @@ impl StreamingCommand for StarlarkBuiltinsCommand {
     const COMMAND_NAME: &'static str = "docs starlark-builtins";
     async fn exec_impl(
         self,
-        buckd: &mut BuckdClientConnector,
-        matches: BuckArgMatches<'_>,
+        yakd: &mut YakdClientConnector,
+        matches: YakArgMatches<'_>,
         ctx: &mut ClientCommandContext<'_>,
         events_ctx: &mut EventsCtx,
     ) -> ExitResult {
@@ -52,7 +52,7 @@ impl StreamingCommand for StarlarkBuiltinsCommand {
 
         let p = self.output_dir.resolve(&ctx.working_dir).to_string();
 
-        let response = buckd
+        let response = yakd
             .with_flushing()
             .new_generic(
                 client_context,

@@ -23,9 +23,9 @@ use yak_build_api::artifact_groups::ArtifactGroup;
 use yak_build_api::interpreter::rule_defs::artifact::starlark_artifact_like::ValueAsInputArtifactLike;
 use yak_build_api::interpreter::rule_defs::artifact_tagging::ArtifactTag;
 use yak_build_api::interpreter::rule_defs::cmd_args::CommandLineArtifactVisitor;
-use yak_error::BuckErrorContext;
-use yak_error::BuckErrorOptionContext;
-use yak_hash::BuckMutMap;
+use yak_error::YakErrorContext;
+use yak_error::YakErrorOptionContext;
+use yak_hash::YakMutMap;
 use yak_interpreter_for_build::interpreter::testing::Tester;
 
 use crate::interpreter::rule_defs::artifact::testing::artifactory;
@@ -70,7 +70,7 @@ fn test_tagging() -> yak_error::Result<()> {
             let artifact = artifact
                 .0
                 .get_bound_artifact()
-                .buck_error_context("Not a bound artifact")?
+                .yak_error_context("Not a bound artifact")?
                 .dupe();
 
             visit_json_artifacts(tagged, &mut AssertVisitor { tag, artifact })?;
@@ -85,7 +85,7 @@ fn test_tagging() -> yak_error::Result<()> {
                 value: JsonUnpack::unpack_value_err(tagged)?,
                 fs: None,
                 absolute: false,
-                artifact_path_mapping: &BuckMutMap::default(),
+                artifact_path_mapping: &YakMutMap::default(),
             })
             .map_err(yak_error::Error::from)?;
 
@@ -93,7 +93,7 @@ fn test_tagging() -> yak_error::Result<()> {
                 value: JsonUnpack::unpack_value_err(value)?,
                 fs: None,
                 absolute: false,
-                artifact_path_mapping: &BuckMutMap::default(),
+                artifact_path_mapping: &YakMutMap::default(),
             })
             .map_err(yak_error::Error::from)?;
 

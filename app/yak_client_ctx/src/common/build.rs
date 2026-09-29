@@ -13,7 +13,7 @@ use clap::builder::FalseyValueParser;
 use tracing::warn;
 use yak_cli_proto::common_build_options::ExecutionStrategy;
 use yak_core::yak_env_name;
-use yak_error::conversion::clap::buck_error_clap_parser;
+use yak_error::conversion::clap::yak_error_clap_parser;
 
 use crate::common::PrintOutputsFormat;
 
@@ -92,7 +92,7 @@ pub struct CommonBuildOptions {
         long = "build-report-options",
         requires = "build_report",
         value_delimiter = ',',
-        value_parser = buck_error_clap_parser(parse_build_report_option),
+        value_parser = yak_error_clap_parser(parse_build_report_option),
     )]
     build_report_options: Vec<BuildReportOption>,
 

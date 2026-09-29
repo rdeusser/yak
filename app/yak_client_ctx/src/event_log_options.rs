@@ -13,8 +13,8 @@ use std::process::Stdio;
 use dupe::Dupe;
 use yak_common::init::LogDownloadMethod;
 use yak_common::temp_path::TempPath;
-use yak_error::BuckErrorContext;
-use yak_error::BuckErrorOptionContext;
+use yak_error::YakErrorContext;
+use yak_error::YakErrorOptionContext;
 use yak_error::ErrorTag;
 use yak_event_log::file_names::find_log_by_trace_id;
 use yak_event_log::file_names::retrieve_nth_recent_log;
@@ -80,7 +80,7 @@ impl EventLogOptions {
         } else {
             retrieve_nth_recent_log(
                 ctx.paths()
-                    .buck_error_context("Error identifying log dir")?,
+                    .yak_error_context("Error identifying log dir")?,
                 self.recent.unwrap_or(0),
             )
         }

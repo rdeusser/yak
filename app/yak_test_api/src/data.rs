@@ -32,7 +32,7 @@ use yak_error::ErrorTag;
 use yak_error::yak_error;
 use yak_fs::paths::abs_norm_path::AbsNormPathBuf;
 use yak_fs::paths::forward_rel_path::ForwardRelativePathBuf;
-use yak_hash::BuckMutMap;
+use yak_hash::YakMutMap;
 pub use yak_test_proto::CasDigest;
 pub use yak_test_proto::ExecutionDetails;
 
@@ -205,7 +205,7 @@ pub struct ExternalRunnerSpec {
     pub command: Vec<ExternalRunnerSpecValue>,
     /// Environment variables a specified by the rule. A mapping from keys to
     /// verbatim values or opaque handles for more complex values.
-    pub env: BuckMutMap<String, ExternalRunnerSpecValue>,
+    pub env: YakMutMap<String, ExternalRunnerSpecValue>,
     /// Labels defined on the rule.
     pub labels: Vec<String>,
     /// Contacts defined on the rule.
@@ -456,11 +456,11 @@ pub struct ExecutionResult2 {
     pub status: ExecutionStatus,
     pub stdout: ExecutionStream,
     pub stderr: ExecutionStream,
-    pub outputs: BuckMutMap<OutputName, Output>,
+    pub outputs: YakMutMap<OutputName, Output>,
     pub start_time: SystemTime,
     pub execution_time: Duration,
     pub max_memory_used_bytes: Option<u64>,
-    /// We don't try to convert this field, mostly because it shares with buck2.data, and that
+    /// We don't try to convert this field, mostly because it shares with yak.data, and that
     /// seems to have very little value. We just validate it's sent.
     pub execution_details: ExecutionDetails,
     pub command_execution: Option<yak_data::CommandExecution>,

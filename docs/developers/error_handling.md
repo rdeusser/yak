@@ -86,14 +86,14 @@ over `.context(...)` or `.expect(...)`.
 
 ## Adding context
 
-`yak_error` supports `buck_error_context` APIs akin to anyhow's context:
+`yak_error` supports `yak_error_context` APIs akin to anyhow's context:
 
 ```rust
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 
-result.buck_error_context("Failed to process file")?;
+result.yak_error_context("Failed to process file")?;
 
-result.with_buck_error_context(|| format!("Failed to process file: {}", path))?;
+result.with_yak_error_context(|| format!("Failed to process file: {}", path))?;
 ```
 
 Be somewhat conservative in the use of context, more is not always better.
@@ -115,7 +115,7 @@ some_result.map_err(|e| from_any_with_tag(e, ErrorTag::Tier0))?;
 ```rust
 fn process_artifact(&self, artifact: &Artifact) -> yak_error::Result<()> {
     let path = artifact.path()
-        .buck_error_context("Failed to get artifact path")?;
+        .yak_error_context("Failed to get artifact path")?;
 
     if !path.exists() {
         return Err(yak_error!(

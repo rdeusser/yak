@@ -33,10 +33,10 @@ def get_labels():
         })
     )
 
-def get_buckconfig_backed_label():
+def get_yakconfig_backed_label():
     return select({
-        "//cfg:buckconfig_backed[enabled]": "buckconfig_backed:enabled",
-        "//cfg:buckconfig_backed[none]": "buckconfig_backed:none",
+        "//cfg:yakconfig_backed[enabled]": "yakconfig_backed:enabled",
+        "//cfg:yakconfig_backed[none]": "yakconfig_backed:none",
     })
 
 def _dummy(ctx):
@@ -49,7 +49,7 @@ def _dummy(ctx):
 dummy = rule(
     impl = _dummy,
     attrs = {
-        "buckconfig_backed_label": attrs.string(default = ""),
+        "yakconfig_backed_label": attrs.string(default = ""),
         "configured_deps": attrs.list(attrs.configured_dep(), default = []),
         "deps": attrs.list(attrs.dep(), default = []),
         "exec_deps": attrs.list(attrs.exec_dep(), default = []),
@@ -72,8 +72,8 @@ def labeled_dummy(name, **kwargs):
     if "labels" not in kwargs:
         kwargs["labels"] = get_labels()
 
-    if "buckconfig_backed_label" not in kwargs:
-        kwargs["buckconfig_backed_label"] = get_buckconfig_backed_label()
+    if "yakconfig_backed_label" not in kwargs:
+        kwargs["yakconfig_backed_label"] = get_yakconfig_backed_label()
 
     # Set default_target_platform if not provided
     if "default_target_platform" not in kwargs:

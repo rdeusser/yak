@@ -13,9 +13,9 @@ use std::io::Write;
 
 use futures::TryStreamExt;
 use futures::stream::Stream;
-use yak_client_ctx::client_ctx::BuckSubcommand;
+use yak_client_ctx::client_ctx::YakSubcommand;
 use yak_client_ctx::client_ctx::ClientCommandContext;
-use yak_client_ctx::common::BuckArgMatches;
+use yak_client_ctx::common::YakArgMatches;
 use yak_client_ctx::event_log_options::EventLogOptions;
 use yak_client_ctx::events_ctx::EventsCtx;
 use yak_client_ctx::exit_result::ClientIoError;
@@ -34,8 +34,8 @@ use yak_event_observer::what_ran::WhatRanOutputWriter;
 use yak_event_observer::what_ran::WhatRanRelevantAction;
 use yak_event_observer::what_ran::WhatRanState;
 use yak_events::span::SpanId;
-use yak_hash::BuckIndexMap;
-use yak_hash::BuckMutMap;
+use yak_hash::YakIndexMap;
+use yak_hash::YakMutMap;
 
 use crate::LogCommandOutputFormat;
 use crate::LogCommandOutputFormatWithWriter;
@@ -112,12 +112,12 @@ struct WhatRanCommandOptions {
     incomplete: bool,
 }
 
-impl BuckSubcommand for WhatRanCommand {
+impl YakSubcommand for WhatRanCommand {
     const COMMAND_NAME: &'static str = "log-what-ran";
 
     async fn exec_impl(
         self,
-        _matches: BuckArgMatches<'_>,
+        _matches: YakArgMatches<'_>,
         ctx: ClientCommandContext<'_>,
         _events_ctx: &mut EventsCtx,
     ) -> ExitResult {
@@ -203,7 +203,7 @@ impl WhatRanEntry {
 #[derive(Default)]
 pub struct WhatRanCommandState {
     /// Maps action spans to their details.
-    known_actions: BuckMutMap<SpanId, WhatRanEntry>,
+    known_actions: YakMutMap<SpanId, WhatRanEntry>,
 }
 
 impl WhatRanState for WhatRanCommandState {
@@ -253,13 +253,13 @@ impl WhatRanCommandState {
     ///   unfinished. We check to emit all unfinished after all events are received
     fn event(
         &mut self,
-        event: Box<yak_data::BuckEvent>,
+        event: Box<yak_data::YakEvent>,
         output: &mut impl WhatRanOutputWriter,
         options: &WhatRanCommandOptions,
     ) -> yak_error::Result<()> {
         if let Some(data) = event.data {
             // Create WhatRanRelevantAction on SpanStart to track CommandReproducers as they come
-            if let Some(action) = WhatRanRelevantAction::from_buck_data(&data) {
+            if let Some(action) = WhatRanRelevantAction::from_yak_data(&data) {
                 self.known_actions.insert(
                     SpanId::from_u64(event.span_id)?,
                     WhatRanEntry {
@@ -270,7 +270,7 @@ impl WhatRanCommandState {
                 return Ok(());
             }
             // Create CommandReproducers on SpanStart an add them to corresponding WhatRanRelevantAction
-            if let Some(repro) = CommandReproducer::from_buck_data(&data, &options.options) {
+            if let Some(repro) = CommandReproducer::from_yak_data(&data, &options.options) {
                 if let Some(parent_id) = SpanId::from_u64_opt(event.parent_id) {
                     if let Some(entry) = self.known_actions.get_mut(&parent_id) {
                         entry.reproducers.push(repro);
@@ -279,7 +279,7 @@ impl WhatRanCommandState {
                 return Ok(());
             }
             // Emit WhatRanRelevantAction when we see the corresponding SpanEnd
-            if let yak_data::buck_event::Data::SpanEnd(span) = &data
+            if let yak_data::yak_event::Data::SpanEnd(span) = &data
                 && let Some(mut entry) =
                     self.known_actions.remove(&SpanId::from_u64(event.span_id)?)
                 && should_emit_finished_action(&span.data, options)
@@ -493,8 +493,8 @@ impl WhatRanOutputWriter for OutputFormatWithWriter<'_> {
     }
 }
 
-fn into_index_map(platform: &Option<yak_data::RePlatform>) -> BuckIndexMap<&str, &str> {
-    platform.as_ref().map_or_else(BuckIndexMap::new, |p| {
+fn into_index_map(platform: &Option<yak_data::RePlatform>) -> YakIndexMap<&str, &str> {
+    platform.as_ref().map_or_else(YakIndexMap::new, |p| {
         p.properties
             .iter()
             .map(|Property { name, value }| (name.as_ref(), value.as_ref()))
@@ -541,27 +541,27 @@ mod json_reproducer {
         LocalDepFileCache,
         Re {
             digest: &'a str,
-            platform_properties: BuckIndexMap<&'a str, &'a str>,
+            platform_properties: YakIndexMap<&'a str, &'a str>,
             #[serde(skip_serializing_if = "Option::is_none")]
             action_key: Option<&'a str>,
         },
         ReWorker {
             digest: &'a str,
-            platform_properties: BuckIndexMap<&'a str, &'a str>,
+            platform_properties: YakIndexMap<&'a str, &'a str>,
             #[serde(skip_serializing_if = "Option::is_none")]
             action_key: Option<&'a str>,
         },
         Local {
             command: Cow<'a, [String]>,
-            env: BuckIndexMap<&'a str, &'a str>,
+            env: YakIndexMap<&'a str, &'a str>,
         },
         Worker {
             command: Cow<'a, [String]>,
-            env: BuckIndexMap<&'a str, &'a str>,
+            env: YakIndexMap<&'a str, &'a str>,
         },
         WorkerInit {
             command: Cow<'a, [String]>,
-            env: BuckIndexMap<&'a str, &'a str>,
+            env: YakIndexMap<&'a str, &'a str>,
         },
     }
 }
@@ -588,7 +588,7 @@ mod tests {
 
     fn make_base_command() -> JsonCommand<'static> {
         let command = Cow::Owned(vec!["some".to_owned(), "command".to_owned()]);
-        let mut env = BuckIndexMap::default();
+        let mut env = YakIndexMap::default();
         env.insert("KEY", "val");
 
         JsonCommand {
@@ -608,7 +608,7 @@ mod tests {
             identity: "some/target",
             reproducer: JsonReproducer::Re {
                 digest: "placeholder",
-                platform_properties: yak_hash::buck_indexmap! {
+                platform_properties: yak_hash::yak_indexmap! {
                     "platform" => "linux-remote-execution"
                 },
                 action_key: None,

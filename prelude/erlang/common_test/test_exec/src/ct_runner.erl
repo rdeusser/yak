@@ -36,7 +36,7 @@ communicates the result to the test runner.
 
 -export_type([port_settings/0]).
 
--include_lib("common/include/buck_ct_records.hrl").
+-include_lib("common/include/yak_ct_records.hrl").
 -include_lib("kernel/include/logger.hrl").
 
 -define(raw_file_access, prim_file).
@@ -381,7 +381,7 @@ config_arg(ConfigFiles) -> [~"-config" | ConfigFiles].
 Create a set up a home dir in the output directory.
 Each test execution will have a separate home dir with a
 erlang default cookie file, setting the default cookie to
-buck2-test-runner-cookie
+yak-test-runner-cookie
 """.
 -spec set_home_dir(file:filename_all()) -> file:filename_all().
 set_home_dir(OutputDir) ->
@@ -429,7 +429,7 @@ try_setup_dotslash_cache(FakeHomeDir) ->
 
 -spec cookie() -> atom().
 cookie() ->
-    'buck2-test-runner-cookie'.
+    'yak-test-runner-cookie'.
 
 -spec project_root() -> file:filename().
 project_root() ->

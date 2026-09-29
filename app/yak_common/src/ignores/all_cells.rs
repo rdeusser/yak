@@ -17,7 +17,7 @@ use yak_core::cells::name::CellName;
 use crate::dice::cells::HasCellResolver;
 use crate::ignores::file_ignores::CellFileIgnores;
 use crate::legacy_configs::dice::HasLegacyConfigs;
-use crate::legacy_configs::key::BuckconfigKeyRef;
+use crate::legacy_configs::key::YakconfigKeyRef;
 
 #[async_trait]
 pub(crate) trait HasCellFileIgnores {
@@ -39,7 +39,7 @@ impl HasCellFileIgnores for DiceComputations<'_> {
 
         let ignore_spec = config.lookup(
             self,
-            BuckconfigKeyRef {
+            YakconfigKeyRef {
                 section: "project",
                 property: "ignore",
             },

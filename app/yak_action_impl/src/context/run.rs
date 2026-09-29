@@ -47,10 +47,10 @@ use yak_build_api::interpreter::rule_defs::provider::builtin::run_info::RunInfo;
 use yak_build_api::interpreter::rule_defs::provider::builtin::worker_run_info::WorkerRunInfo;
 use yak_core::category::CategoryRef;
 use yak_core::deferred::base_deferred_key::BaseDeferredKey;
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 use yak_error::conversion::from_any_with_tag;
 use yak_fs::paths::forward_rel_path::ForwardRelativePathBuf;
-use yak_hash::BuckMutMap;
+use yak_hash::YakMutMap;
 
 use crate::actions::impls::dep_file_fingerprint::StarlarkDepFileFingerprint;
 use crate::actions::impls::run::MetadataParameter;
@@ -138,7 +138,7 @@ pub(crate) fn analysis_actions_methods_run(methods: &mut MethodsBuilder) {
     ///       by `metadata_env_var`
     ///     * Both `metadata_env_var` and `metadata_path` are useful when making actions behave in
     ///       an incremental manner (for details, see [Incremental
-    ///       Actions](https://rdeusser.github.io/buck2/docs/rule_authors/incremental_actions/))
+    ///       Actions](https://rdeusser.github.io/yak/docs/rule_authors/incremental_actions/))
     /// * `dep_files`: a dictionary mapping labels to `ArtifactTag` instances for tracking actual
     ///   dependencies via dependency files (depfiles). This enables precise incremental builds by
     ///   allowing the build tool to report which inputs it actually used.
@@ -194,7 +194,7 @@ pub(crate) fn analysis_actions_methods_run(methods: &mut MethodsBuilder) {
     ///     * The function receives an [`ActionErrorCtx`](../ActionErrorCtx) parameter and should return a list of [`ActionSubError`](../ActionSubError) objects
     ///     * Error handlers enable better error diagnostics and language-specific error categorization
     ///  * `outputs_for_error_handler`: Output files to be provided to the action error handler and read by
-    /// [error handler](https://rdeusser.github.io/buck2/docs/api/build/ActionErrorCtx/#actionerrorctxoutput_artifacts) in the event of a failure..
+    /// [error handler](https://rdeusser.github.io/yak/docs/api/build/ActionErrorCtx/#actionerrorctxoutput_artifacts) in the event of a failure..
     ///     * The output must also be declared as an output of the action
     ///     * The output artifact must be created if the action fails
     ///     * Nothing will be provided if left empty (Which is the default)
@@ -285,7 +285,7 @@ pub(crate) fn analysis_actions_methods_run(methods: &mut MethodsBuilder) {
 
         struct RunCommandArtifactVisitor<'v> {
             inner: SimpleCommandLineArtifactVisitor<'v>,
-            tagged_outputs: BuckMutMap<ArtifactTag, Vec<OutputArtifact<'v>>>,
+            tagged_outputs: YakMutMap<ArtifactTag, Vec<OutputArtifact<'v>>>,
             depth: u64,
             dep_file_artifact_tags: Option<SmallSet<&'v ArtifactTag>>,
             inputs_with_multiple_tags_for_dep_files: Vec<(ArtifactGroup, Vec<ArtifactTag>)>,
@@ -304,7 +304,7 @@ pub(crate) fn analysis_actions_methods_run(methods: &mut MethodsBuilder) {
                 };
                 Self {
                     inner: SimpleCommandLineArtifactVisitor::new(),
-                    tagged_outputs: BuckMutMap::default(),
+                    tagged_outputs: YakMutMap::default(),
                     depth: 0,
                     dep_file_artifact_tags,
                     inputs_with_multiple_tags_for_dep_files: Vec::new(),
@@ -407,7 +407,7 @@ pub(crate) fn analysis_actions_methods_run(methods: &mut MethodsBuilder) {
             (None, Some(v)) => WeightClass::Percentage(
                 WeightPercentage::try_new(v)
                     .map_err(|e| from_any_with_tag(e, yak_error::ErrorTag::Tier0))
-                    .buck_error_context("Invalid `weight_percentage`")?,
+                    .yak_error_context("Invalid `weight_percentage`")?,
             ),
             (Some(..), Some(..)) => {
                 return Err(

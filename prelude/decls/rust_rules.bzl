@@ -16,7 +16,7 @@ load("@prelude//rust:link_info.bzl", "RustProcMacroPlugin")
 load("@prelude//rust:rust_binary.bzl", "rust_binary_impl", "rust_test_impl")
 load("@prelude//rust:rust_library.bzl", "rust_library_impl")
 load("@prelude//rust/rust-analyzer:provider.bzl", "RustAnalyzerTargetKind")
-load(":common.bzl", "RuntimeDependencyHandling", "buck", "prelude_rule")
+load(":common.bzl", "RuntimeDependencyHandling", "yak", "prelude_rule")
 load(":cxx_common.bzl", "cxx_common")
 load(":native_common.bzl", "native_common")
 load(":re_test_common.bzl", "re_test_common")
@@ -24,9 +24,9 @@ load(":rust_common.bzl", "rust_common", "rust_target_dep")
 
 def _rust_common_attributes(is_binary: bool):
     return (
-        buck.licenses_arg()
-        | buck.labels_arg()
-        | buck.contacts_arg()
+        yak.licenses_arg()
+        | yak.labels_arg()
+        | yak.contacts_arg()
         | {
             "clippy_configuration": attrs.option(attrs.dep(providers = [ClippyConfiguration]), default = None),
             "coverage": attrs.bool(default = False),
@@ -37,8 +37,8 @@ def _rust_common_attributes(is_binary: bool):
             "separate_debug_info": attrs.bool(default = False),
             "use_content_based_paths": attrs.bool(default = True),
             "uses_restricted_rustc_flags": attrs.bool(default = False),
-            "_exec_os_type": buck.exec_os_type_arg(),
-            "_target_os_type": buck.target_os_type_arg(),
+            "_exec_os_type": yak.exec_os_type_arg(),
+            "_target_os_type": yak.target_os_type_arg(),
         }
         | cxx_common.default_deps_arg()
     )
@@ -171,7 +171,7 @@ rust_binary = prelude_rule(
         | rust_common.rust_toolchain_arg()
         | rust_common.workspaces_arg()
         | native_common.transformation_spec_arg()
-        | buck.allow_cache_upload_arg()
+        | yak.allow_cache_upload_arg()
     ),
     uses_plugins = [RustProcMacroPlugin],
     supports_incoming_transition = True,
@@ -305,7 +305,7 @@ rust_test = prelude_rule(
     further = None,
     attrs = (
         # @unsorted-dict-items
-        buck.inject_test_env_arg()
+        yak.inject_test_env_arg()
         | rust_common.srcs_arg()
         | rust_common.srcs_filegroup_arg()
         | rust_common.mapped_srcs_arg()

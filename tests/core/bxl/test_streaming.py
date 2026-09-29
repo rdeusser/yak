@@ -6,9 +6,9 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-from e2e_util.api.buck import Buck
+from e2e_util.api.yak import Yak
 from e2e_util.asserts import expect_failure
-from e2e_util.buck_workspace import buck_test
+from e2e_util.yak_workspace import yak_test
 
 
 def assert_file_content_matches(file_path: str, exptected_content: str) -> None:
@@ -17,9 +17,9 @@ def assert_file_content_matches(file_path: str, exptected_content: str) -> None:
         assert content == exptected_content
 
 
-@buck_test()
-async def test_streaming_output_ensured_artifact(buck: Buck) -> None:
-    result = await buck.bxl(
+@yak_test()
+async def test_streaming_output_ensured_artifact(yak: Yak) -> None:
+    result = await yak.bxl(
         "//streaming.bxl:streaming_output_ensured_artifact",
     )
 
@@ -50,9 +50,9 @@ async def test_streaming_output_ensured_artifact(buck: Buck) -> None:
     assert_file_content_matches(output_file_path, "hello world!")
 
 
-@buck_test()
-async def test_streaming_output(buck: Buck) -> None:
-    result = await buck.bxl(
+@yak_test()
+async def test_streaming_output(yak: Yak) -> None:
+    result = await yak.bxl(
         "//streaming.bxl:streaming_output",
     )
 
@@ -75,9 +75,9 @@ async def test_streaming_output(buck: Buck) -> None:
     )
 
 
-@buck_test()
-async def test_streaming_output_without_duplicates(buck: Buck) -> None:
-    result = await buck.bxl(
+@yak_test()
+async def test_streaming_output_without_duplicates(yak: Yak) -> None:
+    result = await yak.bxl(
         "//streaming.bxl:streaming_output_without_duplicates",
     )
 
@@ -94,7 +94,7 @@ async def test_streaming_output_without_duplicates(buck: Buck) -> None:
 
     # call again to check when bxl key is cached
 
-    result = await buck.bxl(
+    result = await yak.bxl(
         "//streaming.bxl:streaming_output_without_duplicates",
     )
     stdout = result.stdout
@@ -109,9 +109,9 @@ async def test_streaming_output_without_duplicates(buck: Buck) -> None:
     )
 
 
-@buck_test()
-async def test_streaming_output_waits_on(buck: Buck) -> None:
-    result = await buck.bxl(
+@yak_test()
+async def test_streaming_output_waits_on(yak: Yak) -> None:
+    result = await yak.bxl(
         "//streaming.bxl:streaming_output_waits_on",
     )
 
@@ -138,10 +138,10 @@ async def test_streaming_output_waits_on(buck: Buck) -> None:
     )
 
 
-@buck_test()
-async def test_streaming_output_json(buck: Buck) -> None:
+@yak_test()
+async def test_streaming_output_json(yak: Yak) -> None:
     async def check_output() -> None:
-        result = await buck.bxl(
+        result = await yak.bxl(
             "//streaming.bxl:streaming_output_json",
         )
 
@@ -190,11 +190,11 @@ async def test_streaming_output_json(buck: Buck) -> None:
     await check_output()
 
 
-@buck_test()
-async def test_stream_output_fail(buck: Buck) -> None:
+@yak_test()
+async def test_stream_output_fail(yak: Yak) -> None:
     async def check() -> None:
         await expect_failure(
-            buck.bxl(
+            yak.bxl(
                 "//streaming.bxl:stream_output_fail",
             ),
             stdout_regex="Streaming output",

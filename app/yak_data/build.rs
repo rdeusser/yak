@@ -14,8 +14,8 @@ use std::io;
 fn main() -> io::Result<()> {
     let proto_files = &["data.proto", "error.proto"];
 
-    let buck_proto_srcs = env::var("YAK_PROTO_SRCS");
-    let includes = if let Ok(path) = &buck_proto_srcs {
+    let yak_proto_srcs = env::var("YAK_PROTO_SRCS");
+    let includes = if let Ok(path) = &yak_proto_srcs {
         vec![path.as_str()]
     } else {
         vec![".", "../yak_host_sharing_proto"]
@@ -24,112 +24,112 @@ fn main() -> io::Result<()> {
     let builder = yak_protoc_dev::configure();
     unsafe { builder.setup_protoc() }
         .type_attribute(
-            "buck.data.BuckEvent.data",
+            "yak.data.YakEvent.data",
             "#[allow(clippy::large_enum_variant)]",
         )
         .type_attribute(
-            "buck.data.SpanEndEvent.data",
+            "yak.data.SpanEndEvent.data",
             "#[allow(clippy::large_enum_variant)]",
         )
         .type_attribute(
-            "buck.data.InstantEvent.data",
+            "yak.data.InstantEvent.data",
             "#[allow(clippy::large_enum_variant)]",
         )
         .type_attribute(
-            "buck.data.BuckEvent.data",
+            "yak.data.YakEvent.data",
             "#[derive(::derive_more::From, ::gazebo::variants::VariantName)]",
         )
         .type_attribute(
-            "buck.data.SpanStartEvent.data",
+            "yak.data.SpanStartEvent.data",
             "#[derive(::derive_more::From, ::gazebo::variants::VariantName)]",
         )
         .type_attribute(
-            "buck.data.SpanEndEvent.data",
+            "yak.data.SpanEndEvent.data",
             "#[derive(::derive_more::From, ::gazebo::variants::VariantName)]",
         )
         .type_attribute(
-            "buck.data.CommandStart.data",
+            "yak.data.CommandStart.data",
             "#[derive(::derive_more::From, ::gazebo::variants::VariantName)]",
         )
         .type_attribute(
-            "buck.data.CommandEnd.data",
+            "yak.data.CommandEnd.data",
             "#[derive(::derive_more::From, ::gazebo::variants::VariantName)]",
         )
         .type_attribute(
-            "buck.data.CommandCriticalStart.data",
+            "yak.data.CommandCriticalStart.data",
             "#[derive(::derive_more::From, ::gazebo::variants::VariantName)]",
         )
         .type_attribute(
-            "buck.data.CommandCriticalEnd.data",
+            "yak.data.CommandCriticalEnd.data",
             "#[derive(::derive_more::From, ::gazebo::variants::VariantName)]",
         )
         .type_attribute(
-            "buck.data.InstantEvent.data",
+            "yak.data.InstantEvent.data",
             "#[derive(::derive_more::From, ::gazebo::variants::VariantName)]",
         )
         .type_attribute(
-            "buck.data.RecordEvent.data",
+            "yak.data.RecordEvent.data",
             "#[derive(::derive_more::From, ::gazebo::variants::VariantName)]",
         )
         .type_attribute(
-            "buck.data.LocalStage.stage",
+            "yak.data.LocalStage.stage",
             "#[derive(::derive_more::From)]",
         )
-        .type_attribute("buck.data.ReStage.stage", "#[derive(::derive_more::From)]")
+        .type_attribute("yak.data.ReStage.stage", "#[derive(::derive_more::From)]")
         .type_attribute(
-            "buck.data.ExecutorStageStart.stage",
+            "yak.data.ExecutorStageStart.stage",
             "#[derive(::derive_more::From)]",
         )
         .type_attribute(
-            "buck.data.CommandExecution.status",
+            "yak.data.CommandExecution.status",
             "#[derive(::derive_more::From, ::gazebo::variants::VariantName)]",
         )
         .type_attribute(
-            "buck.data.ActionExecutionEnd.error",
+            "yak.data.ActionExecutionEnd.error",
             "#[derive(::derive_more::From, ::gazebo::variants::VariantName)]",
         )
         .type_attribute(
-            "buck.data.ActionError.error",
+            "yak.data.ActionError.error",
             "#[derive(::derive_more::From, ::gazebo::variants::VariantName)]",
         )
         .field_attribute(
-            "buck.data.CommandExecutionDetails.cmd_stderr",
+            "yak.data.CommandExecutionDetails.cmd_stderr",
             "#[serde(rename = \"stderr\")]",
         )
         .field_attribute(
-            "buck.data.CommandExecutionDetails.cmd_stdout",
+            "yak.data.CommandExecutionDetails.cmd_stdout",
             "#[serde(rename = \"stdout\")]",
         )
         .type_attribute(
-            "buck.data.CommandExecutionDetails.command",
+            "yak.data.CommandExecutionDetails.command",
             "#[derive(::derive_more::From, ::gazebo::variants::VariantName)]",
         )
         .type_attribute(
-            "buck.data.DynamicLambdaStart.owner",
+            "yak.data.DynamicLambdaStart.owner",
             "#[derive(::derive_more::From, ::gazebo::variants::VariantName)]",
         )
         .type_attribute(
-            "buck.data.DeferredPreparationStageStart.stage",
+            "yak.data.DeferredPreparationStageStart.stage",
             "#[derive(::derive_more::From, ::gazebo::variants::VariantName)]",
         )
         .type_attribute(
-            "buck.data.AnalysisStart.target",
+            "yak.data.AnalysisStart.target",
             "#[derive(::derive_more::From, ::gazebo::variants::VariantName)]",
         )
         .type_attribute(
-            "buck.data.AnalysisEnd.target",
+            "yak.data.AnalysisEnd.target",
             "#[derive(::derive_more::From, ::gazebo::variants::VariantName)]",
         )
         .type_attribute(
-            "buck.data.ActionKind",
+            "yak.data.ActionKind",
             "#[derive(::gazebo::variants::VariantName, ::pagable::Pagable)]",
         )
         .type_attribute(
-            "buck.data.MaterializationMethod",
+            "yak.data.MaterializationMethod",
             "#[derive(::gazebo::variants::VariantName)]",
         )
-        .type_attribute("buck.data.CpuCounter", "#[derive(dupe::Dupe)]")
-        .type_attribute("buck.data.CommandExecutionStats", "#[derive(dupe::Dupe)]")
+        .type_attribute("yak.data.CpuCounter", "#[derive(dupe::Dupe)]")
+        .type_attribute("yak.data.CommandExecutionStats", "#[derive(dupe::Dupe)]")
         .type_attribute(".", "#[derive(::serde::Serialize, ::serde::Deserialize)]")
         .type_attribute(".", "#[derive(::allocative::Allocative)]")
         .field_attribute(
@@ -231,63 +231,63 @@ fn main() -> io::Result<()> {
             "#[serde(rename = \"non_critical_path_duration_us\", with = \"::yak_proto_serde::serialize_duration_as_micros\")]",
         )
         .type_attribute(
-            "buck.data.CriticalPathEntry2.entry",
+            "yak.data.CriticalPathEntry2.entry",
             "#[derive(::derive_more::From, ::gazebo::variants::VariantName)]",
         )
         .type_attribute(
-            "buck.data.CriticalPathEntry2.Analysis.target",
+            "yak.data.CriticalPathEntry2.Analysis.target",
             "#[derive(::derive_more::From, ::gazebo::variants::VariantName)]",
         )
         .type_attribute(
-            "buck.data.CriticalPathEntry2.ActionExecution.owner",
+            "yak.data.CriticalPathEntry2.ActionExecution.owner",
             "#[derive(::derive_more::From, ::gazebo::variants::VariantName)]",
         )
         .type_attribute(
-            "buck.data.CriticalPathEntry2.Materialization.owner",
+            "yak.data.CriticalPathEntry2.Materialization.owner",
             "#[derive(::derive_more::From, ::gazebo::variants::VariantName)]",
         )
         .type_attribute(
-            "buck.data.StarlarkUserMetadataDictValue",
+            "yak.data.StarlarkUserMetadataDictValue",
             "#[serde(transparent)]",
         )
         .type_attribute(
-            "buck.data.StarlarkUserMetadataListValue",
+            "yak.data.StarlarkUserMetadataListValue",
             "#[serde(transparent)]",
         )
         .type_attribute(
-            "buck.data.StarlarkUserMetadataValue",
+            "yak.data.StarlarkUserMetadataValue",
             "#[serde(transparent)]",
         )
         .type_attribute(
-            "buck.data.StarlarkUserMetadataValue.value",
+            "yak.data.StarlarkUserMetadataValue.value",
             "#[serde(untagged)]",
         )
         .type_attribute(
-            "buck.data.CommandExecutionKind.command",
+            "yak.data.CommandExecutionKind.command",
             "#[derive(::derive_more::From, ::gazebo::variants::VariantName)]",
         )
         .field_attribute(
-            "buck.data.Invocation.expanded_command_line_args",
+            "yak.data.Invocation.expanded_command_line_args",
             "#[serde(default)]",
         )
         .field_attribute(
-            "buck.data.CommandExecutionMetadata.wall_time",
+            "yak.data.CommandExecutionMetadata.wall_time",
             "#[serde(rename = \"wall_time_us\", with = \"::yak_proto_serde::serialize_duration_as_micros\")]",
         )
         .field_attribute(
-            "buck.data.CommandExecutionMetadata.execution_time",
+            "yak.data.CommandExecutionMetadata.execution_time",
             "#[serde(rename = \"execution_time_us\", with = \"::yak_proto_serde::serialize_duration_as_micros\")]",
         )
         .field_attribute(
-            "buck.data.CommandExecutionMetadata.input_materialization_duration",
+            "yak.data.CommandExecutionMetadata.input_materialization_duration",
             "#[serde(rename = \"input_materialization_duration_us\", with = \"::yak_proto_serde::serialize_duration_as_micros\")]",
         )
         .field_attribute(
-            "buck.data.CommandExecutionMetadata.hashing_duration",
+            "yak.data.CommandExecutionMetadata.hashing_duration",
             "#[serde(rename = \"hashing_duration_us\", with = \"::yak_proto_serde::serialize_duration_as_micros\")]",
         )
         .field_attribute(
-            "buck.data.CommandExecutionMetadata.queue_duration",
+            "yak.data.CommandExecutionMetadata.queue_duration",
             "#[serde(rename = \"queue_duration_us\", with = \"::yak_proto_serde::serialize_duration_as_micros\")]",
         )
         .boxed("RecordEvent.data.invocation_record")
@@ -295,6 +295,6 @@ fn main() -> io::Result<()> {
         .boxed("SpanEndEvent.data.cache_upload")
         .boxed("CommandEnd.data.clean")
         .boxed("InstantEvent.data.snapshot")
-        .extern_path(".buck.host_sharing", "::yak_host_sharing_proto")
+        .extern_path(".yak.host_sharing", "::yak_host_sharing_proto")
         .compile(proto_files, &includes)
 }

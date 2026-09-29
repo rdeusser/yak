@@ -22,11 +22,11 @@ use tokio_util::sync::CancellationToken;
 use yak_common::init::ResourceControlConfig;
 use yak_events::daemon_id::DaemonId;
 use yak_events::dispatch::EventDispatcher;
-use yak_hash::BuckMutMap;
+use yak_hash::YakMutMap;
 use yak_util::threads::thread_spawn;
 
 use crate::action_scene::ActionScene;
-use crate::buck_cgroup_tree::BuckCgroupTree;
+use crate::yak_cgroup_tree::YakCgroupTree;
 use crate::cgroup::MemoryPressureHandle;
 use crate::pool::CgroupPool;
 use crate::scheduler::SceneIdRef;
@@ -50,7 +50,7 @@ pub type MemoryTrackerHandle = Arc<MemoryTrackerSharedState>;
 #[derive(Allocative)]
 #[allocative(skip)]
 pub struct MemoryTrackerSharedState {
-    pub cgroup_tree: BuckCgroupTree,
+    pub cgroup_tree: YakCgroupTree,
     // Written to by executors and tracker, read by executors
     pub(crate) action_cgroups: std::sync::Mutex<Scheduler>,
     /// A pool of cgroups to be used for actions.
@@ -65,7 +65,7 @@ pub struct MemoryTrackerSharedState {
     /// The memory tracker regularly updates the scheduler with information about the memory state
     /// of the scenes. This map stores the current pairing of scenes to the actions they're
     /// associated with, and is used by the memory tracker to update the scheduler.
-    pub(crate) scene_action_mapping: tokio::sync::Mutex<BuckMutMap<SceneIdRef, ActionScene>>,
+    pub(crate) scene_action_mapping: tokio::sync::Mutex<YakMutMap<SceneIdRef, ActionScene>>,
 }
 
 pub struct MemoryReporter {
@@ -108,7 +108,7 @@ impl Drop for MemoryReporter {
 }
 
 pub async fn create_memory_tracker(
-    cgroup_tree: Option<BuckCgroupTree>,
+    cgroup_tree: Option<YakCgroupTree>,
     resource_control_config: &ResourceControlConfig,
     daemon_id: &DaemonId,
 ) -> yak_error::Result<Option<MemoryTrackerHandle>> {
@@ -133,7 +133,7 @@ pub async fn create_memory_tracker(
         cgroup_tree,
         action_cgroups: std::sync::Mutex::new(action_cgroups),
         pool: tokio::sync::Mutex::new(cgroup_pool),
-        scene_action_mapping: tokio::sync::Mutex::new(BuckMutMap::default()),
+        scene_action_mapping: tokio::sync::Mutex::new(YakMutMap::default()),
     };
     let handle = Arc::new(handle);
     let memory_tracker = MemoryTracker {
@@ -221,7 +221,7 @@ impl MemoryTracker {
 
     async fn collect_scene_readings(
         handle: &MemoryTrackerHandle,
-    ) -> BuckMutMap<SceneIdRef, SceneResourceReading> {
+    ) -> YakMutMap<SceneIdRef, SceneResourceReading> {
         let mut scenes = handle.scene_action_mapping.lock().await;
         scenes
             .iter_mut()
@@ -239,22 +239,22 @@ impl MemoryTracker {
 mod tests {
     use std::time::Duration;
 
-    use yak_common::legacy_configs::configs::LegacyBuckConfig;
+    use yak_common::legacy_configs::configs::LegacyYakConfig;
     use yak_wrapper_common::invocation_id::TraceId;
 
     use super::*;
-    use crate::buck_cgroup_tree::PreppedBuckCgroups;
+    use crate::yak_cgroup_tree::PreppedYakCgroups;
 
     #[tokio::test]
     async fn test_current_memory_changes_tracked() -> yak_error::Result<()> {
-        let Some(prepped) = PreppedBuckCgroups::testing_new().await else {
+        let Some(prepped) = PreppedYakCgroups::testing_new().await else {
             return Ok(());
         };
         let config = ResourceControlConfig {
             memory_high: Some("19000000".to_owned()),
-            ..ResourceControlConfig::from_config(&LegacyBuckConfig::empty())?
+            ..ResourceControlConfig::from_config(&LegacyYakConfig::empty())?
         };
-        let cgroup_tree = BuckCgroupTree::set_up(prepped, &config).await?;
+        let cgroup_tree = YakCgroupTree::set_up(prepped, &config).await?;
         let tracker = create_memory_tracker(Some(cgroup_tree), &config, &DaemonId::new())
             .await?
             .unwrap();

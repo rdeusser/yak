@@ -13,8 +13,8 @@ use std::path::Path;
 use dice::DiceComputations;
 use futures::FutureExt;
 use yak_core::package::PackageLabel;
-use yak_error::BuckErrorContext;
-use yak_error::BuckErrorOptionContext;
+use yak_error::YakErrorContext;
+use yak_error::YakErrorOptionContext;
 use yak_events::dispatch::console_message;
 use yak_fs::paths::abs_path::AbsPath;
 use yak_interpreter::starlark_profiler::data::StarlarkProfileDataAndStats;
@@ -29,7 +29,7 @@ pub(crate) async fn write_query_profile_for_targets(
 ) -> yak_error::Result<()> {
     let output_path = output_path.internal_error("Outut path must be set for profile mode")?;
     let output_path = AbsPath::new(Path::new(output_path))
-        .buck_error_context("Output path must be set to absolute path by the client")?;
+        .yak_error_context("Output path must be set to absolute path by the client")?;
     do_write_query_profile_for_targets(ctx, output_path, Vec::from_iter(targets))
         .boxed()
         .await

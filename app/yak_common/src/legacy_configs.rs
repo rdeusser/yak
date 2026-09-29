@@ -11,7 +11,7 @@
 //! Contains utilities for reading .yakconfig files as configuration.
 
 mod access;
-pub use access::parse_buckconfig_metadata;
+pub use access::parse_yakconfig_metadata;
 mod aggregator;
 pub mod args;
 pub mod cells;

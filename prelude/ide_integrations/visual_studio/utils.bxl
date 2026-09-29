@@ -152,7 +152,7 @@ def get_project_file_path(target_label, extension):
     if len(config_hash) == 2:
         config_hash = config_hash[1]
     else:
-        # config can be unbound (https://rdeusser.github.io/buck2/docs/rule_authors/configurations/#configurationinfo-platform-analysis-and-more)
+        # config can be unbound (https://rdeusser.github.io/yak/docs/rule_authors/configurations/#configurationinfo-platform-analysis-and-more)
         config_hash = "unbound_config"
     return config_hash + "/" + path + sanitize(target_label.name) + extension
 

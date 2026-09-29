@@ -54,7 +54,7 @@ use yak_directory::directory::directory_iterator::DirectoryIterator;
 use yak_directory::directory::directory_iterator::DirectoryIteratorPathStack;
 use yak_directory::directory::entry::DirectoryEntry;
 use yak_directory::directory::walk::unordered_entry_walk;
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 use yak_events::dispatch::EventDispatcher;
 use yak_events::dispatch::current_span;
 use yak_events::dispatch::get_dispatcher;
@@ -80,7 +80,7 @@ use yak_execute::materialize::materializer::MaterializerBackgroundCleanupGuard;
 use yak_execute::materialize::materializer::MaterializerIterItem;
 use yak_execute::materialize::materializer::WriteRequest;
 use yak_execute::re::manager::ReConnectionManager;
-use yak_hash::BuckMutSet;
+use yak_hash::YakMutSet;
 use yak_http::HttpClient;
 use yak_util::threads::thread_spawn;
 
@@ -581,7 +581,7 @@ impl<T: IoHandler + Allocative> Materializer for DeferredMaterializerAccessor<T>
 
         let is_match = recv
             .await
-            .buck_error_context("Recv'ing match future from command thread.")?;
+            .yak_error_context("Recv'ing match future from command thread.")?;
 
         Ok(is_match.into())
     }
@@ -597,7 +597,7 @@ impl<T: IoHandler + Allocative> Materializer for DeferredMaterializerAccessor<T>
 
         let has_artifact = recv
             .await
-            .buck_error_context("Receiving \"has artifact\" future from command thread.")?;
+            .yak_error_context("Receiving \"has artifact\" future from command thread.")?;
 
         Ok(has_artifact)
     }
@@ -632,10 +632,10 @@ impl<T: IoHandler + Allocative> Materializer for DeferredMaterializerAccessor<T>
                 current_span(),
                 sender,
             ))
-            .buck_error_context("Sending Ensure() command.")?;
+            .yak_error_context("Sending Ensure() command.")?;
         let materialization_fut = recv
             .await
-            .buck_error_context("Receiving materialization future from command thread.")?;
+            .yak_error_context("Receiving materialization future from command thread.")?;
         Ok(materialization_fut)
     }
 
@@ -653,10 +653,10 @@ impl<T: IoHandler + Allocative> Materializer for DeferredMaterializerAccessor<T>
                 current_span(),
                 sender,
             ))
-            .buck_error_context("Sending Ensure() command.")?;
+            .yak_error_context("Sending Ensure() command.")?;
         let materialization_fut = recv
             .await
-            .buck_error_context("Receiving materialization future from command thread.")?;
+            .yak_error_context("Receiving materialization future from command thread.")?;
         Ok(materialization_fut.try_collect().await?)
     }
 
@@ -763,7 +763,7 @@ impl<T: IoHandler + Allocative> Materializer for DeferredMaterializerAccessor<T>
             },
         )?;
 
-        let result = recv.await.buck_error_context(
+        let result = recv.await.yak_error_context(
             "Receiving \"artifact entries for materialized paths\" future from command thread.",
         )?;
 
@@ -816,7 +816,7 @@ impl<T: IoHandler + Allocative> DeferredMaterializerAccessor<T> {
         };
         let access_times_buffer =
             (!matches!(configs.update_access_times, AccessTimesUpdates::Disabled))
-                .then(BuckMutSet::default);
+                .then(YakMutSet::default);
 
         let rematerialization_ttl = configs.ttl_refresh.rematerialization_ttl();
 
@@ -865,7 +865,7 @@ impl<T: IoHandler + Allocative> DeferredMaterializerAccessor<T> {
                 ));
             }
         })
-        .buck_error_context("Cannot start materializer thread")?;
+        .yak_error_context("Cannot start materializer thread")?;
 
         Ok(Self {
             command_thread: Some(command_thread),
@@ -884,7 +884,7 @@ impl DeferredMaterializerAccessor<DefaultIoHandler> {
     pub fn new(
         fs: ProjectRoot,
         digest_config: DigestConfig,
-        buck_out_path: ProjectRelativePathBuf,
+        yak_out_path: ProjectRelativePathBuf,
         re_client_manager: Arc<ReConnectionManager>,
         io_executor: Arc<dyn BlockingExecutor>,
         configs: DeferredMaterializerConfigs,
@@ -897,7 +897,7 @@ impl DeferredMaterializerAccessor<DefaultIoHandler> {
             Arc::new(DefaultIoHandler::new(
                 fs,
                 digest_config,
-                buck_out_path,
+                yak_out_path,
                 re_client_manager,
                 io_executor,
                 http_client,
@@ -914,12 +914,12 @@ impl DeferredMaterializerAccessor<NoDiskIoHandler> {
     pub fn new_no_disk(
         fs: ProjectRoot,
         digest_config: DigestConfig,
-        buck_out_path: ProjectRelativePathBuf,
+        yak_out_path: ProjectRelativePathBuf,
         configs: DeferredMaterializerConfigs,
         daemon_dispatcher: EventDispatcher,
     ) -> yak_error::Result<Self> {
         Self::new_with_io(
-            Arc::new(NoDiskIoHandler::new(fs, digest_config, buck_out_path)),
+            Arc::new(NoDiskIoHandler::new(fs, digest_config, yak_out_path)),
             configs,
             None,
             None,
@@ -964,7 +964,7 @@ async fn join_all_existing_futs(
                 f.await.ok();
             }
             ProcessingFuture::Cleaning(f) => {
-                f.await.with_buck_error_context(|| {
+                f.await.with_yak_error_context(|| {
                     format!(
                         "Error waiting for a previous future to finish cleaning output path {path}"
                     )
@@ -990,7 +990,7 @@ impl WriteFile {
         // NOTE: The zstd crate doesn't release extra capacity of its encoding buffer so it's
         // important to do so here (or the compressed Vec is the same capacity as the input!).
         let compressed_data = zstd::bulk::compress(&content, 0)
-            .with_buck_error_context(|| format!("Error compressing {} bytes", content.len()))?
+            .with_yak_error_context(|| format!("Error compressing {} bytes", content.len()))?
             .into_boxed_slice();
 
         Ok(Arc::new(Self {

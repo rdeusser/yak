@@ -6,26 +6,26 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-from e2e_util.api.buck import Buck
+from e2e_util.api.yak import Yak
 from e2e_util.asserts import expect_failure
-from e2e_util.buck_workspace import buck_test, env
+from e2e_util.yak_workspace import yak_test, env
 
 # Empty test executor forces internal test executor to be used.
 INTERNAL_TEST_EXECUTOR = ""
 
 
-@buck_test()
-async def test_internal_test_executor(buck: Buck) -> None:
-    await buck.test(
+@yak_test()
+async def test_internal_test_executor(yak: Yak) -> None:
+    await yak.test(
         ":trivial_pass",
         test_executor=INTERNAL_TEST_EXECUTOR,
     )
 
 
-@buck_test()
+@yak_test()
 @env("TEST_VAR", "BAD_VALUE")
-async def test_internal_test_executor_env(buck: Buck) -> None:
-    await buck.test(
+async def test_internal_test_executor_env(yak: Yak) -> None:
+    await yak.test(
         ":check_env",
         "--",
         "--env",
@@ -34,10 +34,10 @@ async def test_internal_test_executor_env(buck: Buck) -> None:
     )
 
 
-@buck_test()
-async def test_internal_test_executor_timeout(buck: Buck) -> None:
+@yak_test()
+async def test_internal_test_executor_timeout(yak: Yak) -> None:
     await expect_failure(
-        buck.test(
+        yak.test(
             ":timeout",
             "--",
             "--timeout",

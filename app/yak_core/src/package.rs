@@ -58,7 +58,7 @@ use static_interner::interner;
 use strong_hash::StrongHash;
 pub(crate) use yak_fs::paths::fmt::quoted_display;
 use yak_fs::paths::forward_rel_path::ForwardRelativePath;
-use yak_hash::BuckHasher;
+use yak_hash::YakHasher;
 
 use crate::cells::cell_path::CellPath;
 use crate::cells::cell_path::CellPathRef;
@@ -138,7 +138,7 @@ impl Equivalent<PackageLabelData> for PackageLabelDataRef<'_> {
     }
 }
 
-interner!(INTERNER, BuckHasher, PackageLabelData);
+interner!(INTERNER, YakHasher, PackageLabelData);
 
 impl PackageLabel {
     #[inline]

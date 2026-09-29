@@ -6,15 +6,15 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-from e2e_util.api.buck import Buck
+from e2e_util.api.yak import Yak
 from e2e_util.asserts import expect_failure
-from e2e_util.buck_workspace import buck_test
+from e2e_util.yak_workspace import yak_test
 from e2e_util.helper.golden import golden
 
 
-@buck_test()
-async def test_default_not_a_label(buck: Buck) -> None:
-    res = await expect_failure(buck.uquery("root//:", "--console=none", "-v0"))
+@yak_test()
+async def test_default_not_a_label(yak: Yak) -> None:
+    res = await expect_failure(yak.uquery("root//:", "--console=none", "-v0"))
     golden(
         output=res.stderr,
         rel_path="golden/default_not_a_label.golden.stderr",

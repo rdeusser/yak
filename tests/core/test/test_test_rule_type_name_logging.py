@@ -8,48 +8,48 @@
 
 import typing
 
-from e2e_util.api.buck import Buck
-from e2e_util.api.buck_result import BuckResult
-from e2e_util.buck_workspace import buck_test
+from e2e_util.api.yak import Yak
+from e2e_util.api.yak_result import YakResult
+from e2e_util.yak_workspace import yak_test
 
 
 def check_rule_type_names(
-    res: BuckResult, expected_rule_type_names: typing.List[str]
+    res: YakResult, expected_rule_type_names: typing.List[str]
 ) -> None:
     record = res.invocation_record()
     assert record["target_rule_type_names"] == expected_rule_type_names
 
 
-@buck_test(write_invocation_record=True)
-async def test_test_single_dep_touch(buck: Buck) -> None:
-    res = await buck.test("//:rule1")
+@yak_test(write_invocation_record=True)
+async def test_test_single_dep_touch(yak: Yak) -> None:
+    res = await yak.test("//:rule1")
     check_rule_type_names(res, ["one"])
 
 
-@buck_test(write_invocation_record=True)
-async def test_test_two_out_of_order(buck: Buck) -> None:
-    res = await buck.test("//:rule2", "//:rule1")
+@yak_test(write_invocation_record=True)
+async def test_test_two_out_of_order(yak: Yak) -> None:
+    res = await yak.test("//:rule2", "//:rule1")
     check_rule_type_names(res, ["one", "two"])
 
 
-@buck_test(write_invocation_record=True)
-async def test_test_all_in_target(buck: Buck) -> None:
-    res = await buck.test("//:")
+@yak_test(write_invocation_record=True)
+async def test_test_all_in_target(yak: Yak) -> None:
+    res = await yak.test("//:")
     # Includes `not_a_test` because the recorder receives a
     # `TargetRuleTypeName` event for every CLI-resolved top-level target,
     # not only the ones that resolve to a test rule.
     check_rule_type_names(res, ["not_a_test", "one", "two"])
 
 
-@buck_test(write_invocation_record=True)
-async def test_test_all_recursive(buck: Buck) -> None:
-    res = await buck.test("//...")
+@yak_test(write_invocation_record=True)
+async def test_test_all_recursive(yak: Yak) -> None:
+    res = await yak.test("//...")
     check_rule_type_names(res, ["not_a_test", "one", "two"])
 
 
-@buck_test(write_invocation_record=True)
-async def test_test_non_test_rule_logs_actual_rule_type(buck: Buck) -> None:
+@yak_test(write_invocation_record=True)
+async def test_test_non_test_rule_logs_actual_rule_type(yak: Yak) -> None:
     # `yak test` against a non-test rule logs that rule's actual type in
     # `target_rule_type_names`.
-    res = await buck.test("//:not_a_test_target")
+    res = await yak.test("//:not_a_test_target")
     check_rule_type_names(res, ["not_a_test"])

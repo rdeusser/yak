@@ -11,7 +11,7 @@
 use yak_cli_proto::new_generic::MaterializeRequest;
 use yak_cli_proto::new_generic::MaterializeResponse;
 use yak_core::fs::project_rel_path::ProjectRelativePath;
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 use yak_events::dispatch::span_async;
 use yak_execute::materialize::materializer::MaterializationPurpose;
 use yak_server_ctx::commands::command_end;
@@ -31,7 +31,7 @@ pub(crate) async fn materialize_command(
         let result = materialize(&context.base_context, req.paths)
             .await
             .map(|()| MaterializeResponse {})
-            .buck_error_context("Failed to materialize paths");
+            .yak_error_context("Failed to materialize paths");
         let end_event = command_end(&result, yak_data::MaterializeCommandEnd {});
         (result, end_event)
     })

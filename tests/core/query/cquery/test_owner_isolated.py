@@ -8,17 +8,17 @@
 
 import re
 
-from e2e_util.api.buck import Buck
-from e2e_util.buck_workspace import buck_test
+from e2e_util.api.yak import Yak
+from e2e_util.yak_workspace import yak_test
 
 
 def _replace_hash(s: str) -> str:
     return re.sub(r"\b[0-9a-f]{16}\b", "<HASH>", s)
 
 
-@buck_test(data_dir="simple")
-async def test_query_owner(buck: Buck) -> None:
-    result = await buck.cquery(
+@yak_test(data_dir="simple")
+async def test_query_owner(yak: Yak) -> None:
+    result = await yak.cquery(
         "--target-universe=root//bin:the_binary", """owner(bin/YAK.fixture)"""
     )
     assert (

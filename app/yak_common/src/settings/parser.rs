@@ -15,17 +15,17 @@ use std::sync::Arc;
 use serde::de::DeserializeOwned;
 use yak_core::fs::project::ProjectRoot;
 use yak_core::yak_env;
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 use yak_fs::fs_util;
 use yak_fs::paths::abs_path::AbsPath;
 use yak_fs::paths::abs_path::AbsPathBuf;
 
-use crate::settings::BuckSettings;
+use crate::settings::YakSettings;
 use crate::settings::path::DEFAULT_SETTINGS_SOURCES;
 use crate::settings::path::DOT_YAKSETTINGS;
 use crate::settings::path::SettingsSource as SettingsPathSource;
 use crate::settings::settings::ALL_SETTING_METADATA;
-use crate::settings::settings::BuckSettingsData;
+use crate::settings::settings::YakSettingsData;
 use crate::settings::settings::OverrideSource;
 use crate::settings::settings::SettingKeyMetadata;
 use crate::settings::settings::SettingKeyRef;
@@ -191,14 +191,14 @@ impl MergedSettings {
 /// Parses a settings file into an untyped table.
 fn parse_table(path: &AbsPath) -> yak_error::Result<Option<toml::Table>> {
     let Some(content) = fs_util::read_to_string_if_exists(path)
-        .with_buck_error_context(|| format!("Reading `{}`", path.display()))?
+        .with_yak_error_context(|| format!("Reading `{}`", path.display()))?
     else {
         return Ok(None);
     };
 
     let table = toml::from_str::<toml::Table>(&content)
         .map_err(SettingsError::Parse)
-        .with_buck_error_context(|| format!("Parsing `{}`", path.display()))?;
+        .with_yak_error_context(|| format!("Parsing `{}`", path.display()))?;
 
     Ok(Some(table))
 }
@@ -259,7 +259,7 @@ fn merge_layers(layers: Vec<SettingsLayer>) -> MergedSettings {
     merged
 }
 
-fn resolve(layers: Vec<SettingsLayer>) -> yak_error::Result<BuckSettings> {
+fn resolve(layers: Vec<SettingsLayer>) -> yak_error::Result<YakSettings> {
     let layers = layers
         .into_iter()
         .map(|SettingsLayer { provenance, table }| SettingsLayer {
@@ -269,12 +269,12 @@ fn resolve(layers: Vec<SettingsLayer>) -> yak_error::Result<BuckSettings> {
         .collect();
     let merged = merge_layers(layers);
     merged.validate(ALL_SETTING_METADATA)?;
-    let data: BuckSettingsData = merged.deserialize()?;
+    let data: YakSettingsData = merged.deserialize()?;
     Ok(data.into())
 }
 
 #[cfg(test)]
-pub(crate) fn resolve_setting_flags(tables: Vec<toml::Table>) -> yak_error::Result<BuckSettings> {
+pub(crate) fn resolve_setting_flags(tables: Vec<toml::Table>) -> yak_error::Result<YakSettings> {
     resolve(
         tables
             .into_iter()
@@ -311,7 +311,7 @@ fn migrate_legacy_log_download_keys(mut layer: toml::Table) -> toml::Table {
 pub fn parse_settings(
     project_fs: &ProjectRoot,
     settings_args: &[toml::Table],
-) -> yak_error::Result<BuckSettings> {
+) -> yak_error::Result<YakSettings> {
     let repo_root = project_fs.root().as_abs_path();
     let home_dir = yak_env!("YAK_TEST_SETTINGS_HOME_DIR", applicability = testing)?
         .map(PathBuf::from)
@@ -323,7 +323,7 @@ pub fn parse_settings(
             // caller's, so a relative path has nothing sound to resolve
             // against.
             AbsPathBuf::new(PathBuf::from(path))
-                .buck_error_context("`YAK_SETTINGS_OVERRIDE` must be an absolute path")
+                .yak_error_context("`YAK_SETTINGS_OVERRIDE` must be an absolute path")
         })
         .transpose()?;
     parse_settings_with_home(
@@ -339,7 +339,7 @@ fn parse_settings_with_home(
     home_dir: Option<&AbsPath>,
     override_file: Option<&AbsPath>,
     settings_args: &[toml::Table],
-) -> yak_error::Result<BuckSettings> {
+) -> yak_error::Result<YakSettings> {
     let mut layers = parse_layers(repo_root, home_dir)?;
     // Outranks every on-disk layer so a harness can pin settings; only
     // per-command `--setting` flags are more specific.
@@ -374,7 +374,7 @@ mod tests {
     use super::*;
     use crate::settings::args::SettingOverride;
     use crate::settings::args::parse_setting_flag_arg;
-    use crate::settings::settings::testing::TestBuckSettingsData;
+    use crate::settings::settings::testing::TestYakSettingsData;
     use crate::settings::settings::testing::TestSection;
 
     impl MergedSettings {
@@ -428,7 +428,7 @@ mod tests {
         repo_files: &[(&str, &str)],
         home_files: &[(&str, &str)],
         settings_args: &[&str],
-    ) -> yak_error::Result<TestBuckSettingsData> {
+    ) -> yak_error::Result<TestYakSettingsData> {
         let repo = ProjectRootTemp::new()?;
         for (name, content) in repo_files {
             repo.write_file(name, content);
@@ -588,7 +588,7 @@ mod tests {
             .root()
             .as_abs_path()
             .join(".yaksettings.local.toml");
-        let error = resolve_with_metadata::<TestBuckSettingsData>(
+        let error = resolve_with_metadata::<TestYakSettingsData>(
             vec![SettingsLayer::new(
                 Provenance::LocalSettings(path.clone()),
                 table("[test_section]\ntest_flag = true"),
@@ -607,7 +607,7 @@ mod tests {
 
     #[test]
     fn test_rejects_disallowed_command_line_override() {
-        let error = resolve_with_metadata::<TestBuckSettingsData>(
+        let error = resolve_with_metadata::<TestYakSettingsData>(
             vec![SettingsLayer::setting_flag(table(
                 "[test_section]\ntest_flag = true",
             ))],
@@ -653,7 +653,7 @@ mod tests {
     #[test]
     fn test_repo_root_settings_always_valid() -> yak_error::Result<()> {
         let repo = ProjectRootTemp::new()?;
-        let base = resolve_with_metadata::<TestBuckSettingsData>(
+        let base = resolve_with_metadata::<TestYakSettingsData>(
             vec![SettingsLayer::new(
                 Provenance::Base(repo.path().root().as_abs_path().join(".yaksettings.toml")),
                 table("[test_section]\ntest_flag = true"),
@@ -668,7 +668,7 @@ mod tests {
     #[test]
     fn test_overridden_disallowed_source_is_ignored() -> yak_error::Result<()> {
         let local = ProjectRootTemp::new()?;
-        let shadowed = resolve_with_metadata::<TestBuckSettingsData>(
+        let shadowed = resolve_with_metadata::<TestYakSettingsData>(
             vec![
                 SettingsLayer::new(
                     Provenance::LocalSettings(
@@ -690,7 +690,7 @@ mod tests {
 
     #[test]
     fn test_overridden_invalid_type_is_ignored() -> yak_error::Result<()> {
-        let resolved = resolve_with_metadata::<TestBuckSettingsData>(
+        let resolved = resolve_with_metadata::<TestYakSettingsData>(
             vec![
                 SettingsLayer::setting_flag(table("[test_section]\ntest_flag = \"invalid\"")),
                 SettingsLayer::setting_flag(table("[test_section]\ntest_flag = true")),
@@ -722,7 +722,7 @@ mod tests {
         )?;
         assert_eq!(
             resolved,
-            TestBuckSettingsData {
+            TestYakSettingsData {
                 test_section: Some(TestSection {
                     test_flag: Some(false),
                     test_value: Some("repo".to_owned()),
@@ -750,7 +750,7 @@ mod tests {
         )?;
         assert_eq!(
             resolved,
-            TestBuckSettingsData {
+            TestYakSettingsData {
                 test_section: Some(TestSection {
                     test_flag: Some(false),
                     test_value: Some("repo_local".to_owned()),

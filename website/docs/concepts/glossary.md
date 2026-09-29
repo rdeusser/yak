@@ -167,7 +167,7 @@ via a `load()` statement.
 
 When you create a yak project using `yak init --git`, it uses the prelude
 bundled with the `yak` binary. It is viewable at
-https://github.com/rdeusser/buck2/tree/main/prelude.
+https://github.com/rdeusser/yak/tree/main/prelude.
 
 ## Project
 
@@ -223,7 +223,7 @@ language of the yak build system and the language you use in `.bzl` and
 [`YAK` files](#yak-file) to define and instantiate [rules](#rule).
 
 The yak project maintains and uses an open source
-[Starlark interpreter in Rust](https://github.com/rdeusser/buck2/tree/main/starlark-rust).
+[Starlark interpreter in Rust](https://github.com/rdeusser/yak/tree/main/starlark-rust).
 
 ## Subtarget
 

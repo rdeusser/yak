@@ -6,45 +6,45 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-from e2e_util.api.buck import Buck
-from e2e_util.buck_workspace import buck_test
+from e2e_util.api.yak import Yak
+from e2e_util.yak_workspace import yak_test
 
 
-@buck_test()
-async def test_specific_target_success(buck: Buck) -> None:
+@yak_test()
+async def test_specific_target_success(yak: Yak) -> None:
     """Test unconfigured_targets_keep_going with a specific successful target."""
-    await buck.bxl(
+    await yak.bxl(
         "//:unconfigured_targets_keep_going.bxl:test_specific_target_success",
     )
 
 
-@buck_test()
-async def test_recursive_pattern_success(buck: Buck) -> None:
+@yak_test()
+async def test_recursive_pattern_success(yak: Yak) -> None:
     """Test unconfigured_targets_keep_going with a recursive pattern that includes only successful packages."""
-    await buck.bxl(
+    await yak.bxl(
         "//:unconfigured_targets_keep_going.bxl:test_recursive_pattern_success",
     )
 
 
-@buck_test()
-async def test_recursive_pattern_mixed(buck: Buck) -> None:
+@yak_test()
+async def test_recursive_pattern_mixed(yak: Yak) -> None:
     """Test unconfigured_targets_keep_going with a recursive pattern that includes both successful and failing packages."""
-    await buck.bxl(
+    await yak.bxl(
         "//:unconfigured_targets_keep_going.bxl:test_recursive_pattern_mixed",
     )
 
 
-@buck_test()
-async def test_failing_package_only(buck: Buck) -> None:
+@yak_test()
+async def test_failing_package_only(yak: Yak) -> None:
     """Test unconfigured_targets_keep_going with a pattern that only matches a failing package."""
-    await buck.bxl(
+    await yak.bxl(
         "//:unconfigured_targets_keep_going.bxl:test_failing_package_only",
     )
 
 
-@buck_test()
-async def test_specific_target_in_failing_package(buck: Buck) -> None:
+@yak_test()
+async def test_specific_target_in_failing_package(yak: Yak) -> None:
     """Test unconfigured_targets_keep_going with a specific target in a failing package."""
-    await buck.bxl(
+    await yak.bxl(
         "//:unconfigured_targets_keep_going.bxl:test_specific_target_in_failing_package",
     )

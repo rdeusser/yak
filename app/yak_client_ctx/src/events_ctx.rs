@@ -26,11 +26,11 @@ use gazebo::prelude::VecExt;
 use tokio::runtime::Runtime;
 use yak_cli_proto::CommandResult;
 use yak_cli_proto::command_result;
-use yak_error::BuckErrorContext;
-use yak_error::BuckErrorOptionContext;
+use yak_error::YakErrorContext;
+use yak_error::YakErrorOptionContext;
 use yak_error::ErrorTag;
 use yak_event_log::stream_value::StreamValue;
-use yak_events::BuckEvent;
+use yak_events::YakEvent;
 use yak_fs::paths::abs_norm_path::AbsNormPathBuf;
 use yak_fs::paths::abs_path::AbsPathBuf;
 use yak_wrapper_common::invocation_id::TraceId;
@@ -41,7 +41,7 @@ use crate::console_interaction_stream::ConsoleInteraction;
 use crate::console_interaction_stream::ConsoleInteractionStream;
 use crate::console_interaction_stream::NoopSuperConsoleInteraction;
 use crate::console_interaction_stream::SuperConsoleInteraction;
-use crate::daemon::client::BuckdClient;
+use crate::daemon::client::YakdClient;
 use crate::daemon::client::NoPartialResultHandler;
 use crate::daemon::client::tonic_status_to_error;
 use crate::exit_result::ExitResult;
@@ -66,7 +66,7 @@ const STREAM_PROCESSING_YIELD_INTERVAL: Duration = Duration::from_millis(125);
 
 #[derive(Debug, yak_error::Error)]
 #[allow(clippy::large_enum_variant)]
-enum BuckdCommunicationError {
+enum YakdCommunicationError {
     #[error("call to daemon returned an unexpected result type. got `{0:?}`")]
     #[yak(tag = Tier0)]
     UnexpectedResultType(command_result::Result),
@@ -86,14 +86,14 @@ enum BuckdCommunicationError {
     TonicError(tonic::Status),
 }
 
-impl From<tonic::Status> for BuckdCommunicationError {
+impl From<tonic::Status> for YakdCommunicationError {
     fn from(status: tonic::Status) -> Self {
         match status.code() {
             tonic::Code::Ok => {
                 unreachable!("::Ok should be unreachable as it should produce an Ok result")
             }
             // all errors should be encoded into the CommandResult, we must've hit something strange to be here.
-            _ => BuckdCommunicationError::TonicError(status),
+            _ => YakdCommunicationError::TonicError(status),
         }
     }
 }
@@ -152,7 +152,7 @@ impl<'a> DaemonEventsCtx<'a> {
     }
 
     pub(crate) fn new(
-        client: &mut BuckdClient,
+        client: &mut YakdClient,
         events_ctx: &'a mut EventsCtx,
     ) -> yak_error::Result<Self> {
         let tailers = FileTailers::new(&client.daemon_dir)?;
@@ -181,7 +181,7 @@ impl<'a> DaemonEventsCtx<'a> {
     where
         Handler: PartialResultHandler,
     {
-        let next = next.ok_or(BuckdCommunicationError::MissingCommandResult)?;
+        let next = next.ok_or(YakdCommunicationError::MissingCommandResult)?;
         let mut events = Vec::with_capacity(next.len());
         for next in next {
             let next = match next {
@@ -191,7 +191,7 @@ impl<'a> DaemonEventsCtx<'a> {
                     let oom_reason = self.inner.daemon_oom_reason().await?;
                     return if let Some(oom_reason) = oom_reason {
                         Err(e)
-                            .buck_error_context(
+                            .yak_error_context(
                                 format!("yak daemon was killed by an OOM killer due to high memory pressure ({oom_reason}). \
                                 Common causes are large or numerous build or test targets or \
                                 too many yak daemons running simultaneously."))
@@ -199,7 +199,7 @@ impl<'a> DaemonEventsCtx<'a> {
                             .tag(ErrorTag::DaemonOomKilled)
                     } else {
                         Err(e)
-                            .buck_error_context("yak daemon event bus encountered an error, the root cause (if available) is displayed above this message.")
+                            .yak_error_context("yak daemon event bus encountered an error, the root cause (if available) is displayed above this message.")
                             .tag(ErrorTag::ClientGrpcStream)
                     };
                 }
@@ -320,7 +320,7 @@ impl<'a> DaemonEventsCtx<'a> {
                 // certain) the daemon shutdown is the cause for us to simply claim it is.
                 tracing::debug!("Original unpack_stream error was: {:#}", e);
 
-                return Err(BuckdCommunicationError::InterruptedByDaemonShutdown(shutdown).into());
+                return Err(YakdCommunicationError::InterruptedByDaemonShutdown(shutdown).into());
             }
             (Err(e), None) => return Err(e),
         };
@@ -446,9 +446,9 @@ fn convert_result<R: TryFrom<command_result::Result, Error = command_result::Res
         )),
         Some(value) => match value.try_into() {
             Ok(v) => Ok(CommandOutcome::Success(v)),
-            Err(res) => Err(BuckdCommunicationError::UnexpectedResultType(res).into()),
+            Err(res) => Err(YakdCommunicationError::UnexpectedResultType(res).into()),
         },
-        None => Err(BuckdCommunicationError::EmptyCommandResult.into()),
+        None => Err(YakdCommunicationError::EmptyCommandResult.into()),
     }
 }
 
@@ -457,10 +457,10 @@ pub struct EventsCtx {
     pub recorder: Option<Box<InvocationRecorder>>,
     pub(crate) subscribers: Vec<Box<dyn EventSubscriber>>,
     client_cpu_tracker: ClientCpuTracker,
-    // buck_log_dir and command_report_path are used to write the command report.
+    // yak_log_dir and command_report_path are used to write the command report.
     // Ensuring a command report is always written would require either simplifying
     // how the isolation dir is determined, or writing to a different path.
-    pub buck_log_dir: Option<AbsNormPathBuf>,
+    pub yak_log_dir: Option<AbsNormPathBuf>,
     pub command_report_path: Option<AbsPathBuf>,
     // Internal commands triggered by other commands should not log an invocation record.
     pub log_invocation_record: bool,
@@ -468,7 +468,7 @@ pub struct EventsCtx {
     // The daemon process's cgroup path as read from /proc/{pid}/cgroup by the client. Unlike the
     // `daemon_cgroup_path` the daemon reports about itself, this is available even when the daemon
     // isn't running with resource control.
-    pub cgroup_path_of_buck2_daemon: Option<String>,
+    pub cgroup_path_of_yak_daemon: Option<String>,
     pub daemon_start_instant: Option<Instant>,
     /// Whether a superconsole was actually constructed for this command.
     /// Set by `streaming.rs` from the authoritative answer returned by
@@ -486,11 +486,11 @@ impl EventsCtx {
             subscribers,
             recorder: recorder.map(Box::new),
             client_cpu_tracker: ClientCpuTracker::new(),
-            buck_log_dir: None,
+            yak_log_dir: None,
             command_report_path: None,
             log_invocation_record: true,
             daemon_pid: None,
-            cgroup_path_of_buck2_daemon: None,
+            cgroup_path_of_yak_daemon: None,
             daemon_start_instant: None,
             used_superconsole: false,
         }
@@ -506,7 +506,7 @@ impl EventsCtx {
         };
         let evidence = crate::subscribers::oom::find_daemon_oom_evidence(
             pid,
-            self.cgroup_path_of_buck2_daemon.as_deref(),
+            self.cgroup_path_of_yak_daemon.as_deref(),
             self.daemon_start_instant,
         )
         .await?;
@@ -537,12 +537,12 @@ impl EventsCtx {
 
     async fn handle_events(
         &mut self,
-        events: Vec<BuckEvent>,
+        events: Vec<YakEvent>,
         shutdown: &mut Option<yak_data::DaemonShutdown>,
     ) -> yak_error::Result<()> {
         let events = events.into_map(|mut event| {
             let timestamp = event.timestamp();
-            if let yak_data::buck_event::Data::Instant(instant_event) = event.data_mut() {
+            if let yak_data::yak_event::Data::Instant(instant_event) = event.data_mut() {
                 match &mut instant_event.data {
                     Some(yak_data::instant_event::Data::Snapshot(snapshot)) => {
                         let now = SystemTime::now();
@@ -719,7 +719,7 @@ impl EventsCtx {
         runtime: &Runtime,
     ) -> ExitResult {
         runtime.block_on(async move {
-            let buck_log_dir = self.buck_log_dir.take();
+            let yak_log_dir = self.yak_log_dir.take();
             let command_report_path = self.command_report_path.take();
             let finalize_events = async {
                 self.handle_exit_result(&result);
@@ -739,7 +739,7 @@ impl EventsCtx {
             // Don't fail the command if command report fails to write. TODO(ctolliday) show a warning?
             let _unused = result.write_command_report(
                 trace_id,
-                buck_log_dir,
+                yak_log_dir,
                 command_report_path,
                 finalizing_errors,
             );

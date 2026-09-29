@@ -4,7 +4,7 @@ source_listing()
 
 export_file(
     name = "xcode_version_checker",
-    labels = ["buck2-only"],
+    labels = ["yak-only"],
     mode = "reference",
     visibility = ["PUBLIC"],
 )

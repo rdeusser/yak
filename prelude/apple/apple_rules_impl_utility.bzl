@@ -20,7 +20,7 @@ load("@prelude//cxx:headers.bzl", "CPrecompiledHeaderInfo")
 load("@prelude//ide_integrations/xcode:scheme_settings.bzl", "XCODE_SCHEME_SETTINGS_ATTR_NAME", "XCODE_SCHEME_SETTINGS_ATTR_TYPE")
 load("@prelude//linking:execution_preference.bzl", "link_execution_preference_attr")
 load("@prelude//linking:link_info.bzl", "LinkOrdering")
-load("@prelude//utils:buckconfig.bzl", "read_bool")
+load("@prelude//utils:yakconfig.bzl", "read_bool")
 load("@prelude//utils:clear_platform.bzl", "clear_platform_transition")
 
 AppleFrameworkBundleModuleMapType = ["auto"]

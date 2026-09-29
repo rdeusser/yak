@@ -27,7 +27,7 @@ use yak_fs::paths::forward_rel_path::ForwardRelativePathBuf;
 
 use crate::aquery::evaluator::get_dice_aquery_delegate;
 
-// Given the buckout path, how do we search actions?
+// Given the yakout path, how do we search actions?
 enum ActionKeyMatch<'v> {
     // This action key exactly produces the output path.
     Exact(&'v ActionKey),

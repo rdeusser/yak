@@ -248,8 +248,8 @@ def bad() -> str:
         let m = module(
             r#"
 # starlark-lint-disable unused-load
-load("@cell//buck/lib:rust_library.bzl", "rust_library")
-load("@cell//buck/lib:rust_binary.bzl", "rust_binary")
+load("@cell//yak/lib:rust_library.bzl", "rust_library")
+load("@cell//yak/lib:rust_binary.bzl", "rust_binary")
 
 def bad1() -> str:
     pass
@@ -282,7 +282,7 @@ def good3() -> str:
         let src = module(
             "\
             # starlark-lint-disable unused-load\r\n\
-            load('@cell//buck/lib:rust_library.bzl', 'rust_library')",
+            load('@cell//yak/lib:rust_library.bzl', 'rust_library')",
         );
         let res = src.lint(None);
         assert!(res.is_empty());

@@ -18,7 +18,7 @@ use yak_cli_proto::ProfileRequest;
 use yak_cli_proto::ProfileResponse;
 use yak_cli_proto::profile_request::ProfileOpts;
 use yak_common::dice::cells::HasCellResolver;
-use yak_error::BuckErrorOptionContext;
+use yak_error::YakErrorOptionContext;
 use yak_error::internal_error;
 use yak_error::yak_error;
 use yak_fs::paths::abs_path::AbsPath;

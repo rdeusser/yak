@@ -15,7 +15,7 @@ use starlark::values::Value;
 use yak_core::provider::label::ProvidersLabel;
 use yak_core::provider::label::ProvidersName;
 use yak_core::soft_error;
-use yak_error::BuckErrorOptionContext;
+use yak_error::YakErrorOptionContext;
 use yak_node::attrs::attr_type::query::QueryAttr;
 use yak_node::attrs::attr_type::query::QueryAttrBase;
 use yak_node::attrs::attr_type::query::QueryAttrType;

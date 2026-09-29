@@ -25,10 +25,10 @@ use starlark::values::structs::StructRef;
 use starlark::values::tuple::TupleRef;
 use starlark::values::type_repr::StarlarkTypeRepr;
 use yak_core::content_hash::ContentBasedPathHash;
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 use yak_execute::artifact::artifact_dyn::ArtifactDyn;
 use yak_execute::artifact::fs::ExecutorFs;
-use yak_hash::BuckMutMap;
+use yak_hash::YakMutMap;
 use yak_interpreter::types::cell_path::StarlarkCellPath;
 use yak_interpreter::types::configured_providers_label::StarlarkConfiguredProvidersLabel;
 use yak_interpreter::types::target_label::StarlarkTargetLabel;
@@ -61,11 +61,11 @@ pub struct SerializeValue<'a, 'v> {
     pub artifact_path_mapping: &'a dyn ArtifactPathMapper,
 }
 
-struct Buck2ErrorResultOfSerializedValue<'a, 'v> {
+struct YakErrorResultOfSerializedValue<'a, 'v> {
     result: yak_error::Result<SerializeValue<'a, 'v>>,
 }
 
-impl<'a, 'v> Serialize for Buck2ErrorResultOfSerializedValue<'a, 'v> {
+impl<'a, 'v> Serialize for YakErrorResultOfSerializedValue<'a, 'v> {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
@@ -78,8 +78,8 @@ impl<'a, 'v> Serialize for Buck2ErrorResultOfSerializedValue<'a, 'v> {
 }
 
 impl<'a, 'v> SerializeValue<'a, 'v> {
-    fn with_value(&self, x: Value<'v>) -> Buck2ErrorResultOfSerializedValue<'a, 'v> {
-        Buck2ErrorResultOfSerializedValue {
+    fn with_value(&self, x: Value<'v>) -> YakErrorResultOfSerializedValue<'a, 'v> {
+        YakErrorResultOfSerializedValue {
             result: JsonUnpack::unpack_value_err(x)
                 .map_err(yak_error::Error::from)
                 .map(|value| SerializeValue {
@@ -276,7 +276,7 @@ fn is_singleton_cmdargs(x: CommandLineArg) -> bool {
 }
 
 pub fn validate_json(x: JsonUnpack) -> yak_error::Result<()> {
-    write_json(x, None, &mut sink(), false, false, &BuckMutMap::default())
+    write_json(x, None, &mut sink(), false, false, &YakMutMap::default())
 }
 
 pub fn write_json(
@@ -304,7 +304,7 @@ pub fn write_json(
         }
         yak_error::Ok(())
     })()
-    .buck_error_context("Error converting to JSON for `write_json`")
+    .yak_error_context("Error converting to JSON for `write_json`")
 }
 
 pub fn visit_json_artifacts<'v>(

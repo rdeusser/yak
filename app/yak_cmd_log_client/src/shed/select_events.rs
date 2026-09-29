@@ -10,9 +10,9 @@
 
 use gazebo::variants::VariantName;
 use regex::RegexSet;
-use yak_client_ctx::client_ctx::BuckSubcommand;
+use yak_client_ctx::client_ctx::YakSubcommand;
 use yak_client_ctx::client_ctx::ClientCommandContext;
-use yak_client_ctx::common::BuckArgMatches;
+use yak_client_ctx::common::YakArgMatches;
 use yak_client_ctx::event_log_options::EventLogOptions;
 use yak_client_ctx::events_ctx::EventsCtx;
 use yak_client_ctx::exit_result::ExitResult;
@@ -49,12 +49,12 @@ pub struct SelectEventsCommand {
     exclude: Vec<String>,
 }
 
-impl BuckSubcommand for SelectEventsCommand {
+impl YakSubcommand for SelectEventsCommand {
     const COMMAND_NAME: &'static str = "log-shed-select-events";
 
     async fn exec_impl(
         self,
-        _matches: BuckArgMatches<'_>,
+        _matches: YakArgMatches<'_>,
         ctx: ClientCommandContext<'_>,
         _events_ctx: &mut EventsCtx,
     ) -> ExitResult {
@@ -82,8 +82,8 @@ impl BuckSubcommand for SelectEventsCommand {
     }
 }
 
-fn event_name(event: &yak_data::BuckEvent) -> &'static str {
-    use yak_data::buck_event::Data;
+fn event_name(event: &yak_data::YakEvent) -> &'static str {
+    use yak_data::yak_event::Data;
 
     let Some(data) = event.data.as_ref() else {
         return "Unknown";
@@ -111,20 +111,20 @@ mod tests {
     use yak_data::ActionExecutionStart;
     use yak_data::SpanEndEvent;
     use yak_data::SpanStartEvent;
-    use yak_data::buck_event::Data;
+    use yak_data::yak_event::Data;
     use yak_event_log::read::EventLogPathBuf;
     use yak_event_log::stream_value::StreamValue;
     use yak_event_log::utils::Invocation;
     use yak_event_log::write::rewrite_event_log;
-    use yak_events::BuckEvent;
+    use yak_events::YakEvent;
     use yak_events::span::SpanId;
     use yak_fs::paths::abs_path::AbsPathBuf;
     use yak_wrapper_common::invocation_id::TraceId;
 
     use super::*;
 
-    fn make_event(data: Data) -> BuckEvent {
-        BuckEvent::new(
+    fn make_event(data: Data) -> YakEvent {
+        YakEvent::new(
             SystemTime::now(),
             TraceId::new(),
             Some(SpanId::next()),
@@ -162,7 +162,7 @@ mod tests {
     /// publicly constructible from outside `yak_event_log`.
     async fn build_input_log(
         path: AbsPathBuf,
-        events: Vec<BuckEvent>,
+        events: Vec<YakEvent>,
     ) -> yak_error::Result<EventLogPathBuf> {
         use std::io::Write;
 

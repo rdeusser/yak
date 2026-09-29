@@ -12,7 +12,7 @@ use allocative::Allocative;
 use dupe::Dupe;
 use pagable::Pagable;
 use strong_hash::StrongHash;
-use yak_error::BuckErrorOptionContext;
+use yak_error::YakErrorOptionContext;
 use yak_fs::paths::forward_rel_path::ForwardRelativePath;
 
 use crate::cells::name::CellName;

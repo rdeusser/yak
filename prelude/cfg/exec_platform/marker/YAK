@@ -30,7 +30,7 @@ exec_platform_marker_constraint(
 
 # Export YAK file for inclusion in prelude//:prelude filegroup
 prelude.export_file(
-    name = "buck_file",
+    name = "yak_file",
     src = "YAK",
     visibility = ["PUBLIC"],
 )

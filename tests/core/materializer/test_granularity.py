@@ -20,59 +20,59 @@ the second build has only persisted state to work from.
 from pathlib import Path
 from typing import List
 
-from e2e_util.api.buck import Buck
-from e2e_util.buck_workspace import buck_test
+from e2e_util.api.yak import Yak
+from e2e_util.yak_workspace import yak_test
 from e2e_util.helper.utils import replace_in_file
 
 
-def use_second_layout(buck: Buck, name: str) -> None:
+def use_second_layout(yak: Yak, name: str) -> None:
     """Switch `//:{name}` to the `{name}_2` layout defined in `defs.bzl`."""
     replace_in_file(
         f'variant = "{name}_1"',
         f'variant = "{name}_2"',
-        buck.cwd / "YAK.fixture",
+        yak.cwd / "YAK.fixture",
     )
 
 
-async def build_outputs(buck: Buck, target: str) -> List[Path]:
-    result = await buck.build(target)
+async def build_outputs(yak: Yak, target: str) -> List[Path]:
+    result = await yak.build(target)
     return sorted(result.get_build_report().outputs_for_target(target))
 
 
-async def _dir_to_files(buck: Buck, restart: bool) -> None:
+async def _dir_to_files(yak: Yak, restart: bool) -> None:
     target = "root//:dir_to_files"
 
-    (out,) = await build_outputs(buck, target)
+    (out,) = await build_outputs(yak, target)
     assert (out / "a").read_text() == "A1"
     assert (out / "sub" / "keep").read_text() == "K1"
     assert (out / "sub" / "stale").read_text() == "S1"
 
-    use_second_layout(buck, "dir_to_files")
+    use_second_layout(yak, "dir_to_files")
     if restart:
-        await buck.kill()
+        await yak.kill()
 
     # The new artifacts land inside the path the directory artifact used to
     # occupy; without this the checks below would be vacuous.
-    assert await build_outputs(buck, target) == [out / "a", out / "sub"]
+    assert await build_outputs(yak, target) == [out / "a", out / "sub"]
     assert (out / "a").read_text() == "A2"
     assert (out / "sub" / "keep").read_text() == "K2"
     assert not (out / "sub" / "stale").exists()
 
 
-async def _files_to_dir(buck: Buck, restart: bool) -> None:
+async def _files_to_dir(yak: Yak, restart: bool) -> None:
     target = "root//:files_to_dir"
 
-    a, b = await build_outputs(buck, target)
+    a, b = await build_outputs(yak, target)
     out = a.parent
     assert [a, b] == [out / "a", out / "b"]
     assert a.read_text() == "A1"
     assert b.read_text() == "B1"
 
-    use_second_layout(buck, "files_to_dir")
+    use_second_layout(yak, "files_to_dir")
     if restart:
-        await buck.kill()
+        await yak.kill()
 
-    assert await build_outputs(buck, target) == [out]
+    assert await build_outputs(yak, target) == [out]
     assert (out / "a").read_text() == "A2"
     assert (out / "c").read_text() == "C2"
     # `b` is not part of the directory artifact, so it must not be visible to
@@ -80,57 +80,57 @@ async def _files_to_dir(buck: Buck, restart: bool) -> None:
     assert not (out / "b").exists()
 
 
-@buck_test()
-async def test_directory_artifact_becomes_files_inside_it(buck: Buck) -> None:
-    await _dir_to_files(buck, restart=False)
+@yak_test()
+async def test_directory_artifact_becomes_files_inside_it(yak: Yak) -> None:
+    await _dir_to_files(yak, restart=False)
 
 
-@buck_test()
+@yak_test()
 async def test_directory_artifact_becomes_files_inside_it_across_restart(
-    buck: Buck,
+    yak: Yak,
 ) -> None:
-    await _dir_to_files(buck, restart=True)
+    await _dir_to_files(yak, restart=True)
 
 
-@buck_test()
-async def test_files_become_a_directory_artifact_around_them(buck: Buck) -> None:
-    await _files_to_dir(buck, restart=False)
+@yak_test()
+async def test_files_become_a_directory_artifact_around_them(yak: Yak) -> None:
+    await _files_to_dir(yak, restart=False)
 
 
-@buck_test()
+@yak_test()
 async def test_files_become_a_directory_artifact_around_them_across_restart(
-    buck: Buck,
+    yak: Yak,
 ) -> None:
-    await _files_to_dir(buck, restart=True)
+    await _files_to_dir(yak, restart=True)
 
 
-@buck_test()
-async def test_directory_artifact_contents_shrink(buck: Buck) -> None:
+@yak_test()
+async def test_directory_artifact_contents_shrink(yak: Yak) -> None:
     target = "root//:shrinking_dir"
 
-    (out,) = await build_outputs(buck, target)
+    (out,) = await build_outputs(yak, target)
     assert (out / "keep.txt").read_text() == "KEEP1"
     assert (out / "stale.txt").read_text() == "STALE"
 
-    use_second_layout(buck, "shrinking_dir")
+    use_second_layout(yak, "shrinking_dir")
 
-    assert await build_outputs(buck, target) == [out]
+    assert await build_outputs(yak, target) == [out]
     assert (out / "keep.txt").read_text() == "KEEP2"
     assert not (out / "stale.txt").exists()
 
 
-@buck_test()
-async def test_local_consumer_does_not_see_removed_entry(buck: Buck) -> None:
+@yak_test()
+async def test_local_consumer_does_not_see_removed_entry(yak: Yak) -> None:
     # The tests above look at the disk state a final materialization leaves
     # behind. This one looks at what a local action consuming the directory
     # artifact as an input can see in it.
     target = "root//:listed_dir_listing"
 
-    result = await buck.build(target)
+    result = await yak.build(target)
     listing = result.get_build_report().output_for_target(target)
     assert listing.read_text() == "keep,stale"
 
-    use_second_layout(buck, "listed_dir")
+    use_second_layout(yak, "listed_dir")
 
-    result = await buck.build(target)
+    result = await yak.build(target)
     assert result.get_build_report().output_for_target(target).read_text() == "keep"

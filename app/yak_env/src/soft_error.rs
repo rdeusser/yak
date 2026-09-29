@@ -17,7 +17,7 @@ use std::sync::atomic::AtomicUsize;
 use std::sync::atomic::Ordering;
 
 use starlark_map::small_set::SmallSet;
-use yak_hash::BuckDashMap;
+use yak_hash::YakDashMap;
 
 use crate::env::yak_env;
 
@@ -57,7 +57,7 @@ impl Drop for RestoreSoftErrorContext {
     }
 }
 
-pub fn buck2_hard_error_env() -> yak_error::Result<Option<&'static str>> {
+pub fn yak_hard_error_env() -> yak_error::Result<Option<&'static str>> {
     yak_env!("YAK_HARD_ERROR")
 }
 
@@ -94,7 +94,7 @@ impl ShowSoftErrorConfig {
     }
 }
 
-pub fn buck2_show_soft_errors_env() -> yak_error::Result<Option<&'static str>> {
+pub fn yak_show_soft_errors_env() -> yak_error::Result<Option<&'static str>> {
     yak_env!("YAK_SHOW_SOFT_ERRORS")
 }
 
@@ -303,7 +303,7 @@ pub fn initialize(
 pub struct SoftErrorContext {
     hard_error_config: HardErrorConfig,
     show_soft_error_config: ShowSoftErrorConfig,
-    counts: BuckDashMap<(&'static str, u32, u32), AtomicUsize>,
+    counts: YakDashMap<(&'static str, u32, u32), AtomicUsize>,
     command_scoped: bool,
 }
 
@@ -313,15 +313,15 @@ impl SoftErrorContext {
         Ok(Self {
             hard_error_config: HardErrorConfig::from_str(hard_error_config)?,
             show_soft_error_config: ShowSoftErrorConfig::parse(show_soft_error_config),
-            counts: BuckDashMap::default(),
+            counts: YakDashMap::default(),
             command_scoped: true,
         })
     }
 
     fn from_environment() -> yak_error::Result<Self> {
         let mut context = Self::new(
-            buck2_hard_error_env()?.unwrap_or_default(),
-            buck2_show_soft_errors_env()?.unwrap_or_default(),
+            yak_hard_error_env()?.unwrap_or_default(),
+            yak_show_soft_errors_env()?.unwrap_or_default(),
         )?;
         context.command_scoped = false;
         Ok(context)

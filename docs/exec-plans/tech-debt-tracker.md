@@ -5,25 +5,19 @@ Counts and results are from 2026-09-26 unless an entry gives another date. Comma
 
 ## Build and verification
 
-### The Buck build fails on macOS
+### The yak build of this repository has no third-party crates
 
-On macOS, `target/debug/yak build //:yak` fails at `//third-party/rust:objc2-0.6`.
-`objc2` 0.6.4 reads `CARGO_PKG_VERSION` at compile time, and `third-party/rust/fixups/objc2/fixups.toml` does not exist, so the rule that `reindeer` generates does not set the variable.
-`reindeer buckify` also warns that eight other crates have build scripts but no fixups (`alloca`, `bindgen`, `clang-sys`, `constant_time_eq`, `icu_locale_fallback_data`, `icu_segmenter_data`, `psm`, `stacker`).
-
-The macOS failure is from 2026-09-27, when the third-party definitions still lived in `shim/third-party/rust`. The build stopped at that failure, so later failures are unknown.
-On Linux on 2026-09-28, after the rename to yak, `./bootstrap/reindeer --third-party-dir third-party/rust buckify` followed by `target/debug/yak build //:yak` succeeded.
-
-Remove this entry when `yak build //:yak` succeeds on macOS after a fresh `buckify`.
+The `YAK` files of the repository name third-party crates as `//third-party/rust:<crate>`, but the repository no longer has a `third-party/rust` package or a tool that generates one, so `yak build //:yak` fails to load.
+Remove this entry when the repository defines its third-party Rust crates for yak again.
 
 ### The integration tests have not passed in CI
 
 `.github/workflows/integration-tests.yml` runs `pytest tests` on Linux against a debug build, and no run of it has completed.
 On 2026-09-28, the whole suite ran on Linux under Python 3.12 as a user other than root, with `ps` and `lldb` installed and the daemon in a cgroup below the root of its cgroup namespace.
 That run gave 1726 passed, 230 skipped, 3 expected failures, and no other failures.
-After the rename to yak, the same setup gave 1763 passed, 190 skipped, and 3 expected failures, with `BUCK2_COMPLETION_VERIFY` set so the completion tests ran.
+After the rename to yak, the same setup gave 1763 passed, 190 skipped, and 3 expected failures, with `YAK_COMPLETION_VERIFY` set so the completion tests ran.
 On 2026-09-29, after the removal of the JVM, Android, and JavaScript support, the same setup without a completion helper gave 1728 passed, 223 skipped, and 3 expected failures.
-After the removal of the Buck1 compatibility code, the same setup gave 1727 passed, 223 skipped, and 3 expected failures.
+After the removal of the Yak1 compatibility code, the same setup gave 1727 passed, 223 skipped, and 3 expected failures.
 After the rename of the messages and comments of the code, the same setup gave 1727 passed, 223 skipped, and 3 expected failures.
 The skipped tests need a Remote Execution backend, cgroup delegation, helper binaries, Go, or Watchman. The repository has no Remote Execution backend to test against.
 A separate run with Go 1.26, `clang`, and `lld` passed the 30 tests in `tests/prelude/test_prelude_rules.py`, which include the 19 Go tests.
@@ -31,10 +25,10 @@ Whether the GitHub runner puts the daemon in a cgroup below the root of its cgro
 
 Remove this entry when the workflow passes.
 
-### The crate dependency rules run only in the Buck build
+### The crate dependency rules run only in the Yak build
 
-`//app_dep_graph_rules:test_buck2_dep_graph` checks the rules in `app_dep_graph_rules/rules.bzl` during analysis, and `yak build //app_dep_graph_rules:test_buck2_dep_graph` succeeded on Linux on 2026-09-28.
-CI runs no Buck build, so a change that breaks a rule passes CI.
+`//app_dep_graph_rules:test_yak_dep_graph` checks the rules in `app_dep_graph_rules/rules.bzl` during analysis, and `yak build //app_dep_graph_rules:test_yak_dep_graph` succeeded on Linux on 2026-09-28.
+CI runs no Yak build, so a change that breaks a rule passes CI.
 
 Remove this entry when CI runs the check.
 
@@ -50,7 +44,7 @@ Remove this entry when a lint rejects `.elapsed()` in `app/`, or when `docs/deve
 
 The Cargo lint levels live in `[workspace.lints]` in `Cargo.toml`.
 Eight crates copy the whole table into their own `Cargo.toml` to add a `check-cfg` entry, and nothing checks that the copies match. `docs/developers/basics.md` lists the eight crates.
-The macros in `build_defs/rust.bzl` set no lint levels, so the Buck build reports only the default lints of `rustc`.
+The macros in `build_defs/rust.bzl` set no lint levels, so the Yak build reports only the default lints of `rustc`.
 
 Remove this entry when each build reads lint levels from one source, or when a check keeps the copies equal.
 
@@ -61,20 +55,6 @@ Remove this entry when each build reads lint levels from one source, or when a c
 `cargo build --bin=yak` prints ``patch `bindgen v0.72.1 (...)` was not used in the crate graph``.
 
 Remove this entry when the warning no longer appears.
-
-### `yak build //...` fails in third-party crates
-
-`//...` includes every crate that `reindeer buckify` generates in `third-party/rust/YAK`, and some of them fail to build on Linux.
-On 2026-09-28, `buck2 build //third-party/... --keep-going` failed in 10 targets:
-
-- The eight `protoc-bin-vendored` platform crates read `CARGO_MANIFEST_DIR` at compile time, and they have no fixups.
-- The build script of `openssl-sys` reads `CARGO_PKG_VERSION` at compile time, and `third-party/rust/fixups/openssl-sys/fixups.toml` does not set it.
-- `bindgen` includes a file from `OUT_DIR`, and it has no fixup that runs its build script.
-
-`--keep-going` skips the crates that depend on these targets, and those crates can fail too.
-On Linux, `buck2 build` of the 265 targets outside `third-party/rust/` fails only in the two targets that the next entry describes, so none of those targets needs these crates. The Buck build takes `protoc` from `third-party/proto/`.
-
-Remove this entry when `yak build //...` succeeds, or when the documentation names the target pattern that the Buck build supports.
 
 ### `//shed/completion_verify` needs `dnf`
 
@@ -90,7 +70,7 @@ Remove this entry when the completion packages build without `dnf`.
 `//app/yak_miniperf:yak_miniperf_test` is a `rust_library` over `app/yak_miniperf/test/lib.rs`, and that file compiles only under `cfg(test)`, so the target builds an empty library. `app/yak_miniperf/Cargo.toml` has no target for the file.
 The test needs `MINIPERF` and `THREE_BILLION_INSTRUCTIONS` in its environment and the `anyhow`, `bincode`, `tempfile`, and `yak_miniperf_proto` crates. Meta's `rust_library` macro made a test target from `test_deps` and `test_env`, and the macros in this repository never did.
 
-Remove this entry when a Buck or Cargo target runs the test.
+Remove this entry when a Yak or Cargo target runs the test.
 
 ### `test_perf_thread_instruction_counter` fails where perf events are denied
 
@@ -206,11 +186,11 @@ With the default `notify` file watcher, a directory renamed under a running daem
 For a rename, `app/yak_file_watcher/src/notify.rs` passes the renamed path to `file_added_or_removed` and `dir_added_or_removed` in `app/yak_common/src/file_ops/dice.rs`.
 Those calls invalidate the path's metadata and its parent's listing, but not the directory's own listing or the build files under it, so a query against the old path reads the cached listing and build file.
 
-On macOS on 2026-09-27, a project had a `.buckconfig` that sets only `[cells] root = .` and a `pkg/BUCK` that defines one target `a` with a rule returning `DefaultInfo()`.
-`buck2 uquery //pkg/...` printed `root//pkg:a`.
+On macOS on 2026-09-27, a project had a `.yakconfig` that sets only `[cells] root = .` and a `pkg/YAK` that defines one target `a` with a rule returning `DefaultInfo()`.
+`yak uquery //pkg/...` printed `root//pkg:a`.
 After `mv pkg pkg2`, the daemon reported two file change events.
-Seven seconds later, `buck2 uquery //pkg/...` still printed `root//pkg:a` and exited 0.
-After `buck2 kill`, the same query failed because `pkg` does not exist. The Linux behavior was not checked.
+Seven seconds later, `yak uquery //pkg/...` still printed `root//pkg:a` and exited 0.
+After `yak kill`, the same query failed because `pkg` does not exist. The Linux behavior was not checked.
 
 Remove this entry when the query after the rename fails without a daemon restart.
 
@@ -220,10 +200,9 @@ The repository owner plans to remove what still ties the repository to Meta's up
 
 ### Downloads from upstream releases
 
-- `bootstrap/reindeer` downloads `reindeer` from `facebookincubator/reindeer` releases, and `.github/actions/setup_reindeer/action.yml` installs it from that repository with `cargo install`.
 - `.github/workflows/release.yml` and `.github/workflows/upload_yak.yml` publish DotSlash files with the `facebook/dotslash-publish-release` action.
 
-`git grep -n -E 'github\.com/facebook(incubator)?/[^/]+/releases|facebook/dotslash-publish-release|facebookincubator/reindeer reindeer'` lists them.
+`git grep -n -E 'github\.com/facebook(incubator)?/[^/]+/releases|facebook/dotslash-publish-release'` lists them.
 
 Remove each item when the fork publishes its own artifact or drops the download.
 

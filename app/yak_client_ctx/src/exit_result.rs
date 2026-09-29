@@ -252,21 +252,21 @@ impl ExitResult {
     pub fn write_command_report(
         &self,
         trace_id: TraceId,
-        buck_log_dir: Option<AbsNormPathBuf>,
+        yak_log_dir: Option<AbsNormPathBuf>,
         command_report_path: Option<AbsPathBuf>,
         finalizing_error_messages: Vec<String>,
     ) -> yak_error::Result<()> {
-        let (path, copy_path) = if let Some(buck_log_dir) = buck_log_dir {
-            let dir = buck_log_dir.join(ForwardRelativePath::new(&trace_id.to_string())?);
+        let (path, copy_path) = if let Some(yak_log_dir) = yak_log_dir {
+            let dir = yak_log_dir.join(ForwardRelativePath::new(&trace_id.to_string())?);
             fs_util::create_dir_all(&dir)?;
             // this path is used by the yak wrapper, don't change without updating the wrapper.
             let path = dir.join(ForwardRelativePath::new("command_report.json")?);
             (path.into_abs_path_buf(), command_report_path)
         } else if let Some(command_report_path) = command_report_path {
-            // If buck_log_dir is not set, we are running outside a repo, write to command_report_path if present.
+            // If yak_log_dir is not set, we are running outside a repo, write to command_report_path if present.
             (command_report_path, None)
         } else {
-            // No buck_log_dir, no command_report_path, do nothing.
+            // No yak_log_dir, no command_report_path, do nothing.
             return Ok(());
         };
         let file = fs_util::create_file(&path).categorize_internal()?;

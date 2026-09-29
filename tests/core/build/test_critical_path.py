@@ -10,8 +10,8 @@ import json
 import typing
 from dataclasses import dataclass
 
-from e2e_util.api.buck import Buck
-from e2e_util.buck_workspace import buck_test
+from e2e_util.api.yak import Yak
+from e2e_util.yak_workspace import yak_test
 from e2e_util.helper.golden import golden
 from e2e_util.helper.utils import filter_events
 
@@ -28,11 +28,11 @@ class CriticalPathLog:
     potential_improvement_duration: str
 
 
-async def do_critical_path(buck: Buck) -> None:
-    await buck.build("//:step_3", "--no-remote-cache")
+async def do_critical_path(yak: Yak) -> None:
+    await yak.build("//:step_3", "--no-remote-cache")
 
     critical_path = (
-        (await buck.log("critical-path", "--format=tabulated"))
+        (await yak.log("critical-path", "--format=tabulated"))
         .stdout.strip()
         .splitlines()
     )
@@ -45,7 +45,7 @@ async def do_critical_path(buck: Buck) -> None:
     ]
 
     expected = [
-        ("buckd_command_init", ""),
+        ("yakd_command_init", ""),
         ("file-watcher-wait", ""),
         ("other-command-start-overhead", ""),
         ("listing", "root//"),
@@ -78,21 +78,21 @@ async def do_critical_path(buck: Buck) -> None:
         assert s.name == e[1]
 
 
-@buck_test()
-async def test_critical_path_longest_path_graph(buck: Buck) -> None:
-    with open(buck.cwd / ".yakconfig", "a") as f:
+@yak_test()
+async def test_critical_path_longest_path_graph(yak: Yak) -> None:
+    with open(yak.cwd / ".yakconfig", "a") as f:
         f.write("[yak]\n")
         f.write("critical_path_backend2 = longest-path-graph\n")
-    await do_critical_path(buck)
+    await do_critical_path(yak)
 
 
-@buck_test()
-async def test_critical_path_json(buck: Buck) -> None:
+@yak_test()
+async def test_critical_path_json(yak: Yak) -> None:
     import json
 
-    await buck.build("//:step_3", "--no-remote-cache")
+    await yak.build("//:step_3", "--no-remote-cache")
     critical_path = (
-        (await buck.log("critical-path", "--format", "json"))
+        (await yak.log("critical-path", "--format", "json"))
         .stdout.strip()
         .splitlines()
     )
@@ -101,7 +101,7 @@ async def test_critical_path_json(buck: Buck) -> None:
     trimmed_critical_path = [e for e in critical_path if e["kind"] not in ("waiting")]
 
     expected = [
-        ("buckd_command_init", None),
+        ("yakd_command_init", None),
         ("file-watcher-wait", None),
         ("other-command-start-overhead", None),
         ("listing", "root//"),
@@ -132,7 +132,7 @@ async def test_critical_path_json(buck: Buck) -> None:
             "compute-critical-path",
             "file-watcher-wait",
             "other-command-start-overhead",
-            "buckd_command_init",
+            "yakd_command_init",
             "build_key",
             "configure_target",
         ):
@@ -153,15 +153,15 @@ async def test_critical_path_json(buck: Buck) -> None:
 # Test that verifies the dicekey->node+deps graph that we produce for critical path
 # calculations. It can be a lot easier to understand bugs and behavior here than
 # only inspecting the final critical path output (like other tests).
-@buck_test()
-async def test_dynamic_input_events(buck: Buck) -> None:
-    with open(buck.cwd / ".yakconfig", "a") as f:
+@yak_test()
+async def test_dynamic_input_events(yak: Yak) -> None:
+    with open(yak.cwd / ".yakconfig", "a") as f:
         f.write("[yak]\n")
         f.write("critical_path_backend2 = logging\n")
 
-    await buck.build("//:check_dynamic_input", "--no-remote-cache")
+    await yak.build("//:check_dynamic_input", "--no-remote-cache")
     events = await filter_events(
-        buck,
+        yak,
         "Event",
         "data",
         "Instant",
@@ -185,13 +185,13 @@ async def test_dynamic_input_events(buck: Buck) -> None:
 
 
 # Test that we can compute critical paths that include edges as inputs of dynamic_output/actions.
-@buck_test()
-async def test_dynamic_input(buck: Buck) -> None:
+@yak_test()
+async def test_dynamic_input(yak: Yak) -> None:
     import json
 
-    await buck.build("//:check_dynamic_input", "--no-remote-cache")
+    await yak.build("//:check_dynamic_input", "--no-remote-cache")
     critical_path = (
-        await buck.log("critical-path", "--format", "json")
+        await yak.log("critical-path", "--format", "json")
     ).stdout.splitlines()
     critical_path = [json.loads(e) for e in critical_path]
 
@@ -208,7 +208,7 @@ async def test_dynamic_input(buck: Buck) -> None:
             "compute-critical-path",
             "file-watcher-wait",
             "other-command-start-overhead",
-            "buckd_command_init",
+            "yakd_command_init",
             "configure_target",
             "build_key",
         ):
@@ -239,9 +239,9 @@ async def test_dynamic_input(buck: Buck) -> None:
     )
 
 
-@buck_test()
-async def test_critical_path_metadata(buck: Buck) -> None:
-    await buck.build(
+@yak_test()
+async def test_critical_path_metadata(yak: Yak) -> None:
+    await yak.build(
         "//:step_0",
         "--no-remote-cache",
         "--client-metadata",
@@ -250,7 +250,7 @@ async def test_critical_path_metadata(buck: Buck) -> None:
     )
 
     build_graph_info = await filter_events(
-        buck,
+        yak,
         "Event",
         "data",
         "Instant",
@@ -264,9 +264,9 @@ async def test_critical_path_metadata(buck: Buck) -> None:
     assert build_graph_info["metadata"]["oncall"] == "myoncall"
 
 
-async def critical_path_helper(buck: Buck) -> typing.List[typing.Dict[str, typing.Any]]:
+async def critical_path_helper(yak: Yak) -> typing.List[typing.Dict[str, typing.Any]]:
     critical_path_actions = await filter_events(
-        buck,
+        yak,
         "Event",
         "data",
         "Instant",
@@ -279,11 +279,11 @@ async def critical_path_helper(buck: Buck) -> typing.List[typing.Dict[str, typin
     return critical_path_actions[0]
 
 
-@buck_test()
-async def test_critical_path_execution_kind(buck: Buck) -> None:
-    await buck.build("//:step_3", "--no-remote-cache")
+@yak_test()
+async def test_critical_path_execution_kind(yak: Yak) -> None:
+    await yak.build("//:step_3", "--no-remote-cache")
 
-    critical_path_actions = await critical_path_helper(buck)
+    critical_path_actions = await critical_path_helper(yak)
 
     has_action_execution = False
     for action in critical_path_actions:
@@ -298,11 +298,11 @@ async def test_critical_path_execution_kind(buck: Buck) -> None:
     assert has_action_execution
 
 
-@buck_test()
-async def test_critical_path_rule_type(buck: Buck) -> None:
-    await buck.build("//:step_0", "--no-remote-cache")
+@yak_test()
+async def test_critical_path_rule_type(yak: Yak) -> None:
+    await yak.build("//:step_0", "--no-remote-cache")
 
-    critical_path_actions = await critical_path_helper(buck)
+    critical_path_actions = await critical_path_helper(yak)
 
     for action in critical_path_actions:
         assert action["entry"]
@@ -314,11 +314,11 @@ async def test_critical_path_rule_type(buck: Buck) -> None:
             )
 
 
-@buck_test()
-async def test_critical_path_action_digest(buck: Buck) -> None:
-    await buck.build("//:step_3", "--no-remote-cache")
+@yak_test()
+async def test_critical_path_action_digest(yak: Yak) -> None:
+    await yak.build("//:step_3", "--no-remote-cache")
 
-    critical_path_actions = await critical_path_helper(buck)
+    critical_path_actions = await critical_path_helper(yak)
 
     has_action_digest = False
     for action in critical_path_actions:
@@ -330,12 +330,12 @@ async def test_critical_path_action_digest(buck: Buck) -> None:
     assert has_action_digest
 
 
-@buck_test()
-async def test_critical_path_top_level_targets(buck: Buck) -> None:
-    await buck.build("//:step_1", "//:step_2", "//:step_3", "--no-remote-cache")
+@yak_test()
+async def test_critical_path_top_level_targets(yak: Yak) -> None:
+    await yak.build("//:step_1", "//:step_2", "//:step_3", "--no-remote-cache")
 
     build_graph_info = await filter_events(
-        buck,
+        yak,
         "Event",
         "data",
         "Instant",
@@ -370,13 +370,13 @@ async def test_critical_path_top_level_targets(buck: Buck) -> None:
     assert total_duration == d2
 
 
-@buck_test()
-async def test_critical_path_test_entries(buck: Buck) -> None:
-    await buck.test(
+@yak_test()
+async def test_critical_path_test_entries(yak: Yak) -> None:
+    await yak.test(
         "//:long_running_test",
     )
 
-    critical_path_actions = await critical_path_helper(buck)
+    critical_path_actions = await critical_path_helper(yak)
 
     # The built-in test runner does not list tests before it runs them, so the
     # critical path has no TestListing entry.
@@ -412,15 +412,15 @@ async def test_critical_path_test_entries(buck: Buck) -> None:
 # Note: if an optimization is made to materialize tset artifacts individually (without
 # going through EnsureTransitiveSetProjectionKey), the critical path dependency should
 # still not be just BuildKey -- it should include the analysis that produces the tset.
-@buck_test()
-async def test_critical_path_tset_final_materialization(buck: Buck) -> None:
-    with open(buck.cwd / ".yakconfig", "a") as f:
+@yak_test()
+async def test_critical_path_tset_final_materialization(yak: Yak) -> None:
+    with open(yak.cwd / ".yakconfig", "a") as f:
         f.write("[yak]\n")
         f.write("critical_path_backend2 = logging\n")
 
-    await buck.build("//:tset_top", "--no-remote-cache")
+    await yak.build("//:tset_top", "--no-remote-cache")
     events = await filter_events(
-        buck,
+        yak,
         "Event",
         "data",
         "Instant",
@@ -462,15 +462,15 @@ async def test_critical_path_tset_final_materialization(buck: Buck) -> None:
     )
 
 
-@buck_test()
-async def test_cross_package_load_edge(buck: Buck) -> None:
-    with open(buck.cwd / ".yakconfig", "a") as f:
+@yak_test()
+async def test_cross_package_load_edge(yak: Yak) -> None:
+    with open(yak.cwd / ".yakconfig", "a") as f:
         f.write("[yak]\n")
         f.write("critical_path_backend2 = logging\n")
 
-    await buck.build("//:cross_pkg", "--no-remote-cache")
+    await yak.build("//:cross_pkg", "--no-remote-cache")
     events = await filter_events(
-        buck,
+        yak,
         "Event",
         "data",
         "Instant",
@@ -500,15 +500,15 @@ async def test_cross_package_load_edge(buck: Buck) -> None:
     )
 
 
-@buck_test()
-async def test_configuration_dep_load_edge(buck: Buck) -> None:
-    with open(buck.cwd / ".yakconfig", "a") as f:
+@yak_test()
+async def test_configuration_dep_load_edge(yak: Yak) -> None:
+    with open(yak.cwd / ".yakconfig", "a") as f:
         f.write("[yak]\n")
         f.write("critical_path_backend2 = logging\n")
 
-    await buck.build("//:cfg_dep_pkg", "--no-remote-cache")
+    await yak.build("//:cfg_dep_pkg", "--no-remote-cache")
     events = await filter_events(
-        buck,
+        yak,
         "Event",
         "data",
         "Instant",
@@ -534,8 +534,8 @@ async def test_configuration_dep_load_edge(buck: Buck) -> None:
     )
 
 
-@buck_test()
-async def test_critical_path_anon_targets(buck: Buck) -> None:
+@yak_test()
+async def test_critical_path_anon_targets(yak: Yak) -> None:
     """Test that anon target nodes appear on the critical path with correct
     splitting when anon targets themselves have anon target dependencies.
 
@@ -549,9 +549,9 @@ async def test_critical_path_anon_targets(buck: Buck) -> None:
     Expected critical path ordering:
       analysis[part1] -> anon_analysis[part1] -> anon_analysis -> anon_analysis[part2] -> analysis[part2]
     """
-    await buck.build("//:anon_step", "--no-remote-cache")
+    await yak.build("//:anon_step", "--no-remote-cache")
 
-    critical_path_actions = await critical_path_helper(buck)
+    critical_path_actions = await critical_path_helper(yak)
 
     # Collect the entry types we care about
     entry_kinds = []

@@ -9,14 +9,14 @@
 import json
 from pathlib import Path
 
-from e2e_util.api.buck import Buck
+from e2e_util.api.yak import Yak
 from e2e_util.asserts import expect_failure
-from e2e_util.buck_workspace import buck_test
+from e2e_util.yak_workspace import yak_test
 
 
-@buck_test()
-async def test_bxl_actions(buck: Buck) -> None:
-    result = await buck.bxl(
+@yak_test()
+async def test_bxl_actions(yak: Yak) -> None:
+    result = await yak.bxl(
         "//artifact_test/artifacts.bxl:artifact_test",
     )
 
@@ -25,20 +25,20 @@ async def test_bxl_actions(buck: Buck) -> None:
     assert "[<source artifact artifact_test/YAK.fixture>]" in result.stdout
 
 
-@buck_test()
-async def test_bxl_create_build_actions(buck: Buck) -> None:
-    result = await buck.bxl(
+@yak_test()
+async def test_bxl_create_build_actions(yak: Yak) -> None:
+    result = await yak.bxl(
         "//actions_test:actions.bxl:build_actions_test",
         "--",
         "--content",
         "my_content",
     )
-    assert (buck.cwd / Path(result.stdout.strip())).read_text() == "my_content"
+    assert (yak.cwd / Path(result.stdout.strip())).read_text() == "my_content"
 
 
-@buck_test()
-async def test_bxl_create_build_actions_with_content_based_path(buck: Buck) -> None:
-    result = await buck.bxl(
+@yak_test()
+async def test_bxl_create_build_actions_with_content_based_path(yak: Yak) -> None:
+    result = await yak.bxl(
         "//actions_test:actions.bxl:build_actions_test",
         "--",
         "--content",
@@ -47,21 +47,21 @@ async def test_bxl_create_build_actions_with_content_based_path(buck: Buck) -> N
         "true",
     )
 
-    assert (buck.cwd / Path(result.stdout.strip())).read_text() == "my_content"
+    assert (yak.cwd / Path(result.stdout.strip())).read_text() == "my_content"
 
 
-@buck_test()
-async def test_resolve(buck: Buck) -> None:
-    result = await buck.bxl(
+@yak_test()
+async def test_resolve(yak: Yak) -> None:
+    result = await yak.bxl(
         "//resolve_test:resolve.bxl:resolve_test",
     )
 
     assert "a-string\n" == result.stdout
 
 
-@buck_test(skip_for_os=["windows"])
-async def test_bxl_declared_artifact_path(buck: Buck) -> None:
-    result = await buck.bxl(
+@yak_test(skip_for_os=["windows"])
+async def test_bxl_declared_artifact_path(yak: Yak) -> None:
+    result = await yak.bxl(
         "//actions_test/declared_artifact_path.bxl:declared_artifact_path_test",
     )
 
@@ -70,10 +70,10 @@ async def test_bxl_declared_artifact_path(buck: Buck) -> None:
     assert output[0] == output[1]
 
 
-@buck_test()
-async def test_bxl_build_and_write(buck: Buck) -> None:
+@yak_test()
+async def test_bxl_build_and_write(yak: Yak) -> None:
     # Performs a failed build and a successful action.
-    res = await buck.bxl(
+    res = await yak.bxl(
         "//actions_test:actions.bxl:build_and_write",
         "--",
         "--target",
@@ -84,9 +84,9 @@ async def test_bxl_build_and_write(buck: Buck) -> None:
     assert "BXL SUCCEEDED" in res.stderr
 
 
-@buck_test()
-async def test_bxl_not_show_bxl_succeeded(buck: Buck) -> None:
-    res = await buck.run_buck_command(
+@yak_test()
+async def test_bxl_not_show_bxl_succeeded(yak: Yak) -> None:
+    res = await yak.run_yak_command(
         "-v=status",
         "bxl",
         "//actions_test:actions.bxl:build_and_write",
@@ -99,9 +99,9 @@ async def test_bxl_not_show_bxl_succeeded(buck: Buck) -> None:
     assert "BXL SUCCEEDED" not in res.stderr
 
 
-@buck_test()
-async def test_write_json_cell_path(buck: Buck) -> None:
-    res = await buck.bxl("//actions_test:actions.bxl:write_json_cell_path")
+@yak_test()
+async def test_write_json_cell_path(yak: Yak) -> None:
+    res = await yak.bxl("//actions_test:actions.bxl:write_json_cell_path")
     output_path = res.stdout.strip()
     with open(output_path, "r") as f:
         content = f.read()
@@ -110,10 +110,10 @@ async def test_write_json_cell_path(buck: Buck) -> None:
     assert data == expcted
 
 
-@buck_test()
-async def test_ensure_unbound_artifact(buck: Buck) -> None:
+@yak_test()
+async def test_ensure_unbound_artifact(yak: Yak) -> None:
     await expect_failure(
-        buck.bxl(
+        yak.bxl(
             "//actions_test:ensure_unbound_artifact.bxl:ensure_unbound_artifact_test"
         ),
         stderr_regex="Artifact must be bound by now",

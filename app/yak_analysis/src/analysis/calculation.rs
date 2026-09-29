@@ -42,14 +42,14 @@ use yak_core::provider::label::ConfiguredProvidersLabel;
 use yak_core::target::configured_target_label::ConfiguredTargetLabel;
 use yak_data::ToProtoMessage;
 use yak_data::error::ErrorTag;
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 use yak_error::internal_error;
 use yak_events::dispatch::async_record_root_spans;
 use yak_events::dispatch::record_root_spans;
 use yak_events::dispatch::span_async;
 use yak_events::dispatch::span_async_simple;
 use yak_events::span::SpanId;
-use yak_hash::BuckMutMap;
+use yak_hash::YakMutMap;
 use yak_interpreter::dice::starlark_provider::StarlarkEvalKind;
 use yak_interpreter::file_loader::LoadedModule;
 use yak_interpreter::load_module::InterpreterCalculation;
@@ -106,7 +106,7 @@ impl Key for AnalysisKey {
         ctx.analysis_started(&deferred_key)?;
         let res = get_analysis_result(ctx, &self.0, cancellation)
             .await
-            .with_buck_error_context(|| format!("Error running analysis for `{}`", self.0))?;
+            .with_yak_error_context(|| format!("Error running analysis for `{}`", self.0))?;
         if let MaybeCompatible::Compatible(v) = &res {
             ctx.analysis_complete(&deferred_key, &DeferredHolder::Analysis(v))?;
         }
@@ -139,7 +139,7 @@ impl RuleAnalysisCalculationImpl for RuleAnalysisCalculationInstance {
 pub async fn resolve_queries(
     ctx: &mut DiceComputations<'_>,
     configured_node: ConfiguredTargetNodeRef<'_>,
-) -> yak_error::Result<BuckMutMap<String, Arc<AnalysisQueryResult>>> {
+) -> yak_error::Result<YakMutMap<String, Arc<AnalysisQueryResult>>> {
     let mut queries = configured_node.queries().peekable();
 
     if queries.peek().is_none() {
@@ -160,7 +160,7 @@ async fn resolve_queries_impl(
     ctx: &mut DiceComputations<'_>,
     configured_node: ConfiguredTargetNodeRef<'_>,
     queries: impl IntoIterator<Item = (String, ResolvedQueryLiterals<ConfiguredProvidersLabel>)>,
-) -> yak_error::Result<BuckMutMap<String, Arc<AnalysisQueryResult>>> {
+) -> yak_error::Result<YakMutMap<String, Arc<AnalysisQueryResult>>> {
     let deps: TargetSet<_> = configured_node.deps().iter().duped().collect();
     let queries: Vec<_> = queries.into_iter().collect();
     let query_results = ctx
@@ -171,7 +171,7 @@ async fn resolve_queries_impl(
                 String,
                 ResolvedQueryLiterals<ConfiguredProvidersLabel>,
             )| {
-                let mut resolved_literals = BuckMutMap::with_capacity_and_hasher(
+                let mut resolved_literals = YakMutMap::with_capacity_and_hasher(
                     resolved_literals_labels.0.len(),
                     Default::default(),
                 );
@@ -210,7 +210,7 @@ async fn resolve_queries_impl(
         )
         .await?;
 
-    let query_results: BuckMutMap<_, _> = query_results.into_iter().collect();
+    let query_results: YakMutMap<_, _> = query_results.into_iter().collect();
     Ok(query_results)
 }
 

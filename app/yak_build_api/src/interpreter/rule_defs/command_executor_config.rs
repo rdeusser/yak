@@ -38,8 +38,8 @@ use yak_core::execution_types::executor_config::RemoteEnabledExecutorOptions;
 use yak_core::execution_types::executor_config::RemoteExecutorOptions;
 use yak_core::execution_types::executor_config::RemoteExecutorUseCase;
 use yak_core::execution_types::executor_config::parse_network_access;
-use yak_error::BuckErrorContext;
-use yak_error::BuckErrorOptionContext;
+use yak_error::YakErrorContext;
+use yak_error::YakErrorOptionContext;
 use yak_error::internal_error;
 
 #[derive(Debug, yak_error::Error)]
@@ -196,7 +196,7 @@ pub fn register_command_executor_config(builder: &mut GlobalsBuilder) {
                 let re_max_input_files_bytes = remote_execution_max_input_files_mebibytes
                     .map(u64::try_from)
                     .transpose()
-                    .buck_error_context("remote_execution_max_input_files_mebibytes is negative")?
+                    .yak_error_context("remote_execution_max_input_files_mebibytes is negative")?
                     .map(|b| b * 1024 * 1024);
 
                 let re_max_queue_time = yak_common::self_test_timeout::maybe_cap_timeout(
@@ -228,7 +228,7 @@ pub fn register_command_executor_config(builder: &mut GlobalsBuilder) {
             let max_cache_upload_bytes = max_cache_upload_mebibytes
                 .map(u64::try_from)
                 .transpose()
-                .buck_error_context("max_cache_upload_mebibytes is negative")?
+                .yak_error_context("max_cache_upload_mebibytes is negative")?
                 .map(|b| b * 1024 * 1024);
 
             let cache_upload_behavior = if allow_cache_uploads {
@@ -274,7 +274,7 @@ pub fn register_command_executor_config(builder: &mut GlobalsBuilder) {
                         executor: RemoteEnabledExecutor::Local(local),
                         re_properties: re_properties.unwrap_or_default(),
                         re_use_case: re_use_case
-                            .unwrap_or_else(RemoteExecutorUseCase::buck2_default),
+                            .unwrap_or_else(RemoteExecutorUseCase::yak_default),
                         re_action_key,
                         cache_upload_behavior,
                         remote_cache_enabled: true,
@@ -291,14 +291,14 @@ pub fn register_command_executor_config(builder: &mut GlobalsBuilder) {
                 .into_option()
                 .map(|s| s.parse())
                 .transpose()
-                .buck_error_context("Invalid remote_output_paths")?
+                .yak_error_context("Invalid remote_output_paths")?
                 .unwrap_or_default();
 
             let network_access = network_access
                 .into_option()
                 .map(parse_network_access)
                 .transpose()
-                .buck_error_context("Invalid network_access")?
+                .yak_error_context("Invalid network_access")?
                 .map(ExecutorNetworkAccess::from);
 
             CommandExecutorConfig {

@@ -9,22 +9,22 @@
  */
 
 use tracing::Level;
-use yak_error::BuckErrorContext;
-use yak_hash::BuckMutMap;
+use yak_error::YakErrorContext;
+use yak_hash::YakMutMap;
 
 use crate::proto;
 
-impl TryInto<BuckMutMap<String, String>> for proto::Event {
+impl TryInto<YakMutMap<String, String>> for proto::Event {
     type Error = yak_error::Error;
 
-    fn try_into(self) -> Result<BuckMutMap<String, String>, Self::Error> {
+    fn try_into(self) -> Result<YakMutMap<String, String>, Self::Error> {
         use std::collections::hash_map::Entry;
 
         use proto::event::Item;
 
         let proto::Event { items } = self;
 
-        let mut ret = BuckMutMap::default();
+        let mut ret = YakMutMap::default();
         for Item { key, value } in items {
             match ret.entry(key) {
                 Entry::Vacant(e) => {
@@ -67,7 +67,7 @@ impl TryInto<Level> for proto::LogLevel {
         use proto::log_level::Value;
 
         let proto::LogLevel { value } = self;
-        let value = Value::try_from(value).buck_error_context("Invalid `value`")?;
+        let value = Value::try_from(value).yak_error_context("Invalid `value`")?;
 
         Ok(match value {
             Value::NotSet => {

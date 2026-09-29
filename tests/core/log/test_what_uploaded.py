@@ -11,18 +11,18 @@ import random
 import string
 
 import pytest
-from e2e_util.api.buck import Buck
-from e2e_util.buck_workspace import buck_test
+from e2e_util.api.yak import Yak
+from e2e_util.yak_workspace import yak_test
 
 pytestmark = pytest.mark.remote_execution
 
 
-@buck_test()
-async def test_what_uploaded_csv(buck: Buck) -> None:
+@yak_test()
+async def test_what_uploaded_csv(yak: Yak) -> None:
     # Use a random content on every test invocation to make sure we actually get uploads
     content = "".join(random.choices(string.ascii_uppercase + string.digits, k=20))
-    await buck.build("//:upload_rule", "--remote-only", "-c", "test.content=" + content)
-    out = await buck.log("what-uploaded", "--format", "csv")
+    await yak.build("//:upload_rule", "--remote-only", "-c", "test.content=" + content)
+    out = await yak.log("what-uploaded", "--format", "csv")
     header = ["action", "digests_uploaded", "bytes_uploaded"]
     out = [
         dict(zip(header, record))
@@ -36,12 +36,12 @@ async def test_what_uploaded_csv(buck: Buck) -> None:
     assert int(out[1]["digests_uploaded"]) > 0, "second entry should be upload digests"
 
 
-@buck_test()
-async def test_what_uploaded_aggregated(buck: Buck) -> None:
+@yak_test()
+async def test_what_uploaded_aggregated(yak: Yak) -> None:
     # Use a random content on every test invocation to make sure we actually get uploads
     content = "".join(random.choices(string.ascii_uppercase + string.digits, k=20))
-    await buck.build("//:upload_rule", "--remote-only", "-c", "test.content=" + content)
-    out = await buck.log("what-uploaded", "--aggregate-by-ext")
+    await yak.build("//:upload_rule", "--remote-only", "-c", "test.content=" + content)
+    out = await yak.log("what-uploaded", "--aggregate-by-ext")
     out = [line.split() for line in out.stdout.splitlines() if line]
     assert len(out) > 0, "out should have some uploads"
     assert out[0] == ["txt", "1", "20"], f"unexpected output: {out}"

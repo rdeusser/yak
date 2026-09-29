@@ -28,8 +28,8 @@ use yak_artifact::artifact::build_artifact::BuildArtifact;
 use yak_core::category::Category;
 use yak_core::deferred::key::DeferredHolderKey;
 use yak_core::execution_types::execution::ExecutionPlatformResolution;
-use yak_core::fs::buck_out_path::BuckOutPathKind;
-use yak_core::fs::buck_out_path::BuildArtifactPath;
+use yak_core::fs::yak_out_path::YakOutPathKind;
+use yak_core::fs::yak_out_path::BuildArtifactPath;
 use yak_directory::directory;
 use yak_directory::directory::builder::DirectoryBuilder;
 use yak_directory::directory::builder::DirectoryInsertError;
@@ -37,14 +37,14 @@ use yak_directory::directory::directory::Directory;
 use yak_directory::directory::directory_hasher::NoDigest;
 use yak_directory::directory::directory_iterator::DirectoryIterator;
 use yak_directory::directory::entry::DirectoryEntry;
-use yak_error::BuckErrorOptionContext;
+use yak_error::YakErrorOptionContext;
 use yak_error::internal_error;
 use yak_execute::execute::request::OutputType;
 use yak_fs::paths::forward_rel_path::ForwardRelativePath;
 use yak_fs::paths::forward_rel_path::ForwardRelativePathBuf;
-use yak_hash::BuckIndexSet;
-use yak_hash::BuckMutMap;
-use yak_hash::BuckMutSet;
+use yak_hash::YakIndexSet;
+use yak_hash::YakMutMap;
+use yak_hash::YakMutSet;
 
 use crate::actions::ActionErrors;
 use crate::actions::ActionToBeRegistered;
@@ -186,7 +186,7 @@ impl<'v> ActionsRegistry<'v> {
         path: ForwardRelativePathBuf,
         output_type: OutputType,
         declaration_location: Option<FileSpan>,
-        path_resolution_method: BuckOutPathKind,
+        path_resolution_method: YakOutPathKind,
         heap: Heap<'v>,
     ) -> yak_error::Result<DeclaredArtifact<'v>> {
         let (path, hidden) = match prefix {
@@ -210,7 +210,7 @@ impl<'v> ActionsRegistry<'v> {
     pub fn register<A: UnregisteredAction + 'static>(
         &mut self,
         self_key: &DeferredHolderKey,
-        outputs: BuckIndexSet<OutputArtifact>,
+        outputs: YakIndexSet<OutputArtifact>,
         action: A,
     ) -> yak_error::Result<ActionKey> {
         let key = ActionKey::new(
@@ -222,7 +222,7 @@ impl<'v> ActionsRegistry<'v> {
                 (self.declared_dynamic_outputs.len() + self.pending.len()).try_into()?,
             ),
         );
-        let mut bound_outputs = BuckIndexSet::with_capacity(outputs.len());
+        let mut bound_outputs = YakIndexSet::with_capacity(outputs.len());
         for output in outputs {
             let bound = output.bind(key.dupe())?.as_base_artifact().dupe();
             bound_outputs.insert(bound);
@@ -254,8 +254,8 @@ impl<'v> ActionsRegistry<'v> {
         Ok(move |analysis_value_fetcher: &AnalysisValueFetcher| {
             // yak has an invariant that pairs of categories and identifiers are unique throughout a build. That
             // invariant is enforced here, using observed_names to keep track of the categories and identifiers that we've seen.
-            let mut observed_names: BuckMutMap<Category, BuckMutSet<String>> =
-                BuckMutMap::default();
+            let mut observed_names: YakMutMap<Category, YakMutSet<String>> =
+                YakMutMap::default();
             for a in self.pending.into_iter() {
                 let key = a.key().dupe();
                 let (starlark_data, error_handler) =
@@ -276,7 +276,7 @@ impl<'v> ActionsRegistry<'v> {
                     }
                     (category, None) => {
                         if observed_names
-                            .insert(category.to_owned(), BuckMutSet::default())
+                            .insert(category.to_owned(), YakMutSet::default())
                             .is_some()
                         {
                             return Err(ActionErrors::ActionCategoryDuplicateSingleton(

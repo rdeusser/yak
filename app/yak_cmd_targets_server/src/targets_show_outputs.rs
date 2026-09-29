@@ -30,7 +30,7 @@ use yak_core::pattern::pattern_type::ProvidersPatternExtra;
 use yak_core::provider::label::ConfiguredProvidersLabel;
 use yak_core::provider::label::ProvidersLabel;
 use yak_core::target::label::label::TargetLabel;
-use yak_error::BuckErrorOptionContext;
+use yak_error::YakErrorOptionContext;
 use yak_execute::artifact::artifact_dyn::ArtifactDyn;
 use yak_node::nodes::eval_result::EvaluationResult;
 use yak_node::nodes::frontend::TargetGraphCalculation;

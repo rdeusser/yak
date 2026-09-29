@@ -10,19 +10,19 @@ import os
 import tempfile
 
 import pytest
-from e2e_util.api.buck import Buck
+from e2e_util.api.yak import Yak
 from e2e_util.asserts import expect_failure
-from e2e_util.buck_workspace import buck_test, env
+from e2e_util.yak_workspace import yak_test, env
 from e2e_util.helper.utils import filter_events, random_string
 
 pytestmark = pytest.mark.remote_execution
 
 
-@buck_test()
+@yak_test()
 @env("YAK_TEST_FAIL_CONNECT", "true")
-async def test_re_connection_failure_no_retry(buck: Buck) -> None:
+async def test_re_connection_failure_no_retry(yak: Yak) -> None:
     out = await expect_failure(
-        buck.build(
+        yak.build(
             "root//:simple",
             "--remote-only",
             "--no-remote-cache",
@@ -36,10 +36,10 @@ async def test_re_connection_failure_no_retry(buck: Buck) -> None:
 RE_USE_CASE_STAGES = ("Queue", "WorkerDownload", "Execute", "WorkerUpload")
 
 
-async def assert_re_use_case(buck: Buck, expected_use_case: str) -> None:
+async def assert_re_use_case(yak: Yak, expected_use_case: str) -> None:
     for action in RE_USE_CASE_STAGES:
         use_cases = await filter_events(
-            buck,
+            yak,
             "Event",
             "data",
             "SpanStart",
@@ -55,108 +55,108 @@ async def assert_re_use_case(buck: Buck, expected_use_case: str) -> None:
         assert all(use_case == expected_use_case for use_case in use_cases), use_cases
 
 
-@buck_test()
-async def test_re_use_case_override_with_arg(buck: Buck) -> None:
+@yak_test()
+async def test_re_use_case_override_with_arg(yak: Yak) -> None:
     # Make sure action is not cached
-    with open(buck.cwd / "input.txt", "w") as f:
+    with open(yak.cwd / "input.txt", "w") as f:
         f.write(random_string())
-    await buck.build(
+    await yak.build(
         "root//:simple",
         "--remote-only",
         "--no-remote-cache",
     )
-    await assert_re_use_case(buck, "yak-testing")
+    await assert_re_use_case(yak, "yak-testing")
     # Change the target input
-    with open(buck.cwd / "input.txt", "w") as f:
+    with open(yak.cwd / "input.txt", "w") as f:
         f.write(random_string())
-    await buck.build(
+    await yak.build(
         "root//:simple",
         "--remote-only",
         "--no-remote-cache",
         "--config",
         "yak_re_client.override_use_case=yak-user",
     )
-    await assert_re_use_case(buck, "yak-user")
+    await assert_re_use_case(yak, "yak-user")
 
 
-@buck_test()
-async def test_re_use_case_override_with_config(buck: Buck) -> None:
+@yak_test()
+async def test_re_use_case_override_with_config(yak: Yak) -> None:
     # Make sure action is not cached
-    with open(buck.cwd / "input.txt", "w") as f:
+    with open(yak.cwd / "input.txt", "w") as f:
         f.write(random_string())
-    await buck.build(
+    await yak.build(
         "root//:simple",
         "--remote-only",
         "--no-remote-cache",
     )
-    await assert_re_use_case(buck, "yak-testing")
+    await assert_re_use_case(yak, "yak-testing")
     # Change the target input
-    with open(buck.cwd / "input.txt", "w") as f:
+    with open(yak.cwd / "input.txt", "w") as f:
         f.write(random_string())
-    with open(buck.cwd / ".yakconfig.local", "w") as f:
+    with open(yak.cwd / ".yakconfig.local", "w") as f:
         f.write("[yak_re_client]\n")
         f.write("override_use_case = yak-user\n")
-    await buck.build(
+    await yak.build(
         "root//:simple",
         "--remote-only",
         "--no-remote-cache",
     )
-    await assert_re_use_case(buck, "yak-user")
+    await assert_re_use_case(yak, "yak-user")
 
 
-@buck_test()
-async def test_re_use_case_override_with_external_config(buck: Buck) -> None:
+@yak_test()
+async def test_re_use_case_override_with_external_config(yak: Yak) -> None:
     # Make sure action is not cached
-    with open(buck.cwd / "input.txt", "w") as f:
+    with open(yak.cwd / "input.txt", "w") as f:
         f.write(random_string())
-    await buck.build(
+    await yak.build(
         "root//:simple",
         "--remote-only",
         "--no-remote-cache",
     )
-    await assert_re_use_case(buck, "yak-testing")
+    await assert_re_use_case(yak, "yak-testing")
     # Change the target input
-    with open(buck.cwd / "input.txt", "w") as f:
+    with open(yak.cwd / "input.txt", "w") as f:
         f.write(random_string())
     with tempfile.NamedTemporaryFile("w", delete=False) as f:
         f.write("[yak_re_client]\n")
         f.write("override_use_case = yak-user\n")
         f.close()
-        await buck.build(
+        await yak.build(
             "root//:simple",
             "--remote-only",
             "--no-remote-cache",
             "--config-file",
             f.name,
         )
-    await assert_re_use_case(buck, "yak-user")
+    await assert_re_use_case(yak, "yak-user")
 
 
-@buck_test()
-async def test_re_use_case_override_with_external_config_source(buck: Buck) -> None:
+@yak_test()
+async def test_re_use_case_override_with_external_config_source(yak: Yak) -> None:
     with tempfile.NamedTemporaryFile("w", delete=False) as temp:
         env = os.environ.copy()
         env["YAK_TEST_EXTRA_EXTERNAL_CONFIG"] = temp.name
         # Make sure action is not cached
-        with open(buck.cwd / "input.txt", "w") as f:
+        with open(yak.cwd / "input.txt", "w") as f:
             f.write(random_string())
-        await buck.build(
+        await yak.build(
             "root//:simple",
             "--remote-only",
             "--no-remote-cache",
             env=env,
         )
-        await assert_re_use_case(buck, "yak-default")
+        await assert_re_use_case(yak, "yak-default")
         # Change the target input
-        with open(buck.cwd / "input.txt", "w") as f:
+        with open(yak.cwd / "input.txt", "w") as f:
             f.write(random_string())
         temp.write("[yak_re_client]\n")
         temp.write("override_use_case = yak-user\n")
         temp.flush()
-        await buck.build(
+        await yak.build(
             "root//:simple",
             "--remote-only",
             "--no-remote-cache",
             env=env,
         )
-        await assert_re_use_case(buck, "yak-user")
+        await assert_re_use_case(yak, "yak-user")

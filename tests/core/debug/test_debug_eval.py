@@ -6,24 +6,24 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-from e2e_util.api.buck import Buck
+from e2e_util.api.yak import Yak
 from e2e_util.asserts import expect_failure
-from e2e_util.buck_workspace import buck_test
+from e2e_util.yak_workspace import yak_test
 
 
-@buck_test()
-async def test_debug_eval_good(buck: Buck) -> None:
-    await buck.debug(
+@yak_test()
+async def test_debug_eval_good(yak: Yak) -> None:
+    await yak.debug(
         "eval",
         "./good.bzl",
         "./good.bxl",
     )
 
 
-@buck_test()
-async def test_debug_eval_bad_bzl(buck: Buck) -> None:
+@yak_test()
+async def test_debug_eval_bad_bzl(yak: Yak) -> None:
     await expect_failure(
-        buck.debug(
+        yak.debug(
             "eval",
             "./bad.bzl",
         ),
@@ -31,10 +31,10 @@ async def test_debug_eval_bad_bzl(buck: Buck) -> None:
     )
 
 
-@buck_test()
-async def test_debug_eval_bad_bxl(buck: Buck) -> None:
+@yak_test()
+async def test_debug_eval_bad_bxl(yak: Yak) -> None:
     await expect_failure(
-        buck.debug(
+        yak.debug(
             "eval",
             "./bad.bxl",
         ),

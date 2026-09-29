@@ -14,7 +14,7 @@
 -export([parse_test_name/2]).
 
 -include_lib("common/include/tpx_records.hrl").
--include_lib("common/include/buck_ct_records.hrl").
+-include_lib("common/include/yak_ct_records.hrl").
 -include_lib("kernel/include/logger.hrl").
 
 -import(common_util, [unicode_characters_to_list/1, unicode_characters_to_binary/1]).

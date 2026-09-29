@@ -20,7 +20,7 @@ load("@prelude//python:python.bzl", "PythonLibraryInfo")
 load("@prelude//python:python_runtime_bundle.bzl", "PythonRuntimeBundleInfo")
 load("@prelude//python:toolchain.bzl", "NativeLinkStrategy")
 load("@prelude//transitions:constraint_overrides.bzl", "constraint_overrides")
-load(":common.bzl", "CxxRuntimeType", "CxxSourceType", "HeadersAsRawHeadersMode", "LinkableDepType", "buck", "prelude_rule")
+load(":common.bzl", "CxxRuntimeType", "CxxSourceType", "HeadersAsRawHeadersMode", "LinkableDepType", "yak", "prelude_rule")
 load(":cxx_common.bzl", "cxx_common")
 load(":native_common.bzl", "native_common")
 load(":python_common.bzl", "python_common")
@@ -122,7 +122,7 @@ def _python_executable_attrs():
             "_create_manifest_for_source_dir": _create_manifest_for_source_dir(),
             "_cxx_hacks": attrs.default_only(attrs.dep(default = "prelude//cxx/tools:cxx_hacks")),
             "_cxx_toolchain": toolchains_common.cxx(),
-            "_exec_os_type": buck.exec_os_type_arg(),
+            "_exec_os_type": yak.exec_os_type_arg(),
             "_gen_build_info": attrs.option(attrs.exec_dep(providers = [RunInfo]), default = None),
             "_generated_build_info_enabled": attrs.bool(default = False),
             "_generated_build_info_mode": attrs.enum(["full", "stable"], default = "stable"),
@@ -130,7 +130,7 @@ def _python_executable_attrs():
             "_late_build_info_stamping": attrs.any(default = None),
             "_python_internal_tools": python_common.internal_tools_arg(),
             "_python_toolchain": toolchains_common.python(),
-            "_target_os_type": buck.target_os_type_arg(),
+            "_target_os_type": yak.target_os_type_arg(),
         }
     )
 
@@ -240,7 +240,7 @@ cxx_python_extension = prelude_rule(
         # but it's the pragmatic way of getting it working for now.
         # @unsorted-dict-items
         {k: attrs.default_only(v) for k, v in cxx_rules.cxx_library.attrs.items()}
-        | buck.labels_arg()
+        | yak.labels_arg()
         | python_common.base_module_arg()
         | cxx_common.srcs_arg()
         | cxx_common.deps_arg()
@@ -310,10 +310,10 @@ cxx_python_extension = prelude_rule(
             # Copied from python_library.
             "_python_internal_tools": python_common.internal_tools_arg(),
             "_python_toolchain": toolchains_common.python(),
-            "_target_os_type": buck.target_os_type_arg(),
+            "_target_os_type": yak.target_os_type_arg(),
         }
-        | buck.licenses_arg()
-        | buck.contacts_arg()
+        | yak.licenses_arg()
+        | yak.contacts_arg()
     ),
 )
 
@@ -364,7 +364,7 @@ prebuilt_python_library = prelude_rule(
     further = None,
     attrs = (
         # @unsorted-dict-items
-        buck.labels_arg()
+        yak.labels_arg()
         | {
             "binary_src": attrs.option(
                 attrs.source(),
@@ -411,8 +411,8 @@ prebuilt_python_library = prelude_rule(
             "_python_internal_tools": python_common.internal_tools_arg(),
             "_python_toolchain": toolchains_common.python(),
         }
-        | buck.licenses_arg()
-        | buck.contacts_arg()
+        | yak.licenses_arg()
+        | yak.contacts_arg()
     ),
 )
 
@@ -449,7 +449,7 @@ python_binary = prelude_rule(
     attrs = (
         # @unsorted-dict-items
         {k: attrs.default_only(v) for k, v in cxx_rules.cxx_binary.attrs.items()}
-        | buck.labels_arg()
+        | yak.labels_arg()
         | {
             "base_module": attrs.option(
                 attrs.string(),
@@ -499,9 +499,9 @@ python_binary = prelude_rule(
             "repl_only_deps": attrs.list(attrs.dep(), default = []),
             "zip_safe": attrs.option(attrs.bool(), default = None),
         }
-        | buck.licenses_arg()
-        | buck.contacts_arg()
-        | buck.allow_cache_upload_arg()
+        | yak.licenses_arg()
+        | yak.contacts_arg()
+        | yak.allow_cache_upload_arg()
         | _typing_arg()
         | _python_binary_attrs()
         | validation_common.attrs_validators_arg()
@@ -545,7 +545,7 @@ python_library = prelude_rule(
     further = None,
     attrs = (
         # @unsorted-dict-items
-        buck.labels_arg()
+        yak.labels_arg()
         | python_common.srcs_arg()
         | python_common.resources_arg()
         | python_common.base_module_arg()
@@ -574,8 +574,8 @@ python_library = prelude_rule(
             "_python_internal_tools": python_common.internal_tools_arg(),
             "_python_toolchain": toolchains_common.python(),
         }
-        | buck.licenses_arg()
-        | buck.contacts_arg()
+        | yak.licenses_arg()
+        | yak.contacts_arg()
         | _typing_arg()
         | validation_common.attrs_validators_arg()
     ),
@@ -618,7 +618,7 @@ python_test = prelude_rule(
     attrs = (
         # @unsorted-dict-items
         {k: attrs.default_only(v) for k, v in cxx_rules.cxx_binary.attrs.items()}
-        | buck.inject_test_env_arg()
+        | yak.inject_test_env_arg()
         | python_common.srcs_arg()
         | python_common.resources_arg()
         | python_common.base_module_arg()
@@ -660,7 +660,7 @@ python_test = prelude_rule(
         }
         | python_common.deps_arg()
         | python_common.version_selections_arg()
-        | buck.test_rule_timeout_ms()
+        | yak.test_rule_timeout_ms()
         | python_common.package_style_arg()
         | python_common.preload_deps_arg()
         | python_common.linker_flags_arg()
@@ -683,9 +683,9 @@ python_test = prelude_rule(
             "specs": attrs.option(attrs.arg(json = True), default = None),
             "zip_safe": attrs.option(attrs.bool(), default = None),
         }
-        | buck.licenses_arg()
-        | buck.labels_arg()
-        | buck.contacts_arg()
+        | yak.licenses_arg()
+        | yak.labels_arg()
+        | yak.contacts_arg()
         | _typing_arg()
         | test_common.attributes()
         | _python_test_attrs()

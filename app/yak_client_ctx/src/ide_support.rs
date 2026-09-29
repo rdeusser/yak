@@ -16,8 +16,8 @@ use serde::Serialize;
 use tokio::io::AsyncRead;
 use tokio_util::codec::Decoder;
 use tokio_util::codec::FramedRead;
-use yak_error::BuckErrorContext;
-use yak_error::BuckErrorOptionContext;
+use yak_error::YakErrorContext;
+use yak_error::YakErrorOptionContext;
 use yak_error::conversion::from_any_with_tag;
 
 /// Reads from input a stream of lsp-like messages and returns them as serde_json serialized strings.
@@ -48,7 +48,7 @@ impl<T: for<'a> Deserialize<'a>> Decoder for LspMessageLikeDecoder<T> {
 
         let (headers_length, headers) = match httparse::parse_headers(src, &mut headers_buff)
             .map_err(|e| from_any_with_tag(e, yak_error::ErrorTag::Tier0))
-            .buck_error_context("Invalid headers")?
+            .yak_error_context("Invalid headers")?
         {
             httparse::Status::Complete(r) => r,
             httparse::Status::Partial => return Ok(None),
@@ -60,9 +60,9 @@ impl<T: for<'a> Deserialize<'a>> Decoder for LspMessageLikeDecoder<T> {
             if h.name.eq_ignore_ascii_case("Content-Length") {
                 content_length = Some(
                     std::str::from_utf8(h.value)
-                        .buck_error_context("Content-Length is not utf-8")?
+                        .yak_error_context("Content-Length is not utf-8")?
                         .parse()
-                        .buck_error_context("Content-Length is not a number")?,
+                        .yak_error_context("Content-Length is not a number")?,
                 );
                 break;
             }
@@ -76,7 +76,7 @@ impl<T: for<'a> Deserialize<'a>> Decoder for LspMessageLikeDecoder<T> {
 
         let _headers = src.split_to(headers_length);
         let text = src.split_to(content_length);
-        Some(serde_json::from_slice(&text).buck_error_context("Invalid request")).transpose()
+        Some(serde_json::from_slice(&text).yak_error_context("Invalid request")).transpose()
     }
 }
 

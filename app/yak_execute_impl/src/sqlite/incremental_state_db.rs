@@ -23,7 +23,7 @@ use yak_core::soft_error;
 use yak_execute::execute::blocking::BlockingExecutor;
 use yak_fs::paths::abs_norm_path::AbsNormPath;
 use yak_fs::paths::abs_norm_path::AbsNormPathBuf;
-use yak_hash::BuckDashMap;
+use yak_hash::YakDashMap;
 use yak_hash::IntentionallyStdHashMap;
 
 use crate::incremental_actions_helper::IncrementalPathMap;
@@ -39,7 +39,7 @@ use crate::sqlite::tables::incremental_state_table::IncrementalStateSqliteTable;
 /// yakconfig in the project root's .yakconfig.
 pub const INCREMENTAL_DB_SCHEMA_VERSION: u64 = 0;
 
-pub(crate) type IncrementalState = BuckDashMap<String, Arc<IncrementalPathMap>>;
+pub(crate) type IncrementalState = YakDashMap<String, Arc<IncrementalPathMap>>;
 
 pub struct IncrementalDbState {
     pub db: Option<IncrementalStateSqliteDb>,
@@ -50,7 +50,7 @@ impl IncrementalDbState {
     pub fn db_disabled() -> Self {
         Self {
             db: None,
-            state: BuckDashMap::default(),
+            state: YakDashMap::default(),
         }
     }
 }
@@ -226,7 +226,7 @@ impl IncrementalStateSqliteDb {
 
                 Ok(IncrementalDbState {
                     db: Some(db),
-                    state: BuckDashMap::default(),
+                    state: YakDashMap::default(),
                 })
             }
         }

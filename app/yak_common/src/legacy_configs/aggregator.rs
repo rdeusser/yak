@@ -21,8 +21,8 @@ use yak_core::cells::instance;
 use yak_core::cells::name::CellName;
 use yak_core::cells::nested::NestedCells;
 use yak_core::fs::project_rel_path::ProjectRelativePath;
-use yak_error::BuckErrorOptionContext;
-use yak_hash::BuckMutMap;
+use yak_error::YakErrorOptionContext;
+use yak_hash::YakMutMap;
 use yak_hash::IntentionallyStdHashMap;
 
 /// Errors from cell creation
@@ -47,7 +47,7 @@ enum CellError {
 /// generate a final 'CellResolver'
 #[derive(Debug)]
 pub(crate) struct CellsAggregator {
-    cell_infos: BuckMutMap<CellName, CellAggregatorInfo>,
+    cell_infos: YakMutMap<CellName, CellAggregatorInfo>,
     root_aliases: IntentionallyStdHashMap<NonEmptyCellAlias, CellName>,
     root_cell: CellName,
 }
@@ -62,10 +62,10 @@ impl CellsAggregator {
     pub(crate) fn new(
         // This is order sensitive
         cells: Vec<(CellName, CellRootPathBuf)>,
-        root_aliases: BuckMutMap<NonEmptyCellAlias, NonEmptyCellAlias>,
+        root_aliases: YakMutMap<NonEmptyCellAlias, NonEmptyCellAlias>,
     ) -> yak_error::Result<Self> {
-        let mut path_rmap = BuckMutMap::default();
-        let mut infos = BuckMutMap::default();
+        let mut path_rmap = YakMutMap::default();
+        let mut infos = YakMutMap::default();
         let mut combined_aliases = IntentionallyStdHashMap::new();
         for (cell, path) in cells {
             let real_cell = match path_rmap.try_insert(path.clone(), cell) {
@@ -177,7 +177,7 @@ mod tests {
                 (other1, other_path.clone()),
                 (other2, other_path.clone()),
             ],
-            BuckMutMap::default(),
+            YakMutMap::default(),
         )
         .unwrap()
         .make_cell_resolver()
@@ -204,7 +204,7 @@ mod tests {
         assert!(
             CellsAggregator::new(
                 Vec::new(),
-                BuckMutMap::from_iter([(
+                YakMutMap::from_iter([(
                     NonEmptyCellAlias::testing_new("root"),
                     NonEmptyCellAlias::testing_new("does_not_exist")
                 )])

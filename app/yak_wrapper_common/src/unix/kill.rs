@@ -12,7 +12,7 @@ use std::time::Duration;
 
 use nix::sys::signal::Signal;
 use sysinfo::Process;
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 
 use crate::kill::get_sysinfo_status;
 use crate::pid::Pid;
@@ -40,7 +40,7 @@ pub(crate) fn kill(pid: Pid) -> yak_error::Result<Option<KilledProcessHandleImpl
     match nix::sys::signal::kill(pid_nix, Signal::SIGKILL) {
         Ok(()) => Ok(Some(KilledProcessHandleImpl { pid })),
         Err(nix::errno::Errno::ESRCH) => Ok(None),
-        Err(e) => Err(e).with_buck_error_context(|| format!("Failed to kill pid {pid}")),
+        Err(e) => Err(e).with_yak_error_context(|| format!("Failed to kill pid {pid}")),
     }
 }
 

@@ -86,18 +86,18 @@ use yak_core::pattern::pattern_type::TargetPatternExtra;
 use yak_core::target::label::label::TargetLabel;
 use yak_core::target::name::TargetNameRef;
 use yak_core::unsafe_send_future::UnsafeSendFuture;
-use yak_error::BuckErrorContext;
-use yak_error::BuckErrorOptionContext;
+use yak_error::YakErrorContext;
+use yak_error::YakErrorOptionContext;
 use yak_error::internal_error;
 use yak_events::dispatch::async_record_root_spans;
 use yak_events::dispatch::get_dispatcher;
 use yak_events::dispatch::span_async;
 use yak_execute::digest_config::HasDigestConfig;
 use yak_fs::paths::forward_rel_path::ForwardRelativePath;
-use yak_interpreter::factory::BuckStarlarkModule;
+use yak_interpreter::factory::YakStarlarkModule;
 use yak_interpreter::factory::StarlarkEvaluatorProvider;
 use yak_interpreter::print_handler::EventDispatcherPrintHandler;
-use yak_interpreter::soft_error::Buck2StarlarkSoftErrorHandler;
+use yak_interpreter::soft_error::YakStarlarkSoftErrorHandler;
 use yak_interpreter::starlark_promise::StarlarkPromise;
 use yak_interpreter::types::configured_providers_label::StarlarkConfiguredProvidersLabel;
 use yak_interpreter_for_build::attrs::coerce::arc_str_interner::ArcStrInterner;
@@ -279,7 +279,7 @@ impl AnonTargetKey {
             }
             let value = match provided.get(k) {
                 Some(v) => Self::coerce_to_anon_target_attr(a.coercer(), *v, &anon_attr_ctx)
-                    .with_buck_error_context(|| format!("Error coercing attribute `{k}`"))?,
+                    .with_yak_error_context(|| format!("Error coercing attribute `{k}`"))?,
                 None => match a.default() {
                     Some(x) => Self::coerced_to_anon_target_attr(k, x, a.coercer())?,
                     None => return Err(AnonTargetsError::MissingAttribute(k.to_owned()).into()),
@@ -350,7 +350,7 @@ impl AnonTargetKey {
             )
         };
         let lex =
-            lex_target_pattern::<TargetPatternExtra>(x, false).with_buck_error_context(err)?;
+            lex_target_pattern::<TargetPatternExtra>(x, false).with_yak_error_context(err)?;
         // TODO(nga): `CellName` contract requires it refers to declared cell name.
         //   This `unchecked_new` violates it.
         let cell =
@@ -514,13 +514,13 @@ impl AnonTargetKey {
         let eval_kind = self.0.dupe().eval_kind();
         let provider = StarlarkEvaluatorProvider::new(dice, eval_kind).await?;
 
-        BuckStarlarkModule::with_profiling_async(async move |env| {
+        YakStarlarkModule::with_profiling_async(async move |env| {
             let print = EventDispatcherPrintHandler(get_dispatcher());
             let mut reentrant_eval =
                 provider.make_reentrant_evaluator(&env, cancellation.into())?;
             let (ctx, list_res) = reentrant_eval.with_evaluator(|eval| {
                 eval.set_print_handler(&print);
-                eval.set_soft_error_handler(&Buck2StarlarkSoftErrorHandler);
+                eval.set_soft_error_handler(&YakStarlarkSoftErrorHandler);
 
                 let rule_callable =
                     get_rule_callable(eval, module.env(), &self.0.rule_type().name)?;

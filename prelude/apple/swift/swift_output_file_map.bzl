@@ -20,18 +20,18 @@ def add_dependencies_output(ctx: AnalysisContext, output_file_map: dict, cmd: cm
     # Add a Makefile style dependency file output. This output is not tracked,
     # we need to process it first.
     uses_content_based_paths = get_uses_content_based_paths(ctx)
-    buck_dep_file = ctx.actions.declare_output(
+    yak_dep_file = ctx.actions.declare_output(
         "__depfiles__/{}-{}.d".format(ctx.attrs.name, category), has_content_based_path = uses_content_based_paths
     ).as_output()
     map = output_file_map.setdefault("", {})
-    map["dependencies"] = cmd_args(buck_dep_file, delimiter = "", format = "{}.raw")
-    map["emit-module-dependencies"] = cmd_args(buck_dep_file, delimiter = "", format = "{}.raw")
+    map["dependencies"] = cmd_args(yak_dep_file, delimiter = "", format = "{}.raw")
+    map["emit-module-dependencies"] = cmd_args(yak_dep_file, delimiter = "", format = "{}.raw")
     cmd.add("-emit-dependencies")
 
     # Add the flags for the wrapper to process the dependency file to yak format.
     cmd.add(
         "-Xwrapper",
-        cmd_args(inputs_tag.tag_artifacts(buck_dep_file), format = "-dependencies-file-output={}"),
+        cmd_args(inputs_tag.tag_artifacts(yak_dep_file), format = "-dependencies-file-output={}"),
     )
 
 def add_serialized_diagnostics_output(

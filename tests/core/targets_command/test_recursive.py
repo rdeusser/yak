@@ -9,14 +9,14 @@
 
 import json
 
-from e2e_util.api.buck import Buck
+from e2e_util.api.yak import Yak
 from e2e_util.asserts import expect_failure
-from e2e_util.buck_workspace import buck_test
+from e2e_util.yak_workspace import yak_test
 
 
-@buck_test()
-async def test_targets_recursive(buck: Buck) -> None:
-    result = await buck.targets("--json", "ignored/...")
+@yak_test()
+async def test_targets_recursive(yak: Yak) -> None:
+    result = await yak.targets("--json", "ignored/...")
     assert json.loads(result.stdout) == []
 
-    await expect_failure(buck.targets("--json", "nonexistent/..."))
+    await expect_failure(yak.targets("--json", "nonexistent/..."))

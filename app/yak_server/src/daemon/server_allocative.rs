@@ -22,7 +22,7 @@ use yak_fs::fs_util;
 use yak_fs::paths::abs_path::AbsPathBuf;
 use yak_util::process_stats::process_stats;
 
-use crate::daemon::server::BuckdServerData;
+use crate::daemon::server::YakdServerData;
 use crate::daemon::state::RepoState;
 use crate::jemalloc_stats::get_allocator_stats;
 
@@ -107,7 +107,7 @@ fn combined_warnings(
 }
 
 pub(crate) async fn spawn_allocative(
-    buckd_server_data: Arc<BuckdServerData>,
+    yakd_server_data: Arc<YakdServerData>,
     repo: Arc<RepoState>,
     path: AbsPathBuf,
     dispatcher: EventDispatcher,
@@ -125,7 +125,7 @@ pub(crate) async fn spawn_allocative(
         dispatcher.console_message("Visiting global roots...".to_owned());
         graph.visit_global_roots();
         dispatcher.console_message("Visiting yakd...".to_owned());
-        graph.visit_root(&buckd_server_data);
+        graph.visit_root(&yakd_server_data);
         let fg = graph.finish();
         let flamegraph = add_deferred_materializer_profile(
             fg.flamegraph().clone(),

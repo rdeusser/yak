@@ -11,9 +11,9 @@
 use futures::Stream;
 use futures::TryStreamExt;
 use linked_hash_map::LinkedHashMap;
-use yak_client_ctx::client_ctx::BuckSubcommand;
+use yak_client_ctx::client_ctx::YakSubcommand;
 use yak_client_ctx::client_ctx::ClientCommandContext;
-use yak_client_ctx::common::BuckArgMatches;
+use yak_client_ctx::common::YakArgMatches;
 use yak_client_ctx::events_ctx::EventsCtx;
 use yak_client_ctx::exit_result::ExitResult;
 use yak_data::ActionKey;
@@ -41,10 +41,10 @@ struct ActionExecutionData {
 }
 
 fn get_action_execution_data(
-    event: &yak_data::BuckEvent,
+    event: &yak_data::YakEvent,
 ) -> Option<(ActionKey, ActionExecutionData)> {
     event.data.as_ref().and_then(|data| match data {
-        yak_data::buck_event::Data::SpanEnd(end) => end.data.as_ref().and_then(|data| match data {
+        yak_data::yak_event::Data::SpanEnd(end) => end.data.as_ref().and_then(|data| match data {
             yak_data::span_end_event::Data::ActionExecution(data) => {
                 data.key.as_ref().map(|key: &ActionKey| {
                     (
@@ -120,12 +120,12 @@ fn print_divergence_msg(
     Ok(())
 }
 
-impl BuckSubcommand for ActionDivergenceCommand {
+impl YakSubcommand for ActionDivergenceCommand {
     const COMMAND_NAME: &'static str = "log-diff-action-divergence";
 
     async fn exec_impl(
         self,
-        _matches: BuckArgMatches<'_>,
+        _matches: YakArgMatches<'_>,
         ctx: ClientCommandContext<'_>,
         _events_ctx: &mut EventsCtx,
     ) -> ExitResult {

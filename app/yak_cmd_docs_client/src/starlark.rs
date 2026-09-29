@@ -15,18 +15,18 @@ use yak_cli_proto::new_generic::DocsRequest;
 use yak_cli_proto::new_generic::DocsResponse;
 use yak_cli_proto::new_generic::DocsStarlarkRequest;
 use yak_client_ctx::client_ctx::ClientCommandContext;
-use yak_client_ctx::common::BuckArgMatches;
+use yak_client_ctx::common::YakArgMatches;
 use yak_client_ctx::common::CommonBuildConfigurationOptions;
 use yak_client_ctx::common::CommonCommandOptions;
 use yak_client_ctx::common::CommonEventLogOptions;
 use yak_client_ctx::common::CommonStarlarkOptions;
 use yak_client_ctx::common::ui::CommonConsoleOptions;
-use yak_client_ctx::daemon::client::BuckdClientConnector;
+use yak_client_ctx::daemon::client::YakdClientConnector;
 use yak_client_ctx::events_ctx::EventsCtx;
 use yak_client_ctx::exit_result::ExitResult;
 use yak_client_ctx::path_arg::PathArg;
 use yak_client_ctx::streaming::StreamingCommand;
-use yak_error::BuckErrorOptionContext;
+use yak_error::YakErrorOptionContext;
 use yak_error::ErrorTag;
 use yak_error::yak_error;
 
@@ -75,8 +75,8 @@ impl StreamingCommand for DocsStarlarkCommand {
     const COMMAND_NAME: &'static str = "docs starlark";
     async fn exec_impl(
         self,
-        buckd: &mut BuckdClientConnector,
-        matches: BuckArgMatches<'_>,
+        yakd: &mut YakdClientConnector,
+        matches: YakArgMatches<'_>,
         ctx: &mut ClientCommandContext<'_>,
         events_ctx: &mut EventsCtx,
     ) -> ExitResult {
@@ -94,7 +94,7 @@ impl StreamingCommand for DocsStarlarkCommand {
             }
         };
 
-        let response = buckd
+        let response = yakd
             .with_flushing()
             .new_generic(
                 client_context,

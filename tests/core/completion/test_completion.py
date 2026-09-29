@@ -13,8 +13,8 @@ import typing
 from pathlib import Path
 
 import pytest
-from e2e_util.api.buck import Buck
-from e2e_util.buck_workspace import buck_test
+from e2e_util.api.yak import Yak
+from e2e_util.yak_workspace import yak_test
 
 pytestmark = pytest.mark.needs_binary("YAK_COMPLETION_VERIFY")
 
@@ -39,13 +39,13 @@ def completion_test(
             continue
 
         # shell=shell is a trick to get the variable captured by value
-        async def impl(buck: Buck, shell: str = shell) -> None:
-            tmp_path = Path(buck.cwd).parent / "tmp"
+        async def impl(yak: Yak, shell: str = shell) -> None:
+            tmp_path = Path(yak.cwd).parent / "tmp"
             tmp_path.mkdir(exist_ok=True)
 
             verify_bin = Path(os.environ["YAK_COMPLETION_VERIFY"])
 
-            get_completions = await buck.completion(
+            get_completions = await yak.completion(
                 shell, *(["--options-only"] if options_only else [])
             )
             completions_path = tmp_path / f"completion.{shell}"
@@ -59,7 +59,7 @@ def completion_test(
                 [
                     "#!/bin/bash",
                     "shopt -s dotglob",
-                    f'export PATH="{buck.path_to_executable.parent.absolute()}:$PATH"',
+                    f'export PATH="{yak.path_to_executable.parent.absolute()}:$PATH"',
                     "export YAK_COMPLETION_TIMEOUT=30000",
                     f"if [ -n \"$( ls -A '{shell_home}' )\" ]; then",
                     f"    rm -r -- {shell_home}/*",
@@ -73,7 +73,7 @@ def completion_test(
 
             # Bash and Zsh infer completion through PTY idle periods, so avoid including daemon
             # startup in that timing window. Fish also uses the warmed daemon for parity.
-            await buck.uquery("//...")
+            await yak.uquery("//...")
 
             # The generated completion script invokes yak recursively. It must inherit the same
             # external config and file watcher settings as the warmed daemon.
@@ -81,8 +81,8 @@ def completion_test(
                 script_path.absolute(),
                 input=f"{bin} {input}",
                 text=True,
-                cwd=buck.cwd.joinpath(cwd),
-                env=buck._env,
+                cwd=yak.cwd.joinpath(cwd),
+                env=yak._env,
             )
             actual = actual.splitlines()
             if isinstance(expected, list):
@@ -102,7 +102,7 @@ def completion_test(
             else:
                 assert expected(actual), "testing shell: " + shell
 
-        globals()[name + "_" + shell] = buck_test()(impl)
+        globals()[name + "_" + shell] = yak_test()(impl)
 
 
 completion_test(

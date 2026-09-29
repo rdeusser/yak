@@ -14,8 +14,8 @@ use std::collections::hash_map::Entry;
 use starlark::values::Value;
 use starlark::values::ValueIdentity;
 use yak_error::internal_error;
-use yak_hash::BuckMutMap;
-use yak_hash::BuckMutSet;
+use yak_hash::YakMutMap;
+use yak_hash::YakMutSet;
 
 use crate::interpreter::rule_defs::transitive_set::TransitiveSet;
 use crate::interpreter::rule_defs::transitive_set::transitive_set::Node;
@@ -44,7 +44,7 @@ fn assert_transitive_set<'v>(child: Value<'v>) -> &'v TransitiveSet<'v> {
 /// order that minimizes memory usage during traversal.
 pub struct PreorderTransitiveSetIterator<'a, 'v> {
     stack: Vec<&'a TransitiveSet<'v>>,
-    seen: BuckMutSet<ValueIdentity<'v>>,
+    seen: YakMutSet<ValueIdentity<'v>>,
 }
 
 impl<'a, 'v> PreorderTransitiveSetIterator<'a, 'v>
@@ -95,7 +95,7 @@ where
 /// node.
 pub struct PostorderTransitiveSetIterator<'a, 'v> {
     stack: Vec<(&'a TransitiveSet<'v>, PostorderMark<'v>)>,
-    seen: BuckMutSet<ValueIdentity<'v>>,
+    seen: YakMutSet<ValueIdentity<'v>>,
 }
 
 impl<'a, 'v> PostorderTransitiveSetIterator<'a, 'v>
@@ -166,7 +166,7 @@ where
 /// parent it is returned in the order of its last occurrence.
 pub struct TopologicalTransitiveSetIterator<'a, 'v> {
     output_stack: Vec<&'a TransitiveSet<'v>>,
-    instance_counts: BuckMutMap<ValueIdentity<'v>, u32>,
+    instance_counts: YakMutMap<ValueIdentity<'v>, u32>,
 }
 
 impl<'a, 'v> TopologicalTransitiveSetIterator<'a, 'v>
@@ -180,9 +180,9 @@ where
         }
     }
 
-    fn count_instances(set: &'a TransitiveSet<'v>) -> BuckMutMap<ValueIdentity<'v>, u32> {
+    fn count_instances(set: &'a TransitiveSet<'v>) -> YakMutMap<ValueIdentity<'v>, u32> {
         let mut stack = vec![set];
-        let mut instance_counts = BuckMutMap::<ValueIdentity<'v>, u32>::default();
+        let mut instance_counts = YakMutMap::<ValueIdentity<'v>, u32>::default();
 
         while let Some(next) = stack.pop() {
             for child in next.children.iter().rev() {
@@ -248,7 +248,7 @@ where
 /// left-to-right before traversing to any grandchildren.
 pub struct BfsTransitiveSetIterator<'a, 'v> {
     queue: VecDeque<&'a TransitiveSet<'v>>,
-    seen: BuckMutSet<ValueIdentity<'v>>,
+    seen: YakMutSet<ValueIdentity<'v>>,
 }
 
 impl<'a, 'v> BfsTransitiveSetIterator<'a, 'v>
@@ -299,7 +299,7 @@ where
 /// left-to-right.
 pub struct DfsTransitiveSetIterator<'a, 'v> {
     stack: Vec<(&'a TransitiveSet<'v>, Option<ValueIdentity<'v>>)>,
-    seen: BuckMutSet<ValueIdentity<'v>>,
+    seen: YakMutSet<ValueIdentity<'v>>,
 }
 
 impl<'a, 'v> DfsTransitiveSetIterator<'a, 'v>

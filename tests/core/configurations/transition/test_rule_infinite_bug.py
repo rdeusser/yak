@@ -6,15 +6,15 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-from e2e_util.api.buck import Buck
+from e2e_util.api.yak import Yak
 from e2e_util.asserts import expect_failure
-from e2e_util.buck_workspace import buck_test
+from e2e_util.yak_workspace import yak_test
 
 
-@buck_test()
-async def test_configuration_transition_rule_infinite_bug(buck: Buck) -> None:
+@yak_test()
+async def test_configuration_transition_rule_infinite_bug(yak: Yak) -> None:
     result = await expect_failure(
-        buck.cquery(
+        yak.cquery(
             "deps(root//:xx)",
         )
     )

@@ -14,7 +14,7 @@ use std::time::Duration;
 use yak_cli_proto::GenericResponse;
 use yak_cli_proto::UnstableCrashRequest;
 use yak_cli_proto::unstable_crash_request::CrashType;
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 
 pub(crate) async fn crash(req: UnstableCrashRequest) -> yak_error::Result<GenericResponse> {
     let crash_type = CrashType::try_from(req.crash_type).map_err(|_| {
@@ -40,7 +40,7 @@ fn crash_on_dedicated_thread(
     thread::Builder::new()
         .name("yak-crash".to_owned())
         .spawn(crash)
-        .buck_error_context("Failed to spawn crash thread")?
+        .yak_error_context("Failed to spawn crash thread")?
         .join()
         .expect("crash thread should terminate the daemon");
     Ok(GenericResponse {})
@@ -83,7 +83,7 @@ async fn allocate_memory(bytes: u64) -> yak_error::Result<GenericResponse> {
         unreachable!("allocate_and_pressure loops forever")
     })
     .await
-    .buck_error_context("Failed to spawn allocate_memory task")?
+    .yak_error_context("Failed to spawn allocate_memory task")?
 }
 
 fn allocate_and_pressure(bytes: usize, page_size: usize) -> ! {

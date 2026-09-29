@@ -110,7 +110,7 @@ fn format_mb(bytes: usize) -> String {
 
 /// Generate Starlark source code with many function definitions.
 ///
-/// Each function resembles a Buck/bzl macro with unique variable names
+/// Each function resembles a Yak/bzl macro with unique variable names
 /// to prevent identifier deduplication from reducing memory.
 fn generate_source(num_functions: usize, body_size: usize) -> String {
     // Pre-estimate capacity: ~420 bytes per function with body_size=6

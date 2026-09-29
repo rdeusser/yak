@@ -80,7 +80,7 @@ impl IoError {
         }
     }
 
-    fn convert_to_buck2_error(self) -> yak_error::Error {
+    fn convert_to_yak_error(self) -> yak_error::Error {
         let mut tags = vec![ErrorTag::IoSystem];
 
         if let IoErrorSource::Io(e) = &self.source {
@@ -114,7 +114,7 @@ impl IoError {
     /// they already have rather than being labelled missing.
     pub fn categorize_tagged(mut self, tag: ErrorTag) -> yak_error::Error {
         self.not_found_tag = Some(tag);
-        self.convert_to_buck2_error()
+        self.convert_to_yak_error()
     }
 
     /// Convert to a yak_error::Error and tag as an input error if a path is missing.
@@ -137,7 +137,7 @@ impl IoError {
 
     /// Convert to a yak_error::Error with no tags, new code should only use this in tests
     pub fn uncategorized(self) -> yak_error::Error {
-        self.convert_to_buck2_error()
+        self.convert_to_yak_error()
     }
 }
 

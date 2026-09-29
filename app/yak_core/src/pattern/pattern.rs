@@ -18,7 +18,7 @@ use dupe::Dupe;
 use pagable::Pagable;
 use regex::Regex;
 use serde::Serialize;
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 use yak_error::yak_error;
 use yak_fs::paths::forward_rel_path::ForwardRelativePath;
 use yak_fs::paths::relative_path::Component;
@@ -337,7 +337,7 @@ impl<T: PatternType> ParsedPattern<T> {
             },
             pattern,
         )
-        .with_buck_error_context(|| {
+        .with_yak_error_context(|| {
             format!("Error parsing target pattern `{pattern}`, expected an absolute pattern")
         })?;
 
@@ -373,7 +373,7 @@ impl<T: PatternType> ParsedPattern<T> {
             },
             pattern,
         )
-        .with_buck_error_context(|| format!("Parsing target pattern `{pattern}`"))?;
+        .with_yak_error_context(|| format!("Parsing target pattern `{pattern}`"))?;
 
         Self::from_parsed_pattern_with_modifiers(pattern_with_modifiers)
     }
@@ -399,7 +399,7 @@ impl<T: PatternType> ParsedPattern<T> {
             },
             pattern,
         )
-        .with_buck_error_context(|| format!("Error parsing target pattern `{pattern}`"))?;
+        .with_yak_error_context(|| format!("Error parsing target pattern `{pattern}`"))?;
 
         Self::from_parsed_pattern_with_modifiers(pattern_with_modifiers)
     }
@@ -482,7 +482,7 @@ impl<T: PatternType> ParsedPatternWithModifiers<T> {
             },
             pattern,
         )
-        .with_buck_error_context(|| {
+        .with_yak_error_context(|| {
             format!("Error parsing target pattern `{pattern}`, expected an absolute pattern")
         })
     }
@@ -509,7 +509,7 @@ impl<T: PatternType> ParsedPatternWithModifiers<T> {
             },
             pattern,
         )
-        .with_buck_error_context(|| format!("Parsing target pattern `{pattern}`"))
+        .with_yak_error_context(|| format!("Parsing target pattern `{pattern}`"))
     }
 
     pub fn parse_not_relaxed(
@@ -528,7 +528,7 @@ impl<T: PatternType> ParsedPatternWithModifiers<T> {
             },
             pattern,
         )
-        .with_buck_error_context(|| format!("Error parsing target pattern `{pattern}`"))
+        .with_yak_error_context(|| format!("Error parsing target pattern `{pattern}`"))
     }
 }
 
@@ -971,7 +971,7 @@ pub fn lex_target_pattern<T: PatternType>(
     let provider_pattern = lex_configured_providers_pattern(pattern, strip_package_trailing_slash)?;
     provider_pattern
         .try_map(|extra| T::from_configured_providers(extra))
-        .with_buck_error_context(|| {
+        .with_yak_error_context(|| {
             format!(
                 "Expecting {} pattern, got: `{}`",
                 // This can only fail when `PatternType = TargetName`, so the message is correct.
@@ -1249,7 +1249,7 @@ where
         },
         alias,
     )
-    .with_buck_error_context(|| format!("Error dereferencing alias `{}` -> `{}`", target, alias))?;
+    .with_yak_error_context(|| format!("Error dereferencing alias `{}` -> `{}`", target, alias))?;
 
     // And finally, put the `T` we were looking for back together.
     let parsed_pattern = match res.parsed_pattern {

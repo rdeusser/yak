@@ -133,7 +133,7 @@ class DB:
         return json.dumps(dataclasses.asdict(self), indent=2, sort_keys=True)
 
 
-def query_buck(test_target: str) -> Any:
+def query_yak(test_target: str) -> Any:
     result = subprocess.run(
         [
             "yak",
@@ -215,7 +215,7 @@ def main() -> None:
     )
     args = parser.parse_args()
 
-    actual = DB.from_json(query_buck(args.test_target))
+    actual = DB.from_json(query_yak(args.test_target))
 
     if args.generate:
         text = actual.to_json()

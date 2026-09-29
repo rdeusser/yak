@@ -6,7 +6,7 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-load("@prelude//decls:common.bzl", "buck")
+load("@prelude//decls:common.bzl", "yak")
 load("@prelude//decls:test_common.bzl", "test_common")
 load(":julia_binary.bzl", "julia_binary_impl")
 load(":julia_library.bzl", "julia_jll_library_impl", "julia_library_impl")
@@ -29,16 +29,16 @@ extra_attributes = {
         "srcs": attrs.list(attrs.source(), default = []),
         "_julia_toolchain": julia_toolchain(),
     }
-    | buck.labels_arg()
-    | buck.contacts_arg(),
+    | yak.labels_arg()
+    | yak.contacts_arg(),
     "julia_jll_library": {
         "jll_name": attrs.string(),
         "lib_mapping": attrs.named_set(attrs.dep()),
         "uuid": attrs.string(),
         "_julia_toolchain": julia_toolchain(),
     }
-    | buck.labels_arg()
-    | buck.contacts_arg(),
+    | yak.labels_arg()
+    | yak.contacts_arg(),
     "julia_library": {
         "deps": attrs.list(attrs.dep(), default = []),
         "project_toml": attrs.source(),
@@ -46,8 +46,8 @@ extra_attributes = {
         "srcs": attrs.list(attrs.source(), default = []),
         "_julia_toolchain": julia_toolchain(),
     }
-    | buck.labels_arg()
-    | buck.contacts_arg(),
+    | yak.labels_arg()
+    | yak.contacts_arg(),
     "julia_test": {
         "deps": attrs.list(attrs.dep(), default = []),
         "julia_args": attrs.list(attrs.string(), default = []),
@@ -57,8 +57,8 @@ extra_attributes = {
         "_julia_toolchain": julia_toolchain(),
         # TODO: coverage
     }
-    | buck.labels_arg()
-    | buck.contacts_arg()
-    | buck.inject_test_env_arg()
+    | yak.labels_arg()
+    | yak.contacts_arg()
+    | yak.inject_test_env_arg()
     | test_common.attributes(),
 }

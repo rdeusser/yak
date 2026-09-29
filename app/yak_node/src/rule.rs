@@ -16,7 +16,7 @@ use static_interner::interner;
 use yak_core::configuration::transition::id::TransitionId;
 use yak_core::plugins::PluginKind;
 #[allow(unused_imports)]
-use yak_hash::BuckHasher;
+use yak_hash::YakHasher;
 
 use crate::attrs::spec::AttributeSpec;
 use crate::nodes::unconfigured::RuleKind;
@@ -46,4 +46,4 @@ pub struct Rule {
     pub uses_plugins: Vec<PluginKind>,
 }
 
-interner!(INTERNER, BuckHasher, Rule);
+interner!(INTERNER, YakHasher, Rule);

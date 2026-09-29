@@ -16,13 +16,13 @@ use futures::stream::StreamExt;
 use lsp_server::Message;
 use yak_cli_proto::LspRequest;
 use yak_client_ctx::client_ctx::ClientCommandContext;
-use yak_client_ctx::common::BuckArgMatches;
+use yak_client_ctx::common::YakArgMatches;
 use yak_client_ctx::common::CommonBuildConfigurationOptions;
 use yak_client_ctx::common::CommonEventLogOptions;
 use yak_client_ctx::common::CommonStarlarkOptions;
 use yak_client_ctx::common::ui::CommonConsoleOptions;
 use yak_client_ctx::common::ui::ConsoleType;
-use yak_client_ctx::daemon::client::BuckdClientConnector;
+use yak_client_ctx::daemon::client::YakdClientConnector;
 use yak_client_ctx::events_ctx::EventsCtx;
 use yak_client_ctx::events_ctx::PartialResultCtx;
 use yak_client_ctx::events_ctx::PartialResultHandler;
@@ -50,8 +50,8 @@ impl StreamingCommand for LspCommand {
 
     async fn exec_impl(
         self,
-        buckd: &mut BuckdClientConnector,
-        matches: BuckArgMatches<'_>,
+        yakd: &mut YakdClientConnector,
+        matches: YakArgMatches<'_>,
         ctx: &mut ClientCommandContext<'_>,
         events_ctx: &mut EventsCtx,
     ) -> ExitResult {
@@ -71,7 +71,7 @@ impl StreamingCommand for LspCommand {
         reborrow_stream_for_static(
             stream,
             |stream| async move {
-                buckd
+                yakd
                     .with_flushing()
                     .lsp(
                         client_context,

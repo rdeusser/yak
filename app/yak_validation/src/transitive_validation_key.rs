@@ -30,8 +30,8 @@ use yak_artifact::artifact::artifact_type::Artifact;
 use yak_build_api::analysis::calculation::RuleAnalysisCalculation;
 use yak_build_api::validation::transitive_validations::TransitiveValidations;
 use yak_core::target::configured_target_label::ConfiguredTargetLabel;
-use yak_error::BuckErrorContext;
-use yak_error::BuckErrorOptionContext;
+use yak_error::YakErrorContext;
+use yak_error::YakErrorOptionContext;
 
 use crate::cached_validation_result::CachedValidationResult;
 use crate::cached_validation_result::CachedValidationResultData;

@@ -18,7 +18,7 @@ use async_trait::async_trait;
 use dice::UserComputationData;
 use dupe::Dupe;
 use gazebo::variants::VariantName;
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 use yak_events::dispatch::EventDispatcher;
 use yak_fs::paths::file_name::FileNameBuf;
 use yak_hash::IntentionallyStdHashMap;
@@ -224,7 +224,7 @@ where
     if let Err(e) = handle
         .finish()
         .await
-        .buck_error_context("Error computing critical path")
+        .yak_error_context("Error computing critical path")
     {
         yak_fs::fs_util::soft_error!("critical_path_computation_failed", e)?;
     }

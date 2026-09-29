@@ -6,16 +6,16 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-from e2e_util.api.buck import Buck
-from e2e_util.buck_workspace import buck_test
+from e2e_util.api.yak import Yak
+from e2e_util.yak_workspace import yak_test
 from e2e_util.helper.utils import filter_events
 
 
-@buck_test()
-async def test_peak_allocated_bytes(buck: Buck) -> None:
-    await buck.uquery("//:EEE")
+@yak_test()
+async def test_peak_allocated_bytes(yak: Yak) -> None:
+    await yak.uquery("//:EEE")
     span_end_load_event = await filter_events(
-        buck,
+        yak,
         "Event",
         "data",
         "SpanEnd",

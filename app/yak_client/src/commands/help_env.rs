@@ -12,7 +12,7 @@ use std::cmp;
 use std::iter;
 
 use yak_client_ctx::client_ctx::ClientCommandContext;
-use yak_client_ctx::common::BuckArgMatches;
+use yak_client_ctx::common::YakArgMatches;
 use yak_client_ctx::exit_result::ExitResult;
 use yak_core::env::registry::Applicability;
 use yak_core::env::registry::ENV_INFO;
@@ -30,7 +30,7 @@ pub struct HelpEnvCommand {
 }
 
 impl HelpEnvCommand {
-    pub fn exec(self, _matches: BuckArgMatches<'_>, _ctx: ClientCommandContext<'_>) -> ExitResult {
+    pub fn exec(self, _matches: YakArgMatches<'_>, _ctx: ClientCommandContext<'_>) -> ExitResult {
         // TODO(nga): print special yakconfigs too.
 
         // This command depends on `linkme` aggregating all the environment variables.

@@ -42,10 +42,10 @@ use yak_core::configuration::compatibility::MaybeCompatible;
 use yak_core::fs::artifact_path_resolver::ArtifactFs;
 use yak_core::pattern::pattern::ParsedPattern;
 use yak_core::provider::label::ConfiguredProvidersLabel;
-use yak_error::BuckErrorOptionContext;
-use yak_hash::BuckDashMap;
-use yak_hash::BuckMutMap;
-use yak_hash::BuckMutSet;
+use yak_error::YakErrorOptionContext;
+use yak_hash::YakDashMap;
+use yak_hash::YakMutMap;
+use yak_hash::YakMutSet;
 use yak_node::target_calculation::ConfiguredTargetCalculation;
 use yak_query::query::syntax::simple::eval::set::TargetSet;
 
@@ -66,13 +66,13 @@ enum ActionQueryError {
 
 /// A simple concurrent map with a `get_or_compute()` function
 struct NodeCache<K: Hash + Eq + PartialEq + Dupe, V: Dupe> {
-    map: BuckDashMap<K, Shared<oneshot::Receiver<V>>>,
+    map: YakDashMap<K, Shared<oneshot::Receiver<V>>>,
 }
 
 impl<K: Hash + Eq + PartialEq + Dupe, V: Dupe> NodeCache<K, V> {
     fn new() -> Self {
         Self {
-            map: BuckDashMap::default(),
+            map: YakDashMap::default(),
         }
     }
 
@@ -317,11 +317,11 @@ async fn compute_tset_node(
     ctx: &mut DiceComputations<'_>,
     root: TransitiveSetProjectionKey,
 ) -> yak_error::Result<TsetNode> {
-    let mut discovered: BuckMutMap<TransitiveSetProjectionKey, Arc<DiscoveredTset>> =
-        BuckMutMap::default();
-    let mut built: BuckMutMap<TransitiveSetProjectionKey, TsetNode> = BuckMutMap::default();
+    let mut discovered: YakMutMap<TransitiveSetProjectionKey, Arc<DiscoveredTset>> =
+        YakMutMap::default();
+    let mut built: YakMutMap<TransitiveSetProjectionKey, TsetNode> = YakMutMap::default();
 
-    let mut seen: BuckMutSet<TransitiveSetProjectionKey> = BuckMutSet::default();
+    let mut seen: YakMutSet<TransitiveSetProjectionKey> = YakMutSet::default();
     seen.insert(root.dupe());
     let mut frontier = vec![root.dupe()];
     // The caller (`get_or_compute`) has already registered an in-flight cache entry for
@@ -374,7 +374,7 @@ async fn compute_tset_node(
         Exit(TransitiveSetProjectionKey),
     }
 
-    let mut entered: BuckMutSet<TransitiveSetProjectionKey> = BuckMutSet::default();
+    let mut entered: YakMutSet<TransitiveSetProjectionKey> = YakMutSet::default();
     let mut stack = vec![Visit::Enter(root.dupe())];
     while let Some(visit) = stack.pop() {
         match visit {

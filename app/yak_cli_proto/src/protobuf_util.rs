@@ -52,7 +52,7 @@ mod tests {
     use prost::Message;
     use tokio_util::codec::FramedRead;
     use tokio_util::io::StreamReader;
-    use yak_error::BuckErrorOptionContext;
+    use yak_error::YakErrorOptionContext;
 
     use super::*;
 

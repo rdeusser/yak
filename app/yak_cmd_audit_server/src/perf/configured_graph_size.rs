@@ -17,7 +17,7 @@ use yak_build_api::build::graph_properties::debug_compute_configured_graph_prope
 use yak_cli_proto::ClientContext;
 use yak_cmd_audit_client::perf::configured_graph_size::ConfiguredGraphSizeCommand;
 use yak_core::configuration::compatibility::MaybeCompatible;
-use yak_hash::BuckIndexMap;
+use yak_hash::YakIndexMap;
 use yak_node::nodes::configured_frontend::ConfiguredTargetNodeCalculation;
 use yak_server_ctx::ctx::ServerCommandContextTrait;
 use yak_server_ctx::ctx::ServerCommandDiceContext;
@@ -47,7 +47,7 @@ pub(crate) async fn server_execute(
                 sketch: Option<String>,
                 duration_ms: u64,
             }
-            let mut results = BuckIndexMap::default();
+            let mut results = YakIndexMap::default();
 
             // We intentionally don't do this in parallel so that we can get the computation time for them.
             for target in &targets {

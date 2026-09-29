@@ -62,7 +62,7 @@ use yak_data::DiceSynchronizeSectionStart;
 use yak_data::ExclusiveCommandWaitEnd;
 use yak_data::ExclusiveCommandWaitStart;
 use yak_data::NoActiveDiceState;
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 use yak_error::internal_error;
 use yak_util::early_command_timing::EXCLUSIVE_COMMAND_WAIT;
 use yak_util::early_command_timing::EarlyCommandTimingBuilder;
@@ -574,7 +574,7 @@ impl ConcurrencyHandler {
                 let running = ConcurrentTraces::running(&data.active_commands);
                 drop(data);
                 let queued = self.queued_traces(command_id);
-                return Err(ConcurrencyHandlerError::ExitOnDaemonNotIdle).with_buck_error_context(
+                return Err(ConcurrencyHandlerError::ExitOnDaemonNotIdle).with_yak_error_context(
                     || format!("yak daemon is busy processing another command: {running}{queued}"),
                 );
             }
@@ -652,7 +652,7 @@ impl ConcurrencyHandler {
                 drop(data);
                 let queued = self.queued_traces(command_id);
                 return Err(ConcurrencyHandlerError::ExitWhenDifferentState)
-                    .with_buck_error_context(|| {
+                    .with_yak_error_context(|| {
                         format!("yak daemon is busy processing another command: {running}{queued}")
                     });
             }
@@ -737,7 +737,7 @@ impl ConcurrencyHandler {
                         let running = ConcurrentTraces::running(&data.active_commands);
                         drop(data);
                         let queued = self.queued_traces(command_id);
-                        return Err(early_exit_error).with_buck_error_context(|| {
+                        return Err(early_exit_error).with_yak_error_context(|| {
                             format!(
                                 "yak daemon is busy processing another command: {running}{queued}"
                             )
@@ -1150,7 +1150,7 @@ mod tests {
                 }
             })
             .await
-            .buck_error_context("Timed out waiting for a matching event")?;
+            .yak_error_context("Timed out waiting for a matching event")?;
             *cursor = idx + 1;
             Ok(event)
         }
@@ -1715,7 +1715,7 @@ mod tests {
             }
         })
         .await
-        .buck_error_context("Timed out waiting for finished commands to be deregistered")
+        .yak_error_context("Timed out waiting for finished commands to be deregistered")
     }
 
     /// Direct tests of the `ConcurrencyHandlerData` state machine.
@@ -2622,7 +2622,7 @@ mod tests {
         // never released, so without this the test deadlocks rather than failing.
         let result = tokio::time::timeout(Duration::from_secs(10), preemptible)
             .await
-            .buck_error_context("Command was never preempted")?;
+            .yak_error_context("Command was never preempted")?;
 
         let error: yak_error::Error = result?.unwrap_err();
         assert!(
@@ -2759,7 +2759,7 @@ mod tests {
 
         tokio::time::timeout(Duration::from_secs(10), entered.wait())
             .await
-            .buck_error_context("the observer was never reached")?;
+            .yak_error_context("the observer was never reached")?;
 
         let data = concurrency
             .data
@@ -2779,7 +2779,7 @@ mod tests {
         release.wait().await;
         let joined = tokio::time::timeout(Duration::from_secs(10), command)
             .await
-            .buck_error_context("the command did not finish")?;
+            .yak_error_context("the command did not finish")?;
         joined??;
         assert!(exec_ran.load(Ordering::SeqCst));
 
@@ -2820,7 +2820,7 @@ mod tests {
 
         tokio::time::timeout(Duration::from_secs(10), entered.wait())
             .await
-            .buck_error_context("the observer was never reached")?;
+            .yak_error_context("the observer was never reached")?;
 
         let waiter_events = TestEvents::new();
         let waiter_ran = Arc::new(AtomicBool::new(false));
@@ -2857,7 +2857,7 @@ mod tests {
 
         let joined = tokio::time::timeout(Duration::from_secs(10), first)
             .await
-            .buck_error_context("the failing command did not finish")?;
+            .yak_error_context("the failing command did not finish")?;
         let failed = joined?;
         assert!(failed.is_err(), "the observer failure was not returned");
         assert!(
@@ -2867,7 +2867,7 @@ mod tests {
 
         let joined = tokio::time::timeout(Duration::from_secs(10), waiter)
             .await
-            .buck_error_context("the different-state waiter was not woken")?;
+            .yak_error_context("the different-state waiter was not woken")?;
         joined??;
         assert!(waiter_ran.load(Ordering::SeqCst));
 

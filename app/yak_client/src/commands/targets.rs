@@ -15,7 +15,7 @@ use yak_cli_proto::TargetsRequest;
 use yak_cli_proto::targets_request;
 use yak_cli_proto::targets_request::OutputFormat;
 use yak_client_ctx::client_ctx::ClientCommandContext;
-use yak_client_ctx::common::BuckArgMatches;
+use yak_client_ctx::common::YakArgMatches;
 use yak_client_ctx::common::CommonBuildConfigurationOptions;
 use yak_client_ctx::common::CommonCommandOptions;
 use yak_client_ctx::common::CommonEventLogOptions;
@@ -25,7 +25,7 @@ use yak_client_ctx::common::build::CommonOutputOptions;
 use yak_client_ctx::common::target_cfg::TargetCfgOptions;
 use yak_client_ctx::common::ui::CommonConsoleOptions;
 use yak_client_ctx::console_interaction_stream::ConsoleInteractionStream;
-use yak_client_ctx::daemon::client::BuckdClientConnector;
+use yak_client_ctx::daemon::client::YakdClientConnector;
 use yak_client_ctx::daemon::client::NoPartialResultHandler;
 use yak_client_ctx::daemon::client::StdoutPartialResultHandler;
 use yak_client_ctx::events_ctx::EventsCtx;
@@ -173,7 +173,7 @@ pub struct TargetsCommand {
     #[clap(flatten)]
     show_output: CommonOutputOptions,
 
-    /// On loading errors, put buck.error in the output stream and continue
+    /// On loading errors, put yak.error in the output stream and continue
     #[clap(long)]
     keep_going: bool,
 
@@ -282,8 +282,8 @@ impl StreamingCommand for TargetsCommand {
 
     async fn exec_impl(
         mut self,
-        buckd: &mut BuckdClientConnector,
-        matches: BuckArgMatches<'_>,
+        yakd: &mut YakdClientConnector,
+        matches: YakArgMatches<'_>,
         ctx: &mut ClientCommandContext<'_>,
         events_ctx: &mut EventsCtx,
     ) -> ExitResult {
@@ -348,7 +348,7 @@ impl StreamingCommand for TargetsCommand {
             let project_root = ctx.paths()?.roots.project_root.clone();
             targets_show_outputs(
                 ctx.console_interaction_stream(&self.common_opts.console_opts),
-                buckd,
+                yakd,
                 events_ctx,
                 target_request,
                 self.show_output.is_full().then(|| project_root.root()),
@@ -358,7 +358,7 @@ impl StreamingCommand for TargetsCommand {
         } else {
             targets(
                 ctx.console_interaction_stream(&self.common_opts.console_opts),
-                buckd,
+                yakd,
                 events_ctx,
                 target_request,
             )
@@ -385,13 +385,13 @@ impl StreamingCommand for TargetsCommand {
 
 async fn targets_show_outputs(
     console_interaction: Option<ConsoleInteractionStream<'_>>,
-    buckd: &mut BuckdClientConnector,
+    yakd: &mut YakdClientConnector,
     events_ctx: &mut EventsCtx,
     target_request: TargetsRequest,
     root_path: Option<&AbsNormPath>,
     format: PrintOutputsFormat,
 ) -> ExitResult {
-    let response = buckd
+    let response = yakd
         .with_flushing()
         .targets_show_outputs(
             target_request,
@@ -418,11 +418,11 @@ async fn targets_show_outputs(
 
 async fn targets(
     console_interaction: Option<ConsoleInteractionStream<'_>>,
-    buckd: &mut BuckdClientConnector,
+    yakd: &mut YakdClientConnector,
     events_ctx: &mut EventsCtx,
     target_request: TargetsRequest,
 ) -> ExitResult {
-    let response = buckd
+    let response = yakd
         .with_flushing()
         .targets(
             target_request,

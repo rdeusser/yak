@@ -33,8 +33,7 @@ LANGUAGE_STANDARD_AND_TOOLSET_MAP = {
     },
 }
 
-ABSOLUTIZE_PATH_EXE = "prelude//ide_integrations/visual_studio:absolutize_path_exe"
-VS_BUCK_BUILD_PROPS = "prelude//ide_integrations/visual_studio:vs_buck_build_props"
+VS_YAK_BUILD_PROPS = "prelude//ide_integrations/visual_studio:vs_yak_build_props"
 
 def _remove_flags_with_macros(flags: list) -> list:
     # Hacky way to find macros since regex sub is not available in bxl
@@ -53,9 +52,9 @@ def _get_compiler_settings(cxx_toolchain_flags: _CxxToolchainFlags) -> dict:
     compiler_flags = _remove_flags_with_macros(compiler_flags)
     return get_compiler_settings_from_flags(compiler_flags)
 
-def _get_linker_settings(cxx_toolchain_flags: _CxxToolchainFlags, buck_root: str) -> dict:
+def _get_linker_settings(cxx_toolchain_flags: _CxxToolchainFlags, yak_root: str) -> dict:
     linker_flags = _remove_flags_with_macros(cxx_toolchain_flags.ldflags)
-    return get_linker_settings_from_flags(linker_flags, buck_root)
+    return get_linker_settings_from_flags(linker_flags, yak_root)
 
 def _get_provider_output_path(provider, bxl_ctx):
     default_outputs = provider.default_outputs
@@ -165,9 +164,8 @@ def _produce_proj_artifact(
     compiler_settings_content = gen_compiler_settings(compiler_settings)
     linker_settings_content = gen_linker_settings(linker_settings)
 
-    absolutize_path_exe = _get_path(ABSOLUTIZE_PATH_EXE, bxl_ctx)
-    vs_buck_build_props_path = _get_path(VS_BUCK_BUILD_PROPS, bxl_ctx)
-    vs_buck_build_props = """        <Import Project="{}"/>""".format(vs_buck_build_props_path)
+    vs_yak_build_props_path = _get_path(VS_YAK_BUILD_PROPS, bxl_ctx)
+    vs_yak_build_props = """        <Import Project="{}"/>""".format(vs_yak_build_props_path)
 
     content = cmd_args(
         """<?xml version="1.0" encoding="utf-8"?>
@@ -180,7 +178,6 @@ def _produce_proj_artifact(
             "PropertyGroup",
             [
                 h("PlatformToolset", platform_toolset, indent_level = 2),
-                h("AbsolutizePathExe", absolutize_path_exe, indent_level = 2),
             ],
             indent_level = 1,
         ),
@@ -194,7 +191,7 @@ def _produce_proj_artifact(
         """    </ItemDefinitionGroup>""",
         """    <Import Project="$(VCTargetsPath)\\Microsoft.Cpp.Targets" />""",
         """    <ImportGroup Label="PropertySheets">""",
-        vs_buck_build_props,
+        vs_yak_build_props,
         """    </ImportGroup>""",
         """</Project>""",
         delimiter = "\n",

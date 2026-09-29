@@ -7,8 +7,8 @@
 # above-listed licenses.
 
 import pytest
-from e2e_util.api.buck import Buck
-from e2e_util.buck_workspace import buck_test
+from e2e_util.api.yak import Yak
+from e2e_util.yak_workspace import yak_test
 
 
 @pytest.mark.parametrize("executable_bit_override", [None, True, False])
@@ -23,9 +23,9 @@ from e2e_util.buck_workspace import buck_test
         ("files/not_executable_scripts", False),
     ],
 )
-@buck_test(skip_for_os=["windows"])  # Exec bit and all
+@yak_test(skip_for_os=["windows"])  # Exec bit and all
 async def test_exec_bit_of_copied_file(
-    buck: Buck,
+    yak: Yak,
     executable_bit_override: bool | None,
     write_executable_bit: bool | None,
     src: str | None,
@@ -45,7 +45,7 @@ async def test_exec_bit_of_copied_file(
 
     name = "perms_{}_{}_{}".format(executable_bit_override, write_executable_bit, src)
 
-    res = await buck.build_without_report(
+    res = await yak.build_without_report(
         f":{name}", "--out=-", "--local-only", "--no-remote-cache"
     )
 

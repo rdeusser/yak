@@ -14,10 +14,10 @@ from pathlib import Path
 from typing import Any, Optional
 
 import pytest
-from e2e_util.api.buck import Buck
+from e2e_util.api.yak import Yak
 from e2e_util.api.fixtures import Fixture, Span
 from e2e_util.api.lsp import LSPResponseError
-from e2e_util.buck_workspace import buck_test, env
+from e2e_util.yak_workspace import yak_test, env
 from e2e_util.helper.utils import daemon_is_alive
 
 
@@ -54,8 +54,8 @@ def _assert_goto_result(
     _assert_uris(res[0]["targetUri"], expected_dest_path.as_uri())
 
 
-def fixture(buck: Buck, path: Path) -> Fixture:
-    abs_path = buck.cwd / path
+def fixture(yak: Yak, path: Path) -> Fixture:
+    abs_path = yak.cwd / path
     fixture = Fixture(abs_path.read_text())
     abs_path.write_text(fixture.content)
     return fixture
@@ -124,20 +124,20 @@ async def _wait_for_active_command_state(
             return True
 
 
-@buck_test()
-async def test_lsp_starts(buck: Buck) -> None:
-    async with await buck.lsp() as lsp:
+@yak_test()
+async def test_lsp_starts(yak: Yak) -> None:
+    async with await yak.lsp() as lsp:
         # Will fail if the initialize response is not received
         await lsp.init_connection()
 
 
-@buck_test()
+@yak_test()
 async def test_lsp_stdin_eof_clears_server_command(
-    buck: Buck,
+    yak: Yak,
 ) -> None:
     try:
-        async with await buck.subscribe("--active-commands") as subscribe:
-            lsp = await buck.lsp()
+        async with await yak.subscribe("--active-commands") as subscribe:
+            lsp = await yak.lsp()
             try:
                 await lsp.init_connection()
                 assert await _wait_for_active_command_state(
@@ -157,22 +157,22 @@ async def test_lsp_stdin_eof_clears_server_command(
             finally:
                 await _kill_if_alive(lsp.process)
     finally:
-        await buck.kill()
+        await yak.kill()
 
 
-@buck_test()
+@yak_test()
 @env("YAK_TESTING_INACTIVITY_TIMEOUT", "true")
-async def test_lsp_exits_when_daemon_times_out(buck: Buck) -> None:
+async def test_lsp_exits_when_daemon_times_out(yak: Yak) -> None:
     # The inactivity timer only resets when a command *starts*, so it fires while the
     # lsp is still connected. The daemon cannot drain that stream, so it exits on its
     # shutdown deadline instead of waiting, and the lsp follows its daemon down.
-    await buck.server()
-    status = await buck.status()
+    await yak.server()
+    status = await yak.status()
     pid = json.loads(status.stdout)["process_info"]["pid"]
-    daemon_dir = await buck.get_daemon_dir()
+    daemon_dir = await yak.get_daemon_dir()
     daemon_stderr = daemon_dir / "yakd.stderr"
 
-    lsp = await buck.lsp()
+    lsp = await yak.lsp()
     try:
         saw_inactivity_timeout = await _wait_for_file_to_contain(
             daemon_stderr,
@@ -188,24 +188,24 @@ async def test_lsp_exits_when_daemon_times_out(buck: Buck) -> None:
         await _kill_if_alive(lsp.process)
 
 
-@buck_test(skip_for_os=["windows"])
+@yak_test(skip_for_os=["windows"])
 @env("YAK_TESTING_INACTIVITY_TIMEOUT", "true")
 @env("YAKD_STARTUP_TIMEOUT", "90")
 async def test_lsp_daemon_inactivity_shutdown_recovers_with_different_version(
-    buck: Buck,
+    yak: Yak,
 ) -> None:
     # `yakd.info` outlives the daemon, and a version mismatch in it is what sends the
     # client down the connect-to-the-existing-daemon path. That used to cost the full
     # `YAKD_STARTUP_TIMEOUT`, because the daemon accepted the connection and then
     # never answered it. Now there is nothing listening and the client replaces it.
-    await buck.server()
-    status = await buck.status()
+    await yak.server()
+    status = await yak.status()
     original_pid = json.loads(status.stdout)["process_info"]["pid"]
-    daemon_dir = await buck.get_daemon_dir()
+    daemon_dir = await yak.get_daemon_dir()
     daemon_stderr = daemon_dir / "yakd.stderr"
     daemon_info = daemon_dir / "yakd.info"
 
-    lsp = await buck.lsp()
+    lsp = await yak.lsp()
     try:
         saw_inactivity_timeout = await _wait_for_file_to_contain(
             daemon_stderr,
@@ -223,7 +223,7 @@ async def test_lsp_daemon_inactivity_shutdown_recovers_with_different_version(
         daemon_info.write_text(json.dumps(info))
 
         start = asyncio.get_running_loop().time()
-        await buck.server()
+        await yak.server()
         elapsed = asyncio.get_running_loop().time() - start
 
         # Well inside the 90s budget this used to consume in full.
@@ -233,14 +233,14 @@ async def test_lsp_daemon_inactivity_shutdown_recovers_with_different_version(
         await _kill_if_alive(lsp.process)
 
 
-@buck_test()
-async def test_lsp_exits_when_daemon_disappears(buck: Buck) -> None:
-    await buck.server()
+@yak_test()
+async def test_lsp_exits_when_daemon_disappears(yak: Yak) -> None:
+    await yak.server()
 
-    lsp = await buck.lsp()
+    lsp = await yak.lsp()
     try:
         await lsp.init_connection()
-        await buck.kill()
+        await yak.kill()
 
         exited = await _wait_for_exit(lsp.process, timeout=10)
         assert exited
@@ -249,12 +249,12 @@ async def test_lsp_exits_when_daemon_disappears(buck: Buck) -> None:
         await _kill_if_alive(lsp.process)
 
 
-@buck_test()
+@yak_test()
 @env("YAK_TESTING_INACTIVITY_TIMEOUT", "true")
-async def test_lsp_requests_keep_daemon_alive(buck: Buck) -> None:
-    async with await buck.lsp() as lsp:
+async def test_lsp_requests_keep_daemon_alive(yak: Yak) -> None:
+    async with await yak.lsp() as lsp:
         await lsp.init_connection()
-        daemon_info = await buck.get_daemon_dir() / "yakd.info"
+        daemon_info = await yak.get_daemon_dir() / "yakd.info"
         pid = json.loads(daemon_info.read_text())["pid"]
 
         for _ in range(6):
@@ -265,13 +265,13 @@ async def test_lsp_requests_keep_daemon_alive(buck: Buck) -> None:
         assert lsp.process.returncode is None
 
 
-@buck_test(skip_for_os=["windows"])
-async def test_lsp_exits_when_daemon_is_killed(buck: Buck) -> None:
-    await buck.server()
-    status = await buck.status()
+@yak_test(skip_for_os=["windows"])
+async def test_lsp_exits_when_daemon_is_killed(yak: Yak) -> None:
+    await yak.server()
+    status = await yak.status()
     pid = json.loads(status.stdout)["process_info"]["pid"]
 
-    lsp = await buck.lsp()
+    lsp = await yak.lsp()
     try:
         await lsp.init_connection()
         os.kill(pid, signal.SIGKILL)
@@ -283,9 +283,9 @@ async def test_lsp_exits_when_daemon_is_killed(buck: Buck) -> None:
         await _kill_if_alive(lsp.process)
 
 
-@buck_test()
-async def test_lints_on_open(buck: Buck) -> None:
-    async with await buck.lsp() as lsp:
+@yak_test()
+async def test_lints_on_open(yak: Yak) -> None:
+    async with await yak.lsp() as lsp:
         await lsp.init_connection()
         diags = await lsp.open_file(Path("clean_lint.bzl"))
         assert diags is not None
@@ -296,17 +296,17 @@ async def test_lints_on_open(buck: Buck) -> None:
         assert len(diags["diagnostics"]) == 1
 
 
-@buck_test()
-async def test_goto_definition(buck: Buck) -> None:
+@yak_test()
+async def test_goto_definition(yak: Yak) -> None:
     src_targets_path = Path("dir/YAK.fixture")
     dest_targets_path = Path("cell/sub/YAK.fixture")
     dest_bzl_path = Path("cell/sub/defs.bzl")
 
-    src_targets = fixture(buck, src_targets_path)
-    dest_targets = fixture(buck, dest_targets_path)
-    dest_bzl = fixture(buck, dest_bzl_path)
+    src_targets = fixture(yak, src_targets_path)
+    dest_targets = fixture(yak, dest_targets_path)
+    dest_bzl = fixture(yak, dest_bzl_path)
 
-    async with await buck.lsp() as lsp:
+    async with await yak.lsp() as lsp:
         await lsp.init_connection()
         diags = await lsp.open_file(src_targets_path)
         assert len(diags["diagnostics"]) == 0
@@ -319,7 +319,7 @@ async def test_goto_definition(buck: Buck) -> None:
         _assert_goto_result(
             res,
             src_targets.spans["load"],
-            buck.cwd / dest_bzl_path,
+            yak.cwd / dest_bzl_path,
             None,
         )
 
@@ -331,7 +331,7 @@ async def test_goto_definition(buck: Buck) -> None:
         _assert_goto_result(
             res,
             src_targets.spans["dummy"],
-            buck.cwd / dest_bzl_path,
+            yak.cwd / dest_bzl_path,
             dest_bzl.spans["rule"],
         )
 
@@ -350,7 +350,7 @@ async def test_goto_definition(buck: Buck) -> None:
         _assert_goto_result(
             res,
             src_targets.spans["missing_foo"],
-            buck.cwd / dest_targets_path,
+            yak.cwd / dest_targets_path,
             None,
         )
 
@@ -362,7 +362,7 @@ async def test_goto_definition(buck: Buck) -> None:
         _assert_goto_result(
             res,
             src_targets.spans["rule"],
-            buck.cwd / dest_bzl_path,
+            yak.cwd / dest_bzl_path,
             dest_bzl.spans["rule"],
         )
 
@@ -374,14 +374,14 @@ async def test_goto_definition(buck: Buck) -> None:
         _assert_goto_result(
             res,
             src_targets.spans["baz"],
-            buck.cwd / dest_targets_path,
+            yak.cwd / dest_targets_path,
             dest_targets.spans["baz"],
         )
 
 
-@buck_test()
-async def test_returns_file_contents_for_starlark_types(buck: Buck) -> None:
-    async with await buck.lsp() as lsp:
+@yak_test()
+async def test_returns_file_contents_for_starlark_types(yak: Yak) -> None:
+    async with await yak.lsp() as lsp:
         await lsp.init_connection()
 
         res = await lsp.file_contents("starlark:/native/DefaultInfo.bzl")
@@ -394,12 +394,12 @@ async def test_returns_file_contents_for_starlark_types(buck: Buck) -> None:
             await lsp.file_contents((lsp.cwd / ".yakconfig").as_uri())
 
 
-@buck_test()
-async def test_goto_definition_for_globals(buck: Buck) -> None:
+@yak_test()
+async def test_goto_definition_for_globals(yak: Yak) -> None:
     globals_bzl_path = Path("globals.bzl")
 
-    globals_bzl = fixture(buck, globals_bzl_path)
-    async with await buck.lsp() as lsp:
+    globals_bzl = fixture(yak, globals_bzl_path)
+    async with await yak.lsp() as lsp:
         await lsp.init_connection()
         diags = await lsp.open_file(globals_bzl_path)
         assert len(diags["diagnostics"]) == 0
@@ -416,7 +416,7 @@ async def test_goto_definition_for_globals(buck: Buck) -> None:
         assert res[0]["targetSelectionRange"]["start"]["line"] != 0
         _assert_uris(
             res[0]["targetUri"],
-            (buck.cwd / "prelude" / "prelude.bzl").as_uri(),
+            (yak.cwd / "prelude" / "prelude.bzl").as_uri(),
         )
 
         res = await lsp.goto_definition(
@@ -437,13 +437,13 @@ async def test_goto_definition_for_globals(buck: Buck) -> None:
         assert len(res) == 0
 
 
-@buck_test()
-async def test_supports_bxl_files(buck: Buck) -> None:
+@yak_test()
+async def test_supports_bxl_files(yak: Yak) -> None:
     src_bxl_path = Path("query.bxl")
 
-    src_bxl = fixture(buck, src_bxl_path)
+    src_bxl = fixture(yak, src_bxl_path)
 
-    async with await buck.lsp() as lsp:
+    async with await yak.lsp() as lsp:
         await lsp.init_connection()
         diags = await lsp.open_file(src_bxl_path)
         assert len(diags["diagnostics"]) == 0
@@ -456,7 +456,7 @@ async def test_supports_bxl_files(buck: Buck) -> None:
         _assert_goto_result(
             res,
             src_bxl.spans["foo"],
-            buck.cwd / src_bxl_path,
+            yak.cwd / src_bxl_path,
             src_bxl.spans["dest_foo"],
         )
 
@@ -468,6 +468,6 @@ async def test_supports_bxl_files(buck: Buck) -> None:
         _assert_goto_result(
             res,
             src_bxl.spans["f"],
-            buck.cwd / src_bxl_path,
+            yak.cwd / src_bxl_path,
             src_bxl.spans["dest_f"],
         )

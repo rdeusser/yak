@@ -17,7 +17,7 @@ use yak_cli_proto::CounterWithExamples;
 use yak_cli_proto::TestRequest;
 use yak_cli_proto::TestSessionOptions;
 use yak_client_ctx::client_ctx::ClientCommandContext;
-use yak_client_ctx::common::BuckArgMatches;
+use yak_client_ctx::common::YakArgMatches;
 use yak_client_ctx::common::CommonBuildConfigurationOptions;
 use yak_client_ctx::common::CommonCommandOptions;
 use yak_client_ctx::common::CommonEventLogOptions;
@@ -26,7 +26,7 @@ use yak_client_ctx::common::build::CommonBuildOptions;
 use yak_client_ctx::common::target_cfg::TargetCfgOptions;
 use yak_client_ctx::common::timeout::CommonTimeoutOptions;
 use yak_client_ctx::common::ui::CommonConsoleOptions;
-use yak_client_ctx::daemon::client::BuckdClientConnector;
+use yak_client_ctx::daemon::client::YakdClientConnector;
 use yak_client_ctx::daemon::client::NoPartialResultHandler;
 use yak_client_ctx::events_ctx::EventsCtx;
 use yak_client_ctx::exit_result::ExitResult;
@@ -37,8 +37,8 @@ use yak_client_ctx::stdio::eprint_line;
 use yak_client_ctx::streaming::StreamingCommand;
 use yak_client_ctx::subscribers::superconsole::test::TestCounterColumn;
 use yak_client_ctx::subscribers::superconsole::test::span_from_build_failure_count;
-use yak_error::BuckErrorContext;
-use yak_error::BuckErrorOptionContext;
+use yak_error::YakErrorContext;
+use yak_error::YakErrorOptionContext;
 use yak_error::ExitCode;
 use yak_fs::error::IoResultExt;
 use yak_fs::fs_util;
@@ -55,7 +55,7 @@ fn forward_output_to_path(
     fs_util::write(path_arg.resolve(working_dir), output)
         // input path from --test-executor-stderr=FILEPATH
         .categorize_input()
-        .buck_error_context("Failed to write test executor output to path")
+        .yak_error_context("Failed to write test executor output to path")
 }
 
 fn print_error_counter(
@@ -344,8 +344,8 @@ impl StreamingCommand for TestCommand {
 
     async fn exec_impl(
         self,
-        buckd: &mut BuckdClientConnector,
-        matches: BuckArgMatches<'_>,
+        yakd: &mut YakdClientConnector,
+        matches: YakArgMatches<'_>,
         ctx: &mut ClientCommandContext<'_>,
         events_ctx: &mut EventsCtx,
     ) -> ExitResult {
@@ -403,7 +403,7 @@ impl StreamingCommand for TestCommand {
             None
         };
 
-        let response = buckd
+        let response = yakd
             .with_flushing()
             .test(
                 TestRequest {

@@ -10,8 +10,8 @@ import os
 from typing import Any, Dict, List
 
 import pytest
-from e2e_util.api.buck import Buck
-from e2e_util.buck_workspace import buck_test
+from e2e_util.api.yak import Yak
+from e2e_util.yak_workspace import yak_test
 from e2e_util.helper.utils import filter_events, random_string
 
 pytestmark = pytest.mark.needs_binary("THREE_BILLION_INSTRUCTIONS_BIN")
@@ -24,9 +24,9 @@ def helper_bin_flags() -> List[str]:
     ]
 
 
-@buck_test(skip_for_os=["windows", "darwin"], disable_daemon_cgroup=False)
-async def test_instruction_count_disabled(buck: Buck) -> None:
-    await buck.build(
+@yak_test(skip_for_os=["windows", "darwin"], disable_daemon_cgroup=False)
+async def test_instruction_count_disabled(yak: Yak) -> None:
+    await yak.build(
         "root//:three_billion_instructions",
         "-c",
         "yak.miniperf2=false",
@@ -38,7 +38,7 @@ async def test_instruction_count_disabled(buck: Buck) -> None:
     )
 
     events = await filter_events(
-        buck,
+        yak,
         "Event",
         "data",
         "SpanEnd",
@@ -51,9 +51,9 @@ async def test_instruction_count_disabled(buck: Buck) -> None:
             assert c["details"]["metadata"].get("execution_stats") is None
 
 
-async def get_matching_details(buck: Buck) -> Dict[str, Any]:
+async def get_matching_details(yak: Yak) -> Dict[str, Any]:
     events = await filter_events(
-        buck,
+        yak,
         "Event",
         "data",
         "SpanEnd",
@@ -67,9 +67,9 @@ async def get_matching_details(buck: Buck) -> Dict[str, Any]:
     raise AssertionError("did not find the expected target")
 
 
-@buck_test(skip_for_os=["windows", "darwin"], disable_daemon_cgroup=False)
-async def test_instruction_count_enabled(buck: Buck) -> None:
-    await buck.build(
+@yak_test(skip_for_os=["windows", "darwin"], disable_daemon_cgroup=False)
+async def test_instruction_count_enabled(yak: Yak) -> None:
+    await yak.build(
         "root//:three_billion_instructions",
         "-c",
         "yak.miniperf2=true",
@@ -80,7 +80,7 @@ async def test_instruction_count_enabled(buck: Buck) -> None:
         *helper_bin_flags(),
     )
 
-    details = await get_matching_details(buck)
+    details = await get_matching_details(yak)
     assert "OmittedLocalCommand" in details["command_kind"]["command"]
 
     # Check that we are within 20%
@@ -91,9 +91,9 @@ async def test_instruction_count_enabled(buck: Buck) -> None:
 
 
 @pytest.mark.remote_execution
-@buck_test(skip_for_os=["windows", "darwin"], disable_daemon_cgroup=False)
-async def test_instruction_count_remote(buck: Buck) -> None:
-    await buck.build(
+@yak_test(skip_for_os=["windows", "darwin"], disable_daemon_cgroup=False)
+async def test_instruction_count_remote(yak: Yak) -> None:
+    await yak.build(
         "root//:three_billion_instructions",
         "--no-remote-cache",
         "--write-to-cache-anyway",
@@ -101,7 +101,7 @@ async def test_instruction_count_remote(buck: Buck) -> None:
         *helper_bin_flags(),
     )
 
-    details = await get_matching_details(buck)
+    details = await get_matching_details(yak)
     assert not details["command_kind"]["command"]["RemoteCommand"]["cache_hit"]
 
     # Check that we are within 10%
@@ -111,14 +111,14 @@ async def test_instruction_count_remote(buck: Buck) -> None:
 
     # Check we also get it on a cache hit.
 
-    await buck.kill()
-    await buck.build(
+    await yak.kill()
+    await yak.build(
         "root//:three_billion_instructions",
         "--prefer-remote",
         *helper_bin_flags(),
     )
 
-    details = await get_matching_details(buck)
+    details = await get_matching_details(yak)
     assert details["command_kind"]["command"]["RemoteCommand"]["cache_hit"]
 
     # Check that we are within 10%

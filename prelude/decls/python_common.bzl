@@ -11,7 +11,7 @@
 # the generated docs, and so those should be verified to be accurate and
 # well-formatted (and then delete this TODO)
 
-PythonBuckConfigPackageStyle = ["standalone", "inplace", "outplace"]
+PythonYakConfigPackageStyle = ["standalone", "inplace", "outplace"]
 
 def _srcs_arg():
     return {
@@ -71,7 +71,7 @@ def _linker_flags_arg():
 def _package_style_arg():
     return {
         "package_style": attrs.option(
-            attrs.enum(PythonBuckConfigPackageStyle),
+            attrs.enum(PythonYakConfigPackageStyle),
             default = None,
             doc = """
     Used to override the global packaging style that is set in `[`.yakconfig`

@@ -9,7 +9,7 @@
  */
 
 use yak_core::package::PackageLabel;
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 
 use crate::attrs::attr::Attribute;
 use crate::attrs::configured_attr::ConfiguredAttr;
@@ -31,6 +31,6 @@ impl ConfiguredAttrFull<'_> {
     ) -> yak_error::Result<()> {
         self.value
             .traverse(pkg, traversal)
-            .with_buck_error_context(|| format!("traversing attribute `{}`", self.name))
+            .with_yak_error_context(|| format!("traversing attribute `{}`", self.name))
     }
 }

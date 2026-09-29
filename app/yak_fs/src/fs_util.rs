@@ -23,7 +23,7 @@ use std::path::PathBuf;
 
 pub use yak_env::soft_error::soft_error;
 #[cfg(unix)]
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 use yak_error::ErrorTag;
 #[cfg(unix)]
 use yak_error::internal_error;
@@ -611,7 +611,7 @@ pub fn disk_space_stats<P: AsRef<AbsPath>>(path: P) -> yak_error::Result<DiskSpa
 
         let path_c = CString::new(path.as_os_str().as_bytes())
             .map_err(yak_error::Error::from)
-            .with_buck_error_context(|| format!("Failed to convert path to CString: {path:?}"))?;
+            .with_yak_error_context(|| format!("Failed to convert path to CString: {path:?}"))?;
         let mut statvfs = unsafe { MaybeUninit::<libc::statvfs>::zeroed().assume_init() };
         unsafe {
             let r = libc::statvfs(path_c.as_ptr(), &mut statvfs);
@@ -904,7 +904,7 @@ mod tests {
 
     use assert_matches::assert_matches;
     use yak_error::ErrorTag;
-    use yak_hash::BuckMutMap;
+    use yak_hash::YakMutMap;
 
     use crate::error::IoResultExt;
     use crate::fs_util::IoError;
@@ -1520,7 +1520,7 @@ mod tests {
         use std::io::ErrorKind;
 
         let tempdir = tempfile::tempdir().unwrap();
-        let mut test_cases = BuckMutMap::default();
+        let mut test_cases = YakMutMap::default();
         // The behavior of these test cases varies by platform
         let should_succeed = cfg!(target_os = "macos");
         let expected_attempts = if should_succeed { MAX_IO_ATTEMPTS } else { 1 };

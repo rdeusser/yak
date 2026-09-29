@@ -6,13 +6,13 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-from e2e_util.api.buck import Buck
-from e2e_util.buck_workspace import buck_test
+from e2e_util.api.yak import Yak
+from e2e_util.yak_workspace import yak_test
 
 
-@buck_test()
-async def test_dynamic_value(buck: Buck) -> None:
-    result = await buck.build("//:test_rule")
+@yak_test()
+async def test_dynamic_value(yak: Yak) -> None:
+    result = await yak.build("//:test_rule")
     out = result.get_build_report().output_for_target("//:test_rule")
     with open(out, "r") as f:
         assert f.read().strip() == "<<<123>>>"

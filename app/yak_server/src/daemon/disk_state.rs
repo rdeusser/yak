@@ -13,12 +13,12 @@ use std::sync::Arc;
 use allocative::Allocative;
 use jiff::Timestamp;
 use yak_common::invocation_paths::TenantPaths;
-use yak_common::legacy_configs::configs::LegacyBuckConfig;
-use yak_common::legacy_configs::key::BuckconfigKeyRef;
+use yak_common::legacy_configs::configs::LegacyYakConfig;
+use yak_common::legacy_configs::key::YakconfigKeyRef;
 use yak_core::rollout_percentage::RolloutPercentage;
 use yak_core::soft_error;
-use yak_error::BuckErrorContext;
-use yak_error::BuckErrorOptionContext;
+use yak_error::YakErrorContext;
+use yak_error::YakErrorOptionContext;
 use yak_events::daemon_id::DaemonId;
 use yak_execute::digest_config::DigestConfig;
 use yak_execute::execute::blocking::BlockingExecutor;
@@ -46,9 +46,9 @@ pub struct DiskStateOptions {
 }
 
 impl DiskStateOptions {
-    pub fn new(root_config: &LegacyBuckConfig) -> yak_error::Result<Self> {
+    pub fn new(root_config: &LegacyYakConfig) -> yak_error::Result<Self> {
         let sqlite_materializer_state = root_config
-            .parse::<RolloutPercentage>(BuckconfigKeyRef {
+            .parse::<RolloutPercentage>(YakconfigKeyRef {
                 section: "yak",
                 property: "sqlite_materializer_state",
             })?
@@ -61,7 +61,7 @@ impl DiskStateOptions {
 }
 
 fn sqlite_db_setup_metadata_and_versions(
-    root_config: &LegacyBuckConfig,
+    root_config: &LegacyYakConfig,
     schema_version: String,
     version_config: &str,
     deferred_materializer_config: Option<&DeferredMaterializerConfigs>,
@@ -82,11 +82,11 @@ fn sqlite_db_setup_metadata_and_versions(
         );
     }
 
-    if let Some(buckconfig_version) = root_config.parse(BuckconfigKeyRef {
+    if let Some(yakconfig_version) = root_config.parse(YakconfigKeyRef {
         section: "yak",
         property: version_config,
     })? {
-        versions.insert("buckconfig_version".to_owned(), buckconfig_version);
+        versions.insert("yakconfig_version".to_owned(), yakconfig_version);
     }
     if let Some(hostname) = metadata.get("hostname") {
         versions.insert("hostname".to_owned(), hostname.to_owned());
@@ -99,7 +99,7 @@ pub(crate) async fn maybe_initialize_materializer_sqlite_db(
     options: &DiskStateOptions,
     paths: TenantPaths,
     io_executor: Arc<dyn BlockingExecutor>,
-    root_config: &LegacyBuckConfig,
+    root_config: &LegacyYakConfig,
     deferred_materializer_configs: &DeferredMaterializerConfigs,
     digest_config: DigestConfig,
     init_ctx: &RepoStateInitPreferences,
@@ -149,12 +149,12 @@ pub(crate) async fn maybe_initialize_materializer_sqlite_db(
 pub(crate) async fn maybe_initialize_incremental_sqlite_db(
     paths: TenantPaths,
     io_executor: Arc<dyn BlockingExecutor>,
-    root_config: &LegacyBuckConfig,
+    root_config: &LegacyYakConfig,
     daemon_id: &DaemonId,
 ) -> yak_error::Result<IncrementalDbState> {
     // Rolling it out by default, but giving an option to disable in case something goes horribly wrong
     if !root_config
-        .parse(BuckconfigKeyRef {
+        .parse(YakconfigKeyRef {
             section: "yak",
             property: "sqlite_incremental_state",
         })?
@@ -197,7 +197,7 @@ pub(crate) async fn maybe_initialize_dep_file_sqlite_db(
     options: &DiskStateOptions,
     paths: TenantPaths,
     io_executor: Arc<dyn BlockingExecutor>,
-    root_config: &LegacyBuckConfig,
+    root_config: &LegacyYakConfig,
     daemon_id: &DaemonId,
 ) -> yak_error::Result<Option<DepFileStateSqliteDb>> {
     // Opt-in (Phase 1), enabled with `yak.sqlite_dep_file_state = true` -- but only meaningful with
@@ -206,7 +206,7 @@ pub(crate) async fn maybe_initialize_dep_file_sqlite_db(
     // reloaded its tracked state from sqlite. Without `sqlite_materializer_state` that tree is empty
     // post-restart, so no reloaded entry could ever hit and persisting them would be pure overhead.
     let requested = root_config
-        .parse(BuckconfigKeyRef {
+        .parse(YakconfigKeyRef {
             section: "yak",
             property: "sqlite_dep_file_state",
         })?
@@ -256,7 +256,7 @@ pub(crate) async fn maybe_initialize_dep_file_sqlite_db(
     // Bound the db across sessions. TTL (0 disables age-based pruning) mirrors the materializer's
     // default `clean_stale_artifact_ttl_hours`; `max_entries` is an optional hard cap.
     let ttl_days: u64 = root_config
-        .parse(BuckconfigKeyRef {
+        .parse(YakconfigKeyRef {
             section: "yak",
             property: "sqlite_dep_file_state_ttl_days",
         })?
@@ -271,7 +271,7 @@ pub(crate) async fn maybe_initialize_dep_file_sqlite_db(
         let ttl_seconds = ttl_days.saturating_mul(24 * 60 * 60).min(i64::MAX as u64) as i64;
         Some(Timestamp::now().as_second().saturating_sub(ttl_seconds))
     };
-    let max_entries: Option<usize> = root_config.parse(BuckconfigKeyRef {
+    let max_entries: Option<usize> = root_config.parse(YakconfigKeyRef {
         section: "yak",
         property: "sqlite_dep_file_state_max_entries",
     })?;
@@ -349,7 +349,7 @@ pub(crate) fn delete_unknown_disk_state(
         }
     };
 
-    res.with_buck_error_context(|| {
+    res.with_yak_error_context(|| {
         format!(
             "deleting unrecognized caches in {} to prevent them from going stale",
             cache_dir_path

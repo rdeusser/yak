@@ -6,7 +6,7 @@ title: Introduction
 Welcome to yak, a large scale, fast, reliable, and extensible build tool.
 yak supports a variety of languages on many platforms.
 
-This project is an independent open-source fork of Buck2, which Meta created.
+This project is an independent open-source fork of Yak, which Meta created.
 
 yak's core is written in [Rust](https://www.rust-lang.org/).
 [Starlark](https://github.com/bazelbuild/starlark), which is a deterministic,
@@ -44,7 +44,7 @@ your team.
   rules.
 - [Loading Data](users/loading_data.md) - How to load static data from JSON and
   TOML files in rules.
-- [Starlark Types](https://github.com/rdeusser/buck2/blob/main/starlark-rust/docs/types.md) -
+- [Starlark Types](https://github.com/rdeusser/yak/blob/main/starlark-rust/docs/types.md) -
   rules are written in Starlark (which is approximately Python), and the yak
   implementation of Starlark adds types.
 
@@ -52,11 +52,8 @@ your team.
 
 - [Extending yak via BXL](./bxl) - powerful Starlark scripts for introspection
   of yak's graphs.
-- [Reindeer](https://github.com/facebookincubator/reindeer) - a set of tools for
-  importing Rust crates from crates.io, git repos etc and generating a YAK file
-  for using them.
 
 ### For people developing yak
 
-- [`docs/developers/basics.md`](https://github.com/rdeusser/buck2/blob/main/docs/developers/basics.md)
+- [`docs/developers/basics.md`](https://github.com/rdeusser/yak/blob/main/docs/developers/basics.md)
   covers building, testing, and the coding conventions of the source tree.

@@ -10,61 +10,61 @@
 import typing
 from pathlib import Path
 
-from e2e_util.api.buck import Buck
+from e2e_util.api.yak import Yak
 from e2e_util.asserts import expect_failure
-from e2e_util.buck_workspace import buck_test
+from e2e_util.yak_workspace import yak_test
 
 
-def nested_buck2_args(buck: Buck) -> typing.List[str]:
+def nested_yak_args(yak: Yak) -> typing.List[str]:
     return [
         "-c",
-        f"nested.buck2_path={buck.path_to_executable}",
+        f"nested.yak_path={yak.path_to_executable}",
     ]
 
 
 # A nested invocation fails even when it shares the daemon state, because
 # `nested_invocation_same_dice_state` is a hard error.
-@buck_test()
-async def test_same_state(buck: Buck) -> None:
+@yak_test()
+async def test_same_state(yak: Yak) -> None:
     await expect_failure(
-        buck.build("root//:nested_normal", *nested_buck2_args(buck)),
+        yak.build("root//:nested_normal", *nested_yak_args(yak)),
         stderr_regex="Recursive invocation of yak, which is discouraged, but will probably work \\(using the same state\\)",
     )
 
 
-@buck_test(allow_soft_errors=True)
-async def test_different_state_error(buck: Buck, tmp_path: Path) -> None:
+@yak_test(allow_soft_errors=True)
+async def test_different_state_error(yak: Yak, tmp_path: Path) -> None:
     # FIXME(JakobDegen): Nested invocations seem to have buggy behavior around writing the event
     # logs, so `log show` and friends don't work without this
     log = tmp_path / "logfile.json-lines"
     await expect_failure(
-        buck.build(
+        yak.build(
             "-c",
             "some.config=Val",
             "root//:nested_normal",
             "--event-log",
             str(log),
-            *nested_buck2_args(buck),
+            *nested_yak_args(yak),
         ),
         stderr_regex="Failed to build 'root//:nested_normal",
     )
-    res = await buck.log("what-ran", "--failed", "--show-std-err", str(log))
+    res = await yak.log("what-ran", "--failed", "--show-std-err", str(log))
     assert "Recursive invocation of yak, with a different state" in res.stdout
 
 
-@buck_test(allow_soft_errors=True)
-async def test_trace_io_mismatch(buck: Buck, tmp_path: Path) -> None:
+@yak_test(allow_soft_errors=True)
+async def test_trace_io_mismatch(yak: Yak, tmp_path: Path) -> None:
     log = tmp_path / "logfile.json-lines"
     await expect_failure(
-        buck.build(
+        yak.build(
             "root//:nested_trace",
             "--event-log",
             str(log),
-            *nested_buck2_args(buck),
+            *nested_yak_args(yak),
         ),
         stderr_regex="Failed to build 'root//:nested_trace",
     )
-    res = await buck.log("what-ran", "--failed", "--show-std-err", str(log))
+    res = await yak.log("what-ran", "--failed", "--show-std-err", str(log))
     assert (
         "daemon constraint mismatch during nested invocation: Trace IO mismatch"
         in res.stdout

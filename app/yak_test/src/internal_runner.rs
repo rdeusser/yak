@@ -21,7 +21,7 @@ use futures::stream::FuturesUnordered;
 use host_sharing::HostSharingRequirements;
 use yak_build_api::interpreter::rule_defs::provider::builtin::internal_runner_test_info::InternalRunnerTestInfo;
 use yak_build_api::interpreter::rule_defs::provider::builtin::internal_runner_test_info::OwnedInternalRunnerTestInfo;
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 use yak_test_api::data::ArgValue;
 use yak_test_api::data::ArgValueContent;
 use yak_test_api::data::ExecuteResponse;
@@ -87,7 +87,7 @@ pub async fn run_internal_test(
             false,
         )
         .await
-        .buck_error_context("Listing execution failed")?;
+        .yak_error_context("Listing execution failed")?;
 
     let listing_result = match listing_response {
         ExecuteResponse::Result(r) => r,
@@ -119,14 +119,14 @@ pub async fn run_internal_test(
     // Step 2: Parse listing output via Starlark callback
     let discovered_tests =
         InternalRunnerTestInfo::parse_test_listing_output(provider, &listing_output)
-            .buck_error_context("Failed to parse test listing output")?;
+            .yak_error_context("Failed to parse test listing output")?;
 
     // Step 3: Report discovered tests
     let test_names: Vec<String> = discovered_tests.iter().map(|t| t.name.clone()).collect();
     orchestrator
         .report_tests_discovered(target_handle, suite.clone(), test_names)
         .await
-        .buck_error_context("Failed to report discovered tests")?;
+        .yak_error_context("Failed to report discovered tests")?;
 
     // Step 4+5: Execute and report each discovered test.
     // FuturesUnordered pipelines execute2 calls so the next test's orchestrator
@@ -191,7 +191,7 @@ pub async fn run_internal_test(
                         orchestrator
                             .report_test_result(test_result)
                             .await
-                            .buck_error_context("Failed to report test result")?;
+                            .yak_error_context("Failed to report test result")?;
                         continue;
                     }
                 };
@@ -209,7 +209,7 @@ pub async fn run_internal_test(
                     &stderr_str,
                     exit_code,
                 )
-                .buck_error_context("Failed to parse test result output")?;
+                .yak_error_context("Failed to parse test result output")?;
 
                 if result_entries.is_empty() {
                     // Parser returned no results — synthesize a fallback based on
@@ -234,7 +234,7 @@ pub async fn run_internal_test(
                     orchestrator
                         .report_test_result(test_result)
                         .await
-                        .buck_error_context("Failed to report test result")?;
+                        .yak_error_context("Failed to report test result")?;
                 } else {
                     for res in result_entries {
                         let test_result = TestResult {
@@ -249,7 +249,7 @@ pub async fn run_internal_test(
                         orchestrator
                             .report_test_result(test_result)
                             .await
-                            .buck_error_context("Failed to report test result")?;
+                            .yak_error_context("Failed to report test result")?;
                     }
                 }
             }
@@ -266,7 +266,7 @@ pub async fn run_internal_test(
                 orchestrator
                     .report_test_result(test_result)
                     .await
-                    .buck_error_context("Failed to report test result")?;
+                    .yak_error_context("Failed to report test result")?;
             }
             Err(e) => {
                 let test_result = TestResult {
@@ -281,7 +281,7 @@ pub async fn run_internal_test(
                 orchestrator
                     .report_test_result(test_result)
                     .await
-                    .buck_error_context("Failed to report test result")?;
+                    .yak_error_context("Failed to report test result")?;
             }
         }
     }

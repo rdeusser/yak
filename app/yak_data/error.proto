@@ -15,7 +15,7 @@ syntax = "proto3";
 // only reason this file exists is to work around that limitation, especially
 // for error types, which may often have a name that might also make sense
 // elsewhere.
-package buck.data.error;
+package yak.data.error;
 
 // Error types are - by design - restricted to being set exactly once at the
 // error definition site. While they are useful, that means that they are enough
@@ -90,7 +90,7 @@ enum ErrorTag {
   DAEMON_STATUS = 504;
   DAEMON_REDIRECT = 505;
   // The yak daemon's executable has been deleted from disk.
-  BUCKD_EXE_DELETED = 506;
+  YAKD_EXE_DELETED = 506;
   DAEMON_STARTUP_FAILED = 507;
   EXIT_STATUS = 517;
   EXIT_STATUS_UNKNOWN = 519;
@@ -99,12 +99,12 @@ enum ErrorTag {
   DAEMON_CONSTRAINTS_WRONG_AFTER_START = 510;
   DAEMON_DIR_CLEANUP_FAILED = 511;
   DAEMON_KILL_FAILED = 512;
-  BUCKD_LIFECYCLE_LOCK = 513;
-  BUCKD_INFO_MISSING = 514;
-  BUCKD_INFO_PARSE_ERROR = 515;
+  YAKD_LIFECYCLE_LOCK = 513;
+  YAKD_INFO_MISSING = 514;
+  YAKD_INFO_PARSE_ERROR = 515;
   DAEMON_DISCONNECT = 516;
-  // Could not determine the BuckVersion
-  BUCK_VERSION_ERROR = 518;
+  // Could not determine the YakVersion
+  YAK_VERSION_ERROR = 518;
   // The daemon request stream ended without returning a CommandResult.
   MISSING_COMMAND_RESULT = 520;
   // The daemon's working directory was replaced underneath it, so the daemon
@@ -143,7 +143,7 @@ enum ErrorTag {
   // materialization.
   MATERIALIZE_COPY_MISSING_FILE = 2601;
   // Could not find yak project root
-  NO_BUCK_ROOT = 27;
+  NO_YAK_ROOT = 27;
   // Project root directory no longer exists on disk
   MISSING_PROJECT_ROOT = 2700;
   // The invoking user's home directory no longer exists on disk
@@ -314,7 +314,7 @@ enum ErrorTag {
   // Clean stale command was interrupted
   CLEAN_INTERRUPT = 28;
   // Errors while removing yak-out in `yak clean`
-  CLEAN_BUCK_OUT = 281;
+  CLEAN_YAK_OUT = 281;
 
   INVALID_ERROR_REPORT = 6002;
   INVALID_EVENT = 6003;
@@ -323,9 +323,9 @@ enum ErrorTag {
   INVALID_DURATION = 6006;
   INVALID_ABS_PATH = 6008;
   // Malformed yak-out path string
-  INVALID_BUCK_OUT_PATH = 6009;
+  INVALID_YAK_OUT_PATH = 6009;
   // Issue with yak-out dir on disk (ex. broken symlink, not a dir)
-  INVALID_BUCK_OUT = 6010;
+  INVALID_YAK_OUT = 6010;
 
   // Build errors.
   BUILD_DEADLINE_EXPIRED = 7001;
@@ -387,7 +387,7 @@ enum ErrorTag {
   KILL_ALL = 21000;
   BUILD_REPORT = 11100;
   // Reading a yakconfig file from disk
-  BUCKCONFIG_READ = 23004;
+  YAKCONFIG_READ = 23004;
   // Reading the result file produced by a validation
   VALIDATION_RESULT_READ = 24000;
 

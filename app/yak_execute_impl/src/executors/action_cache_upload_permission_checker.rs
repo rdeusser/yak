@@ -16,12 +16,12 @@ use remote_execution::TCode;
 use yak_core::async_once_cell::AsyncOnceCell;
 use yak_core::execution_types::executor_config::RePlatformFields;
 use yak_core::execution_types::executor_config::RemoteExecutorUseCase;
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 use yak_execute::digest_config::DigestConfig;
 use yak_execute::re::client::ActionCacheWriteType;
 use yak_execute::re::error::RemoteExecutionError;
 use yak_execute::re::manager::ManagedRemoteExecutionClient;
-use yak_hash::BuckDashMap;
+use yak_hash::YakDashMap;
 
 use crate::executors::empty_action_result::empty_action_result;
 use crate::executors::to_re_platform::RePlatformFieldsToRePlatform;
@@ -40,13 +40,13 @@ struct CacheValue {
 pub struct ActionCacheUploadPermissionChecker {
     /// Permission check does not depend on RE use case,
     /// but since we use these to upload, it is safer to cache the result by them.
-    has_permission_to_upload_to_cache: BuckDashMap<CacheKey, Arc<CacheValue>>,
+    has_permission_to_upload_to_cache: YakDashMap<CacheKey, Arc<CacheValue>>,
 }
 
 impl ActionCacheUploadPermissionChecker {
     pub fn new() -> ActionCacheUploadPermissionChecker {
         ActionCacheUploadPermissionChecker {
-            has_permission_to_upload_to_cache: BuckDashMap::default(),
+            has_permission_to_upload_to_cache: YakDashMap::default(),
         }
     }
 
@@ -115,6 +115,6 @@ impl ActionCacheUploadPermissionChecker {
             ))
             .await
             .cloned()
-            .buck_error_context("Upload for permission check")
+            .yak_error_context("Upload for permission check")
     }
 }

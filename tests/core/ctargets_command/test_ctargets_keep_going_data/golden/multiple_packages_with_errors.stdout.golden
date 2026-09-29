@@ -2,29 +2,29 @@
 
 [
   {
-    "buck.package":"root//b",
-    "buck.error":"Error evaluating build file: `root//b:YAK.fixture`\n\nCaused by:\n    Traceback (most recent call last):\n      * b/YAK.fixture:2, in <module>\n          fail(\"test_parse_error\")\n    error: fail: test_parse_error\n     --> b/YAK.fixture:2:1\n      |\n    2 | fail(\"test_parse_error\")\n      | ^^^^^^^^^^^^^^^^^^^^^^^^\n    "
+    "yak.package":"root//b",
+    "yak.error":"Error evaluating build file: `root//b:YAK.fixture`\n\nCaused by:\n    Traceback (most recent call last):\n      * b/YAK.fixture:2, in <module>\n          fail(\"test_parse_error\")\n    error: fail: test_parse_error\n     --> b/YAK.fixture:2:1\n      |\n    2 | fail(\"test_parse_error\")\n      | ^^^^^^^^^^^^^^^^^^^^^^^^\n    "
   },
   {
-    "buck.package":"root//nonexistent_package",
-    "buck.error":"package `root//nonexistent_package:` does not exist\n         ^-----------------------^\n    dir `root//nonexistent_package` does not exist. "
+    "yak.package":"root//nonexistent_package",
+    "yak.error":"package `root//nonexistent_package:` does not exist\n         ^-----------------------^\n    dir `root//nonexistent_package` does not exist. "
   },
   {
-    "buck.target":"root//a:target1",
-    "buck.type":"nano_prelude//stub_rules.bzl:stub",
-    "buck.deps":[],
-    "buck.inputs":[],
-    "buck.package":"root//a",
+    "yak.target":"root//a:target1",
+    "yak.type":"nano_prelude//stub_rules.bzl:stub",
+    "yak.deps":[],
+    "yak.inputs":[],
+    "yak.package":"root//a",
     "name":"target1",
     "visibility":[],
     "within_view":["PUBLIC"]
   },
   {
-    "buck.target":"root//d:exists",
-    "buck.type":"nano_prelude//stub_rules.bzl:stub",
-    "buck.deps":[],
-    "buck.inputs":[],
-    "buck.package":"root//d",
+    "yak.target":"root//d:exists",
+    "yak.type":"nano_prelude//stub_rules.bzl:stub",
+    "yak.deps":[],
+    "yak.inputs":[],
+    "yak.package":"root//d",
     "name":"exists",
     "visibility":[],
     "within_view":["PUBLIC"]

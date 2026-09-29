@@ -18,7 +18,7 @@ use yak_core::soft_error;
 use yak_core::target::configured_target_label::ConfiguredTargetLabel;
 use yak_error::ErrorTag;
 use yak_error::internal_error;
-use yak_hash::BuckMutMap;
+use yak_hash::YakMutMap;
 use yak_test_api::data::RequiredLocalResources;
 use yak_test_api::data::TestStage;
 
@@ -38,7 +38,7 @@ impl From<&TestStage> for TestStageSimple {
 
 pub(crate) async fn required_providers<'v>(
     dice: &mut DiceComputations<'_>,
-    available_resources: BuckMutMap<&'v str, Option<&'v ConfiguredProvidersLabel>>,
+    available_resources: YakMutMap<&'v str, Option<&'v ConfiguredProvidersLabel>>,
     rule_required_resource_names: Vec<&'v str>,
     required_local_resources: &'v RequiredLocalResources,
 ) -> yak_error::Result<Vec<(&'v ConfiguredTargetLabel, OwnedLocalResourceInfo)>> {

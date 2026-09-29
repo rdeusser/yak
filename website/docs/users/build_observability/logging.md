@@ -50,10 +50,10 @@ Result {
 
 ### yak events
 
-The rest of the event log contain `BuckEvent`s, which are either
+The rest of the event log contain `YakEvent`s, which are either
 `SpanStartEvent`s, `SpanEndEvent`s, or `InstantEvent`s.
 
-The `BuckEvent` format is roughly as follows:
+The `YakEvent` format is roughly as follows:
 
 ```python
 Event {

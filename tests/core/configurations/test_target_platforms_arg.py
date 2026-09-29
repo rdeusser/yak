@@ -9,13 +9,13 @@
 import re
 from pathlib import Path
 
-from e2e_util.api.buck import Buck
-from e2e_util.buck_workspace import buck_test
+from e2e_util.api.yak import Yak
+from e2e_util.yak_workspace import yak_test
 
 
-@buck_test()
-async def test_target_platforms_arg(buck: Buck) -> None:
-    out = await buck.cquery(
+@yak_test()
+async def test_target_platforms_arg(yak: Yak) -> None:
+    out = await yak.cquery(
         # Specifying platform without cell to make sure it is resolved against current cell
         "--target-platforms=//:p-clouds",
         "deps(//:the-test, 1)",

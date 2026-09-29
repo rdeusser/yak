@@ -8,11 +8,11 @@
 
 import json
 
-from e2e_util.api.buck import Buck
+from e2e_util.api.yak import Yak
 
 
-async def get_files(buck: Buck) -> list[str]:
-    res = await buck.targets("root//:")
+async def get_files(yak: Yak) -> list[str]:
+    res = await yak.targets("root//:")
     for x in res.stderr.splitlines():
         p = x.split("Files: ", 1)
         if len(p) > 1:

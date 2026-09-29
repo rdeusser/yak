@@ -8,9 +8,9 @@
  * above-listed licenses.
  */
 
-use yak_client_ctx::client_ctx::BuckSubcommand;
+use yak_client_ctx::client_ctx::YakSubcommand;
 use yak_client_ctx::client_ctx::ClientCommandContext;
-use yak_client_ctx::common::BuckArgMatches;
+use yak_client_ctx::common::YakArgMatches;
 use yak_client_ctx::common::CommonEventLogOptions;
 use yak_client_ctx::events_ctx::EventsCtx;
 use yak_client_ctx::exit_result::ExitResult;
@@ -26,12 +26,12 @@ pub struct CleanallCommand {
     pub(crate) event_log_opts: CommonEventLogOptions,
 }
 
-impl BuckSubcommand for CleanallCommand {
+impl YakSubcommand for CleanallCommand {
     const COMMAND_NAME: &'static str = "cleanall";
 
     async fn exec_impl(
         self,
-        _matches: BuckArgMatches<'_>,
+        _matches: YakArgMatches<'_>,
         _ctx: ClientCommandContext<'_>,
         _events_ctx: &mut EventsCtx,
     ) -> ExitResult {

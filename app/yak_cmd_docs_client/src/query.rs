@@ -10,7 +10,7 @@
 
 use dupe::Dupe;
 use yak_client_ctx::client_ctx::ClientCommandContext;
-use yak_client_ctx::common::BuckArgMatches;
+use yak_client_ctx::common::YakArgMatches;
 use yak_client_ctx::exit_result::ExitResult;
 use yak_query::query::syntax::simple::functions::description::QUERY_ENVIRONMENT_DESCRIPTION_BY_TYPE;
 use yak_query::query::syntax::simple::functions::description::QueryType;
@@ -90,7 +90,7 @@ fn output(options: OutputFormatOptions, description: QueryEnvironmentDescription
 impl DocsUqueryCommand {
     pub(crate) fn exec(
         self,
-        _matches: BuckArgMatches<'_>,
+        _matches: YakArgMatches<'_>,
         _ctx: ClientCommandContext<'_>,
     ) -> ExitResult {
         let description = (QUERY_ENVIRONMENT_DESCRIPTION_BY_TYPE.get()?)(QueryType::Uquery);
@@ -101,7 +101,7 @@ impl DocsUqueryCommand {
 impl DocsCqueryCommand {
     pub(crate) fn exec(
         self,
-        _matches: BuckArgMatches<'_>,
+        _matches: YakArgMatches<'_>,
         _ctx: ClientCommandContext<'_>,
     ) -> ExitResult {
         let description = (QUERY_ENVIRONMENT_DESCRIPTION_BY_TYPE.get()?)(QueryType::Cquery);
@@ -112,7 +112,7 @@ impl DocsCqueryCommand {
 impl DocsAqueryCommand {
     pub(crate) fn exec(
         self,
-        _matches: BuckArgMatches<'_>,
+        _matches: YakArgMatches<'_>,
         _ctx: ClientCommandContext<'_>,
     ) -> ExitResult {
         let description = (QUERY_ENVIRONMENT_DESCRIPTION_BY_TYPE.get()?)(QueryType::Aquery);

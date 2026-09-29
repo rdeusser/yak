@@ -8,26 +8,26 @@
 
 import json
 
-from e2e_util.api.buck import Buck
-from e2e_util.buck_workspace import buck_test
+from e2e_util.api.yak import Yak
+from e2e_util.yak_workspace import yak_test
 
 
-@buck_test()
-async def test_imports_cross_cell(buck: Buck) -> None:
+@yak_test()
+async def test_imports_cross_cell(yak: Yak) -> None:
     # `nested//` has no `PACKAGE` files of its own, but the root cell's
     # `PACKAGE` file applies to it, so the imports walk must report that
     # file and its loads, matching `PACKAGE` evaluation.
-    result = await buck.targets("nested//...", "--json", "--streaming", "--imports")
+    result = await yak.targets("nested//...", "--json", "--streaming", "--imports")
     xs = json.loads(result.stdout)
-    files = {x["buck.file"]: x for x in xs if "buck.imports" in x}
+    files = {x["yak.file"]: x for x in xs if "yak.imports" in x}
 
     assert "root//PACKAGE" in files
     package_record = files["root//PACKAGE"]
-    assert package_record["buck.imports"] == [
+    assert package_record["yak.imports"] == [
         "prelude//prelude.bzl",
         "root//a.bzl",
     ]
-    assert "buck.package" not in package_record
+    assert "yak.package" not in package_record
 
     # The PACKAGE file's own imports are chased transitively.
     assert "root//a.bzl" in files

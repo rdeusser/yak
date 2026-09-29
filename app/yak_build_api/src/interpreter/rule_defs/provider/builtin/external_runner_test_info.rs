@@ -32,11 +32,11 @@ use starlark::values::none::NoneType;
 use starlark::values::tuple::TupleRef;
 use yak_build_api_derive::internal_provider;
 use yak_core::provider::label::ConfiguredProvidersLabel;
-use yak_error::BuckErrorContext;
-use yak_error::BuckErrorOptionContext;
+use yak_error::YakErrorContext;
+use yak_error::YakErrorOptionContext;
 use yak_error::internal_error;
 use yak_error::yak_error;
-use yak_hash::BuckIndexMap;
+use yak_hash::YakIndexMap;
 use yak_interpreter::types::configured_providers_label::StarlarkConfiguredProvidersLabel;
 
 use crate as yak_build_api;
@@ -177,7 +177,7 @@ impl<'v> ExternalRunnerTestInfo<'v> {
             .map(|v| StarlarkCommandExecutorConfig::from_value(v).unwrap())
     }
 
-    pub fn local_resources(&self) -> BuckIndexMap<&'v str, Option<&'v ConfiguredProvidersLabel>> {
+    pub fn local_resources(&self) -> YakIndexMap<&'v str, Option<&'v ConfiguredProvidersLabel>> {
         unwrap_all(iter_local_resources(self.local_resources.get())).collect()
     }
 
@@ -285,7 +285,7 @@ pub(super) fn iter_test_command<'v>(
         }
 
         let arglike = ValueAsCommandLineLike::unpack_value_err(item)
-            .with_buck_error_context(|| format!("Invalid item in `command`: {item}"))?
+            .with_yak_error_context(|| format!("Invalid item in `command`: {item}"))?
             .0;
 
         Ok(TestCommandMember::Arglike(arglike))
@@ -318,7 +318,7 @@ pub(super) fn iter_test_env<'v>(
         })?;
 
         let arglike = ValueAsCommandLineLike::unpack_value_err(value)
-            .with_buck_error_context(|| format!("Invalid value in `env` for key `{key}`"))?
+            .with_yak_error_context(|| format!("Invalid value in `env` for key `{key}`"))?
             .0;
 
         Ok((key, arglike))
@@ -457,12 +457,12 @@ fn validate_external_runner_test_info<'v>(
 
     let provided_local_resources = iter_local_resources(info.local_resources.get())
         .collect::<yak_error::Result<
-        BuckIndexMap<&str, Option<&ConfiguredProvidersLabel>>,
+        YakIndexMap<&str, Option<&ConfiguredProvidersLabel>>,
     >>()?;
 
     let required_local_resources = info.required_local_resources.get();
     if !required_local_resources.is_none() {
-        for resource_type in iter_value(required_local_resources).buck_error_context("`required_local_resources` should be a list or a tuple of `RequiredTestLocalResource` objects")? {
+        for resource_type in iter_value(required_local_resources).yak_error_context("`required_local_resources` should be a list or a tuple of `RequiredTestLocalResource` objects")? {
             let resource_type = StarlarkRequiredTestLocalResource::from_value(resource_type)
                 .ok_or_else(|| yak_error!(yak_error::ErrorTag::Input, "`required_local_resources` should only contain `RequiredTestLocalResource` values, got {}", resource_type))?;
             if !provided_local_resources.contains_key(&resource_type.name as &str) {

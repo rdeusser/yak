@@ -17,7 +17,7 @@ from core.common.io.file_watcher_tests import (
     git_commit,
     setup_file_watcher_test,
 )
-from e2e_util.api.buck import Buck
+from e2e_util.api.yak import Yak
 
 
 # Creates this history, with the working copy at commit_d:
@@ -25,70 +25,70 @@ from e2e_util.api.buck import Buck
 #   commit_a -- commit_b
 #          \
 #           -- commit_c -- commit_d
-async def setup_file_watcher_scm_test(buck: Buck) -> tuple[str, str, str, str]:
+async def setup_file_watcher_scm_test(yak: Yak) -> tuple[str, str, str, str]:
     # Run after setup_file_watcher_test to create a simple stack of commits
-    commit_a = git(buck, "rev-parse", "HEAD").strip()
+    commit_a = git(yak, "rev-parse", "HEAD").strip()
 
     # Create a file
-    path = os.path.join(buck.cwd, "files", "def")
+    path = os.path.join(yak.cwd, "files", "def")
     with open(path, "a"):
         pass
 
     # Commit it
-    commit_b = git_commit(buck, "commit_b")
+    commit_b = git_commit(yak, "commit_b")
 
     # Go back to commit_a
-    git(buck, "checkout", "--quiet", commit_a)
+    git(yak, "checkout", "--quiet", commit_a)
 
     # Create a file
-    path = os.path.join(buck.cwd, "files", "ghi")
+    path = os.path.join(yak.cwd, "files", "ghi")
     with open(path, "a"):
         pass
 
     # Commit it
-    commit_c = git_commit(buck, "commit_c")
+    commit_c = git_commit(yak, "commit_c")
 
     # Create a file
-    path = os.path.join(buck.cwd, "files", "jkl")
+    path = os.path.join(yak.cwd, "files", "jkl")
     with open(path, "a"):
         pass
 
     # Commit it
-    commit_d = git_commit(buck, "commit_d")
+    commit_d = git_commit(yak, "commit_d")
 
     # clear log - run build twice
-    await buck.targets("root//:")
-    await buck.targets("root//:")
+    await yak.targets("root//:")
+    await yak.targets("root//:")
 
     return commit_a, commit_b, commit_c, commit_d
 
 
 async def run_checkout_mergebase_changes_test(
-    buck: Buck,
+    yak: Yak,
     file_watcher_provider: FileWatcherProvider,
 ) -> None:
-    await setup_file_watcher_test(buck)
+    await setup_file_watcher_test(yak)
 
     # Create a file
-    path = os.path.join(buck.cwd, "files", "def")
+    path = os.path.join(yak.cwd, "files", "def")
     with open(path, "a"):
         pass
 
     # Commit it
-    commit_a = git_commit(buck, "next")
+    commit_a = git_commit(yak, "next")
 
     # Create a file
-    path = os.path.join(buck.cwd, "files", "ghi")
+    path = os.path.join(yak.cwd, "files", "ghi")
     with open(path, "a"):
         pass
 
     # Commit it
-    commit_b = git_commit(buck, "next")
+    commit_b = git_commit(yak, "next")
 
     # Go back to the previous commit
-    git(buck, "checkout", "--quiet", commit_a)
+    git(yak, "checkout", "--quiet", commit_a)
 
-    is_fresh_instance, _ = await get_file_watcher_events(buck)
+    is_fresh_instance, _ = await get_file_watcher_events(yak)
     if file_watcher_provider in [
         FileWatcherProvider.FS_HASH_CRAWLER,
         FileWatcherProvider.RUST_NOTIFY,
@@ -102,9 +102,9 @@ async def run_checkout_mergebase_changes_test(
         assert is_fresh_instance
 
     # Go back to the next commit
-    git(buck, "checkout", "--quiet", commit_b)
+    git(yak, "checkout", "--quiet", commit_b)
 
-    is_fresh_instance, results = await get_file_watcher_events(buck)
+    is_fresh_instance, results = await get_file_watcher_events(yak)
     print(results)
 
     if file_watcher_provider in [
@@ -117,32 +117,32 @@ async def run_checkout_mergebase_changes_test(
 
 
 async def run_checkout_with_mergebase_test(
-    buck: Buck,
+    yak: Yak,
     file_watcher_provider: FileWatcherProvider,
 ) -> None:
-    await setup_file_watcher_test(buck)
-    [_, _, commit_c, _] = await setup_file_watcher_scm_test(buck)
+    await setup_file_watcher_test(yak)
+    [_, _, commit_c, _] = await setup_file_watcher_scm_test(yak)
 
     # Go back to commit_c
-    git(buck, "checkout", "--quiet", commit_c)
+    git(yak, "checkout", "--quiet", commit_c)
 
-    is_fresh_instance, results = await get_file_watcher_events(buck)
+    is_fresh_instance, results = await get_file_watcher_events(yak)
     print(results)
 
     assert not is_fresh_instance
 
 
 async def run_rebase_with_mergebase_test(
-    buck: Buck,
+    yak: Yak,
     file_watcher_provider: FileWatcherProvider,
 ) -> None:
-    await setup_file_watcher_test(buck)
-    [_, commit_b, commit_c, _] = await setup_file_watcher_scm_test(buck)
+    await setup_file_watcher_test(yak)
+    [_, commit_b, commit_c, _] = await setup_file_watcher_scm_test(yak)
 
     # Rebase C->D from A to B
-    git(buck, "rebase", "--quiet", "--onto", commit_b, f"{commit_c}^")
+    git(yak, "rebase", "--quiet", "--onto", commit_b, f"{commit_c}^")
 
-    is_fresh_instance, results = await get_file_watcher_events(buck)
+    is_fresh_instance, results = await get_file_watcher_events(yak)
     print(results)
 
     # Watchman is flaky on native file systems
@@ -151,16 +151,16 @@ async def run_rebase_with_mergebase_test(
 
 
 async def run_restack_with_mergebase_test(
-    buck: Buck,
+    yak: Yak,
     file_watcher_provider: FileWatcherProvider,
 ) -> None:
-    await setup_file_watcher_test(buck)
-    [commit_a, _, _, commit_d] = await setup_file_watcher_scm_test(buck)
+    await setup_file_watcher_test(yak)
+    [commit_a, _, _, commit_d] = await setup_file_watcher_scm_test(yak)
 
     # Rebase D from C to A
-    git(buck, "rebase", "--quiet", "--onto", commit_a, f"{commit_d}^")
+    git(yak, "rebase", "--quiet", "--onto", commit_a, f"{commit_d}^")
 
-    is_fresh_instance, results = await get_file_watcher_events(buck)
+    is_fresh_instance, results = await get_file_watcher_events(yak)
     print(results)
 
     assert not is_fresh_instance

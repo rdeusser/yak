@@ -15,9 +15,9 @@ use dupe::Dupe;
 use gazebo::prelude::IterExactSize;
 use linked_hash_map::LinkedHashMap;
 use yak_error::internal_error;
-use yak_events::BuckEvent;
+use yak_events::YakEvent;
 use yak_events::span::SpanId;
-use yak_hash::BuckMutMap;
+use yak_hash::YakMutMap;
 
 use crate::what_ran::WhatRanRelevantAction;
 use crate::what_ran::WhatRanState;
@@ -142,7 +142,7 @@ impl<'a, T: SpanTrackable> SpanHandle<'a, T> {
 pub struct Roots<T: SpanTrackable> {
     roots: LinkedHashMap<<T as SpanTrackable>::Id, RootData>,
     boring_roots: LinkedHashMap<<T as SpanTrackable>::Id, RootData>,
-    dice_counts: BuckMutMap<&'static str, u64>,
+    dice_counts: YakMutMap<&'static str, u64>,
 }
 
 #[derive(Clone)]
@@ -242,7 +242,7 @@ impl<T: SpanTrackable> Roots<T> {
             .with_exact_size(size)
     }
 
-    pub fn dice_counts(&self) -> &BuckMutMap<&'static str, u64> {
+    pub fn dice_counts(&self) -> &YakMutMap<&'static str, u64> {
         &self.dice_counts
     }
 }
@@ -262,7 +262,7 @@ impl<T: SpanTrackable> Roots<T> {
 #[derive(Clone)]
 pub struct SpanTracker<T: SpanTrackable> {
     roots: Roots<T>,
-    all: BuckMutMap<<T as SpanTrackable>::Id, Span<T>>,
+    all: YakMutMap<<T as SpanTrackable>::Id, Span<T>>,
     roots_completed: usize,
 }
 
@@ -401,15 +401,15 @@ pub trait SpanTrackable: std::fmt::Debug + Send + Sync + 'static {
     fn dice_key_type(&self) -> Option<&'static str>;
 }
 
-impl SpanTrackable for BuckEvent {
+impl SpanTrackable for YakEvent {
     type Id = SpanId;
 
     fn span_id(&self) -> Option<Self::Id> {
-        BuckEvent::span_id(self)
+        YakEvent::span_id(self)
     }
 
     fn parent_id(&self) -> Option<Self::Id> {
-        BuckEvent::parent_id(self)
+        YakEvent::parent_id(self)
     }
 
     fn is_shown(&self) -> bool {
@@ -488,7 +488,7 @@ impl<T: SpanTrackable> SpanTrackable for Arc<T> {
     }
 }
 
-pub fn is_span_shown(event: &BuckEvent) -> bool {
+pub fn is_span_shown(event: &YakEvent) -> bool {
     use yak_data::span_start_event::Data;
 
     match event.span_start_event().and_then(|span| span.data.as_ref()) {
@@ -539,12 +539,12 @@ pub fn is_span_shown(event: &BuckEvent) -> bool {
     }
 }
 
-pub type BuckEventSpanTracker = SpanTracker<Arc<BuckEvent>>;
-pub type BuckEventSpanHandle<'a> = SpanHandle<'a, Arc<BuckEvent>>;
-pub type BuckEventSpanInfo = SpanInfo<Arc<BuckEvent>>;
+pub type YakEventSpanTracker = SpanTracker<Arc<YakEvent>>;
+pub type YakEventSpanHandle<'a> = SpanHandle<'a, Arc<YakEvent>>;
+pub type YakEventSpanInfo = SpanInfo<Arc<YakEvent>>;
 
-impl BuckEventSpanTracker {
-    pub fn handle_event(&mut self, event: &Arc<BuckEvent>) -> yak_error::Result<()> {
+impl YakEventSpanTracker {
+    pub fn handle_event(&mut self, event: &Arc<YakEvent>) -> yak_error::Result<()> {
         if let Some(_start) = event.span_start_event() {
             self.start_at(event)?;
         } else if let Some(_end) = event.span_end_event() {
@@ -554,12 +554,12 @@ impl BuckEventSpanTracker {
     }
 }
 
-impl WhatRanState for SpanTracker<Arc<BuckEvent>> {
+impl WhatRanState for SpanTracker<Arc<YakEvent>> {
     fn get(&self, span_id: SpanId) -> Option<WhatRanRelevantAction> {
         self.all
             .get(&span_id)
             .map(|e| e.info.event.data())
-            .and_then(WhatRanRelevantAction::from_buck_data)
+            .and_then(WhatRanRelevantAction::from_yak_data)
     }
 }
 

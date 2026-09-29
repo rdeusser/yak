@@ -8,20 +8,20 @@
 
 import re
 
-from e2e_util.api.buck import Buck
-from e2e_util.buck_workspace import buck_test
+from e2e_util.api.yak import Yak
+from e2e_util.yak_workspace import yak_test
 
 
 def _replace_hash(s: str) -> str:
     return re.sub(r"\b[0-9a-f]{16}\b", "<HASH>", s)
 
 
-@buck_test()
-async def test_ctargets_transition(buck: Buck) -> None:
+@yak_test()
+async def test_ctargets_transition(yak: Yak) -> None:
     # This target does self-transition, and `ctargets` outputs both
     # forward node and forward target node.
 
-    result = await buck.ctargets(
+    result = await yak.ctargets(
         "root//:candy",
         "--target-platforms=root//:p",
     )

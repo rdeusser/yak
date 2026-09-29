@@ -13,13 +13,13 @@ use yak_cli_proto::ConfigOverride;
 use yak_cli_proto::config_override::ConfigType;
 use yak_core::cells::cell_root_path::CellRootPathBuf;
 use yak_core::fs::project_rel_path::ProjectRelativePathBuf;
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 use yak_fs::paths::abs_path::AbsPath;
 use yak_fs::paths::abs_path::AbsPathBuf;
 
 use crate::legacy_configs::configs::ConfigArgumentParseError;
 use crate::legacy_configs::configs::ConfigSectionAndKey;
-use crate::legacy_configs::configs::LegacyBuckConfig;
+use crate::legacy_configs::configs::LegacyYakConfig;
 use crate::legacy_configs::configs::parse_config_section_and_key;
 use crate::legacy_configs::file_ops::ConfigParserFileOps;
 use crate::legacy_configs::file_ops::ConfigPath;
@@ -96,7 +96,7 @@ async fn resolve_config_file_arg(
     Ok(ResolvedConfigFile::Global(ExternalConfigFile {
         origin_path: AbsPathBuf::new(arg)?,
         parser: LegacyConfigParser::combine(
-            LegacyBuckConfig::start_parse_for_external_files(
+            LegacyYakConfig::start_parse_for_external_files(
                 &[ConfigPath::Global(path.to_owned())],
                 file_ops,
                 // Note that when reading immediate configs that don't follow includes, we don't apply
@@ -115,7 +115,7 @@ pub(crate) async fn resolve_config_args(
     let mut resolved_args = Vec::new();
 
     for u in args {
-        let config_type = ConfigType::try_from(u.config_type).with_buck_error_context(|| {
+        let config_type = ConfigType::try_from(u.config_type).with_yak_error_context(|| {
             format!(
                 "Unknown ConfigType enum value `{}` when trying to deserialize",
                 u.config_type
@@ -142,9 +142,9 @@ pub(crate) async fn resolve_config_args(
 
 pub(crate) fn to_proto_config_args(
     args: &[ResolvedLegacyConfigArg],
-) -> Vec<yak_data::BuckconfigComponent> {
-    use yak_data::buckconfig_component::Data::ConfigFile;
-    use yak_data::buckconfig_component::Data::ConfigValue;
+) -> Vec<yak_data::YakconfigComponent> {
+    use yak_data::yakconfig_component::Data::ConfigFile;
+    use yak_data::yakconfig_component::Data::ConfigValue;
     use yak_data::config_file::Data::GlobalExternalConfig;
     use yak_data::config_file::Data::ProjectRelativePath;
 
@@ -180,7 +180,7 @@ pub(crate) fn to_proto_config_args(
                     })
                 }
             };
-            yak_data::BuckconfigComponent { data: Some(data) }
+            yak_data::YakconfigComponent { data: Some(data) }
         })
         .collect()
 }

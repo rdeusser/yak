@@ -20,9 +20,9 @@ use tracing::info;
 
 use super::Input;
 use crate::Command;
-use crate::buck;
-use crate::buck::Buck;
-use crate::buck::to_project_json;
+use crate::yak;
+use crate::yak::Yak;
+use crate::yak::to_project_json;
 use crate::path::safe_canonicalize;
 use crate::project_json::ProjectJson;
 use crate::project_json::Sysroot;
@@ -33,7 +33,7 @@ use crate::target::Target;
 #[derive(Debug)]
 pub(crate) struct Develop {
     pub(crate) sysroot: SysrootConfig,
-    pub(crate) buck: buck::Buck,
+    pub(crate) yak: yak::Yak,
     pub(crate) check_cycles: bool,
     pub(crate) invoked_by_ra: bool,
     pub(crate) include_all_buildfiles: bool,
@@ -66,7 +66,7 @@ impl Develop {
             pretty,
             mode,
             check_cycles,
-            buck2_command,
+            yak_command,
             include_all_buildfiles,
             max_extra_targets,
             rustc_target,
@@ -84,11 +84,11 @@ impl Develop {
                 None => SysrootConfig::Rustup,
             };
 
-            let buck = buck::Buck::new(buck2_command.clone(), mode, project_root.clone());
+            let yak = yak::Yak::new(yak_command.clone(), mode, project_root.clone());
 
             let develop = Develop {
                 sysroot,
-                buck,
+                yak,
                 check_cycles,
                 invoked_by_ra: false,
                 include_all_buildfiles,
@@ -114,7 +114,7 @@ impl Develop {
         if let crate::Command::DevelopJson {
             sysroot_mode,
             args,
-            buck2_command,
+            yak_command,
             max_extra_targets,
             mode,
             rustc_target,
@@ -135,11 +135,11 @@ impl Develop {
                 }
             };
 
-            let buck = buck::Buck::new(buck2_command.clone(), mode, project_root);
+            let yak = yak::Yak::new(yak_command.clone(), mode, project_root);
 
             let develop = Develop {
                 sysroot,
-                buck,
+                yak,
                 check_cycles: false,
                 invoked_by_ra: true,
                 include_all_buildfiles: false,
@@ -268,7 +268,7 @@ impl Develop {
     pub(crate) fn run_inner(&self, targets: Vec<Target>) -> Result<ProjectJson, anyhow::Error> {
         let Develop {
             sysroot,
-            buck,
+            yak,
             check_cycles,
             include_all_buildfiles,
             rustc_target,
@@ -290,7 +290,7 @@ impl Develop {
         // For first-party code, assume cfg(test) is active so people can work on tests
         // on any project in the monorepo.
         //
-        // For third-party code imported with reindeer, we don't import the test-only
+        // For vendored third-party code, we don't import the test-only
         // dev-dependencies specified in the Cargo.toml, so we don't want cfg(test) to be active.
         let first_party_extra_cfgs = &["test".to_owned()];
 
@@ -298,7 +298,7 @@ impl Develop {
         let global_extra_cfgs: &[String] = &[];
 
         develop_with_sysroot(
-            buck,
+            yak,
             targets,
             sysroot,
             exclude_workspaces,
@@ -321,7 +321,7 @@ impl Develop {
         // so we don't try to load everything in very large generated buildfiles.
 
         // We always want the targets that directly own these Rust files.
-        self.buck.query_owners(input, max_extra_targets)
+        self.yak.query_owners(input, max_extra_targets)
     }
 }
 
@@ -337,7 +337,7 @@ fn expand_tilde(path: &Path) -> Result<PathBuf, anyhow::Error> {
 }
 
 fn develop_with_sysroot(
-    buck: &Buck,
+    yak: &Yak,
     targets: Vec<Target>,
     sysroot: Sysroot,
     exclude_workspaces: bool,
@@ -348,11 +348,11 @@ fn develop_with_sysroot(
     rustc_target: Option<&String>,
 ) -> Result<ProjectJson, anyhow::Error> {
     info!(kind = "progress", "building generated code");
-    let expanded_and_resolved = buck.expand_and_resolve(&targets, exclude_workspaces)?;
+    let expanded_and_resolved = yak.expand_and_resolve(&targets, exclude_workspaces)?;
 
     info!(kind = "progress", "resolving aliased libraries");
     let aliased_libraries =
-        buck.query_aliased_libraries(&expanded_and_resolved.expanded_targets, &targets)?;
+        yak.query_aliased_libraries(&expanded_and_resolved.expanded_targets, &targets)?;
 
     info!(kind = "progress", "generating rust-project.json");
     let rust_project = to_project_json(
@@ -363,7 +363,7 @@ fn develop_with_sysroot(
         include_all_buildfiles,
         global_extra_cfgs,
         first_party_extra_cfgs,
-        buck,
+        yak,
         rustc_target,
     )?;
 

@@ -8,35 +8,35 @@
 
 from typing import List
 
-from e2e_util.api.buck import Buck
+from e2e_util.api.yak import Yak
 from e2e_util.asserts import expect_failure
-from e2e_util.buck_workspace import buck_test
+from e2e_util.yak_workspace import yak_test
 
 
 async def _check_build_and_skip_override(
-    buck: Buck,
+    yak: Yak,
     target: str,
     skip_flag: str,
     config_args: List[str],
     failure_category: str,
 ) -> None:
-    result = await expect_failure(buck.test(target, *config_args))
+    result = await expect_failure(yak.test(target, *config_args))
     assert failure_category in result.stderr
 
-    await buck.test(target, *config_args, skip_flag)
+    await yak.test(target, *config_args, skip_flag)
 
 
-@buck_test()
-async def test_builds_targets_from_command_line_config(buck: Buck) -> None:
+@yak_test()
+async def test_builds_targets_from_command_line_config(yak: Yak) -> None:
     await _check_build_and_skip_override(
-        buck,
+        yak,
         "//:failing_default_info",
         "--skip-default-info",
         ["-c", "yak.test_builds_targets=true"],
         "failing_default_info",
     )
     await _check_build_and_skip_override(
-        buck,
+        yak,
         "//:failing_run_info",
         "--skip-run-info",
         ["-c", "yak.test_builds_targets=true"],
@@ -44,10 +44,10 @@ async def test_builds_targets_from_command_line_config(buck: Buck) -> None:
     )
 
 
-@buck_test()
-async def test_explicit_build_flags_override_disabled_config(buck: Buck) -> None:
+@yak_test()
+async def test_explicit_build_flags_override_disabled_config(yak: Yak) -> None:
     default_result = await expect_failure(
-        buck.test(
+        yak.test(
             "//:failing_default_info",
             "-c",
             "yak.test_builds_targets=false",
@@ -57,7 +57,7 @@ async def test_explicit_build_flags_override_disabled_config(buck: Buck) -> None
     assert "failing_default_info" in default_result.stderr
 
     run_result = await expect_failure(
-        buck.test(
+        yak.test(
             "//:failing_run_info",
             "-c",
             "yak.test_builds_targets=false",
@@ -67,12 +67,12 @@ async def test_explicit_build_flags_override_disabled_config(buck: Buck) -> None
     assert "failing_run_info" in run_result.stderr
 
 
-@buck_test()
-async def test_builds_targets_from_included_config_file(buck: Buck) -> None:
-    config_file = buck.cwd / "test_builds_targets_include.bcfg"
+@yak_test()
+async def test_builds_targets_from_included_config_file(yak: Yak) -> None:
+    config_file = yak.cwd / "test_builds_targets_include.bcfg"
 
     await _check_build_and_skip_override(
-        buck,
+        yak,
         "//:failing_default_info",
         "--skip-default-info",
         ["--config-file", str(config_file)],

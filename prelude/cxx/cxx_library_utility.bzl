@@ -125,7 +125,7 @@ def cxx_attr_resources(ctx: AnalysisContext) -> dict[str, ArtifactOutputs]:
         # back to package; explicit "" means "no prefix" UNLESS `raw_headers`
         # is also set, which signals that a macro layer clobbered `header_namespace=""` to
         # suppress #include namespace mangling — fall back to package in that
-        # case so consumers (e.g. `kBuckPrefix + "manifest.json"`) keep
+        # case so consumers (e.g. `kYakPrefix + "manifest.json"`) keep
         # working. Idempotent: keys already prefixed (by ACME, snapshots) are
         # left alone.
         namespace = ctx.attrs.header_namespace

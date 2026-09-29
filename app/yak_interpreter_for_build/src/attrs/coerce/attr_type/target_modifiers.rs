@@ -10,7 +10,7 @@
 
 use starlark::values::Value;
 use starlark::values::type_repr::StarlarkTypeRepr;
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 use yak_error::conversion::from_any_with_tag;
 use yak_error::internal_error;
 use yak_interpreter::types::opaque_metadata::OpaqueMetadata;
@@ -36,7 +36,7 @@ impl AttrTypeCoerce for TargetModifiersAttrType {
         let value = value
             .to_json_value()
             .map_err(|e| from_any_with_tag(e, yak_error::ErrorTag::Tier0))
-            .with_buck_error_context(|| {
+            .with_yak_error_context(|| {
                 format!(
                     "Target modifiers attribute is not convertible to JSON: {}",
                     value.to_repr(),

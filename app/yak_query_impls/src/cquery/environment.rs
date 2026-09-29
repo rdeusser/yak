@@ -17,7 +17,7 @@ use yak_core::cells::cell_path::CellPath;
 use yak_core::configuration::compatibility::MaybeCompatible;
 use yak_core::target::configured_target_label::ConfiguredTargetLabel;
 use yak_core::target::label::label::TargetLabel;
-use yak_error::BuckErrorOptionContext;
+use yak_error::YakErrorOptionContext;
 use yak_node::configured_universe::CqueryUniverse;
 use yak_node::nodes::configured::ConfiguredTargetNode;
 use yak_node::nodes::configured_node_ref::ConfiguredTargetNodeRefNode;

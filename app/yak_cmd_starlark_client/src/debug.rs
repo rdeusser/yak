@@ -15,13 +15,13 @@ use async_trait::async_trait;
 use futures::StreamExt;
 use yak_cli_proto::DapRequest;
 use yak_client_ctx::client_ctx::ClientCommandContext;
-use yak_client_ctx::common::BuckArgMatches;
+use yak_client_ctx::common::YakArgMatches;
 use yak_client_ctx::common::CommonBuildConfigurationOptions;
 use yak_client_ctx::common::CommonEventLogOptions;
 use yak_client_ctx::common::CommonStarlarkOptions;
 use yak_client_ctx::common::ui::CommonConsoleOptions;
 use yak_client_ctx::common::ui::ConsoleType;
-use yak_client_ctx::daemon::client::BuckdClientConnector;
+use yak_client_ctx::daemon::client::YakdClientConnector;
 use yak_client_ctx::events_ctx::EventsCtx;
 use yak_client_ctx::events_ctx::PartialResultCtx;
 use yak_client_ctx::events_ctx::PartialResultHandler;
@@ -30,9 +30,9 @@ use yak_client_ctx::ide_support::ide_message_stream;
 use yak_client_ctx::stream_util::reborrow_stream_for_static;
 use yak_client_ctx::streaming::StreamingCommand;
 use yak_client_ctx::subscribers::subscriber::EventSubscriber;
-use yak_event_observer::unpack_event::UnpackedBuckEvent;
+use yak_event_observer::unpack_event::UnpackedYakEvent;
 use yak_event_observer::unpack_event::unpack_event;
-use yak_events::BuckEvent;
+use yak_events::YakEvent;
 
 /// Run the starlark debug adapter protocol server
 ///
@@ -73,8 +73,8 @@ impl StreamingCommand for StarlarkDebugAttachCommand {
 
     async fn exec_impl(
         self,
-        buckd: &mut BuckdClientConnector,
-        matches: BuckArgMatches<'_>,
+        yakd: &mut YakdClientConnector,
+        matches: YakArgMatches<'_>,
         ctx: &mut ClientCommandContext<'_>,
         events_ctx: &mut EventsCtx,
     ) -> ExitResult {
@@ -100,7 +100,7 @@ impl StreamingCommand for StarlarkDebugAttachCommand {
         reborrow_stream_for_static(
             stream,
             |stream| async move {
-                buckd
+                yakd
                     .with_flushing()
                     .dap(
                         client_context,
@@ -193,10 +193,10 @@ impl StreamingCommand for StarlarkDebugAttachCommand {
 
             async fn handle_events(
                 &mut self,
-                events: &[std::sync::Arc<BuckEvent>],
+                events: &[std::sync::Arc<YakEvent>],
             ) -> yak_error::Result<()> {
                 for ev in events {
-                    if let UnpackedBuckEvent::Instant(_, _, data) = unpack_event(ev)? {
+                    if let UnpackedYakEvent::Instant(_, _, data) = unpack_event(ev)? {
                         match data {
                             yak_data::instant_event::Data::StructuredError(soft_error) => {
                                 if !soft_error.quiet {

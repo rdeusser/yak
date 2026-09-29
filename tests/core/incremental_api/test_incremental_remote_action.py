@@ -11,57 +11,57 @@ from __future__ import annotations
 import json
 
 import pytest
-from e2e_util.api.buck import Buck
-from e2e_util.buck_workspace import buck_test
+from e2e_util.api.yak import Yak
+from e2e_util.yak_workspace import yak_test
 from e2e_util.helper.utils import random_string
 
 
-@buck_test()
-async def test_incremental_file_materialized(buck: Buck) -> None:
-    result = await buck.run("root//:plate", "-c", f"test.seed={random_string()}")
+@yak_test()
+async def test_incremental_file_materialized(yak: Yak) -> None:
+    result = await yak.run("root//:plate", "-c", f"test.seed={random_string()}")
     assert result.stdout == "0"
-    result = await buck.run("root//:plate", "-c", f"test.seed={random_string()}")
+    result = await yak.run("root//:plate", "-c", f"test.seed={random_string()}")
     assert result.stdout == "1"
 
 
-@buck_test()
-async def test_incremental_dir_materialized(buck: Buck) -> None:
-    result = await buck.run("root//:mate", "-c", f"test.seed={random_string()}")
+@yak_test()
+async def test_incremental_dir_materialized(yak: Yak) -> None:
+    result = await yak.run("root//:mate", "-c", f"test.seed={random_string()}")
     assert result.stdout == "0"
-    result = await buck.run("root//:mate", "-c", f"test.seed={random_string()}")
+    result = await yak.run("root//:mate", "-c", f"test.seed={random_string()}")
     assert result.stdout == "1"
 
 
-@buck_test()
-async def test_incremental_file_not_materialized(buck: Buck) -> None:
-    result = await buck.run("root//:flute", "-c", f"test.seed={random_string()}")
+@yak_test()
+async def test_incremental_file_not_materialized(yak: Yak) -> None:
+    result = await yak.run("root//:flute", "-c", f"test.seed={random_string()}")
     assert result.stdout == "0"
-    result = await buck.run("root//:flute", "-c", f"test.seed={random_string()}")
+    result = await yak.run("root//:flute", "-c", f"test.seed={random_string()}")
     assert result.stdout == "1"
 
 
-@buck_test()
-async def test_incremental_dir_not_materialized(buck: Buck) -> None:
-    result = await buck.run("root//:suite", "-c", f"test.seed={random_string()}")
+@yak_test()
+async def test_incremental_dir_not_materialized(yak: Yak) -> None:
+    result = await yak.run("root//:suite", "-c", f"test.seed={random_string()}")
     assert result.stdout == "0"
-    result = await buck.run("root//:suite", "-c", f"test.seed={random_string()}")
+    result = await yak.run("root//:suite", "-c", f"test.seed={random_string()}")
     assert result.stdout == "1"
 
 
 @pytest.mark.remote_execution
-@buck_test()
-async def test_remote_cache_is_used(buck: Buck) -> None:
+@yak_test()
+async def test_remote_cache_is_used(yak: Yak) -> None:
     seed = random_string()
-    result = await buck.run("root//:plate", "-c", f"test.seed={seed}")
+    result = await yak.run("root//:plate", "-c", f"test.seed={seed}")
     assert result.stdout == "0"
-    result = await buck.run("root//:plate", "-c", f"test.seed={random_string()}")
+    result = await yak.run("root//:plate", "-c", f"test.seed={random_string()}")
     assert result.stdout == "1"
 
     # For the next build with already used seed we expect the action to be taken from the cache
-    result = await buck.run("root//:plate", "-c", f"test.seed={seed}")
+    result = await yak.run("root//:plate", "-c", f"test.seed={seed}")
     assert result.stdout == "0"
 
-    out = await buck.log("what-ran", "--format", "json")
+    out = await yak.log("what-ran", "--format", "json")
     out = [line.strip() for line in out.stdout.splitlines()]
     out = [json.loads(line) for line in out if line]
     assert len(out) == 1, "out should have 1 line: `{}`".format(out)

@@ -26,7 +26,7 @@ use yak_core::error::SoftErrorContext;
 use yak_core::error::capture_soft_error_context;
 use yak_core::error::with_soft_error_context;
 use yak_core::soft_error;
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 use yak_execute::dep_file_state::DepFileDbSize;
 use yak_execute::dep_file_state::DepFileReadStats;
 use yak_execute::dep_file_state::DepFileStore;
@@ -389,7 +389,7 @@ impl PersistedDepFileStore {
                 writer_counters.record(applied);
             }
         })
-        .buck_error_context("Failed to spawn the dep-file db writer thread")?;
+        .yak_error_context("Failed to spawn the dep-file db writer thread")?;
         Ok(Self {
             db,
             digest_config,

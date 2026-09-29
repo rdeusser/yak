@@ -25,8 +25,8 @@ use pagable::Pagable;
 use starlark_map::sorted_map::SortedMap;
 use static_interner::Intern;
 use static_interner::interner;
-use yak_data::NetworkAccess as BuckNetworkAccess;
-use yak_hash::BuckHasher;
+use yak_data::NetworkAccess as YakNetworkAccess;
+use yak_hash::YakHasher;
 
 #[derive(Debug, Eq, Hash, PartialEq, Clone, Dupe, Allocative, Pagable)]
 pub struct LocalExecutorOptions {
@@ -58,7 +58,7 @@ struct RemoteExecutorUseCaseData(String);
 
 interner!(
     USE_CASE_INTERNER,
-    BuckHasher,
+    YakHasher,
     RemoteExecutorUseCaseData,
     String,
     str
@@ -78,7 +78,7 @@ impl RemoteExecutorUseCase {
 
     /// The "yak-default" use case. This is meant to be used when no use case is configured. It's
     /// not meant to be used for convenience when a use case is not available where it's needed!
-    pub fn buck2_default() -> Self {
+    pub fn yak_default() -> Self {
         static USE_CASE: LazyLock<RemoteExecutorUseCase> =
             LazyLock::new(|| RemoteExecutorUseCase::new("yak-default".to_owned()));
         *USE_CASE
@@ -244,37 +244,37 @@ pub enum ExecutorNetworkAccess {
     Private,
 }
 
-impl From<ExecutorNetworkAccess> for BuckNetworkAccess {
+impl From<ExecutorNetworkAccess> for YakNetworkAccess {
     fn from(value: ExecutorNetworkAccess) -> Self {
         match value {
-            ExecutorNetworkAccess::All => BuckNetworkAccess::All,
-            ExecutorNetworkAccess::None => BuckNetworkAccess::None,
-            ExecutorNetworkAccess::Loopback => BuckNetworkAccess::Loopback,
-            ExecutorNetworkAccess::Strict => BuckNetworkAccess::Strict,
-            ExecutorNetworkAccess::Private => BuckNetworkAccess::Private,
+            ExecutorNetworkAccess::All => YakNetworkAccess::All,
+            ExecutorNetworkAccess::None => YakNetworkAccess::None,
+            ExecutorNetworkAccess::Loopback => YakNetworkAccess::Loopback,
+            ExecutorNetworkAccess::Strict => YakNetworkAccess::Strict,
+            ExecutorNetworkAccess::Private => YakNetworkAccess::Private,
         }
     }
 }
 
-impl From<BuckNetworkAccess> for ExecutorNetworkAccess {
-    fn from(value: BuckNetworkAccess) -> Self {
+impl From<YakNetworkAccess> for ExecutorNetworkAccess {
+    fn from(value: YakNetworkAccess) -> Self {
         match value {
-            BuckNetworkAccess::All => ExecutorNetworkAccess::All,
-            BuckNetworkAccess::None => ExecutorNetworkAccess::None,
-            BuckNetworkAccess::Loopback => ExecutorNetworkAccess::Loopback,
-            BuckNetworkAccess::Strict => ExecutorNetworkAccess::Strict,
-            BuckNetworkAccess::Private => ExecutorNetworkAccess::Private,
+            YakNetworkAccess::All => ExecutorNetworkAccess::All,
+            YakNetworkAccess::None => ExecutorNetworkAccess::None,
+            YakNetworkAccess::Loopback => ExecutorNetworkAccess::Loopback,
+            YakNetworkAccess::Strict => ExecutorNetworkAccess::Strict,
+            YakNetworkAccess::Private => ExecutorNetworkAccess::Private,
         }
     }
 }
 
-pub fn parse_network_access(s: &str) -> yak_error::Result<BuckNetworkAccess> {
+pub fn parse_network_access(s: &str) -> yak_error::Result<YakNetworkAccess> {
     match s {
-        "all" => Ok(BuckNetworkAccess::All),
-        "none" => Ok(BuckNetworkAccess::None),
-        "loopback" => Ok(BuckNetworkAccess::Loopback),
-        "strict" => Ok(BuckNetworkAccess::Strict),
-        "private" => Ok(BuckNetworkAccess::Private),
+        "all" => Ok(YakNetworkAccess::All),
+        "none" => Ok(YakNetworkAccess::None),
+        "loopback" => Ok(YakNetworkAccess::Loopback),
+        "strict" => Ok(YakNetworkAccess::Strict),
+        "private" => Ok(YakNetworkAccess::Private),
         _ => Err(yak_error::yak_error!(
             yak_error::ErrorTag::Input,
             "Invalid network_access value `{}`, expected one of [{}]",
@@ -347,23 +347,23 @@ mod tests {
     fn test_network_access_parse() {
         assert_eq!(
             parse_network_access("all").expect("all should parse"),
-            BuckNetworkAccess::All
+            YakNetworkAccess::All
         );
         assert_eq!(
             parse_network_access("none").expect("none should parse"),
-            BuckNetworkAccess::None
+            YakNetworkAccess::None
         );
         assert_eq!(
             parse_network_access("loopback").expect("loopback should parse"),
-            BuckNetworkAccess::Loopback
+            YakNetworkAccess::Loopback
         );
         assert_eq!(
             parse_network_access("strict").expect("strict should parse"),
-            BuckNetworkAccess::Strict
+            YakNetworkAccess::Strict
         );
         assert_eq!(
             parse_network_access("private").expect("private should parse"),
-            BuckNetworkAccess::Private
+            YakNetworkAccess::Private
         );
         assert!(
             parse_network_access("default").is_err(),

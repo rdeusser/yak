@@ -9,26 +9,26 @@
 import time
 
 import pytest
-from e2e_util.api.buck import Buck
-from e2e_util.api.buck_result import BuckException
-from e2e_util.buck_workspace import buck_test
+from e2e_util.api.yak import Yak
+from e2e_util.api.yak_result import YakException
+from e2e_util.yak_workspace import yak_test
 
 
 ALL_STAGES = ["load", "package", "analysis", "bxl", "streaming_targets"]
 
 
-@buck_test()
+@yak_test()
 @pytest.mark.parametrize("stage", ALL_STAGES)
-async def test_cancellation(buck: Buck, stage: str) -> None:
+async def test_cancellation(yak: Yak, stage: str) -> None:
     if stage == "bxl":
-        aproc = buck.bxl(
+        aproc = yak.bxl(
             "--preemptible=always",
             "--config",
             "should.loop=bxl",
             "//:root.bxl:loop_test",
         )
     elif stage == "streaming_targets":
-        aproc = buck.targets(
+        aproc = yak.targets(
             "--streaming",
             "--no-cache",
             "--preemptible=always",
@@ -37,13 +37,13 @@ async def test_cancellation(buck: Buck, stage: str) -> None:
             ":target",
         )
     else:
-        aproc = buck.build(
+        aproc = yak.build(
             "--preemptible=always",
             "--config",
             f"should.loop={stage}",
             ":target",
         )
-    bproc = buck.build(
+    bproc = yak.build(
         ":target",
     )
 
@@ -58,7 +58,7 @@ async def test_cancellation(buck: Buck, stage: str) -> None:
         raise RuntimeError(
             "Expected to be preempted, but command completed successfully"
         )
-    except BuckException as e:
+    except YakException as e:
         a = e
 
     # Note: one of the important features being tested here is not that a is

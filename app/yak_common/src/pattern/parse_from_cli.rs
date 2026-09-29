@@ -22,14 +22,14 @@ use yak_core::pattern::unparsed::UnparsedPatterns;
 use crate::dice::cells::HasCellResolver;
 use crate::pattern::resolve::ResolveTargetPatterns;
 use crate::pattern::resolve::ResolvedPattern;
-use crate::target_aliases::BuckConfigTargetAliasResolver;
+use crate::target_aliases::YakConfigTargetAliasResolver;
 use crate::target_aliases::HasTargetAliasResolver;
 
 struct PatternParser<'d> {
     cell_resolver: &'d CellResolver,
     cell_alias_resolver: &'d CellAliasResolver,
     cwd: CellPath,
-    target_alias_resolver: &'d BuckConfigTargetAliasResolver,
+    target_alias_resolver: &'d YakConfigTargetAliasResolver,
 }
 
 impl<'d> PatternParser<'d> {

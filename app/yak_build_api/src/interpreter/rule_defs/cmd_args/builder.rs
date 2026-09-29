@@ -21,11 +21,11 @@ use yak_core::execution_types::executor_config::PathSeparatorKind;
 use yak_core::fs::project::ProjectRoot;
 use yak_core::fs::project_rel_path::ProjectRelativePath;
 use yak_core::fs::project_rel_path::ProjectRelativePathBuf;
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 use yak_execute::artifact::artifact_dyn::ArtifactDyn;
 use yak_execute::artifact::fs::ExecutorFs;
 use yak_fs::paths::RelativePath;
-use yak_interpreter::types::regex::StarlarkBuckRegex;
+use yak_interpreter::types::regex::StarlarkYakRegex;
 
 use crate::interpreter::rule_defs::artifact::starlark_output_artifact::StarlarkOutputArtifactUnpack;
 use crate::interpreter::rule_defs::cmd_args::options::CommandLineOptionsRef;
@@ -104,7 +104,7 @@ const DEFAULT_ARTIFACT_OPTIONS: ArtifactOptions<'_> = ArtifactOptions {
 };
 
 enum FormatRegex<'v> {
-    Starlark(&'v StarlarkBuckRegex),
+    Starlark(&'v StarlarkYakRegex),
     Owned(regex::Regex),
 }
 

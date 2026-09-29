@@ -9,7 +9,7 @@
  */
 
 use starlark::debug::VariablePath;
-use yak_hash::BuckMutMap;
+use yak_hash::YakMutMap;
 
 /// Maps variable IDs to their access paths for tree-structured DAP protocol variables.
 ///
@@ -24,7 +24,7 @@ use yak_hash::BuckMutMap;
 /// upon a variable request against the child's ID.
 #[derive(Default, Debug)]
 pub(crate) struct VariablesKnownPaths {
-    path_by_id: BuckMutMap<u32, VariablePath>,
+    path_by_id: YakMutMap<u32, VariablePath>,
 }
 
 impl VariablesKnownPaths {

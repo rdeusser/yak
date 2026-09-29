@@ -25,14 +25,14 @@ use superconsole::components::Spinner;
 use threadpool::ThreadPool;
 use uuid::Uuid;
 use walkdir::WalkDir;
-use yak_client_ctx::client_ctx::BuckSubcommand;
+use yak_client_ctx::client_ctx::YakSubcommand;
 use yak_client_ctx::client_ctx::ClientCommandContext;
-use yak_client_ctx::common::BuckArgMatches;
+use yak_client_ctx::common::YakArgMatches;
 use yak_client_ctx::common::CommonCommandOptions;
 use yak_client_ctx::common::CommonEventLogOptions;
 use yak_client_ctx::common::target_cfg::TargetCfgUnusedOptions;
 use yak_client_ctx::common::ui::ConsoleType;
-use yak_client_ctx::daemon::client::BuckdLifecycleLock;
+use yak_client_ctx::daemon::client::YakdLifecycleLock;
 use yak_client_ctx::daemon::client::kill::kill_command_impl;
 use yak_client_ctx::events_ctx::EventsCtx;
 use yak_client_ctx::exit_result::ExitResult;
@@ -40,7 +40,7 @@ use yak_client_ctx::final_console::FinalConsole;
 use yak_client_ctx::startup_deadline::StartupDeadline;
 use yak_client_ctx::subscribers::superconsole::StatefulSuperConsole;
 use yak_common::daemon_dir::DaemonDir;
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 use yak_error::ErrorTag;
 use yak_fs::error::IoError;
 use yak_fs::error::IoResultExt;
@@ -101,7 +101,7 @@ policy or a duration if specified, without killing the daemon",
     ///
     /// `yak-out` can contain untracked artifacts for different reasons:
     ///  - Outputs from aborted actions
-    ///  - State getting deleted (e.g., new buckversion that changes the on-disk state format)
+    ///  - State getting deleted (e.g., new yakversion that changes the on-disk state format)
     ///  - Writing to `yak-out` without being expected by yak
     #[clap(long = "tracked-only", requires = "stale")]
     tracked_only: bool,
@@ -139,7 +139,7 @@ policy or a duration if specified, without killing the daemon",
 impl CleanCommand {
     pub fn exec(
         self,
-        matches: BuckArgMatches<'_>,
+        matches: YakArgMatches<'_>,
         ctx: ClientCommandContext<'_>,
         events_ctx: &mut EventsCtx,
     ) -> ExitResult {
@@ -203,24 +203,24 @@ struct InnerCleanCommand {
     common_opts: CommonCommandOptions,
 }
 
-impl BuckSubcommand for InnerCleanCommand {
+impl YakSubcommand for InnerCleanCommand {
     const COMMAND_NAME: &'static str = "clean";
 
     async fn exec_impl(
         self,
-        _matches: BuckArgMatches<'_>,
+        _matches: YakArgMatches<'_>,
         ctx: ClientCommandContext<'_>,
         _events_ctx: &mut yak_client_ctx::events_ctx::EventsCtx,
     ) -> ExitResult {
         let paths = ctx.paths()?;
-        let buck_out_dir = paths.buck_out_path();
+        let yak_out_dir = paths.yak_out_path();
         let daemon_dir = paths.daemon_dir()?;
         let trash_dir = paths.trash_dir();
         let console = &self.common_opts.console_opts.final_console();
 
         if self.dry_run {
             return clean(
-                buck_out_dir,
+                yak_out_dir,
                 daemon_dir,
                 trash_dir,
                 console,
@@ -234,7 +234,7 @@ impl BuckSubcommand for InnerCleanCommand {
 
         // Kill the daemon and make sure a new daemon does not spin up while we're performing clean up operations
         // This will ensure we have exclusive access to the directories in question
-        let lifecycle_lock = BuckdLifecycleLock::lock_with_timeout(
+        let lifecycle_lock = YakdLifecycleLock::lock_with_timeout(
             daemon_dir.clone(),
             StartupDeadline::duration_from_now(Duration::from_secs(10))?,
         )
@@ -243,7 +243,7 @@ impl BuckSubcommand for InnerCleanCommand {
         kill_command_impl(&lifecycle_lock, "`yak clean` was invoked").await?;
 
         clean(
-            buck_out_dir,
+            yak_out_dir,
             daemon_dir,
             trash_dir,
             console,
@@ -261,13 +261,13 @@ impl BuckSubcommand for InnerCleanCommand {
 }
 
 async fn clean(
-    buck_out_dir: AbsNormPathBuf,
+    yak_out_dir: AbsNormPathBuf,
     daemon_dir: DaemonDir,
     trash_dir: AbsNormPathBuf,
     console: &FinalConsole,
     console_type: ConsoleType,
     // None means "dry run".
-    lifecycle_lock: Option<&BuckdLifecycleLock>,
+    lifecycle_lock: Option<&YakdLifecycleLock>,
     background: bool,
 ) -> yak_error::Result<()> {
     let paths_to_clean = if background {
@@ -280,14 +280,14 @@ async fn clean(
         }
 
         // Move yak-out to trash folder
-        if buck_out_dir.exists() {
+        if yak_out_dir.exists() {
             console.print_stderr(&format!(
                 "Moving {} to {}",
-                buck_out_dir.display(),
+                yak_out_dir.display(),
                 trash_target.display()
             ))?;
-            fs_util::rename(&buck_out_dir, &trash_target)
-                .categorize_tagged(ErrorTag::CleanBuckOut)?;
+            fs_util::rename(&yak_out_dir, &trash_target)
+                .categorize_tagged(ErrorTag::CleanYakOut)?;
         }
 
         // Clean the daemon_dir first
@@ -313,24 +313,24 @@ async fn clean(
                     .map(|path| path.display().to_string()),
             );
             tokio::task::spawn_blocking(move || {
-                clean_buck_out_with_retry(&trash_target_normalized, console_type)
+                clean_yak_out_with_retry(&trash_target_normalized, console_type)
             })
             .await?
-            .buck_error_context("Failed to spawn clean")?;
+            .yak_error_context("Failed to spawn clean")?;
         }
         paths_to_clean
     } else {
         let mut paths_to_clean = Vec::new();
 
-        if buck_out_dir.exists() {
+        if yak_out_dir.exists() {
             paths_to_clean =
-                collect_paths_to_clean(&buck_out_dir)?.map(|path| path.display().to_string());
+                collect_paths_to_clean(&yak_out_dir)?.map(|path| path.display().to_string());
             if lifecycle_lock.is_some() {
                 tokio::task::spawn_blocking(move || {
-                    clean_buck_out_with_retry(&buck_out_dir, console_type)
+                    clean_yak_out_with_retry(&yak_out_dir, console_type)
                 })
                 .await?
-                .buck_error_context("Failed to spawn clean")?;
+                .yak_error_context("Failed to spawn clean")?;
             }
         }
 
@@ -355,13 +355,13 @@ async fn clean(
 }
 
 fn collect_paths_to_clean(
-    buck_out_path: &AbsNormPathBuf,
+    yak_out_path: &AbsNormPathBuf,
 ) -> yak_error::Result<Vec<AbsNormPathBuf>> {
-    if !buck_out_path.exists() {
+    if !yak_out_path.exists() {
         return Ok(vec![]);
     }
     let mut paths_to_clean = vec![];
-    let dir = fs_util::read_dir(buck_out_path).categorize_tagged(ErrorTag::CleanBuckOut)?;
+    let dir = fs_util::read_dir(yak_out_path).categorize_tagged(ErrorTag::CleanYakOut)?;
     for entry in dir {
         let entry = entry?;
         let path = entry.path();
@@ -382,7 +382,7 @@ const CLEAN_PASSES: usize = 3;
 /// finish before the tree is re-walked.
 const CLEAN_PASS_SPACING: Duration = Duration::from_secs(1);
 
-fn clean_buck_out_with_retry(
+fn clean_yak_out_with_retry(
     path: &AbsNormPathBuf,
     console_type: ConsoleType,
 ) -> yak_error::Result<()> {
@@ -407,7 +407,7 @@ fn clean_buck_out_with_retry(
         pass += 1;
         let pass_start = Instant::now();
         let removed_before = state.files_deleted() + state.dirs_deleted();
-        let outcome = clean_buck_out_pass(path, &state);
+        let outcome = clean_yak_out_pass(path, &state);
         let removed = state.files_deleted() + state.dirs_deleted() - removed_before;
 
         let Some(e) = outcome.first_error else {
@@ -571,7 +571,7 @@ fn ok_if_not_found(res: Result<(), IoError>) -> yak_error::Result<()> {
     match res {
         Err(e) if e.io_error_kind() == Some(io::ErrorKind::NotFound) => Ok(()),
         res => res
-            .categorize_tagged(ErrorTag::CleanBuckOut)
+            .categorize_tagged(ErrorTag::CleanYakOut)
             .map_err(Into::into),
     }
 }
@@ -606,7 +606,7 @@ fn split_into_subtree_roots<T>(
 /// One removal pass over the whole tree: every remaining entry gets exactly one removal
 /// attempt; failures are counted and left for the caller to decide whether another pass is
 /// worthwhile.
-fn clean_buck_out_pass(path: &AbsNormPathBuf, state: &Arc<CleanProgressState>) -> CleanPassOutcome {
+fn clean_yak_out_pass(path: &AbsNormPathBuf, state: &Arc<CleanProgressState>) -> CleanPassOutcome {
     let failures = Arc::new(CleanFailures::new());
 
     let file_counter = state.file_counter();
@@ -700,7 +700,7 @@ fn clean_buck_out_pass(path: &AbsNormPathBuf, state: &Arc<CleanProgressState>) -
     // Sweeps up what the subtree walks don't cover: non-directory entries in the root itself,
     // and directories that appeared after the split enumeration. Anything deeper that failed
     // above is re-walked by the next pass, not retried here.
-    match fs_util::read_dir(path).categorize_tagged(ErrorTag::CleanBuckOut) {
+    match fs_util::read_dir(path).categorize_tagged(ErrorTag::CleanYakOut) {
         Ok(entries) => {
             for entry in entries.flatten() {
                 // `file_type()` can fail transiently; re-stat rather than miscounting a

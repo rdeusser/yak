@@ -23,7 +23,7 @@ use gazebo::prelude::*;
 use tokio::sync::Semaphore;
 use yak_core::cells::cell_path::CellPath;
 use yak_core::package::PackageLabel;
-use yak_hash::BuckMutSet;
+use yak_hash::YakMutSet;
 
 use crate::file_ops::trait_::DiceFileOps;
 use crate::file_ops::trait_::FileOps;
@@ -90,7 +90,7 @@ pub async fn collect_package_roots<E>(
     let semaphore = &SEMAPHORE;
 
     let mut queue = FuturesUnordered::new();
-    let mut seen = BuckMutSet::default();
+    let mut seen = YakMutSet::default();
 
     let list_dir = |path: CellPath| async move {
         let _permit = semaphore.acquire().await.unwrap();

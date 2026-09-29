@@ -15,7 +15,7 @@ use yak_build_signals::env::WaitingData;
 use yak_build_signals::error::CriticalPathError;
 use yak_core::target::configured_target_label::ConfiguredTargetLabel;
 use yak_events::span::SpanId;
-use yak_hash::BuckMutMap;
+use yak_hash::YakMutMap;
 
 use crate::BuildInfo;
 use crate::NodeExtraData;
@@ -40,7 +40,7 @@ pub(crate) trait BuildListenerBackend {
 
     fn finish(
         self,
-        anon_target_discovery_edges: BuckMutMap<NodeKey, NodeKey>,
+        anon_target_discovery_edges: YakMutMap<NodeKey, NodeKey>,
     ) -> Result<BuildInfo, CriticalPathError>;
 
     fn name() -> CriticalPathBackendName;

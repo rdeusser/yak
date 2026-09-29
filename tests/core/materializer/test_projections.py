@@ -15,29 +15,29 @@ shape changes between builds, and across a daemon restart.
 """
 
 import pytest
-from e2e_util.api.buck import Buck
-from e2e_util.buck_workspace import buck_test
+from e2e_util.api.yak import Yak
+from e2e_util.yak_workspace import yak_test
 from e2e_util.helper.utils import replace_in_file
 
 
-async def read_consumer(buck: Buck, target: str) -> str:
+async def read_consumer(yak: Yak, target: str) -> str:
     """Build `target` and return what its action read from its inputs."""
-    result = await buck.build(target)
+    result = await yak.build(target)
     return result.get_build_report().output_for_target(target).read_text()
 
 
-@buck_test()
-async def test_two_projections_of_one_artifact(buck: Buck) -> None:
-    result = await buck.build("root//:split_a", "root//:split_b")
+@yak_test()
+async def test_two_projections_of_one_artifact(yak: Yak) -> None:
+    result = await yak.build("root//:split_a", "root//:split_b")
     report = result.get_build_report()
 
     assert report.output_for_target("root//:split_a").read_text() == "split-a"
     assert report.output_for_target("root//:split_b").read_text() == "split-b"
 
 
-@buck_test()
-async def test_projection_and_whole_artifact_in_one_build(buck: Buck) -> None:
-    result = await buck.build("root//:mixed_projection", "root//:mixed_whole")
+@yak_test()
+async def test_projection_and_whole_artifact_in_one_build(yak: Yak) -> None:
+    result = await yak.build("root//:mixed_projection", "root//:mixed_whole")
     report = result.get_build_report()
 
     assert report.output_for_target("root//:mixed_projection").read_text() == "mixed-a"
@@ -46,12 +46,12 @@ async def test_projection_and_whole_artifact_in_one_build(buck: Buck) -> None:
     )
 
 
-@buck_test()
-async def test_projected_subpath_changes_between_builds(buck: Buck) -> None:
+@yak_test()
+async def test_projected_subpath_changes_between_builds(yak: Yak) -> None:
     target = "root//:moving_consumer"
-    targets_file = buck.cwd / "YAK.fixture"
+    targets_file = yak.cwd / "YAK.fixture"
 
-    assert await read_consumer(buck, target) == "moving-a-1"
+    assert await read_consumer(yak, target) == "moving-a-1"
 
     # Both the projected subpath and the whole directory's contents change, so
     # neither the old subpath's bytes nor the old bytes at the new subpath are
@@ -64,49 +64,49 @@ async def test_projected_subpath_changes_between_builds(buck: Buck) -> None:
     replace_in_file("moving-a-1", "moving-a-2", targets_file)
     replace_in_file("moving-b-1", "moving-b-2", targets_file)
 
-    assert await read_consumer(buck, target) == "moving-b-2"
+    assert await read_consumer(yak, target) == "moving-b-2"
 
 
 @pytest.mark.remote_execution
-@buck_test()
-async def test_projection_consumed_after_daemon_restart(buck: Buck) -> None:
+@yak_test()
+async def test_projection_consumed_after_daemon_restart(yak: Yak) -> None:
     # Declare the directory artifact without putting it on disk, so that the
     # work of materializing it falls to the restarted daemon.
-    result = await buck.build("root//:restart", "--materializations=None")
+    result = await yak.build("root//:restart", "--materializations=None")
     produced = result.get_build_report().output_for_target("root//:restart")
     assert not produced.exists()
 
-    await buck.kill()
+    await yak.kill()
 
-    assert await read_consumer(buck, "root//:restart_consumer") == "restart-a"
+    assert await read_consumer(yak, "root//:restart_consumer") == "restart-a"
     assert produced.exists()
 
 
-@buck_test()
-async def test_whole_artifact_after_projection_at_newer_contents(buck: Buck) -> None:
-    targets_file = buck.cwd / "YAK.fixture"
+@yak_test()
+async def test_whole_artifact_after_projection_at_newer_contents(yak: Yak) -> None:
+    targets_file = yak.cwd / "YAK.fixture"
     whole = "root//:interleaved_whole"
     projection = "root//:interleaved_projection"
 
-    assert await read_consumer(buck, whole) == "interleaved-a-1|interleaved-b-1"
+    assert await read_consumer(yak, whole) == "interleaved-a-1|interleaved-b-1"
 
     replace_in_file("interleaved-a-1", "interleaved-a-2", targets_file)
     replace_in_file("interleaved-b-1", "interleaved-b-2", targets_file)
 
     # Only the projection is consumed at the new contents, so this build need
     # not bring `b` up to date on disk...
-    assert await read_consumer(buck, projection) == "interleaved-a-2"
+    assert await read_consumer(yak, projection) == "interleaved-a-2"
     # ...but the whole-directory consumer must not then see a current `a` next
     # to a stale `b`.
-    assert await read_consumer(buck, whole) == "interleaved-a-2|interleaved-b-2"
+    assert await read_consumer(yak, whole) == "interleaved-a-2|interleaved-b-2"
 
 
-@buck_test()
-async def test_projected_subpath_did_not_exist_before(buck: Buck) -> None:
+@yak_test()
+async def test_projected_subpath_did_not_exist_before(yak: Yak) -> None:
     target = "root//:growing_consumer"
-    targets_file = buck.cwd / "YAK.fixture"
+    targets_file = yak.cwd / "YAK.fixture"
 
-    assert await read_consumer(buck, target) == "growing-a"
+    assert await read_consumer(yak, target) == "growing-a"
 
     replace_in_file(
         'contents = {"a": "growing-a"}',
@@ -119,4 +119,4 @@ async def test_projected_subpath_did_not_exist_before(buck: Buck) -> None:
         targets_file,
     )
 
-    assert await read_consumer(buck, target) == "growing-b"
+    assert await read_consumer(yak, target) == "growing-b"

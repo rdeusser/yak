@@ -23,7 +23,7 @@ use yak_fs::error::IoResultExt;
 use yak_fs::fs_util;
 use yak_fs::paths::abs_norm_path::AbsNormPath;
 use yak_fs::paths::abs_norm_path::AbsNormPathBuf;
-use yak_hash::BuckMutMap;
+use yak_hash::YakMutMap;
 
 pub struct MaterializeTreeStructure {
     pub path: ProjectRelativePathBuf,
@@ -122,7 +122,7 @@ where
 /// `file_dest`. It's then removed from `srcs`.
 fn _materialize_files_from_map<P, D>(
     entry: DirectoryEntry<&D, &ActionDirectoryMember>,
-    srcs: &mut BuckMutMap<AbsNormPathBuf, AbsNormPathBuf>,
+    srcs: &mut YakMutMap<AbsNormPathBuf, AbsNormPathBuf>,
     dest: P,
 ) -> yak_error::Result<()>
 where

@@ -16,7 +16,7 @@ use yak_build_api::build::ProviderArtifacts;
 use yak_cli_proto::build_request::Materializations;
 use yak_core::fs::artifact_path_resolver::ArtifactFs;
 use yak_core::fs::project_rel_path::ProjectRelativePathBuf;
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 use yak_error::ErrorTag;
 use yak_execute::artifact_utils::ArtifactValueBuilder;
 use yak_execute::artifact_value::ArtifactValue;
@@ -77,7 +77,7 @@ pub(crate) async fn create_unhashed_outputs_via_materializer(
     )
     .await
     .tag(ErrorTag::UnhashedOutputSymlink)
-    .with_buck_error_context(|| "while creating materializer-managed unhashed output symlinks")
+    .with_yak_error_context(|| "while creating materializer-managed unhashed output symlinks")
 }
 
 async fn create_unhashed_outputs_via_materializer_impl(

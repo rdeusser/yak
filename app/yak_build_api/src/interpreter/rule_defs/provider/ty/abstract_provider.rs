@@ -31,7 +31,7 @@ use yak_interpreter::late_binding_ty::ProviderReprLate;
 
 use crate::interpreter::rule_defs::provider::ValueAsProviderLike;
 use crate::interpreter::rule_defs::provider::user::UserProvider;
-use crate::interpreter::rule_defs::type_id_domain::Buck2TypeIdDomain;
+use crate::interpreter::rule_defs::type_id_domain::YakTypeIdDomain;
 
 #[derive(Allocative, Clone, Debug, Pagable)]
 #[pagable_typetag(TypeMatcherDyn)]
@@ -49,7 +49,7 @@ fn mk_ty_provider() -> yak_error::Result<Ty> {
         UserProvider::TYPE.to_owned(),
         // Builtin providers behave like `UserProvider`.
         TyStarlarkValue::new::<UserProvider>(),
-        TypeInstanceId::from_identity(Buck2TypeIdDomain::ProviderSingleton, &UserProvider::TYPE),
+        TypeInstanceId::from_identity(YakTypeIdDomain::ProviderSingleton, &UserProvider::TYPE),
         TyUserParams {
             matcher: Some(TypeMatcherFactory::new(ProviderMatcher)),
             fields: TyUserFields::unknown(),

@@ -12,30 +12,30 @@ use starlark::environment::GlobalsBuilder;
 use yak_util::late_binding::LateBinding;
 
 /// Globals defined in `yak_build_api`.
-pub static REGISTER_BUCK2_BUILD_API_GLOBALS: LateBinding<fn(&mut GlobalsBuilder)> =
-    LateBinding::new("REGISTER_BUCK2_BUILD_API_GLOBALS");
+pub static REGISTER_YAK_BUILD_API_GLOBALS: LateBinding<fn(&mut GlobalsBuilder)> =
+    LateBinding::new("REGISTER_YAK_BUILD_API_GLOBALS");
 
 /// `__internal__`s defined in `yak_build_api`.
-pub static REGISTER_BUCK2_BUILD_API_INTERNALS: LateBinding<fn(&mut GlobalsBuilder)> =
-    LateBinding::new("REGISTER_BUCK2_BUILD_API_INTERNALS");
+pub static REGISTER_YAK_BUILD_API_INTERNALS: LateBinding<fn(&mut GlobalsBuilder)> =
+    LateBinding::new("REGISTER_YAK_BUILD_API_INTERNALS");
 
-/// Globals defined in `buck2_transitions` crate.
-pub static REGISTER_BUCK2_TRANSITION_GLOBALS: LateBinding<fn(&mut GlobalsBuilder)> =
-    LateBinding::new("REGISTER_BUCK2_TRANSITION_GLOBALS");
+/// Globals defined in `yak_transitions` crate.
+pub static REGISTER_YAK_TRANSITION_GLOBALS: LateBinding<fn(&mut GlobalsBuilder)> =
+    LateBinding::new("REGISTER_YAK_TRANSITION_GLOBALS");
 
 /// Globals defined in `yak_action_impl` crate.
-pub static REGISTER_BUCK2_ACTION_IMPL_GLOBALS: LateBinding<fn(&mut GlobalsBuilder)> =
-    LateBinding::new("REGISTER_BUCK2_ACTION_IMPL_GLOBALS");
+pub static REGISTER_YAK_ACTION_IMPL_GLOBALS: LateBinding<fn(&mut GlobalsBuilder)> =
+    LateBinding::new("REGISTER_YAK_ACTION_IMPL_GLOBALS");
 
-/// Globals defined in `buck2_anon_targets` crate.
-pub static REGISTER_BUCK2_ANON_TARGETS_GLOBALS: LateBinding<fn(&mut GlobalsBuilder)> =
-    LateBinding::new("REGISTER_BUCK2_ANON_TARGETS_GLOBALS");
+/// Globals defined in `yak_anon_targets` crate.
+pub static REGISTER_YAK_ANON_TARGETS_GLOBALS: LateBinding<fn(&mut GlobalsBuilder)> =
+    LateBinding::new("REGISTER_YAK_ANON_TARGETS_GLOBALS");
 
 /// Globals defined in `yak_bxl` crate,
 /// which are used to create the context for `.bxl` evaluation.
-pub static REGISTER_BUCK2_BXL_GLOBALS: LateBinding<fn(&mut GlobalsBuilder)> =
-    LateBinding::new("REGISTER_BUCK2_BXL_GLOBALS");
+pub static REGISTER_YAK_BXL_GLOBALS: LateBinding<fn(&mut GlobalsBuilder)> =
+    LateBinding::new("REGISTER_YAK_BXL_GLOBALS");
 
 /// Globals defined in `yak_cfg_constructor` crate.
-pub static REGISTER_BUCK2_CFG_CONSTRUCTOR_GLOBALS: LateBinding<fn(&mut GlobalsBuilder)> =
-    LateBinding::new("REGISTER_BUCK2_CFG_CONSTRUCTOR_GLOBALS");
+pub static REGISTER_YAK_CFG_CONSTRUCTOR_GLOBALS: LateBinding<fn(&mut GlobalsBuilder)> =
+    LateBinding::new("REGISTER_YAK_CFG_CONSTRUCTOR_GLOBALS");

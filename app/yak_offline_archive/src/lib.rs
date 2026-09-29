@@ -13,7 +13,7 @@ use std::fmt;
 use std::path::Path;
 
 use yak_core::fs::project_rel_path::ProjectRelativePathBuf;
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 use yak_fs::error::IoResultExt;
 use yak_fs::fs_util;
 use yak_fs::paths::abs_norm_path::AbsNormPathBuf;
@@ -159,9 +159,9 @@ where
 
     let result = cmd
         .output()
-        .buck_error_context("failed to dispatch hg command")?;
+        .yak_error_context("failed to dispatch hg command")?;
     if result.status.success() {
-        let out = String::from_utf8(result.stdout).buck_error_context("hg stdout to string")?;
+        let out = String::from_utf8(result.stdout).yak_error_context("hg stdout to string")?;
         let out = out.trim();
         if out.is_empty() {
             Err(yak_error::yak_error!(
@@ -173,7 +173,7 @@ where
             Ok(out.to_owned())
         }
     } else {
-        let err = String::from_utf8(result.stderr).buck_error_context("hg stderr to string")?;
+        let err = String::from_utf8(result.stderr).yak_error_context("hg stderr to string")?;
         Err(yak_error::yak_error!(
             yak_error::ErrorTag::OfflineArchive,
             "{}",

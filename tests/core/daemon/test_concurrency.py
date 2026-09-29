@@ -10,16 +10,16 @@ import asyncio
 from typing import Optional
 
 import pytest
-from e2e_util.api.buck import Buck
-from e2e_util.api.buck_result import BuckException, BuildResult
+from e2e_util.api.yak import Yak
+from e2e_util.api.yak_result import YakException, BuildResult
 from e2e_util.api.process import Process
 from e2e_util.asserts import expect_failure
-from e2e_util.buck_workspace import buck_test
+from e2e_util.yak_workspace import yak_test
 
 
-@buck_test()
-async def test_exit_when_different_state(buck: Buck) -> None:
-    a = buck.build(
+@yak_test()
+async def test_exit_when_different_state(yak: Yak) -> None:
+    a = yak.build(
         "-c",
         "foo.bar=1",
         "--exit-when=differentstate",
@@ -28,7 +28,7 @@ async def test_exit_when_different_state(buck: Buck) -> None:
         "--no-remote-cache",
     )
 
-    b = buck.build(
+    b = yak.build(
         "-c",
         "foo.bar=2",
         "--exit-when=differentstate",
@@ -39,7 +39,7 @@ async def test_exit_when_different_state(buck: Buck) -> None:
 
     # create a coroutine that can return a result
     async def process(
-        p: Process[BuildResult, BuckException],
+        p: Process[BuildResult, YakException],
     ) -> tuple[Optional[int], str]:
         result = await expect_failure(p)
         return (result.process.returncode, result.stderr)
@@ -60,10 +60,10 @@ async def test_exit_when_different_state(buck: Buck) -> None:
         assert exit_code == 4
 
 
-@buck_test()
+@yak_test()
 @pytest.mark.parametrize("same_state", [True, False])
-async def test_exit_when_preemptible_always(buck: Buck, same_state: bool) -> None:
-    a = buck.build(
+async def test_exit_when_preemptible_always(yak: Yak, same_state: bool) -> None:
+    a = yak.build(
         "-c",
         "foo.bar=1",
         "--preemptible=always",
@@ -72,7 +72,7 @@ async def test_exit_when_preemptible_always(buck: Buck, same_state: bool) -> Non
         "--no-remote-cache",
     )
 
-    b = buck.build(
+    b = yak.build(
         "-c",
         # We expect to ALWAYS preempt commands, to prevent blocking new callees
         "foo.bar=1" if same_state else "foo.bar=2",
@@ -84,7 +84,7 @@ async def test_exit_when_preemptible_always(buck: Buck, same_state: bool) -> Non
 
     # create a coroutine that can return a result
     async def process(
-        p: Process[BuildResult, BuckException],
+        p: Process[BuildResult, YakException],
     ) -> tuple[Optional[int], str]:
         result = await expect_failure(p)
         return (result.process.returncode, result.stderr)
@@ -105,9 +105,9 @@ async def test_exit_when_preemptible_always(buck: Buck, same_state: bool) -> Non
         assert exit_code == 5
 
 
-@buck_test(write_invocation_record=True)
-async def test_preemptible_logged(buck: Buck) -> None:
-    res = await buck.targets(
+@yak_test(write_invocation_record=True)
+async def test_preemptible_logged(yak: Yak) -> None:
+    res = await yak.targets(
         "--preemptible=always",
         ":",
     )
@@ -115,12 +115,12 @@ async def test_preemptible_logged(buck: Buck) -> None:
     assert record["preemptible"] == "ALWAYS"
 
 
-@buck_test()
+@yak_test()
 @pytest.mark.parametrize("same_state", [True, False])
 async def test_exit_when_preemptible_on_different_state(
-    buck: Buck, same_state: bool
+    yak: Yak, same_state: bool
 ) -> None:
-    a = buck.build(
+    a = yak.build(
         "-c",
         "foo.bar=1",
         "--preemptible=ondifferentstate",
@@ -129,7 +129,7 @@ async def test_exit_when_preemptible_on_different_state(
         "--no-remote-cache",
     )
 
-    b = buck.build(
+    b = yak.build(
         "-c",
         # We expect to ALWAYS preempt commands, to prevent blocking new callees
         "foo.bar=1" if same_state else "foo.bar=2",
@@ -141,7 +141,7 @@ async def test_exit_when_preemptible_on_different_state(
 
     # create a coroutine that can return a result
     async def process(
-        p: Process[BuildResult, BuckException],
+        p: Process[BuildResult, YakException],
     ) -> tuple[Optional[int], str]:
         result = await expect_failure(p)
         return (result.process.returncode, result.stderr)
@@ -167,21 +167,21 @@ async def test_exit_when_preemptible_on_different_state(
         assert exit_code == 5
 
 
-@buck_test()
+@yak_test()
 @pytest.mark.parametrize("same_state", [True, False])
 async def test_exit_when_not_idle_does_not_start_when_daemon_busy(
-    buck: Buck, same_state: bool
+    yak: Yak, same_state: bool
 ) -> None:
     """Test that an incoming command with --exit-when=notidle does not start if there's another command running."""
 
     # create a coroutine that can return a result
     async def process(
-        p: Process[BuildResult, BuckException],
+        p: Process[BuildResult, YakException],
     ) -> tuple[Optional[int], str]:
         result = await expect_failure(p)
         return (result.process.returncode, result.stderr)
 
-    a = buck.build(
+    a = yak.build(
         "-c",
         "foo.bar=1",
         ":long_running_target",
@@ -194,7 +194,7 @@ async def test_exit_when_not_idle_does_not_start_when_daemon_busy(
     # Wait a short time to ensure the first command has started
     await asyncio.sleep(0.5)
 
-    b = buck.build(
+    b = yak.build(
         "-c",
         "foo.bar=1" if same_state else "foo.bar=2",
         "--exit-when=notidle",
@@ -221,21 +221,21 @@ async def test_exit_when_not_idle_does_not_start_when_daemon_busy(
         assert exit_code == 4
 
 
-@buck_test()
+@yak_test()
 @pytest.mark.parametrize("same_state", [True, False])
 async def test_exit_when_not_idle_does_not_gets_preempted(
-    buck: Buck, same_state: bool
+    yak: Yak, same_state: bool
 ) -> None:
     """Test that a running command with --exit-when=notidle continues running even with an incoming command."""
 
     # create a coroutine that can return a result
     async def process(
-        p: Process[BuildResult, BuckException],
+        p: Process[BuildResult, YakException],
     ) -> tuple[Optional[int], str]:
         result = await expect_failure(p)
         return (result.process.returncode, result.stderr)
 
-    a = buck.build(
+    a = yak.build(
         "-c",
         "foo.bar=1",
         "--exit-when=notidle",
@@ -250,7 +250,7 @@ async def test_exit_when_not_idle_does_not_gets_preempted(
     await asyncio.sleep(0.5)
 
     # Start another command without the flag (default is --preemptible=never)
-    b = buck.build(
+    b = yak.build(
         "-c",
         "foo.bar=1" if same_state else "foo.bar=2",
         ":long_running_target",
@@ -270,21 +270,21 @@ async def test_exit_when_not_idle_does_not_gets_preempted(
     assert len(pending) == 2
 
 
-@buck_test()
+@yak_test()
 @pytest.mark.parametrize("same_state", [True, False])
 async def test_preemptible_exit_when_not_idle_gets_preempted(
-    buck: Buck, same_state: bool
+    yak: Yak, same_state: bool
 ) -> None:
     """Test that a running command with --exit-when=notidle and --preemptible gets preempted with an incoming command."""
 
     # create a coroutine that can return a result
     async def process(
-        p: Process[BuildResult, BuckException],
+        p: Process[BuildResult, YakException],
     ) -> tuple[Optional[int], str]:
         result = await expect_failure(p)
         return (result.process.returncode, result.stderr)
 
-    a = buck.build(
+    a = yak.build(
         "-c",
         "foo.bar=1",
         "--exit-when=notidle",
@@ -300,7 +300,7 @@ async def test_preemptible_exit_when_not_idle_gets_preempted(
     await asyncio.sleep(0.5)
 
     # Start another command without the flag (default is --preemptible=never)
-    b = buck.build(
+    b = yak.build(
         "-c",
         "foo.bar=1" if same_state else "foo.bar=2",
         ":long_running_target",
@@ -326,10 +326,10 @@ async def test_preemptible_exit_when_not_idle_gets_preempted(
         assert exit_code == 5
 
 
-@buck_test()
+@yak_test()
 @pytest.mark.parametrize("same_state", [True, False])
 async def test_multiple_exit_when_not_idle_commands(
-    buck: Buck, same_state: bool
+    yak: Yak, same_state: bool
 ) -> None:
     """
     Test that a running command with --exit-when=notidle does NOT get preempted by an incoming command that
@@ -338,12 +338,12 @@ async def test_multiple_exit_when_not_idle_commands(
 
     # create a coroutine that can return a result
     async def process(
-        p: Process[BuildResult, BuckException],
+        p: Process[BuildResult, YakException],
     ) -> tuple[Optional[int], str]:
         result = await expect_failure(p)
         return (result.process.returncode, result.stderr)
 
-    a = buck.build(
+    a = yak.build(
         "-c",
         "foo.bar=1",
         "--exit-when=notidle",
@@ -357,7 +357,7 @@ async def test_multiple_exit_when_not_idle_commands(
     # Wait a short time to ensure the first command has started
     await asyncio.sleep(0.5)
 
-    b = buck.build(
+    b = yak.build(
         "-c",
         "foo.bar=1" if same_state else "foo.bar=2",
         "--exit-when=notidle",
@@ -383,21 +383,21 @@ async def test_multiple_exit_when_not_idle_commands(
         assert exit_code == 4
 
 
-@buck_test()
+@yak_test()
 @pytest.mark.parametrize("same_state", [True, False])
 async def test_exit_when_not_idle_after_command_exits(
-    buck: Buck, same_state: bool
+    yak: Yak, same_state: bool
 ) -> None:
     """ """
 
     # create a coroutine that can return a result
     async def process(
-        p: Process[BuildResult, BuckException],
+        p: Process[BuildResult, YakException],
     ) -> tuple[Optional[int], str]:
         result = await p
         return (result.process.returncode, result.stderr)
 
-    a = buck.build(
+    a = yak.build(
         "-c",
         "foo.bar=1",
         ":short_running_target",
@@ -410,7 +410,7 @@ async def test_exit_when_not_idle_after_command_exits(
     # Wait a short time to ensure the first command has finished
     await asyncio.sleep(2)
 
-    b = buck.build(
+    b = yak.build(
         "-c",
         "foo.bar=1" if same_state else "foo.bar=2",
         "--exit-when=notidle",

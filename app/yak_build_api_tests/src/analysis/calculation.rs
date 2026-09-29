@@ -24,9 +24,9 @@ use yak_build_api::interpreter::rule_defs::provider::builtin::default_info::Defa
 use yak_build_api::interpreter::rule_defs::provider::callable::register_provider;
 use yak_build_api::interpreter::rule_defs::provider::registration::register_builtin_providers;
 use yak_build_api::keep_going::HasKeepGoing;
-use yak_build_api::spawner::BuckSpawner;
+use yak_build_api::spawner::YakSpawner;
 use yak_common::dice::data::testing::SetTestingIoProvider;
-use yak_common::legacy_configs::configs::LegacyBuckConfig;
+use yak_common::legacy_configs::configs::LegacyYakConfig;
 use yak_common::package_listing::listing::PackageListing;
 use yak_common::package_listing::listing::testing::PackageListingExt;
 use yak_configured::execution::ExecutionPlatformsKey;
@@ -81,7 +81,7 @@ async fn test_analysis_calculation() -> yak_error::Result<()> {
             IntentionallyStdHashMap::new(),
         )?,
         resolver.dupe(),
-        LegacyBuckConfig::empty(),
+        LegacyYakConfig::empty(),
         CellPathWithAllowedRelativeDir::new(CellPath::testing_new("cell//pkg"), None),
     ))?;
     interpreter.additional_globals(register_rule_function);
@@ -158,7 +158,7 @@ async fn test_analysis_calculation() -> yak_error::Result<()> {
             data.set_starlark_debugger_handle(None);
             set_fallback_executor_config(&mut data.data, CommandExecutorConfig::testing_local());
             data.data.set(EventDispatcher::null());
-            data.spawner = Arc::new(BuckSpawner::current_runtime().unwrap());
+            data.spawner = Arc::new(YakSpawner::current_runtime().unwrap());
             data
         })
         .unwrap();

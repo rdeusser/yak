@@ -6,7 +6,7 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-load("@prelude//decls:common.bzl", "buck")
+load("@prelude//decls:common.bzl", "yak")
 load("@prelude//os_lookup:defs.bzl", "Os", "OsLookup")
 
 def _yak_bundle_impl(ctx: AnalysisContext) -> list[Provider]:
@@ -40,7 +40,7 @@ yak_bundle = rule(
     attrs = {
         "yak": attrs.dep(),
         "yak_client": attrs.dep(),
-        "_target_os_type": buck.target_os_type_arg(),
+        "_target_os_type": yak.target_os_type_arg(),
     },
 )
 

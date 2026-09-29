@@ -6,58 +6,58 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-from e2e_util.api.buck import Buck
+from e2e_util.api.yak import Yak
 from e2e_util.asserts import expect_failure
-from e2e_util.buck_workspace import buck_test
+from e2e_util.yak_workspace import yak_test
 
 
-@buck_test()
-async def test_within_view(buck: Buck) -> None:
-    res = await buck.targets("//a/...", "--json-lines")
+@yak_test()
+async def test_within_view(yak: Yak) -> None:
+    res = await yak.targets("//a/...", "--json-lines")
     assert res.get_target_list() == ["prelude//a:a"]
 
 
-@buck_test()
-async def test_within_view_outside_view(buck: Buck) -> None:
+@yak_test()
+async def test_within_view_outside_view(yak: Yak) -> None:
     await expect_failure(
-        buck.targets("//b/..."),
+        yak.targets("//b/..."),
         stderr_regex="Target's `within_view` attribute does not allow dependency `prelude//a:a`",
     )
 
 
-@buck_test()
-async def test_within_view_default_outofview(buck: Buck) -> None:
-    res = await buck.targets("//default/...", "--json-lines")
+@yak_test()
+async def test_within_view_default_outofview(yak: Yak) -> None:
+    res = await yak.targets("//default/...", "--json-lines")
     assert res.get_target_list() == ["prelude//default:a"]
 
 
-@buck_test()
-async def test_within_view_default_outofview_withnone(buck: Buck) -> None:
-    res = await buck.targets("//default_withnone/none/...", "--json-lines")
+@yak_test()
+async def test_within_view_default_outofview_withnone(yak: Yak) -> None:
+    res = await yak.targets("//default_withnone/none/...", "--json-lines")
     assert res.get_target_list() == [
         "prelude//default_withnone/none:target",
     ]
 
 
-@buck_test()
-async def test_within_view_default_outofview_withnoneselect(buck: Buck) -> None:
-    res = await buck.targets("//default_withnone/select/...", "--json-lines")
+@yak_test()
+async def test_within_view_default_outofview_withnoneselect(yak: Yak) -> None:
+    res = await yak.targets("//default_withnone/select/...", "--json-lines")
     assert res.get_target_list() == [
         "prelude//default_withnone/select:target",
     ]
 
 
-@buck_test()
-async def test_within_view_default_outofview_withdefault(buck: Buck) -> None:
-    res = await buck.targets("//default_withvalue/value/...", "--json-lines")
+@yak_test()
+async def test_within_view_default_outofview_withdefault(yak: Yak) -> None:
+    res = await yak.targets("//default_withvalue/value/...", "--json-lines")
     assert res.get_target_list() == [
         "prelude//default_withvalue/value:target",
     ]
 
 
-@buck_test()
-async def test_within_view_default_outofview_withdefaultselect(buck: Buck) -> None:
-    res = await buck.targets("//default_withvalue/select/...", "--json-lines")
+@yak_test()
+async def test_within_view_default_outofview_withdefaultselect(yak: Yak) -> None:
+    res = await yak.targets("//default_withvalue/select/...", "--json-lines")
     assert res.get_target_list() == [
         "prelude//default_withvalue/select:target",
     ]

@@ -6,7 +6,7 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-load("@prelude//decls:common.bzl", "buck", "prelude_rule")
+load("@prelude//decls:common.bzl", "yak", "prelude_rule")
 load("@prelude//decls:cxx_rules.bzl", "cxx_rules")
 load("@prelude//decls:python_common.bzl", "python_common")
 load("@prelude//decls:toolchains_common.bzl", "toolchains_common")
@@ -26,8 +26,8 @@ cython_library = prelude_rule(
         # @unsorted-dict-items
         {k: attrs.default_only(v) for k, v in cxx_rules.cxx_library.attrs.items()}
         | python_common.base_module_arg()
-        | buck.labels_arg()
-        | buck.contacts_arg()
+        | yak.labels_arg()
+        | yak.contacts_arg()
         | {
             "allow_embedding": attrs.option(
                 attrs.bool(),
@@ -224,9 +224,9 @@ cython_library = prelude_rule(
             # Private/toolchain attrs
             "_cxx_toolchain": toolchains_common.cxx(),
             "_cython_toolchain": toolchains_common.cython(),
-            "_exec_os_type": buck.exec_os_type_arg(),
+            "_exec_os_type": yak.exec_os_type_arg(),
             "_python_toolchain": toolchains_common.python(),
-            "_target_os_type": buck.target_os_type_arg(),
+            "_target_os_type": yak.target_os_type_arg(),
         }
     ),
 )
@@ -404,9 +404,9 @@ cython_static_extension = prelude_rule(
             # Toolchain attrs
             "_cxx_toolchain": toolchains_common.cxx(),
             "_cython_toolchain": toolchains_common.cython(),
-            "_exec_os_type": buck.exec_os_type_arg(),
+            "_exec_os_type": yak.exec_os_type_arg(),
             "_python_toolchain": toolchains_common.python(),
-            "_target_os_type": buck.target_os_type_arg(),
+            "_target_os_type": yak.target_os_type_arg(),
         }
     ),
 )

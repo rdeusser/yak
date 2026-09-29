@@ -7,6 +7,6 @@ native.set_cfg_constructor(
     key = MODIFIER_METADATA_KEY,
     aliases = struct(),
     extra_data = struct(
-        buckconfig_backed_modifiers = "root//buckconfig_backed:buckconfig_modifiers",
+        yakconfig_backed_modifiers = "root//yakconfig_backed:yakconfig_modifiers",
     ),
 )

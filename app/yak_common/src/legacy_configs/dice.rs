@@ -35,86 +35,86 @@ use dupe::ResultDupedErrExt;
 use pagable::Pagable;
 use pagable::pagable_typetag;
 use yak_core::cells::name::CellName;
-use yak_error::BuckErrorContext;
-use yak_error::BuckErrorOptionContext;
+use yak_error::YakErrorContext;
+use yak_error::YakErrorOptionContext;
 use yak_events::dispatch::get_dispatcher;
 
 use crate::dice::cells::HasCellResolver;
-use crate::legacy_configs::cells::BuckConfigBasedCells;
-use crate::legacy_configs::cells::ExternalBuckconfigData;
-use crate::legacy_configs::configs::LegacyBuckConfig;
-use crate::legacy_configs::key::BuckconfigKeyRef;
-use crate::legacy_configs::view::LegacyBuckConfigView;
+use crate::legacy_configs::cells::YakConfigBasedCells;
+use crate::legacy_configs::cells::ExternalYakconfigData;
+use crate::legacy_configs::configs::LegacyYakConfig;
+use crate::legacy_configs::key::YakconfigKeyRef;
+use crate::legacy_configs::view::LegacyYakConfigView;
 
 /// yakconfig view which queries yakconfig entry from DICE.
 #[derive(Clone, Dupe)]
-pub struct OpaqueLegacyBuckConfigOnDice<'d> {
-    config: Arc<OpaqueValue<'d, LegacyBuckConfigForCellKey>>,
+pub struct OpaqueLegacyYakConfigOnDice<'d> {
+    config: Arc<OpaqueValue<'d, LegacyYakConfigForCellKey>>,
 }
 
-impl<'d> std::fmt::Debug for OpaqueLegacyBuckConfigOnDice<'d> {
+impl<'d> std::fmt::Debug for OpaqueLegacyYakConfigOnDice<'d> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("LegacyBuckConfigOnDice")
+        f.debug_struct("LegacyYakConfigOnDice")
             .field("config", &self.config)
             .finish()
     }
 }
 
-impl<'d> OpaqueLegacyBuckConfigOnDice<'d> {
+impl<'d> OpaqueLegacyYakConfigOnDice<'d> {
     pub fn lookup(
         &self,
         ctx: &mut DiceComputations<'d>,
-        key: BuckconfigKeyRef,
+        key: YakconfigKeyRef,
     ) -> yak_error::Result<Option<Arc<str>>> {
-        let BuckconfigKeyRef { section, property } = key;
+        let YakconfigKeyRef { section, property } = key;
         Ok(ctx.projection(
             &*self.config,
-            &LegacyBuckConfigPropertyProjectionKey {
+            &LegacyYakConfigPropertyProjectionKey {
                 section: section.to_owned(),
                 property: property.to_owned(),
             },
         )?)
     }
 
-    pub fn view<'a>(&'a self, ctx: &'a mut DiceComputations<'d>) -> LegacyBuckConfigOnDice<'a, 'd> {
-        LegacyBuckConfigOnDice { ctx, config: self }
+    pub fn view<'a>(&'a self, ctx: &'a mut DiceComputations<'d>) -> LegacyYakConfigOnDice<'a, 'd> {
+        LegacyYakConfigOnDice { ctx, config: self }
     }
 }
 
-pub struct LegacyBuckConfigOnDice<'a, 'd> {
+pub struct LegacyYakConfigOnDice<'a, 'd> {
     ctx: &'a mut DiceComputations<'d>,
-    config: &'a OpaqueLegacyBuckConfigOnDice<'d>,
+    config: &'a OpaqueLegacyYakConfigOnDice<'d>,
 }
 
-impl LegacyBuckConfigOnDice<'_, '_> {
-    pub fn parse<T: FromStr>(&mut self, key: BuckconfigKeyRef) -> yak_error::Result<Option<T>>
+impl LegacyYakConfigOnDice<'_, '_> {
+    pub fn parse<T: FromStr>(&mut self, key: YakconfigKeyRef) -> yak_error::Result<Option<T>>
     where
         yak_error::Error: From<<T as FromStr>::Err>,
     {
-        LegacyBuckConfig::parse_value(key, self.get(key)?.as_deref())
+        LegacyYakConfig::parse_value(key, self.get(key)?.as_deref())
     }
 }
 
-impl std::fmt::Debug for LegacyBuckConfigOnDice<'_, '_> {
+impl std::fmt::Debug for LegacyYakConfigOnDice<'_, '_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("LegacyBuckConfigOnDice")
+        f.debug_struct("LegacyYakConfigOnDice")
             .field("config", &self.config)
             .finish()
     }
 }
 
-impl LegacyBuckConfigView for LegacyBuckConfigOnDice<'_, '_> {
-    fn get(&mut self, key: BuckconfigKeyRef) -> yak_error::Result<Option<Arc<str>>> {
+impl LegacyYakConfigView for LegacyYakConfigOnDice<'_, '_> {
+    fn get(&mut self, key: YakconfigKeyRef) -> yak_error::Result<Option<Arc<str>>> {
         self.config.lookup(self.ctx, key)
     }
 }
 
 pub trait HasInjectedLegacyConfigs<'d> {
-    fn get_injected_external_buckconfig_data(
+    fn get_injected_external_yakconfig_data(
         &mut self,
-    ) -> impl Future<Output = yak_error::Result<&'d ExternalBuckconfigData>>;
+    ) -> impl Future<Output = yak_error::Result<&'d ExternalYakconfigData>>;
 
-    fn is_injected_external_buckconfig_data_key_set(
+    fn is_injected_external_yakconfig_data_key_set(
         &mut self,
     ) -> impl Future<Output = yak_error::Result<bool>>;
 }
@@ -128,11 +128,11 @@ pub trait HasLegacyConfigs<'d> {
     async fn get_legacy_config_on_dice(
         &mut self,
         cell_name: CellName,
-    ) -> yak_error::Result<OpaqueLegacyBuckConfigOnDice<'d>>;
+    ) -> yak_error::Result<OpaqueLegacyYakConfigOnDice<'d>>;
 
     async fn get_legacy_root_config_on_dice(
         &mut self,
-    ) -> yak_error::Result<OpaqueLegacyBuckConfigOnDice<'d>>;
+    ) -> yak_error::Result<OpaqueLegacyYakConfigOnDice<'d>>;
 
     /// Use this function carefully: a computation which fetches this key will be recomputed
     /// if any yakconfig property changes.
@@ -141,18 +141,18 @@ pub trait HasLegacyConfigs<'d> {
     async fn get_legacy_config_for_cell(
         &mut self,
         cell_name: CellName,
-    ) -> yak_error::Result<&'d LegacyBuckConfig>;
+    ) -> yak_error::Result<&'d LegacyYakConfig>;
 
     async fn get_legacy_config_property(
         &mut self,
         cell_name: CellName,
-        key: BuckconfigKeyRef<'_>,
+        key: YakconfigKeyRef<'_>,
     ) -> yak_error::Result<Option<Arc<str>>>;
 
     async fn parse_legacy_config_property<T: FromStr>(
         &mut self,
         cell_name: CellName,
-        key: BuckconfigKeyRef<'_>,
+        key: YakconfigKeyRef<'_>,
     ) -> yak_error::Result<Option<T>>
     where
         yak_error::Error: From<<T as FromStr>::Err>,
@@ -161,7 +161,7 @@ pub trait HasLegacyConfigs<'d> {
     async fn parse_legacy_config_list_property<T: FromStr>(
         &mut self,
         cell_name: CellName,
-        key: BuckconfigKeyRef<'_>,
+        key: YakconfigKeyRef<'_>,
     ) -> yak_error::Result<Option<Vec<T>>>
     where
         yak_error::Error: From<<T as FromStr>::Err>,
@@ -171,7 +171,7 @@ pub trait HasLegacyConfigs<'d> {
 pub trait SetLegacyConfigs {
     fn set_legacy_config_external_data(
         &mut self,
-        overrides: ExternalBuckconfigData,
+        overrides: ExternalYakconfigData,
     ) -> yak_error::Result<()>;
 
     fn set_none_legacy_config_external_data(&mut self) -> yak_error::Result<()>;
@@ -180,10 +180,10 @@ pub trait SetLegacyConfigs {
 #[derive(Clone, Dupe, Display, Debug, Eq, Hash, PartialEq, Allocative, Pagable)]
 #[display("{:?}", self)]
 #[pagable_typetag(dice::DiceKeyDyn)]
-struct LegacyExternalBuckConfigDataKey;
+struct LegacyExternalYakConfigDataKey;
 
-impl InjectedKey for LegacyExternalBuckConfigDataKey {
-    type Value = Option<ExternalBuckconfigData>;
+impl InjectedKey for LegacyExternalYakConfigDataKey {
+    type Value = Option<ExternalYakconfigData>;
 
     fn equality_behavior() -> EqualityBehavior<Self::Value> {
         EqualityBehavior::Compare(|x, y| x == y)
@@ -195,26 +195,26 @@ impl InjectedKey for LegacyExternalBuckConfigDataKey {
 }
 
 #[derive(Clone, Display, Debug, Hash, Eq, PartialEq, Allocative, Pagable)]
-#[display("LegacyBuckConfigForCellKey({})", self.cell_name)]
+#[display("LegacyYakConfigForCellKey({})", self.cell_name)]
 #[pagable_typetag(dice::DiceKeyDyn)]
-struct LegacyBuckConfigForCellKey {
+struct LegacyYakConfigForCellKey {
     cell_name: CellName,
 }
 
 #[async_trait]
-impl Key for LegacyBuckConfigForCellKey {
-    type Value = yak_error::Result<LegacyBuckConfig>;
+impl Key for LegacyYakConfigForCellKey {
+    type Value = yak_error::Result<LegacyYakConfig>;
 
     async fn compute(
         &self,
         ctx: &mut DiceComputations,
         _cancellations: &CancellationContext,
-    ) -> yak_error::Result<LegacyBuckConfig> {
+    ) -> yak_error::Result<LegacyYakConfig> {
         let cells = ctx.get_cell_resolver().await?;
         let this_cell = cells.get(self.cell_name)?;
-        let config = BuckConfigBasedCells::parse_single_cell_with_dice(ctx, this_cell.path())
+        let config = YakConfigBasedCells::parse_single_cell_with_dice(ctx, this_cell.path())
             .await
-            .with_buck_error_context(|| {
+            .with_yak_error_context(|| {
                 format!("Computing legacy yakconfigs for cell `{}`", self.cell_name)
             })?;
         let config = config.filter_values(is_config_invisible_to_dice);
@@ -239,24 +239,24 @@ impl Key for LegacyBuckConfigForCellKey {
     }
 }
 
-/// The computation `LegacyBuckConfigForCellKey` computation might encounter an error.
+/// The computation `LegacyYakConfigForCellKey` computation might encounter an error.
 ///
 /// We can't return that error immediately, because we only compute the opaque value. We could
 /// return the error when doing the projection to the yakconfig values, but that would result in us
 /// increasing the size of the value returned from that computation. Instead, we'll use a different
 /// projection key to extract just the error from the cell computation, and compute that when
-/// constructing the `OpaqueLegacyBuckConfigOnDice`.
+/// constructing the `OpaqueLegacyYakConfigOnDice`.
 #[derive(Debug, Display, Hash, Eq, PartialEq, Clone, Allocative, Pagable)]
 #[pagable_typetag(dice::DiceProjectionDyn)]
-struct LegacyBuckConfigErrorKey();
+struct LegacyYakConfigErrorKey();
 
-impl ProjectionKey for LegacyBuckConfigErrorKey {
-    type DeriveFromKey = LegacyBuckConfigForCellKey;
+impl ProjectionKey for LegacyYakConfigErrorKey {
+    type DeriveFromKey = LegacyYakConfigForCellKey;
     type Value = Option<yak_error::Error>;
 
     fn compute(
         &self,
-        config: &yak_error::Result<LegacyBuckConfig>,
+        config: &yak_error::Result<LegacyYakConfig>,
         _ctx: &DiceProjectionComputations,
     ) -> Option<yak_error::Error> {
         config.as_ref().err().cloned()
@@ -274,24 +274,24 @@ impl ProjectionKey for LegacyBuckConfigErrorKey {
 #[derive(Debug, Display, Hash, Eq, PartialEq, Clone, Allocative, Pagable)]
 #[display("{}.{}", section, property)]
 #[pagable_typetag(dice::DiceProjectionDyn)]
-struct LegacyBuckConfigPropertyProjectionKey {
+struct LegacyYakConfigPropertyProjectionKey {
     section: String,
     property: String,
 }
 
-impl ProjectionKey for LegacyBuckConfigPropertyProjectionKey {
-    type DeriveFromKey = LegacyBuckConfigForCellKey;
+impl ProjectionKey for LegacyYakConfigPropertyProjectionKey {
+    type DeriveFromKey = LegacyYakConfigForCellKey;
     type Value = Option<Arc<str>>;
 
     fn compute(
         &self,
-        config: &yak_error::Result<LegacyBuckConfig>,
+        config: &yak_error::Result<LegacyYakConfig>,
         _ctx: &DiceProjectionComputations,
     ) -> Option<Arc<str>> {
-        // See the comment in `LegacyBuckConfigErrorKey` for why this is safe
+        // See the comment in `LegacyYakConfigErrorKey` for why this is safe
         let config = config.as_ref().unwrap();
         config
-            .get(BuckconfigKeyRef {
+            .get(YakconfigKeyRef {
                 section: &self.section,
                 property: &self.property,
             })
@@ -308,15 +308,15 @@ impl ProjectionKey for LegacyBuckConfigPropertyProjectionKey {
 }
 
 impl<'d> HasInjectedLegacyConfigs<'d> for DiceComputations<'d> {
-    async fn get_injected_external_buckconfig_data(
+    async fn get_injected_external_yakconfig_data(
         &mut self,
-    ) -> yak_error::Result<&'d ExternalBuckconfigData> {
-        self.compute(&LegacyExternalBuckConfigDataKey).await?.as_ref().internal_error("Tried to retrieve LegacyExternalBuckConfigDataKey from the graph, but key has None value")
+    ) -> yak_error::Result<&'d ExternalYakconfigData> {
+        self.compute(&LegacyExternalYakConfigDataKey).await?.as_ref().internal_error("Tried to retrieve LegacyExternalYakConfigDataKey from the graph, but key has None value")
     }
 
-    async fn is_injected_external_buckconfig_data_key_set(&mut self) -> yak_error::Result<bool> {
+    async fn is_injected_external_yakconfig_data_key_set(&mut self) -> yak_error::Result<bool> {
         Ok(self
-            .compute(&LegacyExternalBuckConfigDataKey)
+            .compute(&LegacyExternalYakConfigDataKey)
             .await?
             .is_some())
     }
@@ -325,21 +325,21 @@ impl<'d> HasInjectedLegacyConfigs<'d> for DiceComputations<'d> {
 pub fn inject_legacy_config_for_test(
     dice: &mut DiceTransactionUpdater,
     cell_name: CellName,
-    configs: LegacyBuckConfig,
+    configs: LegacyYakConfig,
 ) -> yak_error::Result<()> {
     inject_legacy_configs_for_test(dice, [(cell_name, configs)])
 }
 
 pub fn inject_legacy_configs_for_test(
     dice: &mut DiceTransactionUpdater,
-    configs: impl IntoIterator<Item = (CellName, LegacyBuckConfig)> + Send + Sync + 'static,
+    configs: impl IntoIterator<Item = (CellName, LegacyYakConfig)> + Send + Sync + 'static,
 ) -> yak_error::Result<()> {
     let configs = configs
         .into_iter()
-        .map(|(cell_name, configs)| (LegacyBuckConfigForCellKey { cell_name }, Ok(configs)))
+        .map(|(cell_name, configs)| (LegacyYakConfigForCellKey { cell_name }, Ok(configs)))
         .collect::<Vec<_>>();
     dice.changed_to(configs)?;
-    dice.changed_to([(LegacyExternalBuckConfigDataKey, None)])?;
+    dice.changed_to([(LegacyExternalYakConfigDataKey, None)])?;
     Ok(())
 }
 
@@ -348,21 +348,21 @@ impl<'d> HasLegacyConfigs<'d> for DiceComputations<'d> {
     async fn get_legacy_config_on_dice(
         &mut self,
         cell_name: CellName,
-    ) -> yak_error::Result<OpaqueLegacyBuckConfigOnDice<'d>> {
+    ) -> yak_error::Result<OpaqueLegacyYakConfigOnDice<'d>> {
         let config = self
-            .compute_opaque(&LegacyBuckConfigForCellKey { cell_name })
+            .compute_opaque(&LegacyYakConfigForCellKey { cell_name })
             .await?;
-        if let Some(error) = self.projection(&config, &LegacyBuckConfigErrorKey())? {
+        if let Some(error) = self.projection(&config, &LegacyYakConfigErrorKey())? {
             return Err(error);
         }
-        Ok(OpaqueLegacyBuckConfigOnDice {
+        Ok(OpaqueLegacyYakConfigOnDice {
             config: Arc::new(config),
         })
     }
 
     async fn get_legacy_root_config_on_dice(
         &mut self,
-    ) -> yak_error::Result<OpaqueLegacyBuckConfigOnDice<'d>> {
+    ) -> yak_error::Result<OpaqueLegacyYakConfigOnDice<'d>> {
         let cell_resolver = self.get_cell_resolver().await?;
         self.get_legacy_config_on_dice(cell_resolver.root_cell())
             .await
@@ -371,8 +371,8 @@ impl<'d> HasLegacyConfigs<'d> for DiceComputations<'d> {
     async fn get_legacy_config_for_cell(
         &mut self,
         cell_name: CellName,
-    ) -> yak_error::Result<&'d LegacyBuckConfig> {
-        self.compute(&LegacyBuckConfigForCellKey { cell_name })
+    ) -> yak_error::Result<&'d LegacyYakConfig> {
+        self.compute(&LegacyYakConfigForCellKey { cell_name })
             .await?
             .as_ref()
             .duped_err()
@@ -381,7 +381,7 @@ impl<'d> HasLegacyConfigs<'d> for DiceComputations<'d> {
     async fn get_legacy_config_property(
         &mut self,
         cell_name: CellName,
-        key: BuckconfigKeyRef<'_>,
+        key: YakconfigKeyRef<'_>,
     ) -> yak_error::Result<Option<Arc<str>>> {
         self.get_legacy_config_on_dice(cell_name)
             .await?
@@ -391,13 +391,13 @@ impl<'d> HasLegacyConfigs<'d> for DiceComputations<'d> {
     async fn parse_legacy_config_property<T: FromStr>(
         &mut self,
         cell_name: CellName,
-        key: BuckconfigKeyRef<'_>,
+        key: YakconfigKeyRef<'_>,
     ) -> yak_error::Result<Option<T>>
     where
         yak_error::Error: From<<T as FromStr>::Err>,
         T: Send + Sync + 'static,
     {
-        LegacyBuckConfig::parse_value(
+        LegacyYakConfig::parse_value(
             key,
             self.get_legacy_config_property(cell_name, key)
                 .await?
@@ -408,13 +408,13 @@ impl<'d> HasLegacyConfigs<'d> for DiceComputations<'d> {
     async fn parse_legacy_config_list_property<T: FromStr>(
         &mut self,
         cell_name: CellName,
-        key: BuckconfigKeyRef<'_>,
+        key: YakconfigKeyRef<'_>,
     ) -> yak_error::Result<Option<Vec<T>>>
     where
         yak_error::Error: From<<T as FromStr>::Err>,
         T: Send + Sync + 'static,
     {
-        LegacyBuckConfig::parse_list_value(
+        LegacyYakConfig::parse_list_value(
             key,
             self.get_legacy_config_property(cell_name, key)
                 .await?
@@ -426,25 +426,25 @@ impl<'d> HasLegacyConfigs<'d> for DiceComputations<'d> {
 impl SetLegacyConfigs for DiceTransactionUpdater {
     fn set_legacy_config_external_data(
         &mut self,
-        data: ExternalBuckconfigData,
+        data: ExternalYakconfigData,
     ) -> yak_error::Result<()> {
         let data = data.filter_values(is_config_invisible_to_dice);
-        Ok(self.changed_to(vec![(LegacyExternalBuckConfigDataKey, Some(data))])?)
+        Ok(self.changed_to(vec![(LegacyExternalYakConfigDataKey, Some(data))])?)
     }
 
     fn set_none_legacy_config_external_data(&mut self) -> yak_error::Result<()> {
-        Ok(self.changed_to(vec![(LegacyExternalBuckConfigDataKey, None)])?)
+        Ok(self.changed_to(vec![(LegacyExternalYakConfigDataKey, None)])?)
     }
 }
 
-fn is_config_invisible_to_dice(key: &BuckconfigKeyRef) -> bool {
+fn is_config_invisible_to_dice(key: &YakconfigKeyRef) -> bool {
     !CONFIGS_INVISIBLE_TO_DICE.contains(key)
 }
 
 /// A set of yakconfigs that are visibile outside of dice, but not within it. Importantly, changes
 /// to these configs do not cause state invalidations.
 // FIXME(JakobDegen): Error if someone tries to read any of these from in dice
-const CONFIGS_INVISIBLE_TO_DICE: &[BuckconfigKeyRef<'static>] = &[BuckconfigKeyRef {
+const CONFIGS_INVISIBLE_TO_DICE: &[YakconfigKeyRef<'static>] = &[YakconfigKeyRef {
     section: "yak_re_client",
     property: "override_use_case",
 }];

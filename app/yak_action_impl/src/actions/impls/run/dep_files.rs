@@ -49,7 +49,7 @@ use yak_common::file_ops::metadata::TrackedFileDigest;
 use yak_core::configuration::pair::Configuration;
 use yak_core::content_hash::ContentBasedPathHash;
 use yak_core::fs::artifact_path_resolver::ArtifactFs;
-use yak_core::fs::buck_out_path::BuildArtifactPath;
+use yak_core::fs::yak_out_path::BuildArtifactPath;
 use yak_core::fs::project_rel_path::ProjectRelativePathBuf;
 use yak_core::soft_error;
 use yak_core::yak_env;
@@ -60,8 +60,8 @@ use yak_directory::directory::directory_selector::DirectorySelector;
 use yak_directory::directory::entry::DirectoryEntry;
 use yak_directory::directory::find::find;
 use yak_directory::directory::fingerprinted_directory::FingerprintedDirectory;
-use yak_error::BuckErrorContext;
-use yak_error::BuckErrorOptionContext;
+use yak_error::YakErrorContext;
+use yak_error::YakErrorOptionContext;
 use yak_error::internal_error;
 use yak_events::dispatch::span_async;
 use yak_execute::artifact::artifact_dyn::ArtifactDyn;
@@ -100,9 +100,9 @@ use yak_fs::paths::file_name::FileNameBuf;
 use yak_fs::paths::forward_rel_path::ForwardRelativePath;
 use yak_fs::paths::forward_rel_path::ForwardRelativePathBuf;
 use yak_fs::paths::forward_rel_path::ForwardRelativePathNormalizer;
-use yak_hash::BuckDashMap;
-use yak_hash::BuckMutMap;
-use yak_hash::BuckMutSet;
+use yak_hash::YakDashMap;
+use yak_hash::YakMutMap;
+use yak_hash::YakMutSet;
 use yak_util::strong_hasher::Blake3StrongHasher;
 
 use crate::actions::impls::run::LogicalActionKey;
@@ -217,7 +217,7 @@ impl ConfigActionSlot {
 /// and BXL actions.
 #[derive(Default, Allocative)]
 struct ShardedDepFiles {
-    map: BuckDashMap<LogicalActionKey, ConfigActionSlot>,
+    map: YakDashMap<LogicalActionKey, ConfigActionSlot>,
 }
 
 impl ShardedDepFiles {
@@ -1111,7 +1111,7 @@ impl DepFileBundle {
             materializer,
         )
         .await
-        .buck_error_context("Error reading dep files")?;
+        .yak_error_context("Error reading dep files")?;
 
         let dep_files = match dep_files {
             Some(dep_files) => dep_files,
@@ -1500,7 +1500,7 @@ fn remap_live_outputs(
     declared_outputs: &[BuildArtifact],
     cached: &ActionOutputs,
 ) -> yak_error::Result<ActionOutputs> {
-    let by_short_path: BuckMutMap<&ForwardRelativePath, &ArtifactValue> = cached
+    let by_short_path: YakMutMap<&ForwardRelativePath, &ArtifactValue> = cached
         .iter()
         .map(|(path, value)| (path.path(), value))
         .collect();
@@ -1532,7 +1532,7 @@ async fn resolve_loaded_outputs(
     outputs: &[StoredOutput],
 ) -> yak_error::Result<Option<ActionOutputs>> {
     let fs = ctx.fs();
-    let by_short_path: BuckMutMap<&ForwardRelativePath, &StoredOutputValue> = outputs
+    let by_short_path: YakMutMap<&ForwardRelativePath, &StoredOutputValue> = outputs
         .iter()
         .map(|o| (o.path.as_ref(), &o.value))
         .collect();
@@ -1573,7 +1573,7 @@ async fn resolve_loaded_outputs(
                     None
                 };
                 let project_path = fs
-                    .buck_out_path_resolver()
+                    .yak_out_path_resolver()
                     .resolve_gen(path, content_hash.as_ref())?;
                 Plan::Directory {
                     project_path,
@@ -1591,8 +1591,8 @@ async fn resolve_loaded_outputs(
             Plan::Ready(_) => None,
         })
         .collect();
-    let mut fetched: BuckMutMap<ProjectRelativePathBuf, _> = if dir_paths.is_empty() {
-        BuckMutMap::default()
+    let mut fetched: YakMutMap<ProjectRelativePathBuf, _> = if dir_paths.is_empty() {
+        YakMutMap::default()
     } else {
         ctx.materializer()
             .get_artifact_entries_for_materialized_paths(dir_paths, false)
@@ -1774,7 +1774,7 @@ async fn outputs_are_still_present_in_materializer(
         .iter()
         .map(|(path, value)| {
             Ok((
-                fs.buck_out_path_resolver()
+                fs.yak_out_path_resolver()
                     .resolve_gen(path, Some(&value.content_based_path_hash()))?,
                 value.dupe(),
             ))
@@ -1901,7 +1901,7 @@ async fn dep_files_match(
         ctx.materializer(),
     )
     .await
-    .buck_error_context(
+    .yak_error_context(
         "Error reading persisted dep files. \
             Fix the command that produced an invalid dep file. \
             You may also use `yak debug flush-dep-files` to drop all dep file state.",
@@ -1959,7 +1959,7 @@ fn outputs_are_reusable(
 ) -> bool {
     // Match by configuration-independent output path so an identical action built under a different
     // configuration (or reloaded from disk) is still recognized as reusable.
-    let cached: BuckMutSet<&ForwardRelativePath> = candidate.short_paths().collect();
+    let cached: YakMutSet<&ForwardRelativePath> = candidate.short_paths().collect();
     declared_outputs.iter().all(|out| {
         let path = out.get_path();
         cached.contains(&(path.path()))
@@ -1990,7 +1990,7 @@ pub(crate) async fn read_dep_files(
         };
     }
 
-    let dep_files = declared_dep_files.read(fs, result).buck_error_context(
+    let dep_files = declared_dep_files.read(fs, result).yak_error_context(
         "Error reading dep files, verify that the action produced valid output",
     )?;
 
@@ -2436,7 +2436,7 @@ impl DeclaredDepFiles {
         result: &ActionOutputs,
     ) -> yak_error::Result<Option<ConcreteDepFiles>> {
         let mut contents =
-            BuckMutMap::with_capacity_and_hasher(self.tagged.len(), Default::default());
+            YakMutMap::with_capacity_and_hasher(self.tagged.len(), Default::default());
 
         for declared_dep_file in self.tagged.values() {
             let content_hash = if declared_dep_file
@@ -2478,7 +2478,7 @@ impl DeclaredDepFiles {
                 contents.insert(declared_dep_file.label.dupe(), dep_file);
             };
 
-            read_dep_file.with_buck_error_context(|| {
+            read_dep_file.with_yak_error_context(|| {
                 format!(
                     "Action execution produced an invalid `{}` dep file at `{}`",
                     declared_dep_file.label, dep_file,
@@ -2497,7 +2497,7 @@ impl DeclaredDepFiles {
     /// cached state is looked up by a key that already fixes the (unconfigured) target, comparing
     /// these identities is sufficient to reuse dep files (or the whole action) from a previous
     /// invocation, possibly under a different configuration or from a previous daemon session.
-    fn identities(&self) -> yak_error::Result<BuckMutSet<DeclaredDepFileIdentity>> {
+    fn identities(&self) -> yak_error::Result<YakMutSet<DeclaredDepFileIdentity>> {
         self.tagged
             .values()
             .map(DeclaredDepFile::identity)
@@ -2522,7 +2522,7 @@ enum MaterializeDepFilesError {
 /// content of the corresponding dep file.
 #[derive(Clone)]
 pub(crate) struct ConcreteDepFiles {
-    contents: BuckMutMap<Arc<str>, String>,
+    contents: YakMutMap<Arc<str>, String>,
 }
 
 impl ConcreteDepFiles {
@@ -2545,7 +2545,7 @@ impl ConcreteDepFiles {
             }
 
             let path = ForwardRelativePathNormalizer::normalize_path(line)
-                .buck_error_context("Invalid line encountered in dep file")?;
+                .yak_error_context("Invalid line encountered in dep file")?;
 
             if let Err(e) = Self::add_path_to_selector(path, &mut selector, fs, builder) {
                 soft_error!("failed_to_add_dep_file_path_to_selector", e, hard_error: true)?;
@@ -2572,7 +2572,7 @@ impl ConcreteDepFiles {
         fs: &ArtifactFs,
         builder: &ActionDirectoryBuilder,
     ) -> yak_error::Result<()> {
-        if !path.starts_with(fs.buck_out_path_resolver().root()) {
+        if !path.starts_with(fs.yak_out_path_resolver().root()) {
             // This path isn't in yak-out, no content-based hash to replace.
             selector.select(path.as_ref());
             return Ok(());
@@ -2780,7 +2780,7 @@ mod tests {
     use yak_execute::directory::extract_artifact_value;
     use yak_execute::directory::insert_entry;
     use yak_execute::directory::insert_file;
-    use yak_hash::BuckIndexMap;
+    use yak_hash::YakIndexMap;
 
     use super::*;
 
@@ -2796,7 +2796,7 @@ mod tests {
             identifier: None,
         };
         let state = Arc::new(dep_file_state_with(
-            ActionOutputs::new(BuckIndexMap::new()),
+            ActionOutputs::new(YakIndexMap::new()),
             DigestConfig::testing_default(),
         ));
 
@@ -2956,7 +2956,7 @@ mod tests {
         let target =
             ConfiguredTargetLabel::testing_parse("cell//pkg:foo", ConfigurationData::testing_new());
         let artifact = BuildArtifact::testing_new(target, "out", ActionIndex::new(0));
-        ActionOutputs::new(BuckIndexMap::from_iter([(
+        ActionOutputs::new(YakIndexMap::from_iter([(
             artifact.get_path().dupe(),
             value,
         )]))

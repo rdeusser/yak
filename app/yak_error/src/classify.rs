@@ -115,7 +115,7 @@ macro_rules! rank {
 
 #[derive(derive_more::Display, Debug, PartialEq)]
 pub enum ErrorSourceArea {
-    Buck2,
+    Yak,
     Re,
     Watchman,
     TestExecutor,
@@ -145,7 +145,7 @@ impl ErrorTagExtra for ErrorTag {
         } else if tag_name.starts_with("INSTALLER") {
             ErrorSourceArea::Installer
         } else {
-            ErrorSourceArea::Buck2
+            ErrorSourceArea::Yak
         }
     }
 
@@ -168,7 +168,7 @@ fn tag_metadata(tag: ErrorTag) -> TagMetadata {
         ErrorTag::ServerTransportError => rank!(environment),
         ErrorTag::ServerMemoryPressure => rank!(environment),
         ErrorTag::DaemonOomKilled => rank!(environment).exit_code(ExitCode::FatalOom),
-        ErrorTag::NoBuckRoot => rank!(environment),
+        ErrorTag::NoYakRoot => rank!(environment),
         ErrorTag::InstallerEnvironment => rank!(environment).hidden(),
         ErrorTag::IoNotConnected => rank!(environment), // Typically a disconnected FUSE mount
         // Typically due to poor network performance and large artifacts.
@@ -200,8 +200,8 @@ fn tag_metadata(tag: ErrorTag) -> TagMetadata {
         ErrorTag::IoInputOutputError => rank!(environment),
         ErrorTag::IoBadAddress => rank!(environment),
         ErrorTag::IoStaleNfsHandle => rank!(environment),
-        ErrorTag::InvalidBuckOut => rank!(environment),
-        ErrorTag::BuckdExeDeleted => rank!(environment),
+        ErrorTag::InvalidYakOut => rank!(environment),
+        ErrorTag::YakdExeDeleted => rank!(environment),
         ErrorTag::MissingProjectRoot => rank!(environment),
         ErrorTag::MissingHomeDir => rank!(environment),
         // Typically a checkout replaced the directory the daemon was started in.
@@ -222,9 +222,9 @@ fn tag_metadata(tag: ErrorTag) -> TagMetadata {
         ErrorTag::DaemonConstraintsWrongAfterStart => rank!(tier0),
         ErrorTag::DaemonDirCleanupFailed => rank!(tier0),
         ErrorTag::DaemonKillFailed => rank!(tier0),
-        ErrorTag::BuckdLifecycleLock => rank!(tier0),
-        ErrorTag::BuckdInfoMissing => rank!(tier0),
-        ErrorTag::BuckdInfoParseError => rank!(tier0),
+        ErrorTag::YakdLifecycleLock => rank!(tier0),
+        ErrorTag::YakdInfoMissing => rank!(tier0),
+        ErrorTag::YakdInfoParseError => rank!(tier0),
         ErrorTag::MissingCommandResult => rank!(tier0),
         ErrorTag::DaemonWontDieFromKill => rank!(tier0),
         ErrorTag::GrpcResponseMessageTooLarge => rank!(tier0),
@@ -307,7 +307,7 @@ fn tag_metadata(tag: ErrorTag) -> TagMetadata {
         ErrorTag::InvalidDuration => rank!(tier0),
         ErrorTag::InvalidAuthToken => rank!(tier0),
         ErrorTag::InvalidAbsPath => rank!(tier0),
-        ErrorTag::InvalidBuckOutPath => rank!(tier0),
+        ErrorTag::InvalidYakOutPath => rank!(tier0),
         ErrorTag::InvalidErrorReport => rank!(tier0),
 
         ErrorTag::WindowsUnsupported => rank!(tier0),
@@ -336,9 +336,9 @@ fn tag_metadata(tag: ErrorTag) -> TagMetadata {
         ErrorTag::ValidationResultRead => rank!(tier0),
         // yak-out is also removed by concurrent `yak clean` invocations, which yak could
         // serialize.
-        ErrorTag::CleanBuckOut => rank!(tier0),
+        ErrorTag::CleanYakOut => rank!(tier0),
         // These files are not tracked by the file watcher, so they can change mid-command.
-        ErrorTag::BuckconfigRead => rank!(tier0),
+        ErrorTag::YakconfigRead => rank!(tier0),
 
         ErrorTag::MallocStats => rank!(tier0),
 
@@ -379,8 +379,8 @@ fn tag_metadata(tag: ErrorTag) -> TagMetadata {
         ErrorTag::Tier0 => rank!(tier0).hidden(),
         // Daemon disconnected with nothing in stderr, likely SIGKILLed.
         ErrorTag::DaemonDisconnect => rank!(environment),
-        // Could not determine the BuckVersion
-        ErrorTag::BuckVersionError => rank!(tier0),
+        // Could not determine the YakVersion
+        ErrorTag::YakVersionError => rank!(tier0),
         ErrorTag::MaterializeCopyMissingFile => rank!(tier0),
 
         // Input errors
@@ -534,18 +534,18 @@ pub(crate) fn error_tag_category(tag: ErrorTag) -> Option<Tier> {
     tag_metadata(tag).category
 }
 
-// `ErrorSourceArea::Buck2` is the fallback/default source area, use the first other source area.
+// `ErrorSourceArea::Yak` is the fallback/default source area, use the first other source area.
 pub fn source_area(tags: impl IntoIterator<Item = ErrorTag>) -> ErrorSourceArea {
     tags.into_iter()
         .find_map(|tag| {
             let area = tag.source_area();
-            if area != ErrorSourceArea::Buck2 {
+            if area != ErrorSourceArea::Yak {
                 Some(area)
             } else {
                 None
             }
         })
-        .unwrap_or(ErrorSourceArea::Buck2)
+        .unwrap_or(ErrorSourceArea::Yak)
 }
 
 #[cfg(test)]
@@ -658,7 +658,7 @@ mod tests {
     fn test_source_area() {
         assert_eq!(
             ErrorTag::DaemonDisconnect.source_area(),
-            ErrorSourceArea::Buck2
+            ErrorSourceArea::Yak
         );
         assert_eq!(ErrorTag::ReAborted.source_area(), ErrorSourceArea::Re);
         assert_eq!(

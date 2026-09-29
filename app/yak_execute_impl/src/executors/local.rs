@@ -42,13 +42,13 @@ use yak_common::liveliness_observer::NoopLivelinessObserver;
 use yak_common::local_resource_state::LocalResourceHolder;
 use yak_core::content_hash::ContentBasedPathHash;
 use yak_core::fs::artifact_path_resolver::ArtifactFs;
-use yak_core::fs::buck_out_path::BuildArtifactPath;
+use yak_core::fs::yak_out_path::BuildArtifactPath;
 use yak_core::fs::project_rel_path::ProjectRelativePath;
 use yak_core::fs::project_rel_path::ProjectRelativePathBuf;
 use yak_core::soft_error;
 use yak_core::tag_error;
 use yak_core::tag_result;
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 use yak_error::yak_error;
 use yak_events::daemon_id::DaemonId;
 use yak_events::dispatch::EventDispatcher;
@@ -99,7 +99,7 @@ use yak_fs::async_fs_util;
 use yak_fs::fs_util;
 use yak_fs::paths::abs_norm_path::AbsNormPathBuf;
 use yak_fs::paths::abs_path::AbsPath;
-use yak_hash::BuckIndexMap;
+use yak_hash::YakIndexMap;
 use yak_resource_control::ActionFreezeEvent;
 use yak_resource_control::ActionFreezeEventReceiver;
 use yak_resource_control::CommandType;
@@ -247,7 +247,7 @@ impl LocalExecutor {
                     .await?;
                     decode_command_event_stream(stream).await
                 }
-                .with_buck_error_context(|| format!("Failed to gather output from command: {exe}")),
+                .with_yak_error_context(|| format!("Failed to gather output from command: {exe}")),
             }?;
 
             if !result.orphan_processes.is_empty() {
@@ -306,7 +306,7 @@ impl LocalExecutor {
                     ),
                     prep_scratch_path(scratch_path, &self.artifact_fs),
                 )
-                .buck_error_context("Error creating output directories")?;
+                .yak_error_context("Error creating output directories")?;
 
                 yak_error::Ok(())
             },
@@ -745,7 +745,7 @@ impl LocalExecutor {
                 // failed, we'll run the `exit_code != 0` branch below, allowing
                 // us to detect corrupted materializer state in check_inputs. If
                 // the output is just missing because the action didn't produce
-                // it, that's detected when BuckActionExecutor.execute validates
+                // it, that's detected when YakActionExecutor.execute validates
                 // that all outputs were actually returned.
                 let (outputs, hashing_time) = match self
                     .calculate_and_declare_output_values(request, digest_config)
@@ -892,7 +892,7 @@ impl LocalExecutor {
         request: &CommandExecutionRequest,
         digest_config: DigestConfig,
     ) -> yak_error::Result<(
-        BuckIndexMap<CommandExecutionOutput, ArtifactValue>,
+        YakIndexMap<CommandExecutionOutput, ArtifactValue>,
         HashingInfo,
     )> {
         let mut builder = inputs_directory(request.inputs(), digest_config, &self.artifact_fs)?;
@@ -916,7 +916,7 @@ impl LocalExecutor {
                 self.artifact_fs.fs().root(),
             )
             .await
-            .with_buck_error_context(|| format!("collecting output {path:?}"))?;
+            .with_yak_error_context(|| format!("collecting output {path:?}"))?;
             total_hashing_time += hashing_info.hashing_duration;
             total_hashed_outputs += hashing_info.hashed_artifacts_count;
             if let Some(entry) = entry {
@@ -926,7 +926,7 @@ impl LocalExecutor {
         }
 
         let mut to_declare = vec![];
-        let mut mapped_outputs = BuckIndexMap::with_capacity(entries.len());
+        let mut mapped_outputs = YakIndexMap::with_capacity(entries.len());
         let mut configuration_path_to_content_based_path_symlinks = vec![];
         let mut output_path_to_content_based_path_copies = vec![];
 
@@ -1209,7 +1209,7 @@ impl LocalExecutor {
                 cancellations,
             )
             .await
-            .buck_error_context("Failed to cleanup output directory")?;
+            .yak_error_context("Failed to cleanup output directory")?;
 
         if let Some(state) =
             get_incremental_path_map(&self.incremental_db_state, request.run_action_key())
@@ -1421,12 +1421,12 @@ pub async fn materialize_inputs(
             }
             CommandExecutionInput::ActionMetadata(metadata) => {
                 let path = artifact_fs
-                    .buck_out_path_resolver()
+                    .yak_out_path_resolver()
                     .resolve_gen(&metadata.path, Some(&metadata.content_hash))?;
                 paths.push(path);
             }
             CommandExecutionInput::ScratchPath(path) => {
-                let path = artifact_fs.buck_out_path_resolver().resolve_scratch(path)?;
+                let path = artifact_fs.yak_out_path_resolver().resolve_scratch(path)?;
 
                 if scratch.0.is_some() {
                     return Err(yak_error::internal_error!(
@@ -1509,7 +1509,7 @@ async fn check_inputs(
                                 // want to propagate it.
                                 let _ignored = tag_result!(
                                     "missing_local_inputs",
-                                    fs_util::symlink_metadata(&abs_path).categorize_internal().buck_error_context("Missing input"),
+                                    fs_util::symlink_metadata(&abs_path).categorize_internal().yak_error_context("Missing input"),
                                     quiet: true,
                                     daemon_materializer_state_is_corrupted: true
                                 );
@@ -1615,7 +1615,7 @@ pub async fn create_output_dirs(
                 cancellations,
             )
             .await
-            .buck_error_context("Failed to cleanup output directory")?;
+            .yak_error_context("Failed to cleanup output directory")?;
     }
 
     let project_fs = artifact_fs.fs();
@@ -1790,11 +1790,11 @@ mod tests {
     use yak_core::cells::CellResolver;
     use yak_core::cells::cell_root_path::CellRootPathBuf;
     use yak_core::cells::name::CellName;
-    use yak_core::fs::buck_out_path::BuckOutPathResolver;
+    use yak_core::fs::yak_out_path::YakOutPathResolver;
     use yak_core::fs::project::ProjectRoot;
     use yak_core::fs::project::ProjectRootTemp;
     use yak_execute::execute::blocking::testing::DummyBlockingExecutor;
-    use yak_hash::BuckMutMap;
+    use yak_hash::YakMutMap;
 
     use super::*;
     use crate::materializers::deferred::NoDiskDeferredMaterializer;
@@ -1805,7 +1805,7 @@ mod tests {
                 CellName::testing_new("cell"),
                 CellRootPathBuf::new(ProjectRelativePathBuf::unchecked_new("cell_path".into())),
             ),
-            BuckOutPathResolver::new(ProjectRelativePathBuf::unchecked_new("buck_out/v2".into())),
+            YakOutPathResolver::new(ProjectRelativePathBuf::unchecked_new("yak_out/v2".into())),
             project_fs,
         )
     }
@@ -1848,7 +1848,7 @@ mod tests {
             .exec(
                 interpreter,
                 ["-c", "echo $PWD; pwd"],
-                &BuckMutMap::<String, String>::default(),
+                &YakMutMap::<String, String>::default(),
                 ProjectRelativePath::empty(),
                 None,
                 None,
@@ -1861,7 +1861,7 @@ mod tests {
             .await?;
         assert_matches!(status, GatherOutputStatus::Finished { exit_code, .. } if exit_code == 0);
 
-        let stdout = std::str::from_utf8(&stdout).buck_error_context("Invalid stdout")?;
+        let stdout = std::str::from_utf8(&stdout).yak_error_context("Invalid stdout")?;
 
         if cfg!(windows) {
             let lines: Vec<&str> = stdout.split("\r\n").collect();
@@ -1887,7 +1887,7 @@ mod tests {
             .exec(
                 "sh",
                 ["-c", "echo $USER"],
-                &BuckMutMap::<String, String>::default(),
+                &YakMutMap::<String, String>::default(),
                 ProjectRelativePath::empty(),
                 None,
                 Some(&EnvironmentInheritance::empty()),

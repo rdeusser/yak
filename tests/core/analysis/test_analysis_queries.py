@@ -6,16 +6,16 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-from e2e_util.api.buck import Buck
-from e2e_util.buck_workspace import buck_test
+from e2e_util.api.yak import Yak
+from e2e_util.yak_workspace import yak_test
 from e2e_util.helper.golden import golden
 
 
-async def _test_analysis_query_invalidation_impl(buck: Buck, name: str) -> None:
-    linux = await buck.build_without_report(
+async def _test_analysis_query_invalidation_impl(yak: Yak, name: str) -> None:
+    linux = await yak.build_without_report(
         ":root", "-c", "test.configuration=linux", "--out=-"
     )
-    macos = await buck.build_without_report(
+    macos = await yak.build_without_report(
         ":root", "-c", "test.configuration=macos", "--out=-"
     )
 
@@ -34,19 +34,19 @@ async def _test_analysis_query_invalidation_impl(buck: Buck, name: str) -> None:
     assert "macos-select-dep" in macos.stdout
 
 
-@buck_test(data_dir="analysis_query_invalidation")
-async def test_analysis_query_invalidation_deps(buck: Buck) -> None:
+@yak_test(data_dir="analysis_query_invalidation")
+async def test_analysis_query_invalidation_deps(yak: Yak) -> None:
     """
     Checks that a `deps()` analysis query sees the dependencies that a yakconfig change selects.
     """
     await _test_analysis_query_invalidation_impl(
-        buck, name="analysis_query_invalidation"
+        yak, name="analysis_query_invalidation"
     )
 
 
-@buck_test(data_dir="analysis_query_deps")
-async def test_analysis_query_deps(buck: Buck) -> None:
-    deps = await buck.build_without_report(":deps", "--out=-")
+@yak_test(data_dir="analysis_query_deps")
+async def test_analysis_query_deps(yak: Yak) -> None:
+    deps = await yak.build_without_report(":deps", "--out=-")
     golden(
         output=deps.stdout,
         rel_path="analysis_query_deps/deps.txt.golden",
@@ -57,9 +57,9 @@ async def test_analysis_query_deps(buck: Buck) -> None:
     assert ":qux" in deps.stdout
 
 
-@buck_test(data_dir="analysis_query_deps")
-async def test_duplicate_analysis_query_expansions(buck: Buck) -> None:
-    result = await buck.build_without_report(":duplicate_queries", "--out=-")
+@yak_test(data_dir="analysis_query_deps")
+async def test_duplicate_analysis_query_expansions(yak: Yak) -> None:
+    result = await yak.build_without_report(":duplicate_queries", "--out=-")
     fields = result.stdout.strip().split("|")
     assert len(fields) == 4
     assert all(fields)
@@ -68,9 +68,9 @@ async def test_duplicate_analysis_query_expansions(buck: Buck) -> None:
     assert fields[0].endswith(":bar")
 
 
-@buck_test(data_dir="analysis_query_deps")
-async def test_analysis_query_deps_with_depth(buck: Buck) -> None:
-    deps = await buck.build_without_report(":deps1", "--out=-")
+@yak_test(data_dir="analysis_query_deps")
+async def test_analysis_query_deps_with_depth(yak: Yak) -> None:
+    deps = await yak.build_without_report(":deps1", "--out=-")
     golden(output=deps.stdout, rel_path="analysis_query_deps/deps1.txt.golden")
     assert ":foo" in deps.stdout
     assert ":bar" in deps.stdout
@@ -78,9 +78,9 @@ async def test_analysis_query_deps_with_depth(buck: Buck) -> None:
     assert ":qux" not in deps.stdout
 
 
-@buck_test(data_dir="analysis_query_deps")
-async def test_analysis_query_target_deps(buck: Buck) -> None:
-    deps = await buck.build_without_report(":target_deps", "--out=-")
+@yak_test(data_dir="analysis_query_deps")
+async def test_analysis_query_target_deps(yak: Yak) -> None:
+    deps = await yak.build_without_report(":target_deps", "--out=-")
     golden(
         output=deps.stdout,
         rel_path="analysis_query_deps/target_deps.txt.golden",

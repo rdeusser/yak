@@ -39,11 +39,11 @@ use yak_common::file_ops::metadata::TrackedFileDigest;
 use yak_core::category::CategoryRef;
 use yak_core::content_hash::ContentBasedPathHash;
 use yak_core::fs::project_rel_path::ProjectRelativePathBuf;
-use yak_error::BuckErrorOptionContext;
+use yak_error::YakErrorOptionContext;
 use yak_execute::artifact::fs::ExecutorFs;
 use yak_execute::execute::command_executor::ActionExecutionTimingData;
 use yak_execute::materialize::materializer::WriteRequest;
-use yak_hash::BuckIndexSet;
+use yak_hash::YakIndexSet;
 
 use crate::actions::impls::run::DepFilesPlaceholderArtifactPathMapper;
 use crate::actions::impls::write::CommandLineContentBasedInputVisitor;
@@ -69,7 +69,7 @@ impl UnregisteredWriteMacrosToFileAction {
 impl UnregisteredAction for UnregisteredWriteMacrosToFileAction {
     fn register(
         self: Box<Self>,
-        outputs: BuckIndexSet<BuildArtifact>,
+        outputs: YakIndexSet<BuildArtifact>,
         starlark_data: Option<OwnedFrozen<Value<'static>>>,
         _error_handler: Option<OwnedFrozen<Value<'static>>>,
     ) -> yak_error::Result<Box<dyn Action>> {
@@ -104,7 +104,7 @@ struct WriteMacrosToFileAction {
 impl WriteMacrosToFileAction {
     fn new(
         contents: OwnedFrozen<Value<'static>>,
-        outputs: BuckIndexSet<BuildArtifact>,
+        outputs: YakIndexSet<BuildArtifact>,
         inner: UnregisteredWriteMacrosToFileAction,
     ) -> yak_error::Result<Self> {
         let is_command_line = contents.by_ref(|v| -> yak_error::Result<bool> {

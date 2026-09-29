@@ -12,7 +12,7 @@ use std::borrow::Cow;
 use std::path::Path;
 
 use yak_common::invocation_roots::InvocationRoots;
-use yak_common::legacy_configs::cells::BuckConfigBasedCells;
+use yak_common::legacy_configs::cells::YakConfigBasedCells;
 use yak_core::cells::CellAliasResolver;
 use yak_core::cells::CellResolver;
 use yak_core::cells::name::CellName;
@@ -64,7 +64,7 @@ pub(crate) struct PathSanitizer {
 
 impl PathSanitizer {
     pub(crate) async fn new(
-        cell_configs: &BuckConfigBasedCells,
+        cell_configs: &YakConfigBasedCells,
         cwd: &AbsWorkingDir,
         cwd_roots: &InvocationRoots,
     ) -> yak_error::Result<Self> {
@@ -89,7 +89,7 @@ impl PathSanitizer {
             [cell, path] => self.sanitize_cell_based_path(given, cell, path),
             _ => Err(yak_error!(
                 yak_error::ErrorTag::Input,
-                "Poorly formatted BuckPath string"
+                "Poorly formatted YakPath string"
             )),
         }
     }
@@ -233,7 +233,7 @@ impl PathSanitizer {
 mod tests {
     use paste::paste;
     use yak_common::invocation_roots::find_invocation_roots;
-    use yak_common::legacy_configs::cells::BuckConfigBasedCells;
+    use yak_common::legacy_configs::cells::YakConfigBasedCells;
 
     use super::*;
 
@@ -283,9 +283,9 @@ mod tests {
         Ok(path.to_string())
     }
 
-    fn cell_configs(cwd: &AbsWorkingDir) -> yak_error::Result<BuckConfigBasedCells> {
+    fn cell_configs(cwd: &AbsWorkingDir) -> yak_error::Result<YakConfigBasedCells> {
         let cwd_roots = find_invocation_roots(cwd)?;
-        futures::executor::block_on(BuckConfigBasedCells::parse_with_config_args(
+        futures::executor::block_on(YakConfigBasedCells::parse_with_config_args(
             &cwd_roots.project_root,
             &[],
         ))
@@ -346,7 +346,7 @@ mod tests {
         let uut =
             PathSanitizer::new(&cell_configs(&cwd)?, &cwd, &find_invocation_roots(&cwd)?).await?;
 
-        uut.sanitize("root//baredir0/buckdir0a")?;
+        uut.sanitize("root//baredir0/yakdir0a")?;
 
         Ok(())
     }
@@ -357,18 +357,18 @@ mod tests {
         let uut =
             PathSanitizer::new(&cell_configs(&cwd)?, &cwd, &find_invocation_roots(&cwd)?).await?;
 
-        uut.sanitize("baredir0/buckdir0a")?;
+        uut.sanitize("baredir0/yakdir0a")?;
 
         Ok(())
     }
 
-    testy!(canonical_path_in_root_from_root(in_root()?, "root//baredir0/buckdir0a") -> {
-        abs_path: from_root("baredir0/buckdir0a"),
-        canonical: "root//baredir0/buckdir0a",
+    testy!(canonical_path_in_root_from_root(in_root()?, "root//baredir0/yakdir0a") -> {
+        abs_path: from_root("baredir0/yakdir0a"),
+        canonical: "root//baredir0/yakdir0a",
         cell_name: "root",
-        cell_path: "baredir0/buckdir0a",
-        given: "root//baredir0/buckdir0a",
-        to_string: "root//baredir0/buckdir0a",
+        cell_path: "baredir0/yakdir0a",
+        given: "root//baredir0/yakdir0a",
+        to_string: "root//baredir0/yakdir0a",
     });
 
     testy!(anonymous_cell_from_root(in_root()?, "//") -> {
@@ -380,40 +380,40 @@ mod tests {
         to_string: "//",
     });
 
-    testy!(canonical_cell_path_from_root(in_root()?, "cell1//buck2") -> {
-        abs_path: from_root("cell1/buck2"),
-        canonical: "cell1//buck2",
+    testy!(canonical_cell_path_from_root(in_root()?, "cell1//yak") -> {
+        abs_path: from_root("cell1/yak"),
+        canonical: "cell1//yak",
         cell_name: "cell1",
-        cell_path: "buck2",
-        given: "cell1//buck2",
-        to_string: "cell1//buck2",
+        cell_path: "yak",
+        given: "cell1//yak",
+        to_string: "cell1//yak",
     });
 
-    testy!(relative_path_from_root(in_root()?, "baredir0/buckdir0a") -> {
-        abs_path: from_root("baredir0/buckdir0a"),
-        canonical: "root//baredir0/buckdir0a",
+    testy!(relative_path_from_root(in_root()?, "baredir0/yakdir0a") -> {
+        abs_path: from_root("baredir0/yakdir0a"),
+        canonical: "root//baredir0/yakdir0a",
         cell_name: "root",
-        cell_path: "baredir0/buckdir0a",
-        given: "baredir0/buckdir0a",
-        to_string: "baredir0/buckdir0a",
+        cell_path: "baredir0/yakdir0a",
+        given: "baredir0/yakdir0a",
+        to_string: "baredir0/yakdir0a",
     });
 
-    testy!(cross_cell_forward_path_from_root(in_root()?, "cell1/buck2") -> {
-        abs_path: from_root("cell1/buck2"),
-        canonical: "cell1//buck2",
+    testy!(cross_cell_forward_path_from_root(in_root()?, "cell1/yak") -> {
+        abs_path: from_root("cell1/yak"),
+        canonical: "cell1//yak",
         cell_name: "cell1",
-        cell_path: "buck2",
-        given: "cell1//buck2", // BuckPath is documented as correcting this to cell1//buck2
-        to_string: "cell1//buck2",
+        cell_path: "yak",
+        given: "cell1//yak", // YakPath is documented as correcting this to cell1//yak
+        to_string: "cell1//yak",
     });
 
-    testy!(corrects_malformed_cross_cell_forward_path_from_root(in_root()?, "root//cell1/buck2") -> {
-        abs_path: from_root("cell1/buck2"),
-        canonical: "cell1//buck2",
+    testy!(corrects_malformed_cross_cell_forward_path_from_root(in_root()?, "root//cell1/yak") -> {
+        abs_path: from_root("cell1/yak"),
+        canonical: "cell1//yak",
         cell_name: "cell1",
-        cell_path: "buck2",
-        given: "cell1//buck2",
-        to_string: "cell1//buck2",
+        cell_path: "yak",
+        given: "cell1//yak",
+        to_string: "cell1//yak",
     });
 
     #[tokio::test]
@@ -488,31 +488,31 @@ mod tests {
         to_string: "root//baredir0",
     });
 
-    testy!(absolute_path_in_subcell(in_dir("cell1")?, &abs_str_from_root("cell1/buck2")?) -> {
-        abs_path: from_root("cell1/buck2"),
-        canonical: "cell1//buck2",
+    testy!(absolute_path_in_subcell(in_dir("cell1")?, &abs_str_from_root("cell1/yak")?) -> {
+        abs_path: from_root("cell1/yak"),
+        canonical: "cell1//yak",
         cell_name: "cell1",
-        cell_path: "buck2",
-        given: "cell1//buck2",
-        to_string: "cell1//buck2",
+        cell_path: "yak",
+        given: "cell1//yak",
+        to_string: "cell1//yak",
     });
 
-    testy!(aliased_cell(in_dir("cell1/buck2/prelude")?, "cell1_alias//buck2") -> {
-        abs_path: from_root("cell1/buck2"),
-        canonical: "cell1//buck2",
+    testy!(aliased_cell(in_dir("cell1/yak/prelude")?, "cell1_alias//yak") -> {
+        abs_path: from_root("cell1/yak"),
+        canonical: "cell1//yak",
         cell_name: "cell1",
-        cell_path: "buck2",
-        given: "cell1_alias//buck2",
-        to_string: "cell1_alias//buck2",
+        cell_path: "yak",
+        given: "cell1_alias//yak",
+        to_string: "cell1_alias//yak",
     });
 
     #[tokio::test]
     async fn test_creation_returns_error_on_non_local_alias() -> yak_error::Result<()> {
-        let cwd = in_dir("cell1/buck2")?;
+        let cwd = in_dir("cell1/yak")?;
         let uut =
             PathSanitizer::new(&cell_configs(&cwd)?, &cwd, &find_invocation_roots(&cwd)?).await?;
 
-        assert!(uut.sanitize("cell1_alias//buck2").is_err());
+        assert!(uut.sanitize("cell1_alias//yak").is_err());
 
         Ok(())
     }

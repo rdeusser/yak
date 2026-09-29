@@ -16,8 +16,8 @@ use futures::TryStreamExt;
 use futures::channel::mpsc::UnboundedReceiver;
 use host_sharing::HostSharingRequirements;
 use parking_lot::Mutex;
-use yak_error::BuckErrorContext;
-use yak_error::BuckErrorOptionContext;
+use yak_error::YakErrorContext;
+use yak_error::YakErrorOptionContext;
 use yak_test_api::data::ArgValue;
 use yak_test_api::data::ArgValueContent;
 use yak_test_api::data::ConfiguredTargetHandle;
@@ -44,20 +44,20 @@ pub type SpecReceiver = UnboundedReceiver<ExternalRunnerSpec>;
 /// out-of-the-box for open-source users.
 ///
 /// **This is intended for open-source use only.**
-pub struct Buck2TestRunner {
+pub struct YakTestRunner {
     orchestrator_client: TestOrchestratorClient,
     spec_receiver: Mutex<Option<SpecReceiver>>,
     config: Config,
 }
 
-impl Buck2TestRunner {
+impl YakTestRunner {
     pub fn new(
         orchestrator_client: TestOrchestratorClient,
         spec_receiver: SpecReceiver,
         args: Vec<String>,
     ) -> yak_error::Result<Self> {
         let config = Config::try_parse_from(args)
-            .buck_error_context("Error parsing test runner arguments")?;
+            .yak_error_context("Error parsing test runner arguments")?;
         Ok(Self {
             orchestrator_client,
             spec_receiver: Mutex::new(Some(spec_receiver)),
@@ -85,7 +85,7 @@ impl Buck2TestRunner {
                 let execution_response = self
                     .execute_test_from_spec(spec)
                     .await
-                    .buck_error_context("Test execution request failed")?;
+                    .yak_error_context("Test execution request failed")?;
 
                 let execution_result = match execution_response {
                     ExecuteResponse::Result(r) => r,
@@ -97,7 +97,7 @@ impl Buck2TestRunner {
 
                 self.report_test_result(test_result)
                     .await
-                    .buck_error_context("Test result reporting failed")?;
+                    .yak_error_context("Test result reporting failed")?;
 
                 Ok(test_status)
             })

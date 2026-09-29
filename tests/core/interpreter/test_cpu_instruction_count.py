@@ -9,16 +9,16 @@
 import logging
 import platform
 
-from e2e_util.api.buck import Buck
-from e2e_util.buck_workspace import buck_test
+from e2e_util.api.yak import Yak
+from e2e_util.yak_workspace import yak_test
 from e2e_util.helper.utils import filter_events
 
 
-@buck_test()
-async def test_cpu_instruction_count(buck: Buck) -> None:
-    await buck.uquery("//:")
+@yak_test()
+async def test_cpu_instruction_count(yak: Yak) -> None:
+    await yak.uquery("//:")
     span_end_load_event = await filter_events(
-        buck,
+        yak,
         "Event",
         "data",
         "SpanEnd",

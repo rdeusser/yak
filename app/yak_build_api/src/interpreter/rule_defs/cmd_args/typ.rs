@@ -57,8 +57,8 @@ use starlark::values::tuple::UnpackTuple;
 use starlark::values::type_repr::StarlarkTypeRepr;
 use yak_artifact::artifact::artifact_type::Artifact;
 use yak_artifact::artifact::artifact_type::OutputArtifact;
-use yak_error::BuckErrorOptionContext;
-use yak_hash::BuckIndexSet;
+use yak_error::YakErrorOptionContext;
+use yak_hash::YakIndexSet;
 use yak_util::size_assert;
 
 use crate::artifact_groups::ArtifactGroup;
@@ -87,7 +87,7 @@ use crate::interpreter::rule_defs::cmd_args::value::CommandLineArg;
 pub enum CommandLineError {
     #[error("Artifact(s) {0:?} cannot be used with ignore_artifacts as they are content-based")]
     #[yak(input)]
-    ContentBasedIgnoreArtifacts(BuckIndexSet<String>),
+    ContentBasedIgnoreArtifacts(YakIndexSet<String>),
 }
 
 /// Fields of `cmd_args`. Abstract mutable and frozen versions.
@@ -105,7 +105,7 @@ struct FieldsRef<'v, F: Fields<'v>>(F, PhantomData<Value<'v>>);
 /// This implementation exists for operations such as:
 ///
 /// ```ignore
-/// yak cquery :buck2 --providers
+/// yak cquery :yak --providers
 /// ```
 ///
 /// which must not fail if a provider contains `cmd_args`.
@@ -245,13 +245,13 @@ impl<'v, F: Fields<'v>> CommandLineArgLike<'v> for FieldsRef<'v, F> {
             }
         } else {
             struct IgnoredArtifactsVisitor {
-                content_based_artifacts: BuckIndexSet<String>,
+                content_based_artifacts: YakIndexSet<String>,
             }
 
             impl IgnoredArtifactsVisitor {
                 fn new() -> Self {
                     Self {
-                        content_based_artifacts: BuckIndexSet::default(),
+                        content_based_artifacts: YakIndexSet::default(),
                     }
                 }
             }
@@ -1099,7 +1099,7 @@ pub fn register_cmd_args(builder: &mut GlobalsBuilder) {
 )]
 pub struct StarlarkCommandLineInputs {
     #[starlark_pagable(pagable)]
-    pub inputs: BuckIndexSet<ArtifactGroup>,
+    pub inputs: YakIndexSet<ArtifactGroup>,
 }
 
 starlark_simple_value!(StarlarkCommandLineInputs);

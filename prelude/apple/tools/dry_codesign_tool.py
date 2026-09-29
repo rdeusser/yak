@@ -11,14 +11,14 @@ import plistlib
 import shutil
 from pathlib import Path
 
-_CODE_SIGN_DRY_RUN_ARGS_FILE = "BUCK_code_sign_args.plist"
-_CODE_SIGN_DRY_RUN_ENTITLEMENTS_FILE = "BUCK_code_sign_entitlements.plist"
+_CODE_SIGN_DRY_RUN_ARGS_FILE = "YAK_code_sign_args.plist"
+_CODE_SIGN_DRY_RUN_ENTITLEMENTS_FILE = "YAK_code_sign_entitlements.plist"
 
 
 def _args_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="""
-            Instead of code signing the bundle, the tool creates a file named `BUCK_code_sign_args.plist` inside,
+            Instead of code signing the bundle, the tool creates a file named `YAK_code_sign_args.plist` inside,
              which contains all parameters needed to perform a deferred signing later.
         """
     )

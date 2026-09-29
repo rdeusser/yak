@@ -22,7 +22,7 @@ use starlark_map::ordered_map::OrderedMap;
 use starlark_map::small_map::Entry;
 use static_interner::Intern;
 use static_interner::interner;
-use yak_hash::BuckHasher;
+use yak_hash::YakHasher;
 use yak_util::size_assert;
 
 use crate::cells::cell_path::CellPath;
@@ -72,7 +72,7 @@ impl<'a> From<&'a PluginKindInner> for PluginKindInner {
 )]
 pub struct PluginKind(Intern<PluginKindInner>);
 
-interner!(PLUGIN_KIND_INTERNER, BuckHasher, PluginKindInner);
+interner!(PLUGIN_KIND_INTERNER, YakHasher, PluginKindInner);
 
 impl PluginKind {
     /// Creates a new `PluginKind` instance.
@@ -153,7 +153,7 @@ size_assert::words_of_type!(PluginKindSetUnpacked, 2);
 
 interner!(
     PLUGIN_KIND_SET_INTERNER,
-    BuckHasher,
+    YakHasher,
     PluginKindSetData,
     Vec<(PluginKind, bool)>,
     [(PluginKind, bool)]

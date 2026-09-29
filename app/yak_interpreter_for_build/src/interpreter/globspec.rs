@@ -14,10 +14,10 @@ use std::fmt::Debug;
 use derivative::Derivative;
 use yak_common::package_listing::file_listing::PackageFileListing;
 use yak_core::package::package_relative_path::PackageRelativePath;
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 use yak_error::conversion::from_any_with_tag;
 use yak_fs::paths::forward_rel_path::ForwardRelativePath;
-use yak_hash::BuckMutSet;
+use yak_hash::YakMutSet;
 
 #[derive(Debug, yak_error::Error)]
 #[yak(input)]
@@ -54,7 +54,7 @@ impl GlobPattern {
     fn new(pattern: &str) -> yak_error::Result<GlobPattern> {
         let parsed_pattern = glob::Pattern::new(pattern)
             .map_err(|e| from_any_with_tag(e, yak_error::ErrorTag::Input))
-            .with_buck_error_context(|| format!("Error creating globspec for `{pattern}`"))?;
+            .with_yak_error_context(|| format!("Error creating globspec for `{pattern}`"))?;
         if pattern.contains("//") {
             return Err(GlobError::DoubleSlash(pattern.to_owned()).into());
         }
@@ -79,7 +79,7 @@ impl GlobPattern {
 #[derivative(Debug)]
 pub(crate) struct GlobSpec {
     common_prefix: String,
-    exact_matches: BuckMutSet<String>,
+    exact_matches: YakMutSet<String>,
     patterns: Vec<GlobPattern>,
     excludes: Vec<GlobPattern>,
 }
@@ -123,7 +123,7 @@ impl GlobSpec {
     ) -> yak_error::Result<Self> {
         let mut glob_patterns = Vec::new();
         let mut glob_excludes = Vec::new();
-        let mut exact_matches = BuckMutSet::default();
+        let mut exact_matches = YakMutSet::default();
         for pattern in patterns {
             let pattern = pattern.as_ref();
             if pattern.contains('*') {

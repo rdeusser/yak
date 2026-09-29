@@ -6,10 +6,10 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-from e2e_util.api.buck import Buck
-from e2e_util.buck_workspace import buck_test
+from e2e_util.api.yak import Yak
+from e2e_util.yak_workspace import yak_test
 
 
-@buck_test()
-async def test_cquery_ctx(buck: Buck) -> None:
-    await buck.bxl("//bxl/check_type_names_and_symbols.bxl:cquery_ctx")
+@yak_test()
+async def test_cquery_ctx(yak: Yak) -> None:
+    await yak.bxl("//bxl/check_type_names_and_symbols.bxl:cquery_ctx")

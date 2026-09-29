@@ -11,7 +11,7 @@
 # the generated docs, and so those should be verified to be accurate and
 # well-formatted (and then delete this TODO)
 
-load(":common.bzl", "buck", "prelude_rule")
+load(":common.bzl", "yak", "prelude_rule")
 load(":ocaml_common.bzl", "ocaml_common")
 
 ocaml_binary = prelude_rule(
@@ -76,9 +76,9 @@ ocaml_binary = prelude_rule(
             "platform": attrs.option(attrs.string(), default = None),
             "warnings_flags": attrs.option(attrs.string(), default = None),
         }
-        | buck.licenses_arg()
-        | buck.labels_arg()
-        | buck.contacts_arg()
+        | yak.licenses_arg()
+        | yak.labels_arg()
+        | yak.contacts_arg()
     ),
 )
 
@@ -116,9 +116,9 @@ ocaml_library = prelude_rule(
             "ocamldep_flags": attrs.list(attrs.arg(), default = []),
             "warnings_flags": attrs.option(attrs.string(), default = None),
         }
-        | buck.licenses_arg()
-        | buck.labels_arg()
-        | buck.contacts_arg()
+        | yak.licenses_arg()
+        | yak.labels_arg()
+        | yak.contacts_arg()
     ),
 )
 
@@ -146,9 +146,9 @@ prebuilt_ocaml_library = prelude_rule(
             "native_c_libs": attrs.list(attrs.string(), default = []),
             "native_lib": attrs.option(attrs.string(), default = None),
         }
-        | buck.licenses_arg()
-        | buck.labels_arg()
-        | buck.contacts_arg()
+        | yak.licenses_arg()
+        | yak.labels_arg()
+        | yak.contacts_arg()
     ),
 )
 

@@ -8,14 +8,14 @@
 
 from pathlib import Path
 
-from e2e_util.api.buck import Buck
-from e2e_util.buck_workspace import buck_test
+from e2e_util.api.yak import Yak
+from e2e_util.yak_workspace import yak_test
 
 
-@buck_test(skip_final_kill=True)
-async def test_no_repo(buck: Buck, tmp_path: Path) -> None:
-    await buck.help()
+@yak_test(skip_final_kill=True)
+async def test_no_repo(yak: Yak, tmp_path: Path) -> None:
+    await yak.help()
     # And make sure this also works with absolute argfiles
     arg_path = tmp_path / "argsfile.txt"
     arg_path.write_text("--help", encoding="utf-8")
-    await buck.run_buck_command(f"@{arg_path}")
+    await yak.run_yak_command(f"@{arg_path}")

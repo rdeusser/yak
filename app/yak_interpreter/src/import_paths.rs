@@ -24,8 +24,8 @@ use pagable::Pagable;
 use pagable::pagable_typetag;
 use yak_common::dice::cells::HasCellResolver;
 use yak_common::legacy_configs::dice::HasLegacyConfigs;
-use yak_common::legacy_configs::key::BuckconfigKeyRef;
-use yak_common::legacy_configs::view::LegacyBuckConfigView;
+use yak_common::legacy_configs::key::YakconfigKeyRef;
+use yak_common::legacy_configs::view::LegacyYakConfigView;
 use yak_core::bzl::ImportPath;
 use yak_core::cells::CellAliasResolver;
 use yak_core::cells::build_file_cell::BuildFileCell;
@@ -42,7 +42,7 @@ pub struct ImplicitImportPaths {
 
 impl ImplicitImportPaths {
     pub fn parse(
-        mut config: impl LegacyBuckConfigView,
+        mut config: impl LegacyYakConfigView,
         cell_name: BuildFileCell,
         cell_alias_resolver: &CellAliasResolver,
     ) -> yak_error::Result<ImplicitImportPaths> {
@@ -50,7 +50,7 @@ impl ImplicitImportPaths {
         // normal imports. e.g. it uses `cell//path/to/file.bzl` instead of
         // `cell//path/to:file.bzl`.
         let root_import = config
-            .get(BuckconfigKeyRef {
+            .get(YakconfigKeyRef {
                 section: "buildfile",
                 property: "includes",
             })?
@@ -68,7 +68,7 @@ impl ImplicitImportPaths {
             cell_name,
             cell_alias_resolver.dupe(),
             config
-                .get(BuckconfigKeyRef {
+                .get(YakconfigKeyRef {
                     section: "buildfile",
                     property: "package_includes",
                 })?

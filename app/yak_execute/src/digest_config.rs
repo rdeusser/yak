@@ -89,7 +89,7 @@ impl fmt::Display for DigestConfig {
 
 static_interner::interner!(
     DIGEST_CONFIG_INTERNER,
-    yak_hash::BuckHasher,
+    yak_hash::YakHasher,
     DigestConfigInner
 );
 

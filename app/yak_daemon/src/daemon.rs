@@ -24,8 +24,8 @@ use futures::pin_mut;
 use futures::select;
 use yak_cli_proto::DaemonProcessInfo;
 use yak_client_ctx::daemon_constraints::gen_daemon_constraints;
-use yak_client_ctx::version::BuckVersion;
-use yak_common::buckd_connection::ConnectionType;
+use yak_client_ctx::version::YakVersion;
+use yak_common::yakd_connection::ConnectionType;
 use yak_common::daemon_dir::DaemonDir;
 use yak_common::init::DaemonStartupConfig;
 use yak_common::invocation_paths::InvocationPaths;
@@ -33,18 +33,18 @@ use yak_common::memory;
 use yak_core::logging::LogConfigurationReloadHandle;
 use yak_core::soft_error;
 use yak_core::yak_env;
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 use yak_error::ErrorTag;
-use yak_error::conversion::clap::buck_error_clap_parser;
+use yak_error::conversion::clap::yak_error_clap_parser;
 use yak_error::yak_error;
 use yak_events::daemon_id::DaemonId;
 use yak_fs::error::IoResultExt;
 use yak_fs::fs_util;
 use yak_fs::paths::forward_rel_path::ForwardRelativePath;
-use yak_resource_control::buck_cgroup_tree::PreppedBuckCgroups;
+use yak_resource_control::yak_cgroup_tree::PreppedYakCgroups;
 use yak_server::daemon::daemon_tcp::create_listener;
-use yak_server::daemon::server::BuckdServer;
-use yak_server::daemon::server::BuckdServerInitPreferences;
+use yak_server::daemon::server::YakdServer;
+use yak_server::daemon::server::YakdServerInitPreferences;
 use yak_util::threads::thread_spawn;
 use yak_util::tokio_runtime::new_tokio_runtime;
 
@@ -78,7 +78,7 @@ pub struct DaemonCommand {
     skip_macos_qos: bool,
     /// Early configs that the daemon needs at startup. Those are read by the client then passed to
     /// the daemon. The client will restart the daemon if they mismatch.
-    #[clap(value_parser = buck_error_clap_parser(DaemonStartupConfig::deserialize))]
+    #[clap(value_parser = yak_error_clap_parser(DaemonStartupConfig::deserialize))]
     daemon_startup_config: DaemonStartupConfig,
 
     #[clap(env("ENABLE_TRACE_IO"), long)]
@@ -139,7 +139,7 @@ pub(crate) fn write_process_info(
     daemon_dir: &DaemonDir,
     process_info: &DaemonProcessInfo,
 ) -> yak_error::Result<()> {
-    let file = File::create(daemon_dir.buckd_info())?;
+    let file = File::create(daemon_dir.yakd_info())?;
     serde_json::to_writer(&file, &process_info)?;
     // Fsync so the endpoint/auth token are durable before clients race
     // to read this file; a crash here would otherwise lose them.
@@ -148,7 +148,7 @@ pub(crate) fn write_process_info(
 }
 
 fn verify_current_daemon(daemon_dir: &DaemonDir) -> yak_error::Result<()> {
-    let file = daemon_dir.buckd_pid();
+    let file = daemon_dir.yakd_pid();
     let my_pid = process::id();
 
     let recorded_pid: u32 = fs_util::read_to_string(&file)
@@ -181,11 +181,11 @@ fn terminate_on_panic() {
     }));
 }
 
-fn verify_buck_out_dir(paths: &InvocationPaths) -> yak_error::Result<()> {
-    let path = paths.buck_out_path();
+fn verify_yak_out_dir(paths: &InvocationPaths) -> yak_error::Result<()> {
+    let path = paths.yak_out_path();
 
     fs_util::create_dir_all(path.clone()).map_err(|e| {
-        e.tag([ErrorTag::InvalidBuckOut]).context(format!(
+        e.tag([ErrorTag::InvalidYakOut]).context(format!(
             "Failed to create yak-out directory `{}`. \
              The path or a parent directory may be on a stale mount, \
              be a broken symlink, a file, or the project root may no longer be \
@@ -221,7 +221,7 @@ impl DaemonCommand {
         let prepped_cgroups = if self.has_cgroup {
             // Note: It's important that we do this before daemonizing, as otherwise there may be
             // stray processes laying around in this cgroup
-            Some(PreppedBuckCgroups::prep_current_process()?)
+            Some(PreppedYakCgroups::prep_current_process()?)
         } else {
             None
         };
@@ -239,7 +239,7 @@ impl DaemonCommand {
         //   and resolve all paths relative to original cwd.
         fs_util::set_current_dir(paths.project_root().root()).categorize_internal()?;
 
-        let server_init_ctx = BuckdServerInitPreferences {
+        let server_init_ctx = YakdServerInitPreferences {
             detect_cycles: yak_env!("DICE_DETECT_CYCLES_UNSTABLE", type=DetectCycles)?,
             enable_trace_io: self.enable_trace_io,
             reject_materializer_state: self.reject_materializer_state.map(|s| s.into()),
@@ -263,9 +263,9 @@ impl DaemonCommand {
         }
 
         let daemon_dir = paths.daemon_dir()?;
-        let pid_path = daemon_dir.buckd_pid();
-        let stdout_path = daemon_dir.buckd_stdout();
-        let stderr_path = daemon_dir.buckd_stderr();
+        let pid_path = daemon_dir.yakd_pid();
+        let stdout_path = daemon_dir.yakd_stdout();
+        let stderr_path = daemon_dir.yakd_stderr();
         // Even if we don't redirect output, we still need to create stdout/stderr files,
         // because tailer opens them. This is untidy.
         let stdout = File::create(stdout_path)?;
@@ -290,7 +290,7 @@ impl DaemonCommand {
             let process_info = DaemonProcessInfo {
                 pid: pid as i64,
                 endpoint: endpoint.to_string(),
-                version: BuckVersion::get()?.unique_id().to_owned(),
+                version: YakVersion::get()?.unique_id().to_owned(),
                 auth_token,
             };
 
@@ -313,7 +313,7 @@ impl DaemonCommand {
             let process_info = DaemonProcessInfo {
                 pid: process::id() as i64,
                 endpoint: endpoint.to_string(),
-                version: BuckVersion::get()?.unique_id().to_owned(),
+                version: YakVersion::get()?.unique_id().to_owned(),
                 auth_token,
             };
 
@@ -325,7 +325,7 @@ impl DaemonCommand {
         let daemon_id = DaemonId::parse_from_str(&self.daemon_id)?;
 
         tracing::info!("Starting yak daemon");
-        tracing::info!("Version: {}", BuckVersion::get_version()?);
+        tracing::info!("Version: {}", YakVersion::get_version()?);
         tracing::info!("PID: {}", process::id());
         tracing::info!("ID: {}", daemon_id);
         tracing::info!("Endpoint: {}", endpoint);
@@ -352,7 +352,7 @@ impl DaemonCommand {
         // run. However, at the point at which we're starting a daemon it does seem sensible to now
         // ensure that it always exists, primarily so that we can put a file into it to mark it as a
         // cachedir.
-        verify_buck_out_dir(&paths)?;
+        verify_yak_out_dir(&paths)?;
 
         let mut builder = new_tokio_runtime("yak-rt");
         builder.enable_all();
@@ -378,7 +378,7 @@ impl DaemonCommand {
         // ~50ns, that puts the cost of these polls at 0.1% CPU, which is an acceptable cost to pay
         // for the value of the telemetry.
         //
-        // The histogram config is sized for `buck2_webconsole`'s display bands, which bin polls at
+        // The histogram config is sized for `yak_webconsole`'s display bands, which bin polls at
         // decade boundaries between 1µs and 1s. `precision_exact(0)` gives one bucket per power of
         // 2 (≈3 buckets per decade — finer than the bands but coarse enough to not blow up event
         // log size); `min_value` and `max_value` pin the bucket range so we don't carry hundreds
@@ -400,7 +400,7 @@ impl DaemonCommand {
 
         let worker_runtime = builder
             .build()
-            .buck_error_context("Error creating Tokio runtime")?;
+            .yak_error_context("Error creating Tokio runtime")?;
         let handle = worker_runtime.handle().clone();
 
         let tonic_runtime = new_tokio_runtime("yak-tn")
@@ -409,7 +409,7 @@ impl DaemonCommand {
             .worker_threads(2)
             .max_blocking_threads(2)
             .build()
-            .buck_error_context("Error creating Tonic Tokio runtime")?;
+            .yak_error_context("Error creating Tonic Tokio runtime")?;
 
         let result = tonic_runtime.block_on(async move {
             // Once any item is received on the hard_shutdown_receiver, the daemon process will exit immediately.
@@ -443,7 +443,7 @@ impl DaemonCommand {
             let daemon_constraints =
                 gen_daemon_constraints(&server_init_ctx.daemon_startup_config, &daemon_id)?;
 
-            let buckd_server = BuckdServer::run(
+            let yakd_server = YakdServer::run(
                 log_reload_handle,
                 paths,
                 server_init_ctx,
@@ -457,7 +457,7 @@ impl DaemonCommand {
             )
             .fuse();
             let shutdown_future = async move { hard_shutdown_receiver.next().await }.fuse();
-            pin_mut!(buckd_server);
+            pin_mut!(yakd_server);
             pin_mut!(shutdown_future);
 
             let checker_interval_seconds = self.checker_interval_seconds;
@@ -472,7 +472,7 @@ impl DaemonCommand {
             })?;
 
             select! {
-                res = buckd_server => {
+                res = yakd_server => {
                     tracing::warn!("server shutdown");
                     res
                 }
@@ -578,7 +578,7 @@ impl DaemonCommand {
         let res = self.run(log_reload_handle, paths, in_process, listener_created);
         if let Err(err) = res.as_ref() {
             fs_util::write(
-                daemon_dir.buckd_error_log(),
+                daemon_dir.yakd_error_log(),
                 serde_json::to_string(&yak_data::ErrorReport::from(err))?,
             )
             .categorize_internal()?;
@@ -664,12 +664,12 @@ mod tests {
     use yak_core::fs::project::ProjectRootTemp;
     use yak_core::fs::project_rel_path::ProjectRelativePath;
     use yak_core::logging::LogConfigurationReloadHandle;
-    use yak_error::BuckErrorContext;
+    use yak_error::YakErrorContext;
     use yak_events::daemon_id::DaemonId;
     use yak_fs::paths::file_name::FileNameBuf;
     use yak_server::daemon::daemon_tcp::create_listener;
-    use yak_server::daemon::server::BuckdServer;
-    use yak_server::daemon::server::BuckdServerInitPreferences;
+    use yak_server::daemon::server::YakdServer;
+    use yak_server::daemon::server::YakdServerInitPreferences;
 
     #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
     async fn test_daemon_smoke() {
@@ -695,11 +695,11 @@ mod tests {
 
         // NOTE: This disables the forkserver since it uses the current
         // executable and that's not gonna be available in a test like this.
-        let buckconfig = ProjectRelativePath::unchecked_new(".yakconfig");
+        let yakconfig = ProjectRelativePath::unchecked_new(".yakconfig");
         project_root
             .path()
             .write_file(
-                buckconfig,
+                yakconfig,
                 "[cells]\nroot = .\n[yak]\nforkserver = false\n",
                 false,
             )
@@ -714,10 +714,10 @@ mod tests {
 
         let daemon_id = DaemonId::new();
 
-        let handle = tokio::spawn(BuckdServer::run(
+        let handle = tokio::spawn(YakdServer::run(
             <dyn LogConfigurationReloadHandle>::noop(),
             invocation_paths,
-            BuckdServerInitPreferences {
+            YakdServerInitPreferences {
                 detect_cycles: None,
                 enable_trace_io: false,
                 reject_materializer_state: None,
@@ -766,7 +766,7 @@ mod tests {
                     ..PingRequest::default()
                 })
                 .await
-                .buck_error_context(format!("req_size={req_size}"))
+                .yak_error_context(format!("req_size={req_size}"))
                 .unwrap();
         }
 
@@ -777,7 +777,7 @@ mod tests {
                     ..PingRequest::default()
                 })
                 .await
-                .buck_error_context(format!("resp_size={resp_size}"))
+                .yak_error_context(format!("resp_size={resp_size}"))
                 .unwrap();
         }
 

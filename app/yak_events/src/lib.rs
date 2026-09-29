@@ -54,9 +54,9 @@ use crate::span::SpanId;
 /// introduce new "spans". All events belong to a span except the first and last events of a trace. All spans except
 /// the span created by the first and last events of the trace have a parent; as such, spans form a tree.
 #[derive(Debug, Clone, PartialEq, Serialize)]
-pub struct BuckEvent {
+pub struct YakEvent {
     /// Full event, the rest of the fields are caches.
-    event: Box<yak_data::BuckEvent>,
+    event: Box<yak_data::YakEvent>,
 
     /// A timestamp for when this event was emitted.
     timestamp: SystemTime,
@@ -70,22 +70,22 @@ pub struct BuckEvent {
     pub parent_id: Option<SpanId>,
 }
 
-impl BuckEvent {
+impl YakEvent {
     pub fn new(
         timestamp: SystemTime,
         trace_id: TraceId,
         span_id: Option<SpanId>,
         parent_id: Option<SpanId>,
-        data: yak_data::buck_event::Data,
-    ) -> BuckEvent {
-        let event = yak_data::BuckEvent {
+        data: yak_data::yak_event::Data,
+    ) -> YakEvent {
+        let event = yak_data::YakEvent {
             timestamp: Some(timestamp.into()),
             trace_id: trace_id.to_string(),
             span_id: span_id.map_or(0, |s| s.0.into()),
             parent_id: parent_id.map_or(0, |s| s.0.into()),
             data: Some(data),
         };
-        BuckEvent {
+        YakEvent {
             event: Box::new(event),
             timestamp,
             span_id,
@@ -109,18 +109,18 @@ impl BuckEvent {
         self.parent_id
     }
 
-    pub fn event(&self) -> &yak_data::BuckEvent {
+    pub fn event(&self) -> &yak_data::YakEvent {
         &self.event
     }
 
-    pub fn data(&self) -> &yak_data::buck_event::Data {
+    pub fn data(&self) -> &yak_data::yak_event::Data {
         self.event
             .data
             .as_ref()
             .expect("data is set, it is validated")
     }
 
-    pub fn data_mut(&mut self) -> &mut yak_data::buck_event::Data {
+    pub fn data_mut(&mut self) -> &mut yak_data::yak_event::Data {
         self.event
             .data
             .as_mut()
@@ -129,14 +129,14 @@ impl BuckEvent {
 
     pub fn span_start_event(&self) -> Option<&yak_data::SpanStartEvent> {
         match self.data() {
-            yak_data::buck_event::Data::SpanStart(start) => Some(start),
+            yak_data::yak_event::Data::SpanStart(start) => Some(start),
             _ => None,
         }
     }
 
     pub fn span_end_event(&self) -> Option<&yak_data::SpanEndEvent> {
         match self.data() {
-            yak_data::buck_event::Data::SpanEnd(end) => Some(end),
+            yak_data::yak_event::Data::SpanEnd(end) => Some(end),
             _ => None,
         }
     }
@@ -148,7 +148,7 @@ impl BuckEvent {
                 match span_start_event
                     .data
                     .as_ref()
-                    .ok_or_else(|| BuckEventError::MissingField(self.clone()))?
+                    .ok_or_else(|| YakEventError::MissingField(self.clone()))?
                 {
                     yak_data::span_start_event::Data::Command(command_start) => {
                         Ok(Some(command_start))
@@ -160,23 +160,23 @@ impl BuckEvent {
     }
 }
 
-impl From<BuckEvent> for Box<yak_data::BuckEvent> {
-    fn from(e: BuckEvent) -> Self {
+impl From<YakEvent> for Box<yak_data::YakEvent> {
+    fn from(e: YakEvent) -> Self {
         e.event
     }
 }
 
-impl TryFrom<Box<yak_data::BuckEvent>> for BuckEvent {
+impl TryFrom<Box<yak_data::YakEvent>> for YakEvent {
     type Error = yak_error::Error;
 
-    fn try_from(event: Box<yak_data::BuckEvent>) -> yak_error::Result<BuckEvent> {
-        event.data.as_ref().ok_or(BuckEventError::MissingData)?;
+    fn try_from(event: Box<yak_data::YakEvent>) -> yak_error::Result<YakEvent> {
+        event.data.as_ref().ok_or(YakEventError::MissingData)?;
         fn new_span_id(num: u64) -> Option<SpanId> {
             NonZeroU64::new(num).map(SpanId)
         }
         Ok(Self {
             timestamp: SystemTime::try_from(
-                event.timestamp.ok_or(BuckEventError::MissingTimestamp)?,
+                event.timestamp.ok_or(YakEventError::MissingTimestamp)?,
             )?,
             span_id: new_span_id(event.span_id),
             parent_id: new_span_id(event.parent_id),
@@ -194,7 +194,7 @@ pub enum Event {
     /// A progress event from this command. Different commands have different types.
     PartialResult(PartialResult),
     /// A regular yak event. Is the only type to end up in the Event Log
-    Buck(BuckEvent),
+    Yak(YakEvent),
 }
 
 /// A sink for events, easily plumbable to the guts of systems that intend to produce events consumeable by
@@ -223,13 +223,13 @@ pub fn create_source_sink_pair() -> (ChannelEventSource, impl EventSink) {
 #[allow(clippy::large_enum_variant)]
 #[derive(yak_error::Error, Debug)]
 #[yak(tag = InvalidEvent)]
-enum BuckEventError {
-    #[error("The `yak_data::BuckEvent` provided has no `Timestamp`")]
+enum YakEventError {
+    #[error("The `yak_data::YakEvent` provided has no `Timestamp`")]
     MissingTimestamp,
-    #[error("The `yak_data::BuckEvent` provided has no `Data`")]
+    #[error("The `yak_data::YakEvent` provided has no `Data`")]
     MissingData,
     #[error("Sent an event missing one or more fields: `{0:?}`")]
-    MissingField(BuckEvent),
+    MissingField(YakEvent),
 }
 
 pub fn init_late_bindings() {
@@ -245,7 +245,7 @@ mod tests {
 
     #[test]
     fn round_trip_success() {
-        let test = BuckEvent::new(
+        let test = YakEvent::new(
             SystemTime::now(),
             TraceId::new(),
             Some(SpanId::next()),
@@ -262,7 +262,7 @@ mod tests {
         );
         assert_eq!(
             test,
-            BuckEvent::try_from(Box::<yak_data::BuckEvent>::from(test.clone())).unwrap()
+            YakEvent::try_from(Box::<yak_data::YakEvent>::from(test.clone())).unwrap()
         );
     }
 }

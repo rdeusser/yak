@@ -19,5 +19,5 @@ use yak_cli_proto::PartialResult;
 pub enum StreamValue {
     Result(Box<CommandResult>),
     PartialResult(Box<PartialResult>),
-    Event(Box<yak_data::BuckEvent>),
+    Event(Box<yak_data::YakEvent>),
 }

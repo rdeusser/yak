@@ -30,7 +30,7 @@ load("@prelude//cxx:link_groups_types.bzl", "LINK_GROUP_MAP_ATTR")
 load("@prelude//cxx:prebuilt_cxx_library_group.bzl", "prebuilt_cxx_library_group_impl")
 load("@prelude//cxx:transformation_spec.bzl", "TransformationKind", "transformation_spec_impl")
 load("@prelude//cxx:windows_resource.bzl", "windows_resource_impl")
-load("@prelude//decls:common.bzl", "IncludeType", "buck")
+load("@prelude//decls:common.bzl", "IncludeType", "yak")
 load("@prelude//decls:core_rules.bzl", "core_rules")
 load("@prelude//decls:cxx_rules.bzl", "BUILD_INFO_ATTR", "cxx_rules")
 load("@prelude//decls:cython_rules.bzl", "cython_rules")
@@ -229,8 +229,8 @@ def _python_runtime_bundle_attrs():
             "shared_libs": attrs.list(attrs.dep(), default = [], doc = "Additional shared libraries required by this runtime"),
             "stdlib": attrs.string(doc = "The python standard library"),
         }
-        | buck.labels_arg()
-        | buck.contacts_arg()
+        | yak.labels_arg()
+        | yak.contacts_arg()
     )
 
 _dotnet_extra_attributes = {
@@ -291,7 +291,7 @@ cxx_extra_attributes = {
     "cxx_genrule": genrule_attributes()
     | {
         "_cxx_toolchain": toolchains_common.cxx(),
-        "_exec_os_type": buck.exec_os_type_arg(),
+        "_exec_os_type": yak.exec_os_type_arg(),
     },
     "cxx_library": _cxx_extra_library_attrs,
     "cxx_precompiled_header": _cxx_extra_library_attrs,
@@ -329,7 +329,7 @@ control how the dependencies of this library are linked, use `link_style` instea
             "supports_python_dlopen": attrs.bool(default = True),
             "third_party_build": attrs.option(attrs.dep(providers = [ThirdPartyBuildInfo]), default = None),
             "_cxx_toolchain": toolchains_common.cxx(),
-            "_target_os_type": buck.target_os_type_arg(),
+            "_target_os_type": yak.target_os_type_arg(),
         }
         | third_party_common.create_third_party_build_root_attrs()
     ),
@@ -360,12 +360,12 @@ _go_extra_attributes = {
         "_cgo_enabled": cgo_enabled_attr,
         "_coverage_mode": coverage_mode_attr,
         "_cxx_toolchain": toolchains_common.cxx(),
-        "_exec_os_type": buck.exec_os_type_arg(),
+        "_exec_os_type": yak.exec_os_type_arg(),
         "_go_stdlib": attrs.default_only(attrs.dep(default = "prelude//go/tools:stdlib")),
         "_go_toolchain": toolchains_common.go(),
     },
     "go_bootstrap_binary": {
-        "_exec_os_type": buck.exec_os_type_arg(),
+        "_exec_os_type": yak.exec_os_type_arg(),
         "_go_bootstrap_toolchain": toolchains_common.go_bootstrap(),
     },
     "go_exported_library": {
@@ -373,7 +373,7 @@ _go_extra_attributes = {
         "_build_tags": build_tags_attr,
         "_cgo_enabled": cgo_enabled_attr,
         "_cxx_toolchain": toolchains_common.cxx(),
-        "_exec_os_type": buck.exec_os_type_arg(),
+        "_exec_os_type": yak.exec_os_type_arg(),
         "_go_stdlib": attrs.default_only(attrs.dep(default = "prelude//go/tools:stdlib")),
         "_go_toolchain": toolchains_common.go(),
     },
@@ -382,7 +382,7 @@ _go_extra_attributes = {
         "_cgo_enabled": cgo_enabled_attr,
         "_coverage_mode": coverage_mode_attr,
         "_cxx_toolchain": toolchains_common.cxx(),
-        "_exec_os_type": buck.exec_os_type_arg(),
+        "_exec_os_type": yak.exec_os_type_arg(),
         "_go_stdlib": attrs.default_only(attrs.dep(default = "prelude//go/tools:stdlib")),
         "_go_toolchain": toolchains_common.go(),
     },
@@ -390,7 +390,7 @@ _go_extra_attributes = {
         "_build_tags": build_tags_attr,
         "_cgo_enabled": cgo_enabled_attr,
         "_cxx_toolchain": toolchains_common.cxx(),
-        "_exec_os_type": buck.exec_os_type_arg(),
+        "_exec_os_type": yak.exec_os_type_arg(),
         "_go_toolchain": toolchains_common.go(),
     },
     "go_test": {
@@ -401,7 +401,7 @@ _go_extra_attributes = {
         "_cgo_enabled": cgo_enabled_attr,
         "_coverage_mode": coverage_mode_attr,
         "_cxx_toolchain": toolchains_common.cxx(),
-        "_exec_os_type": buck.exec_os_type_arg(),
+        "_exec_os_type": yak.exec_os_type_arg(),
         "_go_stdlib": attrs.default_only(attrs.dep(default = "prelude//go/tools:stdlib")),
         "_go_toolchain": toolchains_common.go(),
         "_testmaingen": attrs.default_only(attrs.exec_dep(providers = [RunInfo], default = "prelude//go/tools:testmaingen")),
@@ -446,15 +446,15 @@ _python_extra_attributes = {
         "main": attrs.source(),
         "_python_bootstrap_toolchain": toolchains_common.python_bootstrap(),
     }
-    | buck.labels_arg()
-    | buck.contacts_arg(),
+    | yak.labels_arg()
+    | yak.contacts_arg(),
     "python_bootstrap_library": {
         "deps": attrs.list(attrs.dep(providers = [PythonBootstrapSources]), default = []),
         "has_content_based_path": attrs.bool(default = False),
         "srcs": attrs.list(attrs.source()),
     }
-    | buck.labels_arg()
-    | buck.contacts_arg(),
+    | yak.labels_arg()
+    | yak.contacts_arg(),
     "python_needed_coverage_test": dict(
         contacts = attrs.list(attrs.string(), default = []),
         env = attrs.dict(key = attrs.string(), value = attrs.arg(), sorted = False, default = {}),
@@ -462,7 +462,7 @@ _python_extra_attributes = {
         needed_coverage = attrs.list(attrs.tuple(attrs.int(), attrs.dep(), attrs.option(attrs.string())), default = []),
         supports_test_execution_caching = attrs.bool(default = False),
         test = attrs.dep(providers = [ExternalRunnerTestInfo]),
-        **(re_test_common.test_args() | buck.inject_test_env_arg()),
+        **(re_test_common.test_args() | yak.inject_test_env_arg()),
     ),
     "python_runtime_bundle": _python_runtime_bundle_attrs(),
 }

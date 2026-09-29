@@ -32,7 +32,7 @@ use yak_build_api::bxl::result::BxlResult;
 use yak_build_api::bxl::types::BxlFunctionLabel;
 use yak_common::events::HasEvents;
 use yak_common::scope::scope_and_collect_with_dice;
-use yak_common::target_aliases::BuckConfigTargetAliasResolver;
+use yak_common::target_aliases::YakConfigTargetAliasResolver;
 use yak_core::cells::CellAliasResolver;
 use yak_core::cells::CellResolver;
 use yak_core::global_cfg_options::GlobalCfgOptions;
@@ -49,13 +49,13 @@ use yak_events::dispatch::get_dispatcher;
 use yak_events::dispatch::with_dispatcher;
 use yak_execute::digest_config::DigestConfig;
 use yak_execute::digest_config::HasDigestConfig;
-use yak_interpreter::factory::BuckStarlarkModule;
+use yak_interpreter::factory::YakStarlarkModule;
 use yak_interpreter::factory::StarlarkEvaluatorProvider;
 use yak_interpreter::file_loader::LoadedModule;
 use yak_interpreter::load_module::InterpreterCalculation;
 use yak_interpreter::paths::module::StarlarkModulePath;
 use yak_interpreter::print_handler::EventDispatcherPrintHandler;
-use yak_interpreter::soft_error::Buck2StarlarkSoftErrorHandler;
+use yak_interpreter::soft_error::YakStarlarkSoftErrorHandler;
 use yak_interpreter::starlark_profiler::data::StarlarkProfileDataAndStats;
 
 use crate::bxl::key::BxlKey;
@@ -190,7 +190,7 @@ impl BxlInnerEvaluator {
             dispatcher,
         } = self;
 
-        BuckStarlarkModule::with_profiling(|env| {
+        YakStarlarkModule::with_profiling(|env| {
             let key = data.key().dupe();
 
             let bxl_dice = BxlDiceComputations::new(dice, liveness.dupe());
@@ -215,7 +215,7 @@ impl BxlInnerEvaluator {
                         let bxl_function_name = key.label().name.clone();
                         let frozen_callable = get_bxl_callable(key.label(), &module)?;
                         eval.set_print_handler(&print);
-                        eval.set_soft_error_handler(&Buck2StarlarkSoftErrorHandler);
+                        eval.set_soft_error_handler(&YakStarlarkSoftErrorHandler);
 
                         eval.extra_mut = Some(&mut extra);
 
@@ -386,7 +386,7 @@ pub(crate) fn get_bxl_callable(
 }
 
 pub(crate) struct CliResolutionCtx<'d> {
-    pub(crate) target_alias_resolver: BuckConfigTargetAliasResolver,
+    pub(crate) target_alias_resolver: YakConfigTargetAliasResolver,
     pub(crate) cell_resolver: &'d CellResolver,
     pub(crate) cell_alias_resolver: &'d CellAliasResolver,
     pub(crate) relative_dir: PackageLabel,

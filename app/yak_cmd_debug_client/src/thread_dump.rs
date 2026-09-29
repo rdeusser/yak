@@ -9,11 +9,11 @@
  */
 
 use yak_client_ctx::client_ctx::ClientCommandContext;
-use yak_client_ctx::common::BuckArgMatches;
-use yak_client_ctx::daemon::client::connect::BuckdProcessInfo;
+use yak_client_ctx::common::YakArgMatches;
+use yak_client_ctx::daemon::client::connect::YakdProcessInfo;
 use yak_client_ctx::exit_result::ExitResult;
 use yak_client_ctx::thread_dump::thread_dump_command;
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 use yak_error::ErrorTag;
 use yak_error::yak_error;
 
@@ -22,17 +22,17 @@ use yak_error::yak_error;
 pub struct ThreadDumpCommand {}
 
 impl ThreadDumpCommand {
-    pub fn exec(self, _matches: BuckArgMatches<'_>, ctx: ClientCommandContext<'_>) -> ExitResult {
+    pub fn exec(self, _matches: YakArgMatches<'_>, ctx: ClientCommandContext<'_>) -> ExitResult {
         let paths = ctx.paths()?;
         let daemon_dir = paths.daemon_dir()?;
-        let Ok(info) = BuckdProcessInfo::load(&daemon_dir) else {
+        let Ok(info) = YakdProcessInfo::load(&daemon_dir) else {
             return yak_error!(ErrorTag::Input, "No running yak daemon").into();
         };
 
         ctx.with_runtime(|_| async move {
             let status = thread_dump_command(&info)?
                 .spawn()
-                .buck_error_context("Could not run LLDB to grab a thread-dump")?
+                .yak_error_context("Could not run LLDB to grab a thread-dump")?
                 .wait()
                 .await?;
             if status.success() {

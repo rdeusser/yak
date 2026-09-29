@@ -12,7 +12,7 @@
 
 // We put this in a module for easier naming in convert.
 mod proto {
-    tonic::include_proto!("buck.downward_api");
+    tonic::include_proto!("yak.downward_api");
 }
 
 pub use proto::*;

@@ -5,7 +5,7 @@ files given yak target labels or patterns, with full functional IntelliSense
 and build/run/debug setup.
 
 The majority of heavy lifting is implemented in
-[BXL](https://rdeusser.github.io/buck2/docs/bxl/), the extension language of yak, which
+[BXL](https://rdeusser.github.io/yak/docs/bxl/), the extension language of yak, which
 offers superb performance and handles incremental changes extremely well.
 
 ![demo](assets/demo.png)

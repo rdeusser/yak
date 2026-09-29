@@ -36,8 +36,8 @@ use yak_core::fs::project::ProjectRootTemp;
 use yak_core::target::label::label::TargetLabel;
 use yak_execute::digest_config::DigestConfig;
 use yak_execute::digest_config::SetDigestConfig;
-use yak_hash::BuckIndexSet;
-use yak_hash::BuckMutMap;
+use yak_hash::YakIndexSet;
+use yak_hash::YakMutMap;
 use yak_node::nodes::configured::ConfiguredTargetNode;
 use dice::DiceComputations;
 use dice::UserComputationData;
@@ -48,7 +48,7 @@ use indoc::indoc;
 use crate::interpreter::rule_defs::provider::testing::FrozenProviderCollectionValueExt;
 
 #[derive(Debug, Allocative)]
-struct FakeDeferred(usize, BuckIndexSet<DeferredInput>, Arc<AtomicBool>);
+struct FakeDeferred(usize, YakIndexSet<DeferredInput>, Arc<AtomicBool>);
 
 impl provider::Provider for FakeDeferred {
     fn provide<'a>(&'a self, _demand: &mut provider::Demand<'a>) {}
@@ -96,8 +96,8 @@ async fn lookup_deferred_from_analysis() -> yak_error::Result<()> {
 
     let executed0 = Arc::new(AtomicBool::new(false));
     let executed1 = Arc::new(AtomicBool::new(false));
-    let data0 = deferred.defer(FakeDeferred(1, BuckIndexSet::default(), executed0.dupe()));
-    let data1 = deferred.defer(FakeDeferred(5, BuckIndexSet::default(), executed1.dupe()));
+    let data0 = deferred.defer(FakeDeferred(1, YakIndexSet::default(), executed0.dupe()));
+    let data1 = deferred.defer(FakeDeferred(5, YakIndexSet::default(), executed1.dupe()));
     let (deferred_result, analysis_values) = deferred.take_result()?;
 
     let fs = ProjectRootTemp::new()?;
@@ -113,7 +113,7 @@ async fn lookup_deferred_from_analysis() -> yak_error::Result<()> {
                 deferred_result,
                 analysis_values,
                 None,
-                BuckMutMap::default(),
+                YakMutMap::default(),
                 0,
                 0,
             ))),
@@ -158,7 +158,7 @@ async fn lookup_deferred_from_analysis() -> yak_error::Result<()> {
 #[tokio::test]
 async fn lookup_deferred_that_has_deferreds() -> yak_error::Result<()> {
     #[derive(Debug, Allocative)]
-    struct TestDeferringDeferred(usize, BuckIndexSet<DeferredInput>, Arc<AtomicBool>);
+    struct TestDeferringDeferred(usize, YakIndexSet<DeferredInput>, Arc<AtomicBool>);
 
     impl provider::Provider for TestDeferringDeferred {
         fn provide<'a>(&'a self, _demand: &mut provider::Demand<'a>) {}
@@ -202,7 +202,7 @@ async fn lookup_deferred_that_has_deferreds() -> yak_error::Result<()> {
     let executed = Arc::new(AtomicBool::new(false));
     let data = deferred.defer(TestDeferringDeferred(
         8,
-        BuckIndexSet::default(),
+        YakIndexSet::default(),
         executed.dupe(),
     ));
     let (deferred_result, analysis_values) = deferred.take_result()?;
@@ -220,7 +220,7 @@ async fn lookup_deferred_that_has_deferreds() -> yak_error::Result<()> {
                 deferred_result,
                 analysis_values,
                 None,
-                BuckMutMap::default(),
+                YakMutMap::default(),
                 0,
                 0,
             ))),

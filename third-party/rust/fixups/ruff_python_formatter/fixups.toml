@@ -1,3 +1,0 @@
-# The clap derive in `src/cli.rs` reads the package's authors, description, and
-# version at compile time.
-cargo_env = ["CARGO_PKG_AUTHORS", "CARGO_PKG_DESCRIPTION", "CARGO_PKG_VERSION"]

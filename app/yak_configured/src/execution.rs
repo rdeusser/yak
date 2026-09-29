@@ -34,7 +34,7 @@ use yak_core::execution_types::execution_platforms::ExecutionPlatformsData;
 use yak_core::provider::label::ProvidersLabel;
 use yak_core::target::label::label::TargetLabel;
 use yak_core::target::target_configured_target_label::TargetConfiguredTargetLabel;
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 use yak_error::internal_error;
 use dice_futures::cancellation::CancellationContext;
 use yak_node::attrs::configuration_context::AttrConfigurationContext;
@@ -45,7 +45,7 @@ use yak_node::configuration::resolved::ConfigurationSettingKey;
 use yak_node::configuration::resolved::MatchedConfigurationSettingKeysWithCfg;
 use yak_node::execution::GetExecutionPlatforms;
 use yak_node::execution::GetExecutionPlatformsImpl;
-use yak_node::execution::EXECUTION_PLATFORMS_BUCKCONFIG;
+use yak_node::execution::EXECUTION_PLATFORMS_YAKCONFIG;
 use yak_node::execution::GET_EXECUTION_PLATFORMS;
 use yak_node::nodes::configured::ConfiguredTargetNode;
 use yak_node::nodes::configured_frontend::ConfiguredTargetNodeCalculation;
@@ -228,7 +228,7 @@ impl ExecutionPlatformConstraints {
         {
             let configured_attr = a
                 .configure(cfg_ctx)
-                .with_buck_error_context(|| {
+                .with_yak_error_context(|| {
                     format!(
                         "Error configuring attribute `{}` to resolve execution platform",
                         EXEC_COMPATIBLE_WITH_ATTRIBUTE.name
@@ -237,7 +237,7 @@ impl ExecutionPlatformConstraints {
                 .require_compatible()?;
             ConfiguredTargetNode::attr_as_target_compatible_with(configured_attr.value)
                 .map(|label| {
-                    label.with_buck_error_context(|| {
+                    label.with_yak_error_context(|| {
                         format!("attribute `{}`", EXEC_COMPATIBLE_WITH_ATTRIBUTE.name)
                     })
                 })
@@ -479,7 +479,7 @@ async fn compute_execution_platforms(
     let cell_alias_resolver = ctx.get_cell_alias_resolver(cells.root_cell()).await?;
 
     let execution_platforms_target = ctx
-        .get_legacy_config_property(cells.root_cell(), EXECUTION_PLATFORMS_BUCKCONFIG)
+        .get_legacy_config_property(cells.root_cell(), EXECUTION_PLATFORMS_YAKCONFIG)
         .await?;
 
     let execution_platforms_target = match execution_platforms_target {
@@ -582,7 +582,7 @@ impl Key for ExecDepCfgKey {
                 node.rule_type(),
             )
             .await
-            .with_buck_error_context(|| {
+            .with_yak_error_context(|| {
                 format!(
                     "Resolving modifiers for exec dep target `{}`",
                     self.exec_dep

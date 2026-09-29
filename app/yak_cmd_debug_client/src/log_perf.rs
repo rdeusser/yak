@@ -10,7 +10,7 @@
 
 use tokio_stream::StreamExt;
 use yak_client_ctx::client_ctx::ClientCommandContext;
-use yak_client_ctx::common::BuckArgMatches;
+use yak_client_ctx::common::YakArgMatches;
 use yak_client_ctx::event_log_options::EventLogOptions;
 use yak_client_ctx::exit_result::ExitResult;
 use yak_event_log::read::ReaderStats;
@@ -27,7 +27,7 @@ pub struct LogPerfCommand {
 }
 
 impl LogPerfCommand {
-    pub fn exec(self, _matches: BuckArgMatches<'_>, ctx: ClientCommandContext<'_>) -> ExitResult {
+    pub fn exec(self, _matches: YakArgMatches<'_>, ctx: ClientCommandContext<'_>) -> ExitResult {
         let Self {
             event_log,
             interval,

@@ -34,7 +34,7 @@ use yak_core::execution_types::executor_config::RePlatformFields;
 use yak_core::fs::artifact_path_resolver::ArtifactFs;
 use yak_core::yak_env;
 use yak_directory::directory::entry::DirectoryEntry;
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 use yak_events::dispatch::span_async;
 use yak_execute::digest::CasDigestToReExt;
 use yak_execute::digest_config::DigestConfig;
@@ -441,11 +441,11 @@ impl CacheUploader {
             self.materializer
                 .ensure_materialized(content_paths, MaterializationPurpose::IntermediateOnly)
                 .await
-                .buck_error_context("Error materializing outputs for cache upload")?;
+                .yak_error_context("Error materializing outputs for cache upload")?;
 
             yak_util::future::try_join_all(upload_futs)
                 .await
-                .buck_error_context("Error uploading outputs")?;
+                .yak_error_context("Error uploading outputs")?;
 
             Ok(())
         };
@@ -457,7 +457,7 @@ impl CacheUploader {
                 .clone()
                 .into_re(&self.re_client, digest_config)
                 .await
-                .buck_error_context("Error accessing std_streams")
+                .yak_error_context("Error accessing std_streams")
         };
 
         let ((), std_streams) = future::try_join(uploads, std_streams).await?;
@@ -512,7 +512,7 @@ impl UploadCache for CacheUploader {
         dep_file_bundle: Option<&mut dyn IntoRemoteDepFile>,
         action_digest_and_blobs: &ActionDigestAndBlobs,
     ) -> yak_error::Result<CacheUploadResults> {
-        let error_on_cache_upload = error_on_cache_upload().buck_error_context("cache_upload")?;
+        let error_on_cache_upload = error_on_cache_upload().yak_error_context("cache_upload")?;
 
         let (cache_upload_outcome, action_result) = if res.was_locally_executed() {
             tracing::debug!(
@@ -593,7 +593,7 @@ fn systemtime_to_ttimestamp(time: SystemTime) -> yak_error::Result<TTimestamp> {
         seconds: duration
             .as_secs()
             .try_into()
-            .buck_error_context("Invalid duration")?,
+            .yak_error_context("Invalid duration")?,
         // Max 1B so it won't wrap around.
         nanos: duration.subsec_nanos() as _,
         ..Default::default()

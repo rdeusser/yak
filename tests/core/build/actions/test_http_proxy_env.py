@@ -20,9 +20,9 @@ from dataclasses import dataclass
 
 import pytest
 from aiohttp import web
-from e2e_util.api.buck import Buck
+from e2e_util.api.yak import Yak
 from e2e_util.asserts import expect_failure
-from e2e_util.buck_workspace import buck_test
+from e2e_util.yak_workspace import yak_test
 
 
 PROXY_ENV_VARS = [
@@ -77,12 +77,12 @@ async def serve(
             await runner.cleanup()
 
 
-def configure(buck: Buck, digest: str = "SHA256") -> None:
+def configure(yak: Yak, digest: str = "SHA256") -> None:
     for name in PROXY_ENV_VARS:
-        assert buck.get_env_var(name) is None, (
+        assert yak.get_env_var(name) is None, (
             f"{name} leaked into the test environment"
         )
-    (buck.cwd / ".yakconfig.local").write_text(
+    (yak.cwd / ".yakconfig.local").write_text(
         f"[yak]\ndigest_algorithms = {digest}\n"
     )
 
@@ -107,7 +107,7 @@ def build_args(
 
 
 async def build_download(
-    buck: Buck,
+    yak: Yak,
     payload: bytes,
     origin: Server,
     env: dict[str, str],
@@ -115,7 +115,7 @@ async def build_download(
     size: bool = False,
 ) -> None:
     result = await asyncio.wait_for(
-        buck.build(
+        yak.build(
             "//:download",
             *build_args(payload, origin, size=size),
             env=env,
@@ -126,8 +126,8 @@ async def build_download(
     assert output.read_bytes() == payload
 
 
-async def daemon_pid(buck: Buck, env: dict[str, str]) -> int:
-    result = await asyncio.wait_for(buck.status(env=env), timeout=30)
+async def daemon_pid(yak: Yak, env: dict[str, str]) -> int:
+    result = await asyncio.wait_for(yak.status(env=env), timeout=30)
     return json.loads(result.stdout)["process_info"]["pid"]
 
 
@@ -146,15 +146,15 @@ class TestHttpProxyEnv:
         ],
         ids=["immediate", "head-and-deferred-get", "sized-deferred-get"],
     )
-    @buck_test(skip_for_os=["windows"])
+    @yak_test(skip_for_os=["windows"])
     async def test_proxy_download_paths(
-        self, buck: Buck, digest: str, size: bool, methods: list[str]
+        self, yak: Yak, digest: str, size: bool, methods: list[str]
     ) -> None:
-        configure(buck, digest=digest)
+        configure(yak, digest=digest)
         payload = make_payload()
         async with serve(payload) as origin, serve(payload) as proxy:
             await build_download(
-                buck,
+                yak,
                 payload,
                 origin,
                 {"HTTP_PROXY": proxy.url},
@@ -191,18 +191,18 @@ class TestHttpProxyEnv:
             "all-proxy-ignored",
         ],
     )
-    @buck_test(skip_for_os=["windows"])
+    @yak_test(skip_for_os=["windows"])
     async def test_proxy_environment_semantics(
-        self, buck: Buck, values: dict[str, str], proxied: bool
+        self, yak: Yak, values: dict[str, str], proxied: bool
     ) -> None:
-        configure(buck)
+        configure(yak)
         payload = make_payload()
         async with serve(payload) as origin, serve(payload) as proxy:
             substitutions = {"origin": origin.url, "proxy": proxy.url}
             env = {
                 name: substitutions.get(value, value) for name, value in values.items()
             }
-            await build_download(buck, payload, origin, env)
+            await build_download(yak, payload, origin, env)
             if proxied:
                 assert origin.requests == []
                 assert proxy.requests == [
@@ -233,11 +233,11 @@ class TestHttpProxyEnv:
             "malformed",
         ],
     )
-    @buck_test(skip_for_os=["windows"])
+    @yak_test(skip_for_os=["windows"])
     async def test_invalid_proxy_values_are_rejected(
-        self, buck: Buck, values: dict[str, str]
+        self, yak: Yak, values: dict[str, str]
     ) -> None:
-        configure(buck)
+        configure(yak)
         payload = make_payload()
         # The daemon fails to start with an invalid proxy value. The client
         # sometimes notices only when its startup timeout runs out, so this
@@ -249,7 +249,7 @@ class TestHttpProxyEnv:
         async with serve(payload) as origin:
             await asyncio.wait_for(
                 expect_failure(
-                    buck.build(
+                    yak.build(
                         "//:download",
                         *build_args(payload, origin),
                         env={**values, **startup_timeout},
@@ -260,11 +260,11 @@ class TestHttpProxyEnv:
             )
             assert origin.requests == []
 
-    @buck_test(skip_for_os=["windows"])
+    @yak_test(skip_for_os=["windows"])
     async def test_proxy_environment_changes_require_manual_restart(
-        self, buck: Buck
+        self, yak: Yak
     ) -> None:
-        configure(buck)
+        configure(yak)
         payload = make_payload()
         second_payload = make_payload()
         async with (
@@ -276,7 +276,7 @@ class TestHttpProxyEnv:
             args = build_args(payload, origin)
             first_env = {"HTTP_PROXY": first_proxy.url}
             first_result = await asyncio.wait_for(
-                buck.build(
+                yak.build(
                     "//:download", *args, "--materializations=None", env=first_env
                 ),
                 timeout=90,
@@ -286,14 +286,14 @@ class TestHttpProxyEnv:
             )
             assert not output.exists()
             assert first_proxy.requests == [("HEAD", f"{origin.url}/download")]
-            first_pid = await daemon_pid(buck, first_env)
+            first_pid = await daemon_pid(yak, first_env)
 
             second_env = {"HTTP_PROXY": second_proxy.url}
             await asyncio.wait_for(
-                buck.build("//:download", *args, env=second_env),
+                yak.build("//:download", *args, env=second_env),
                 timeout=90,
             )
-            assert await daemon_pid(buck, second_env) == first_pid
+            assert await daemon_pid(yak, second_env) == first_pid
             assert output.read_bytes() == payload
             assert first_proxy.requests == [
                 ("HEAD", f"{origin.url}/download"),
@@ -301,16 +301,16 @@ class TestHttpProxyEnv:
             ]
             assert second_proxy.requests == []
 
-            await asyncio.wait_for(buck.kill(), timeout=30)
+            await asyncio.wait_for(yak.kill(), timeout=30)
             second_result = await asyncio.wait_for(
-                buck.build(
+                yak.build(
                     "//:download",
                     *build_args(second_payload, second_origin),
                     env=second_env,
                 ),
                 timeout=90,
             )
-            assert await daemon_pid(buck, second_env) != first_pid
+            assert await daemon_pid(yak, second_env) != first_pid
             output = second_result.get_build_report().output_for_target(
                 "root//:download"
             )

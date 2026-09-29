@@ -54,7 +54,7 @@ use yak_execute::re::manager::ManagedRemoteExecutionClient;
 use yak_execute::re::output_trees_download_config::OutputTreesDownloadConfig;
 use yak_execute::re::remote_action_result::ExecuteResponseWithQueueStats;
 use yak_execute::re::remote_action_result::RemoteActionResult;
-use yak_hash::BuckIndexMap;
+use yak_hash::YakIndexMap;
 use yak_util::time_span::TimeSpan;
 
 use crate::incremental_actions_helper::save_content_based_incremental_state;
@@ -278,7 +278,7 @@ impl ReExecutor {
                 // do here is just pass on the error.
                 manager.failure(
                     execution_kind,
-                    BuckIndexMap::default(),
+                    YakIndexMap::default(),
                     CommandStdStreams::Local {
                         stdout: Vec::new(),
                         stderr: out.to_owned().into(),
@@ -293,7 +293,7 @@ impl ReExecutor {
             {
                 manager.timeout(
                     execution_kind,
-                    BuckIndexMap::default(),
+                    YakIndexMap::default(),
                     // Checked above: we fallthrough to the error path if we didn't set a timeout
                     // and yet received one.
                     request.timeout().unwrap(),

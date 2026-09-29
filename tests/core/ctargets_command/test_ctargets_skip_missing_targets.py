@@ -8,19 +8,19 @@
 
 import re
 
-from e2e_util.api.buck import Buck
+from e2e_util.api.yak import Yak
 from e2e_util.asserts import expect_failure
-from e2e_util.buck_workspace import buck_test
+from e2e_util.yak_workspace import yak_test
 
 
 def _replace_hash(s: str) -> str:
     return re.sub(r"\b[0-9a-f]{16}\b", "<HASH>", s)
 
 
-@buck_test()
-async def test_ctargets_skip_missing_targets(buck: Buck) -> None:
+@yak_test()
+async def test_ctargets_skip_missing_targets(yak: Yak) -> None:
     await expect_failure(
-        buck.ctargets(
+        yak.ctargets(
             "root//:existing",
             "root//:nonexistent",
             "--target-platforms=root//:p",
@@ -28,7 +28,7 @@ async def test_ctargets_skip_missing_targets(buck: Buck) -> None:
         stderr_regex="Unknown target `nonexistent` from package",
     )
 
-    result = await buck.ctargets(
+    result = await yak.ctargets(
         "root//:existing",
         "root//:nonexistent",
         "--target-platforms=root//:p",

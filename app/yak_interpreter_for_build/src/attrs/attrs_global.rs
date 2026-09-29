@@ -26,7 +26,7 @@ use starlark::values::list_or_tuple::UnpackListOrTuple;
 use starlark::values::tuple::UnpackTuple;
 use yak_core::configuration::transition::id::TransitionId;
 use yak_core::plugins::PluginKindSet;
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 use yak_interpreter::coerce::COERCE_PROVIDERS_LABEL_FOR_BZL;
 use yak_interpreter::types::provider::callable::ValueAsProviderCallableLike;
 use yak_interpreter::types::transition::transition_id_from_value;
@@ -87,7 +87,7 @@ impl AttributeExt for Attribute {
                         &attr_coercion_context_for_bzl(eval)?,
                         x,
                     )
-                    .buck_error_context("Error coercing attribute default")?,
+                    .yak_error_context("Error coercing attribute default")?,
             )),
         };
         Ok(StarlarkAttribute::new(Attribute::new(

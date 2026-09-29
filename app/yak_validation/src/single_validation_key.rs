@@ -23,8 +23,8 @@ use pagable::pagable_typetag;
 use yak_artifact::actions::key::ActionKey;
 use yak_build_api::actions::artifact::get_artifact_fs::GetArtifactFs;
 use yak_build_api::actions::calculation::ActionCalculation;
-use yak_error::BuckErrorContext;
-use yak_error::BuckErrorOptionContext;
+use yak_error::YakErrorContext;
+use yak_error::YakErrorOptionContext;
 use yak_error::ErrorTag;
 use yak_execute::materialize::materializer::HasMaterializer;
 use yak_execute::materialize::materializer::MaterializationPurpose;
@@ -75,7 +75,7 @@ impl Key for SingleValidationKey {
         };
 
         let fs = ctx.get_artifact_fs().await?;
-        let project_relative_path = fs.buck_out_path_resolver().resolve_gen(
+        let project_relative_path = fs.yak_out_path_resolver().resolve_gen(
             &gen_path,
             if gen_path.is_content_based_path() {
                 Some(artifact_value.content_based_path_hash())
@@ -99,7 +99,7 @@ impl Key for SingleValidationKey {
         let content = async_fs_util::read_to_string(&validation_result_path)
             .await
             .categorize_tagged(ErrorTag::ValidationResultRead)
-            .buck_error_context("Reading validation result")?;
+            .yak_error_context("Reading validation result")?;
 
         match parse_validation_result(&content) {
             Ok(r) => Ok(CachedValidationResult::new(

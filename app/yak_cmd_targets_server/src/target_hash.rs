@@ -38,8 +38,8 @@ use yak_core::global_cfg_options::GlobalCfgOptions;
 use yak_core::package::PackageLabelWithModifiers;
 use yak_core::target::configured_or_unconfigured::ConfiguredOrUnconfiguredTargetLabel;
 use yak_core::target::label::label::TargetLabel;
-use yak_hash::BuckMutMap;
-use yak_hash::BuckMutSet;
+use yak_hash::YakMutMap;
+use yak_hash::YakMutSet;
 use yak_node::nodes::configured::ConfiguredTargetNode;
 use yak_node::nodes::unconfigured::TargetNode;
 use yak_query::query::environment::QueryTarget;
@@ -50,10 +50,10 @@ use yak_query::query::traversal::async_depth_first_postorder_traversal;
 
 #[derive(Clone, Dupe, derive_more::Display)]
 #[display("{:032x}", _0)]
-pub struct BuckTargetHash(pub u128);
+pub struct YakTargetHash(pub u128);
 
-trait BuckTargetHasher: Hasher + Send + 'static {
-    fn finish_u128(&mut self) -> BuckTargetHash;
+trait YakTargetHasher: Hasher + Send + 'static {
+    fn finish_u128(&mut self) -> YakTargetHash;
 }
 
 /// siphash24 is used as the "fast" hash. There are faster hash algorithms out there,
@@ -61,9 +61,9 @@ trait BuckTargetHasher: Hasher + Send + 'static {
 /// across architectures is rarely guaranteed. We see about a 20-25% improvement relative
 /// to blake3 and so there's likely little opportunity remaining for a faster hash function
 /// to capture anyway.
-impl BuckTargetHasher for siphasher::sip128::SipHasher24 {
-    fn finish_u128(&mut self) -> BuckTargetHash {
-        BuckTargetHash(self.finish128().as_u128())
+impl YakTargetHasher for siphasher::sip128::SipHasher24 {
+    fn finish_u128(&mut self) -> YakTargetHash {
+        YakTargetHash(self.finish128().as_u128())
     }
 }
 
@@ -88,17 +88,17 @@ impl Hasher for Blake3Adapter {
     }
 }
 
-impl BuckTargetHasher for Blake3Adapter {
-    fn finish_u128(&mut self) -> BuckTargetHash {
+impl YakTargetHasher for Blake3Adapter {
+    fn finish_u128(&mut self) -> YakTargetHash {
         let hash = blake3::Hasher::finalize(&self.0);
         let bytes = hash.as_bytes();
-        BuckTargetHash(u128::from_le_bytes(bytes[16..].try_into().unwrap()))
+        YakTargetHash(u128::from_le_bytes(bytes[16..].try_into().unwrap()))
     }
 }
 
 pub enum TargetHashesFileMode {
     /// The following files have changed in some way (don't do any IO)
-    PathsOnly(BuckMutSet<CellPath>),
+    PathsOnly(YakMutSet<CellPath>),
     /// Use IO operations to find the paths and their contents
     PathsAndContents,
     /// Don't hash any files
@@ -112,7 +112,7 @@ trait FileHasher: Send + Sync {
 }
 
 struct PathsOnlyFileHasher {
-    pseudo_changed_paths: BuckMutSet<CellPath>,
+    pseudo_changed_paths: YakMutSet<CellPath>,
 }
 
 #[async_trait]
@@ -255,7 +255,7 @@ impl TargetHashingTargetNode for TargetNode {
 }
 pub struct TargetHashes {
     // key is an unconfigured target label, but the hash is generated from the configured target label.
-    target_mapping: BuckMutMap<TargetLabel, yak_error::Result<BuckTargetHash>>,
+    target_mapping: YakMutMap<TargetLabel, yak_error::Result<YakTargetHash>>,
 }
 
 #[derive(yak_error::Error, Debug)]
@@ -268,7 +268,7 @@ enum TargetHashError {
 }
 
 impl TargetHashes {
-    pub fn get(&self, label: &TargetLabel) -> Option<&yak_error::Result<BuckTargetHash>> {
+    pub fn get(&self, label: &TargetLabel) -> Option<&yak_error::Result<YakTargetHash>> {
         self.target_mapping.get(label)
     }
 
@@ -282,10 +282,10 @@ impl TargetHashes {
     where
         T::Key: ConfiguredOrUnconfiguredTargetLabel,
     {
-        let mut hashes: BuckMutMap<
+        let mut hashes: YakMutMap<
             T::Key,
-            Shared<DropcancelJoinHandle<yak_error::Result<BuckTargetHash>>>,
-        > = BuckMutMap::default();
+            Shared<DropcancelJoinHandle<yak_error::Result<YakTargetHash>>>,
+        > = YakMutMap::default();
 
         let visit = |target: T| {
             // this is postorder, so guaranteed that all deps have futures already.
@@ -361,8 +361,8 @@ impl TargetHashes {
             .map(|(target, fut)| async move { (target, fut.await) })
             .collect();
 
-        let mut target_mapping: BuckMutMap<TargetLabel, yak_error::Result<BuckTargetHash>> =
-            BuckMutMap::default();
+        let mut target_mapping: YakMutMap<TargetLabel, yak_error::Result<YakTargetHash>> =
+            YakMutMap::default();
 
         // TODO(cjhopman): FuturesOrdered/Unordered interacts poorly with tokio cooperative scheduling
         // (see https://github.com/rust-lang/futures-rs/issues/2053). Clean this up once a good
@@ -395,7 +395,7 @@ impl TargetHashes {
             .map(|target| {
                 let file_hasher = file_hasher.dupe();
                 async move {
-                    let hash_result: yak_error::Result<BuckTargetHash> = try {
+                    let hash_result: yak_error::Result<YakTargetHash> = try {
                         let mut hasher = TargetHashes::new_hasher(use_fast_hash);
                         TargetHashes::hash_node(&target, &mut *hasher);
 
@@ -423,7 +423,7 @@ impl TargetHashes {
             })
             .collect();
 
-        let target_mapping: BuckMutMap<TargetLabel, yak_error::Result<BuckTargetHash>> =
+        let target_mapping: YakMutMap<TargetLabel, yak_error::Result<YakTargetHash>> =
             yak_util::future::join_all(hashing_futures)
                 .await
                 .into_iter()
@@ -431,7 +431,7 @@ impl TargetHashes {
         Ok(Self { target_mapping })
     }
 
-    pub fn compute_immediate_one(node: &TargetNode, use_fast_hash: bool) -> BuckTargetHash {
+    pub fn compute_immediate_one(node: &TargetNode, use_fast_hash: bool) -> YakTargetHash {
         let mut hasher = TargetHashes::new_hasher(use_fast_hash);
         TargetHashes::hash_node(node, &mut *hasher);
         hasher.finish_u128()
@@ -479,7 +479,7 @@ impl TargetHashes {
         }
     }
 
-    fn new_hasher(use_fast_hash: bool) -> Box<dyn BuckTargetHasher> {
+    fn new_hasher(use_fast_hash: bool) -> Box<dyn YakTargetHasher> {
         if use_fast_hash {
             Box::new(SipHasher24::new())
         } else {
@@ -487,13 +487,13 @@ impl TargetHashes {
         }
     }
 
-    fn hash_node<T: TargetHashingTargetNode>(node: &T, mut hasher: &mut dyn BuckTargetHasher) {
+    fn hash_node<T: TargetHashingTargetNode>(node: &T, mut hasher: &mut dyn YakTargetHasher) {
         node.target_hash(&mut hasher);
     }
 
     fn hash_deps(
-        dep_hashes: Vec<yak_error::Result<BuckTargetHash>>,
-        hasher: &mut dyn BuckTargetHasher,
+        dep_hashes: Vec<yak_error::Result<YakTargetHash>>,
+        hasher: &mut dyn YakTargetHasher,
     ) -> yak_error::Result<()> {
         for target_hash in dep_hashes {
             hasher.write_u128(target_hash?.0);
@@ -503,7 +503,7 @@ impl TargetHashes {
 
     fn hash_files(
         file_digests: Vec<(CellPath, yak_error::Result<Vec<u8>>)>,
-        mut hasher: &mut dyn BuckTargetHasher,
+        mut hasher: &mut dyn YakTargetHasher,
     ) -> yak_error::Result<()> {
         for (path, digest) in file_digests {
             path.hash(&mut hasher);
@@ -517,17 +517,17 @@ impl TargetHashes {
 
 #[cfg(test)]
 mod tests {
-    use crate::target_hash::BuckTargetHash;
+    use crate::target_hash::YakTargetHash;
 
     #[test]
     fn test_hash_display() {
         assert_eq!(
             "00000000000000000000000000000000",
-            BuckTargetHash(0).to_string()
+            YakTargetHash(0).to_string()
         );
         assert_eq!(
             "ffffffffffffffffffffffffffffffff",
-            BuckTargetHash(u128::MAX).to_string()
+            YakTargetHash(u128::MAX).to_string()
         );
     }
 }

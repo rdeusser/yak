@@ -16,7 +16,7 @@ use std::time::Instant;
 use allocative::Allocative;
 use starlark::eval::ProfileData;
 use yak_common::starlark_profiler::StarlarkProfileDataAndStatsDyn;
-use yak_error::BuckErrorOptionContext;
+use yak_error::YakErrorOptionContext;
 use yak_error::internal_error;
 
 use crate::dice::starlark_provider::StarlarkEvalKind;

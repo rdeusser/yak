@@ -24,17 +24,17 @@ pub(crate) fn check_user_allowed() -> yak_error::Result<()> {
     use windows_sys::Win32::System::Threading::GetCurrentProcess;
     use windows_sys::Win32::System::Threading::OpenProcessToken;
     use yak_core::ci::is_ci;
-    use yak_error::BuckErrorContext;
+    use yak_error::YakErrorContext;
     use yak_wrapper_common::win::winapi_handle::WinapiHandle;
 
     let mut handle: HANDLE = ptr::null_mut();
     let token_ok = unsafe { OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &mut handle) };
     if token_ok == 0 {
-        return Err(io::Error::last_os_error()).buck_error_context("OpenProcessToken failed");
+        return Err(io::Error::last_os_error()).yak_error_context("OpenProcessToken failed");
     }
 
     let handle = unsafe {
-        WinapiHandle::new_check_last_os_error(handle).buck_error_context("OpenProcessToken")?
+        WinapiHandle::new_check_last_os_error(handle).yak_error_context("OpenProcessToken")?
     };
     let size = mem::size_of::<TOKEN_ELEVATION>();
     let elevation: MaybeUninit<TOKEN_ELEVATION> = MaybeUninit::zeroed();
@@ -50,7 +50,7 @@ pub(crate) fn check_user_allowed() -> yak_error::Result<()> {
         )
     };
     if success_get == 0 {
-        return Err(io::Error::last_os_error()).buck_error_context("GetTokenInformation failed");
+        return Err(io::Error::last_os_error()).yak_error_context("GetTokenInformation failed");
     }
 
     let elevation_struct: TOKEN_ELEVATION = unsafe { elevation.assume_init() };

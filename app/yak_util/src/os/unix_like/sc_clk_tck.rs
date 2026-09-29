@@ -12,7 +12,7 @@
 
 use std::sync::OnceLock;
 
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 use yak_error::yak_error;
 
 #[allow(clippy::absurd_extreme_comparisons)]
@@ -23,7 +23,7 @@ pub fn sc_clk_tck() -> yak_error::Result<u32> {
             let rate = libc::sysconf(libc::_SC_CLK_TCK);
             let rate: u32 = rate
                 .try_into()
-                .buck_error_context("Integer overflow converting ticks per second")?;
+                .yak_error_context("Integer overflow converting ticks per second")?;
             if rate <= 0 || rate > 10_000 {
                 return Err(yak_error!(
                     yak_error::ErrorTag::CpuStats,

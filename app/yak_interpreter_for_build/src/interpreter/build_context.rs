@@ -24,8 +24,8 @@ use yak_interpreter::build_context::STARLARK_PATH_FROM_BUILD_CONTEXT;
 use yak_interpreter::file_type::StarlarkFileType;
 use yak_interpreter::paths::path::StarlarkPath;
 
-use crate::interpreter::buckconfig::BuckConfigsViewForStarlark;
-use crate::interpreter::buckconfig::LegacyBuckConfigsForStarlark;
+use crate::interpreter::yakconfig::YakConfigsViewForStarlark;
+use crate::interpreter::yakconfig::LegacyYakConfigsForStarlark;
 use crate::interpreter::bzl_eval_ctx::BzlEvalCtx;
 use crate::interpreter::cell_info::InterpreterCellInfo;
 use crate::interpreter::functions::host_info::HostInfo;
@@ -162,7 +162,7 @@ pub struct BuildContext<'a> {
     /// `load()` statements.
     pub cell_info: &'a InterpreterCellInfo,
 
-    pub(crate) buckconfigs: LegacyBuckConfigsForStarlark<'a>,
+    pub(crate) yakconfigs: LegacyYakConfigsForStarlark<'a>,
 
     pub(crate) host_info: &'a HostInfo,
 
@@ -185,16 +185,16 @@ impl<'a> BuildContext<'a> {
     /// Create a build context for the given module.
     pub(crate) fn new(
         cell_info: &'a InterpreterCellInfo,
-        buckconfigs: &'a mut dyn BuckConfigsViewForStarlark,
+        yakconfigs: &'a mut dyn YakConfigsViewForStarlark,
         host_info: &'a HostInfo,
         additional: PerFileTypeContext,
         ignore_attrs_for_profiling: bool,
         infer_target_names: InferTargetNames,
     ) -> BuildContext<'a> {
-        let buckconfigs = LegacyBuckConfigsForStarlark::new(buckconfigs);
+        let yakconfigs = LegacyYakConfigsForStarlark::new(yakconfigs);
         BuildContext {
             cell_info,
-            buckconfigs,
+            yakconfigs,
             host_info,
             additional,
             ignore_attrs_for_profiling,

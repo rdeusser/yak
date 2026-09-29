@@ -34,9 +34,9 @@ use yak_data::FileWatcherKind;
 use yak_data::TargetLabel;
 use yak_data::action_key;
 use yak_data::span_start_event::Data;
-use yak_error::BuckErrorContext;
-use yak_error::BuckErrorOptionContext;
-use yak_events::BuckEvent;
+use yak_error::YakErrorContext;
+use yak_error::YakErrorOptionContext;
+use yak_events::YakEvent;
 use yak_test_api::data::TestStatus;
 use yak_util::commas::commas;
 use yak_util::truncate::truncate;
@@ -317,12 +317,12 @@ impl fmt::Display for EventDisplay {
 
 /// Formats event payloads for display.
 pub fn display_event(
-    event: &BuckEvent,
+    event: &YakEvent,
     opts: TargetDisplayOptions,
 ) -> yak_error::Result<EventDisplay> {
     let res: yak_error::Result<_> = try {
         let data = match event.data() {
-            yak_data::buck_event::Data::SpanStart(start) => start.data.as_ref().unwrap(),
+            yak_data::yak_event::Data::SpanStart(start) => start.data.as_ref().unwrap(),
             _ => Err(yak_error::Error::from(ParseEventError::UnexpectedEvent))?,
         };
 
@@ -546,7 +546,7 @@ pub fn display_event(
         res?
     };
 
-    res.with_buck_error_context(|| InvalidBuckEvent(Arc::new(event.clone())).to_string())
+    res.with_yak_error_context(|| InvalidYakEvent(Arc::new(event.clone())).to_string())
 }
 
 fn display_file_watcher(provider: i32) -> &'static str {
@@ -697,8 +697,8 @@ pub fn display_executor_stage(
 ///
 /// Gates the slow-action coloring so the warning reflects slow work, not time
 /// spent waiting for a local slot or for inputs under contention.
-pub fn is_active_execution_stage(event: &BuckEvent) -> bool {
-    let yak_data::buck_event::Data::SpanStart(start) = event.data() else {
+pub fn is_active_execution_stage(event: &YakEvent) -> bool {
+    let yak_data::yak_event::Data::SpanStart(start) = event.data() else {
         return false;
     };
     let Some(Data::ExecutorStage(info)) = start.data.as_ref() else {
@@ -774,7 +774,7 @@ enum ParseEventError {
 #[derive(yak_error::Error, Debug)]
 #[error("Invalid yak event: `{0:?}`")]
 #[yak(tag = Tier0)]
-pub struct InvalidBuckEvent(pub Arc<BuckEvent>);
+pub struct InvalidYakEvent(pub Arc<YakEvent>);
 
 pub fn format_test_result(
     test_result: &yak_data::TestResult,
@@ -1105,7 +1105,7 @@ fn failure_reason_for_command_execution(
                 .as_ref()
                 .internal_error("Timeout did not include a `duration`")?
                 .try_into_duration()
-                .buck_error_context("Timeout `duration` was invalid")?;
+                .yak_error_context("Timeout `duration` was invalid")?;
 
             format!("Command timed out after {:.3}s", duration.as_secs_f64(),)
         }
@@ -1342,14 +1342,14 @@ mod tests {
     use std::time::UNIX_EPOCH;
 
     use yak_data::SpanStartEvent;
-    use yak_events::BuckEvent;
+    use yak_events::YakEvent;
     use yak_events::span::SpanId;
     use yak_wrapper_common::invocation_id::TraceId;
 
     use super::*;
 
-    fn action_execution_event(identifier: &str) -> BuckEvent {
-        BuckEvent::new(
+    fn action_execution_event(identifier: &str) -> YakEvent {
+        YakEvent::new(
             UNIX_EPOCH,
             TraceId::new(),
             Some(SpanId::next()),

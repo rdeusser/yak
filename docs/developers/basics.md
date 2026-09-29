@@ -23,15 +23,7 @@ cd examples/no_prelude
 ../../target/debug/yak --isolation-dir dev kill
 ```
 
-The repository can also build itself with yak. The yak build loads the prelude bundled in the `yak` binary (`[external_cells] prelude = bundled` in `.yakconfig`), so it needs a binary built from this repository. `bootstrap/reindeer` generates the yak rules for the third-party crates and needs `dotslash` on `PATH` (see `website/docs/about/bootstrapping.md`):
-
-```bash
-cargo build --bin=yak
-./bootstrap/reindeer --third-party-dir third-party/rust buckify
-target/debug/yak build //:yak
-```
-
-`reindeer` writes `third-party/rust/YAK` and `third-party/rust/Cargo.lock`, and Git ignores both. Until `third-party/rust/YAK` exists, any command that loads the `third-party/rust` package fails with the `reindeer` command to run. The yak build succeeds on Linux but fails on macOS, as [the tech-debt tracker](../exec-plans/tech-debt-tracker.md) records.
+The repository has `YAK` files for its crates, but they name third-party crates as `//third-party/rust:<crate>`, which the repository no longer defines, so the yak build of this repository does not load.
 
 On Windows, the build uses clang-cl when `-c cxx.windows_compiler_type=clang` is on the command line. The `toolchains` cell has no `.yakconfig` of its own, so the setting has no effect in the repository's `.yakconfig`.
 
@@ -71,7 +63,7 @@ Most important of all: Most questions can be answered by matching the convention
 
 Standard `rustfmt` conventions apply, with the options in `rustfmt.toml`. Beyond that:
 
-- **HashMaps**: use `yak_hash::BuckMutMap`, not `fxhash::FxHashMap`.
+- **HashMaps**: use `yak_hash::YakMutMap`, not `fxhash::FxHashMap`.
 - **Cloning**: prefer `.dupe()` over `.clone()` for types that implement `Dupe`
   (e.g. `Arc`-wrapped types). Use `gazebo` utilities — particularly `dupe` —
   where they fit.
@@ -118,7 +110,7 @@ Handling](./error_handling.md).
 
 Gate new or risky behavior with yakconfig, not environment variables: a
 `[yak]`-section key, read where DICE can track it (grep for
-`BuckconfigKeyRef` with `section: "yak"` for the pattern), and named so
+`YakconfigKeyRef` with `section: "yak"` for the pattern), and named so
 the value flips false -> true as the feature rolls out. Use
 `RolloutPercentage` in place of `bool` when you want hostname-hashed
 percentage rollout. Reserve `yak_env!` for the few places configuration
@@ -127,9 +119,9 @@ knobs.
 
 ## Porting changes from upstream
 
-`facebook/buck2` builds inside Meta's internal repository, and its code marks what only that build uses (`#[cfg(fbcode_build)]` branches, `@oss-disable` and `@oss-enable` comments, `is_open_source()` checks, and `fbcode//` or `fbsource//` labels). This repository has none of these markers. A change ported from upstream keeps the open-source side of each marker and drops the rest.
+`facebook/yak` builds inside Meta's internal repository, and its code marks what only that build uses (`#[cfg(fbcode_build)]` branches, `@oss-disable` and `@oss-enable` comments, `is_open_source()` checks, and `fbcode//` or `fbsource//` labels). This repository has none of these markers. A change ported from upstream keeps the open-source side of each marker and drops the rest.
 
-Upstream `BUCK` files load macros from Meta's cells and name crates by their path inside Meta's repository. A ported build file is named `YAK`, loads `//build_defs:rust.bzl` or `//build_defs:proto.bzl`, names third-party crates `//third-party/rust:<crate>` in place of `fbsource//third-party/rust:<crate>`, and names crates of this repository `//<path>:<crate>` in place of `//buck2/<path>:<crate>`.
+Upstream `YAK` files load macros from Meta's cells and name crates by their path inside Meta's repository. A ported build file is named `YAK`, loads `//build_defs:rust.bzl` or `//build_defs:proto.bzl`, names third-party crates `//third-party/rust:<crate>` in place of `fbsource//third-party/rust:<crate>`, and names crates of this repository `//<path>:<crate>` in place of `//yak/<path>:<crate>`.
 
 ## Rust dependencies
 
@@ -137,8 +129,7 @@ Each crate has a `Cargo.toml` and a `YAK` file, and a dependency change updates 
 
 1. Add the version to `[workspace.dependencies]` in the root `Cargo.toml` if it is new, and name it in the crate's `Cargo.toml` with `workspace = true`.
 2. Add the same dependency to the crate's `YAK` file. Third-party crates are named `//third-party/rust:<crate>`, and crates in this repository are named `//<path>:<crate>` (for example `//app/yak_core:yak_core`).
-3. For a new third-party crate, also add it to `third-party/rust/Cargo.toml`, which the yak build reads through `reindeer`. A crate with a build script, or one that reads Cargo environment variables at compile time, also needs `third-party/rust/fixups/<crate>/fixups.toml`. `reindeer buckify` fails when a fixup configures a build script that the resolved crate versions no longer have, so a dependency change that drops or upgrades a crate can require editing or deleting its fixup.
-4. Check the dependency against the crate dependency rules in `ARCHITECTURE.md`. `target/debug/yak build //app_dep_graph_rules:test_buck2_dep_graph` fails when a dependency breaks one.
+3. Check the dependency against the crate dependency rules in `ARCHITECTURE.md`. `target/debug/yak build //app_dep_graph_rules:test_yak_dep_graph` fails when a dependency breaks one.
 
 ## Debugging and performance
 

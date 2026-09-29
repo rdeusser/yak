@@ -17,8 +17,8 @@ use host_sharing::WeightClass;
 use host_sharing::WeightPercentage;
 use yak_core::cells::name::CellName;
 use yak_core::execution_types::executor_config::RemoteExecutorUseCase;
-use yak_error::BuckErrorContext;
-use yak_error::BuckErrorOptionContext;
+use yak_error::YakErrorContext;
+use yak_error::YakErrorOptionContext;
 use yak_fs::paths::forward_rel_path::ForwardRelativePathBuf;
 
 use super::LocalExecutionCommand;
@@ -59,7 +59,7 @@ fn weight_class_from_grpc(
 
     Ok(match input.value.internal_error("Missing `value`")? {
         Value::Permits(p) => {
-            WeightClass::Permits(p.try_into().buck_error_context("Invalid `permits`")?)
+            WeightClass::Permits(p.try_into().yak_error_context("Invalid `permits`")?)
         }
         Value::Percentage(p) => WeightClass::Percentage(
             WeightPercentage::try_new(p)
@@ -109,7 +109,7 @@ fn weight_class_to_grpc(
 
     let value = match input {
         WeightClass::Permits(p) => {
-            Value::Permits(p.try_into().buck_error_context("Invalid `permits`")?)
+            Value::Permits(p.try_into().yak_error_context("Invalid `permits`")?)
         }
         WeightClass::Percentage(p) => Value::Percentage(p.into_value().into()),
     };
@@ -262,7 +262,7 @@ impl TryFrom<yak_test_proto::ConfiguredTargetHandle> for ConfiguredTargetHandle 
     type Error = yak_error::Error;
 
     fn try_from(s: yak_test_proto::ConfiguredTargetHandle) -> Result<Self, Self::Error> {
-        let handle = s.id.try_into().buck_error_context("Invalid `id`")?;
+        let handle = s.id.try_into().yak_error_context("Invalid `id`")?;
         Ok(Self(handle))
     }
 }
@@ -272,7 +272,7 @@ impl TryInto<yak_test_proto::ConfiguredTargetHandle> for ConfiguredTargetHandle 
 
     fn try_into(self) -> Result<yak_test_proto::ConfiguredTargetHandle, Self::Error> {
         Ok(yak_test_proto::ConfiguredTargetHandle {
-            id: self.0.try_into().buck_error_context("Invalid `handle`")?,
+            id: self.0.try_into().yak_error_context("Invalid `handle`")?,
         })
     }
 }
@@ -296,7 +296,7 @@ impl TryFrom<yak_test_proto::ConfiguredTarget> for ConfiguredTarget {
             handle: handle
                 .internal_error("Missing `handle`")?
                 .try_into()
-                .buck_error_context("Invalid `handle`")?,
+                .yak_error_context("Invalid `handle`")?,
             cell,
             package,
             target,
@@ -318,7 +318,7 @@ impl TryInto<yak_test_proto::ConfiguredTarget> for ConfiguredTarget {
             handle: Some(
                 self.handle
                     .try_into()
-                    .buck_error_context("Invalid `handle`")?,
+                    .yak_error_context("Invalid `handle`")?,
             ),
             cell: self.cell,
             package: self.package,
@@ -335,7 +335,7 @@ impl TryFrom<i32> for TestStatus {
     type Error = yak_error::Error;
 
     fn try_from(s: i32) -> Result<Self, Self::Error> {
-        let s = yak_test_proto::TestStatus::try_from(s).buck_error_context("Invalid `status`")?;
+        let s = yak_test_proto::TestStatus::try_from(s).yak_error_context("Invalid `status`")?;
 
         Ok(match s {
             yak_test_proto::TestStatus::NotSet => {
@@ -393,15 +393,15 @@ impl TryFrom<yak_test_proto::TestResult> for TestResult {
         let duration = duration
             .map(convert::to_std_duration)
             .transpose()
-            .buck_error_context("For `duration`")?;
+            .yak_error_context("For `duration`")?;
 
         Ok(Self {
             target: target
                 .internal_error("Missing `target`")?
                 .try_into()
-                .buck_error_context("Invalid `target`")?,
+                .yak_error_context("Invalid `target`")?,
             name,
-            status: status.try_into().buck_error_context("Invalid `status`")?,
+            status: status.try_into().yak_error_context("Invalid `status`")?,
             msg: msg.map(|m| m.msg),
             duration,
             max_memory_used_bytes,
@@ -420,13 +420,13 @@ impl TryInto<yak_test_proto::TestResult> for TestResult {
             target: Some(
                 self.target
                     .try_into()
-                    .buck_error_context("Invalid `target`")?,
+                    .yak_error_context("Invalid `target`")?,
             ),
             name: self.name,
             status: self
                 .status
                 .try_into()
-                .buck_error_context("Invalid `status`")?,
+                .yak_error_context("Invalid `status`")?,
             details: self.details,
             msg: self.msg.map(|msg| OptionalMsg { msg }),
             duration: self.duration.try_map(|d| d.try_into())?,
@@ -454,11 +454,11 @@ impl TryFrom<yak_test_proto::ExternalRunnerSpec> for ExternalRunnerSpec {
             target: target
                 .internal_error("Missing `target`")?
                 .try_into()
-                .buck_error_context("Invalid `target`")?,
+                .yak_error_context("Invalid `target`")?,
             test_type,
             command: command
                 .into_try_map(|x| x.try_into())
-                .buck_error_context("Invalid `command`")?,
+                .yak_error_context("Invalid `command`")?,
             env: env
                 .into_iter()
                 .map(|(k, v)| Ok((k, v.try_into().unwrap())))
@@ -486,11 +486,11 @@ impl TryInto<yak_test_proto::ExternalRunnerSpec> for ExternalRunnerSpec {
             working_dir_cell,
         } = self;
         Ok(yak_test_proto::ExternalRunnerSpec {
-            target: Some(target.try_into().buck_error_context("Invalid `target`")?),
+            target: Some(target.try_into().yak_error_context("Invalid `target`")?),
             test_type,
             command: command
                 .into_try_map(|x| x.try_into())
-                .buck_error_context("Invalid `command`")?,
+                .yak_error_context("Invalid `command`")?,
             env: env
                 .into_iter()
                 .map(|(k, v)| Ok((k, v.try_into().unwrap())))
@@ -511,7 +511,7 @@ impl TryFrom<yak_test_proto::ExternalRunnerSpecValue> for ExternalRunnerSpecValu
         Ok(match s.value.internal_error("Missing `value`")? {
             Value::Verbatim(val) => ExternalRunnerSpecValue::Verbatim(val),
             Value::ArgHandle(val) => ExternalRunnerSpecValue::ArgHandle(
-                val.try_into().buck_error_context("Invalid `arg_handle`")?,
+                val.try_into().yak_error_context("Invalid `arg_handle`")?,
             ),
             Value::EnvHandle(val) => ExternalRunnerSpecValue::EnvHandle(val.into()),
         })
@@ -527,7 +527,7 @@ impl TryInto<yak_test_proto::ExternalRunnerSpecValue> for ExternalRunnerSpecValu
         let value = match self {
             Self::Verbatim(val) => Value::Verbatim(val),
             Self::ArgHandle(ArgHandle(val)) => {
-                Value::ArgHandle(val.try_into().buck_error_context("Invalid `arg_handle`")?)
+                Value::ArgHandle(val.try_into().yak_error_context("Invalid `arg_handle`")?)
             }
             Self::EnvHandle(EnvHandle(val)) => Value::EnvHandle(val),
         };
@@ -632,7 +632,7 @@ impl TryInto<yak_test_proto::ArgValue> for ArgValue {
             content: Some(
                 self.content
                     .try_into()
-                    .buck_error_context("Invalid `content`")?,
+                    .yak_error_context("Invalid `content`")?,
             ),
             format: self.format.map(|f| yak_test_proto::ArgFormat { format: f }),
         })
@@ -647,7 +647,7 @@ impl TryFrom<yak_test_proto::ArgValue> for ArgValue {
             .content
             .internal_error("Missing `content`")?
             .try_into()
-            .buck_error_context("Invalid `content`")?;
+            .yak_error_context("Invalid `content`")?;
         let format = s.format.map(|f| f.format);
 
         Ok(Self { content, format })
@@ -664,7 +664,7 @@ impl TryInto<yak_test_proto::ArgValueContent> for ArgValueContent {
             Self::ExternalRunnerSpecValue(value) => Value::SpecValue(
                 value
                     .try_into()
-                    .buck_error_context("Invalid external runner spec value")?,
+                    .yak_error_context("Invalid external runner spec value")?,
             ),
             Self::DeclaredOutput(value) => Value::DeclaredOutput(value.into()),
         };
@@ -683,10 +683,10 @@ impl TryFrom<yak_test_proto::ArgValueContent> for ArgValueContent {
             Value::SpecValue(value) => Self::ExternalRunnerSpecValue(
                 value
                     .try_into()
-                    .buck_error_context("Invalid external runner spec value")?,
+                    .yak_error_context("Invalid external runner spec value")?,
             ),
             Value::DeclaredOutput(value) => {
-                Self::DeclaredOutput(value.try_into().buck_error_context("Invalid `value`")?)
+                Self::DeclaredOutput(value.try_into().yak_error_context("Invalid `value`")?)
             }
         })
     }
@@ -708,16 +708,16 @@ impl TryFrom<yak_test_proto::ExecuteRequest2> for ExecuteRequest2 {
         let test_executable = test_executable
             .internal_error("Missing `test_executable`")?
             .try_into()
-            .buck_error_context("Invalid `test_executable`")?;
+            .yak_error_context("Invalid `test_executable`")?;
 
         let timeout = convert::to_std_duration(timeout.internal_error("Missing `timeout`")?)
-            .buck_error_context("Invalid `timeout`")?;
+            .yak_error_context("Invalid `timeout`")?;
 
         let host_sharing_requirements =
             host_sharing_requirements.internal_error("Missing `host_sharing_requirements`")?;
         let host_sharing_requirements =
             host_sharing_requirements_from_grpc(host_sharing_requirements)
-                .buck_error_context("Invalid `host_sharing_requirements`")?;
+                .yak_error_context("Invalid `host_sharing_requirements`")?;
 
         let executor_override = executor_override.map(|o| o.into());
 
@@ -743,7 +743,7 @@ impl TryInto<yak_test_proto::ExecuteRequest2> for ExecuteRequest2 {
         let test_executable = Some(
             self.test_executable
                 .try_into()
-                .buck_error_context("Invalid `test_executable`")?,
+                .yak_error_context("Invalid `test_executable`")?,
         );
 
         Ok(yak_test_proto::ExecuteRequest2 {
@@ -751,7 +751,7 @@ impl TryInto<yak_test_proto::ExecuteRequest2> for ExecuteRequest2 {
             timeout: Some(self.timeout.try_into()?),
             host_sharing_requirements: Some(
                 host_sharing_requirements_to_grpc(self.host_sharing_requirements)
-                    .buck_error_context("Invalid `host_sharing_requirements`")?,
+                    .yak_error_context("Invalid `host_sharing_requirements`")?,
             ),
             executor_override: self.executor_override.map(|o| o.into()),
             required_local_resources: self
@@ -825,7 +825,7 @@ impl TryInto<yak_test_proto::Output> for Output {
             Self::LocalPath(value) => Value::LocalPath(
                 value
                     .to_str()
-                    .buck_error_context("Invalid local path")?
+                    .yak_error_context("Invalid local path")?
                     .to_owned(),
             ),
             Self::RemoteObject(value) => Value::RemoteObject(value.try_into()?),
@@ -845,7 +845,7 @@ impl TryFrom<yak_test_proto::Output> for Output {
             Value::LocalPath(value) => Self::LocalPath(
                 value
                     .try_into()
-                    .buck_error_context("Invalid local path value.")?,
+                    .yak_error_context("Invalid local path value.")?,
             ),
             Value::RemoteObject(value) => Self::RemoteObject(value.try_into()?),
         })
@@ -860,17 +860,17 @@ impl TryInto<yak_test_proto::ExecutionResult2> for ExecutionResult2 {
             status: Some(
                 self.status
                     .try_into()
-                    .buck_error_context("Invalid `status`")?,
+                    .yak_error_context("Invalid `status`")?,
             ),
             stdout: Some(
                 self.stdout
                     .try_into()
-                    .buck_error_context("Invalid `stdout`")?,
+                    .yak_error_context("Invalid `stdout`")?,
             ),
             stderr: Some(
                 self.stderr
                     .try_into()
-                    .buck_error_context("Invalid `stderr`")?,
+                    .yak_error_context("Invalid `stderr`")?,
             ),
             outputs: self
                 .outputs
@@ -878,7 +878,7 @@ impl TryInto<yak_test_proto::ExecutionResult2> for ExecutionResult2 {
                 .map(|(k, v)| {
                     Ok(yak_test_proto::OutputEntry {
                         declared_output: Some(k.into()),
-                        output: Some(v.try_into().buck_error_context("Invalid `output`")?),
+                        output: Some(v.try_into().yak_error_context("Invalid `output`")?),
                     })
                 })
                 .collect::<Result<_, Self::Error>>()?,
@@ -914,15 +914,15 @@ impl TryFrom<yak_test_proto::ExecutionResult2> for ExecutionResult2 {
         let status = status
             .internal_error("Missing `status`")?
             .try_into()
-            .buck_error_context("Invalid `status`")?;
+            .yak_error_context("Invalid `status`")?;
         let stdout = stdout
             .internal_error("Missing `stdout`")?
             .try_into()
-            .buck_error_context("Invalid `stdout`")?;
+            .yak_error_context("Invalid `stdout`")?;
         let stderr = stderr
             .internal_error("Missing `stderr`")?
             .try_into()
-            .buck_error_context("Invalid `stderr`")?;
+            .yak_error_context("Invalid `stderr`")?;
 
         let outputs = outputs
             .into_iter()
@@ -934,22 +934,22 @@ impl TryFrom<yak_test_proto::ExecutionResult2> for ExecutionResult2 {
                 let declared_output = declared_output
                     .internal_error("Missing `declared_output`")?
                     .try_into()
-                    .buck_error_context("Invalid `declared_output`")?;
+                    .yak_error_context("Invalid `declared_output`")?;
                 let output = output
                     .internal_error("Missing `output`")?
                     .try_into()
-                    .buck_error_context("Invalid `output`")?;
+                    .yak_error_context("Invalid `output`")?;
                 Ok((declared_output, output))
             })
             .collect::<Result<_, Self::Error>>()?;
 
         let start_time = SystemTime::UNIX_EPOCH
             + convert::to_std_duration(start_time.internal_error("Missing `start_time`")?)
-                .buck_error_context("Invalid `start_time`")?;
+                .yak_error_context("Invalid `start_time`")?;
 
         let execution_time =
             convert::to_std_duration(execution_time.internal_error("Missing `execution_time`")?)
-                .buck_error_context("Invalid `execution_time`")?;
+                .yak_error_context("Invalid `execution_time`")?;
 
         let execution_details = execution_details.internal_error("Missing `execution_details`")?;
 
@@ -981,16 +981,16 @@ impl TryFrom<yak_test_proto::TestExecutable> for TestExecutable {
         let ui_prints = stage
             .internal_error("Missing `ui_prints`")?
             .try_into()
-            .buck_error_context("Invalid `ui_prints`")?;
+            .yak_error_context("Invalid `ui_prints`")?;
 
         let target = target
             .internal_error("Missing `target`")?
             .try_into()
-            .buck_error_context("Invalid `target`")?;
+            .yak_error_context("Invalid `target`")?;
 
         let cmd = cmd
             .into_try_map(|c| c.try_into())
-            .buck_error_context("Invalid `cmd`")?;
+            .yak_error_context("Invalid `cmd`")?;
 
         let env = env
             .into_iter()
@@ -999,14 +999,14 @@ impl TryFrom<yak_test_proto::TestExecutable> for TestExecutable {
                 value
                     .internal_error("Missing `value`")?
                     .try_into()
-                    .buck_error_context("Invalid `env`")
+                    .yak_error_context("Invalid `env`")
                     .map(|v: ArgValue| (key, v))
             })
             .collect::<yak_error::Result<_>>()?;
 
         let pre_create_dirs = pre_create_dirs
             .into_try_map(|c| c.try_into())
-            .buck_error_context("Invalid `pre_create_dirs`")?;
+            .yak_error_context("Invalid `pre_create_dirs`")?;
 
         Ok(TestExecutable {
             stage: ui_prints,
@@ -1025,23 +1025,23 @@ impl TryInto<yak_test_proto::TestExecutable> for TestExecutable {
         let stage = Some(
             self.stage
                 .try_into()
-                .buck_error_context("Invalid `ui_prints`")?,
+                .yak_error_context("Invalid `ui_prints`")?,
         );
         let target = Some(
             self.target
                 .try_into()
-                .buck_error_context("Invalid `target`")?,
+                .yak_error_context("Invalid `target`")?,
         );
         let cmd = self
             .cmd
             .into_try_map(|i| i.try_into())
-            .buck_error_context("Invalid `cmd`")?;
+            .yak_error_context("Invalid `cmd`")?;
 
         let env = self
             .env
             .into_iter()
             .map(|(k, v)| {
-                v.try_into().buck_error_context("Invalid `env`").map(
+                v.try_into().yak_error_context("Invalid `env`").map(
                     |v: yak_test_proto::ArgValue| yak_test_proto::EnvironmentVariable {
                         key: k,
                         value: Some(v),
@@ -1070,7 +1070,7 @@ impl TryInto<yak_test_proto::PrepareForLocalExecutionResponse> for PrepareForLoc
             .command
             .cwd
             .to_str()
-            .buck_error_context("Invalid cwd path")?
+            .yak_error_context("Invalid cwd path")?
             .to_owned();
 
         Ok(yak_test_proto::PrepareForLocalExecutionResponse {
@@ -1108,7 +1108,7 @@ impl TryInto<yak_test_proto::SetupLocalResourceLocalExecutionCommand> for LocalE
             cwd: self
                 .cwd
                 .to_str()
-                .buck_error_context("Invalid cwd path for local resource")?
+                .yak_error_context("Invalid cwd path for local resource")?
                 .to_owned(),
             env: self
                 .env
@@ -1125,7 +1125,7 @@ impl TryFrom<yak_test_proto::PrepareForLocalExecutionResult> for LocalExecutionC
     fn try_from(s: yak_test_proto::PrepareForLocalExecutionResult) -> Result<Self, Self::Error> {
         Ok(Self {
             cmd: s.cmd,
-            cwd: s.cwd.try_into().buck_error_context("Invalid cwd value.")?,
+            cwd: s.cwd.try_into().yak_error_context("Invalid cwd value.")?,
             env: s
                 .env
                 .into_iter()
@@ -1143,7 +1143,7 @@ impl TryFrom<yak_test_proto::SetupLocalResourceLocalExecutionCommand> for LocalE
     ) -> Result<Self, Self::Error> {
         Ok(Self {
             cmd: s.cmd,
-            cwd: s.cwd.try_into().buck_error_context("Invalid cwd value.")?,
+            cwd: s.cwd.try_into().yak_error_context("Invalid cwd value.")?,
             env: s
                 .env
                 .into_iter()

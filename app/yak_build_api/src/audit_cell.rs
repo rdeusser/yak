@@ -13,7 +13,7 @@ use futures::future::BoxFuture;
 use yak_core::fs::project::ProjectRoot;
 use yak_core::fs::project_rel_path::ProjectRelativePath;
 use yak_fs::paths::abs_norm_path::AbsNormPathBuf;
-use yak_hash::BuckIndexMap;
+use yak_hash::YakIndexMap;
 use yak_util::late_binding::LateBinding;
 
 pub static AUDIT_CELL: LateBinding<
@@ -23,7 +23,7 @@ pub static AUDIT_CELL: LateBinding<
         aliases: bool,
         cwd: &'v ProjectRelativePath,
         fs: &'v ProjectRoot,
-    ) -> BoxFuture<'v, yak_error::Result<BuckIndexMap<String, AbsNormPathBuf>>>,
+    ) -> BoxFuture<'v, yak_error::Result<YakIndexMap<String, AbsNormPathBuf>>>,
 > = LateBinding::new("AUDIT_CELL");
 
 pub fn audit_cell<'v>(
@@ -32,7 +32,7 @@ pub fn audit_cell<'v>(
     aliases: bool,
     cwd: &'v ProjectRelativePath,
     fs: &'v ProjectRoot,
-) -> yak_error::Result<BoxFuture<'v, yak_error::Result<BuckIndexMap<String, AbsNormPathBuf>>>> {
+) -> yak_error::Result<BoxFuture<'v, yak_error::Result<YakIndexMap<String, AbsNormPathBuf>>>> {
     Ok((AUDIT_CELL.get()?)(
         ctx,
         aliases_to_resolve,

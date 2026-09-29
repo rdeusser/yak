@@ -8,111 +8,111 @@
 
 import json
 
-from e2e_util.api.buck import Buck
+from e2e_util.api.yak import Yak
 from e2e_util.asserts import expect_failure
-from e2e_util.buck_workspace import buck_test
+from e2e_util.yak_workspace import yak_test
 from e2e_util.helper.golden import golden, GOLDEN_DIRECTORY
 
 
-@buck_test()
-async def test_build_with_single_modifier(buck: Buck) -> None:
+@yak_test()
+async def test_build_with_single_modifier(yak: Yak) -> None:
     target_with_modifiers = "root//:dummy?root//:macos"
 
-    result = await buck.build(target_with_modifiers)
+    result = await yak.build(target_with_modifiers)
 
     output = json.loads(result.stdout)
 
     [configuration] = output["results"][target_with_modifiers]["configured"].keys()
 
-    cfg = await buck.audit_configurations(configuration)
+    cfg = await yak.audit_configurations(configuration)
 
     assert "root//:macos" in cfg.stdout
 
 
-@buck_test()
-async def test_build_with_multiple_modifiers(buck: Buck) -> None:
+@yak_test()
+async def test_build_with_multiple_modifiers(yak: Yak) -> None:
     target_with_modifiers = "root//:dummy?root//:macos+root//:arm"
-    result = await buck.build(target_with_modifiers)
+    result = await yak.build(target_with_modifiers)
 
     output = json.loads(result.stdout)
 
     [configuration] = output["results"][target_with_modifiers]["configured"].keys()
 
-    cfg = await buck.audit_configurations(configuration)
+    cfg = await yak.audit_configurations(configuration)
 
     assert "root//:macos" in cfg.stdout
     assert "root//:arm" in cfg.stdout
 
 
-@buck_test()
-async def test_build_order_of_modifiers(buck: Buck) -> None:
+@yak_test()
+async def test_build_order_of_modifiers(yak: Yak) -> None:
     # if passing in modifiers of the same constraint setting,
     # the last one should be the one that applies
     target_with_modifiers = "root//:dummy?root//:linux+root//:macos"
-    result = await buck.build(target_with_modifiers)
+    result = await yak.build(target_with_modifiers)
 
     output = json.loads(result.stdout)
 
     [configuration] = output["results"][target_with_modifiers]["configured"].keys()
 
-    cfg = await buck.audit_configurations(configuration)
+    cfg = await yak.audit_configurations(configuration)
 
     assert "root//:macos" in cfg.stdout
     assert "root//:linux" not in cfg.stdout
 
 
-@buck_test()
-async def test_build_with_different_targets_and_modifiers(buck: Buck) -> None:
+@yak_test()
+async def test_build_with_different_targets_and_modifiers(yak: Yak) -> None:
     mac_target = "root//:dummy?root//:macos"
     linux_target = "root//:dummy2?root//:linux"
 
-    result = await buck.build(mac_target, linux_target)
+    result = await yak.build(mac_target, linux_target)
 
     output = json.loads(result.stdout)
 
     [configuration] = output["results"][mac_target]["configured"].keys()
-    cfg = await buck.audit_configurations(configuration)
+    cfg = await yak.audit_configurations(configuration)
     assert "root//:macos" in cfg.stdout
 
     [configuration] = output["results"][linux_target]["configured"].keys()
-    cfg = await buck.audit_configurations(configuration)
+    cfg = await yak.audit_configurations(configuration)
     assert "root//:linux" in cfg.stdout
 
 
-@buck_test()
-async def test_build_with_same_target_different_modifiers(buck: Buck) -> None:
+@yak_test()
+async def test_build_with_same_target_different_modifiers(yak: Yak) -> None:
     mac_target = "root//:dummy?root//:macos"
     linux_target = "root//:dummy?root//:linux"
 
-    result = await buck.build(mac_target, linux_target)
+    result = await yak.build(mac_target, linux_target)
 
     output = json.loads(result.stdout)
 
     [configuration] = output["results"][mac_target]["configured"].keys()
-    cfg = await buck.audit_configurations(configuration)
+    cfg = await yak.audit_configurations(configuration)
     assert "root//:macos" in cfg.stdout
 
     [configuration] = output["results"][linux_target]["configured"].keys()
-    cfg = await buck.audit_configurations(configuration)
+    cfg = await yak.audit_configurations(configuration)
     assert "root//:linux" in cfg.stdout
 
 
-@buck_test()
-async def test_build_with_same_target_and_modifiers(buck: Buck) -> None:
+@yak_test()
+async def test_build_with_same_target_and_modifiers(yak: Yak) -> None:
     target_with_modifier = "root//:dummy?root//:macos"
-    result = await buck.build(target_with_modifier, target_with_modifier)
+    result = await yak.build(target_with_modifier, target_with_modifier)
 
     output = json.loads(result.stdout)
 
     [configuration] = output["results"][target_with_modifier]["configured"].keys()
 
-    cfg = await buck.audit_configurations(configuration)
+    cfg = await yak.audit_configurations(configuration)
     assert "root//:macos" in cfg.stdout
 
 
-@buck_test()
-async def test_build_with_target_universe(buck: Buck) -> None:
-    result = await buck.build(
+@yak_test()
+async def test_build_with_target_universe(yak: Yak) -> None:
+    result = await yak.build(
         "root//:dummy",
         "--target-universe",
         "root//:universe?root//:linux",
@@ -122,14 +122,14 @@ async def test_build_with_target_universe(buck: Buck) -> None:
 
     [configuration] = output["results"]["root//:dummy"]["configured"].keys()
 
-    cfg = await buck.audit_configurations(configuration)
+    cfg = await yak.audit_configurations(configuration)
 
     assert "root//:linux" in cfg.stdout
 
 
-@buck_test()
-async def test_build_with_target_universe_multiple_modifiers(buck: Buck) -> None:
-    result = await buck.build(
+@yak_test()
+async def test_build_with_target_universe_multiple_modifiers(yak: Yak) -> None:
+    result = await yak.build(
         "root//:dummy",
         "--target-universe",
         "root//:universe?root//:linux+root//:arm",
@@ -139,15 +139,15 @@ async def test_build_with_target_universe_multiple_modifiers(buck: Buck) -> None
 
     [configuration] = output["results"]["root//:dummy"]["configured"].keys()
 
-    cfg = await buck.audit_configurations(configuration)
+    cfg = await yak.audit_configurations(configuration)
 
     assert "root//:linux" in cfg.stdout
     assert "root//:arm" in cfg.stdout
 
 
-@buck_test()
-async def test_build_with_mutliple_target_universes(buck: Buck) -> None:
-    result = await buck.build(
+@yak_test()
+async def test_build_with_mutliple_target_universes(yak: Yak) -> None:
+    result = await yak.build(
         "root//:dummy",
         "--target-universe",
         "root//:universe?root//:linux,root//:dummy?root//:macos+root//:arm",
@@ -162,7 +162,7 @@ async def test_build_with_mutliple_target_universes(buck: Buck) -> None:
     linux_found = False
     macos_found = False
     for configuration in configurations:
-        cfg = await buck.audit_configurations(configuration)
+        cfg = await yak.audit_configurations(configuration)
         if "root//:linux" in cfg.stdout:
             linux_found = True
         if "root//:macos" in cfg.stdout and "root//:arm" in cfg.stdout:
@@ -172,59 +172,59 @@ async def test_build_with_mutliple_target_universes(buck: Buck) -> None:
     assert macos_found
 
 
-@buck_test()
-async def test_build_with_package_pattern(buck: Buck) -> None:
-    result = await buck.build("root//:?root//:macos")
+@yak_test()
+async def test_build_with_package_pattern(yak: Yak) -> None:
+    result = await yak.build("root//:?root//:macos")
 
     output = json.loads(result.stdout)
 
     [configuration] = output["results"]["root//:dummy?root//:macos"][
         "configured"
     ].keys()
-    cfg = await buck.audit_configurations(configuration)
+    cfg = await yak.audit_configurations(configuration)
     assert "root//:macos" in cfg.stdout
 
     [configuration] = output["results"]["root//:dummy2?root//:macos"][
         "configured"
     ].keys()
-    cfg = await buck.audit_configurations(configuration)
+    cfg = await yak.audit_configurations(configuration)
     assert "root//:macos" in cfg.stdout
 
 
-@buck_test()
-async def test_build_with_recursive_pattern(buck: Buck) -> None:
-    result = await buck.build("root//...?root//:macos")
+@yak_test()
+async def test_build_with_recursive_pattern(yak: Yak) -> None:
+    result = await yak.build("root//...?root//:macos")
 
     output = json.loads(result.stdout)
 
     [configuration] = output["results"]["root//:dummy?root//:macos"][
         "configured"
     ].keys()
-    cfg = await buck.audit_configurations(configuration)
+    cfg = await yak.audit_configurations(configuration)
     assert "root//:macos" in cfg.stdout
 
     [configuration] = output["results"]["root//:dummy2?root//:macos"][
         "configured"
     ].keys()
-    cfg = await buck.audit_configurations(configuration)
+    cfg = await yak.audit_configurations(configuration)
     assert "root//:macos" in cfg.stdout
 
     [configuration] = output["results"][
         "root//recursive_pattern:recursive_target?root//:macos"
     ]["configured"].keys()
-    cfg = await buck.audit_configurations(configuration)
+    cfg = await yak.audit_configurations(configuration)
     assert "root//:macos" in cfg.stdout
 
 
-@buck_test()
-async def test_build_fails_with_global_modifiers(buck: Buck) -> None:
+@yak_test()
+async def test_build_fails_with_global_modifiers(yak: Yak) -> None:
     await expect_failure(
-        buck.build("--modifier", "root//:macos", "root//:dummy?root//:linux"),
+        yak.build("--modifier", "root//:macos", "root//:dummy?root//:linux"),
         stderr_regex=r"Cannot specify modifiers with \?modifier syntax when global CLI modifiers are set with --modifier flag",
     )
 
     await expect_failure(
-        buck.build(
+        yak.build(
             "--modifier",
             "root//:macos",
             "root//:dummy",
@@ -235,12 +235,12 @@ async def test_build_fails_with_global_modifiers(buck: Buck) -> None:
     )
 
 
-@buck_test()
+@yak_test()
 async def test_build_fails_with_pattern_modifier_and_target_universe_modifier(
-    buck: Buck,
+    yak: Yak,
 ) -> None:
     await expect_failure(
-        buck.build(
+        yak.build(
             "root//:dummy?root//:macos",
             "--target-universe",
             "root//:dummy?root//:linux",
@@ -249,7 +249,7 @@ async def test_build_fails_with_pattern_modifier_and_target_universe_modifier(
     )
 
 
-async def run_all_output_flags(buck: Buck, *argv: str) -> str:
+async def run_all_output_flags(yak: Yak, *argv: str) -> str:
     flags = [
         "--show-output",
         "--show-full-output",
@@ -261,21 +261,21 @@ async def run_all_output_flags(buck: Buck, *argv: str) -> str:
 
     results = []
     for flag in flags:
-        result = await buck.build_without_report(flag, *argv)
+        result = await yak.build_without_report(flag, *argv)
         results.append(f"{flag}\n{result.stdout}")
 
     output = "\n\n".join(results)
     output = output.replace("\\\\", "\\")  # Windows path separators in json
-    output = output.replace(str(buck.cwd), "/abs/project/root")
+    output = output.replace(str(yak.cwd), "/abs/project/root")
     output = output.replace("\\", "/")  # Windows path separators not in json
 
     return output
 
 
-@buck_test()
-async def test_build_modifiers_output_single_modifier(buck: Buck) -> None:
+@yak_test()
+async def test_build_modifiers_output_single_modifier(yak: Yak) -> None:
     result = await run_all_output_flags(
-        buck,
+        yak,
         "root//:dummy?root//:macos",
     )
 
@@ -286,10 +286,10 @@ async def test_build_modifiers_output_single_modifier(buck: Buck) -> None:
     )
 
 
-@buck_test()
-async def test_build_modifiers_output_multiple_modifiers(buck: Buck) -> None:
+@yak_test()
+async def test_build_modifiers_output_multiple_modifiers(yak: Yak) -> None:
     result = await run_all_output_flags(
-        buck,
+        yak,
         "root//:dummy?root//:macos+root//:arm",
     )
 
@@ -300,12 +300,12 @@ async def test_build_modifiers_output_multiple_modifiers(buck: Buck) -> None:
     )
 
 
-@buck_test()
+@yak_test()
 async def test_build_modifiers_output_multiple_patterns(
-    buck: Buck,
+    yak: Yak,
 ) -> None:
     result = await run_all_output_flags(
-        buck, "root//:dummy?root//:macos", "root//:dummy?root//:linux"
+        yak, "root//:dummy?root//:macos", "root//:dummy?root//:linux"
     )
 
     golden(
@@ -315,12 +315,12 @@ async def test_build_modifiers_output_multiple_patterns(
     )
 
 
-@buck_test()
+@yak_test()
 async def test_build_modifiers_output_multiple_modifiers_multiple_patterns(
-    buck: Buck,
+    yak: Yak,
 ) -> None:
     result = await run_all_output_flags(
-        buck,
+        yak,
         "root//:dummy?root//:macos+root//:arm",
         "root//:dummy?root//:linux",
     )
@@ -332,13 +332,13 @@ async def test_build_modifiers_output_multiple_modifiers_multiple_patterns(
     )
 
 
-@buck_test()
+@yak_test()
 async def test_build_modifiers_output_duplicate_patterns(
-    buck: Buck,
+    yak: Yak,
 ) -> None:
     # Note: switching the order of the modifiers will make it so that both patterns are still in the output
     result = await run_all_output_flags(
-        buck,
+        yak,
         "root//:dummy?root//:macos+root//:arm",
         "root//:dummy?root//:macos+root//:arm",
     )
@@ -350,13 +350,13 @@ async def test_build_modifiers_output_duplicate_patterns(
     )
 
 
-@buck_test()
+@yak_test()
 async def test_build_modifiers_output_with_target_universe(
-    buck: Buck,
+    yak: Yak,
 ) -> None:
     # Modifiers defined in target universe should not be included in the output
     result = await run_all_output_flags(
-        buck,
+        yak,
         "root//:dummy",
         "--target-universe",
         "root//:dummy?root//:macos+root//:linux",

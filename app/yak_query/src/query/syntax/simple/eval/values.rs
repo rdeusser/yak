@@ -151,11 +151,11 @@ impl<T: QueryTarget> QueryEvaluationValue<T> {
 pub type QueryResult<T> = Result<Spanned<T>, Spanned<QueryError>>;
 
 pub trait QueryResultExt<T> {
-    fn into_buck2_error(self, query: &str) -> yak_error::Result<T>;
+    fn into_yak_error(self, query: &str) -> yak_error::Result<T>;
 }
 
 impl<T> QueryResultExt<T> for QueryResult<T> {
-    fn into_buck2_error(self, query: &str) -> yak_error::Result<T> {
+    fn into_yak_error(self, query: &str) -> yak_error::Result<T> {
         match self {
             Ok(v) => Ok(v.value),
             Err(err) => Err(QueryError::convert_error(err, query)),

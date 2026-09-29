@@ -64,7 +64,7 @@ pub(crate) fn global_intern(pkg: PackageLabel, name: &TargetNameRef) -> TargetLa
 mod tests {
     use std::ptr;
 
-    use yak_hash::BuckMutMap;
+    use yak_hash::YakMutMap;
 
     use crate::target::label::label::TargetLabel;
 
@@ -88,7 +88,7 @@ mod tests {
                 .collect()
         });
 
-        let mut canonical: BuckMutMap<String, *const ()> = BuckMutMap::default();
+        let mut canonical: YakMutMap<String, *const ()> = YakMutMap::default();
         for label in &labels {
             let ptr = canonical.entry(label.to_string()).or_insert(label.as_raw());
             assert!(

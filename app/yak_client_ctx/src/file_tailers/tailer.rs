@@ -20,7 +20,7 @@ use dupe::Dupe;
 use futures::FutureExt;
 use tokio::sync::mpsc::UnboundedSender;
 use tokio::sync::oneshot;
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 use yak_fs::paths::abs_norm_path::AbsNormPathBuf;
 
 use crate::events_ctx::FileTailerEvent;
@@ -49,7 +49,7 @@ impl FileTailer {
         sender: UnboundedSender<FileTailerEvent>,
         stdout_or_stderr: StdoutOrStderr,
     ) -> yak_error::Result<FileTailer> {
-        let mut reader = BufReader::new(File::open(&file).with_buck_error_context(|| {
+        let mut reader = BufReader::new(File::open(&file).with_yak_error_context(|| {
             format!("Error setting up tailer for {}", file.display())
         })?);
 

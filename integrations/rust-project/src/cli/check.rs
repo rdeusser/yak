@@ -15,32 +15,32 @@ use std::str::FromStr;
 use anyhow::Context as _;
 use rustc_hash::FxHashSet;
 
-use crate::buck;
-use crate::buck::Buck;
+use crate::yak;
+use crate::yak::Yak;
 use crate::diagnostics;
 use crate::path::safe_canonicalize;
 
 pub(crate) struct Check {
-    pub(crate) buck: buck::Buck,
+    pub(crate) yak: yak::Yak,
     pub(crate) use_clippy: bool,
     pub(crate) saved_file: PathBuf,
 }
 
 impl Check {
-    pub(crate) fn new(buck: Buck, use_clippy: bool, saved_file: PathBuf) -> Self {
+    pub(crate) fn new(yak: Yak, use_clippy: bool, saved_file: PathBuf) -> Self {
         let saved_file = safe_canonicalize(&saved_file);
 
         Self {
-            buck,
+            yak,
             use_clippy,
             saved_file,
         }
     }
 
     pub(crate) fn run(&self) -> Result<(), anyhow::Error> {
-        let buck = &self.buck;
+        let yak = &self.yak;
 
-        let check_output = buck.check_saved_file(self.use_clippy, &self.saved_file)?;
+        let check_output = yak.check_saved_file(self.use_clippy, &self.saved_file)?;
 
         let contents: Vec<String> = check_output
             .diagnostic_paths

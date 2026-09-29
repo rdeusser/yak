@@ -22,7 +22,7 @@ use crate::final_console::FinalConsole;
 use crate::subscribers::errorconsole::ErrorConsole;
 use crate::subscribers::simpleconsole::SimpleConsole;
 use crate::subscribers::subscriber::EventSubscriber;
-use crate::subscribers::superconsole::BUCK_NO_INTERACTIVE_CONSOLE;
+use crate::subscribers::superconsole::YAK_NO_INTERACTIVE_CONSOLE;
 use crate::subscribers::superconsole::StatefulSuperConsole;
 use crate::subscribers::superconsole::SuperConsoleConfig;
 use crate::subscribers::superconsole::timekeeper::Timekeeper;
@@ -201,7 +201,7 @@ pub struct CommonConsoleOptions {
     #[clap(
         long,
         help = "Disable console interactions",
-        env = yak_env_name!(BUCK_NO_INTERACTIVE_CONSOLE),
+        env = yak_env_name!(YAK_NO_INTERACTIVE_CONSOLE),
         value_parser = FalseyValueParser::new(),
     )]
     pub no_interactive_console: bool,

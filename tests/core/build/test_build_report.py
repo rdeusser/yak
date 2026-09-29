@@ -11,8 +11,8 @@ from pathlib import Path
 from typing import Any
 
 import pytest
-from e2e_util.api.buck import Buck
-from e2e_util.buck_workspace import buck_test
+from e2e_util.api.yak import Yak
+from e2e_util.yak_workspace import yak_test
 from e2e_util.helper.golden import golden
 from e2e_util.helper.utils import replace_digest, replace_hash
 
@@ -44,9 +44,9 @@ def _collect_output_paths(report: dict[str, Any]) -> set[str]:
 
 
 def build_report_test(name: str, command: list[str]) -> None:
-    async def impl(buck: Buck, tmp_path: Path) -> None:
+    async def impl(yak: Yak, tmp_path: Path) -> None:
         report = tmp_path / "build-report.json"
-        await buck.build("--build-report", str(report), *command)
+        await yak.build("--build-report", str(report), *command)
 
         with open(report) as file:
             report = json.loads(file.read())
@@ -67,7 +67,7 @@ def build_report_test(name: str, command: list[str]) -> None:
 
     globals()[name] = impl
 
-    return buck_test()(impl)
+    return yak_test()(impl)
 
 
 build_report_test(
@@ -154,26 +154,26 @@ build_report_test(
 )
 
 
-@buck_test()
-async def test_build_report_non_existent_directory(buck: Buck) -> None:
+@yak_test()
+async def test_build_report_non_existent_directory(yak: Yak) -> None:
     build_report = "non_existent_dir/report"
 
-    await buck.build(
+    await yak.build(
         "//:rule1",
         "--build-report",
         build_report,
     )
 
-    with open(buck.cwd / build_report) as file:
+    with open(yak.cwd / build_report) as file:
         report = json.load(file)
         assert report["success"]
 
 
-@buck_test()
-async def test_build_report_contains_metrics(buck: Buck, tmp_path: Path) -> None:
+@yak_test()
+async def test_build_report_contains_metrics(yak: Yak, tmp_path: Path) -> None:
     report = tmp_path / "build-report.json"
 
-    await buck.build(
+    await yak.build(
         "//:rule1",
         "-c",
         "yak.detailed_aggregated_metrics=true",
@@ -190,13 +190,13 @@ async def test_build_report_contains_metrics(buck: Buck, tmp_path: Path) -> None
         assert report["build_metrics"]["metrics"]["declared_actions"] == 2
 
 
-@buck_test()
+@yak_test()
 async def test_build_report_contains_per_target_build_metrics(
-    buck: Buck, tmp_path: Path
+    yak: Yak, tmp_path: Path
 ) -> None:
     report = tmp_path / "build-report.json"
 
-    await buck.build(
+    await yak.build(
         "//:rule1",
         "//:rule2",
         "-c",
@@ -234,11 +234,11 @@ async def test_build_report_contains_per_target_build_metrics(
 
 
 def streaming_build_report_test(name: str, command: list[str]) -> None:
-    async def impl(buck: Buck, tmp_path: Path) -> None:
+    async def impl(yak: Yak, tmp_path: Path) -> None:
         base_report = tmp_path / "build-report.json"
         report = tmp_path / "streaming-build-report.json"
 
-        await buck.build(
+        await yak.build(
             "--build-report",
             str(base_report),
             "--streaming-build-report",
@@ -267,7 +267,7 @@ def streaming_build_report_test(name: str, command: list[str]) -> None:
 
     globals()[name] = impl
 
-    return buck_test()(impl)
+    return yak_test()(impl)
 
 
 streaming_build_report_test(
@@ -292,12 +292,12 @@ streaming_build_report_test(
 )
 
 
-@buck_test()
-async def test_streaming_build_report(buck: Buck, tmp_path: Path) -> None:
+@yak_test()
+async def test_streaming_build_report(yak: Yak, tmp_path: Path) -> None:
     """Test that --streaming-build-report creates a streaming report file with JSON lines."""
     streaming_report = tmp_path / "streaming-report.jsonl"
 
-    await buck.build(
+    await yak.build(
         "//:rule1",
         "//:rule2",
         "//:rule2[out2]",
@@ -339,31 +339,31 @@ async def test_streaming_build_report(buck: Buck, tmp_path: Path) -> None:
         }
 
 
-@buck_test()
-async def test_streaming_build_report_non_existent_directory(buck: Buck) -> None:
+@yak_test()
+async def test_streaming_build_report_non_existent_directory(yak: Yak) -> None:
     streaming_report = "non_existent_dir/report"
 
-    await buck.build(
+    await yak.build(
         "//:rule1",
         "--streaming-build-report",
         streaming_report,
     )
 
-    with open(buck.cwd / streaming_report) as file:
+    with open(yak.cwd / streaming_report) as file:
         report = json.load(file)
         assert report["success"]
 
 
-@buck_test()
+@yak_test()
 async def test_streaming_build_report_overwrites_existing_file(
-    buck: Buck, tmp_path: Path
+    yak: Yak, tmp_path: Path
 ) -> None:
     streaming_report = tmp_path / "streaming-report.jsonl"
 
     with open(streaming_report, "w") as file:
         file.write("Not valid JSON!")
 
-    await buck.build(
+    await yak.build(
         "//:rule1",
         "--streaming-build-report",
         str(streaming_report),
@@ -384,11 +384,11 @@ async def test_streaming_build_report_overwrites_existing_file(
 
 
 @pytest.mark.remote_execution
-@buck_test(data_dir="re_platform_names")
-async def test_build_report_re_platform_names(buck: Buck, tmp_path: Path) -> None:
+@yak_test(data_dir="re_platform_names")
+async def test_build_report_re_platform_names(yak: Yak, tmp_path: Path) -> None:
     report = tmp_path / "build-report.json"
 
-    await buck.build(
+    await yak.build(
         "//:run_action",
         "-c",
         "yak.detailed_aggregated_metrics=true",

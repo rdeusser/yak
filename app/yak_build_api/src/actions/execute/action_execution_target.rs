@@ -14,7 +14,7 @@ use derivative::Derivative;
 use dupe::Dupe;
 use yak_core::category::CategoryRef;
 use yak_core::deferred::base_deferred_key::BaseDeferredKey;
-use yak_core::fs::buck_out_path::BuckOutScratchPath;
+use yak_core::fs::yak_out_path::YakOutScratchPath;
 use yak_data::ToProtoMessage;
 use yak_execute::execute::target::CommandExecutionTarget;
 
@@ -44,8 +44,8 @@ impl<'a> ActionExecutionTarget<'a> {
         self.action.identifier()
     }
 
-    pub fn scratch_path(&self) -> BuckOutScratchPath {
-        BuckOutScratchPath::new(
+    pub fn scratch_path(&self) -> YakOutScratchPath {
+        YakOutScratchPath::new(
             self.action.owner().dupe(),
             self.action.category(),
             self.action.identifier(),

@@ -9,16 +9,16 @@
  */
 
 use yak_client_ctx::client_ctx::ClientCommandContext;
-use yak_client_ctx::common::BuckArgMatches;
+use yak_client_ctx::common::YakArgMatches;
 use yak_client_ctx::exit_result::ExitResult;
-use yak_client_ctx::version::BuckVersion;
+use yak_client_ctx::version::YakVersion;
 
 #[derive(Debug, clap::Parser)]
 pub struct InternalVersionCommand {}
 
 impl InternalVersionCommand {
-    pub fn exec(self, _matches: BuckArgMatches<'_>, _ctx: ClientCommandContext<'_>) -> ExitResult {
-        yak_client_ctx::println!("yak internal-version {}", BuckVersion::get_unique_id()?)?;
+    pub fn exec(self, _matches: YakArgMatches<'_>, _ctx: ClientCommandContext<'_>) -> ExitResult {
+        yak_client_ctx::println!("yak internal-version {}", YakVersion::get_unique_id()?)?;
         ExitResult::success()
     }
 }

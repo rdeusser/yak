@@ -23,7 +23,7 @@ use yak_core::configuration::pair::ConfigurationNoExec;
 use yak_core::provider::label::ConfiguredProvidersLabel;
 use yak_core::provider::label::ProvidersLabel;
 use yak_core::target::configured_target_label::ConfiguredTargetLabel;
-use yak_hash::BuckMutMap;
+use yak_hash::YakMutMap;
 use yak_node::nodes::configured::ConfiguredTargetNode;
 use yak_node::nodes::configured_ref::ConfiguredGraphNodeRef;
 use yak_query::query::syntax::simple::eval::set::TargetSet;
@@ -36,7 +36,7 @@ use crate::validation::transitive_validations::TransitiveValidations;
 pub static EVAL_ANALYSIS_QUERY: LateBinding<
     for<'a> fn(
         &'a str,
-        BuckMutMap<String, ConfiguredTargetNode>,
+        YakMutMap<String, ConfiguredTargetNode>,
     ) -> Pin<
         Box<dyn Future<Output = yak_error::Result<TargetSet<ConfiguredGraphNodeRef>>> + Send + 'a>,
     >,

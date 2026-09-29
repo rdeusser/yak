@@ -13,7 +13,7 @@ use yak_core::fs::project::ProjectRoot;
 use yak_core::fs::project_rel_path::ProjectRelativePathBuf;
 use yak_fs::paths::abs_norm_path::AbsNormPathBuf;
 use yak_fs::paths::forward_rel_path::ForwardRelativePath;
-use yak_hash::BuckDashSet;
+use yak_hash::YakDashSet;
 
 use crate::file_ops::metadata::RawDirEntry;
 use crate::file_ops::metadata::RawPathMetadata;
@@ -28,19 +28,19 @@ pub struct Symlink {
 
 #[derive(Allocative)]
 pub struct Trace {
-    pub project_entries: BuckDashSet<ProjectRelativePathBuf>,
-    pub buck_out_entries: BuckDashSet<ProjectRelativePathBuf>,
-    pub external_entries: BuckDashSet<AbsNormPathBuf>,
-    pub symlinks: BuckDashSet<Symlink>,
+    pub project_entries: YakDashSet<ProjectRelativePathBuf>,
+    pub yak_out_entries: YakDashSet<ProjectRelativePathBuf>,
+    pub external_entries: YakDashSet<AbsNormPathBuf>,
+    pub symlinks: YakDashSet<Symlink>,
 }
 
 impl Trace {
     pub fn new() -> Self {
         Self {
-            project_entries: BuckDashSet::default(),
-            buck_out_entries: BuckDashSet::default(),
-            external_entries: BuckDashSet::default(),
-            symlinks: BuckDashSet::default(),
+            project_entries: YakDashSet::default(),
+            yak_out_entries: YakDashSet::default(),
+            external_entries: YakDashSet::default(),
+            symlinks: YakDashSet::default(),
         }
     }
 
@@ -52,8 +52,8 @@ impl Trace {
             .collect()
     }
 
-    pub fn buck_out_entries(&self) -> Vec<ProjectRelativePathBuf> {
-        self.buck_out_entries
+    pub fn yak_out_entries(&self) -> Vec<ProjectRelativePathBuf> {
+        self.yak_out_entries
             .iter()
             .map(|path| path.key().to_buf())
             .collect()
@@ -89,8 +89,8 @@ impl TracingIoProvider {
         self.trace.project_entries.insert(path);
     }
 
-    pub fn add_buck_out_entry(&self, entry: ProjectRelativePathBuf) {
-        self.trace.buck_out_entries.insert(entry);
+    pub fn add_yak_out_entry(&self, entry: ProjectRelativePathBuf) {
+        self.trace.yak_out_entries.insert(entry);
     }
 
     pub fn add_external_path(&self, path: AbsNormPathBuf) {

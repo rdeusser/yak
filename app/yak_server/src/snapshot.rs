@@ -19,7 +19,7 @@ use std::time::Instant;
 
 use dupe::Dupe;
 use yak_core::io_counters::IoCounterKey;
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 use yak_execute::dep_file_state::DepFileDbSize;
 use yak_execute::dep_file_state::DepFileStore;
 use yak_execute::re::manager::ReConnectionManager;
@@ -108,7 +108,7 @@ pub struct SnapshotCollector {
     daemon: Arc<DaemonStateData>,
     repo: Arc<RepoState>,
     net_io_collector: SystemNetworkIoCollector,
-    buck_out_path: Arc<AbsNormPathBuf>,
+    yak_out_path: Arc<AbsNormPathBuf>,
     cpu_usage_collector: Option<CpuUsageCollector>,
     /// Handle to the *main* (`yak-rt`) runtime where DICE / build work runs.
     /// Snapshot collection itself runs on the smaller `yak-tn` Tonic
@@ -190,12 +190,12 @@ impl SnapshotCollector {
         repo: Arc<RepoState>,
         runtime: tokio::runtime::Handle,
     ) -> SnapshotCollector {
-        let buck_out_path = repo.paths.buck_out_path();
+        let yak_out_path = repo.paths.yak_out_path();
         SnapshotCollector {
             daemon,
             repo,
             net_io_collector: SystemNetworkIoCollector::new(),
-            buck_out_path: buck_out_path.into(),
+            yak_out_path: yak_out_path.into(),
             cpu_usage_collector: CpuUsageCollector::new().ok(),
             runtime,
             tokio_metrics_state: Arc::new(TokioMetricsState::new()),
@@ -326,7 +326,7 @@ impl SnapshotCollector {
         ) -> yak_error::Result<()> {
             let stats = re
                 .get_network_stats()
-                .buck_error_context("Error collecting network stats")?;
+                .yak_error_context("Error collecting network stats")?;
 
             snapshot.re_download_bytes = stats.downloaded;
             snapshot.re_upload_bytes = stats.uploaded;
@@ -422,16 +422,16 @@ impl SnapshotCollector {
     fn add_system_metrics(&self, snapshot: &mut yak_data::Snapshot) {
         let process_stats = process_stats();
         if let Some(max_rss_bytes) = process_stats.max_rss_bytes {
-            snapshot.buck2_max_rss = max_rss_bytes;
+            snapshot.yak_max_rss = max_rss_bytes;
         }
         if let Some(user_cpu_us) = process_stats.user_cpu_us {
-            snapshot.buck2_user_cpu_us = user_cpu_us;
+            snapshot.yak_user_cpu_us = user_cpu_us;
         }
         if let Some(system_cpu_us) = process_stats.system_cpu_us {
-            snapshot.buck2_system_cpu_us = system_cpu_us;
+            snapshot.yak_system_cpu_us = system_cpu_us;
         }
         snapshot.daemon_uptime_s = (Instant::now() - self.daemon.start_time).as_secs();
-        snapshot.buck2_rss = process_stats.rss_bytes;
+        snapshot.yak_rss = process_stats.rss_bytes;
         let allocator_stats = get_allocator_stats().ok();
         if let Some(alloc_stats) = allocator_stats {
             snapshot.malloc_bytes_active = alloc_stats.bytes_active;
@@ -441,7 +441,7 @@ impl SnapshotCollector {
         if let Ok(DiskSpaceStats {
             total_space,
             free_space,
-        }) = disk_space_stats(&*self.buck_out_path)
+        }) = disk_space_stats(&*self.yak_out_path)
         {
             snapshot.used_disk_space_bytes = Some(total_space - free_space);
         }

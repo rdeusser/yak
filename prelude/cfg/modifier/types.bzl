@@ -21,13 +21,13 @@ ModifierTargetLocation = record()
 ModifierCliLocation = record()
 
 # Modifier specified from yakconfig
-ModifierBuckconfigLocation = record(
+ModifierYakconfigLocation = record(
     section = str,
     property = str,
 )
 
 # This is a handy way of specifying a rust-style enum in Starlark.
-ModifierLocation = ModifierPackageLocation | ModifierTargetLocation | ModifierCliLocation | ModifierBuckconfigLocation
+ModifierLocation = ModifierPackageLocation | ModifierTargetLocation | ModifierCliLocation | ModifierYakconfigLocation
 
 # Modifier types as how they appear to the user via `set_cfg_modifier` or `cfg_modifier` function.
 
@@ -63,7 +63,7 @@ ConditionalModifierInfo = provider(
     }
 )
 
-BuckconfigBackedModifierInfo = provider(
+YakconfigBackedModifierInfo = provider(
     fields = {
         "post_platform_modifiers": list[ConditionalModifierInfo],
         "pre_cli_modifiers": list[ConditionalModifierInfo],

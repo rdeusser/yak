@@ -10,10 +10,10 @@
 
 use starlark::eval::SoftErrorHandler;
 use yak_core::soft_error;
-pub struct Buck2StarlarkSoftErrorHandler;
+pub struct YakStarlarkSoftErrorHandler;
 
 /// When starlark deprecates something, we propagate it to our `soft_error!` handler.
-impl SoftErrorHandler for Buck2StarlarkSoftErrorHandler {
+impl SoftErrorHandler for YakStarlarkSoftErrorHandler {
     fn soft_error(&self, category: &str, error: starlark::Error) -> Result<(), starlark::Error> {
         let error = yak_error::Error::from(error);
         soft_error!(&format!("starlark_rust_{category}"), error, quiet: true, hard_error: true)?;

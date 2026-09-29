@@ -18,7 +18,7 @@ use tokio::sync::oneshot;
 use yak_common::init::ActionSuspendStrategy;
 use yak_common::init::ResourceControlConfig;
 use yak_events::daemon_id::DaemonId;
-use yak_hash::BuckMutMap;
+use yak_hash::YakMutMap;
 
 use crate::ActionFreezeEvent;
 use crate::CommandType;
@@ -404,7 +404,7 @@ impl Scheduler {
     pub(crate) fn update(
         &mut self,
         memory_reading: MemoryReading,
-        scene_readings: BuckMutMap<SceneIdRef, SceneResourceReading>,
+        scene_readings: YakMutMap<SceneIdRef, SceneResourceReading>,
         now: Instant,
     ) {
         self.allprocs_memory_current
@@ -735,11 +735,11 @@ mod tests {
 
     use super::*;
 
-    struct UpdateBuilder(BuckMutMap<SceneIdRef, SceneResourceReading>);
+    struct UpdateBuilder(YakMutMap<SceneIdRef, SceneResourceReading>);
 
     impl UpdateBuilder {
         fn new() -> Self {
-            Self(BuckMutMap::default())
+            Self(YakMutMap::default())
         }
 
         fn add(self, scene_id: SceneIdRef, memory_current: u64) -> Self {
@@ -762,7 +762,7 @@ mod tests {
             self
         }
 
-        fn build(self) -> BuckMutMap<SceneIdRef, SceneResourceReading> {
+        fn build(self) -> YakMutMap<SceneIdRef, SceneResourceReading> {
             self.0
         }
     }

@@ -6,15 +6,15 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-from e2e_util.api.buck import Buck
-from e2e_util.buck_workspace import buck_test
+from e2e_util.api.yak import Yak
+from e2e_util.yak_workspace import yak_test
 
 
-@buck_test()
-async def test_sub_packages(buck: Buck) -> None:
-    res = await buck.targets("root//:")
+@yak_test()
+async def test_sub_packages(yak: Yak) -> None:
+    res = await yak.targets("root//:")
     assert 'Pkgs: ["cat/x", "dog"]' in res.stderr
-    res = await buck.targets("root//dog:")
+    res = await yak.targets("root//dog:")
     assert 'Pkgs: ["y"]' in res.stderr
-    res = await buck.targets("root//cat/x:")
+    res = await yak.targets("root//cat/x:")
     assert "Pkgs: []" in res.stderr

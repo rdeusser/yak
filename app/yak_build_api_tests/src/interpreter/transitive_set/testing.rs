@@ -30,9 +30,9 @@ use yak_build_api::interpreter::rule_defs::transitive_set::TransitiveSet;
 use yak_build_api::interpreter::rule_defs::transitive_set::TransitiveSetOrdering;
 use yak_build_api::interpreter::rule_defs::transitive_set::transitive_set_definition::register_transitive_set;
 use yak_core::deferred::key::DeferredHolderKey;
-use yak_error::BuckErrorOptionContext;
+use yak_error::YakErrorOptionContext;
 use yak_interpreter::from_freeze::from_freeze_error;
-use yak_interpreter::testing::Buck2TestHeapName;
+use yak_interpreter::testing::YakTestHeapName;
 
 use crate::interpreter::rule_defs::artifact::testing::artifactory;
 
@@ -78,7 +78,7 @@ pub(crate) fn new_transitive_set(
         yak_interpreter_for_build::attrs::coerce::testing::to_value(&env, &globals, code);
 
         let frozen = env
-            .freeze_named(Buck2TestHeapName::frozen_heap_name())
+            .freeze_named(YakTestHeapName::frozen_heap_name())
             .freeze_error_context("Freeze failed")
             .map_err(from_freeze_error)?;
 
@@ -94,7 +94,7 @@ pub(crate) fn new_transitive_set(
             env2.set_extra_value(ret);
 
             let frozen = env2
-                .freeze_named(Buck2TestHeapName::frozen_heap_name())
+                .freeze_named(YakTestHeapName::frozen_heap_name())
                 .map_err(from_freeze_error)?;
 
             frozen
@@ -118,7 +118,7 @@ fn freeze_defs_module(code: &str) -> yak_error::Result<FrozenModule> {
 
         yak_interpreter_for_build::attrs::coerce::testing::to_value(&env, &globals, code);
 
-        env.freeze_named(Buck2TestHeapName::frozen_heap_name())
+        env.freeze_named(YakTestHeapName::frozen_heap_name())
             .freeze_error_context("Freeze failed")
             .map_err(from_freeze_error)
     })

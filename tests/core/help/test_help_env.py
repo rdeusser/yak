@@ -6,20 +6,20 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-from e2e_util.api.buck import Buck
-from e2e_util.buck_workspace import buck_test
+from e2e_util.api.yak import Yak
+from e2e_util.yak_workspace import yak_test
 from e2e_util.helper.golden import golden
 
 
-@buck_test()
-async def test_help(buck: Buck) -> None:
-    result = await buck.help_env()
+@yak_test()
+async def test_help(yak: Yak) -> None:
+    result = await yak.help_env()
     golden(
         output=result.stdout,
-        rel_path="buck2-help-env.golden.txt",
+        rel_path="yak-help-env.golden.txt",
     )
-    result = await buck.help_env("--self-testing")
+    result = await yak.help_env("--self-testing")
     golden(
         output=result.stdout,
-        rel_path="buck2-help-env-testing.golden.txt",
+        rel_path="yak-help-env-testing.golden.txt",
     )

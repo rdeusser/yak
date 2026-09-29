@@ -9,22 +9,22 @@
 from typing import Optional
 
 import pytest
-from e2e_util.api.buck import Buck
-from e2e_util.api.buck_result import BuckException, InvocationRecord
+from e2e_util.api.yak import Yak
+from e2e_util.api.yak_result import YakException, InvocationRecord
 from e2e_util.asserts import expect_failure
-from e2e_util.buck_workspace import buck_test, env
+from e2e_util.yak_workspace import yak_test, env
 from e2e_util.helper.utils import json_get, random_string, read_what_ran
 
 
 @pytest.mark.remote_execution
-@buck_test()
-async def test_hybrid_executor_threshold(buck: Buck) -> None:
-    await buck.build(
+@yak_test()
+async def test_hybrid_executor_threshold(yak: Yak) -> None:
+    await yak.build(
         "root//executor_threshold_tests/...",
         "-c",
         f"test.cache_buster={random_string()}",
     )
-    out = await read_what_ran(buck)
+    out = await read_what_ran(yak)
 
     executors = {line["identity"]: line["reproducer"]["executor"] for line in out}
     expected = {
@@ -37,7 +37,7 @@ async def test_hybrid_executor_threshold(buck: Buck) -> None:
 
 
 @pytest.mark.remote_execution
-@buck_test()
+@yak_test()
 @pytest.mark.parametrize(
     "low_pass_filter",
     [
@@ -45,7 +45,7 @@ async def test_hybrid_executor_threshold(buck: Buck) -> None:
         "false",
     ],
 )
-async def test_hybrid_executor_fallbacks(buck: Buck, low_pass_filter: str) -> None:
+async def test_hybrid_executor_fallbacks(yak: Yak, low_pass_filter: str) -> None:
     opts = [
         "-c",
         f"test.cache_buster={random_string()}",
@@ -54,7 +54,7 @@ async def test_hybrid_executor_fallbacks(buck: Buck, low_pass_filter: str) -> No
     ]
 
     # Those work as they are allowed to fallback:
-    await buck.build(
+    await yak.build(
         "root//executor_fallback_tests:local_only",
         "root//executor_fallback_tests:local_only_full_hybrid",
         "root//executor_fallback_tests:remote_only_prefer_local",
@@ -63,22 +63,22 @@ async def test_hybrid_executor_fallbacks(buck: Buck, low_pass_filter: str) -> No
 
     # This one doesn't:
     await expect_failure(
-        buck.build(
+        yak.build(
             "root//executor_fallback_tests:local_only_no_fallback",
             *opts,
         )
     )
 
 
-@buck_test()
-async def test_hybrid_executor_fallback_preferred_error(buck: Buck) -> None:
+@yak_test()
+async def test_hybrid_executor_fallback_preferred_error(yak: Yak) -> None:
     opts = [
         "-c",
         f"test.cache_buster={random_string()}",
     ]
 
     await expect_failure(
-        buck.build(
+        yak.build(
             "root//executor_fallback_tests:fails_both",
             *opts,
         ),
@@ -86,7 +86,7 @@ async def test_hybrid_executor_fallback_preferred_error(buck: Buck) -> None:
     )
 
     await expect_failure(
-        buck.build(
+        yak.build(
             "root//executor_fallback_tests:fails_both_prefer_local",
             *opts,
         ),
@@ -95,7 +95,7 @@ async def test_hybrid_executor_fallback_preferred_error(buck: Buck) -> None:
 
 
 @pytest.mark.remote_execution
-@buck_test()
+@yak_test()
 @pytest.mark.parametrize(
     "target",
     [
@@ -103,14 +103,14 @@ async def test_hybrid_executor_fallback_preferred_error(buck: Buck) -> None:
         "slower_locally_force_full_hybrid",
     ],
 )
-async def test_hybrid_executor_cancels_local_execution(buck: Buck, target: str) -> None:
-    await buck.build(
+async def test_hybrid_executor_cancels_local_execution(yak: Yak, target: str) -> None:
+    await yak.build(
         f"root//executor_race_tests:{target}",
         "-c",
         f"test.cache_buster={random_string()}",
     )
 
-    log = (await buck.log("show")).stdout.strip().splitlines()
+    log = (await yak.log("show")).stdout.strip().splitlines()
     commands = None
 
     for line in log:
@@ -131,15 +131,15 @@ async def test_hybrid_executor_cancels_local_execution(buck: Buck, target: str) 
 
 
 @pytest.mark.remote_execution
-@buck_test()
-async def test_hybrid_executor_logging(buck: Buck) -> None:
-    await buck.build(
+@yak_test()
+async def test_hybrid_executor_logging(yak: Yak) -> None:
+    await yak.build(
         "root//executor_fallback_tests:local_only",
         "-c",
         f"test.cache_buster={random_string()}",
     )
 
-    log = (await buck.log("show")).stdout.strip().splitlines()
+    log = (await yak.log("show")).stdout.strip().splitlines()
     commands = None
 
     for line in log:
@@ -161,7 +161,7 @@ async def test_hybrid_executor_logging(buck: Buck) -> None:
     assert commands[1]["status"] == {"Success": {}}
 
 
-@buck_test()
+@yak_test()
 @pytest.mark.parametrize(
     "low_pass_filter",
     [
@@ -169,7 +169,7 @@ async def test_hybrid_executor_logging(buck: Buck) -> None:
         "false",
     ],
 )
-async def test_hybrid_executor_prefer_local(buck: Buck, low_pass_filter: str) -> None:
+async def test_hybrid_executor_prefer_local(yak: Yak, low_pass_filter: str) -> None:
     opts = [
         "-c",
         f"test.cache_buster={random_string()}",
@@ -184,14 +184,14 @@ async def test_hybrid_executor_prefer_local(buck: Buck, low_pass_filter: str) ->
     #
     # slower_and_works_only_locally will only work locally but it'll fail
     # faster on RE. This means it must not be attempted at al on RE.
-    await buck.build(
+    await yak.build(
         "root//executor_race_tests:heavyweight_works_only_locally",
         "root//executor_race_tests:slower_and_works_only_locally",
         *opts,
     )
 
     # Same as above, but with prefer-local on the build command line instead of the command.
-    await buck.build(
+    await yak.build(
         "root//executor_race_tests:heavyweight_works_only_locally_local_not_preferred",
         "root//executor_race_tests:slower_and_works_only_locally_local_not_preferred",
         "--prefer-local",
@@ -199,15 +199,15 @@ async def test_hybrid_executor_prefer_local(buck: Buck, low_pass_filter: str) ->
     )
 
 
-@buck_test()
-async def test_hybrid_executor_prefer_remote_local_fallback(buck: Buck) -> None:
+@yak_test()
+async def test_hybrid_executor_prefer_remote_local_fallback(yak: Yak) -> None:
     opts = [
         "-c",
         f"test.cache_buster={random_string()}",
     ]
     # Local only command that fails with --remote-only, passes with --prefer-remote
     await expect_failure(
-        buck.build(
+        yak.build(
             "root//executor_fallback_tests:local_only_full_hybrid",
             "--remote-only",
             *opts,
@@ -215,7 +215,7 @@ async def test_hybrid_executor_prefer_remote_local_fallback(buck: Buck) -> None:
         stderr_regex="Failed to build .*local_only_full_hybrid",
     )
 
-    await buck.build(
+    await yak.build(
         "root//executor_fallback_tests:local_only_full_hybrid",
         "--prefer-remote",
         *opts,
@@ -223,8 +223,8 @@ async def test_hybrid_executor_prefer_remote_local_fallback(buck: Buck) -> None:
 
 
 @pytest.mark.remote_execution
-@buck_test()
-async def test_hybrid_executor_prefer_remote(buck: Buck) -> None:
+@yak_test()
+async def test_hybrid_executor_prefer_remote(yak: Yak) -> None:
     opts = [
         "-c",
         f"test.cache_buster={random_string()}",
@@ -232,7 +232,7 @@ async def test_hybrid_executor_prefer_remote(buck: Buck) -> None:
     # Build execution is sequential and remote first with --prefer-remote
     # using an action that succeeds slowly on RE and fails fast locally
     # that would fail if run concurrently
-    await buck.build(
+    await yak.build(
         "root//executor_race_tests:slower_remotely",
         "--prefer-remote",
         *opts,
@@ -240,14 +240,14 @@ async def test_hybrid_executor_prefer_remote(buck: Buck) -> None:
 
 
 @pytest.mark.remote_execution
-@buck_test()
-async def test_executor_preference_priority(buck: Buck) -> None:
+@yak_test()
+async def test_executor_preference_priority(yak: Yak) -> None:
     opts = [
         "-c",
         f"test.cache_buster={random_string()}",
     ]
 
-    await buck.build(
+    await yak.build(
         "root//executor_preference_tests:",
         "--prefer-remote",
         *opts,
@@ -255,22 +255,22 @@ async def test_executor_preference_priority(buck: Buck) -> None:
 
 
 @pytest.mark.remote_execution
-@buck_test()
-async def test_executor_preference_with_remote_args(buck: Buck) -> None:
+@yak_test()
+async def test_executor_preference_with_remote_args(yak: Yak) -> None:
     opts = [
         "-c",
         f"test.cache_buster={random_string()}",
     ]
 
-    await buck.build(
+    await yak.build(
         "root//executor_preference_prefer_remote_arg_tests:",
         *opts,
     )
 
 
-@buck_test()
+@yak_test()
 async def test_executor_preference_with_remote_args_and_cli_override(
-    buck: Buck,
+    yak: Yak,
 ) -> None:
     opts = [
         "-c",
@@ -278,7 +278,7 @@ async def test_executor_preference_with_remote_args_and_cli_override(
     ]
 
     await expect_failure(
-        buck.build(
+        yak.build(
             "root//executor_preference_prefer_remote_arg_tests:",
             # `--prefer-local` takes priority over any `ctx.actions.run()`
             "--prefer-local",
@@ -287,40 +287,40 @@ async def test_executor_preference_with_remote_args_and_cli_override(
     )
 
 
-@buck_test()
-async def test_prefer_local(buck: Buck) -> None:
+@yak_test()
+async def test_prefer_local(yak: Yak) -> None:
     await expect_failure(
-        buck.build(
+        yak.build(
             "root//executor_fallback_tests:local_only_no_fallback",
             "-c",
             f"test.cache_buster={random_string()}",
         )
     )
 
-    await buck.build(
+    await yak.build(
         "root//executor_fallback_tests:local_only_no_fallback", "--prefer-local"
     )
 
 
-@buck_test()
-async def test_local_only(buck: Buck) -> None:
+@yak_test()
+async def test_local_only(yak: Yak) -> None:
     args = [
         "root//executor_fallback_tests:local_only_no_fallback",
         "-c",
         f"test.cache_buster={random_string()}",
     ]
 
-    await expect_failure(buck.build(*args))
+    await expect_failure(yak.build(*args))
 
-    await buck.build(
+    await yak.build(
         *args,
         "--local-only",
     )
 
 
 @pytest.mark.remote_execution
-@buck_test()
-async def test_remote_only(buck: Buck) -> None:
+@yak_test()
+async def test_remote_only(yak: Yak) -> None:
     args = [
         "root//executor_fallback_tests:remote_only_no_fallback",
         "root//executor_fallback_tests:remote_only_full_hybrid",
@@ -328,27 +328,27 @@ async def test_remote_only(buck: Buck) -> None:
         f"test.cache_buster={random_string()}",
     ]
 
-    await expect_failure(buck.build(*args))
+    await expect_failure(yak.build(*args))
 
-    await buck.build(
+    await yak.build(
         *args,
         "--remote-only",
     )
 
 
-@buck_test()
-async def test_build_fails_with_mutually_exclusive_executors(buck: Buck) -> None:
-    with pytest.raises(BuckException):
-        await buck.build(
+@yak_test()
+async def test_build_fails_with_mutually_exclusive_executors(yak: Yak) -> None:
+    with pytest.raises(YakException):
+        await yak.build(
             "--local-only", "--remote-only", "root//executor_threshold_tests/..."
         )
 
 
-@buck_test()
+@yak_test()
 @env("YAK_OFFLINE_BUILD", "1")
-async def test_build_offline(buck: Buck) -> None:
-    await buck.build("root//executor_threshold_tests/...")
-    out = await read_what_ran(buck)
+async def test_build_offline(yak: Yak) -> None:
+    await yak.build("root//executor_threshold_tests/...")
+    out = await read_what_ran(yak)
 
     executors = {line["identity"]: line["reproducer"]["executor"] for line in out}
     expected = {
@@ -361,14 +361,14 @@ async def test_build_offline(buck: Buck) -> None:
 
 
 @pytest.mark.remote_execution
-@buck_test(write_invocation_record=True)
-async def test_hybrid_executor_remote_queuing_fallback(buck: Buck) -> None:
+@yak_test(write_invocation_record=True)
+async def test_hybrid_executor_remote_queuing_fallback(yak: Yak) -> None:
     async def build(
         target: str, *opts: str, env: Optional[dict[str, str]] = None
     ) -> InvocationRecord:
         # kill to update env
-        await buck.kill()
-        res = await buck.build(
+        await yak.kill()
+        res = await yak.build(
             f"root//executor_race_tests:{target}",
             "-c",
             f"test.cache_buster={random_string()}",
@@ -377,15 +377,15 @@ async def test_hybrid_executor_remote_queuing_fallback(buck: Buck) -> None:
         )
         return res.invocation_record()
 
-    async def scheduling_mode(buck: Buck) -> int:
-        actions = await read_what_ran(buck)
+    async def scheduling_mode(yak: Yak) -> int:
+        actions = await read_what_ran(yak)
         return actions[0]["scheduling_mode"]
 
     record = await build("slower_remotely_and_works_on_both_full_hybrid")
     assert record["run_local_count"] == 1
     assert record["run_remote_count"] == 0
     assert record["run_fallback_count"] == 0
-    assert await scheduling_mode(buck) == "FullHybrid"
+    assert await scheduling_mode(yak) == "FullHybrid"
 
     record = await build(
         "slower_remotely_and_works_on_both_fallback_only",
@@ -394,7 +394,7 @@ async def test_hybrid_executor_remote_queuing_fallback(buck: Buck) -> None:
     assert record["run_local_count"] == 0
     assert record["run_remote_count"] == 1
     assert record["run_fallback_count"] == 0
-    assert await scheduling_mode(buck) == "Fallback"
+    assert await scheduling_mode(yak) == "Fallback"
 
     record = await build(
         "slower_remotely_and_works_on_both_fallback_only",
@@ -405,4 +405,4 @@ async def test_hybrid_executor_remote_queuing_fallback(buck: Buck) -> None:
     assert record["run_local_count"] == 1
     assert record["run_remote_count"] == 0
     assert record["run_fallback_count"] == 1
-    assert await scheduling_mode(buck) == "FallbackReQueueEstimate"
+    assert await scheduling_mode(yak) == "FallbackReQueueEstimate"

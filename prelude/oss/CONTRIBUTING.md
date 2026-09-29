@@ -1,8 +1,8 @@
 # Contributing to yak Prelude
 
-The prelude is developed in <https://github.com/rdeusser/buck2> under the
+The prelude is developed in <https://github.com/rdeusser/yak> under the
 `prelude/` directory. Contributions follow that repository's
-[contributing guide](https://github.com/rdeusser/buck2/blob/main/CONTRIBUTING.md).
+[contributing guide](https://github.com/rdeusser/yak/blob/main/CONTRIBUTING.md).
 
 ## License
 

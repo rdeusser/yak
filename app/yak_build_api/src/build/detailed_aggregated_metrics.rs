@@ -14,7 +14,7 @@ mod implementation;
 pub mod types;
 pub mod yak_sketches;
 
-pub type FxMultiMap<K, V> = multimap::MultiMap<K, V, yak_hash::BuckHasherBuilder>;
+pub type FxMultiMap<K, V> = multimap::MultiMap<K, V, yak_hash::YakHasherBuilder>;
 
 pub mod testing {
     pub use super::implementation::traverse::traverse_partial_action_graph;

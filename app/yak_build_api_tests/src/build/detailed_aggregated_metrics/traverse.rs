@@ -37,13 +37,13 @@ mod tests {
     use yak_core::deferred::dynamic::DynamicLambdaResultsKey;
     use yak_core::deferred::key::DeferredHolderKey;
     use yak_core::execution_types::executor_config::CommandExecutorConfig;
-    use yak_core::fs::buck_out_path::BuckOutPathKind;
-    use yak_core::fs::buck_out_path::BuildArtifactPath;
+    use yak_core::fs::yak_out_path::YakOutPathKind;
+    use yak_core::fs::yak_out_path::BuildArtifactPath;
     use yak_core::package::source_path::SourcePath;
     use yak_core::target::configured_target_label::ConfiguredTargetLabel;
     use yak_fs::paths::forward_rel_path::ForwardRelativePathBuf;
-    use yak_hash::StdBuckHashMap;
-    use yak_hash::buck_indexset;
+    use yak_hash::StdYakHashMap;
+    use yak_hash::yak_indexset;
 
     use crate::actions::testings::SimpleAction;
 
@@ -85,7 +85,7 @@ mod tests {
 
         fn add_to_state(
             self,
-            state: &mut yak_hash::BuckMutMap<DeferredHolderKey, OwnedDeferredHolder>,
+            state: &mut yak_hash::YakMutMap<DeferredHolderKey, OwnedDeferredHolder>,
         ) {
             let (key, holder) = self.build();
             state.insert(key, holder);
@@ -115,7 +115,7 @@ mod tests {
                     OwnedDeferredHolder::Analysis(AnalysisResult::new(
                         analysis_values,
                         None,
-                        StdBuckHashMap::default(),
+                        StdYakHashMap::default(),
                         0,
                         0,
                         None,
@@ -176,7 +176,7 @@ mod tests {
                 key.dupe(),
                 Box::new(SimpleAction::new(
                     inputs.into_iter().duped().collect(),
-                    buck_indexset! {output.dupe()},
+                    yak_indexset! {output.dupe()},
                     Vec::new(),
                     Category::new("category".to_owned()).unwrap(),
                     Some(format!("id-{idx}")),
@@ -193,7 +193,7 @@ mod tests {
                 BuildArtifactPath::new(
                     self.holder_key.owner().dupe(),
                     ForwardRelativePathBuf::unchecked_new(format!("output-{}", key.action_index())),
-                    BuckOutPathKind::default(),
+                    YakOutPathKind::default(),
                 ),
                 key.dupe(),
                 yak_execute::execute::request::OutputType::File,
@@ -224,14 +224,14 @@ mod tests {
     }
 
     #[track_caller]
-    fn assert_set_eq(actions: yak_hash::BuckMutSet<ActionKey>, expected: Vec<ActionKey>) {
-        let expected_set: yak_hash::BuckMutSet<_> = expected.into_iter().collect();
+    fn assert_set_eq(actions: yak_hash::YakMutSet<ActionKey>, expected: Vec<ActionKey>) {
+        let expected_set: yak_hash::YakMutSet<_> = expected.into_iter().collect();
         assert_eq!(actions, expected_set)
     }
 
     #[test]
     fn test_empty_graph() -> yak_error::Result<()> {
-        let state = yak_hash::BuckMutMap::default();
+        let state = yak_hash::YakMutMap::default();
         let (complete, actions) = traverse_partial_action_graph(Vec::new(), &state)?;
         assert!(complete);
         assert!(actions.is_empty());
@@ -240,7 +240,7 @@ mod tests {
 
     #[test]
     fn test_single_action() -> yak_error::Result<()> {
-        let mut state = yak_hash::BuckMutMap::default();
+        let mut state = yak_hash::YakMutMap::default();
 
         let mut builder = Builder::for_analysis(create_target("root//:lib").dupe());
         let (output, action_key) =
@@ -256,7 +256,7 @@ mod tests {
 
     #[test]
     fn test_diamond() -> yak_error::Result<()> {
-        let mut state = yak_hash::BuckMutMap::default();
+        let mut state = yak_hash::YakMutMap::default();
 
         let mut builder1 = Builder::for_analysis(create_target("root//:lib").dupe());
         let mut builder2 = Builder::for_analysis(create_target("root//:bin"));
@@ -291,7 +291,7 @@ mod tests {
         // cycles can't actually occur in the action graph, but there may be bugs or races in our
         // state tracking that leads to us traversing an invalid graph. This test just ensures that
         // we still terminate if we encounter a cycle.
-        let mut state = yak_hash::BuckMutMap::default();
+        let mut state = yak_hash::YakMutMap::default();
 
         let mut builder1 = Builder::for_analysis(create_target("root//:lib").dupe());
 
@@ -315,7 +315,7 @@ mod tests {
     #[should_panic(expected = "assertion `left == right` failed")] // We don't currently actually have the ability to traverse this edge.
     fn test_dynamic_input() {
         fn go() -> yak_error::Result<()> {
-            let mut state = yak_hash::BuckMutMap::default();
+            let mut state = yak_hash::YakMutMap::default();
 
             let mut builder1 = Builder::for_analysis(create_target("root//:lib").dupe());
 
@@ -344,7 +344,7 @@ mod tests {
     /// Checks that we can traverse a graph where some parts are missing.
     #[test]
     fn test_dynamic_node_analysis_missing() -> yak_error::Result<()> {
-        let mut state = yak_hash::BuckMutMap::default();
+        let mut state = yak_hash::YakMutMap::default();
 
         let mut builder1 = Builder::for_analysis(create_target("root//:lib").dupe());
 
@@ -371,7 +371,7 @@ mod tests {
     /*
     #[test]
     fn test_tset() -> yak_error::Result<()> {
-        let mut state = yak_hash::BuckMutMap::default();
+        let mut state = yak_hash::YakMutMap::default();
 
         let mut builder1 = Builder::for_analysis(create_target("root//:lib").dupe());
 

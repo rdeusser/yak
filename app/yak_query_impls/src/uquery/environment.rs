@@ -31,11 +31,11 @@ use yak_core::configuration::compatibility::MaybeCompatible;
 use yak_core::package::PackageLabel;
 use yak_core::pattern::pattern_type::TargetPatternExtra;
 use yak_core::target::label::label::TargetLabel;
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 use yak_fs::paths::file_name::FileName;
 use yak_fs::paths::file_name::FileNameBuf;
-use yak_hash::BuckIndexSet;
-use yak_hash::BuckMutMap;
+use yak_hash::YakIndexSet;
+use yak_hash::YakMutMap;
 use yak_interpreter::load_module::InterpreterCalculation;
 use yak_node::nodes::frontend::TargetGraphCalculation;
 use yak_node::nodes::unconfigured::TargetNode;
@@ -81,7 +81,7 @@ enum RBuildFilesError {
 pub(crate) trait UqueryDelegate: Send + Sync {
     async fn get_buildfile_names_by_cell(
         &self,
-    ) -> yak_error::Result<BuckMutMap<CellName, Arc<[FileNameBuf]>>>;
+    ) -> yak_error::Result<YakMutMap<CellName, Arc<[FileNameBuf]>>>;
 
     /// Resolves a target pattern.
     async fn resolve_target_patterns(
@@ -118,12 +118,12 @@ pub(crate) struct UqueryEnvironment<'c> {
 }
 
 pub(crate) struct PreresolvedQueryLiterals<T: QueryTarget> {
-    resolved_literals: BuckMutMap<String, yak_error::Result<TargetSet<T>>>,
+    resolved_literals: YakMutMap<String, yak_error::Result<TargetSet<T>>>,
 }
 
 impl<T: QueryTarget> PreresolvedQueryLiterals<T> {
     pub(crate) fn new(
-        resolved_literals: BuckMutMap<String, yak_error::Result<TargetSet<T>>>,
+        resolved_literals: YakMutMap<String, yak_error::Result<TargetSet<T>>>,
     ) -> Self {
         Self { resolved_literals }
     }
@@ -138,7 +138,7 @@ impl<T: QueryTarget> PreresolvedQueryLiterals<T> {
                 (lit.to_owned(), base.eval_literals(&[lit], ctx).await)
             })
             .await;
-        let mut resolved_literals = BuckMutMap::default();
+        let mut resolved_literals = YakMutMap::default();
         for (literal, result) in resolved_literal_results {
             resolved_literals.insert(literal, result);
         }
@@ -204,7 +204,7 @@ impl<'c> UqueryEnvironment<'c> {
             .ctx()
             .get_interpreter_results(target.pkg())
             .await
-            .with_buck_error_context(|| format!("Error looking up `{target}`"))?;
+            .with_yak_error_context(|| format!("Error looking up `{target}`"))?;
         let node = package.resolve_target(target.name())?;
         Ok(node.to_owned())
     }
@@ -396,7 +396,7 @@ pub(crate) async fn allbuildfiles<T: QueryTarget>(
     universe: &TargetSet<T>,
     delegate: &dyn UqueryDelegate,
 ) -> yak_error::Result<FileSet> {
-    let mut paths = BuckIndexSet::<FileNode>::default();
+    let mut paths = YakIndexSet::<FileNode>::default();
 
     let mut top_level_imports = Vec::<ImportPath>::new();
 
@@ -414,7 +414,7 @@ pub(crate) async fn allbuildfiles<T: QueryTarget>(
     let loads =
         get_transitive_loads(top_level_imports, delegate.linear_dice_computations()).await?;
 
-    let mut new_paths = BuckIndexSet::<FileNode>::default();
+    let mut new_paths = YakIndexSet::<FileNode>::default();
     for load in &loads {
         new_paths.insert(FileNode(load.path().clone()));
     }
@@ -483,7 +483,7 @@ pub(crate) async fn rbuildfiles(
     let mut output_paths: Vec<ImportPath> = Vec::new();
 
     struct Delegate<'a> {
-        first_order_import_map: &'a BuckMutMap<ImportPath, Vec<ImportPath>>,
+        first_order_import_map: &'a YakMutMap<ImportPath, Vec<ImportPath>>,
     }
 
     let visit = |node: Node| {
@@ -538,7 +538,7 @@ pub(crate) async fn rbuildfiles(
     )
     .await?;
 
-    let mut output_files = BuckIndexSet::<FileNode>::default();
+    let mut output_files = YakIndexSet::<FileNode>::default();
     for file in &output_paths {
         output_files.insert(FileNode(file.path().clone()));
     }
@@ -605,8 +605,8 @@ async fn top_level_imports_by_build_file(
     buildfiles: &[ArcCellPath],
     bzlfiles: &[ArcCellPath],
     delegate: &dyn UqueryDelegate,
-) -> yak_error::Result<BuckMutMap<ArcCellPath, Vec<ImportPath>>> {
-    let mut top_level_import_by_build_file = BuckMutMap::<ArcCellPath, Vec<ImportPath>>::default();
+) -> yak_error::Result<YakMutMap<ArcCellPath, Vec<ImportPath>>> {
+    let mut top_level_import_by_build_file = YakMutMap::<ArcCellPath, Vec<ImportPath>>::default();
 
     for file in bzlfiles {
         let imports = vec![ImportPath::new_same_cell(file.as_ref().clone())?];
@@ -645,7 +645,7 @@ async fn top_level_imports_by_build_file(
 async fn first_order_imports(
     all_top_level_imports: &[ImportPath],
     delegate: &dyn UqueryDelegate,
-) -> yak_error::Result<BuckMutMap<ImportPath, Vec<ImportPath>>> {
+) -> yak_error::Result<YakMutMap<ImportPath, Vec<ImportPath>>> {
     let all_imports = get_transitive_loads(
         all_top_level_imports.to_vec(),
         delegate.linear_dice_computations(),
@@ -657,7 +657,7 @@ async fn first_order_imports(
         .map(|node| async move { (node, delegate.ctx().get_loaded_module_imports(node).await) })
         .collect();
 
-    let mut first_order_import_map = BuckMutMap::<ImportPath, Vec<ImportPath>>::default();
+    let mut first_order_import_map = YakMutMap::<ImportPath, Vec<ImportPath>>::default();
 
     while let Some((import, first_order_imports)) =
         tokio::task::unconstrained(all_first_order_futs.next()).await

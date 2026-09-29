@@ -15,7 +15,7 @@ impl From<rusqlite::Error> for crate::Error {
     #[track_caller]
     fn from(value: rusqlite::Error) -> Self {
         if let rusqlite::Error::FromSqlConversionFailure(_, _, e) = &value {
-            if let Some(wrapper) = e.downcast_ref::<Buck2ErrorAsRusqliteError>() {
+            if let Some(wrapper) = e.downcast_ref::<YakErrorAsRusqliteError>() {
                 return wrapper.0.clone();
             }
         }
@@ -40,6 +40,6 @@ impl From<rusqlite::Error> for crate::Error {
 
 #[derive(Debug, Display)]
 #[repr(transparent)]
-pub struct Buck2ErrorAsRusqliteError(pub crate::Error);
+pub struct YakErrorAsRusqliteError(pub crate::Error);
 
-impl std::error::Error for Buck2ErrorAsRusqliteError {}
+impl std::error::Error for YakErrorAsRusqliteError {}

@@ -178,7 +178,7 @@ def generate_rustdoc(
     output = ctx.actions.declare_output(subdir, has_content_based_path = use_cbp)
 
     plain_env, path_env = process_env(compile_ctx, toolchain_info.rustdoc_env | ctx.attrs.env)
-    plain_env["RUSTDOC_BUCK_TARGET"] = cmd_args(str(ctx.label.raw_target()))
+    plain_env["RUSTDOC_YAK_TARGET"] = cmd_args(str(ctx.label.raw_target()))
 
     # The toolchain's `rustdoc_flags` may rely on unstable functionality, e.g.
     # `--generate-link-to-definition`.
@@ -252,7 +252,7 @@ def generate_rustdoc_coverage(
     output = ctx.actions.declare_output(file, has_content_based_path = use_cbp)
 
     plain_env, path_env = process_env(compile_ctx, ctx.attrs.env)
-    plain_env["RUSTDOC_BUCK_TARGET"] = cmd_args(str(ctx.label.raw_target()))
+    plain_env["RUSTDOC_YAK_TARGET"] = cmd_args(str(ctx.label.raw_target()))
 
     if toolchain_info.rust_target_path != None:
         path_env["RUST_TARGET_PATH"] = toolchain_info.rust_target_path[DefaultInfo].default_outputs[0]
@@ -1322,7 +1322,7 @@ def _compute_common_args(
     # transitive dependency only occurs if the rlib and dylib both describe the
     # same crate i.e. contain the same crate hash.
     #
-    # Buck-built libraries never produce an rlib and dylib containing the same
+    # Yak-built libraries never produce an rlib and dylib containing the same
     # crate hash, since that only occurs when outputting multiple crate types
     # through a single rustc invocation: `--crate-type=rlib --crate-type=dylib`.
     # In yak, different crate types are built by different rustc invocations.
@@ -1331,7 +1331,7 @@ def _compute_common_args(
     # standard libraries built by x.py and distributed by Rustup are built this
     # way.
     if toolchain_info.explicit_sysroot_deps:
-        # Standard libraries are being passed explicitly, and Buck-built
+        # Standard libraries are being passed explicitly, and Yak-built
         # dependencies never collide on crate hash, so `-Cprefer-dynamic` cannot
         # make a difference.
         prefer_dynamic_flags = []
@@ -1789,7 +1789,7 @@ def _rustc_invoke(
         cmd_args(diag_json.as_output(), format = "--diag-json={}"),
         cmd_args(diag_txt.as_output(), format = "--diag-txt={}"),
         ["--remap-cwd-prefix=."] if not toolchain_info.nightly_features else [],
-        "--buck-target={}".format(ctx.label.raw_target()),
+        "--yak-target={}".format(ctx.label.raw_target()),
         hidden = [toolchain_info.compiler, compile_ctx.transitive_srcs.project_as_args("artifacts")],
     )
 
@@ -2114,7 +2114,7 @@ def rust_link_binary(
         # argsfile listing them is written by a dynamic action after the
         # manifest is available. Resolving the manifest's names against the
         # artifacts directory here — rather than having the extraction write
-        # paths into a file itself — keeps the paths buck-rendered, which is
+        # paths into a file itself — keeps the paths yak-rendered, which is
         # what makes them correct under content-based paths.
         objects_argsfile = ctx.actions.declare_output(output.short_path + ".rust_objects.args", has_content_based_path = False)
 

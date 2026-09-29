@@ -11,7 +11,7 @@
 use std::process::ExitStatus;
 
 use async_trait::async_trait;
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 use yak_error::conversion::from_any_with_tag;
 use yak_fs::paths::abs_norm_path::AbsNormPathBuf;
 use yak_miniperf_proto::MiniperfOutput;
@@ -97,7 +97,7 @@ impl StatusDecoder for MiniperfStatusDecoder {
 
         let status = tokio::fs::read(&self.out_path)
             .await
-            .with_buck_error_context(|| {
+            .with_yak_error_context(|| {
                 format!(
                     "Error reading miniperf output at `{}`",
                     self.out_path.display()
@@ -106,7 +106,7 @@ impl StatusDecoder for MiniperfStatusDecoder {
 
         tokio::fs::remove_file(&self.out_path)
             .await
-            .with_buck_error_context(|| {
+            .with_yak_error_context(|| {
                 format!("Error removing miniperf output at `{}`", self.out_path)
             })?;
 
@@ -115,7 +115,7 @@ impl StatusDecoder for MiniperfStatusDecoder {
             bincode::config::legacy(),
         )
         .map_err(|e| from_any_with_tag(e, yak_error::ErrorTag::Tier0))
-        .with_buck_error_context(|| {
+        .with_yak_error_context(|| {
             format!("Invalid miniperf output at `{}`", self.out_path.display())
         })?;
 

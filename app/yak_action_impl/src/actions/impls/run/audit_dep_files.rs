@@ -20,7 +20,7 @@ use yak_core::deferred::base_deferred_key::BaseDeferredKey;
 use yak_core::target::configured_target_label::ConfiguredTargetLabel;
 use yak_directory::directory::directory::Directory;
 use yak_directory::directory::directory_iterator::DirectoryIterator;
-use yak_error::BuckErrorOptionContext;
+use yak_error::YakErrorOptionContext;
 use yak_error::yak_error;
 use yak_execute::digest_config::HasDigestConfig;
 use yak_execute::materialize::materializer::HasMaterializer;

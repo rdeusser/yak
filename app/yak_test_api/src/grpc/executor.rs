@@ -11,8 +11,8 @@
 use tokio::io::AsyncRead;
 use tokio::io::AsyncWrite;
 use tonic::transport::Channel;
-use yak_error::BuckErrorContext as _;
-use yak_error::BuckErrorOptionContext;
+use yak_error::YakErrorContext as _;
+use yak_error::YakErrorOptionContext;
 use yak_grpc::ServerHandle;
 use yak_grpc::make_channel;
 use yak_grpc::spawn_oneshot;
@@ -52,7 +52,7 @@ impl TestExecutor for TestExecutorClient {
         self.client
             .clone()
             .external_runner_spec(ExternalRunnerSpecRequest {
-                test_spec: Some(s.try_into().buck_error_context("Invalid `test_spec`")?),
+                test_spec: Some(s.try_into().yak_error_context("Invalid `test_spec`")?),
             })
             .await?;
 
@@ -94,12 +94,12 @@ where
             let test_spec = test_spec
                 .internal_error("Missing `test_spec`")?
                 .try_into()
-                .buck_error_context("Invalid `test_spec`")?;
+                .yak_error_context("Invalid `test_spec`")?;
 
             self.inner
                 .external_runner_spec(test_spec)
                 .await
-                .buck_error_context("Failed to dispatch test_spec")?;
+                .yak_error_context("Failed to dispatch test_spec")?;
 
             Ok(Empty {})
         })
@@ -114,7 +114,7 @@ where
             self.inner
                 .end_of_test_requests()
                 .await
-                .buck_error_context("Failed to report end-of-tests")?;
+                .yak_error_context("Failed to report end-of-tests")?;
 
             Ok(Empty {})
         })
@@ -129,7 +129,7 @@ where
             self.inner
                 .unstable_heap_dump(&req.into_inner().destination_path)
                 .await
-                .buck_error_context("Failed to dispatch unstable_heap_dump")?;
+                .yak_error_context("Failed to dispatch unstable_heap_dump")?;
             Ok(UnstableHeapDumpResponse {})
         })
         .await

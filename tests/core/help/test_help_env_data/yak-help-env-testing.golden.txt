@@ -1,0 +1,76 @@
+# This file is @generated, regenerate by rerunning the test with `YAK_UPDATE_GOLDEN=1` set
+
+Name                                         Type                   Default
+CI                                           bool                   false
+COMPLETION_VERIFY_LOCKFILE                   String
+DICE_DETECT_CYCLES_UNSTABLE                  DetectCycles
+ENFORCE_DISPATCHER_SET                       bool                   false
+FORCE_WANT_RESTART                           bool                   false
+YAKD_STARTUP_INIT_TIMEOUT                    u64
+YAKD_STARTUP_TIMEOUT                         u64
+YAK_ARG0                                     String
+YAK_CLIENT_METADATA                          String
+YAK_CONSOLE                                  String
+YAK_CONSOLE_OUTPUT_LIMIT                     u64
+YAK_DAEMON_LOG_TO_FILE                       u8
+YAK_DEBUG_RAWOUTPUT_CHUNK_SIZE               usize                  DEFAULT_CHUNK_SIZE
+YAK_DEFAULT_DIGEST_ALGORITHM                 DigestAlgorithmFamily
+YAK_DICE_SNAPSHOT_INTERVAL_MS                u64                    500
+YAK_DISABLE_EXPANDED_PROGRESS                bool                   false
+YAK_DISABLE_FILE_ATTR                        bool                   false
+YAK_DISABLE_MACOS_QOS                        bool                   false
+YAK_HARD_ERROR                               String
+YAK_INSTALLER_SEND_TIMEOUT_S                 u64
+YAK_INSTALLER_TIMEOUT_S                      u64
+YAK_IO_SEMAPHORE                             usize                  yak_util::threads::available_parallelism()
+YAK_IO_THREADS                               usize                  directory_mutation_parallelism()
+YAK_KEEP_DEP_FILE_DIRECTORIES                bool                   false
+YAK_LIB_BACKTRACE                            String
+YAK_LOG                                      String
+YAK_MAX_BLOCKING_THREADS                     usize
+YAK_NO_INTERACTIVE_CONSOLE                   String
+YAK_OFFLINE_BUILD                            String
+YAK_PARANOID                                 bool
+YAK_PARANOID_PATH                            String
+YAK_PREFER_REMOTE                            String
+YAK_RE_CONNECT_TIMEOUT_S                     u64                    120
+YAK_RE_DOWNLOAD_CONCURRENCY                  usize                  256
+YAK_RUNTIME_THREADS                          usize
+YAK_SELF_TEST_TIMEOUT_S                      u64
+YAK_SETTINGS_OVERRIDE                        String
+YAK_SHOW_SOFT_ERRORS                         String
+YAK_TERMINATE_AFTER                          u64
+YAK_TESTING_CHECKER_INTERVAL_SECONDS         u64
+YAK_TESTING_INACTIVITY_TIMEOUT               bool                   false
+YAK_TEST_BUILD_ERROR                         bool                   false
+YAK_TEST_DAEMON_STARTUP_SIGNAL               bool                   false
+YAK_TEST_DISABLE_CACHING                     bool
+YAK_TEST_DISABLE_DAEMON_CGROUP               bool
+YAK_TEST_ERROR_ON_CACHE_UPLOAD               bool                   false
+YAK_TEST_EXECUTOR_USE_TCP                    bool                   false
+YAK_TEST_EXTRA_EXTERNAL_CONFIG               String
+YAK_TEST_FAIL_CONNECT                        bool                   false
+YAK_TEST_FAIL_PAGE_OUT                       bool                   false
+YAK_TEST_FAIL_RE_DOWNLOADS                   bool                   false
+YAK_TEST_FAIL_RE_EXECUTE                     bool                   false
+YAK_TEST_FAIL_RE_RESOURCE_EXHAUSTED          bool                   false
+YAK_TEST_FAIL_STREAMING                      bool                   false
+YAK_TEST_FAIL_YAKD_AUTH                      bool                   false
+YAK_TEST_FAKE_SYSTEM_TOTAL_MEMORY            u64
+YAK_TEST_FORCE_CACHE_UPLOAD                  bool                   false
+YAK_TEST_FORCE_DECLARE_MISMATCH              bool                   false
+YAK_TEST_INIT_DAEMON_ERROR                   bool                   false
+YAK_TEST_INIT_DATA_SLEEP_SECS                u64
+YAK_TEST_INJECTED_MISSING_DIGESTS            Vec<FileDigest>
+YAK_TEST_ONLY_REMOTE_DEP_FILE_CACHE          bool                   false
+YAK_TEST_RESOURCE_CONTROL_CONFIG             String
+YAK_TEST_RE_QUEUE_ESTIMATE_S                 u64
+YAK_TEST_SETTINGS_HOME_DIR                   String
+YAK_TEST_SKIP_ACTION_CACHE_WRITE             bool                   false
+YAK_TEST_SKIP_DEFAULT_EXTERNAL_CONFIG        bool                   false
+YAK_TEST_SKIP_DICE_CLEAR_ON_MERGEBASE_CHANGE bool                   false
+YAK_TEST_STDIN_BUFFER_SIZE                   usize
+YAK_TEST_TOMBSTONED_DIGESTS                  YakMutSet<FileDigest>
+YAK_VERBOSE                                  String
+YAK_WATCHMAN_TIMEOUT                         u64                    57
+YAK_WRAPPER_START_TIME                       u64

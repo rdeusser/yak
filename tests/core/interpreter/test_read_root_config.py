@@ -6,19 +6,19 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-from e2e_util.api.buck import Buck
-from e2e_util.buck_workspace import buck_test
+from e2e_util.api.yak import Yak
+from e2e_util.yak_workspace import yak_test
 
 
-@buck_test()
-async def test_read_root_config(buck: Buck) -> None:
-    output = await buck.build("//:")
+@yak_test()
+async def test_read_root_config(yak: Yak) -> None:
+    output = await yak.build("//:")
     assert "<<root=regular>>" in output.stderr
     assert "<<root_ignore_default=regular>>" in output.stderr
     assert "<<root_use_default=predict>>" in output.stderr
     assert "<<local=regular>>" in output.stderr
 
-    output = await buck.build("other//:")
+    output = await yak.build("other//:")
     assert "{{root=regular}}" in output.stderr
     assert "{{root_ignore_default=regular}}" in output.stderr
     assert "{{root_use_default=quantity}}" in output.stderr

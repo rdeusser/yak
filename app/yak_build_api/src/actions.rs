@@ -75,10 +75,10 @@ use yak_execute::re::output_trees_download_config::OutputTreesDownloadConfig;
 use yak_file_watcher::dep_files::DepFileCache;
 use yak_file_watcher::mergebase::Mergebase;
 use yak_fs::paths::forward_rel_path::ForwardRelativePathBuf;
-use yak_hash::BuckIndexMap;
-use yak_hash::BuckIndexSet;
-use yak_hash::BuckMutMap;
-use yak_hash::buck_indexmap;
+use yak_hash::YakIndexMap;
+use yak_hash::YakIndexSet;
+use yak_hash::YakMutMap;
+use yak_hash::yak_indexmap;
 use yak_http::HttpClient;
 
 use crate::actions::errors::execute_error::ExecuteError;
@@ -109,7 +109,7 @@ pub trait UnregisteredAction: Allocative + Send {
     /// and no longer bindable to any other 'Artifact's.
     fn register(
         self: Box<Self>,
-        outputs: BuckIndexSet<BuildArtifact>,
+        outputs: YakIndexSet<BuildArtifact>,
         starlark_data: Option<OwnedFrozen<Value<'static>>>,
         error_handler: Option<OwnedFrozen<Value<'static>>>,
     ) -> yak_error::Result<Box<dyn Action>>;
@@ -179,8 +179,8 @@ pub trait Action: PagableTagged + Allocative + Debug + Send + Sync + 'static {
         &self,
         _fs: &ExecutorFs,
         _artifact_path_mapping: &dyn ArtifactPathMapper,
-    ) -> BuckIndexMap<String, String> {
-        buck_indexmap! {}
+    ) -> YakIndexMap<String, String> {
+        yak_indexmap! {}
     }
 
     fn error_handler(&self) -> Option<&OwnedFrozen<Value<'static>>> {
@@ -312,8 +312,8 @@ pub trait ActionExecutionCtx: Send + Sync {
 
     fn artifact_path_mapping(
         &self,
-        filter: Option<BuckIndexSet<ArtifactGroup>>,
-    ) -> BuckMutMap<&Artifact, ContentBasedPathHash>;
+        filter: Option<YakIndexSet<ArtifactGroup>>,
+    ) -> YakMutMap<&Artifact, ContentBasedPathHash>;
 
     fn blocking_executor(&self) -> &dyn BlockingExecutor;
 
@@ -459,14 +459,14 @@ impl Deref for RegisteredAction {
 #[derive(Allocative)]
 struct ActionToBeRegistered {
     key: ActionKey,
-    outputs: BuckIndexSet<BuildArtifact>,
+    outputs: YakIndexSet<BuildArtifact>,
     action: Box<dyn UnregisteredAction>,
 }
 
 impl ActionToBeRegistered {
     fn new<A: UnregisteredAction + 'static>(
         key: ActionKey,
-        outputs: BuckIndexSet<BuildArtifact>,
+        outputs: YakIndexSet<BuildArtifact>,
         a: A,
     ) -> Self {
         Self {

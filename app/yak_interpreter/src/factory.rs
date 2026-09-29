@@ -19,7 +19,7 @@ use starlark::environment::Module;
 use starlark::eval::Evaluator;
 use starlark::values::FrozenHeapName;
 use yak_common::legacy_configs::dice::HasLegacyConfigs;
-use yak_common::legacy_configs::key::BuckconfigKeyRef;
+use yak_common::legacy_configs::key::YakconfigKeyRef;
 use yak_error::conversion::from_any_with_tag;
 
 use crate::dice::starlark_debug::HasStarlarkDebugger;
@@ -77,7 +77,7 @@ impl FinishedStarlarkEvaluation {
 
     pub fn freeze_and_finish(
         self,
-        env: BuckStarlarkModule,
+        env: YakStarlarkModule,
     ) -> yak_error::Result<(
         ProfilingReportedToken,
         FrozenModule,
@@ -113,11 +113,11 @@ impl StarlarkEvaluatorProvider {
     ) -> yak_error::Result<StarlarkEvaluatorProvider> {
         let profile_mode = ctx.get_starlark_profiler_mode(&eval_kind).await?;
 
-        let root_buckconfig = ctx.get_legacy_root_config_on_dice().await?;
+        let root_yakconfig = ctx.get_legacy_root_config_on_dice().await?;
         let profile_listener = ctx.get_profile_event_listener().cloned();
 
         let starlark_max_callstack_size =
-            root_buckconfig.view(ctx).parse::<usize>(BuckconfigKeyRef {
+            root_yakconfig.view(ctx).parse::<usize>(YakconfigKeyRef {
                 section: "yak",
                 property: "starlark_max_callstack_size",
             })?;
@@ -147,7 +147,7 @@ impl StarlarkEvaluatorProvider {
     ///  (3) re-enter evaluation to resolve promises.
     pub fn make_reentrant_evaluator<'v, 'a, 'e>(
         mut self,
-        module: &'a BuckStarlarkModule<'v>,
+        module: &'a YakStarlarkModule<'v>,
         cancellation: CancellationPoller,
     ) -> yak_error::Result<ReentrantStarlarkEvaluator<'v, 'a, 'e>> {
         let (_, _v) = (yak_error::Ok(()), 1);
@@ -176,7 +176,7 @@ impl StarlarkEvaluatorProvider {
     /// when debugging.
     pub fn with_evaluator<'v, 'a, 'e: 'a, R>(
         self,
-        module: &'a BuckStarlarkModule<'v>,
+        module: &'a YakStarlarkModule<'v>,
         cancellation: CancellationPoller,
         closure: impl FnOnce(&mut Evaluator<'v, 'a, 'e>, bool) -> yak_error::Result<R>,
     ) -> yak_error::Result<(FinishedStarlarkEvaluation, R)> {
@@ -274,13 +274,13 @@ impl SetProfileEventListener {
 }
 
 /// A token that simply indicates that profiling has been reported. Used with
-/// BuckStarlarkModule::with_profiling to ensure that profiling is reported.
+/// YakStarlarkModule::with_profiling to ensure that profiling is reported.
 pub struct ProfilingReportedToken(());
 
 /// A simple wrapper around a starlark Module that allows us to ensure that profiling is reported.
-pub struct BuckStarlarkModule<'v>(Module<'v>);
+pub struct YakStarlarkModule<'v>(Module<'v>);
 
-impl<'v> std::ops::Deref for BuckStarlarkModule<'v> {
+impl<'v> std::ops::Deref for YakStarlarkModule<'v> {
     type Target = Module<'v>;
 
     fn deref(&self) -> &Self::Target {
@@ -288,13 +288,13 @@ impl<'v> std::ops::Deref for BuckStarlarkModule<'v> {
     }
 }
 
-impl BuckStarlarkModule<'_> {
+impl YakStarlarkModule<'_> {
     /// This function allows us to ensure that profiling is reported (in the successful path) of any starlark evaluation.
     pub fn with_profiling<R, E>(
-        func: impl for<'v> FnOnce(BuckStarlarkModule<'v>) -> Result<(ProfilingReportedToken, R), E>,
+        func: impl for<'v> FnOnce(YakStarlarkModule<'v>) -> Result<(ProfilingReportedToken, R), E>,
     ) -> Result<R, E> {
-        // This is `BuckStarlarkModule`
-        match Module::with_temp_heap(|m| func(BuckStarlarkModule(m))) {
+        // This is `YakStarlarkModule`
+        match Module::with_temp_heap(|m| func(YakStarlarkModule(m))) {
             Ok((ProfilingReportedToken(..), res)) => Ok(res),
             Err(e) => Err(e),
         }
@@ -304,11 +304,11 @@ impl BuckStarlarkModule<'_> {
     pub async fn with_profiling_async<F, R>(func: F) -> yak_error::Result<R>
     where
         F: for<'v> AsyncFnOnce(
-            BuckStarlarkModule<'v>,
+            YakStarlarkModule<'v>,
         ) -> yak_error::Result<(ProfilingReportedToken, R)>,
     {
-        // This is `BuckStarlarkModule`
-        match Module::with_temp_heap_async(async |m| func(BuckStarlarkModule(m)).await).await {
+        // This is `YakStarlarkModule`
+        match Module::with_temp_heap_async(async |m| func(YakStarlarkModule(m)).await).await {
             Ok((ProfilingReportedToken(..), res)) => Ok(res),
             Err(e) => Err(e),
         }

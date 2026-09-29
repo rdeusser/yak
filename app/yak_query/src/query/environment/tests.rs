@@ -15,9 +15,9 @@ use std::sync::Arc;
 
 use derive_more::Display;
 use derive_more::From;
-use yak_error::BuckErrorOptionContext;
-use yak_hash::BuckIndexSet;
-use yak_hash::BuckMutMap;
+use yak_error::YakErrorOptionContext;
+use yak_hash::YakIndexSet;
+use yak_hash::YakMutMap;
 use yak_query::query::traversal::NodeLookup;
 use yak_query::query::traversal::async_depth_first_postorder_traversal;
 use yak_query::query::traversal::async_depth_limited_traversal;
@@ -35,7 +35,7 @@ struct TestTargetAttr;
 #[derive(Clone, Dupe, Eq, PartialEq)]
 struct TestTarget {
     id: TestTargetId,
-    deps: Arc<BuckIndexSet<TestTargetId>>,
+    deps: Arc<YakIndexSet<TestTargetId>>,
 }
 
 /// Custom debug to make the test output more readable
@@ -130,7 +130,7 @@ impl QueryTarget for TestTarget {
 }
 
 struct TestEnv {
-    graph: BuckMutMap<TestTargetId, TestTarget>,
+    graph: YakMutMap<TestTargetId, TestTarget>,
 }
 
 impl NodeLookup<TestTarget> for TestEnv {
@@ -230,7 +230,7 @@ impl TestEnv {
     fn set(&self, entries: &str) -> yak_error::Result<TargetSet<TestTarget>> {
         let mut set = TargetSet::new();
         for c in entries.split(',') {
-            let id = TestTargetId(c.parse().buck_error_context("Invalid ID")?);
+            let id = TestTargetId(c.parse().yak_error_context("Invalid ID")?);
             set.insert(<Self as NodeLookup<TestTarget>>::get(self, &id)?);
         }
         Ok(set)
@@ -239,7 +239,7 @@ impl TestEnv {
 
 #[derive(Default)]
 pub struct TestEnvBuilder {
-    graph: BuckMutMap<u64, BuckIndexSet<u64>>,
+    graph: YakMutMap<u64, YakIndexSet<u64>>,
 }
 
 impl TestEnvBuilder {

@@ -14,8 +14,8 @@ use allocative::Allocative;
 use yak_core::fs::project::ProjectRoot;
 use yak_core::fs::project_rel_path::ProjectRelativePathBuf;
 use yak_core::yak_env;
-use yak_error::BuckErrorContext;
-use yak_error::BuckErrorOptionContext;
+use yak_error::YakErrorContext;
+use yak_error::YakErrorOptionContext;
 use yak_fs::fs_util;
 use yak_fs::paths::abs_norm_path::AbsNormPath;
 use yak_fs::paths::abs_norm_path::AbsNormPathBuf;
@@ -28,12 +28,12 @@ use crate::invocation_paths::InvocationPaths;
 use crate::invocation_paths_result::InvocationPathsResult;
 
 #[derive(Debug, yak_error::Error)]
-enum BuckCliError {
+enum YakCliError {
     #[error(
         "Couldn't find a project root for directory `{}`. Expected to find a .yakconfig file.", _0.path().display()
     )]
-    #[yak(tag = NoBuckRoot)]
-    NoBuckRoot(AbsWorkingDir),
+    #[yak(tag = NoYakRoot)]
+    NoYakRoot(AbsWorkingDir),
 }
 
 #[derive(Clone, Allocative)]
@@ -43,8 +43,8 @@ pub struct InvocationRoots {
 }
 
 impl InvocationRoots {
-    pub fn common_buckd_dir(&self) -> yak_error::Result<AbsNormPathBuf> {
-        Ok(home_buck_dir()?.join(FileName::unchecked_new("yakd")))
+    pub fn common_yakd_dir(&self) -> yak_error::Result<AbsNormPathBuf> {
+        Ok(home_yak_dir()?.join(FileName::unchecked_new("yakd")))
     }
 
     pub fn paranoid_info_path(&self) -> yak_error::Result<AbsPathBuf> {
@@ -54,7 +54,7 @@ impl InvocationRoots {
         }
 
         Ok(self
-            .common_buckd_dir()?
+            .common_yakd_dir()?
             .join(FileName::new("paranoid.info")?)
             .into_abs_path_buf())
     }
@@ -107,7 +107,7 @@ fn get_roots(from: &AbsWorkingDir) -> yak_error::Result<Option<InvocationRoots>>
 }
 
 pub fn find_invocation_roots(from: &AbsWorkingDir) -> yak_error::Result<InvocationRoots> {
-    get_roots(from)?.ok_or_else(|| BuckCliError::NoBuckRoot(from.to_owned()).into())
+    get_roots(from)?.ok_or_else(|| YakCliError::NoYakRoot(from.to_owned()).into())
 }
 
 pub fn get_invocation_paths_result(
@@ -117,7 +117,7 @@ pub fn get_invocation_paths_result(
     match get_roots(from) {
         Ok(Some(roots)) => InvocationPathsResult::Paths(InvocationPaths { roots, isolation }),
         Ok(None) => {
-            InvocationPathsResult::OutsideOfRepo(BuckCliError::NoBuckRoot(from.to_owned()).into())
+            InvocationPathsResult::OutsideOfRepo(YakCliError::NoYakRoot(from.to_owned()).into())
         }
         Err(e) => InvocationPathsResult::OtherError(e),
     }
@@ -138,12 +138,12 @@ pub fn get_invocation_paths_result(
 ///
 /// 2. Keep user-owned .yakd directory, use some other mechanism to move ownership of
 ///    output directories between different yakd instances.
-pub(crate) fn home_buck_dir() -> yak_error::Result<&'static AbsNormPath> {
+pub(crate) fn home_yak_dir() -> yak_error::Result<&'static AbsNormPath> {
     fn find_dir() -> yak_error::Result<AbsNormPathBuf> {
-        let home = yak_wrapper_common::buck2_home_dir()
+        let home = yak_wrapper_common::yak_home_dir()
             .internal_error("Expected a HOME directory to be available")?;
         let home =
-            AbsNormPathBuf::new(home).buck_error_context("Expected an absolute HOME directory")?;
+            AbsNormPathBuf::new(home).yak_error_context("Expected an absolute HOME directory")?;
         Ok(home.join(FileName::new(".yak")?))
     }
 

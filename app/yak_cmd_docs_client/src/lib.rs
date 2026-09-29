@@ -9,7 +9,7 @@
  */
 
 use yak_client_ctx::client_ctx::ClientCommandContext;
-use yak_client_ctx::common::BuckArgMatches;
+use yak_client_ctx::common::YakArgMatches;
 use yak_client_ctx::events_ctx::EventsCtx;
 use yak_client_ctx::exit_result::ExitResult;
 
@@ -48,7 +48,7 @@ impl DocsCommand {
         self,
         // The top-level command is used to generate the markdown help doc
         top_level_cmd: clap::Command,
-        matches: BuckArgMatches<'_>,
+        matches: YakArgMatches<'_>,
         ctx: ClientCommandContext<'_>,
         events_ctx: &mut EventsCtx,
     ) -> ExitResult {

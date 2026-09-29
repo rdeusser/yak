@@ -9,82 +9,82 @@
 import json
 import typing
 
-from e2e_util.api.buck import Buck
-from e2e_util.buck_workspace import buck_test
+from e2e_util.api.yak import Yak
+from e2e_util.yak_workspace import yak_test
 
 
-@buck_test(skip_for_os=["darwin", "windows"], disable_daemon_cgroup=False)
-async def test_version_gate_enables_cgroup(buck: Buck) -> None:
+@yak_test(skip_for_os=["darwin", "windows"], disable_daemon_cgroup=False)
+async def test_version_gate_enables_cgroup(yak: Yak) -> None:
     """When min_version_for_gated_status is set to a version <= the binary's
     DAEMON_CGROUP_VERSION, resource control should be enabled (status =
     if_available)."""
 
-    with open(buck.cwd / ".yakconfig", "a") as buckconfig:
-        buckconfig.write("[yak_resource_control]\n")
+    with open(yak.cwd / ".yakconfig", "a") as yakconfig:
+        yakconfig.write("[yak_resource_control]\n")
         # Version 1 is the current DAEMON_CGROUP_VERSION, so this should enable.
-        buckconfig.write("min_version_for_gated_status = 1\n")
+        yakconfig.write("min_version_for_gated_status = 1\n")
 
-    snapshot = await start_daemon_and_get_snapshot(buck)
+    snapshot = await start_daemon_and_get_snapshot(yak)
     assert snapshot["allprocs_cgroup"] is not None
 
 
-@buck_test(skip_for_os=["darwin", "windows"], disable_daemon_cgroup=False)
-async def test_version_gated_default_status_overrides_gated_default(buck: Buck) -> None:
+@yak_test(skip_for_os=["darwin", "windows"], disable_daemon_cgroup=False)
+async def test_version_gated_default_status_overrides_gated_default(yak: Yak) -> None:
     """When the version gate passes, version_gated_default_status overrides the
     default gated status of if_available."""
 
-    with open(buck.cwd / ".yakconfig", "a") as buckconfig:
-        buckconfig.write("[yak_resource_control]\n")
-        buckconfig.write("min_version_for_gated_status = 1\n")
-        buckconfig.write("version_gated_default_status = off\n")
+    with open(yak.cwd / ".yakconfig", "a") as yakconfig:
+        yakconfig.write("[yak_resource_control]\n")
+        yakconfig.write("min_version_for_gated_status = 1\n")
+        yakconfig.write("version_gated_default_status = off\n")
 
-    snapshot = await start_daemon_and_get_snapshot(buck)
+    snapshot = await start_daemon_and_get_snapshot(yak)
     assert snapshot["allprocs_cgroup"] is None
 
 
-@buck_test(skip_for_os=["darwin", "windows"], disable_daemon_cgroup=False)
-async def test_explicit_status_overrides_gated_one(buck: Buck) -> None:
+@yak_test(skip_for_os=["darwin", "windows"], disable_daemon_cgroup=False)
+async def test_explicit_status_overrides_gated_one(yak: Yak) -> None:
     """When the explicit status is present it takes precedence."""
 
-    with open(buck.cwd / ".yakconfig", "a") as buckconfig:
-        buckconfig.write("[yak_resource_control]\n")
-        buckconfig.write("status = off\n")
-        buckconfig.write("min_version_for_gated_status = 1\n")
-        buckconfig.write("version_gated_default_status = required\n")
+    with open(yak.cwd / ".yakconfig", "a") as yakconfig:
+        yakconfig.write("[yak_resource_control]\n")
+        yakconfig.write("status = off\n")
+        yakconfig.write("min_version_for_gated_status = 1\n")
+        yakconfig.write("version_gated_default_status = required\n")
 
-    snapshot = await start_daemon_and_get_snapshot(buck)
+    snapshot = await start_daemon_and_get_snapshot(yak)
     assert snapshot["allprocs_cgroup"] is None
 
 
-@buck_test(skip_for_os=["darwin", "windows"], disable_daemon_cgroup=False)
-async def test_version_gate_disables_cgroup_when_version_too_high(buck: Buck) -> None:
+@yak_test(skip_for_os=["darwin", "windows"], disable_daemon_cgroup=False)
+async def test_version_gate_disables_cgroup_when_version_too_high(yak: Yak) -> None:
     """When min_version_for_gated_status is set to a version higher than the
     binary's DAEMON_CGROUP_VERSION, resource control should remain off."""
 
-    with open(buck.cwd / ".yakconfig", "a") as buckconfig:
-        buckconfig.write("[yak_resource_control]\n")
+    with open(yak.cwd / ".yakconfig", "a") as yakconfig:
+        yakconfig.write("[yak_resource_control]\n")
         # Version 9999 is higher than any DAEMON_CGROUP_VERSION, so this should not enable.
-        buckconfig.write("min_version_for_gated_status = 9999\n")
+        yakconfig.write("min_version_for_gated_status = 9999\n")
 
-    snapshot = await start_daemon_and_get_snapshot(buck)
+    snapshot = await start_daemon_and_get_snapshot(yak)
     assert snapshot["allprocs_cgroup"] is None
 
 
-@buck_test(skip_for_os=["darwin", "windows"], disable_daemon_cgroup=False)
-async def test_version_gate_not_set_status_off(buck: Buck) -> None:
+@yak_test(skip_for_os=["darwin", "windows"], disable_daemon_cgroup=False)
+async def test_version_gate_not_set_status_off(yak: Yak) -> None:
     """When min_version_for_gated_status is not set and status is off,
     resource control should be off."""
 
-    with open(buck.cwd / ".yakconfig", "a") as buckconfig:
-        buckconfig.write("[yak_resource_control]\n")
-        buckconfig.write("status = off\n")
+    with open(yak.cwd / ".yakconfig", "a") as yakconfig:
+        yakconfig.write("[yak_resource_control]\n")
+        yakconfig.write("status = off\n")
 
-    snapshot = await start_daemon_and_get_snapshot(buck)
+    snapshot = await start_daemon_and_get_snapshot(yak)
     assert snapshot["allprocs_cgroup"] is None
 
 
-async def start_daemon_and_get_snapshot(buck: Buck) -> dict[str, typing.Any]:
-    await buck.targets(":")
-    status_result = await buck.status("--snapshot")
+async def start_daemon_and_get_snapshot(yak: Yak) -> dict[str, typing.Any]:
+    await yak.targets(":")
+    status_result = await yak.status("--snapshot")
     status_data = json.loads(status_result.stdout)
     return status_data["snapshot"]

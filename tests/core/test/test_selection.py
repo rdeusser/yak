@@ -6,49 +6,49 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-from e2e_util.api.buck import Buck
+from e2e_util.api.yak import Yak
 from e2e_util.asserts import expect_failure
-from e2e_util.buck_workspace import buck_test
+from e2e_util.yak_workspace import yak_test
 
 
-@buck_test()
-async def test_ok(buck: Buck) -> None:
-    await buck.test("//:ok")
+@yak_test()
+async def test_ok(yak: Yak) -> None:
+    await yak.test("//:ok")
 
 
-@buck_test()
-async def test_fail(buck: Buck) -> None:
-    await expect_failure(buck.test("//:fail"), stderr_regex="Fail: root//:fail")
+@yak_test()
+async def test_fail(yak: Yak) -> None:
+    await expect_failure(yak.test("//:fail"), stderr_regex="Fail: root//:fail")
 
 
-@buck_test()
-async def test_tests_attribute(buck: Buck) -> None:
+@yak_test()
+async def test_tests_attribute(yak: Yak) -> None:
     await expect_failure(
-        buck.test("//:noop_references_fail"),
+        yak.test("//:noop_references_fail"),
         stderr_regex="Fail: root//:fail",
     )
 
 
-@buck_test()
-async def test_tests_attribute_transitive(buck: Buck) -> None:
+@yak_test()
+async def test_tests_attribute_transitive(yak: Yak) -> None:
     await expect_failure(
-        buck.test(
+        yak.test(
             "//:noop_transitively_references_fail",
         ),
         stderr_regex="Fail: root//:fail",
     )
 
 
-@buck_test()
-async def test_tests_attribute_cycle(buck: Buck) -> None:
-    buck.test(
+@yak_test()
+async def test_tests_attribute_cycle(yak: Yak) -> None:
+    yak.test(
         "//:noop_cycle1",
     )
 
 
-@buck_test()
-async def test_tests_attribute_self_transition(buck: Buck) -> None:
+@yak_test()
+async def test_tests_attribute_self_transition(yak: Yak) -> None:
     await expect_failure(
-        buck.test("//:noop_self_transition_references_fail"),
+        yak.test("//:noop_self_transition_references_fail"),
         stderr_regex="Fail: root//:fail",
     )

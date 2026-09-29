@@ -43,8 +43,8 @@ use yak_data::SoftError;
 use yak_data::SystemInfo;
 use yak_data::TargetCfg;
 use yak_data::error::ErrorTag;
-use yak_error::BuckErrorContext;
-use yak_error::BuckErrorOptionContext;
+use yak_error::YakErrorContext;
+use yak_error::YakErrorOptionContext;
 use yak_error::ExitCode;
 use yak_error::Tier;
 use yak_error::classify::ERROR_TAG_UNCLASSIFIED;
@@ -57,17 +57,17 @@ use yak_event_observer::cache_hit_rate::total_cache_hit_rate;
 use yak_event_observer::last_command_execution_kind;
 use yak_event_observer::last_command_execution_kind::LastCommandExecutionKind;
 use yak_event_observer::last_command_execution_kind::get_last_command_execution_time;
-use yak_events::BuckEvent;
+use yak_events::YakEvent;
 use yak_events::daemon_id::DaemonId;
 use yak_fs::error::IoResultExt;
 use yak_fs::fs_util;
 use yak_fs::paths::abs_path::AbsPathBuf;
-use yak_hash::BuckMutMap;
-use yak_hash::BuckMutSet;
+use yak_hash::YakMutMap;
+use yak_hash::YakMutSet;
 use yak_hash::IntentionallyStdHashMap;
 use yak_util::network_speed_average::NetworkSpeedAverage;
 use yak_util::sliding_window::SlidingWindow;
-use yak_wrapper_common::BUCK_WRAPPER_START_TIME_ENV_VAR;
+use yak_wrapper_common::YAK_WRAPPER_START_TIME_ENV_VAR;
 use yak_wrapper_common::invocation_id::TraceId;
 
 use crate::client_ctx::ClientCommandContext;
@@ -85,13 +85,13 @@ use crate::subscribers::system_warning::check_memory_pressure;
 use crate::subscribers::system_warning::check_remaining_disk_space;
 
 pub fn process_memory(snapshot: &yak_data::Snapshot) -> Option<u64> {
-    // buck2_rss is the resident set size observed by daemon (exluding subprocesses).
-    // On MacOS buck2_rss is not stored and also RSS in general is not a reliable indicator due to swapping which moves pages from resident set to disk.
-    // Hence, we take max of buck2_rss and malloc_bytes_active (coming from jemalloc and is available on Macs as well).
+    // yak_rss is the resident set size observed by daemon (exluding subprocesses).
+    // On MacOS yak_rss is not stored and also RSS in general is not a reliable indicator due to swapping which moves pages from resident set to disk.
+    // Hence, we take max of yak_rss and malloc_bytes_active (coming from jemalloc and is available on Macs as well).
     snapshot
         .malloc_bytes_active
         .into_iter()
-        .chain(snapshot.buck2_rss)
+        .chain(snapshot.yak_rss)
         .max()
 }
 
@@ -174,7 +174,7 @@ pub struct InvocationRecorder {
     file_watcher_stats: Option<yak_data::FileWatcherStats>,
     file_watcher_duration: Option<Duration>,
     time_to_last_action_execution_end: Option<Duration>,
-    soft_error_categories: BuckMutSet<SoftError>,
+    soft_error_categories: YakMutSet<SoftError>,
     concurrent_command_blocking_duration: Option<Duration>,
     metadata: IntentionallyStdHashMap<String, String>,
     analysis_count: u64,
@@ -193,7 +193,7 @@ pub struct InvocationRecorder {
     install_device_metadata: Vec<yak_data::DeviceMetadata>,
     initial_re_upload_bytes: Option<u64>,
     initial_re_download_bytes: Option<u64>,
-    concurrent_command_ids: BuckMutSet<String>,
+    concurrent_command_ids: YakMutSet<String>,
     daemon_connection_failure: bool,
     /// Daemon started by this command.
     daemon_was_started: Option<yak_data::DaemonWasStartedReason>,
@@ -211,11 +211,11 @@ pub struct InvocationRecorder {
     re_avg_download_speed: NetworkSpeedAverage,
     re_avg_upload_speed: NetworkSpeedAverage,
     peak_process_memory_bytes: Option<u64>,
-    has_new_buckconfigs: bool,
+    has_new_yakconfigs: bool,
     peak_used_disk_space_bytes: Option<u64>,
     peak_normalized_system_load1: Option<f64>,
     peak_normalized_system_load5: Option<f64>,
-    active_networks_kinds: BuckMutSet<i32>,
+    active_networks_kinds: YakMutSet<i32>,
     target_cfg: Option<TargetCfg>,
     hg_revision: Option<String>,
     git_revision: Option<String>,
@@ -248,7 +248,7 @@ pub struct InvocationRecorder {
     // action-concurrency distribution emitted on the InvocationRecord.
     action_intervals: Vec<ActionInterval>,
     // Track executor stage types by span ID to know which counter to decrement on end
-    executor_stages_by_span: BuckMutMap<u64, ExecutorStageType>,
+    executor_stages_by_span: YakMutMap<u64, ExecutorStageType>,
     // Track maximum yak daemon anon memory usage
     memory_max_anon_allprocs: Option<u64>,
     // Track maximum yak forkserver anon memory usage
@@ -368,7 +368,7 @@ impl InvocationRecorder {
             file_watcher_stats: None,
             file_watcher_duration: None,
             time_to_last_action_execution_end: None,
-            soft_error_categories: BuckMutSet::default(),
+            soft_error_categories: YakMutSet::default(),
             concurrent_command_blocking_duration: None,
             // Use a null daemon_id here initially - if we later get metadata back from the daemon,
             // we'll overwrite this then
@@ -389,7 +389,7 @@ impl InvocationRecorder {
             install_device_metadata: Vec::new(),
             initial_re_upload_bytes: None,
             initial_re_download_bytes: None,
-            concurrent_command_ids: BuckMutSet::default(),
+            concurrent_command_ids: YakMutSet::default(),
             daemon_connection_failure: false,
             daemon_was_started: None,
             should_restart: false,
@@ -413,11 +413,11 @@ impl InvocationRecorder {
             re_avg_download_speed: NetworkSpeedAverage::default(),
             re_avg_upload_speed: NetworkSpeedAverage::default(),
             peak_process_memory_bytes: None,
-            has_new_buckconfigs: false,
+            has_new_yakconfigs: false,
             peak_used_disk_space_bytes: None,
             peak_normalized_system_load1: None,
             peak_normalized_system_load5: None,
-            active_networks_kinds: BuckMutSet::default(),
+            active_networks_kinds: YakMutSet::default(),
             target_cfg: None,
             hg_revision: None,
             git_revision: None,
@@ -447,7 +447,7 @@ impl InvocationRecorder {
             max_in_progress_remote_actions: 0,
             current_in_progress_remote_uploads: 0,
             max_in_progress_remote_uploads: 0,
-            executor_stages_by_span: BuckMutMap::default(),
+            executor_stages_by_span: YakMutMap::default(),
             memory_max_anon_allprocs: None,
             memory_max_anon_forkserver_actions: None,
             memory_max_total_allprocs: None,
@@ -558,7 +558,7 @@ impl InvocationRecorder {
                                 build_count
                                     .increment(merge_base, v, is_success)
                                     .await
-                                    .buck_error_context("Error recording build count"),
+                                    .yak_error_context("Error recording build count"),
                             )
                             .transpose()
                         } else {
@@ -821,7 +821,7 @@ impl InvocationRecorder {
             client_walltime: duration_since(SystemTime::now(), self.start_time)
                 .try_into()
                 .ok(),
-            wrapper_start_time: yak_env!(BUCK_WRAPPER_START_TIME_ENV_VAR, type=u64)
+            wrapper_start_time: yak_env!(YAK_WRAPPER_START_TIME_ENV_VAR, type=u64)
                 .ok()
                 .flatten()
                 .or_else(|| {
@@ -962,7 +962,7 @@ impl InvocationRecorder {
             target_rule_type_names: unique_and_sorted(
                 std::mem::take(&mut self.target_rule_type_names).into_iter(),
             ),
-            new_configs_used: Some(self.has_new_buckconfigs),
+            new_configs_used: Some(self.has_new_yakconfigs),
             re_max_download_speed: self
                 .re_max_download_speeds
                 .iter()
@@ -1124,7 +1124,7 @@ impl InvocationRecorder {
             repo_path: self.repo_path.take(),
         };
 
-        let event = BuckEvent::new(
+        let event = YakEvent::new(
             SystemTime::now(),
             self.trace_id.dupe(),
             None,
@@ -1139,10 +1139,10 @@ impl InvocationRecorder {
             let out = fs_util::create_file(path)
                 // input path from --unstable-write-invocation-record
                 .categorize_input()
-                .buck_error_context("Error opening")?;
+                .yak_error_context("Error opening")?;
             let mut out = std::io::BufWriter::new(out);
-            serde_json::to_writer(&mut out, event.event()).buck_error_context("Error writing")?;
-            out.flush().buck_error_context("Error flushing")?;
+            serde_json::to_writer(&mut out, event.event()).yak_error_context("Error writing")?;
+            out.flush().yak_error_context("Error flushing")?;
             yak_error::Ok(())
         })();
 
@@ -1168,7 +1168,7 @@ impl InvocationRecorder {
     fn handle_command_start(
         &mut self,
         command: &yak_data::CommandStart,
-        event: &BuckEvent,
+        event: &YakEvent,
     ) -> yak_error::Result<()> {
         self.metadata.extend(command.metadata.clone());
         self.time_to_command_start = Some(duration_since(event.timestamp(), self.start_time));
@@ -1178,11 +1178,11 @@ impl InvocationRecorder {
     async fn handle_command_end(
         &mut self,
         command: &yak_data::CommandEnd,
-        event: &BuckEvent,
+        event: &YakEvent,
     ) -> yak_error::Result<()> {
         // Awkwardly unpacks the SpanEnd event so we can read its duration.
         let command_end = match event.data() {
-            yak_data::buck_event::Data::SpanEnd(end) => end.clone(),
+            yak_data::yak_event::Data::SpanEnd(end) => end.clone(),
             _ => {
                 return Err(yak_error!(
                     ErrorTag::InvalidEvent,
@@ -1231,7 +1231,7 @@ impl InvocationRecorder {
     fn handle_command_critical_start(
         &mut self,
         command: &yak_data::CommandCriticalStart,
-        event: &BuckEvent,
+        event: &YakEvent,
     ) -> yak_error::Result<()> {
         self.metadata.extend(command.metadata.clone());
         self.time_to_command_critical_section =
@@ -1241,7 +1241,7 @@ impl InvocationRecorder {
     fn handle_command_critical_end(
         &mut self,
         command: &yak_data::CommandCriticalEnd,
-        _event: &BuckEvent,
+        _event: &YakEvent,
     ) -> yak_error::Result<()> {
         self.metadata.extend(command.metadata.clone());
         Ok(())
@@ -1250,7 +1250,7 @@ impl InvocationRecorder {
     fn handle_action_execution_start(
         &mut self,
         _action: &yak_data::ActionExecutionStart,
-        event: &BuckEvent,
+        event: &YakEvent,
     ) -> yak_error::Result<()> {
         if self.time_to_first_action_execution.is_none() {
             self.time_to_first_action_execution =
@@ -1292,7 +1292,7 @@ impl InvocationRecorder {
     fn handle_action_execution_end(
         &mut self,
         action: &yak_data::ActionExecutionEnd,
-        event: &BuckEvent,
+        event: &YakEvent,
     ) -> yak_error::Result<()> {
         self.dep_file_db_writes_queued += action.dep_file_db_writes_queued.unwrap_or_default();
         // Decrement current in-progress actions counter
@@ -1371,7 +1371,7 @@ impl InvocationRecorder {
     fn handle_analysis_start(
         &mut self,
         _analysis: &yak_data::AnalysisStart,
-        event: &BuckEvent,
+        event: &YakEvent,
     ) -> yak_error::Result<()> {
         self.time_to_first_analysis
             .get_or_insert_with(|| duration_since(event.timestamp(), self.start_time));
@@ -1381,7 +1381,7 @@ impl InvocationRecorder {
     fn handle_load_start(
         &mut self,
         _eval: &yak_data::LoadBuildFileStart,
-        event: &BuckEvent,
+        event: &YakEvent,
     ) -> yak_error::Result<()> {
         self.time_to_load_first_build_file
             .get_or_insert_with(|| duration_since(event.timestamp(), self.start_time));
@@ -1391,7 +1391,7 @@ impl InvocationRecorder {
     fn handle_executor_stage_start(
         &mut self,
         executor_stage: &yak_data::ExecutorStageStart,
-        event: &BuckEvent,
+        event: &YakEvent,
     ) -> yak_error::Result<()> {
         let span_id = if let Some(span_id) = event.span_id() {
             span_id
@@ -1448,7 +1448,7 @@ impl InvocationRecorder {
     fn handle_executor_stage_end(
         &mut self,
         executor_stage: &yak_data::ExecutorStageEnd,
-        event: &BuckEvent,
+        event: &YakEvent,
     ) -> yak_error::Result<()> {
         if executor_stage.cache_query_error.is_some() {
             self.re_action_cache_query_error_count += 1;
@@ -1478,7 +1478,7 @@ impl InvocationRecorder {
     fn handle_cache_upload_end(
         &mut self,
         cache_upload: &yak_data::CacheUploadEnd,
-        _event: &BuckEvent,
+        _event: &YakEvent,
     ) -> yak_error::Result<()> {
         if cache_upload.success {
             self.cache_upload_count += 1;
@@ -1490,7 +1490,7 @@ impl InvocationRecorder {
     fn handle_dep_file_upload_end(
         &mut self,
         upload: &yak_data::DepFileUploadEnd,
-        _event: &BuckEvent,
+        _event: &YakEvent,
     ) -> yak_error::Result<()> {
         if upload.success {
             self.dep_file_upload_count += 1;
@@ -1502,7 +1502,7 @@ impl InvocationRecorder {
     fn handle_re_session_created(
         &mut self,
         session: &yak_data::RemoteExecutionSessionCreated,
-        _event: &BuckEvent,
+        _event: &YakEvent,
     ) -> yak_error::Result<()> {
         self.re_session_id = Some(session.session_id.clone());
         Ok(())
@@ -1511,7 +1511,7 @@ impl InvocationRecorder {
     fn handle_materialization_end(
         &mut self,
         materialization: &yak_data::MaterializationEnd,
-        _event: &BuckEvent,
+        _event: &YakEvent,
     ) -> yak_error::Result<()> {
         self.materialization_output_size += materialization.total_bytes;
         self.materialization_files += materialization.file_count;
@@ -1530,10 +1530,10 @@ impl InvocationRecorder {
     fn handle_bxl_ensure_artifacts_end(
         &mut self,
         _bxl_ensure_artifacts_end: yak_data::BxlEnsureArtifactsEnd,
-        event: &BuckEvent,
+        event: &YakEvent,
     ) -> yak_error::Result<()> {
         let bxl_ensure_artifacts_end = match event.data() {
-            yak_data::buck_event::Data::SpanEnd(end) => end.clone(),
+            yak_data::yak_event::Data::SpanEnd(end) => end.clone(),
             _ => {
                 return Err(yak_error!(
                     ErrorTag::InvalidEvent,
@@ -1563,7 +1563,7 @@ impl InvocationRecorder {
     fn handle_test_discovery(
         &mut self,
         test_info: &yak_data::TestDiscovery,
-        _event: &BuckEvent,
+        _event: &YakEvent,
     ) -> yak_error::Result<()> {
         match &test_info.data {
             Some(yak_data::test_discovery::Data::Session(session_info)) => {
@@ -1578,7 +1578,7 @@ impl InvocationRecorder {
     fn handle_test_discovery_start(
         &mut self,
         _test_discovery: &yak_data::TestDiscoveryStart,
-        event: &BuckEvent,
+        event: &YakEvent,
     ) -> yak_error::Result<()> {
         self.time_to_first_test_discovery
             .get_or_insert_with(|| duration_since(event.timestamp(), self.start_time));
@@ -1588,7 +1588,7 @@ impl InvocationRecorder {
     fn handle_test_run_start(
         &mut self,
         _test_run: &yak_data::TestRunStart,
-        event: &BuckEvent,
+        event: &YakEvent,
     ) -> yak_error::Result<()> {
         self.time_to_first_test_run
             .get_or_insert_with(|| duration_since(event.timestamp(), self.start_time));
@@ -1598,7 +1598,7 @@ impl InvocationRecorder {
     fn handle_test_result(
         &mut self,
         test_result: &yak_data::TestResult,
-        event: &BuckEvent,
+        event: &YakEvent,
     ) -> yak_error::Result<()> {
         let duration = duration_since(event.timestamp(), self.start_time);
         match test_result.status() {
@@ -1668,7 +1668,7 @@ impl InvocationRecorder {
     fn handle_build_graph_info(
         &mut self,
         info: &yak_data::BuildGraphExecutionInfo,
-        _event: &BuckEvent,
+        _event: &YakEvent,
     ) -> yak_error::Result<()> {
         let mut duration = Duration::default();
         let mut page_in = Duration::default();
@@ -1734,7 +1734,7 @@ impl InvocationRecorder {
     fn handle_snapshot(
         &mut self,
         update: &yak_data::Snapshot,
-        event: &BuckEvent,
+        event: &YakEvent,
     ) -> yak_error::Result<()> {
         self.max_malloc_bytes_active =
             max(self.max_malloc_bytes_active, update.malloc_bytes_active);
@@ -1921,7 +1921,7 @@ impl InvocationRecorder {
         &mut self,
         file_watcher: &yak_data::FileWatcherEnd,
         duration: Option<&prost_types::Duration>,
-        _event: &BuckEvent,
+        _event: &YakEvent,
     ) -> yak_error::Result<()> {
         // We might receive this event twice, so ... deal with it by merging the two.
         self.file_watcher_stats =
@@ -1976,10 +1976,10 @@ impl InvocationRecorder {
     fn handle_dice_block_concurrent_command_end(
         &mut self,
         _command: &yak_data::DiceBlockConcurrentCommandEnd,
-        event: &BuckEvent,
+        event: &YakEvent,
     ) -> yak_error::Result<()> {
         let block_concurrent_command = match event.data() {
-            yak_data::buck_event::Data::SpanEnd(end) => end.clone(),
+            yak_data::yak_event::Data::SpanEnd(end) => end.clone(),
             _ => {
                 return Err(yak_error!(
                     ErrorTag::InvalidEvent,
@@ -2003,10 +2003,10 @@ impl InvocationRecorder {
     fn handle_dice_cleanup_end(
         &mut self,
         _command: yak_data::DiceCleanupEnd,
-        event: &BuckEvent,
+        event: &YakEvent,
     ) -> yak_error::Result<()> {
         let dice_cleanup_end = match event.data() {
-            yak_data::buck_event::Data::SpanEnd(end) => end.clone(),
+            yak_data::yak_event::Data::SpanEnd(end) => end.clone(),
             _ => {
                 return Err(yak_error!(
                     ErrorTag::InvalidEvent,
@@ -2048,7 +2048,7 @@ impl InvocationRecorder {
         Ok(())
     }
 
-    async fn handle_event(&mut self, event: &Arc<BuckEvent>) -> yak_error::Result<()> {
+    async fn handle_event(&mut self, event: &Arc<YakEvent>) -> yak_error::Result<()> {
         // TODO(nga): query now once in `EventsCtx`.
         let now = SystemTime::now();
         if let Ok(delay) = now.duration_since(event.timestamp()) {
@@ -2058,7 +2058,7 @@ impl InvocationRecorder {
         self.event_count += 1;
 
         match event.data() {
-            yak_data::buck_event::Data::SpanStart(start) => {
+            yak_data::yak_event::Data::SpanStart(start) => {
                 match start.data.as_ref().internal_error("Missing `start`")? {
                     yak_data::span_start_event::Data::Command(command) => {
                         self.handle_command_start(command, event)
@@ -2090,7 +2090,7 @@ impl InvocationRecorder {
                     _ => Ok(()),
                 }
             }
-            yak_data::buck_event::Data::SpanEnd(end) => {
+            yak_data::yak_event::Data::SpanEnd(end) => {
                 match end.data.as_ref().internal_error("Missing `end`")? {
                     yak_data::span_end_event::Data::Command(command) => {
                         self.handle_command_end(command, event).await
@@ -2140,7 +2140,7 @@ impl InvocationRecorder {
                     _ => Ok(()),
                 }
             }
-            yak_data::buck_event::Data::Instant(instant) => {
+            yak_data::yak_event::Data::Instant(instant) => {
                 match instant.data.as_ref().internal_error("Missing `data`")? {
                     yak_data::instant_event::Data::ReSession(session) => {
                         self.handle_re_session_created(session, event)
@@ -2172,7 +2172,7 @@ impl InvocationRecorder {
                         self.handle_concurrent_commands(concurrent_commands)
                     }
                     yak_data::instant_event::Data::CellHasNewConfigs(_) => {
-                        self.has_new_buckconfigs = true;
+                        self.has_new_yakconfigs = true;
                         Ok(())
                     }
                     yak_data::instant_event::Data::InstallFinished(install_finished) => {
@@ -2213,7 +2213,7 @@ impl InvocationRecorder {
                     _ => Ok(()),
                 }
             }
-            yak_data::buck_event::Data::Record(_) => Ok(()),
+            yak_data::yak_event::Data::Record(_) => Ok(()),
         }
     }
 }
@@ -2278,7 +2278,7 @@ impl EventSubscriber for InvocationRecorder {
         "invocation recorder"
     }
 
-    async fn handle_events(&mut self, events: &[Arc<BuckEvent>]) -> yak_error::Result<()> {
+    async fn handle_events(&mut self, events: &[Arc<YakEvent>]) -> yak_error::Result<()> {
         for event in events {
             self.handle_event(event).await?;
         }

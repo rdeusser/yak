@@ -11,8 +11,8 @@ from pathlib import Path
 from typing import Any, Union
 
 import pytest
-from e2e_util.api.buck import Buck
-from e2e_util.buck_workspace import buck_test
+from e2e_util.api.yak import Yak
+from e2e_util.yak_workspace import yak_test
 
 output_cleanup_targets = [
     "local_action",
@@ -29,7 +29,7 @@ output_cleanup_targets = [
 ]
 
 
-@buck_test()
+@yak_test()
 # Note: listing these second...first makes the parameterization appear [first-second-...] in the job names
 @pytest.mark.parametrize(
     "second",
@@ -40,7 +40,7 @@ output_cleanup_targets = [
     output_cleanup_targets,
 )
 async def test_output_cleanup(
-    buck: Buck, tmp_path: Path, first: str, second: str
+    yak: Yak, tmp_path: Path, first: str, second: str
 ) -> None:
     def read_dir(d: Path) -> dict[str, Any]:
         steps = 0
@@ -63,19 +63,19 @@ async def test_output_cleanup(
     first = f"{first}-a"
     second = f"{second}-b"
 
-    await buck.build(":main", "-c", f"test.main={first}")
-    await buck.build(":main", "-c", f"test.main={second}", "--out", str(rebuild))
+    await yak.build(":main", "-c", f"test.main={first}")
+    await yak.build(":main", "-c", f"test.main={second}", "--out", str(rebuild))
 
-    await buck.clean()
-    await buck.build(":main", "-c", f"test.main={second}", "--out", str(clean))
+    await yak.clean()
+    await yak.build(":main", "-c", f"test.main={second}", "--out", str(clean))
 
     assert read_dir(rebuild) == read_dir(clean)
 
 
-@buck_test()
+@yak_test()
 @pytest.mark.parametrize("kind", ["readonly_file", "readonly_dir", "nonexec_dir"])
 async def test_permissions_match_local_remote(
-    buck: Buck, tmp_path: Path, kind: str
+    yak: Yak, tmp_path: Path, kind: str
 ) -> None:
     target = "root//:main"
     lhs = f"local_{kind}-a"
@@ -110,16 +110,16 @@ async def test_permissions_match_local_remote(
         return ret
 
     lhs_res = (
-        (await buck.build(":main", "-c", f"test.main={lhs}"))
+        (await yak.build(":main", "-c", f"test.main={lhs}"))
         .get_build_report()
         .output_for_target(target)
     )
     lhs_entries = get_entries(lhs_res, False)
     lhs_entries_and_contents = get_entries(lhs_res, True)
 
-    await buck.clean()
+    await yak.clean()
     rhs_res = (
-        (await buck.build(":main", "-c", f"test.main={rhs}"))
+        (await yak.build(":main", "-c", f"test.main={rhs}"))
         .get_build_report()
         .output_for_target(target)
     )

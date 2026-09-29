@@ -40,16 +40,16 @@
 //!     AbsNormPathBuf::from("C:\\open\\project\\".into())?
 //! };
 //! let some_path = if cfg!(not(windows)) {
-//!     AbsNormPath::new("/usr/local/project/buck/YAK")?
+//!     AbsNormPath::new("/usr/local/project/yak/YAK")?
 //! } else {
-//!     AbsNormPath::new("c:/open/project/buck/YAK")?
+//!     AbsNormPath::new("c:/open/project/yak/YAK")?
 //! };
 //!
 //! let fs = ProjectRoot::new_unchecked(root);
 //! let project_rel = fs.relativize(some_path)?;
 //!
 //! assert_eq!(
-//!     Cow::Borrowed(ProjectRelativePath::new("buck/YAK")?),
+//!     Cow::Borrowed(ProjectRelativePath::new("yak/YAK")?),
 //!     project_rel
 //! );
 //! assert_eq!(some_path.to_buf(), fs.resolve(project_rel.as_ref()));
@@ -57,7 +57,7 @@
 //! let rel_path = RelativePath::unchecked_new("../src");
 //! let project_rel_2 = project_rel.join_normalized(rel_path)?;
 //! assert_eq!(
-//!     ProjectRelativePathBuf::try_from("buck/src".to_owned())?,
+//!     ProjectRelativePathBuf::try_from("yak/src".to_owned())?,
 //!     project_rel_2
 //! );
 //!
@@ -743,7 +743,7 @@ impl<'a> IntoFileNameBufIterator for &'a ProjectRelativePathBuf {
 #[cfg(test)]
 mod tests {
     use yak_fs::paths::forward_rel_path::ForwardRelativePath;
-    use yak_hash::BuckMutMap;
+    use yak_hash::YakMutMap;
 
     use crate::fs::project_rel_path::ProjectRelativePath;
     use crate::fs::project_rel_path::ProjectRelativePathBuf;
@@ -805,7 +805,7 @@ mod tests {
 
     #[test]
     fn wrapped_paths_work_in_maps() -> yak_error::Result<()> {
-        let mut map = BuckMutMap::default();
+        let mut map = YakMutMap::default();
 
         let p1 = ForwardRelativePath::new("foo")?;
         let p2 = ProjectRelativePath::new("bar")?;

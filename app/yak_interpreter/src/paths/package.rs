@@ -24,7 +24,7 @@ use yak_fs::paths::file_name::FileName;
 ///
 /// Example of a valid PACKAGE file path: `root//path/to/PACKAGE`
 ///
-/// Find more details in the [Buck2 documentation](https://rdeusser.github.io/buck2/docs/rule_authors/package_files/).
+/// Find more details in the [Yak documentation](https://rdeusser.github.io/yak/docs/rule_authors/package_files/).
 #[derive(
     Clone,
     Debug,

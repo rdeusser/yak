@@ -378,8 +378,8 @@ and `cquery` on `//app/yak_core:yak_core`.
 > yak uquery -A '"//app/yak_core:yak_core"'
 {
   "root//app/yak_core:yak_core": {
-    "buck.type": "rust_library",
-    "buck.package": "root//app/yak_core:YAK",
+    "yak.type": "rust_library",
+    "yak.package": "root//app/yak_core:YAK",
     "name": "yak_core",
     "visibility": [
       "PUBLIC"
@@ -417,10 +417,10 @@ and `cquery` on `//app/yak_core:yak_core`.
 > yak cquery -A '"//app/yak_core:yak_core"'
 {
   "root//app/yak_core:yak_core (prelude//platforms:default#<OMITTED>)": {
-    "buck.type": "rust_library",
-    "buck.package": "root//app/yak_core:YAK",
-    "buck.target_configuration": "prelude//platforms:default#<OMITTED>",
-    "buck.execution_platform": "prelude//platforms:default",
+    "yak.type": "rust_library",
+    "yak.package": "root//app/yak_core:YAK",
+    "yak.target_configuration": "prelude//platforms:default#<OMITTED>",
+    "yak.execution_platform": "prelude//platforms:default",
     "name": "yak_core",
     "visibility": [
       "PUBLIC"
@@ -436,8 +436,8 @@ and `cquery` on `//app/yak_core:yak_core`.
 }
 ```
 
-The `cquery` output has additional `buck.target_configuration` and
-`buck.execution_platform` attributes which tell you what the target is
+The `cquery` output has additional `yak.target_configuration` and
+`yak.execution_platform` attributes which tell you what the target is
 being built for and what it's being built on, respectively. `uquery`
 doesn't have those.
 

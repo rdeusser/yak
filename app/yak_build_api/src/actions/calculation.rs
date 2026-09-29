@@ -45,7 +45,7 @@ use yak_data::ActionErrorDiagnostics;
 use yak_data::ActionSubErrors;
 use yak_data::ToProtoMessage;
 use yak_data::get_action_digest;
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 use yak_event_observer::action_util::get_execution_time_ms;
 use yak_events::dispatch::async_record_root_spans;
 use yak_events::dispatch::get_dispatcher;
@@ -54,9 +54,9 @@ use yak_events::span::SpanId;
 use yak_execute::execute::result::CommandExecutionReport;
 use yak_execute::execute::result::CommandExecutionStatus;
 use yak_execute::output_size::OutputSize;
-use yak_hash::BuckIndexMap;
+use yak_hash::YakIndexMap;
 use yak_interpreter::print_handler::EventDispatcherPrintHandler;
-use yak_interpreter::soft_error::Buck2StarlarkSoftErrorHandler;
+use yak_interpreter::soft_error::YakStarlarkSoftErrorHandler;
 use yak_node::nodes::configured_frontend::ConfiguredTargetNodeCalculation;
 use yak_util::time_span::TimeSpan;
 
@@ -68,7 +68,7 @@ use crate::actions::errors::error_handler::ActionSubErrorResult;
 use crate::actions::errors::error_handler::StarlarkActionErrorContext;
 use crate::actions::errors::execute_error::ExecuteError;
 use crate::actions::execute::action_executor::ActionOutputs;
-use crate::actions::execute::action_executor::BuckActionExecutor;
+use crate::actions::execute::action_executor::YakActionExecutor;
 use crate::actions::execute::action_executor::HasActionExecutor;
 use crate::artifact_groups::ArtifactGroup;
 use crate::artifact_groups::ArtifactGroupValues;
@@ -117,10 +117,10 @@ async fn build_action_no_redirect(
     let executor = ctx
         .get_action_executor(action.execution_config())
         .await
-        .buck_error_context(format!("for action `{action}`"))?;
+        .yak_error_context(format!("for action `{action}`"))?;
 
     let ensured_inputs = if inputs.is_empty() {
-        BuckIndexMap::default()
+        YakIndexMap::default()
     } else {
         let ready_inputs: Vec<_> =
             KeepGoing::try_compute_join_all(ctx, inputs.iter(), async |ctx, v| {
@@ -133,7 +133,7 @@ async fn build_action_no_redirect(
             })
             .await?;
 
-        let mut results = BuckIndexMap::with_capacity(inputs.len());
+        let mut results = YakIndexMap::with_capacity(inputs.len());
         for (artifact, ready) in zip(inputs.iter(), ready_inputs) {
             results.insert(artifact.clone(), ready);
         }
@@ -208,9 +208,9 @@ async fn build_action_no_redirect(
 async fn build_action_inner(
     ctx: &mut DiceComputations<'_>,
     cancellation: &CancellationContext,
-    executor: &BuckActionExecutor<'_>,
+    executor: &YakActionExecutor<'_>,
     waiting_data: WaitingData,
-    ensured_inputs: BuckIndexMap<ArtifactGroup, ArtifactGroupValues>,
+    ensured_inputs: YakIndexMap<ArtifactGroup, ArtifactGroupValues>,
     action: &Arc<RegisteredAction>,
     target_rule_type_name: Option<String>,
 ) -> (ActionExecutionData, Box<yak_data::ActionExecutionEnd>) {
@@ -450,7 +450,7 @@ async fn build_action_inner(
 
 fn is_action_eligible_for_dedupe(
     action: &Arc<RegisteredAction>,
-    inputs: &BuckIndexMap<ArtifactGroup, ArtifactGroupValues>,
+    inputs: &YakIndexMap<ArtifactGroup, ArtifactGroupValues>,
 ) -> yak_data::EligibleForDedupe {
     let target_platform =
         if let BaseDeferredKey::TargetLabel(configured_label) = action.key().owner() {
@@ -510,7 +510,7 @@ fn try_run_error_handler(
                         let print = EventDispatcherPrintHandler(get_dispatcher());
                         let mut eval = Evaluator::new(&env);
                         eval.set_print_handler(&print);
-                        eval.set_soft_error_handler(&Buck2StarlarkSoftErrorHandler);
+                        eval.set_soft_error_handler(&YakStarlarkSoftErrorHandler);
 
                         let artifact_fs = match artifact_fs {
                             Ok(fs) => fs,

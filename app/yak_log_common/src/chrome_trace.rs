@@ -21,7 +21,7 @@
 // are traditionally process id and thread id.
 //
 // In these traces, it's not really practical to assign the actual  pid/tid that
-// produced the BuckEvents in the logs to the TraceEvent objects. MUCH of yak's
+// produced the YakEvents in the logs to the TraceEvent objects. MUCH of yak's
 // work is done in asynchronous futures, and the thread assignments for them are
 // (somewhat) irrelevant. If an action execution future gets moved between
 // executor threads, say, we would still like to represent the spans as relating
@@ -70,16 +70,16 @@ use futures::TryStreamExt;
 use futures::stream::BoxStream;
 use serde::Serialize;
 use serde_json::json;
-use yak_client_ctx::client_ctx::BuckSubcommand;
+use yak_client_ctx::client_ctx::YakSubcommand;
 use yak_client_ctx::client_ctx::ClientCommandContext;
-use yak_client_ctx::common::BuckArgMatches;
+use yak_client_ctx::common::YakArgMatches;
 use yak_client_ctx::event_log_options::EventLogOptions;
 use yak_client_ctx::events_ctx::EventsCtx;
 use yak_client_ctx::exit_result::ExitResult;
 use yak_client_ctx::path_arg::PathArg;
 use yak_common::convert::ProstDurationExt;
-use yak_error::BuckErrorContext;
-use yak_error::BuckErrorOptionContext;
+use yak_error::YakErrorContext;
+use yak_error::YakErrorOptionContext;
 use yak_error::yak_error;
 use yak_event_log::read::EventLogPathBuf;
 use yak_event_log::stream_value::StreamValue;
@@ -87,12 +87,12 @@ use yak_event_log::utils::Invocation;
 use yak_event_observer::display;
 use yak_event_observer::display::CriticalPathEntryDisplay;
 use yak_event_observer::display::TargetDisplayOptions;
-use yak_event_observer::unpack_event::UnpackedBuckEvent;
+use yak_event_observer::unpack_event::UnpackedYakEvent;
 use yak_event_observer::unpack_event::unpack_event;
-use yak_events::BuckEvent;
+use yak_events::YakEvent;
 use yak_fs::paths::abs_path::AbsPathBuf;
-use yak_hash::BuckMutMap;
-use yak_hash::BuckMutSet;
+use yak_hash::YakMutMap;
+use yak_hash::YakMutSet;
 
 /// Generates a Chrome trace from a yak event log.
 #[derive(Debug, clap::Parser)]
@@ -154,12 +154,12 @@ struct ChromeTraceFirstPass {
     ///    of the last events.
     ///
     /// So this first pass builds up several lists of "interesting" span IDs.
-    pub long_analyses: BuckMutSet<yak_events::span::SpanId>,
-    pub long_loads: BuckMutSet<yak_events::span::SpanId>,
-    pub long_load_packages: BuckMutSet<yak_events::span::SpanId>,
-    pub local_actions: BuckMutSet<yak_events::span::SpanId>,
-    pub critical_path_action_keys: BuckMutSet<yak_data::ActionKey>,
-    pub critical_path_span_ids: BuckMutSet<u64>,
+    pub long_analyses: YakMutSet<yak_events::span::SpanId>,
+    pub long_loads: YakMutSet<yak_events::span::SpanId>,
+    pub long_load_packages: YakMutSet<yak_events::span::SpanId>,
+    pub local_actions: YakMutSet<yak_events::span::SpanId>,
+    pub critical_path_action_keys: YakMutSet<yak_data::ActionKey>,
+    pub critical_path_span_ids: YakMutSet<u64>,
     pub command_start: SystemTime,
     pub command_options: Option<yak_data::CommandOptions>,
 }
@@ -170,20 +170,20 @@ impl ChromeTraceFirstPass {
     const LONG_LOAD_PACKAGE_CUTOFF: Duration = Duration::from_millis(50);
     fn new() -> Self {
         Self {
-            long_analyses: BuckMutSet::default(),
-            long_loads: BuckMutSet::default(),
-            long_load_packages: BuckMutSet::default(),
-            local_actions: BuckMutSet::default(),
-            critical_path_action_keys: BuckMutSet::default(),
-            critical_path_span_ids: BuckMutSet::default(),
+            long_analyses: YakMutSet::default(),
+            long_loads: YakMutSet::default(),
+            long_load_packages: YakMutSet::default(),
+            local_actions: YakMutSet::default(),
+            critical_path_action_keys: YakMutSet::default(),
+            critical_path_span_ids: YakMutSet::default(),
             command_start: SystemTime::UNIX_EPOCH,
             command_options: None,
         }
     }
 
-    fn handle_event(&mut self, event: &BuckEvent) -> yak_error::Result<()> {
+    fn handle_event(&mut self, event: &YakEvent) -> yak_error::Result<()> {
         match event.data() {
-            yak_data::buck_event::Data::SpanStart(start) => {
+            yak_data::yak_event::Data::SpanStart(start) => {
                 if let Some(yak_data::span_start_event::Data::Command(..)) = start.data.as_ref() {
                     self.command_start = event.timestamp();
                 } else if let Some(yak_data::span_start_event::Data::ExecutorStage(exec)) =
@@ -214,7 +214,7 @@ impl ChromeTraceFirstPass {
                     }
                 }
             }
-            yak_data::buck_event::Data::SpanEnd(end) => {
+            yak_data::yak_event::Data::SpanEnd(end) => {
                 if let Some(yak_data::span_end_event::Data::Analysis(_)) = end.data.as_ref() {
                     if end
                         .duration
@@ -249,7 +249,7 @@ impl ChromeTraceFirstPass {
                     }
                 }
             }
-            yak_data::buck_event::Data::Instant(instant) => {
+            yak_data::yak_event::Data::Instant(instant) => {
                 if let Some(yak_data::instant_event::Data::BuildGraphInfo(info)) =
                     instant.data.as_ref()
                 {
@@ -264,7 +264,7 @@ impl ChromeTraceFirstPass {
                     self.command_options = Some(*options);
                 }
             }
-            yak_data::buck_event::Data::Record(_) => {}
+            yak_data::yak_event::Data::Record(_) => {}
         };
         Ok(())
     }
@@ -511,7 +511,7 @@ struct SimpleCounters<T> {
     /// Stores the current value of each timeseries.
     /// Set to None when we output a zero, so we can save a bit of filesize
     /// by omitting them from the JSON output.
-    counters: BuckMutMap<String, SimpleCounter<T>>,
+    counters: YakMutMap<String, SimpleCounter<T>>,
     zero_value: T,
     trace_events: Vec<serde_json::Value>,
 }
@@ -536,7 +536,7 @@ where
         Self {
             name,
             next_flush: SystemTime::UNIX_EPOCH,
-            counters: BuckMutMap::default(),
+            counters: YakMutMap::default(),
             trace_events: vec![],
             zero_value,
         }
@@ -663,13 +663,13 @@ struct TimestampAndAmount {
 
 struct AverageRateOfChangeCounters {
     counters: SimpleCounters<u64>,
-    previous_timestamp_and_amount_by_key: BuckMutMap<String, TimestampAndAmount>,
+    previous_timestamp_and_amount_by_key: YakMutMap<String, TimestampAndAmount>,
 }
 
 impl AverageRateOfChangeCounters {
     pub fn new(name: &'static str) -> Self {
         Self {
-            previous_timestamp_and_amount_by_key: BuckMutMap::default(),
+            previous_timestamp_and_amount_by_key: YakMutMap::default(),
             counters: SimpleCounters::<u64>::new(name, 0),
         }
     }
@@ -711,20 +711,20 @@ impl AverageRateOfChangeCounters {
 struct SpanCounters {
     counter: SimpleCounters<i32>,
     // Stores how current open spans contribute to counter values.
-    open_spans: BuckMutMap<yak_events::span::SpanId, (&'static str, i32)>,
+    open_spans: YakMutMap<yak_events::span::SpanId, (&'static str, i32)>,
 }
 
 impl SpanCounters {
     pub fn new(name: &'static str) -> Self {
         Self {
             counter: SimpleCounters::new(name, 0),
-            open_spans: BuckMutMap::default(),
+            open_spans: YakMutMap::default(),
         }
     }
 
     fn bump_counter_while_span(
         &mut self,
-        event: &BuckEvent,
+        event: &YakEvent,
         key: &'static str,
         amount: i32,
     ) -> yak_error::Result<()> {
@@ -736,7 +736,7 @@ impl SpanCounters {
     fn handle_event_end(
         &mut self,
         _end: &yak_data::SpanEndEvent,
-        event: &BuckEvent,
+        event: &YakEvent,
     ) -> yak_error::Result<()> {
         if let Some((key, value)) = self.open_spans.remove(&event.span_id().unwrap()) {
             self.counter.subtract(event.timestamp(), key, value)?;
@@ -841,12 +841,12 @@ fn build_phase_mask(data: &yak_data::span_start_event::Data) -> u16 {
 
 struct ChromeTraceWriter {
     trace_events: Vec<serde_json::Value>,
-    open_spans: BuckMutMap<yak_events::span::SpanId, ChromeTraceOpenSpan>,
+    open_spans: YakMutMap<yak_events::span::SpanId, ChromeTraceOpenSpan>,
     invocation: Invocation,
     first_pass: ChromeTraceFirstPass,
     max_tracks: u64,
     span_counters: SpanCounters,
-    unused_track_ids: BuckMutMap<SpanCategorization, TrackIdAllocator>,
+    unused_track_ids: YakMutMap<SpanCategorization, TrackIdAllocator>,
     // Wrappers to contain values from InstantEvent.Data.Snapshot as a timeseries
     snapshot_counters: SimpleCounters<u64>,
     process_memory_counters: SimpleCounters<f64>,
@@ -861,11 +861,11 @@ struct ChromeTraceWriter {
     // First/last snapshot timestamp at which each DICE key type's counters
     // changed, for min/max envelopes on the "dice activity" track. Resolution
     // is the DiceStateSnapshot cadence (~500ms).
-    dice_activity: BuckMutMap<String, (SystemTime, SystemTime)>,
-    dice_prev_key_states: BuckMutMap<String, yak_data::DiceKeyState>,
+    dice_activity: YakMutMap<String, (SystemTime, SystemTime)>,
+    dice_prev_key_states: YakMutMap<String, yak_data::DiceKeyState>,
     // Phase memberships and start time of currently-open spans, applied to the
     // stats when the corresponding SpanEnd arrives.
-    open_build_phase_spans: BuckMutMap<yak_events::span::SpanId, (u16, SystemTime)>,
+    open_build_phase_spans: YakMutMap<yak_events::span::SpanId, (u16, SystemTime)>,
 }
 
 /// Where one build phase's work sits in time: the raw first-start/last-end
@@ -953,11 +953,11 @@ impl ChromeTraceWriter {
     pub fn new(invocation: Invocation, first_pass: ChromeTraceFirstPass, max_tracks: u64) -> Self {
         Self {
             trace_events: vec![],
-            open_spans: BuckMutMap::default(),
+            open_spans: YakMutMap::default(),
             invocation,
             first_pass,
             max_tracks,
-            unused_track_ids: BuckMutMap::default(),
+            unused_track_ids: YakMutMap::default(),
             span_counters: SpanCounters::new("spans"),
             snapshot_counters: SimpleCounters::<u64>::new("snapshot_counters", 0),
             process_memory_counters: SimpleCounters::<f64>::new("process_memory", 0.0),
@@ -966,9 +966,9 @@ impl ChromeTraceWriter {
             rate_of_change_counters: AverageRateOfChangeCounters::new("rate_of_change_counters"),
             dice_counters: AverageRateOfChangeCounters::new("dice"),
             build_phases: Default::default(),
-            dice_activity: BuckMutMap::default(),
-            dice_prev_key_states: BuckMutMap::default(),
-            open_build_phase_spans: BuckMutMap::default(),
+            dice_activity: YakMutMap::default(),
+            dice_prev_key_states: YakMutMap::default(),
+            open_build_phase_spans: YakMutMap::default(),
         }
     }
 
@@ -1223,7 +1223,7 @@ impl ChromeTraceWriter {
     fn assign_track_for_span(
         &mut self,
         track_key: SpanCategorization,
-        event: Option<&BuckEvent>,
+        event: Option<&YakEvent>,
     ) -> yak_error::Result<Option<SpanTrackAssignment>> {
         let parent_track_id = event
             .and_then(|event| event.parent_id)
@@ -1286,14 +1286,14 @@ impl ChromeTraceWriter {
         Ok(())
     }
 
-    fn open_span(&mut self, event: &BuckEvent, span: ChromeTraceOpenSpan) -> yak_error::Result<()> {
+    fn open_span(&mut self, event: &YakEvent, span: ChromeTraceOpenSpan) -> yak_error::Result<()> {
         self.open_spans.insert(event.span_id().unwrap(), span);
         Ok(())
     }
 
     fn open_named_span(
         &mut self,
-        event: &BuckEvent,
+        event: &YakEvent,
         name: String,
         track_key: SpanCategorization,
     ) -> yak_error::Result<()> {
@@ -1318,9 +1318,9 @@ impl ChromeTraceWriter {
         Ok(())
     }
 
-    fn handle_event(&mut self, event: &Arc<BuckEvent>) -> yak_error::Result<()> {
+    fn handle_event(&mut self, event: &Arc<YakEvent>) -> yak_error::Result<()> {
         match event.data() {
-            yak_data::buck_event::Data::SpanStart(yak_data::SpanStartEvent {
+            yak_data::yak_event::Data::SpanStart(yak_data::SpanStartEvent {
                 data: Some(start_data),
             }) => {
                 let phase_mask = build_phase_mask(start_data);
@@ -1537,23 +1537,23 @@ impl ChromeTraceWriter {
             }
             // Data field is oneof and `None` means the event is produced with newer version of `.proto` file
             // which added a variant which is not available in version used when compiling this program.
-            yak_data::buck_event::Data::SpanStart(yak_data::SpanStartEvent { data: None }) => {}
-            yak_data::buck_event::Data::SpanEnd(end) => self.handle_event_end(end, event)?,
-            yak_data::buck_event::Data::Instant(yak_data::InstantEvent {
+            yak_data::yak_event::Data::SpanStart(yak_data::SpanStartEvent { data: None }) => {}
+            yak_data::yak_event::Data::SpanEnd(end) => self.handle_event_end(end, event)?,
+            yak_data::yak_event::Data::Instant(yak_data::InstantEvent {
                 data: Some(instant_data),
             }) => match instant_data {
                 yak_data::instant_event::Data::Snapshot(snapshot) => {
-                    if let Some(buck2_rss) = snapshot.buck2_rss {
+                    if let Some(yak_rss) = snapshot.yak_rss {
                         self.process_memory_counters.set(
                             event.timestamp(),
                             "rss_gigabyte",
-                            (buck2_rss) as f64 / Self::BYTES_PER_GIGABYTE,
+                            (yak_rss) as f64 / Self::BYTES_PER_GIGABYTE,
                         )?;
                     }
                     self.process_memory_counters.set(
                         event.timestamp(),
                         "max_rss_gigabyte",
-                        (snapshot.buck2_max_rss) as f64 / Self::BYTES_PER_GIGABYTE,
+                        (snapshot.yak_max_rss) as f64 / Self::BYTES_PER_GIGABYTE,
                     )?;
                     if let Some(malloc_bytes_active) = snapshot.malloc_bytes_active {
                         self.process_memory_counters.set(
@@ -1603,13 +1603,13 @@ impl ChromeTraceWriter {
                         .set_average_rate_of_change_per_s(
                             event.timestamp(),
                             "average_user_cpu_in_usecs_per_s",
-                            snapshot.buck2_user_cpu_us,
+                            snapshot.yak_user_cpu_us,
                         )?;
                     self.rate_of_change_counters
                         .set_average_rate_of_change_per_s(
                             event.timestamp(),
                             "average_system_cpu_in_usecs_per_s",
-                            snapshot.buck2_system_cpu_us,
+                            snapshot.yak_system_cpu_us,
                         )?;
                     if let Some(cpu_usage_system) = snapshot.host_cpu_usage_system_ms {
                         self.rate_of_change_counters
@@ -1743,8 +1743,8 @@ impl ChromeTraceWriter {
             },
             // Data field is oneof and `None` means the event is produced with newer version of `.proto` file
             // which added a variant which is not available in version used when compiling this program.
-            yak_data::buck_event::Data::Instant(yak_data::InstantEvent { data: None }) => {}
-            yak_data::buck_event::Data::Record(_) => {}
+            yak_data::yak_event::Data::Instant(yak_data::InstantEvent { data: None }) => {}
+            yak_data::yak_event::Data::Record(_) => {}
         };
         Ok(())
     }
@@ -2077,7 +2077,7 @@ impl ChromeTraceWriter {
     fn handle_event_end(
         &mut self,
         end: &yak_data::SpanEndEvent,
-        event: &BuckEvent,
+        event: &YakEvent,
     ) -> yak_error::Result<()> {
         self.span_counters.handle_event_end(end, event)?;
         if let Some((mask, start)) = self
@@ -2136,7 +2136,7 @@ impl ChromeTraceWriter {
 impl ChromeTraceCommand {
     pub fn exec(
         self,
-        matches: BuckArgMatches<'_>,
+        matches: YakArgMatches<'_>,
         ctx: ClientCommandContext<'_>,
         events_ctx: &mut EventsCtx,
     ) -> ExitResult {
@@ -2145,11 +2145,11 @@ impl ChromeTraceCommand {
 
     async fn load_events(
         log_path: EventLogPathBuf,
-    ) -> yak_error::Result<(Invocation, BoxStream<'static, yak_error::Result<BuckEvent>>)> {
+    ) -> yak_error::Result<(Invocation, BoxStream<'static, yak_error::Result<YakEvent>>)> {
         let (invocation, stream_values) = log_path.unpack_stream().await?;
         let stream = stream_values.try_filter_map(|stream_value| async move {
             match stream_value {
-                StreamValue::Event(e) => Ok(Some(BuckEvent::try_from(e)?)),
+                StreamValue::Event(e) => Ok(Some(YakEvent::try_from(e)?)),
                 _ => Ok(None),
             }
         });
@@ -2177,12 +2177,12 @@ impl ChromeTraceCommand {
     }
 }
 
-impl BuckSubcommand for ChromeTraceCommand {
+impl YakSubcommand for ChromeTraceCommand {
     const COMMAND_NAME: &'static str = "chrome-trace";
 
     async fn exec_impl(
         self,
-        _matches: BuckArgMatches<'_>,
+        _matches: YakArgMatches<'_>,
         ctx: ClientCommandContext<'_>,
         _events_ctx: &mut EventsCtx,
     ) -> ExitResult {
@@ -2197,7 +2197,7 @@ impl BuckSubcommand for ChromeTraceCommand {
 
         let dest_path = if trace_path.is_dir() {
             Self::trace_path_from_dir(trace_path, log.path())
-                .buck_error_context("Could not determine trace path")?
+                .yak_error_context("Could not determine trace path")?
         } else {
             trace_path
         };
@@ -2252,10 +2252,10 @@ impl ChromeTraceCommand {
         while let Some(event) = tokio_stream::StreamExt::try_next(&mut stream).await? {
             first_pass
                 .handle_event(&event)
-                .with_buck_error_context(|| {
-                    display::InvalidBuckEvent(Arc::new(event.clone())).to_string()
+                .with_yak_error_context(|| {
+                    display::InvalidYakEvent(Arc::new(event.clone())).to_string()
                 })?;
-            if let Ok(UnpackedBuckEvent::Instant(
+            if let Ok(UnpackedYakEvent::Instant(
                 _,
                 _,
                 yak_data::instant_event::Data::BuildGraphInfo(info),
@@ -2297,7 +2297,7 @@ impl ChromeTraceCommand {
             let event = Arc::new(event);
             writer
                 .handle_event(&event)
-                .with_buck_error_context(|| display::InvalidBuckEvent(event).to_string())?;
+                .with_yak_error_context(|| display::InvalidYakEvent(event).to_string())?;
         }
 
         writer.write_thread_names()?;

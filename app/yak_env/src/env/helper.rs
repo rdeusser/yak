@@ -12,7 +12,7 @@ use std::env;
 use std::env::VarError;
 use std::sync::OnceLock;
 
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 
 pub struct EnvHelper<T> {
     convert: fn(&str) -> yak_error::Result<T>,
@@ -53,6 +53,6 @@ impl<T> EnvHelper<T> {
                 )),
             })
             .map(Option::as_ref)
-            .with_buck_error_context(|| format!("Invalid value for ${var}"))
+            .with_yak_error_context(|| format!("Invalid value for ${var}"))
     }
 }

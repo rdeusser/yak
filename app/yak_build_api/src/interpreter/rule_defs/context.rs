@@ -40,8 +40,8 @@ use starlark::values::type_repr::StarlarkTypeRepr;
 use yak_core::provider::label::ConfiguredProvidersLabel;
 use yak_core::provider::label::ProvidersName;
 use yak_core::target::configured_target_label::ConfiguredTargetLabel;
-use yak_error::BuckErrorContext;
-use yak_error::BuckErrorOptionContext;
+use yak_error::YakErrorContext;
+use yak_error::YakErrorOptionContext;
 use yak_error::conversion::from_any_with_tag;
 use yak_error::internal_error;
 use yak_execute::digest_config::DigestConfig;
@@ -76,7 +76,7 @@ impl<'v> AnalysisActions<'v> {
             .state
             .try_borrow_mut()
             .map_err(|e| from_any_with_tag(e, yak_error::ErrorTag::Tier0))
-            .buck_error_context("AnalysisActions.state is already borrowed")?;
+            .yak_error_context("AnalysisActions.state is already borrowed")?;
         RefMut::filter_map(state, |x| x.as_mut())
             .ok()
             .internal_error("state to be present during execution")

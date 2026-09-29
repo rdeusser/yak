@@ -12,7 +12,7 @@
 
 use starlark::values::Value;
 use starlark::values::dict::DictRef;
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 use yak_error::internal_error;
 use yak_interpreter::types::select_fail::StarlarkSelectFail;
 use yak_interpreter::types::select_incompatible::StarlarkSelectIncompatible;
@@ -163,7 +163,7 @@ impl CoercedAttrExr for CoercedAttr {
         } else {
             Ok(attr
                 .coerce_item(configurable, ctx, value)
-                .with_buck_error_context(|| format!("Error coercing {value}"))?)
+                .with_yak_error_context(|| format!("Error coercing {value}"))?)
         }
     }
 }

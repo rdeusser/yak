@@ -1,7 +1,7 @@
 # This file is @generated, regenerate by rerunning the test with `YAK_UPDATE_GOLDEN=1` set
 
 [
-  "buckd_command_init",
+  "yakd_command_init",
   "file-watcher-wait",
   "other-command-start-overhead",
   "listing root//",

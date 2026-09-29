@@ -40,14 +40,14 @@ use yak_common::file_ops::dice::DiceFileComputations;
 use yak_common::file_ops::metadata::RawPathMetadata;
 use yak_common::file_ops::metadata::RawSymlink;
 use yak_common::legacy_configs::dice::HasLegacyConfigs;
-use yak_common::legacy_configs::key::BuckconfigKeyRef;
+use yak_common::legacy_configs::key::YakconfigKeyRef;
 use yak_common::package_listing::dice::DicePackageListingResolver;
 use yak_core::build_file_path::BuildFilePath;
 use yak_core::cells::cell_path::CellPath;
 use yak_core::package::PackageLabel;
 use yak_directory::directory::directory_data::DirectoryData;
 use yak_directory::directory::exhaustiveness::Exhaustiveness;
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 use yak_error::internal_error;
 use yak_execute::artifact_value::ArtifactValue;
 use yak_execute::digest_config::HasDigestConfig;
@@ -426,7 +426,7 @@ async fn path_artifact_value(
             let use_correct_source_symlink_reading = ctx
                 .parse_legacy_config_property(
                     root_cell,
-                    BuckconfigKeyRef {
+                    YakconfigKeyRef {
                         section: "yak",
                         property: "use_correct_source_symlink_reading",
                     },
@@ -514,7 +514,7 @@ impl Key for EnsureProjectedArtifactKey {
         insert_artifact(&mut builder, base_path, &base_value)?;
 
         let value = extract_artifact_value(&builder, &projected_path, digest_config)
-            .with_buck_error_context(|| {
+            .with_yak_error_context(|| {
                 format!("The path `{path}` cannot be projected in the artifact `{base}`. Are you calling project() on a symlink?")
             })?
             .ok_or_else(|| {
@@ -617,7 +617,7 @@ impl Key for EnsureTransitiveSetProjectionKey {
             let digest_config = ctx.global_data().get_digest_config();
 
             let values = ArtifactGroupValues::new(values, children, artifact_fs, digest_config)
-                .buck_error_context("Failed to construct ArtifactGroupValues")?;
+                .yak_error_context("Failed to construct ArtifactGroupValues")?;
 
             ctx.store_evaluation_data(EnsureTransitiveSetProjectionKeyActivationData {
                 time_span: time_span.end_now(),

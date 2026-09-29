@@ -7,7 +7,7 @@
 # above-listed licenses.
 
 CxxGenericErrorType = record(
-    matcher = str | BuckRegex,
+    matcher = str | YakRegex,
     category_suffix = str,
 )
 
@@ -17,10 +17,10 @@ def make_error_type(matcher = None, category_suffix = str) -> CxxGenericErrorTyp
         category_suffix = category_suffix,
     )
 
-def _match(matcher: str | BuckRegex, lowercase_stderr: str) -> bool:
+def _match(matcher: str | YakRegex, lowercase_stderr: str) -> bool:
     if isinstance(matcher, str):
         return matcher in lowercase_stderr
-    elif isinstance(matcher, BuckRegex):
+    elif isinstance(matcher, YakRegex):
         return matcher.match(lowercase_stderr)
     else:
         fail("Unknown matcher type: {}", type(matcher))

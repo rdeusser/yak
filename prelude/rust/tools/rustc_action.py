@@ -109,7 +109,7 @@ class Args(NamedTuple):
     path_env: Optional[list[tuple[str, str]]]
     remap_cwd_prefix: Optional[str]
     crate_map: Optional[list[tuple[str, str]]]
-    buck_target: Optional[str]
+    yak_target: Optional[str]
     failure_filter: Optional[IO[bytes]]
     required_output: Optional[list[tuple[str, str]]]
     echo: Optional[IO[bytes]]
@@ -159,7 +159,7 @@ def arg_parse() -> Args:
         help="Crate name to target map for unused crate diagnostics",
     )
     parser.add_argument(
-        "--buck-target",
+        "--yak-target",
         help="yak target for crate, used for unused crate diagnostics",
     )
     parser.add_argument(
@@ -351,7 +351,7 @@ async def handle_output(  # noqa: C901
                 got_error_diag = True
 
             # Add more information to unused crate warnings.
-            if args.buck_target:
+            if args.yak_target:
                 rendered_unused = []
                 for name in unused_names:
                     if name in crate_map:
@@ -361,9 +361,9 @@ async def handle_output(  # noqa: C901
                 rendered_unused.sort()
                 rendered_unused = "\n    ".join(rendered_unused)
 
-                diag["buck_target"] = args.buck_target
+                diag["yak_target"] = args.yak_target
                 diag["rendered"] = (
-                    f"Target `{args.buck_target}` has unused dependencies:\n"
+                    f"Target `{args.yak_target}` has unused dependencies:\n"
                     f"    {rendered_unused}"
                 )
             diag["unused_deps"] = {
@@ -436,10 +436,10 @@ async def main() -> int:  # noqa: C901
         # right-hand side as "./" and "./one/" and "one/two/". In compiler
         # diagnostics we would never want this leading "./" so strip it off.
         if arg.startswith("--remap-path-prefix="):
-            flag, buck_out, mapped = arg.split("=", 2)
+            flag, yak_out, mapped = arg.split("=", 2)
             if mapped.startswith("./"):
                 mapped = mapped[2:]
-            arg = f"{flag}={buck_out}={mapped}"
+            arg = f"{flag}={yak_out}={mapped}"
 
         # While the env-set feature is unstable, allow it to be used with stable
         # rustc by translating from a rustc flag to environment variables set

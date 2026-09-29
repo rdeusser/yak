@@ -11,7 +11,7 @@
 use clap::Parser;
 use tokio::runtime::Runtime;
 use yak_client_ctx::client_ctx::ClientCommandContext;
-use yak_client_ctx::common::BuckArgMatches;
+use yak_client_ctx::common::YakArgMatches;
 use yak_client_ctx::events_ctx::EventsCtx;
 use yak_client_ctx::exit_result::ExitResult;
 
@@ -20,17 +20,17 @@ use yak_client_ctx::exit_result::ExitResult;
 pub(crate) struct InternalTestRunnerCommand {
     #[cfg(unix)]
     #[clap(flatten)]
-    unix_runner: yak_test_runner::unix::Buck2TestRunnerUnix,
+    unix_runner: yak_test_runner::unix::YakTestRunnerUnix,
 
     #[cfg(not(unix))]
     #[clap(flatten)]
-    tcp_runner: yak_test_runner::tcp::Buck2TestRunnerTcp,
+    tcp_runner: yak_test_runner::tcp::YakTestRunnerTcp,
 }
 
 impl InternalTestRunnerCommand {
     pub(crate) fn exec(
         self,
-        _matches: BuckArgMatches<'_>,
+        _matches: YakArgMatches<'_>,
         _ctx: ClientCommandContext<'_>,
         events_ctx: &mut EventsCtx,
     ) -> ExitResult {

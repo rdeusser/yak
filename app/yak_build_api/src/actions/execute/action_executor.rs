@@ -34,9 +34,9 @@ use yak_core::content_hash::ContentBasedPathHash;
 use yak_core::execution_types::executor_config::CommandExecutorConfig;
 use yak_core::execution_types::executor_config::RemoteExecutorUseCase;
 use yak_core::fs::artifact_path_resolver::ArtifactFs;
-use yak_core::fs::buck_out_path::BuildArtifactPath;
+use yak_core::fs::yak_out_path::BuildArtifactPath;
 use yak_data::SchedulingMode;
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 use yak_error::internal_error;
 use yak_events::dispatch::EventDispatcher;
 use yak_execute::artifact::fs::ExecutorFs;
@@ -79,11 +79,11 @@ use yak_file_watcher::dep_files::DepFileCache;
 use yak_file_watcher::dep_files::HasDepFileCache;
 use yak_file_watcher::mergebase::GetMergebase;
 use yak_file_watcher::mergebase::Mergebase;
-use yak_hash::BuckIndexMap;
-use yak_hash::BuckIndexSet;
-use yak_hash::BuckMutMap;
-use yak_hash::BuckMutSet;
-use yak_hash::buck_indexmap;
+use yak_hash::YakIndexMap;
+use yak_hash::YakIndexSet;
+use yak_hash::YakMutMap;
+use yak_hash::YakMutSet;
+use yak_hash::yak_indexmap;
 use yak_http::HttpClient;
 use yak_util::strong_hasher::Blake3StrongHasher;
 
@@ -123,7 +123,7 @@ impl OutputSize for ActionOutputs {
 
 #[derive(Debug, Allocative, pagable::Pagable)]
 struct ActionOutputsData {
-    outputs: BuckIndexMap<BuildArtifactPath, ArtifactValue>,
+    outputs: YakIndexMap<BuildArtifactPath, ArtifactValue>,
     /// Strong hash of `outputs`, computed at construction; see `PartialEq`
     /// below.
     // This is OK to skip because the hash is stored inline.
@@ -268,7 +268,7 @@ impl ActionExecutionKind {
 }
 
 impl ActionOutputs {
-    pub fn new(outputs: BuckIndexMap<BuildArtifactPath, ArtifactValue>) -> Self {
+    pub fn new(outputs: YakIndexMap<BuildArtifactPath, ArtifactValue>) -> Self {
         let mut hasher = Blake3StrongHasher::new();
         outputs.len().strong_hash(&mut hasher);
         for (path, value) in &outputs {
@@ -283,7 +283,7 @@ impl ActionOutputs {
     }
 
     pub fn from_single(artifact: BuildArtifactPath, value: ArtifactValue) -> Self {
-        Self::new(buck_indexmap! {artifact => value})
+        Self::new(yak_indexmap! {artifact => value})
     }
 
     pub fn get(&self, artifact: &BuildArtifactPath) -> Option<&ArtifactValue> {
@@ -311,7 +311,7 @@ pub trait HasActionExecutor<'d> {
     async fn get_action_executor(
         &mut self,
         config: &CommandExecutorConfig,
-    ) -> yak_error::Result<BuckActionExecutor<'d>>;
+    ) -> yak_error::Result<YakActionExecutor<'d>>;
 }
 
 #[async_trait]
@@ -319,7 +319,7 @@ impl<'d> HasActionExecutor<'d> for DiceComputations<'d> {
     async fn get_action_executor(
         &mut self,
         executor_config: &CommandExecutorConfig,
-    ) -> yak_error::Result<BuckActionExecutor<'d>> {
+    ) -> yak_error::Result<YakActionExecutor<'d>> {
         let artifact_fs = self.get_artifact_fs().await?;
         let digest_config = self.global_data().get_digest_config();
 
@@ -344,7 +344,7 @@ impl<'d> HasActionExecutor<'d> for DiceComputations<'d> {
         let invalidation_tracking_enabled = self.get_invalidation_tracking_config().enabled;
         let invocation_re_settings = self.per_transaction_data().get_invocation_re_settings();
 
-        Ok(BuckActionExecutor::new(
+        Ok(YakActionExecutor::new(
             CommandExecutor::new(
                 executor,
                 action_cache_checker,
@@ -372,7 +372,7 @@ impl<'d> HasActionExecutor<'d> for DiceComputations<'d> {
     }
 }
 
-pub struct BuckActionExecutor<'d> {
+pub struct YakActionExecutor<'d> {
     command_executor: CommandExecutor,
     blocking_executor: &'d dyn BlockingExecutor,
     materializer: &'d dyn Materializer,
@@ -390,7 +390,7 @@ pub struct BuckActionExecutor<'d> {
     invocation_re_settings: InvocationReSettings,
 }
 
-impl<'d> BuckActionExecutor<'d> {
+impl<'d> YakActionExecutor<'d> {
     pub fn new(
         command_executor: CommandExecutor,
         blocking_executor: &'d dyn BlockingExecutor,
@@ -408,7 +408,7 @@ impl<'d> BuckActionExecutor<'d> {
         output_trees_download_config: OutputTreesDownloadConfig,
         invocation_re_settings: InvocationReSettings,
     ) -> Self {
-        BuckActionExecutor {
+        YakActionExecutor {
             command_executor,
             blocking_executor,
             materializer,
@@ -428,17 +428,17 @@ impl<'d> BuckActionExecutor<'d> {
     }
 }
 
-struct BuckActionExecutionContext<'a, 'd> {
-    executor: &'a BuckActionExecutor<'d>,
+struct YakActionExecutionContext<'a, 'd> {
+    executor: &'a YakActionExecutor<'d>,
     action: &'a RegisteredAction,
-    inputs: BuckIndexMap<ArtifactGroup, ArtifactGroupValues>,
+    inputs: YakIndexMap<ArtifactGroup, ArtifactGroupValues>,
     outputs: &'a [BuildArtifact],
     command_reports: &'a mut Vec<CommandExecutionReport>,
     cancellations: &'a CancellationContext,
 }
 
 #[async_trait]
-impl ActionExecutionCtx for BuckActionExecutionContext<'_, '_> {
+impl ActionExecutionCtx for YakActionExecutionContext<'_, '_> {
     fn target(&self) -> ActionExecutionTarget<'_> {
         ActionExecutionTarget::new(self.action)
     }
@@ -474,8 +474,8 @@ impl ActionExecutionCtx for BuckActionExecutionContext<'_, '_> {
 
     fn artifact_path_mapping(
         &self,
-        filter: Option<BuckIndexSet<ArtifactGroup>>,
-    ) -> BuckMutMap<&Artifact, ContentBasedPathHash> {
+        filter: Option<YakIndexSet<ArtifactGroup>>,
+    ) -> YakMutMap<&Artifact, ContentBasedPathHash> {
         self.inputs
             .iter()
             .filter(|(ag, _)| {
@@ -733,7 +733,7 @@ impl ActionExecutionCtx for BuckActionExecutionContext<'_, '_> {
             .materializer
             .invalidate_many(output_paths.clone())
             .await
-            .buck_error_context("Failed to invalidate output directory")?;
+            .yak_error_context("Failed to invalidate output directory")?;
 
         self.executor
             .blocking_executor
@@ -744,7 +744,7 @@ impl ActionExecutionCtx for BuckActionExecutionContext<'_, '_> {
                 self.cancellations,
             )
             .await
-            .buck_error_context("Failed to cleanup output directory")?;
+            .yak_error_context("Failed to cleanup output directory")?;
 
         Ok(())
     }
@@ -762,11 +762,11 @@ impl ActionExecutionCtx for BuckActionExecutionContext<'_, '_> {
     }
 }
 
-impl<'d> BuckActionExecutor<'d> {
+impl<'d> YakActionExecutor<'d> {
     pub(crate) async fn execute(
         &self,
         waiting_data: WaitingData,
-        inputs: BuckIndexMap<ArtifactGroup, ArtifactGroupValues>,
+        inputs: YakIndexMap<ArtifactGroup, ArtifactGroupValues>,
         action: &RegisteredAction,
         cancellations: &CancellationContext,
     ) -> (
@@ -778,7 +778,7 @@ impl<'d> BuckActionExecutor<'d> {
         let res = async {
             let outputs = action.outputs();
 
-            let mut ctx = BuckActionExecutionContext {
+            let mut ctx = YakActionExecutionContext {
                 executor: self,
                 action,
                 inputs,
@@ -820,7 +820,7 @@ impl<'d> BuckActionExecutor<'d> {
             ) -> bool {
                 // Ignore ordering as outputs in original action might be ordered differently from
                 // output paths in action result (they are sorted there).
-                let result_output_paths: BuckMutSet<&BuildArtifactPath> =
+                let result_output_paths: YakMutSet<&BuildArtifactPath> =
                     result_outputs.into_iter().collect();
                 let mut outputs_count = 0;
                 for output in outputs.iter() {

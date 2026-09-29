@@ -11,7 +11,7 @@
 use yak_common::init::DaemonStartupConfig;
 use yak_events::daemon_id::DaemonId;
 
-use crate::version::BuckVersion;
+use crate::version::YakVersion;
 
 /// Checks an environment variable to see if we were spawned by a yak daemon and if so, returns the
 /// UUID of that daemon.
@@ -40,5 +40,5 @@ pub fn gen_daemon_constraints(
 }
 
 pub fn version() -> yak_error::Result<String> {
-    Ok(BuckVersion::get_unique_id()?.to_owned())
+    Ok(YakVersion::get_unique_id()?.to_owned())
 }

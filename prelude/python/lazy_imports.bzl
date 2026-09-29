@@ -36,8 +36,8 @@ def run_lazy_imports_analyzer(ctx: AnalysisContext, resources, output: Artifact,
     cmd = cmd_args(ctx.attrs.lazy_imports_analyzer[RunInfo], hidden = resources)
     cmd.add(dbg_source_db_output)  # First arg: <DB_PATH>
     cmd.add(output.as_output())  # Second arg: <OUTPUT_PATH>
-    cmd.add("--buck_mode")
-    cmd.add("buck-build")
+    cmd.add("--yak_mode")
+    cmd.add("yak-build")
 
     main_module = _get_main_module(ctx)
     if main_module != None:

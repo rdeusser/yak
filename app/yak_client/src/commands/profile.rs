@@ -18,15 +18,15 @@ use yak_cli_proto::TargetProfile;
 use yak_cli_proto::profile_request::ProfileOpts;
 use yak_cli_proto::target_profile;
 use yak_client_ctx::client_ctx::ClientCommandContext;
-use yak_client_ctx::common::BuckArgMatches;
+use yak_client_ctx::common::YakArgMatches;
 use yak_client_ctx::common::CommonBuildConfigurationOptions;
 use yak_client_ctx::common::CommonCommandOptions;
 use yak_client_ctx::common::CommonEventLogOptions;
 use yak_client_ctx::common::CommonStarlarkOptions;
-use yak_client_ctx::common::profiling::BuckProfileMode;
+use yak_client_ctx::common::profiling::YakProfileMode;
 use yak_client_ctx::common::target_cfg::TargetCfgWithUniverseOptions;
 use yak_client_ctx::common::ui::CommonConsoleOptions;
-use yak_client_ctx::daemon::client::BuckdClientConnector;
+use yak_client_ctx::daemon::client::YakdClientConnector;
 use yak_client_ctx::daemon::client::NoPartialResultHandler;
 use yak_client_ctx::events_ctx::EventsCtx;
 use yak_client_ctx::exit_result::ExitResult;
@@ -34,8 +34,8 @@ use yak_client_ctx::path_arg::PathArg;
 use yak_client_ctx::streaming::StreamingCommand;
 use yak_common::argv::Argv;
 use yak_common::argv::SanitizedArgv;
-use yak_error::BuckErrorContext;
-use yak_error::BuckErrorOptionContext;
+use yak_error::YakErrorContext;
+use yak_error::YakErrorOptionContext;
 use yak_error::yak_error;
 
 use super::bxl::BxlCommandOptions;
@@ -51,7 +51,7 @@ pub enum ProfileCommand {
 impl ProfileCommand {
     pub fn exec(
         self,
-        matches: BuckArgMatches<'_>,
+        matches: YakArgMatches<'_>,
         ctx: ClientCommandContext<'_>,
         events_ctx: &mut EventsCtx,
     ) -> ExitResult {
@@ -82,7 +82,7 @@ pub struct ProfileBxlCommand {
 #[derive(Debug, clap::Parser)]
 pub struct ProfileLoadingCommand {
     #[clap(flatten)]
-    buck_opts: AnalysisOrLoadProfileOptions,
+    yak_opts: AnalysisOrLoadProfileOptions,
 
     #[clap(flatten)]
     profile_common_opts: ProfileCommonOptions,
@@ -92,7 +92,7 @@ pub struct ProfileLoadingCommand {
 #[derive(Debug, clap::Parser)]
 pub struct ProfileAnalysisCommand {
     #[clap(flatten)]
-    buck_opts: AnalysisOrLoadProfileOptions,
+    yak_opts: AnalysisOrLoadProfileOptions,
 
     #[clap(flatten)]
     profile_common_opts: ProfileCommonOptions,
@@ -130,7 +130,7 @@ struct ProfileCommonOptions {
     ///
     /// `-allocated` means allocated memory, including memory which is later garbage collected.
     #[clap(long, value_enum)]
-    mode: BuckProfileMode,
+    mode: YakProfileMode,
 
     #[clap(flatten)]
     target_cfg: TargetCfgWithUniverseOptions,
@@ -159,8 +159,8 @@ impl StreamingCommand for ProfileSubcommand {
 
     async fn exec_impl(
         self,
-        buckd: &mut BuckdClientConnector,
-        matches: BuckArgMatches<'_>,
+        yakd: &mut YakdClientConnector,
+        matches: YakArgMatches<'_>,
         ctx: &mut ClientCommandContext<'_>,
         events_ctx: &mut EventsCtx,
     ) -> ExitResult {
@@ -178,7 +178,7 @@ impl StreamingCommand for ProfileSubcommand {
 
         let profile_opts = match &self.subcommand {
             ProfileCommand::Loading(loading) => ProfileOpts::TargetProfile(TargetProfile {
-                target_patterns: loading.buck_opts.target_patterns.clone(),
+                target_patterns: loading.yak_opts.target_patterns.clone(),
                 action: target_profile::Action::Loading as i32,
                 target_cfg: Some(
                     loading
@@ -192,10 +192,10 @@ impl StreamingCommand for ProfileSubcommand {
                     .target_cfg
                     .target_universe
                     .clone(),
-                recursive: loading.buck_opts.recursive,
+                recursive: loading.yak_opts.recursive,
             }),
             ProfileCommand::Analysis(analysis) => ProfileOpts::TargetProfile(TargetProfile {
-                target_patterns: analysis.buck_opts.target_patterns.clone(),
+                target_patterns: analysis.yak_opts.target_patterns.clone(),
                 action: target_profile::Action::Analysis as i32,
                 target_cfg: Some(
                     analysis
@@ -209,7 +209,7 @@ impl StreamingCommand for ProfileSubcommand {
                     .target_cfg
                     .target_universe
                     .clone(),
-                recursive: analysis.buck_opts.recursive,
+                recursive: analysis.yak_opts.recursive,
             }),
             ProfileCommand::Bxl(bxl) => {
                 if !bxl
@@ -239,7 +239,7 @@ impl StreamingCommand for ProfileSubcommand {
             profile_mode: profiler as i32,
         };
 
-        let response = buckd
+        let response = yakd
             .with_flushing()
             .profile(
                 request,
@@ -261,7 +261,7 @@ impl StreamingCommand for ProfileSubcommand {
                     yak_error::yak_error!(yak_error::ErrorTag::Input, "Duration is negative")
                 })
             })
-            .buck_error_context("Elapsed is invalid")?;
+            .yak_error_context("Elapsed is invalid")?;
 
         yak_client_ctx::println!(
             "Starlark {:?} profile has been written to {}",

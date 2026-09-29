@@ -11,8 +11,8 @@
 use futures::StreamExt;
 use gazebo::prelude::VecExt;
 use yak_common::invocation_paths::InvocationPaths;
-use yak_error::BuckErrorOptionContext;
-use yak_events::BuckEvent;
+use yak_error::YakErrorOptionContext;
+use yak_events::YakEvent;
 use yak_fs::fs_util;
 use yak_fs::paths::abs_norm_path::AbsNormPath;
 use yak_fs::paths::abs_norm_path::AbsNormPathBuf;
@@ -24,7 +24,7 @@ use crate::utils::Encoding;
 use crate::utils::EventLogErrors;
 
 pub(crate) fn get_logfile_name(
-    event: &BuckEvent,
+    event: &YakEvent,
     encoding: Encoding,
     command_name: &str,
 ) -> yak_error::Result<FileNameBuf> {
@@ -169,7 +169,7 @@ mod tests {
         // Create 5 log files directly in logdir with incrementing modification times
         let mut log_paths = Vec::new();
         for i in 0..5 {
-            let log_path = logdir_path.join(format!("buck-log-{}.zst", i));
+            let log_path = logdir_path.join(format!("yak-log-{}.zst", i));
             let mut file = File::create(&log_path)?;
             file.write_all(format!("log content {}", i).as_bytes())?;
 
@@ -219,7 +219,7 @@ mod tests {
 
         let mut log_paths = Vec::new();
         for i in 0..3 {
-            let log_path = logdir_path.join(format!("buck-log-{}.zst", i));
+            let log_path = logdir_path.join(format!("yak-log-{}.zst", i));
             let mut file = File::create(&log_path)?;
             file.write_all(format!("log content {}", i).as_bytes())?;
 

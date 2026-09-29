@@ -6,47 +6,47 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-from e2e_util.api.buck import Buck
-from e2e_util.buck_workspace import buck_test
+from e2e_util.api.yak import Yak
+from e2e_util.yak_workspace import yak_test
 
 
-@buck_test()
-async def test_uquery_allbuildfiles(buck: Buck) -> None:
-    await buck.bxl(
+@yak_test()
+async def test_uquery_allbuildfiles(yak: Yak) -> None:
+    await yak.bxl(
         "//:query_buildfiles.bxl:uquery_allbuildfiles",
     )
 
 
-@buck_test()
-async def test_uquery_rbuildfiles(buck: Buck) -> None:
-    await buck.bxl(
+@yak_test()
+async def test_uquery_rbuildfiles(yak: Yak) -> None:
+    await yak.bxl(
         "//:query_buildfiles.bxl:uquery_rbuildfiles",
     )
 
 
-@buck_test()
-async def test_cquery_allbuildfiles(buck: Buck) -> None:
-    await buck.bxl(
+@yak_test()
+async def test_cquery_allbuildfiles(yak: Yak) -> None:
+    await yak.bxl(
         "//:query_buildfiles.bxl:cquery_allbuildfiles",
     )
 
 
-@buck_test()
-async def test_cquery_rbuildfiles(buck: Buck) -> None:
-    await buck.bxl(
+@yak_test()
+async def test_cquery_rbuildfiles(yak: Yak) -> None:
+    await yak.bxl(
         "//:query_buildfiles.bxl:cquery_rbuildfiles",
     )
 
 
-@buck_test()
-async def test_lazy_uquery_allbuildfiles(buck: Buck) -> None:
-    await buck.bxl(
+@yak_test()
+async def test_lazy_uquery_allbuildfiles(yak: Yak) -> None:
+    await yak.bxl(
         "//:query_buildfiles.bxl:lazy_uquery_allbuildfiles",
     )
 
 
-@buck_test()
-async def test_lazy_uquery_rbuildfiles(buck: Buck) -> None:
-    await buck.bxl(
+@yak_test()
+async def test_lazy_uquery_rbuildfiles(yak: Yak) -> None:
+    await yak.bxl(
         "//:query_buildfiles.bxl:lazy_uquery_rbuildfiles",
     )

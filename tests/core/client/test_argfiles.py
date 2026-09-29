@@ -8,19 +8,19 @@
 
 from pathlib import Path
 
-from e2e_util.api.buck import Buck
-from e2e_util.buck_workspace import buck_test
+from e2e_util.api.yak import Yak
+from e2e_util.yak_workspace import yak_test
 
 
-@buck_test()
-async def test_argfile_with_cell(buck: Buck) -> None:
-    res = await buck.audit_config("@cell1//argfile", "--cell", "root", "foo.bar")
+@yak_test()
+async def test_argfile_with_cell(yak: Yak) -> None:
+    res = await yak.audit_config("@cell1//argfile", "--cell", "root", "foo.bar")
     assert "bar = 1" in res.stdout
 
 
-@buck_test()
-async def test_argfile_from_cwd_cell(buck: Buck) -> None:
-    res = await buck.audit_config(
+@yak_test()
+async def test_argfile_from_cwd_cell(yak: Yak) -> None:
+    res = await yak.audit_config(
         "@//argfile",
         "--cell",
         "root",
@@ -30,17 +30,17 @@ async def test_argfile_from_cwd_cell(buck: Buck) -> None:
     assert "bar = 1" in res.stdout
 
 
-@buck_test()
-async def test_executable_argfile(buck: Buck) -> None:
-    res = await buck.audit_config(
+@yak_test()
+async def test_executable_argfile(yak: Yak) -> None:
+    res = await yak.audit_config(
         "@//exec_argfile.py#iphonesimulator-x86_64", "--cell", "root", "foo.bar"
     )
     assert "bar = 1" in res.stdout
 
 
-@buck_test()
-async def test_stdin_argfile(buck: Buck) -> None:
-    res = await buck.audit_config(
+@yak_test()
+async def test_stdin_argfile(yak: Yak) -> None:
+    res = await yak.audit_config(
         "@-",
         "--cell",
         "root",

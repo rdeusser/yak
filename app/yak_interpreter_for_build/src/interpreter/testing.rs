@@ -17,7 +17,7 @@ use indoc::indoc;
 use pagable::PagablePanic;
 use pagable::pagable_typetag;
 use starlark::environment::GlobalsBuilder;
-use yak_common::legacy_configs::configs::LegacyBuckConfig;
+use yak_common::legacy_configs::configs::LegacyYakConfig;
 use yak_common::legacy_configs::configs::testing::parse_with_config_args;
 use yak_common::package_listing::listing::PackageListing;
 use yak_common::package_listing::listing::testing::PackageListingExt;
@@ -47,7 +47,7 @@ use yak_node::nodes::eval_result::EvaluationResult;
 use yak_node::nodes::targets_map::TargetsMap;
 use yak_node::super_package::SuperPackage;
 
-use crate::interpreter::buckconfig::LegacyConfigsViewForStarlark;
+use crate::interpreter::yakconfig::LegacyConfigsViewForStarlark;
 use crate::interpreter::cell_info::InterpreterCellInfo;
 use crate::interpreter::configuror::AdditionalGlobalsFn;
 use crate::interpreter::configuror::AdditionalGlobalsFnDyn;
@@ -72,7 +72,7 @@ use crate::super_package::package_value::SuperPackageValuesImpl;
 pub struct Tester {
     cell_alias_resolver: CellAliasResolver,
     cell_resolver: CellResolver,
-    root_config: LegacyBuckConfig,
+    root_config: LegacyYakConfig,
     loaded_modules: LoadedModules,
     additional_globals: Vec<AdditionalGlobalsFn>,
     prelude_path: Option<PreludePath>,
@@ -83,7 +83,7 @@ pub struct Tester {
 pub type CellsData = (
     CellAliasResolver,
     CellResolver,
-    LegacyBuckConfig,
+    LegacyYakConfig,
     CellPathWithAllowedRelativeDir,
 );
 
@@ -266,12 +266,12 @@ impl Tester {
             interpreter.parse(StarlarkPath::LoadFile(path), content.to_owned())??;
         let provider =
             StarlarkEvaluatorProvider::passthrough(StarlarkEvalKind::Unknown("testing".into()));
-        let mut buckconfigs =
+        let mut yakconfigs =
             LegacyConfigsViewForStarlark::new(self.root_config.dupe(), self.root_config.dupe());
 
         let env = interpreter.eval_module(
             StarlarkModulePath::LoadFile(path),
-            &mut buckconfigs,
+            &mut yakconfigs,
             ast,
             loaded_modules.clone(),
             provider,
@@ -314,11 +314,11 @@ impl Tester {
             interpreter.parse(StarlarkPath::BuildFile(path), content.to_owned())??;
         let provider =
             StarlarkEvaluatorProvider::passthrough(StarlarkEvalKind::Unknown("testing".into()));
-        let mut buckconfigs =
+        let mut yakconfigs =
             LegacyConfigsViewForStarlark::new(self.root_config.dupe(), self.root_config.dupe());
         let (_finished_eval, eval_result_with_stats) = interpreter.eval_build_file(
             path,
-            &mut buckconfigs,
+            &mut yakconfigs,
             package_listing,
             SuperPackage::empty::<SuperPackageValuesImpl>()?,
             false,

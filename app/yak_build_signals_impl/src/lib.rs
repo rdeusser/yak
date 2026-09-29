@@ -68,9 +68,9 @@ use yak_events::dispatch::EventDispatcher;
 use yak_events::dispatch::instant_event;
 use yak_events::dispatch::with_dispatcher_async;
 use yak_events::span::SpanId;
-use yak_hash::BuckDashMap;
-use yak_hash::BuckDashSet;
-use yak_hash::BuckMutMap;
+use yak_hash::YakDashMap;
+use yak_hash::YakDashSet;
+use yak_hash::YakMutMap;
 use yak_interpreter_for_build::interpreter::calculation::InterpreterResultsKey;
 use yak_interpreter_for_build::interpreter::calculation::InterpreterResultsKeyActivationData;
 use yak_node::nodes::eval_result::EvaluationResult;
@@ -380,7 +380,7 @@ pub(crate) struct Evaluation {
 
 pub(crate) struct BuildSignalSender {
     sender: UnboundedSender<BuildSignal>,
-    pending_page_in_phases: BuckDashMap<NodeKey, PageInPhase>,
+    pending_page_in_phases: YakDashMap<NodeKey, PageInPhase>,
     // `None` until the first page-in is recorded (via `key_paged_in`), so builds that never
     // page in allocate nothing here and keep the fast early-return for unmapped keys. Never
     // cleared once set, matching the monotonic nature of page-in tracking within a build.
@@ -393,7 +393,7 @@ pub(crate) struct BuildSignalSender {
 /// [`BuildSignalSender::page_in_reachability`]).
 #[derive(Default)]
 struct PageInReachability {
-    keys: BuckDashSet<DynKey>,
+    keys: YakDashSet<DynKey>,
 }
 
 impl PageInReachability {
@@ -818,23 +818,23 @@ struct BuildSignalReceiver<T> {
     // Maps a PackageLabel to the first PackageLabel that had an edge to it. When that PackageLabel
     // shows up, we'll give it a dependency on said first PackageLabel that had an edge to it, which
     // is how we discovered its existence.
-    first_edge_to_load: BuckMutMap<PackageLabel, PackageLabel>,
+    first_edge_to_load: YakMutMap<PackageLabel, PackageLabel>,
     // Maps an anon target NodeKey to the analysis Part 1 NodeKey that discovered it
     // (the one whose Part 1 finished earliest). Used to add discovery edges in finish().
-    first_analysis_for_anon_target: BuckMutMap<NodeKey, (NodeKey, Instant)>,
+    first_analysis_for_anon_target: YakMutMap<NodeKey, (NodeKey, Instant)>,
     // Maps a Part 1 key (e.g. AnalysisKey) to its finish key (Part 2) for split analyses.
     // When a node depends on a split analysis, the dep should point to the finish key
     // (representing full completion) rather than the Part 1 key.
-    split_analysis_finish_keys: BuckMutMap<NodeKey, NodeKey>,
+    split_analysis_finish_keys: YakMutMap<NodeKey, NodeKey>,
     // Non-match page-ins are reported before `key_activated` supplies their dependencies and
     // evaluation data. Hold each timed signal until that associated evaluation arrives so the
     // page-in can be placed on the correct side of the evaluation work.
-    pending_page_ins: BuckMutMap<NodeKey, PageInSignal>,
+    pending_page_ins: YakMutMap<NodeKey, PageInSignal>,
     backend: T,
 
     // TODO(rajneeshl): When Test listing and execution are on DICE, we can remove this and use
     // DICE keys instead.
-    test_listing_keys: BuckMutMap<String, NodeKey>,
+    test_listing_keys: YakMutMap<String, NodeKey>,
 }
 
 impl<T> BuildSignalReceiver<T>
@@ -845,11 +845,11 @@ where
         Self {
             receiver: UnboundedReceiverStream::new(receiver),
             backend,
-            first_edge_to_load: BuckMutMap::default(),
-            first_analysis_for_anon_target: BuckMutMap::default(),
-            split_analysis_finish_keys: BuckMutMap::default(),
-            pending_page_ins: BuckMutMap::default(),
-            test_listing_keys: BuckMutMap::default(),
+            first_edge_to_load: YakMutMap::default(),
+            first_analysis_for_anon_target: YakMutMap::default(),
+            split_analysis_finish_keys: YakMutMap::default(),
+            pending_page_ins: YakMutMap::default(),
+            test_listing_keys: YakMutMap::default(),
         }
     }
 
@@ -1272,7 +1272,7 @@ impl DetailedCriticalPath {
             .into()
         };
 
-        let mut current_kind = "buckd_command_init";
+        let mut current_kind = "yakd_command_init";
         let mut current_start = early_command_timing.command_start;
         for (span_start, kind) in &early_command_timing.early_spans {
             let span_start = span_start.max(&current_start);
@@ -1517,7 +1517,7 @@ fn create_build_signals() -> (BuildSignalsInstaller, Box<dyn DeferredBuildSignal
 
     let sender = Arc::new(BuildSignalSender {
         sender,
-        pending_page_in_phases: BuckDashMap::default(),
+        pending_page_in_phases: YakDashMap::default(),
         page_in_reachability: OnceLock::new(),
     });
     let installer = BuildSignalsInstaller {
@@ -1547,7 +1547,7 @@ mod tests {
 
     #[derive(Default)]
     struct RecordingBackend {
-        deps: BuckMutMap<NodeKey, Vec<NodeKey>>,
+        deps: YakMutMap<NodeKey, Vec<NodeKey>>,
     }
 
     impl BuildListenerBackend for RecordingBackend {
@@ -1572,7 +1572,7 @@ mod tests {
 
         fn finish(
             self,
-            _anon_target_discovery_edges: BuckMutMap<NodeKey, NodeKey>,
+            _anon_target_discovery_edges: YakMutMap<NodeKey, NodeKey>,
         ) -> Result<BuildInfo, CriticalPathError> {
             unreachable!("topology tests do not finish the backend")
         }

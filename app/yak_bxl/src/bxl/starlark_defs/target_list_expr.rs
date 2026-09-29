@@ -35,7 +35,7 @@ use yak_core::pattern::pattern_type::TargetPatternExtra;
 use yak_core::provider::label::ConfiguredProvidersLabel;
 use yak_core::soft_error;
 use yak_core::target::label::label::TargetLabel;
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 use yak_interpreter::types::target_label::StarlarkConfiguredTargetLabel;
 use yak_interpreter::types::target_label::StarlarkTargetLabel;
 use yak_node::load_patterns::MissingTargetBehavior;
@@ -612,7 +612,7 @@ impl<'v> TargetListExpr<'v, TargetNode> {
                         .for_each(|t| resolved.push(TargetExpr::Node(t))),
                         TargetListExpr::Iterable(_) => {
                             return Err(TargetExprError::NotATarget(item.value.to_repr()))
-                                .buck_error_context("list in a list");
+                                .yak_error_context("list in a list");
                         }
                     }
                 }

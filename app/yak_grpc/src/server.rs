@@ -19,7 +19,7 @@ use tonic::service::Routes;
 use tonic::transport::server::Router;
 use tower::Service;
 use tower::layer::Layer;
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 
 use self::connection_with_extra::ConnectionWithExtra;
 use self::drop_notifier::DropNotifier;
@@ -35,7 +35,7 @@ impl ServerHandle {
         self.channel.notify_now();
         self.handle
             .await
-            .buck_error_context("Failed to join task")?
+            .yak_error_context("Failed to join task")?
     }
 
     /// Obtain the JoinHandle to the task driving the server, without asking the server to
@@ -82,7 +82,7 @@ where
                 let _ignored = recv.recv().await;
             })
             .await
-            .buck_error_context("Server exited with an error")?;
+            .yak_error_context("Server exited with an error")?;
 
         Ok(())
     };

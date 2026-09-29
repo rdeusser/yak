@@ -17,7 +17,7 @@ use futures::Future;
 use tokio::time::Instant;
 use tonic::transport::Channel;
 use tonic::transport::Endpoint;
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 use yak_error::ErrorTag;
 use yak_grpc::configure_endpoint;
 
@@ -31,20 +31,20 @@ pub async fn get_channel_uds(
     use yak_fs::error::IoResultExt;
     use yak_fs::fs_util;
 
-    use crate::home_buck_tmp::home_buck_tmp_dir;
+    use crate::home_yak_tmp::home_yak_tmp_dir;
     use crate::temp_path::TempPath;
 
     // Symlink to temp file to connect to unix domain socket
     // since the unix domain socket path is limited to 108 characters.
     // https://man7.org/linux/man-pages/man7/unix.7.html
     if change_to_parent_dir {
-        let symlink = TempPath::new_in(home_buck_tmp_dir()?)?;
+        let symlink = TempPath::new_in(home_yak_tmp_dir()?)?;
 
         fs_util::symlink(unix_socket, symlink.path()).categorize_internal()?;
 
         let r = get_channel_uds_no_symlink(symlink.path())
             .await
-            .with_buck_error_context(|| {
+            .with_yak_error_context(|| {
                 format!(
                     "Failed to connect to unix domain socket `{}` using symlink `{}`",
                     unix_socket.display(),
@@ -58,7 +58,7 @@ pub async fn get_channel_uds(
     } else {
         get_channel_uds_no_symlink(unix_socket)
             .await
-            .with_buck_error_context(|| {
+            .with_yak_error_context(|| {
                 format!(
                     "Failed to connect to unix domain socket `{}`",
                     unix_socket.display()
@@ -100,7 +100,7 @@ pub async fn get_channel_tcp(socket_addr: Ipv4Addr, port: u16) -> yak_error::Res
         .connect()
         .await
         .tag(ErrorTag::ServerTransportError)
-        .with_buck_error_context(|| format!("failed to connect to port {port}"))
+        .with_yak_error_context(|| format!("failed to connect to port {port}"))
 }
 
 #[derive(yak_error::Error, Debug)]

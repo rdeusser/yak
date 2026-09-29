@@ -17,7 +17,7 @@ use starlark::values::StarlarkValue;
 use starlark::values::typing::TypeInstanceId;
 use yak_interpreter::types::provider::callable::ProviderCallableLike;
 
-use crate::interpreter::rule_defs::type_id_domain::Buck2TypeIdDomain;
+use crate::interpreter::rule_defs::type_id_domain::YakTypeIdDomain;
 
 pub(crate) fn ty_provider_callable<'v, C: StarlarkValue<'v> + ProviderCallableLike>(
     creator_func: TyCallable,
@@ -25,7 +25,7 @@ pub(crate) fn ty_provider_callable<'v, C: StarlarkValue<'v> + ProviderCallableLi
     Ok(Ty::custom(TyUser::new(
         C::TYPE.to_owned(),
         TyStarlarkValue::new::<C>(),
-        TypeInstanceId::from_identity(Buck2TypeIdDomain::BuiltinProvider, &(C::TYPE, "callable")),
+        TypeInstanceId::from_identity(YakTypeIdDomain::BuiltinProvider, &(C::TYPE, "callable")),
         TyUserParams {
             callable: Some(creator_func),
             ..TyUserParams::default()

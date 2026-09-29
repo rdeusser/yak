@@ -16,7 +16,7 @@ use futures::stream::FuturesOrdered;
 use starlark_map::Hashed;
 use starlark_map::unordered_map;
 use starlark_map::unordered_map::UnorderedMap;
-use yak_error::BuckErrorOptionContext;
+use yak_error::YakErrorOptionContext;
 use yak_error::internal_error;
 
 use crate::query::graph::node::LabeledNode;
@@ -177,8 +177,8 @@ mod tests {
     use async_trait::async_trait;
     use dupe::Dupe;
     use gazebo::prelude::VecExt;
-    use yak_hash::BuckMutMap;
-    use yak_hash::BuckMutSet;
+    use yak_hash::YakMutMap;
+    use yak_hash::YakMutSet;
     use yak_query::query::traversal::ChildVisitor;
 
     use crate::query::graph::async_bfs::async_bfs_find_path;
@@ -205,8 +205,8 @@ mod tests {
 
     #[derive(Default)]
     struct TestGraph {
-        successors: BuckMutMap<u32, Vec<u32>>,
-        errors: BuckMutSet<u32>,
+        successors: YakMutMap<u32, Vec<u32>>,
+        errors: YakMutSet<u32>,
     }
 
     impl TestGraph {

@@ -54,16 +54,16 @@ use yak_artifact::artifact::build_artifact::BuildArtifact;
 use yak_core::deferred::base_deferred_key::BaseDeferredKey;
 use yak_core::deferred::key::DeferredHolderKey;
 use yak_core::execution_types::execution::ExecutionPlatformResolution;
-use yak_core::fs::buck_out_path::BuckOutPathKind;
-use yak_error::BuckErrorOptionContext;
+use yak_core::fs::yak_out_path::YakOutPathKind;
+use yak_error::YakErrorOptionContext;
 use yak_error::internal_error;
 use yak_execute::execute::request::OutputType;
 use yak_fs::paths::forward_rel_path::ForwardRelativePath;
 use yak_fs::paths::forward_rel_path::ForwardRelativePathBuf;
-use yak_hash::BuckIndexSet;
-use yak_hash::BuckMutMap;
-use yak_hash::BuckMutSet;
-use yak_interpreter::testing::Buck2TestHeapName;
+use yak_hash::YakIndexSet;
+use yak_hash::YakMutMap;
+use yak_hash::YakMutSet;
+use yak_interpreter::testing::YakTestHeapName;
 
 use crate::actions::RegisteredAction;
 use crate::actions::UnregisteredAction;
@@ -98,8 +98,8 @@ pub struct AnalysisRegistry<'v> {
     pub actions: ActionsRegistry<'v>,
     pub anon_targets: Box<DynStarlark<'v, dyn AnonTargetsRegistryDyn<'v>>>,
     pub analysis_value_storage: AnalysisValueStorage<'v>,
-    pub short_path_assertions: BuckMutMap<PromiseArtifactId, ForwardRelativePathBuf>,
-    pub content_based_path_assertions: BuckMutSet<PromiseArtifactId>,
+    pub short_path_assertions: YakMutMap<PromiseArtifactId, ForwardRelativePathBuf>,
+    pub content_based_path_assertions: YakMutSet<PromiseArtifactId>,
 }
 
 #[derive(yak_error::Error, Debug)]
@@ -129,8 +129,8 @@ impl<'v> AnalysisRegistry<'v> {
             actions: ActionsRegistry::new(self_key.dupe(), execution_platform.dupe()),
             anon_targets: (ANON_TARGET_REGISTRY_NEW.get()?)(PhantomData, execution_platform),
             analysis_value_storage: AnalysisValueStorage::new(self_key),
-            short_path_assertions: BuckMutMap::default(),
-            content_based_path_assertions: BuckMutSet::default(),
+            short_path_assertions: YakMutMap::default(),
+            content_based_path_assertions: YakMutSet::default(),
         })
     }
 
@@ -160,7 +160,7 @@ impl<'v> AnalysisRegistry<'v> {
         filename: &str,
         output_type: OutputType,
         declaration_location: Option<FileSpan>,
-        path_resolution_method: BuckOutPathKind,
+        path_resolution_method: YakOutPathKind,
         heap: Heap<'v>,
     ) -> yak_error::Result<DeclaredArtifact<'v>> {
         // We don't allow declaring `` as an output, although technically there's nothing preventing
@@ -213,9 +213,9 @@ impl<'v> AnalysisRegistry<'v> {
                     output_type,
                     declaration_location.dupe(),
                     match has_content_based_path {
-                        Some(true) => BuckOutPathKind::ContentHash,
-                        Some(false) => BuckOutPathKind::Configuration,
-                        None => BuckOutPathKind::ContentHash,
+                        Some(true) => YakOutPathKind::ContentHash,
+                        Some(false) => YakOutPathKind::Configuration,
+                        None => YakOutPathKind::ContentHash,
                     },
                     heap,
                 )?;
@@ -259,7 +259,7 @@ impl<'v> AnalysisRegistry<'v> {
 
     pub fn register_action<A: UnregisteredAction + 'static>(
         &mut self,
-        outputs: BuckIndexSet<OutputArtifact>,
+        outputs: YakIndexSet<OutputArtifact>,
         action: A,
         associated_value: Option<Value<'v>>,
         error_handler: Option<StarlarkCallable<'v>>,
@@ -692,7 +692,7 @@ impl RecordedAnalysisValues {
         actions: RecordedActions,
     ) -> Self {
         let analysis_storage: OwnedFrozenAnalysisValueStorage =
-            OwnedFrozen::build(Buck2TestHeapName::frozen_heap_name(), |heap| {
+            OwnedFrozen::build(YakTestHeapName::frozen_heap_name(), |heap| {
                 let alloced_tsets: Vec<_> = transitive_sets
                     .iter()
                     .sorted_by_key(|(key, _)| key.index().0)

@@ -11,7 +11,7 @@
 use std::sync::Arc;
 
 use async_trait::async_trait;
-use yak_events::BuckEvent;
+use yak_events::YakEvent;
 
 use crate::console_interaction_stream::ConsoleInteraction;
 use crate::exit_result::ExitResult;
@@ -42,7 +42,7 @@ pub trait EventSubscriber: Send {
     ) -> yak_error::Result<()> {
         Ok(())
     }
-    async fn handle_events(&mut self, _event: &[Arc<BuckEvent>]) -> yak_error::Result<()> {
+    async fn handle_events(&mut self, _event: &[Arc<YakEvent>]) -> yak_error::Result<()> {
         Ok(())
     }
     async fn handle_command_result(

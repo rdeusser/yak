@@ -24,7 +24,7 @@ use tokio::process::Child;
 use tonic::Request;
 use tonic::transport::Channel;
 use yak_core::tag_error;
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 use yak_execute_local::CommandResult;
 use yak_execute_local::decode_command_event_stream;
 use yak_resource_control::ActionFreezeEvent;
@@ -125,7 +125,7 @@ impl ForkserverClient {
             .clone()
             .run(stream)
             .await
-            .buck_error_context("Error dispatching command to Forkserver")?
+            .yak_error_context("Error dispatching command to Forkserver")?
             .into_inner();
         let stream = decode_event_stream(stream);
 

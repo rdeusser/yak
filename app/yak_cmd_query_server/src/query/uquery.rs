@@ -17,7 +17,7 @@ use yak_build_api::query::oneshot::QUERY_FRONTEND;
 use yak_cli_proto::UqueryRequest;
 use yak_cli_proto::UqueryResponse;
 use yak_common::dice::cells::HasCellResolver;
-use yak_error::BuckErrorOptionContext;
+use yak_error::YakErrorOptionContext;
 use yak_node::attrs::display::AttrDisplayWithContext;
 use yak_node::attrs::display::AttrDisplayWithContextExt;
 use yak_node::attrs::fmt_context::AttrFmtContext;

@@ -13,9 +13,9 @@ use std::fmt::Formatter;
 use std::io::Write;
 
 use tokio_stream::StreamExt;
-use yak_client_ctx::client_ctx::BuckSubcommand;
+use yak_client_ctx::client_ctx::YakSubcommand;
 use yak_client_ctx::client_ctx::ClientCommandContext;
-use yak_client_ctx::common::BuckArgMatches;
+use yak_client_ctx::common::YakArgMatches;
 use yak_client_ctx::event_log_options::EventLogOptions;
 use yak_client_ctx::events_ctx::EventsCtx;
 use yak_client_ctx::exit_result::ClientIoError;
@@ -24,7 +24,7 @@ use yak_data::ReUploadMetrics;
 use yak_event_log::stream_value::StreamValue;
 use yak_event_observer::display;
 use yak_event_observer::display::TargetDisplayOptions;
-use yak_hash::BuckMutMap;
+use yak_hash::YakMutMap;
 
 use crate::LogCommandOutputFormat;
 use crate::LogCommandOutputFormatWithWriter;
@@ -79,7 +79,7 @@ impl Display for ExtensionRecord {
 }
 
 fn get_action_record(
-    state: &BuckMutMap<u64, yak_data::ActionExecutionStart>,
+    state: &YakMutMap<u64, yak_data::ActionExecutionStart>,
     upload: &ReUploadEvent,
 ) -> ActionRecord {
     let digests_uploaded = upload.inner.digests_uploaded.unwrap_or_default();
@@ -120,7 +120,7 @@ fn print_uploads(
 
 fn print_extension_stats(
     output: &mut LogCommandOutputFormatWithWriter,
-    stats_by_extension: &BuckMutMap<String, ReUploadMetrics>,
+    stats_by_extension: &YakMutMap<String, ReUploadMetrics>,
 ) -> Result<(), ClientIoError> {
     let mut records: Vec<ExtensionRecord> = stats_by_extension
         .iter()
@@ -152,12 +152,12 @@ struct ReUploadEvent<'a> {
     pub inner: &'a yak_data::ReUploadEnd,
 }
 
-impl BuckSubcommand for WhatUploadedCommand {
+impl YakSubcommand for WhatUploadedCommand {
     const COMMAND_NAME: &'static str = "log-what-uploaded";
 
     async fn exec_impl(
         self,
-        _matches: BuckArgMatches<'_>,
+        _matches: YakArgMatches<'_>,
         ctx: ClientCommandContext<'_>,
         _events_ctx: &mut EventsCtx,
     ) -> ExitResult {
@@ -179,20 +179,20 @@ impl BuckSubcommand for WhatUploadedCommand {
 
             let mut total_digests_uploaded = 0;
             let mut total_bytes_uploaded = 0;
-            let mut state = BuckMutMap::default();
-            let mut stats_by_extension: BuckMutMap<String, ReUploadMetrics> = BuckMutMap::default();
+            let mut state = YakMutMap::default();
+            let mut stats_by_extension: YakMutMap<String, ReUploadMetrics> = YakMutMap::default();
             while let Some(event) = events.try_next().await? {
                 match event {
                     // Insert parent span information so we can refer back to it later.
                     StreamValue::Event(event) => {
-                        if let Some(yak_data::buck_event::Data::SpanStart(start)) = &event.data
+                        if let Some(yak_data::yak_event::Data::SpanStart(start)) = &event.data
                             && let Some(yak_data::span_start_event::Data::ActionExecution(action)) =
                                 &start.data
                         {
                             state.insert(event.span_id, action.clone());
                         }
 
-                        if let Some(yak_data::buck_event::Data::SpanEnd(end)) = &event.data
+                        if let Some(yak_data::yak_event::Data::SpanEnd(end)) = &event.data
                             && let Some(yak_data::span_end_event::Data::ReUpload(u)) =
                                 end.data.as_ref()
                         {

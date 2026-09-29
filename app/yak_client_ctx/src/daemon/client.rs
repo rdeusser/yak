@@ -30,7 +30,7 @@ use yak_cli_proto::new_generic::NewGenericResponse;
 use yak_cli_proto::*;
 use yak_common::daemon_dir::DaemonDir;
 use yak_data::error::ErrorTag;
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 use yak_event_log::stream_value::StreamValue;
 use yak_fs::error::IoResultExt;
 use yak_fs::fs_util;
@@ -40,7 +40,7 @@ use yak_wrapper_common::YAKD_LIFECYCLE;
 
 use crate::command_outcome::CommandOutcome;
 use crate::console_interaction_stream::ConsoleInteractionStream;
-use crate::daemon::client::connect::BuckAddAuthTokenInterceptor;
+use crate::daemon::client::connect::YakAddAuthTokenInterceptor;
 use crate::events_ctx::DaemonEventsCtx;
 use crate::events_ctx::EventsCtx;
 use crate::events_ctx::PartialResultCtx;
@@ -60,16 +60,16 @@ enum LifecycleError {
 
 /// We need to make sure that all calls to the daemon in yakd flush the tailers after completion.
 /// The connector wraps all yakd calls with flushing.
-pub struct BuckdClientConnector {
-    client: BuckdClient,
+pub struct YakdClientConnector {
+    client: YakdClient,
     pub(crate) daemon_pid: i64,
-    pub(crate) cgroup_path_of_buck2_daemon: Option<String>,
+    pub(crate) cgroup_path_of_yak_daemon: Option<String>,
     pub(crate) daemon_start_instant: Option<Instant>,
 }
 
-impl BuckdClientConnector {
-    pub fn with_flushing(&mut self) -> FlushingBuckdClient<'_> {
-        FlushingBuckdClient {
+impl YakdClientConnector {
+    pub fn with_flushing(&mut self) -> FlushingYakdClient<'_> {
+        FlushingYakdClient {
             inner: &mut self.client,
         }
     }
@@ -79,30 +79,30 @@ impl BuckdClientConnector {
     }
 }
 
-pub struct BuckdLifecycleLock {
+pub struct YakdLifecycleLock {
     daemon_dir: DaemonDir,
     lock_file: File,
 }
 
 #[derive(Debug, yak_error::Error)]
-#[yak(tag = BuckdLifecycleLock)]
+#[yak(tag = YakdLifecycleLock)]
 #[error("Error locking yakd.lifecycle: {error:#}")]
 pub struct LifecycleLockError {
     #[source]
     error: yak_error::Error,
 }
 
-impl BuckdLifecycleLock {
-    const BUCKD_PREV_DIR: &'static str = "prev";
+impl YakdLifecycleLock {
+    const YAKD_PREV_DIR: &'static str = "prev";
 
     pub async fn lock_with_timeout(
         daemon_dir: DaemonDir,
         deadline: StartupDeadline,
-    ) -> Result<BuckdLifecycleLock, LifecycleLockError> {
+    ) -> Result<YakdLifecycleLock, LifecycleLockError> {
         async fn lock_inner(
             daemon_dir: DaemonDir,
             deadline: StartupDeadline,
-        ) -> yak_error::Result<BuckdLifecycleLock> {
+        ) -> yak_error::Result<YakdLifecycleLock> {
             create_dir_all(&daemon_dir.path)?;
             let lifecycle_path = daemon_dir.path.as_path().join(YAKD_LIFECYCLE);
             let file = File::create(lifecycle_path)?;
@@ -118,7 +118,7 @@ impl BuckdLifecycleLock {
                 )
                 .await?;
 
-            Ok(BuckdLifecycleLock {
+            Ok(YakdLifecycleLock {
                 lock_file: file,
                 daemon_dir,
             })
@@ -135,7 +135,7 @@ impl BuckdLifecycleLock {
         let prev_daemon_dir = self
             .daemon_dir
             .path
-            .join(FileName::new(Self::BUCKD_PREV_DIR).unwrap());
+            .join(FileName::new(Self::YAKD_PREV_DIR).unwrap());
         if keep_prev {
             if prev_daemon_dir.is_dir() {
                 fs_util::remove_dir_all(&prev_daemon_dir).categorize_internal()?;
@@ -151,7 +151,7 @@ impl BuckdLifecycleLock {
                 continue;
             }
             if keep_prev {
-                if p.file_name() != Self::BUCKD_PREV_DIR {
+                if p.file_name() != Self::YAKD_PREV_DIR {
                     let file_name = p.file_name();
                     let file_name = FileName::from_os_string(&file_name)?;
                     fs_util::rename(p.path(), prev_daemon_dir.join(file_name))
@@ -173,7 +173,7 @@ impl BuckdLifecycleLock {
     }
 }
 
-impl Drop for BuckdLifecycleLock {
+impl Drop for YakdLifecycleLock {
     fn drop(&mut self) {
         self.lock_file
             .unlock()
@@ -185,8 +185,8 @@ impl Drop for BuckdLifecycleLock {
 /// some of the complexity/verbosity of making calls with that. For example, the user
 /// doesn't need to deal with tonic::Response/Request and this may provide functions
 /// that take more primitive types than the protobuf structure itself.
-pub struct BuckdClient {
-    client: DaemonApiClient<InterceptedService<Channel, BuckAddAuthTokenInterceptor>>,
+pub struct YakdClient {
+    client: DaemonApiClient<InterceptedService<Channel, YakAddAuthTokenInterceptor>>,
     constraints: yak_cli_proto::DaemonConstraints,
     pub(crate) daemon_dir: DaemonDir,
 }
@@ -255,7 +255,7 @@ fn grpc_to_stream(
     .right_stream()
 }
 
-impl BuckdClient {
+impl YakdClient {
     /// Some commands stream events back from the server.
     /// For these commands, we want to be able to manipulate CLI state.
     async fn stream<'i, 'j, T, Res, Handler, Command>(
@@ -268,7 +268,7 @@ impl BuckdClient {
     ) -> yak_error::Result<CommandOutcome<Res>>
     where
         Command: for<'b> FnOnce(
-            &'b mut DaemonApiClient<InterceptedService<Channel, BuckAddAuthTokenInterceptor>>,
+            &'b mut DaemonApiClient<InterceptedService<Channel, YakAddAuthTokenInterceptor>>,
             Request<T>,
         ) -> BoxFuture<
             'b,
@@ -282,7 +282,7 @@ impl BuckdClient {
         let response = command(client, Request::new(request))
             .await
             .map_err(tonic_status_to_error)
-            .buck_error_context("Error dispatching request");
+            .yak_error_context("Error dispatching request");
         let stream = grpc_to_stream(response);
         pin_mut!(stream);
         events_ctx
@@ -326,8 +326,8 @@ impl BuckdClient {
     }
 }
 
-pub struct FlushingBuckdClient<'a> {
-    inner: &'a mut BuckdClient,
+pub struct FlushingYakdClient<'a> {
+    inner: &'a mut YakdClient,
 }
 
 pub enum NoPartialResult {}
@@ -479,7 +479,7 @@ macro_rules! debug_method {
     };
 }
 
-/// Wrap a method that exists on the BuckdClient, with flushing.
+/// Wrap a method that exists on the YakdClient, with flushing.
 macro_rules! wrap_method {
     ($method: ident ($($param: ident : $param_type: ty),*), $res: ty) => {
         pub async fn $method(&mut self, events_ctx: &mut EventsCtx, $($param: $param_type)*) -> yak_error::Result<$res> {
@@ -494,7 +494,7 @@ macro_rules! wrap_method {
     };
  }
 
-impl FlushingBuckdClient<'_> {
+impl FlushingYakdClient<'_> {
     stream_method!(
         aquery,
         AqueryRequest,
@@ -644,7 +644,7 @@ impl FlushingBuckdClient<'_> {
         stdin: Option<ConsoleInteractionStream<'_>>,
     ) -> yak_error::Result<CommandOutcome<NewGenericResponse>> {
         let req = serde_json::to_string(&req)
-            .buck_error_context("Could not serialize `NewGenericRequest`")?;
+            .yak_error_context("Could not serialize `NewGenericRequest`")?;
         let req = yak_cli_proto::NewGenericRequestMessage {
             context: Some(context),
             new_generic_request: req,
@@ -655,7 +655,7 @@ impl FlushingBuckdClient<'_> {
         match command_outcome {
             CommandOutcome::Success(resp) => {
                 let resp = serde_json::from_str(&resp.new_generic_response)
-                    .buck_error_context("Could not deserialize `NewGenericResponse`")?;
+                    .yak_error_context("Could not deserialize `NewGenericResponse`")?;
                 Ok(CommandOutcome::Success(resp))
             }
             CommandOutcome::Failure(code) => Ok(CommandOutcome::Failure(code)),
@@ -689,8 +689,8 @@ mod tests {
     use super::*;
     use crate::startup_deadline::StartupDeadline;
 
-    async fn try_lock(dir: &DaemonDir, timeout: Duration) -> Option<BuckdLifecycleLock> {
-        BuckdLifecycleLock::lock_with_timeout(
+    async fn try_lock(dir: &DaemonDir, timeout: Duration) -> Option<YakdLifecycleLock> {
+        YakdLifecycleLock::lock_with_timeout(
             dir.clone(),
             StartupDeadline::duration_from_now(timeout).unwrap(),
         )

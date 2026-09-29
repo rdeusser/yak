@@ -15,9 +15,9 @@ use std::time::Duration;
 use std::time::SystemTime;
 
 use tokio_stream::StreamExt;
-use yak_client_ctx::client_ctx::BuckSubcommand;
+use yak_client_ctx::client_ctx::YakSubcommand;
 use yak_client_ctx::client_ctx::ClientCommandContext;
-use yak_client_ctx::common::BuckArgMatches;
+use yak_client_ctx::common::YakArgMatches;
 use yak_client_ctx::event_log_options::EventLogOptions;
 use yak_client_ctx::events_ctx::EventsCtx;
 use yak_client_ctx::exit_result::ExitResult;
@@ -59,9 +59,9 @@ struct Stats {
 }
 
 impl Stats {
-    fn update_with_event(&mut self, event: &yak_data::BuckEvent) {
+    fn update_with_event(&mut self, event: &yak_data::YakEvent) {
         match &event.data {
-            Some(yak_data::buck_event::Data::SpanEnd(end)) => match end.data.as_ref() {
+            Some(yak_data::yak_event::Data::SpanEnd(end)) => match end.data.as_ref() {
                 Some(yak_data::span_end_event::Data::ReUpload(data)) => {
                     self.total_bytes_uploaded += data.bytes_uploaded.unwrap_or_default();
                 }
@@ -85,7 +85,7 @@ impl Stats {
                 }
                 _ => {}
             },
-            Some(yak_data::buck_event::Data::Instant(instant_event)) => {
+            Some(yak_data::yak_event::Data::Instant(instant_event)) => {
                 match instant_event.data.as_ref() {
                     Some(yak_data::instant_event::Data::Snapshot(snapshot)) => {
                         self.peak_process_memory_bytes =
@@ -137,7 +137,7 @@ impl Stats {
     }
 }
 
-fn get_event_timestamp(event: &yak_data::BuckEvent) -> Option<SystemTime> {
+fn get_event_timestamp(event: &yak_data::YakEvent) -> Option<SystemTime> {
     SystemTime::try_from(event.timestamp?).ok()
 }
 
@@ -313,12 +313,12 @@ pub struct SummaryCommand {
     event_log: EventLogOptions,
 }
 
-impl BuckSubcommand for SummaryCommand {
+impl YakSubcommand for SummaryCommand {
     const COMMAND_NAME: &'static str = "log-summary";
 
     async fn exec_impl(
         self,
-        _matches: BuckArgMatches<'_>,
+        _matches: YakArgMatches<'_>,
         ctx: ClientCommandContext<'_>,
         _events_ctx: &mut EventsCtx,
     ) -> ExitResult {

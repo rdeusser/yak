@@ -15,7 +15,7 @@ use starlark::environment::Module;
 use starlark::eval::Evaluator;
 use starlark::syntax::AstModule;
 use starlark::values::Value;
-use yak_common::legacy_configs::configs::LegacyBuckConfig;
+use yak_common::legacy_configs::configs::LegacyYakConfig;
 use yak_common::package_listing::listing::PackageListing;
 use yak_common::package_listing::listing::testing::PackageListingExt;
 use yak_core::bzl::ImportPath;
@@ -33,7 +33,7 @@ use yak_interpreter::file_type::StarlarkFileType;
 use yak_node::attrs::coercion_context::AttrCoercionContext;
 
 use crate::attrs::coerce::ctx::BuildAttrCoercionContext;
-use crate::interpreter::buckconfig::LegacyConfigsViewForStarlark;
+use crate::interpreter::yakconfig::LegacyConfigsViewForStarlark;
 use crate::interpreter::build_context::BuildContext;
 use crate::interpreter::build_context::PerFileTypeContext;
 use crate::interpreter::bzl_eval_ctx::BzlEvalCtx;
@@ -96,14 +96,14 @@ pub fn to_value<'v>(env: &Module<'v>, globals: &Globals, content: &str) -> Value
     )
     .unwrap();
 
-    let mut buckconfigs =
-        LegacyConfigsViewForStarlark::new(LegacyBuckConfig::empty(), LegacyBuckConfig::empty());
+    let mut yakconfigs =
+        LegacyConfigsViewForStarlark::new(LegacyYakConfig::empty(), LegacyYakConfig::empty());
     let host_platform = InterpreterHostPlatform::Linux;
     let host_architecture = InterpreterHostArchitecture::X86_64;
     let host_info = HostInfo::new(host_platform, host_architecture, None);
     let build_ctx = BuildContext::new(
         &cell_info,
-        &mut buckconfigs,
+        &mut yakconfigs,
         &host_info,
         PerFileTypeContext::Bzl(BzlEvalCtx {
             bzl_path: import_path,

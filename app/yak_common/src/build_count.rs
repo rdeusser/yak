@@ -13,12 +13,12 @@ use std::time::Duration;
 use serde::Deserialize;
 use serde::Serialize;
 use yak_data::ParsedTargetPatterns;
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 use yak_fs::async_fs_util;
 use yak_fs::error::IoResultExt;
 use yak_fs::paths::abs_norm_path::AbsNormPathBuf;
 use yak_fs::paths::file_name::FileName;
-use yak_hash::BuckMutMap;
+use yak_hash::YakMutMap;
 
 use crate::client_utils;
 
@@ -55,19 +55,19 @@ impl BuildCount {
 #[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
 struct BuildCountMap {
     merge_base: String,
-    counts: BuckMutMap<String, BuildCount>,
+    counts: YakMutMap<String, BuildCount>,
 }
 
 impl BuildCountMap {
     fn new(merge_base: String) -> Self {
         Self {
             merge_base,
-            counts: BuckMutMap::default(),
+            counts: YakMutMap::default(),
         }
     }
 
     #[cfg(test)]
-    fn testing_new(counts: BuckMutMap<String, BuildCount>) -> Self {
+    fn testing_new(counts: YakMutMap<String, BuildCount>) -> Self {
         Self {
             merge_base: "testing".to_owned(),
             counts,
@@ -142,7 +142,7 @@ impl BuildCountManager {
             return Ok(None);
         };
         let build_count_map: BuildCountMap = serde_json::from_str(&buffer)
-            .with_buck_error_context(|| {
+            .with_yak_error_context(|| {
                 format!("Parsing JSON from {}", self.file_path.display())
             })?;
         Ok(Some(build_count_map))
@@ -237,13 +237,13 @@ mod tests {
 
     #[test]
     fn test_update_normal_input() -> yak_error::Result<()> {
-        let mut before = BuckMutMap::default();
+        let mut before = YakMutMap::default();
         before.insert("//some:target".to_owned(), BuildCount::new(1, 1));
         before.insert("//some/other:target".to_owned(), BuildCount::new(2, 2));
         let mut bc = BuildCountMap::testing_new(before);
         let target_patterns = make_patterns(vec!["//some/other:target", "//yet/another:target"]);
         bc.increment(&target_patterns, true);
-        let mut expected = BuckMutMap::default();
+        let mut expected = YakMutMap::default();
         expected.insert("//some:target".to_owned(), BuildCount::new(1, 1));
         expected.insert("//some/other:target".to_owned(), BuildCount::new(3, 3));
         expected.insert("//yet/another:target".to_owned(), BuildCount::new(1, 1));
@@ -254,7 +254,7 @@ mod tests {
 
     #[test]
     fn test_update_empty_input() -> yak_error::Result<()> {
-        let mut before = BuckMutMap::default();
+        let mut before = YakMutMap::default();
         before.insert("//some:target".to_owned(), BuildCount::new(1, 1));
         let expected = before.clone();
         let mut bc = BuildCountMap::testing_new(before);
@@ -267,7 +267,7 @@ mod tests {
 
     #[test]
     fn test_min_count_some_value() -> yak_error::Result<()> {
-        let mut data = BuckMutMap::default();
+        let mut data = YakMutMap::default();
         data.insert("//some:target1".to_owned(), BuildCount::new(3, 3));
         data.insert("//some:target2".to_owned(), BuildCount::new(4, 4));
         data.insert("//some:target3".to_owned(), BuildCount::new(5, 5));
@@ -280,7 +280,7 @@ mod tests {
 
     #[test]
     fn test_min_count_ignores_others() -> yak_error::Result<()> {
-        let mut data = BuckMutMap::default();
+        let mut data = YakMutMap::default();
         data.insert("//some:target1".to_owned(), BuildCount::new(3, 3));
         data.insert("//some:target2".to_owned(), BuildCount::new(4, 4));
         data.insert("//some:target3".to_owned(), BuildCount::new(5, 5));
@@ -293,7 +293,7 @@ mod tests {
 
     #[test]
     fn test_min_count_empty_data() -> yak_error::Result<()> {
-        let data = BuckMutMap::default();
+        let data = YakMutMap::default();
         let bc = BuildCountMap::testing_new(data);
         assert_eq!(bc.min_count(&make_patterns(vec![])), BuildCount::new(0, 0));
 
@@ -324,7 +324,7 @@ mod tests {
         )
         .await?;
         let bc = bcm.read_mergebase("testing").await?;
-        let mut expected = BuckMutMap::default();
+        let mut expected = YakMutMap::default();
         expected.insert("//some:target".to_owned(), BuildCount::new(1, 1));
         assert_eq!(bc.counts, expected);
 
@@ -345,7 +345,7 @@ mod tests {
     async fn test_write_normal_input() -> yak_error::Result<()> {
         let temp_dir = tempfile::tempdir()?;
         let bcm = BuildCountManager::new(temp_dir.path().to_path_buf().try_into()?)?;
-        let mut data = BuckMutMap::default();
+        let mut data = YakMutMap::default();
         data.insert("//some:target".to_owned(), BuildCount::new(1, 1));
         bcm.write(&BuildCountMap::testing_new(data)).await?;
         assert_eq!(
@@ -360,7 +360,7 @@ mod tests {
     async fn test_write_empty_input() -> yak_error::Result<()> {
         let temp_dir = tempfile::tempdir()?;
         let bcm = BuildCountManager::new(temp_dir.path().to_path_buf().try_into()?)?;
-        let data = BuckMutMap::default();
+        let data = YakMutMap::default();
         bcm.write(&BuildCountMap::testing_new(data)).await?;
         assert_eq!(
             std::str::from_utf8(&tokio::fs::read(bcm.file_path).await?)?,

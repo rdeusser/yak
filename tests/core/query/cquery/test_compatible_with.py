@@ -8,19 +8,19 @@
 
 import re
 
-from e2e_util.api.buck import Buck
-from e2e_util.buck_workspace import buck_test
+from e2e_util.api.yak import Yak
+from e2e_util.yak_workspace import yak_test
 
 
-@buck_test()
-async def test_compatible_with(buck: Buck) -> None:
+@yak_test()
+async def test_compatible_with(yak: Yak) -> None:
     for good in ["root//:pass", "root//:pass2"]:
-        out = await buck.cquery(good)
+        out = await yak.cquery(good)
         assert re.match(
             "{} \\(.*\\)\n".format(good),
             out.stdout,
         )
 
     for bad in ["root//:fail", "root//:fail2"]:
-        out = await buck.cquery(bad)
+        out = await yak.cquery(bad)
         assert out.stdout == ""

@@ -11,11 +11,11 @@ load("@prelude//python:source_db.bzl", "PythonSourceDBInfo")
 load("@prelude//python:toolchain.bzl", "PythonToolchainInfo")
 load("@prelude//python:typing.bzl", "get_default_sys_platform")
 load("@prelude//python:typing.bzl", "DEFAULT_PY_VERSION")
-load("@prelude//python/sourcedb:filter.bxl", "BUCK_PYTHON_RULE_KINDS")
+load("@prelude//python/sourcedb:filter.bxl", "YAK_PYTHON_RULE_KINDS")
 load("@prelude//utils:utils.bzl", "flatten")
 
 def _is_python_target(rule_type: str) -> bool:
-    for kind in BUCK_PYTHON_RULE_KINDS:
+    for kind in YAK_PYTHON_RULE_KINDS:
         if rule_type.endswith(kind):
             return True
     return False

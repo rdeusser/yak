@@ -6,7 +6,7 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-load("@prelude//utils:buckconfig.bzl", "read_bool")
+load("@prelude//utils:yakconfig.bzl", "read_bool")
 load(":apple_code_signing_types.bzl", "CodeSignConfiguration")
 
 def _read_bool(config: str, default: [None, bool] = None) -> [None, bool]:

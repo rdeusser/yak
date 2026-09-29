@@ -6,13 +6,13 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-from e2e_util.api.buck import Buck
-from e2e_util.buck_workspace import buck_test
+from e2e_util.api.yak import Yak
+from e2e_util.yak_workspace import yak_test
 
 
-@buck_test()
-async def test_projected_output_artifact_write(buck: Buck) -> None:
-    res = await buck.build("root//:write")
+@yak_test()
+async def test_projected_output_artifact_write(yak: Yak) -> None:
+    res = await yak.build("root//:write")
     # TODO(nga): this is a bug: we write into projected artifact, but return original artifact,
     #   and yet here we read from original non-projected artifact.
     assert (
@@ -21,9 +21,9 @@ async def test_projected_output_artifact_write(buck: Buck) -> None:
     )
 
 
-@buck_test()
-async def test_projected_output_artifact_run(buck: Buck) -> None:
-    res = await buck.build("root//:run")
+@yak_test()
+async def test_projected_output_artifact_run(yak: Yak) -> None:
+    res = await yak.build("root//:run")
     assert (
         "hello"
         == (res.get_build_report().output_for_target("root//:run") / "rel").read_text()

@@ -19,7 +19,7 @@ use yak_core::target::configured_target_label::ConfiguredTargetLabel;
 use yak_data::QuickUnstableE2eData;
 use yak_events::dispatch::EventDispatcher;
 use yak_events::span::SpanId;
-use yak_hash::BuckMutMap;
+use yak_hash::YakMutMap;
 
 use crate::BuildInfo;
 use crate::DetailedCriticalPath;
@@ -91,7 +91,7 @@ impl BuildListenerBackend for LoggingBackend {
 
     fn finish(
         self,
-        _anon_target_discovery_edges: BuckMutMap<NodeKey, NodeKey>,
+        _anon_target_discovery_edges: YakMutMap<NodeKey, NodeKey>,
     ) -> Result<BuildInfo, CriticalPathError> {
         Ok(BuildInfo {
             critical_path: DetailedCriticalPath::empty(),

@@ -25,8 +25,8 @@ use yak_core::cells::name::CellName;
 use yak_core::cells::paths::CellRelativePath;
 use yak_core::fs::project_rel_path::ProjectRelativePath;
 use yak_core::fs::project_rel_path::ProjectRelativePathBuf;
-use yak_error::BuckErrorContext;
-use yak_hash::BuckDashMap;
+use yak_error::YakErrorContext;
+use yak_hash::YakDashMap;
 
 use crate::dice::data::HasIoProvider;
 use crate::file_ops::delegate::FileOpsDelegate;
@@ -86,7 +86,7 @@ impl FileOpsDelegate for IoFileOpsDelegate {
             .get_io_provider()
             .read_dir(project_path.clone())
             .await
-            .with_buck_error_context(|| format!("Error listing dir `{path}`"))?;
+            .with_yak_error_context(|| format!("Error listing dir `{path}`"))?;
 
         // Make sure entries are deterministic, since read_dir isn't.
         entries.sort_by(|a, b| a.file_name.cmp(&b.file_name));
@@ -108,7 +108,7 @@ impl FileOpsDelegate for IoFileOpsDelegate {
             .get_io_provider()
             .read_path_metadata_if_exists(project_path)
             .await
-            .with_buck_error_context(|| format!("Error accessing metadata for path `{path}`"))?;
+            .with_yak_error_context(|| format!("Error accessing metadata for path `{path}`"))?;
         Ok(res.map(|meta| meta.map(|path| Arc::new(self.get_cell_path(&path)))))
     }
 
@@ -134,7 +134,7 @@ impl FileOpsDelegate for IoFileOpsDelegate {
     }
 }
 
-struct ReadDirCache(BuckDashMap<ProjectRelativePathBuf, Arc<[RawDirEntry]>>);
+struct ReadDirCache(YakDashMap<ProjectRelativePathBuf, Arc<[RawDirEntry]>>);
 
 pub fn initialize_read_dir_cache(data: &mut UserComputationData) {
     data.data.set(ReadDirCache(Default::default()));

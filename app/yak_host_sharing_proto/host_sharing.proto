@@ -10,7 +10,7 @@
 
 syntax = "proto3";
 
-package buck.host_sharing;
+package yak.host_sharing;
 
 message HostSharingRequirements {
   reserved 1, 3;

@@ -15,7 +15,7 @@ use dice::DiceTransaction;
 use yak_build_api::actions::query::ActionQueryNode;
 use yak_build_api::query::oneshot::QUERY_FRONTEND;
 use yak_common::dice::cells::HasCellResolver;
-use yak_error::BuckErrorOptionContext;
+use yak_error::YakErrorOptionContext;
 use yak_query::query::environment::AttrFmtOptions;
 use yak_query::query::syntax::simple::eval::values::QueryEvaluationResult;
 use yak_server_ctx::ctx::ServerCommandContextTrait;

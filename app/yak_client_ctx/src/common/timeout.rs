@@ -8,7 +8,7 @@
  * above-listed licenses.
  */
 
-use yak_error::BuckErrorContext as _;
+use yak_error::YakErrorContext as _;
 
 /// Defines common options for options with timeouts
 #[derive(Debug, clap::Parser)]
@@ -44,6 +44,6 @@ impl CommonTimeoutOptions {
                 t.try_into()
             })
             .transpose()
-            .buck_error_context("Invalid `timeout`")
+            .yak_error_context("Invalid `timeout`")
     }
 }

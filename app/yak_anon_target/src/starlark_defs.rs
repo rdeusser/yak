@@ -40,7 +40,7 @@ use yak_build_api::interpreter::rule_defs::artifact::starlark_promise_artifact::
 use yak_build_api::interpreter::rule_defs::context::ANALYSIS_ACTIONS_METHODS_ANON_TARGET;
 use yak_build_api::interpreter::rule_defs::context::AnalysisActions;
 use yak_fs::paths::forward_rel_path::ForwardRelativePathBuf;
-use yak_interpreter::downstream_crate_starlark_defs::REGISTER_BUCK2_ANON_TARGETS_GLOBALS;
+use yak_interpreter::downstream_crate_starlark_defs::REGISTER_YAK_ANON_TARGETS_GLOBALS;
 use yak_interpreter::starlark_promise::StarlarkPromise;
 use yak_interpreter_for_build::rule::FrozenArtifactPromiseMappings;
 use yak_interpreter_for_build::rule::FrozenStarlarkRuleCallable;
@@ -241,7 +241,7 @@ fn anon_targets_methods(builder: &mut MethodsBuilder) {
 pub(crate) fn register_anon_target_types(globals: &mut GlobalsBuilder) {}
 
 pub(crate) fn init_register_anon_target_types() {
-    REGISTER_BUCK2_ANON_TARGETS_GLOBALS.init(register_anon_target_types);
+    REGISTER_YAK_ANON_TARGETS_GLOBALS.init(register_anon_target_types);
 }
 
 #[starlark_module]
@@ -250,7 +250,7 @@ fn analysis_actions_methods_anon_target(builder: &mut MethodsBuilder) {
     /// During analysis, rules can define and access the providers of anonymous targets before producing their own providers.
     /// Two distinct rules might ask for the same anonymous target, sharing the work it performs.
     ///
-    /// For more details see https://rdeusser.github.io/buck2/docs/rule_authors/anon_targets/
+    /// For more details see https://rdeusser.github.io/yak/docs/rule_authors/anon_targets/
     fn anon_target<'v>(
         this: &AnalysisActions<'v>,
         // TODO(nga): this should be either positional or named, not both.

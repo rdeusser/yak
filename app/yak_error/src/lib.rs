@@ -28,17 +28,17 @@ pub mod starlark_error;
 /// A piece of metadata to indicate whether this error is an infra or user error.
 ///
 /// You can attach this to an error by passing it to the [`Error::context`] method. Alternatively,
-/// you can call [`.tag()`](`crate::BuckErrorContext::tag`) on a [`yak_error::Result`][`Result`].
+/// you can call [`.tag()`](`crate::YakErrorContext::tag`) on a [`yak_error::Result`][`Result`].
 ///
 /// The category is fundamentally closed - the expectation is that it will not grow new variants in
 /// the future.
 #[doc(inline)]
 pub use classify::Tier;
-pub use context::BuckErrorContext;
-pub use context::BuckErrorOptionContext;
+pub use context::YakErrorContext;
+pub use context::YakErrorOptionContext;
 pub use context_value::ContextValue;
 pub use context_value::TypedContext;
-pub use conversion::serde::BuckErrorSerde;
+pub use conversion::serde::YakErrorSerde;
 pub use error::DynLateFormat;
 pub use error::Error;
 pub use exit_code::ExitCode;
@@ -57,7 +57,7 @@ pub use yak_data::error::ErrorTag;
 /// Generates an error impl for the type.
 ///
 /// This macro is a drop-in replacement for [`thiserror::Error`]. In the near future, all uses of
-/// `thiserror` in `buck2/app` will be replaced with this macro.
+/// `thiserror` in `yak/app` will be replaced with this macro.
 ///
 /// Currently, the only distinction from `thiserror::Error` is that an additional impl of
 /// `AnyError` is generated for the type, which makes some of the interactions with `yak_error` more

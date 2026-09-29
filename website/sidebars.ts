@@ -40,7 +40,6 @@ export const sidebars: SidebarsConfig = {
       items: [
         'about/why',
         'about/language_support',
-        'about/bootstrapping',
       ],
     },
     {
@@ -129,7 +128,6 @@ export const sidebars: SidebarsConfig = {
               items: [
                 'users/languages/go/overview',
                 'users/languages/go/toolchains',
-                'users/languages/go/third_party_packages',
                 'users/languages/go/gopackagesdriver',
               ],
             },

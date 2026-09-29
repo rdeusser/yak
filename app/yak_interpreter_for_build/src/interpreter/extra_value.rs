@@ -23,9 +23,9 @@ use starlark::values::OwnedFrozen;
 use starlark::values::Trace;
 use starlark::values::ValueTyped;
 use starlark::values::any_complex::StarlarkAnyComplex;
-use yak_error::BuckErrorOptionContext;
+use yak_error::YakErrorOptionContext;
 
-use crate::interpreter::buckconfig::BuckConfigsCache;
+use crate::interpreter::yakconfig::YakConfigsCache;
 use crate::interpreter::package_file_extra::FrozenPackageFileExtra;
 use crate::interpreter::package_file_extra::PackageFileExtra;
 
@@ -42,7 +42,7 @@ pub(crate) struct InterpreterExtraValue<'v> {
     /// Set when evaluating `PACKAGE` files.
     pub(crate) package_extra: OnceCell<PackageFileExtra<'v>>,
     /// What `read_config` has returned so far.
-    pub(crate) buckconfigs: BuckConfigsCache<'v>,
+    pub(crate) yakconfigs: YakConfigsCache<'v>,
 }
 
 #[derive(Debug, ProvidesStaticType, Allocative, StarlarkPagable)]
@@ -58,7 +58,7 @@ impl<'v> Freeze<'v> for InterpreterExtraValue<'v> {
     fn freeze<'fv>(self, freezer: &Freezer<'v, 'fv>) -> FreezeResult<Self::Frozen<'fv>> {
         let InterpreterExtraValue {
             package_extra,
-            buckconfigs: _,
+            yakconfigs: _,
         } = self;
         Ok(FrozenInterpreterExtraValue {
             package_extra: Freeze::freeze(package_extra, freezer)?,

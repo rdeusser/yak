@@ -46,7 +46,7 @@ pub enum RelativeImports<'a> {
     Disallow,
 }
 
-/// Extra options for parsing a load() or load-like path into a `BuckPath`
+/// Extra options for parsing a load() or load-like path into a `YakPath`
 pub struct ParseImportOptions<'a> {
     /// Whether '@' is required at the beginning of the import.
     pub allow_missing_at_symbol: bool,
@@ -83,7 +83,7 @@ pub fn parse_import(
     parse_import_with_config(cell_resolver, import, &opts)
 }
 
-/// Parse import string into a BuckPath, but potentially be more or less flexible with what is
+/// Parse import string into a YakPath, but potentially be more or less flexible with what is
 /// accepted.
 ///
 /// Common use case is e.g. allowing "cell//foo:bar.bzl" to be passed on the command line

@@ -8,18 +8,18 @@
 
 import re
 
-from e2e_util.api.buck import Buck
-from e2e_util.buck_workspace import buck_test
+from e2e_util.api.yak import Yak
+from e2e_util.yak_workspace import yak_test
 
 
 def _replace_hash(s: str) -> str:
     return re.sub(r"\b[0-9a-f]{16}\b", "<HASH>", s)
 
 
-@buck_test(data_dir="deprecated_correct")
-async def test_owner_without_universe_correct(buck: Buck) -> None:
+@yak_test(data_dir="deprecated_correct")
+async def test_owner_without_universe_correct(yak: Yak) -> None:
     # TODO(nga): there should be a warning.
-    result = await buck.cquery(
+    result = await yak.cquery(
         "owner(bin.sh)",
     )
     assert "" == result.stdout
@@ -29,9 +29,9 @@ async def test_owner_without_universe_correct(buck: Buck) -> None:
     )
 
 
-@buck_test(data_dir="deprecated_correct")
-async def test_owner_with_auto_universe_correct(buck: Buck) -> None:
-    result = await buck.cquery(
+@yak_test(data_dir="deprecated_correct")
+async def test_owner_with_auto_universe_correct(yak: Yak) -> None:
+    result = await yak.cquery(
         "deps(//:test) intersect owner(bin.sh)",
     )
     lines = result.stdout.splitlines()

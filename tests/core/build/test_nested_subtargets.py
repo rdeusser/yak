@@ -7,14 +7,14 @@
 # above-listed licenses.
 
 from e2e_util import asserts
-from e2e_util.api.buck import Buck
+from e2e_util.api.yak import Yak
 from e2e_util.asserts import expect_failure
-from e2e_util.buck_workspace import buck_test
+from e2e_util.yak_workspace import yak_test
 
 
-@buck_test()
-async def test_build_nested_subtargets(buck: Buck) -> None:
-    result = await buck.build(
+@yak_test()
+async def test_build_nested_subtargets(yak: Yak) -> None:
+    result = await yak.build(
         "//:nested[sub][nested_sub]",
     )
     build_report = result.get_build_report()
@@ -25,17 +25,17 @@ async def test_build_nested_subtargets(buck: Buck) -> None:
     asserts.assert_not_executable(output)
 
 
-@buck_test()
-async def test_build_nested_subtargets_errors(buck: Buck) -> None:
+@yak_test()
+async def test_build_nested_subtargets_errors(yak: Yak) -> None:
     await expect_failure(
-        buck.build(
+        yak.build(
             "//:nested[bad]",
         ),
         stderr_regex="Available subtargets are.*sub",
     )
 
     await expect_failure(
-        buck.build(
+        yak.build(
             "//:nested[sub][bad]",
         ),
         stderr_regex="Available subtargets are.*nested_sub",

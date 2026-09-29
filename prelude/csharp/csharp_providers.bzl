@@ -42,7 +42,7 @@ def generate_target_tset_children(deps: list[typing.Any], ctx: AnalysisContext) 
                     ctx.actions.tset(DllDepTSet, value = DllReference(reference = dep)),
                 )
             else:
-                # yak target dependency (eg "//buck/path/to:foobar").
+                # yak target dependency (eg "//yak/path/to:foobar").
                 # Adds all of the dependencies of the yak target dependency to the tset.
                 tset_children.append(dep.get(DotNetLibraryInfo).dll_deps)
 

@@ -12,7 +12,7 @@ use std::sync::Arc;
 
 use clap::ArgGroup;
 use yak_client_ctx::client_ctx::ClientCommandContext;
-use yak_client_ctx::common::BuckArgMatches;
+use yak_client_ctx::common::YakArgMatches;
 use yak_client_ctx::events_ctx::EventsCtx;
 use yak_client_ctx::exit_result::ExitResult;
 use yak_core::logging::LogConfigurationReloadHandle;
@@ -46,7 +46,7 @@ pub(crate) struct ForkserverCommand {
 impl ForkserverCommand {
     pub(crate) fn exec(
         self,
-        _matches: BuckArgMatches<'_>,
+        _matches: YakArgMatches<'_>,
         _ctx: ClientCommandContext<'_>,
         events_ctx: &mut EventsCtx,
         log_reload_handle: Arc<dyn LogConfigurationReloadHandle>,

@@ -25,10 +25,10 @@ use yak_error::yak_error;
 use yak_wrapper_common::kill;
 use yak_wrapper_common::pid::Pid;
 
-use crate::daemon::client::BuckdLifecycleLock;
-use crate::daemon::client::connect::BuckAddAuthTokenInterceptor;
-use crate::daemon::client::connect::BuckdProcessInfo;
-use crate::daemon::client::connect::buckd_startup_timeout;
+use crate::daemon::client::YakdLifecycleLock;
+use crate::daemon::client::connect::YakAddAuthTokenInterceptor;
+use crate::daemon::client::connect::YakdProcessInfo;
+use crate::daemon::client::connect::yakd_startup_timeout;
 use crate::startup_deadline::StartupDeadline;
 
 const GRACEFUL_SHUTDOWN_TIMEOUT: Duration = Duration::from_secs(4);
@@ -37,27 +37,27 @@ const KILL_REQUEST_TIMEOUT: Duration = Duration::from_secs(3);
 const FORCE_SHUTDOWN_TIMEOUT: Duration = Duration::from_secs(10);
 
 pub async fn kill_command_impl(
-    lifecycle_lock: &BuckdLifecycleLock,
+    lifecycle_lock: &YakdLifecycleLock,
     reason: &str,
 ) -> yak_error::Result<()> {
-    let process = match BuckdProcessInfo::load(lifecycle_lock.daemon_dir()) {
+    let process = match YakdProcessInfo::load(lifecycle_lock.daemon_dir()) {
         Ok(p) => p,
         Err(e) => {
-            tracing::debug!("No BuckdProcessInfo: {:#}", e);
+            tracing::debug!("No YakdProcessInfo: {:#}", e);
             crate::eprintln!("no yakd server running")?;
             return Ok(());
         }
     };
 
-    let buckd = tokio::time::timeout(buckd_startup_timeout()?, async {
+    let yakd = tokio::time::timeout(yakd_startup_timeout()?, async {
         process.create_channel().await?.upgrade().await
     })
     .await;
 
-    let pid = match buckd {
-        Ok(Ok(mut buckd)) => {
+    let pid = match yakd {
+        Ok(Ok(mut yakd)) => {
             crate::eprintln!("killing yakd server")?;
-            Some(buckd.kill(reason).await?)
+            Some(yakd.kill(reason).await?)
         }
         Ok(Err(e)) => {
             // No time out: we just errored out. This is likely indicative that there is no
@@ -105,7 +105,7 @@ pub async fn kill_command_impl(
 }
 
 pub(crate) async fn kill(
-    client: &mut DaemonApiClient<InterceptedService<Channel, BuckAddAuthTokenInterceptor>>,
+    client: &mut DaemonApiClient<InterceptedService<Channel, YakAddAuthTokenInterceptor>>,
     info: &DaemonProcessInfo,
     reason: &str,
 ) -> yak_error::Result<()> {

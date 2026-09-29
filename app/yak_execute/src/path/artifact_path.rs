@@ -16,7 +16,7 @@ use either::Either;
 use gazebo::cell::ARef;
 use yak_core::content_hash::ContentBasedPathHash;
 use yak_core::fs::artifact_path_resolver::ArtifactFs;
-use yak_core::fs::buck_out_path::BuildArtifactPath;
+use yak_core::fs::yak_out_path::BuildArtifactPath;
 use yak_core::fs::project_rel_path::ProjectRelativePathBuf;
 use yak_core::package::source_path::SourcePathRef;
 use yak_error::ErrorTag;
@@ -41,8 +41,8 @@ impl ArtifactPath<'_> {
         let file_name = match self.projected_path.is_empty() {
             false => self.projected_path,
             true => match self.base_path.as_ref() {
-                Either::Left(buck_out) => buck_out.path(),
-                Either::Right(buck) => buck.path().as_ref(),
+                Either::Left(yak_out) => yak_out.path(),
+                Either::Right(yak) => yak.path().as_ref(),
             },
         }
         .file_name()
@@ -62,8 +62,8 @@ impl ArtifactPath<'_> {
         for<'b> F: FnOnce(&'b ForwardRelativePath) -> T,
     {
         let base_short_path = match self.base_path.as_ref() {
-            Either::Left(buck_out) => buck_out.path(),
-            Either::Right(buck) => buck.path().as_ref(),
+            Either::Left(yak_out) => yak_out.path(),
+            Either::Right(yak) => yak.path().as_ref(),
         };
 
         let path = base_short_path.join_cow(self.projected_path);
@@ -81,12 +81,12 @@ impl ArtifactPath<'_> {
         for<'b> F: FnOnce(&'b ForwardRelativePath) -> T,
     {
         let base_path = match self.base_path.as_ref() {
-            Either::Left(buck_out) => Cow::Borrowed(buck_out.path()),
-            Either::Right(buck) => Cow::Owned(
-                buck.package()
+            Either::Left(yak_out) => Cow::Borrowed(yak_out.path()),
+            Either::Right(yak) => Cow::Owned(
+                yak.package()
                     .cell_relative_path()
                     .as_forward_relative_path()
-                    .join(buck.path()),
+                    .join(yak.path()),
             ),
         };
 
@@ -111,7 +111,7 @@ impl ArtifactPath<'_> {
 
         let base_path = match base_path {
             Either::Left(build) => artifact_fs
-                .buck_out_path_resolver()
+                .yak_out_path_resolver()
                 .resolve_gen(build, content_hash)?,
             Either::Right(source) => artifact_fs.resolve_source(*source)?,
         };
@@ -134,7 +134,7 @@ impl ArtifactPath<'_> {
 
         let base_path = match base_path {
             Either::Left(build) => artifact_fs
-                .buck_out_path_resolver()
+                .yak_out_path_resolver()
                 .resolve_gen_configuration_hash_path(build)?,
             Either::Right(source) => artifact_fs.resolve_source(*source)?,
         };

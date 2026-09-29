@@ -23,7 +23,7 @@ use yak_core::cells::build_file_cell::BuildFileCell;
 use yak_core::cells::cell_path::CellPath;
 use yak_core::cells::cell_path_with_allowed_relative_dir::CellPathWithAllowedRelativeDir;
 use yak_core::cells::name::CellName;
-use yak_hash::BuckMutSet;
+use yak_hash::YakMutSet;
 use yak_interpreter::load_module::InterpreterCalculation;
 use yak_interpreter::parse_import::ParseImportOptions;
 use yak_interpreter::parse_import::RelativeImports;
@@ -76,7 +76,7 @@ fn parse_starlark_paths(
     cell_resolver: &CellAliasResolver,
     current_dir: &CellPath,
     symbol_patterns: &[String],
-) -> yak_error::Result<BuckMutSet<StarlarkFilePath>> {
+) -> yak_error::Result<YakMutSet<StarlarkFilePath>> {
     let parse_options = ParseImportOptions {
         allow_missing_at_symbol: true,
         relative_import_option: RelativeImports::Allow {

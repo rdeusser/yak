@@ -183,7 +183,7 @@ def sanitize_stderr(s: str) -> str:
     # Sanitize daemon process info file paths.
     s = re.sub(
         r"^    Daemon process info from .+:?$",
-        "    Daemon process info from <BUCKD_INFO>",
+        "    Daemon process info from <YAKD_INFO>",
         s,
         flags=re.MULTILINE,
     )

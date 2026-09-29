@@ -10,7 +10,7 @@
 
 use allocative::Allocative;
 use pagable::Pagable;
-use yak_hash::BuckIndexSet;
+use yak_hash::YakIndexSet;
 
 use crate::analysis::registry::RecordedAnalysisValues;
 use crate::artifact_groups::ArtifactGroup;
@@ -36,8 +36,8 @@ impl BxlResult {
         output: Vec<u8>,
         error: Vec<u8>,
         streaming: Vec<u8>,
-        ensured_artifacts: BuckIndexSet<ArtifactGroup>,
-        pending_streaming_outputs: Vec<(BuckIndexSet<ArtifactGroup>, Vec<u8>)>,
+        ensured_artifacts: YakIndexSet<ArtifactGroup>,
+        pending_streaming_outputs: Vec<(YakIndexSet<ArtifactGroup>, Vec<u8>)>,
         analysis_values: RecordedAnalysisValues,
     ) -> Self {
         Self {
@@ -80,16 +80,16 @@ impl BxlResult {
 
 #[derive(Allocative, Debug, Clone, Pagable)]
 pub struct PendingStreamingOutput {
-    waits_on: BuckIndexSet<ArtifactGroup>,
+    waits_on: YakIndexSet<ArtifactGroup>,
     output: Vec<u8>,
 }
 
 impl PendingStreamingOutput {
-    pub fn new(waits_on: BuckIndexSet<ArtifactGroup>, output: Vec<u8>) -> Self {
+    pub fn new(waits_on: YakIndexSet<ArtifactGroup>, output: Vec<u8>) -> Self {
         Self { waits_on, output }
     }
 
-    pub fn waits_on(&self) -> &BuckIndexSet<ArtifactGroup> {
+    pub fn waits_on(&self) -> &YakIndexSet<ArtifactGroup> {
         &self.waits_on
     }
 

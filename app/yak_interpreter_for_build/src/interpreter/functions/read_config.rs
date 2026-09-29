@@ -46,8 +46,8 @@ pub(crate) fn register_read_config(globals: &mut GlobalsBuilder) {
         default: Option<Value<'v>>,
         eval: &mut Evaluator<'v, '_, '_>,
     ) -> starlark::Result<Value<'v>> {
-        let buckconfigs = &BuildContext::from_context(eval)?.buckconfigs;
-        match buckconfigs.current_cell_get(section, key, eval)? {
+        let yakconfigs = &BuildContext::from_context(eval)?.yakconfigs;
+        match yakconfigs.current_cell_get(section, key, eval)? {
             Some(v) => Ok(v.to_value()),
             None => Ok(default.unwrap_or_else(Value::new_none)),
         }
@@ -63,8 +63,8 @@ pub(crate) fn register_read_config(globals: &mut GlobalsBuilder) {
         #[starlark(require = pos, default = NoneOr::None)] default: NoneOr<StringValue<'v>>,
         eval: &mut Evaluator<'v, '_, '_>,
     ) -> starlark::Result<NoneOr<StringValue<'v>>> {
-        let buckconfigs = &BuildContext::from_context(eval)?.buckconfigs;
-        match buckconfigs.root_cell_get(section, key, eval)? {
+        let yakconfigs = &BuildContext::from_context(eval)?.yakconfigs;
+        match yakconfigs.root_cell_get(section, key, eval)? {
             Some(v) => Ok(NoneOr::Other(v)),
             None => Ok(default),
         }

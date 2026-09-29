@@ -8,25 +8,25 @@
 
 import json
 
-from e2e_util.api.buck import Buck
-from e2e_util.buck_workspace import buck_test
+from e2e_util.api.yak import Yak
+from e2e_util.yak_workspace import yak_test
 
 
-@buck_test()
+@yak_test()
 async def test_unconfigured_target_hashing(
-    buck: Buck,
+    yak: Yak,
 ) -> None:
-    await assert_hashes(buck, ":foo", "foo.txt", False)
-    await assert_hashes(buck, ":foo", "bar.txt", True)
-    await assert_hashes(buck, ":foo_dep", "foo.txt", False)
-    await assert_hashes(buck, ":foo_dep", "bar.txt", True)
-    await assert_hashes(buck, ":none", "bar.txt", True)
+    await assert_hashes(yak, ":foo", "foo.txt", False)
+    await assert_hashes(yak, ":foo", "bar.txt", True)
+    await assert_hashes(yak, ":foo_dep", "foo.txt", False)
+    await assert_hashes(yak, ":foo_dep", "bar.txt", True)
+    await assert_hashes(yak, ":none", "bar.txt", True)
 
 
 async def assert_hashes(
-    buck: Buck, target: str, modified_path: str, same_hash: bool
+    yak: Yak, target: str, modified_path: str, same_hash: bool
 ) -> None:
-    result = await buck.targets(
+    result = await yak.targets(
         target,
         "--show-unconfigured-target-hash",
         "--json",
@@ -35,7 +35,7 @@ async def assert_hashes(
         "--target-hash-recursive=true",
     )
 
-    modified_result = await buck.targets(
+    modified_result = await yak.targets(
         target,
         "--show-unconfigured-target-hash",
         "--json",
@@ -50,24 +50,24 @@ async def assert_hashes(
 
     # Hash should change if modified path belongs to target or to any of its dependencies
     if same_hash:
-        assert output[0]["buck.target_hash"] == modified_output[0]["buck.target_hash"]
+        assert output[0]["yak.target_hash"] == modified_output[0]["yak.target_hash"]
     else:
-        assert output[0]["buck.target_hash"] != modified_output[0]["buck.target_hash"]
+        assert output[0]["yak.target_hash"] != modified_output[0]["yak.target_hash"]
 
 
-@buck_test()
-async def test_cfg_modifiers_change_target_hash(buck: Buck) -> None:
-    result = await buck.targets(
+@yak_test()
+async def test_cfg_modifiers_change_target_hash(yak: Yak) -> None:
+    result = await yak.targets(
         ":foo",
         "--show-unconfigured-target-hash",
         "--target-hash-recursive=false",
         "--json",
     )
 
-    with open(buck.cwd / "PACKAGE", "w") as package:
+    with open(yak.cwd / "PACKAGE", "w") as package:
         package.write("set_modifiers(['aaabbbccc'])")
 
-    modified_result = await buck.targets(
+    modified_result = await yak.targets(
         ":foo",
         "--show-unconfigured-target-hash",
         "--target-hash-recursive=false",
@@ -77,12 +77,12 @@ async def test_cfg_modifiers_change_target_hash(buck: Buck) -> None:
     modified_output = json.loads(modified_result.stdout)
 
     # modifiers should change target hash
-    assert output[0]["buck.target_hash"] != modified_output[0]["buck.target_hash"]
+    assert output[0]["yak.target_hash"] != modified_output[0]["yak.target_hash"]
 
 
-@buck_test()
-async def test_visibility_cap_change_target_hash(buck: Buck) -> None:
-    result = await buck.targets(
+@yak_test()
+async def test_visibility_cap_change_target_hash(yak: Yak) -> None:
+    result = await yak.targets(
         ":public_lib",
         "--show-unconfigured-target-hash",
         "--target-hash-recursive=false",
@@ -93,12 +93,12 @@ async def test_visibility_cap_change_target_hash(buck: Buck) -> None:
     # without touching the target's `visibility` attribute (here `PUBLIC`), so
     # without hashing the cap this change would be invisible to the target hash
     # and thus to target determination.
-    with open(buck.cwd / "PACKAGE", "w") as package:
+    with open(yak.cwd / "PACKAGE", "w") as package:
         package.write(
             'package(visibility = ["//foo/..."])\nenforce_visibility_intersection()\n'
         )
 
-    modified_result = await buck.targets(
+    modified_result = await yak.targets(
         ":public_lib",
         "--show-unconfigured-target-hash",
         "--target-hash-recursive=false",
@@ -107,22 +107,22 @@ async def test_visibility_cap_change_target_hash(buck: Buck) -> None:
     output = json.loads(result.stdout)
     modified_output = json.loads(modified_result.stdout)
 
-    assert output[0]["buck.target_hash"] != modified_output[0]["buck.target_hash"]
+    assert output[0]["yak.target_hash"] != modified_output[0]["yak.target_hash"]
 
 
-@buck_test()
-async def test_parent_cfg_modifiers_change_target_hash(buck: Buck) -> None:
-    result = await buck.targets(
+@yak_test()
+async def test_parent_cfg_modifiers_change_target_hash(yak: Yak) -> None:
+    result = await yak.targets(
         "foo:bar",
         "--show-unconfigured-target-hash",
         "--target-hash-recursive=false",
         "--json",
     )
 
-    with open(buck.cwd / "PACKAGE", "w") as package:
+    with open(yak.cwd / "PACKAGE", "w") as package:
         package.write("set_modifiers(['aaabbbccc'])")
 
-    modified_result = await buck.targets(
+    modified_result = await yak.targets(
         "foo:bar",
         "--show-unconfigured-target-hash",
         "--target-hash-recursive=false",
@@ -133,4 +133,4 @@ async def test_parent_cfg_modifiers_change_target_hash(buck: Buck) -> None:
 
     # parent set_modifiers value should change target hash
     # note that we merge parent modifiers and current package modifiers
-    assert output[0]["buck.target_hash"] != modified_output[0]["buck.target_hash"]
+    assert output[0]["yak.target_hash"] != modified_output[0]["yak.target_hash"]

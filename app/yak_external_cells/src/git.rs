@@ -41,11 +41,11 @@ use yak_core::cells::external::ExternalCellOrigin;
 use yak_core::cells::external::GitCellSetup;
 use yak_core::cells::name::CellName;
 use yak_core::cells::paths::CellRelativePath;
-use yak_core::fs::buck_out_path::BuckOutPathResolver;
+use yak_core::fs::yak_out_path::YakOutPathResolver;
 use yak_core::fs::project_rel_path::ProjectRelativePath;
 use yak_core::fs::project_rel_path::ProjectRelativePathBuf;
 use yak_directory::directory::directory::Directory;
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 use yak_error::internal_error;
 use yak_execute::artifact_value::ArtifactValue;
 use yak_execute::digest_config::HasDigestConfig;
@@ -60,7 +60,7 @@ use yak_execute::materialize::materializer::Materializer;
 use yak_fs::fs_util;
 use yak_fs::paths::abs_norm_path::AbsNormPath;
 use yak_fs::paths::forward_rel_path::ForwardRelativePath;
-use yak_hash::BuckMutMap;
+use yak_hash::YakMutMap;
 use yak_util::process::background_command;
 
 #[derive(yak_error::Error, Debug)]
@@ -133,7 +133,7 @@ impl IoRequest for GitFetchIoRequest {
                 .stderr(Stdio::piped())
                 .stdout(Stdio::null())
                 .output()
-                .buck_error_context("Could not run git to fetch external cell")?;
+                .yak_error_context("Could not run git to fetch external cell")?;
 
             if !output.status.success() {
                 return Err(GitError::Unsuccessful {
@@ -248,7 +248,7 @@ async fn download_and_materialize(
 
     // A map of commit hashes to semaphores that are actually condvars which protect access to the
     // directory associated with that commit
-    static DIRECTORY_LICENSES: OnceLock<Mutex<BuckMutMap<Arc<str>, Arc<Semaphore>>>> =
+    static DIRECTORY_LICENSES: OnceLock<Mutex<YakMutMap<Arc<str>, Arc<Semaphore>>>> =
         OnceLock::new();
 
     // We have to write this in a slightly funny way to convince the compiler that there's no
@@ -308,7 +308,7 @@ async fn download_and_materialize(
 
 #[derive(allocative::Allocative, Pagable)]
 pub(crate) struct GitFileOpsDelegate {
-    buck_out_resolver: BuckOutPathResolver,
+    yak_out_resolver: YakOutPathResolver,
     cell: CellName,
     setup: GitCellSetup,
     // The fs accesses in this code are sort of a mix between source file accesses and yak-out
@@ -318,7 +318,7 @@ pub(crate) struct GitFileOpsDelegate {
 
 impl GitFileOpsDelegate {
     fn resolve(&self, path: &CellRelativePath) -> ProjectRelativePathBuf {
-        self.buck_out_resolver
+        self.yak_out_resolver
             .resolve_external_cell_source(path, ExternalCellOrigin::Git(self.setup.dupe()))
     }
 
@@ -350,7 +350,7 @@ impl FileOpsDelegate for GitFileOpsDelegate {
         let mut entries = (&self.io as &dyn IoProvider)
             .read_dir(project_path)
             .await
-            .with_buck_error_context(|| format!("Error listing dir `{path}`"))?;
+            .with_yak_error_context(|| format!("Error listing dir `{path}`"))?;
 
         // Make sure entries are deterministic, since read_dir isn't.
         entries.sort_by(|a, b| a.file_name.cmp(&b.file_name));
@@ -368,7 +368,7 @@ impl FileOpsDelegate for GitFileOpsDelegate {
         let Some(metadata) = (&self.io as &dyn IoProvider)
             .read_path_metadata_if_exists(project_path)
             .await
-            .with_buck_error_context(|| format!("Error accessing metadata for path `{path}`"))?
+            .with_yak_error_context(|| format!("Error accessing metadata for path `{path}`"))?
         else {
             return Ok(None);
         };
@@ -420,7 +420,7 @@ pub(crate) async fn get_file_ops_delegate(
         ) -> Self::Value {
             let artifact_fs = ctx.get_artifact_fs().await?;
             let ops = GitFileOpsDelegate {
-                buck_out_resolver: artifact_fs.buck_out_path_resolver().clone(),
+                yak_out_resolver: artifact_fs.yak_out_path_resolver().clone(),
                 cell: self.0,
                 setup: self.1.dupe(),
                 io: FsIoProvider::new(

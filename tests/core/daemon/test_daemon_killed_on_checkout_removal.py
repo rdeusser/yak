@@ -15,8 +15,8 @@ import shutil
 import subprocess
 from pathlib import Path
 
-from e2e_util.api.buck import Buck
-from e2e_util.buck_workspace import buck_test, env
+from e2e_util.api.yak import Yak
+from e2e_util.yak_workspace import yak_test, env
 from e2e_util.helper.golden import golden, sanitize_daemon_stderr
 
 
@@ -44,19 +44,19 @@ def _get_process_name(pid: int) -> str | None:
     return result.stdout.strip() or None
 
 
-@buck_test(skip_final_kill=True)
+@yak_test(skip_final_kill=True)
 @env("YAK_TESTING_CHECKER_INTERVAL_SECONDS", "1")
-async def test_daemon_killed_on_checkout_removal(buck: Buck) -> None:
+async def test_daemon_killed_on_checkout_removal(yak: Yak) -> None:
     # Start the daemon and capture its PID and daemon dir before removal.
-    await buck.server()
+    await yak.server()
 
-    status = json.loads((await buck.status()).stdout)
+    status = json.loads((await yak.status()).stdout)
     pid = status["process_info"]["pid"]
     process_name = _get_process_name(pid)
     assert process_name is not None, f"Could not find daemon process {pid}"
-    daemon_dir = await buck.get_daemon_dir()
+    daemon_dir = await yak.get_daemon_dir()
 
-    project_dir = Path(buck.cwd)
+    project_dir = Path(yak.cwd)
     shutil.rmtree(project_dir)
 
     # Wait for the daemon to detect the missing project root and shut down.

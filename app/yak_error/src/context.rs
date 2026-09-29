@@ -18,22 +18,22 @@ use crate::context_value::TypedContext;
 /// Provides the `context` method for `Result`.
 ///
 /// This trait is analogous to the `anyhow::Context` trait. It is mostly a drop-in replacement, and
-/// in the near future, uses of `anyhow::Context` in `buck2/app` will be broadly replaced with use
+/// in the near future, uses of `anyhow::Context` in `yak/app` will be broadly replaced with use
 /// of this trait. Subsequently, additional APIs will be provided for annotating errors with
 /// structured context data.
-pub trait BuckErrorContext<T>: Sealed {
+pub trait YakErrorContext<T>: Sealed {
     #[track_caller]
-    fn buck_error_context<C: Into<ContextValue>>(self, context: C) -> crate::Result<T>;
+    fn yak_error_context<C: Into<ContextValue>>(self, context: C) -> crate::Result<T>;
 
     #[track_caller]
-    fn with_buck_error_context<C, F>(self, f: F) -> crate::Result<T>
+    fn with_yak_error_context<C, F>(self, f: F) -> crate::Result<T>
     where
         C: Into<ContextValue>,
         F: FnOnce() -> C;
 
     #[track_caller]
     fn tag(self, tag: crate::ErrorTag) -> crate::Result<T> {
-        self.buck_error_context(ContextValue::Tags(smallvec![tag]))
+        self.yak_error_context(ContextValue::Tags(smallvec![tag]))
     }
 
     #[track_caller]
@@ -46,7 +46,7 @@ pub trait BuckErrorContext<T>: Sealed {
     where
         F: FnOnce() -> String,
     {
-        self.with_buck_error_context(|| format!("{} (internal error)", f()))
+        self.with_yak_error_context(|| format!("{} (internal error)", f()))
             .tag(crate::ErrorTag::InternalError)
     }
 
@@ -69,11 +69,11 @@ pub trait Sealed: Sized {}
 
 impl<T, E> Sealed for std::result::Result<T, E> where crate::Error: From<E> {}
 
-impl<T, E> BuckErrorContext<T> for std::result::Result<T, E>
+impl<T, E> YakErrorContext<T> for std::result::Result<T, E>
 where
     crate::Error: From<E>,
 {
-    fn buck_error_context<C>(self, c: C) -> crate::Result<T>
+    fn yak_error_context<C>(self, c: C) -> crate::Result<T>
     where
         C: Into<ContextValue>,
     {
@@ -83,7 +83,7 @@ where
         }
     }
 
-    fn with_buck_error_context<C, F>(self, f: F) -> crate::Result<T>
+    fn with_yak_error_context<C, F>(self, f: F) -> crate::Result<T>
     where
         C: Into<ContextValue>,
         F: FnOnce() -> C,
@@ -114,10 +114,10 @@ where
 }
 
 /// Provides `internal_error` for `Option`, turning an unexpected `None` into a tagged internal
-/// error. `Option` deliberately gets only this subset of [`BuckErrorContext`]: there is no
+/// error. `Option` deliberately gets only this subset of [`YakErrorContext`]: there is no
 /// underlying error to wrap, so the general context methods would have to synthesize a root
 /// error out of an arbitrary `ContextValue`.
-pub trait BuckErrorOptionContext<T>: Sealed {
+pub trait YakErrorOptionContext<T>: Sealed {
     #[track_caller]
     fn internal_error(self, message: &str) -> crate::Result<T> {
         self.with_internal_error(|| message.to_owned())
@@ -131,7 +131,7 @@ pub trait BuckErrorOptionContext<T>: Sealed {
 
 impl<T> Sealed for Option<T> {}
 
-impl<T> BuckErrorOptionContext<T> for Option<T> {
+impl<T> YakErrorOptionContext<T> for Option<T> {
     #[track_caller]
     fn with_internal_error<F>(self, f: F) -> crate::Result<T>
     where

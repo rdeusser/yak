@@ -29,21 +29,21 @@ use yak_execute::materialize::materializer::CasDownloadInfo;
 use yak_execute::re::manager::UnconfiguredRemoteExecutionClient;
 use yak_fs::async_fs_util::spawn_blocking;
 use yak_fs::paths::abs_path::AbsPathBuf;
-use yak_hash::BuckMutSet;
+use yak_hash::YakMutSet;
 use yak_test_api::data::RemoteStorageConfig;
 
 type CacheKey = TDigest;
 
 pub struct ReClientWithCache {
     client: UnconfiguredRemoteExecutionClient,
-    cache: Mutex<BuckMutSet<Arc<CacheKey>>>,
+    cache: Mutex<YakMutSet<Arc<CacheKey>>>,
 }
 
 impl ReClientWithCache {
     pub fn new(client: UnconfiguredRemoteExecutionClient) -> Self {
         Self {
             client,
-            cache: Mutex::new(BuckMutSet::default()),
+            cache: Mutex::new(YakMutSet::default()),
         }
     }
 

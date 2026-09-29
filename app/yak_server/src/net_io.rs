@@ -29,9 +29,9 @@ mod collector {
 
     use dupe::Dupe;
     use psutil::network::NetIoCountersCollector;
-    use yak_error::BuckErrorContext;
+    use yak_error::YakErrorContext;
     use yak_error::conversion::from_any_with_tag;
-    use yak_hash::BuckMutMap;
+    use yak_hash::YakMutMap;
 
     use super::*;
 
@@ -54,12 +54,12 @@ mod collector {
         /// * If a new NIC appears between collection periods, we'll start keeping
         ///   track of it.
         /// * If a NIC *disappears*, then we stop reporting on its stats.
-        pub fn collect(&self) -> yak_error::Result<Option<BuckMutMap<String, NetworkStat>>> {
+        pub fn collect(&self) -> yak_error::Result<Option<YakMutMap<String, NetworkStat>>> {
             let mut collector = self.collector.lock().expect("poisoned lock");
-            let counters: BuckMutMap<_, _> = collector
+            let counters: YakMutMap<_, _> = collector
                 .net_io_counters_pernic()
                 .map_err(|e| from_any_with_tag(e, yak_error::ErrorTag::Tier0))
-                .buck_error_context("collecting old counters")?
+                .yak_error_context("collecting old counters")?
                 .into_iter()
                 .filter(|(s, _)| {
                     ["en", "eth", "wlan"]
@@ -109,7 +109,7 @@ mod collector {
 #[cfg(target_os = "windows")]
 mod collector {
     use dupe::Dupe;
-    use yak_hash::BuckMutMap;
+    use yak_hash::YakMutMap;
     use yak_util::os::win::network_interface_table::NetworkInterfaceTable;
 
     use super::*;
@@ -122,8 +122,8 @@ mod collector {
             Self
         }
 
-        pub fn collect(&self) -> yak_error::Result<Option<BuckMutMap<String, NetworkStat>>> {
-            let mut counters = BuckMutMap::default();
+        pub fn collect(&self) -> yak_error::Result<Option<YakMutMap<String, NetworkStat>>> {
+            let mut counters = YakMutMap::default();
             let table = NetworkInterfaceTable::new()?;
 
             for interface in table {
@@ -158,7 +158,7 @@ mod collector {
 #[cfg(not(any(target_os = "macos", target_os = "linux", target_os = "windows")))]
 mod collector {
     use dupe::Dupe;
-    use yak_hash::BuckMutMap;
+    use yak_hash::YakMutMap;
 
     use super::*;
 
@@ -170,7 +170,7 @@ mod collector {
             Self
         }
 
-        pub fn collect(&self) -> yak_error::Result<Option<BuckMutMap<String, NetworkStat>>> {
+        pub fn collect(&self) -> yak_error::Result<Option<YakMutMap<String, NetworkStat>>> {
             Ok(None)
         }
     }

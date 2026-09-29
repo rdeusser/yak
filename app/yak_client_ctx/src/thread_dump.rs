@@ -10,12 +10,12 @@
 
 use yak_util::process::async_background_command;
 
-use crate::daemon::client::connect::BuckdProcessInfo;
+use crate::daemon::client::connect::YakdProcessInfo;
 
 pub fn thread_dump_command(
-    buckd: &BuckdProcessInfo<'_>,
+    yakd: &YakdProcessInfo<'_>,
 ) -> yak_error::Result<tokio::process::Command> {
-    let pid = buckd.pid()?;
+    let pid = yakd.pid()?;
     let mut cmd = async_background_command("lldb");
     cmd.arg("-p")
         .arg(pid.to_string())

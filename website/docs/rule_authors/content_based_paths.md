@@ -287,12 +287,12 @@ the causes of duplication.
 You can also use `yak aquery` to investigate eligibility directly. Each action
 exposes attributes that report its dedupe status:
 
-- `buck.all_outputs_are_content_based` — whether every output is content-based.
-- `buck.all_inputs_are_eligible_for_dedupe` — whether every input is eligible.
-- `buck.all_ineligible_for_dedup_inputs` — the specific inputs that are not
+- `yak.all_outputs_are_content_based` — whether every output is content-based.
+- `yak.all_inputs_are_eligible_for_dedupe` — whether every input is eligible.
+- `yak.all_ineligible_for_dedup_inputs` — the specific inputs that are not
   eligible (only present when there is at least one).
 
-For example, `yak aquery <target> --output-attribute 'buck\..*'` will print
+For example, `yak aquery <target> --output-attribute 'yak\..*'` will print
 these attributes for each action, pointing you directly at the outputs or inputs
 that are keeping the action from being deduplicated.
 

@@ -14,7 +14,7 @@
 #![feature(async_fn_traits)]
 #![feature(unboxed_closures)]
 
-//! The dynamic incremental caching computation engine that powers buckv2.
+//! The dynamic incremental caching computation engine that powers yakv2.
 //!
 //! The computation engine will output values corresponding to given `Key`s,
 //! reusing previously computed values when possible. `Key`s computations are
@@ -214,8 +214,8 @@ pub use dice_futures::cancellation::CancellationContext; // expose cancellation 
 pub use dice_futures::cancellation::CancellationHandle; // expose cancellation handle as api
 pub use dice_futures::spawn::CancellableJoinHandle; // expose cancellation context as api
 pub use dice_futures::spawn::WeakFutureError; // expose future errors as api
-pub(crate) type HashMap<K, V> = yak_hash::BuckMutMap<K, V>;
-pub(crate) type HashSet<K> = yak_hash::BuckMutSet<K>;
+pub(crate) type HashMap<K, V> = yak_hash::YakMutMap<K, V>;
+pub(crate) type HashSet<K> = yak_hash::YakMutSet<K>;
 
 pub use crate::api::activation_tracker::ActivationData;
 pub use crate::api::activation_tracker::ActivationTracker;

@@ -16,14 +16,14 @@ def main():
 
     if platform.system() == "Windows":
         check = ["TEMP", "TMP"]
-        buck_out = "yak-out\\v2"
+        yak_out = "yak-out\\v2"
     else:
         check = ["TMPDIR"]
-        buck_out = "yak-out/v2"
+        yak_out = "yak-out/v2"
 
     scratch = os.environ["YAK_SCRATCH_PATH"]
     assert not os.path.isabs(scratch), scratch
-    assert buck_out in scratch, scratch
+    assert yak_out in scratch, scratch
     assert os.path.isdir(scratch), scratch
 
     for c in check:
@@ -32,7 +32,7 @@ def main():
 
         if location == "local":
             # Check the path is "ours"
-            assert buck_out in v, v
+            assert yak_out in v, v
             # Check the path is the same as YAK_SCRATCH_PATH
             rel = os.path.relpath(os.path.normpath(v))
             assert rel == scratch, rel

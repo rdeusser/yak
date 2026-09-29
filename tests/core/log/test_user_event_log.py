@@ -11,8 +11,8 @@ import re
 from pathlib import Path
 
 import pytest
-from e2e_util.api.buck import Buck
-from e2e_util.buck_workspace import buck_test
+from e2e_util.api.yak import Yak
+from e2e_util.yak_workspace import yak_test
 from e2e_util.helper.golden import golden
 
 
@@ -20,11 +20,11 @@ def _replace_timestamp(s: str) -> str:
     return re.sub(r"\b[0-9]+\b", "<NUMBER>", s)
 
 
-@buck_test(skip_for_os=["windows"])
-async def test_user_event_log_custom_output(buck: Buck, tmp_path: Path) -> None:
+@yak_test(skip_for_os=["windows"])
+async def test_user_event_log_custom_output(yak: Yak, tmp_path: Path) -> None:
     local_log = tmp_path / "test.json"
 
-    await buck.bxl(
+    await yak.bxl(
         "root//:test.bxl:instant_event",
         "--user-event-log",
         str(local_log),
@@ -41,18 +41,18 @@ async def test_user_event_log_custom_output(buck: Buck, tmp_path: Path) -> None:
         json.loads(results[2])["StarlarkUserEvent"]
 
 
-@buck_test(skip_for_os=["windows"])
-async def test_user_event_log_with_actions(buck: Buck, tmp_path: Path) -> None:
+@yak_test(skip_for_os=["windows"])
+async def test_user_event_log_with_actions(yak: Yak, tmp_path: Path) -> None:
     local_log = tmp_path / "test.json-lines"
 
-    await buck.bxl(
+    await yak.bxl(
         "root//:test.bxl:action",
         "--event-log",
         str(local_log),
     )
 
     results = (
-        (await buck.log("show-user", str(Path(local_log).absolute())))
+        (await yak.log("show-user", str(Path(local_log).absolute())))
         .stdout.strip()
         .splitlines()[1:]
     )
@@ -73,13 +73,13 @@ async def test_user_event_log_with_actions(buck: Buck, tmp_path: Path) -> None:
     )
 
 
-@buck_test(skip_for_os=["windows"])
-async def test_user_event_with_log_show_user(buck: Buck) -> None:
-    await buck.bxl(
+@yak_test(skip_for_os=["windows"])
+async def test_user_event_with_log_show_user(yak: Yak) -> None:
+    await yak.bxl(
         "root//:test.bxl:instant_event",
     )
 
-    results = (await buck.log("show-user")).stdout.strip().splitlines()[1:]
+    results = (await yak.log("show-user")).stdout.strip().splitlines()[1:]
 
     results = _replace_timestamp("\n".join(results))
 
@@ -90,25 +90,25 @@ async def test_user_event_with_log_show_user(buck: Buck) -> None:
     )
 
 
-@buck_test(skip_for_os=["windows"])
+@yak_test(skip_for_os=["windows"])
 @pytest.mark.parametrize(
     "file_extension", [".json-lines", ".json-lines.gz", ".json-lines.zst"]
 )
 async def test_user_event_log_with_log_show_user_compatibility(
-    buck: Buck,
+    yak: Yak,
     tmp_path: Path,
     file_extension: str,
 ) -> None:
     local_log = tmp_path / f"test.{file_extension}"
 
-    await buck.bxl(
+    await yak.bxl(
         "root//:test.bxl:instant_event",
         "--event-log",
         str(local_log),
     )
 
     results = (
-        (await buck.log("show-user", str(Path(local_log).absolute())))
+        (await yak.log("show-user", str(Path(local_log).absolute())))
         .stdout.strip()
         .splitlines()[1:]
     )

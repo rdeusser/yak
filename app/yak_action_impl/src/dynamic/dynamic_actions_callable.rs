@@ -46,7 +46,7 @@ use starlark::values::typing::StarlarkCallableParamSpec;
 use starlark_map::small_map::SmallMap;
 use yak_build_api::interpreter::rule_defs::context::AnalysisActions;
 use yak_build_api::interpreter::rule_defs::provider::ty::abstract_provider::AbstractProvider;
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 
 use crate::dynamic::attrs::DynamicAttrType;
 use crate::dynamic::attrs::DynamicAttrValues;
@@ -186,7 +186,7 @@ impl<'v> StarlarkValue<'v> for FrozenStarlarkDynamicActionsCallable<'v> {
                 for (name, attr_ty) in &self.attrs {
                     let value = attr_ty
                         .coerce(parser.next()?)
-                        .with_buck_error_context(|| format!("Error coercing attribute `{name}`"))?;
+                        .with_yak_error_context(|| format!("Error coercing attribute `{name}`"))?;
                     attr_values.push(value);
                 }
                 Ok(DynamicAttrValues {

@@ -21,13 +21,13 @@ use yak_cmd_audit_client::config::LocationStyle;
 use yak_cmd_audit_client::config::OutputFormat;
 use yak_cmd_audit_client::config::ValueStyle;
 use yak_common::dice::cells::HasCellResolver;
-use yak_common::legacy_configs::configs::LegacyBuckConfig;
-use yak_common::legacy_configs::configs::LegacyBuckConfigLocation;
-use yak_common::legacy_configs::configs::LegacyBuckConfigValue;
+use yak_common::legacy_configs::configs::LegacyYakConfig;
+use yak_common::legacy_configs::configs::LegacyYakConfigLocation;
+use yak_common::legacy_configs::configs::LegacyYakConfigValue;
 use yak_common::legacy_configs::dice::HasLegacyConfigs;
 use yak_core::cells::CellAliasResolver;
 use yak_core::cells::name::CellName;
-use yak_hash::BuckMutMap;
+use yak_hash::YakMutMap;
 use yak_server_ctx::ctx::ServerCommandContextTrait;
 use yak_server_ctx::ctx::ServerCommandDiceContext;
 use yak_server_ctx::partial_result_dispatcher::PartialResultDispatcher;
@@ -37,7 +37,7 @@ use crate::ServerAuditSubcommand;
 
 fn print_location_string(
     writer: &mut impl Write,
-    location: &LegacyBuckConfigLocation,
+    location: &LegacyYakConfigLocation,
     keyword: &str,
 ) -> yak_error::Result<()> {
     writeln!(writer, "  ({keyword} {location})")?;
@@ -46,7 +46,7 @@ fn print_location_string(
 
 fn print_location(
     writer: &mut impl Write,
-    value: &LegacyBuckConfigValue,
+    value: &LegacyYakConfigValue,
     style: LocationStyle,
 ) -> yak_error::Result<()> {
     match style {
@@ -75,7 +75,7 @@ fn print_value(
     writer: &mut impl Write,
     inline_section: Option<&str>,
     key: &str,
-    value: &LegacyBuckConfigValue,
+    value: &LegacyYakConfigValue,
     style: ValueStyle,
 ) -> yak_error::Result<()> {
     let (prefix, sep) = match inline_section {
@@ -198,7 +198,7 @@ trait CellConfigRenderer {
         cell: CellName,
         section: &str,
         key: &str,
-        value: LegacyBuckConfigValue<'_>,
+        value: LegacyYakConfigValue<'_>,
     ) -> yak_error::Result<()>;
     fn flush(&mut self) -> yak_error::Result<()>;
 }
@@ -234,7 +234,7 @@ impl CellConfigRenderer for SimpleCellConfigRenderer<'_> {
         _cell: CellName,
         section: &str,
         key: &str,
-        value: LegacyBuckConfigValue<'_>,
+        value: LegacyYakConfigValue<'_>,
     ) -> yak_error::Result<()> {
         let inline_section = if self.inline_section {
             Some(section)
@@ -261,7 +261,7 @@ impl CellConfigRenderer for SimpleCellConfigRenderer<'_> {
 struct JsonCellConfigRenderer<'a> {
     stdout: StdoutPartialOutput<'a>,
     scope_keys_to_cell: bool,
-    json_output: BuckMutMap<String, String>,
+    json_output: YakMutMap<String, String>,
 }
 
 impl CellConfigRenderer for JsonCellConfigRenderer<'_> {
@@ -279,7 +279,7 @@ impl CellConfigRenderer for JsonCellConfigRenderer<'_> {
         cell: CellName,
         _section: &str,
         _key: &str,
-        value: LegacyBuckConfigValue<'_>,
+        value: LegacyYakConfigValue<'_>,
     ) -> yak_error::Result<()> {
         let key = if self.scope_keys_to_cell && !spec.contains("//") {
             format!("{cell}//{spec}")
@@ -303,7 +303,7 @@ fn render_cell_config(
     renderer: &mut dyn CellConfigRenderer,
     relevant_cell: Option<CellName>,
     cell: CellName,
-    cell_config: LegacyBuckConfig,
+    cell_config: LegacyYakConfig,
     specs: &Matches<'_>,
 ) -> yak_error::Result<()> {
     let mut rendered_cell_header = false;
@@ -362,7 +362,7 @@ impl ServerAuditSubcommand for AuditConfigCommand {
                     OutputFormat::Json => Box::new(JsonCellConfigRenderer {
                         stdout,
                         scope_keys_to_cell: self.all_cells,
-                        json_output: BuckMutMap::default(),
+                        json_output: YakMutMap::default(),
                     }),
                 };
 

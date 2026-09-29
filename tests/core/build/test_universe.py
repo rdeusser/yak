@@ -6,20 +6,20 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-from e2e_util.api.buck import Buck
-from e2e_util.buck_workspace import buck_test
+from e2e_util.api.yak import Yak
+from e2e_util.yak_workspace import yak_test
 
 
-@buck_test()
-async def test_build_universe(buck: Buck) -> None:
+@yak_test()
+async def test_build_universe(yak: Yak) -> None:
     # Run the build without universe.
-    result = await buck.build("//:test")
+    result = await yak.build("//:test")
     build_report = result.get_build_report()
     output = build_report.output_for_target("//:test")
     assert output.read_text().rstrip() == "default"
 
     # Now build the same target, but with the universe.
-    result = await buck.build(
+    result = await yak.build(
         "//:test",
         "--target-universe",
         "//:universe",
@@ -29,9 +29,9 @@ async def test_build_universe(buck: Buck) -> None:
     assert output.read_text().rstrip() == "cat"
 
 
-@buck_test()
-async def test_build_target_not_found_in_universe(buck: Buck) -> None:
-    result = await buck.build(
+@yak_test()
+async def test_build_target_not_found_in_universe(yak: Yak) -> None:
+    result = await yak.build(
         "//:test",
         "--target-universe",
         "//:different_universe",

@@ -17,21 +17,21 @@ use std::path::Path;
 use std::path::PathBuf;
 
 use tokio::fs;
-use yak_hash::BuckMutSet;
+use yak_hash::YakMutSet;
 
 use crate::DEFAULT_ISOLATION_DIR;
 use crate::YAKD_LIFECYCLE;
 
 #[cfg(test)]
-const TEST_READ_DIR_ERROR_PATH: &str = "__buck2_test_read_dir_error__";
+const TEST_READ_DIR_ERROR_PATH: &str = "__yak_test_read_dir_error__";
 
 #[derive(Clone, Copy)]
-enum BuckdPathLayout {
+enum YakdPathLayout {
     Unix,
     Windows,
 }
 
-impl BuckdPathLayout {
+impl YakdPathLayout {
     fn current() -> Self {
         if cfg!(windows) {
             Self::Windows
@@ -47,8 +47,8 @@ pub(super) struct CleanallTarget {
     pub(super) isolation_dir: String,
 }
 
-async fn find_lifecycle_markers(buckd_root: &Path) -> Vec<PathBuf> {
-    let mut directories = vec![buckd_root.to_owned()];
+async fn find_lifecycle_markers(yakd_root: &Path) -> Vec<PathBuf> {
+    let mut directories = vec![yakd_root.to_owned()];
     let mut markers = Vec::new();
     let lifecycle_filename = OsStr::new(YAKD_LIFECYCLE);
 
@@ -95,9 +95,9 @@ async fn find_lifecycle_markers(buckd_root: &Path) -> Vec<PathBuf> {
 }
 
 fn decode_lifecycle_marker(
-    buckd_root: &Path,
+    yakd_root: &Path,
     marker: &Path,
-    layout: BuckdPathLayout,
+    layout: YakdPathLayout,
 ) -> Vec<CleanallTarget> {
     if marker.file_name() != Some(OsStr::new(YAKD_LIFECYCLE)) {
         return Vec::new();
@@ -105,7 +105,7 @@ fn decode_lifecycle_marker(
 
     let Some(daemon_dir) = marker
         .parent()
-        .and_then(|parent| parent.strip_prefix(buckd_root).ok())
+        .and_then(|parent| parent.strip_prefix(yakd_root).ok())
     else {
         return Vec::new();
     };
@@ -130,12 +130,12 @@ fn decode_lifecycle_marker(
     }
 
     let project_roots = match layout {
-        BuckdPathLayout::Unix => {
+        YakdPathLayout::Unix => {
             let mut project_root = PathBuf::from("/");
             project_root.extend(project_components);
             vec![project_root]
         }
-        BuckdPathLayout::Windows => decode_windows_project_roots(project_components),
+        YakdPathLayout::Windows => decode_windows_project_roots(project_components),
     };
 
     project_roots
@@ -200,14 +200,14 @@ fn cleanall_target_priority(target: &CleanallTarget) -> u8 {
 }
 
 fn targets_from_markers(
-    buckd_root: &Path,
+    yakd_root: &Path,
     markers: impl IntoIterator<Item = PathBuf>,
-    layout: BuckdPathLayout,
+    layout: YakdPathLayout,
 ) -> Vec<CleanallTarget> {
     let mut targets: Vec<_> = markers
         .into_iter()
-        .flat_map(|marker| decode_lifecycle_marker(buckd_root, &marker, layout))
-        .collect::<BuckMutSet<_>>()
+        .flat_map(|marker| decode_lifecycle_marker(yakd_root, &marker, layout))
+        .collect::<YakMutSet<_>>()
         .into_iter()
         .collect();
     targets.sort_unstable_by(|left, right| {
@@ -221,10 +221,10 @@ fn targets_from_markers(
 
 /// Registry entries can outlive their project roots, so callers must validate
 /// each discovered target before invoking cleanup.
-pub(super) async fn discover_cleanall_targets(buckd_root: &Path) -> Vec<CleanallTarget> {
+pub(super) async fn discover_cleanall_targets(yakd_root: &Path) -> Vec<CleanallTarget> {
     // TODO(scottcao): Also run separate yak-out discovery to discover all possible cleanall targets
-    let markers = find_lifecycle_markers(buckd_root).await;
-    targets_from_markers(buckd_root, markers, BuckdPathLayout::current())
+    let markers = find_lifecycle_markers(yakd_root).await;
+    targets_from_markers(yakd_root, markers, YakdPathLayout::current())
 }
 
 #[cfg(test)]
@@ -233,11 +233,11 @@ mod tests {
 
     #[cfg(not(windows))]
     async fn create_lifecycle_marker(
-        buckd_root: &Path,
+        yakd_root: &Path,
         project_root: &Path,
         isolation_dir: &str,
     ) -> PathBuf {
-        let marker = buckd_root
+        let marker = yakd_root
             .join(
                 project_root
                     .strip_prefix("/")
@@ -256,11 +256,11 @@ mod tests {
 
     #[test]
     fn decodes_unix_lifecycle_path() {
-        let buckd_root = Path::new("/home/user/.yak/yakd");
-        let marker = buckd_root.join("data/users/user/repo/custom/yakd.lifecycle");
+        let yakd_root = Path::new("/home/user/.yak/yakd");
+        let marker = yakd_root.join("data/users/user/repo/custom/yakd.lifecycle");
 
         assert_eq!(
-            decode_lifecycle_marker(buckd_root, &marker, BuckdPathLayout::Unix),
+            decode_lifecycle_marker(yakd_root, &marker, YakdPathLayout::Unix),
             vec![CleanallTarget {
                 project_root: PathBuf::from("/data/users/user/repo"),
                 isolation_dir: String::from("custom"),
@@ -273,24 +273,24 @@ mod tests {
     fn ignores_non_utf8_isolation_dir() {
         use std::os::unix::ffi::OsStringExt;
 
-        let buckd_root = Path::new("/home/user/.yak/yakd");
-        let marker = buckd_root
+        let yakd_root = Path::new("/home/user/.yak/yakd");
+        let marker = yakd_root
             .join("data/users/user/repo")
             .join(OsString::from_vec(vec![0xff]))
             .join(YAKD_LIFECYCLE);
 
-        assert!(decode_lifecycle_marker(buckd_root, &marker, BuckdPathLayout::Unix).is_empty());
+        assert!(decode_lifecycle_marker(yakd_root, &marker, YakdPathLayout::Unix).is_empty());
     }
 
     #[test]
     fn decodes_windows_lifecycle_paths() {
-        let buckd_root = Path::new("registry");
+        let yakd_root = Path::new("registry");
 
         assert_eq!(
             decode_lifecycle_marker(
-                buckd_root,
-                &buckd_root.join("C/repo/nested/v2/yakd.lifecycle"),
-                BuckdPathLayout::Windows,
+                yakd_root,
+                &yakd_root.join("C/repo/nested/v2/yakd.lifecycle"),
+                YakdPathLayout::Windows,
             ),
             vec![
                 CleanallTarget {
@@ -305,9 +305,9 @@ mod tests {
         );
         assert_eq!(
             decode_lifecycle_marker(
-                buckd_root,
-                &buckd_root.join("server/share/repo/v2/yakd.lifecycle"),
-                BuckdPathLayout::Windows,
+                yakd_root,
+                &yakd_root.join("server/share/repo/v2/yakd.lifecycle"),
+                YakdPathLayout::Windows,
             ),
             vec![CleanallTarget {
                 project_root: PathBuf::from(r"\\server\share\repo"),
@@ -318,15 +318,15 @@ mod tests {
 
     #[test]
     fn orders_and_deduplicates_cleanall_targets() {
-        let buckd_root = Path::new("/registry");
-        let marker = |path: &str| buckd_root.join(path).join(YAKD_LIFECYCLE);
+        let yakd_root = Path::new("/registry");
+        let marker = |path: &str| yakd_root.join(path).join(YAKD_LIFECYCLE);
         let target = |project_root: &str, isolation_dir: &str| CleanallTarget {
             project_root: PathBuf::from(project_root),
             isolation_dir: isolation_dir.to_owned(),
         };
 
         let targets = targets_from_markers(
-            buckd_root,
+            yakd_root,
             [
                 marker("d/repo/custom"),
                 marker("c/backup/beta"),
@@ -336,7 +336,7 @@ mod tests {
                 marker("a/my_checkout/v2"),
                 marker("z/monorepo/v2"),
             ],
-            BuckdPathLayout::Unix,
+            YakdPathLayout::Unix,
         );
 
         assert_eq!(
@@ -354,13 +354,13 @@ mod tests {
 
     #[cfg(not(windows))]
     #[tokio::test]
-    async fn discovers_lifecycle_marker_without_buck_out_or_live_daemon() {
+    async fn discovers_lifecycle_marker_without_yak_out_or_live_daemon() {
         let temp = tempfile::tempdir().expect("temporary directory should be created");
-        let buckd_root = temp.path().join("registry");
+        let yakd_root = temp.path().join("registry");
         let project_root = temp.path().join("project");
         let isolation_dir = "v2";
-        let marker = create_lifecycle_marker(&buckd_root, &project_root, isolation_dir).await;
-        let targets = discover_cleanall_targets(&buckd_root).await;
+        let marker = create_lifecycle_marker(&yakd_root, &project_root, isolation_dir).await;
+        let targets = discover_cleanall_targets(&yakd_root).await;
 
         assert_eq!(
             targets,
@@ -386,11 +386,11 @@ mod tests {
     #[tokio::test]
     async fn discovery_continues_after_traversal_error() {
         let temp = tempfile::tempdir().expect("temporary directory should be created");
-        let buckd_root = temp.path().join("registry");
+        let yakd_root = temp.path().join("registry");
         let project_root = temp.path().join("project");
         let isolation_dir = "v2";
-        create_lifecycle_marker(&buckd_root, &project_root, isolation_dir).await;
-        let failed_marker = buckd_root
+        create_lifecycle_marker(&yakd_root, &project_root, isolation_dir).await;
+        let failed_marker = yakd_root
             .join(TEST_READ_DIR_ERROR_PATH)
             .join("project")
             .join(isolation_dir)
@@ -405,7 +405,7 @@ mod tests {
         fs::write(&failed_marker, [])
             .await
             .expect("failed marker should be created");
-        let targets = discover_cleanall_targets(&buckd_root).await;
+        let targets = discover_cleanall_targets(&yakd_root).await;
 
         assert_eq!(
             targets,

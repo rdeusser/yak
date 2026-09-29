@@ -13,7 +13,7 @@ use std::sync::Arc;
 
 use yak_artifact::artifact::artifact_type::Artifact;
 use yak_core::provider::label::ConfiguredProvidersLabel;
-use yak_hash::StdBuckHashMap;
+use yak_hash::StdYakHashMap;
 use yak_interpreter::starlark_profiler::data::StarlarkProfileDataAndStats;
 
 use crate::analysis::registry::RecordedAnalysisValues;
@@ -42,7 +42,7 @@ pub struct AnalysisResult {
     /// For forward node, this value is shared with underlying analysis (including this field).
     #[pagable(discard = "None")]
     pub profile_data: Option<Arc<StarlarkProfileDataAndStats>>,
-    promise_artifact_map: Arc<StdBuckHashMap<PromiseArtifactId, Artifact>>,
+    promise_artifact_map: Arc<StdYakHashMap<PromiseArtifactId, Artifact>>,
     pub num_declared_actions: u64,
     pub num_declared_artifacts: u64,
     /// `None` means there are no `ValidationInfo` providers in transitive dependencies.
@@ -54,7 +54,7 @@ impl AnalysisResult {
     pub fn new(
         analysis_values: RecordedAnalysisValues,
         profile_data: Option<Arc<StarlarkProfileDataAndStats>>,
-        promise_artifact_map: StdBuckHashMap<PromiseArtifactId, Artifact>,
+        promise_artifact_map: StdYakHashMap<PromiseArtifactId, Artifact>,
         num_declared_actions: u64,
         num_declared_artifacts: u64,
         validations: Option<TransitiveValidations>,
@@ -73,7 +73,7 @@ impl AnalysisResult {
         self.analysis_values.provider_collection()
     }
 
-    pub fn promise_artifact_map(&self) -> &Arc<StdBuckHashMap<PromiseArtifactId, Artifact>> {
+    pub fn promise_artifact_map(&self) -> &Arc<StdYakHashMap<PromiseArtifactId, Artifact>> {
         &self.promise_artifact_map
     }
 

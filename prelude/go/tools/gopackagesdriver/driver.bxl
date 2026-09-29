@@ -247,7 +247,7 @@ def _compiled_go_files(
 
     return compiled_go_files, set()
 
-# map import names to packages ID, for non-buck packages like stdlib leave names as is
+# map import names to packages ID, for non-yak packages like stdlib leave names as is
 # Example {"foo/bar": "root//foo/bar:bar"}
 def _imports(go_list_out: GoListOut, import_table: dict[str, str]) -> dict[str, str]:
     # todo: make it work when deps are not requested

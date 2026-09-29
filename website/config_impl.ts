@@ -66,7 +66,7 @@ const themeConfig: ClassicPresetConfig = ({
         activeBasePath: '/docs/prelude',
       },
       {
-        href: 'https://github.com/rdeusser/buck2',
+        href: 'https://github.com/rdeusser/yak',
         label: 'GitHub',
         position: 'right',
       },
@@ -89,7 +89,7 @@ const themeConfig: ClassicPresetConfig = ({
         items: [
           {
             label: 'GitHub issues',
-            href: 'https://github.com/rdeusser/buck2/issues',
+            href: 'https://github.com/rdeusser/yak/issues',
           },
         ],
       },
@@ -98,12 +98,12 @@ const themeConfig: ClassicPresetConfig = ({
         items: [
           {
             label: 'Code',
-            href: 'https://github.com/rdeusser/buck2',
+            href: 'https://github.com/rdeusser/yak',
           },
         ],
       },
     ],
-    copyright: 'Based on Buck2, © Meta Platforms, Inc. and affiliates. Built with Docusaurus.',
+    copyright: 'Based on Yak, © Meta Platforms, Inc. and affiliates. Built with Docusaurus.',
   },
   prism: {
     additionalLanguages: ['bash', 'powershell', 'cpp', 'ini', 'mermaid'],
@@ -116,13 +116,13 @@ const config: DocusaurusConfig = ({
   title: 'yak',
   // GitHub Pages serves a project site from https://<owner>.github.io/<repository>/.
   url: 'https://rdeusser.github.io',
-  baseUrl: '/buck2/',
+  baseUrl: '/yak/',
   onBrokenLinks: 'throw',
   trailingSlash: true,
   onBrokenMarkdownLinks: 'warn',
   favicon: 'img/logo.png',
   organizationName: 'rdeusser',
-  projectName: 'buck2',
+  projectName: 'yak',
 
   presets: [
     [

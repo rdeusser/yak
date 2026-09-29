@@ -19,7 +19,7 @@ use std::sync::Arc;
 use dupe::Dupe;
 use pagable::Pagable;
 use ref_cast::RefCast;
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 use yak_fs::error::IoResultExt;
 use yak_fs::fs_util;
 use yak_fs::paths::abs_norm_path::AbsNormPath;
@@ -85,7 +85,7 @@ impl ProjectRoot {
     pub fn new(root: AbsNormPathBuf) -> yak_error::Result<Self> {
         let canon = fs_util::canonicalize(&root)
             .categorize_internal()
-            .buck_error_context("canonicalize project root")?;
+            .yak_error_context("canonicalize project root")?;
         if canon != root {
             return Err(ProjectRootError::NotCanonical(root, canon).into());
         }
@@ -124,16 +124,16 @@ impl ProjectRoot {
     ///     let fs = ProjectRoot::new_unchecked(root);
     ///
     ///     assert_eq!(
-    ///         AbsNormPathBuf::from("/usr/local/project/buck/YAK".into())?,
-    ///         fs.resolve(ProjectRelativePath::new("buck/YAK")?)
+    ///         AbsNormPathBuf::from("/usr/local/project/yak/YAK".into())?,
+    ///         fs.resolve(ProjectRelativePath::new("yak/YAK")?)
     ///     );
     /// } else {
     ///     let root = AbsNormPathBuf::from("c:/open/project/".into())?;
     ///     let fs = ProjectRoot::new_unchecked(root);
     ///
     ///     assert_eq!(
-    ///         AbsNormPathBuf::from("c:/open/project/buck/YAK".into())?,
-    ///         fs.resolve(ProjectRelativePath::new("buck/YAK")?)
+    ///         AbsNormPathBuf::from("c:/open/project/yak/YAK".into())?,
+    ///         fs.resolve(ProjectRelativePath::new("yak/YAK")?)
     ///     );
     /// }
     ///
@@ -161,8 +161,8 @@ impl ProjectRoot {
     /// let fs = ProjectRoot::new_unchecked(root);
     ///
     /// assert_eq!(
-    ///     PathBuf::from("buck/YAK"),
-    ///     fs.as_relative_path(ProjectRelativePath::new("buck/YAK")?)
+    ///     PathBuf::from("yak/YAK"),
+    ///     fs.as_relative_path(ProjectRelativePath::new("yak/YAK")?)
     /// );
     ///
     /// # yak_error::Ok(())
@@ -191,8 +191,8 @@ impl ProjectRoot {
     ///     let fs = ProjectRoot::new_unchecked(root);
     ///
     ///     assert_eq!(
-    ///         Cow::Borrowed(ProjectRelativePath::new("src/buck.java")?),
-    ///         fs.relativize(AbsNormPath::new("/usr/local/project/src/buck.java")?)?
+    ///         Cow::Borrowed(ProjectRelativePath::new("src/yak.java")?),
+    ///         fs.relativize(AbsNormPath::new("/usr/local/project/src/yak.java")?)?
     ///     );
     ///     assert!(fs.relativize(AbsNormPath::new("/other/path")?).is_err());
     /// } else {
@@ -200,16 +200,16 @@ impl ProjectRoot {
     ///     let fs = ProjectRoot::new_unchecked(root);
     ///
     ///     assert_eq!(
-    ///         Cow::Borrowed(ProjectRelativePath::new("src/buck.java")?),
-    ///         fs.relativize(AbsNormPath::new("c:/open/project/src/buck.java")?)?
+    ///         Cow::Borrowed(ProjectRelativePath::new("src/yak.java")?),
+    ///         fs.relativize(AbsNormPath::new("c:/open/project/src/yak.java")?)?
     ///     );
     ///     assert_eq!(
-    ///         Cow::Borrowed(ProjectRelativePath::new("src/buck.java")?),
-    ///         fs.relativize(AbsNormPath::new(r"C:\open\project\src\buck.java")?)?
+    ///         Cow::Borrowed(ProjectRelativePath::new("src/yak.java")?),
+    ///         fs.relativize(AbsNormPath::new(r"C:\open\project\src\yak.java")?)?
     ///     );
     ///     assert_eq!(
-    ///         Cow::Borrowed(ProjectRelativePath::new("src/buck.java")?),
-    ///         fs.relativize(AbsNormPath::new(r"\\?\C:\open\project\src\buck.java")?)?
+    ///         Cow::Borrowed(ProjectRelativePath::new("src/yak.java")?),
+    ///         fs.relativize(AbsNormPath::new(r"\\?\C:\open\project\src\yak.java")?)?
     ///     );
     ///     assert!(fs.relativize(AbsNormPath::new("c:/other/path")?).is_err());
     /// }
@@ -298,7 +298,7 @@ impl ProjectRoot {
     ) -> yak_error::Result<ProjectRelativePathBuf> {
         let path = path.as_ref();
         self.relativize_any_impl(path.as_ref())
-            .with_buck_error_context(|| {
+            .with_yak_error_context(|| {
                 format!(
                     "relativize path `{}` against project root `{}`",
                     path.display(),
@@ -316,13 +316,13 @@ impl ProjectRoot {
     ) -> yak_error::Result<()> {
         let abs_path = self.root().join(path.as_ref());
         if let Some(parent) = abs_path.parent() {
-            fs_util::create_dir_all(parent).with_buck_error_context(|| {
+            fs_util::create_dir_all(parent).with_yak_error_context(|| {
                 format!("`write_file` for `{abs_path}` creating directory `{parent}`")
             })?;
         }
         fs_util::write_with_executable_bit(&abs_path, contents, executable)
             .categorize_internal()
-            .with_buck_error_context(|| format!("`write_file` writing `{abs_path}`"))?;
+            .with_yak_error_context(|| format!("`write_file` writing `{abs_path}`"))?;
         Ok(())
     }
 
@@ -334,17 +334,17 @@ impl ProjectRoot {
     ) -> yak_error::Result<File> {
         let abs_path = self.root().join(path.as_ref());
         if let Some(parent) = abs_path.parent() {
-            fs_util::create_dir_all(parent).with_buck_error_context(|| {
+            fs_util::create_dir_all(parent).with_yak_error_context(|| {
                 format!("`create_file` for `{abs_path}` creating directory `{parent}`")
             })?;
         }
         let file = File::create(&abs_path)
-            .with_buck_error_context(|| format!("`create_file` creating `{abs_path}`"))?;
+            .with_yak_error_context(|| format!("`create_file` creating `{abs_path}`"))?;
         #[cfg(unix)]
         if executable {
             use std::os::unix::fs::PermissionsExt;
             file.set_permissions(std::fs::Permissions::from_mode(0o755))
-                .with_buck_error_context(|| {
+                .with_yak_error_context(|| {
                     format!("`create_file` setting executable `{abs_path}`")
                 })?;
         }
@@ -430,7 +430,7 @@ impl ProjectRoot {
         let dest_abs = self.resolve(dest);
 
         let result = self.copy_resolved(&src_abs, &dest_abs);
-        result.with_buck_error_context(|| {
+        result.with_yak_error_context(|| {
             format!("Error copying from src path `{src_abs}` to dest path `{dest_abs}`")
         })
     }

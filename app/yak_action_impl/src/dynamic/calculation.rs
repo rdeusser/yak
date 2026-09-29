@@ -37,7 +37,7 @@ use yak_core::deferred::base_deferred_key::BaseDeferredKey;
 use yak_core::deferred::dynamic::DynamicLambdaResultsKey;
 use yak_core::deferred::key::DeferredHolderKey;
 use yak_data::ToProtoMessage;
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 
 use crate::dynamic::deferred::prepare_and_execute_lambda;
 use crate::dynamic::storage::FrozenDynamicLambdaParamsStorageImpl;
@@ -101,7 +101,7 @@ impl Key for DynamicLambdaDiceKey {
 
         let analysis_values = prepare_and_execute_lambda(ctx, cancellation, lambda, self.0.dupe())
             .await
-            .with_buck_error_context(|| {
+            .with_yak_error_context(|| {
                 format!("Error running dynamic analysis for `{}`", self.0.owner())
             })?;
         let res = Arc::new(DynamicLambdaResult { analysis_values });

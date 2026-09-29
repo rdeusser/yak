@@ -6,23 +6,23 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-from e2e_util.api.buck import Buck
-from e2e_util.api.buck_result import BuckException, BuckResult
+from e2e_util.api.yak import Yak
+from e2e_util.api.yak_result import YakException, YakResult
 from e2e_util.asserts import expect_failure
-from e2e_util.buck_workspace import buck_test
+from e2e_util.yak_workspace import yak_test
 from e2e_util.helper.golden import golden, sanitize_hashes
 
 
-@buck_test()
-async def test_select_fail(buck: Buck) -> None:
+@yak_test()
+async def test_select_fail(yak: Yak) -> None:
     outputs: list[str] = []
 
-    async def run(*args: str) -> BuckResult:
+    async def run(*args: str) -> YakResult:
         outputs.append("$ yak " + " ".join(args))
         try:
-            res = await buck.run_buck_command(*args)
+            res = await yak.run_yak_command(*args)
             outputs.append(res.stdout)
-        except BuckException as e:
+        except YakException as e:
             outputs.append(e.stderr)
             raise e
         return res
@@ -80,16 +80,16 @@ async def test_select_fail(buck: Buck) -> None:
     )
 
 
-@buck_test()
-async def test_select_incompatible(buck: Buck) -> None:
+@yak_test()
+async def test_select_incompatible(yak: Yak) -> None:
     outputs: list[str] = []
 
-    async def run(*args: str) -> BuckResult:
+    async def run(*args: str) -> YakResult:
         outputs.append("$ yak " + " ".join(args))
         try:
-            res = await buck.run_buck_command(*args)
+            res = await yak.run_yak_command(*args)
             outputs.append(res.stdout)
-        except BuckException as e:
+        except YakException as e:
             outputs.append(e.stderr)
             raise e
         return res

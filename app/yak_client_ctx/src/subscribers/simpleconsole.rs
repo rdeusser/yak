@@ -33,7 +33,7 @@ use yak_event_observer::verbosity::Verbosity;
 use yak_event_observer::what_ran::WhatRanCommandConsoleFormat;
 use yak_event_observer::what_ran::WhatRanOutputCommand;
 use yak_event_observer::what_ran::WhatRanOutputWriter;
-use yak_events::BuckEvent;
+use yak_events::YakEvent;
 use yak_wrapper_common::invocation_id::TraceId;
 
 use crate::subscribers::console_output_limit::ConsoleOutputLimit;
@@ -206,7 +206,7 @@ where
 
     pub(crate) async fn update_event_observer(
         &mut self,
-        event: &Arc<BuckEvent>,
+        event: &Arc<YakEvent>,
     ) -> yak_error::Result<()> {
         self.observer.observe(event).await
     }
@@ -240,8 +240,8 @@ where
         } else {
             let mut parts = Vec::with_capacity(2);
             if let Some((_, snapshot)) = &snapshots.last {
-                if let Some(buck2_rss) = snapshot.buck2_rss {
-                    parts.push(format!("RSS: {}", HumanizedBytes::new(buck2_rss)));
+                if let Some(yak_rss) = snapshot.yak_rss {
+                    parts.push(format!("RSS: {}", HumanizedBytes::new(yak_rss)));
                 }
             }
             if let Some(cpu) = snapshots.cpu_percents() {
@@ -297,7 +297,7 @@ where
     pub(crate) async fn handle_file_watcher_end(
         &mut self,
         file_watcher: &yak_data::FileWatcherEnd,
-        _event: &BuckEvent,
+        _event: &YakEvent,
     ) -> yak_error::Result<()> {
         if self.verbosity.print_status() {
             for x in display_file_watcher_end(file_watcher) {
@@ -308,7 +308,7 @@ where
         Ok(())
     }
 
-    pub(crate) async fn handle_event(&mut self, event: &Arc<BuckEvent>) -> yak_error::Result<()> {
+    pub(crate) async fn handle_event(&mut self, event: &Arc<YakEvent>) -> yak_error::Result<()> {
         self.update_event_observer(event).await?;
 
         self.handle_event_inner(event).await?;
@@ -325,9 +325,9 @@ where
         Ok(())
     }
 
-    async fn handle_event_inner(&mut self, event: &BuckEvent) -> yak_error::Result<()> {
+    async fn handle_event_inner(&mut self, event: &YakEvent) -> yak_error::Result<()> {
         match unpack_event(event)? {
-            yak_event_observer::unpack_event::UnpackedBuckEvent::SpanStart(_, _, data) => {
+            yak_event_observer::unpack_event::UnpackedYakEvent::SpanStart(_, _, data) => {
                 match data {
                     yak_data::span_start_event::Data::Command(command) => {
                         self.handle_command_start(command, event).await
@@ -335,7 +335,7 @@ where
                     _ => Ok(()),
                 }
             }
-            yak_event_observer::unpack_event::UnpackedBuckEvent::SpanEnd(_, _, data) => {
+            yak_event_observer::unpack_event::UnpackedYakEvent::SpanEnd(_, _, data) => {
                 match data {
                     yak_data::span_end_event::Data::Command(command) => {
                         self.handle_command_end(command, event).await
@@ -349,7 +349,7 @@ where
                     _ => Ok(()),
                 }
             }
-            yak_event_observer::unpack_event::UnpackedBuckEvent::Instant(_, _, data) => {
+            yak_event_observer::unpack_event::UnpackedYakEvent::Instant(_, _, data) => {
                 match data {
                     yak_data::instant_event::Data::ConsoleMessage(message) => {
                         self.handle_stderr(&message.message).await
@@ -390,9 +390,9 @@ where
                     _ => Ok(()),
                 }
             }
-            yak_event_observer::unpack_event::UnpackedBuckEvent::UnrecognizedSpanStart(_, _)
-            | yak_event_observer::unpack_event::UnpackedBuckEvent::UnrecognizedSpanEnd(_, _)
-            | yak_event_observer::unpack_event::UnpackedBuckEvent::UnrecognizedInstant(_, _) => {
+            yak_event_observer::unpack_event::UnpackedYakEvent::UnrecognizedSpanStart(_, _)
+            | yak_event_observer::unpack_event::UnpackedYakEvent::UnrecognizedSpanEnd(_, _)
+            | yak_event_observer::unpack_event::UnpackedYakEvent::UnrecognizedInstant(_, _) => {
                 Err(VisitorError::MissingField(event.clone()).into())
             }
         }
@@ -401,7 +401,7 @@ where
     pub(crate) async fn handle_structured_error(
         &mut self,
         err: &yak_data::StructuredError,
-        _event: &BuckEvent,
+        _event: &YakEvent,
     ) -> yak_error::Result<()> {
         if err.quiet {
             return Ok(());
@@ -414,7 +414,7 @@ where
     async fn handle_command_start(
         &mut self,
         _command: &yak_data::CommandStart,
-        event: &BuckEvent,
+        event: &YakEvent,
     ) -> yak_error::Result<()> {
         echo!("Build ID: {}", event.trace_id()?)?;
         self.notify_printed();
@@ -424,7 +424,7 @@ where
     async fn handle_command_end(
         &mut self,
         _command: &yak_data::CommandEnd,
-        _event: &BuckEvent,
+        _event: &YakEvent,
     ) -> yak_error::Result<()> {
         let snapshots = self.observer().two_snapshots();
 
@@ -467,7 +467,7 @@ where
     pub(crate) async fn handle_action_execution_end(
         &mut self,
         action: &yak_data::ActionExecutionEnd,
-        _event: &BuckEvent,
+        _event: &YakEvent,
     ) -> yak_error::Result<()> {
         let action_id = display::display_action_identity(
             action.key.as_ref(),
@@ -523,7 +523,7 @@ where
     async fn handle_test_discovery(
         &mut self,
         test_info: &yak_data::TestDiscovery,
-        _event: &BuckEvent,
+        _event: &YakEvent,
     ) -> yak_error::Result<()> {
         if let Some(data) = &test_info.data {
             match data {
@@ -543,7 +543,7 @@ where
     async fn handle_test_result(
         &mut self,
         result: &yak_data::TestResult,
-        _event: &BuckEvent,
+        _event: &YakEvent,
     ) -> yak_error::Result<()> {
         if let Some(msg) = display::format_test_result(result, self.verbosity)? {
             let mut buffer = String::new();
@@ -588,7 +588,7 @@ where
         Ok(())
     }
 
-    async fn handle_events(&mut self, events: &[Arc<BuckEvent>]) -> yak_error::Result<()> {
+    async fn handle_events(&mut self, events: &[Arc<YakEvent>]) -> yak_error::Result<()> {
         for ev in events {
             self.handle_event(ev).await?;
         }

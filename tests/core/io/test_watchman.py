@@ -44,8 +44,8 @@ from core.common.io.file_watcher_tests import (
     setup_file_watcher_test,
     verify_results,
 )
-from e2e_util.api.buck import Buck
-from e2e_util.buck_workspace import buck_test
+from e2e_util.api.yak import Yak
+from e2e_util.yak_workspace import yak_test
 
 # The daemon finds the Watchman server by running the `watchman` program on
 # PATH.
@@ -54,76 +54,76 @@ pytestmark = pytest.mark.skipif(
 )
 
 
-@buck_test()
-async def test_watchman_create_file(buck: Buck) -> None:
-    await run_create_file_test(buck, FileWatcherProvider.WATCHMAN)
+@yak_test()
+async def test_watchman_create_file(yak: Yak) -> None:
+    await run_create_file_test(yak, FileWatcherProvider.WATCHMAN)
 
 
-@buck_test()
-async def test_watchman_modify_file(buck: Buck) -> None:
-    await run_modify_file_test(buck, FileWatcherProvider.WATCHMAN)
+@yak_test()
+async def test_watchman_modify_file(yak: Yak) -> None:
+    await run_modify_file_test(yak, FileWatcherProvider.WATCHMAN)
 
 
-@buck_test()
-async def test_watchman_remove_file(buck: Buck) -> None:
-    await run_remove_file_test(buck, FileWatcherProvider.WATCHMAN)
+@yak_test()
+async def test_watchman_remove_file(yak: Yak) -> None:
+    await run_remove_file_test(yak, FileWatcherProvider.WATCHMAN)
 
 
-@buck_test()
-async def test_watchman_rename_file(buck: Buck) -> None:
-    await run_rename_file_test(buck, FileWatcherProvider.WATCHMAN)
+@yak_test()
+async def test_watchman_rename_file(yak: Yak) -> None:
+    await run_rename_file_test(yak, FileWatcherProvider.WATCHMAN)
 
 
 # File replace is not supported on Windows
-@buck_test(skip_for_os=["windows"])
-async def test_watchman_replace_file(buck: Buck) -> None:
-    await run_replace_file_test(buck, FileWatcherProvider.WATCHMAN)
+@yak_test(skip_for_os=["windows"])
+async def test_watchman_replace_file(yak: Yak) -> None:
+    await run_replace_file_test(yak, FileWatcherProvider.WATCHMAN)
 
 
-@buck_test()
-async def test_watchman_create_directory(buck: Buck) -> None:
-    await run_create_directory_test(buck, FileWatcherProvider.WATCHMAN)
+@yak_test()
+async def test_watchman_create_directory(yak: Yak) -> None:
+    await run_create_directory_test(yak, FileWatcherProvider.WATCHMAN)
 
 
-@buck_test()
-async def test_watchman_remove_directory(buck: Buck) -> None:
-    await run_remove_directory_test(buck, FileWatcherProvider.WATCHMAN)
+@yak_test()
+async def test_watchman_remove_directory(yak: Yak) -> None:
+    await run_remove_directory_test(yak, FileWatcherProvider.WATCHMAN)
 
 
-@buck_test()
-async def test_watchman_rename_directory(buck: Buck) -> None:
-    await run_rename_directory_test(buck, FileWatcherProvider.WATCHMAN)
+@yak_test()
+async def test_watchman_rename_directory(yak: Yak) -> None:
+    await run_rename_directory_test(yak, FileWatcherProvider.WATCHMAN)
 
 
-@buck_test()
-async def test_watchman_checkout_mergebase_changes(buck: Buck) -> None:
-    await run_checkout_mergebase_changes_test(buck, FileWatcherProvider.WATCHMAN)
+@yak_test()
+async def test_watchman_checkout_mergebase_changes(yak: Yak) -> None:
+    await run_checkout_mergebase_changes_test(yak, FileWatcherProvider.WATCHMAN)
 
 
-@buck_test()
-async def test_watchman_checkout_with_mergebase(buck: Buck) -> None:
-    await run_checkout_with_mergebase_test(buck, FileWatcherProvider.WATCHMAN)
+@yak_test()
+async def test_watchman_checkout_with_mergebase(yak: Yak) -> None:
+    await run_checkout_with_mergebase_test(yak, FileWatcherProvider.WATCHMAN)
 
 
-@buck_test()
-async def test_watchman_rebase_with_mergebase(buck: Buck) -> None:
-    await run_rebase_with_mergebase_test(buck, FileWatcherProvider.WATCHMAN)
+@yak_test()
+async def test_watchman_rebase_with_mergebase(yak: Yak) -> None:
+    await run_rebase_with_mergebase_test(yak, FileWatcherProvider.WATCHMAN)
 
 
-@buck_test()
-async def test_watchman_restack_with_mergebase(buck: Buck) -> None:
-    await run_restack_with_mergebase_test(buck, FileWatcherProvider.WATCHMAN)
+@yak_test()
+async def test_watchman_restack_with_mergebase(yak: Yak) -> None:
+    await run_restack_with_mergebase_test(yak, FileWatcherProvider.WATCHMAN)
 
 
-@buck_test(
-    extra_buck_config={
+@yak_test(
+    extra_yak_config={
         "yak": {"disable_watchman_empty_on_fresh_instance": "true"},
     },
 )
-async def test_watchman_files_report_on_fresh_instance(buck: Buck) -> None:
-    await setup_file_watcher_test(buck)
-    await setup_file_watcher_scm_test(buck)
-    await buck.kill()
+async def test_watchman_files_report_on_fresh_instance(yak: Yak) -> None:
+    await setup_file_watcher_test(yak)
+    await setup_file_watcher_scm_test(yak)
+    await yak.kill()
 
     required = [
         FileWatcherEvent(
@@ -134,21 +134,21 @@ async def test_watchman_files_report_on_fresh_instance(buck: Buck) -> None:
         ),
     ]
 
-    is_fresh_instance, results = await get_file_watcher_events(buck)
+    is_fresh_instance, results = await get_file_watcher_events(yak)
     assert is_fresh_instance
     verify_results(results, required)
 
 
-@buck_test()
-async def test_watchman_create_symlink_test(buck: Buck) -> None:
-    await run_create_symlink_test(buck, FileWatcherProvider.WATCHMAN)
+@yak_test()
+async def test_watchman_create_symlink_test(yak: Yak) -> None:
+    await run_create_symlink_test(yak, FileWatcherProvider.WATCHMAN)
 
 
-@buck_test()
-async def test_watchman_replace_file_with_symlink(buck: Buck) -> None:
-    await run_replace_file_with_symlink_test(buck, FileWatcherProvider.WATCHMAN)
+@yak_test()
+async def test_watchman_replace_file_with_symlink(yak: Yak) -> None:
+    await run_replace_file_with_symlink_test(yak, FileWatcherProvider.WATCHMAN)
 
 
-@buck_test()
-async def test_watchman_change_symlink_target_test(buck: Buck) -> None:
-    await run_change_symlink_target_test(buck, FileWatcherProvider.WATCHMAN)
+@yak_test()
+async def test_watchman_change_symlink_target_test(yak: Yak) -> None:
+    await run_change_symlink_target_test(yak, FileWatcherProvider.WATCHMAN)

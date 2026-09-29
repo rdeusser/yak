@@ -18,7 +18,7 @@ use tokio::sync::oneshot;
 #[cfg(unix)]
 pub mod action_scene;
 #[cfg(unix)]
-pub mod buck_cgroup_tree;
+pub mod yak_cgroup_tree;
 #[cfg(unix)]
 pub mod cgroup;
 #[cfg(unix)]
@@ -44,7 +44,7 @@ pub struct OrphanProcessInfo {
 }
 
 #[cfg(not(unix))]
-pub mod buck_cgroup_tree {
+pub mod yak_cgroup_tree {
     use yak_common::init::ResourceControlConfig;
 
     /// Return the current cgroup path for logging, if supported on this platform.
@@ -58,20 +58,20 @@ pub mod buck_cgroup_tree {
         unreachable!("not used on windows")
     }
 
-    pub struct PreppedBuckCgroups;
+    pub struct PreppedYakCgroups;
 
-    impl PreppedBuckCgroups {
+    impl PreppedYakCgroups {
         pub fn prep_current_process() -> yak_error::Result<Self> {
             unreachable!("not used on windows")
         }
     }
 
     #[derive(allocative::Allocative)]
-    pub struct BuckCgroupTree;
+    pub struct YakCgroupTree;
 
-    impl BuckCgroupTree {
+    impl YakCgroupTree {
         pub async fn set_up(
-            _prepped: PreppedBuckCgroups,
+            _prepped: PreppedYakCgroups,
             _config: &ResourceControlConfig,
         ) -> yak_error::Result<Self> {
             unreachable!("not used on windows")
@@ -87,17 +87,17 @@ pub mod memory_tracker {
     use yak_common::init::ResourceControlConfig;
     use yak_events::daemon_id::DaemonId;
 
-    use crate::buck_cgroup_tree::BuckCgroupTree;
+    use crate::yak_cgroup_tree::YakCgroupTree;
 
     #[derive(Allocative)]
     pub struct MemoryTracker {
-        pub cgroup_tree: BuckCgroupTree,
+        pub cgroup_tree: YakCgroupTree,
     }
 
     pub type MemoryTrackerHandle = Arc<MemoryTracker>;
 
     pub async fn create_memory_tracker(
-        _cgroup_tree: Option<BuckCgroupTree>,
+        _cgroup_tree: Option<YakCgroupTree>,
         _resource_control_config: &ResourceControlConfig,
         _daemon_id: &DaemonId,
     ) -> yak_error::Result<Option<MemoryTrackerHandle>> {

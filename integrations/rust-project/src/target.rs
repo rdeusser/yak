@@ -110,7 +110,7 @@ pub(crate) struct TargetInfo {
     pub(crate) name: String,
     /// The target identifier, e.g. `root//integrations/rust-project:rust-project`.
     ///
-    /// See also <https://rdeusser.github.io/buck2/docs/concepts/labels/>
+    /// See also <https://rdeusser.github.io/yak/docs/concepts/labels/>
     pub(crate) label: String,
     /// A list of tags, e.g. ["generated", "split-dwarf"]
     ///
@@ -135,7 +135,7 @@ pub(crate) struct TargetInfo {
     #[serde(rename = "tests")]
     pub(crate) test_deps: Vec<Target>,
     // Optional set of renamed crates. in yak, these are not unified with
-    // `buck.direct_dependencies` and are instead a separate entry.
+    // `yak.direct_dependencies` and are instead a separate entry.
     #[serde(deserialize_with = "deserialize_named_deps")]
     pub(crate) named_deps: FxHashMap<String, Target>,
     pub(crate) proc_macro: Option<bool>,
@@ -266,12 +266,12 @@ impl TargetInfo {
         false
     }
 
-    /// Is this a reindeer-vendored third-party crate?
+    /// Is this a vendored third-party crate?
     ///
     /// Crates count as vendored when they live under the package roots
     /// `third-party/rust`, `third-party/rust/top`, or `third-party/rust/vendor/`
     /// of any cell.
-    pub(crate) fn is_reindeer_third_party(&self) -> bool {
+    pub(crate) fn is_vendored_third_party(&self) -> bool {
         // Strip the cell (e.g. `root//`) and the target name (`:foo`) to get
         // the yak package path.
         let package = self
@@ -402,7 +402,7 @@ mod tests {
     }
 
     #[test]
-    fn test_is_reindeer_third_party() {
+    fn test_is_vendored_third_party() {
         let with_label = |label: &str| TargetInfo {
             name: "foo".to_owned(),
             label: label.to_owned(),
@@ -426,16 +426,16 @@ mod tests {
             rustc_flags: vec![],
         };
 
-        assert!(with_label("root//third-party/rust/vendor/tokio:1").is_reindeer_third_party());
-        assert!(with_label("root//third-party/rust:tokio").is_reindeer_third_party());
-        assert!(with_label("root//third-party/rust/top:rustc").is_reindeer_third_party());
+        assert!(with_label("root//third-party/rust/vendor/tokio:1").is_vendored_third_party());
+        assert!(with_label("root//third-party/rust:tokio").is_vendored_third_party());
+        assert!(with_label("root//third-party/rust/top:rustc").is_vendored_third_party());
 
         assert!(
-            !with_label("root//integrations/rust-project:rust-project").is_reindeer_third_party()
+            !with_label("root//integrations/rust-project:rust-project").is_vendored_third_party()
         );
         // A first-party crate that merely lives under a similarly-named path is
-        // not a reindeer root.
-        assert!(!with_label("root//third-party/rust-tools/foo:foo").is_reindeer_third_party());
+        // not a vendored third-party root.
+        assert!(!with_label("root//third-party/rust-tools/foo:foo").is_vendored_third_party());
     }
 
     #[test]

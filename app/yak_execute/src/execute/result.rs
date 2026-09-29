@@ -25,7 +25,7 @@ use yak_core::content_hash::ContentBasedPathHash;
 use yak_core::fs::artifact_path_resolver::ArtifactFs;
 use yak_core::fs::project_rel_path::ProjectRelativePathBuf;
 use yak_data::SchedulingMode;
-use yak_hash::BuckIndexMap;
+use yak_hash::YakIndexMap;
 use yak_util::time_span::TimeSpan;
 
 use crate::artifact_value::ArtifactValue;
@@ -229,7 +229,7 @@ impl CommandExecutionMetadata {
 #[derivative(Debug)]
 pub struct CommandExecutionResult {
     /// The outputs produced by this command
-    pub outputs: BuckIndexMap<CommandExecutionOutput, ArtifactValue>,
+    pub outputs: YakIndexMap<CommandExecutionOutput, ArtifactValue>,
     /// How it executed.
     pub report: CommandExecutionReport,
     /// A previously rejected execution of this command.
@@ -481,7 +481,7 @@ mod tests {
         let status = CommandExecutionStatus::Success {
             execution_kind: CommandExecutionKind::Local {
                 digest: CasDigest::new_blake3([0].repeat(32).as_slice().try_into().unwrap(), 123),
-                command: vec!["fake_buck2".to_owned()],
+                command: vec!["fake_yak".to_owned()],
                 env: {
                     let mut map = SortedVectorMap::new();
                     map.insert("FAKE_ENV_VAR".to_owned(), "1".to_owned());
@@ -535,7 +535,7 @@ mod tests {
         let command_execution_kind = yak_data::CommandExecutionKind {
             command: Some(yak_data::command_execution_kind::Command::LocalCommand(
                 yak_data::LocalCommand {
-                    argv: vec!["fake_buck2".to_owned()],
+                    argv: vec!["fake_yak".to_owned()],
                     env: vec![yak_data::EnvironmentEntry {
                         key: "FAKE_ENV_VAR".to_owned(),
                         value: "1".to_owned(),

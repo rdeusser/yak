@@ -22,7 +22,7 @@ use yak_cli_proto::build_request::Uploads;
 use yak_cli_proto::build_request::build_providers;
 use yak_client_ctx::client_ctx::ClientCommandContext;
 use yak_client_ctx::command_outcome::CommandOutcome;
-use yak_client_ctx::common::BuckArgMatches;
+use yak_client_ctx::common::YakArgMatches;
 use yak_client_ctx::common::CommonBuildConfigurationOptions;
 use yak_client_ctx::common::CommonCommandOptions;
 use yak_client_ctx::common::CommonEventLogOptions;
@@ -30,7 +30,7 @@ use yak_client_ctx::common::CommonStarlarkOptions;
 use yak_client_ctx::common::build::CommonBuildOptions;
 use yak_client_ctx::common::target_cfg::TargetCfgWithUniverseOptions;
 use yak_client_ctx::common::ui::CommonConsoleOptions;
-use yak_client_ctx::daemon::client::BuckdClientConnector;
+use yak_client_ctx::daemon::client::YakdClientConnector;
 use yak_client_ctx::daemon::client::NoPartialResultHandler;
 use yak_client_ctx::events_ctx::EventsCtx;
 use yak_client_ctx::exit_result::ExecEnvironment;
@@ -39,12 +39,12 @@ use yak_client_ctx::path_arg::PathArg;
 use yak_client_ctx::streaming::StreamingCommand;
 use yak_common::argv::Argv;
 use yak_common::argv::SanitizedArgv;
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 use yak_error::conversion::from_any_with_tag;
-use yak_hash::BuckMutSet;
-use yak_wrapper_common::BUCK_WRAPPER_START_TIME_ENV_VAR;
-use yak_wrapper_common::BUCK_WRAPPER_UUID_ENV_VAR;
-use yak_wrapper_common::BUCK2_WRAPPER_ENV_VAR;
+use yak_hash::YakMutSet;
+use yak_wrapper_common::YAK_WRAPPER_START_TIME_ENV_VAR;
+use yak_wrapper_common::YAK_WRAPPER_UUID_ENV_VAR;
+use yak_wrapper_common::YAK_WRAPPER_ENV_VAR;
 
 use crate::commands::build::print_build_failed;
 use crate::commands::build::print_build_id;
@@ -52,9 +52,9 @@ use crate::commands::build::print_build_result;
 use crate::commands::build::print_build_succeeded;
 
 const WRAPPER_ENV_VARS: [&str; 3] = [
-    BUCK2_WRAPPER_ENV_VAR,
-    BUCK_WRAPPER_UUID_ENV_VAR,
-    BUCK_WRAPPER_START_TIME_ENV_VAR,
+    YAK_WRAPPER_ENV_VAR,
+    YAK_WRAPPER_UUID_ENV_VAR,
+    YAK_WRAPPER_START_TIME_ENV_VAR,
 ];
 
 /// Build and run the selected target.
@@ -117,8 +117,8 @@ impl StreamingCommand for RunCommand {
 
     async fn exec_impl(
         self,
-        buckd: &mut BuckdClientConnector,
-        matches: BuckArgMatches<'_>,
+        yakd: &mut YakdClientConnector,
+        matches: YakArgMatches<'_>,
         ctx: &mut ClientCommandContext<'_>,
         events_ctx: &mut EventsCtx,
     ) -> ExitResult {
@@ -131,7 +131,7 @@ impl StreamingCommand for RunCommand {
         let context = ctx.client_context(matches, &self)?;
         let has_target_universe = !self.target_cfg.target_universe.is_empty();
         // TODO(rafaelc): fail fast on the daemon if the target doesn't have RunInfo
-        let response = buckd
+        let response = yakd
             .with_flushing()
             .build(
                 BuildRequest {
@@ -206,7 +206,7 @@ impl StreamingCommand for RunCommand {
         print_build_succeeded(&console, ctx, extra)?;
 
         if let Some(file_path) = self.command_args_file {
-            let mut output = File::create(&file_path).with_buck_error_context(|| {
+            let mut output = File::create(&file_path).with_yak_error_context(|| {
                 format!("Failed to create/open `{file_path}` to print command")
             })?;
 
@@ -218,10 +218,10 @@ impl StreamingCommand for RunCommand {
                     .collect(),
             };
             let serialized = serde_json::to_string(&command)
-                .buck_error_context("Failed to serialize command")?;
+                .yak_error_context("Failed to serialize command")?;
             output
                 .write_all(serialized.as_bytes())
-                .buck_error_context("Failed to write command")?;
+                .yak_error_context("Failed to write command")?;
 
             return ExitResult::success();
         }
@@ -269,7 +269,7 @@ impl StreamingCommand for RunCommand {
     }
 
     fn sanitize_argv(&self, argv: Argv) -> SanitizedArgv {
-        let to_redact: BuckMutSet<_> = self.extra_run_args.iter().collect();
+        let to_redact: YakMutSet<_> = self.extra_run_args.iter().collect();
         argv.redacted(to_redact)
     }
 }

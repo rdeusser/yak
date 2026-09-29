@@ -20,7 +20,7 @@ def _get_sourcedb(result: list[bxl.EnsuredArtifact]) -> bxl.EnsuredArtifact:
 
 def _abort_on_build_failure(target_label: TargetLabel, result: bxl.BuildResult) -> None:
     for failure in result.failures():
-        error_message = "Target `{}` cannot be built by Buck\nreason: {}".format(target_label, failure)
+        error_message = "Target `{}` cannot be built by Yak\nreason: {}".format(target_label, failure)
         fail(error_message)
 
 def _build(ctx: bxl.Context, targets: list[ConfiguredTargetLabel]) -> dict[Label, bxl.BuildResult]:

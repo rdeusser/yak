@@ -13,5 +13,5 @@
 pub mod daemon;
 mod daemon_lower_priority;
 mod daemonize;
-pub mod no_buckd;
+pub mod no_yakd;
 mod schedule_termination;

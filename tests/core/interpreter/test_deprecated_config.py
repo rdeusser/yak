@@ -7,17 +7,17 @@
 # above-listed licenses.
 
 import pytest
-from e2e_util.api.buck import Buck
+from e2e_util.api.yak import Yak
 from e2e_util.asserts import expect_failure
-from e2e_util.buck_workspace import buck_test
+from e2e_util.yak_workspace import yak_test
 
 
-@buck_test()
+@yak_test()
 @pytest.mark.parametrize("section", ["some", "other"])
 @pytest.mark.parametrize("root", ["true", "false"])
-async def test_deprecated_config(buck: Buck, section: str, root: str) -> None:
+async def test_deprecated_config(yak: Yak, section: str, root: str) -> None:
     _ = await expect_failure(
-        buck.build(
+        yak.build(
             f":test_target_{section}_config1",
             "-c",
             f"test.section={section}",
@@ -30,11 +30,11 @@ async def test_deprecated_config(buck: Buck, section: str, root: str) -> None:
     )
 
 
-@buck_test()
+@yak_test()
 @pytest.mark.parametrize("root", ["true", "false"])
-async def test_not_deprecated_config(buck: Buck, root: str) -> None:
+async def test_not_deprecated_config(yak: Yak, root: str) -> None:
     section = "other"
-    _ = await buck.build(
+    _ = await yak.build(
         f":test_target_{section}_config2",
         "-c",
         f"test.section={section}",
@@ -45,10 +45,10 @@ async def test_not_deprecated_config(buck: Buck, root: str) -> None:
     )
 
 
-@buck_test()
-async def test_no_deprecated_cell_config(buck: Buck) -> None:
+@yak_test()
+async def test_no_deprecated_cell_config(yak: Yak) -> None:
     section = "other"
-    await buck.build(
+    await yak.build(
         f"cell//:test_target_{section}_config1",
         "-c",
         f"test.section={section}",
@@ -57,11 +57,11 @@ async def test_no_deprecated_cell_config(buck: Buck) -> None:
     )
 
 
-@buck_test()
-async def test_deprecated_cell_config2(buck: Buck) -> None:
+@yak_test()
+async def test_deprecated_cell_config2(yak: Yak) -> None:
     section = "other"
     _ = await expect_failure(
-        buck.build(
+        yak.build(
             f"cell//:test_target_{section}_config2",
             "-c",
             f"test.section={section}",

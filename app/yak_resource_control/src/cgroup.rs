@@ -770,7 +770,7 @@ impl CgroupMinimal {
         use yak_fs::paths::abs_norm_path::AbsNormPath;
         use yak_util::process::background_command;
 
-        if !cfg!(buck_build) || !cfg!(target_os = "linux") {
+        if !cfg!(yak_build) || !cfg!(target_os = "linux") {
             return None;
         }
 
@@ -857,7 +857,7 @@ impl CgroupMinimal {
                 // means that attempting to run multiple tests like this in the same process won't
                 // work, but alas this is the best we can do
                 let leaf = parent
-                    .make_child(FileNameBuf::unchecked_new("_buck_leaf"))
+                    .make_child(FileNameBuf::unchecked_new("_yak_leaf"))
                     .await
                     .unwrap();
                 // Move ourselves into the cgroup we just created

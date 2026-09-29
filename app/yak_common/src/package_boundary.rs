@@ -30,27 +30,27 @@ use yak_core::cells::paths::CellRelativePathBuf;
 use yak_fs::paths::file_name::FileNameBuf;
 use yak_fs::paths::forward_rel_path::ForwardRelativePath;
 use yak_fs::paths::forward_rel_path::ForwardRelativePathBuf;
-use yak_hash::StdBuckHashMap;
+use yak_hash::StdYakHashMap;
 
 use crate::legacy_configs::dice::HasLegacyConfigs;
-use crate::legacy_configs::key::BuckconfigKeyRef;
+use crate::legacy_configs::key::YakconfigKeyRef;
 
 #[derive(PartialEq, Allocative)]
-pub struct PackageBoundaryExceptions(StdBuckHashMap<CellName, CellPackageBoundaryExceptions>);
+pub struct PackageBoundaryExceptions(StdYakHashMap<CellName, CellPackageBoundaryExceptions>);
 
 #[derive(PartialEq, Allocative, Pagable)]
 struct CellPackageBoundaryExceptions {
     // The reason we avoid a trie is that there's not a convenient `TrieSet` implementation to use,
     // and tries will likely have worse performance because most exception paths are very short.
     // Instead, we use a HashMap of first directory of the path to the rest of the path.
-    prefix_to_subpaths: StdBuckHashMap<FileNameBuf, Vec<ForwardRelativePathBuf>>,
+    prefix_to_subpaths: StdYakHashMap<FileNameBuf, Vec<ForwardRelativePathBuf>>,
     // Sometimes we want to say everything is allowed
     allow_everything: bool,
 }
 
 impl CellPackageBoundaryExceptions {
     fn new(s: &str) -> yak_error::Result<Self> {
-        let mut prefix_to_subpaths = StdBuckHashMap::default();
+        let mut prefix_to_subpaths = StdYakHashMap::default();
         let mut allow_everything = false;
         for path_str in s.split(',') {
             let path_str = path_str.trim();
@@ -116,7 +116,7 @@ impl Key for CellPackageBoundaryExceptionsKey {
         let s = ctx
             .get_legacy_config_property(
                 self.0,
-                BuckconfigKeyRef {
+                YakconfigKeyRef {
                     section: "project",
                     property: "package_boundary_exceptions",
                 },

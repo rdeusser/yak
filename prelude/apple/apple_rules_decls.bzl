@@ -56,7 +56,7 @@ load("@prelude//apple/validation:required_reasons_tools.bzl", "RequiredReasonsTo
 load("@prelude//cxx:groups_types.bzl", "GroupFilterInfo", "Traversal")
 load("@prelude//cxx:headers.bzl", "CPrecompiledHeaderInfo", "HeaderMode")
 load("@prelude//cxx:link_groups_types.bzl", "LINK_GROUP_MAP_ATTR")
-load("@prelude//decls:common.bzl", "CxxRuntimeType", "CxxSourceType", "HeadersAsRawHeadersMode", "LinkableDepType", "buck", "prelude_rule")
+load("@prelude//decls:common.bzl", "CxxRuntimeType", "CxxSourceType", "HeadersAsRawHeadersMode", "LinkableDepType", "yak", "prelude_rule")
 load("@prelude//decls:cxx_common.bzl", "cxx_common")
 load("@prelude//decls:native_common.bzl", "native_common")
 load("@prelude//decls:test_common.bzl", "test_common")
@@ -65,7 +65,7 @@ load("@prelude//linking:execution_preference.bzl", "link_execution_preference_at
 load("@prelude//linking:link_info.bzl", "LinkOrdering")
 load("@prelude//linking:types.bzl", "Linkage")
 load("@prelude//transitions:constraint_overrides.bzl", "constraint_overrides")
-load("@prelude//utils:buckconfig.bzl", "read_bool")
+load("@prelude//utils:yakconfig.bzl", "read_bool")
 load("@prelude//xplugins:attrs.bzl", "xplugins_common")
 load(":apple_app_intents.bzl", "apple_app_intents_impl")
 load(":apple_asset_catalog.bzl", "apple_asset_catalog_impl")
@@ -118,9 +118,9 @@ def apple_bundle_base_attrs():
         apple_common.product_name_from_module_name_arg()
         | apple_common.asset_catalogs_compilation_options_arg()
         | apple_common.info_plist_substitutions_arg()
-        | buck.contacts_arg()
-        | buck.labels_arg()
-        | buck.licenses_arg()
+        | yak.contacts_arg()
+        | yak.labels_arg()
+        | yak.licenses_arg()
         | apple_common.codesign_flags_arg()
         | apple_common.codesign_identity_arg()
         | apple_common.deps_arg()
@@ -192,9 +192,9 @@ apple_asset_catalog = prelude_rule(
     further = None,
     attrs = (
         # @unsorted-dict-items
-        buck.contacts_arg()
-        | buck.labels_arg()
-        | buck.licenses_arg()
+        yak.contacts_arg()
+        | yak.labels_arg()
+        | yak.licenses_arg()
         | {
             "app_icon": attrs.option(
                 attrs.string(),
@@ -233,7 +233,7 @@ apple_app_intents = prelude_rule(
     docs = "An `apple_app_intents()` rule represents App Intents definitions for Apple platforms.",
     examples = None,
     further = None,
-    attrs = (buck.contacts_arg() | buck.labels_arg() | buck.licenses_arg()),
+    attrs = (yak.contacts_arg() | yak.labels_arg() | yak.licenses_arg()),
     impl = apple_app_intents_impl,
 )
 
@@ -316,9 +316,9 @@ apple_binary = prelude_rule(
         | apple_common.executable_name_arg()
         | apple_common.info_plist_substitutions_arg()
         | cxx_common.supported_platforms_regex_arg()
-        | buck.contacts_arg()
-        | buck.labels_arg()
-        | buck.licenses_arg()
+        | yak.contacts_arg()
+        | yak.labels_arg()
+        | yak.licenses_arg()
         | apple_common.deps_arg()
         | apple_common.devirt_enabled_arg()
         | apple_common.diagnostics_arg()
@@ -384,7 +384,7 @@ apple_binary = prelude_rule(
             "_swift_enable_testing": attrs.default_only(attrs.bool(default = False)),
             VALIDATION_DEPS_ATTR_NAME: VALIDATION_DEPS_ATTR_TYPE,
         }
-        | buck.allow_cache_upload_arg()
+        | yak.allow_cache_upload_arg()
         | validation_common.attrs_validators_arg()
         | constraint_overrides.attributes
         | get_skip_swift_incremental_outputs_attrs()
@@ -521,9 +521,9 @@ apple_bundle = prelude_rule(
         | apple_common.privacy_manifest_arg()
         | apple_common.product_name_from_module_name_arg()
         | apple_common.asset_catalogs_compilation_options_arg()
-        | buck.contacts_arg()
-        | buck.labels_arg()
-        | buck.licenses_arg()
+        | yak.contacts_arg()
+        | yak.labels_arg()
+        | yak.licenses_arg()
         | apple_common.codesign_flags_arg()
         | apple_common.codesign_identity_arg()
         | apple_common.resource_group_arg()
@@ -627,9 +627,9 @@ apple_library = prelude_rule(
         | apple_common.apple_tools_arg()
         | apple_common.apple_toolchain_arg()
         | validation_common.attrs_validators_arg()
-        | buck.contacts_arg()
-        | buck.labels_arg()
-        | buck.licenses_arg()
+        | yak.contacts_arg()
+        | yak.labels_arg()
+        | yak.licenses_arg()
         | apple_common.deps_arg()
         | apple_common.devirt_enabled_arg()
         | apple_common.diagnostics_arg()
@@ -702,7 +702,7 @@ apple_library = prelude_rule(
             APPLE_ARCHIVE_OBJECTS_LOCALLY_OVERRIDE_ATTR_NAME: attrs.option(attrs.bool(), default = None),
             VALIDATION_DEPS_ATTR_NAME: VALIDATION_DEPS_ATTR_TYPE,
         }
-        | buck.allow_cache_upload_arg()
+        | yak.allow_cache_upload_arg()
         | get_swift_incremental_file_hashing_attrs()
         | get_swift_incremental_logging_attrs()
         | get_swift_incremental_remote_outputs_attrs()
@@ -758,8 +758,8 @@ apple_metal_library = prelude_rule(
     """,
     further = None,
     attrs = (
-        buck.labels_arg()
-        | buck.contacts_arg()
+        yak.labels_arg()
+        | yak.contacts_arg()
         | {
             "headers": attrs.list(attrs.source(), default = []),
             "metal_compiler_flags": attrs.list(
@@ -814,9 +814,9 @@ apple_package = prelude_rule(
     further = None,
     attrs = (
         # @unsorted-dict-items
-        buck.contacts_arg()
-        | buck.labels_arg()
-        | buck.licenses_arg()
+        yak.contacts_arg()
+        | yak.labels_arg()
+        | yak.licenses_arg()
         | {
             "bundle": attrs.dep(
                 providers = [AppleBundleInfo],
@@ -947,9 +947,9 @@ apple_resource = prelude_rule(
             "codesign_entitlements": attrs.option(attrs.source(), default = None),
             "codesign_flags_override": attrs.option(attrs.list(attrs.string()), default = None),
         }
-        | buck.contacts_arg()
-        | buck.labels_arg()
-        | buck.licenses_arg()
+        | yak.contacts_arg()
+        | yak.labels_arg()
+        | yak.licenses_arg()
         | apple_common.skip_universal_resource_dedupe_arg()
     ),
     impl = apple_resource_impl,
@@ -1021,8 +1021,8 @@ apple_test = prelude_rule(
         | cxx_common.compiler_flags_arg()
         | cxx_common.linker_flags_arg()
         | apple_common.target_sdk_version()
-        | buck.run_test_separately_arg(run_test_separately_type = attrs.bool(default = False))
-        | buck.test_label_arg()
+        | yak.run_test_separately_arg(run_test_separately_type = attrs.bool(default = False))
+        | yak.test_label_arg()
         | apple_common.extra_xcode_sources()
         | apple_common.extra_xcode_files()
         | apple_common.serialize_debugging_options_arg()
@@ -1030,8 +1030,8 @@ apple_test = prelude_rule(
         | apple_common.executable_name_arg()
         | apple_common.asset_catalogs_compilation_options_arg()
         | cxx_common.supported_platforms_regex_arg()
-        | buck.contacts_arg()
-        | buck.licenses_arg()
+        | yak.contacts_arg()
+        | yak.licenses_arg()
         | apple_common.codesign_flags_arg()
         | apple_common.codesign_identity_arg()
         | apple_common.deps_arg()
@@ -1104,8 +1104,8 @@ apple_test = prelude_rule(
             "test_rule_timeout_ms": attrs.option(attrs.int(), default = None),
             "ui_test_target_app": attrs.option(attrs.dep(), default = None),
         }
-        | buck.allow_cache_upload_arg()
-        | buck.inject_test_env_arg()
+        | yak.allow_cache_upload_arg()
+        | yak.inject_test_env_arg()
         | apple_test_extra_attrs()
         | test_common.attributes()
         | xplugins_common.debug_artifacts_arg
@@ -1128,9 +1128,9 @@ apple_toolchain = prelude_rule(
     examples = None,
     further = None,
     attrs = (
-        buck.contacts_arg()
-        | buck.labels_arg()
-        | buck.licenses_arg()
+        yak.contacts_arg()
+        | yak.labels_arg()
+        | yak.licenses_arg()
         | {
             "actool": attrs.exec_dep(providers = [RunInfo]),
             "app_intents_metadata_processor": attrs.option(attrs.exec_dep(providers = [RunInfo]), default = None),
@@ -1202,8 +1202,8 @@ required_reasons_tools = prelude_rule(
     examples = None,
     further = None,
     attrs = (
-        buck.contacts_arg()
-        | buck.labels_arg()
+        yak.contacts_arg()
+        | yak.labels_arg()
         | {
             "analyzer": attrs.exec_dep(providers = [RunInfo]),
             "validator": attrs.exec_dep(providers = [RunInfo]),
@@ -1232,9 +1232,9 @@ core_data_model = prelude_rule(
     further = None,
     attrs = (
         # @unsorted-dict-items
-        buck.contacts_arg()
-        | buck.labels_arg()
-        | buck.licenses_arg()
+        yak.contacts_arg()
+        | yak.labels_arg()
+        | yak.licenses_arg()
         | {
             "module": attrs.option(attrs.string(), default = None),
             "path": attrs.source(
@@ -1271,9 +1271,9 @@ prebuilt_apple_framework = prelude_rule(
     further = None,
     attrs = (
         # @unsorted-dict-items
-        buck.contacts_arg()
-        | buck.labels_arg()
-        | buck.licenses_arg()
+        yak.contacts_arg()
+        | yak.labels_arg()
+        | yak.licenses_arg()
         | apple_common.deps_arg()
         | apple_common.libraries_arg()
         | apple_common.sdk_modules_arg()
@@ -1333,9 +1333,9 @@ scene_kit_assets = prelude_rule(
     further = None,
     attrs = (
         # @unsorted-dict-items
-        buck.contacts_arg()
-        | buck.labels_arg()
-        | buck.licenses_arg()
+        yak.contacts_arg()
+        | yak.labels_arg()
+        | yak.licenses_arg()
         | {
             "path": attrs.source(allow_directory = True),
         }
@@ -1354,9 +1354,9 @@ swift_toolchain = prelude_rule(
     examples = None,
     further = None,
     attrs = (
-        buck.contacts_arg()
-        | buck.labels_arg()
-        | buck.licenses_arg()
+        yak.contacts_arg()
+        | yak.labels_arg()
+        | yak.licenses_arg()
         | {
             "architecture": attrs.string(),
             "enforce_dedupe_eligibility": attrs.bool(default = False),
@@ -1435,8 +1435,8 @@ apple_universal_executable = prelude_rule(
     examples = None,
     further = None,
     attrs = (
-        buck.labels_arg()
-        | buck.contacts_arg()
+        yak.labels_arg()
+        | yak.contacts_arg()
         | {
             "executable": attrs.split_transition_dep(
                 cfg = cpu_split_transition,
@@ -1565,8 +1565,8 @@ cxx_universal_executable = prelude_rule(
     examples = None,
     further = None,
     attrs = (
-        buck.labels_arg()
-        | buck.contacts_arg()
+        yak.labels_arg()
+        | yak.contacts_arg()
         | {
             "executable": attrs.split_transition_dep(
                 cfg = cpu_split_transition,
@@ -1616,8 +1616,8 @@ apple_xcframework = prelude_rule(
         built per-platform via a split transition and then combined.
     """,
     impl = apple_xcframework_impl,
-    attrs = buck.labels_arg()
-    | buck.contacts_arg()
+    attrs = yak.labels_arg()
+    | yak.contacts_arg()
     | {
         "framework": attrs.split_transition_dep(cfg = framework_split_transition),
         "framework_name": attrs.option(attrs.string(), default = None),
@@ -1632,7 +1632,7 @@ apple_spm_package = prelude_rule(
     name = "apple_spm_package",
     docs = """
         An `apple_spm_package()` rule packages a set of dependencies into a Swift Package
-        Manager (SPM) compatible package. This enables distributing buck2-built libraries
+        Manager (SPM) compatible package. This enables distributing yak-built libraries
         in a format that can be consumed by SPM-based projects.
     """,
     impl = apple_spm_package_impl,
@@ -1654,8 +1654,8 @@ apple_static_archive = prelude_rule(
     """,
     impl = apple_static_archive_impl,
     attrs = (
-        buck.labels_arg()
-        | buck.contacts_arg()
+        yak.labels_arg()
+        | yak.contacts_arg()
         | apple_common.deps_arg()
         | {
             "archive_name": attrs.option(attrs.string(), default = None),
@@ -1720,8 +1720,8 @@ apple_resource_bundle = prelude_rule(
     """,
     impl = apple_resource_bundle_impl,
     attrs = (
-        buck.labels_arg()
-        | buck.contacts_arg()
+        yak.labels_arg()
+        | yak.contacts_arg()
         | apple_common.deps_arg()
         | apple_common.ibtool_flags_arg()
         | apple_common.product_name_arg()

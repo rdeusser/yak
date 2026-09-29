@@ -15,9 +15,9 @@ use std::time::SystemTime;
 
 use gazebo::variants::VariantName;
 use yak_data::SpanEndEvent;
-use yak_events::BuckEvent;
+use yak_events::YakEvent;
 
-use crate::unpack_event::UnpackedBuckEvent;
+use crate::unpack_event::UnpackedYakEvent;
 use crate::unpack_event::unpack_event;
 
 static NUM_DELAYS_FOR_AVERAGE: usize = 10;
@@ -60,7 +60,7 @@ impl DebugEventsState {
         }
     }
 
-    pub fn handle_event(&mut self, event: &BuckEvent) -> yak_error::Result<()> {
+    pub fn handle_event(&mut self, event: &YakEvent) -> yak_error::Result<()> {
         self.event_count += 1;
 
         let delay = event
@@ -75,12 +75,12 @@ impl DebugEventsState {
         }
 
         match unpack_event(event)? {
-            UnpackedBuckEvent::SpanStart(_, _, data) => self.span_started(Some(data)),
-            UnpackedBuckEvent::UnrecognizedSpanStart(_, _) => self.span_started(None),
-            UnpackedBuckEvent::SpanEnd(_, span_end, data) => self.span_end(span_end, Some(data)),
-            UnpackedBuckEvent::UnrecognizedSpanEnd(_, span_end) => self.span_end(span_end, None),
-            UnpackedBuckEvent::Instant(_, _, data) => self.instant(Some(data)),
-            UnpackedBuckEvent::UnrecognizedInstant(_, _) => self.instant(None),
+            UnpackedYakEvent::SpanStart(_, _, data) => self.span_started(Some(data)),
+            UnpackedYakEvent::UnrecognizedSpanStart(_, _) => self.span_started(None),
+            UnpackedYakEvent::SpanEnd(_, span_end, data) => self.span_end(span_end, Some(data)),
+            UnpackedYakEvent::UnrecognizedSpanEnd(_, span_end) => self.span_end(span_end, None),
+            UnpackedYakEvent::Instant(_, _, data) => self.instant(Some(data)),
+            UnpackedYakEvent::UnrecognizedInstant(_, _) => self.instant(None),
         }
 
         Ok(())

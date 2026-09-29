@@ -10,9 +10,9 @@
 
 use yak_cli_proto::SetLogFilterRequest;
 use yak_client_ctx::client_ctx::ClientCommandContext;
-use yak_client_ctx::common::BuckArgMatches;
-use yak_client_ctx::daemon::client::connect::BuckdConnectOptions;
-use yak_client_ctx::daemon::client::connect::connect_buckd;
+use yak_client_ctx::common::YakArgMatches;
+use yak_client_ctx::daemon::client::connect::YakdConnectOptions;
+use yak_client_ctx::daemon::client::connect::connect_yakd;
 use yak_client_ctx::events_ctx::EventsCtx;
 use yak_client_ctx::exit_result::ExitResult;
 use yak_client_ctx::subscribers::stdout_stderr_forwarder::StdoutStderrForwarder;
@@ -35,18 +35,18 @@ pub struct SetLogFilterCommand {
 }
 
 impl SetLogFilterCommand {
-    pub fn exec(self, _matches: BuckArgMatches<'_>, ctx: ClientCommandContext<'_>) -> ExitResult {
+    pub fn exec(self, _matches: YakArgMatches<'_>, ctx: ClientCommandContext<'_>) -> ExitResult {
         ctx.with_runtime(|ctx| async move {
             let mut events_ctx = EventsCtx::new(None, vec![Box::new(StdoutStderrForwarder)]);
 
-            let mut buckd = connect_buckd(
-                BuckdConnectOptions::ExistingOnly,
+            let mut yakd = connect_yakd(
+                YakdConnectOptions::ExistingOnly,
                 &mut events_ctx,
                 ctx.paths()?,
             )
             .await?;
 
-            buckd
+            yakd
                 .with_flushing()
                 .set_log_filter(
                     &mut events_ctx,

@@ -12,7 +12,7 @@ use dupe::Dupe;
 use starlark::values::UnpackValue;
 use starlark::values::none::NoneType;
 use starlark::values::type_repr::StarlarkTypeRepr;
-use yak_common::target_aliases::BuckConfigTargetAliasResolver;
+use yak_common::target_aliases::YakConfigTargetAliasResolver;
 use yak_core::cells::CellAliasResolver;
 use yak_core::cells::CellResolver;
 use yak_core::cells::cell_path::CellPathRef;
@@ -35,7 +35,7 @@ impl<'v> ValueAsStarlarkTargetLabel<'v> {
 
     pub(crate) fn parse_target_platforms(
         self,
-        target_alias_resolver: &BuckConfigTargetAliasResolver,
+        target_alias_resolver: &YakConfigTargetAliasResolver,
         cell_resolver: &CellResolver,
         cell_alias_resolver: &CellAliasResolver,
         cell_name: CellName,

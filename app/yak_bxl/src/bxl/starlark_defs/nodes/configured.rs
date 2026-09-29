@@ -63,10 +63,10 @@ use yak_core::package::PackageLabel;
 use yak_core::package::source_path::SourcePathRef;
 use yak_core::provider::label::ConfiguredProvidersLabel;
 use yak_core::target::configured_target_label::ConfiguredTargetLabel;
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 use yak_fs::paths::abs_path::AbsPath;
-use yak_hash::BuckMutMap;
-use yak_hash::BuckMutSet;
+use yak_hash::YakMutMap;
+use yak_hash::YakMutSet;
 use yak_interpreter::types::target_label::StarlarkConfiguredTargetLabel;
 use yak_node::attrs::attr_type::arg::StringWithMacros;
 use yak_node::attrs::attr_type::dict::DictLiteral;
@@ -128,7 +128,7 @@ fn attr_with_stripped_cfg(attr: &ConfiguredAttr) -> yak_error::Result<CoercedAtt
             CoercedAttr::Dep(dep.label.unconfigured())
         }
         ConfiguredAttr::SplitTransitionDep(dep) => {
-            let deps: BuckMutSet<_> = dep.deps.values().map(|l| l.unconfigured()).collect();
+            let deps: YakMutSet<_> = dep.deps.values().map(|l| l.unconfigured()).collect();
             if deps.len() != 1 {
                 return Err(yak_error::internal_error!(
                     "ConfiguredSplitTransitionDep should have exactly one dep, but found {}",
@@ -346,7 +346,7 @@ fn configured_target_node_value_methods(builder: &mut MethodsBuilder) {
     /// Gets the attribute from the configured target node.
     /// If the attribute is unset, returns the default value.
     /// If the attribute is not defined by the rule, returns `None`.
-    /// It will not return special attribute (attribute that start with 'buck.' in `yak cquery -A` command).
+    /// It will not return special attribute (attribute that start with 'yak.' in `yak cquery -A` command).
     ///
     /// Sample usage:
     /// ```python
@@ -672,10 +672,10 @@ fn configured_target_node_value_methods(builder: &mut MethodsBuilder) {
         let path = if path.is_absolute() {
             Cow::Owned(
                 fs.relativize_any(AbsPath::new(path)?)
-                    .buck_error_context("Given path does not belong to the project root")?,
+                    .yak_error_context("Given path does not belong to the project root")?,
             )
         } else {
-            Cow::Borrowed(ProjectRelativePath::new(path).buck_error_context(
+            Cow::Borrowed(ProjectRelativePath::new(path).yak_error_context(
                 "Given path should either be absolute or a forward pointing project relative path",
             )?)
         };
@@ -900,7 +900,7 @@ fn configured_attr_methods(builder: &mut MethodsBuilder) {
     ) -> starlark::Result<StarlarkCoercedAttr> {
         Ok(StarlarkCoercedAttr(
             attr_with_stripped_cfg(&this.0)
-                .buck_error_context("Failed to strip configuration from attribute")?,
+                .yak_error_context("Failed to strip configuration from attribute")?,
             this.1.dupe(),
         ))
     }
@@ -981,7 +981,7 @@ fn lazy_attrs_methods(builder: &mut MethodsBuilder) {
                         .configured_target_node
                         .0
                         .special_attrs()
-                        .collect::<BuckMutMap<_, _>>();
+                        .collect::<YakMutMap<_, _>>();
                     let attr = special_attrs.get(attr);
                     match attr {
                         None => NoneOr::None,
@@ -1091,7 +1091,7 @@ fn lazy_resolved_attrs_methods(builder: &mut MethodsBuilder) {
                         .configured_node
                         .0
                         .special_attrs()
-                        .collect::<BuckMutMap<_, _>>();
+                        .collect::<YakMutMap<_, _>>();
                     let attr = special_attrs.get(attr);
                     match attr {
                         None => NoneOr::None,

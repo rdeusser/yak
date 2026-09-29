@@ -12,14 +12,14 @@ using namespace System.Management.Automation.Language
 # %INSERT_GENERATED_LINE%
 
 # clap's static completer, whose `Register-ArgumentCompleter` call is rewritten at
-# generation time into an assignment to `$BuckClapStaticCompleter` (see the Rust
+# generation time into an assignment to `$YakClapStaticCompleter` (see the Rust
 # generator). We register it for `yak`.
 
 # clap_complete generated content BEGINS
 # %INSERT_OPTION_COMPLETION%
 # clap_complete generated content ENDS
 
-if (-not $BuckClapStaticCompleter) {
+if (-not $YakClapStaticCompleter) {
     throw "yak completion: clap static completer was not defined - the Rust-side rewrite may have failed"
 }
-Register-ArgumentCompleter -Native -CommandName 'yak' -ScriptBlock $BuckClapStaticCompleter
+Register-ArgumentCompleter -Native -CommandName 'yak' -ScriptBlock $YakClapStaticCompleter

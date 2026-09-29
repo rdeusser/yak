@@ -32,7 +32,7 @@ use yak_core::cells::CellResolver;
 use yak_core::cells::name::CellName;
 use yak_core::fs::project_rel_path::ProjectRelativePath;
 
-use crate::legacy_configs::cells::BuckConfigBasedCells;
+use crate::legacy_configs::cells::YakConfigBasedCells;
 use crate::legacy_configs::dice::HasLegacyConfigs;
 
 #[async_trait]
@@ -141,7 +141,7 @@ impl Key for CellAliasResolverKey {
         CellAliasResolver::new_for_non_root_cell(
             self.0,
             root_aliases,
-            BuckConfigBasedCells::get_cell_aliases_from_config(config)?,
+            YakConfigBasedCells::get_cell_aliases_from_config(config)?,
         )
     }
 

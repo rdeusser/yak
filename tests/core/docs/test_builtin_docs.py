@@ -6,15 +6,15 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-from e2e_util.api.buck import Buck
-from e2e_util.buck_workspace import buck_test
+from e2e_util.api.yak import Yak
+from e2e_util.yak_workspace import yak_test
 from e2e_util.helper.golden import golden_dir
 
 
-@buck_test()
-async def test_builtin_docs_golden(buck: Buck) -> None:
-    output = buck.cwd.parent / "output"
-    await buck.docs("starlark-builtins", "--output-dir", str(output))
+@yak_test()
+async def test_builtin_docs_golden(yak: Yak) -> None:
+    output = yak.cwd.parent / "output"
+    await yak.docs("starlark-builtins", "--output-dir", str(output))
 
     outputs: dict[str, str] = {}
     for file in output.glob("**/*.md"):
@@ -25,4 +25,4 @@ async def test_builtin_docs_golden(buck: Buck) -> None:
         rel_path = file.relative_to(output)
         outputs[str(rel_path)] = s
 
-    golden_dir(output=outputs, rel_path="buck2-golden-docs")
+    golden_dir(output=outputs, rel_path="yak-golden-docs")

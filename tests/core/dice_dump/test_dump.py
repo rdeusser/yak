@@ -10,16 +10,16 @@ import gzip
 import os.path
 from pathlib import Path
 
-from e2e_util.api.buck import Buck
-from e2e_util.buck_workspace import buck_test
+from e2e_util.api.yak import Yak
+from e2e_util.yak_workspace import yak_test
 
 
-@buck_test()
-async def test_debug_legacy_dice_dump(buck: Buck, tmp_path: Path) -> None:
+@yak_test()
+async def test_debug_legacy_dice_dump(yak: Yak, tmp_path: Path) -> None:
     file_path = tmp_path / "dump"
 
-    await buck.uquery("//...")
-    await buck.debug("dice-dump", "--path", str(file_path))
+    await yak.uquery("//...")
+    await yak.debug("dice-dump", "--path", str(file_path))
 
     assert os.path.exists(f"{file_path}/nodes.gz")
     assert os.path.exists(f"{file_path}/edges.gz")

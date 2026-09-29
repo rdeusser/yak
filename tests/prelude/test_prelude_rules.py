@@ -15,9 +15,9 @@ import shutil
 import sys
 
 import pytest
-from e2e_util.api.buck import Buck
+from e2e_util.api.yak import Yak
 from e2e_util.asserts import expect_failure
-from e2e_util.buck_workspace import buck_test
+from e2e_util.yak_workspace import yak_test
 
 COMMAND_ALIAS_PACKAGES = [
     "cross_build",
@@ -69,25 +69,25 @@ GO_PACKAGES = [
 ]
 
 
-@buck_test()
+@yak_test()
 @pytest.mark.parametrize("package", COMMAND_ALIAS_PACKAGES)
-async def test_command_alias(buck: Buck, package: str) -> None:
-    await buck.build(f"root//command_alias/{package}/...")
+async def test_command_alias(yak: Yak, package: str) -> None:
+    await yak.build(f"root//command_alias/{package}/...")
 
 
 @_needs_go
-@buck_test()
+@yak_test()
 @pytest.mark.parametrize("package", GO_PACKAGES)
-async def test_go(buck: Buck, package: str) -> None:
-    await buck.build(f"root//go/{package}/...")
+async def test_go(yak: Yak, package: str) -> None:
+    await yak.build(f"root//go/{package}/...")
 
 
-@buck_test()
-async def test_zip_file(buck: Buck) -> None:
-    await buck.build("root//zip_file/...")
+@yak_test()
+async def test_zip_file(yak: Yak) -> None:
+    await yak.build("root//zip_file/...")
 
 
-@buck_test()
+@yak_test()
 @pytest.mark.parametrize(
     "target, message",
     [
@@ -96,8 +96,8 @@ async def test_zip_file(buck: Buck) -> None:
         ("invalid_exclude", "pattern `\\(` is not a valid regular expression"),
     ],
 )
-async def test_zip_file_errors(buck: Buck, target: str, message: str) -> None:
+async def test_zip_file_errors(yak: Yak, target: str, message: str) -> None:
     await expect_failure(
-        buck.build(f"root//zip_file_errors:{target}"),
+        yak.build(f"root//zip_file_errors:{target}"),
         stderr_regex=message,
     )

@@ -1,7 +1,0 @@
-name: build_bootstrap
-runs:
-  using: composite
-  steps:
-  - name: Build `yak` with `yak`
-    run: "$RUNNER_TEMP/artifacts/yak build :yak -v 2"
-    shell: bash

@@ -15,7 +15,7 @@ use futures::stream::StreamExt;
 use yak_cli_proto::ClientContext;
 use yak_cmd_audit_client::deferred_materializer::DeferredMaterializerCommand;
 use yak_cmd_audit_client::deferred_materializer::DeferredMaterializerSubcommand;
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 use yak_execute::materialize::materializer::MaterializerIterItem;
 use yak_server_ctx::ctx::ServerCommandContextTrait;
 use yak_server_ctx::partial_result_dispatcher::PartialResultDispatcher;
@@ -38,7 +38,7 @@ impl ServerAuditSubcommand for DeferredMaterializerCommand {
             DeferredMaterializerSubcommand::List => {
                 let mut stream = deferred_materializer
                     .iterate()
-                    .buck_error_context("Failed to start iterating")?;
+                    .yak_error_context("Failed to start iterating")?;
 
                 while let Some(MaterializerIterItem {
                     artifact_path,
@@ -56,7 +56,7 @@ impl ServerAuditSubcommand for DeferredMaterializerCommand {
             DeferredMaterializerSubcommand::Fsck => {
                 let mut stream = deferred_materializer
                     .fsck()
-                    .buck_error_context("Failed to start iterating")?;
+                    .yak_error_context("Failed to start iterating")?;
 
                 let mut n = 0;
 
@@ -72,13 +72,13 @@ impl ServerAuditSubcommand for DeferredMaterializerCommand {
                 deferred_materializer
                     .refresh_ttls(min_ttl)
                     .await
-                    .buck_error_context("Failed to refresh")?;
+                    .yak_error_context("Failed to refresh")?;
             }
             DeferredMaterializerSubcommand::GetRefreshLog => {
                 let text = deferred_materializer
                     .get_ttl_refresh_log()
                     .await
-                    .buck_error_context("Failed to get_ttl_refresh_log")?;
+                    .yak_error_context("Failed to get_ttl_refresh_log")?;
 
                 write!(stdout, "{text}")?;
             }
@@ -86,7 +86,7 @@ impl ServerAuditSubcommand for DeferredMaterializerCommand {
                 let text = deferred_materializer
                     .test_iter(count)
                     .await
-                    .buck_error_context("Failed to test_iter")?;
+                    .yak_error_context("Failed to test_iter")?;
 
                 write!(stdout, "{text}")?;
             }
@@ -94,7 +94,7 @@ impl ServerAuditSubcommand for DeferredMaterializerCommand {
                 let text = deferred_materializer
                     .flush_all_access_times()
                     .await
-                    .buck_error_context("Failed to flush all access times")?;
+                    .yak_error_context("Failed to flush all access times")?;
 
                 write!(stdout, "{text}")?;
             }

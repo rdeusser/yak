@@ -23,7 +23,7 @@ use yak_cli_proto::build_request::Materializations;
 use yak_cli_proto::build_request::Uploads;
 use yak_core::execution_types::executor_config::RemoteExecutorUseCase;
 use yak_core::fs::project_rel_path::ProjectRelativePath;
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 use yak_execute::artifact::artifact_dyn::ArtifactDyn;
 use yak_execute::artifact_utils::ArtifactValueBuilder;
 use yak_execute::artifact_value::ArtifactValue;
@@ -32,7 +32,7 @@ use yak_execute::directory::ActionDirectoryBuilder;
 use yak_execute::execute::blobs::ActionBlobs;
 use yak_execute::materialize::materializer::HasMaterializer;
 use yak_execute::re::invocation_re_settings::HasInvocationReSettings;
-use yak_hash::BuckDashSet;
+use yak_hash::YakDashSet;
 
 use crate::actions::artifact::get_artifact_fs::GetArtifactFs;
 use crate::actions::artifact::materializer::ArtifactMaterializer;
@@ -46,7 +46,7 @@ pub async fn materialize_and_upload_artifact_group(
     ctx: &mut DiceComputations<'_>,
     artifact_group: &ArtifactGroup,
     contexts: MaterializationAndUploadContext,
-    queue_tracker: &Arc<BuckDashSet<BuildArtifact>>,
+    queue_tracker: &Arc<YakDashSet<BuildArtifact>>,
 ) -> yak_error::Result<ArtifactGroupValues> {
     let (values, _) = {
         let fut = ctx.try_compute2(
@@ -69,7 +69,7 @@ async fn materialize_artifact_group(
     ctx: &mut DiceComputations<'_>,
     artifact_group: &ArtifactGroup,
     materialization_context: MaterializationContext,
-    queue_tracker: &Arc<BuckDashSet<BuildArtifact>>,
+    queue_tracker: &Arc<YakDashSet<BuildArtifact>>,
 ) -> yak_error::Result<ArtifactGroupValues> {
     let values = ctx.ensure_artifact_group(artifact_group).await?;
 
@@ -127,7 +127,7 @@ async fn materialize_artifact_group(
                             materializer
                             .declare_copy(configuration_hash_path.clone(), symlink_value, Vec::new())
                             .await
-                            .buck_error_context(
+                            .yak_error_context(
                                 "Failed to declare configuration path to content-based path symlinks",
                             )?;
                         }
@@ -140,7 +140,7 @@ async fn materialize_artifact_group(
                             &artifact_group,
                         )
                         .await
-                        .buck_error_context("Failed to materialize artifacts")?;
+                        .yak_error_context("Failed to materialize artifacts")?;
                         yak_error::Ok(())
                     }
                 };
@@ -266,22 +266,22 @@ impl From<(Materializations, Uploads)> for MaterializationAndUploadContext {
 /// This map contains all the artifacts that we enqueued for materialization. This ensures
 /// we don't enqueue the same thing more than once. Should be shared across work done
 /// in a single DICE transaction.
-pub struct MaterializationQueueTrackerHolder(Arc<BuckDashSet<BuildArtifact>>);
+pub struct MaterializationQueueTrackerHolder(Arc<YakDashSet<BuildArtifact>>);
 
 pub trait HasMaterializationQueueTracker {
     fn init_materialization_queue_tracker(&mut self);
 
-    fn get_materialization_queue_tracker(&self) -> Arc<BuckDashSet<BuildArtifact>>;
+    fn get_materialization_queue_tracker(&self) -> Arc<YakDashSet<BuildArtifact>>;
 }
 
 impl HasMaterializationQueueTracker for UserComputationData {
     fn init_materialization_queue_tracker(&mut self) {
         self.data.set(MaterializationQueueTrackerHolder(Arc::new(
-            BuckDashSet::default(),
+            YakDashSet::default(),
         )));
     }
 
-    fn get_materialization_queue_tracker(&self) -> Arc<BuckDashSet<BuildArtifact>> {
+    fn get_materialization_queue_tracker(&self) -> Arc<YakDashSet<BuildArtifact>> {
         self.data
             .get::<MaterializationQueueTrackerHolder>()
             .expect("MaterializationQueueTracker should be set")

@@ -23,9 +23,9 @@ from .utils import MachOException
 
 FAKE_PATH = b"fake/path"
 # yak-out/isolation_dir/gen/project_cell/{hash}/....
-NUM_OF_COMPONENTS_IN_BUCK2_OUTPUT_PATH_BEFORE_PROJECT_PATH = 5
+NUM_OF_COMPONENTS_IN_YAK_OUTPUT_PATH_BEFORE_PROJECT_PATH = 5
 # yak-out/isolation_dir/gen/project_cell//X/Y/__name__/{hash}/....
-NUM_OF_COMPONENTS_IN_BUCK2_OUTPUT_PATH_BEFORE_PROJECT_PATH_WITH_CONTENT_BASED_PATH = 4
+NUM_OF_COMPONENTS_IN_YAK_OUTPUT_PATH_BEFORE_PROJECT_PATH_WITH_CONTENT_BASED_PATH = 4
 
 
 def _always_scrub(_: str) -> bool:
@@ -89,10 +89,10 @@ def _get_target_output_path_from_debug_file_path(
 
     # This handles the two cases, one with content based path, and one without
     return "/".join(
-        parts[NUM_OF_COMPONENTS_IN_BUCK2_OUTPUT_PATH_BEFORE_PROJECT_PATH : -i + 1]
+        parts[NUM_OF_COMPONENTS_IN_YAK_OUTPUT_PATH_BEFORE_PROJECT_PATH : -i + 1]
     ), "/".join(
         parts[
-            NUM_OF_COMPONENTS_IN_BUCK2_OUTPUT_PATH_BEFORE_PROJECT_PATH_WITH_CONTENT_BASED_PATH : -i
+            NUM_OF_COMPONENTS_IN_YAK_OUTPUT_PATH_BEFORE_PROJECT_PATH_WITH_CONTENT_BASED_PATH : -i
             + 1
         ]
     )

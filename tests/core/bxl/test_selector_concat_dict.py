@@ -9,34 +9,34 @@
 
 import json
 
-from e2e_util.api.buck import Buck
-from e2e_util.buck_workspace import buck_test
+from e2e_util.api.yak import Yak
+from e2e_util.yak_workspace import yak_test
 
 
-@buck_test()
-async def test_not_selector_attr(buck: Buck) -> None:
-    await buck.bxl(
+@yak_test()
+async def test_not_selector_attr(yak: Yak) -> None:
+    await yak.bxl(
         "//:selector_concat_dict.bxl:not_selector_attr",
     )
 
 
-@buck_test()
-async def test_selector_dict_attr(buck: Buck) -> None:
-    await buck.bxl(
+@yak_test()
+async def test_selector_dict_attr(yak: Yak) -> None:
+    await yak.bxl(
         "//:selector_concat_dict.bxl:selector_dict_attr",
     )
 
 
-@buck_test()
-async def test_selector_concat_attr(buck: Buck) -> None:
-    await buck.bxl(
+@yak_test()
+async def test_selector_concat_attr(yak: Yak) -> None:
+    await yak.bxl(
         "//:selector_concat_dict.bxl:selector_concat_attr",
     )
 
 
-@buck_test()
-async def test_selector_dict_write_json(buck: Buck) -> None:
-    res = await buck.bxl(
+@yak_test()
+async def test_selector_dict_write_json(yak: Yak) -> None:
+    res = await yak.bxl(
         "//:selector_concat_dict.bxl:selector_dict_write_json",
     )
     file_path = res.stdout.strip()
@@ -53,9 +53,9 @@ async def test_selector_dict_write_json(buck: Buck) -> None:
     assert json.loads(content) == expected_content
 
 
-@buck_test()
-async def test_selector_concat_write_json(buck: Buck) -> None:
-    res = await buck.bxl(
+@yak_test()
+async def test_selector_concat_write_json(yak: Yak) -> None:
+    res = await yak.bxl(
         "//:selector_concat_dict.bxl:selector_concat_write_json",
     )
     file_path = res.stdout.strip()

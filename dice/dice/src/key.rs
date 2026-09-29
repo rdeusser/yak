@@ -29,7 +29,7 @@ use pagable::PagableSerializer;
 use pagable::PagableTagged;
 #[cfg(feature = "pagable")]
 use pagable::pagable_typetag;
-use yak_hash::BuckHasher;
+use yak_hash::YakHasher;
 
 #[cfg(not(feature = "pagable"))]
 pub trait PagableTagged {}
@@ -245,7 +245,7 @@ impl<'a> CowDiceKey<'a> {
 }
 
 fn key_hash<K: Hash + 'static>(key: &K) -> u64 {
-    let mut hasher = BuckHasher::default();
+    let mut hasher = YakHasher::default();
     if mem::size_of::<K>() == 0 {
         // Hashing `TypeId` unconditionally measurably slows down hashing.
         TypeId::of::<K>().hash(&mut hasher);
@@ -524,7 +524,7 @@ impl ProjectionWithBase {
     }
 
     fn hash(&self) -> u64 {
-        let mut hasher = BuckHasher::default();
+        let mut hasher = YakHasher::default();
 
         self.base.hash(&mut hasher);
         self.proj.hash().hash(&mut hasher);
@@ -562,7 +562,7 @@ impl ProjectionWithBaseRef<'_> {
     }
 
     fn hash(&self) -> u64 {
-        let mut hasher = BuckHasher::default();
+        let mut hasher = YakHasher::default();
 
         self.base.hash(&mut hasher);
         self.proj.hash().hash(&mut hasher);

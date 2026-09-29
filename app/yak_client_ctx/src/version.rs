@@ -12,22 +12,22 @@ use std::fs::File;
 use std::sync::OnceLock;
 
 use object::Object;
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 use yak_error::ErrorTag;
 
 /// Provides information about this yak version.
-pub struct BuckVersion {
+pub struct YakVersion {
     version: String,
     internal_exe_hash: String,
 }
 
-impl BuckVersion {
-    pub fn get() -> yak_error::Result<&'static BuckVersion> {
-        static VERSION: OnceLock<yak_error::Result<BuckVersion>> = OnceLock::new();
+impl YakVersion {
+    pub fn get() -> yak_error::Result<&'static YakVersion> {
+        static VERSION: OnceLock<yak_error::Result<YakVersion>> = OnceLock::new();
         VERSION
             .get_or_init(Self::compute)
             .as_ref()
-            .map_err(|err: &yak_error::Error| err.clone().tag([ErrorTag::BuckVersionError]))
+            .map_err(|err: &yak_error::Error| err.clone().tag([ErrorTag::YakVersionError]))
     }
 
     pub fn get_unique_id() -> yak_error::Result<&'static str> {
@@ -54,21 +54,21 @@ impl BuckVersion {
 
     fn hash_binary(file: &mut File) -> yak_error::Result<String> {
         let mut blake3 = blake3::Hasher::new();
-        std::io::copy(file, &mut blake3).buck_error_context("Error hashing binary")?;
+        std::io::copy(file, &mut blake3).yak_error_context("Error hashing binary")?;
         let hash = blake3.finalize();
         Ok(hash.to_hex().to_string())
     }
 
-    fn compute() -> yak_error::Result<BuckVersion> {
+    fn compute() -> yak_error::Result<YakVersion> {
         // Make sure to use the daemon exe's version, if there is one
         let exe = crate::daemon::client::connect::get_daemon_exe()
-            .buck_error_context("Error finding daemon executable for versioning")?;
+            .yak_error_context("Error finding daemon executable for versioning")?;
 
-        let mut file = File::open(&exe).with_buck_error_context(|| {
+        let mut file = File::open(&exe).with_yak_error_context(|| {
             format!("Error opening daemon executable at {}", exe.display())
         })?;
 
-        let file_m = unsafe { memmap2::Mmap::map(&file) }.with_buck_error_context(|| {
+        let file_m = unsafe { memmap2::Mmap::map(&file) }.with_yak_error_context(|| {
             format!(
                 "Error to mmap daemon executable at {} for versioning",
                 exe.display()
@@ -96,7 +96,7 @@ impl BuckVersion {
             format!("{internal_exe_hash} {internal_exe_hash_kind}")
         };
 
-        Ok(BuckVersion {
+        Ok(YakVersion {
             version,
             internal_exe_hash,
         })

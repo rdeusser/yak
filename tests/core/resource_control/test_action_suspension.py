@@ -13,16 +13,16 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 
 import pytest
-from e2e_util.api.buck import Buck
-from e2e_util.api.buck_result import BuckResult
-from e2e_util.buck_workspace import buck_test, env
+from e2e_util.api.yak import Yak
+from e2e_util.api.yak_result import YakResult
+from e2e_util.yak_workspace import yak_test, env
 from e2e_util.helper.utils import filter_events
 
 pytestmark = pytest.mark.needs_binary("USE_SOME_MEMORY_BIN")
 
 
-def _configure(buck: Buck, kill_and_retry: bool) -> None:
-    with open(buck.cwd / ".yakconfig.local", "w") as f:
+def _configure(yak: Yak, kill_and_retry: bool) -> None:
+    with open(yak.cwd / ".yakconfig.local", "w") as f:
         f.write("[yak_resource_control]\n")
         if kill_and_retry:
             f.write("preferred_action_suspend_strategy = kill_and_retry\n")
@@ -30,7 +30,7 @@ def _configure(buck: Buck, kill_and_retry: bool) -> None:
             f.write("preferred_action_suspend_strategy = cgroup_freeze\n")
 
 
-def _use_some_memory_args(buck: Buck, temp: TemporaryDirectory[str]) -> list[str]:
+def _use_some_memory_args(yak: Yak, temp: TemporaryDirectory[str]) -> list[str]:
     return [
         "--show-full-simple-output",
         "-c",
@@ -43,14 +43,14 @@ def _use_some_memory_args(buck: Buck, temp: TemporaryDirectory[str]) -> list[str
 
 
 async def _check_suspends(  # noqa C901
-    buck: Buck,
+    yak: Yak,
     kill_and_retry: bool,
     temp: TemporaryDirectory[str],
-    res: BuckResult,
+    res: YakResult,
 ) -> int:
     # First check the reported suspensions
     actions = await filter_events(
-        buck,
+        yak,
         "Event",
         "data",
         "SpanEnd",
@@ -94,7 +94,7 @@ async def _check_suspends(  # noqa C901
         assert total_detected_kills >= expected_kills - 2
     else:
         paths = Path(res.stdout.strip()).read_text().splitlines()
-        paths = [buck.cwd / p for p in paths]
+        paths = [yak.cwd / p for p in paths]
         assert len(paths) == len(reported_suspends)
 
         # Then compare them to the detected suspensions
@@ -114,35 +114,35 @@ async def _check_suspends(  # noqa C901
     return num_suspended_actions
 
 
-@buck_test(skip_for_os=["darwin", "windows"], disable_daemon_cgroup=False)
+@yak_test(skip_for_os=["darwin", "windows"], disable_daemon_cgroup=False)
 @env("YAK_HARD_ERROR", "panic")
 @pytest.mark.parametrize("kill_and_retry", [True, False])
 async def test_action_suspend(
-    buck: Buck,
+    yak: Yak,
     kill_and_retry: bool,
 ) -> None:
     temp = TemporaryDirectory()
-    _configure(buck, kill_and_retry)
-    res = await buck.build_without_report(
+    _configure(yak, kill_and_retry)
+    res = await yak.build_without_report(
         ":sleep_10",
-        *_use_some_memory_args(buck, temp),
+        *_use_some_memory_args(yak, temp),
     )
 
-    await _check_suspends(buck, kill_and_retry, temp, res)
+    await _check_suspends(yak, kill_and_retry, temp, res)
 
 
-@buck_test(skip_for_os=["darwin", "windows"], disable_daemon_cgroup=False)
+@yak_test(skip_for_os=["darwin", "windows"], disable_daemon_cgroup=False)
 @env("YAK_HARD_ERROR", "panic")
 @pytest.mark.parametrize("kill_and_retry", [True, False])
 async def test_action_suspend_stress_test(
-    buck: Buck,
+    yak: Yak,
     kill_and_retry: bool,
 ) -> None:
     temp = TemporaryDirectory()
-    _configure(buck, kill_and_retry)
-    await buck.build(
+    _configure(yak, kill_and_retry)
+    await yak.build(
         ":very_fast_100",
-        *_use_some_memory_args(buck, temp),
+        *_use_some_memory_args(yak, temp),
     )
 
 
@@ -153,19 +153,19 @@ async def test_action_suspend_stress_test(
 # still-running action stays throttled above memory.high and never makes progress, deadlocking the
 # build. There is no swap setting that both builds pressure (needs swap off) and lets a freeze
 # relieve it (needs swap on), so this scenario cannot be tested deterministically for freeze.
-@buck_test(skip_for_os=["darwin", "windows"], disable_daemon_cgroup=False)
+@yak_test(skip_for_os=["darwin", "windows"], disable_daemon_cgroup=False)
 @pytest.mark.parametrize("kill_and_retry", [True])
 async def test_suspend_one_of_two(
-    buck: Buck,
+    yak: Yak,
     kill_and_retry: bool,
 ) -> None:
     temp = TemporaryDirectory()
-    _configure(buck, kill_and_retry)
+    _configure(yak, kill_and_retry)
 
-    res = await buck.build_without_report(
+    res = await yak.build_without_report(
         ":two_mutually_incompatible",
-        *_use_some_memory_args(buck, temp),
+        *_use_some_memory_args(yak, temp),
     )
 
-    num_suspends = await _check_suspends(buck, kill_and_retry, temp, res)
+    num_suspends = await _check_suspends(yak, kill_and_retry, temp, res)
     assert num_suspends == 1

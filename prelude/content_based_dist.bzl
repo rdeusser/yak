@@ -44,7 +44,7 @@ def make_content_based_dist(ctx: AnalysisContext, name: str, exe: Artifact, copi
     # which would break every rust_binary analysis on older binaries. Reaching
     # this function without the API (i.e. actually opting a target in) is a
     # hard, explicit error instead.
-    entry_ctors = getattr(__buck2_builtins__, "assembled_dir", None)
+    entry_ctors = getattr(__yak_builtins__, "assembled_dir", None)
     make_assembled_dir = getattr(ctx.actions, "assembled_dir", None)
     if entry_ctors == None or make_assembled_dir == None:
         fail(

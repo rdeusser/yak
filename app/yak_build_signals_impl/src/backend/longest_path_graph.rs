@@ -31,10 +31,10 @@ use yak_critical_path::VertexData;
 use yak_critical_path::VertexId;
 use yak_critical_path::VertexKeys;
 use yak_critical_path::compute_critical_path_potentials;
-use yak_error::BuckErrorOptionContext;
+use yak_error::YakErrorOptionContext;
 use yak_events::span::SpanId;
-use yak_hash::BuckMutMap;
-use yak_hash::BuckMutSet;
+use yak_hash::YakMutMap;
+use yak_hash::YakMutSet;
 
 use crate::AnalysisFinishNodeKey;
 use crate::BuildInfo;
@@ -120,7 +120,7 @@ impl BuildListenerBackend for LongestPathGraphBackend {
 
     fn finish(
         self,
-        anon_target_discovery_edges: BuckMutMap<NodeKey, NodeKey>,
+        anon_target_discovery_edges: YakMutMap<NodeKey, NodeKey>,
     ) -> Result<BuildInfo, CriticalPathError> {
         let (graph, keys, data) = {
             let (graph, keys, data) = self.builder?.finish();
@@ -361,7 +361,7 @@ fn compute_slowest_paths(
         }
     }
 
-    let mut visited: BuckMutSet<VertexId> = BuckMutSet::default();
+    let mut visited: YakMutSet<VertexId> = YakMutSet::default();
     let mut slowest_path = Vec::new();
     let mut node = last.unzip().1;
     while let Some(curr) = node {

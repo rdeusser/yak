@@ -244,7 +244,7 @@ following query functions:
 - **Is white space okay inside a macro?** Macro arguments are white space
   separated, so arguments which contain white space must be quoted.
 - **Are nested quotes allowed?** A single level of nested quotes is allowed,
-  such as `"My name is 'Buck'."` or `'My name is "Buck".'`. Note that when you
+  such as `"My name is 'Yak'."` or `'My name is "Yak".'`. Note that when you
   use a macro in a YAK file, you must ensure that quotes are properly escaped,
   so that the shell command that uses the macro forms a proper string.
 

@@ -6,29 +6,29 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-from e2e_util.api.buck import Buck
+from e2e_util.api.yak import Yak
 from e2e_util.asserts import expect_failure
-from e2e_util.buck_workspace import buck_test
+from e2e_util.yak_workspace import yak_test
 
 
-@buck_test()
-async def test_typing_validation_fails_on_type_errors(buck: Buck) -> None:
+@yak_test()
+async def test_typing_validation_fails_on_type_errors(yak: Yak) -> None:
     await expect_failure(
-        buck.build(":bad_types_validated"),
+        yak.build(":bad_types_validated"),
         stderr_regex="Validation for .+ failed.*is not assignable to parameter",
     )
 
 
-@buck_test()
-async def test_typing_validation_passes_on_clean_types(buck: Buck) -> None:
-    await buck.build(":good_types_validated")
+@yak_test()
+async def test_typing_validation_passes_on_clean_types(yak: Yak) -> None:
+    await yak.build(":good_types_validated")
 
 
-@buck_test()
-async def test_typing_validation_off_ignores_errors(buck: Buck) -> None:
-    await buck.build(":bad_types_no_validation")
+@yak_test()
+async def test_typing_validation_off_ignores_errors(yak: Yak) -> None:
+    await yak.build(":bad_types_no_validation")
 
 
-@buck_test()
-async def test_typing_disabled_skips_validation(buck: Buck) -> None:
-    await buck.build(":typing_disabled")
+@yak_test()
+async def test_typing_disabled_skips_validation(yak: Yak) -> None:
+    await yak.build(":typing_disabled")

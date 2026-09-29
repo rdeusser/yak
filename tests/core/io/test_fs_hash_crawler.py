@@ -30,81 +30,81 @@ from core.common.io.file_watcher_symlink_tests import (
     run_create_symlink_test,
     run_replace_file_with_symlink_test,
 )
-from e2e_util.api.buck import Buck
-from e2e_util.buck_workspace import buck_test
+from e2e_util.api.yak import Yak
+from e2e_util.yak_workspace import yak_test
 
 
-@buck_test()
-async def test_fs_hash_cralwer_create_file(buck: Buck) -> None:
-    await run_create_file_test(buck, FileWatcherProvider.FS_HASH_CRAWLER)
+@yak_test()
+async def test_fs_hash_cralwer_create_file(yak: Yak) -> None:
+    await run_create_file_test(yak, FileWatcherProvider.FS_HASH_CRAWLER)
 
 
-@buck_test()
-async def test_fs_hash_cralwer_modify_file(buck: Buck) -> None:
-    await run_modify_file_test(buck, FileWatcherProvider.FS_HASH_CRAWLER)
+@yak_test()
+async def test_fs_hash_cralwer_modify_file(yak: Yak) -> None:
+    await run_modify_file_test(yak, FileWatcherProvider.FS_HASH_CRAWLER)
 
 
-@buck_test()
-async def test_fs_hash_cralwer_remove_file(buck: Buck) -> None:
-    await run_remove_file_test(buck, FileWatcherProvider.FS_HASH_CRAWLER)
+@yak_test()
+async def test_fs_hash_cralwer_remove_file(yak: Yak) -> None:
+    await run_remove_file_test(yak, FileWatcherProvider.FS_HASH_CRAWLER)
 
 
-@buck_test()
-async def test_fs_hash_cralwer_rename_file(buck: Buck) -> None:
-    await run_rename_file_test(buck, FileWatcherProvider.FS_HASH_CRAWLER)
+@yak_test()
+async def test_fs_hash_cralwer_rename_file(yak: Yak) -> None:
+    await run_rename_file_test(yak, FileWatcherProvider.FS_HASH_CRAWLER)
 
 
 # File replace is not supported on Windows
-@buck_test(skip_for_os=["windows"])
-async def test_fs_hash_cralwer_replace_file(buck: Buck) -> None:
-    await run_replace_file_test(buck, FileWatcherProvider.FS_HASH_CRAWLER)
+@yak_test(skip_for_os=["windows"])
+async def test_fs_hash_cralwer_replace_file(yak: Yak) -> None:
+    await run_replace_file_test(yak, FileWatcherProvider.FS_HASH_CRAWLER)
 
 
-@buck_test()
-async def test_fs_hash_cralwer_create_directory(buck: Buck) -> None:
-    await run_create_directory_test(buck, FileWatcherProvider.FS_HASH_CRAWLER)
+@yak_test()
+async def test_fs_hash_cralwer_create_directory(yak: Yak) -> None:
+    await run_create_directory_test(yak, FileWatcherProvider.FS_HASH_CRAWLER)
 
 
-@buck_test()
-async def test_fs_hash_cralwer_remove_directory(buck: Buck) -> None:
-    await run_remove_directory_test(buck, FileWatcherProvider.FS_HASH_CRAWLER)
+@yak_test()
+async def test_fs_hash_cralwer_remove_directory(yak: Yak) -> None:
+    await run_remove_directory_test(yak, FileWatcherProvider.FS_HASH_CRAWLER)
 
 
-@buck_test()
-async def test_fs_hash_cralwer_rename_directory(buck: Buck) -> None:
-    await run_rename_directory_test(buck, FileWatcherProvider.FS_HASH_CRAWLER)
+@yak_test()
+async def test_fs_hash_cralwer_rename_directory(yak: Yak) -> None:
+    await run_rename_directory_test(yak, FileWatcherProvider.FS_HASH_CRAWLER)
 
 
-@buck_test()
-async def test_fs_hash_cralwer_checkout_mergebase_changes(buck: Buck) -> None:
-    await run_checkout_mergebase_changes_test(buck, FileWatcherProvider.FS_HASH_CRAWLER)
+@yak_test()
+async def test_fs_hash_cralwer_checkout_mergebase_changes(yak: Yak) -> None:
+    await run_checkout_mergebase_changes_test(yak, FileWatcherProvider.FS_HASH_CRAWLER)
 
 
-@buck_test()
-async def test_fs_hash_cralwer_checkout_with_mergebase(buck: Buck) -> None:
-    await run_checkout_with_mergebase_test(buck, FileWatcherProvider.FS_HASH_CRAWLER)
+@yak_test()
+async def test_fs_hash_cralwer_checkout_with_mergebase(yak: Yak) -> None:
+    await run_checkout_with_mergebase_test(yak, FileWatcherProvider.FS_HASH_CRAWLER)
 
 
-@buck_test()
-async def test_fs_hash_cralwer_rebase_with_mergebase(buck: Buck) -> None:
-    await run_rebase_with_mergebase_test(buck, FileWatcherProvider.FS_HASH_CRAWLER)
+@yak_test()
+async def test_fs_hash_cralwer_rebase_with_mergebase(yak: Yak) -> None:
+    await run_rebase_with_mergebase_test(yak, FileWatcherProvider.FS_HASH_CRAWLER)
 
 
-@buck_test()
-async def test_fs_hash_cralwer_restack_with_mergebase(buck: Buck) -> None:
-    await run_restack_with_mergebase_test(buck, FileWatcherProvider.FS_HASH_CRAWLER)
+@yak_test()
+async def test_fs_hash_cralwer_restack_with_mergebase(yak: Yak) -> None:
+    await run_restack_with_mergebase_test(yak, FileWatcherProvider.FS_HASH_CRAWLER)
 
 
-@buck_test()
-async def test_fs_hash_crawler_create_symlink_test(buck: Buck) -> None:
-    await run_create_symlink_test(buck, FileWatcherProvider.FS_HASH_CRAWLER)
+@yak_test()
+async def test_fs_hash_crawler_create_symlink_test(yak: Yak) -> None:
+    await run_create_symlink_test(yak, FileWatcherProvider.FS_HASH_CRAWLER)
 
 
-@buck_test()
-async def test_fs_hash_crawler_replace_file_with_symlink_test(buck: Buck) -> None:
-    await run_replace_file_with_symlink_test(buck, FileWatcherProvider.FS_HASH_CRAWLER)
+@yak_test()
+async def test_fs_hash_crawler_replace_file_with_symlink_test(yak: Yak) -> None:
+    await run_replace_file_with_symlink_test(yak, FileWatcherProvider.FS_HASH_CRAWLER)
 
 
-@buck_test()
-async def test_fs_hash_crawler_change_symlink_target_test(buck: Buck) -> None:
-    await run_change_symlink_target_test(buck, FileWatcherProvider.FS_HASH_CRAWLER)
+@yak_test()
+async def test_fs_hash_crawler_change_symlink_target_test(yak: Yak) -> None:
+    await run_change_symlink_target_test(yak, FileWatcherProvider.FS_HASH_CRAWLER)

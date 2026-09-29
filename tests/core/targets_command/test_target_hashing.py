@@ -10,17 +10,17 @@
 import os
 from pathlib import Path
 
-from e2e_util.api.buck import Buck
+from e2e_util.api.yak import Yak
 from e2e_util.asserts import expect_failure
-from e2e_util.buck_workspace import buck_test
+from e2e_util.yak_workspace import yak_test
 
 
-@buck_test()
+@yak_test()
 async def test_target_hashing_accepts_backreferencing_relative_paths(
-    buck: Buck,
+    yak: Yak,
     tmp_path: Path,
 ) -> None:
-    await buck.targets(
+    await yak.targets(
         ":bin",
         "--show-target-hash",
         "--target-hash-file-mode=paths_only",
@@ -30,7 +30,7 @@ async def test_target_hashing_accepts_backreferencing_relative_paths(
 
     # Paths outside of the project still fail
     await expect_failure(
-        buck.targets(
+        yak.targets(
             "bin:bin",
             "--show-target-hash",
             "--target-hash-file-mode=paths_only",
@@ -41,9 +41,9 @@ async def test_target_hashing_accepts_backreferencing_relative_paths(
 
     if os.name != "nt":
         # Absolute path non-normalized paths should work
-        (tmp_path / "symlink").symlink_to(buck.cwd)
+        (tmp_path / "symlink").symlink_to(yak.cwd)
 
-        await buck.targets(
+        await yak.targets(
             ":bin",
             "--show-target-hash",
             "--target-hash-file-mode=paths_only",

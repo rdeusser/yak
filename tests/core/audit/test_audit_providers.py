@@ -8,9 +8,9 @@
 
 import re
 
-from e2e_util.api.buck import Buck
+from e2e_util.api.yak import Yak
 from e2e_util.asserts import expect_failure
-from e2e_util.buck_workspace import buck_test
+from e2e_util.yak_workspace import yak_test
 from e2e_util.helper.golden import golden_replace_cfg_hash, sanitize_stderr
 
 
@@ -21,9 +21,9 @@ def _replace_hash(s: str) -> str:
 GOLDEN_DIRECTORY = "modifiers/golden/"
 
 
-@buck_test(data_dir="sorted")
-async def test_listed_providers_are_sorted(buck: Buck) -> None:
-    result = await buck.audit("providers", "//:target", "--list")
+@yak_test(data_dir="sorted")
+async def test_listed_providers_are_sorted(yak: Yak) -> None:
+    result = await yak.audit("providers", "//:target", "--list")
 
     # "  - DefaultInfo" -> "DefaultInfo"
     providers = [
@@ -38,20 +38,20 @@ async def test_listed_providers_are_sorted(buck: Buck) -> None:
     ]
 
 
-@buck_test(data_dir="universe")
-async def test_audit_providers_universe(buck: Buck) -> None:
-    result = await buck.audit("providers", "//:aaa", "--quiet")
+@yak_test(data_dir="universe")
+async def test_audit_providers_universe(yak: Yak) -> None:
+    result = await yak.audit("providers", "//:aaa", "--quiet")
     assert "root//:aaa (root//:p-aaa#<HASH>)" == _replace_hash(result.stdout.strip())
 
-    result = await buck.audit(
+    result = await yak.audit(
         "providers", "//:aaa", "--target-universe=//:bbb", "--quiet"
     )
     assert "root//:aaa (root//:p-bbb#<HASH>)" == _replace_hash(result.stdout.strip())
 
 
-@buck_test(data_dir="modifiers")
-async def test_audit_providers_with_single_modifier(buck: Buck) -> None:
-    result = await buck.audit("providers", "//:dummy?//:macos")
+@yak_test(data_dir="modifiers")
+async def test_audit_providers_with_single_modifier(yak: Yak) -> None:
+    result = await yak.audit("providers", "//:dummy?//:macos")
 
     golden_replace_cfg_hash(
         output=result.stdout,
@@ -59,9 +59,9 @@ async def test_audit_providers_with_single_modifier(buck: Buck) -> None:
     )
 
 
-@buck_test(data_dir="modifiers")
-async def test_audit_providers_with_multiple_target_patterns(buck: Buck) -> None:
-    result = await buck.audit("providers", "//:dummy?//:macos", "//:dummy?//:arm")
+@yak_test(data_dir="modifiers")
+async def test_audit_providers_with_multiple_target_patterns(yak: Yak) -> None:
+    result = await yak.audit("providers", "//:dummy?//:macos", "//:dummy?//:arm")
 
     golden_replace_cfg_hash(
         output=result.stdout,
@@ -70,9 +70,9 @@ async def test_audit_providers_with_multiple_target_patterns(buck: Buck) -> None
     )
 
 
-@buck_test(data_dir="modifiers")
-async def test_audit_providers_with_multiple_modifiers(buck: Buck) -> None:
-    result = await buck.audit("providers", "//:dummy?//:macos+//:arm")
+@yak_test(data_dir="modifiers")
+async def test_audit_providers_with_multiple_modifiers(yak: Yak) -> None:
+    result = await yak.audit("providers", "//:dummy?//:macos+//:arm")
 
     golden_replace_cfg_hash(
         output=result.stdout,
@@ -81,11 +81,11 @@ async def test_audit_providers_with_multiple_modifiers(buck: Buck) -> None:
     )
 
 
-@buck_test(data_dir="modifiers")
-async def test_audit_providers_order_of_modifiers(buck: Buck) -> None:
+@yak_test(data_dir="modifiers")
+async def test_audit_providers_order_of_modifiers(yak: Yak) -> None:
     # if passing in modifiers of the same constraint setting,
     # the last one should be the one that applies
-    result = await buck.audit("providers", "//:dummy?//:macos+//:linux")
+    result = await yak.audit("providers", "//:dummy?//:macos+//:linux")
 
     golden_replace_cfg_hash(
         output=result.stdout,
@@ -93,9 +93,9 @@ async def test_audit_providers_order_of_modifiers(buck: Buck) -> None:
     )
 
 
-@buck_test(data_dir="modifiers")
-async def test_audit_providers_all_targets_with_modifiers(buck: Buck) -> None:
-    result = await buck.audit("providers", "//:?//:macos")
+@yak_test(data_dir="modifiers")
+async def test_audit_providers_all_targets_with_modifiers(yak: Yak) -> None:
+    result = await yak.audit("providers", "//:?//:macos")
 
     golden_replace_cfg_hash(
         output=result.stdout,
@@ -104,9 +104,9 @@ async def test_audit_providers_all_targets_with_modifiers(buck: Buck) -> None:
     )
 
 
-@buck_test(data_dir="modifiers")
-async def test_audit_providers_recursive_with_modifiers(buck: Buck) -> None:
-    result = await buck.audit("providers", "//...?//:macos")
+@yak_test(data_dir="modifiers")
+async def test_audit_providers_recursive_with_modifiers(yak: Yak) -> None:
+    result = await yak.audit("providers", "//...?//:macos")
 
     golden_replace_cfg_hash(
         output=result.stdout,
@@ -115,9 +115,9 @@ async def test_audit_providers_recursive_with_modifiers(buck: Buck) -> None:
     )
 
 
-@buck_test(data_dir="modifiers")
-async def test_audit_providers_modifiers_with_subtarget(buck: Buck) -> None:
-    result = await buck.audit("providers", "//:dummy_with_subtarget[sub]?//:macos")
+@yak_test(data_dir="modifiers")
+async def test_audit_providers_modifiers_with_subtarget(yak: Yak) -> None:
+    result = await yak.audit("providers", "//:dummy_with_subtarget[sub]?//:macos")
 
     golden_replace_cfg_hash(
         output=result.stdout,
@@ -126,9 +126,9 @@ async def test_audit_providers_modifiers_with_subtarget(buck: Buck) -> None:
     )
 
 
-@buck_test(data_dir="modifiers")
-async def test_audit_providers_modifiers_with_target_universe(buck: Buck) -> None:
-    result = await buck.audit(
+@yak_test(data_dir="modifiers")
+async def test_audit_providers_modifiers_with_target_universe(yak: Yak) -> None:
+    result = await yak.audit(
         "providers", "//:dummy", "--target-universe", "//:dummy?//:linux"
     )
 
@@ -139,11 +139,11 @@ async def test_audit_providers_modifiers_with_target_universe(buck: Buck) -> Non
     )
 
 
-@buck_test(data_dir="modifiers")
+@yak_test(data_dir="modifiers")
 async def test_audit_providers_modifiers_with_multiple_target_universe(
-    buck: Buck,
+    yak: Yak,
 ) -> None:
-    result = await buck.audit(
+    result = await yak.audit(
         "providers",
         "//:dummy",
         "--target-universe",
@@ -157,15 +157,15 @@ async def test_audit_providers_modifiers_with_multiple_target_universe(
     )
 
 
-@buck_test(data_dir="modifiers")
-async def test_audit_providers_modifiers_fail_with_global(buck: Buck) -> None:
+@yak_test(data_dir="modifiers")
+async def test_audit_providers_modifiers_fail_with_global(yak: Yak) -> None:
     await expect_failure(
-        buck.audit("providers", "--modifier", "//:linux", "//:dummy?//:arm"),
+        yak.audit("providers", "--modifier", "//:linux", "//:dummy?//:arm"),
         stderr_regex=r"Cannot specify modifiers with \?modifier syntax when global CLI modifiers are set with --modifier flag",
     )
 
     await expect_failure(
-        buck.audit(
+        yak.audit(
             "providers",
             "--modifier",
             "//:linux",
@@ -177,12 +177,12 @@ async def test_audit_providers_modifiers_fail_with_global(buck: Buck) -> None:
     )
 
 
-@buck_test(data_dir="modifiers")
+@yak_test(data_dir="modifiers")
 async def test_audit_providers_modifiers_fail_with_pattern_modifier_and_target_universe_modifier(
-    buck: Buck,
+    yak: Yak,
 ) -> None:
     await expect_failure(
-        buck.audit(
+        yak.audit(
             "providers", "//:dummy?//:macos", "--target-universe", "//:dummy?//:linux"
         ),
         stderr_regex=r"Cannot use \?modifier syntax in target pattern expression with --target-universe flag",
@@ -192,9 +192,9 @@ async def test_audit_providers_modifiers_fail_with_pattern_modifier_and_target_u
 FILTER_GOLDEN_DIRECTORY = "filter/golden/"
 
 
-@buck_test(data_dir="filter")
-async def test_audit_providers_filter_single(buck: Buck) -> None:
-    result = await buck.audit("providers", "-p", "FooInfo", "//:has_all")
+@yak_test(data_dir="filter")
+async def test_audit_providers_filter_single(yak: Yak) -> None:
+    result = await yak.audit("providers", "-p", "FooInfo", "//:has_all")
 
     golden_replace_cfg_hash(
         output=result.stdout,
@@ -202,9 +202,9 @@ async def test_audit_providers_filter_single(buck: Buck) -> None:
     )
 
 
-@buck_test(data_dir="filter")
-async def test_audit_providers_filter_multiple(buck: Buck) -> None:
-    result = await buck.audit(
+@yak_test(data_dir="filter")
+async def test_audit_providers_filter_multiple(yak: Yak) -> None:
+    result = await yak.audit(
         "providers", "-p", "FooInfo", "-p", "BarInfo", "//:has_all"
     )
 
@@ -214,9 +214,9 @@ async def test_audit_providers_filter_multiple(buck: Buck) -> None:
     )
 
 
-@buck_test(data_dir="filter")
-async def test_audit_providers_filter_not_found(buck: Buck) -> None:
-    result = await buck.audit(
+@yak_test(data_dir="filter")
+async def test_audit_providers_filter_not_found(yak: Yak) -> None:
+    result = await yak.audit(
         "providers", "-p", "Nonexistent1", "-p", "Nonexistent2", "//:has_all"
     )
 
@@ -232,9 +232,9 @@ async def test_audit_providers_filter_not_found(buck: Buck) -> None:
     )
 
 
-@buck_test(data_dir="filter")
-async def test_audit_providers_filter_multi_target(buck: Buck) -> None:
-    result = await buck.audit(
+@yak_test(data_dir="filter")
+async def test_audit_providers_filter_multi_target(yak: Yak) -> None:
+    result = await yak.audit(
         "providers", "-p", "FooInfo", "-p", "BarInfo", "//:has_all", "//:has_foo"
     )
 

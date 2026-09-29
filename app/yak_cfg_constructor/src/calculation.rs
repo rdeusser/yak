@@ -44,7 +44,7 @@ use yak_node::super_package::SuperPackage;
 #[yak(tag = Input)]
 enum CalculationCfgConstructorError {
     #[error(
-        "Target `{0}` sets `metadata[\"buck.cfg_modifiers\"]` which is no longer supported. \
+        "Target `{0}` sets `metadata[\"yak.cfg_modifiers\"]` which is no longer supported. \
          Use the first-class `modifiers` attribute instead."
     )]
     MetadataModifiersNotSupported(TargetLabel),
@@ -166,7 +166,7 @@ impl CfgConstructorCalculationImpl for CfgConstructorCalculationInstance {
         let modifier_key = cfg_constructor.key();
         let package_cfg_modifiers = super_package.cfg_modifiers().duped();
 
-        // metadata["buck.cfg_modifiers"] is no longer supported. Fail loudly so the developer
+        // metadata["yak.cfg_modifiers"] is no longer supported. Fail loudly so the developer
         // knows the modifier they wrote won't be applied.
         if target
             .metadata()?

@@ -21,7 +21,7 @@ use starlark::values::Trace;
 use starlark::values::Value;
 use starlark::values::ValueOfUnchecked;
 use starlark::values::starlark_value;
-use yak_error::BuckErrorOptionContext;
+use yak_error::YakErrorOptionContext;
 
 use crate::interpreter::rule_defs::transitive_set::TransitiveSet;
 use crate::interpreter::rule_defs::transitive_set::TransitiveSetError;

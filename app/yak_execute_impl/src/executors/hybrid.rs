@@ -28,7 +28,7 @@ use yak_common::liveliness_observer::LivelinessObserver;
 use yak_common::liveliness_observer::LivelinessObserverExt;
 use yak_core::execution_types::executor_config::HybridExecutionLevel;
 use yak_data::SchedulingMode;
-use yak_error::BuckErrorOptionContext;
+use yak_error::YakErrorOptionContext;
 use yak_events::dispatch::EventDispatcher;
 use yak_execute::execute::claim::Claim;
 use yak_execute::execute::claim::ClaimManager;

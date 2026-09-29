@@ -1,0 +1,7 @@
+stub(
+    name = "yak",
+)
+
+stub(
+    name = "symlinked_yak_and_runner",
+)

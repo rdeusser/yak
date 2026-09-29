@@ -20,22 +20,22 @@ use starlark_map::sorted_map::SortedMap;
 use yak_cli_proto::ConfigOverride;
 use yak_core::cells::cell_root_path::CellRootPath;
 use yak_core::fs::project_rel_path::ProjectRelativePath;
-use yak_hash::BuckMutMap;
+use yak_hash::YakMutMap;
 
-use super::cells::ExternalPathBuckconfigData;
+use super::cells::ExternalPathYakconfigData;
 use crate::legacy_configs::args::ResolvedConfigFile;
 use crate::legacy_configs::args::ResolvedLegacyConfigArg;
 use crate::legacy_configs::file_ops::ConfigParserFileOps;
 use crate::legacy_configs::file_ops::ConfigPath;
-use crate::legacy_configs::key::BuckconfigKeyRef;
+use crate::legacy_configs::key::YakconfigKeyRef;
 use crate::legacy_configs::parser::LegacyConfigParser;
 
 #[derive(Clone, Dupe, Debug, Allocative, Pagable)]
-pub struct LegacyBuckConfig(pub(crate) Arc<ConfigData>);
+pub struct LegacyYakConfig(pub(crate) Arc<ConfigData>);
 
 #[derive(Debug, Allocative, Pagable)]
 pub(crate) struct ConfigData {
-    pub(crate) values: SortedMap<String, LegacyBuckConfigSection>,
+    pub(crate) values: SortedMap<String, LegacyYakConfigSection>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Allocative, Pagable)]
@@ -67,10 +67,10 @@ pub(crate) enum Location {
 }
 
 impl Location {
-    pub(crate) fn as_legacy_buck_config_location(&self) -> LegacyBuckConfigLocation<'_> {
+    pub(crate) fn as_legacy_yak_config_location(&self) -> LegacyYakConfigLocation<'_> {
         match self {
-            Self::File(x) => LegacyBuckConfigLocation::File(&x.source_file.path, x.line),
-            Self::CommandLineArgument => LegacyBuckConfigLocation::CommandLineArgument,
+            Self::File(x) => LegacyYakConfigLocation::File(&x.source_file.path, x.line),
+            Self::CommandLineArgument => LegacyYakConfigLocation::CommandLineArgument,
         }
     }
 }
@@ -138,7 +138,7 @@ pub(crate) struct ConfigValue {
 }
 
 #[derive(Debug, Default, Allocative, Pagable)]
-pub struct LegacyBuckConfigSection {
+pub struct LegacyYakConfigSection {
     pub(crate) values: SortedMap<String, ConfigValue>,
 }
 
@@ -174,17 +174,17 @@ impl ConfigValue {
     }
 }
 
-pub struct LegacyBuckConfigValue<'a> {
+pub struct LegacyYakConfigValue<'a> {
     pub(crate) value: &'a ConfigValue,
 }
 
 #[derive(PartialEq, Debug)]
-pub enum LegacyBuckConfigLocation<'a> {
+pub enum LegacyYakConfigLocation<'a> {
     File(&'a str, usize),
     CommandLineArgument,
 }
 
-impl Display for LegacyBuckConfigLocation<'_> {
+impl Display for LegacyYakConfigLocation<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::File(file, line) => {
@@ -197,7 +197,7 @@ impl Display for LegacyBuckConfigLocation<'_> {
     }
 }
 
-impl<'a> LegacyBuckConfigValue<'a> {
+impl<'a> LegacyYakConfigValue<'a> {
     pub fn as_str(&self) -> &'a str {
         self.value.as_str()
     }
@@ -206,23 +206,23 @@ impl<'a> LegacyBuckConfigValue<'a> {
         self.value.raw_value()
     }
 
-    pub fn location(&self) -> LegacyBuckConfigLocation<'_> {
+    pub fn location(&self) -> LegacyYakConfigLocation<'_> {
         match &self.value.source {
             Location::File(file) => {
-                LegacyBuckConfigLocation::File(&file.source_file.path, file.line)
+                LegacyYakConfigLocation::File(&file.source_file.path, file.line)
             }
-            Location::CommandLineArgument => LegacyBuckConfigLocation::CommandLineArgument,
+            Location::CommandLineArgument => LegacyYakConfigLocation::CommandLineArgument,
         }
     }
 
-    pub fn location_stack(&self) -> Vec<LegacyBuckConfigLocation<'_>> {
+    pub fn location_stack(&self) -> Vec<LegacyYakConfigLocation<'_>> {
         let mut res = Vec::new();
         let mut location = Some(&self.value.source);
 
         while let Some(loc) = location.take() {
             match &loc {
                 Location::File(loc) => {
-                    res.push(LegacyBuckConfigLocation::File(
+                    res.push(LegacyYakConfigLocation::File(
                         &loc.source_file.path,
                         loc.line,
                     ));
@@ -237,7 +237,7 @@ impl<'a> LegacyBuckConfigValue<'a> {
     }
 }
 
-impl LegacyBuckConfig {
+impl LegacyYakConfig {
     pub fn empty() -> Self {
         Self(Arc::new(ConfigData {
             values: SortedMap::new(),
@@ -246,7 +246,7 @@ impl LegacyBuckConfig {
 
     pub fn filter_values<F>(&self, filter: F) -> Self
     where
-        F: Fn(&BuckconfigKeyRef) -> bool,
+        F: Fn(&YakconfigKeyRef) -> bool,
     {
         let values = self
             .0
@@ -256,13 +256,13 @@ impl LegacyBuckConfig {
                 let values: SortedMap<_, _> = section_data
                     .values
                     .iter()
-                    .filter(|(property, _)| filter(&BuckconfigKeyRef { section, property }))
+                    .filter(|(property, _)| filter(&YakconfigKeyRef { section, property }))
                     .map(|(property, value)| (property.clone(), value.clone()))
                     .collect();
                 if values.is_empty() {
                     None
                 } else {
-                    Some((section.clone(), LegacyBuckConfigSection { values }))
+                    Some((section.clone(), LegacyYakConfigSection { values }))
                 }
             })
             .collect();
@@ -273,14 +273,14 @@ impl LegacyBuckConfig {
         config_paths: &[ConfigPath],
         file_ops: &mut dyn ConfigParserFileOps,
         follow_includes: bool,
-    ) -> yak_error::Result<Vec<ExternalPathBuckconfigData>> {
+    ) -> yak_error::Result<Vec<ExternalPathYakconfigData>> {
         let mut external_path_configs = Vec::new();
         for main_config_file in config_paths {
             let mut parser = LegacyConfigParser::new();
             parser
                 .parse_file(main_config_file, None, follow_includes, file_ops)
                 .await?;
-            external_path_configs.push(ExternalPathBuckconfigData {
+            external_path_configs.push(ExternalPathYakconfigData {
                 origin_path: main_config_file.clone(),
                 parse_state: parser,
             });
@@ -289,7 +289,7 @@ impl LegacyBuckConfig {
     }
 
     pub(crate) async fn finish_parse(
-        external_path_configs: Vec<ExternalPathBuckconfigData>,
+        external_path_configs: Vec<ExternalPathYakconfigData>,
         main_config_files: &[ConfigPath],
         current_cell: &CellRootPath,
         file_ops: &mut dyn ConfigParserFileOps,
@@ -337,7 +337,7 @@ pub mod testing {
     use crate::legacy_configs::args::resolve_config_args;
     use crate::legacy_configs::file_ops::ConfigDirEntry;
 
-    pub fn parse(data: &[(&str, &str)], path: &str) -> yak_error::Result<LegacyBuckConfig> {
+    pub fn parse(data: &[(&str, &str)], path: &str) -> yak_error::Result<LegacyYakConfig> {
         parse_with_config_args(data, path, &[])
     }
 
@@ -345,13 +345,13 @@ pub mod testing {
         data: &[(&str, &str)],
         cell_path: &str,
         config_args: &[ConfigOverride],
-    ) -> yak_error::Result<LegacyBuckConfig> {
+    ) -> yak_error::Result<LegacyYakConfig> {
         let mut file_ops = TestConfigParserFileOps::new(data)?;
         let path = ProjectRelativePath::new(cell_path)?;
         futures::executor::block_on(async {
             // As long as people don't pass config files, making up values here is ok
             let processed_config_args = resolve_config_args(config_args, &mut file_ops).await?;
-            LegacyBuckConfig::finish_parse(
+            LegacyYakConfig::finish_parse(
                 Vec::new(),
                 &[ConfigPath::Project(path.to_owned())],
                 CellRootPath::new(ProjectRelativePath::empty()),
@@ -364,12 +364,12 @@ pub mod testing {
     }
 
     pub struct TestConfigParserFileOps {
-        data: BuckMutMap<ProjectRelativePathBuf, String>,
+        data: YakMutMap<ProjectRelativePathBuf, String>,
     }
 
     impl TestConfigParserFileOps {
         pub fn new(data: &[(&str, &str)]) -> yak_error::Result<Self> {
-            let mut holder_data = BuckMutMap::default();
+            let mut holder_data = YakMutMap::default();
             for (file, content) in data {
                 holder_data.insert(
                     ProjectRelativePath::new(*file)?.to_owned(),
@@ -429,10 +429,10 @@ pub(crate) mod tests {
 
     use super::testing::*;
     use super::*;
-    use crate::legacy_configs::key::BuckconfigKeyRef;
+    use crate::legacy_configs::key::YakconfigKeyRef;
 
     pub(crate) fn assert_config_value(
-        config: &LegacyBuckConfig,
+        config: &LegacyYakConfig,
         section: &str,
         key: &str,
         expected: &str,
@@ -466,7 +466,7 @@ pub(crate) mod tests {
         }
     }
 
-    fn assert_config_value_is_empty(config: &LegacyBuckConfig, section: &str, key: &str) {
+    fn assert_config_value_is_empty(config: &LegacyYakConfig, section: &str, key: &str) {
         if let Some(values) = config.get_section(section)
             && let Some(v) = values.get(key)
         {
@@ -519,14 +519,14 @@ pub(crate) mod tests {
 
         assert_eq!(
             None,
-            config.get(BuckconfigKeyRef {
+            config.get(YakconfigKeyRef {
                 section: "section",
                 property: "missing"
             })
         );
         assert_eq!(
             None,
-            config.get(BuckconfigKeyRef {
+            config.get(YakconfigKeyRef {
                 section: "missing",
                 property: "int"
             })
@@ -764,7 +764,7 @@ pub(crate) mod tests {
         let key_value = apple_section.get("key").unwrap();
         assert_eq!(
             key_value.location(),
-            LegacyBuckConfigLocation::CommandLineArgument
+            LegacyYakConfigLocation::CommandLineArgument
         );
 
         Ok(())
@@ -834,7 +834,7 @@ pub(crate) mod tests {
 
         let apple_section = config.get_section("apple").unwrap();
         let key_value = apple_section.get("key").unwrap();
-        let expected_path = LegacyBuckConfigLocation::File("cli-config", 2);
+        let expected_path = LegacyYakConfigLocation::File("cli-config", 2);
         assert_eq!(key_value.location(), expected_path);
 
         Ok(())

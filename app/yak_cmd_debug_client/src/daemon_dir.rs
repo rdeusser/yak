@@ -9,7 +9,7 @@
  */
 
 use yak_client_ctx::client_ctx::ClientCommandContext;
-use yak_client_ctx::common::BuckArgMatches;
+use yak_client_ctx::common::YakArgMatches;
 use yak_client_ctx::exit_result::ExitResult;
 
 /// Print yak daemon directory (`~/.yak/yakd/xxx`).
@@ -17,7 +17,7 @@ use yak_client_ctx::exit_result::ExitResult;
 pub struct DaemonDirCommand {}
 
 impl DaemonDirCommand {
-    pub fn exec(self, _matches: BuckArgMatches<'_>, ctx: ClientCommandContext<'_>) -> ExitResult {
+    pub fn exec(self, _matches: YakArgMatches<'_>, ctx: ClientCommandContext<'_>) -> ExitResult {
         yak_client_ctx::println!("{}", ctx.paths()?.daemon_dir()?.path.display())?;
         ExitResult::success()
     }

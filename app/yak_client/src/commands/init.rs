@@ -12,14 +12,14 @@ use std::io::ErrorKind;
 use std::io::Write;
 
 use yak_client_ctx::client_ctx::ClientCommandContext;
-use yak_client_ctx::common::BuckArgMatches;
+use yak_client_ctx::common::YakArgMatches;
 use yak_client_ctx::common::ui::CommonConsoleOptions;
 use yak_client_ctx::exit_result::ExitResult;
 use yak_client_ctx::final_console::FinalConsole;
 use yak_client_ctx::path_arg::PathArg;
 use yak_common::argv::Argv;
 use yak_common::argv::SanitizedArgv;
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 use yak_error::ErrorTag;
 use yak_error::yak_error;
 use yak_fs::error::IoResultExt;
@@ -53,7 +53,7 @@ pub struct InitCommand {
 }
 
 impl InitCommand {
-    pub fn exec(self, _matches: BuckArgMatches<'_>, ctx: ClientCommandContext<'_>) -> ExitResult {
+    pub fn exec(self, _matches: YakArgMatches<'_>, ctx: ClientCommandContext<'_>) -> ExitResult {
         let console = self.console_opts.final_console();
 
         match exec_impl(self, ctx, &console) {
@@ -101,7 +101,7 @@ fn exec_impl(
                 )?;
                 None
             }
-            r => Some(r.buck_error_context("Couldn't detect dirty status of folder.")?),
+            r => Some(r.yak_error_context("Couldn't detect dirty status of folder.")?),
         };
 
         let changes = status.filter(|o| o.status.success()).map(|o| {
@@ -122,54 +122,54 @@ fn exec_impl(
     set_up_project(&absolute, git, !cmd.no_prelude)
 }
 
-fn initialize_buckconfig(repo_root: &AbsPath, prelude: bool, git: bool) -> yak_error::Result<()> {
-    let mut buckconfig = std::fs::File::create(repo_root.join(".yakconfig"))?;
-    writeln!(buckconfig, "[cells]")?;
-    writeln!(buckconfig, "  root = .")?;
+fn initialize_yakconfig(repo_root: &AbsPath, prelude: bool, git: bool) -> yak_error::Result<()> {
+    let mut yakconfig = std::fs::File::create(repo_root.join(".yakconfig"))?;
+    writeln!(yakconfig, "[cells]")?;
+    writeln!(yakconfig, "  root = .")?;
 
     // Add additional configs that depend on prelude / no-prelude mode
     if prelude {
-        writeln!(buckconfig, "  prelude = prelude")?;
-        writeln!(buckconfig, "  toolchains = toolchains")?;
-        writeln!(buckconfig)?;
-        writeln!(buckconfig, "[cell_aliases]")?;
-        writeln!(buckconfig, "  config = prelude")?;
-        writeln!(buckconfig)?;
+        writeln!(yakconfig, "  prelude = prelude")?;
+        writeln!(yakconfig, "  toolchains = toolchains")?;
+        writeln!(yakconfig)?;
+        writeln!(yakconfig, "[cell_aliases]")?;
+        writeln!(yakconfig, "  config = prelude")?;
+        writeln!(yakconfig)?;
         writeln!(
-            buckconfig,
+            yakconfig,
             "# Uses a copy of the prelude bundled with the yak binary. You can alternatively delete this"
         )?;
         writeln!(
-            buckconfig,
+            yakconfig,
             "# section and vendor a copy of the prelude to the `prelude` directory of your project."
         )?;
-        writeln!(buckconfig, "[external_cells]")?;
-        writeln!(buckconfig, "  prelude = bundled")?;
-        writeln!(buckconfig)?;
-        writeln!(buckconfig, "[parser]")?;
+        writeln!(yakconfig, "[external_cells]")?;
+        writeln!(yakconfig, "  prelude = bundled")?;
+        writeln!(yakconfig)?;
+        writeln!(yakconfig, "[parser]")?;
         writeln!(
-            buckconfig,
+            yakconfig,
             "  target_platform_detector_spec = target:root//...->prelude//platforms:default \\
     target:prelude//...->prelude//platforms:default \\
     target:toolchains//...->prelude//platforms:default"
         )?;
-        writeln!(buckconfig)?;
-        writeln!(buckconfig, "[build]")?;
+        writeln!(yakconfig)?;
+        writeln!(yakconfig, "[build]")?;
         writeln!(
-            buckconfig,
+            yakconfig,
             "  execution_platforms = prelude//platforms:default"
         )?;
     }
 
     if git {
-        writeln!(buckconfig)?;
-        writeln!(buckconfig, "[project]")?;
-        writeln!(buckconfig, "  ignore = .git")?;
+        writeln!(yakconfig)?;
+        writeln!(yakconfig, "[project]")?;
+        writeln!(yakconfig, "  ignore = .git")?;
     }
     Ok(())
 }
 
-fn initialize_toolchains_buck(repo_root: &AbsPath) -> yak_error::Result<()> {
+fn initialize_toolchains_yak(repo_root: &AbsPath) -> yak_error::Result<()> {
     std::fs::write(
         repo_root.join("YAK"),
         r#"
@@ -184,20 +184,20 @@ system_demo_toolchains()
     Ok(())
 }
 
-fn initialize_root_buck(repo_root: &AbsPath, prelude: bool) -> yak_error::Result<()> {
-    let mut buck = std::fs::File::create(repo_root.join("YAK"))?;
+fn initialize_root_yak(repo_root: &AbsPath, prelude: bool) -> yak_error::Result<()> {
+    let mut yak = std::fs::File::create(repo_root.join("YAK"))?;
 
     if prelude {
         writeln!(
-            buck,
-            "# A list of available rules and their signatures can be found here: https://rdeusser.github.io/buck2/docs/prelude/globals/"
+            yak,
+            "# A list of available rules and their signatures can be found here: https://rdeusser.github.io/yak/docs/prelude/globals/"
         )?;
-        writeln!(buck)?;
-        writeln!(buck, "genrule(")?;
-        writeln!(buck, "    name = \"hello_world\",")?;
-        writeln!(buck, "    out = \"out.txt\",")?;
-        writeln!(buck, "    cmd = \"echo BUILT BY YAK> $OUT\",")?;
-        writeln!(buck, ")")?;
+        writeln!(yak)?;
+        writeln!(yak, "genrule(")?;
+        writeln!(yak, "    name = \"hello_world\",")?;
+        writeln!(yak, "    out = \"out.txt\",")?;
+        writeln!(yak, "    cmd = \"echo BUILT BY YAK> $OUT\",")?;
+        writeln!(yak, ")")?;
     }
     // TODO: Add a doc pointers for rules
     Ok(())
@@ -212,13 +212,13 @@ fn set_up_gitignore(repo_root: &AbsPath) -> yak_error::Result<()> {
     Ok(())
 }
 
-fn set_up_buckroot(repo_root: &AbsPath) -> yak_error::Result<()> {
+fn set_up_yakroot(repo_root: &AbsPath) -> yak_error::Result<()> {
     fs_util::write(repo_root.join(".yakroot"), "").categorize_internal()?;
     Ok(())
 }
 
 fn set_up_project(repo_root: &AbsPath, git: bool, prelude: bool) -> yak_error::Result<()> {
-    set_up_buckroot(repo_root)?;
+    set_up_yakroot(repo_root)?;
 
     if git {
         if !background_command("git")
@@ -243,16 +243,16 @@ fn set_up_project(repo_root: &AbsPath, git: bool, prelude: bool) -> yak_error::R
         return Ok(());
     }
 
-    initialize_buckconfig(repo_root, prelude, git)?;
+    initialize_yakconfig(repo_root, prelude, git)?;
     if prelude {
         let toolchains = repo_root.join("toolchains");
         if !toolchains.exists() {
             fs_util::create_dir(&toolchains).categorize_internal()?;
-            initialize_toolchains_buck(&toolchains)?;
+            initialize_toolchains_yak(&toolchains)?;
         }
     }
     if !repo_root.join("YAK").exists() {
-        initialize_root_buck(repo_root, prelude)?;
+        initialize_root_yak(repo_root, prelude)?;
     }
     Ok(())
 }
@@ -262,8 +262,8 @@ mod tests {
     use yak_fs::fs_util::uncategorized as fs_util;
     use yak_fs::paths::abs_path::AbsPath;
 
-    use crate::commands::init::initialize_buckconfig;
-    use crate::commands::init::initialize_root_buck;
+    use crate::commands::init::initialize_yakconfig;
+    use crate::commands::init::initialize_root_yak;
     use crate::commands::init::set_up_gitignore;
     use crate::commands::init::set_up_project;
 
@@ -316,16 +316,16 @@ mod tests {
     }
 
     #[test]
-    fn test_buckconfig_generation_with_prelude() -> yak_error::Result<()> {
+    fn test_yakconfig_generation_with_prelude() -> yak_error::Result<()> {
         let tempdir = tempfile::tempdir()?;
         let tempdir_path = tempdir.path();
         let tempdir_path = AbsPath::new(tempdir_path)?;
         fs_util::create_dir_all(tempdir_path)?;
 
-        let buckconfig_path = tempdir_path.join(".yakconfig");
-        initialize_buckconfig(tempdir_path, true, true)?;
-        let actual_buckconfig = fs_util::read_to_string(buckconfig_path)?;
-        let expected_buckconfig = "[cells]
+        let yakconfig_path = tempdir_path.join(".yakconfig");
+        initialize_yakconfig(tempdir_path, true, true)?;
+        let actual_yakconfig = fs_util::read_to_string(yakconfig_path)?;
+        let expected_yakconfig = "[cells]
   root = .
   prelude = prelude
   toolchains = toolchains
@@ -349,39 +349,39 @@ mod tests {
 [project]
   ignore = .git
 ";
-        assert_eq!(actual_buckconfig, expected_buckconfig);
+        assert_eq!(actual_yakconfig, expected_yakconfig);
         Ok(())
     }
 
     #[test]
-    fn test_buckconfig_generation_without_prelude() -> yak_error::Result<()> {
+    fn test_yakconfig_generation_without_prelude() -> yak_error::Result<()> {
         let tempdir = tempfile::tempdir()?;
         let tempdir_path = tempdir.path();
         let tempdir_path = AbsPath::new(tempdir_path)?;
         fs_util::create_dir_all(tempdir_path)?;
 
-        let buckconfig_path = tempdir_path.join(".yakconfig");
-        initialize_buckconfig(tempdir_path, false, false)?;
-        let actual_buckconfig = fs_util::read_to_string(buckconfig_path)?;
-        let expected_buckconfig = "[cells]
+        let yakconfig_path = tempdir_path.join(".yakconfig");
+        initialize_yakconfig(tempdir_path, false, false)?;
+        let actual_yakconfig = fs_util::read_to_string(yakconfig_path)?;
+        let expected_yakconfig = "[cells]
   root = .
 ";
-        assert_eq!(actual_buckconfig, expected_buckconfig);
+        assert_eq!(actual_yakconfig, expected_yakconfig);
 
         Ok(())
     }
 
     #[test]
-    fn test_buckfile_generation_with_prelude() -> yak_error::Result<()> {
+    fn test_yakfile_generation_with_prelude() -> yak_error::Result<()> {
         let tempdir = tempfile::tempdir()?;
         let tempdir_path = tempdir.path();
         let tempdir_path = AbsPath::new(tempdir_path)?;
         fs_util::create_dir_all(tempdir_path)?;
 
-        let buck_path = tempdir_path.join("YAK");
-        initialize_root_buck(tempdir_path, true)?;
-        let actual_buck = fs_util::read_to_string(buck_path)?;
-        let expected_buck = "# A list of available rules and their signatures can be found here: https://rdeusser.github.io/buck2/docs/prelude/globals/
+        let yak_path = tempdir_path.join("YAK");
+        initialize_root_yak(tempdir_path, true)?;
+        let actual_yak = fs_util::read_to_string(yak_path)?;
+        let expected_yak = "# A list of available rules and their signatures can be found here: https://rdeusser.github.io/yak/docs/prelude/globals/
 
 genrule(
     name = \"hello_world\",
@@ -389,7 +389,7 @@ genrule(
     cmd = \"echo BUILT BY YAK> $OUT\",
 )
 ";
-        assert_eq!(actual_buck, expected_buck);
+        assert_eq!(actual_yak, expected_yak);
         Ok(())
     }
 }

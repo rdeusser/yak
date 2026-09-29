@@ -9,7 +9,7 @@
 """
 Example:
 
-    buck_genrule(
+    yak_genrule(
         name = "my-generated-data"
         bash = "something slow",
     )

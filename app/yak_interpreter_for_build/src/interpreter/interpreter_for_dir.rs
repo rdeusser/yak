@@ -25,8 +25,8 @@ use starlark::codemap::FileSpan;
 use starlark::environment::FrozenModule;
 use starlark::syntax::AstModule;
 use starlark::values::any_complex::StarlarkAnyComplex;
-use yak_common::legacy_configs::configs::LegacyBuckConfig;
-use yak_common::legacy_configs::key::BuckconfigKeyRef;
+use yak_common::legacy_configs::configs::LegacyYakConfig;
+use yak_common::legacy_configs::key::YakconfigKeyRef;
 use yak_common::package_listing::listing::PackageListing;
 use yak_core::build_file_path::BuildFilePath;
 use yak_core::bxl::BxlFilePath;
@@ -34,12 +34,12 @@ use yak_core::bzl::ImportPath;
 use yak_core::cells::build_file_cell::BuildFileCell;
 use yak_core::cells::cell_path::CellPath;
 use yak_core::cells::cell_path_with_allowed_relative_dir::CellPathWithAllowedRelativeDir;
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 use yak_error::conversion::from_any_with_tag;
 use yak_error::internal_error;
 use yak_event_observer::humanized::HumanizedBytes;
 use yak_events::dispatch::get_dispatcher;
-use yak_interpreter::factory::BuckStarlarkModule;
+use yak_interpreter::factory::YakStarlarkModule;
 use yak_interpreter::factory::FinishedStarlarkEvaluation;
 use yak_interpreter::factory::StarlarkEvaluatorProvider;
 use yak_interpreter::file_loader::InterpreterFileLoader;
@@ -57,14 +57,14 @@ use yak_interpreter::paths::path::OwnedStarlarkPath;
 use yak_interpreter::paths::path::StarlarkPath;
 use yak_interpreter::prelude_path::PreludePath;
 use yak_interpreter::print_handler::EventDispatcherPrintHandler;
-use yak_interpreter::soft_error::Buck2StarlarkSoftErrorHandler;
+use yak_interpreter::soft_error::YakStarlarkSoftErrorHandler;
 use yak_interpreter::starlark_profiler::data::StarlarkProfileDataAndStats;
 use yak_node::nodes::eval_result::EvaluationResult;
 use yak_node::nodes::eval_result::EvaluationResultWithStats;
 use yak_node::super_package::SuperPackage;
 use yak_util::per_thread_instruction_counter::PerThreadInstructionCounter;
 
-use crate::interpreter::buckconfig::BuckConfigsViewForStarlark;
+use crate::interpreter::yakconfig::YakConfigsViewForStarlark;
 use crate::interpreter::build_context::BuildContext;
 use crate::interpreter::build_context::PerFileTypeContext;
 use crate::interpreter::bzl_eval_ctx::BzlEvalCtx;
@@ -85,7 +85,7 @@ struct StarlarkTabsError(OwnedStarlarkPath);
 #[derive(Debug, yak_error::Error)]
 enum StarlarkPeakMemoryError {
     #[error(
-        "Starlark peak memory usage for {0} is {1} which exceeds the limit {2}! Please reduce memory usage to prevent OOMs. See https://rdeusser.github.io/buck2/docs/users/faq/starlark_peak_mem for debugging tips."
+        "Starlark peak memory usage for {0} is {1} which exceeds the limit {2}! Please reduce memory usage to prevent OOMs. See https://rdeusser.github.io/yak/docs/users/faq/starlark_peak_mem for debugging tips."
     )]
     #[yak(input)]
     ExceedsThreshold(BuildFilePath, HumanizedBytes, HumanizedBytes),
@@ -112,7 +112,7 @@ impl ParseData {
         for x in ast.loads() {
             let path = resolver
                 .resolve_load(x.module_id, Some(&x.span))
-                .with_buck_error_context(|| {
+                .with_yak_error_context(|| {
                     format!(
                         "Error loading `load` of `{}` from `{}`",
                         x.module_id, x.span
@@ -196,7 +196,7 @@ impl LoadResolver for InterpreterLoadResolver {
         if path.path().extension() == Some("bxl") {
             match self.loader_file_type {
                 StarlarkFileType::Bzl
-                | StarlarkFileType::Buck
+                | StarlarkFileType::Yak
                 | StarlarkFileType::Package
                 | StarlarkFileType::Json
                 | StarlarkFileType::Toml => {
@@ -310,10 +310,10 @@ impl InterpreterForDir {
 
     fn create_env<'v>(
         &self,
-        env: BuckStarlarkModule<'v>,
+        env: YakStarlarkModule<'v>,
         starlark_path: StarlarkPath<'_>,
         loaded_modules: &LoadedModules,
-    ) -> yak_error::Result<BuckStarlarkModule<'v>> {
+    ) -> yak_error::Result<YakStarlarkModule<'v>> {
         if let Some(prelude_import) = self.prelude_import(starlark_path) {
             let prelude_env = loaded_modules
                 .map
@@ -325,7 +325,7 @@ impl InterpreterForDir {
                 })?;
             env.import_public_symbols(prelude_env.env());
             if let StarlarkPath::BuildFile(_) = starlark_path {
-                if let Some(native) = prelude_env.native_globals_for_buck_files()? {
+                if let Some(native) = prelude_env.native_globals_for_yak_files()? {
                     for (name, value) in native.add_to_heap(env.heap()).iter() {
                         env.set(name.as_str(), value);
                     }
@@ -348,13 +348,13 @@ impl InterpreterForDir {
     // implicit package include.
     fn create_build_env<'v>(
         &self,
-        env: BuckStarlarkModule<'v>,
+        env: YakStarlarkModule<'v>,
         build_file: &BuildFilePath,
         package_listing: &PackageListing,
         super_package: SuperPackage,
         package_boundary_exception: bool,
         loaded_modules: &LoadedModules,
-    ) -> yak_error::Result<(BuckStarlarkModule<'v>, ModuleInternals)> {
+    ) -> yak_error::Result<(YakStarlarkModule<'v>, ModuleInternals)> {
         let internals = self.global_state.configuror.new_extra_context(
             &self.cell_info,
             build_file.clone(),
@@ -483,9 +483,9 @@ impl InterpreterForDir {
 
     fn eval(
         self: &Arc<Self>,
-        env: &BuckStarlarkModule,
+        env: &YakStarlarkModule,
         ast: AstModule,
-        buckconfigs: &mut dyn BuckConfigsViewForStarlark,
+        yakconfigs: &mut dyn YakConfigsViewForStarlark,
         loaded_modules: LoadedModules,
         extra_context: PerFileTypeContext,
         eval_provider: StarlarkEvaluatorProvider,
@@ -499,7 +499,7 @@ impl InterpreterForDir {
         let host_info = self.global_state.configuror.host_info();
         let extra = BuildContext::new(
             &self.cell_info,
-            buckconfigs,
+            yakconfigs,
             host_info,
             extra_context,
             self.ignore_attrs_for_profiling,
@@ -514,7 +514,7 @@ impl InterpreterForDir {
                 |eval, is_profiling_enabled_by_provider| {
                     eval.enable_static_typechecking(unstable_typecheck);
                     eval.set_print_handler(&print);
-                    eval.set_soft_error_handler(&Buck2StarlarkSoftErrorHandler);
+                    eval.set_soft_error_handler(&YakStarlarkSoftErrorHandler);
                     eval.set_loader(&file_loader);
                     eval.extra = Some(&extra);
                     if self.verbose_gc {
@@ -564,13 +564,13 @@ impl InterpreterForDir {
     pub(crate) fn eval_module(
         self: &Arc<Self>,
         starlark_path: StarlarkModulePath<'_>,
-        buckconfigs: &mut dyn BuckConfigsViewForStarlark,
+        yakconfigs: &mut dyn YakConfigsViewForStarlark,
         ast: AstModule,
         loaded_modules: LoadedModules,
         eval_provider: StarlarkEvaluatorProvider,
         cancellation: &CancellationContext,
     ) -> yak_error::Result<FrozenModule> {
-        BuckStarlarkModule::with_profiling(|env| {
+        YakStarlarkModule::with_profiling(|env| {
             let env = self.create_env(env, starlark_path.into(), &loaded_modules)?;
             let extra_context = match starlark_path {
                 StarlarkModulePath::LoadFile(bzl) => PerFileTypeContext::Bzl(BzlEvalCtx {
@@ -592,7 +592,7 @@ impl InterpreterForDir {
             let (finished_eval, _) = self.eval(
                 &env,
                 ast,
-                buckconfigs,
+                yakconfigs,
                 loaded_modules,
                 extra_context,
                 eval_provider,
@@ -610,12 +610,12 @@ impl InterpreterForDir {
         package_file_path: &PackageFilePath,
         ast: AstModule,
         parent: SuperPackage,
-        buckconfigs: &mut dyn BuckConfigsViewForStarlark,
+        yakconfigs: &mut dyn YakConfigsViewForStarlark,
         loaded_modules: LoadedModules,
         eval_provider: StarlarkEvaluatorProvider,
         cancellation: &CancellationContext,
     ) -> yak_error::Result<SuperPackage> {
-        BuckStarlarkModule::with_profiling(|env| {
+        YakStarlarkModule::with_profiling(|env| {
             let env = self.create_env(
                 env,
                 StarlarkPath::PackageFile(package_file_path),
@@ -634,7 +634,7 @@ impl InterpreterForDir {
             let (finished_eval, eval_result) = self.eval(
                 &env,
                 ast,
-                buckconfigs,
+                yakconfigs,
                 loaded_modules,
                 extra_context,
                 eval_provider,
@@ -670,7 +670,7 @@ impl InterpreterForDir {
     pub(crate) fn eval_build_file(
         self: &Arc<Self>,
         build_file: &BuildFilePath,
-        buckconfigs: &mut dyn BuckConfigsViewForStarlark,
+        yakconfigs: &mut dyn YakConfigsViewForStarlark,
         listing: PackageListing,
         super_package: SuperPackage,
         package_boundary_exception: bool,
@@ -683,7 +683,7 @@ impl InterpreterForDir {
         Option<Arc<StarlarkProfileDataAndStats>>,
         EvaluationResultWithStats,
     )> {
-        BuckStarlarkModule::with_profiling(|env| {
+        YakStarlarkModule::with_profiling(|env| {
             let (env, internals) = self.create_build_env(
                 env,
                 build_file,
@@ -692,14 +692,14 @@ impl InterpreterForDir {
                 package_boundary_exception,
                 &loaded_modules,
             )?;
-            let buckconfig_key = BuckconfigKeyRef {
+            let yakconfig_key = YakconfigKeyRef {
                 section: "yak",
                 property: "check_starlark_peak_memory",
             };
-            let starlark_peak_mem_config_enabled = LegacyBuckConfig::parse_value(
-                buckconfig_key,
-                buckconfigs
-                    .read_root_cell_config(buckconfig_key)?
+            let starlark_peak_mem_config_enabled = LegacyYakConfig::parse_value(
+                yakconfig_key,
+                yakconfigs
+                    .read_root_cell_config(yakconfig_key)?
                     .as_deref(),
             )?
             .unwrap_or(false);
@@ -707,7 +707,7 @@ impl InterpreterForDir {
             let (finished_eval, eval_result) = self.eval(
                 &env,
                 ast,
-                buckconfigs,
+                yakconfigs,
                 loaded_modules,
                 PerFileTypeContext::Build(internals),
                 eval_provider,

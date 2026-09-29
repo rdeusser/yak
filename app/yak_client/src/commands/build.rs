@@ -20,7 +20,7 @@ use yak_cli_proto::build_request::ResponseOptions;
 use yak_cli_proto::build_request::build_providers;
 use yak_client_ctx::client_ctx::ClientCommandContext;
 use yak_client_ctx::command_outcome::CommandOutcome;
-use yak_client_ctx::common::BuckArgMatches;
+use yak_client_ctx::common::YakArgMatches;
 use yak_client_ctx::common::CommonBuildConfigurationOptions;
 use yak_client_ctx::common::CommonCommandOptions;
 use yak_client_ctx::common::CommonEventLogOptions;
@@ -31,7 +31,7 @@ use yak_client_ctx::common::build::CommonOutputOptions;
 use yak_client_ctx::common::target_cfg::TargetCfgWithUniverseOptions;
 use yak_client_ctx::common::timeout::CommonTimeoutOptions;
 use yak_client_ctx::common::ui::CommonConsoleOptions;
-use yak_client_ctx::daemon::client::BuckdClientConnector;
+use yak_client_ctx::daemon::client::YakdClientConnector;
 use yak_client_ctx::daemon::client::NoPartialResultHandler;
 use yak_client_ctx::events_ctx::EventsCtx;
 use yak_client_ctx::exit_result::ClientIoError;
@@ -40,7 +40,7 @@ use yak_client_ctx::final_console::FinalConsole;
 use yak_client_ctx::output_destination_arg::OutputDestinationArg;
 use yak_client_ctx::streaming::StreamingCommand;
 use yak_core::yak_env;
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 use yak_error::yak_error;
 
 use crate::commands::build::out::copy_to_out;
@@ -219,14 +219,14 @@ impl StreamingCommand for BuildCommand {
 
     async fn exec_impl(
         self,
-        buckd: &mut BuckdClientConnector,
-        matches: BuckArgMatches<'_>,
+        yakd: &mut YakdClientConnector,
+        matches: YakArgMatches<'_>,
         ctx: &mut ClientCommandContext<'_>,
         events_ctx: &mut EventsCtx,
     ) -> ExitResult {
         let context = ctx.client_context(matches, &self)?;
 
-        let result = buckd
+        let result = yakd
             .with_flushing()
             .build(
                 BuildRequest {
@@ -313,7 +313,7 @@ impl StreamingCommand for BuildCommand {
                     stdout,
                 )
                 .await
-                .buck_error_context("Error requesting specific output path for --out")?;
+                .yak_error_context("Error requesting specific output path for --out")?;
             }
 
             ExitResult::success()

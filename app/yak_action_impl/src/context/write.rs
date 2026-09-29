@@ -42,8 +42,8 @@ use yak_build_api::interpreter::rule_defs::resolved_macro::ResolvedMacro;
 use yak_core::fs::project_rel_path::ProjectRelativePathBuf;
 use yak_execute::artifact::fs::ExecutorFs;
 use yak_execute::execute::request::OutputType;
-use yak_hash::BuckMutMap;
-use yak_hash::buck_indexset;
+use yak_hash::YakMutMap;
+use yak_hash::yak_indexset;
 
 use crate::actions::impls::dep_file_fingerprint::DepFileFingerprintFormat;
 use crate::actions::impls::dep_file_fingerprint::StarlarkDepFileFingerprint;
@@ -193,7 +193,7 @@ pub(crate) fn analysis_actions_methods_write(methods: &mut MethodsBuilder) {
         cli.visit_contents(&mut visitor)?;
 
         this.register_action(
-            buck_indexset![output_artifact],
+            yak_indexset![output_artifact],
             UnregisteredWriteJsonAction::new(
                 pretty,
                 absolute,
@@ -295,7 +295,7 @@ pub(crate) fn analysis_actions_methods_write(methods: &mut MethodsBuilder) {
 
             let mut counter = WriteToFileMacrosCounter { count: 0 };
             // At this point the mapping doesn't matter because we're only doing a count
-            cli.visit_write_to_file_macros(&mut counter, &BuckMutMap::default())?;
+            cli.visit_write_to_file_macros(&mut counter, &YakMutMap::default())?;
             Ok(counter.count)
         }
 
@@ -360,7 +360,7 @@ pub(crate) fn analysis_actions_methods_write(methods: &mut MethodsBuilder) {
                 format!("__macros/{sha}")
             };
 
-            let mut written_macro_files = buck_indexset![];
+            let mut written_macro_files = yak_indexset![];
             for i in 0..written_macro_count {
                 let macro_file = this.declare_output(
                     None,
@@ -389,12 +389,12 @@ pub(crate) fn analysis_actions_methods_write(methods: &mut MethodsBuilder) {
 
             written_macro_files
         } else {
-            buck_indexset![]
+            yak_indexset![]
         };
 
         let action = {
             let maybe_macro_files = if allow_args {
-                let mut macro_files = buck_indexset![];
+                let mut macro_files = yak_indexset![];
                 for a in &written_macro_files {
                     let artifact = a.dupe().ensure_bound()?.into_artifact();
                     macro_files.insert(artifact.dupe());
@@ -413,7 +413,7 @@ pub(crate) fn analysis_actions_methods_write(methods: &mut MethodsBuilder) {
         let fingerprint_macro_files =
             dep_files_fingerprint_using_canonical_paths.then(|| action.macro_files.clone());
         this.register_action(
-            buck_indexset![output_artifact],
+            yak_indexset![output_artifact],
             action,
             Some(content_cli.to_value()),
             None,

@@ -8,26 +8,26 @@
 
 import json
 
-from e2e_util.api.buck import Buck
+from e2e_util.api.yak import Yak
 from e2e_util.asserts import expect_failure
-from e2e_util.buck_workspace import buck_test
+from e2e_util.yak_workspace import yak_test
 
 
-@buck_test()
-async def test_default_target_platform_is_subtarget(buck: Buck) -> None:
+@yak_test()
+async def test_default_target_platform_is_subtarget(yak: Yak) -> None:
     # FIXME(JakobDegen): Bug. The target specifies a subtarget that does have an appropriate
     # provider.
     await expect_failure(
-        buck.cquery(":stub"),
+        yak.cquery(":stub"),
         stderr_regex="Expected `root//:alias_platform` to be a `platform\\(\\)` target",
     )
 
 
-@buck_test()
-async def test_subtarget_in_select_key(buck: Buck) -> None:
-    res = await buck.uquery(
-        "root//:with_constraint_key_dep", "-a", "buck.configuration_deps"
+@yak_test()
+async def test_subtarget_in_select_key(yak: Yak) -> None:
+    res = await yak.uquery(
+        "root//:with_constraint_key_dep", "-a", "yak.configuration_deps"
     )
     res = json.loads(res.stdout)
-    # FIXME(JakobDegen): Bug. `buck.deps`-like attributes do not include subtargets
-    assert list(res.values())[0]["buck.configuration_deps"] == ["root//:cat_alias[sub]"]
+    # FIXME(JakobDegen): Bug. `yak.deps`-like attributes do not include subtargets
+    assert list(res.values())[0]["yak.configuration_deps"] == ["root//:cat_alias[sub]"]

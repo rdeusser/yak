@@ -26,8 +26,8 @@ use tracing::debug;
 use tracing::error;
 use tracing::trace;
 use yak_error::yak_error;
-use yak_hash::BuckMutMap;
-use yak_hash::BuckMutSet;
+use yak_hash::YakMutMap;
+use yak_hash::YakMutSet;
 
 pub trait CycleDescriptor: Debug + 'static {
     type Key: Debug + Display + Clone + Eq + Hash + Send + Sync;
@@ -99,8 +99,8 @@ impl<C: CycleDescriptor> LazyCycleDetector<C> {
 
             CycleDetectorState {
                 nodes: Vec::new(),
-                node_ids: BuckMutMap::default(),
-                dirtied_nodes: BuckMutSet::default(),
+                node_ids: YakMutMap::default(),
+                dirtied_nodes: YakMutSet::default(),
                 idle_delay,
             }
             .run(&mut receiver)
@@ -201,10 +201,10 @@ enum NodeState<C: CycleDescriptor> {
 }
 
 struct CycleDetectorState<C: CycleDescriptor> {
-    node_ids: BuckMutMap<C::Key, u32>,
+    node_ids: YakMutMap<C::Key, u32>,
     nodes: Vec<(C::Key, NodeState<C>)>,
     // These are nodes for which we've seen a new out-edge since last we checked for cycles. We will start our next search at these nodes.
-    dirtied_nodes: BuckMutSet<u32>,
+    dirtied_nodes: YakMutSet<u32>,
     idle_delay: Duration,
 }
 
@@ -344,7 +344,7 @@ impl<C: CycleDescriptor> CycleDetectorState<C> {
             }
         }
 
-        let mut visited = BuckMutSet::default();
+        let mut visited = YakMutSet::default();
 
         let mut stack = SmallSet::new();
 

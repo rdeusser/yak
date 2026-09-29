@@ -16,11 +16,11 @@ import "google/protobuf/empty.proto";
 import "error.proto";
 import "host_sharing.proto";
 
-package buck.data;
+package yak.data;
 
 // A single event originating from yak. Its semantics depend on the `data`
 // member.
-message BuckEvent {
+message YakEvent {
   reserved 2047;
 
   // A timestamp for when this event was fired, taken from the system clock.
@@ -205,7 +205,7 @@ message StdoutStreamingOutput {
 message CommandPreempted {}
 
 /// The result of a background idle page-out, once it finishes. Logged to the
-/// `buck2_page_outs` table (see the buck2_cleans pipeline).
+/// `yak_page_outs` table (see the yak_cleans pipeline).
 message PageOutSummary {
   map<string, string> metadata = 1;
   /// The command whose finalize triggered this idle page-out.
@@ -356,7 +356,7 @@ message InstantEvent {
     ConfigurationCreated configuration_created = 46;
 
     // Tracks values of external yakconfigs
-    BuckconfigInputValues buckconfig_input_values = 47;
+    YakconfigInputValues yakconfig_input_values = 47;
 
     CellHasNewConfigs cell_has_new_configs = 48;
 
@@ -407,15 +407,15 @@ message EndOfTestResults {
   int32 exit_code = 1;
 }
 
-message BuckconfigInputValues {
+message YakconfigInputValues {
   // yakconfigs are computed by joining together values from a number of
   // different inputs (repo, well-known directories, CLI). Each of these is
   // represented as a component, and they are applied in the given order,
   // with later components overriding earlier ones
-  repeated BuckconfigComponent components = 1;
+  repeated YakconfigComponent components = 1;
 }
 
-message BuckconfigComponent {
+message YakconfigComponent {
   oneof data {
     ConfigValue config_value = 1;
     ConfigFile config_file = 2;
@@ -1032,14 +1032,14 @@ message Snapshot {
       430 to 433, 1201 to 1208, 1106, 1110, 1118, 1124, 1128, 1136;
   // Resident set size in bytes of the yak daemon.
   // Does not include subprocesses (e.g. local actions).
-  optional uint64 buck2_rss = 11;
+  optional uint64 yak_rss = 11;
   // Maximum resident set size in bytes of the yak daemon.
   // Does not include subprocesses (e.g. local actions).
-  uint64 buck2_max_rss = 1;
+  uint64 yak_max_rss = 1;
   // User CPU time of yak daemon, not including subprocesses.
-  uint64 buck2_user_cpu_us = 2;
+  uint64 yak_user_cpu_us = 2;
   // System CPU time of yak daemon, not including subprocesses.
-  uint64 buck2_system_cpu_us = 3;
+  uint64 yak_system_cpu_us = 3;
   // Queue size of the blocking executor.
   uint64 blocking_executor_io_queue_size = 4;
   // Tokio blocking queue depth.
@@ -2125,7 +2125,7 @@ enum ExpectedEligibleForDedupe {
 // values from this enum, but it's important that the semantic meaning of the
 // 0/1 values here match the false/true meanings of the old `did_*` fields. That
 // way old yak instances that still generate true/false are interpreted
-// correctly by new ingress/buck clients.
+// correctly by new ingress/yak clients.
 enum UploadResult {
   UPLOAD_RESULT_DID_NOT_UPLOAD_UNSPECIFIED = 0;
   UPLOAD_RESULT_UPLOADED = 1;
@@ -2479,7 +2479,7 @@ message TestDiscoveryEnd {
   string suite_name = 1;
   CommandExecution command_report = 2;
   bool re_cache_enabled = 3;
-  optional buck.host_sharing.HostSharingRequirements
+  optional yak.host_sharing.HostSharingRequirements
       command_host_sharing_requirements = 4;
   ConfiguredTargetLabel target_label = 5;
 }
@@ -2491,7 +2491,7 @@ message TestRunStart {
 message TestRunEnd {
   TestSuite suite = 1;
   CommandExecution command_report = 2;
-  optional buck.host_sharing.HostSharingRequirements
+  optional yak.host_sharing.HostSharingRequirements
       command_host_sharing_requirements = 3;
 }
 
@@ -2652,7 +2652,7 @@ message BuildArtifact {
 }
 
 // A target pattern, representing a set of targets. See
-// `<https://rdeusser.github.io/buck2/docs/concepts/target_pattern>` for yak's
+// `<https://rdeusser.github.io/yak/docs/concepts/target_pattern>` for yak's
 // documentation on target patterns.
 message TargetPattern {
   string value = 1;
@@ -2789,8 +2789,8 @@ enum DaemonWasStartedReason {
   COULD_NOT_CONNECT_TO_DAEMON = 11;
   TIMED_OUT_CONNECTING_TO_DAEMON = 12;
   TIMEOUT_CALCULATION_ERROR = 13;
-  NO_BUCKD_INFO = 14;
-  COULD_NOT_LOAD_BUCKD_INFO = 15;
+  NO_YAKD_INFO = 14;
+  COULD_NOT_LOAD_YAKD_INFO = 15;
   // `yakd.info` exists, but yakd is not running.
   NO_DAEMON_PROCESS = 16;
 }
@@ -3406,7 +3406,7 @@ message ErrorReport {
   // The location in source code where this error was created. Typically a Rust
   // source file, but the exact format is not guaranteed.
   SourceLocation source_location = 5;
-  repeated buck.data.error.ErrorTag tags = 6;
+  repeated yak.data.error.ErrorTag tags = 6;
   repeated string sub_error_categories = 7;
   optional string category_key = 8;
   repeated StringTag string_tags = 9;

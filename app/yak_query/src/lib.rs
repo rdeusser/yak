@@ -18,9 +18,9 @@ pub use yak_query_derive::query_module;
 // ::yak_query like it would when used in other crates).
 extern crate self as yak_query;
 
-/// __derive_refs allows us to reference other crates in buck_query_proc_macro without users needing to be
+/// __derive_refs allows us to reference other crates in yak_query_proc_macro without users needing to be
 ///  aware of those dependencies. We make them public here and then can reference them like
-///  `buck_query::__derive_refs::foo`.
+///  `yak_query::__derive_refs::foo`.
 #[doc(hidden)]
 pub mod __derive_refs {
     pub use async_trait;

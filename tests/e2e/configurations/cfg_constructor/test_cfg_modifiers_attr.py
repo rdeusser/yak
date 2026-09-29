@@ -9,14 +9,14 @@
 import json
 
 from e2e.configurations.cfg_constructor.modifiers_util import get_cfg
-from e2e_util.api.buck import Buck
+from e2e_util.api.yak import Yak
 from e2e_util.asserts import expect_failure
-from e2e_util.buck_workspace import buck_test
+from e2e_util.yak_workspace import yak_test
 
 
-@buck_test()
-async def test_cfg_modifiers_attr(buck: Buck) -> None:
-    result = await buck.targets(
+@yak_test()
+async def test_cfg_modifiers_attr(yak: Yak) -> None:
+    result = await yak.targets(
         "root//:test",
         "--output-attribute=modifiers",
     )
@@ -28,19 +28,19 @@ async def test_cfg_modifiers_attr(buck: Buck) -> None:
     assert target_modifiers == ["root//:A_1"]
 
 
-@buck_test()
-async def test_cfg_modifiers_attr_ctargets(buck: Buck) -> None:
+@yak_test()
+async def test_cfg_modifiers_attr_ctargets(yak: Yak) -> None:
     result = await get_cfg(
-        buck,
+        yak,
         "root//:test2",
     )
     assert ":A_1" in result
 
 
-@buck_test()
-async def test_metadata_modifiers_is_hard_error(buck: Buck) -> None:
-    result = await expect_failure(buck.ctargets("root//:test_metadata_modifiers"))
+@yak_test()
+async def test_metadata_modifiers_is_hard_error(yak: Yak) -> None:
+    result = await expect_failure(yak.ctargets("root//:test_metadata_modifiers"))
     assert (
-        'sets `metadata["buck.cfg_modifiers"]` which is no longer supported'
+        'sets `metadata["yak.cfg_modifiers"]` which is no longer supported'
         in result.stderr
     )

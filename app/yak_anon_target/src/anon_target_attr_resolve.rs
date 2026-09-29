@@ -31,7 +31,7 @@ use yak_build_api::keep_going::KeepGoing;
 use yak_core::package::PackageLabel;
 use yak_core::provider::label::ConfiguredProvidersLabel;
 use yak_core::target::configured_target_label::ConfiguredTargetLabel;
-use yak_hash::BuckMutMap;
+use yak_hash::YakMutMap;
 use yak_interpreter::types::configured_providers_label::StarlarkProvidersLabel;
 use yak_node::attrs::attr_type::dep::DepAttrType;
 use yak_node::attrs::attr_type::query::ResolvedQueryLiterals;
@@ -45,7 +45,7 @@ use crate::anon_targets::get_artifact_from_anon_target_analysis;
 // No macros in anon targets, so query results are empty. Execution platform resolution should
 // always be inherited from the anon target.
 pub(crate) struct AnonTargetAttrResolutionContext<'a, 'v> {
-    pub(crate) promised_artifacts_map: BuckMutMap<&'a PromiseArtifactAttr, Artifact>,
+    pub(crate) promised_artifacts_map: YakMutMap<&'a PromiseArtifactAttr, Artifact>,
     pub(crate) rule_analysis_attr_resolution_ctx: RuleAnalysisAttrResolutionContext<'a, 'v>,
 }
 
@@ -249,7 +249,7 @@ impl AnonTargetDependents {
                     .map(|r| (dep, r.dupe()))
             })
             .await?;
-        let promised_artifacts: BuckMutMap<_, _> = {
+        let promised_artifacts: YakMutMap<_, _> = {
             KeepGoing::try_compute_join_all(
                 dice,
                 self.promise_artifacts.iter(),

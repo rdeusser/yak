@@ -10,14 +10,14 @@
 import typing
 
 import pytest
-from e2e_util.api.buck import Buck
+from e2e_util.api.yak import Yak
 from e2e_util.asserts import expect_failure
-from e2e_util.buck_workspace import buck_test
+from e2e_util.yak_workspace import yak_test
 from e2e_util.helper.utils import json_get
 
 
-async def get_detailed_metrics(buck: Buck) -> typing.Any:
-    log = (await buck.log("show")).stdout.strip().splitlines()
+async def get_detailed_metrics(yak: Yak) -> typing.Any:
+    log = (await yak.log("show")).stdout.strip().splitlines()
 
     for line in log:
         message = json_get(
@@ -47,17 +47,17 @@ def parse_metrics(metrics: typing.Any) -> tuple[typing.Any, dict[str, typing.Any
     return (all_targets, per_targets)
 
 
-@buck_test()
-async def test_disabled(buck: Buck) -> None:
-    await buck.build("//:foo4", "-c", "yak.detailed_aggregated_metrics=false")
-    message = await get_detailed_metrics(buck)
+@yak_test()
+async def test_disabled(yak: Yak) -> None:
+    await yak.build("//:foo4", "-c", "yak.detailed_aggregated_metrics=false")
+    message = await get_detailed_metrics(yak)
     assert message is None
 
 
-@buck_test()
-async def test_enabled(buck: Buck) -> None:
-    await buck.build("//:foo4", "-c", "yak.detailed_aggregated_metrics=true")
-    message = await get_detailed_metrics(buck)
+@yak_test()
+async def test_enabled(yak: Yak) -> None:
+    await yak.build("//:foo4", "-c", "yak.detailed_aggregated_metrics=true")
+    message = await get_detailed_metrics(yak)
     assert message is not None
     all_targets_metrics, per_target_metrics = parse_metrics(message)
     assert [
@@ -67,10 +67,10 @@ async def test_enabled(buck: Buck) -> None:
     ] == [7, 7, pytest.approx(12.0)]
 
 
-@buck_test()
-async def test_incomplete_graph(buck: Buck) -> None:
+@yak_test()
+async def test_incomplete_graph(yak: Yak) -> None:
     await expect_failure(
-        buck.build(
+        yak.build(
             "//:foo4",
             "-c",
             "yak.detailed_aggregated_metrics=true",
@@ -78,7 +78,7 @@ async def test_incomplete_graph(buck: Buck) -> None:
             "user.dyn_input_good=0",
         )
     )
-    message = await get_detailed_metrics(buck)
+    message = await get_detailed_metrics(yak)
     assert message is not None
     all_targets_metrics, per_target_metrics = parse_metrics(message)
     assert [
@@ -88,10 +88,10 @@ async def test_incomplete_graph(buck: Buck) -> None:
     ] == [None, None, pytest.approx(12.0)]
 
 
-@buck_test()
-async def test_wall_clock_completion(buck: Buck) -> None:
-    await buck.build("//:foo4", "-c", "yak.detailed_aggregated_metrics=true")
-    message = await get_detailed_metrics(buck)
+@yak_test()
+async def test_wall_clock_completion(yak: Yak) -> None:
+    await yak.build("//:foo4", "-c", "yak.detailed_aggregated_metrics=true")
+    message = await get_detailed_metrics(yak)
     assert message is not None
     _all_targets_metrics, per_target_metrics = parse_metrics(message)
     wall_clock = per_target_metrics["root//:foo4"]["wall_clock_completion_ms"]
@@ -99,10 +99,10 @@ async def test_wall_clock_completion(buck: Buck) -> None:
     assert wall_clock > 0
 
 
-@buck_test()
-async def test_wall_clock_completion_on_timeout(buck: Buck) -> None:
+@yak_test()
+async def test_wall_clock_completion_on_timeout(yak: Yak) -> None:
     await expect_failure(
-        buck.build(
+        yak.build(
             "//:slow",
             "-c",
             "yak.detailed_aggregated_metrics=true",
@@ -111,7 +111,7 @@ async def test_wall_clock_completion_on_timeout(buck: Buck) -> None:
         ),
         stderr_regex="Build timed out",
     )
-    message = await get_detailed_metrics(buck)
+    message = await get_detailed_metrics(yak)
     assert message is not None
     _all_targets_metrics, per_target_metrics = parse_metrics(message)
     wall_clock = per_target_metrics["root//:slow"]["wall_clock_completion_ms"]
@@ -119,10 +119,10 @@ async def test_wall_clock_completion_on_timeout(buck: Buck) -> None:
     assert wall_clock > 0
 
 
-@buck_test()
-async def test_wall_clock_completion_on_failure(buck: Buck) -> None:
+@yak_test()
+async def test_wall_clock_completion_on_failure(yak: Yak) -> None:
     await expect_failure(
-        buck.build(
+        yak.build(
             "//:foo4",
             "-c",
             "yak.detailed_aggregated_metrics=true",
@@ -130,7 +130,7 @@ async def test_wall_clock_completion_on_failure(buck: Buck) -> None:
             "user.dyn_input_good=0",
         )
     )
-    message = await get_detailed_metrics(buck)
+    message = await get_detailed_metrics(yak)
     assert message is not None
     _all_targets_metrics, per_target_metrics = parse_metrics(message)
     wall_clock = per_target_metrics["root//:foo4"]["wall_clock_completion_ms"]
@@ -138,12 +138,12 @@ async def test_wall_clock_completion_on_failure(buck: Buck) -> None:
     assert wall_clock > 0
 
 
-@buck_test()
-async def test_amortization(buck: Buck) -> None:
-    await buck.build(
+@yak_test()
+async def test_amortization(yak: Yak) -> None:
+    await yak.build(
         "//:foo4", "//:foo5", "-c", "yak.detailed_aggregated_metrics=true"
     )
-    message = await get_detailed_metrics(buck)
+    message = await get_detailed_metrics(yak)
     assert message is not None
     all_targets_metrics, per_target_metrics = parse_metrics(message)
     assert [
@@ -167,16 +167,16 @@ async def test_amortization(buck: Buck) -> None:
     ]
 
 
-@buck_test(allow_soft_errors=True)
-async def test_enabled_after_analysis_soft_errors(buck: Buck) -> None:
+@yak_test(allow_soft_errors=True)
+async def test_enabled_after_analysis_soft_errors(yak: Yak) -> None:
     # First command runs analysis with collection off; enabling it on a later
     # command can't produce complete metrics, so we expect a soft error and empty
     # metrics rather than partial ones.
-    await buck.build("//:foo4")
-    await buck.build("//:foo4", "-c", "yak.detailed_aggregated_metrics=true")
-    log = (await buck.log("show")).stdout
+    await yak.build("//:foo4")
+    await yak.build("//:foo4", "-c", "yak.detailed_aggregated_metrics=true")
+    log = (await yak.log("show")).stdout
     assert "detailed_aggregated_metrics_enabled_after_analysis" in log
-    message = await get_detailed_metrics(buck)
+    message = await get_detailed_metrics(yak)
     assert message is not None
     all_targets_metrics, per_target_metrics = parse_metrics(message)
     assert per_target_metrics == {}

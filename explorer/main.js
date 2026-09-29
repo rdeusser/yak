@@ -25,7 +25,7 @@ let mainWindow;
 
 // The directory all yak commands are run from. It starts at the home
 // directory until the user selects a project.
-let buckDir = app.getPath('home');
+let yakDir = app.getPath('home');
 
 function createWindow () {
     mainWindow = new BrowserWindow({
@@ -66,43 +66,43 @@ async function runCommand(args, host) {
     // Therefore we run all shells with `--login` using `exec -- $@` to escape the arguments.
     const { stdout } = await execFile("sh", ["--login", "-c", 'exec -- "$@"', "--", "yak"].concat(args), {
         maxBuffer: buffer,
-        cwd: buckDir,
+        cwd: yakDir,
     });
     console.log("Finish: " + args[0]);
     return stdout;
 }
 
-ipcMain.handle('buck2-status', async _ => {
+ipcMain.handle('yak-status', async _ => {
     return await runCommand(["status"], "")
 });
 
-ipcMain.handle('buck2-targets', async (_, target, host) => {
+ipcMain.handle('yak-targets', async (_, target, host) => {
     validateTarget(target);
     return await runCommand(["targets", target], host);
 });
 
-ipcMain.handle('buck2-attributes', async (_, target, host) => {
+ipcMain.handle('yak-attributes', async (_, target, host) => {
     validateTarget(target);
     return await runCommand(["uquery", `'${target}'`, "--output-attribute=.*"], host);
 });
 
-ipcMain.handle('buck2-providers', async (_, target, host) => {
+ipcMain.handle('yak-providers', async (_, target, host) => {
     validateTarget(target);
     return await runCommand(["audit", "providers", target], host);
 });
 
-ipcMain.handle('select-buck-dir', async _ => {
+ipcMain.handle('select-yak-dir', async _ => {
     const result = await dialog.showOpenDialog(mainWindow, {
         properties: ['openDirectory'],
-        defaultPath: buckDir,
+        defaultPath: yakDir,
         message: "Select your yak working directory",
     })
-    buckDir = result.filePaths[0];
-    return buckDir;
+    yakDir = result.filePaths[0];
+    return yakDir;
 });
 
-ipcMain.handle('current-buck-dir', async _ => {
-    return buckDir;
+ipcMain.handle('current-yak-dir', async _ => {
+    return yakDir;
 });
 
 app.whenReady().then(() => {

@@ -18,7 +18,7 @@ use starlark::environment::Globals;
 use starlark::environment::GlobalsBuilder;
 use yak_cli_proto::new_generic::DocsResponse;
 use yak_cli_proto::new_generic::DocsStarlarkBuiltinsRequest;
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 use yak_error::internal_error;
 use yak_fs::error::IoResultExt;
 use yak_fs::fs_util;
@@ -27,7 +27,7 @@ use yak_fs::paths::forward_rel_path::ForwardRelativePath;
 use yak_interpreter_for_build::interpreter::globals::register_analysis_natives;
 use yak_interpreter_for_build::interpreter::globals::register_bxl_natives;
 use yak_interpreter_for_build::interpreter::globals::register_load_natives;
-use yak_interpreter_for_build::interpreter::globals::starlark_library_extensions_for_buck2;
+use yak_interpreter_for_build::interpreter::globals::starlark_library_extensions_for_yak;
 use yak_server_ctx::ctx::ServerCommandContextTrait;
 
 pub(crate) fn write_docs_to_subdir(
@@ -84,7 +84,7 @@ pub(crate) async fn docs_starlark_builtins(
     _dice_ctx: DiceTransaction,
     request: &DocsStarlarkBuiltinsRequest,
 ) -> yak_error::Result<DocsResponse> {
-    let starlark = Globals::extended_by(starlark_library_extensions_for_buck2()).documentation();
+    let starlark = Globals::extended_by(starlark_library_extensions_for_yak()).documentation();
 
     let build = GlobalsBuilder::new()
         .with(register_load_natives)

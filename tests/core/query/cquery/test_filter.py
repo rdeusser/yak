@@ -8,18 +8,18 @@
 
 import re
 
-from e2e_util.api.buck import Buck
-from e2e_util.buck_workspace import buck_test
+from e2e_util.api.yak import Yak
+from e2e_util.yak_workspace import yak_test
 
 
 def _replace_hash(s: str) -> str:
     return re.sub(r"\b[0-9a-f]{16}\b", "<HASH>", s)
 
 
-@buck_test()
-async def test_cquery_filter_should_not_include_configuration(buck: Buck) -> None:
+@yak_test()
+async def test_cquery_filter_should_not_include_configuration(yak: Yak) -> None:
     # First, self-check.
-    result = await buck.cquery("//...")
+    result = await yak.cquery("//...")
     assert [
         "root//:aaaaa (<unbound>)",
         "root//:bbbbb (root//:aaaaa#<HASH>)",
@@ -27,7 +27,7 @@ async def test_cquery_filter_should_not_include_configuration(buck: Buck) -> Non
 
     # Now check the behavior of `filter()`.
     # `filter()` function checks unconfigured target label.
-    result = await buck.cquery(r"filter('^root//:bbbbb$', //...)")
+    result = await yak.cquery(r"filter('^root//:bbbbb$', //...)")
     assert [
         "root//:bbbbb (root//:aaaaa#<HASH>)",
     ] == _replace_hash(result.stdout).splitlines()

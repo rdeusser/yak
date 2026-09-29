@@ -36,7 +36,7 @@ use yak_common::file_ops::metadata::TrackedFileDigest;
 use yak_common::sqlite::sqlite_db::SqliteTables;
 use yak_core::soft_error;
 use yak_directory::directory::entry::DirectoryEntry;
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 use yak_error::conversion::from_any_with_tag;
 use yak_error::internal_error;
 use yak_execute::dep_file_state::DepFileDbSize;
@@ -90,7 +90,7 @@ fn rebuild_file_digest(size: u64, bytes: &[u8], kind: u8) -> yak_error::Result<F
     let kind = kind
         .try_into()
         .map_err(|e| from_any_with_tag(e, yak_error::ErrorTag::InternalError))
-        .with_buck_error_context(|| format!("Invalid digest kind: `{kind}`"))?;
+        .with_yak_error_context(|| format!("Invalid digest kind: `{kind}`"))?;
     FileDigest::from_digest_bytes(kind, bytes, size)
 }
 
@@ -134,7 +134,7 @@ fn output_row_to_stored_output(
     // Validate the path read from the database rather than trusting it: a corrupt row surfaces as an
     // error (skipped by the hydration caller) instead of constructing an invalid path.
     let path = ForwardRelativePathBuf::new(row.output_path)
-        .buck_error_context("Invalid `output_path` in dep-file db")?;
+        .yak_error_context("Invalid `output_path` in dep-file db")?;
 
     // A directory output stored only its fingerprint (`entry_size`/`entry_hash`/`entry_hash_kind`);
     // the full tree is rehydrated from the materializer at lookup time and verified against it.
@@ -193,7 +193,7 @@ fn output_row_to_stored_output(
                 .symlink_remaining_path
                 .map(ForwardRelativePathBuf::new)
                 .transpose()
-                .buck_error_context("Invalid symlink `remaining_path` in dep-file db")?
+                .yak_error_context("Invalid symlink `remaining_path` in dep-file db")?
                 .unwrap_or_default();
             ActionDirectoryMember::ExternalSymlink(Arc::new(ExternalSymlink::new(
                 target.into(),
@@ -234,7 +234,7 @@ fn delete_key_in_tx(
     ] {
         tx.prepare_cached(sql)?
             .execute(rusqlite::params![logical_key, config_key])
-            .with_buck_error_context(|| format!("deleting from {table}"))?;
+            .with_yak_error_context(|| format!("deleting from {table}"))?;
     }
     Ok(())
 }
@@ -481,7 +481,7 @@ impl DepFileStateSqliteTable {
             ),
         ] {
             conn.execute(&sql, [])
-                .with_buck_error_context(|| format!("creating sqlite table: {sql}"))?;
+                .with_yak_error_context(|| format!("creating sqlite table: {sql}"))?;
         }
         Ok(())
     }
@@ -543,7 +543,7 @@ impl DepFileStateSqliteTable {
                 state.was_produced_locally,
                 last_write_time,
             ])
-            .with_buck_error_context(|| format!("inserting into {STATE_TABLE_NAME}"))?;
+            .with_yak_error_context(|| format!("inserting into {STATE_TABLE_NAME}"))?;
         let entry_id = tx.last_insert_rowid();
 
         for output in &state.outputs {
@@ -640,7 +640,7 @@ impl DepFileStateSqliteTable {
                     symlink_target,
                     symlink_remaining_path,
                 ])
-                .with_buck_error_context(|| format!("inserting into {OUTPUTS_TABLE_NAME}"))?;
+                .with_yak_error_context(|| format!("inserting into {OUTPUTS_TABLE_NAME}"))?;
         }
 
         for identity in &state.declared {
@@ -652,7 +652,7 @@ impl DepFileStateSqliteTable {
                     identity.projected,
                     identity.is_content_based,
                 ])
-                .with_buck_error_context(|| format!("inserting into {DECLARED_TABLE_NAME}"))?;
+                .with_yak_error_context(|| format!("inserting into {DECLARED_TABLE_NAME}"))?;
         }
 
         tx.commit()?;
@@ -674,7 +674,7 @@ impl DepFileStateSqliteTable {
         let tx = conn.transaction()?;
         for table in [STATE_TABLE_NAME, OUTPUTS_TABLE_NAME, DECLARED_TABLE_NAME] {
             tx.execute(&format!("DELETE FROM {table}"), [])
-                .with_buck_error_context(|| format!("clearing {table}"))?;
+                .with_yak_error_context(|| format!("clearing {table}"))?;
         }
         tx.commit()?;
         Ok(())
@@ -708,7 +708,7 @@ impl DepFileStateSqliteTable {
                     |row| row.get(0),
                 )
                 .optional()
-                .with_buck_error_context(|| {
+                .with_yak_error_context(|| {
                     format!("reading {STATE_TABLE_NAME} max-entries cutoff for prune")
                 })?,
             None => None,
@@ -725,14 +725,14 @@ impl DepFileStateSqliteTable {
                 ),
                 rusqlite::params![cutoff],
             )
-            .with_buck_error_context(|| format!("pruning {table}"))?;
+            .with_yak_error_context(|| format!("pruning {table}"))?;
         }
         let pruned = tx
             .execute(
                 &format!("DELETE FROM {STATE_TABLE_NAME} WHERE last_write_time <= ?1"),
                 rusqlite::params![cutoff],
             )
-            .with_buck_error_context(|| format!("pruning {STATE_TABLE_NAME}"))?;
+            .with_yak_error_context(|| format!("pruning {STATE_TABLE_NAME}"))?;
         tx.commit()?;
         Ok(pruned)
     }
@@ -776,7 +776,7 @@ impl DepFileStateSqliteTable {
                 ))
             })?
             .collect::<Result<Vec<_>, _>>()
-            .with_buck_error_context(|| format!("reading {STATE_TABLE_NAME}"))?
+            .with_yak_error_context(|| format!("reading {STATE_TABLE_NAME}"))?
         };
 
         rows.into_iter()
@@ -850,7 +850,7 @@ impl DepFileStateSqliteTable {
                     })
                 })?
                 .collect::<Result<Vec<_>, _>>()
-                .with_buck_error_context(|| format!("reading {OUTPUTS_TABLE_NAME}"))?;
+                .with_yak_error_context(|| format!("reading {OUTPUTS_TABLE_NAME}"))?;
             output_rows.extend(rows);
         }
 
@@ -872,7 +872,7 @@ impl DepFileStateSqliteTable {
                     })
                 })?
                 .collect::<Result<Vec<_>, _>>()
-                .with_buck_error_context(|| format!("reading {DECLARED_TABLE_NAME}"))?;
+                .with_yak_error_context(|| format!("reading {DECLARED_TABLE_NAME}"))?;
             declared.extend(rows);
         }
 
@@ -904,7 +904,7 @@ impl DepFileStateSqliteTable {
                 ))
             })
             .optional()
-            .with_buck_error_context(|| format!("reading {STATE_TABLE_NAME}"))?
+            .with_yak_error_context(|| format!("reading {STATE_TABLE_NAME}"))?
         };
 
         // Every row is now materialized, so release the connection before rebuilding digests and

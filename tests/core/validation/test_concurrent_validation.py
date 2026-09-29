@@ -9,17 +9,17 @@
 import random
 import string
 
-from e2e_util.api.buck import Buck
+from e2e_util.api.yak import Yak
 from e2e_util.asserts import expect_failure
-from e2e_util.buck_workspace import buck_test
+from e2e_util.yak_workspace import yak_test
 
 
-@buck_test()
-async def test_validation_concurrent(buck: Buck) -> None:
+@yak_test()
+async def test_validation_concurrent(yak: Yak) -> None:
     # There are 2 actions — slow build action and fast validation action.
     # Check that validation doesn't wait for a slow DefaultInfo artifact to be built and fails the build first.
     await expect_failure(
-        buck.build(
+        yak.build(
             ":plate",
             "-c",
             f"test.cache_buster={_random_string()}",

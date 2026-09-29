@@ -6,21 +6,21 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-from e2e_util.api.buck import Buck
+from e2e_util.api.yak import Yak
 from e2e_util.asserts import expect_failure
-from e2e_util.buck_workspace import buck_test
+from e2e_util.yak_workspace import yak_test
 
 
-@buck_test(skip_for_os=["windows"])
-async def test_run_action_timeout_expires(buck: Buck) -> None:
+@yak_test(skip_for_os=["windows"])
+async def test_run_action_timeout_expires(yak: Yak) -> None:
     await expect_failure(
-        buck.build("//:slow_with_timeout"),
+        yak.build("//:slow_with_timeout"),
         stderr_regex="timed out after",
     )
 
 
-@buck_test(skip_for_os=["windows"])
-async def test_run_action_timeout_succeeds(buck: Buck) -> None:
-    result = await buck.build("//:fast_with_timeout")
+@yak_test(skip_for_os=["windows"])
+async def test_run_action_timeout_succeeds(yak: Yak) -> None:
+    result = await yak.build("//:fast_with_timeout")
     output = result.get_build_report().output_for_target("//:fast_with_timeout")
     assert output.read_text().strip() == "hello"

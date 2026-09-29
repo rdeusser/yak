@@ -6,15 +6,15 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-from e2e_util.api.buck import Buck
+from e2e_util.api.yak import Yak
 from e2e_util.asserts import expect_failure
-from e2e_util.buck_workspace import buck_test
+from e2e_util.yak_workspace import yak_test
 
 
 # Test prelude is typechecked unconditionally.
-@buck_test()
-async def test_prelude_typecheck(buck: Buck) -> None:
+@yak_test()
+async def test_prelude_typecheck(yak: Yak) -> None:
     await expect_failure(
-        buck.uquery("//:"),
+        yak.uquery("//:"),
         stderr_regex="Expected type `str` but got `int`",
     )

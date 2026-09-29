@@ -12,7 +12,7 @@ use std::sync::Arc;
 
 use yak_client_ctx::command_outcome::CommandOutcome;
 use yak_common::invocation_roots::InvocationRoots;
-use yak_common::legacy_configs::cells::BuckConfigBasedCells;
+use yak_common::legacy_configs::cells::YakConfigBasedCells;
 use yak_fs::IoResultExt;
 use yak_fs::fs_util;
 use yak_fs::working_dir::AbsWorkingDir;
@@ -52,7 +52,7 @@ pub(crate) struct FlagfileCompleter {
 impl FlagfileCompleter {
     pub(crate) async fn new(cwd: &AbsWorkingDir, roots: &InvocationRoots) -> CommandOutcome<Self> {
         let cell_configs =
-            Arc::new(BuckConfigBasedCells::parse_with_config_args(&roots.project_root, &[]).await?);
+            Arc::new(YakConfigBasedCells::parse_with_config_args(&roots.project_root, &[]).await?);
         let path_sanitizer = PathSanitizer::new(&cell_configs, cwd, roots).await?;
         CommandOutcome::Success(Self { path_sanitizer })
     }

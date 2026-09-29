@@ -8,9 +8,9 @@
 
 import json
 
-from e2e_util.api.buck import Buck
+from e2e_util.api.yak import Yak
 from e2e_util.asserts import expect_failure
-from e2e_util.buck_workspace import buck_test
+from e2e_util.yak_workspace import yak_test
 from e2e_util.helper.golden import golden
 
 
@@ -19,17 +19,17 @@ Tests to ensure that the `yak docs` command works as expected
 """
 
 
-@buck_test()
-async def test_docs_returns(buck: Buck) -> None:
-    result = await buck.docs("starlark")
+@yak_test()
+async def test_docs_returns(yak: Yak) -> None:
+    result = await yak.docs("starlark")
     result.check_returncode()
     decoded = json.loads(result.stdout)
     assert decoded == []
 
 
-@buck_test()
-async def test_prelude_docs(buck: Buck) -> None:
-    result = await buck.docs("starlark", "prelude//:prelude.bzl")
+@yak_test()
+async def test_prelude_docs(yak: Yak) -> None:
+    result = await yak.docs("starlark", "prelude//:prelude.bzl")
     result.check_returncode()
     decoded = json.loads(result.stdout)
     golden(
@@ -38,13 +38,13 @@ async def test_prelude_docs(buck: Buck) -> None:
     )
 
 
-@buck_test()
-async def test_docs_fail_with_invalid_patterns(buck: Buck) -> None:
+@yak_test()
+async def test_docs_fail_with_invalid_patterns(yak: Yak) -> None:
     await expect_failure(
-        buck.docs("starlark", "not_an_import_path"),
+        yak.docs("starlark", "not_an_import_path"),
         stderr_regex="Import path must have suffix .*: `root//not_an_import_path`",
     )
     await expect_failure(
-        buck.docs("starlark", "//cell"),
+        yak.docs("starlark", "//cell"),
         stderr_regex="Import path must have suffix .*: `root//cell`",
     )

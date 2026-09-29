@@ -45,7 +45,7 @@ use yak_core::deferred::base_deferred_key::BaseDeferredKey;
 use yak_core::deferred::base_deferred_key::BaseDeferredKeyDyn;
 use yak_core::deferred::base_deferred_key::PathResolutionError;
 use yak_core::execution_types::execution::ExecutionPlatformResolution;
-use yak_core::fs::buck_out_path::BuckOutPathKind;
+use yak_core::fs::yak_out_path::YakOutPathKind;
 use yak_core::fs::project_rel_path::ProjectRelativePath;
 use yak_core::fs::project_rel_path::ProjectRelativePathBuf;
 use yak_core::global_cfg_options::GlobalCfgOptions;
@@ -55,9 +55,9 @@ use yak_data::ToProtoMessage;
 use yak_data::action_key_owner::BaseDeferredKeyProto;
 use yak_error::internal_error;
 use yak_fs::paths::forward_rel_path::ForwardRelativePath;
-use yak_hash::BuckHasher;
-use yak_hash::BuckMutMap;
-use yak_hash::StdBuckHashMap;
+use yak_hash::YakHasher;
+use yak_hash::YakMutMap;
+use yak_hash::StdYakHashMap;
 use yak_interpreter::dice::starlark_provider::DynEvalKindKey;
 use yak_interpreter::dice::starlark_provider::StarlarkEvalKind;
 use yak_node::attrs::spec::AttributeSpec;
@@ -145,7 +145,7 @@ impl AnonTarget {
         exec_cfg: ConfigurationNoExec,
         variant: AnonTargetVariant,
     ) -> Self {
-        let mut full_hash = BuckHasher::default();
+        let mut full_hash = YakHasher::default();
         rule_type.hash(&mut full_hash);
         name.hash(&mut full_hash);
         attrs.hash(&mut full_hash);
@@ -218,7 +218,7 @@ impl AnonTargetDyn for AnonTarget {
         let rule_analysis_attr_resolution_ctx = RuleAnalysisAttrResolutionContext {
             module: env,
             dep_analysis_results,
-            query_results: BuckMutMap::default(),
+            query_results: YakMutMap::default(),
             execution_platform_resolution: exec_resolution,
         };
 
@@ -261,8 +261,8 @@ impl AnonTargetDyn for AnonTarget {
         promise_artifact_mappings: SmallMap<String, Value<'v>>,
         anon_target_result: Value<'v>,
         eval: &mut Evaluator<'v, '_, '_>,
-    ) -> yak_error::Result<StdBuckHashMap<PromiseArtifactId, Artifact>> {
-        let mut fulfilled_artifact_mappings = StdBuckHashMap::default();
+    ) -> yak_error::Result<StdYakHashMap<PromiseArtifactId, Artifact>> {
+        let mut fulfilled_artifact_mappings = StdYakHashMap::default();
 
         for (id, func) in promise_artifact_mappings.values().enumerate() {
             let artifact = eval.eval_function(*func, &[anon_target_result], &[])?;
@@ -310,12 +310,12 @@ impl BaseDeferredKeyDyn for AnonTarget {
         prefix: &ForwardRelativePath,
         action_key: Option<&str>,
         path: &ForwardRelativePath,
-        path_resolution_method: BuckOutPathKind,
+        path_resolution_method: YakOutPathKind,
         content_hash: Option<&ContentBasedPathHash>,
     ) -> yak_error::Result<ProjectRelativePathBuf> {
         let cell_relative_path = self.name().pkg().cell_relative_path().as_str();
         let mut configuration_path_hash = CompactString::with_capacity(16);
-        let path_hash = if path_resolution_method == BuckOutPathKind::Configuration {
+        let path_hash = if path_resolution_method == YakOutPathKind::Configuration {
             write!(&mut configuration_path_hash, "{:x}", self.strong_hash)
                 .expect("u64 hex formatting fits in 16 bytes");
             configuration_path_hash.as_str()
@@ -336,12 +336,12 @@ impl BaseDeferredKeyDyn for AnonTarget {
             prefix.as_str(),
             "-anon/",
             self.name().pkg().cell_name().as_str(),
-            if path_resolution_method == BuckOutPathKind::Configuration {
+            if path_resolution_method == YakOutPathKind::Configuration {
                 "/"
             } else {
                 ""
             },
-            if path_resolution_method == BuckOutPathKind::Configuration {
+            if path_resolution_method == YakOutPathKind::Configuration {
                 self.exec_cfg().cfg().output_hash().as_str()
             } else {
                 ""

@@ -16,8 +16,8 @@ use derive_more::From;
 use dupe::Dupe;
 use parking_lot::Mutex;
 use rusqlite::Connection;
-use yak_error::BuckErrorContext;
-use yak_error::BuckErrorOptionContext;
+use yak_error::YakErrorContext;
+use yak_error::YakErrorOptionContext;
 use yak_fs::error::IoResultExt;
 use yak_fs::fs_util;
 use yak_fs::paths::abs_norm_path::AbsNormPath;
@@ -187,7 +187,7 @@ impl<T: SqliteTable> SqliteTables<T> {
         let identity = self
             .created_by_table
             .get(IDENTITY_KEY)
-            .buck_error_context("Error reading creation metadata")?
+            .yak_error_context("Error reading creation metadata")?
             .map(SqliteIdentity)
             .with_internal_error(|| format!("Identity key is missing in db: `{IDENTITY_KEY}`"))?;
 
@@ -264,7 +264,7 @@ mod tests {
             self.connection
                 .lock()
                 .execute(sql, [value])
-                .buck_error_context("Failed to insert test data")?;
+                .yak_error_context("Failed to insert test data")?;
             Ok(())
         }
 
@@ -288,7 +288,7 @@ mod tests {
             self.connection
                 .lock()
                 .execute(sql, [])
-                .buck_error_context("Failed to create test table")?;
+                .yak_error_context("Failed to create test table")?;
             Ok(())
         }
     }

@@ -23,8 +23,8 @@ use tokio::sync::Semaphore;
 use tokio::sync::oneshot;
 use yak_core::fs::project::ProjectRoot;
 use yak_core::yak_env;
-use yak_error::BuckErrorContext;
-use yak_error::BuckErrorOptionContext;
+use yak_error::YakErrorContext;
+use yak_error::YakErrorOptionContext;
 use yak_events::dispatch::EventDispatcher;
 use yak_events::dispatch::current_span;
 use yak_events::dispatch::get_dispatcher_opt;
@@ -88,14 +88,14 @@ struct ThreadPoolIoRequest {
 }
 
 #[derive(Allocative)]
-struct BuckBlockingExecutorShared {
+struct YakBlockingExecutorShared {
     #[allocative(skip)]
     io_data_semaphore: Semaphore,
     #[allocative(skip)]
     command_sender: crossbeam_channel::Sender<ThreadPoolIoRequest>,
 }
 
-impl BuckBlockingExecutorShared {
+impl YakBlockingExecutorShared {
     /// We choose the default concurrency as follows:
     ///
     /// - For operations executed by the thread pool, we use `directory_mutation_parallelism()`:
@@ -130,7 +130,7 @@ impl BuckBlockingExecutorShared {
                     let _ignored = sender.send(res);
                 }
             })
-            .buck_error_context("Failed to spawn io worker")?;
+            .yak_error_context("Failed to spawn io worker")?;
         }
 
         Ok(Self {
@@ -141,14 +141,14 @@ impl BuckBlockingExecutorShared {
 }
 
 #[derive(Allocative)]
-struct BuckBlockingExecutor {
-    shared: Arc<BuckBlockingExecutorShared>,
+struct YakBlockingExecutor {
+    shared: Arc<YakBlockingExecutorShared>,
     #[allocative(skip)]
     project_fs: ProjectRoot,
 }
 
 #[async_trait]
-impl BlockingExecutor for BuckBlockingExecutor {
+impl BlockingExecutor for YakBlockingExecutor {
     async fn execute_dyn_io_inline<'a>(
         &self,
         f: Box<dyn FnOnce() -> yak_error::Result<()> + Send + 'a>,
@@ -182,7 +182,7 @@ impl BlockingExecutor for BuckBlockingExecutor {
 
         cancellations
             .critical_section(
-                || async move { receiver.await.buck_error_context("Pool shut down")? },
+                || async move { receiver.await.yak_error_context("Pool shut down")? },
             )
             .boxed()
     }
@@ -225,7 +225,7 @@ impl BlockingExecutor for DirectIoExecutor {
                     with_dispatcher_opt(dispatcher, || io.execute(&project_fs))
                 })
                 .await
-                .buck_error_context("Direct IO spawn_blocking failed")?
+                .yak_error_context("Direct IO spawn_blocking failed")?
             })
             .boxed()
     }
@@ -239,7 +239,7 @@ impl BlockingExecutor for DirectIoExecutor {
 
 #[derive(Allocative)]
 enum BlockingExecutorFactoryKind {
-    Pooled(Arc<BuckBlockingExecutorShared>),
+    Pooled(Arc<YakBlockingExecutorShared>),
     Direct,
 }
 
@@ -255,7 +255,7 @@ impl BlockingExecutorFactory {
             BlockingExecutorFactoryKind::Direct
         } else {
             BlockingExecutorFactoryKind::Pooled(Arc::new(
-                BuckBlockingExecutorShared::default_concurrency()?,
+                YakBlockingExecutorShared::default_concurrency()?,
             ))
         };
 
@@ -264,7 +264,7 @@ impl BlockingExecutorFactory {
 
     pub fn for_project(&self, project_fs: ProjectRoot) -> Arc<dyn BlockingExecutor> {
         match &self.kind {
-            BlockingExecutorFactoryKind::Pooled(shared) => Arc::new(BuckBlockingExecutor {
+            BlockingExecutorFactoryKind::Pooled(shared) => Arc::new(YakBlockingExecutor {
                 shared: shared.dupe(),
                 project_fs,
             }),
@@ -421,8 +421,8 @@ mod tests {
     #[tokio::test]
     async fn executors_propagate_soft_error_context() -> yak_error::Result<()> {
         let root = ProjectRootTemp::new()?;
-        let pooled = BuckBlockingExecutor {
-            shared: Arc::new(BuckBlockingExecutorShared::default_concurrency()?),
+        let pooled = YakBlockingExecutor {
+            shared: Arc::new(YakBlockingExecutorShared::default_concurrency()?),
             project_fs: root.path().dupe(),
         };
         assert_propagates_soft_error_context(&pooled).await?;

@@ -10,7 +10,7 @@
 
 use allocative::Allocative;
 use dupe::Dupe;
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 use yak_fs::paths::file_name::FileName;
 use yak_util::arc_str::ArcS;
 

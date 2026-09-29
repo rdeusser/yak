@@ -65,10 +65,10 @@ mod serialize_action_kind {
     }
 }
 
-tonic::include_proto!("buck.data");
+tonic::include_proto!("yak.data");
 
 pub mod error {
-    tonic::include_proto!("buck.data.error");
+    tonic::include_proto!("yak.data.error");
 }
 
 /// Extract action digest from a list of command executions.

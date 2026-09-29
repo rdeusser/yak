@@ -38,14 +38,14 @@ instead — the heap dump from step 7 is post-build retained, not peak.
 ## Diff
 
 ```sh
-python3 scripts/heap_diff.py /path/to/buck2_a A.heap /path/to/buck2_b B.heap a b
+python3 scripts/heap_diff.py /path/to/yak_a A.heap /path/to/yak_b B.heap a b
 ```
 
 Symbol names are stable across unrelated binary changes, so leaves align
 even after refactors. To pull the full call chain for a specific leaf:
 
 ```sh
-python3 scripts/heap_stacks.py /path/to/buck2_b B.heap "<leaf-substring>"
+python3 scripts/heap_stacks.py /path/to/yak_b B.heap "<leaf-substring>"
 ```
 
 Substring matches against both mangled and demangled forms. **Demangled

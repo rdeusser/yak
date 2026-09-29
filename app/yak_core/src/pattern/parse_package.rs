@@ -8,7 +8,7 @@
  * above-listed licenses.
  */
 
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 use yak_fs::paths::forward_rel_path::ForwardRelativePath;
 
 use crate::cells::CellAliasResolver;
@@ -34,7 +34,7 @@ pub fn parse_package(
 
     let cell = cell_alias_resolver.resolve(cell)?;
     let cell_relative =
-        ForwardRelativePath::new(cell_relative).buck_error_context("Parsing package argument")?;
+        ForwardRelativePath::new(cell_relative).yak_error_context("Parsing package argument")?;
     let cell_relative = CellRelativePath::new(cell_relative);
 
     PackageLabel::new(cell, cell_relative)

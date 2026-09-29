@@ -9,16 +9,16 @@
 import os
 
 import pytest
-from e2e_util.buck_workspace import (  # noqa F401
-    buck,
-    buck2_binary,
+from e2e_util.yak_workspace import (  # noqa F401
+    yak,
+    yak_binary,
     CGROUPS_ENV_VAR,
     RE_CONFIG_ENV_VAR,
 )
 
 
 def pytest_report_header(config: pytest.Config) -> str:
-    return f"yak binary: {buck2_binary()}"
+    return f"yak binary: {yak_binary()}"
 
 
 def pytest_runtest_setup(item: pytest.Item) -> None:

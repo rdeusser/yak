@@ -57,7 +57,7 @@ use yak_cli_proto::representative_config_flag;
 use yak_common::dice::cells::HasCellResolver;
 use yak_common::events::HasEvents;
 use yak_common::legacy_configs::dice::HasLegacyConfigs;
-use yak_common::legacy_configs::key::BuckconfigKeyRef;
+use yak_common::legacy_configs::key::YakconfigKeyRef;
 use yak_common::liveliness_observer::LivelinessGuard;
 use yak_common::liveliness_observer::LivelinessObserver;
 use yak_common::liveliness_observer::LivelinessObserverExt;
@@ -81,8 +81,8 @@ use yak_core::provider::label::ProvidersLabel;
 use yak_core::tag_result;
 use yak_core::target::label::label::TargetLabel;
 use yak_data::BuildResult;
-use yak_error::BuckErrorContext;
-use yak_error::BuckErrorOptionContext;
+use yak_error::YakErrorContext;
+use yak_error::YakErrorOptionContext;
 use yak_error::ErrorTag;
 use yak_events::dispatch::console_message;
 use yak_events::dispatch::instant_event;
@@ -90,8 +90,8 @@ use yak_events::dispatch::with_dispatcher_async;
 use yak_fs::error::IoResultExt;
 use yak_fs::fs_util;
 use yak_fs::paths::abs_path::AbsPathBuf;
-use yak_hash::BuckIndexSet;
-use yak_hash::BuckMutSet;
+use yak_hash::YakIndexSet;
+use yak_hash::YakMutSet;
 use yak_interpreter::extra::InterpreterHostPlatform;
 use yak_interpreter_for_build::interpreter::context::HasInterpreterContext;
 use yak_node::load_patterns::MissingTargetBehavior;
@@ -111,13 +111,13 @@ use yak_test_api::data::TestStatus;
 use yak_test_api::protocol::TestExecutor;
 use yak_test_api::protocol::TestOrchestrator;
 
-use crate::downward_api::BuckTestDownwardApi;
+use crate::downward_api::YakTestDownwardApi;
 use crate::executor_launcher::ExecutorLaunch;
 use crate::executor_launcher::ExecutorLauncher;
 use crate::executor_launcher::OutOfProcessTestExecutor;
 use crate::executor_launcher::TestExecutorClientWrapper;
 use crate::local_resource_registry::HasLocalResourceRegistry;
-use crate::orchestrator::BuckTestOrchestrator;
+use crate::orchestrator::YakTestOrchestrator;
 use crate::orchestrator::ExecutorMessage;
 use crate::session::TestSession;
 use crate::session::TestSessionOptions;
@@ -272,7 +272,7 @@ struct DeadlineExpired;
 pub(crate) enum InternalRunnerConfig {
     All,
     None,
-    Frameworks(BuckMutSet<String>),
+    Frameworks(YakMutSet<String>),
 }
 
 impl InternalRunnerConfig {
@@ -281,7 +281,7 @@ impl InternalRunnerConfig {
             None | Some("true") => Self::All,
             Some("false") => Self::None,
             Some(list) => {
-                let frameworks: BuckMutSet<String> = list
+                let frameworks: YakMutSet<String> = list
                     .split(',')
                     .map(|s| s.trim().to_owned())
                     .filter(|s| !s.is_empty())
@@ -372,7 +372,7 @@ async fn test(
             ctx.ctx()
                 .parse_legacy_config_property::<bool>(
                     cell_resolver.root_cell(),
-                    BuckconfigKeyRef {
+                    YakconfigKeyRef {
                         section: "yak",
                         property: "test_builds_targets",
                     },
@@ -402,7 +402,7 @@ async fn test(
         .ctx()
         .get_legacy_config_property(
             cell_resolver.root_cell(),
-            BuckconfigKeyRef {
+            YakconfigKeyRef {
                 section: "test",
                 property: "v2_test_executor",
             },
@@ -413,9 +413,9 @@ async fn test(
     let (test_executor, test_executor_args) = match test_executor_config {
         Some(config) => {
             let test_executor = post_process_test_executor(config.as_ref())
-                .with_buck_error_context(|| format!("Invalid `test.v2_test_executor`: {config}"))?;
+                .with_yak_error_context(|| format!("Invalid `test.v2_test_executor`: {config}"))?;
             let mut test_executor_args =
-                vec!["--buck-trace-id".to_owned(), client_ctx.trace_id.clone()];
+                vec!["--yak-trace-id".to_owned(), client_ctx.trace_id.clone()];
             let platform = match ctx
                 .ctx()
                 .get_interpreter_configuror()
@@ -491,7 +491,7 @@ async fn test(
         .as_ref()
         .map(|t| (*t).try_into())
         .transpose()
-        .buck_error_context("Invalid `duration`")?;
+        .yak_error_context("Invalid `duration`")?;
 
     let test_executor_args = request.test_executor_args.clone();
 
@@ -696,7 +696,7 @@ async fn test_targets(
     let res = launcher
         .launch(executor_args)
         .await
-        .buck_error_context("Failed to launch executor");
+        .yak_error_context("Failed to launch executor");
 
     let res = tag_result!(
         "executor_launch_failed",
@@ -720,7 +720,7 @@ async fn test_targets(
         .ctx()
         .get_legacy_config_property(
             cell_resolver.root_cell(),
-            BuckconfigKeyRef {
+            YakconfigKeyRef {
                 section: "test",
                 property: "timeout_default_s",
             },
@@ -734,7 +734,7 @@ async fn test_targets(
         ctx.ctx()
             .get_legacy_config_property(
                 cell_resolver.root_cell(),
-                BuckconfigKeyRef {
+                YakconfigKeyRef {
                     section: "test",
                     property: "use_internal_runner",
                 },
@@ -757,7 +757,7 @@ async fn test_targets(
                 // Keep wrapper alive for the lifetime of the executor to ensure it stays registered.
                 let _test_executor_wrapper = test_executor_wrapper;
 
-                let orchestrator = BuckTestOrchestrator::new(
+                let orchestrator = YakTestOrchestrator::new(
                     ctx.dupe(),
                     session.dupe(),
                     liveliness_observer.dupe(),
@@ -766,9 +766,9 @@ async fn test_targets(
                     internal_runner_config.clone(),
                 )
                 .await
-                .buck_error_context("Failed to create a BuckTestOrchestrator")?;
+                .yak_error_context("Failed to create a YakTestOrchestrator")?;
 
-                let server_handle = make_server(orchestrator, BuckTestDownwardApi);
+                let server_handle = make_server(orchestrator, YakTestDownwardApi);
 
                 // Lazily created orchestrator for the in-process internal runner path.
                 // Only initialized when a target has InternalRunnerTestInfo.
@@ -797,7 +797,7 @@ async fn test_targets(
                 );
 
                 driver.push_pattern(
-                    pattern.convert_pattern().buck_error_context(
+                    pattern.convert_pattern().yak_error_context(
                         "Test with explicit configuration pattern is not supported yet",
                     )?,
                     skip_incompatible_targets,
@@ -834,7 +834,7 @@ async fn test_targets(
                 test_executor
                     .end_of_test_requests()
                     .await
-                    .buck_error_context("Failed to notify test executor of end-of-tests")?;
+                    .yak_error_context("Failed to notify test executor of end-of-tests")?;
 
                 // Wait for the tests to finish running.
                 let mut test_statuses = test_status_receiver
@@ -843,7 +843,7 @@ async fn test_targets(
                         future::ready(Ok(acc))
                     })
                     .await
-                    .buck_error_context("Did not receive all results from executor")?;
+                    .yak_error_context("Did not receive all results from executor")?;
 
                 test_statuses.used_internal_runner = used_internal_runner;
 
@@ -856,14 +856,14 @@ async fn test_targets(
                 server_handle
                     .shutdown()
                     .await
-                    .buck_error_context("Failed to shutdown orchestrator")?;
+                    .yak_error_context("Failed to shutdown orchestrator")?;
 
                 let local_resource_registry = ctx.ctx().get_local_resource_registry()?;
 
                 local_resource_registry
                     .release_all_resources()
                     .await
-                    .buck_error_context("Failed to release local resources")?;
+                    .yak_error_context("Failed to release local resources")?;
 
                 // Process the build errors we've collected.
                 let mut builder = BuildTargetResultBuilder::new(None, std::time::Instant::now());
@@ -882,7 +882,7 @@ async fn test_targets(
 
     let executor_output = executor_handle
         .await
-        .buck_error_context("Failed to retrieve executor exit code")?;
+        .yak_error_context("Failed to retrieve executor exit code")?;
 
     if executor_output.signal.is_some() {
         // The executor was killed by a signal: a crash (e.g. SIGSEGV) or an OOM kill,
@@ -916,7 +916,7 @@ async fn test_targets(
     // TODO(bobyf, torozco) we can use cancellation handle here instead of liveliness observer
     let (build_target_result, executor_report) = test_server
         .await
-        .buck_error_context("Failed to collect executor report")??;
+        .yak_error_context("Failed to collect executor report")??;
 
     let build_errors = convert_error(&build_target_result)
         .iter()
@@ -992,8 +992,8 @@ struct TestDriverState<'a, 'e> {
 struct TestDriver<'a, 'e> {
     state: TestDriverState<'a, 'e>,
     work: FuturesUnordered<BoxFuture<'a, ControlFlow<Vec<BuildEvent>, Vec<TestDriverTask>>>>,
-    labels_configured: BuckMutSet<(ProvidersLabelWithModifiers, bool)>,
-    labels_tested: BuckMutSet<ConfiguredProvidersLabel>,
+    labels_configured: YakMutSet<(ProvidersLabelWithModifiers, bool)>,
+    labels_tested: YakMutSet<ConfiguredProvidersLabel>,
     error_events: Vec<BuildEvent>,
     build_target_result: BuildTargetResult,
     streaming_build_result_tx: Option<UnboundedSender<BuildTargetResult>>,
@@ -1007,8 +1007,8 @@ impl<'a, 'e> TestDriver<'a, 'e> {
         Self {
             state,
             work: FuturesUnordered::new(),
-            labels_configured: BuckMutSet::default(),
-            labels_tested: BuckMutSet::default(),
+            labels_configured: YakMutSet::default(),
+            labels_tested: YakMutSet::default(),
             error_events: Vec::new(),
             build_target_result: BuildTargetResult::new(),
             streaming_build_result_tx,
@@ -1562,7 +1562,7 @@ async fn test_target<'a, 'e>(
             let orchestrator = driver_state
                 .internal_orchestrator
                 .get_or_try_init(|| async {
-                    let orchestrator = BuckTestOrchestrator::new(
+                    let orchestrator = YakTestOrchestrator::new(
                         driver_state.ctx.dupe(),
                         driver_state.session.dupe(),
                         driver_state.liveliness_observer.dupe(),
@@ -1571,7 +1571,7 @@ async fn test_target<'a, 'e>(
                         driver_state.internal_runner_config.clone(),
                     )
                     .await
-                    .buck_error_context("Failed to create internal BuckTestOrchestrator")?;
+                    .yak_error_context("Failed to create internal YakTestOrchestrator")?;
                     Ok::<_, yak_error::Error>(
                         Arc::new(orchestrator) as Arc<dyn TestOrchestrator + Send + Sync>
                     )
@@ -1683,7 +1683,7 @@ fn run_tests<'a, 'b>(
 
             (async move {
                 fut.await
-                    .buck_error_context("Failed to notify test executor of a new test")?;
+                    .yak_error_context("Failed to notify test executor of a new test")?;
                 Ok(providers_label)
             })
             .boxed()
@@ -1717,9 +1717,9 @@ struct TestLabelFiltering {
     /// If positive include label filters are present, then this filter will ONLY match sets of
     /// labels that contains the label filter. Otherwise, if only exclusion filters are present, or
     /// no label filters are present, this will match any set of labels as long as its not excluded.
-    included_labels: BuckIndexSet<String>,
+    included_labels: YakIndexSet<String>,
     /// Additional excluded labels. These have order of precedence after `included_labels`.
-    excluded_labels: BuckIndexSet<String>,
+    excluded_labels: YakIndexSet<String>,
     /// If true, ignores order of precedence such that as long as an exclusion filter matches, we
     /// don't match the set of labels.
     always_exclude: bool,
@@ -1857,20 +1857,20 @@ fn post_process_test_executor(s: &str) -> yak_error::Result<PathBuf> {
     match s.split_once("$YAK_BINARY_DIR/") {
         Some(("", rest)) => {
             let exe = AbsPathBuf::new(
-                std::env::current_exe().buck_error_context("Cannot get yak executable")?,
+                std::env::current_exe().yak_error_context("Cannot get yak executable")?,
             )?;
             // On Linux, /proc/self/exe appends " (deleted)" to the path when the
             // binary has been removed from disk (e.g. after a yak upgrade).
             if exe.as_path().to_string_lossy().ends_with(" (deleted)") {
                 return Err(yak_error::yak_error!(
-                    ErrorTag::BuckdExeDeleted,
+                    ErrorTag::YakdExeDeleted,
                     "The yak daemon's binary has been deleted from disk. \
                      Run `yak kill` to restart the daemon with the current binary."
                 ));
             }
             let exe = fs_util::canonicalize(&exe)
-                .categorize_tagged(ErrorTag::BuckdExeDeleted)
-                .buck_error_context(
+                .categorize_tagged(ErrorTag::YakdExeDeleted)
+                .yak_error_context(
                     "Failed to canonicalize path to yak executable. Try running `yak kill`.",
                 )?;
 

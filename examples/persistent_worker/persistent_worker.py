@@ -26,8 +26,8 @@ from dataclasses import dataclass
 import google.protobuf.proto as proto
 import grpc
 import proto.bazel.worker_protocol_pb2 as bazel_pb2
-import proto.buck2.worker_pb2 as buck2_pb2
-import proto.buck2.worker_pb2_grpc as buck2_pb2_grpc
+import proto.yak.worker_pb2 as yak_pb2
+import proto.yak.worker_pb2_grpc as yak_pb2_grpc
 
 
 @dataclass
@@ -92,7 +92,7 @@ class Implementation:
             return Response(exit_code=2, stderr=str(e))
 
 
-class Buck2Servicer(buck2_pb2_grpc.WorkerServicer):
+class YakServicer(yak_pb2_grpc.WorkerServicer):
     """yak remote persistent worker implementation."""
 
     def __init__(self):
@@ -107,7 +107,7 @@ class Buck2Servicer(buck2_pb2_grpc.WorkerServicer):
         host = socket.gethostname()
         pid = os.getpid()
         cwd = os.getcwd()
-        return buck2_pb2.ExecuteResponse(
+        return yak_pb2.ExecuteResponse(
             exit_code=response.exit_code,
             stderr=f"yak persistent worker {host} {pid} {cwd}\n" + response.stderr,
         )
@@ -136,7 +136,7 @@ def main():
     parser = argparse.ArgumentParser(
         fromfile_prefix_chars="@",
         prog="worker",
-        description="Buck2/Bazel Local/Remote Persistent Worker",
+        description="Yak/Bazel Local/Remote Persistent Worker",
     )
     parser.add_argument(
         "--persistent_worker",
@@ -158,7 +158,7 @@ def main():
         server = grpc.server(
             futures.ThreadPoolExecutor(max_workers=os.cpu_count() or 1)
         )
-        buck2_pb2_grpc.add_WorkerServicer_to_server(Buck2Servicer(), server)
+        yak_pb2_grpc.add_WorkerServicer_to_server(YakServicer(), server)
         server.add_insecure_port(f"unix://{socket_path}")
         server.start()
         server.wait_for_termination()

@@ -6,15 +6,15 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-from e2e_util.api.buck import Buck
+from e2e_util.api.yak import Yak
 from e2e_util.asserts import expect_failure
-from e2e_util.buck_workspace import buck_test
+from e2e_util.yak_workspace import yak_test
 
 
-@buck_test()
-async def test_validation_affects_build_command(buck: Buck) -> None:
+@yak_test()
+async def test_validation_affects_build_command(yak: Yak) -> None:
     await expect_failure(
-        buck.build(":plate"),
+        yak.build(":plate"),
         stderr_regex="""
 Validation for `prelude//:mate \\(<unspecified>\\)` failed:
 
@@ -22,13 +22,13 @@ Here I am describing the failure reason
 
 Full validation result is located at""",
     )
-    await buck.build(":date")
+    await yak.build(":date")
 
 
-@buck_test(write_invocation_record=True)
-async def test_validation_affects_run_command(buck: Buck) -> None:
+@yak_test(write_invocation_record=True)
+async def test_validation_affects_run_command(yak: Yak) -> None:
     res = await expect_failure(
-        buck.run(
+        yak.run(
             ":plate",
         ),
         stderr_regex="""
@@ -42,13 +42,13 @@ Full validation result is located at""",
     record = res.invocation_record()
     assert len(record["errors"]) == 1
 
-    await buck.run(":date")
+    await yak.run(":date")
 
 
-@buck_test(write_invocation_record=True)
-async def test_validation_affects_test_command(buck: Buck) -> None:
+@yak_test(write_invocation_record=True)
+async def test_validation_affects_test_command(yak: Yak) -> None:
     res = await expect_failure(
-        buck.test(
+        yak.test(
             ":plate",
             test_executor="",
         ),
@@ -63,13 +63,13 @@ Full validation result is located at""",
     record = res.invocation_record()
     assert len(record["errors"]) == 1
 
-    await buck.test(":date", test_executor="")
+    await yak.test(":date", test_executor="")
 
 
-@buck_test(write_invocation_record=True)
-async def test_validation_affects_install_command(buck: Buck) -> None:
+@yak_test(write_invocation_record=True)
+async def test_validation_affects_install_command(yak: Yak) -> None:
     res = await expect_failure(
-        buck.install(
+        yak.install(
             ":plate",
         ),
         stderr_regex="Validation for `prelude//:mate \\(<unspecified>\\)` failed",
@@ -82,7 +82,7 @@ async def test_validation_affects_install_command(buck: Buck) -> None:
     # We intentionally fail on the installer side, but interpret
     # an attempt to run it as a successful verification.
     res = await expect_failure(
-        buck.install(
+        yak.install(
             ":date",
         ),
         stderr_regex="Installer: Incoming connection accepted, now closing it",
@@ -92,15 +92,15 @@ async def test_validation_affects_install_command(buck: Buck) -> None:
     assert len(record["errors"]) == 1
 
 
-@buck_test()
-async def test_optional_validation(buck: Buck) -> None:
-    await buck.build(":optional_passing")
+@yak_test()
+async def test_optional_validation(yak: Yak) -> None:
+    await yak.build(":optional_passing")
 
     # Optional validations are not run by default.
-    await buck.build(":optional_failing")
+    await yak.build(":optional_failing")
 
     # Expect a failure when run with --enable-optional-validations.
     await expect_failure(
-        buck.build(":optional_failing", "--enable-optional-validations", "whistle"),
+        yak.build(":optional_failing", "--enable-optional-validations", "whistle"),
         stderr_regex="Validation for `.+` failed",
     )

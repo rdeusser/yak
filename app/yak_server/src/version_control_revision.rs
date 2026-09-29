@@ -320,7 +320,7 @@ async fn repo_type(repo_root: &AbsNormPathBuf) -> RepoVcs {
     let is_hg = hg_metadata.is_ok_and(|output| output.is_dir());
     // `.git` can be a symlink or a file with contents like:
     //
-    //     gitdir: /home/dog/buck2/.git/worktrees/buck3
+    //     gitdir: /home/dog/yak/.git/worktrees/yak3
     let is_git = git_metadata.is_ok();
 
     if is_hg {
@@ -351,7 +351,7 @@ mod tests {
         git(repo_root, &["config", "user.name", "yak Test"]).await;
         git(
             repo_root,
-            &["config", "user.email", "buck-test@example.com"],
+            &["config", "user.email", "yak-test@example.com"],
         )
         .await;
         git(repo_root, &["config", "commit.gpgsign", "false"]).await;

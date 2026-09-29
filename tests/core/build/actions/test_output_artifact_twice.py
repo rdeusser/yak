@@ -6,13 +6,13 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-from e2e_util.api.buck import Buck
-from e2e_util.buck_workspace import buck_test
+from e2e_util.api.yak import Yak
+from e2e_util.yak_workspace import yak_test
 
 
-@buck_test()
-async def test_output_artifact_twice_same(buck: Buck) -> None:
-    res = await buck.build("root//:test_output_artifact_twice_same")
+@yak_test()
+async def test_output_artifact_twice_same(yak: Yak) -> None:
+    res = await yak.build("root//:test_output_artifact_twice_same")
     assert (
         res.get_build_report()
         .output_for_target("root//:test_output_artifact_twice_same")
@@ -21,9 +21,9 @@ async def test_output_artifact_twice_same(buck: Buck) -> None:
     )
 
 
-@buck_test()
-async def test_output_artifact_twice_with_projection(buck: Buck) -> None:
-    res = await buck.build("root//:test_output_artifact_twice_with_projection")
+@yak_test()
+async def test_output_artifact_twice_with_projection(yak: Yak) -> None:
+    res = await yak.build("root//:test_output_artifact_twice_with_projection")
     assert (
         res.get_build_report().output_for_target(
             "root//:test_output_artifact_twice_with_projection"

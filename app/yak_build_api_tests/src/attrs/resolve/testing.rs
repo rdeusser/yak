@@ -33,8 +33,8 @@ use yak_build_api::interpreter::rule_defs::provider::registration::register_buil
 use yak_core::configuration::data::ConfigurationData;
 use yak_core::execution_types::execution::ExecutionPlatformResolution;
 use yak_core::provider::label::ConfiguredProvidersLabel;
-use yak_error::BuckErrorOptionContext;
-use yak_interpreter::testing::Buck2TestHeapName;
+use yak_error::YakErrorOptionContext;
+use yak_interpreter::testing::YakTestHeapName;
 use yak_interpreter::types::provider::callable::ValueAsProviderCallableLike;
 use yak_interpreter_for_build::attrs::coerce;
 use yak_interpreter_for_build::attrs::coerce::testing;
@@ -133,7 +133,7 @@ pub(crate) fn resolution_ctx_with_providers<'v>(
                  "#
                 );
                 testing::to_value(&provider_env, &globals, provider_content);
-                provider_env.freeze_named(Buck2TestHeapName::frozen_heap_name())
+                provider_env.freeze_named(YakTestHeapName::frozen_heap_name())
             })
             .expect("provider should freeze successfully");
             let foo_info = frozen_provider_env.get("FooInfo").unwrap();
@@ -143,7 +143,7 @@ pub(crate) fn resolution_ctx_with_providers<'v>(
                 env.set("FooInfo", foo_info.as_ref().add_to_heap(env.heap()));
                 env.set("BarInfo", bar_info.as_ref().add_to_heap(env.heap()));
                 Self::eval(&env, &globals);
-                env.freeze_named(Buck2TestHeapName::frozen_heap_name())
+                env.freeze_named(YakTestHeapName::frozen_heap_name())
             })
             .expect("should freeze successfully");
             let label_and_result = |label, var_name| {

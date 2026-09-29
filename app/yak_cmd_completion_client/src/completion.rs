@@ -12,7 +12,7 @@ use clap::Command;
 use clap::ValueEnum;
 use clap_complete::generate;
 use yak_client_ctx::client_ctx::ClientCommandContext;
-use yak_client_ctx::common::BuckArgMatches;
+use yak_client_ctx::common::YakArgMatches;
 use yak_client_ctx::exit_result::ExitResult;
 
 // This file is the entry point for the target-completing delegate for yak
@@ -58,7 +58,7 @@ impl CompletionCommand {
     pub fn exec(
         self,
         command: Command,
-        _matches: BuckArgMatches<'_>,
+        _matches: YakArgMatches<'_>,
         _ctx: ClientCommandContext<'_>,
     ) -> ExitResult {
         let mut command = command;
@@ -77,7 +77,7 @@ const GENERATED_TAG: &'static str = concat!("@", "generated");
 const COMPLETION_INSERTION_POINT: &'static str = "# %INSERT_OPTION_COMPLETION%";
 
 fn completion_wrapper(shell: Shell) -> &'static str {
-    #[cfg(buck_build)]
+    #[cfg(yak_build)]
     {
         match shell {
             Shell::Bash => completion_wrapper_bash::get(),
@@ -86,7 +86,7 @@ fn completion_wrapper(shell: Shell) -> &'static str {
             Shell::Powershell => completion_wrapper_powershell::get(),
         }
     }
-    #[cfg(not(buck_build))]
+    #[cfg(not(yak_build))]
     {
         match shell {
             Shell::Bash => include_str!("completion/completion-wrapper.bash"),
@@ -98,7 +98,7 @@ fn completion_wrapper(shell: Shell) -> &'static str {
 }
 
 fn options_wrapper(shell: Shell) -> &'static str {
-    #[cfg(buck_build)]
+    #[cfg(yak_build)]
     {
         match shell {
             Shell::Bash => options_wrapper_bash::get(),
@@ -107,7 +107,7 @@ fn options_wrapper(shell: Shell) -> &'static str {
             Shell::Powershell => options_wrapper_powershell::get(),
         }
     }
-    #[cfg(not(buck_build))]
+    #[cfg(not(yak_build))]
     {
         match shell {
             Shell::Bash => include_str!("completion/options-wrapper.bash"),
@@ -185,7 +185,7 @@ fn option_completions(shell: clap_complete::Shell, cmd: &mut Command) -> yak_err
         //    the middle of the spliced script.
         //
         // 2. Rewrite clap's `Register-ArgumentCompleter ... -ScriptBlock { ... }` into
-        //    an assignment `$BuckClapStaticCompleter = { ... }`. The wrapper then owns
+        //    an assignment `$YakClapStaticCompleter = { ... }`. The wrapper then owns
         //    the single native completer registration and layers dynamic (target /
         //    flagfile) completion on top of clap's static block. Capturing the block by
         //    assignment avoids shadowing the `Register-ArgumentCompleter` cmdlet and
@@ -201,7 +201,7 @@ fn option_completions(shell: clap_complete::Shell, cmd: &mut Command) -> yak_err
             .map(|line| {
                 if line.starts_with(&register_prefix) {
                     rewrote_register = true;
-                    line.replacen(&register_prefix, "$BuckClapStaticCompleter =", 1) + "\n"
+                    line.replacen(&register_prefix, "$YakClapStaticCompleter =", 1) + "\n"
                 } else {
                     format!("{line}\n")
                 }
@@ -209,7 +209,7 @@ fn option_completions(shell: clap_complete::Shell, cmd: &mut Command) -> yak_err
             .collect();
         // If clap_complete ever changes how it emits the registration line, the
         // rewrite above no-ops and the wrapper would splice a script that never
-        // assigns `$BuckClapStaticCompleter`. Fail loudly instead, mirroring the
+        // assigns `$YakClapStaticCompleter`. Fail loudly instead, mirroring the
         // `found_insertion_point` check in `print_completion_script`.
         if !rewrote_register {
             return Err(yak_error::yak_error!(

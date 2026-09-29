@@ -17,7 +17,7 @@ use futures::StreamExt;
 use futures::stream;
 use tokio::fs;
 use tokio::process::Command;
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 
 use crate::async_background_command;
 use crate::cleanall::discovery::CleanallTarget;
@@ -88,14 +88,14 @@ impl CleanallTarget {
     }
 
     async fn clean_stale_inner(&self) -> yak_error::Result<CleanStaleOutcome> {
-        let child = self.command().spawn().with_buck_error_context(|| {
+        let child = self.command().spawn().with_yak_error_context(|| {
             format!(
                 "Failed to start `yak --isolation-dir {} clean --stale` in `{}`",
                 self.isolation_dir,
                 self.project_root.display(),
             )
         })?;
-        let child_output = child.wait_with_output().await.with_buck_error_context(|| {
+        let child_output = child.wait_with_output().await.with_yak_error_context(|| {
             format!(
                 "Failed to wait for `yak --isolation-dir {} clean --stale` in `{}`",
                 self.isolation_dir,
@@ -230,11 +230,11 @@ async fn run_stale_clean_commands(targets: Vec<CleanallTarget>) -> Vec<yak_error
 ///
 /// Returns every child-process failure after all clean commands finish.
 pub async fn cleanall_stale() -> yak_error::Result<()> {
-    let Some(home) = crate::buck2_home_dir() else {
+    let Some(home) = crate::yak_home_dir() else {
         return Err(CleanallError::HomeDirectoryNotFound.into());
     };
-    let buckd_root = home.join(".yak").join("yakd");
-    let targets = discover_cleanall_targets(&buckd_root).await;
+    let yakd_root = home.join(".yak").join("yakd");
+    let targets = discover_cleanall_targets(&yakd_root).await;
     let errors = run_stale_clean_commands(targets).await;
 
     if errors.is_empty() {
@@ -329,7 +329,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn validates_buck_out_path() {
+    async fn validates_yak_out_path() {
         let temp = tempfile::tempdir().expect("temporary directory should be created");
         let target = |project_root, isolation_dir: &str| CleanallTarget {
             project_root,

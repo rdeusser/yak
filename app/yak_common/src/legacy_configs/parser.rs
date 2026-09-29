@@ -21,23 +21,23 @@ use pagable::Pagable;
 use regex::Regex;
 use starlark_map::sorted_map::SortedMap;
 use yak_core::cells::cell_root_path::CellRootPath;
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 use yak_fs::paths::RelativePath;
 use yak_fs::paths::abs_norm_path::AbsNormPath;
 
-use super::cells::ExternalPathBuckconfigData;
+use super::cells::ExternalPathYakconfigData;
 use crate::legacy_configs::args::ResolvedConfigFlag;
 use crate::legacy_configs::configs::ConfigArgumentParseError;
 use crate::legacy_configs::configs::ConfigData;
 use crate::legacy_configs::configs::ConfigFileLocation;
 use crate::legacy_configs::configs::ConfigFileLocationWithLine;
 use crate::legacy_configs::configs::ConfigValue;
-use crate::legacy_configs::configs::LegacyBuckConfig;
-use crate::legacy_configs::configs::LegacyBuckConfigSection;
+use crate::legacy_configs::configs::LegacyYakConfig;
+use crate::legacy_configs::configs::LegacyYakConfigSection;
 use crate::legacy_configs::configs::Location;
 use crate::legacy_configs::file_ops::ConfigParserFileOps;
 use crate::legacy_configs::file_ops::ConfigPath;
-use crate::legacy_configs::key::BuckconfigKeyRef;
+use crate::legacy_configs::key::YakconfigKeyRef;
 use crate::legacy_configs::parser::resolver::ConfigResolver;
 
 mod resolver;
@@ -74,8 +74,8 @@ struct SectionBuilder {
 }
 
 impl SectionBuilder {
-    fn finish(self) -> LegacyBuckConfigSection {
-        LegacyBuckConfigSection {
+    fn finish(self) -> LegacyYakConfigSection {
+        LegacyYakConfigSection {
             values: SortedMap::from_iter(self.values),
         }
     }
@@ -125,7 +125,7 @@ impl LegacyConfigParser {
         file_parser
             .parse_file_on_stack(path, follow_includes, file_ops)
             .await
-            .with_buck_error_context(|| format!("Error parsing yakconfig `{path}`"))?;
+            .with_yak_error_context(|| format!("Error parsing yakconfig `{path}`"))?;
         file_parser.finish_file();
 
         Ok(())
@@ -159,12 +159,12 @@ impl LegacyConfigParser {
         Ok(())
     }
 
-    pub(crate) fn finish(self) -> yak_error::Result<LegacyBuckConfig> {
+    pub(crate) fn finish(self) -> yak_error::Result<LegacyYakConfig> {
         let LegacyConfigParser { values } = self;
 
         let values = ConfigResolver::resolve(values)?;
 
-        Ok(LegacyBuckConfig(Arc::new(ConfigData { values })))
+        Ok(LegacyYakConfig(Arc::new(ConfigData { values })))
     }
 
     pub(crate) fn join(&mut self, other: &LegacyConfigParser) {
@@ -181,11 +181,11 @@ impl LegacyConfigParser {
 
     pub(crate) fn filter_values<F>(mut self, filter: F) -> Self
     where
-        F: Fn(&BuckconfigKeyRef) -> bool,
+        F: Fn(&YakconfigKeyRef) -> bool,
     {
         for (section, section_builder) in self.values.iter_mut() {
             section_builder.values.retain(|key, _| {
-                filter(&BuckconfigKeyRef {
+                filter(&YakconfigKeyRef {
                     section,
                     property: key,
                 })
@@ -211,7 +211,7 @@ impl LegacyConfigParser {
             })
             .collect()
     }
-    pub(crate) fn combine(external_path_configs: Vec<ExternalPathBuckconfigData>) -> Self {
+    pub(crate) fn combine(external_path_configs: Vec<ExternalPathYakconfigData>) -> Self {
         let mut parser = LegacyConfigParser::new();
         external_path_configs
             .into_iter()

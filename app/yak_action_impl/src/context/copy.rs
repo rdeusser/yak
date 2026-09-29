@@ -23,7 +23,7 @@ use yak_build_api::interpreter::rule_defs::artifact::starlark_declared_artifact:
 use yak_build_api::interpreter::rule_defs::context::AnalysisActions;
 use yak_error::internal_error;
 use yak_execute::execute::request::OutputType;
-use yak_hash::buck_indexset;
+use yak_hash::yak_indexset;
 
 use crate::actions::impls::assembled_dir::UnregisteredAssembledDirAction;
 use crate::actions::impls::copy::CopyMode;
@@ -44,7 +44,7 @@ fn create_dir_tree<'v>(
     let mut this = this.state()?;
     let (declaration, output_artifact) =
         this.get_or_declare_output(eval, output, OutputType::Directory, has_content_based_path)?;
-    this.register_action(buck_indexset![output_artifact], action, None, None)?;
+    this.register_action(yak_indexset![output_artifact], action, None, None)?;
 
     Ok(declaration.into_declared_artifact(unioned_associated_artifacts))
 }
@@ -82,7 +82,7 @@ fn create_assembled_dir_tree<'v>(
     let mut this = this.state()?;
     let (declaration, output_artifact) =
         this.get_or_declare_output(eval, output, OutputType::Directory, has_content_based_path)?;
-    this.register_action(buck_indexset![output_artifact], action, None, None)?;
+    this.register_action(yak_indexset![output_artifact], action, None, None)?;
 
     Ok(declaration.into_declared_artifact(unioned_associated_artifacts))
 }
@@ -105,7 +105,7 @@ fn copy_file_impl<'v>(
         this.get_or_declare_output(eval, dest, output_type, has_content_based_path)?;
 
     this.register_action(
-        buck_indexset![output_artifact],
+        yak_indexset![output_artifact],
         UnregisteredCopyAction::new(artifact, copy),
         None,
         None,

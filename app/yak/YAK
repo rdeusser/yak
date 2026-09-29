@@ -67,8 +67,8 @@ rust_binary(
     crate = "yak",
     crate_root = "bin/yak.rs",
     env = {
-        # `-c buck.set_explicit_version=<version>` sets the version that `--version` prints.
-        "YAK_SET_EXPLICIT_VERSION": read_config("buck", "set_explicit_version", ""),
+        # `-c yak.set_explicit_version=<version>` sets the version that `--version` prints.
+        "YAK_SET_EXPLICIT_VERSION": read_config("yak", "set_explicit_version", ""),
     },
     # `-c yak.emit_relocs=true` keeps ELF relocations in the binary for BOLT.
     linker_flags = ["-Wl,--emit-relocs"] if read_config("yak", "emit_relocs", "") == "true" else [],

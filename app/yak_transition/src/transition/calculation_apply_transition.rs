@@ -43,13 +43,13 @@ use yak_core::configuration::data::ConfigurationData;
 use yak_core::configuration::transition::applied::TransitionApplied;
 use yak_core::configuration::transition::id::TransitionId;
 use yak_core::provider::label::ProvidersLabel;
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 use yak_events::dispatch::get_dispatcher;
 use yak_interpreter::dice::starlark_provider::StarlarkEvalKind;
-use yak_interpreter::factory::BuckStarlarkModule;
+use yak_interpreter::factory::YakStarlarkModule;
 use yak_interpreter::factory::StarlarkEvaluatorProvider;
 use yak_interpreter::print_handler::EventDispatcherPrintHandler;
-use yak_interpreter::soft_error::Buck2StarlarkSoftErrorHandler;
+use yak_interpreter::soft_error::YakStarlarkSoftErrorHandler;
 use yak_node::attrs::configured_attr::ConfiguredAttr;
 use yak_node::attrs::display::AttrDisplayWithContextExt;
 
@@ -143,11 +143,11 @@ async fn do_apply_transition(
     let print = EventDispatcherPrintHandler(get_dispatcher());
     let eval_kind = StarlarkEvalKind::Transition(Arc::new(transition_id.clone()));
     let provider = StarlarkEvaluatorProvider::new(ctx, eval_kind).await?;
-    BuckStarlarkModule::with_profiling(|module| {
+    YakStarlarkModule::with_profiling(|module| {
         let (finished_eval, res) =
             provider.with_evaluator(&module, cancellation.into(), |eval, _| {
                 eval.set_print_handler(&print);
-                eval.set_soft_error_handler(&Buck2StarlarkSoftErrorHandler);
+                eval.set_soft_error_handler(&YakStarlarkSoftErrorHandler);
                 let refs = module.heap().alloc(AllocStruct(
                     refs.iter()
                         .map(|(s, v)| (*s, v.add_heap_ref(module.heap()))),
@@ -162,7 +162,7 @@ async fn do_apply_transition(
                                     PackageLabelOption::TransitionAttr,
                                     module.heap(),
                                 )
-                                .with_buck_error_context(|| {
+                                .with_yak_error_context(|| {
                                     format!(
                                         "Error converting attribute `{}={}` to Starlark value",
                                         name,
@@ -186,7 +186,7 @@ async fn do_apply_transition(
                     TransitionApplied::Single(new) => {
                         let new_2 =
                             match call_transition_function(&transition, &new, refs, attrs, eval)
-                                .buck_error_context(
+                                .yak_error_context(
                                     "applying transition again on transition output",
                                 )? {
                                 TransitionApplied::Single(new_2) => new_2,
@@ -308,7 +308,7 @@ impl TransitionCalculation for TransitionCalculationImpl {
                     .await?
                 };
 
-                Ok(Arc::new(v.with_buck_error_context(|| {
+                Ok(Arc::new(v.with_yak_error_context(|| {
                     format!("Error computing transition `{__self}`")
                 })?))
             }

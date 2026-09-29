@@ -8,7 +8,7 @@
  * above-listed licenses.
  */
 
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 use yak_util::tokio_runtime::new_tokio_runtime;
 
 /// Tokio runtime used by the client commands.
@@ -20,5 +20,5 @@ pub fn client_tokio_runtime() -> yak_error::Result<tokio::runtime::Runtime> {
         .worker_threads(1)
         .enable_all()
         .build()
-        .buck_error_context("Building tokio runtime")
+        .yak_error_context("Building tokio runtime")
 }

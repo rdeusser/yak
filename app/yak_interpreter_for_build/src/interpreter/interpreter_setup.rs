@@ -12,7 +12,7 @@ use std::sync::Arc;
 
 use dice::DiceTransactionUpdater;
 use yak_common::dice::cells::SetCellResolver;
-use yak_common::legacy_configs::cells::ExternalBuckconfigData;
+use yak_common::legacy_configs::cells::ExternalYakconfigData;
 use yak_common::legacy_configs::dice::SetLegacyConfigs;
 use yak_core::cells::CellResolver;
 use yak_interpreter::dice::starlark_types::SetStarlarkTypes;
@@ -27,7 +27,7 @@ pub fn setup_interpreter(
     updater: &mut DiceTransactionUpdater,
     cell_resolver: CellResolver,
     configuror: Arc<BuildInterpreterConfiguror>,
-    legacy_config_overrides: ExternalBuckconfigData,
+    legacy_config_overrides: ExternalYakconfigData,
     starlark_profiler_instrumentation_override: StarlarkProfilerConfiguration,
     disable_starlark_types: bool,
     unstable_typecheck: bool,
@@ -50,7 +50,7 @@ pub fn setup_interpreter_basic(
         dice,
         cell_resolver,
         configuror,
-        ExternalBuckconfigData::testing_default(),
+        ExternalYakconfigData::testing_default(),
         StarlarkProfilerConfiguration::default(),
         false,
         false,

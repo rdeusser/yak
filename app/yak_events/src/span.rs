@@ -15,7 +15,7 @@ use std::sync::atomic::Ordering;
 use allocative::Allocative;
 use dupe::Dupe;
 use serde::Serialize;
-use yak_error::BuckErrorOptionContext;
+use yak_error::YakErrorOptionContext;
 
 /// A SpanId is a unique identifier for a span, which is a pair of events that represent a conceptual start and stop
 /// of a particular operation.

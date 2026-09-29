@@ -11,12 +11,12 @@
 use async_trait::async_trait;
 use tracing::Level;
 use yak_downward_api::DownwardApi;
-use yak_hash::BuckMutMap;
+use yak_hash::YakMutMap;
 
-pub struct BuckTestDownwardApi;
+pub struct YakTestDownwardApi;
 
 #[async_trait]
-impl DownwardApi for BuckTestDownwardApi {
+impl DownwardApi for YakTestDownwardApi {
     async fn console(&self, _level: Level, msg: String) -> yak_error::Result<()> {
         // TODO(brasselsprouts): use the level and hook it up with our superconsole
         eprintln!("{}", msg);
@@ -27,7 +27,7 @@ impl DownwardApi for BuckTestDownwardApi {
         unimplemented!("TODO(bobyf)")
     }
 
-    async fn external(&self, _data: BuckMutMap<String, String>) -> yak_error::Result<()> {
+    async fn external(&self, _data: YakMutMap<String, String>) -> yak_error::Result<()> {
         unimplemented!("need yak event stream to implement")
     }
 }

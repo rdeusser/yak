@@ -23,8 +23,8 @@ use yak::process_context::ClientRuntime;
 use yak::process_context::ProcessContext;
 use yak::process_context::SharedProcessContext;
 use yak::soft_error;
-use yak_build_info::BUCK2_BUILD_INFO;
-use yak_build_info::Buck2BuildInfo;
+use yak_build_info::YAK_BUILD_INFO;
+use yak_build_info::YakBuildInfo;
 use yak_client_ctx::events_ctx::EventsCtx;
 use yak_client_ctx::exit_result::ExitResult;
 use yak_client_ctx::restarter::Restarter;
@@ -37,10 +37,10 @@ use yak_core::yak_env;
 use yak_fs::working_dir::AbsWorkingDir;
 use yak_wrapper_common::invocation_id::TraceId;
 
-// Cargo builds use jemalloc on Linux and macOS. A yak build (`cfg(buck_build)`) uses the system
-// allocator, because `third-party/rust/fixups/tikv-jemalloc-sys` does not build jemalloc.
+// Cargo builds use jemalloc on Linux and macOS. A yak build (`cfg(yak_build)`) uses the system
+// allocator.
 #[global_allocator]
-#[cfg(all(any(target_os = "linux", target_os = "macos"), not(buck_build)))]
+#[cfg(all(any(target_os = "linux", target_os = "macos"), not(yak_build)))]
 static ALLOC: tikv_jemallocator::Jemalloc = tikv_jemallocator::Jemalloc;
 #[global_allocator]
 #[cfg(target_os = "windows")]
@@ -134,7 +134,7 @@ fn main() -> ! {
         yak_validation::init_late_bindings();
         yak_events::init_late_bindings();
     }
-    BUCK2_BUILD_INFO.init(Buck2BuildInfo {
+    YAK_BUILD_INFO.init(YakBuildInfo {
         revision: std::option_env!("YAK_SET_EXPLICIT_VERSION"),
     });
 

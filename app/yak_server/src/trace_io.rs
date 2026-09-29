@@ -12,7 +12,7 @@ use yak_cli_proto::trace_io_request;
 use yak_cli_proto::trace_io_response;
 use yak_common::file_ops::metadata::RawSymlink;
 use yak_common::io::trace::TracingIoProvider;
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 use yak_events::dispatch::span_async;
 use yak_execute::materialize::materializer::MaterializationPurpose;
 use yak_server_ctx::commands::command_end;
@@ -63,18 +63,18 @@ async fn build_response_with_trace(
     provider: &TracingIoProvider,
 ) -> yak_error::Result<yak_cli_proto::TraceIoResponse> {
     // Materialize yak-out paths so they can be archived.
-    let buck_out_entries: Vec<_> = provider.trace().buck_out_entries();
+    let yak_out_entries: Vec<_> = provider.trace().yak_out_entries();
     context
         .materializer()
         .ensure_materialized(
-            buck_out_entries.clone(),
+            yak_out_entries.clone(),
             MaterializationPurpose::IntermediateOnly,
         )
         .await
-        .buck_error_context("Error materializing yak-out paths for trace")?;
+        .yak_error_context("Error materializing yak-out paths for trace")?;
 
     let mut entries = provider.trace().project_entries();
-    entries.extend(buck_out_entries);
+    entries.extend(yak_out_entries);
 
     let mut relative_symlinks = Vec::new();
     let mut external_symlinks = Vec::new();

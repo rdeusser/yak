@@ -7,14 +7,14 @@
 # above-listed licenses.
 
 
-from e2e_util.api.buck import Buck
+from e2e_util.api.yak import Yak
 from e2e_util.asserts import expect_failure
-from e2e_util.buck_workspace import buck_test
+from e2e_util.yak_workspace import yak_test
 
 
-@buck_test()
-async def test_run_single_modifier(buck: Buck) -> None:
-    result = await buck.run("root//:run?root//:macos")
+@yak_test()
+async def test_run_single_modifier(yak: Yak) -> None:
+    result = await yak.run("root//:run?root//:macos")
 
     [os, cpu] = result.stdout.strip().split()
 
@@ -22,9 +22,9 @@ async def test_run_single_modifier(buck: Buck) -> None:
     assert cpu == "DEFAULT"
 
 
-@buck_test()
-async def test_run_multiple_modifiers(buck: Buck) -> None:
-    result = await buck.run("root//:run?root//:macos+root//:arm")
+@yak_test()
+async def test_run_multiple_modifiers(yak: Yak) -> None:
+    result = await yak.run("root//:run?root//:macos+root//:arm")
 
     [os, cpu] = result.stdout.strip().split()
 
@@ -32,9 +32,9 @@ async def test_run_multiple_modifiers(buck: Buck) -> None:
     assert cpu == "arm"
 
 
-@buck_test()
-async def test_run_order_of_modifiers(buck: Buck) -> None:
-    result = await buck.run("root//:run?root//:macos+root//:linux")
+@yak_test()
+async def test_run_order_of_modifiers(yak: Yak) -> None:
+    result = await yak.run("root//:run?root//:macos+root//:linux")
 
     [os, cpu] = result.stdout.strip().split()
 
@@ -42,9 +42,9 @@ async def test_run_order_of_modifiers(buck: Buck) -> None:
     assert cpu == "DEFAULT"
 
 
-@buck_test()
-async def test_run_target_universe_single_modifier(buck: Buck) -> None:
-    result = await buck.run(
+@yak_test()
+async def test_run_target_universe_single_modifier(yak: Yak) -> None:
+    result = await yak.run(
         "root//:run",
         "--target-universe",
         "root//:run?root//:macos",
@@ -56,9 +56,9 @@ async def test_run_target_universe_single_modifier(buck: Buck) -> None:
     assert cpu == "DEFAULT"
 
 
-@buck_test()
-async def test_run_target_universe_multiple_modifiers(buck: Buck) -> None:
-    result = await buck.run(
+@yak_test()
+async def test_run_target_universe_multiple_modifiers(yak: Yak) -> None:
+    result = await yak.run(
         "root//:run",
         "--target-universe",
         "root//:run?root//:macos+root//:arm",
@@ -70,10 +70,10 @@ async def test_run_target_universe_multiple_modifiers(buck: Buck) -> None:
     assert cpu == "arm"
 
 
-@buck_test()
-async def test_run_fails_with_global_modifiers(buck: Buck) -> None:
+@yak_test()
+async def test_run_fails_with_global_modifiers(yak: Yak) -> None:
     await expect_failure(
-        buck.run(
+        yak.run(
             "--modifier",
             "root//:macos",
             "root//:run?root//:linux",
@@ -82,7 +82,7 @@ async def test_run_fails_with_global_modifiers(buck: Buck) -> None:
     )
 
     await expect_failure(
-        buck.run(
+        yak.run(
             "--modifier",
             "root//:macos",
             "root//:run",
@@ -93,12 +93,12 @@ async def test_run_fails_with_global_modifiers(buck: Buck) -> None:
     )
 
 
-@buck_test()
+@yak_test()
 async def test_run_fails_with_pattern_modifier_and_target_universe_modifier(
-    buck: Buck,
+    yak: Yak,
 ) -> None:
     await expect_failure(
-        buck.run(
+        yak.run(
             "root//:run?root//:macos",
             "--target-universe",
             "root//:run?root//:arm",

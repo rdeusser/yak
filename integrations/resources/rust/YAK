@@ -1,12 +1,12 @@
 load("//build_defs:rust.bzl", "rust_binary", "rust_library")
 
 rust_library(
-    name = "buck_resources",
+    name = "yak_resources",
     srcs = [
         "src/lib.rs",
         "src/manifest.rs",
     ],
-    # Other targets use the published crate, `//third-party/rust:buck-resources`.
+    # Other targets use the published crate, `//third-party/rust:yak-resources`.
     visibility = [],
     deps = [
         "//third-party/rust:dunce",
@@ -23,12 +23,12 @@ rust_binary(
 )
 
 rust_binary(
-    name = "buck_resources_test",
+    name = "yak_resources_test",
     srcs = ["tests/src/main.rs"],
     resources = {
         "hello_binary": ":hello",
     },
     deps = [
-        ":buck_resources",
+        ":yak_resources",
     ],
 )

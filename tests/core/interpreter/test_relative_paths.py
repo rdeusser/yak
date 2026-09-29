@@ -8,44 +8,44 @@
 
 import os
 
-from e2e_util.api.buck import Buck
+from e2e_util.api.yak import Yak
 from e2e_util.asserts import expect_failure
-from e2e_util.buck_workspace import buck_test
+from e2e_util.yak_workspace import yak_test
 
 
-@buck_test()
-async def test_relative_path_basic(buck: Buck) -> None:
-    assert "//foo/bar:test_basic" in (await buck.targets("//foo/bar:")).stdout
+@yak_test()
+async def test_relative_path_basic(yak: Yak) -> None:
+    assert "//foo/bar:test_basic" in (await yak.targets("//foo/bar:")).stdout
 
 
-@buck_test()
-async def test_relative_path_left_allowed_dir(buck: Buck) -> None:
+@yak_test()
+async def test_relative_path_left_allowed_dir(yak: Yak) -> None:
     await expect_failure(
-        buck.targets("//foo/baz:"),
+        yak.targets("//foo/baz:"),
         stderr_regex="Relative import path `../../defs.bzl` is not allowed at the current location.",
     )
 
 
-@buck_test()
-async def test_relative_path_has_symlink(buck: Buck) -> None:
-    os.symlink(buck.cwd, os.path.join(buck.cwd, "foo/sym"), target_is_directory=True)
+@yak_test()
+async def test_relative_path_has_symlink(yak: Yak) -> None:
+    os.symlink(yak.cwd, os.path.join(yak.cwd, "foo/sym"), target_is_directory=True)
     await expect_failure(
-        buck.targets("//foo/sym/foo/bar:"),
+        yak.targets("//foo/sym/foo/bar:"),
         stderr_regex="Symlink found on the way from current dir `root//foo/sym/foo/bar` to allowed relative dir `root//foo`: `root//foo/sym`.",
     )
 
 
-@buck_test()
-async def test_relative_path_in_attribute_default_current(buck: Buck) -> None:
+@yak_test()
+async def test_relative_path_in_attribute_default_current(yak: Yak) -> None:
     await expect_failure(
-        buck.targets("//foo/default_current:target"),
+        yak.targets("//foo/default_current:target"),
         stderr_regex="Target pattern must be absolute",
     )
 
 
-@buck_test()
-async def test_relative_path_in_attribute_default_up(buck: Buck) -> None:
+@yak_test()
+async def test_relative_path_in_attribute_default_up(yak: Yak) -> None:
     await expect_failure(
-        buck.targets("//foo/default_up:target"),
+        yak.targets("//foo/default_up:target"),
         stderr_regex="Target pattern must be absolute",
     )

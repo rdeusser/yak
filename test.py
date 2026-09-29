@@ -231,8 +231,8 @@ def main() -> None:
     args = parser.parse_args()
 
     # Change to yak directory
-    buck2_dir = Path(__file__).parent.absolute()
-    os.chdir(str(buck2_dir))
+    yak_dir = Path(__file__).parent.absolute()
+    os.chdir(str(yak_dir))
 
     package_args = [f"--package={p.rstrip('/')}" for p in args.packages]
     if args.exclude:

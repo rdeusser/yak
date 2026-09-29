@@ -32,11 +32,11 @@ mod tests {
 
     use yak_data::CommandStart;
     use yak_data::SpanStartEvent;
-    use yak_data::buck_event::Data::SpanStart;
+    use yak_data::yak_event::Data::SpanStart;
     use yak_data::span_start_event::Data::Command;
 
     use super::ChannelEventSource;
-    use crate::BuckEvent;
+    use crate::YakEvent;
     use crate::Event;
     use crate::EventSink;
     use crate::TraceId;
@@ -47,7 +47,7 @@ mod tests {
         let (send, recv) = crossbeam_channel::unbounded();
         let sink = ChannelEventSink::new(send);
         let mut source = ChannelEventSource::new(recv);
-        sink.send(Event::Buck(BuckEvent::new(
+        sink.send(Event::Yak(YakEvent::new(
             SystemTime::now(),
             TraceId::new(),
             None,
@@ -62,7 +62,7 @@ mod tests {
             }
             .into(),
         )));
-        let event = source.receive().unwrap().unpack_buck().unwrap().clone();
+        let event = source.receive().unwrap().unpack_yak().unwrap().clone();
         assert!(matches!(
             event.data(),
             SpanStart(SpanStartEvent {

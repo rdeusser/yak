@@ -54,14 +54,14 @@ pub trait HttpErrorForRetry {
     fn is_retryable(&self) -> bool;
 }
 
-pub trait IntoBuck2Error {
-    fn into_buck2_error(self) -> yak_error::Error;
+pub trait IntoYakError {
+    fn into_yak_error(self) -> yak_error::Error;
 }
 
 pub async fn http_retry<Exec, F, T, E>(exec: Exec, mut intervals: Vec<Duration>) -> Result<T, E>
 where
     Exec: Fn() -> F,
-    E: IntoBuck2Error + HttpErrorForRetry + std::fmt::Display + Send + Sync + 'static,
+    E: IntoYakError + HttpErrorForRetry + std::fmt::Display + Send + Sync + 'static,
     F: Future<Output = Result<T, E>>,
 {
     intervals.insert(0, Duration::from_secs(0));
@@ -84,7 +84,7 @@ where
                     "Retrying a HTTP error after {} seconds: {:#}",
                     b.as_secs(),
                     // Print as a yak_error to make sure we get the source
-                    err.into_buck2_error()
+                    err.into_yak_error()
                 );
                 continue;
             }
@@ -140,8 +140,8 @@ mod tests {
         }
     }
 
-    impl IntoBuck2Error for HttpTestError {
-        fn into_buck2_error(self) -> yak_error::Error {
+    impl IntoYakError for HttpTestError {
+        fn into_yak_error(self) -> yak_error::Error {
             yak_error::Error::from(self)
         }
     }

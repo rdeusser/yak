@@ -28,7 +28,7 @@ use regex::Regex;
 use static_interner::Intern;
 use static_interner::interner;
 use strong_hash::StrongHash;
-use yak_hash::BuckHasher;
+use yak_hash::YakHasher;
 
 /// Interned category data, representing a family of actions.
 #[derive(
@@ -44,7 +44,7 @@ use yak_hash::BuckHasher;
 )]
 struct CategoryData(String);
 
-interner!(CATEGORY_INTERNER, BuckHasher, CategoryData, String);
+interner!(CATEGORY_INTERNER, YakHasher, CategoryData, String);
 
 /// A category, representing a family of actions.
 #[derive(

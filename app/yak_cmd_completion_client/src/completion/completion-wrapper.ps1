@@ -13,7 +13,7 @@ using namespace System.Management.Automation.Language
 
 # The generated block below is clap's static (flag/subcommand) completer. Its
 # `Register-ArgumentCompleter` call is rewritten at generation time into an
-# assignment to `$BuckClapStaticCompleter` so that we own the single native
+# assignment to `$YakClapStaticCompleter` so that we own the single native
 # completer registration (PowerShell allows only one per command) and can layer
 # dynamic target completion on top of clap's static completions.
 
@@ -21,7 +21,7 @@ using namespace System.Management.Automation.Language
 # %INSERT_OPTION_COMPLETION%
 # clap_complete generated content ENDS
 
-$BuckCompleter = {
+$YakCompleter = {
     param($wordToComplete, $commandAst, $cursorPosition)
 
     $completeBin = if ($env:_YAK_COMPLETE_BIN) { $env:_YAK_COMPLETE_BIN } else { 'yak' }
@@ -74,9 +74,9 @@ $BuckCompleter = {
     }
 
     # Fall back to clap's static flag/subcommand completions.
-    if ($BuckClapStaticCompleter) {
-        return (& $BuckClapStaticCompleter $wordToComplete $commandAst $cursorPosition)
+    if ($YakClapStaticCompleter) {
+        return (& $YakClapStaticCompleter $wordToComplete $commandAst $cursorPosition)
     }
 }.GetNewClosure()
 
-Register-ArgumentCompleter -Native -CommandName 'yak' -ScriptBlock $BuckCompleter
+Register-ArgumentCompleter -Native -CommandName 'yak' -ScriptBlock $YakCompleter

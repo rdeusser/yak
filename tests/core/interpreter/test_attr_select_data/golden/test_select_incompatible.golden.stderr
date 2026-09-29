@@ -29,8 +29,8 @@ error_rule(
 $ yak uquery root//:incompat_foo -v0 --output-format=json -B
 {
   "root//:incompat_foo": {
-    "buck.type": "error_rule",
-    "buck.package": "root//:YAK.fixture",
+    "yak.type": "error_rule",
+    "yak.package": "root//:YAK.fixture",
     "name": "incompat_foo",
     "default_target_platform": null,
     "target_compatible_with": [],

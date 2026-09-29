@@ -113,7 +113,7 @@ fn do_lower_priority(qos_class: MacosQosClass) -> yak_error::Result<()> {
     use std::os::unix::ffi::OsStrExt;
     use std::ptr;
 
-    use yak_error::BuckErrorContext;
+    use yak_error::YakErrorContext;
 
     unsafe extern "C" {
         // https://github.com/rust-lang/libc/pull/3128
@@ -148,7 +148,7 @@ fn do_lower_priority(qos_class: MacosQosClass) -> yak_error::Result<()> {
                 let r = libc::posix_spawnattr_init(spawnattr.as_mut_ptr());
                 if r != 0 {
                     return Err(io::Error::from_raw_os_error(r))
-                        .buck_error_context("posix_spawnattr_init");
+                        .yak_error_context("posix_spawnattr_init");
                 }
                 Ok(Spawnattr(spawnattr.assume_init()))
             }
@@ -177,14 +177,14 @@ fn do_lower_priority(qos_class: MacosQosClass) -> yak_error::Result<()> {
         );
         if r != 0 {
             return Err(io::Error::from_raw_os_error(r))
-                .buck_error_context("posix_spawnattr_setflags");
+                .yak_error_context("posix_spawnattr_setflags");
         }
 
         let r = posix_spawnattr_set_qos_class_np(&mut spawnattr.0, qos_class.to_qos_class_t()?);
 
         if r != 0 {
             return Err(io::Error::from_raw_os_error(r))
-                .buck_error_context("posix_spawnattr_set_qos_class_np");
+                .yak_error_context("posix_spawnattr_set_qos_class_np");
         }
 
         let environ = *_NSGetEnviron();
@@ -199,7 +199,7 @@ fn do_lower_priority(qos_class: MacosQosClass) -> yak_error::Result<()> {
             environ,
         );
         if r != 0 {
-            return Err(io::Error::from_raw_os_error(r)).buck_error_context("posix_spawnp");
+            return Err(io::Error::from_raw_os_error(r)).yak_error_context("posix_spawnp");
         }
     }
 

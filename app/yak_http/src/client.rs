@@ -27,7 +27,7 @@ use hyper_util::client::legacy::connect::Connect;
 use tokio::io::AsyncReadExt;
 use tokio::sync::Semaphore;
 use tokio_util::io::StreamReader;
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 
 use crate::HttpError;
 use crate::redirect::PendingRequest;
@@ -231,7 +231,7 @@ pub async fn to_bytes(body: BoxStream<'_, hyper::Result<Bytes>>) -> yak_error::R
     reader
         .read_to_end(&mut buf)
         .await
-        .buck_error_context("Reading response body")?;
+        .yak_error_context("Reading response body")?;
     Ok(buf.into())
 }
 

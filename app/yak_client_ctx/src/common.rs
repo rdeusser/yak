@@ -42,7 +42,7 @@ use yak_common::argv::ExpandedArgv;
 use yak_fs::paths::abs_path::AbsPath;
 use yak_fs::working_dir::AbsWorkingDir;
 
-use crate::common::profiling::BuckProfileMode;
+use crate::common::profiling::YakProfileMode;
 use crate::common::ui::CommonConsoleOptions;
 use crate::immediate_config::ImmediateConfigContext;
 use crate::path_arg::PathArg;
@@ -252,14 +252,14 @@ impl CommonBuildConfigurationOptions {
     /// hence they're merged into a single list.
     pub fn config_overrides(
         &self,
-        matches: BuckArgMatches<'_>,
+        matches: YakArgMatches<'_>,
         immediate_ctx: &ImmediateConfigContext<'_>,
         cwd: &AbsWorkingDir,
     ) -> yak_error::Result<Vec<ConfigOverride>> {
         fn with_indices<'a, T>(
             collection: &'a [T],
             name: &str,
-            matches: BuckArgMatches<'a>,
+            matches: YakArgMatches<'a>,
         ) -> yak_error::Result<impl Iterator<Item = (usize, &'a T)> + use<'a, T>> {
             let indices: Vec<usize> = if collection.is_empty() {
                 Vec::new()
@@ -449,7 +449,7 @@ pub struct CommonStarlarkOptions {
     ///
     /// `-allocated` means allocated memory, including memory which is later garbage collected.
     #[clap(long, value_enum)]
-    profile_patterns_mode: Option<BuckProfileMode>,
+    profile_patterns_mode: Option<YakProfileMode>,
 }
 
 impl CommonStarlarkOptions {
@@ -513,12 +513,12 @@ pub enum PrintOutputsFormat {
 }
 
 #[derive(Clone, Copy)]
-pub struct BuckArgMatches<'a> {
+pub struct YakArgMatches<'a> {
     inner: &'a clap::ArgMatches,
     expanded_argv: &'a ExpandedArgv,
 }
 
-impl<'a> BuckArgMatches<'a> {
+impl<'a> YakArgMatches<'a> {
     pub fn from_clap(inner: &'a clap::ArgMatches, expanded_argv: &'a ExpandedArgv) -> Self {
         Self {
             inner,
@@ -624,7 +624,7 @@ mod tests {
 
         let argv = argv.build();
         let clap = clap::ArgMatches::default();
-        let matches = BuckArgMatches::from_clap(&clap, &argv);
+        let matches = YakArgMatches::from_clap(&clap, &argv);
         let flags = matches.get_representative_config_flags_by_source();
 
         assert_eq!(
@@ -682,7 +682,7 @@ mod tests {
 
         let argv = argv.build();
         let clap = clap::ArgMatches::default();
-        let matches = BuckArgMatches::from_clap(&clap, &argv);
+        let matches = YakArgMatches::from_clap(&clap, &argv);
         let flags = matches.get_representative_config_flags_by_source();
 
         assert_eq!(
@@ -719,7 +719,7 @@ mod tests {
         let opts = CommonBuildConfigurationOptions::default();
         let argv = ExpandedArgvBuilder::new().build();
         let clap = clap::ArgMatches::default();
-        let matches = BuckArgMatches::from_clap(&clap, &argv);
+        let matches = YakArgMatches::from_clap(&clap, &argv);
 
         let overrides = opts.config_overrides(matches, &immediate_ctx, &cwd)?;
         assert!(overrides.is_empty());

@@ -13,7 +13,7 @@ use yak_build_api::interpreter::rule_defs::register_rule_defs;
 use yak_interpreter_for_build::interpreter::testing::Tester;
 
 #[test]
-fn configuration_info_validates_buckconfigs() -> yak_error::Result<()> {
+fn configuration_info_validates_yakconfigs() -> yak_error::Result<()> {
     let mut tester = Tester::new().unwrap();
     tester.additional_globals(register_rule_defs);
     tester.run_starlark_bzl_test_expecting_error(
@@ -45,7 +45,7 @@ fn configuration_info_validates_buckconfigs() -> yak_error::Result<()> {
 }
 
 #[test]
-fn configuration_info_validates_root_buckconfigs() -> yak_error::Result<()> {
+fn configuration_info_validates_root_yakconfigs() -> yak_error::Result<()> {
     let mut tester = Tester::new().unwrap();
     tester.additional_globals(register_rule_defs);
     tester.run_starlark_bzl_test_expecting_error(

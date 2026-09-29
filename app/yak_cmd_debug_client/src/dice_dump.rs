@@ -12,12 +12,12 @@ use async_trait::async_trait;
 use yak_cli_proto::UnstableDiceDumpRequest;
 use yak_cli_proto::unstable_dice_dump_request::DiceDumpFormat;
 use yak_client_ctx::client_ctx::ClientCommandContext;
-use yak_client_ctx::common::BuckArgMatches;
+use yak_client_ctx::common::YakArgMatches;
 use yak_client_ctx::common::CommonBuildConfigurationOptions;
 use yak_client_ctx::common::CommonEventLogOptions;
 use yak_client_ctx::common::CommonStarlarkOptions;
 use yak_client_ctx::common::ui::CommonConsoleOptions;
-use yak_client_ctx::daemon::client::BuckdClientConnector;
+use yak_client_ctx::daemon::client::YakdClientConnector;
 use yak_client_ctx::events_ctx::EventsCtx;
 use yak_client_ctx::exit_result::ExitResult;
 use yak_client_ctx::path_arg::PathArg;
@@ -44,8 +44,8 @@ impl StreamingCommand for DiceDumpCommand {
 
     async fn exec_impl(
         self,
-        buckd: &mut BuckdClientConnector,
-        _matches: BuckArgMatches<'_>,
+        yakd: &mut YakdClientConnector,
+        _matches: YakArgMatches<'_>,
         ctx: &mut ClientCommandContext<'_>,
         events_ctx: &mut EventsCtx,
     ) -> ExitResult {
@@ -57,7 +57,7 @@ impl StreamingCommand for DiceDumpCommand {
             DiceDumpFormat::Tsv
         };
         let context = ctx.empty_client_context("debug-dice-dump")?;
-        buckd
+        yakd
             .with_flushing()
             .unstable_dice_dump(
                 UnstableDiceDumpRequest {

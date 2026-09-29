@@ -22,8 +22,8 @@ use yak_core::pattern::pattern::display_precise_pattern;
 use yak_core::pattern::pattern_type::ConfiguredProvidersPatternExtra;
 use yak_core::pattern::pattern_type::PatternType;
 use yak_core::target::name::TargetName;
-use yak_error::BuckErrorContext;
-use yak_hash::BuckIndexMap;
+use yak_error::YakErrorContext;
+use yak_hash::YakIndexMap;
 
 use crate::file_ops::trait_::DiceFileOps;
 use crate::file_ops::trait_::FileOps;
@@ -33,7 +33,7 @@ use crate::pattern::package_roots::find_package_roots;
 /// Targets are not validated yet, and `:` is not yet expanded.
 #[derive(Debug)]
 pub struct ResolvedPattern<T: PatternType> {
-    pub specs: BuckIndexMap<PackageLabelWithModifiers, PackageSpec<T>>,
+    pub specs: YakIndexMap<PackageLabelWithModifiers, PackageSpec<T>>,
 }
 
 impl<T> ResolvedPattern<T>
@@ -42,7 +42,7 @@ where
 {
     pub fn new() -> Self {
         Self {
-            specs: BuckIndexMap::default(),
+            specs: YakIndexMap::default(),
         }
     }
 
@@ -78,13 +78,13 @@ where
 
 impl ResolvedPattern<ConfiguredProvidersPatternExtra> {
     pub fn convert_pattern<U: PatternType>(self) -> yak_error::Result<ResolvedPattern<U>> {
-        let mut specs = BuckIndexMap::with_capacity(self.specs.len());
+        let mut specs = YakIndexMap::with_capacity(self.specs.len());
         for (package_with_modifiers, spec) in self.specs {
             let spec = match spec {
                 PackageSpec::Targets(targets) => {
                     PackageSpec::Targets(targets.into_try_map(|(target_name, extra)| {
                         let extra = U::from_configured_providers(extra.clone())
-                            .with_buck_error_context(|| {
+                            .with_yak_error_context(|| {
                                 format!(
                                     "Expecting {} pattern, got `{}`",
                                     U::NAME,
@@ -156,7 +156,7 @@ async fn resolve_target_patterns_impl<P: PatternType>(
             ParsedPattern::Recursive(cell_path) => {
                 let roots = find_package_roots(cell_path.clone(), file_ops)
                     .await
-                    .buck_error_context("Error resolving recursive target pattern.")?;
+                    .yak_error_context("Error resolving recursive target pattern.")?;
                 for package in roots {
                     resolved.add_package(package, Modifiers::new(None));
                 }
@@ -188,7 +188,7 @@ async fn resolve_target_patterns_with_modifiers_impl<P: PatternType>(
             ParsedPattern::Recursive(cell_path) => {
                 let roots = find_package_roots(cell_path.clone(), file_ops)
                     .await
-                    .buck_error_context("Error resolving recursive target pattern.")?;
+                    .yak_error_context("Error resolving recursive target pattern.")?;
                 for package in roots {
                     resolved.add_package(package, pattern.modifiers.clone());
                 }

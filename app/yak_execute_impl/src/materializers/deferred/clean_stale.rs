@@ -22,8 +22,8 @@ use jiff::SignedDuration;
 use jiff::Timestamp;
 use tokio::sync::oneshot::Sender;
 use yak_common::file_ops::metadata::FileType;
-use yak_common::legacy_configs::configs::LegacyBuckConfig;
-use yak_common::legacy_configs::key::BuckconfigKeyRef;
+use yak_common::legacy_configs::configs::LegacyYakConfig;
+use yak_common::legacy_configs::key::YakconfigKeyRef;
 use yak_common::liveliness_observer::LivelinessGuard;
 use yak_common::liveliness_observer::LivelinessObserverSync;
 use yak_core::execution_types::executor_config::RemoteExecutorUseCase;
@@ -38,8 +38,8 @@ use yak_data::clean_stale_result::AdaptiveOutcome;
 use yak_data::clean_stale_result::FailurePhase;
 use yak_data::clean_stale_result::PolicyMode;
 use yak_data::clean_stale_result::Trigger;
-use yak_error::BuckErrorContext;
-use yak_error::BuckErrorOptionContext;
+use yak_error::YakErrorContext;
+use yak_error::YakErrorOptionContext;
 use yak_error::ErrorTag;
 use yak_error::yak_error;
 use yak_events::daemon_id::DaemonId;
@@ -481,7 +481,7 @@ impl CleanStaleArtifactsCommand {
         let mut scan_error: Option<PendingCleanFailure> = None;
         for dir_name in &["gen", "gen-anon", "gen-bxl", "art", "art-anon", "art-bxl"] {
             let dir_path = io
-                .buck_out_path()
+                .yak_out_path()
                 .join(ProjectRelativePathBuf::unchecked_new(dir_name.to_string()));
             let dir_abs = io.fs().resolve(&dir_path);
             match fs_util::try_exists(&dir_abs) {
@@ -525,7 +525,7 @@ impl CleanStaleArtifactsCommand {
 
                 let dir_subtree = tree
                     .get_subtree(&mut dir_path.iter())
-                    .with_buck_error_context(|| {
+                    .with_yak_error_context(|| {
                         format!("Found a file where directory was expected: {}", dir_path)
                     });
                 let dir_subtree = match dir_subtree {
@@ -1368,7 +1368,7 @@ async fn scratch_sweep<T: IoHandler>(
     let mut found = Vec::new();
     for dir_name in &["tmp", "tmp-anon", "tmp-bxl"] {
         let dir_path = io
-            .buck_out_path()
+            .yak_out_path()
             .join(ProjectRelativePathBuf::unchecked_new(dir_name.to_string()));
         let abs_dir = io.fs().resolve(&dir_path);
         let read_dir = match io.read_dir(&abs_dir) {
@@ -2080,74 +2080,74 @@ fn unmaterialization_threshold_from_config(
 }
 
 impl CleanStaleConfig {
-    pub fn from_buck_config(root_config: &LegacyBuckConfig) -> yak_error::Result<Self> {
+    pub fn from_yak_config(root_config: &LegacyYakConfig) -> yak_error::Result<Self> {
         let clean_stale_enabled = root_config
-            .parse(BuckconfigKeyRef {
+            .parse(YakconfigKeyRef {
                 section: "yak",
                 property: "clean_stale_enabled",
             })?
             .unwrap_or(false);
         let clean_stale_artifact_ttl_hours = root_config
-            .parse(BuckconfigKeyRef {
+            .parse(YakconfigKeyRef {
                 section: "yak",
                 property: "clean_stale_artifact_ttl_hours",
             })?
             .unwrap_or(24.0 * DEFAULT_CLEAN_STALE_TTL_DAYS as f64);
         let clean_stale_period_hours = root_config
-            .parse(BuckconfigKeyRef {
+            .parse(YakconfigKeyRef {
                 section: "yak",
                 property: "clean_stale_period_hours",
             })?
             .unwrap_or(24.0);
         let clean_stale_start_offset_hours = root_config
-            .parse(BuckconfigKeyRef {
+            .parse(YakconfigKeyRef {
                 section: "yak",
                 property: "clean_stale_start_offset_hours",
             })?
             .unwrap_or(12.0);
         let clean_stale_dry_run = root_config
-            .parse(BuckconfigKeyRef {
+            .parse(YakconfigKeyRef {
                 section: "yak",
                 property: "clean_stale_dry_run",
             })?
             .unwrap_or(false);
         let adaptive_enabled = root_config
-            .parse(BuckconfigKeyRef {
+            .parse(YakconfigKeyRef {
                 section: "yak",
                 property: "clean_stale_low_disk_adaptive_enabled",
             })?
             .unwrap_or(false);
         let adaptive_min_ttl_hours: f64 = root_config
-            .parse(BuckconfigKeyRef {
+            .parse(YakconfigKeyRef {
                 section: "yak",
                 property: "clean_stale_low_disk_adaptive_min_ttl_hours",
             })?
             .unwrap_or(12.0);
         let delete_intermediate_within_min_ttl = root_config
-            .parse(BuckconfigKeyRef {
+            .parse(YakconfigKeyRef {
                 section: "yak",
                 property: "clean_stale_low_disk_adaptive_delete_intermediate_within_min_ttl",
             })?
             .unwrap_or(false);
         let unmaterialize_active = root_config
-            .parse(BuckconfigKeyRef {
+            .parse(YakconfigKeyRef {
                 section: "yak",
                 property: "clean_stale_low_disk_adaptive_unmaterialize_active",
             })?
             .unwrap_or(false);
         let unmaterialization_threshold_percent: Option<f64> =
-            root_config.parse(BuckconfigKeyRef {
+            root_config.parse(YakconfigKeyRef {
                 section: "yak",
                 property: "clean_stale_low_disk_unmaterialization_threshold",
             })?;
         let unmaterialize_upload_enabled = root_config
-            .parse(BuckconfigKeyRef {
+            .parse(YakconfigKeyRef {
                 section: "yak",
                 property: "clean_stale_unmaterialize_upload_enabled",
             })?
             .unwrap_or(false);
         let unmaterialize_upload_max_bytes = root_config
-            .parse(BuckconfigKeyRef {
+            .parse(YakconfigKeyRef {
                 section: "yak",
                 property: "clean_stale_unmaterialize_upload_max_bytes",
             })?
@@ -2158,11 +2158,11 @@ impl CleanStaleConfig {
                 re_use_case,
                 max_bytes: unmaterialize_upload_max_bytes,
             });
-        let low_disk_artifact_ttl_hours: Option<f64> = root_config.parse(BuckconfigKeyRef {
+        let low_disk_artifact_ttl_hours: Option<f64> = root_config.parse(YakconfigKeyRef {
             section: "yak",
             property: "clean_stale_low_disk_artifact_ttl_hours",
         })?;
-        let low_disk_threshold_percent: Option<f64> = root_config.parse(BuckconfigKeyRef {
+        let low_disk_threshold_percent: Option<f64> = root_config.parse(YakconfigKeyRef {
             section: "yak",
             property: "clean_stale_low_disk_threshold",
         })?;

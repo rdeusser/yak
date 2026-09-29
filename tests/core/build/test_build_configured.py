@@ -10,14 +10,14 @@ import json
 import re
 import typing
 
-from e2e_util.api.buck import Buck
+from e2e_util.api.yak import Yak
 from e2e_util.asserts import expect_failure
-from e2e_util.buck_workspace import buck_test
+from e2e_util.yak_workspace import yak_test
 
 
 # Obtain hashes of `<astrologer>` and `<vagabond>` configurations.
-async def _obtain_cfg_hashes(buck: Buck) -> typing.Tuple[str, str]:
-    result = await buck.cquery(
+async def _obtain_cfg_hashes(yak: Yak) -> typing.Tuple[str, str]:
+    result = await yak.cquery(
         "root//:simple",
         "--target-universe",
         "root//:universe",
@@ -32,11 +32,11 @@ async def _obtain_cfg_hashes(buck: Buck) -> typing.Tuple[str, str]:
     return (astrologer_hash, vagabond_hash)
 
 
-@buck_test()
-async def test_build_configured_full_configuration(buck: Buck) -> None:
-    (astrologer_hash, _) = await _obtain_cfg_hashes(buck)
+@yak_test()
+async def test_build_configured_full_configuration(yak: Yak) -> None:
+    (astrologer_hash, _) = await _obtain_cfg_hashes(yak)
 
-    result = await buck.build(
+    result = await yak.build(
         f"root//:simple (<astrologer>#{astrologer_hash})",
         "--target-universe",
         "root//:universe",
@@ -45,10 +45,10 @@ async def test_build_configured_full_configuration(buck: Buck) -> None:
     assert f"$$$root//:simple (<astrologer>#{astrologer_hash})$$$" == out
 
 
-@buck_test()
-async def test_build_configured_no_hash(buck: Buck) -> None:
-    (_, vagabond_hash) = await _obtain_cfg_hashes(buck)
-    result = await buck.build(
+@yak_test()
+async def test_build_configured_no_hash(yak: Yak) -> None:
+    (_, vagabond_hash) = await _obtain_cfg_hashes(yak)
+    result = await yak.build(
         "root//:simple (<vagabond>)",
         "--target-universe",
         "root//:universe",
@@ -57,9 +57,9 @@ async def test_build_configured_no_hash(buck: Buck) -> None:
     assert f"$$$root//:simple (<vagabond>#{vagabond_hash})$$$" == out
 
 
-@buck_test()
-async def test_build_configured_wrong_hash(buck: Buck) -> None:
-    result = await buck.build(
+@yak_test()
+async def test_build_configured_wrong_hash(yak: Yak) -> None:
+    result = await yak.build(
         "root//:simple (<vagabond>#0123456789abcdef)",
         "--target-universe",
         "root//:universe",
@@ -68,10 +68,10 @@ async def test_build_configured_wrong_hash(buck: Buck) -> None:
     assert "root//:simple" not in json.loads(result.stdout)["results"]
 
 
-@buck_test()
-async def test_build_configured_no_universe(buck: Buck) -> None:
+@yak_test()
+async def test_build_configured_no_universe(yak: Yak) -> None:
     await expect_failure(
-        buck.build(
+        yak.build(
             "root//:simple (<vagabond>)",
         ),
         stderr_regex="Targets with explicit configuration can only be built when the",

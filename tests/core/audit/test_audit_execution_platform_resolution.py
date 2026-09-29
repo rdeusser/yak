@@ -6,22 +6,22 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-from e2e_util.api.buck import Buck
-from e2e_util.buck_workspace import buck_test
+from e2e_util.api.yak import Yak
+from e2e_util.yak_workspace import yak_test
 from e2e_util.helper.golden import golden_replace_cfg_hash
 
 
-@buck_test()
-async def test_audit_execition_platform_resolution(buck: Buck) -> None:
-    result = await buck.audit("execution-platform-resolution", "//:target")
+@yak_test()
+async def test_audit_execition_platform_resolution(yak: Yak) -> None:
+    result = await yak.audit("execution-platform-resolution", "//:target")
     golden_replace_cfg_hash(output=result.stdout, rel_path="out.txt.golden")
 
 
-@buck_test()
+@yak_test()
 async def test_audit_execution_platform_resolution_no_compatible_platform(
-    buck: Buck,
+    yak: Yak,
 ) -> None:
-    result = await buck.audit(
+    result = await yak.audit(
         "execution-platform-resolution", "//:no_compatible_platform"
     )
     golden_replace_cfg_hash(
@@ -29,12 +29,12 @@ async def test_audit_execution_platform_resolution_no_compatible_platform(
     )
 
 
-@buck_test()
-async def test_audit_execution_platform_resolution_error_fallback(buck: Buck) -> None:
+@yak_test()
+async def test_audit_execution_platform_resolution_error_fallback(yak: Yak) -> None:
     # With `fallback = "error"` the target fails to configure outright, so there is no
     # retained resolution to read the skip reasons from; the audit command reconstructs
     # them by re-walking the candidates.
-    result = await buck.audit(
+    result = await yak.audit(
         "execution-platform-resolution",
         "//:no_compatible_platform",
         "-c",

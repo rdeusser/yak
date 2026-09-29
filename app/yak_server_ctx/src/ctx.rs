@@ -51,7 +51,7 @@ use crate::stderr_output_guard::StderrOutputGuard;
 
 #[derive(Allocative, Debug)]
 pub struct PreviousCommandDataInternal {
-    pub external_and_local_configs: Vec<yak_data::BuckconfigComponent>,
+    pub external_and_local_configs: Vec<yak_data::YakconfigComponent>,
     pub sanitized_argv: Vec<String>,
     pub trace_id: TraceId,
 }
@@ -65,7 +65,7 @@ impl PreviousCommandData {
     pub fn process_current_command(
         &mut self,
         event_dispatcher: EventDispatcher,
-        current_external_and_local_configs: Vec<yak_data::BuckconfigComponent>,
+        current_external_and_local_configs: Vec<yak_data::YakconfigComponent>,
         current_sanitized_argv: Vec<String>,
         current_trace: TraceId,
     ) {
@@ -132,7 +132,7 @@ impl CommandEvents for DispatcherEvents {
 /// command's config and the config values themselves.
 /// Concurrent equivalent-state commands update previous-command telemetry in observer completion
 /// order, so the stored UUID is a comparison anchor rather than a strict admission predecessor.
-struct BuckconfigTelemetry<'a> {
+struct YakconfigTelemetry<'a> {
     events: EventDispatcher,
     project_root: &'a ProjectRoot,
     previous_command_data: Arc<LockedPreviousCommandData>,
@@ -141,14 +141,14 @@ struct BuckconfigTelemetry<'a> {
 }
 
 #[async_trait]
-impl CommandTransactionObserver for BuckconfigTelemetry<'_> {
+impl CommandTransactionObserver for YakconfigTelemetry<'_> {
     async fn on_transaction_committed(
         &self,
         transaction: &DiceTransaction,
     ) -> yak_error::Result<()> {
         if !transaction
             .ctx()
-            .is_injected_external_buckconfig_data_key_set()
+            .is_injected_external_yakconfig_data_key_set()
             .await?
         {
             return Ok(());
@@ -156,11 +156,11 @@ impl CommandTransactionObserver for BuckconfigTelemetry<'_> {
 
         let external_configs = transaction
             .ctx()
-            .get_injected_external_buckconfig_data()
+            .get_injected_external_yakconfig_data()
             .await?;
-        let current_external_and_local_configs: Vec<yak_data::BuckconfigComponent> =
+        let current_external_and_local_configs: Vec<yak_data::YakconfigComponent> =
             external_configs
-                .get_buckconfig_components(self.project_root)
+                .get_yakconfig_components(self.project_root)
                 .await;
 
         self.previous_command_data
@@ -174,7 +174,7 @@ impl CommandTransactionObserver for BuckconfigTelemetry<'_> {
                 self.trace_id.dupe(),
             );
 
-        self.events.instant_event(yak_data::BuckconfigInputValues {
+        self.events.instant_event(yak_data::YakconfigInputValues {
             components: current_external_and_local_configs,
         });
 
@@ -302,7 +302,7 @@ impl ServerCommandDiceContext for dyn ServerCommandContextTrait + '_ {
 
         let early_command_timing = EarlyCommandTimingBuilder::new(self.command_start());
 
-        let transaction_observer = BuckconfigTelemetry {
+        let transaction_observer = YakconfigTelemetry {
             events: self.events().dupe(),
             project_root: self.project_root(),
             previous_command_data: self.previous_command_data(),

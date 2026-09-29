@@ -13,7 +13,7 @@ use derivative::Derivative;
 use derive_more::Display;
 use dupe::Dupe;
 use pagable::Pagable;
-use yak_core::fs::buck_out_path::BuildArtifactPath;
+use yak_core::fs::yak_out_path::BuildArtifactPath;
 use yak_data::ToProtoMessage;
 use yak_error::internal_error;
 use yak_execute::execute::request::OutputType;

@@ -13,7 +13,7 @@ use std::vec;
 
 use allocative::Allocative;
 use pagable::Pagable;
-use yak_hash::BuckIndexSet;
+use yak_hash::YakIndexSet;
 
 /// It is a boxed slice, where all elements are unique.
 #[derive(Debug, Allocative, Pagable)]
@@ -31,9 +31,9 @@ impl<T> BoxSliceSet<T> {
     }
 }
 
-impl<T> From<BuckIndexSet<T>> for BoxSliceSet<T> {
+impl<T> From<YakIndexSet<T>> for BoxSliceSet<T> {
     #[inline]
-    fn from(set: BuckIndexSet<T>) -> BoxSliceSet<T> {
+    fn from(set: YakIndexSet<T>) -> BoxSliceSet<T> {
         BoxSliceSet(set.into_iter().collect())
     }
 }

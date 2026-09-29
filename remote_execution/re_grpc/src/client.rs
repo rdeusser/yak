@@ -88,7 +88,7 @@ use tonic::metadata::MetadataKey;
 use tonic::metadata::MetadataValue;
 use tonic::service::Interceptor;
 use tonic::transport::Channel;
-use yak_re_configuration::Buck2OssReConfiguration;
+use yak_re_configuration::YakOssReConfiguration;
 use yak_re_configuration::HttpHeader;
 
 use crate::error::*;
@@ -241,7 +241,7 @@ impl Compressor {
 pub struct REClientBuilder;
 
 impl REClientBuilder {
-    pub async fn build_and_connect(opts: &Buck2OssReConfiguration) -> anyhow::Result<REClient> {
+    pub async fn build_and_connect(opts: &YakOssReConfiguration) -> anyhow::Result<REClient> {
         // Create channel config once (reads TLS files)
         let channel_config = ChannelConfig::new(opts)
             .await
@@ -1741,14 +1741,14 @@ fn with_re_metadata<T>(t: T, metadata: &RemoteExecutionMetadata) -> tonic::Reque
     RequestMetadata {
         tool_details: Some(ToolDetails {
             tool_name: "yak".to_owned(),
-            // TODO(#503): Pull the BuckVersion::get_unique_id() from BuckDaemon
+            // TODO(#503): Pull the YakVersion::get_unique_id() from YakDaemon
             tool_version: "0.1.0".to_owned(),
         }),
         action_id: "".to_owned(),
         tool_invocation_id: metadata
-            .buck_info
+            .yak_info
             .as_ref()
-            .map_or(String::new(), |buck_info| buck_info.build_id.clone()),
+            .map_or(String::new(), |yak_info| yak_info.build_id.clone()),
         correlated_invocations_id: "".to_owned(),
         action_mnemonic: "".to_owned(),
         target_id: "".to_owned(),

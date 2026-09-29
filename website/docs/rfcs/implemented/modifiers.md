@@ -159,7 +159,7 @@ python_binary(
 )
 ```
 
-Note that for legacy reasons, we also support modifiers defined on the `metadata` attribute via “buck.cfg_modifiers” key.
+Note that for legacy reasons, we also support modifiers defined on the `metadata` attribute via “yak.cfg_modifiers” key.
 
 ```python
 # repo/foo/YAK
@@ -167,14 +167,14 @@ Note that for legacy reasons, we also support modifiers defined on the `metadata
 python_binary(
   name = "bar",
   # ...
-  metadata = {"buck.cfg_modifiers": [
+  metadata = {"yak.cfg_modifiers": [
     "cfg//os:windows",
     "prelude//constraints/compiler:clang",
   ]},
 )
 ```
 
-*Note:* We are in the process of migrating these use cases to the `modifiers` attribute. In the meantime, if a target has both `modifiers` and metadata key “buck.cfg_modifiers” defined, yak will throw an error at configuration time.
+*Note:* We are in the process of migrating these use cases to the `modifiers` attribute. In the meantime, if a target has both `modifiers` and metadata key “yak.cfg_modifiers” defined, yak will throw an error at configuration time.
 
 #### Prefer per-PACKAGE modifiers over per-target modifiers!
 

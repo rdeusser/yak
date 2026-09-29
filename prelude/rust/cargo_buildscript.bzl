@@ -6,14 +6,7 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-# Cargo build script runner compatible with Reindeer-generated targets.
-#
-# Use this reindeer.toml configuration to refer to this rule:
-#
-#     [buck]
-#     buckfile_imports = """
-#     load("@prelude//rust:cargo_buildscript.bzl", "buildscript_run")
-#     """
+# Cargo build script runner for generated third-party Rust targets.
 #
 #     # optional (this matches the default rule name):
 #     buildscript_genrule = "buildscript_run"
@@ -26,7 +19,7 @@ load(
     "cxx_merge_cpreprocessors",
 )
 load("@prelude//cxx:target_sdk_version.bzl", "get_target_triple")
-load("@prelude//decls:common.bzl", "buck")
+load("@prelude//decls:common.bzl", "yak")
 load("@prelude//decls:toolchains_common.bzl", "toolchains_common")
 load("@prelude//linking:link_info.bzl", "LinkInfosTSet", "LinkStrategy", "MergedLinkInfo")
 load("@prelude//os_lookup:defs.bzl", "Os", "OsLookup", "ScriptLanguage")
@@ -41,8 +34,8 @@ load(":build_params.bzl", "MetadataKind")
 load(
     ":cargo_package.bzl",
     "apply_platform_attrs",
-    "get_reindeer_platform_names",
-    "get_reindeer_platforms",
+    "get_cargo_platform_names",
+    "get_cargo_platforms",
 )
 load(":dep_context.bzl", "DepCollectionContext")
 load(
@@ -393,7 +386,7 @@ _cargo_buildscript_rule = rule(
         "rustc_link_search": attrs.bool(default = False),
         "version": attrs.string(),
         "_cxx_toolchain": toolchains_common.cxx(),
-        "_exec_os_type": buck.exec_os_type_arg(),
+        "_exec_os_type": yak.exec_os_type_arg(),
         "_rust_internal_tools_toolchain": attrs.default_only(
             attrs.toolchain_dep(default = "prelude//rust/tools:internal_tools_toolchain"),
         ),
@@ -432,7 +425,7 @@ def buildscript_run(
 
     def platform_buildscript_build_name(plat):
         if name.endswith("-build-script-run"):
-            # This is the expected case for Reindeer-generated targets, which
+            # This is the expected case for generated third-party targets, which
             # come in pairs build-script-run and build-script-build.
             return "{}-build-script-build-{}".format(
                 name.removesuffix("-build-script-run"),
@@ -441,7 +434,7 @@ def buildscript_run(
         else:
             return "{}-{}".format(name, plat)
 
-    for i, plat in enumerate(get_reindeer_platform_names()):
+    for i, plat in enumerate(get_cargo_platform_names()):
         transition_alias(
             name = platform_buildscript_build_name(plat),
             actual = buildscript_rule,
@@ -451,7 +444,7 @@ def buildscript_run(
         )
 
     buildscript_rule = selects.apply(
-        get_reindeer_platforms(),
+        get_cargo_platforms(),
         lambda plat: buildscript_rule if plat == None else ":{}".format(platform_buildscript_build_name(plat)),
     )
 

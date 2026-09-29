@@ -27,7 +27,7 @@ use starlark::values::none::NoneType;
 use starlark::values::starlark_value;
 use yak_core::cells::cell_path::CellPathRef;
 use yak_core::cells::paths::CellRelativePath;
-use yak_interpreter::downstream_crate_starlark_defs::REGISTER_BUCK2_CFG_CONSTRUCTOR_GLOBALS;
+use yak_interpreter::downstream_crate_starlark_defs::REGISTER_YAK_CFG_CONSTRUCTOR_GLOBALS;
 use yak_interpreter_for_build::interpreter::build_context::BuildContext;
 use yak_interpreter_for_build::interpreter::build_context::PerFileTypeContext;
 use yak_interpreter_for_build::interpreter::package_file_extra::MAKE_CFG_CONSTRUCTOR;
@@ -146,5 +146,5 @@ pub(crate) fn register_set_cfg_constructor(globals: &mut GlobalsBuilder) {
 
 pub(crate) fn init_registration() {
     MAKE_CFG_CONSTRUCTOR.init(make_cfg_constructor);
-    REGISTER_BUCK2_CFG_CONSTRUCTOR_GLOBALS.init(register_set_cfg_constructor);
+    REGISTER_YAK_CFG_CONSTRUCTOR_GLOBALS.init(register_set_cfg_constructor);
 }

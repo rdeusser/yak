@@ -62,11 +62,11 @@ use yak_build_api::interpreter::rule_defs::cmd_args::value_as::ValueAsCommandLin
 use yak_common::events::HasEvents;
 use yak_core::fs::artifact_path_resolver::ArtifactFs;
 use yak_core::fs::project::ProjectRoot;
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 use yak_error::starlark_error::from_starlark_with_options;
 use yak_error::yak_error;
 use yak_execute::path::artifact_path::ArtifactPath;
-use yak_hash::BuckIndexSet;
+use yak_hash::YakIndexSet;
 use yak_server_ctx::bxl::BxlStreamingTracker;
 use yak_server_ctx::bxl::GetBxlStreamingTracker;
 
@@ -120,11 +120,11 @@ pub(crate) struct OutputStreamState {
 pub(crate) struct OutputStreamOutcome {
     /// set of artifacts that need to be materialized, flattened from
     /// the original EnsuredArtifactOrGroup entries.
-    pub(crate) ensured_artifacts: BuckIndexSet<ArtifactGroup>,
+    pub(crate) ensured_artifacts: YakIndexSet<ArtifactGroup>,
     pub(crate) output: Vec<u8>,
     pub(crate) streaming: Vec<u8>,
     pub(crate) error: Vec<u8>,
-    pub(crate) pending_streaming_outputs: Vec<(BuckIndexSet<ArtifactGroup>, Vec<u8>)>,
+    pub(crate) pending_streaming_outputs: Vec<(YakIndexSet<ArtifactGroup>, Vec<u8>)>,
 }
 
 #[derive(
@@ -196,7 +196,7 @@ impl OutputStreamState {
             .into_iter()
             .map(EnsuredArtifactOrGroup::into_artifact_groups)
             .flatten_ok()
-            .collect::<yak_error::Result<BuckIndexSet<ArtifactGroup>>>()?;
+            .collect::<yak_error::Result<YakIndexSet<ArtifactGroup>>>()?;
         let pending_streaming_outputs = state
             .pending_streaming_outputs
             .into_iter()
@@ -205,10 +205,10 @@ impl OutputStreamState {
                     .into_iter()
                     .map(|ensured_artifact| ensured_artifact.into_artifact_groups())
                     .flatten_ok()
-                    .collect::<yak_error::Result<BuckIndexSet<ArtifactGroup>>>()?;
+                    .collect::<yak_error::Result<YakIndexSet<ArtifactGroup>>>()?;
                 Ok((artifacts, output_str))
             })
-            .collect::<yak_error::Result<Vec<(BuckIndexSet<ArtifactGroup>, Vec<u8>)>>>()?;
+            .collect::<yak_error::Result<Vec<(YakIndexSet<ArtifactGroup>, Vec<u8>)>>>()?;
         Ok(OutputStreamOutcome {
             ensured_artifacts: artifacts,
             output: state.output,
@@ -544,7 +544,7 @@ impl StarlarkOutputStream {
                 async_ctx: &RefCell::new(&mut BxlEvalExtra::from_context(eval)?.dice),
             },
         )
-        .buck_error_context("Error writing to JSON for `write_json`")?;
+        .yak_error_context("Error writing to JSON for `write_json`")?;
 
         writeln!(&mut output)?;
         output.flush()?;

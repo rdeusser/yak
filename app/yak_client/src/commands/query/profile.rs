@@ -8,7 +8,7 @@
  * above-listed licenses.
  */
 
-use yak_client_ctx::common::profiling::BuckProfileMode;
+use yak_client_ctx::common::profiling::YakProfileMode;
 use yak_client_ctx::path_arg::PathArg;
 
 /// Starlark profiling options
@@ -21,7 +21,7 @@ pub(crate) struct QueryProfileOptions {
     /// and merge the results into a single profile.
     /// The command may return cached profile data if `YAK` files were not invalidated.
     #[clap(long, requires("profile_output"))]
-    pub(crate) profile_mode: Option<BuckProfileMode>,
+    pub(crate) profile_mode: Option<YakProfileMode>,
 
     /// Where to write profile output.
     #[clap(long)]

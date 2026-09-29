@@ -169,7 +169,7 @@ actions that directly mirrors the graph that the `index` step outputs. The graph
 that the `index` step outputs is entirely dynamic and, as such, the build system
 is only aware of what the graph could be after the `index` step is complete.
 Unlike Bazel, yak has explicit support for this paradigm
-[("dynamic dependencies")](https://rdeusser.github.io/buck2/docs/rule_authors/dynamic_dependencies/). Therefore, for
+[("dynamic dependencies")](https://rdeusser.github.io/yak/docs/rule_authors/dynamic_dependencies/). Therefore, for
 yak, the basic strategy looks like:
 
 1. Invoke `clang` to act as `index`. `index` will output a file for every object

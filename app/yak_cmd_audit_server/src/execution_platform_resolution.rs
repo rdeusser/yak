@@ -17,7 +17,7 @@ use yak_cli_proto::ClientContext;
 use yak_cmd_audit_client::execution_platform_resolution::AuditExecutionPlatformResolutionCommand;
 use yak_core::configuration::compatibility::ResultMaybeCompatible;
 use yak_core::target::target_configured_target_label::TargetConfiguredTargetLabel;
-use yak_node::execution::EXECUTION_PLATFORMS_BUCKCONFIG;
+use yak_node::execution::EXECUTION_PLATFORMS_YAKCONFIG;
 use yak_node::execution::GET_EXECUTION_PLATFORMS;
 use yak_node::execution::GetExecutionPlatforms;
 use yak_node::nodes::configured_frontend::ConfiguredTargetNodeCalculation;
@@ -52,7 +52,7 @@ impl ServerAuditSubcommand for AuditExecutionPlatformResolutionCommand {
                     None => {
                         writeln!(
                             stdout,
-                            "Execution platforms are not configured: {EXECUTION_PLATFORMS_BUCKCONFIG} unset"
+                            "Execution platforms are not configured: {EXECUTION_PLATFORMS_YAKCONFIG} unset"
                         )?;
                         writeln!(stdout, "Using legacy execution platform")?;
                     }

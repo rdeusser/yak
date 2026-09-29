@@ -18,19 +18,19 @@ use yak_cli_proto::new_generic::NewGenericRequest;
 use yak_cli_proto::new_generic::NewGenericResponse;
 use yak_client_ctx::client_ctx::ClientCommandContext;
 use yak_client_ctx::command_outcome::CommandOutcome;
-use yak_client_ctx::common::BuckArgMatches;
+use yak_client_ctx::common::YakArgMatches;
 use yak_client_ctx::common::CommonBuildConfigurationOptions;
 use yak_client_ctx::common::CommonEventLogOptions;
 use yak_client_ctx::common::CommonStarlarkOptions;
 use yak_client_ctx::common::target_cfg::TargetCfgOptions;
 use yak_client_ctx::common::ui::CommonConsoleOptions;
-use yak_client_ctx::daemon::client::BuckdClientConnector;
-use yak_client_ctx::daemon::client::FlushingBuckdClient;
+use yak_client_ctx::daemon::client::YakdClientConnector;
+use yak_client_ctx::daemon::client::FlushingYakdClient;
 use yak_client_ctx::events_ctx::EventsCtx;
 use yak_client_ctx::exit_result::ExitResult;
 use yak_client_ctx::streaming::StreamingCommand;
 use yak_common::invocation_roots::InvocationRoots;
-use yak_common::legacy_configs::cells::BuckConfigBasedCells;
+use yak_common::legacy_configs::cells::YakConfigBasedCells;
 use yak_fs::working_dir::AbsWorkingDir;
 
 use super::path_sanitizer::PathSanitizer;
@@ -70,15 +70,15 @@ impl StreamingCommand for CompleteTargetCommand {
 
     async fn exec_impl(
         self,
-        buckd: &mut BuckdClientConnector,
-        matches: BuckArgMatches<'_>,
+        yakd: &mut YakdClientConnector,
+        matches: YakArgMatches<'_>,
         ctx: &mut ClientCommandContext<'_>,
         events_ctx: &mut EventsCtx,
     ) -> ExitResult {
-        let buckd_client = buckd.with_flushing();
+        let yakd_client = yakd.with_flushing();
         let context = ctx.client_context(matches, &self)?;
         let mut target_resolver = DaemonTargetResolver {
-            buckd_client,
+            yakd_client,
             context,
             target_cfg: self.target_cfg,
             events_ctx,
@@ -116,7 +116,7 @@ impl StreamingCommand for CompleteTargetCommand {
 pub(crate) struct TargetCompleter<'a> {
     cwd: AbsWorkingDir,
     roots: &'a InvocationRoots,
-    cell_configs: Arc<BuckConfigBasedCells>,
+    cell_configs: Arc<YakConfigBasedCells>,
     target_resolver: &'a mut dyn TargetResolver,
     results: CompletionResults<'a>,
 }
@@ -128,7 +128,7 @@ impl<'a> TargetCompleter<'a> {
         target_resolver: &'a mut dyn TargetResolver,
     ) -> yak_error::Result<Self> {
         let cell_configs =
-            Arc::new(BuckConfigBasedCells::parse_with_config_args(&roots.project_root, &[]).await?);
+            Arc::new(YakConfigBasedCells::parse_with_config_args(&roots.project_root, &[]).await?);
         Ok(Self {
             cwd: cwd.to_owned(),
             roots,
@@ -166,7 +166,7 @@ impl<'a> TargetCompleter<'a> {
 }
 
 struct DaemonTargetResolver<'a> {
-    buckd_client: FlushingBuckdClient<'a>,
+    yakd_client: FlushingYakdClient<'a>,
     context: ClientContext,
     target_cfg: TargetCfgOptions,
     events_ctx: &'a mut EventsCtx,
@@ -181,7 +181,7 @@ impl TargetResolver for DaemonTargetResolver<'_> {
             target_cfg: self.target_cfg.target_cfg(),
             partial_target,
         });
-        self.buckd_client
+        self.yakd_client
             .new_generic(self.context.clone(), request, self.events_ctx, None)
             .then(|res| async move {
                 match res {

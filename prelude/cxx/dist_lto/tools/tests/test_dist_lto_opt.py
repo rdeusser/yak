@@ -59,8 +59,8 @@ class TestDistLtoOpt(unittest.TestCase):
         ]
         self.assertEqual(_fbcc_prefix_end(opt_args), 4)
 
-    def test_fbcc_prefix_end_buckified_no_log_fbcc(self):
-        """Buckified toolchain: --target is NOT consumed by fbcc and must be
+    def test_fbcc_prefix_end_yakified_no_log_fbcc(self):
+        """Yakified toolchain: --target is NOT consumed by fbcc and must be
         excluded from prefix to avoid breaking -cc1 mode."""
         opt_args = [
             "--",

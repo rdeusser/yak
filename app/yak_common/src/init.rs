@@ -17,14 +17,14 @@ use dupe::Dupe;
 use serde::Deserialize;
 use serde::Serialize;
 use yak_core::yak_env;
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 #[cfg(unix)]
 use yak_fs::paths::abs_norm_path::AbsNormPathBuf;
 use yak_fs::paths::file_name::FileName;
 
-use crate::legacy_configs::configs::LegacyBuckConfig;
-use crate::legacy_configs::key::BuckconfigKeyRef;
-use crate::settings::BuckSettings;
+use crate::legacy_configs::configs::LegacyYakConfig;
+use crate::legacy_configs::key::YakconfigKeyRef;
+use crate::settings::YakSettings;
 
 pub const DEFAULT_RETAINED_EVENT_LOGS: usize = 12;
 
@@ -69,30 +69,30 @@ pub struct HttpConfig {
 }
 
 impl HttpConfig {
-    pub fn from_config(config: &LegacyBuckConfig) -> yak_error::Result<Self> {
-        let connect_timeout_ms = config.parse(BuckconfigKeyRef {
+    pub fn from_config(config: &LegacyYakConfig) -> yak_error::Result<Self> {
+        let connect_timeout_ms = config.parse(YakconfigKeyRef {
             section: "http",
             property: "connect_timeout_ms",
         })?;
-        let read_timeout_ms = config.parse(BuckconfigKeyRef {
+        let read_timeout_ms = config.parse(YakconfigKeyRef {
             section: "http",
             property: "read_timeout_ms",
         })?;
-        let write_timeout_ms = config.parse(BuckconfigKeyRef {
+        let write_timeout_ms = config.parse(YakconfigKeyRef {
             section: "http",
             property: "write_timeout_ms",
         })?;
-        let max_redirects = config.parse(BuckconfigKeyRef {
+        let max_redirects = config.parse(YakconfigKeyRef {
             section: "http",
             property: "max_redirects",
         })?;
         let http2 = config
-            .parse(BuckconfigKeyRef {
+            .parse(YakconfigKeyRef {
                 section: "http",
                 property: "http2",
             })?
             .unwrap_or(true);
-        let max_concurrent_requests = config.parse(BuckconfigKeyRef {
+        let max_concurrent_requests = config.parse(YakconfigKeyRef {
             section: "http",
             property: "max_concurrent_requests",
         })?;
@@ -162,20 +162,20 @@ pub struct SystemWarningConfig {
 }
 
 impl SystemWarningConfig {
-    pub fn from_config(config: &LegacyBuckConfig) -> yak_error::Result<Self> {
-        let memory_pressure_threshold_percent = config.parse(BuckconfigKeyRef {
+    pub fn from_config(config: &LegacyYakConfig) -> yak_error::Result<Self> {
+        let memory_pressure_threshold_percent = config.parse(YakconfigKeyRef {
             section: "yak_system_warning",
             property: "memory_pressure_threshold_percent",
         })?;
-        let remaining_disk_space_threshold_gb = config.parse(BuckconfigKeyRef {
+        let remaining_disk_space_threshold_gb = config.parse(YakconfigKeyRef {
             section: "yak_system_warning",
             property: "remaining_disk_space_threshold_gb",
         })?;
-        let min_re_download_bytes_threshold = config.parse(BuckconfigKeyRef {
+        let min_re_download_bytes_threshold = config.parse(YakconfigKeyRef {
             section: "yak_system_warning",
             property: "min_re_download_bytes_threshold",
         })?;
-        let avg_re_download_bytes_per_sec_threshold = config.parse(BuckconfigKeyRef {
+        let avg_re_download_bytes_per_sec_threshold = config.parse(YakconfigKeyRef {
             section: "yak_system_warning",
             property: "avg_re_download_bytes_per_sec_threshold",
         })?;
@@ -188,12 +188,12 @@ impl SystemWarningConfig {
     }
 
     pub fn serialize(&self) -> yak_error::Result<String> {
-        serde_json::to_string(&self).buck_error_context("Error serializing SystemWarningConfig")
+        serde_json::to_string(&self).yak_error_context("Error serializing SystemWarningConfig")
     }
 
     pub fn deserialize(s: &str) -> yak_error::Result<Self> {
         serde_json::from_str::<Self>(s)
-            .buck_error_context("Error deserializing SystemWarningConfig")
+            .yak_error_context("Error deserializing SystemWarningConfig")
     }
 }
 
@@ -247,7 +247,7 @@ pub struct ResourceControlConfig {
 
 impl ResourceControlConfig {
     pub fn testing_default() -> Self {
-        Self::from_config(&LegacyBuckConfig::empty()).unwrap()
+        Self::from_config(&LegacyYakConfig::empty()).unwrap()
     }
 }
 
@@ -351,20 +351,20 @@ const RESOURCE_CONTROL_ALGO_VERSION: u32 = 6;
 const DAEMON_CGROUP_VERSION: u32 = 1;
 
 impl ResourceControlConfig {
-    pub fn from_config(config: &LegacyBuckConfig) -> yak_error::Result<Self> {
+    pub fn from_config(config: &LegacyYakConfig) -> yak_error::Result<Self> {
         if let Some(env_conf) =
             yak_env!("YAK_TEST_RESOURCE_CONTROL_CONFIG", applicability = testing)?
         {
             Self::deserialize(env_conf)
         } else {
-            let status: Option<ResourceControlStatus> = config.parse(BuckconfigKeyRef {
+            let status: Option<ResourceControlStatus> = config.parse(YakconfigKeyRef {
                 section: "yak_resource_control",
                 property: "status",
             })?;
             let status = if let Some(status) = status {
                 status
             } else {
-                let min_version_for_gated_status: Option<u32> = config.parse(BuckconfigKeyRef {
+                let min_version_for_gated_status: Option<u32> = config.parse(YakconfigKeyRef {
                     section: "yak_resource_control",
                     property: "min_version_for_gated_status",
                 })?;
@@ -372,7 +372,7 @@ impl ResourceControlConfig {
                     .is_some_and(|min_version| DAEMON_CGROUP_VERSION >= min_version)
                 {
                     config
-                        .parse(BuckconfigKeyRef {
+                        .parse(YakconfigKeyRef {
                             section: "yak_resource_control",
                             property: "version_gated_default_status",
                         })?
@@ -382,57 +382,57 @@ impl ResourceControlConfig {
                 }
             };
             let init = config
-                .parse(BuckconfigKeyRef {
+                .parse(YakconfigKeyRef {
                     section: "yak_resource_control",
                     property: "init",
                 })?
                 .unwrap_or(ResourceControlInit::Systemd);
-            let memory_max = config.parse(BuckconfigKeyRef {
+            let memory_max = config.parse(YakconfigKeyRef {
                 section: "yak_resource_control",
                 property: "memory_max",
             })?;
-            let memory_high = config.parse(BuckconfigKeyRef {
+            let memory_high = config.parse(YakconfigKeyRef {
                 section: "yak_resource_control",
                 property: "memory_high",
             })?;
-            let memory_max_per_action = config.parse(BuckconfigKeyRef {
+            let memory_max_per_action = config.parse(YakconfigKeyRef {
                 section: "yak_resource_control",
                 property: "memory_max_per_action",
             })?;
-            let memory_high_per_action = config.parse(BuckconfigKeyRef {
+            let memory_high_per_action = config.parse(YakconfigKeyRef {
                 section: "yak_resource_control",
                 property: "memory_high_per_action",
             })?;
-            let memory_high_actions = config.parse(BuckconfigKeyRef {
+            let memory_high_actions = config.parse(YakconfigKeyRef {
                 section: "yak_resource_control",
                 property: "memory_high_actions",
             })?;
-            let memory_max_actions = config.parse(BuckconfigKeyRef {
+            let memory_max_actions = config.parse(YakconfigKeyRef {
                 section: "yak_resource_control",
                 property: "memory_max_actions",
             })?;
-            let memory_swap_max_actions = config.parse(BuckconfigKeyRef {
+            let memory_swap_max_actions = config.parse(YakconfigKeyRef {
                 section: "yak_resource_control",
                 property: "memory_swap_max_actions",
             })?;
-            let enable_suspension = config.parse(BuckconfigKeyRef {
+            let enable_suspension = config.parse(YakconfigKeyRef {
                 section: "yak_resource_control",
                 property: "enable_suspension",
             })?;
             let enable_suspension_if_min_algo_version: Option<u32> =
-                config.parse(BuckconfigKeyRef {
+                config.parse(YakconfigKeyRef {
                     section: "yak_resource_control",
                     property: "enable_suspension_if_min_algo_version",
                 })?;
             let enable_suspension = enable_suspension.unwrap_or(false)
                 || enable_suspension_if_min_algo_version
                     .is_some_and(|min_version| RESOURCE_CONTROL_ALGO_VERSION >= min_version);
-            let experimental_suspension_algo_variant = config.parse(BuckconfigKeyRef {
+            let experimental_suspension_algo_variant = config.parse(YakconfigKeyRef {
                 section: "yak_resource_control",
                 property: "experimental_suspension_algo_variant",
             })?;
             let preferred_action_suspend_strategy = config
-                .parse(BuckconfigKeyRef {
+                .parse(YakconfigKeyRef {
                     section: "yak_resource_control",
                     property: "preferred_action_suspend_strategy",
                 })?
@@ -455,12 +455,12 @@ impl ResourceControlConfig {
     }
 
     pub fn serialize(&self) -> yak_error::Result<String> {
-        serde_json::to_string(&self).buck_error_context("Error serializing ResourceControlConfig")
+        serde_json::to_string(&self).yak_error_context("Error serializing ResourceControlConfig")
     }
 
     pub fn deserialize(s: &str) -> yak_error::Result<Self> {
         serde_json::from_str::<Self>(s)
-            .buck_error_context("Error deserializing ResourceControlConfig")
+            .yak_error_context("Error deserializing ResourceControlConfig")
     }
 }
 
@@ -493,12 +493,12 @@ impl HydrationConfig {
     /// Returns `None` when neither the yak settings nor their legacy fallbacks
     /// enable paging.
     fn from_config(
-        config: &LegacyBuckConfig,
-        settings: &BuckSettings,
+        config: &LegacyYakConfig,
+        settings: &YakSettings,
     ) -> yak_error::Result<Option<Self>> {
         fn resolve_bool(
             setting: Option<bool>,
-            config: &LegacyBuckConfig,
+            config: &LegacyYakConfig,
             property: &'static str,
         ) -> yak_error::Result<bool> {
             if let Some(setting) = setting {
@@ -506,7 +506,7 @@ impl HydrationConfig {
             }
 
             Ok(config
-                .parse(BuckconfigKeyRef {
+                .parse(YakconfigKeyRef {
                     section: "yak_hydration",
                     property,
                 })?
@@ -526,20 +526,20 @@ impl HydrationConfig {
         }
         Ok(Some(Self {
             pagable_storage_backend: config
-                .parse::<PagableStorageBackend>(BuckconfigKeyRef {
+                .parse::<PagableStorageBackend>(YakconfigKeyRef {
                     section: "yak_hydration",
                     property: "pagable_storage_backend",
                 })?
                 .unwrap_or_default(),
             page_out_on_idle,
             page_out_min_free_disk_gb: config
-                .parse(BuckconfigKeyRef {
+                .parse(YakconfigKeyRef {
                     section: "yak_hydration",
                     property: "page_out_min_free_disk_gb",
                 })?
                 .unwrap_or(100),
             allow_multiple_idle_page_outs: config
-                .parse(BuckconfigKeyRef {
+                .parse(YakconfigKeyRef {
                     section: "yak_hydration",
                     property: "allow_multiple_idle_page_outs",
                 })?
@@ -560,7 +560,7 @@ impl HydrationConfig {
 /// before parsing DaemonStartupConfig).
 #[derive(Allocative, Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct DaemonStartupConfig {
-    pub buck_settings: BuckSettings,
+    pub yak_settings: YakSettings,
     pub num_tokio_workers: Option<usize>,
     pub daemon_buster: Option<String>,
     pub digest_algorithms: Option<String>,
@@ -579,14 +579,14 @@ pub struct DaemonStartupConfig {
 
 impl DaemonStartupConfig {
     pub fn new(
-        config: &LegacyBuckConfig,
-        settings: &BuckSettings,
+        config: &LegacyYakConfig,
+        settings: &YakSettings,
         paranoid: bool,
     ) -> yak_error::Result<Self> {
         // Intepreted client side because we need the value here.
 
         let log_url = settings.log_download.log_url().or_else(|| {
-            config.get(BuckconfigKeyRef {
+            config.get(YakconfigKeyRef {
                 section: "yak",
                 property: "log_url",
             })
@@ -603,34 +603,34 @@ impl DaemonStartupConfig {
         };
 
         Ok(Self {
-            buck_settings: settings.dupe(),
+            yak_settings: settings.dupe(),
             num_tokio_workers: config
-                .parse(BuckconfigKeyRef {
+                .parse(YakconfigKeyRef {
                     section: "build",
                     property: "num_tokio_workers",
                 })
                 .unwrap_or(Some(0)),
             daemon_buster: config
-                .get(BuckconfigKeyRef {
+                .get(YakconfigKeyRef {
                     section: "yak",
                     property: "daemon_buster",
                 })
                 .map(ToOwned::to_owned),
             digest_algorithms: config
-                .get(BuckconfigKeyRef {
+                .get(YakconfigKeyRef {
                     section: "yak",
                     property: "digest_algorithms",
                 })
                 .map(ToOwned::to_owned),
             source_digest_algorithm: config
-                .get(BuckconfigKeyRef {
+                .get(YakconfigKeyRef {
                     section: "yak",
                     property: "source_digest_algorithm",
                 })
                 .map(ToOwned::to_owned),
             paranoid,
             materializations: config
-                .get(BuckconfigKeyRef {
+                .get(YakconfigKeyRef {
                     section: "yak",
                     property: "materializations",
                 })
@@ -639,7 +639,7 @@ impl DaemonStartupConfig {
             resource_control: ResourceControlConfig::from_config(config)?,
             log_download_method,
             retained_event_logs: config
-                .get(BuckconfigKeyRef {
+                .get(YakconfigKeyRef {
                     section: "yak",
                     property: "retained_event_logs",
                 })
@@ -647,7 +647,7 @@ impl DaemonStartupConfig {
                 .unwrap_or(DEFAULT_RETAINED_EVENT_LOGS),
             macos_qos_class: {
                 let from_config = config
-                    .get(BuckconfigKeyRef {
+                    .get(YakconfigKeyRef {
                         section: "yak",
                         property: "macos_qos_class",
                     })
@@ -669,7 +669,7 @@ impl DaemonStartupConfig {
                     from_config
                 }
             },
-            daemon_idle_timeout_s: config.parse(BuckconfigKeyRef {
+            daemon_idle_timeout_s: config.parse(YakconfigKeyRef {
                 section: "yak",
                 property: "daemon_idle_timeout_s",
             })?,
@@ -686,24 +686,24 @@ impl DaemonStartupConfig {
         self.hydration.as_ref().filter(|hydration| {
             hydration.page_out_on_idle
                 && self
-                    .buck_settings
+                    .yak_settings
                     .hydration
                     .page_out_on_idle_applies_to_isolation_dir(isolation_dir)
         })
     }
 
     pub fn serialize(&self) -> yak_error::Result<String> {
-        serde_json::to_string(&self).buck_error_context("Error serializing DaemonStartupConfig")
+        serde_json::to_string(&self).yak_error_context("Error serializing DaemonStartupConfig")
     }
 
     pub fn deserialize(s: &str) -> yak_error::Result<Self> {
         serde_json::from_str::<Self>(s)
-            .buck_error_context("Error deserializing DaemonStartupConfig")
+            .yak_error_context("Error deserializing DaemonStartupConfig")
     }
 
     pub fn testing_empty() -> Self {
         Self {
-            buck_settings: BuckSettings::empty(),
+            yak_settings: YakSettings::empty(),
             num_tokio_workers: None,
             daemon_buster: None,
             digest_algorithms: None,
@@ -733,7 +733,7 @@ mod tests {
     #[test]
     fn test_daemon_idle_timeout_s_default() -> yak_error::Result<()> {
         let config = parse(&[("config", indoc!(r#""#))], "config")?;
-        let startup_config = DaemonStartupConfig::new(&config, &BuckSettings::empty(), false)?;
+        let startup_config = DaemonStartupConfig::new(&config, &YakSettings::empty(), false)?;
         assert_eq!(startup_config.daemon_idle_timeout_s, None);
         Ok(())
     }
@@ -752,7 +752,7 @@ mod tests {
             )],
             "config",
         )?;
-        let startup_config = DaemonStartupConfig::new(&config, &BuckSettings::empty(), false)?;
+        let startup_config = DaemonStartupConfig::new(&config, &YakSettings::empty(), false)?;
         assert_eq!(startup_config.daemon_idle_timeout_s, Some(10800));
         Ok(())
     }
@@ -789,7 +789,7 @@ mod tests {
             "config",
         )?;
 
-        let startup_config = DaemonStartupConfig::new(&config, &BuckSettings::empty(), false)?;
+        let startup_config = DaemonStartupConfig::new(&config, &YakSettings::empty(), false)?;
         let hydration = startup_config
             .hydration
             .expect("Legacy idle page-out config should enable hydration");

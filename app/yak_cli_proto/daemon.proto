@@ -10,7 +10,7 @@
 
 syntax = "proto3";
 
-package buck.daemon;
+package yak.daemon;
 
 import "google/protobuf/timestamp.proto";
 import "google/protobuf/duration.proto";
@@ -72,7 +72,7 @@ message StatusResponse {
   reserved 6;
   reserved 12;
   reserved 15;
-  buck.data.Snapshot snapshot = 7;
+  yak.data.Snapshot snapshot = 7;
   DaemonConstraints daemon_constraints = 8;
   string project_root = 9;
   string isolation_dir = 10;
@@ -82,7 +82,7 @@ message StatusResponse {
   optional string io_provider = 16;
   optional TokioRuntimeMetrics tokio_runtime_metrics = 17;
   optional string allprocs_cgroup_path = 18;
-  repeated buck.subscription.ActiveCommand active_commands = 19;
+  repeated yak.subscription.ActiveCommand active_commands = 19;
 }
 
 message TokioRuntimeMetrics {
@@ -157,13 +157,13 @@ message ClientContext {
   // The name of the command the client thinks it's running.
   string command_name = 17;
   // Any --client-metadata passed by the user.
-  repeated buck.data.ClientMetadata client_metadata = 18;
+  repeated yak.data.ClientMetadata client_metadata = 18;
 
   /// Contents of `YAK_HARD_ERROR` environment variable.
-  string buck2_hard_error = 20;
+  string yak_hard_error = 20;
 
   /// Contents of `YAK_SHOW_SOFT_ERRORS` environment variable.
-  string buck2_show_soft_errors = 26;
+  string yak_show_soft_errors = 26;
 
   enum PreemptibleWhen {
     /// Default
@@ -607,7 +607,7 @@ message BxlResponse {
   reserved 101;
   // Absolute path to the repo root
   string project_root = 2;
-  repeated buck.data.ErrorReport errors = 102;
+  repeated yak.data.ErrorReport errors = 102;
   optional string serialized_build_report = 100;
 }
 
@@ -653,7 +653,7 @@ message BuildResponse {
   string project_root = 2;
 
   optional string serialized_build_report = 100;
-  repeated buck.data.ErrorReport errors = 102;
+  repeated yak.data.ErrorReport errors = 102;
 }
 
 message CounterWithExamples {
@@ -668,12 +668,12 @@ message TestResponse {
   optional string serialized_build_report = 100;
   // Errors from building the test targets. These take precedence over
   // `executor_exit_code` when producing the exit code.
-  repeated buck.data.ErrorReport build_errors = 103;
+  repeated yak.data.ErrorReport build_errors = 103;
   // Errors from the test run itself, such as an expired `--overall-timeout`.
   // The test executor stays in charge of the exit code when these are the only
   // errors, so keep them apart from `build_errors` rather than filtering them
   // back out downstream.
-  repeated buck.data.ErrorReport test_errors = 104;
+  repeated yak.data.ErrorReport test_errors = 104;
   message TestStatuses {
     reserved 1 to 6, 16;
     CounterWithExamples passed = 10;
@@ -733,7 +733,7 @@ message CommandResult {
   reserved 10;
 
   oneof result {
-    buck.data.ErrorReport error = 1;
+    yak.data.ErrorReport error = 1;
     // Ideally, this would be an Any, but tonic/prost doesn't support it yet.
     KillResponse kill_response = 2;
     StatusResponse status_response = 3;
@@ -787,7 +787,7 @@ message PartialResult {
 // A response from a command, either an informational event or the response.
 message CommandProgress {
   oneof progress {
-    buck.data.BuckEvent event = 1;
+    yak.data.YakEvent event = 1;
     CommandResult result = 2;
     PartialResult partial_result = 3;
   }
@@ -884,7 +884,7 @@ message DapRequest {
 /// the starlark DAP server is complete for
 /// this request. Responses to individual
 /// DAP requests are sent back in the event
-/// stream. See `buck.data.DapResult`
+/// stream. See `yak.data.DapResult`
 message DapResponse {}
 
 message BxlProfile {
@@ -971,7 +971,7 @@ message CleanStaleRequest {
 
 message CleanStaleResponse {
   optional string message = 1;
-  buck.data.CleanStaleStats stats = 2;
+  yak.data.CleanStaleStats stats = 2;
 }
 
 message FileStatusRequest {
@@ -1006,7 +1006,7 @@ message HydrationResponse {
   optional string summary = 1;
   // What the page-out moved. Set only for `page-out`, and only on success —
   // failures surface as a command error.
-  optional buck.data.PageOutSummary page_out_summary = 2;
+  optional yak.data.PageOutSummary page_out_summary = 2;
 }
 
 message SetLogFilterRequest {
@@ -1021,12 +1021,12 @@ message SetLogFilterResponse {}
 // directly, but this lets us have the daemon potentially send data to the CLI
 // as a side channel.
 message SubscriptionRequestWrapper {
-  buck.subscription.SubscriptionRequest request = 1;
+  yak.subscription.SubscriptionRequest request = 1;
 }
 
 // Same as above but for responses.
 message SubscriptionResponseWrapper {
-  buck.subscription.SubscriptionResponse response = 1;
+  yak.subscription.SubscriptionResponse response = 1;
 }
 
 // Sent to close out a call to Subscription. Data atually flows through via

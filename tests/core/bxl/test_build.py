@@ -11,32 +11,32 @@ import os
 from pathlib import Path
 
 import pytest
-from e2e_util.api.buck import Buck
-from e2e_util.buck_workspace import buck_test
+from e2e_util.api.yak import Yak
+from e2e_util.yak_workspace import yak_test
 from e2e_util.helper.utils import replace_hash
 
 
-@buck_test()
-async def test_bxl_build(buck: Buck) -> None:
-    result = await buck.bxl(
+@yak_test()
+async def test_bxl_build(yak: Yak) -> None:
+    result = await yak.bxl(
         "//build.bxl:build_test",
         "--",
         "--target",
         ":trivial_build",
     )
     outputs = json.loads(result.stdout)
-    assert (buck.cwd / Path(outputs["root//:trivial_build"][0])).read_text() == "abcd"
+    assert (yak.cwd / Path(outputs["root//:trivial_build"][0])).read_text() == "abcd"
 
-    result = await buck.bxl(
+    result = await yak.bxl(
         "//build.bxl:cquery_build_test",
     )
     outputs = result.stdout.splitlines()[0]
-    assert (buck.cwd / Path(outputs)).read_text() == "abcd"
+    assert (yak.cwd / Path(outputs)).read_text() == "abcd"
 
 
-@buck_test()
-async def test_bxl_build_stats(buck: Buck) -> None:
-    result = await buck.bxl(
+@yak_test()
+async def test_bxl_build_stats(yak: Yak) -> None:
+    result = await yak.bxl(
         "//build.bxl:build_stats",
         "--",
         "--targets",
@@ -49,10 +49,10 @@ async def test_bxl_build_stats(buck: Buck) -> None:
     assert stats["root//build:fail"]["failures"] == 1
 
 
-@buck_test()
-async def test_bxl_target_platform_from_unpacking_providers_expr(buck: Buck) -> None:
+@yak_test()
+async def test_bxl_target_platform_from_unpacking_providers_expr(yak: Yak) -> None:
     # Pass in explicit target platform from client. Result should be configured with this target platform.
-    result = await buck.bxl(
+    result = await yak.bxl(
         "--target-platforms",
         "root//:platform2",
         "//build.bxl:build_with_target_platform_test",
@@ -66,7 +66,7 @@ async def test_bxl_target_platform_from_unpacking_providers_expr(buck: Buck) -> 
     )
 
     # No target platform specified from client context. Result should be configured with root//:platform1
-    result = await buck.bxl(
+    result = await yak.bxl(
         "//build.bxl:build_with_target_platform_test",
         "--",
         "--target",
@@ -78,7 +78,7 @@ async def test_bxl_target_platform_from_unpacking_providers_expr(buck: Buck) -> 
     )
 
     # Target platform from client context should be overridden by what's declared in build().
-    result = await buck.bxl(
+    result = await yak.bxl(
         "//build.bxl:build_with_target_platform_test",
         "--target-platforms",
         "root//:platform2",
@@ -94,28 +94,28 @@ async def test_bxl_target_platform_from_unpacking_providers_expr(buck: Buck) -> 
     )
 
 
-@buck_test()
-async def test_bxl_build_order(buck: Buck) -> None:
-    await buck.bxl("//build_artifacts_order/check.bxl:check")
+@yak_test()
+async def test_bxl_build_order(yak: Yak) -> None:
+    await yak.bxl("//build_artifacts_order/check.bxl:check")
 
 
 @pytest.mark.remote_execution
-@buck_test()
-async def test_bxl_build_no_materialization(buck: Buck) -> None:
-    result = await buck.bxl(
+@yak_test()
+async def test_bxl_build_no_materialization(yak: Yak) -> None:
+    result = await yak.bxl(
         "//materializations.bxl:build",
         "--",
         "--materializations=skip",
     )
 
     [output] = result.stdout.splitlines()
-    assert os.path.exists(buck.cwd / Path(output)) is False
+    assert os.path.exists(yak.cwd / Path(output)) is False
 
-    result = await buck.bxl(
+    result = await yak.bxl(
         "//materializations.bxl:build",
         "--",
         "--materializations=materialize",
     )
 
     [output] = result.stdout.splitlines()
-    assert os.path.exists(buck.cwd / Path(output)) is True
+    assert os.path.exists(yak.cwd / Path(output)) is True

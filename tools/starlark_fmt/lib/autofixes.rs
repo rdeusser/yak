@@ -212,7 +212,7 @@ x = z_func() + a_func()
 
     #[test]
     fn test_select_comma_less_none_branch_through_full_pipeline() {
-        // The reported BUCKFORMAT crash exercised several passes at once: a
+        // The reported YAKFORMAT crash exercised several passes at once: a
         // `select()` whose dict keys must be reordered, whose list value must be
         // sorted, and whose relocated final branch (`"DEFAULT": None`) omits its
         // trailing comma. Running the whole pipeline must reorder everything AND

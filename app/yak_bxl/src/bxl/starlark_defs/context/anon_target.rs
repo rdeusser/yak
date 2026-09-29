@@ -54,13 +54,13 @@ use yak_common::events::HasEvents;
 use yak_common::scope::scope_and_collect_with_dice;
 use yak_core::execution_types::execution::ExecutionPlatformResolution;
 use yak_core::global_cfg_options::GlobalCfgOptions;
-use yak_error::BuckErrorOptionContext;
+use yak_error::YakErrorOptionContext;
 use yak_error::yak_error;
 use yak_execute::digest_config::HasDigestConfig;
-use yak_interpreter::factory::BuckStarlarkModule;
+use yak_interpreter::factory::YakStarlarkModule;
 use yak_interpreter::factory::StarlarkEvaluatorProvider;
 use yak_interpreter::print_handler::EventDispatcherPrintHandler;
-use yak_interpreter::soft_error::Buck2StarlarkSoftErrorHandler;
+use yak_interpreter::soft_error::YakStarlarkSoftErrorHandler;
 use yak_interpreter_for_build::attrs::StarlarkAttribute;
 use yak_interpreter_for_build::rule::StarlarkRuleCallable;
 use yak_interpreter_for_build::rule::frozen_rule_attribute_spec;
@@ -264,7 +264,7 @@ async fn eval_bxl_for_anon_target_inner(
     let eval_kind = anon_target.dupe().eval_kind();
     let provider = StarlarkEvaluatorProvider::new(dice, eval_kind).await?;
 
-    BuckStarlarkModule::with_profiling(|env| {
+    YakStarlarkModule::with_profiling(|env| {
         let bxl_dice = BxlDiceComputations::new(dice, liveness.dupe());
         let bxl_ctx_core_data = Arc::new(bxl_ctx_core_data);
         let mut extra = BxlEvalExtra::new_anon(bxl_dice, bxl_ctx_core_data.dupe());
@@ -272,7 +272,7 @@ async fn eval_bxl_for_anon_target_inner(
         let mut reentrant_eval = provider.make_reentrant_evaluator(&env, liveness.into())?;
         let (bxl_ctx, list_res) = reentrant_eval.with_evaluator(|eval| {
             eval.set_print_handler(&print);
-            eval.set_soft_error_handler(&Buck2StarlarkSoftErrorHandler);
+            eval.set_soft_error_handler(&YakStarlarkSoftErrorHandler);
             eval.extra_mut = Some(&mut extra);
 
             let analysis_registry = AnalysisRegistry::new_from_owner(

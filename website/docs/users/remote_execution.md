@@ -12,7 +12,7 @@ yak projects have been successfully tested for remote execution against
 [BuildBarn](https://github.com/buildbarn/bb-remote-execution) and
 [BuildBuddy](https://www.buildbuddy.io). Sample project configurations for those
 providers are available under
-[examples/remote_execution](https://github.com/rdeusser/buck2/tree/main/examples/remote_execution).
+[examples/remote_execution](https://github.com/rdeusser/yak/tree/main/examples/remote_execution).
 
 ## RE configuration in `.yakconfig`
 
@@ -54,10 +54,10 @@ Next, your build will need an
 [execution platform](../concepts/glossary.md#execution-platform)
 that specifies how and where actions should be executed. For a sample platform
 definition that sets up an execution platform to utilize RE, take a look at the
-[EngFlow example](https://github.com/rdeusser/buck2/blob/main/examples/remote_execution/engflow/platforms/defs.bzl),
-[BuildBarn example](https://github.com/rdeusser/buck2/blob/main/examples/remote_execution/buildbarn/platforms/defs.bzl),
+[EngFlow example](https://github.com/rdeusser/yak/blob/main/examples/remote_execution/engflow/platforms/defs.bzl),
+[BuildBarn example](https://github.com/rdeusser/yak/blob/main/examples/remote_execution/buildbarn/platforms/defs.bzl),
 or the
-[BuildBuddy example](https://github.com/rdeusser/buck2/blob/main/examples/remote_execution/buildbuddy/platforms/defs.bzl).
+[BuildBuddy example](https://github.com/rdeusser/yak/blob/main/examples/remote_execution/buildbuddy/platforms/defs.bzl).
 
 To enable remote execution, configure the following fields in
 [CommandExecutorConfig](../../api/build/CommandExecutorConfig)

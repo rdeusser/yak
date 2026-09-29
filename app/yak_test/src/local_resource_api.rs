@@ -16,7 +16,7 @@ use yak_common::local_resource_state::LocalResource;
 use yak_common::local_resource_state::LocalResourceState;
 use yak_core::target::configured_target_label::ConfiguredTargetLabel;
 use yak_error::ErrorTag;
-use yak_hash::BuckIndexMap;
+use yak_hash::YakIndexMap;
 
 #[derive(Deserialize)]
 /// Represents the JSON schema for output of a local resource command setup.
@@ -35,11 +35,11 @@ impl LocalResourcesSetupResult {
     pub(crate) fn into_state(
         self,
         resource_target: ConfiguredTargetLabel,
-        provider_env_mapping: &BuckIndexMap<String, String>,
+        provider_env_mapping: &YakIndexMap<String, String>,
     ) -> yak_error::Result<LocalResourceState> {
         fn make_resource(
             alias_to_value: BTreeMap<String, String>,
-            env_var_to_alias: &BuckIndexMap<String, String>,
+            env_var_to_alias: &YakIndexMap<String, String>,
         ) -> yak_error::Result<LocalResource> {
             let env_vars = env_var_to_alias
                 .iter()
@@ -75,7 +75,7 @@ mod tests {
     use yak_common::local_resource_state::LocalResource;
     use yak_core::configuration::data::ConfigurationData;
     use yak_core::target::configured_target_label::ConfiguredTargetLabel;
-    use yak_hash::buck_indexmap;
+    use yak_hash::yak_indexmap;
 
     use crate::local_resource_api::LocalResourcesSetupResult;
 
@@ -91,7 +91,7 @@ mod tests {
         };
         let target =
             ConfiguredTargetLabel::testing_parse("foo//bar:baz", ConfigurationData::testing_new());
-        let provider_env_mapping = buck_indexmap! {
+        let provider_env_mapping = yak_indexmap! {
             "ENV_SOCKET".to_owned() => "socket_address".to_owned(),
         };
         let state = setup_result.into_state(target, &provider_env_mapping)?;
@@ -134,7 +134,7 @@ mod tests {
         };
         let target =
             ConfiguredTargetLabel::testing_parse("foo//bar:baz", ConfigurationData::testing_new());
-        let provider_env_mapping = buck_indexmap! {
+        let provider_env_mapping = yak_indexmap! {
             "ENV_SOCKET".to_owned() => "socket_address".to_owned(),
         };
         let result = setup_result.into_state(target, &provider_env_mapping);

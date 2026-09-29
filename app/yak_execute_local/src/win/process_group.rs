@@ -22,7 +22,7 @@ use windows_sys::Win32::Foundation::HANDLE;
 use windows_sys::Win32::System::Threading::CREATE_NO_WINDOW;
 use windows_sys::Win32::System::Threading::CREATE_SUSPENDED;
 use windows_sys::Win32::System::Threading::ResumeThread;
-use yak_error::BuckErrorOptionContext;
+use yak_error::YakErrorOptionContext;
 use yak_resource_control::ActionFreezeEventReceiver;
 use yak_resource_control::path::CgroupPathBuf;
 

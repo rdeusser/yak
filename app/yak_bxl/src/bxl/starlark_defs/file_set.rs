@@ -34,7 +34,7 @@ use starlark::values::starlark_value;
 use starlark::values::type_repr::StarlarkTypeRepr;
 use yak_common::file_ops::metadata::SimpleDirEntry;
 use yak_core::cells::cell_path::CellPath;
-use yak_hash::BuckIndexSet;
+use yak_hash::YakIndexSet;
 use yak_query::query::syntax::simple::eval::file_set::FileNode;
 use yak_query::query::syntax::simple::eval::file_set::FileSet;
 
@@ -59,7 +59,7 @@ impl<'a> FileSetExpr<'a> {
                 bxl.parse_query_file_literal(val)?,
             )])),
             FileSetExpr::Literals(val) => {
-                let mut file_set = FileSet::new(BuckIndexSet::default());
+                let mut file_set = FileSet::new(YakIndexSet::default());
                 for arg in &val {
                     file_set.insert(FileNode(bxl.parse_query_file_literal(arg)?));
                 }
@@ -98,7 +98,7 @@ impl OwnedFileSetExpr {
                 core_data.parse_query_file_literal(val)?,
             )])),
             OwnedFileSetExpr::Literals(val) => {
-                let mut file_set = FileSet::new(BuckIndexSet::default());
+                let mut file_set = FileSet::new(YakIndexSet::default());
                 for arg in val {
                     file_set.insert(FileNode(core_data.parse_query_file_literal(arg)?));
                 }

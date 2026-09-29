@@ -6,26 +6,26 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-from e2e_util.api.buck import Buck
-from e2e_util.buck_workspace import buck_test
+from e2e_util.api.yak import Yak
+from e2e_util.yak_workspace import yak_test
 
 
-@buck_test()
-async def test_allbuildfiles(buck: Buck) -> None:
+@yak_test()
+async def test_allbuildfiles(yak: Yak) -> None:
     target1 = "root//load:abc"
     target2 = "root//transitive_load:def"
     target3 = "root//transitive_load:ghi"
-    out1 = (await buck.uquery(f"allbuildfiles({target1})")).stdout
-    out2 = (await buck.uquery(f"allbuildfiles({target2})")).stdout
-    out3 = (await buck.uquery(f"allbuildfiles({target3})")).stdout
-    out4 = (await buck.uquery(f"allbuildfiles(set({target1} {target2}))")).stdout
+    out1 = (await yak.uquery(f"allbuildfiles({target1})")).stdout
+    out2 = (await yak.uquery(f"allbuildfiles({target2})")).stdout
+    out3 = (await yak.uquery(f"allbuildfiles({target3})")).stdout
+    out4 = (await yak.uquery(f"allbuildfiles(set({target1} {target2}))")).stdout
 
     # First, check that these are the same for cquery
-    assert out1 == (await buck.cquery(f"allbuildfiles({target1})")).stdout
-    assert out2 == (await buck.cquery(f"allbuildfiles({target2})")).stdout
-    assert out3 == (await buck.cquery(f"allbuildfiles({target3})")).stdout
+    assert out1 == (await yak.cquery(f"allbuildfiles({target1})")).stdout
+    assert out2 == (await yak.cquery(f"allbuildfiles({target2})")).stdout
+    assert out3 == (await yak.cquery(f"allbuildfiles({target3})")).stdout
     assert (
-        out4 == (await buck.cquery(f"allbuildfiles(set({target1} {target2}))")).stdout
+        out4 == (await yak.cquery(f"allbuildfiles(set({target1} {target2}))")).stdout
     )
 
     out1 = [x for x in out1.splitlines() if not x.startswith("nano_prelude/")]
@@ -57,23 +57,23 @@ async def test_allbuildfiles(buck: Buck) -> None:
     assert out4 == expected4
 
 
-@buck_test()
-async def test_rbuildfiles(buck: Buck) -> None:
+@yak_test()
+async def test_rbuildfiles(yak: Yak) -> None:
     target_file = "transitive_load/YAK.fixture"
     out1 = (
-        await buck.uquery(f"rbuildfiles({target_file}, transitive_load/c.bzl)")
+        await yak.uquery(f"rbuildfiles({target_file}, transitive_load/c.bzl)")
     ).stdout
-    out2 = (await buck.uquery(f"rbuildfiles({target_file}, {target_file})")).stdout
+    out2 = (await yak.uquery(f"rbuildfiles({target_file}, {target_file})")).stdout
 
     # Check that these are the same for cquery
     assert (
         out1
         == (
-            await buck.cquery(f"rbuildfiles({target_file}, transitive_load/c.bzl)")
+            await yak.cquery(f"rbuildfiles({target_file}, transitive_load/c.bzl)")
         ).stdout
     )
     assert (
-        out2 == (await buck.cquery(f"rbuildfiles({target_file}, {target_file})")).stdout
+        out2 == (await yak.cquery(f"rbuildfiles({target_file}, {target_file})")).stdout
     )
 
     assert "transitive_load/b.bzl" in out1

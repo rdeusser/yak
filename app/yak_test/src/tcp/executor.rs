@@ -15,14 +15,14 @@ use std::process::Stdio;
 use futures::future::Either;
 use tokio::net::TcpListener;
 use tokio::net::TcpStream;
-use yak_error::BuckErrorContext as _;
+use yak_error::YakErrorContext as _;
 use yak_util::process::async_background_command;
 
 use crate::executor_launcher::ExecutorFuture;
 
 /// Environment variable used to pass the actual username from yak client to the test executor.
 /// This is necessary because in some scenarios yakd may run as a different user than the user who invoked `yak test`.
-const BUCK2_TEST_EXECUTOR_USER_ENV_VAR: &str = "YAK_TEST_EXECUTOR_USER";
+const YAK_TEST_EXECUTOR_USER_ENV_VAR: &str = "YAK_TEST_EXECUTOR_USER";
 
 pub(crate) async fn spawn(
     executable: &Path,
@@ -50,10 +50,10 @@ pub(crate) async fn spawn(
     // This executor also serves Windows, where `USERNAME` names the user.
     let user_var = if cfg!(windows) { "USERNAME" } else { "USER" };
     if let Some(user) = std::env::var_os(user_var) {
-        command.env(BUCK2_TEST_EXECUTOR_USER_ENV_VAR, user);
+        command.env(YAK_TEST_EXECUTOR_USER_ENV_VAR, user);
     }
 
-    let proc = command.spawn().with_buck_error_context(|| {
+    let proc = command.spawn().with_yak_error_context(|| {
         format!(
             "Failed to start {} for OutOfProcessTestExecutor",
             executable.display()
@@ -69,7 +69,7 @@ pub(crate) async fn spawn(
             executor_tcp_listener.accept(),
         )
         .await
-        .with_buck_error_context(|| {
+        .with_yak_error_context(|| {
             format!(
                 "Failed to accept TCP connection from {}",
                 executable.display()

@@ -13,7 +13,7 @@ use std::time::SystemTime;
 
 use prost::Message;
 use yak_client_ctx::client_ctx::ClientCommandContext;
-use yak_client_ctx::common::BuckArgMatches;
+use yak_client_ctx::common::YakArgMatches;
 use yak_client_ctx::exit_result::ExitResult;
 use yak_fs::error::IoResultExt;
 use yak_fs::fs_util;
@@ -43,7 +43,7 @@ pub struct EnableParanoidCommand {
 pub struct DisableParanoidCommand {}
 
 impl ParanoidCommand {
-    pub fn exec(self, _matches: BuckArgMatches<'_>, ctx: ClientCommandContext<'_>) -> ExitResult {
+    pub fn exec(self, _matches: YakArgMatches<'_>, ctx: ClientCommandContext<'_>) -> ExitResult {
         let paranoid_info_path = ctx.paths()?.roots.paranoid_info_path()?;
 
         if let Some(parent) = paranoid_info_path.parent() {

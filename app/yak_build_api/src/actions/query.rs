@@ -41,8 +41,8 @@ use yak_core::package::PackageLabel;
 use yak_core::provider::label::ConfiguredProvidersLabel;
 use yak_execute::artifact::fs::ExecutorFs;
 use yak_fs::paths::forward_rel_path::ForwardRelativePathBuf;
-use yak_hash::BuckIndexMap;
-use yak_hash::BuckMutSet;
+use yak_hash::YakIndexMap;
+use yak_hash::YakMutSet;
 use yak_node::attrs::configured_attr::ConfiguredAttr;
 use yak_query::query::environment::QueryTarget;
 use yak_query::query::graph::node::LabeledNode;
@@ -248,7 +248,7 @@ impl ActionData {
         &self.deps
     }
 
-    fn attrs(&self) -> BuckIndexMap<String, String> {
+    fn attrs(&self) -> YakIndexMap<String, String> {
         let mut attrs = self.action.action().aquery_attributes(
             &ExecutorFs::new(
                 &self.fs,
@@ -259,18 +259,18 @@ impl ActionData {
             },
         );
         attrs.insert(
-            "buck.executor_configuration".to_owned(),
+            "yak.executor_configuration".to_owned(),
             self.action.execution_config().executor.to_string(),
         );
         attrs.insert(
-            "buck.all_outputs_are_content_based".to_owned(),
+            "yak.all_outputs_are_content_based".to_owned(),
             self.action
                 .action()
                 .all_outputs_are_content_based()
                 .to_string(),
         );
         attrs.insert(
-            "buck.all_inputs_are_eligible_for_dedupe".to_owned(),
+            "yak.all_inputs_are_eligible_for_dedupe".to_owned(),
             self.action
                 .action()
                 .all_inputs_are_eligible_for_dedupe()
@@ -280,7 +280,7 @@ impl ActionData {
         let all_ineligible = self.action.action().all_ineligible_for_dedup_inputs();
         if !all_ineligible.is_empty() {
             attrs.insert(
-                "buck.all_ineligible_for_dedup_inputs".to_owned(),
+                "yak.all_ineligible_for_dedup_inputs".to_owned(),
                 all_ineligible.join(", "),
             );
         }
@@ -458,13 +458,13 @@ pub fn iter_action_inputs<'a>(
     deps: &'a [ActionInput],
 ) -> impl Iterator<Item = &'a ActionQueryNodeRef> + Send + 'a {
     struct Iter<'a> {
-        visited: BuckMutSet<&'a SetProjectionInputs>,
+        visited: YakMutSet<&'a SetProjectionInputs>,
         queue: VecDeque<&'a SetProjectionInputs>,
     }
 
     impl<'a> Iter<'a> {
         fn new<From: Iterator<Item = &'a SetProjectionInputs>>(iter: From) -> Self {
-            let mut visited = BuckMutSet::default();
+            let mut visited = YakMutSet::default();
             let mut queue = VecDeque::new();
             for it in iter {
                 if visited.insert(it) {

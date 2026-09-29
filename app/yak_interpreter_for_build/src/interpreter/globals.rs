@@ -10,20 +10,20 @@
 
 use starlark::environment::GlobalsBuilder;
 use starlark::environment::LibraryExtension;
-use yak_interpreter::downstream_crate_starlark_defs::REGISTER_BUCK2_ACTION_IMPL_GLOBALS;
-use yak_interpreter::downstream_crate_starlark_defs::REGISTER_BUCK2_ANON_TARGETS_GLOBALS;
-use yak_interpreter::downstream_crate_starlark_defs::REGISTER_BUCK2_BUILD_API_GLOBALS;
-use yak_interpreter::downstream_crate_starlark_defs::REGISTER_BUCK2_BUILD_API_INTERNALS;
-use yak_interpreter::downstream_crate_starlark_defs::REGISTER_BUCK2_BXL_GLOBALS;
-use yak_interpreter::downstream_crate_starlark_defs::REGISTER_BUCK2_CFG_CONSTRUCTOR_GLOBALS;
-use yak_interpreter::downstream_crate_starlark_defs::REGISTER_BUCK2_TRANSITION_GLOBALS;
+use yak_interpreter::downstream_crate_starlark_defs::REGISTER_YAK_ACTION_IMPL_GLOBALS;
+use yak_interpreter::downstream_crate_starlark_defs::REGISTER_YAK_ANON_TARGETS_GLOBALS;
+use yak_interpreter::downstream_crate_starlark_defs::REGISTER_YAK_BUILD_API_GLOBALS;
+use yak_interpreter::downstream_crate_starlark_defs::REGISTER_YAK_BUILD_API_INTERNALS;
+use yak_interpreter::downstream_crate_starlark_defs::REGISTER_YAK_BXL_GLOBALS;
+use yak_interpreter::downstream_crate_starlark_defs::REGISTER_YAK_CFG_CONSTRUCTOR_GLOBALS;
+use yak_interpreter::downstream_crate_starlark_defs::REGISTER_YAK_TRANSITION_GLOBALS;
 use yak_interpreter::starlark_promise::register_promise;
 use yak_interpreter::types::cell_path::register_cell_path;
 use yak_interpreter::types::cell_root::register_cell_root;
 use yak_interpreter::types::configured_providers_label::register_providers_label;
 use yak_interpreter::types::package_path::register_package_path;
 use yak_interpreter::types::project_root::register_project_root;
-use yak_interpreter::types::regex::register_buck_regex;
+use yak_interpreter::types::regex::register_yak_regex;
 use yak_interpreter::types::target_label::register_target_label;
 use yak_util::late_binding::LateBinding;
 
@@ -56,12 +56,12 @@ fn from_late_binding(l: &LateBinding<fn(&mut GlobalsBuilder)>, builder: &mut Glo
 }
 
 // NOTE: Semantically, `register_load_natives`, `register_analysis_natives`, `register_bxl_natives`,
-// and `starlark_library_extensions_for_buck2` are all the same, since all symbols are available
+// and `starlark_library_extensions_for_yak` are all the same, since all symbols are available
 // everywhere. However, we distinguish between them for the purpose of generating documentation.
 
 pub fn register_load_natives(builder: &mut GlobalsBuilder) {
-    from_late_binding(&REGISTER_BUCK2_CFG_CONSTRUCTOR_GLOBALS, builder);
-    from_late_binding(&REGISTER_BUCK2_TRANSITION_GLOBALS, builder);
+    from_late_binding(&REGISTER_YAK_CFG_CONSTRUCTOR_GLOBALS, builder);
+    from_late_binding(&REGISTER_YAK_TRANSITION_GLOBALS, builder);
     register_module_natives(builder);
     register_host_info(builder);
     register_read_config(builder);
@@ -70,7 +70,7 @@ pub fn register_load_natives(builder: &mut GlobalsBuilder) {
     register_package_natives(builder);
     register_warning(builder);
     register_regex(builder);
-    register_buck_regex(builder);
+    register_yak_regex(builder);
     register_load_symbols(builder);
     register_rule_function(builder);
     register_attrs(builder);
@@ -90,17 +90,17 @@ pub fn register_load_natives(builder: &mut GlobalsBuilder) {
 }
 
 pub fn register_analysis_natives(builder: &mut GlobalsBuilder) {
-    from_late_binding(&REGISTER_BUCK2_ACTION_IMPL_GLOBALS, builder);
-    from_late_binding(&REGISTER_BUCK2_BUILD_API_GLOBALS, builder);
+    from_late_binding(&REGISTER_YAK_ACTION_IMPL_GLOBALS, builder);
+    from_late_binding(&REGISTER_YAK_BUILD_API_GLOBALS, builder);
     register_promise(builder);
-    from_late_binding(&REGISTER_BUCK2_ANON_TARGETS_GLOBALS, builder);
+    from_late_binding(&REGISTER_YAK_ANON_TARGETS_GLOBALS, builder);
 }
 
 pub fn register_bxl_natives(builder: &mut GlobalsBuilder) {
-    from_late_binding(&REGISTER_BUCK2_BXL_GLOBALS, builder);
+    from_late_binding(&REGISTER_YAK_BXL_GLOBALS, builder);
 }
 
-pub fn starlark_library_extensions_for_buck2() -> &'static [LibraryExtension] {
+pub fn starlark_library_extensions_for_yak() -> &'static [LibraryExtension] {
     &[
         LibraryExtension::Breakpoint,
         LibraryExtension::Debug,
@@ -127,14 +127,14 @@ fn register_all_natives(builder: &mut GlobalsBuilder) {
     register_load_natives(builder);
     register_analysis_natives(builder);
     register_bxl_natives(builder);
-    for ext in starlark_library_extensions_for_buck2() {
+    for ext in starlark_library_extensions_for_yak() {
         ext.add(builder);
     }
 }
 
 fn register_all_internals(builder: &mut GlobalsBuilder) {
     register_internals(builder);
-    from_late_binding(&REGISTER_BUCK2_BUILD_API_INTERNALS, builder);
+    from_late_binding(&REGISTER_YAK_BUILD_API_INTERNALS, builder);
     register_select_internal(builder);
     register_xml(builder);
 }
@@ -144,7 +144,7 @@ fn register_all_internals(builder: &mut GlobalsBuilder) {
 /// This does not include the implicit prelude and cell imports which are only available in `YAK`
 /// files, but does include everything else.
 ///
-/// Note: As long as starlark/buck have any notion of reference equality, it is important for
+/// Note: As long as starlark/yak have any notion of reference equality, it is important for
 /// correctness that this be called just once. The result should be accessed via
 /// `ctx.get_global_interpreter_state()`
 pub(crate) fn base_globals() -> GlobalsBuilder {
@@ -152,7 +152,7 @@ pub(crate) fn base_globals() -> GlobalsBuilder {
     global_env.namespace("__internal__", |x| {
         register_all_internals(x);
     });
-    global_env.namespace("__buck2_builtins__", |x| {
+    global_env.namespace("__yak_builtins__", |x| {
         register_all_natives(x);
     });
     global_env

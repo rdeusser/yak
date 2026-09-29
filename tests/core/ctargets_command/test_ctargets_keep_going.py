@@ -6,8 +6,8 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-from e2e_util.api.buck import Buck
-from e2e_util.buck_workspace import buck_test
+from e2e_util.api.yak import Yak
+from e2e_util.yak_workspace import yak_test
 from e2e_util.helper.golden import (
     golden,
     golden_replace_cfg_hash,
@@ -15,10 +15,10 @@ from e2e_util.helper.golden import (
 )
 
 
-@buck_test()
-async def test_ctargets_keep_going_parse_error_json(buck: Buck) -> None:
+@yak_test()
+async def test_ctargets_keep_going_parse_error_json(yak: Yak) -> None:
     """Test that package parse errors appear in JSON output with --keep-going"""
-    result = await buck.ctargets(
+    result = await yak.ctargets(
         "//a:target1",
         "//b:any",
         "//a:target2",
@@ -37,10 +37,10 @@ async def test_ctargets_keep_going_parse_error_json(buck: Buck) -> None:
     )
 
 
-@buck_test()
-async def test_ctargets_keep_going_parse_error_plain_text(buck: Buck) -> None:
+@yak_test()
+async def test_ctargets_keep_going_parse_error_plain_text(yak: Yak) -> None:
     """Test that parse errors go to stderr in plain text mode"""
-    result = await buck.ctargets(
+    result = await yak.ctargets(
         "//a:target1",
         "//b:any",
         "//a:target2",
@@ -58,10 +58,10 @@ async def test_ctargets_keep_going_parse_error_plain_text(buck: Buck) -> None:
     )
 
 
-@buck_test()
-async def test_ctargets_keep_going_missing_package(buck: Buck) -> None:
+@yak_test()
+async def test_ctargets_keep_going_missing_package(yak: Yak) -> None:
     """Test that missing packages are handled with --keep-going"""
-    result = await buck.ctargets(
+    result = await yak.ctargets(
         "//a:target1",
         "//nonexistent_package:target",
         "//a:target2",
@@ -80,10 +80,10 @@ async def test_ctargets_keep_going_missing_package(buck: Buck) -> None:
     )
 
 
-@buck_test()
-async def test_ctargets_keep_going_with_incompatible(buck: Buck) -> None:
+@yak_test()
+async def test_ctargets_keep_going_with_incompatible(yak: Yak) -> None:
     """Test that incompatible targets and errors work together correctly"""
-    result = await buck.ctargets(
+    result = await yak.ctargets(
         "//a:target1",
         "//a:macos_only",
         "//b:any",
@@ -102,10 +102,10 @@ async def test_ctargets_keep_going_with_incompatible(buck: Buck) -> None:
     )
 
 
-@buck_test()
-async def test_ctargets_keep_going_single_error(buck: Buck) -> None:
+@yak_test()
+async def test_ctargets_keep_going_single_error(yak: Yak) -> None:
     """Test edge case with single failing target"""
-    result = await buck.ctargets(
+    result = await yak.ctargets(
         "//b:does_not_matter",
         "--target-platforms=root//:p",
         "--keep-going",
@@ -122,10 +122,10 @@ async def test_ctargets_keep_going_single_error(buck: Buck) -> None:
     )
 
 
-@buck_test()
-async def test_ctargets_keep_going_multiple_packages_with_errors(buck: Buck) -> None:
+@yak_test()
+async def test_ctargets_keep_going_multiple_packages_with_errors(yak: Yak) -> None:
     """Test errors from multiple different packages"""
-    result = await buck.ctargets(
+    result = await yak.ctargets(
         "//a:target1",
         "//b:any",
         "//d:exists",
@@ -145,10 +145,10 @@ async def test_ctargets_keep_going_multiple_packages_with_errors(buck: Buck) -> 
     )
 
 
-@buck_test()
-async def test_ctargets_keep_going_transitive_incompatible(buck: Buck) -> None:
+@yak_test()
+async def test_ctargets_keep_going_transitive_incompatible(yak: Yak) -> None:
     """Test transitive incompatibility"""
-    result = await buck.ctargets(
+    result = await yak.ctargets(
         "//a:target1",
         "//c:depends_on_incompatible",
         "//a:target2",
@@ -167,10 +167,10 @@ async def test_ctargets_keep_going_transitive_incompatible(buck: Buck) -> None:
     )
 
 
-@buck_test()
-async def test_ctargets_keep_going_modifier_conflict(buck: Buck) -> None:
+@yak_test()
+async def test_ctargets_keep_going_modifier_conflict(yak: Yak) -> None:
     """Test modifier conflict: pattern modifiers + global modifiers"""
-    result = await buck.ctargets(
+    result = await yak.ctargets(
         "//a:target1",
         "//a:target2?root//:linux",
         "--modifier",

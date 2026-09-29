@@ -53,17 +53,17 @@ use tonic::Response;
 use tonic::Status;
 use tonic::service::Interceptor;
 use tonic::service::InterceptorLayer;
-use yak_build_api::configure_dice::configure_dice_for_buck;
-use yak_build_api::spawner::BuckSpawner;
+use yak_build_api::configure_dice::configure_dice_for_yak;
+use yak_build_api::spawner::YakSpawner;
 use yak_cli_proto::daemon_api_server::*;
 use yak_cli_proto::*;
-use yak_common::buckd_connection::BUCK_AUTH_TOKEN_HEADER;
+use yak_common::yakd_connection::YAK_AUTH_TOKEN_HEADER;
 use yak_common::events::HasEvents;
 use yak_common::init::DaemonStartupConfig;
 use yak_common::invocation_paths::InvocationPaths;
 use yak_common::io::IoProvider;
 use yak_common::io::trace::TracingIoProvider;
-use yak_common::legacy_configs::configs::LegacyBuckConfig;
+use yak_common::legacy_configs::configs::LegacyYakConfig;
 use yak_common::memory;
 use yak_common::sqlite::sqlite_db::SqliteIdentity;
 use yak_core::error::SoftErrorContext;
@@ -71,7 +71,7 @@ use yak_core::fs::project::ProjectRoot;
 use yak_core::logging::LogConfigurationReloadHandle;
 use yak_core::pattern::unparsed::UnparsedPatternPredicate;
 use yak_core::yak_env;
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 use yak_error::ErrorTag;
 use yak_events::Event;
 use yak_events::daemon_id::DaemonId;
@@ -89,8 +89,8 @@ use yak_fs::paths::abs_path::AbsPathBuf;
 use yak_interpreter::starlark_profiler::config::StarlarkProfilerConfiguration;
 use yak_profile::proto_to_profile_mode;
 use yak_profile::starlark_profiler_configuration_from_request;
-use yak_resource_control::buck_cgroup_tree::BuckCgroupTree;
-use yak_resource_control::buck_cgroup_tree::PreppedBuckCgroups;
+use yak_resource_control::yak_cgroup_tree::YakCgroupTree;
+use yak_resource_control::yak_cgroup_tree::PreppedYakCgroups;
 use yak_server_ctx::bxl::BXL_SERVER_COMMANDS;
 use yak_server_ctx::ctx::ServerCommandContextTrait;
 use yak_server_ctx::late_bindings::AUDIT_SERVER_COMMAND;
@@ -229,7 +229,7 @@ impl DaemonShutdown {
 }
 
 #[derive(Allocative)]
-pub struct BuckdServerInitPreferences {
+pub struct YakdServerInitPreferences {
     pub detect_cycles: Option<DetectCycles>,
     pub enable_trace_io: bool,
     pub reject_materializer_state: Option<SqliteIdentity>,
@@ -246,7 +246,7 @@ pub(crate) struct RepoStateInitPreferences {
     pub(crate) daemon_startup_config: DaemonStartupConfig,
 }
 
-impl BuckdServerInitPreferences {
+impl YakdServerInitPreferences {
     pub(crate) fn split(self) -> (RepoStateInitPreferences, Option<String>) {
         let Self {
             detect_cycles,
@@ -273,13 +273,13 @@ impl RepoStateInitPreferences {
         &self,
         io: Arc<dyn IoProvider>,
         digest_config: DigestConfig,
-        root_config: &LegacyBuckConfig,
+        root_config: &LegacyYakConfig,
         dice_state_path: &Path,
     ) -> yak_error::Result<Arc<Dice>> {
         // `hydration` is `Some` when paging is enabled (via `enable_paging` or
         // `page_out_on_idle`), which is what gates setting up on-disk storage.
         let hydration = self.daemon_startup_config.hydration.as_ref();
-        configure_dice_for_buck(
+        configure_dice_for_yak(
             io,
             digest_config,
             Some(root_config),
@@ -292,13 +292,13 @@ impl RepoStateInitPreferences {
 }
 
 #[derive(Clone)]
-struct BuckCheckAuthTokenInterceptor {
+struct YakCheckAuthTokenInterceptor {
     auth_token: String,
 }
 
-impl Interceptor for BuckCheckAuthTokenInterceptor {
+impl Interceptor for YakCheckAuthTokenInterceptor {
     fn call(&mut self, request: Request<()>) -> Result<Request<()>, Status> {
-        let token = match request.metadata().get(BUCK_AUTH_TOKEN_HEADER) {
+        let token = match request.metadata().get(YAK_AUTH_TOKEN_HEADER) {
             Some(token) => token,
             None => return Err(Status::unauthenticated("missing auth token")),
         };
@@ -315,7 +315,7 @@ impl Interceptor for BuckCheckAuthTokenInterceptor {
 }
 
 #[derive(Allocative)]
-pub(crate) struct BuckdServerData {
+pub(crate) struct YakdServerData {
     /// The flag that is set to true when server is shutting down.
     stop_accepting_requests: AtomicBool,
     #[allocative(skip)]
@@ -335,22 +335,22 @@ pub(crate) struct BuckdServerData {
     rt: Handle,
 }
 
-/// The BuckdServer implements the DaemonApi.
+/// The YakdServer implements the DaemonApi.
 ///
 /// Simple endpoints are implemented here and complex things will be implemented in a sibling
 /// module taking just a ServerCommandContext.
 #[derive(Allocative)]
-pub struct BuckdServer(Arc<BuckdServerData>);
+pub struct YakdServer(Arc<YakdServerData>);
 
-impl BuckdServer {
+impl YakdServer {
     #[tracing::instrument(name = "daemon_listener", skip_all)]
     pub async fn run(
         log_reload_handle: Arc<dyn LogConfigurationReloadHandle>,
         paths: InvocationPaths,
-        init_ctx: BuckdServerInitPreferences,
+        init_ctx: YakdServerInitPreferences,
         process_info: DaemonProcessInfo,
         in_process: bool,
-        prepped_cgroups: Option<PreppedBuckCgroups>,
+        prepped_cgroups: Option<PreppedYakCgroups>,
         base_daemon_constraints: yak_cli_proto::DaemonConstraints,
         listener: Pin<Box<dyn Stream<Item = Result<tokio::net::TcpStream, io::Error>> + Send>>,
         rt: Handle,
@@ -371,19 +371,19 @@ impl BuckdServer {
         let tenant_paths = paths.tenant_paths();
 
         // Create yak-out and potentially chdir to there.
-        fs_util::create_dir_all(tenant_paths.buck_out_path())
-            .tag(ErrorTag::InvalidBuckOut)
-            .buck_error_context("Error creating buck_out_path")?;
+        fs_util::create_dir_all(tenant_paths.yak_out_path())
+            .tag(ErrorTag::InvalidYakOut)
+            .yak_error_context("Error creating yak_out_path")?;
 
         let cwd = {
-            let dir = WorkingDirectory::open(tenant_paths.buck_out_path())?;
+            let dir = WorkingDirectory::open(tenant_paths.yak_out_path())?;
             dir.chdir_and_promise_it_will_not_change()?;
             dir
         };
 
         let cgroup_tree = if let Some(prepped_cgroups) = prepped_cgroups {
             Some(
-                BuckCgroupTree::set_up(
+                YakCgroupTree::set_up(
                     prepped_cgroups,
                     &init_ctx.daemon_startup_config.resource_control,
                 )
@@ -418,7 +418,7 @@ impl BuckdServer {
             .dupe();
 
         let auth_token = process_info.auth_token.clone();
-        let api_server = BuckdServer(Arc::new(BuckdServerData {
+        let api_server = YakdServer(Arc::new(YakdServerData {
             stop_accepting_requests: AtomicBool::new(false),
             process_info,
             base_daemon_constraints,
@@ -442,7 +442,7 @@ impl BuckdServer {
             in_process,
         );
         let server = yak_grpc::server_builder()
-            .layer(InterceptorLayer::new(BuckCheckAuthTokenInterceptor {
+            .layer(InterceptorLayer::new(YakCheckAuthTokenInterceptor {
                 auth_token,
             }))
             .add_service(
@@ -563,8 +563,8 @@ impl BuckdServer {
 
         let client_ctx = req.get_ref().client_context()?;
         let soft_error_context = Arc::new(SoftErrorContext::new(
-            &client_ctx.buck2_hard_error,
-            &client_ctx.buck2_show_soft_errors,
+            &client_ctx.yak_hard_error,
+            &client_ctx.yak_show_soft_errors,
         )?);
 
         OneshotCommandOptions::pre_run(&opts, self)?;
@@ -593,7 +593,7 @@ impl BuckdServer {
         // Captured here alongside `SystemInfo` and handed to this command's
         // `PagingManager`, which pairs it with the command-end snapshot's used-disk
         // reading to gate idle page-out without a second disk stat.
-        let total_disk_space_bytes = disk_space_stats(repo.paths.buck_out_path())
+        let total_disk_space_bytes = disk_space_stats(repo.paths.yak_out_path())
             .ok()
             .map(|DiskSpaceStats { total_space, .. }| total_space);
 
@@ -901,11 +901,11 @@ fn pump_events(
                     progress: Some(command_progress::Progress::PartialResult(Box::new(result))),
                 }));
             }
-            Event::Buck(buck_event) => {
-                state.peek_event(&buck_event);
+            Event::Yak(yak_event) => {
+                state.peek_event(&yak_event);
 
                 let _ignore = output_send.send(Ok(CommandProgress {
-                    progress: Some(command_progress::Progress::Event(buck_event.into())),
+                    progress: Some(command_progress::Progress::Event(yak_event.into())),
                 }));
             }
         }
@@ -947,7 +947,7 @@ where
 
     let spawned = spawn_dropcancel(
         |cancellations| func(req, cancellations),
-        &BuckSpawner::new(rt.clone()),
+        &YakSpawner::new(rt.clone()),
         &events_ctx,
     );
     let (output_send, output_recv) = tokio::sync::mpsc::unbounded_channel();
@@ -976,7 +976,7 @@ where
     let daemon_shutdown_stream = daemon_shutdown_channel
         .map_ok(move |shutdown| CommandProgress {
             progress: Some(command_progress::Progress::Event(Box::new(
-                yak_data::BuckEvent {
+                yak_data::YakEvent {
                     timestamp: Some(SystemTime::now().into()),
                     trace_id: trace_id.to_string(),
                     span_id: 0,
@@ -1014,7 +1014,7 @@ struct QueryCommandOptions {
 }
 
 impl OneshotCommandOptions for QueryCommandOptions {
-    fn pre_run(&self, _server: &BuckdServer) -> Result<(), Status> {
+    fn pre_run(&self, _server: &YakdServer) -> Result<(), Status> {
         Ok(())
     }
 }
@@ -1045,13 +1045,13 @@ type ResponseStream =
     Pin<Box<dyn Stream<Item = Result<MultiCommandProgress, Status>> + Send + Sync>>;
 
 #[async_trait]
-impl DaemonApi for BuckdServer {
+impl DaemonApi for YakdServer {
     async fn kill(&self, req: Request<KillRequest>) -> Result<Response<CommandResult>, Status> {
         struct KillRunCommandOptions;
 
         impl OneshotCommandOptions for KillRunCommandOptions {
             /// kill should be always available
-            fn pre_run(&self, _server: &BuckdServer) -> Result<(), Status> {
+            fn pre_run(&self, _server: &YakdServer) -> Result<(), Status> {
                 Ok(())
             }
         }
@@ -1089,7 +1089,7 @@ impl DaemonApi for BuckdServer {
                 0;
                 req.response_payload_size
                     .try_into()
-                    .buck_error_context("requested payload too large")?
+                    .yak_error_context("requested payload too large")?
             ];
             rand::rngs::SmallRng::seed_from_u64(10).fill_bytes(&mut payload);
 
@@ -1528,12 +1528,12 @@ impl DaemonApi for BuckdServer {
         let req = req.into_inner();
         let response = if req.purge {
             memory::purge_jemalloc()
-                .buck_error_context("Failed to purge jemalloc")
+                .yak_error_context("Failed to purge jemalloc")
                 .and_then(|()| memory::allocator_stats(&req.options))
         } else {
             memory::allocator_stats(&req.options)
         }
-        .buck_error_context("Failed to retrieve allocator stats");
+        .yak_error_context("Failed to retrieve allocator stats");
 
         match response {
             Ok(response) => Ok(Response::new(UnstableAllocatorStatsResponse { response })),
@@ -1559,11 +1559,11 @@ impl DaemonApi for BuckdServer {
             let path = Path::new(&path);
             let format_proto =
                 yak_cli_proto::unstable_dice_dump_request::DiceDumpFormat::try_from(inner.format)
-                    .buck_error_context("Invalid DICE dump format")?;
+                    .yak_error_context("Invalid DICE dump format")?;
 
             repo.spawn_dice_dump(path, format_proto)
                 .await
-                .with_buck_error_context(|| {
+                .with_yak_error_context(|| {
                     format!("Failed to perform dice dump to {}", path.display())
                 })?;
 
@@ -1585,8 +1585,8 @@ impl DaemonApi for BuckdServer {
         let res: yak_error::Result<_> = try {
             let client_ctx = req.get_ref().client_context()?;
             let soft_error_context = Arc::new(SoftErrorContext::new(
-                &client_ctx.buck2_hard_error,
-                &client_ctx.buck2_show_soft_errors,
+                &client_ctx.yak_hard_error,
+                &client_ctx.yak_show_soft_errors,
             )?);
             let trace_id = client_ctx
                 .trace_id
@@ -1779,7 +1779,7 @@ impl DaemonApi for BuckdServer {
             self.0
                 .log_reload_handle
                 .update_log_filter(&req.log_filter)
-                .buck_error_context("Error updating daemon log filter")
+                .yak_error_context("Error updating daemon log filter")
                 .map_err(|e| Status::invalid_argument(format!("{e:#}")))?;
         }
 
@@ -1790,7 +1790,7 @@ impl DaemonApi for BuckdServer {
                 forkserver
                     .set_log_filter(req.log_filter)
                     .await
-                    .buck_error_context("Error forwarding daemon log filter to forkserver")
+                    .yak_error_context("Error forwarding daemon log filter to forkserver")
                     .map_err(|e| Status::invalid_argument(format!("{e:#}")))?;
             }
         }
@@ -1817,7 +1817,7 @@ impl DaemonApi for BuckdServer {
 /// Options to configure the execution of a oneshot command (i.e. what happens in `oneshot()`).
 trait OneshotCommandOptions: Send + Sync + 'static {
     #[allow(clippy::result_large_err)]
-    fn pre_run(&self, server: &BuckdServer) -> Result<(), Status> {
+    fn pre_run(&self, server: &YakdServer) -> Result<(), Status> {
         server.check_if_accepting_requests()
     }
 }

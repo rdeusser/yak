@@ -19,29 +19,29 @@
 //! # Usage
 //!
 //! ```
-//! use yak_hash::BuckMutMap;
-//! use yak_hash::BuckMutSet;
+//! use yak_hash::YakMutMap;
+//! use yak_hash::YakMutSet;
 //!
-//! let mut map: BuckMutMap<String, i32> = BuckMutMap::default();
+//! let mut map: YakMutMap<String, i32> = YakMutMap::default();
 //! map.insert("key".to_string(), 42);
 //!
-//! let mut set: BuckMutSet<i32> = BuckMutSet::default();
+//! let mut set: YakMutSet<i32> = YakMutSet::default();
 //! set.insert(42);
 //! ```
 //!
-//! For ordered collections that preserve insertion order, use [`BuckIndexMap`]
-//! and [`BuckIndexSet`]:
+//! For ordered collections that preserve insertion order, use [`YakIndexMap`]
+//! and [`YakIndexSet`]:
 //!
 //! ```
-//! use yak_hash::BuckIndexMap;
-//! use yak_hash::BuckIndexSet;
+//! use yak_hash::YakIndexMap;
+//! use yak_hash::YakIndexSet;
 //!
-//! let mut map: BuckIndexMap<String, i32> = BuckIndexMap::default();
+//! let mut map: YakIndexMap<String, i32> = YakIndexMap::default();
 //! map.insert("first".to_string(), 1);
 //! map.insert("second".to_string(), 2);
 //! // Iteration order is guaranteed: "first", then "second"
 //!
-//! let mut set: BuckIndexSet<i32> = BuckIndexSet::default();
+//! let mut set: YakIndexSet<i32> = YakIndexSet::default();
 //! set.insert(42);
 //! ```
 
@@ -70,20 +70,20 @@ use fxhash::FxHasher64;
 /// forwarding method is omitted, calls to it will silently take the slower
 /// byte-serialization path.
 #[derive(Default)]
-pub struct BuckHasher(FxHasher64);
+pub struct YakHasher(FxHasher64);
 
-impl BuckHasher {
+impl YakHasher {
     /// Creates a new hasher.
     #[inline]
     pub fn new() -> Self {
-        BuckHasher::default()
+        YakHasher::default()
     }
 }
 
 // IMPORTANT: `Hasher` wrappers must explicitly forward every `write_*` method
-// to the inner hasher. See the doc comment on `BuckHasher` for details.
+// to the inner hasher. See the doc comment on `YakHasher` for details.
 #[allow(clippy::missing_trait_methods)]
-impl Hasher for BuckHasher {
+impl Hasher for YakHasher {
     #[inline]
     fn finish(&self) -> u64 {
         self.0.finish()
@@ -125,61 +125,61 @@ impl Hasher for BuckHasher {
     }
 }
 
-/// [`BuildHasher`] implementation which produces [`BuckHasher`].
+/// [`BuildHasher`] implementation which produces [`YakHasher`].
 #[derive(Default, Debug, Clone, Copy, Dupe)]
-pub struct BuckHasherBuilder;
+pub struct YakHasherBuilder;
 
-impl BuildHasher for BuckHasherBuilder {
-    type Hasher = BuckHasher;
+impl BuildHasher for YakHasherBuilder {
+    type Hasher = YakHasher;
 
     #[inline]
     fn build_hasher(&self) -> Self::Hasher {
-        BuckHasher::new()
+        YakHasher::new()
     }
 }
 
-/// A [`HashMap`](std::collections::HashMap) using [`BuckHasherBuilder`].
+/// A [`HashMap`](std::collections::HashMap) using [`YakHasherBuilder`].
 ///
 /// The default map for yak code: mutable, with no guarantee about iteration order. The
 /// hasher is faster than the standard library's, which is optimized against hash flooding -
 /// not a concern for yak's internal maps.
-pub type BuckMutMap<K, V> = std::collections::HashMap<K, V, BuckHasherBuilder>;
+pub type YakMutMap<K, V> = std::collections::HashMap<K, V, YakHasherBuilder>;
 
-/// A [`HashSet`](std::collections::HashSet) using [`BuckHasherBuilder`].
+/// A [`HashSet`](std::collections::HashSet) using [`YakHasherBuilder`].
 ///
-/// The set counterpart of [`BuckMutMap`], and the default set for yak code.
-pub type BuckMutSet<K> = std::collections::HashSet<K, BuckHasherBuilder>;
+/// The set counterpart of [`YakMutMap`], and the default set for yak code.
+pub type YakMutSet<K> = std::collections::HashSet<K, YakHasherBuilder>;
 
 /// An [`IndexMap`](indexmap::IndexMap) using the default hasher.
 ///
 /// This is a type alias for `indexmap::IndexMap` that preserves insertion order.
-/// Unlike [`BuckMutMap`], iteration order is guaranteed to match insertion order.
+/// Unlike [`YakMutMap`], iteration order is guaranteed to match insertion order.
 ///
 /// This abstraction allows the hasher implementation to be changed centrally
 /// in a future commit.
-pub type BuckIndexMap<K, V> = indexmap::IndexMap<K, V>;
+pub type YakIndexMap<K, V> = indexmap::IndexMap<K, V>;
 
 /// An [`IndexSet`](indexmap::IndexSet) using the default hasher.
 ///
 /// This is a type alias for `indexmap::IndexSet` that preserves insertion order.
-/// Unlike [`BuckMutSet`], iteration order is guaranteed to match insertion order.
+/// Unlike [`YakMutSet`], iteration order is guaranteed to match insertion order.
 ///
 /// This abstraction allows the hasher implementation to be changed centrally
 /// in a future commit.
-pub type BuckIndexSet<K> = indexmap::IndexSet<K>;
+pub type YakIndexSet<K> = indexmap::IndexSet<K>;
 
-/// Creates a [`BuckIndexMap`] from a list of key-value pairs.
+/// Creates a [`YakIndexMap`] from a list of key-value pairs.
 ///
 /// This macro mirrors the `indexmap!` macro from the `indexmap` crate but uses
-/// whatever hasher [`BuckIndexMap`] is configured to use, allowing the hasher
+/// whatever hasher [`YakIndexMap`] is configured to use, allowing the hasher
 /// to be changed centrally.
 ///
 /// # Example
 ///
 /// ```
-/// use yak_hash::buck_indexmap;
+/// use yak_hash::yak_indexmap;
 ///
-/// let map = buck_indexmap! {
+/// let map = yak_indexmap! {
 ///     "a" => 1,
 ///     "b" => 2,
 /// };
@@ -187,55 +187,55 @@ pub type BuckIndexSet<K> = indexmap::IndexSet<K>;
 /// assert_eq!(map["b"], 2);
 /// ```
 #[macro_export]
-macro_rules! buck_indexmap {
+macro_rules! yak_indexmap {
     () => {
-        $crate::BuckIndexMap::default()
+        $crate::YakIndexMap::default()
     };
     ($($key:expr => $value:expr),+ $(,)?) => {{
-        let mut map = $crate::BuckIndexMap::default();
+        let mut map = $crate::YakIndexMap::default();
         $(map.insert($key, $value);)+
         map
     }};
 }
 
-/// Creates a [`BuckIndexSet`] from a list of values.
+/// Creates a [`YakIndexSet`] from a list of values.
 ///
 /// This macro mirrors the `indexset!` macro from the `indexmap` crate but uses
-/// whatever hasher [`BuckIndexSet`] is configured to use, allowing the hasher
+/// whatever hasher [`YakIndexSet`] is configured to use, allowing the hasher
 /// to be changed centrally.
 ///
 /// # Example
 ///
 /// ```
-/// use yak_hash::buck_indexset;
+/// use yak_hash::yak_indexset;
 ///
-/// let set = buck_indexset![1, 2, 3];
+/// let set = yak_indexset![1, 2, 3];
 /// assert!(set.contains(&1));
 /// assert!(set.contains(&2));
 /// assert!(set.contains(&3));
 /// ```
 #[macro_export]
-macro_rules! buck_indexset {
+macro_rules! yak_indexset {
     () => {
-        $crate::BuckIndexSet::default()
+        $crate::YakIndexSet::default()
     };
     ($($value:expr),+ $(,)?) => {{
-        let mut set = $crate::BuckIndexSet::default();
+        let mut set = $crate::YakIndexSet::default();
         $(set.insert($value);)+
         set
     }};
 }
 
-/// A [`DashMap`](dashmap::DashMap) using [`BuckHasherBuilder`].
+/// A [`DashMap`](dashmap::DashMap) using [`YakHasherBuilder`].
 ///
 /// The concurrent map for yak code. Construct it with `default()`; `DashMap::new()` exists
 /// only for the standard library's hasher.
-pub type BuckDashMap<K, V, S = BuckHasherBuilder> = dashmap::DashMap<K, V, S>;
+pub type YakDashMap<K, V, S = YakHasherBuilder> = dashmap::DashMap<K, V, S>;
 
-/// A [`DashSet`](dashmap::DashSet) using [`BuckHasherBuilder`].
+/// A [`DashSet`](dashmap::DashSet) using [`YakHasherBuilder`].
 ///
-/// The set counterpart of [`BuckDashMap`].
-pub type BuckDashSet<K, S = BuckHasherBuilder> = dashmap::DashSet<K, S>;
+/// The set counterpart of [`YakDashMap`].
+pub type YakDashSet<K, S = YakHasherBuilder> = dashmap::DashSet<K, S>;
 
 /// Do not use in new code. A [`HashMap`](std::collections::HashMap) with the standard
 /// library's `RandomState` hasher.
@@ -243,16 +243,16 @@ pub type BuckDashSet<K, S = BuckHasherBuilder> = dashmap::DashSet<K, S>;
 /// What is left of this alias marks the retained maps - dice values, daemon state, the
 /// materializer tree - that are waiting on the immutable map type from the retained-maps
 /// plan. Once those are converted this alias goes away. Anywhere else, the map is either
-/// transient, and wants [`BuckMutMap`], or forced to be a concrete `HashMap` by something
+/// transient, and wants [`YakMutMap`], or forced to be a concrete `HashMap` by something
 /// outside yak, and wants [`IntentionallyStdHashMap`].
-pub type StdBuckHashMap<K, V> = std::collections::HashMap<K, V>;
+pub type StdYakHashMap<K, V> = std::collections::HashMap<K, V>;
 
 /// A [`HashMap`](std::collections::HashMap) that intentionally uses the standard library's
 /// default `RandomState` hasher rather than yak's performance-optimized hasher.
 ///
 /// Use this at API boundaries where the concrete type `HashMap<K, V>` is required —
 /// for example, protobuf-generated struct fields, third-party crate APIs, or rusqlite
-/// result collection. In all other cases, prefer [`BuckMutMap`].
+/// result collection. In all other cases, prefer [`YakMutMap`].
 pub type IntentionallyStdHashMap<K, V> = std::collections::HashMap<K, V>;
 
 /// A [`HashSet`](std::collections::HashSet) that intentionally uses the standard library's
@@ -260,7 +260,7 @@ pub type IntentionallyStdHashMap<K, V> = std::collections::HashMap<K, V>;
 ///
 /// Use this at API boundaries where the concrete type `HashSet<K>` is required —
 /// for example, starlark's `ast.lint()` API which expects `&HashSet<String>`.
-/// In all other cases, prefer [`BuckMutSet`].
+/// In all other cases, prefer [`YakMutSet`].
 pub type IntentionallyStdHashSet<K> = std::collections::HashSet<K>;
 
 #[cfg(test)]
@@ -270,29 +270,29 @@ mod tests {
 
     use super::*;
 
-    fn hash_with_buck_hasher<T: Hash>(value: &T) -> u64 {
-        let mut hasher = BuckHasher::new();
+    fn hash_with_yak_hasher<T: Hash>(value: &T) -> u64 {
+        let mut hasher = YakHasher::new();
         value.hash(&mut hasher);
         hasher.finish()
     }
 
     #[test]
-    fn test_buck_hasher_deterministic() {
-        let h1 = hash_with_buck_hasher(&42u64);
-        let h2 = hash_with_buck_hasher(&42u64);
-        assert_eq!(h1, h2, "BuckHasher should be deterministic");
+    fn test_yak_hasher_deterministic() {
+        let h1 = hash_with_yak_hasher(&42u64);
+        let h2 = hash_with_yak_hasher(&42u64);
+        assert_eq!(h1, h2, "YakHasher should be deterministic");
     }
 
     #[test]
-    fn test_buck_hasher_different_values() {
-        let h1 = hash_with_buck_hasher(&42u64);
-        let h2 = hash_with_buck_hasher(&43u64);
+    fn test_yak_hasher_different_values() {
+        let h1 = hash_with_yak_hasher(&42u64);
+        let h2 = hash_with_yak_hasher(&43u64);
         assert_ne!(h1, h2, "Different values should produce different hashes");
     }
 
     #[test]
-    fn test_buck_mut_map() {
-        let mut map: BuckMutMap<String, i32> = BuckMutMap::default();
+    fn test_yak_mut_map() {
+        let mut map: YakMutMap<String, i32> = YakMutMap::default();
         map.insert("key1".to_owned(), 1);
         map.insert("key2".to_owned(), 2);
 
@@ -302,8 +302,8 @@ mod tests {
     }
 
     #[test]
-    fn test_buck_mut_set() {
-        let mut set: BuckMutSet<i32> = BuckMutSet::default();
+    fn test_yak_mut_set() {
+        let mut set: YakMutSet<i32> = YakMutSet::default();
         set.insert(1);
         set.insert(2);
         set.insert(1);
@@ -315,8 +315,8 @@ mod tests {
     }
 
     #[test]
-    fn test_buck_index_map() {
-        let mut map: BuckIndexMap<String, i32> = BuckIndexMap::default();
+    fn test_yak_index_map() {
+        let mut map: YakIndexMap<String, i32> = YakIndexMap::default();
         map.insert("first".to_owned(), 1);
         map.insert("second".to_owned(), 2);
         map.insert("third".to_owned(), 3);
@@ -332,8 +332,8 @@ mod tests {
     }
 
     #[test]
-    fn test_buck_index_set() {
-        let mut set: BuckIndexSet<i32> = BuckIndexSet::default();
+    fn test_yak_index_set() {
+        let mut set: YakIndexSet<i32> = YakIndexSet::default();
         set.insert(3);
         set.insert(1);
         set.insert(2);
@@ -352,11 +352,11 @@ mod tests {
 
     #[test]
     fn test_multi_write_sequence() {
-        let mut h1 = BuckHasher::new();
+        let mut h1 = YakHasher::new();
         h1.write_u64(1);
         h1.write_u64(2);
 
-        let mut h2 = BuckHasher::new();
+        let mut h2 = YakHasher::new();
         h2.write_u64(1);
         h2.write_u64(2);
 

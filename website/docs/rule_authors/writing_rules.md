@@ -22,7 +22,7 @@ The built-in yak rules are stored in the `prelude` folder in the yak repo.
 To add a rule for a language, say `pascal`:
 
 1. Look at
-   [prelude/decls](https://github.com/rdeusser/buck2/tree/main/prelude/decls)
+   [prelude/decls](https://github.com/rdeusser/yak/tree/main/prelude/decls)
    to see the attributes of the existing rules. If `pascal` was an existing
    rule, you would see what attributes it takes (often it will be
    `pascal_library` and `pascal_binary`).
@@ -156,7 +156,7 @@ In many cases, it becomes apparent you need the transitive closure of all
 libraries (for example, the libraries and everything they depend upon), in which
 case, the standard pattern is to move to a provider of a list of `record` (see
 the
-[types.md](https://github.com/rdeusser/buck2/blob/main/starlark-rust/docs/types.md)
+[types.md](https://github.com/rdeusser/yak/blob/main/starlark-rust/docs/types.md)
 document in GitHub) and the `flatten/dedupe` functions, defining it as:
 
 ```python
@@ -240,7 +240,7 @@ are used instead of shell scripts as they have better cross-platform
 compatibility and fewer hidden corners (especially in error paths).
 
 As an example of a Python helper, see
-[make_comp_db.py](https://github.com/rdeusser/buck2/blob/main/prelude/cxx/tools/make_comp_db.py).
+[make_comp_db.py](https://github.com/rdeusser/yak/blob/main/prelude/cxx/tools/make_comp_db.py).
 
 A further advantage of using Python is that these commands can be tested in
 isolation, outside of yak.

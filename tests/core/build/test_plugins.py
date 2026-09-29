@@ -8,40 +8,40 @@
 
 import json
 
-from e2e_util.api.buck import Buck
+from e2e_util.api.yak import Yak
 from e2e_util.asserts import expect_failure
-from e2e_util.buck_workspace import buck_test
+from e2e_util.yak_workspace import yak_test
 
 
-@buck_test()
-async def test_deps_in_cquery_not_uquery(buck: Buck) -> None:
+@yak_test()
+async def test_deps_in_cquery_not_uquery(yak: Yak) -> None:
     # Check that plugin deps appear as deps in uquery but not in cquery
-    result = await buck.uquery("deps(//tests:reg_a)")
+    result = await yak.uquery("deps(//tests:reg_a)")
     assert "//tests:reg_a_REAL" in result.stdout
-    result = await buck.cquery("deps(//tests:reg_a)")
+    result = await yak.cquery("deps(//tests:reg_a)")
     assert "//tests:reg_a_REAL" not in result.stdout
     # And make sure that the attribute itself is serialized correctly in cquery and uquery
-    result = await buck.uquery("-a", "actual", "//tests:reg_a")
+    result = await yak.uquery("-a", "actual", "//tests:reg_a")
     assert json.loads(result.stdout) == {
         "root//tests:reg_a": {"actual": "root//tests:reg_a_REAL"}
     }
-    result = await buck.cquery("-a", "actual", "//tests:reg_a")
+    result = await yak.cquery("-a", "actual", "//tests:reg_a")
     assert json.loads(result.stdout) == {
         "root//tests:reg_a (<unspecified>)": {"actual": "root//tests:reg_a_REAL"}
     }
 
 
-@buck_test()
-async def test_cquery(buck: Buck) -> None:
+@yak_test()
+async def test_cquery(yak: Yak) -> None:
     ###### Check that everything is correctly configured as reported by cquery
-    result = await buck.cquery(
+    result = await yak.cquery(
         "--json",
         "-a",
-        "buck.deps",
+        "yak.deps",
         "-a",
-        "buck.execution_platform",
+        "yak.execution_platform",
         "-a",
-        "buck.plugins",
+        "yak.plugins",
         "deps(//tests:b)",
     )
     result = json.loads(result.stdout)
@@ -51,25 +51,25 @@ async def test_cquery(buck: Buck) -> None:
         v for k, v in result.items() if k.startswith("root//tests:l")
     )
 
-    assert set(b["buck.plugins"]["RustProcMacro"]) == {
+    assert set(b["yak.plugins"]["RustProcMacro"]) == {
         "root//tests:reg_a_REAL",
         "root//tests:reg_b_REAL",
         "root//tests:doc_a_REAL",
     }
-    assert set(l["buck.plugins"]["RustProcMacro"]) == {
+    assert set(l["yak.plugins"]["RustProcMacro"]) == {
         "root//tests:reg_a_REAL",
         "root//tests:doc_b_REAL",
     }
 
-    assert b["buck.execution_platform"].startswith("root//config:platform_linux")
+    assert b["yak.execution_platform"].startswith("root//config:platform_linux")
     assert any(
         dep.startswith("root//tests:reg_a_REAL (root//config:platform_linux")
-        for dep in b["buck.deps"]
+        for dep in b["yak.deps"]
     )
-    assert l["buck.execution_platform"].startswith("root//config:platform_windows")
+    assert l["yak.execution_platform"].startswith("root//config:platform_windows")
     assert any(
         dep.startswith("root//tests:reg_a_REAL (root//config:platform_windows")
-        for dep in l["buck.deps"]
+        for dep in l["yak.deps"]
     )
 
     assert any(
@@ -82,10 +82,10 @@ async def test_cquery(buck: Buck) -> None:
     )
 
 
-@buck_test()
-async def test_analysis(buck: Buck) -> None:
+@yak_test()
+async def test_analysis(yak: Yak) -> None:
     # Check that we can properly identify all the different plugin deps in analysis
-    result = await buck.build("root//tests:b", "root//tests:l")
+    result = await yak.build("root//tests:b", "root//tests:l")
 
     b = json.loads(
         result.get_build_report().output_for_target("root//tests:b").read_text()
@@ -108,40 +108,40 @@ async def test_analysis(buck: Buck) -> None:
     }
 
 
-@buck_test()
-async def test_plugin_dep_errors(buck: Buck) -> None:
+@yak_test()
+async def test_plugin_dep_errors(yak: Yak) -> None:
     # Tests are explained in the file
-    await buck.build("//test_errors:recursive_target_1")
+    await yak.build("//test_errors:recursive_target_1")
 
-    await buck.build("//test_errors:regular_a")
+    await yak.build("//test_errors:regular_a")
 
-    result = await buck.uquery("deps(//test_errors:regular_b)")
+    result = await yak.uquery("deps(//test_errors:regular_b)")
     assert "//test_errors:toolchain" in result.stdout
-    result = await expect_failure(buck.build("//test_errors:regular_b"))
+    result = await expect_failure(yak.build("//test_errors:regular_b"))
     assert (
         "Plugin dep `root//test_errors:toolchain` is a toolchain rule" in result.stderr
     )
 
-    result = await expect_failure(buck.build("//test_errors:wrong_plugin_kind"))
+    result = await expect_failure(yak.build("//test_errors:wrong_plugin_kind"))
     assert "The rule did not declare that it uses plugins of kind A" in result.stderr
 
 
-@buck_test()
-async def test_repeated_insertion(buck: Buck) -> None:
-    result = await buck.cquery(
-        "-a", "buck.plugins", "//repeated_insertion:different_deps_alias"
+@yak_test()
+async def test_repeated_insertion(yak: Yak) -> None:
+    result = await yak.cquery(
+        "-a", "yak.plugins", "//repeated_insertion:different_deps_alias"
     )
     assert {"Plugin": ["root//repeated_insertion:plugin"]} == list(
         json.loads(result.stdout).values()
-    )[0]["buck.plugins"]
+    )[0]["yak.plugins"]
 
 
-@buck_test()
-async def test_visibility(buck: Buck) -> None:
-    result = await expect_failure(buck.build("//visibility:missing_access"))
+@yak_test()
+async def test_visibility(yak: Yak) -> None:
+    result = await expect_failure(yak.build("//visibility:missing_access"))
     assert (
         "`root//visibility/package:hidden` is not visible to `root//visibility:missing_access`"
         in result.stderr
     )
 
-    await buck.build("//visibility:has_access")
+    await yak.build("//visibility:has_access")

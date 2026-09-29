@@ -36,8 +36,8 @@ use starlark_map::Hashed;
 use yak_core::content_hash::ContentBasedPathHash;
 use yak_core::deferred::base_deferred_key::BaseDeferredKey;
 use yak_core::fs::artifact_path_resolver::ArtifactFs;
-use yak_core::fs::buck_out_path::BuckOutPathKind;
-use yak_core::fs::buck_out_path::BuildArtifactPath;
+use yak_core::fs::yak_out_path::YakOutPathKind;
+use yak_core::fs::yak_out_path::BuildArtifactPath;
 use yak_core::fs::project_rel_path::ProjectRelativePathBuf;
 use yak_execute::artifact::artifact_dyn::ArtifactDyn;
 use yak_execute::execute::request::OutputType;
@@ -595,7 +595,7 @@ impl<'v> OutputArtifact<'v> {
         output_type.check_path(self, self.0.output_type())
     }
 
-    pub fn path_resolution_method(&self) -> BuckOutPathKind {
+    pub fn path_resolution_method(&self) -> YakOutPathKind {
         match &*self.0.artifact().borrow() {
             DeclaredArtifactKind::Bound(b) => b.get_path().path_resolution_method(),
             DeclaredArtifactKind::Unbound(u) => u.0.path_resolution_method(),
@@ -625,8 +625,8 @@ pub mod testing {
     use dupe::Dupe;
     use yak_core::deferred::base_deferred_key::BaseDeferredKey;
     use yak_core::deferred::key::DeferredHolderKey;
-    use yak_core::fs::buck_out_path::BuckOutPathKind;
-    use yak_core::fs::buck_out_path::BuildArtifactPath;
+    use yak_core::fs::yak_out_path::YakOutPathKind;
+    use yak_core::fs::yak_out_path::BuildArtifactPath;
     use yak_core::target::configured_target_label::ConfiguredTargetLabel;
     use yak_execute::execute::request::OutputType;
     use yak_fs::paths::forward_rel_path::ForwardRelativePath;
@@ -684,7 +684,7 @@ pub mod testing {
                 BuildArtifactPath::new(
                     BaseDeferredKey::TargetLabel(target.dupe()),
                     ForwardRelativePath::new(path).unwrap().to_buf(),
-                    BuckOutPathKind::default(),
+                    YakOutPathKind::default(),
                 ),
                 ActionKey::new(
                     DeferredHolderKey::Base(BaseDeferredKey::TargetLabel(target)),
@@ -709,9 +709,9 @@ mod tests {
     use yak_core::deferred::base_deferred_key::BaseDeferredKey;
     use yak_core::deferred::key::DeferredHolderKey;
     use yak_core::fs::artifact_path_resolver::ArtifactFs;
-    use yak_core::fs::buck_out_path::BuckOutPathKind;
-    use yak_core::fs::buck_out_path::BuckOutPathResolver;
-    use yak_core::fs::buck_out_path::BuildArtifactPath;
+    use yak_core::fs::yak_out_path::YakOutPathKind;
+    use yak_core::fs::yak_out_path::YakOutPathResolver;
+    use yak_core::fs::yak_out_path::BuildArtifactPath;
     use yak_core::fs::project::ProjectRoot;
     use yak_core::fs::project::ProjectRootTemp;
     use yak_core::fs::project_rel_path::ProjectRelativePath;
@@ -745,7 +745,7 @@ mod tests {
                 BuildArtifactPath::new(
                     BaseDeferredKey::TargetLabel(target.dupe()),
                     ForwardRelativePathBuf::unchecked_new("bar.out".into()),
-                    BuckOutPathKind::default(),
+                    YakOutPathKind::default(),
                 ),
                 OutputType::File,
                 0,
@@ -796,7 +796,7 @@ mod tests {
                 CellName::testing_new("cell"),
                 CellRootPathBuf::new(ProjectRelativePathBuf::unchecked_new("cell_path".into())),
             ),
-            BuckOutPathResolver::new(ProjectRelativePathBuf::unchecked_new("buck_out".into())),
+            YakOutPathResolver::new(ProjectRelativePathBuf::unchecked_new("yak_out".into())),
             project_fs,
         );
 
@@ -827,7 +827,7 @@ mod tests {
                 CellName::testing_new("cell"),
                 CellRootPathBuf::new(ProjectRelativePathBuf::unchecked_new("cell_path".into())),
             ),
-            BuckOutPathResolver::new(ProjectRelativePathBuf::unchecked_new("buck_out".into())),
+            YakOutPathResolver::new(ProjectRelativePathBuf::unchecked_new("yak_out".into())),
             project_fs.dupe(),
         );
         let expected_path1 = project_fs.resolve(fs.resolve_build(artifact1.get_path(), None)?);

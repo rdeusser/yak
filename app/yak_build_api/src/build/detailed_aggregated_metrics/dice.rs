@@ -14,8 +14,8 @@ use dice::DiceComputations;
 use dice::DiceDataBuilder;
 use dice::UserComputationData;
 use dupe::Dupe;
-use yak_common::legacy_configs::configs::LegacyBuckConfig;
-use yak_common::legacy_configs::key::BuckconfigKeyRef;
+use yak_common::legacy_configs::configs::LegacyYakConfig;
+use yak_common::legacy_configs::key::YakconfigKeyRef;
 use yak_core::deferred::key::DeferredHolderKey;
 use yak_core::fs::artifact_path_resolver::ArtifactFs;
 use yak_core::provider::label::ConfiguredProvidersLabel;
@@ -23,7 +23,7 @@ use yak_data::ComputeDetailedAggregatedMetricsEnd;
 use yak_data::ComputeDetailedAggregatedMetricsStart;
 use yak_error::internal_error;
 use yak_events::dispatch::span_async_simple;
-use yak_hash::BuckMutSet;
+use yak_hash::YakMutSet;
 
 use crate::build::BuildProviderType;
 use crate::build::detailed_aggregated_metrics::events::DetailedAggregatedMetricsHandle;
@@ -52,7 +52,7 @@ pub trait HasDetailedAggregatedMetrics {
     /// start; latches on for the daemon's lifetime.
     fn maybe_enable_detailed_aggregated_metrics(
         &self,
-        config: &LegacyBuckConfig,
+        config: &LegacyYakConfig,
     ) -> yak_error::Result<()>;
     fn compute_detailed_metrics(
         &self,
@@ -66,8 +66,8 @@ pub trait HasDetailedAggregatedMetrics {
         &mut self,
         events: &PerBuildEvents,
         artifact_fs: &ArtifactFs,
-        providers_to_skip: BuckMutSet<BuildProviderType>,
-        skip_targets: &BuckMutSet<ConfiguredProvidersLabel>,
+        providers_to_skip: YakMutSet<BuildProviderType>,
+        skip_targets: &YakMutSet<ConfiguredProvidersLabel>,
         sketch_count: bool,
         sketch_size: bool,
     ) -> impl Future<Output = yak_error::Result<ArtifactPathSketchResult>> + Send;
@@ -102,7 +102,7 @@ impl HasDetailedAggregatedMetrics for DiceComputations<'_> {
 
     fn maybe_enable_detailed_aggregated_metrics(
         &self,
-        config: &LegacyBuckConfig,
+        config: &LegacyYakConfig,
     ) -> yak_error::Result<()> {
         if detailed_aggregated_metrics_requested(config)? {
             get_detailed_aggregated_metrics_handle(self)?.enable();
@@ -139,8 +139,8 @@ impl HasDetailedAggregatedMetrics for DiceComputations<'_> {
         &mut self,
         events: &PerBuildEvents,
         artifact_fs: &ArtifactFs,
-        providers_to_skip: BuckMutSet<BuildProviderType>,
-        skip_targets: &BuckMutSet<ConfiguredProvidersLabel>,
+        providers_to_skip: YakMutSet<BuildProviderType>,
+        skip_targets: &YakMutSet<ConfiguredProvidersLabel>,
         sketch_count: bool,
         sketch_size: bool,
     ) -> yak_error::Result<ArtifactPathSketchResult> {
@@ -203,10 +203,10 @@ fn get_detailed_aggregated_metrics_handle<'a>(
 
 /// Whether `config` requests a tracker consumer. (Artifact-path sketches compute
 /// from DICE directly and don't read the tracker.)
-fn detailed_aggregated_metrics_requested(config: &LegacyBuckConfig) -> yak_error::Result<bool> {
+fn detailed_aggregated_metrics_requested(config: &LegacyYakConfig) -> yak_error::Result<bool> {
     for property in ["detailed_aggregated_metrics", "log_action_graph_sketch"] {
         if config
-            .parse::<bool>(BuckconfigKeyRef {
+            .parse::<bool>(YakconfigKeyRef {
                 section: "yak",
                 property,
             })?

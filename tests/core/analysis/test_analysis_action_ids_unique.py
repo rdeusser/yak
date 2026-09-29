@@ -6,24 +6,24 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-from e2e_util.api.buck import Buck
+from e2e_util.api.yak import Yak
 from e2e_util.asserts import expect_failure
-from e2e_util.buck_workspace import buck_test
+from e2e_util.yak_workspace import yak_test
 
 
-@buck_test(data_dir="identifier")
+@yak_test(data_dir="identifier")
 async def test_analysis_action_ids_unique_identifier_within_category(
-    buck: Buck,
+    yak: Yak,
 ) -> None:
     await expect_failure(
-        buck.audit("providers", "//:yyy"),
+        yak.audit("providers", "//:yyy"),
         stderr_regex="Action category `foo` contains duplicate identifier `x`",
     )
 
 
-@buck_test(data_dir="category")
-async def test_analysis_action_ids_unique_singleton_category(buck: Buck) -> None:
+@yak_test(data_dir="category")
+async def test_analysis_action_ids_unique_singleton_category(yak: Yak) -> None:
     await expect_failure(
-        buck.audit("providers", "//:zzz"),
+        yak.audit("providers", "//:zzz"),
         stderr_regex="Analysis produced multiple actions with category `foo` and at least one of them had no identifier",
     )

@@ -10,16 +10,16 @@
 
 use yak_util::late_binding::LateBinding;
 
-pub struct Buck2BuildInfo {
+pub struct YakBuildInfo {
     pub revision: Option<&'static str>,
 }
 
-pub static BUCK2_BUILD_INFO: LateBinding<Buck2BuildInfo> = LateBinding::new("BUCK2_BUILD_INFO");
+pub static YAK_BUILD_INFO: LateBinding<YakBuildInfo> = LateBinding::new("YAK_BUILD_INFO");
 
 /// Get the source control revision for this binary, if available. We provide this externally when
 /// building yak for release.
 pub fn revision() -> Option<&'static str> {
-    BUCK2_BUILD_INFO
+    YAK_BUILD_INFO
         .get()
         .ok()
         .and_then(|i| i.revision)

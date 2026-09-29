@@ -27,9 +27,9 @@ use yak_common::file_ops::metadata::TrackedFileDigest;
 use yak_common::local_resource_state::LocalResourceState;
 use yak_core::content_hash::ContentBasedPathHash;
 use yak_core::fs::artifact_path_resolver::ArtifactFs;
-use yak_core::fs::buck_out_path::BuckOutScratchPath;
-use yak_core::fs::buck_out_path::BuckOutTestPath;
-use yak_core::fs::buck_out_path::BuildArtifactPath;
+use yak_core::fs::yak_out_path::YakOutScratchPath;
+use yak_core::fs::yak_out_path::YakOutTestPath;
+use yak_core::fs::yak_out_path::BuildArtifactPath;
 use yak_core::fs::project_rel_path::ProjectRelativePath;
 use yak_core::fs::project_rel_path::ProjectRelativePathBuf;
 use yak_core::soft_error;
@@ -39,7 +39,7 @@ use yak_directory::directory::directory::Directory;
 use yak_directory::directory::directory_iterator::DirectoryIterator;
 use yak_directory::directory::fingerprinted_directory::FingerprintedDirectory;
 use yak_error::yak_error;
-use yak_hash::BuckIndexSet;
+use yak_hash::YakIndexSet;
 
 use super::dep_file_digest::DepFileDigest;
 use crate::artifact::group::artifact_group_values_dyn::ArtifactGroupValuesDyn;
@@ -84,7 +84,7 @@ pub struct ActionMetadataBlob {
 pub enum CommandExecutionInput {
     Artifact(Box<dyn ArtifactGroupValuesDyn>),
     ActionMetadata(ActionMetadataBlob),
-    ScratchPath(BuckOutScratchPath),
+    ScratchPath(YakOutScratchPath),
     IncrementalRemoteOutput(
         ProjectRelativePathBuf,
         ActionDirectoryEntry<ActionSharedDirectory>,
@@ -206,7 +206,7 @@ impl ExecutorPreference {
 
 pub struct CommandExecutionPaths {
     inputs: Vec<CommandExecutionInput>,
-    outputs: BuckIndexSet<CommandExecutionOutput>,
+    outputs: YakIndexSet<CommandExecutionOutput>,
 
     input_directory: ActionImmutableDirectory,
     output_paths: Vec<(ProjectRelativePathBuf, OutputType)>,
@@ -218,7 +218,7 @@ pub struct CommandExecutionPaths {
 impl CommandExecutionPaths {
     pub fn new(
         inputs: Vec<CommandExecutionInput>,
-        outputs: BuckIndexSet<CommandExecutionOutput>,
+        outputs: YakIndexSet<CommandExecutionOutput>,
         fs: &ArtifactFs,
         digest_config: DigestConfig,
         interner: Option<&DashMapDirectoryInterner<ActionDirectoryMember, TrackedFileDigest>>,
@@ -228,7 +228,7 @@ impl CommandExecutionPaths {
         // RE spec requires outputs to be sorted:
         // https://github.com/bazelbuild/remote-apis/blob/1f36c310b28d762b258ea577ed08e8203274efae/build/bazel/remote/execution/v2/remote_execution.proto#L667-L669
         // We sort early here and not when we create RE action in order for local and remote actions to be in-sync.
-        let outputs: BuckIndexSet<_> = outputs
+        let outputs: YakIndexSet<_> = outputs
             .into_iter()
             .sorted_by_key(|e| {
                 let resolved = e
@@ -773,7 +773,7 @@ pub enum CommandExecutionOutputRef<'a> {
         output_type: OutputType,
     },
     TestPath {
-        path: &'a BuckOutTestPath,
+        path: &'a YakOutTestPath,
         create: OutputCreationBehavior,
     },
 }
@@ -793,7 +793,7 @@ impl CommandExecutionOutputRef<'_> {
                 output_type: *output_type,
             }),
             Self::TestPath { path, create } => Ok(ResolvedCommandExecutionOutput {
-                path: fs.buck_out_path_resolver().resolve_test(path),
+                path: fs.yak_out_path_resolver().resolve_test(path),
                 create: *create,
                 output_type: OutputType::FileOrDirectory,
             }),
@@ -813,7 +813,7 @@ impl CommandExecutionOutputRef<'_> {
                 output_type: *output_type,
             }),
             Self::TestPath { path, create } => Ok(ResolvedCommandExecutionOutput {
-                path: fs.buck_out_path_resolver().resolve_test(path),
+                path: fs.yak_out_path_resolver().resolve_test(path),
                 create: *create,
                 output_type: OutputType::FileOrDirectory,
             }),
@@ -848,7 +848,7 @@ pub enum CommandExecutionOutput {
         output_type: OutputType,
     },
     TestPath {
-        path: BuckOutTestPath,
+        path: YakOutTestPath,
         create: OutputCreationBehavior,
     },
 }

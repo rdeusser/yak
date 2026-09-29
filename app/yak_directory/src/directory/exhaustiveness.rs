@@ -148,7 +148,7 @@ impl ExhaustivenessHash {
         // Mixed hashes are embedded in pagable-persisted directory data, so the mix is part
         // of a persisted format: it must be computed with a hash whose algorithm never
         // changes, with platform-independent input bytes. Blake3 (the strong-hash choice) is
-        // that; general-purpose hashers like `BuckHasher` are allowed to change between
+        // that; general-purpose hashers like `YakHasher` are allowed to change between
         // versions.
         let mut hasher = Blake3StrongHasher::new();
         for c in dir_children() {

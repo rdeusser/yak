@@ -13,13 +13,13 @@ use starlark::values::FrozenHeapName;
 use strong_hash::StrongHash;
 
 /// Testing sentinel for yak test code.
-/// Used as `FrozenHeapName::User(Box::new(Buck2TestHeapName))`.
+/// Used as `FrozenHeapName::User(Box::new(YakTestHeapName))`.
 #[derive(Clone, derive_more::Display, Debug, Hash, StrongHash, Pagable)]
 #[pagable::pagable_typetag(starlark::values::UserHeapName)]
-#[display("Buck2TestHeapName")]
-pub struct Buck2TestHeapName;
+#[display("YakTestHeapName")]
+pub struct YakTestHeapName;
 
-impl Buck2TestHeapName {
+impl YakTestHeapName {
     pub fn frozen_heap_name() -> FrozenHeapName {
         FrozenHeapName::User(Box::new(Self))
     }

@@ -14,8 +14,8 @@ use std::io;
 fn main() -> io::Result<()> {
     let proto_files = &["subscription.proto"];
 
-    let buck_proto_srcs = env::var("YAK_PROTO_SRCS");
-    let includes = if let Ok(path) = &buck_proto_srcs {
+    let yak_proto_srcs = env::var("YAK_PROTO_SRCS");
+    let includes = if let Ok(path) = &yak_proto_srcs {
         vec![path.as_str()]
     } else {
         vec!["."]
@@ -26,11 +26,11 @@ fn main() -> io::Result<()> {
         .type_attribute(".", "#[derive(::serde::Serialize, ::serde::Deserialize)]")
         .type_attribute(".", "#[derive(::allocative::Allocative)]")
         .type_attribute(
-            "buck.subscription.SubscriptionRequest.request",
+            "yak.subscription.SubscriptionRequest.request",
             "#[derive(::derive_more::From)]",
         )
         .type_attribute(
-            "buck.subscription.SubscriptionResponse.response",
+            "yak.subscription.SubscriptionResponse.response",
             "#[derive(::derive_more::From)]",
         )
         .compile(proto_files, &includes)

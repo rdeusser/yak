@@ -11,9 +11,9 @@ import sys
 from pathlib import Path
 
 import pytest
-from e2e_util.api.buck import Buck
+from e2e_util.api.yak import Yak
 from e2e_util.asserts import expect_failure
-from e2e_util.buck_workspace import buck_test
+from e2e_util.yak_workspace import yak_test
 from e2e_util.helper.golden import (
     golden,
     sanitize_build_report,
@@ -27,10 +27,10 @@ from e2e_util.helper.golden import (
 def build_report_test(
     name: str, command: list[str], remote_execution: bool = False
 ) -> None:
-    async def impl(buck: Buck, tmp_path: Path) -> None:
+    async def impl(yak: Yak, tmp_path: Path) -> None:
         report = tmp_path / "build-report.json"
         await expect_failure(
-            buck.build(
+            yak.build(
                 "--build-report",
                 str(report),
                 *command,
@@ -43,7 +43,7 @@ def build_report_test(
 
         golden(
             output=sanitize_hashes(
-                sanitize_python(json.dumps(report, indent=2, sort_keys=True), buck.cwd)
+                sanitize_python(json.dumps(report, indent=2, sort_keys=True), yak.cwd)
             ),
             rel_path="fixtures/" + name + ".golden.json",
         )
@@ -53,7 +53,7 @@ def build_report_test(
     if remote_execution:
         pytest.mark.remote_execution(impl)
 
-    return buck_test()(impl)
+    return yak_test()(impl)
 
 
 build_report_test(
@@ -112,46 +112,46 @@ if not running_on_windows() and not running_on_mac():
         ["//fail_action:fail_one_with_error_handler_no_op"],
     )
 
-    def sanitize_error_stderr(stderr: str, buck: Buck) -> str:
-        return strip_waiting_on(sanitize_stderr(sanitize_python(stderr, buck.cwd)))
+    def sanitize_error_stderr(stderr: str, yak: Yak) -> str:
+        return strip_waiting_on(sanitize_stderr(sanitize_python(stderr, yak.cwd)))
 
-    @buck_test()
-    async def test_stderr_with_empty_error_diagnostics(buck: Buck) -> None:
+    @yak_test()
+    async def test_stderr_with_empty_error_diagnostics(yak: Yak) -> None:
         result = await expect_failure(
-            buck.build("//fail_action:fail_one_with_error_handler_no_op")
+            yak.build("//fail_action:fail_one_with_error_handler_no_op")
         )
 
         golden(
-            output=sanitize_error_stderr(result.stderr, buck),
+            output=sanitize_error_stderr(result.stderr, yak),
             rel_path="fixtures/test_stderr_with_empty_error_diagnostics.golden.txt",
         )
 
-    @buck_test()
-    async def test_stderr_with_error_diagnostics(buck: Buck) -> None:
+    @yak_test()
+    async def test_stderr_with_error_diagnostics(yak: Yak) -> None:
         result = await expect_failure(
-            buck.build("//fail_action:error_handler_produced_multiple_categories")
+            yak.build("//fail_action:error_handler_produced_multiple_categories")
         )
 
         golden(
-            output=sanitize_error_stderr(result.stderr, buck),
+            output=sanitize_error_stderr(result.stderr, yak),
             rel_path="fixtures/test_stderr_with_error_diagnostics.golden.txt",
         )
 
-    @buck_test()
-    async def test_stderr_with_no_error_diagnostics(buck: Buck) -> None:
-        result = await expect_failure(buck.build("//fail_action:fail_script"))
+    @yak_test()
+    async def test_stderr_with_no_error_diagnostics(yak: Yak) -> None:
+        result = await expect_failure(yak.build("//fail_action:fail_script"))
 
         golden(
-            output=sanitize_error_stderr(result.stderr, buck),
+            output=sanitize_error_stderr(result.stderr, yak),
             rel_path="fixtures/test_stderr_with_no_error_diagnostics.golden.txt",
         )
 
-    @buck_test()
-    async def test_stderr_could_not_produce_error_diagnostics(buck: Buck) -> None:
-        result = await expect_failure(buck.build("//fail_action:error_handler_failed"))
+    @yak_test()
+    async def test_stderr_could_not_produce_error_diagnostics(yak: Yak) -> None:
+        result = await expect_failure(yak.build("//fail_action:error_handler_failed"))
 
         golden(
-            output=sanitize_error_stderr(result.stderr, buck),
+            output=sanitize_error_stderr(result.stderr, yak),
             rel_path="fixtures/test_stderr_could_not_produce_error_diagnostics.golden.txt",
         )
 
@@ -260,14 +260,14 @@ build_report_test(
 )
 
 
-@buck_test()
-async def test_two_action_dep_failures(buck: Buck, tmp_path: Path) -> None:
+@yak_test()
+async def test_two_action_dep_failures(yak: Yak, tmp_path: Path) -> None:
     # When we pass `--keep-going`, we should get error reports for both dependencies of the action.
     # However, we don't. Instead, we just get one error non-deterministically. This is also why we
     # can't use a `build_report_test` for this test.
     report = tmp_path / "build-report.json"
     await expect_failure(
-        buck.build(
+        yak.build(
             "--keep-going", "--build-report", str(report), "//fail_action:fail_two_deps"
         ),
         stderr_regex="Failed to build 'root//fail_action:fail_two_deps",
@@ -288,15 +288,15 @@ async def test_two_action_dep_failures(buck: Buck, tmp_path: Path) -> None:
     assert "fail_two_deps" in errors[0]["action_error"]["key"]["owner"]
 
 
-@buck_test()
-async def test_error_handler_failed(buck: Buck, tmp_path: Path) -> None:
+@yak_test()
+async def test_error_handler_failed(yak: Yak, tmp_path: Path) -> None:
     # Starlark error messages change across different modes for some reason (ex: opt-asan vs opt).
     # We have a fair amount of coverage for other functionalities of error handler/build report,
     # so let's just add a simple test here.
     report = tmp_path / "build-report.json"
 
     await expect_failure(
-        buck.build(
+        yak.build(
             "--build-report",
             str(report),
             "//fail_action:error_handler_failed",
@@ -311,15 +311,15 @@ async def test_error_handler_failed(buck: Buck, tmp_path: Path) -> None:
     assert "fail: something went wrong" in report
 
 
-@buck_test()
-async def test_error_handler_wrong_return_type(buck: Buck, tmp_path: Path) -> None:
+@yak_test()
+async def test_error_handler_wrong_return_type(yak: Yak, tmp_path: Path) -> None:
     # Starlark error messages change across different modes for some reason (ex: opt-asan vs opt).
     # We have a fair amount of coverage for other functionalities of error handler/build report,
     # so let's just add a simple test here.
     report = tmp_path / "build-report.json"
 
     await expect_failure(
-        buck.build(
+        yak.build(
             "--build-report",
             str(report),
             "//fail_action:error_handler_wrong_return_type",
@@ -337,12 +337,12 @@ async def test_error_handler_wrong_return_type(buck: Buck, tmp_path: Path) -> No
     )
 
 
-@buck_test()
-async def test_missing_report_on_wrong_package(buck: Buck, tmp_path: Path) -> None:
+@yak_test()
+async def test_missing_report_on_wrong_package(yak: Yak, tmp_path: Path) -> None:
     # If we specify a non-existent package, we don't get an error report
     report = tmp_path / "build-report.json"
     await expect_failure(
-        buck.build("--build-report", str(report), "//nopackage/..."),
+        yak.build("--build-report", str(report), "//nopackage/..."),
         stderr_regex="Error resolving recursive target pattern",
     )
     if report.exists():
@@ -352,13 +352,13 @@ async def test_missing_report_on_wrong_package(buck: Buck, tmp_path: Path) -> No
 # TODO fix on windows and mac
 if not running_on_windows() and not running_on_mac():
 
-    @buck_test()
-    async def test_exclude_action_error_diagnostics(buck: Buck, tmp_path: Path) -> None:
+    @yak_test()
+    async def test_exclude_action_error_diagnostics(yak: Yak, tmp_path: Path) -> None:
         # Test that --build-report-options=exclude-action-error-diagnostics removes
         # error_diagnostics from the build report.
         report = tmp_path / "build-report.json"
         await expect_failure(
-            buck.build(
+            yak.build(
                 "--build-report",
                 str(report),
                 "--build-report-options",
@@ -374,20 +374,20 @@ if not running_on_windows() and not running_on_mac():
         golden(
             output=sanitize_hashes(
                 sanitize_python(
-                    json.dumps(report_data, indent=2, sort_keys=True), buck.cwd
+                    json.dumps(report_data, indent=2, sort_keys=True), yak.cwd
                 )
             ),
             rel_path="fixtures/test_exclude_action_error_diagnostics.golden.json",
         )
 
-    @buck_test()
-    async def test_truncate_error_content(buck: Buck, tmp_path: Path) -> None:
+    @yak_test()
+    async def test_truncate_error_content(yak: Yak, tmp_path: Path) -> None:
         # Test that --build-report-options=truncate-error-content truncates
         # error message content in the build report when errors exceed 20KB.
         # Uses a target that produces a 25KB+ error message.
         report = tmp_path / "build-report.json"
         await expect_failure(
-            buck.build(
+            yak.build(
                 "--build-report",
                 str(report),
                 "--build-report-options",
@@ -403,7 +403,7 @@ if not running_on_windows() and not running_on_mac():
         golden(
             output=sanitize_hashes(
                 sanitize_python(
-                    json.dumps(report_data, indent=2, sort_keys=True), buck.cwd
+                    json.dumps(report_data, indent=2, sort_keys=True), yak.cwd
                 )
             ),
             rel_path="fixtures/test_truncate_error_content.golden.json",

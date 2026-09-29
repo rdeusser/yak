@@ -1,2 +1,0 @@
-# `zip` reads `CARGO_PKG_VERSION` at compile time.
-cargo_env = ["CARGO_PKG_VERSION"]

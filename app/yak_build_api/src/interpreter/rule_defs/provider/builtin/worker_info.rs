@@ -34,8 +34,8 @@ use starlark::values::list::AllocList;
 use starlark::values::none::NoneOr;
 use starlark::values::none::NoneType;
 use yak_build_api_derive::internal_provider;
-use yak_error::BuckErrorContext;
-use yak_error::BuckErrorOptionContext;
+use yak_error::YakErrorContext;
+use yak_error::YakErrorOptionContext;
 use yak_error::yak_error;
 
 use crate as yak_build_api;
@@ -134,7 +134,7 @@ fn iter_env<'v>(
         })?;
 
         let arglike = ValueAsCommandLineLike::unpack_value_err(value)
-            .with_buck_error_context(|| format!("Invalid value in `env` for key `{key}`"))?
+            .with_yak_error_context(|| format!("Invalid value in `env` for key `{key}`"))?
             .0;
 
         Ok((key, arglike))
@@ -177,7 +177,7 @@ impl<'v> WorkerInfo<'v> {
 }
 
 fn validate_worker_info<'v>(info: &WorkerInfo<'v>) -> yak_error::Result<()> {
-    let exe = StarlarkCmdArgs::try_from_value(info.exe.get()).with_buck_error_context(|| {
+    let exe = StarlarkCmdArgs::try_from_value(info.exe.get()).with_yak_error_context(|| {
         format!(
             "Value for `exe` field is not a command line: `{}`",
             info.exe

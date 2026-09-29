@@ -14,9 +14,9 @@ import time
 from pathlib import Path
 
 import pytest
-from e2e_util.api.buck import Buck
+from e2e_util.api.yak import Yak
 from e2e_util.asserts import expect_failure
-from e2e_util.buck_workspace import buck_test, env
+from e2e_util.yak_workspace import yak_test, env
 from e2e_util.helper.golden import (
     golden,
     sanitize_daemon_stderr,
@@ -26,10 +26,10 @@ from e2e_util.helper.golden import (
 from e2e_util.helper.utils import is_running_on_windows, read_invocation_record
 
 
-@buck_test(write_invocation_record=True)
-async def test_action_error(buck: Buck) -> None:
+@yak_test(write_invocation_record=True)
+async def test_action_error(yak: Yak) -> None:
     res = await expect_failure(
-        buck.build("//:action_fail"),
+        yak.build("//:action_fail"),
         stderr_regex="Failed to build 'root//:action_fail",
     )
     error = res.invocation_record().single_error()
@@ -41,21 +41,21 @@ async def test_action_error(buck: Buck) -> None:
     )
 
 
-@buck_test(write_invocation_record=True)
-async def test_missing_outputs(buck: Buck) -> None:
+@yak_test(write_invocation_record=True)
+async def test_missing_outputs(yak: Yak) -> None:
     # FIXME(JakobDegen): This doesn't work with non-local-only actions
     res = await expect_failure(
-        buck.build("//:missing_outputs", "--local-only"),
+        yak.build("//:missing_outputs", "--local-only"),
         stderr_regex="Failed to build 'root//:missing_outputs",
     )
     error = res.invocation_record().single_error()
     assert error["category"] == "USER"
 
 
-@buck_test(write_invocation_record=True)
-async def test_bad_url(buck: Buck) -> None:
+@yak_test(write_invocation_record=True)
+async def test_bad_url(yak: Yak) -> None:
     res = await expect_failure(
-        buck.build("//:bad_url"),
+        yak.build("//:bad_url"),
         stderr_regex="Failed to build 'root//:bad_url",
     )
     error = res.invocation_record().single_error()
@@ -65,10 +65,10 @@ async def test_bad_url(buck: Buck) -> None:
     # assert error["source_location"] == "yak_http/src/lib.rs::HttpError::SendRequest"
 
 
-@buck_test(write_invocation_record=True)
-async def test_attr_coercion(buck: Buck) -> None:
+@yak_test(write_invocation_record=True)
+async def test_attr_coercion(yak: Yak) -> None:
     res = await expect_failure(
-        buck.build("//attr_coercion:int_rule"),
+        yak.build("//attr_coercion:int_rule"),
         stderr_regex="evaluating build file: `root//attr_coercion:YAK.fixture",
     )
     error = res.invocation_record().single_error()
@@ -76,62 +76,62 @@ async def test_attr_coercion(buck: Buck) -> None:
     assert "StarlarkError::Value::" in error["source_location"]
 
 
-@buck_test(write_invocation_record=True)
-async def test_buck2_fail(buck: Buck) -> None:
+@yak_test(write_invocation_record=True)
+async def test_yak_fail(yak: Yak) -> None:
     res = await expect_failure(
-        buck.build("//buck2_fail:foobar"),
-        stderr_regex="evaluating build file: `root//buck2_fail:YAK.fixture`",
+        yak.build("//yak_fail:foobar"),
+        stderr_regex="evaluating build file: `root//yak_fail:YAK.fixture`",
     )
     error = res.invocation_record().single_error()
     # Just make sure that despite there being no context on the error, we still report the right
     # metadata
     assert error["source_location"].startswith(
-        "yak_interpreter_for_build/src/interpreter/functions/internals.rs::BuckFail::"
+        "yak_interpreter_for_build/src/interpreter/functions/internals.rs::YakFail::"
     )
 
 
-@buck_test(write_invocation_record=True)
-async def test_starlark_fail_error_categorization(buck: Buck) -> None:
+@yak_test(write_invocation_record=True)
+async def test_starlark_fail_error_categorization(yak: Yak) -> None:
     res = await expect_failure(
-        buck.build("//starlark_fail:foobar"),
+        yak.build("//starlark_fail:foobar"),
         stderr_regex="evaluating build file: `root//starlark_fail:YAK.fixture`",
     )
     error = res.invocation_record().single_error()
     assert "StarlarkError::Fail::" in error["source_location"]
-    assert error["source_area"] == "BUCK2"
+    assert error["source_area"] == "YAK"
     assert error["category"] == "USER"
 
 
-@buck_test(write_invocation_record=True)
-async def test_starlark_parse_error_categorization(buck: Buck) -> None:
+@yak_test(write_invocation_record=True)
+async def test_starlark_parse_error_categorization(yak: Yak) -> None:
     res = await expect_failure(
-        buck.build("//starlark_parse_error:starlark_parse_error"),
+        yak.build("//starlark_parse_error:starlark_parse_error"),
         stderr_regex=".*Parse error:.*",
     )
     error = res.invocation_record().single_error()
     assert "StarlarkError::Parser::" in error["source_location"]
     assert error["tags"] == ["STARLARK_PARSER"]
-    assert error["source_area"] == "BUCK2"
+    assert error["source_area"] == "YAK"
     assert error["category"] == "USER"
 
 
-@buck_test(write_invocation_record=True)
-async def test_starlark_scope_error_categorization(buck: Buck) -> None:
+@yak_test(write_invocation_record=True)
+async def test_starlark_scope_error_categorization(yak: Yak) -> None:
     res = await expect_failure(
-        buck.build("//starlark_scope_error:value_err"),
+        yak.build("//starlark_scope_error:value_err"),
         stderr_regex="evaluating build file: .* not found",
     )
     error = res.invocation_record().single_error()
     assert "StarlarkError::Scope::" in error["source_location"]
     assert error["tags"] == ["STARLARK_SCOPE"]
-    assert error["source_area"] == "BUCK2"
+    assert error["source_area"] == "YAK"
     assert error["category"] == "USER"
 
 
-@buck_test(write_invocation_record=True)
-async def test_targets_error_categorization(buck: Buck) -> None:
+@yak_test(write_invocation_record=True)
+async def test_targets_error_categorization(yak: Yak) -> None:
     res = await expect_failure(
-        buck.targets("//starlark_fail:foobar"),
+        yak.targets("//starlark_fail:foobar"),
         stderr_regex="evaluating build file: `root//starlark_fail:YAK.fixture`",
     )
     error = res.invocation_record().single_error()
@@ -144,12 +144,12 @@ async def test_targets_error_categorization(buck: Buck) -> None:
     )
 
 
-@buck_test(write_invocation_record=True)
-async def test_daemon_crash(buck: Buck) -> None:
-    await buck.build()
+@yak_test(write_invocation_record=True)
+async def test_daemon_crash(yak: Yak) -> None:
+    await yak.build()
 
     res = await expect_failure(
-        buck.debug("crash", "panic"),
+        yak.debug("crash", "panic"),
     )
     error = res.invocation_record().single_error()
     if is_running_on_windows():
@@ -181,11 +181,11 @@ async def test_daemon_crash(buck: Buck) -> None:
         )
 
 
-@buck_test(write_invocation_record=True)
+@yak_test(write_invocation_record=True)
 @env("YAKD_STARTUP_TIMEOUT", "0")
 @env("YAKD_STARTUP_INIT_TIMEOUT", "0")
-async def test_connection_timeout(buck: Buck) -> None:
-    res = await expect_failure(buck.targets(":"))
+async def test_connection_timeout(yak: Yak) -> None:
+    res = await expect_failure(yak.targets(":"))
     assert "timed out before establishing connection to yak daemon" in res.stderr
 
     record = res.invocation_record()
@@ -205,11 +205,11 @@ async def test_connection_timeout(buck: Buck) -> None:
         )
 
 
-@buck_test(write_invocation_record=True)
-async def test_daemon_abort(buck: Buck) -> None:
-    await buck.build()
+@yak_test(write_invocation_record=True)
+async def test_daemon_abort(yak: Yak) -> None:
+    await yak.build()
 
-    res = await expect_failure(buck.debug("crash", "abort"))
+    res = await expect_failure(yak.debug("crash", "abort"))
     error = res.invocation_record().single_error()
     # The client recognizes a SIGABRT from the signal handler message in the
     # daemon's stderr. The daemon installs no such handler, so the client
@@ -218,10 +218,10 @@ async def test_daemon_abort(buck: Buck) -> None:
     assert error["category_key"] == "DAEMON_DISCONNECT"
 
 
-async def wait_for_daemon_pid(buck: Buck) -> int:
+async def wait_for_daemon_pid(yak: Yak) -> int:
     for _ in range(10):
         time.sleep(1)
-        status = await buck.status()
+        status = await yak.status()
         if status.stderr != "no yakd running":
             return json.loads(status.stdout)["process_info"]["pid"]
     raise Exception("Failed to find yakd pid")
@@ -263,16 +263,16 @@ def current_dmesg_timestamp(seconds_ago: int = 0) -> str:
     return f"{seconds}.{nanoseconds // 1_000:06d}"
 
 
-@buck_test(
+@yak_test(
     skip_for_os=["darwin", "windows"],
     write_invocation_record=True,
 )
 async def test_pre_daemon_oom_record_does_not_mask_daemon_crash(
-    buck: Buck, tmp_path: Path
+    yak: Yak, tmp_path: Path
 ) -> None:
     pre_daemon_timestamp = current_dmesg_timestamp(seconds_ago=60)
-    await buck.build()
-    daemon_cgroup = read_daemon_cgroup(await wait_for_daemon_pid(buck)).removeprefix(
+    await yak.build()
+    daemon_cgroup = read_daemon_cgroup(await wait_for_daemon_pid(yak)).removeprefix(
         "/"
     )
 
@@ -281,22 +281,22 @@ async def test_pre_daemon_oom_record_does_not_mask_daemon_crash(
         f"<6>[{pre_daemon_timestamp}] oomd kill: 81.28 80.05 42.78 {daemon_cgroup} 1000 ruleset:[test]\n",
     )
 
-    res = await expect_failure(buck.debug("crash", "panic", env=dmesg_env))
+    res = await expect_failure(yak.debug("crash", "panic", env=dmesg_env))
     error = res.invocation_record().single_error()
     assert dmesg_called.exists()
     assert "DAEMON_OOM_KILLED" not in error["tags"]
     assert error["best_tag"] == "SERVER_PANICKED"
 
 
-@buck_test(
+@yak_test(
     skip_for_os=["darwin", "windows"],
     write_invocation_record=True,
 )
 async def test_current_oomd_record_marks_daemon_crash_as_oom(
-    buck: Buck, tmp_path: Path
+    yak: Yak, tmp_path: Path
 ) -> None:
-    await buck.build()
-    daemon_cgroup = read_daemon_cgroup(await wait_for_daemon_pid(buck)).removeprefix(
+    await yak.build()
+    daemon_cgroup = read_daemon_cgroup(await wait_for_daemon_pid(yak)).removeprefix(
         "/"
     )
     dmesg_env, dmesg_called = fake_dmesg_env(
@@ -304,22 +304,22 @@ async def test_current_oomd_record_marks_daemon_crash_as_oom(
         f"<6>[{current_dmesg_timestamp()}] oomd kill: 81.28 80.05 42.78 {daemon_cgroup} 1000 ruleset:[test]\n",
     )
 
-    res = await expect_failure(buck.debug("crash", "panic", env=dmesg_env))
+    res = await expect_failure(yak.debug("crash", "panic", env=dmesg_env))
     error = res.invocation_record().single_error()
     assert dmesg_called.exists()
     assert "DAEMON_OOM_KILLED" in error["tags"]
     assert error["best_tag"] == "DAEMON_OOM_KILLED"
 
 
-@buck_test(
+@yak_test(
     skip_for_os=["darwin", "windows"],
     write_invocation_record=True,
 )
 async def test_oomd_kill_in_descendant_cgroup_does_not_mask_daemon_crash(
-    buck: Buck, tmp_path: Path
+    yak: Yak, tmp_path: Path
 ) -> None:
-    await buck.build()
-    daemon_cgroup = read_daemon_cgroup(await wait_for_daemon_pid(buck)).removeprefix(
+    await yak.build()
+    daemon_cgroup = read_daemon_cgroup(await wait_for_daemon_pid(yak)).removeprefix(
         "/"
     )
     dmesg_env, dmesg_called = fake_dmesg_env(
@@ -327,63 +327,63 @@ async def test_oomd_kill_in_descendant_cgroup_does_not_mask_daemon_crash(
         f"<6>[{current_dmesg_timestamp()}] oomd kill: 81.28 80.05 42.78 {daemon_cgroup}/child 1000 ruleset:[test]\n",
     )
 
-    res = await expect_failure(buck.debug("crash", "panic", env=dmesg_env))
+    res = await expect_failure(yak.debug("crash", "panic", env=dmesg_env))
     error = res.invocation_record().single_error()
     assert dmesg_called.exists()
     assert "DAEMON_OOM_KILLED" not in error["tags"]
     assert error["best_tag"] == "SERVER_PANICKED"
 
 
-@buck_test(
+@yak_test(
     skip_for_os=["darwin", "windows"],
     write_invocation_record=True,
 )
 async def test_kernel_oom_victim_pid_marks_daemon_crash_as_oom(
-    buck: Buck, tmp_path: Path
+    yak: Yak, tmp_path: Path
 ) -> None:
-    await buck.build()
-    daemon_pid = await wait_for_daemon_pid(buck)
+    await yak.build()
+    daemon_pid = await wait_for_daemon_pid(yak)
     dmesg_env, dmesg_called = fake_dmesg_env(
         tmp_path,
         f"<6>[{current_dmesg_timestamp()}] Memory cgroup out of memory: Killed process {daemon_pid} (yak) total-vm:1000kB\n",
     )
 
-    res = await expect_failure(buck.debug("crash", "panic", env=dmesg_env))
+    res = await expect_failure(yak.debug("crash", "panic", env=dmesg_env))
     error = res.invocation_record().single_error()
     assert dmesg_called.exists()
     assert "DAEMON_OOM_KILLED" in error["tags"]
     assert error["best_tag"] == "DAEMON_OOM_KILLED"
 
 
-@buck_test(
+@yak_test(
     skip_for_os=["darwin", "windows"],
     write_invocation_record=True,
 )
 async def test_kernel_oom_for_other_pid_does_not_mask_daemon_crash(
-    buck: Buck, tmp_path: Path
+    yak: Yak, tmp_path: Path
 ) -> None:
-    await buck.build()
-    other_pid = await wait_for_daemon_pid(buck) + 1
+    await yak.build()
+    other_pid = await wait_for_daemon_pid(yak) + 1
     dmesg_env, dmesg_called = fake_dmesg_env(
         tmp_path,
         f"<6>[{current_dmesg_timestamp()}] Memory cgroup out of memory: Killed process {other_pid} (yak) total-vm:1000kB\n",
     )
 
-    res = await expect_failure(buck.debug("crash", "panic", env=dmesg_env))
+    res = await expect_failure(yak.debug("crash", "panic", env=dmesg_env))
     error = res.invocation_record().single_error()
     assert dmesg_called.exists()
     assert "DAEMON_OOM_KILLED" not in error["tags"]
     assert error["best_tag"] == "SERVER_PANICKED"
 
 
-@buck_test(skip_for_os=["windows"])
-async def test_daemon_killed(buck: Buck, tmp_path: Path) -> None:
+@yak_test(skip_for_os=["windows"])
+async def test_daemon_killed(yak: Yak, tmp_path: Path) -> None:
     record = tmp_path / "record.json"
-    build = await buck.build(
+    build = await yak.build(
         ":slow_action", "--unstable-write-invocation-record", str(record)
     ).start()
 
-    pid = await wait_for_daemon_pid(buck)
+    pid = await wait_for_daemon_pid(yak)
     os.kill(pid, signal.SIGKILL)
     await build.communicate()  # Wait for the client to exit
 
@@ -392,16 +392,16 @@ async def test_daemon_killed(buck: Buck, tmp_path: Path) -> None:
     assert error["category"] == "ENVIRONMENT"
 
 
-@buck_test(write_invocation_record=True)
-async def test_build_file_race(buck: Buck) -> None:
+@yak_test(write_invocation_record=True)
+async def test_build_file_race(yak: Yak) -> None:
     target = "//file_busy:file"
     # first build
-    file_path = (await buck.build(target)).get_build_report().output_for_target(target)
+    file_path = (await yak.build(target)).get_build_report().output_for_target(target)
 
     # Open the file for writing and keep it open
     f = open(file_path, "w")
     # build again, source code has changed, binary must be rebuilt
-    build = buck.build(
+    build = yak.build(
         target,
         "--show-output",
         "-c",
@@ -421,13 +421,13 @@ async def test_build_file_race(buck: Buck) -> None:
 
 
 @pytest.mark.remote_execution
-@buck_test(write_invocation_record=True)
-async def test_download_failure(buck: Buck) -> None:
+@yak_test(write_invocation_record=True)
+async def test_download_failure(yak: Yak) -> None:
     # Upload action if necessary
-    await buck.build("//:run_action", "--remote-only")
-    await buck.clean()
+    await yak.build("//:run_action", "--remote-only")
+    await yak.clean()
     res = await expect_failure(
-        buck.build(
+        yak.build(
             "//:run_action",
             env={"YAK_TEST_FAIL_RE_DOWNLOADS": "true"},
         )
@@ -442,10 +442,10 @@ async def test_download_failure(buck: Buck) -> None:
 
 
 @pytest.mark.remote_execution
-@buck_test(write_invocation_record=True)
-async def test_declared_artifact_download_failure(buck: Buck) -> None:
+@yak_test(write_invocation_record=True)
+async def test_declared_artifact_download_failure(yak: Yak) -> None:
     res = await expect_failure(
-        buck.build(
+        yak.build(
             "//:declared_file",
             env={"YAK_TEST_FAIL_RE_DOWNLOADS": "true"},
         )
@@ -456,10 +456,10 @@ async def test_declared_artifact_download_failure(buck: Buck) -> None:
 
 
 @pytest.mark.remote_execution
-@buck_test(write_invocation_record=True)
-async def test_declared_tree_download_failure(buck: Buck) -> None:
+@yak_test(write_invocation_record=True)
+async def test_declared_tree_download_failure(yak: Yak) -> None:
     res = await expect_failure(
-        buck.build(
+        yak.build(
             "//:declared_tree",
             env={"YAK_TEST_FAIL_RE_DOWNLOADS": "true"},
         )
@@ -470,13 +470,13 @@ async def test_declared_tree_download_failure(buck: Buck) -> None:
 
 
 @pytest.mark.remote_execution
-@buck_test(write_invocation_record=True)
-async def test_re_execute_failure(buck: Buck) -> None:
+@yak_test(write_invocation_record=True)
+async def test_re_execute_failure(yak: Yak) -> None:
     # Upload action if necessary
-    await buck.build("//:run_action", "--remote-only")
-    await buck.clean()
+    await yak.build("//:run_action", "--remote-only")
+    await yak.clean()
     res = await expect_failure(
-        buck.build(
+        yak.build(
             "//:run_action",
             "--no-remote-cache",
             env={"YAK_TEST_FAIL_RE_EXECUTE": "true"},
@@ -487,10 +487,10 @@ async def test_re_execute_failure(buck: Buck) -> None:
 
 
 @pytest.mark.remote_execution
-@buck_test(write_invocation_record=True)
-async def test_local_incompatible(buck: Buck) -> None:
+@yak_test(write_invocation_record=True)
+async def test_local_incompatible(yak: Yak) -> None:
     res = await expect_failure(
-        buck.build(
+        yak.build(
             "//:local_run_action",
             "--remote-only",
             "--no-remote-cache",
@@ -505,10 +505,10 @@ async def test_local_incompatible(buck: Buck) -> None:
     )
 
 
-@buck_test(write_invocation_record=True)
+@yak_test(write_invocation_record=True)
 @env("YAK_TEST_INIT_DAEMON_ERROR", "true")
-async def test_daemon_startup_error(buck: Buck) -> None:
-    res = await expect_failure(buck.targets(":"))
+async def test_daemon_startup_error(yak: Yak) -> None:
+    res = await expect_failure(yak.targets(":"))
     assert "Injected init daemon error" in res.stderr
     assert "Error initializing DaemonStateData" in res.stderr
 
@@ -522,10 +522,10 @@ async def test_daemon_startup_error(buck: Buck) -> None:
     )
 
 
-@buck_test(skip_for_os=["windows"], write_invocation_record=True)
+@yak_test(skip_for_os=["windows"], write_invocation_record=True)
 @env("YAK_TEST_DAEMON_STARTUP_SIGNAL", "true")
-async def test_daemon_startup_signal(buck: Buck) -> None:
-    res = await expect_failure(buck.targets(":"))
+async def test_daemon_startup_signal(yak: Yak) -> None:
+    res = await expect_failure(yak.targets(":"))
     error = res.invocation_record().single_error()
     assert error["category_key"] == "DAEMON_STARTUP_FAILED:SIGTERM"
 
@@ -535,10 +535,10 @@ async def test_daemon_startup_signal(buck: Buck) -> None:
     )
 
 
-@buck_test(write_invocation_record=True)
+@yak_test(write_invocation_record=True)
 @env("YAK_TEST_FAIL_STREAMING", "true")
-async def test_client_streaming_error(buck: Buck) -> None:
-    res = await expect_failure(buck.targets(":"))
+async def test_client_streaming_error(yak: Yak) -> None:
+    res = await expect_failure(yak.targets(":"))
     assert "Injected client streaming error" in res.stderr
 
     error = res.invocation_record().single_error()
@@ -550,10 +550,10 @@ async def test_client_streaming_error(buck: Buck) -> None:
     )
 
 
-@buck_test(write_invocation_record=True)
-async def test_action_error_has_categorization(buck: Buck) -> None:
+@yak_test(write_invocation_record=True)
+async def test_action_error_has_categorization(yak: Yak) -> None:
     res = await expect_failure(
-        buck.build("//fail_action:error_handler_produced_error_categories"),
+        yak.build("//fail_action:error_handler_produced_error_categories"),
         stderr_regex="Action sub-errors produced by error handlers",
     )
 
@@ -562,11 +562,11 @@ async def test_action_error_has_categorization(buck: Buck) -> None:
     assert error["category_key"] == "ACTION_COMMAND_FAILURE:FirstError"
 
 
-@buck_test(write_invocation_record=True, skip_for_os=["windows"])
+@yak_test(write_invocation_record=True, skip_for_os=["windows"])
 @env("YAK_TEST_INIT_DATA_SLEEP_SECS", "120")
 @env("YAKD_STARTUP_INIT_TIMEOUT", "5")
-async def test_init_data_timeout(buck: Buck) -> None:
-    res = await expect_failure(buck.targets(":"))
+async def test_init_data_timeout(yak: Yak) -> None:
+    res = await expect_failure(yak.targets(":"))
     record = res.invocation_record()
     error = record.single_error()
 
@@ -577,16 +577,16 @@ async def test_init_data_timeout(buck: Buck) -> None:
     )
 
 
-@buck_test(
+@yak_test(
     skip_for_os=["darwin", "windows"],
     write_invocation_record=True,
 )
-async def test_nix_errno(buck: Buck) -> None:
-    await buck.build(":run_action", "--show-output")
-    shutil.rmtree(buck.cwd / "yak-out/v2")
+async def test_nix_errno(yak: Yak) -> None:
+    await yak.build(":run_action", "--show-output")
+    shutil.rmtree(yak.cwd / "yak-out/v2")
 
     res = await expect_failure(
-        buck.targets(":"),
+        yak.targets(":"),
         stderr_regex="Failed to stat.*ENOENT: No such file or directory",
     )
     error = res.invocation_record().single_error()

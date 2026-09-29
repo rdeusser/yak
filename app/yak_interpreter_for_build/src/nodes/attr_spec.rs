@@ -23,9 +23,9 @@ use starlark::values::Value;
 use starlark_map::vec2::Vec2;
 use yak_core::target::label::label::TargetLabelRef;
 use yak_core::target::name::TargetNameRef;
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 use yak_error::internal_error;
-use yak_hash::BuckMutMap;
+use yak_hash::YakMutMap;
 use yak_hash::IntentionallyStdHashMap;
 use yak_node::attrs::attr::Attribute;
 use yak_node::attrs::attr::CoercedValue;
@@ -120,7 +120,7 @@ impl AttributeSpecExt for AttributeSpec {
 
         let target_label = TargetLabelRef::new(internals.buildfile_path().package(), name);
 
-        let mut default_allowed_deps = BuckMutMap::default();
+        let mut default_allowed_deps = YakMutMap::default();
 
         for (attr_name, attr_idx, attribute) in indices {
             let configurable = attr_is_configurable(attr_name);
@@ -140,7 +140,7 @@ impl AttributeSpecExt for AttributeSpec {
                         internals.attr_coercion_context(),
                         v,
                     )
-                    .with_buck_error_context(|| {
+                    .with_yak_error_context(|| {
                         format!("Error coercing attribute `{attr_name}` of `{target_label}`",)
                     })?;
 
@@ -196,7 +196,7 @@ impl AttributeSpecExt for AttributeSpec {
                     internals.super_package.within_view_cap(),
                     default_deps,
                 )
-                .with_buck_error_context(|| {
+                .with_yak_error_context(|| {
                     format!(
                         "checking `within_view` for attribute `{}` of `{}`",
                         a.name, target_label,

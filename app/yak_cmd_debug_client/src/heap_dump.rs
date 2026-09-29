@@ -11,12 +11,12 @@
 use async_trait::async_trait;
 use yak_cli_proto::UnstableHeapDumpRequest;
 use yak_client_ctx::client_ctx::ClientCommandContext;
-use yak_client_ctx::common::BuckArgMatches;
+use yak_client_ctx::common::YakArgMatches;
 use yak_client_ctx::common::CommonBuildConfigurationOptions;
 use yak_client_ctx::common::CommonEventLogOptions;
 use yak_client_ctx::common::CommonStarlarkOptions;
 use yak_client_ctx::common::ui::CommonConsoleOptions;
-use yak_client_ctx::daemon::client::BuckdClientConnector;
+use yak_client_ctx::daemon::client::YakdClientConnector;
 use yak_client_ctx::events_ctx::EventsCtx;
 use yak_client_ctx::exit_result::ExitResult;
 use yak_client_ctx::path_arg::PathArg;
@@ -49,8 +49,8 @@ impl StreamingCommand for HeapDumpCommand {
 
     async fn exec_impl(
         self,
-        buckd: &mut BuckdClientConnector,
-        _matches: BuckArgMatches<'_>,
+        yakd: &mut YakdClientConnector,
+        _matches: YakArgMatches<'_>,
         ctx: &mut ClientCommandContext<'_>,
         events_ctx: &mut EventsCtx,
     ) -> ExitResult {
@@ -58,7 +58,7 @@ impl StreamingCommand for HeapDumpCommand {
         let test_executor_path = self
             .test_executor_path
             .map(|path| path.resolve(&ctx.working_dir));
-        buckd
+        yakd
             .with_flushing()
             .unstable_heap_dump(
                 UnstableHeapDumpRequest {

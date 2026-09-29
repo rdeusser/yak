@@ -20,13 +20,13 @@ use yak_build_api::interpreter::rule_defs::cmd_args::value_as::ValueAsCommandLin
 use yak_build_api::interpreter::rule_defs::register_rule_defs;
 use yak_core::execution_types::executor_config::PathSeparatorKind;
 use yak_core::fs::artifact_path_resolver::ArtifactFs;
-use yak_core::fs::buck_out_path::BuckOutPathResolver;
+use yak_core::fs::yak_out_path::YakOutPathResolver;
 use yak_core::fs::project::ProjectRoot;
 use yak_core::fs::project_rel_path::ProjectRelativePathBuf;
 use yak_execute::artifact::fs::ExecutorFs;
 use yak_fs::paths::abs_norm_path::AbsNormPathBuf;
-use yak_hash::BuckMutMap;
-use yak_interpreter::types::regex::register_buck_regex;
+use yak_hash::YakMutMap;
+use yak_interpreter::types::regex::register_yak_regex;
 use yak_interpreter_for_build::interpreter::testing::Tester;
 use yak_interpreter_for_build::interpreter::testing::cells;
 use yak_interpreter_for_build::label::testing::label_creator;
@@ -37,7 +37,7 @@ fn artifact_fs() -> ArtifactFs {
     let cell_info = cells(None).unwrap();
     ArtifactFs::new(
         cell_info.1,
-        BuckOutPathResolver::new(ProjectRelativePathBuf::unchecked_new(
+        YakOutPathResolver::new(ProjectRelativePathBuf::unchecked_new(
             "yak-out/v2".to_owned(),
         )),
         ProjectRoot::new(AbsNormPathBuf::try_from(std::env::current_dir().unwrap()).unwrap())
@@ -49,7 +49,7 @@ fn get_command_line(value: Value) -> yak_error::Result<Vec<String>> {
     let fs = artifact_fs();
     let executor_fs = ExecutorFs::new(&fs, PathSeparatorKind::Unix);
     let mut cli = Vec::<String>::new();
-    let artifact_path_mapping = BuckMutMap::default();
+    let artifact_path_mapping = YakMutMap::default();
     let mut fmt = CommandLineBuilder::new(&mut cli, &artifact_path_mapping, &executor_fs);
 
     match ValueAsCommandLineLike::unpack_value(value)? {
@@ -71,7 +71,7 @@ pub(crate) fn command_line_stringifier(builder: &mut GlobalsBuilder) {
         let fs = artifact_fs();
         let executor_fs = ExecutorFs::new(&fs, PathSeparatorKind::Unix);
         let mut cli = Vec::<String>::new();
-        let artifact_path_mapping = BuckMutMap::default();
+        let artifact_path_mapping = YakMutMap::default();
         let mut fmt = CommandLineBuilder::new(&mut cli, &artifact_path_mapping, &executor_fs);
         ValueAsCommandLineLike::unpack_value_err(value)?
             .0
@@ -105,6 +105,6 @@ pub(crate) fn tester() -> yak_error::Result<Tester> {
     tester.additional_globals(artifactory);
     tester.additional_globals(label_creator);
     tester.additional_globals(register_rule_defs);
-    tester.additional_globals(register_buck_regex);
+    tester.additional_globals(register_yak_regex);
     Ok(tester)
 }

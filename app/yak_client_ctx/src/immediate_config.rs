@@ -17,8 +17,8 @@ use yak_common::argv::ArgFilePath;
 use yak_common::init::DaemonStartupConfig;
 use yak_common::invocation_roots::InvocationRoots;
 use yak_common::invocation_roots::find_invocation_roots;
-use yak_common::legacy_configs::cells::BuckConfigBasedCells;
-use yak_common::legacy_configs::configs::LegacyBuckConfig;
+use yak_common::legacy_configs::cells::YakConfigBasedCells;
+use yak_common::legacy_configs::configs::LegacyYakConfig;
 use yak_common::settings::parser::parse_settings;
 use yak_core::cells::CellAliasResolver;
 use yak_core::cells::CellResolver;
@@ -26,8 +26,8 @@ use yak_core::cells::cell_path::CellPathRef;
 use yak_core::cells::cell_root_path::CellRootPathBuf;
 use yak_core::fs::project::ProjectRoot;
 use yak_core::yak_env;
-use yak_error::BuckErrorContext;
-use yak_error::BuckErrorOptionContext;
+use yak_error::YakErrorContext;
+use yak_error::YakErrorOptionContext;
 use yak_error::internal_error;
 use yak_fs::fs_util;
 use yak_fs::paths::abs_norm_path::AbsNormPath;
@@ -42,7 +42,7 @@ struct ImmediateConfigContextData {
     cell_resolver: CellResolver,
     cwd_cell_alias_resolver: CellAliasResolver,
     // Config retained for deferred `DaemonStartupConfig` creation.
-    root_config: LegacyBuckConfig,
+    root_config: LegacyYakConfig,
     project_filesystem: ProjectRoot,
     paranoid_info_path: AbsPathBuf,
 }
@@ -54,7 +54,7 @@ impl ImmediateConfigContextData {
     fn parse(roots: InvocationRoots) -> yak_error::Result<Self> {
         let paranoid_info_path = roots.paranoid_info_path()?;
         // This function is non-reentrant, and blocking for a bit should be ok
-        let cells = futures::executor::block_on(BuckConfigBasedCells::parse_with_config_args(
+        let cells = futures::executor::block_on(YakConfigBasedCells::parse_with_config_args(
             &roots.project_root,
             &[],
         ))?;
@@ -114,7 +114,7 @@ impl<'a> ImmediateConfigContext<'a> {
         self.daemon_startup_config
             .get_or_try_init(|| {
                 let data = self.data()?;
-                let buck_settings = parse_settings(&data.project_filesystem, setting_arg_layers)?;
+                let yak_settings = parse_settings(&data.project_filesystem, setting_arg_layers)?;
                 let paranoid = match is_paranoid_enabled(&data.paranoid_info_path) {
                     Ok(paranoid) => paranoid,
                     Err(e) => {
@@ -127,10 +127,10 @@ impl<'a> ImmediateConfigContext<'a> {
                     }
                 };
 
-                DaemonStartupConfig::new(&data.root_config, &buck_settings, paranoid)
-                    .buck_error_context("Error loading daemon startup config")
+                DaemonStartupConfig::new(&data.root_config, &yak_settings, paranoid)
+                    .yak_error_context("Error loading daemon startup config")
             })
-            .buck_error_context("Error creating daemon startup config")
+            .yak_error_context("Error creating daemon startup config")
     }
 
     pub fn set_setting_arg_layers(
@@ -179,7 +179,7 @@ impl<'a> ImmediateConfigContext<'a> {
     fn data(&self) -> yak_error::Result<&ImmediateConfigContextData> {
         self.data
             .get_or_try_init(|| ImmediateConfigContextData::parse(find_invocation_roots(self.cwd)?))
-            .buck_error_context("Error creating cell resolver")
+            .yak_error_context("Error creating cell resolver")
     }
 
     pub(crate) fn resolve_argfile_kind(
@@ -220,11 +220,11 @@ fn is_paranoid_enabled(path: &AbsPath) -> yak_error::Result<bool> {
     };
 
     let info = yak_cli_proto::ParanoidInfo::decode(bytes.as_slice())
-        .buck_error_context("Invalid data ")?;
+        .yak_error_context("Invalid data ")?;
 
     let now = SystemTime::now();
     let expires_at = SystemTime::try_from(info.expires_at.internal_error("Missing expires_at")?)
-        .buck_error_context("Invalid expires_at")?;
+        .yak_error_context("Invalid expires_at")?;
     Ok(now < expires_at)
 }
 

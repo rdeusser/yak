@@ -8,4 +8,4 @@
  * above-listed licenses.
  */
 
-tonic::include_proto!("buck.host_sharing");
+tonic::include_proto!("yak.host_sharing");

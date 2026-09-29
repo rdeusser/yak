@@ -72,7 +72,7 @@ use starlark_map::small_map::SmallMap;
 use starlark_map::small_set::SmallSet;
 use yak_core::cells::cell_path::CellPath;
 use yak_core::provider::id::ProviderId;
-use yak_error::BuckErrorContext;
+use yak_error::YakErrorContext;
 use yak_error::conversion::from_any_with_tag;
 use yak_interpreter::build_context::starlark_path_from_build_context;
 use yak_interpreter::types::provider::callable::ProviderCallableLike;
@@ -84,7 +84,7 @@ use crate::interpreter::rule_defs::provider::ty::provider::ty_provider;
 use crate::interpreter::rule_defs::provider::ty::provider_callable::ty_provider_callable;
 use crate::interpreter::rule_defs::provider::user::UserProvider;
 use crate::interpreter::rule_defs::provider::user::user_provider_creator;
-use crate::interpreter::rule_defs::type_id_domain::Buck2TypeIdDomain;
+use crate::interpreter::rule_defs::type_id_domain::YakTypeIdDomain;
 
 #[derive(Debug, yak_error::Error)]
 #[yak(tag = Input)]
@@ -521,7 +521,7 @@ impl<'v> StarlarkValue<'v> for UserProviderCallable<'v> {
                 name: variable_name.to_owned(),
             });
             let ty_provider_type_instance_id =
-                TypeInstanceId::from_identity(Buck2TypeIdDomain::UserProvider, &*provider_id);
+                TypeInstanceId::from_identity(YakTypeIdDomain::UserProvider, &*provider_id);
             let ty_provider = ty_provider(
                 &provider_id.name,
                 ty_provider_type_instance_id,
@@ -806,7 +806,7 @@ pub fn register_provider(builder: &mut GlobalsBuilder) {
                         new_fields.insert(name, field.dupe());
                     } else {
                         let ty = provider_field_parse_type(field, eval)
-                            .with_buck_error_context(|| format!("Field `{name}` type `{field}` is not created with `provider_field`, and cannot be evaluated as a type"))?;
+                            .with_yak_error_context(|| format!("Field `{name}` type `{field}` is not created with `provider_field`, and cannot be evaluated as a type"))?;
                         new_fields.insert(name, UserProviderField { ty, default: None });
                     }
                 }

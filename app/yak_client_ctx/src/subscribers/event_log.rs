@@ -15,7 +15,7 @@ use std::time::SystemTime;
 use async_trait::async_trait;
 use yak_common::argv::SanitizedArgv;
 use yak_event_log::write::WriteEventLog;
-use yak_events::BuckEvent;
+use yak_events::YakEvent;
 use yak_fs::paths::abs_norm_path::AbsNormPathBuf;
 use yak_fs::paths::abs_path::AbsPathBuf;
 use yak_fs::working_dir::AbsWorkingDir;
@@ -63,7 +63,7 @@ impl EventSubscriber for EventLog {
         "event log"
     }
 
-    async fn handle_events(&mut self, events: &[Arc<BuckEvent>]) -> yak_error::Result<()> {
+    async fn handle_events(&mut self, events: &[Arc<YakEvent>]) -> yak_error::Result<()> {
         Ok(self.writer.write_events(events).await?)
     }
 

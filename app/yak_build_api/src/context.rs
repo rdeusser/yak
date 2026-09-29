@@ -22,21 +22,21 @@ use dice::ValueSerialize;
 use dupe::Dupe;
 use pagable::Pagable;
 use pagable::pagable_typetag;
-use yak_core::fs::buck_out_path::BuckOutPathResolver;
+use yak_core::fs::yak_out_path::YakOutPathResolver;
 use yak_core::fs::project_rel_path::ProjectRelativePathBuf;
 
 #[async_trait]
 pub trait HasBuildContextData<'d> {
-    async fn get_buck_out_path(&mut self) -> yak_error::Result<&'d BuckOutPathResolver>;
+    async fn get_yak_out_path(&mut self) -> yak_error::Result<&'d YakOutPathResolver>;
 }
 
 pub trait SetBuildContextData {
-    fn set_buck_out_path(&mut self, path: Option<ProjectRelativePathBuf>) -> yak_error::Result<()>;
+    fn set_yak_out_path(&mut self, path: Option<ProjectRelativePathBuf>) -> yak_error::Result<()>;
 }
 
 #[derive(PartialEq, Eq, Allocative, Pagable)]
 pub struct BuildData {
-    buck_out_path_resolver: BuckOutPathResolver,
+    yak_out_path_resolver: YakOutPathResolver,
 }
 
 #[derive(Clone, Dupe, Display, Debug, Eq, Hash, PartialEq, Allocative, Pagable)]
@@ -58,18 +58,18 @@ impl InjectedKey for BuildDataKey {
 
 #[async_trait]
 impl<'d> HasBuildContextData<'d> for DiceComputations<'d> {
-    async fn get_buck_out_path(&mut self) -> yak_error::Result<&'d BuckOutPathResolver> {
+    async fn get_yak_out_path(&mut self) -> yak_error::Result<&'d YakOutPathResolver> {
         let data = self.compute(&BuildDataKey).await?;
-        Ok(&data.buck_out_path_resolver)
+        Ok(&data.yak_out_path_resolver)
     }
 }
 
 impl SetBuildContextData for DiceTransactionUpdater {
-    fn set_buck_out_path(&mut self, path: Option<ProjectRelativePathBuf>) -> yak_error::Result<()> {
+    fn set_yak_out_path(&mut self, path: Option<ProjectRelativePathBuf>) -> yak_error::Result<()> {
         Ok(self.changed_to(vec![(
             BuildDataKey,
             BuildData {
-                buck_out_path_resolver: BuckOutPathResolver::new(path.unwrap_or_else(|| {
+                yak_out_path_resolver: YakOutPathResolver::new(path.unwrap_or_else(|| {
                     ProjectRelativePathBuf::unchecked_new("yak-out/v2".to_owned())
                 })),
             },

@@ -6,14 +6,14 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-from e2e_util.api.buck import Buck
+from e2e_util.api.yak import Yak
 
 
-async def get_cfg(buck: Buck, *args: str) -> str:
-    result = await buck.ctargets(*args)
+async def get_cfg(yak: Yak, *args: str) -> str:
+    result = await yak.ctargets(*args)
 
     # Assuming ctargets output is `target (cfg)`
     cfg = result.stdout.split()[1].strip("()")
 
-    result = await buck.audit_configurations(cfg)
+    result = await yak.audit_configurations(cfg)
     return result.stdout

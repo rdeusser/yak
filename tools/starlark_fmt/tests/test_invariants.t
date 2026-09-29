@@ -70,7 +70,7 @@ Idempotency: formatting twice produces byte-identical output. Covers
 each autofix (dict-key sort, list-arg sort, load sort + symbol sort +
 same-origin merge, BZL # keep sorted, blank-line collapse, kwarg spaces,
 triple-quoted string preservation).
-  $ cat <<'EOF' > idempotent_BUCK
+  $ cat <<'EOF' > idempotent_YAK
   > load(   "//z:z.bzl"   ,    "z_unused"   ,   "z_c"   ,   "z_a"   )
   > load(  "//a:a.bzl"  ,   "a_b"  ,    "a_a"   )
   > load("//a:a.bzl", "a_extra")
@@ -91,11 +91,11 @@ triple-quoted string preservation).
   > result   =   a_a(   a_b(   z_a(   z_c(   ext_used(   )   )   )   )   )
   > extra   =   a_extra(   )
   > EOF
-  $ starlark-fmt idempotent_BUCK
-   INFO process_file: idempotent_BUCK: formatted
-  $ cp idempotent_BUCK idempotent.first
-  $ starlark-fmt idempotent_BUCK
-  $ cmp idempotent_BUCK idempotent.first
+  $ starlark-fmt idempotent_YAK
+   INFO process_file: idempotent_YAK: formatted
+  $ cp idempotent_YAK idempotent.first
+  $ starlark-fmt idempotent_YAK
+  $ cmp idempotent_YAK idempotent.first
 
 Idempotency for .bzl files (no rule-arg sort, but # keep sorted lists,
 loads, dicts, blank-line collapse, and triple-quoted strings still apply).

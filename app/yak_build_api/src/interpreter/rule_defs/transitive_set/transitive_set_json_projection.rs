@@ -31,7 +31,7 @@ use starlark::values::Value;
 use starlark::values::ValueOf;
 use starlark::values::ValueOfUnchecked;
 use starlark::values::starlark_value;
-use yak_error::BuckErrorOptionContext;
+use yak_error::YakErrorOptionContext;
 
 use crate::artifact_groups::TransitiveSetProjectionKey;
 use crate::artifact_groups::TransitiveSetProjectionWrapper;
