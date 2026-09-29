@@ -39,8 +39,6 @@
 #          +------>|      Binary       |<--------+
 #                  +-------------------+
 
-load("@prelude//apple:apple_rules_impl_utility.bzl", "get_apple_info_plist_build_system_identification_attrs")
-
 _RESOURCE_BUNDLE_FIELDS = [
     "asset_catalogs_compilation_options",
     "binary",
@@ -58,7 +56,7 @@ _RESOURCE_BUNDLE_FIELDS = [
     "resource_group_map",
     "within_view",
     "visibility",
-] + get_apple_info_plist_build_system_identification_attrs().keys()
+]
 
 def _is_resources_toolchain_enabled() -> bool:
     return read_root_config("apple", "resources_toolchain_enabled", "true").lower() == "true"

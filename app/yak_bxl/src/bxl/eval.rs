@@ -407,7 +407,6 @@ pub(crate) async fn resolve_cli_args<'a>(
 ) -> yak_error::Result<BxlResolvedCliArgs> {
     let cli_spec = frozen_callable.value().as_ref().cli_spec();
     match cli_spec
-        // ast-grep-ignore: rust/buck2-no-command-new
         .to_clap(clap::Command::new(&spec.name).no_binary_name(true))
         .try_get_matches_from(bxl_args)
     {
@@ -419,7 +418,6 @@ pub(crate) async fn resolve_cli_args<'a>(
                 let mut help_out = Vec::new();
 
                 cli_spec
-                    // ast-grep-ignore: rust/buck2-no-command-new
                     .to_clap(clap::Command::new(&spec.name).no_binary_name(true))
                     .write_long_help(&mut help_out)
                     .unwrap();

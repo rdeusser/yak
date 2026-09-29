@@ -13,7 +13,6 @@ use std::process::Command;
 
 /// Creates a command that does not show a window on Windows.
 pub fn background_command<S: AsRef<OsStr>>(program: S) -> Command {
-    // ast-grep-ignore: rust/buck2-no-command-new
     let mut command = Command::new(program);
     #[cfg(windows)]
     {

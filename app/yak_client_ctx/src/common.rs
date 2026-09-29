@@ -404,12 +404,6 @@ pub struct CommonStarlarkOptions {
     #[clap(long = "stack")]
     pub target_call_stacks: bool,
 
-    /// If there are targets with duplicate names in `YAK` file,
-    /// skip all the duplicates but the first one.
-    /// This is a hack for TD. Do not use this option.
-    #[clap(long, hide = true)]
-    pub(crate) skip_targets_with_duplicate_names: bool,
-
     /// Enables profiling for all evaluations whose evaluation identifier matches one of the provided patterns.
     ///
     /// Some examples identifiers:
@@ -464,7 +458,6 @@ impl CommonStarlarkOptions {
             disable_starlark_types: false,
             unstable_typecheck: false,
             target_call_stacks: false,
-            skip_targets_with_duplicate_names: false,
             profile_patterns: None,
             profile_patterns_output: None,
             profile_patterns_mode: None,

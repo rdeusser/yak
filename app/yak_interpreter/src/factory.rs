@@ -294,7 +294,6 @@ impl BuckStarlarkModule<'_> {
         func: impl for<'v> FnOnce(BuckStarlarkModule<'v>) -> Result<(ProfilingReportedToken, R), E>,
     ) -> Result<R, E> {
         // This is `BuckStarlarkModule`
-        // ast-grep-ignore: rust/buck2-no-starlark-module
         match Module::with_temp_heap(|m| func(BuckStarlarkModule(m))) {
             Ok((ProfilingReportedToken(..), res)) => Ok(res),
             Err(e) => Err(e),
@@ -309,7 +308,6 @@ impl BuckStarlarkModule<'_> {
         ) -> yak_error::Result<(ProfilingReportedToken, R)>,
     {
         // This is `BuckStarlarkModule`
-        // ast-grep-ignore: rust/buck2-no-starlark-module
         match Module::with_temp_heap_async(async |m| func(BuckStarlarkModule(m)).await).await {
             Ok((ProfilingReportedToken(..), res)) => Ok(res),
             Err(e) => Err(e),

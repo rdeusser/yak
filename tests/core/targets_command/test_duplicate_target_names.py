@@ -6,27 +6,14 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-import re
-
 from e2e_util.api.buck import Buck
 from e2e_util.asserts import expect_failure
 from e2e_util.buck_workspace import buck_test
 
 
 @buck_test()
-async def test_skip_targets_with_duplicate_names_without_flag(buck: Buck) -> None:
+async def test_duplicate_target_names(buck: Buck) -> None:
     await expect_failure(
         buck.targets("//..."),
         stderr_regex="Attempted to register target prelude//:aa twice",
     )
-
-
-@buck_test()
-async def test_skip_targets_with_duplicate_names_with_flag(buck: Buck) -> None:
-    result = await buck.targets("//...", "--skip-targets-with-duplicate-names")
-    assert [
-        "prelude//:aa",
-        "prelude//:bb",
-    ] == result.stdout.splitlines()
-    assert re.search("Attempted to register target prelude//:aa twice", result.stderr)
-    assert re.search("Attempted to register target prelude//:bb twice", result.stderr)

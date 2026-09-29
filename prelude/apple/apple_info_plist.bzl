@@ -146,13 +146,6 @@ def _info_plist_additional_keys(ctx: AnalysisContext) -> dict[str, typing.Any]:
         sdk_version = get_bundle_min_target_version(ctx, get_default_binary_dep(ctx.attrs.binary)),
     )
 
-    identify_build_system = ctx.attrs._info_plist_identify_build_system_default
-    if ctx.attrs.info_plist_identify_build_system != None:
-        identify_build_system = ctx.attrs.info_plist_identify_build_system
-    if identify_build_system and ctx.attrs.extension == "app":
-        # Only top-level .app bundle will contain special key.
-        result["FBBuck2"] = True
-
     return result
 
 def _extra_mac_info_plist_keys(sdk_metadata: AppleSdkMetadata, extension: str) -> dict[str, typing.Any]:

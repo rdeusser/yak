@@ -213,7 +213,6 @@ impl Tester {
                     InterpreterHostArchitecture::X86_64,
                     None,
                     false,
-                    false,
                     InferTargetNames::No,
                     Some(AdditionalGlobalsFn(Arc::new(FnWrapper(Box::new(
                         move |globals_builder| {

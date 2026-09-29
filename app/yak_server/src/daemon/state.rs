@@ -1162,7 +1162,7 @@ const DEFAULT_READ_TIMEOUT_MS: u64 = 10000;
 async fn http_client_from_startup_config(
     config: &DaemonStartupConfig,
 ) -> yak_error::Result<HttpClientBuilder> {
-    let mut builder = HttpClientBuilder::oss().await?;
+    let mut builder = HttpClientBuilder::https_with_system_roots_and_proxy_from_env().await?;
     builder.with_max_redirects(config.http.max_redirects.unwrap_or(DEFAULT_MAX_REDIRECTS));
     builder.with_http2(config.http.http2);
     builder.with_max_concurrent_requests(config.http.max_concurrent_requests);

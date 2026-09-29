@@ -25,7 +25,6 @@ load(
     "AppleFrameworkBundleModuleMapType",
     "apple_bundle_extra_attrs",
     "apple_test_extra_attrs",
-    "get_apple_info_plist_build_system_identification_attrs",
 )
 load("@prelude//apple:apple_simulators.bzl", "apple_simulators_impl")
 load("@prelude//apple:apple_static_archive.bzl", "apple_static_archive_impl")
@@ -1744,7 +1743,6 @@ apple_resource_bundle = prelude_rule(
             "_bundle_target_name": attrs.string(),
             "_compile_resources_locally_override": attrs.option(attrs.bool(), default = None),
         }
-        | get_apple_info_plist_build_system_identification_attrs()
         | apple_common.apple_tools_arg()
         | apple_common.asset_catalogs_compilation_options_arg()
         | apple_common.info_plist_substitutions_arg()

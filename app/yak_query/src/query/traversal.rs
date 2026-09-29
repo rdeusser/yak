@@ -101,7 +101,6 @@ pub async fn async_fast_depth_first_postorder_traversal<
 
     // Deliberately keyed with starlark's hasher, not yak_hash's, so hashes stay
     // consistent with starlark_map collections used alongside it.
-    // ast-grep-ignore: rust/buck2-no-std-hashmap
     let mut visited: std::collections::HashSet<T::Key, StarlarkHasherBuilder> = Default::default();
     let mut work: Vec<WorkItem<T>> = root.into_iter().map(|t| WorkItem::Visit(t)).collect();
 
@@ -148,7 +147,6 @@ pub async fn async_depth_limited_traversal<
 ) -> yak_error::Result<()> {
     // Deliberately keyed with starlark's hasher, not yak_hash's, so hashes stay
     // consistent with starlark_map collections used alongside it.
-    // ast-grep-ignore: rust/buck2-no-std-hashmap
     let mut visited: std::collections::HashMap<_, _, StarlarkHasherBuilder> = Default::default();
     let mut push =
         |queue: &mut FuturesOrdered<_>, target: &T::Key, parent: Option<T::Key>, depth: u32| {

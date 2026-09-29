@@ -24,7 +24,6 @@ use yak_core::build_file_path::BuildFilePath;
 use yak_core::bzl::ImportPath;
 use yak_core::package::package_relative_path::PackageRelativePath;
 use yak_core::target::name::TargetNameRef;
-use yak_events::dispatch::console_message;
 use yak_node::nodes::eval_result::EvaluationResult;
 use yak_node::nodes::targets_map::TargetsMap;
 use yak_node::nodes::targets_map::TargetsMapRecordError;
@@ -88,7 +87,6 @@ pub struct ModuleInternals {
     imports: Vec<ImportPath>,
     package_implicits: Option<PackageImplicits>,
     record_target_call_stacks: bool,
-    skip_targets_with_duplicate_names: bool,
     /// The files owned by this directory. Is `None` for .bzl files.
     package_listing: PackageListing,
     pub(crate) super_package: SuperPackage,
@@ -127,7 +125,6 @@ impl ModuleInternals {
         imports: Vec<ImportPath>,
         package_implicits: Option<PackageImplicits>,
         record_target_call_stacks: bool,
-        skip_targets_with_duplicate_names: bool,
         package_listing: PackageListing,
         super_package: SuperPackage,
     ) -> Self {
@@ -138,7 +135,6 @@ impl ModuleInternals {
             imports,
             package_implicits,
             record_target_call_stacks,
-            skip_targets_with_duplicate_names,
             package_listing,
             super_package,
         }
@@ -149,17 +145,7 @@ impl ModuleInternals {
     }
 
     pub fn record(&self, target_node: TargetNode) -> yak_error::Result<()> {
-        match self.recording_targets().recorder.record(target_node) {
-            Ok(()) => Ok(()),
-            Err(e @ TargetsMapRecordError::RegisteredTargetTwice { .. }) => {
-                if self.skip_targets_with_duplicate_names {
-                    console_message(e.to_string());
-                    Ok(())
-                } else {
-                    Err(e.into())
-                }
-            }
-        }
+        Ok(self.recording_targets().recorder.record(target_node)?)
     }
 
     pub(crate) fn set_oncall(&self, name: &str) -> yak_error::Result<()> {

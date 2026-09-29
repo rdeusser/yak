@@ -480,7 +480,6 @@ fn apply_exec_environment(command: &mut Command, environment: ExecEnvironment) {
 /// Invokes the given program with the given argv and replaces the program image with the new program.
 /// Does not return.
 fn execv(args: ExecArgs) -> ! {
-    // ast-grep-ignore: rust/buck2-no-command-new
     let mut command = Command::new(&args.prog);
     command.args(&args.argv[1..]);
     if let Some(dir) = args.chdir {

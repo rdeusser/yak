@@ -74,7 +74,6 @@ pub struct BuildInterpreterConfiguror {
     prelude_import: Option<PreludePath>,
     host_info: HostInfo,
     record_target_call_stack: bool,
-    skip_targets_with_duplicate_names: bool,
     /// Whether to infer a target name when a pattern in a build or bzl file does
     /// not provide one, making `//foo/bar` equivalent to `//foo/bar:bar`.
     /// Controlled by the `yak.infer_target_names` yakconfig.
@@ -90,7 +89,6 @@ impl BuildInterpreterConfiguror {
         host_architecture: InterpreterHostArchitecture,
         host_xcode_version: Option<XcodeVersionInfo>,
         record_target_call_stack: bool,
-        skip_targets_with_duplicate_names: bool,
         infer_target_names: InferTargetNames,
         additional_globals: Option<AdditionalGlobalsFn>,
     ) -> yak_error::Result<Arc<Self>> {
@@ -98,7 +96,6 @@ impl BuildInterpreterConfiguror {
             prelude_import,
             host_info: HostInfo::new(host_platform, host_architecture, host_xcode_version),
             record_target_call_stack,
-            skip_targets_with_duplicate_names,
             infer_target_names,
             additional_globals,
         }))
@@ -128,7 +125,6 @@ impl BuildInterpreterConfiguror {
         current_dir_with_allowed_relative_dirs: CellPathWithAllowedRelativeDir,
     ) -> yak_error::Result<ModuleInternals> {
         let record_target_call_stack = self.record_target_call_stack;
-        let skip_targets_with_duplicate_names = self.skip_targets_with_duplicate_names;
         let package_implicits = implicit_import.map(|spec| {
             PackageImplicits::new(
                 loaded_modules
@@ -161,7 +157,6 @@ impl BuildInterpreterConfiguror {
             imports,
             package_implicits,
             record_target_call_stack,
-            skip_targets_with_duplicate_names,
             package_listing,
             super_package,
         ))

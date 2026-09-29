@@ -303,8 +303,6 @@ mod tests {
 
     #[test]
     fn test_concat() -> yak_error::Result<()> {
-        // Test
-        // ast-grep-ignore: rust/buck2-no-starlark-module
         Module::with_temp_heap(|env| {
             let globals = GlobalsBuilder::standard().with(register_select).build();
             let attr = AttrType::arg(true);
@@ -333,7 +331,6 @@ mod tests {
 
     #[test]
     fn test_unrecognized_macro_coerces() -> yak_error::Result<()> {
-        // ast-grep-ignore: rust/buck2-no-starlark-module
         Module::with_temp_heap(|env| {
             let globals = GlobalsBuilder::standard().with(register_select).build();
             let attr = AttrType::arg(true);

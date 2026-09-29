@@ -94,5 +94,4 @@ pub mod __internal {
     pub use static_assertions;
 }
 
-// ast-grep-ignore: rust/buck2-no-use-anyhow
 pub use anyhow::anyhow;

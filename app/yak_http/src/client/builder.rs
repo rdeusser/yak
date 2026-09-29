@@ -64,9 +64,9 @@ pub struct HttpClientBuilder {
 }
 
 impl HttpClientBuilder {
-    /// `oss` builds an https client that trusts the system roots and uses the proxies named by
-    /// `HTTPS_PROXY` and `HTTP_PROXY`.
-    pub async fn oss() -> yak_error::Result<Self> {
+    /// `https_with_system_roots_and_proxy_from_env` builds an https client that trusts the
+    /// system roots and uses the proxies named by `HTTPS_PROXY` and `HTTP_PROXY`.
+    pub async fn https_with_system_roots_and_proxy_from_env() -> yak_error::Result<Self> {
         let mut builder = Self::https_with_system_roots().await?;
         builder.with_proxy_from_env()?;
         Ok(builder)

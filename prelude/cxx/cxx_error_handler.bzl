@@ -69,7 +69,7 @@ def cxx_generic_error_handler(ctx: ActionErrorCtx) -> list[ActionSubError]:
 #
 # Error types added here should be generic across all cxx toolchains, toolchain/platform specific errors
 # should be defined in a separate toolchain and provided accordingly, these generic errors will automatically
-# be added to all types. If you wish to add messages, it must be applicable to ALL scenarios, including OSS.
+# be added to all types. If you wish to add messages, it must be applicable to ALL scenarios.
 CXX_GENERIC_ERROR_TYPES = [
     # linker errors
     make_error_type(

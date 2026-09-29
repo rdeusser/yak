@@ -171,7 +171,6 @@ async fn test_analysis_calculation() -> yak_error::Result<()> {
             InterpreterHostArchitecture::X86_64,
             None,
             false,
-            false,
             InferTargetNames::No,
             None,
         )?,

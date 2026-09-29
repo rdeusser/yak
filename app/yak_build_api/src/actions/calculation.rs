@@ -505,7 +505,6 @@ fn try_run_error_handler(
                 .clone()
                 .span(yak_data::ActionErrorHandlerExecutionStart {}, || {
                     // FIXME(JakobDegen): Wrong
-                    // ast-grep-ignore: rust/buck2-no-starlark-module
                     Module::with_temp_heap(|env| {
                         let heap = env.heap();
                         let print = EventDispatcherPrintHandler(get_dispatcher());

@@ -10,7 +10,7 @@ load("@prelude//go:toolchain.bzl", "GoDistrInfo", "GoToolchainInfo", "parse_go_v
 
 def _go_toolchain_impl(ctx):
     # Note: It makes sense to make GoDirstrInfo an attribute of GoToolchainInfo.
-    # That's a breaking change, so we'll need to notify oss users.
+    # That's a breaking change for users who define their own Go toolchain.
     go_distr = ctx.attrs.go_distr[GoDistrInfo]
 
     # `yak run` executes the `go` subtarget on the invoking machine, so it is

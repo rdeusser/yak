@@ -207,7 +207,6 @@ impl<'a> ClientCommandContext<'a> {
             host_xcode_version: config_opts.host_xcode_version_override(),
             disable_starlark_types: starlark_opts.disable_starlark_types,
             unstable_typecheck: starlark_opts.unstable_typecheck,
-            skip_targets_with_duplicate_names: starlark_opts.skip_targets_with_duplicate_names,
             reuse_current_config: config_opts.reuse_current_config,
             sanitized_argv: cmd.sanitize_argv(self.argv.clone()).argv,
             preemptible: match config_opts.preemptible {
@@ -264,7 +263,6 @@ impl<'a> ClientCommandContext<'a> {
             disable_starlark_types: false,
             unstable_typecheck: false,
             target_call_stacks: false,
-            skip_targets_with_duplicate_names: false,
             trace_id: format!("{}", self.trace_id),
             reuse_current_config: false,
             daemon_uuid: get_possibly_nested_invocation_daemon_uuid(),

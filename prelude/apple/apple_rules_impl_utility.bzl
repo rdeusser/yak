@@ -60,12 +60,6 @@ APPLE_EMBED_PROVISIONING_PROFILE_WHEN_ADHOC_CODE_SIGNING_ATTR_NAME = "embed_prov
 APPLE_VALIDATION_DEPS_ATTR_NAME = "validation_deps"
 APPLE_VALIDATION_DEPS_ATTR_TYPE = attrs.set(attrs.dep(), sorted = True, default = [])
 
-def get_apple_info_plist_build_system_identification_attrs():
-    return {
-        "info_plist_identify_build_system": attrs.option(attrs.bool(), default = None),
-        "_info_plist_identify_build_system_default": attrs.bool(default = False),
-    }
-
 def get_skip_swift_incremental_outputs_attrs():
     return {
         "_skip_swift_incremental_outputs": attrs.bool(default = read_bool("apple", "skip_swift_incremental_outputs", False, False, True)),
@@ -136,7 +130,6 @@ def _apple_bundle_like_common_attrs():
         APPLE_VALIDATION_DEPS_ATTR_NAME: APPLE_VALIDATION_DEPS_ATTR_TYPE,
         XCODE_SCHEME_SETTINGS_ATTR_NAME: XCODE_SCHEME_SETTINGS_ATTR_TYPE,
     }
-    attribs.update(get_apple_info_plist_build_system_identification_attrs())
     attribs.update(apple_common.apple_tools_arg())
     attribs.update(apple_common.enforce_minimum_os_plist_key())
     return attribs

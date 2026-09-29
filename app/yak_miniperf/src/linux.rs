@@ -109,7 +109,6 @@ pub fn main() -> anyhow::Result<()> {
     let counters = Counters::open();
 
     let status = args.next().context("No process to run").and_then(|bin| {
-        // ast-grep-ignore: rust/buck2-no-command-new
         Command::new(bin)
             .args(args)
             .status()

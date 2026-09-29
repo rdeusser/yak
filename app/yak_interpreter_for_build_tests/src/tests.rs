@@ -64,7 +64,6 @@ pub(crate) async fn calculation(fs: &ProjectRootTemp) -> DiceTransaction {
             InterpreterHostArchitecture::X86_64,
             None,
             false,
-            false,
             InferTargetNames::No,
             None,
         )

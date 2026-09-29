@@ -141,7 +141,7 @@ impl TestOutcome {
 }
 
 /// Exit code for a run in which tests failed;
-/// matches `RunVerdict::Fail` in the OSS test runner
+/// matches `RunVerdict::Fail` in `yak_test_runner`
 const TESTS_FAILED_EXIT_CODE: i32 = 32;
 
 #[derive(Default)]

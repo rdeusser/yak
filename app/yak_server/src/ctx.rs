@@ -223,7 +223,6 @@ pub struct ServerCommandContext<'a> {
     debugger_handle: Option<BuckStarlarkDebuggerHandle>,
 
     record_target_call_stacks: bool,
-    skip_targets_with_duplicate_names: bool,
     disable_starlark_types: bool,
     unstable_typecheck: bool,
 
@@ -362,7 +361,6 @@ impl<'a> ServerCommandContext<'a> {
             isolation_prefix,
             build_options: build_options.cloned(),
             record_target_call_stacks: client_context.target_call_stacks,
-            skip_targets_with_duplicate_names: client_context.skip_targets_with_duplicate_names,
             disable_starlark_types: client_context.disable_starlark_types,
             unstable_typecheck: client_context.unstable_typecheck,
             heartbeat_guard_handle: Some(heartbeat_guard_handle),
@@ -695,7 +693,6 @@ impl DiceUpdater for DiceCommandUpdater<'_, '_> {
             self.interpreter_architecture,
             self.interpreter_xcode_version.clone(),
             self.cmd_ctx.record_target_call_stacks,
-            self.cmd_ctx.skip_targets_with_duplicate_names,
             infer_target_names,
             None,
         )?;

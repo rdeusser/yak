@@ -285,10 +285,8 @@ where
 
         let message = error_display.simple_format_with_timestamps(with_timestamps, output_format);
         if self.tty_mode == TtyMode::Disabled {
-            // ast-grep-ignore: rust/buck2-cli-simpleconsole-echo
             crate::eprintln!("{}", display::sanitize_output_colors(message.as_bytes()))?;
         } else {
-            // ast-grep-ignore: rust/buck2-cli-simpleconsole-echo
             crate::eprintln!("{}", message)?;
         }
 

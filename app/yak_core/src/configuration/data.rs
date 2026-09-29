@@ -78,7 +78,7 @@ fn emit_configuration_instant_event(cfg: &ConfigurationData) -> yak_error::Resul
         })
         .collect();
 
-    // Sometimes this isn't going to be init'd in tests (oss or yak), let's
+    // Sometimes this isn't going to be init'd in tests (under Cargo or yak), let's
     // ignore that and rely on e2e test to assert we're still logging data from
     // production code paths.
     if let Ok(event_dispatch) = EVENT_DISPATCH.get() {

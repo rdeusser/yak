@@ -149,7 +149,6 @@ mod tests {
         "#;
         child_file.write_all(child_script.as_bytes()).await?;
 
-        // ast-grep-ignore: rust/buck2-no-command-new
         let mut command = tokio::process::Command::new("sh");
         command
             .args(["parent.sh"])
@@ -204,7 +203,6 @@ mod tests {
         "#;
         child_file.write_all(child_script.as_bytes()).await?;
 
-        // ast-grep-ignore: rust/buck2-no-command-new
         let mut command = tokio::process::Command::new("sh");
         command
             .args(["parent.sh"])

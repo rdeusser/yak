@@ -22,7 +22,6 @@ fn test_miniperf() -> anyhow::Result<()> {
     let temp_dir = tempfile::tempdir()?;
     let path = temp_dir.path().join("out");
 
-    // ast-grep-ignore: rust/buck2-no-command-new
     let mut cmd = Command::new(std::env::var_os("MINIPERF").context("$MINIPERF is not set")?);
     cmd.arg(&path);
     cmd.arg(

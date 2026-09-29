@@ -270,7 +270,6 @@ impl<'v> InternalRunnerTestInfo<'v> {
         listing_content: &str,
     ) -> yak_error::Result<Vec<TestListingEntry>> {
         // calling frozen callback
-        // ast-grep-ignore: rust/buck2-no-starlark-module
         Module::with_temp_heap(|env| {
             let heap = env.heap();
             let mut eval = Evaluator::new(&env);
@@ -375,7 +374,6 @@ impl<'v> InternalRunnerTestInfo<'v> {
         exit_code: i32,
     ) -> yak_error::Result<Vec<TestResultEntry>> {
         // calling frozen callback
-        // ast-grep-ignore: rust/buck2-no-starlark-module
         Module::with_temp_heap(|env| {
             let heap = env.heap();
             let mut eval = Evaluator::new(&env);

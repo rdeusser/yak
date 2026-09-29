@@ -506,7 +506,7 @@ mod tests {
         let fake_buck2 = temp_dir.join("yak");
         fs::copy("/bin/sh", &fake_buck2).expect("test yak executable should be copied");
 
-        // Under OSS `cargo test` (all tests share one process, unlike yak's
+        // Under `cargo test` (all tests share one process, unlike yak's
         // per-test process isolation) a sibling test's `fork` can inherit the
         // write fd `fs::copy` briefly holds on `fake_buck2`, making `exec` fail
         // with ETXTBSY until that fd clears. Retry past the window.

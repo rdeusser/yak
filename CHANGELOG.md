@@ -134,6 +134,7 @@ The prelude:
 - `buck2 docs agent` is removed. It printed Meta's schema for `--agent-context`.
 - The global `--agent-context` flag and the `CODING_AGENT_METADATA` environment variable are removed. They tagged invocations for Meta's analytics.
 - `buck2 query --output-format html` is removed. It uploaded the page to Manifold.
+- The hidden `--skip-targets-with-duplicate-names` flag is removed. Its help called it a hack for TD and said not to use it.
 
 ### Removed analytics
 
@@ -155,6 +156,7 @@ The prelude:
 - The `[buck2]` keys for event log upload are removed (`log_use_manifold`, `event_log_buffer_size`, `event_log_message_batch_size`, `event_log_retry_attempts`, `event_log_retry_backoff_duration_ms`).
 - The `log_use_manifold` setting in `[log_download]` is removed. `log_url` still selects a server for `buck2 log` downloads.
 - The `[buck2]` keys `agent_hostname_fail_v2_context`, `agent_hostname_fail_v2_glob`, and `allow_daemon_start_unsandboxed_via_wrapper` are removed.
+- The `[apple] info_plist_identify_build_system` key is removed.
 - The `[http] proxy_env_allowlist` key is removed. Only Meta's internal HTTP client read it. `HTTPS_PROXY`, `HTTP_PROXY`, and `NO_PROXY` work as before.
 - The environment variables for Eden (`BUCK2_DISABLE_EDEN_HEALTH_CHECK`, `BUCK2_EDEN_SEMAPHORE`, `BUCK2_ENABLE_EDEN_THRIFT_READ`) are removed.
 - The environment variables for log upload (`BUCK2_SCRIBE_CATEGORY`, `BUCK2_TEST_MANIFOLD_TTL_S`, `BUCK2_TEST_MANIFOLD_CHUNK_BYTES`, `BUCK2_TEST_BLOCK_ON_UPLOAD`, `BUCK2_TEST_DISABLE_LOG_UPLOAD`) are removed.
@@ -192,10 +194,12 @@ The Bazel Remote Execution API has no field for gang workers, action dependencie
 - `buck2 run` on a `go_test` without `env` runs the test binary directly. It ran through `inject_test_env.py` before.
 - The `TestListingInfo` provider and the `prelude//go/tools:list_tests` target are removed.
 - The `@prelude//apple:apple_test_device_types.bzl` module is removed.
+- Top-level `.app` bundles no longer carry the `FBBuck2` key in `Info.plist`.
+- `@prelude//cfg/modifier:alias.bzl` exports its struct of modifier aliases as `ALIASES` in place of `OSS_ALIASES`.
 
 Rule attributes and toolchain fields that only Meta's build used are removed:
 
-- Apple rules lose `bundle_telemetry_logger`, `entitlements_verification_check_enabled`, `_fast_adhoc_signing_probe_enabled`, `_meta_apple_library_validation_enabled`, and `_sanitizer_compatibility`. `apple_test` loses `test_device_type`. `AppleToolchainInfo` loses `bundle_telemetry_logger`.
+- Apple rules lose `bundle_telemetry_logger`, `entitlements_verification_check_enabled`, `_fast_adhoc_signing_probe_enabled`, `info_plist_identify_build_system`, `_info_plist_identify_build_system_default`, `_meta_apple_library_validation_enabled`, and `_sanitizer_compatibility`. `apple_test` loses `test_device_type`. `AppleToolchainInfo` loses `bundle_telemetry_logger`.
 - C++ rules lose `use_fbcc_rust_wrapper`.
 - `cxx_toolchain` loses `_dumpbin_toolchain_path`.
 - `CxxToolchainInfo` loses `compiler_with_wrapper`.

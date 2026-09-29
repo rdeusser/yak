@@ -8,9 +8,6 @@
  * above-listed licenses.
  */
 
-// Internal stable rustc still treats `assert_matches` as unstable; OSS nightly has stabilized it
-// and denies the now-redundant feature gate.
-#![allow(stable_features)]
 #![feature(once_cell_try)]
 
 use std::sync::Arc;

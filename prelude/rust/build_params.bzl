@@ -153,7 +153,7 @@ RuleType = enum("binary", "library")
 #
 # native-bundled: In this mode, we build rust libraries as staticlibs, where
 # rustc will bundle all of this target's rust dependencies into a single library
-# artifact. This approach is the most standardized OSS way to build rust
+# artifact. This approach is the most standardized way to build rust
 # libraries for linkage in non-rust code.
 
 LinkageLang = enum(
