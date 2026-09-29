@@ -33,6 +33,7 @@ use yak_execute::execute::result::CommandExecutionResult;
 use yak_execute::materialize::materializer::CasDownloadInfo;
 use yak_execute::materialize::materializer::DeclareArtifactPayload;
 use yak_execute::materialize::materializer::Materializer;
+use yak_execute::materialize::materializer::WriteLease;
 use yak_execute::re::manager::ReConnectionManager;
 use yak_fs::error::IoResultExt;
 use yak_fs::fs_util;
@@ -168,7 +169,11 @@ impl ParanoidDownloader {
                     .execute_io(Box::new(MoveOutputsIntoPlace { mapping }), cancellations)
                     .await?;
 
-                materializer.declare_existing(artifacts).await?;
+                materializer
+                    // FIXME(materializer): this producer takes no lease over the paths it
+                    // writes yet; problem-path-locking.md.
+                    .declare_existing(&WriteLease::noop(), artifacts)
+                    .await?;
 
                 yak_error::Ok(())
             })

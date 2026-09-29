@@ -178,6 +178,8 @@ async fn download_impl(
     cancellations: &CancellationContext,
 ) -> yak_error::Result<()> {
     let io = ctx.get_blocking_executor();
+    // Held until the fetched checkout is reported below.
+    let output_lease = materializer.prepare_outputs(vec![path.to_owned()]).await?;
     io.execute_io(
         Box::new(CleanOutputPaths {
             paths: vec![path.to_owned()],
@@ -225,10 +227,13 @@ async fn download_impl(
     });
 
     materializer
-        .declare_existing(vec![DeclareArtifactPayload {
-            path: path.to_owned(),
-            artifact: ArtifactValue::new(entry, None),
-        }])
+        .declare_existing(
+            &output_lease,
+            vec![DeclareArtifactPayload {
+                path: path.to_owned(),
+                artifact: ArtifactValue::new(entry, None),
+            }],
+        )
         .await?;
 
     Ok(())

@@ -36,8 +36,6 @@ use yak_core::execution_types::executor_config::RemoteExecutorUseCase;
 use yak_core::fs::artifact_path_resolver::ArtifactFs;
 use yak_core::fs::yak_out_path::BuildArtifactPath;
 use yak_data::SchedulingMode;
-use yak_error::YakErrorContext;
-use yak_error::internal_error;
 use yak_events::dispatch::EventDispatcher;
 use yak_execute::artifact::fs::ExecutorFs;
 use yak_execute::artifact_value::ArtifactValue;
@@ -52,7 +50,6 @@ use yak_execute::execute::cache_uploader::CacheUploadInfo;
 use yak_execute::execute::cache_uploader::CacheUploadResults;
 use yak_execute::execute::cache_uploader::IntoRemoteDepFile;
 use yak_execute::execute::claim::MutexClaimManager;
-use yak_execute::execute::clean_output_paths::CleanOutputPaths;
 use yak_execute::execute::command_executor::ActionExecutionTimingData;
 use yak_execute::execute::command_executor::CommandExecutor;
 use yak_execute::execute::dep_file_digest::DepFileDigest;
@@ -432,7 +429,6 @@ struct YakActionExecutionContext<'a, 'd> {
     executor: &'a YakActionExecutor<'d>,
     action: &'a RegisteredAction,
     inputs: YakIndexMap<ArtifactGroup, ArtifactGroupValues>,
-    outputs: &'a [BuildArtifact],
     command_reports: &'a mut Vec<CommandExecutionReport>,
     cancellations: &'a CancellationContext,
 }
@@ -711,44 +707,6 @@ impl ActionExecutionCtx for YakActionExecutionContext<'_, '_> {
             .await?)
     }
 
-    async fn cleanup_outputs(&self) -> yak_error::Result<()> {
-        // Delete all outputs before we start, so things will be clean.
-        let output_paths = self
-            .outputs
-            .iter()
-            .map(|o| {
-                if o.get_path().is_content_based_path() {
-                    internal_error!("Cleanup outputs is not supported for content-based paths!");
-                }
-                self.fs().resolve_build(o.get_path(), None)
-            })
-            .collect::<yak_error::Result<Vec<_>>>()?;
-
-        // Invalidate all the output paths this action might provide. Note that this is a bit
-        // approximative: we might have previous instances of this action that declared
-        // different outputs with a different materialization method that will become invalid
-        // now. However, nothing should reference those stale outputs, so while this does not
-        // do a good job of cleaning up garbage, it prevents using invalid artifacts.
-        self.executor
-            .materializer
-            .invalidate_many(output_paths.clone())
-            .await
-            .yak_error_context("Failed to invalidate output directory")?;
-
-        self.executor
-            .blocking_executor
-            .execute_io(
-                Box::new(CleanOutputPaths {
-                    paths: output_paths,
-                }),
-                self.cancellations,
-            )
-            .await
-            .yak_error_context("Failed to cleanup output directory")?;
-
-        Ok(())
-    }
-
     fn io_provider(&self) -> &dyn IoProvider {
         self.executor.io_provider
     }
@@ -782,7 +740,6 @@ impl<'d> YakActionExecutor<'d> {
                 executor: self,
                 action,
                 inputs,
-                outputs: outputs.as_ref(),
                 command_reports: &mut command_reports,
                 cancellations,
             };
