@@ -352,12 +352,12 @@ async def test_missing_report_on_wrong_package(yak: Yak, tmp_path: Path) -> None
 # TODO fix on windows and mac
 if not running_on_windows() and not running_on_mac():
 
-    @yak_test()
+    @yak_test(write_invocation_record=True)
     async def test_exclude_action_error_diagnostics(yak: Yak, tmp_path: Path) -> None:
         # Test that --build-report-options=exclude-action-error-diagnostics removes
         # error_diagnostics from the build report.
         report = tmp_path / "build-report.json"
-        await expect_failure(
+        res = await expect_failure(
             yak.build(
                 "--build-report",
                 str(report),
@@ -368,6 +368,17 @@ if not running_on_windows() and not running_on_mac():
         )
         with open(report) as f:
             report_data = json.loads(f.read())
+
+        errors = report_data["results"][
+            "root//fail_action:fail_one_with_error_handler"
+        ]["configured"]["<unspecified>"]["errors"]
+        assert len(errors) == 1
+        # category_key must match what yak logs to its error telemetry.
+        telemetry_error = res.invocation_record().single_error()
+        assert errors[0]["category_key"] == telemetry_error["category_key"], (
+            errors[0],
+            telemetry_error,
+        )
 
         sanitize_build_report(report_data)
 
