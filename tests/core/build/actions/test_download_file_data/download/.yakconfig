@@ -1,0 +1,20 @@
+[cells]
+  root = .
+  nano_prelude = nano_prelude
+
+[cell_aliases]
+  prelude = nano_prelude
+
+[external_cells]
+  nano_prelude = bundled
+
+[buildfile]
+  name = YAK.fixture
+
+[build]
+  execution_platforms = root//platforms:platforms
+
+# The tests declare SHA-1 checksums, which the CAS names content by only when
+# SHA-1 is the digest algorithm. yak defaults to SHA-256.
+[yak]
+  digest_algorithms = SHA1
