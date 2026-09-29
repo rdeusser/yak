@@ -1,0 +1,42 @@
+load("//build_defs:rust.bzl", "rust_library")
+
+rust_library(
+    name = "yak_util",
+    srcs = glob(
+        ["src/**/*.rs"],
+    ),
+    deps = [
+        "//allocative/allocative:allocative",
+        "//app/yak_env:yak_env",
+        "//app/yak_error:yak_error",
+        "//app/yak_hash:yak_hash",
+        "//app/yak_wrapper_common:yak_wrapper_common",
+        "//dice/dice_futures:dice_futures",
+        "//gazebo/dupe:dupe",
+        "//gazebo/gazebo:gazebo",
+        "//gazebo/strong_hash:strong_hash",
+        "//pagable:pagable",
+        "//shed/mini_vec:mini_vec",
+        "//starlark-rust/starlark_map:starlark_map",
+        "//third-party/rust:blake3",
+        "//third-party/rust:futures",
+        "//third-party/rust:regex",
+        "//third-party/rust:serde",
+        "//third-party/rust:sysinfo",
+        "//third-party/rust:tokio",
+        "//third-party/rust:tracing",
+        "//third-party/rust:triomphe",
+    ] + select({
+        "DEFAULT": [],
+        "prelude//os:linux": [
+            "//third-party/rust:libc",
+            "//third-party/rust:perf-event",
+        ],
+        "prelude//os:macos": [
+            "//third-party/rust:libc",
+        ],
+        "prelude//os:windows": [
+            "//third-party/rust:windows-sys",
+        ],
+    }),
+)

@@ -1,0 +1,40 @@
+[package]
+name = "yak_server_commands"
+version.workspace = true
+edition.workspace = true
+repository.workspace = true
+license.workspace = true
+
+[dependencies]
+async-trait.workspace = true
+dice.workspace = true
+dupe.workspace = true
+futures.workspace = true
+itertools.workspace = true
+jiff.workspace = true
+starlark_map.workspace = true
+tokio.workspace = true
+tokio-stream.workspace = true
+tonic.workspace = true
+tracing.workspace = true
+yak_artifact.workspace = true
+yak_build_api.workspace = true
+yak_cli_proto.workspace = true
+yak_common.workspace = true
+yak_core.workspace = true
+yak_data.workspace = true
+yak_directory.workspace = true
+yak_error.workspace = true
+yak_events.workspace = true
+yak_execute.workspace = true
+yak_fs.workspace = true
+yak_hash.workspace = true
+yak_install_proto.workspace = true
+yak_interpreter.workspace = true
+yak_node.workspace = true
+yak_query.workspace = true
+yak_server_ctx.workspace = true
+yak_util.workspace = true
+
+[lints]
+workspace = true

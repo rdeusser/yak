@@ -1,0 +1,43 @@
+[package]
+name = "yak_interpreter"
+version.workspace = true
+edition.workspace = true
+repository.workspace = true
+license.workspace = true
+
+[dependencies]
+allocative.workspace = true
+async-trait.workspace = true
+derivative.workspace = true
+derive_more.workspace = true
+dice.workspace = true
+dice_futures.workspace = true
+dupe.workspace = true
+either.workspace = true
+fancy-regex.workspace = true
+futures.workspace = true
+gazebo.workspace = true
+itertools.workspace = true
+pagable.workspace = true
+plist.workspace = true
+ref-cast.workspace = true
+regex.workspace = true
+serde.workspace = true
+starlark.workspace = true
+starlark_map.workspace = true
+strong_hash.workspace = true
+tokio.workspace = true
+triomphe.workspace = true
+yak_common.workspace = true
+yak_core.workspace = true
+yak_error.workspace = true
+yak_events.workspace = true
+yak_fs.workspace = true
+yak_util.workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true
+yak_hash.workspace = true
+
+[lints]
+workspace = true

@@ -18,7 +18,6 @@ use std::task::Poll;
 use std::time::Duration;
 
 use anyhow::Context as _;
-use buck2_re_configuration::Buck2OssReConfiguration;
 use http_body::Body;
 use http_body::Frame;
 use http_body_util::combinators::UnsyncBoxBody;
@@ -36,6 +35,7 @@ use tonic::transport::Identity;
 use tonic::transport::Uri;
 use tonic::transport::channel::ClientTlsConfig;
 use tower::Service;
+use yak_re_configuration::Buck2OssReConfiguration;
 
 use crate::stats::CountingConnector;
 

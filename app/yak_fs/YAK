@@ -1,0 +1,40 @@
+load("//build_defs:rust.bzl", "rust_library")
+
+rust_library(
+    name = "yak_fs",
+    srcs = glob(
+        ["src/**/*.rs"],
+    ),
+    deps = [
+        "//allocative/allocative:allocative",
+        "//app/yak_env:yak_env",
+        "//app/yak_error:yak_error",
+        "//app/yak_util:yak_util",
+        "//gazebo/dupe:dupe",
+        "//gazebo/gazebo:gazebo",
+        "//gazebo/strong_hash:strong_hash",
+        "//pagable:pagable",
+        "//third-party/rust:compact_str",
+        "//third-party/rust:derive_more",
+        "//third-party/rust:dunce",
+        "//third-party/rust:memchr",
+        "//third-party/rust:ref-cast",
+        "//third-party/rust:serde",
+        "//third-party/rust:smallvec",
+        "//third-party/rust:tokio",
+    ] + select({
+        "DEFAULT": [],
+        "prelude//os:linux": [
+            "//third-party/rust:libc",
+            "//third-party/rust:nix",
+        ],
+        "prelude//os:macos": [
+            "//third-party/rust:libc",
+            "//third-party/rust:nix",
+        ],
+        "prelude//os:windows": [
+            "//third-party/rust:common-path",
+            "//third-party/rust:windows-sys",
+        ],
+    }),
+)

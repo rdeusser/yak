@@ -1,0 +1,39 @@
+[package]
+name = "yak_build_signals_impl"
+version.workspace = true
+edition.workspace = true
+repository.workspace = true
+license.workspace = true
+
+[dependencies]
+async-trait.workspace = true
+dice.workspace = true
+dupe.workspace = true
+gazebo.workspace = true
+itertools.workspace = true
+prost-types.workspace = true
+ref-cast.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+smallvec.workspace = true
+starlark_map.workspace = true
+tokio.workspace = true
+tokio-stream.workspace = true
+tracing.workspace = true
+yak_analysis.workspace = true
+yak_artifact.workspace = true
+yak_build_api.workspace = true
+yak_build_signals.workspace = true
+yak_common.workspace = true
+yak_core.workspace = true
+yak_critical_path.workspace = true
+yak_data.workspace = true
+yak_error.workspace = true
+yak_events.workspace = true
+yak_hash.workspace = true
+yak_interpreter_for_build.workspace = true
+yak_node.workspace = true
+yak_util.workspace = true
+
+[lints]
+workspace = true

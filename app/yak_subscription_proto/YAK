@@ -1,0 +1,24 @@
+load("//build_defs:proto.bzl", "proto_srcs", "rust_protobuf_library")
+
+rust_protobuf_library(
+    name = "yak_subscription_proto",
+    srcs = glob(["src/**/*.rs"]),
+    build_script = "build.rs",
+    proto_srcs = ":yak_subscription_proto.proto",
+    deps = [
+        "//allocative/allocative:allocative",
+        "//third-party/rust:derive_more",
+        "//third-party/rust:serde",
+    ],
+)
+
+proto_srcs(
+    name = "yak_subscription_proto.proto",
+    srcs = ["subscription.proto"],
+    visibility = ["PUBLIC"],
+)
+
+export_file(
+    name = "subscription.proto",
+    visibility = ["PUBLIC"],
+)

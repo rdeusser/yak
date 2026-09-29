@@ -1,0 +1,17 @@
+[package]
+name = "yak_install_proto"
+version.workspace = true
+edition.workspace = true
+repository.workspace = true
+license.workspace = true
+
+[dependencies]
+prost.workspace = true
+tonic.workspace = true
+tonic-prost.workspace = true
+
+[build-dependencies]
+yak_protoc_dev.workspace = true
+
+[lints]
+workspace = true

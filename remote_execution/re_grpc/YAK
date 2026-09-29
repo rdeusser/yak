@@ -4,8 +4,8 @@ rust_library(
     name = "remote_execution",
     srcs = glob(["src/**/*.rs"]),
     deps = [
-        "//app/buck2_re_configuration:buck2_re_configuration",
-        "//app/buck2_util:buck2_util",
+        "//app/yak_re_configuration:yak_re_configuration",
+        "//app/yak_util:yak_util",
         "//gazebo/dupe:dupe",
         "//gazebo/gazebo:gazebo",
         "//remote_execution/re_grpc_proto:re_grpc_proto",

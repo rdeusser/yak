@@ -1,0 +1,26 @@
+load("//build_defs:rust.bzl", "rust_library")
+
+rust_library(
+    name = "yak_cfg_constructor",
+    srcs = glob(
+        ["src/**/*.rs"],
+    ),
+    deps = [
+        "//allocative/allocative:allocative",
+        "//app/yak_build_api:yak_build_api",
+        "//app/yak_common:yak_common",
+        "//app/yak_core:yak_core",
+        "//app/yak_error:yak_error",
+        "//app/yak_events:yak_events",
+        "//app/yak_interpreter:yak_interpreter",
+        "//app/yak_interpreter_for_build:yak_interpreter_for_build",
+        "//app/yak_node:yak_node",
+        "//dice/dice:dice",
+        "//dice/dice_futures:dice_futures",
+        "//gazebo/dupe:dupe",
+        "//pagable:pagable",
+        "//starlark-rust/starlark:starlark",
+        "//third-party/rust:async-trait",
+        "//third-party/rust:derive_more",
+    ],
+)

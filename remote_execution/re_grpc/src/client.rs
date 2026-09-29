@@ -27,8 +27,6 @@ use async_compression::tokio::bufread::DeflateDecoder;
 use async_compression::tokio::bufread::DeflateEncoder;
 use async_compression::tokio::bufread::ZstdDecoder;
 use async_compression::tokio::bufread::ZstdEncoder;
-use buck2_re_configuration::Buck2OssReConfiguration;
-use buck2_re_configuration::HttpHeader;
 use dupe::Dupe;
 use futures::Stream;
 use futures::future::BoxFuture;
@@ -90,6 +88,8 @@ use tonic::metadata::MetadataKey;
 use tonic::metadata::MetadataValue;
 use tonic::service::Interceptor;
 use tonic::transport::Channel;
+use yak_re_configuration::Buck2OssReConfiguration;
+use yak_re_configuration::HttpHeader;
 
 use crate::error::*;
 use crate::metadata::*;
@@ -1494,7 +1494,7 @@ where
         })
     });
 
-    buck2_util::future::try_join_all(writes).await?;
+    yak_util::future::try_join_all(writes).await?;
 
     Ok(DownloadResponse {
         inlined_blobs: Some(inlined_blobs),

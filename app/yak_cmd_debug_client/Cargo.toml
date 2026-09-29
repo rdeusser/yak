@@ -1,0 +1,29 @@
+[package]
+name = "yak_cmd_debug_client"
+version.workspace = true
+edition.workspace = true
+repository.workspace = true
+license.workspace = true
+
+[dependencies]
+allocative.workspace = true
+async-trait.workspace = true
+clap.workspace = true
+gazebo.workspace = true
+humantime.workspace = true
+prost.workspace = true
+serde_json.workspace = true
+tokio-stream.workspace = true
+tracing.workspace = true
+yak_cli_proto.workspace = true
+yak_client_ctx.workspace = true
+yak_common.workspace = true
+yak_core.workspace = true
+yak_error.workspace = true
+yak_event_log.workspace = true
+yak_fs.workspace = true
+yak_log_common.workspace = true
+yak_offline_archive.workspace = true
+
+[lints]
+workspace = true

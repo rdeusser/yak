@@ -21,7 +21,7 @@ from e2e_util.buck_workspace import buck_test, env
 # `yak_hydration.enable_paging` (pagable DICE storage on disk) and
 # `yak_hydration.page_out_on_idle` (page the graph out when the daemon goes idle).
 
-# `buck2_data.PageOutStarted::*` — the invocation record serializes the
+# `yak_data.PageOutStarted::*` — the invocation record serializes the
 # `page_out_started` enum field as its integer value (see data.proto).
 _PAGE_OUT_STARTED_STARTED = 1
 _PAGE_OUT_STARTED_DISABLED_AFTER_ERROR = 9

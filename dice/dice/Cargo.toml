@@ -12,7 +12,6 @@ anymap3.workspace = true
 arc-swap.workspace = true
 async-trait.workspace = true
 bit-set.workspace = true
-buck2_hash.workspace = true
 cmp_any.workspace = true
 dashmap.workspace = true
 derivative.workspace = true
@@ -39,6 +38,7 @@ static_assertions.workspace = true
 thiserror.workspace = true
 tokio.workspace = true
 tracing.workspace = true
+yak_hash.workspace = true
 
 [dev-dependencies]
 assert_matches.workspace = true

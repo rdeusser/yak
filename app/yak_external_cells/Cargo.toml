@@ -1,0 +1,30 @@
+[package]
+name = "yak_external_cells"
+version.workspace = true
+edition.workspace = true
+repository.workspace = true
+license.workspace = true
+
+[dependencies]
+allocative.workspace = true
+async-trait.workspace = true
+blake3.workspace = true
+cmp_any.workspace = true
+derive_more.workspace = true
+dice.workspace = true
+dupe.workspace = true
+pagable.workspace = true
+tokio.workspace = true
+yak_build_api.workspace = true
+yak_common.workspace = true
+yak_core.workspace = true
+yak_directory.workspace = true
+yak_error.workspace = true
+yak_execute.workspace = true
+yak_external_cells_bundled.workspace = true
+yak_fs.workspace = true
+yak_hash.workspace = true
+yak_util.workspace = true
+
+[lints]
+workspace = true

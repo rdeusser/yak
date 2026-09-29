@@ -1,0 +1,19 @@
+load("//build_defs:proto.bzl", "proto_srcs", "rust_protobuf_library")
+
+rust_protobuf_library(
+    name = "yak_downward_api_proto",
+    srcs = glob(["src/**/*.rs"]),
+    build_script = "build.rs",
+    proto_srcs = ":yak_downward_api_proto.proto",
+    deps = [
+        "//app/yak_error:yak_error",
+        "//app/yak_hash:yak_hash",
+        "//third-party/rust:tracing",
+    ],
+)
+
+proto_srcs(
+    name = "yak_downward_api_proto.proto",
+    srcs = ["downward_api.proto"],
+    visibility = ["PUBLIC"],
+)

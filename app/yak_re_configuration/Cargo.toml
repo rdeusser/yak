@@ -1,0 +1,14 @@
+[package]
+name = "yak_re_configuration"
+version.workspace = true
+edition.workspace = true
+repository.workspace = true
+license.workspace = true
+
+[dependencies]
+allocative.workspace = true
+yak_common.workspace = true
+yak_error.workspace = true
+
+[lints]
+workspace = true

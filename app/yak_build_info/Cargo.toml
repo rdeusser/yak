@@ -1,0 +1,12 @@
+[package]
+name = "yak_build_info"
+version.workspace = true
+edition.workspace = true
+repository.workspace = true
+license.workspace = true
+
+[dependencies]
+yak_util.workspace = true
+
+[lints]
+workspace = true

@@ -1,0 +1,28 @@
+[package]
+name = "yak_log_common"
+version.workspace = true
+edition.workspace = true
+repository.workspace = true
+license.workspace = true
+
+[dependencies]
+clap.workspace = true
+derive_more.workspace = true
+dupe.workspace = true
+flate2.workspace = true
+futures.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+tokio-stream.workspace = true
+yak_client_ctx.workspace = true
+yak_common.workspace = true
+yak_data.workspace = true
+yak_error.workspace = true
+yak_event_log.workspace = true
+yak_event_observer.workspace = true
+yak_events.workspace = true
+yak_fs.workspace = true
+yak_hash.workspace = true
+
+[lints]
+workspace = true

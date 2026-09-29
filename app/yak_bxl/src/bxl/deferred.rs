@@ -1,0 +1,146 @@
+/*
+ * Copyright (c) Meta Platforms, Inc. and affiliates.
+ *
+ * This source code is dual-licensed under either the MIT license found in the
+ * LICENSE-MIT file in the root directory of this source tree or the Apache
+ * License, Version 2.0 found in the LICENSE-APACHE file in the root directory
+ * of this source tree. You may select, at your option, one of the
+ * above-listed licenses.
+ */
+
+#[cfg(test)]
+mod tests {
+
+    use std::sync::Arc;
+    use std::sync::atomic::AtomicBool;
+    use std::sync::atomic::Ordering;
+
+    use allocative::Allocative;
+    use yak_artifact::deferred::key::DeferredHolderKey;
+    use yak_build_api::actions::execute::dice_data::set_fallback_executor_config;
+    use yak_build_api::bxl::result::BxlResult;
+    use yak_build_api::bxl::types::BxlFunctionLabel;
+    use yak_build_api::deferred::calculation::DeferredCalculation;
+    use yak_build_api::deferred::types::Deferred;
+    use yak_build_api::deferred::types::DeferredCtx;
+    use yak_build_api::deferred::types::DeferredInput;
+    use yak_build_api::deferred::types::DeferredInputsRef;
+    use yak_build_api::deferred::types::DeferredOutput;
+    use yak_build_api::deferred::types::DeferredRegistry;
+    use yak_build_api::deferred::types::DeferredValue;
+    use yak_common::dice::data::testing::SetTestingIoProvider;
+    use yak_core::base_deferred_key::BaseDeferredKey;
+    use yak_core::bxl::BxlFilePath;
+    use yak_core::execution_types::execution::ExecutionPlatformResolution;
+    use yak_core::execution_types::executor_config::CommandExecutorConfig;
+    use yak_core::fs::project::ProjectRootTemp;
+    use yak_core::global_cfg_options::GlobalCfgOptions;
+    use yak_execute::digest_config::DigestConfig;
+    use yak_execute::digest_config::SetDigestConfig;
+    use dice::DiceComputations;
+    use dice::UserComputationData;
+    use dice::testing::DiceBuilder;
+    use dupe::Dupe;
+    use starlark_map::ordered_map::OrderedMap;
+
+    use crate::bxl::calculation::testing::BxlComputeKey;
+    use crate::bxl::eval::mk_stream_cache;
+    use crate::bxl::key::BxlKey;
+
+    #[derive(Allocative, Clone, Debug, Eq, PartialEq)]
+    struct FakeDeferredOutput(usize);
+
+    impl DeferredOutput for FakeDeferredOutput {}
+
+    #[derive(Debug, Allocative)]
+    struct FakeDeferred(usize, BuckIndexSet<DeferredInput>, Arc<AtomicBool>);
+
+    impl provider::Provider for FakeDeferred {
+        fn provide<'a>(&'a self, _demand: &mut provider::Demand<'a>) {}
+    }
+
+    impl Deferred for FakeDeferred {
+        type Output = FakeDeferredOutput;
+
+        fn inputs(&self) -> DeferredInputsRef<'_> {
+            DeferredInputsRef::IndexSet(&self.1)
+        }
+
+        async fn execute(
+            &self,
+            _ctx: &mut dyn DeferredCtx,
+            _dice: &mut DiceComputations<'_>,
+        ) -> yak_error::Result<DeferredValue<Self::Output>> {
+            self.2.store(true, Ordering::SeqCst);
+            Ok(DeferredValue::Ready(FakeDeferredOutput(self.0)))
+        }
+    }
+
+    #[tokio::test]
+    async fn lookup_deferred_from_bxl() -> yak_error::Result<()> {
+        let bxl = BxlKey::new(
+            BxlFunctionLabel {
+                bxl_path: BxlFilePath::testing_new("cell", "dir"),
+                name: "foo".to_owned(),
+            },
+            Arc::new(OrderedMap::new()),
+            false,
+            GlobalCfgOptions::default(),
+        );
+
+        let mut deferred = DeferredRegistry::new(DeferredHolderKey::Base(
+            BaseDeferredKey::BxlLabel(bxl.dupe().into_base_deferred_key_dyn_impl(
+                ExecutionPlatformResolution::unspecified(),
+                Vec::new(),
+                Vec::new(),
+            )),
+        ));
+
+        let executed0 = Arc::new(AtomicBool::new(false));
+        let executed1 = Arc::new(AtomicBool::new(false));
+        let data0 = deferred.defer(FakeDeferred(1, BuckIndexSet::default(), executed0.dupe()));
+        let data1 = deferred.defer(FakeDeferred(5, BuckIndexSet::default(), executed1.dupe()));
+        let (deferred_result, analysis_values) = deferred.take_result()?;
+
+        let fs = ProjectRootTemp::new()?;
+        let dice = DiceBuilder::new()
+            .set_data(|data| {
+                data.set_testing_io_provider(&fs);
+                data.set_digest_config(DigestConfig::testing_default());
+            })
+            .mock_and_return(
+                BxlComputeKey(bxl.dupe()),
+                yak_error::Ok(Arc::new(BxlResult::BuildsArtifacts {
+                    output_loc: mk_stream_cache("test", &bxl),
+                    error_loc: mk_stream_cache("errortest", &bxl),
+                    built: vec![],
+                    artifacts: vec![],
+                    deferred: deferred_result,
+                    analysis_values,
+                })),
+            );
+
+        let mut dice_data = UserComputationData::new();
+        set_fallback_executor_config(&mut dice_data.data, CommandExecutorConfig::testing_local());
+
+        let mut dice = dice.build(dice_data)?.commit().await;
+        let deferred_result = dice.compute_deferred_data(&data0).await?;
+        assert_eq!(deferred_result.0, 1);
+        assert!(executed0.load(Ordering::SeqCst));
+        // we should cache deferred execution
+        executed0.store(false, Ordering::SeqCst);
+        let deferred_result = dice.compute_deferred_data(&data0).await?;
+        assert_eq!(deferred_result.0, 1);
+        assert!(!executed0.load(Ordering::SeqCst));
+
+        let deferred_result = dice.compute_deferred_data(&data1).await?;
+        assert_eq!(deferred_result.0, 5);
+        assert!(executed1.load(Ordering::SeqCst));
+        // we should cache deferred execution
+        executed1.store(false, Ordering::SeqCst);
+        assert_eq!(deferred_result.0, 5);
+        assert!(!executed1.load(Ordering::SeqCst));
+
+        Ok(())
+    }
+}

@@ -1,0 +1,10 @@
+load("//build_defs:rust.bzl", "rust_library")
+
+rust_library(
+    name = "yak_miniperf_proto",
+    srcs = glob(["src/**/*.rs"]),
+    deps = [
+        "//gazebo/dupe:dupe",
+        "//third-party/rust:serde",
+    ],
+)

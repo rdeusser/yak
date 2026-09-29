@@ -1,0 +1,15 @@
+[package]
+name = "yak_errorformat"
+version.workspace = true
+edition.workspace = true
+repository.workspace = true
+license.workspace = true
+
+[dependencies]
+fancy-regex.workspace = true
+nom.workspace = true
+tracing.workspace = true
+yak_error.workspace = true
+
+[lints]
+workspace = true

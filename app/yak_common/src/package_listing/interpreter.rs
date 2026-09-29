@@ -1,0 +1,536 @@
+/*
+ * Copyright (c) Meta Platforms, Inc. and affiliates.
+ *
+ * This source code is dual-licensed under either the MIT license found in the
+ * LICENSE-MIT file in the root directory of this source tree or the Apache
+ * License, Version 2.0 found in the LICENSE-APACHE file in the root directory
+ * of this source tree. You may select, at your option, one of the
+ * above-listed licenses.
+ */
+
+use async_trait::async_trait;
+use dice::DiceComputations;
+use dupe::Dupe;
+use futures::FutureExt;
+use futures::future::BoxFuture;
+use starlark_map::sorted_set::SortedSet;
+use starlark_map::sorted_vec::SortedVec;
+use yak_core::cells::cell_path::CellPath;
+use yak_core::cells::cell_path::CellPathRef;
+use yak_core::cells::paths::CellRelativePath;
+use yak_core::package::PackageLabel;
+use yak_core::package::package_relative_path::PackageRelativePath;
+use yak_core::package::package_relative_path::PackageRelativePathBuf;
+use yak_fs::paths::file_name::FileNameBuf;
+use yak_util::arc_str::ArcS;
+
+use crate::file_ops::dice::DiceFileComputations;
+use crate::find_buildfile::find_buildfile;
+use crate::ignores::file_ignores::FileIgnoreReason;
+use crate::io::DirectoryDoesNotExistSuggestion;
+use crate::io::ReadDirError;
+use crate::package_listing::listing::PackageListing;
+use crate::package_listing::resolver::PackageListingResolver;
+
+#[derive(Debug, yak_error::Error)]
+#[yak(tag = Input)]
+enum PackageListingError {
+    #[error("Expected `{0}` to be within a package directory, but there was no buildfile in any parent directories. Expected one of `{}`", .1.join("`, `"))]
+    NoContainingPackage(CellPath, Vec<FileNameBuf>),
+}
+
+#[async_trait]
+impl PackageListingResolver for InterpreterPackageListingResolver<'_, '_> {
+    async fn resolve(&mut self, package: PackageLabel) -> yak_error::Result<PackageListing> {
+        Ok(self.gather_package_listing(package.dupe()).await?)
+    }
+
+    async fn get_enclosing_package(
+        &mut self,
+        path: CellPathRef<'async_trait>,
+    ) -> yak_error::Result<PackageLabel> {
+        let buildfile_candidates = DiceFileComputations::buildfiles(self.ctx, path.cell()).await?;
+        if let Some(path) = path.parent() {
+            for path in path.ancestors() {
+                let listing = DiceFileComputations::read_dir(self.ctx, path).await?;
+                if find_buildfile(buildfile_candidates, &listing.included).is_some() {
+                    return PackageLabel::from_cell_path(path);
+                }
+            }
+        }
+        Err(PackageListingError::NoContainingPackage(
+            path.to_owned(),
+            buildfile_candidates.to_vec(),
+        )
+        .into())
+    }
+
+    async fn get_enclosing_packages(
+        &mut self,
+        path: CellPathRef<'async_trait>,
+        enclosing_path: CellPathRef<'async_trait>,
+    ) -> yak_error::Result<Vec<PackageLabel>> {
+        let buildfile_candidates = DiceFileComputations::buildfiles(self.ctx, path.cell()).await?;
+        if let Some(path) = path.parent() {
+            let mut packages = Vec::new();
+            for path in path.ancestors() {
+                if !path.starts_with(enclosing_path.dupe()) {
+                    // stop when we are no longer within the enclosing path
+                    break;
+                }
+                let listing = DiceFileComputations::read_dir(self.ctx, path.dupe()).await?;
+                if find_buildfile(buildfile_candidates, &listing.included).is_some() {
+                    packages.push(PackageLabel::from_cell_path(path)?);
+                }
+            }
+            Ok(packages)
+        } else {
+            Err(PackageListingError::NoContainingPackage(
+                path.to_owned(),
+                buildfile_candidates.to_vec(),
+            )
+            .into())
+        }
+    }
+}
+
+pub struct InterpreterPackageListingResolver<'c, 'd> {
+    ctx: &'c mut DiceComputations<'d>,
+}
+
+#[derive(Debug, yak_error::Error)]
+#[yak(tag = Input)]
+pub enum GatherPackageListingError {
+    #[yak(input)]
+    NoBuildFile {
+        package: CellPath,
+        candidates: Vec<FileNameBuf>,
+    },
+    #[yak(input)]
+    DirectoryDoesNotExist {
+        package: CellPath,
+        expected_path: CellPath,
+        suggestion: DirectoryDoesNotExistSuggestion,
+    },
+    #[yak(input)]
+    DirectoryIsIgnored {
+        package: CellPath,
+        path: CellPath,
+        ignore_reason: FileIgnoreReason,
+    },
+    #[yak(input)]
+    NotADirectory {
+        package: CellPath,
+        path: CellPath,
+        node_type: String,
+    },
+    Error {
+        package: CellPath,
+        #[source]
+        error: yak_error::Error,
+    },
+}
+
+impl GatherPackageListingError {
+    fn error<E: Into<yak_error::Error>>(
+        package_path: CellPathRef<'_>,
+        err: E,
+    ) -> GatherPackageListingError {
+        GatherPackageListingError::Error {
+            package: package_path.to_owned(),
+            error: err.into(),
+        }
+    }
+
+    fn from_read_dir(
+        package_path: CellPathRef<'_>,
+        err: ReadDirError,
+    ) -> GatherPackageListingError {
+        match err {
+            ReadDirError::DirectoryDoesNotExist { path, suggestion } => {
+                GatherPackageListingError::DirectoryDoesNotExist {
+                    package: package_path.to_owned(),
+                    expected_path: path,
+                    suggestion,
+                }
+            }
+            ReadDirError::DirectoryIsIgnored(path, ignore_reason) => {
+                GatherPackageListingError::DirectoryIsIgnored {
+                    package: package_path.to_owned(),
+                    path,
+                    ignore_reason,
+                }
+            }
+            ReadDirError::NotADirectory(path, node_type) => {
+                GatherPackageListingError::NotADirectory {
+                    package: package_path.to_owned(),
+                    path,
+                    node_type,
+                }
+            }
+            ReadDirError::Error(e) => GatherPackageListingError::Error {
+                package: package_path.to_owned(),
+                error: e,
+            },
+        }
+    }
+
+    fn no_build_file(
+        package_path: CellPathRef<'_>,
+        candidates: Vec<FileNameBuf>,
+    ) -> GatherPackageListingError {
+        GatherPackageListingError::NoBuildFile {
+            package: package_path.to_owned(),
+            candidates,
+        }
+    }
+}
+
+impl std::fmt::Display for GatherPackageListingError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        /*
+         package `root//foo/target/x/y/lmnop:` does not exist
+                  ^----------------^
+             dir `root//foo/target/x` does not exist
+
+         package `root//foo/target/x/y/lmnop:` does not exist
+                  ^----------------^
+             dir `root//foo/target/x` is ignored (config project.ignore contains `foo/target/ **`)
+
+         package `root//other/target/x/y/lmnop:` does not exist
+                  ^---------^
+             this package is using the wrong cell, use `other//target/x/y/lmnop:` instead
+
+
+         package `root//foo/target/x/y/lmnop:` does not exist
+                  ^----------------^
+            path `root//foo/target/x` is a file, not a directory
+
+         package `root//foo/target/x/y/lmnop:` does not exist
+             missing `YAK` file (also missing alternatives `BUILD`)
+
+         error loading package `root//foo/target/x/y/lmnop:`
+              ... # just display the yak_error for now
+        */
+
+        let prefix = "package `";
+        let underlined = |path_as_string: &str| {
+            format!(
+                "{}^{}^",
+                " ".repeat(prefix.len()),
+                "-".repeat(path_as_string.len().saturating_sub(2))
+            )
+        };
+
+        let (package, submessage) = match self {
+            GatherPackageListingError::Error { package, .. } => {
+                // in this case we return the yak_error as our source and we're just displayed as context
+                write!(f, "gathering package listing for `{}`", package)?;
+                return Ok(());
+            }
+            GatherPackageListingError::NoBuildFile {
+                candidates,
+                package,
+            } => {
+                if let Some((primary_candidate, alternatives)) = candidates.split_first() {
+                    let alternatives: Vec<_> =
+                        alternatives.iter().map(|v| format!("`{v}`")).collect();
+
+                    let message = if alternatives.is_empty() {
+                        format!("    missing `{}` file", primary_candidate)
+                    } else {
+                        format!(
+                            "    missing `{}` file (also missing alternatives {})",
+                            primary_candidate,
+                            alternatives.join(", ")
+                        )
+                    };
+
+                    (package, message)
+                } else {
+                    unreachable!()
+                }
+            }
+            GatherPackageListingError::DirectoryDoesNotExist {
+                package,
+                expected_path,
+                suggestion,
+            } => {
+                let path_as_str = expected_path.to_string();
+                let suggestion_msg = match suggestion {
+                    DirectoryDoesNotExistSuggestion::Cell(cell_suggestion) => {
+                        format!("Did you mean one of [`{}`]?", cell_suggestion.join("`, `"))
+                    }
+                    DirectoryDoesNotExistSuggestion::Typo(suggestion) => {
+                        let suggested_target = match expected_path.parent() {
+                            Some(parent) => {
+                                if parent.path().is_empty() {
+                                    format!("{}//{}", parent.cell(), suggestion)
+                                } else {
+                                    format!("{}/{}", parent, suggestion)
+                                }
+                            }
+                            None => {
+                                format!("{}//{}", expected_path.cell(), suggestion)
+                            }
+                        };
+
+                        format!("Did you mean `{}`?", suggested_target)
+                    }
+                    DirectoryDoesNotExistSuggestion::NoSuggestion => "".to_owned(),
+                };
+
+                (
+                    package,
+                    format!(
+                        "{}\n    dir `{}` does not exist. {}",
+                        underlined(&path_as_str),
+                        path_as_str,
+                        suggestion_msg
+                    ),
+                )
+            }
+            GatherPackageListingError::NotADirectory {
+                package,
+                path,
+                node_type,
+            } => {
+                let path_as_str = path.to_string();
+                (
+                    package,
+                    format!(
+                        "{}\n   path `{}` is a {}, not a directory",
+                        underlined(&path_as_str),
+                        path_as_str,
+                        node_type
+                    ),
+                )
+            }
+            GatherPackageListingError::DirectoryIsIgnored {
+                package,
+                path,
+                ignore_reason: FileIgnoreReason::IgnoredByPattern { pattern, .. },
+            } => {
+                let path_as_str = path.to_string();
+                (
+                    package,
+                    format!(
+                        "{}\n    dir `{}` does not exist (project.ignore contains `{}`)",
+                        underlined(&path_as_str),
+                        path_as_str,
+                        pattern
+                    ),
+                )
+            }
+            GatherPackageListingError::DirectoryIsIgnored {
+                package,
+                path,
+                ignore_reason: FileIgnoreReason::IgnoredByCell { cell_name, .. },
+            } => {
+                let path_as_str = path.to_string();
+                let corrected = {
+                    match package.strip_prefix(path.as_ref()) {
+                        Ok(fixed) => {
+                            CellPath::new(*cell_name, CellRelativePath::new(fixed).to_owned())
+                                .to_string()
+                        }
+                        _ => format!("{cell_name}//"),
+                    }
+                };
+                (
+                    package,
+                    format!(
+                        "{}\n    this package is using the wrong cell, use `{}` instead",
+                        underlined(&path_as_str),
+                        corrected,
+                    ),
+                )
+            }
+        };
+
+        writeln!(f, "{prefix}{package}:` does not exist")?;
+        f.write_str(&submessage)?;
+        Ok(())
+    }
+}
+
+impl<'c, 'd> InterpreterPackageListingResolver<'c, 'd> {
+    pub fn new(ctx: &'c mut DiceComputations<'d>) -> Self {
+        Self { ctx }
+    }
+
+    pub async fn gather_package_listing(
+        &mut self,
+        root: PackageLabel,
+    ) -> Result<PackageListing, GatherPackageListingError> {
+        gather_package_listing_impl(self.ctx, root).await
+    }
+}
+
+struct Directory {
+    path: ArcS<PackageRelativePath>,
+    files: Vec<ArcS<PackageRelativePath>>,
+    subdirs: Vec<Directory>,
+    subpackages: Vec<ArcS<PackageRelativePath>>,
+    buildfile: Option<FileNameBuf>,
+
+    recursive_files_count: usize,
+    recursive_dirs_count: usize,
+    recursive_subpackages_count: usize,
+}
+
+impl Directory {
+    // Ok(None) indicates that the path is a subpackage
+    async fn gather(
+        ctx: &mut DiceComputations<'_>,
+        buildfile_candidates: &[FileNameBuf],
+        root: CellPathRef<'_>,
+        path: &PackageRelativePath,
+        is_root: bool,
+    ) -> Result<Option<Directory>, GatherPackageListingError> {
+        let cell_path = root.join(path.as_forward_rel_path());
+        let entries = DiceFileComputations::read_dir_ext(ctx, cell_path.as_ref())
+            .await
+            .map_err(|e| GatherPackageListingError::from_read_dir(cell_path.as_ref(), e))?
+            .included;
+        let buildfile = find_buildfile(buildfile_candidates, &entries);
+
+        match (is_root, buildfile) {
+            (true, None) => {
+                return Err(GatherPackageListingError::no_build_file(
+                    cell_path.as_ref(),
+                    buildfile_candidates.to_vec(),
+                ));
+            }
+            (false, Some(_)) => {
+                return Ok(None);
+            }
+            _ => {}
+        }
+
+        let mut subdirs = Vec::new();
+        let mut files = Vec::new();
+
+        for d in &*entries {
+            let child_path = path.join(&d.file_name);
+            if d.file_type.is_dir() {
+                subdirs.push(child_path);
+            } else {
+                files.push(child_path.to_arc());
+            }
+        }
+
+        let (subdirs, subpackages) =
+            Self::gather_subdirs(ctx, buildfile_candidates, root, subdirs).await?;
+
+        let mut recursive_files_count = files.len();
+        let mut recursive_dirs_count = subdirs.len();
+        let mut recursive_subpackages_count = subpackages.len();
+        for d in &subdirs {
+            recursive_files_count += d.recursive_files_count;
+            recursive_dirs_count += d.recursive_dirs_count;
+            recursive_subpackages_count += d.recursive_subpackages_count;
+        }
+
+        Ok(Some(Directory {
+            path: path.to_arc(),
+            files,
+            subdirs,
+            subpackages,
+            buildfile: buildfile.map(|v| v.to_owned()),
+            recursive_files_count,
+            recursive_dirs_count,
+            recursive_subpackages_count,
+        }))
+    }
+
+    fn gather_subdirs<'a>(
+        ctx: &'a mut DiceComputations<'_>,
+        buildfile_candidates: &'a [FileNameBuf],
+        root: CellPathRef<'a>,
+        subdirs: Vec<PackageRelativePathBuf>,
+    ) -> BoxFuture<
+        'a,
+        Result<(Vec<Directory>, Vec<ArcS<PackageRelativePath>>), GatherPackageListingError>,
+    > {
+        async move {
+            let mut new_subdirs = Vec::new();
+            let mut subpackages = Vec::new();
+
+            for res in ctx
+                .compute_join(subdirs, async |ctx: &mut DiceComputations, path| {
+                    let res =
+                        Directory::gather(ctx, buildfile_candidates, root, &path, false).await?;
+                    Ok((path, res))
+                })
+                .await
+            {
+                let (path, res) = res?;
+                match res {
+                    Some(v) => new_subdirs.push(v),
+                    None => subpackages.push(path.to_arc()),
+                }
+            }
+            Ok((new_subdirs, subpackages))
+        }
+        .boxed()
+    }
+
+    fn collect_into(
+        self,
+        files: &mut Vec<ArcS<PackageRelativePath>>,
+        dirs: &mut Vec<ArcS<PackageRelativePath>>,
+        pkgs: &mut Vec<ArcS<PackageRelativePath>>,
+    ) {
+        files.extend(self.files);
+        pkgs.extend(self.subpackages);
+        if !self.path.is_empty() {
+            dirs.push(self.path);
+        }
+        for d in self.subdirs {
+            d.collect_into(files, dirs, pkgs)
+        }
+    }
+
+    fn flatten(mut self) -> PackageListing {
+        let buildfile = self.buildfile.take().unwrap();
+        let mut files = Vec::with_capacity(self.recursive_files_count);
+        let mut dirs = Vec::with_capacity(self.recursive_dirs_count);
+        let mut subpackages = Vec::with_capacity(self.recursive_subpackages_count);
+
+        self.collect_into(&mut files, &mut dirs, &mut subpackages);
+
+        // The files are discovered in a deterministic order but not necessarily sorted.
+        // TODO(cjhopman): Do we require that they be sorted for anything?
+        let files = SortedVec::from(files);
+        let dirs = SortedVec::from(dirs);
+        let subpackages = SortedVec::from(subpackages);
+
+        PackageListing::new(
+            SortedSet::from(files),
+            SortedSet::from(dirs),
+            subpackages,
+            buildfile,
+        )
+    }
+}
+
+async fn gather_package_listing_impl(
+    ctx: &mut DiceComputations<'_>,
+    root: PackageLabel,
+) -> Result<PackageListing, GatherPackageListingError> {
+    let cell_path = root.as_cell_path();
+    let buildfile_candidates = DiceFileComputations::buildfiles(ctx, root.cell_name())
+        .await
+        .map_err(|e| GatherPackageListingError::error(cell_path, e))?;
+    Ok(Directory::gather(
+        ctx,
+        buildfile_candidates,
+        cell_path,
+        PackageRelativePath::empty(),
+        true,
+    )
+    .await?
+    .unwrap()
+    .flatten())
+}

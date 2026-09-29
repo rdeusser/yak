@@ -55,6 +55,10 @@ Removes the code, configuration, and service clients that only Meta's internal b
 - The games save their state in `~/.yak_games`.
 - The default Remote Execution use case is `yak-default`.
 - The uploads of `[yak] clean_stale_unmaterialize_upload_enabled` use the Remote Execution use case `yak-local-unmaterialization`.
+- The Cargo packages and their directories take `yak` names, such as `yak_core` in `app/yak_core`. The package that builds the binary is `yak` in `app/yak`, and `cargo install --path=app/yak` installs it.
+- `YAK_LOG` filters name modules by the new crate names, such as `yak_execute_impl::materializers=trace`.
+- The error derive macro reads `#[yak(...)]` attributes.
+- The `yak_bundle` rule in `defs.bzl` takes the binaries as `yak` and `yak_client`.
 
 ### Removed JVM, Android, and JavaScript support
 

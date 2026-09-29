@@ -19,7 +19,6 @@ use std::sync::Arc as StdArc;
 
 use allocative::Allocative;
 use async_trait::async_trait;
-use buck2_hash::BuckHasher;
 use cmp_any::PartialEqAny;
 use derive_more::Display;
 use dice_futures::cancellation::CancellationContext;
@@ -30,6 +29,7 @@ use pagable::PagableSerializer;
 use pagable::PagableTagged;
 #[cfg(feature = "pagable")]
 use pagable::pagable_typetag;
+use yak_hash::BuckHasher;
 
 #[cfg(not(feature = "pagable"))]
 pub trait PagableTagged {}

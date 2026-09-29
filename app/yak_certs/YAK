@@ -1,0 +1,14 @@
+load("//build_defs:rust.bzl", "rust_library")
+
+rust_library(
+    name = "yak_certs",
+    srcs = glob(["src/**/*.rs"]),
+    deps = [
+        "//app/yak_error:yak_error",
+        "//third-party/rust:rustls",
+        "//third-party/rust:rustls-native-certs",
+        "//third-party/rust:rustls-pki-types",
+        "//third-party/rust:tokio",
+        "//third-party/rust:tracing",
+    ],
+)

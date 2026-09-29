@@ -1,0 +1,34 @@
+[package]
+name = "yak_artifact"
+version.workspace = true
+edition.workspace = true
+repository.workspace = true
+license.workspace = true
+
+[dependencies]
+allocative.workspace = true
+derivative.workspace = true
+derive_more.workspace = true
+dupe.workspace = true
+either.workspace = true
+gazebo.workspace = true
+pagable.workspace = true
+serde.workspace = true
+starlark.workspace = true
+starlark_map.workspace = true
+strong_hash.workspace = true
+take_mut.workspace = true
+yak_common.workspace = true
+yak_core.workspace = true
+yak_data.workspace = true
+yak_error.workspace = true
+yak_execute.workspace = true
+yak_fs.workspace = true
+yak_util.workspace = true
+
+[dev-dependencies]
+assert_matches.workspace = true
+serde_json.workspace = true
+
+[lints]
+workspace = true

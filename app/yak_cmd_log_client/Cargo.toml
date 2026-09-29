@@ -1,0 +1,45 @@
+[package]
+name = "yak_cmd_log_client"
+version.workspace = true
+edition.workspace = true
+repository.workspace = true
+license.workspace = true
+
+[dependencies]
+async-trait.workspace = true
+clap.workspace = true
+csv.workspace = true
+dupe.workspace = true
+futures.workspace = true
+gazebo.workspace = true
+linked-hash-map.workspace = true
+prost-types.workspace = true
+regex.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+similar.workspace = true
+superconsole.workspace = true
+tokio.workspace = true
+tokio-stream.workspace = true
+yak_cli_proto.workspace = true
+yak_client_ctx.workspace = true
+yak_common.workspace = true
+yak_data.workspace = true
+yak_error.workspace = true
+yak_event_log.workspace = true
+yak_event_observer.workspace = true
+yak_events.workspace = true
+yak_fs.workspace = true
+yak_hash.workspace = true
+yak_log_common.workspace = true
+yak_subscription_proto.workspace = true
+yak_util.workspace = true
+yak_wrapper_common.workspace = true
+
+[dev-dependencies]
+prost.workspace = true
+tempfile.workspace = true
+zstd.workspace = true
+
+[lints]
+workspace = true

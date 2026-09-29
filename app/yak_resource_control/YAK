@@ -1,0 +1,34 @@
+load("//build_defs:rust.bzl", "rust_library")
+
+rust_library(
+    name = "yak_resource_control",
+    srcs = glob(
+        ["src/**/*.rs"],
+    ),
+    deps = [
+        "//allocative/allocative:allocative",
+        "//app/yak_common:yak_common",
+        "//app/yak_core:yak_core",
+        "//app/yak_data:yak_data",
+        "//app/yak_error:yak_error",
+        "//app/yak_events:yak_events",
+        "//app/yak_fs:yak_fs",
+        "//app/yak_hash:yak_hash",
+        "//app/yak_util:yak_util",
+        "//app/yak_wrapper_common:yak_wrapper_common",
+        "//gazebo/dupe:dupe",
+        "//third-party/rust:derive_more",
+        "//third-party/rust:futures",
+        "//third-party/rust:ref-cast",
+        "//third-party/rust:tokio",
+        "//third-party/rust:tokio-util",
+    ] + select({
+        "DEFAULT": [],
+        "prelude//os:linux": [
+            "//third-party/rust:nix",
+        ],
+        "prelude//os:macos": [
+            "//third-party/rust:nix",
+        ],
+    }),
+)

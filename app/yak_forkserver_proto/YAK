@@ -1,0 +1,23 @@
+load("//build_defs:proto.bzl", "proto_srcs", "rust_protobuf_library")
+
+rust_protobuf_library(
+    name = "yak_forkserver_proto",
+    srcs = glob(["src/**/*.rs"]),
+    build_script = "build.rs",
+    proto_srcs = ":yak_forkserver_proto.proto",
+    deps = [
+        "//app/yak_data:yak_data",
+        "//gazebo/gazebo:gazebo",
+        "//third-party/rust:derive_more",
+        "//third-party/rust:prost-types",
+    ],
+)
+
+proto_srcs(
+    name = "yak_forkserver_proto.proto",
+    srcs = ["forkserver.proto"],
+    visibility = ["PUBLIC"],
+    deps = [
+        "//app/yak_data:data_proto",
+    ],
+)

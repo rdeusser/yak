@@ -12,7 +12,7 @@
                 "args": [
                     "build",
                     "--bin=yak",
-                    "--package=buck2"
+                    "--package=yak"
                 ],
                 "env": {
                     // Doesn't work, but has been requested upstream

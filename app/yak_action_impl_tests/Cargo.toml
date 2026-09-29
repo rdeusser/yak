@@ -1,0 +1,29 @@
+[package]
+name = "yak_action_impl_tests"
+version.workspace = true
+edition.workspace = true
+repository.workspace = true
+license.workspace = true
+autolib = false
+
+[[test]]
+name = "yak_action_impl_tests"
+path = "src/lib.rs"
+
+[dev-dependencies]
+ctor.workspace = true
+dupe.workspace = true
+indoc.workspace = true
+maplit.workspace = true
+starlark.workspace = true
+yak_action_impl.workspace = true
+yak_anon_target.workspace = true
+yak_build_api.workspace = true
+yak_core.workspace = true
+yak_error.workspace = true
+yak_execute.workspace = true
+yak_interpreter.workspace = true
+yak_interpreter_for_build.workspace = true
+
+[lints]
+workspace = true

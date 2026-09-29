@@ -1,0 +1,21 @@
+load("//build_defs:rust.bzl", "rust_library")
+
+rust_library(
+    name = "yak_cmd_starlark_client",
+    srcs = glob(["src/**/*.rs"]),
+    deps = [
+        "//app/yak_cli_proto:yak_cli_proto",
+        "//app/yak_client_ctx:yak_client_ctx",
+        "//app/yak_common:yak_common",
+        "//app/yak_data:yak_data",
+        "//app/yak_error:yak_error",
+        "//app/yak_event_observer:yak_event_observer",
+        "//app/yak_events:yak_events",
+        "//third-party/rust:async-trait",
+        "//third-party/rust:clap",
+        "//third-party/rust:debugserver-types",
+        "//third-party/rust:futures",
+        "//third-party/rust:serde",
+        "//third-party/rust:serde_json",
+    ],
+)

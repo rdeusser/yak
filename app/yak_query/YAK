@@ -1,0 +1,31 @@
+load("//build_defs:rust.bzl", "rust_library")
+
+rust_library(
+    name = "yak_query",
+    srcs = glob(["src/**/*.rs"]),
+    deps = [
+        "//allocative/allocative:allocative",
+        "//app/yak_core:yak_core",
+        "//app/yak_error:yak_error",
+        "//app/yak_hash:yak_hash",
+        "//app/yak_query_derive:yak_query_derive",
+        "//app/yak_query_parser:yak_query_parser",
+        "//app/yak_util:yak_util",
+        "//gazebo/display_container:display_container",
+        "//gazebo/dupe:dupe",
+        "//gazebo/gazebo:gazebo",
+        "//pagable:pagable",
+        "//starlark-rust/starlark_map:starlark_map",
+        "//third-party/rust:async-trait",
+        "//third-party/rust:derive_more",
+        "//third-party/rust:enum-iterator",
+        "//third-party/rust:fancy-regex",
+        "//third-party/rust:futures",
+        "//third-party/rust:indexmap",
+        "//third-party/rust:indoc",
+        "//third-party/rust:itertools",
+        "//third-party/rust:ref-cast",
+        "//third-party/rust:tokio",
+        "//third-party/rust:tracing",
+    ],
+)

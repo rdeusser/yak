@@ -1,0 +1,36 @@
+[package]
+name = "yak_cmd_query_server"
+version.workspace = true
+edition.workspace = true
+repository.workspace = true
+license.workspace = true
+
+[dependencies]
+async-trait.workspace = true
+dice.workspace = true
+dupe.workspace = true
+futures.workspace = true
+gazebo.workspace = true
+indent_write.workspace = true
+regex.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+starlark_map.workspace = true
+yak_build_api.workspace = true
+yak_cli_proto.workspace = true
+yak_common.workspace = true
+yak_core.workspace = true
+yak_data.workspace = true
+yak_error.workspace = true
+yak_events.workspace = true
+yak_fs.workspace = true
+yak_hash.workspace = true
+yak_interpreter.workspace = true
+yak_node.workspace = true
+yak_profile.workspace = true
+yak_query.workspace = true
+yak_server_ctx.workspace = true
+yak_util.workspace = true
+
+[lints]
+workspace = true

@@ -1,0 +1,68 @@
+load("//build_defs:rust.bzl", "rust_library", "rust_linkable_symbol")
+
+rust_library(
+    name = "yak_cmd_completion_client",
+    srcs = glob(["src/**/*.rs"]),
+    deps = [
+        ":completion_wrapper_bash",
+        ":completion_wrapper_fish",
+        ":completion_wrapper_powershell",
+        ":completion_wrapper_zsh",
+        ":options_wrapper_bash",
+        ":options_wrapper_fish",
+        ":options_wrapper_powershell",
+        ":options_wrapper_zsh",
+        "//app/yak_cli_proto:yak_cli_proto",
+        "//app/yak_client_ctx:yak_client_ctx",
+        "//app/yak_common:yak_common",
+        "//app/yak_core:yak_core",
+        "//app/yak_error:yak_error",
+        "//app/yak_fs:yak_fs",
+        "//app/yak_hash:yak_hash",
+        "//third-party/rust:async-trait",
+        "//third-party/rust:clap",
+        "//third-party/rust:clap_complete",
+        "//third-party/rust:futures",
+        "//third-party/rust:tokio",
+    ],
+)
+
+rust_linkable_symbol(
+    name = "completion_wrapper_bash",
+    content_str = "src/completion/completion-wrapper.bash",
+)
+
+rust_linkable_symbol(
+    name = "completion_wrapper_fish",
+    content_str = "src/completion/completion-wrapper.fish",
+)
+
+rust_linkable_symbol(
+    name = "completion_wrapper_zsh",
+    content_str = "src/completion/completion-wrapper.zsh",
+)
+
+rust_linkable_symbol(
+    name = "completion_wrapper_powershell",
+    content_str = "src/completion/completion-wrapper.ps1",
+)
+
+rust_linkable_symbol(
+    name = "options_wrapper_bash",
+    content_str = "src/completion/options-wrapper.bash",
+)
+
+rust_linkable_symbol(
+    name = "options_wrapper_fish",
+    content_str = "src/completion/options-wrapper.fish",
+)
+
+rust_linkable_symbol(
+    name = "options_wrapper_zsh",
+    content_str = "src/completion/options-wrapper.zsh",
+)
+
+rust_linkable_symbol(
+    name = "options_wrapper_powershell",
+    content_str = "src/completion/options-wrapper.ps1",
+)

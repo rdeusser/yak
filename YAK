@@ -4,14 +4,14 @@ load(":defs.bzl", "pagable_transition_alias", "yak_bundle")
 # of the target that depends on it.
 pagable_transition_alias(
     name = "yak",
-    actual = "//app/buck2:buck2-bin",
+    actual = "//app/yak:yak-bin",
 )
 
 # The client binary next to the daemon binary, the layout that the
 # client-only build expects. `yak.py` runs it.
 yak_bundle(
     name = "yak_bundle",
-    buck2 = "//:yak",
-    buck2_client = "//app/buck2:buck2_client-bin",
+    yak = "//:yak",
+    yak_client = "//app/yak:yak_client-bin",
     visibility = ["PUBLIC"],
 )

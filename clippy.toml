@@ -16,7 +16,7 @@
 #
 # NOTE: clippy cannot flag the overloaded `+`/`-` operators on datetime types, and those
 # panic on overflow too. Datetime arithmetic must use the `checked_*` methods or the helpers
-# in `buck2_execute::re::ttl`.
+# in `yak_execute::re::ttl`.
 disallowed-methods = [
     { path = "jiff::ToSpan::seconds", reason = "panics on out-of-range values; use `jiff::SignedDuration`" },
     { path = "jiff::ToSpan::minutes", reason = "panics on out-of-range values; use `jiff::SignedDuration`" },

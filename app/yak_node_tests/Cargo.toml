@@ -1,0 +1,22 @@
+[package]
+name = "yak_node_tests"
+version.workspace = true
+edition.workspace = true
+repository.workspace = true
+license.workspace = true
+autolib = false
+
+[[test]]
+name = "yak_node_tests"
+path = "src/lib.rs"
+
+[dev-dependencies]
+dupe.workspace = true
+yak_core.workspace = true
+yak_error.workspace = true
+yak_fs.workspace = true
+yak_node.workspace = true
+yak_util.workspace = true
+
+[lints]
+workspace = true

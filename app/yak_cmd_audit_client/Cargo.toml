@@ -1,0 +1,18 @@
+[package]
+name = "yak_cmd_audit_client"
+version.workspace = true
+edition.workspace = true
+repository.workspace = true
+license.workspace = true
+
+[dependencies]
+async-trait.workspace = true
+clap.workspace = true
+dupe.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+yak_cli_proto.workspace = true
+yak_client_ctx.workspace = true
+
+[lints]
+workspace = true

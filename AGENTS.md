@@ -2,7 +2,7 @@
 
 This repository is a fork of Meta's Buck2 build system.
 It holds the Rust client and daemon (`app/`), the Starlark interpreter (`starlark-rust/`), the incremental computation engine (`dice/`), the Starlark rule library (`prelude/`), and the crates they use.
-The fork is being renamed to yak. The binary is `yak`, it reads `YAK` build files and `.yakconfig` files, and it writes `yak-out`. [The rename plan](docs/exec-plans/active/2026-09-28-rename-the-fork.md) tracks the remaining work, such as the `buck2*` crates.
+The fork is being renamed to yak. The binary is `yak`, it reads `YAK` build files and `.yakconfig` files, and it writes `yak-out`. [The rename plan](docs/exec-plans/active/2026-09-28-rename-the-fork.md) tracks the remaining work, such as the environment variables and directories that still name Buck.
 [The tech-debt tracker](docs/exec-plans/tech-debt-tracker.md) lists what still depends on the upstream project, such as release downloads.
 
 ## Read before changing code
@@ -42,7 +42,7 @@ Run these commands from the repository root. `rust-toolchain.toml` pins the nigh
 
 CI (`.github/workflows/build-and-test.yml`) runs `cargo build --bin=yak` and then `python3 test.py --ci` on Linux, macOS, and Windows.
 `.github/workflows/integration-tests.yml` runs the integration tests on Linux.
-Run `test.py` for every package you changed. Run it without packages when a change reaches crates that many others depend on, such as `buck2_core` or `buck2_common`.
+Run `test.py` for every package you changed. Run it without packages when a change reaches crates that many others depend on, such as `yak_core` or `yak_common`.
 To check behavior end to end, run `target/debug/yak` in a project under `examples/` with its own `--isolation-dir`, as `docs/developers/basics.md` shows.
 
 ## Rules for changes

@@ -1,0 +1,35 @@
+[package]
+name = "yak_http"
+version.workspace = true
+edition.workspace = true
+repository.workspace = true
+license.workspace = true
+
+[dependencies]
+allocative.workspace = true
+bytes.workspace = true
+dupe.workspace = true
+futures.workspace = true
+http.workspace = true
+http-body-util.workspace = true
+hyper.workspace = true
+hyper-http-proxy.workspace = true
+hyper-rustls.workspace = true
+hyper-timeout.workspace = true
+hyper-util.workspace = true
+ipnetwork.workspace = true
+pin-project.workspace = true
+rustls.workspace = true
+tokio.workspace = true
+tokio-rustls.workspace = true
+tokio-util.workspace = true
+tower-service.workspace = true
+tracing.workspace = true
+yak_certs.workspace = true
+yak_error.workspace = true
+
+[dev-dependencies]
+httptest.workspace = true
+
+[lints]
+workspace = true

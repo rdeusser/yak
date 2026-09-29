@@ -1,6 +1,6 @@
 # Error Handling
 
-yak uses `buck2_error` replacing both `anyhow` and `thiserror`.
+yak uses `yak_error` replacing both `anyhow` and `thiserror`.
 
 Use of `anyhow` or `thiserror` in `app/` is banned except where there are pre-existing
 exceptions or when extremely strongly justified.
@@ -8,26 +8,26 @@ exceptions or when extremely strongly justified.
 ## Result type
 
 ```rust
-fn my_function() -> buck2_error::Result<String> {
+fn my_function() -> yak_error::Result<String> {
     // ...
 }
 ```
 
 ## Defining custom error types
 
-Use `#[derive(Debug, buck2_error::Error)]`, with an API similar to `thiserror`. Every error
+Use `#[derive(Debug, yak_error::Error)]`, with an API similar to `thiserror`. Every error
 must carry an `ErrorTag`:
 
 ```rust
-#[derive(Debug, buck2_error::Error)]
+#[derive(Debug, yak_error::Error)]
 #[error("My error message: {field}")]
-#[buck2(tag = Input)]
+#[yak(tag = Input)]
 struct MyError {
     field: String,
 }
 
-#[derive(Debug, buck2_error::Error)]
-#[buck2(tag = Input)]
+#[derive(Debug, yak_error::Error)]
+#[yak(tag = Input)]
 enum MyErrors {
     #[error("Invalid input: {0}")]
     InvalidInput(String),
@@ -39,7 +39,7 @@ enum MyErrors {
 
 ## Error tags
 
-Tags are defined in `app/buck2_data/error.proto`. Common generic tags:
+Tags are defined in `app/yak_data/error.proto`. Common generic tags:
 
 - `Input` — user input errors (invalid arguments, malformed build files, ...)
 - `Tier0` — critical infrastructure failures
@@ -52,11 +52,11 @@ those, reuse existing tags only when appropriate.
 ## Ad-hoc errors
 
 ```rust
-use buck2_error::buck2_error;
+use yak_error::yak_error;
 
 if some_condition {
-    return Err(buck2_error!(
-        buck2_error::ErrorTag::Input,
+    return Err(yak_error!(
+        yak_error::ErrorTag::Input,
         "Invalid value: expected {}, got {}",
         expected,
         actual
@@ -71,7 +71,7 @@ via `.expect()`, `.unwrap()`, etc. is ok for file-local invariants. For non-file
 variant of internal error:
 
 ```rust
-use buck2_error::internal_error;
+use yak_error::internal_error;
 
 let value = map.get(key).internal_error("Key must exist")?;
 
@@ -86,10 +86,10 @@ over `.context(...)` or `.expect(...)`.
 
 ## Adding context
 
-`buck2_error` supports `buck_error_context` APIs akin to anyhow's context:
+`yak_error` supports `buck_error_context` APIs akin to anyhow's context:
 
 ```rust
-use buck2_error::BuckErrorContext;
+use yak_error::BuckErrorContext;
 
 result.buck_error_context("Failed to process file")?;
 
@@ -100,12 +100,12 @@ Be somewhat conservative in the use of context, more is not always better.
 
 ## Conversion
 
-`buck2_error::Error` impls `From` for many common error types, including many from std and common
+`yak_error::Error` impls `From` for many common error types, including many from std and common
 dependencies. When none exists, follow existing patterns, add one if semantically appropriate, and
 otherwise use an ad-hoc conversion:
 
 ```rust
-use buck2_error::conversion::from_any_with_tag;
+use yak_error::conversion::from_any_with_tag;
 
 some_result.map_err(|e| from_any_with_tag(e, ErrorTag::Tier0))?;
 ```
@@ -113,13 +113,13 @@ some_result.map_err(|e| from_any_with_tag(e, ErrorTag::Tier0))?;
 ## Worked example
 
 ```rust
-fn process_artifact(&self, artifact: &Artifact) -> buck2_error::Result<()> {
+fn process_artifact(&self, artifact: &Artifact) -> yak_error::Result<()> {
     let path = artifact.path()
         .buck_error_context("Failed to get artifact path")?;
 
     if !path.exists() {
-        return Err(buck2_error!(
-            buck2_error::ErrorTag::Input,
+        return Err(yak_error!(
+            yak_error::ErrorTag::Input,
             "Artifact does not exist: {}",
             path
         ));

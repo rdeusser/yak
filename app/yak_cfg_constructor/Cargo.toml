@@ -1,0 +1,27 @@
+[package]
+name = "yak_cfg_constructor"
+version.workspace = true
+edition.workspace = true
+repository.workspace = true
+license.workspace = true
+
+[dependencies]
+allocative.workspace = true
+async-trait.workspace = true
+derive_more.workspace = true
+dice.workspace = true
+dice_futures.workspace = true
+dupe.workspace = true
+pagable.workspace = true
+starlark.workspace = true
+yak_build_api.workspace = true
+yak_common.workspace = true
+yak_core.workspace = true
+yak_error.workspace = true
+yak_events.workspace = true
+yak_interpreter.workspace = true
+yak_interpreter_for_build.workspace = true
+yak_node.workspace = true
+
+[lints]
+workspace = true

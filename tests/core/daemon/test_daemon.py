@@ -227,7 +227,7 @@ async def test_status_all(buck: Buck) -> None:
 
 
 @buck_test()
-@env("YAK_LOG", "buck2_client_ctx::daemon::client::kill=debug")
+@env("YAK_LOG", "yak_client_ctx::daemon::client::kill=debug")
 async def test_no_buckd_kills_existing_daemon(buck: Buck) -> None:
     await buck.audit("cell")  # Start the daemon
     result = await buck.audit("cell", "--no-yakd")  # Kill the existing daemon

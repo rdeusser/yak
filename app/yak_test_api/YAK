@@ -1,0 +1,37 @@
+load("//build_defs:rust.bzl", "rust_library")
+
+rust_library(
+    name = "yak_test_api",
+    srcs = glob(
+        ["src/**/*.rs"],
+    ),
+    deps = [
+        "//allocative/allocative:allocative",
+        "//app/yak_core:yak_core",
+        "//app/yak_data:yak_data",
+        "//app/yak_downward_api:yak_downward_api",
+        "//app/yak_downward_api_proto:yak_downward_api_proto",
+        "//app/yak_error:yak_error",
+        "//app/yak_events:yak_events",
+        "//app/yak_fs:yak_fs",
+        "//app/yak_grpc:yak_grpc",
+        "//app/yak_hash:yak_hash",
+        "//app/yak_host_sharing_proto:yak_host_sharing_proto",
+        "//app/yak_test_proto:yak_test_proto",
+        "//gazebo/dupe:dupe",
+        "//gazebo/gazebo:gazebo",
+        "//host_sharing:host_sharing",
+        "//pagable:pagable",
+        "//third-party/rust:async-trait",
+        "//third-party/rust:derivative",
+        "//third-party/rust:derive_more",
+        "//third-party/rust:futures",
+        "//third-party/rust:prost-types",
+        "//third-party/rust:sorted_vector_map",
+        "//third-party/rust:tokio",
+        "//third-party/rust:tonic",
+        "//third-party/rust:tower-layer",
+        "//third-party/rust:tower-service",
+        "//third-party/rust:tracing",
+    ],
+)

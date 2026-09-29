@@ -1,0 +1,16 @@
+load("//build_defs:rust.bzl", "rust_library")
+
+rust_library(
+    name = "yak_env",
+    srcs = glob(
+        ["src/**/*.rs"],
+    ),
+    deps = [
+        "//app/yak_error:yak_error",
+        "//app/yak_hash:yak_hash",
+        "//gazebo/dupe:dupe",
+        "//starlark-rust/starlark_map:starlark_map",
+        "//third-party/rust:linkme",
+        "//third-party/rust:tracing",
+    ],
+)

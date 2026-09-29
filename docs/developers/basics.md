@@ -41,24 +41,24 @@ On Windows, the build uses clang-cl when `-c cxx.windows_compiler_type=clang` is
 # clippy with warnings denied, rustdoc with warnings denied, then unit tests and doc tests
 python3 test.py
 # The same for the named packages only
-python3 test.py buck2_core buck2_common
+python3 test.py yak_core yak_common
 # One stage only
-python3 test.py --lint-only buck2_core
-python3 test.py --rustdoc-only buck2_core
-python3 test.py --test-only buck2_core
+python3 test.py --lint-only yak_core
+python3 test.py --rustdoc-only yak_core
+python3 test.py --test-only yak_core
 # Format
 cargo fmt --all
 ```
 
 CI (`.github/workflows/build-and-test.yml`) runs `cargo build --bin=yak` and then `python3 test.py --ci` on Linux, macOS, and Windows. With `--ci`, `test.py` also fails when the run leaves changes in the Git working tree. CI does not check formatting.
 
-Clippy's lint levels live in `[workspace.lints]` in `Cargo.toml`, and `clippy.toml` bans panicking datetime and duration APIs. Plain `cargo clippy` applies both, and `test.py` adds `--deny=warnings`. Eight crates copy the whole lint table into their own `Cargo.toml` to add a `check-cfg` entry (`app/buck2`, `app/buck2_daemon`, `allocative/allocative`, `shed/mini_vec`, and `starlark`, `starlark_syntax`, `starlark_map`, and `starlark_lsp` under `starlark-rust/`), so a change to a lint level updates those copies too.
+Clippy's lint levels live in `[workspace.lints]` in `Cargo.toml`, and `clippy.toml` bans panicking datetime and duration APIs. Plain `cargo clippy` applies both, and `test.py` adds `--deny=warnings`. Eight crates copy the whole lint table into their own `Cargo.toml` to add a `check-cfg` entry (`app/yak`, `app/yak_daemon`, `allocative/allocative`, `shed/mini_vec`, and `starlark`, `starlark_syntax`, `starlark_map`, and `starlark_lsp` under `starlark-rust/`), so a change to a lint level updates those copies too.
 
-Unit tests live next to the code they test. Crates named `*_tests` (for example `app/buck2_build_api_tests`) hold tests that need late bindings from several crates.
+Unit tests live next to the code they test. Crates named `*_tests` (for example `app/yak_build_api_tests`) hold tests that need late bindings from several crates.
 
 Golden tests compare output with checked-in files whose names contain `.golden`. To regenerate them, rerun the test with the regeneration variable set:
 
-- `YAK_RUST_REGENERATE_GOLDEN_TESTS=1` for tests that use `buck2_util::golden_test_helper`.
+- `YAK_RUST_REGENERATE_GOLDEN_TESTS=1` for tests that use `yak_util::golden_test_helper`.
 - `STARLARK_RUST_REGENERATE_GOLDEN_TESTS=1` for `starlark-rust/`.
 - `ALLOCATIVE_REGENERATE_TESTS=1` for `allocative/`.
 - `YAK_UPDATE_GOLDEN=1` for the integration tests under `tests/`. The update accepts whatever the binary prints, so review each golden file diff.
@@ -71,7 +71,7 @@ Most important of all: Most questions can be answered by matching the convention
 
 Standard `rustfmt` conventions apply, with the options in `rustfmt.toml`. Beyond that:
 
-- **HashMaps**: use `buck2_hash::BuckMutMap`, not `fxhash::FxHashMap`.
+- **HashMaps**: use `yak_hash::BuckMutMap`, not `fxhash::FxHashMap`.
 - **Cloning**: prefer `.dupe()` over `.clone()` for types that implement `Dupe`
   (e.g. `Arc`-wrapped types). Use `gazebo` utilities — particularly `dupe` —
   where they fit.
@@ -98,16 +98,16 @@ Standard `rustfmt` conventions apply, with the options in `rustfmt.toml`. Beyond
 
 ## Error handling
 
-yak uses `buck2_error` replacing both `anyhow` and `thiserror`. The must-knows:
+yak uses `yak_error` replacing both `anyhow` and `thiserror`. The must-knows:
 
-- Return `buck2_error::Result<T>`.
-- Define error types with `#[derive(Debug, buck2_error::Error)]` and tag them
-  with `#[buck2(tag = ...)]` (no `thiserror::Error`).
-- Use the `buck2_error!` macro for ad-hoc errors.
+- Return `yak_error::Result<T>`.
+- Define error types with `#[derive(Debug, yak_error::Error)]` and tag them
+  with `#[yak(tag = ...)]` (no `thiserror::Error`).
+- Use the `yak_error!` macro for ad-hoc errors.
 - `.expect()`, `.unwrap()`, etc. are ok for file-local invariant violations/"this should never
   happen" cases. If not file-local, prefer `internal_error!()`, `.internal_error("...")?` or
   `.with_internal_error(|| ...)` if possible.
-- Inspecting or creating `buck2_error::Error`s in non-error codepaths is strongly discouraged.
+- Inspecting or creating `yak_error::Error`s in non-error codepaths is strongly discouraged.
   Represent states that are not errors using types that are not errors or at least dedicated,
   semantically clear error types.
 
@@ -121,7 +121,7 @@ Gate new or risky behavior with yakconfig, not environment variables: a
 `BuckconfigKeyRef` with `section: "yak"` for the pattern), and named so
 the value flips false -> true as the feature rolls out. Use
 `RolloutPercentage` in place of `bool` when you want hostname-hashed
-percentage rollout. Reserve `buck2_env!` for the few places configuration
+percentage rollout. Reserve `yak_env!` for the few places configuration
 cannot reach: the client before it talks to the daemon, and test-only
 knobs.
 
@@ -136,7 +136,7 @@ Upstream `BUCK` files load macros from Meta's cells and name crates by their pat
 Each crate has a `Cargo.toml` and a `YAK` file, and a dependency change updates both:
 
 1. Add the version to `[workspace.dependencies]` in the root `Cargo.toml` if it is new, and name it in the crate's `Cargo.toml` with `workspace = true`.
-2. Add the same dependency to the crate's `YAK` file. Third-party crates are named `//third-party/rust:<crate>`, and crates in this repository are named `//<path>:<crate>` (for example `//app/buck2_core:buck2_core`).
+2. Add the same dependency to the crate's `YAK` file. Third-party crates are named `//third-party/rust:<crate>`, and crates in this repository are named `//<path>:<crate>` (for example `//app/yak_core:yak_core`).
 3. For a new third-party crate, also add it to `third-party/rust/Cargo.toml`, which the yak build reads through `reindeer`. A crate with a build script, or one that reads Cargo environment variables at compile time, also needs `third-party/rust/fixups/<crate>/fixups.toml`. `reindeer buckify` fails when a fixup configures a build script that the resolved crate versions no longer have, so a dependency change that drops or upgrades a crate can require editing or deleting its fixup.
 4. Check the dependency against the crate dependency rules in `ARCHITECTURE.md`. `target/debug/yak build //app_dep_graph_rules:test_buck2_dep_graph` fails when a dependency breaks one.
 

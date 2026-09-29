@@ -256,7 +256,7 @@ style df display:none
 | `dfs`         | `["A", "B", "D", "E", "F", "C"]` |
 
 A test in
-[`app/buck2_build_api_tests/src/interpreter/transitive_set/tests.rs`](https://github.com/rdeusser/buck2/blob/main/app/buck2_build_api_tests/src/interpreter/transitive_set/tests.rs)
+[`app/yak_build_api_tests/src/interpreter/transitive_set/tests.rs`](https://github.com/rdeusser/buck2/blob/main/app/yak_build_api_tests/src/interpreter/transitive_set/tests.rs)
 checks these orderings:
 
 ```python

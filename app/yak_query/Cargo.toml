@@ -1,0 +1,34 @@
+[package]
+name = "yak_query"
+version.workspace = true
+edition.workspace = true
+repository.workspace = true
+license.workspace = true
+
+[dependencies]
+allocative.workspace = true
+async-trait.workspace = true
+derive_more.workspace = true
+display_container.workspace = true
+dupe.workspace = true
+enum-iterator.workspace = true
+fancy-regex.workspace = true
+futures.workspace = true
+gazebo.workspace = true
+indexmap.workspace = true
+indoc.workspace = true
+itertools.workspace = true
+pagable.workspace = true
+ref-cast.workspace = true
+starlark_map.workspace = true
+tokio.workspace = true
+tracing.workspace = true
+yak_core.workspace = true
+yak_error.workspace = true
+yak_hash.workspace = true
+yak_query_derive.workspace = true
+yak_query_parser.workspace = true
+yak_util.workspace = true
+
+[lints]
+workspace = true

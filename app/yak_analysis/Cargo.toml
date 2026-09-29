@@ -1,0 +1,36 @@
+[package]
+name = "yak_analysis"
+version.workspace = true
+edition.workspace = true
+repository.workspace = true
+license.workspace = true
+
+[dependencies]
+allocative.workspace = true
+async-trait.workspace = true
+derive_more.workspace = true
+dice.workspace = true
+dupe.workspace = true
+either.workspace = true
+futures.workspace = true
+gazebo.workspace = true
+pagable.workspace = true
+smallvec.workspace = true
+starlark.workspace = true
+starlark_map.workspace = true
+yak_artifact.workspace = true
+yak_build_api.workspace = true
+yak_build_signals.workspace = true
+yak_core.workspace = true
+yak_data.workspace = true
+yak_error.workspace = true
+yak_events.workspace = true
+yak_execute.workspace = true
+yak_hash.workspace = true
+yak_interpreter.workspace = true
+yak_node.workspace = true
+yak_query.workspace = true
+yak_util.workspace = true
+
+[lints]
+workspace = true

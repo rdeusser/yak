@@ -1,0 +1,25 @@
+[package]
+name = "yak_build_signals"
+version.workspace = true
+edition.workspace = true
+repository.workspace = true
+license.workspace = true
+
+[dependencies]
+allocative.workspace = true
+async-trait.workspace = true
+cmp_any.workspace = true
+derive_more.workspace = true
+dice.workspace = true
+dupe.workspace = true
+gazebo.workspace = true
+tokio.workspace = true
+yak_data.workspace = true
+yak_error.workspace = true
+yak_events.workspace = true
+yak_fs.workspace = true
+yak_hash.workspace = true
+yak_util.workspace = true
+
+[lints]
+workspace = true

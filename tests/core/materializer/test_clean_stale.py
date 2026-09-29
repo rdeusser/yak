@@ -73,7 +73,7 @@ def golden_audit_entries(*, entries: list[str], rel_path: str) -> None:
 
 
 @buck_test()
-@env("YAK_LOG", "buck2_execute_impl::materializers=trace")
+@env("YAK_LOG", "yak_execute_impl::materializers=trace")
 async def test_artifact_access_time(buck: Buck) -> None:
     # drop microseconds to match 1s precision from materializer
     start = datetime.now(UTC).replace(microsecond=0)
@@ -124,7 +124,7 @@ async def test_artifact_access_time(buck: Buck) -> None:
 
 
 @buck_test()
-@env("YAK_LOG", "buck2_execute_impl::materializers=trace")
+@env("YAK_LOG", "yak_execute_impl::materializers=trace")
 async def test_clean_stale_artifacts(buck: Buck) -> None:
     target_1 = "root//:copy"
     result_1 = await buck.build(target_1)
@@ -170,7 +170,7 @@ async def test_clean_stale_artifacts(buck: Buck) -> None:
 
 
 @buck_test()
-@env("YAK_LOG", "buck2_execute_impl::materializers=trace")
+@env("YAK_LOG", "yak_execute_impl::materializers=trace")
 async def test_clean_stale_artifact_dir(buck: Buck) -> None:
     target_1 = "root//:copy"
     result_1 = await buck.build(target_1)
@@ -197,7 +197,7 @@ async def test_clean_stale_buck_out_empty(buck: Buck) -> None:
 
 
 @buck_test()
-@env("YAK_LOG", "buck2_execute_impl::materializers=trace")
+@env("YAK_LOG", "yak_execute_impl::materializers=trace")
 async def test_clean_stale_actions(buck: Buck) -> None:
     async with serve_file(DOWNLOAD_CONTENT) as served:
         configure_served_file(buck, served)

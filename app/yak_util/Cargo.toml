@@ -1,0 +1,45 @@
+[package]
+name = "yak_util"
+version.workspace = true
+edition.workspace = true
+repository.workspace = true
+license.workspace = true
+
+[dependencies]
+allocative.workspace = true
+blake3.workspace = true
+dice_futures.workspace = true
+dupe.workspace = true
+futures.workspace = true
+gazebo.workspace = true
+mini_vec.workspace = true
+pagable.workspace = true
+regex.workspace = true
+serde.workspace = true
+starlark_map.workspace = true
+strong_hash.workspace = true
+sysinfo.workspace = true
+tokio.workspace = true
+tracing.workspace = true
+triomphe.workspace = true
+yak_env.workspace = true
+yak_error.workspace = true
+yak_hash.workspace = true
+yak_wrapper_common.workspace = true
+
+[dev-dependencies]
+serde_json.workspace = true
+three_billion_instructions.workspace = true
+
+[target.'cfg(target_os = "linux")'.dependencies]
+libc.workspace = true
+perf-event.workspace = true
+
+[target.'cfg(target_os = "macos")'.dependencies]
+libc.workspace = true
+
+[target.'cfg(target_os = "windows")'.dependencies]
+windows-sys.workspace = true
+
+[lints]
+workspace = true

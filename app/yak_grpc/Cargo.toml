@@ -1,0 +1,19 @@
+[package]
+name = "yak_grpc"
+version.workspace = true
+edition.workspace = true
+repository.workspace = true
+license.workspace = true
+
+[dependencies]
+futures.workspace = true
+hyper.workspace = true
+hyper-util.workspace = true
+pin-project.workspace = true
+tokio.workspace = true
+tonic.workspace = true
+tower.workspace = true
+yak_error.workspace = true
+
+[lints]
+workspace = true

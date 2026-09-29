@@ -1,0 +1,45 @@
+[package]
+name = "yak_file_watcher"
+version.workspace = true
+edition.workspace = true
+repository.workspace = true
+license.workspace = true
+
+[dependencies]
+allocative.workspace = true
+async-trait.workspace = true
+blake3.workspace = true
+compact_str.workspace = true
+dice.workspace = true
+dupe.workspace = true
+futures.workspace = true
+notify.workspace = true
+serde.workspace = true
+starlark_map.workspace = true
+tokio.workspace = true
+tracing.workspace = true
+watchman_client.workspace = true
+yak_common.workspace = true
+yak_core.workspace = true
+yak_data.workspace = true
+yak_error.workspace = true
+yak_events.workspace = true
+yak_fs.workspace = true
+yak_hash.workspace = true
+yak_util.workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true
+
+[target.'cfg(target_os = "linux")'.dev-dependencies]
+assert_matches.workspace = true
+gazebo.workspace = true
+yak_util.workspace = true
+
+[target.'cfg(target_os = "macos")'.dev-dependencies]
+assert_matches.workspace = true
+gazebo.workspace = true
+yak_util.workspace = true
+
+[lints]
+workspace = true

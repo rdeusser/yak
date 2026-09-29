@@ -1,0 +1,20 @@
+[package]
+name = "yak_cmd_docs_client"
+version.workspace = true
+edition.workspace = true
+repository.workspace = true
+license.workspace = true
+
+[dependencies]
+async-trait.workspace = true
+clap.workspace = true
+dupe.workspace = true
+regex.workspace = true
+termimad.workspace = true
+yak_cli_proto.workspace = true
+yak_client_ctx.workspace = true
+yak_error.workspace = true
+yak_query.workspace = true
+
+[lints]
+workspace = true

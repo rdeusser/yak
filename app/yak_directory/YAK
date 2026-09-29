@@ -1,0 +1,27 @@
+load("//build_defs:rust.bzl", "rust_library")
+
+rust_library(
+    name = "yak_directory",
+    srcs = glob(
+        ["src/**/*.rs"],
+    ),
+    deps = [
+        "//allocative/allocative:allocative",
+        "//app/yak_core:yak_core",
+        "//app/yak_error:yak_error",
+        "//app/yak_fs:yak_fs",
+        "//app/yak_hash:yak_hash",
+        "//app/yak_util:yak_util",
+        "//gazebo/dupe:dupe",
+        "//gazebo/gazebo:gazebo",
+        "//gazebo/strong_hash:strong_hash",
+        "//pagable:pagable",
+        "//shed/mini_vec:mini_vec",
+        "//starlark-rust/starlark_map:starlark_map",
+        "//third-party/rust:dashmap",
+        "//third-party/rust:derivative",
+        "//third-party/rust:derive_more",
+        "//third-party/rust:either",
+        "//third-party/rust:sorted_vector_map",
+    ],
+)

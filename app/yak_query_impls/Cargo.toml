@@ -1,0 +1,39 @@
+[package]
+name = "yak_query_impls"
+version.workspace = true
+edition.workspace = true
+repository.workspace = true
+license.workspace = true
+
+[dependencies]
+async-trait.workspace = true
+dashmap.workspace = true
+derive_more.workspace = true
+dice.workspace = true
+dupe.workspace = true
+either.workspace = true
+futures.workspace = true
+gazebo.workspace = true
+itertools.workspace = true
+ref-cast.workspace = true
+tokio.workspace = true
+tracing.workspace = true
+yak_artifact.workspace = true
+yak_build_api.workspace = true
+yak_common.workspace = true
+yak_core.workspace = true
+yak_error.workspace = true
+yak_events.workspace = true
+yak_fs.workspace = true
+yak_hash.workspace = true
+yak_interpreter.workspace = true
+yak_node.workspace = true
+yak_query.workspace = true
+yak_query_parser.workspace = true
+yak_util.workspace = true
+
+[dev-dependencies]
+assert_matches.workspace = true
+
+[lints]
+workspace = true

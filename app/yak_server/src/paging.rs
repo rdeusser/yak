@@ -1,0 +1,690 @@
+/*
+ * Copyright (c) Meta Platforms, Inc. and affiliates.
+ *
+ * This source code is dual-licensed under either the MIT license found in the
+ * LICENSE-MIT file in the root directory of this source tree or the Apache
+ * License, Version 2.0 found in the LICENSE-APACHE file in the root directory
+ * of this source tree. You may select, at your option, one of the
+ * above-listed licenses.
+ */
+
+//! DICE paging telemetry and the page-out mechanism.
+//!
+//! [`PagingManager`] collects per-command paging telemetry. The rest of this
+//! module implements page-out itself (also driven manually by `yak debug
+//! hydration`, see [`crate::hydration`]) and automatic page-out when the daemon
+//! goes idle.
+//!
+//! Automatic page-out is enabled with `yak_hydration.page_out_on_idle = true`. When
+//! enabled, a finishing command schedules a background task (see
+//! [`spawn_page_out_on_idle`]) that waits for DICE to go idle and then pages out
+//! to reclaim memory — but only when there is something to page out and there is
+//! disk headroom (see [`should_page_out_decision`], configurable via
+//! `yak_hydration.*` / [`PageOutThresholds`]).
+//!
+//! Concurrency: automatic page-out deliberately does *not* take the DICE
+//! exclusivity lock the explicit command uses, so it never blocks an incoming
+//! command. Instead it only starts when no command is active and the daemon is
+//! idle, and it is cancelled (see [`Dice::page_out_cancellable`]) the moment a
+//! command that contends for the graph appears, so it yields CPU, I/O, and the
+//! DICE state thread back to real work. The read-only `status` command does not
+//! cancel it — with `--wait` it instead blocks until the page-out finishes. A
+//! partially paged-out graph is valid — paged-out values hydrate back on demand.
+
+use std::sync::Arc;
+use std::sync::LazyLock;
+use std::sync::atomic::AtomicBool;
+use std::sync::atomic::AtomicU8;
+use std::sync::atomic::Ordering;
+use std::time::Instant;
+
+use dice::Dice;
+use dice::PagableNodeCounts;
+use dice::PageOutCancel;
+use dice::StorageIoSnapshot;
+use dupe::Dupe;
+use starlark::pagable::starlark_partial_deser_stats;
+use starlark::pagable::starlark_serialization_state_retained_bytes;
+use tokio::sync::Notify;
+use yak_common::memory;
+use yak_core::soft_error;
+use yak_core::yak_env;
+use yak_error::ErrorTag;
+use yak_error::conversion::from_any_with_tag;
+use yak_events::dispatch::EventDispatcher;
+use yak_events::dispatch::with_dispatcher_async;
+use yak_events::metadata;
+use yak_hash::IntentionallyStdHashMap;
+use yak_server_ctx::concurrency::ConcurrencyHandler;
+use yak_util::process_stats::process_stats;
+
+use crate::active_commands::is_only_active_command;
+use crate::daemon::state::RepoState;
+use crate::jemalloc_stats::get_allocator_stats;
+
+/// Command-scoped collector for DICE paging telemetry. Captures a baseline of the
+/// cumulative page-in and DataKey I/O counters at construction (command start) and
+/// produces the per-command delta on demand (command end).
+///
+/// Page-out settings are copied into each instance so the manager does not need to retain the
+/// command context.
+pub(crate) struct PagingManager {
+    repo: Arc<RepoState>,
+    /// Resource-pressure thresholds for automatic idle page-out, `Some` iff enabled.
+    page_out_on_idle: Option<PageOutThresholds>,
+    /// Running more than one automatic idle page-out during this daemon's lifetime.
+    allow_multiple_idle_page_outs: bool,
+    total_disk_space_bytes: Option<u64>,
+    page_in_baseline: IntentionallyStdHashMap<String, yak_data::DicePageInKeyTypeStats>,
+    /// `None` when pagable storage is not configured.
+    data_key_io_baseline: Option<StorageIoSnapshot>,
+}
+
+impl PagingManager {
+    pub(crate) fn new(
+        repo: Arc<RepoState>,
+        page_out_on_idle: Option<PageOutThresholds>,
+        allow_multiple_idle_page_outs: bool,
+        total_disk_space_bytes: Option<u64>,
+    ) -> PagingManager {
+        let page_in_baseline = page_in_proto_map(&repo);
+        let data_key_io_baseline = repo.dice_manager.unsafe_dice().storage_io_metrics();
+        PagingManager {
+            repo,
+            page_out_on_idle,
+            allow_multiple_idle_page_outs,
+            total_disk_space_bytes,
+            page_in_baseline,
+            data_key_io_baseline,
+        }
+    }
+
+    fn summary(
+        &self,
+        counts: &PagableNodeCounts,
+        page_out_started: yak_data::PageOutStarted,
+    ) -> yak_data::PagingSummary {
+        let dice = self.repo.dice_manager.unsafe_dice();
+        // The delta is this command's work, matching the `page_in_*` fields beside
+        // it; the cumulative totals are a daemon-wide gauge.
+        let cumulative = dice.storage_io_metrics();
+        let memory = dice.paging_memory_metrics();
+        let delta = cumulative.map(|c| c.since(self.data_key_io_baseline.unwrap_or(c)));
+        yak_data::PagingSummary {
+            dice_page_in_by_key_type: compute_page_in_delta(
+                &self.page_in_baseline,
+                &page_in_proto_map(&self.repo),
+            ),
+            paging_db_size_bytes: measured_db_size_bytes(dice.paging_db_size_bytes()),
+            resident_node_count: Some(counts.resident as u64),
+            paged_out_node_count: Some(counts.paged_out as u64),
+            candidate_node_count: Some(counts.candidates as u64),
+            page_out_started: Some(page_out_started as i32),
+            paging_data_keys_out: delta.map(|d| d.data_keys_out),
+            paging_data_key_bytes_out: delta.map(|d| d.bytes_out),
+            paging_data_keys_in: delta.map(|d| d.data_keys_in),
+            paging_data_key_bytes_in: delta.map(|d| d.bytes_in),
+            paging_daemon_data_keys_out: cumulative.map(|c| c.data_keys_out),
+            paging_daemon_data_key_bytes_out: cumulative.map(|c| c.bytes_out),
+            paging_daemon_data_keys_in: cumulative.map(|c| c.data_keys_in),
+            paging_daemon_data_key_bytes_in: cumulative.map(|c| c.bytes_in),
+            paging_memory_offloaded_bytes: memory.map(|m| m.bytes_offloaded),
+            paging_memory_restored_bytes: memory.map(|m| m.bytes_restored),
+            starlark_partial_deser: starlark_partial_deser_proto(),
+        }
+    }
+
+    /// Called at command end: schedule a background idle page-out (if
+    /// `triggers_idle_page_out`) and emit this command's paging telemetry.
+    pub(crate) async fn maybe_trigger_page_out_on_idle(
+        &self,
+        dispatcher: &EventDispatcher,
+        command_end_snapshot: &yak_data::Snapshot,
+        triggers_idle_page_out: bool,
+    ) {
+        // Read the node tally once and share it: the paging telemetry and the page-out
+        // candidates gate both need it.
+        let counts = self
+            .repo
+            .dice_manager
+            .unsafe_dice()
+            .pagable_node_counts()
+            .await;
+        let free_disk_bytes = free_disk_space_bytes(
+            command_end_snapshot.used_disk_space_bytes,
+            self.total_disk_space_bytes,
+        );
+        let page_out_started = if triggers_idle_page_out {
+            spawn_page_out_on_idle(
+                self.page_out_on_idle,
+                self.allow_multiple_idle_page_outs,
+                self.repo.dice_manager.dupe(),
+                dispatcher.dupe(),
+                free_disk_bytes,
+                counts.candidates,
+            )
+            .await
+        } else {
+            yak_data::PageOutStarted::CommandOptedOut
+        };
+        dispatcher.instant_event(self.summary(&counts, page_out_started));
+    }
+}
+
+/// Turn the cached DB-size measurement into a reportable value, emitting a
+/// `soft_error` (and reporting nothing) when the last measurement walk failed,
+/// rather than silently dropping the failure.
+fn measured_db_size_bytes(size: Option<Result<u64, Arc<std::io::Error>>>) -> Option<u64> {
+    match size {
+        None => None,
+        Some(Ok(bytes)) => Some(bytes),
+        Some(Err(e)) => {
+            let _unused = soft_error!(
+                "paging_db_size_measurement_failed",
+                yak_error::yak_error!(
+                    yak_error::ErrorTag::Tier0,
+                    "Failed to measure pagable DB size: {e}"
+                )
+            );
+            None
+        }
+    }
+}
+
+/// Daemon-lifetime Starlark partial-deserialization counters, as proto stats.
+fn starlark_partial_deser_proto() -> Option<yak_data::StarlarkPartialDeserStats> {
+    let s = starlark_partial_deser_stats()?;
+    Some(yak_data::StarlarkPartialDeserStats {
+        heaps_loaded: s.heaps_loaded,
+        heap_retained_blob_bytes: s.heap_retained_blob_bytes,
+        heaps_with_metadata: s.heaps_with_metadata,
+        used_heap_retained_blob_bytes: s.used_heap_retained_blob_bytes,
+        heap_value_serialized_bytes: s.heap_value_serialized_bytes,
+        heap_values: s.heap_values,
+        heap_value_alloc_bytes: s.heap_value_alloc_bytes,
+        claimed_values: s.claimed_values,
+        claimed_alloc_bytes: s.claimed_alloc_bytes,
+    })
+}
+
+/// Cumulative per-key-type page-in counters, as proto stats.
+fn page_in_proto_map(
+    repo: &RepoState,
+) -> IntentionallyStdHashMap<String, yak_data::DicePageInKeyTypeStats> {
+    repo.dice_manager
+        .unsafe_dice()
+        .page_in_metrics()
+        .iter()
+        .map(|(&key_type, stats)| {
+            (
+                String::from(key_type),
+                yak_data::DicePageInKeyTypeStats {
+                    count: stats.count,
+                    fetch_us: stats.fetch_us,
+                    deser_us: stats.deser_us,
+                    bytes: stats.bytes,
+                    restored_bytes: stats.restored_bytes,
+                },
+            )
+        })
+        .collect()
+}
+
+/// Per-key-type delta of the cumulative page-in counters between the command's
+/// start (`baseline`) and now (`current`).
+fn compute_page_in_delta(
+    baseline: &IntentionallyStdHashMap<String, yak_data::DicePageInKeyTypeStats>,
+    current: &IntentionallyStdHashMap<String, yak_data::DicePageInKeyTypeStats>,
+) -> IntentionallyStdHashMap<String, yak_data::DicePageInKeyTypeStats> {
+    current
+        .iter()
+        .filter_map(|(key_type, c)| {
+            let base = baseline.get(key_type);
+            // saturating_sub guards against an (unexpected) counter regression,
+            // e.g. a daemon restart mid-command resetting the cumulatives.
+            let delta = yak_data::DicePageInKeyTypeStats {
+                count: c.count.saturating_sub(base.map_or(0, |b| b.count)),
+                fetch_us: c.fetch_us.saturating_sub(base.map_or(0, |b| b.fetch_us)),
+                deser_us: c.deser_us.saturating_sub(base.map_or(0, |b| b.deser_us)),
+                bytes: c.bytes.saturating_sub(base.map_or(0, |b| b.bytes)),
+                restored_bytes: c
+                    .restored_bytes
+                    .saturating_sub(base.map_or(0, |b| b.restored_bytes)),
+            };
+            (delta.count > 0).then(|| (key_type.clone(), delta))
+        })
+        .collect()
+}
+
+/// Page DICE node values out to the configured on-disk storage, then return the
+/// freed memory to the OS. `cancelled` lets automatic idle page-out stop promptly
+/// when a command arrives; pass `|| false` for an uninterruptible page-out.
+pub(crate) async fn page_out(dice: &Arc<Dice>, cancelled: PageOutCancel) -> yak_error::Result<()> {
+    if yak_env!("YAK_TEST_FAIL_PAGE_OUT", bool, applicability = testing).unwrap() {
+        return Err(yak_error::yak_error!(
+            ErrorTag::TestOnly,
+            "Injected page-out failure (YAK_TEST_FAIL_PAGE_OUT)"
+        ));
+    }
+    dice.page_out_cancellable(cancelled)
+        .await
+        .map_err(|e| from_any_with_tag(e, ErrorTag::Environment))?;
+
+    // Waiting for metrics drains the DICE state queue, ensuring evictions have
+    // processed before we purge.
+    let _ = dice.metrics();
+    memory::purge_jemalloc()?;
+    Ok(())
+}
+
+/// Lock-free state of the background idle page-out, doubling as the single-flight
+/// guard and the cancel flag. `IDLE -> RUNNING` when a page-out starts (only `IDLE`
+/// may start one, so at most one runs), `RUNNING -> CANCELLED` when a command asks
+/// it to stop, back to `IDLE` when it finishes. The detached page-out task polls
+/// [`page_out_cancelled`] lock-free while [`cancel_active_page_out`] transitions it,
+/// so one atomic replaces a mutex-guarded slot plus a separate `Arc<AtomicBool>`.
+static PAGE_OUT: AtomicU8 = AtomicU8::new(IDLE);
+const IDLE: u8 = 0;
+const RUNNING: u8 = 1;
+const CANCELLED: u8 = 2;
+
+/// Notified when an idle page-out finishes, so `status --wait` can await it
+/// instead of polling.
+static PAGE_OUT_DONE: LazyLock<Notify> = LazyLock::new(Notify::new);
+
+/// Set when an idle page-out returns an error. Once set, no further idle
+/// page-outs are scheduled for the rest of this daemon's lifetime.
+/// Paging may be in a bad state, this avoids wasting work if we hit the same error
+/// and/or avoids page out values that will later cause page in failures.
+/// Cleared only on daemon restart.
+static PAGE_OUT_FAILED: AtomicBool = AtomicBool::new(false);
+
+/// Set immediately before the first automatic idle page-out is spawned. By
+/// default it is never cleared, limiting automatic page-out to one run per daemon.
+static IDLE_PAGE_OUT_HAS_RUN: AtomicBool = AtomicBool::new(false);
+
+/// Whether a background idle page-out is running, for `yak debug hydration
+/// status`. A manual `page-out` isn't tracked: it holds the exclusive command
+/// lock, so a concurrent `status` blocks behind it and never observes it mid-run.
+pub(crate) fn page_out_in_progress() -> bool {
+    PAGE_OUT.load(Ordering::Relaxed) != IDLE
+}
+
+/// Whether the running idle page-out has been asked to cancel. Passed to
+/// [`Dice::page_out_cancellable`] as its cancel check (polled per key).
+fn page_out_cancelled() -> bool {
+    PAGE_OUT.load(Ordering::Relaxed) == CANCELLED
+}
+
+/// Block until no idle page-out is in progress, for `status --wait`.
+pub(crate) async fn wait_for_idle_page_out() {
+    loop {
+        let notified = PAGE_OUT_DONE.notified();
+        tokio::pin!(notified);
+        // Register as a waiter before the check so a page-out that finishes in the
+        // gap still wakes us.
+        notified.as_mut().enable();
+        if !page_out_in_progress() {
+            return;
+        }
+        notified.await;
+    }
+}
+
+/// Cancel the in-progress idle page-out, if any. Called when a command that
+/// contends for the graph starts (from `run_streaming`, gated by
+/// `triggers_idle_page_out`), and by the manual page-out / page-in subcommands.
+pub(crate) fn cancel_active_page_out() {
+    let _ = PAGE_OUT.compare_exchange(RUNNING, CANCELLED, Ordering::Relaxed, Ordering::Relaxed);
+}
+
+/// RAII single-flight guard; while held, [`PAGE_OUT`] is `RUNNING`/`CANCELLED`, so
+/// no second page-out can start.
+struct PageOutGuard;
+
+impl PageOutGuard {
+    /// Returns `None` if a page-out is already running (state isn't `IDLE`). This is
+    /// expected, not an error: a cancelled page-out keeps running until it observes
+    /// the flag, so a new one must not start and race it on the same graph.
+    fn acquire() -> Option<Self> {
+        // Dropping a guard releases PAGE_OUT, so only construct one on success.
+        PAGE_OUT
+            .compare_exchange(IDLE, RUNNING, Ordering::Acquire, Ordering::Relaxed)
+            .is_ok()
+            .then(|| PageOutGuard)
+    }
+}
+
+impl Drop for PageOutGuard {
+    fn drop(&mut self) {
+        // Publish `IDLE_PAGE_OUT_HAS_RUN` before another scheduler acquires the guard.
+        PAGE_OUT.store(IDLE, Ordering::Release);
+        PAGE_OUT_DONE.notify_waiters();
+    }
+}
+
+/// Resource thresholds gating idle page-out. GiB (not bytes) so
+/// `DaemonStartupConfig` stays `Eq` (no floats).
+#[derive(Clone, Copy, allocative::Allocative)]
+pub(crate) struct PageOutThresholds {
+    /// Page out only when at least this many GiB of disk are free to write to.
+    pub(crate) min_free_disk_gb: u64,
+}
+
+/// Spawn a background idle page-out if it should run, returning the outcome:
+/// [`PageOutStarted::Started`] if one was scheduled (not whether it succeeds), else the
+/// reason it wasn't — disabled, not enough disk headroom, another command active, one
+/// already running, one already ran, or nothing to page out. When commands overlap,
+/// only the last to finish still sees itself as the sole active command, so only it
+/// starts one.
+pub(crate) async fn spawn_page_out_on_idle(
+    thresholds: Option<PageOutThresholds>,
+    allow_multiple_idle_page_outs: bool,
+    dice_manager: Arc<ConcurrencyHandler>,
+    dispatcher: EventDispatcher,
+    free_disk_bytes: Option<u64>,
+    pagable_candidates: usize,
+) -> yak_data::PageOutStarted {
+    use yak_data::PageOutStarted;
+
+    let Some(thresholds) = thresholds else {
+        return PageOutStarted::Disabled;
+    };
+
+    if PAGE_OUT_FAILED.load(Ordering::Relaxed) {
+        return PageOutStarted::DisabledAfterError;
+    }
+
+    if !is_only_active_command(dispatcher.trace_id()) {
+        return PageOutStarted::OtherCommandsActive;
+    }
+
+    if let Some(reason) = should_page_out_decision(free_disk_bytes, thresholds) {
+        return reason;
+    }
+
+    let Some(guard) = PageOutGuard::acquire() else {
+        return PageOutStarted::AlreadyRunning;
+    };
+
+    if IDLE_PAGE_OUT_HAS_RUN.load(Ordering::Relaxed) && !allow_multiple_idle_page_outs {
+        return PageOutStarted::AlreadyRan;
+    }
+
+    // Re-check under the guard: a command that started in the window above (which
+    // wouldn't have cancelled us) mustn't slip through. Also bail if there is nothing
+    // to page out.
+    if !is_only_active_command(dispatcher.trace_id()) {
+        return PageOutStarted::OtherCommandsActive;
+    }
+    if pagable_candidates == 0 {
+        return PageOutStarted::NothingToPageOut;
+    }
+
+    IDLE_PAGE_OUT_HAS_RUN.store(true, Ordering::Relaxed);
+    let context_dispatcher = dispatcher.clone();
+    tokio::spawn(with_dispatcher_async(context_dispatcher, async move {
+        if let Err(e) = page_out_on_idle(guard, dice_manager, dispatcher).await {
+            let _unused = soft_error!(
+                "page_out_on_idle_failed",
+                e.context("Automatic page-out on idle failed")
+            );
+        }
+    }));
+    PageOutStarted::Started
+}
+
+/// Free disk space (bytes) on `yak-out` (where paged-out values are written),
+/// derived from telemetry the command already collected rather than a fresh stat:
+/// `total` disk (captured from `SystemInfo` at command start) minus `used` disk (from
+/// the command-end `Snapshot`). `None` when either input is unavailable.
+fn free_disk_space_bytes(used: Option<u64>, total: Option<u64>) -> Option<u64> {
+    Some(total?.saturating_sub(used?))
+}
+
+/// The idle page-out disk gate: `None` when there is headroom (`free_disk_bytes` at or
+/// above `min_free_disk_gb`), else the reason there isn't —
+/// [`PageOutStarted::InsufficientDiskHeadroom`], or [`PageOutStarted::FreeDiskUnknown`]
+/// when `free_disk_bytes` is `None` (total or used disk unavailable).
+fn should_page_out_decision(
+    free_disk_bytes: Option<u64>,
+    thresholds: PageOutThresholds,
+) -> Option<yak_data::PageOutStarted> {
+    let min_free_disk_bytes = thresholds
+        .min_free_disk_gb
+        .saturating_mul(1024 * 1024 * 1024);
+    match free_disk_bytes {
+        Some(free) if free >= min_free_disk_bytes => None,
+        Some(free) => {
+            tracing::debug!("Skipping page-out on idle: only {free} bytes of disk free");
+            Some(yak_data::PageOutStarted::InsufficientDiskHeadroom)
+        }
+        None => Some(yak_data::PageOutStarted::FreeDiskUnknown),
+    }
+}
+
+async fn page_out_on_idle(
+    _guard: PageOutGuard,
+    dice_manager: Arc<ConcurrencyHandler>,
+    dispatcher: EventDispatcher,
+) -> yak_error::Result<()> {
+    let dice = dice_manager.unsafe_dice().dupe();
+
+    // Let the residual DICE tasks from the command that triggered this page-out
+    // drain first.
+    dice.wait_for_idle().await;
+
+    // A command may have arrived (and cancelled us) while we waited for idle. That's
+    // rare, so don't check here — `page_out` observes the flag and stops promptly.
+    tracing::info!("Daemon is idle; paging DICE out to reclaim memory");
+    // The triggering command has finished, so its event channel is closed and the summary
+    // has no reader.
+    let (result, _summary) = page_out_measured(&dice, page_out_cancelled, &dispatcher).await;
+    if result.is_err() {
+        // Set before this function returns (dropping the single-flight guard) so a
+        // `status --wait` that unblocks on guard release already sees the flag.
+        PAGE_OUT_FAILED.store(true, Ordering::Relaxed);
+    }
+    result.map(|_| ())
+}
+
+/// Page out, measuring memory and DataKey I/O around it.
+///
+/// Shared with `yak debug hydration page-out` so both paths report the same
+/// measurements. `cancelled` both drives the page-out and fills the summary
+/// field. The `Result` is for control flow; the failure is also in the
+/// summary's `error`.
+pub(crate) async fn page_out_measured(
+    dice: &Arc<Dice>,
+    cancelled: PageOutCancel,
+    dispatcher: &EventDispatcher,
+) -> (yak_error::Result<()>, yak_data::PageOutSummary) {
+    let (resident_bytes_before, allocated_bytes_before, db_size_bytes_before) =
+        page_out_memory_snapshot(dice);
+    let io_before = dice.storage_io_metrics();
+    let memory_before = dice.paging_memory_metrics();
+    let nodes_before = dice.paged_out_node_total();
+    let start = Instant::now();
+    let result = page_out(dice, cancelled).await;
+    let duration_ms = (Instant::now() - start).as_millis() as u64;
+    let (resident_bytes_after, allocated_bytes_after, db_size_bytes_after) =
+        page_out_memory_snapshot(dice);
+    let starlark_serialization_state_bytes_after =
+        dice.pagable_storage_context().and_then(|storage| {
+            u64::try_from(starlark_serialization_state_retained_bytes(storage)).ok()
+        });
+    let daemon_io = dice.storage_io_metrics();
+    let memory = dice.paging_memory_metrics();
+    let io_delta = daemon_io
+        .zip(io_before)
+        .map(|(after, before)| after.since(before));
+    let memory_delta = memory
+        .zip(memory_before)
+        .map(|(after, before)| after.since(before));
+    let error = match &result {
+        Ok(()) => None,
+        Err(e) => Some(e.into()),
+    };
+    // Read after `page_out` has drained the state queue, so every eviction it
+    // queued has been applied. A daemon-lifetime total, so differenced like the
+    // memory counters beside it.
+    let paged_out_count = dice
+        .paged_out_node_total()
+        .zip(nodes_before)
+        .map_or(0, |(after, before)| after.saturating_sub(before));
+    let summary = yak_data::PageOutSummary {
+        metadata: metadata::collect(dispatcher.daemon_id()),
+        command_uuid: Some(dispatcher.trace_id().to_string()),
+        paged_out_count,
+        duration_ms,
+        cancelled: cancelled(),
+        error,
+        resident_bytes_before,
+        resident_bytes_after,
+        allocated_bytes_before,
+        allocated_bytes_after,
+        db_size_bytes_before,
+        db_size_bytes_after,
+        starlark_serialization_state_bytes_after,
+        daemon_data_keys_out: daemon_io.map(|c| c.data_keys_out),
+        daemon_data_key_bytes_out: daemon_io.map(|c| c.bytes_out),
+        daemon_data_keys_in: daemon_io.map(|c| c.data_keys_in),
+        daemon_data_key_bytes_in: daemon_io.map(|c| c.bytes_in),
+        data_keys_out: io_delta.map(|d| d.data_keys_out),
+        data_key_bytes_out: io_delta.map(|d| d.bytes_out),
+        data_keys_in: io_delta.map(|d| d.data_keys_in),
+        data_key_bytes_in: io_delta.map(|d| d.bytes_in),
+        daemon_memory_offloaded_bytes: memory.map(|m| m.bytes_offloaded),
+        daemon_memory_restored_bytes: memory.map(|m| m.bytes_restored),
+        memory_offloaded_bytes: memory_delta.map(|d| d.bytes_offloaded),
+        memory_restored_bytes: memory_delta.map(|d| d.bytes_restored),
+    };
+    (result, summary)
+}
+
+/// `(resident RSS, jemalloc allocated, pagable DB on-disk size)` in bytes, each
+/// `None` when unavailable: no RSS on this platform, not built with jemalloc, or no
+/// pagable storage configured. Reads `/proc` and the store directory, so it is only
+/// called around a page-out, never on the hot path.
+fn page_out_memory_snapshot(dice: &Arc<Dice>) -> (Option<u64>, Option<u64>, Option<u64>) {
+    let resident = process_stats().rss_bytes;
+    let allocated = get_allocator_stats().ok().and_then(|s| s.bytes_allocated);
+    // A measurement error here is surfaced via the command-end `PagingSummary`; for
+    // these before/after metrics just use the size when available.
+    let db_size = dice.paging_db_size_bytes().and_then(|r| r.ok());
+    (resident, allocated, db_size)
+}
+
+#[cfg(test)]
+mod tests {
+    use yak_hash::IntentionallyStdHashMap;
+
+    use super::PageOutGuard;
+    use super::PageOutThresholds;
+    use super::cancel_active_page_out;
+    use super::compute_page_in_delta;
+    use super::page_out_cancelled;
+    use super::page_out_in_progress;
+    use super::should_page_out_decision;
+
+    const GIB: u64 = 1024 * 1024 * 1024;
+
+    #[test]
+    fn failed_page_out_acquire_preserves_active_guard() {
+        let guard = PageOutGuard::acquire().expect("initial page-out should acquire the guard");
+        for cancelled in [false, true] {
+            if cancelled {
+                cancel_active_page_out();
+            }
+            for _ in 0..2 {
+                assert!(PageOutGuard::acquire().is_none());
+                assert!(page_out_in_progress());
+                assert_eq!(page_out_cancelled(), cancelled);
+            }
+        }
+
+        drop(guard);
+        assert!(!page_out_in_progress());
+
+        let next = PageOutGuard::acquire().expect("guard should be released after page-out");
+        assert!(!page_out_cancelled());
+        drop(next);
+        assert!(!page_out_in_progress());
+    }
+
+    #[test]
+    fn delta_subtracts_baseline_and_drops_unchanged() {
+        let stat =
+            |count, fetch_us, deser_us, bytes, restored_bytes| yak_data::DicePageInKeyTypeStats {
+                count,
+                fetch_us,
+                deser_us,
+                bytes,
+                restored_bytes,
+            };
+
+        // Baseline cumulatives include page-ins from earlier commands on this
+        // daemon, so they must be subtracted out.
+        let mut baseline = IntentionallyStdHashMap::default();
+        baseline.insert("A".to_owned(), stat(10, 100, 200, 1000, 10000));
+        baseline.insert("C".to_owned(), stat(5, 50, 50, 500, 5000));
+
+        let mut current = IntentionallyStdHashMap::default();
+        current.insert("A".to_owned(), stat(12, 130, 260, 1300, 13000)); // +2 this command
+        current.insert("B".to_owned(), stat(3, 30, 60, 300, 3000)); // new key type, baseline 0
+        current.insert("C".to_owned(), stat(5, 50, 50, 500, 5000)); // unchanged -> omitted
+
+        let delta = compute_page_in_delta(&baseline, &current);
+
+        assert_eq!(
+            delta.len(),
+            2,
+            "only key types with page-ins during the command are kept"
+        );
+        let a = delta.get("A").expect("A had new page-ins");
+        assert_eq!(
+            (a.count, a.fetch_us, a.deser_us, a.bytes, a.restored_bytes),
+            (2, 30, 60, 300, 3000)
+        );
+        let b = delta.get("B").expect("B is new this command (baseline 0)");
+        assert_eq!(
+            (b.count, b.fetch_us, b.deser_us, b.bytes, b.restored_bytes),
+            (3, 30, 60, 300, 3000)
+        );
+        assert!(
+            !delta.contains_key("C"),
+            "a key type with no new page-ins is omitted"
+        );
+    }
+
+    #[test]
+    fn pages_out_only_with_disk_headroom() {
+        let thresholds = PageOutThresholds {
+            min_free_disk_gb: 20,
+        };
+        assert_eq!(should_page_out_decision(Some(50 * GIB), thresholds), None);
+        // threshold is inclusive
+        assert_eq!(should_page_out_decision(Some(20 * GIB), thresholds), None);
+        assert_eq!(
+            should_page_out_decision(Some(19 * GIB), thresholds),
+            Some(yak_data::PageOutStarted::InsufficientDiskHeadroom)
+        );
+        // Free disk couldn't be determined.
+        assert_eq!(
+            should_page_out_decision(None, thresholds),
+            Some(yak_data::PageOutStarted::FreeDiskUnknown)
+        );
+    }
+
+    #[test]
+    fn min_free_disk_gb_saturates() {
+        // A huge GiB threshold saturates rather than overflowing; nothing meets it.
+        let thresholds = PageOutThresholds {
+            min_free_disk_gb: u64::MAX,
+        };
+        assert_eq!(
+            should_page_out_decision(Some(u64::MAX - 1), thresholds),
+            Some(yak_data::PageOutStarted::InsufficientDiskHeadroom)
+        );
+    }
+}

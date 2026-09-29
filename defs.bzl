@@ -17,19 +17,19 @@ def _yak_bundle_impl(ctx: AnalysisContext) -> list[Provider]:
     target_is_windows = ctx.attrs._target_os_type[OsLookup].os == Os("windows")
 
     binary_extension = ".exe" if target_is_windows else ""
-    buck2_binary = "yak" + binary_extension
-    buck2_daemon_binary = "yak-daemon" + binary_extension
+    yak_binary = "yak" + binary_extension
+    yak_daemon_binary = "yak-daemon" + binary_extension
 
     copied_dir = {}
     materialisations = []
 
-    buck2 = ctx.attrs.buck2[DefaultInfo].default_outputs[0]
-    copied_dir[buck2_daemon_binary] = buck2
-    materialisations.extend(ctx.attrs.buck2[DefaultInfo].other_outputs)
+    yak = ctx.attrs.yak[DefaultInfo].default_outputs[0]
+    copied_dir[yak_daemon_binary] = yak
+    materialisations.extend(ctx.attrs.yak[DefaultInfo].other_outputs)
 
-    buck2_client = ctx.attrs.buck2_client[DefaultInfo].default_outputs[0]
-    copied_dir[buck2_binary] = buck2_client
-    materialisations.extend(ctx.attrs.buck2_client[DefaultInfo].other_outputs)
+    yak_client = ctx.attrs.yak_client[DefaultInfo].default_outputs[0]
+    copied_dir[yak_binary] = yak_client
+    materialisations.extend(ctx.attrs.yak_client[DefaultInfo].other_outputs)
 
     out = ctx.actions.copied_dir("out", copied_dir, has_content_based_path = False)
 
@@ -38,8 +38,8 @@ def _yak_bundle_impl(ctx: AnalysisContext) -> list[Provider]:
 yak_bundle = rule(
     impl = _yak_bundle_impl,
     attrs = {
-        "buck2": attrs.dep(),
-        "buck2_client": attrs.dep(),
+        "yak": attrs.dep(),
+        "yak_client": attrs.dep(),
         "_target_os_type": buck.target_os_type_arg(),
     },
 )

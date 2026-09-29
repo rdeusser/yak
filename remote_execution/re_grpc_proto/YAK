@@ -6,7 +6,7 @@ rust_protobuf_library(
     build_script = "build.rs",
     protos = glob(["proto/**/*.proto"]),
     deps = [
-        "//app/buck2_proto_serde:buck2_proto_serde",
+        "//app/yak_proto_serde:yak_proto_serde",
         "//third-party/rust:prost-types",
         "//third-party/rust:serde",
     ],

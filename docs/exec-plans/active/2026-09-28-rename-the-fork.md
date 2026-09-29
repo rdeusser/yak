@@ -49,7 +49,13 @@ The documentation, the website, and the messages of the binary call the tool yak
 - [x] The prelude downloads bootstrap jars built from the `dev.yak` sources, from a location the owner chooses, in place of the upstream release. The item was superseded on 2026-09-29, when `docs/exec-plans/completed/2026-09-29-remove-jvm-and-buck1-compatibility.md` removed the JVM toolchain, its sources, and the jar downloads.
   - Under Java 21, the moved sources build `cp_snapshot_generator.jar`, `jar_builder_main.jar`, and `zip_scrubber_main.jar` with `dev.yak` main classes, no `com/facebook` entries, and Java 11 class files, as the upstream jars have.
   - With the three jars served from a local HTTP server in place of the upstream release, `yak build prelude//toolchains/android/...` and `yak test prelude//toolchains/android/test/...` under Java 21 fail in the same actions and list the same 2684 JUnit results as with the upstream jars.
-- [ ] Milestone 5: the Cargo packages and directories take the new name.
+- [x] Milestone 5: the Cargo packages and directories take the new name (2026-09-29).
+  - `rename_crates.py` and `manual_edits_crates.py` in `docs/exec-plans/active/2026-09-28-rename-the-fork/` made the change from commit `b2bb73b419`. `rename_crates.py` moved the 97 crate directories and two files named after crates, and it made 25343 replacements in 1587 files. `manual_edits_crates.py` made 16 edits in 12 files. `cargo update --workspace --offline` rewrote `Cargo.lock`, and `cargo fmt --all` sorted the imports that the new names moved.
+  - `Cargo.lock` keeps the versions and checksums of its 709 third-party packages, and each of its 140 workspace packages keeps its dependencies under the new names.
+  - `git grep` finds the 96 names `buck2_*` of the crates only in `docs/exec-plans/active/`, `docs/exec-plans/completed/`, `CHANGELOG.md`, `prelude/erlang/`, and links to `github.com/facebook/`.
+  - The integration tests regenerated the help golden files of 41 commands. The example of `--profile-patterns` in them names `analysis/cell//app/yak_action_impl:yak_action_impl` and drops the `buck2/` directory of Meta's layout. The help of `yak subscribe` also wraps one sentence differently, because the crate name in it is shorter.
+  - On Linux, `cargo build --bin=yak`, `cargo fmt --all -- --check`, clippy, and rustdoc pass. `cargo test --lib --no-fail-fast` passes 3865 unit tests and fails only `test_perf_thread_instruction_counter`, and `cargo test --doc` passes 311 doc tests. The integration tests give 1727 passed, 223 skipped, and 3 expected failures after the golden files are regenerated.
+  - On Linux, after `buckify`, `yak build //:yak`, `yak build //app_dep_graph_rules:test_buck2_dep_graph`, `yak targets //...`, and the `resolve_deps.bxl` run for `//app/yak_wrapper_common:yak_wrapper_common` succeed. The query examples in `app/yak_query/src/query/syntax/simple/functions.rs` that name the targets of the repository print what their documentation shows. `yak build //... -v 2` succeeds in `examples/toolchains/python_toolchain` and fails in `examples/no_prelude` only at `root//go:main`, as the tech-debt tracker describes.
 - [x] Milestone 6: the documentation, the website, and the messages and comments of the code use the new name (2026-09-29).
   - [x] The documentation and the website (2026-09-29). `rename_prose.py` in `docs/exec-plans/active/2026-09-28-rename-the-fork/` moved seven pages and directories, deleted the page about Buck1 and five images, and made 1067 replacements in 125 files. Hand edits rewrote the pages about Buck1, redrew five diagrams in Mermaid, and replaced the logo.
   - [x] The messages, help text, doc comments, and comments of the code, with the golden files that print them (2026-09-29).
@@ -109,6 +115,10 @@ The documentation, the website, and the messages of the binary call the tool yak
 - The parser test cases in `starlark-rust/starlark_syntax/testcases/` are copies of other projects' files, such as a Gerrit macro that names Buck's native `gwt_binary` rule. `rename_code_prose.py` skips the directory.
 - Two comments in `prelude/apple/` spell Buck1 as `BUCK1`, which the report of `rename_code_prose.py` does not match. A case-insensitive `git grep` found them.
 - The `Clean` target of `prelude/ide_integrations/visual_studio/msvs/vs_buck_build.props` ran `yak clean` after commit `04fcc47b52`, but its `vs_buck_path` property still named `buck2`, so the projects that `vsgo` generates built with a binary that no longer exists. The command rule of `rename_runtime.py` required a space, a quote, punctuation, or the end of the line after `buck2`, and the property value ends at `<`. The rules of `rename_code_prose.py` parse only Rust, Python, Starlark, and C-style sources.
+- The help of `--profile-patterns` gave an identifier in Meta's layout, `analysis/cell//buck2/app/buck2_action_impl:buck2_action_impl`, where the crates lived under `buck2/app/`. A comment in `app/buck2_error/src/source_location.rs` explained the same layout. `manual_edits_crates.py` drops the `buck2/` directory from both.
+- The Erlang shell of the prelude has a function named `buck2_query`, which matches the name of a crate, so `rename_crates.py` skips `prelude/erlang/`.
+- `CLAUDE.md` is a symbolic link to `AGENTS.md`, so `rename_crates.py` skips symbolic links and edits `AGENTS.md` once.
+- Names that start with `buck2_` sort near the start of a dependency list, and names that start with `yak_` sort near the end. A rename in place leaves the dependency tables of the manifests and the dependency lists of the build files out of order, so `rename_crates.py` sorts each list that its rules changed and that was sorted before.
 - The rules of `rename_runtime.py` and `rename_code_prose.py` skip a name that a hyphen or a colon follows, because crate names such as `buck2-bin` and labels such as `root//app/buck2:buck2` put those characters after the name. They skipped thread names such as `buck2-dm`, the forkserver's process name `(buck2-forkserver)`, the Remote Execution use cases such as `buck2-default`, and prose such as `arguments to buck2:` and `buck2-agnostic`. `rename_runtime.py` also skips a name after a dot, so the suffix `.buck2.tmp` kept its name.
 
 ## Decision Log
@@ -166,6 +176,11 @@ The documentation, the website, and the messages of the binary call the tool yak
 - 2026-09-29: Values that identify the tool to a server take the new name, such as the user agent `yak` and the default Remote Execution use case `yak-default`. The examples and tests use the use cases `yak-testing` and `yak-user`.
 - 2026-09-29: Names that programs outside this repository read keep `buck`. They include the `--buck-trace-id` flag that yak passes to the executor of `test.v2_test_executor` and the `--buck_mode buck-build` arguments of the lazy imports analyzer that a target or the Python toolchain names.
 - 2026-09-29: Values that no output shows keep `buck`, such as the `x-buck-auth-token` header between the client and the daemon, the tags of `Buck2TypeIdDomain` that type ids hash, and the `buck2.structured-dep-file-inputs.v1` marker that dep file digests hash.
+- 2026-09-29: The package `buck2` takes the name `yak`, which its library and its binary share. Its directory is `app/yak`, and its binary target is `//app/yak:yak-bin`.
+- 2026-09-29: Identifiers that contain a crate name keep their names, such as `Buck2BuildInfo` and `buck2_home_dir`, as the milestone 1 decision keeps identifiers. Five exceptions name the same thing as a crate or sit beside a renamed macro (`buck2_env_name`, `buck2_error_impl`, `buck2_client_only_setting`, `buck2_client_transition_alias`, and `buck2_miniperf_test`).
+- 2026-09-29: The error derive macro reads `#[yak(...)]` and no other attribute name.
+- 2026-09-29: Links to `github.com/facebook/buck2` keep their upstream paths.
+- 2026-09-29: The package `buck-resources` keeps its name in milestone 5, because `shed/completion_verify` uses the published crate of that name. The progress item for values that a user sees lists it.
 
 ## Outcomes & Retrospective
 
@@ -181,20 +196,22 @@ The second part of milestone 6 landed on 2026-09-29. The messages, help text, an
 
 The leftovers of milestones 1 and 6 landed on 2026-09-29. Threads, the forkserver's process, the files and directories that yak creates outside `yak-out`, and the Remote Execution use cases take yak names. A rule that skips a name before a hyphen or a colon keeps crate names and labels intact, but it also skips names such as `buck2-dm`, so a search for the old name before those characters checks the result.
 
+Milestone 5 landed on 2026-09-29. The Cargo packages, their directories, and the targets of the repository's own build take yak names. A rename changes where names sort, so the script sorts the lists that were sorted before. Cargo regenerates the lock file from the renamed workspace without changing any third-party version. Values that a user sees and that still name Buck remain.
+
 ## Context and Orientation
 
 The names the binary uses are defined in these files:
 
 | Name | Where it is defined |
 | --- | --- |
-| Binary `yak` | `[[bin]]` in `app/buck2/Cargo.toml` and the clap `name` in `app/buck2/src/lib.rs` |
-| Build file `YAK` | `DEFAULT_BUILDFILES` in `app/buck2_common/src/buildfiles.rs` |
-| `.yakconfig`, `.yakconfig.local`, `.yakconfig.d/`, `/etc/yakconfig`, and the Windows `yakconfig.d` | `app/buck2_common/src/legacy_configs/path.rs` |
-| Project root markers `.yakconfig` and `.yakroot`, and the `~/.yak` directory | `app/buck2_common/src/invocation_roots.rs` |
-| Output directory `yak-out` and its reserved directory `._yak` | `app/buck2_common/src/invocation_paths.rs`, and `app/buck2_common/src/ignores/ignore_set.rs` for the ignore rule |
-| `.yaksettings.toml` | `app/buck2_common/src/settings/parser.rs` |
-| Files that `init` writes | `app/buck2_client/src/commands/init.rs` |
-| Environment variables | each `buck2_env!` call, with the `YAK_` prefix |
+| Binary `yak` | `[[bin]]` in `app/yak/Cargo.toml` and the clap `name` in `app/yak/src/lib.rs` |
+| Build file `YAK` | `DEFAULT_BUILDFILES` in `app/yak_common/src/buildfiles.rs` |
+| `.yakconfig`, `.yakconfig.local`, `.yakconfig.d/`, `/etc/yakconfig`, and the Windows `yakconfig.d` | `app/yak_common/src/legacy_configs/path.rs` |
+| Project root markers `.yakconfig` and `.yakroot`, and the `~/.yak` directory | `app/yak_common/src/invocation_roots.rs` |
+| Output directory `yak-out` and its reserved directory `._yak` | `app/yak_common/src/invocation_paths.rs`, and `app/yak_common/src/ignores/ignore_set.rs` for the ignore rule |
+| `.yaksettings.toml` | `app/yak_common/src/settings/parser.rs` |
+| Files that `init` writes | `app/yak_client/src/commands/init.rs` |
+| Environment variables | each `yak_env!` call, with the `YAK_` prefix |
 
 The repository's own yak build is described in `ARCHITECTURE.md` under "Two build definitions". Milestone 4 moved the Java and Kotlin sources of the JVM and Android toolchain, and `docs/exec-plans/completed/2026-09-29-remove-jvm-and-buck1-compatibility.md` later removed them with the toolchain.
 Milestone 6 edits the prose. The user documentation lives in `website/docs/`, the site's sources in `website/`, and the contributor documentation in `docs/developers/`. `website/gen_docs.py` generates the reference pages from the doc comments of the code and the prelude, so those pages change with the code.
@@ -236,6 +253,7 @@ Commands run from the repository root unless a step names another directory.
 - For milestone 4, in a project that vendors the prelude, `yak build prelude//toolchains/android/...` fails only in the targets the tech-debt tracker listed under "The JVM toolchain has targets that do not build", and in `toolchains//:jdk_system_image` where no Android SDK is installed. The JUnit reports of `yak test prelude//toolchains/android/test/...` list the same failures before and after the move. The toolchain no longer exists.
 - For milestone 6, `python3 docs/exec-plans/active/2026-09-28-rename-the-fork/check_links.py .` checks the relative links, heading anchors, images, sidebar ids, and redirects of the site. The site cannot be built without its Node packages, so the script stands in for `docusaurus build`. After the documentation commit it prints three problems that it also prints for the commit before (two links of `website/docs/index.md` that it cannot resolve and the sidebar name `ruleSidebar`), and the five broken anchors that it printed before are fixed.
 - For the second part of milestone 6, `rename_code_prose.py` without `--apply`, run on the result, would change only the three strings that `manual_edits_code.py` restores, and it lists the names that the decision log keeps.
+- For milestone 5, `git grep` for the 96 names `buck2_*` of the crates prints matches only in `docs/exec-plans/active/`, `docs/exec-plans/completed/`, `CHANGELOG.md`, `prelude/erlang/`, and links to `github.com/facebook/`. `Cargo.lock` keeps the entries of its third-party packages.
 - `git grep -n -E '(^|[^.[:alnum:]_])com[./]facebook' -- . ':!docs/exec-plans/' ':!CHANGELOG.md' | grep -v -e 'https://github\.com/facebook/'` prints nothing.
 
 ## Idempotence and Recovery
@@ -244,3 +262,4 @@ Each milestone's script runs on a clean tree and can be rerun after `git checkou
 To rerun the documentation part of milestone 6, copy `rename_prose.py` out of the checkout, check out `fe50161a7d`, and run `rename_prose.py --apply` from the repository root. It moves and deletes files with Git before it edits them, so it runs once on a clean tree. The hand edits are in the commit, and `rename_prose.py` without `--apply` lists the lines that still name Buck.
 To rerun the second part of milestone 6, copy `rename_code_prose.py` and `manual_edits_code.py` out of the checkout, check out `b236e9eebb`, and run `rename_code_prose.py --apply` and then `manual_edits_code.py` from the repository root under Python 3.12 or later. Then regenerate the golden files as `tests/README.md` describes and review their diff. `manual_edits_code.py` moves and deletes files with Git, so it runs once on a clean tree.
 To rerun the leftovers, copy `rename_leftovers.py` out of the checkout, check out `5bf8000575`, and run it from the repository root. Then regenerate the golden files as `tests/README.md` describes. `rename_leftovers.py` exits with a list of failures when an edit matches a different number of times than it expects.
+To rerun milestone 5, copy `rename_crates.py` and `manual_edits_crates.py` out of the checkout, check out `b2bb73b419`, and run `rename_crates.py --apply` and then `manual_edits_crates.py` from the repository root. Then run `cargo update --workspace --offline` and `cargo fmt --all`, and regenerate the golden files as `tests/README.md` describes. `rename_crates.py` moves directories with Git, so it runs once on a clean tree.

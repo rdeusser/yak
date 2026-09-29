@@ -1,0 +1,33 @@
+[package]
+name = "yak_configured"
+version.workspace = true
+edition.workspace = true
+repository.workspace = true
+license.workspace = true
+
+[dependencies]
+allocative.workspace = true
+async-trait.workspace = true
+derive_more.workspace = true
+dice.workspace = true
+dice_futures.workspace = true
+dupe.workspace = true
+futures.workspace = true
+gazebo.workspace = true
+itertools.workspace = true
+pagable.workspace = true
+ref-cast.workspace = true
+starlark_map.workspace = true
+yak_build_api.workspace = true
+yak_build_signals.workspace = true
+yak_common.workspace = true
+yak_core.workspace = true
+yak_error.workspace = true
+yak_node.workspace = true
+yak_util.workspace = true
+
+[dev-dependencies]
+tokio.workspace = true
+
+[lints]
+workspace = true

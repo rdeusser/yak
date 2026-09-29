@@ -56,7 +56,7 @@ class FileWatcherEvent:
 
 
 #
-# Example FileWatcher.stats (`FileWatcherStats` in app/buck2_data/data.proto):
+# Example FileWatcher.stats (`FileWatcherStats` in app/yak_data/data.proto):
 #   "FileWatcher": {
 #     "stats": {
 #       "fresh_instance": false,

@@ -1,0 +1,140 @@
+load("//build_defs:rust.bzl", "rust_binary", "rust_library")
+load(":transition.bzl", "yak_client_transition_alias")
+
+rust_library(
+    name = "yak",
+    srcs = glob(["src/**/*.rs"]),
+    rustc_flags = select({
+        ":yak_client_only_setting[build]": ["--cfg=client_only"],
+        "DEFAULT": [],
+    }),
+    deps = [
+        "//app/yak_client:yak_client",
+        "//app/yak_client_ctx:yak_client_ctx",
+        "//app/yak_cmd_audit_client:yak_cmd_audit_client",
+        "//app/yak_cmd_completion_client:yak_cmd_completion_client",
+        "//app/yak_cmd_debug_client:yak_cmd_debug_client",
+        "//app/yak_cmd_docs_client:yak_cmd_docs_client",
+        "//app/yak_cmd_log_client:yak_cmd_log_client",
+        "//app/yak_cmd_starlark_client:yak_cmd_starlark_client",
+        "//app/yak_common:yak_common",
+        "//app/yak_core:yak_core",
+        "//app/yak_data:yak_data",
+        "//app/yak_error:yak_error",
+        "//app/yak_event_observer:yak_event_observer",
+        "//app/yak_events:yak_events",
+        "//app/yak_fs:yak_fs",
+        "//app/yak_util:yak_util",
+        "//app/yak_wrapper_common:yak_wrapper_common",
+        "//gazebo/dupe:dupe",
+        "//superconsole:superconsole",
+        "//third-party/rust:clap",
+        "//third-party/rust:tokio",
+        "//third-party/rust:tracing",
+    ]
+    + select({
+        ":yak_client_only_setting[build]": [],
+        "DEFAULT": [
+            "//app/yak_daemon:yak_daemon",
+            "//app/yak_server:yak_server",
+            "//app/yak_test_runner:yak_test_runner",
+        ],
+    })
+    + select({
+        "DEFAULT": [],
+        "prelude//os:linux": [
+            "//app/yak_forkserver:yak_forkserver",
+            "//third-party/rust:dirs",
+            "//third-party/rust:libc",
+            "//third-party/rust:nix",
+        ],
+        "prelude//os:macos": [
+            "//app/yak_forkserver:yak_forkserver",
+            "//third-party/rust:dirs",
+            "//third-party/rust:libc",
+            "//third-party/rust:nix",
+        ],
+        "prelude//os:windows": [
+            "//third-party/rust:windows-sys",
+        ],
+    }),
+)
+
+rust_binary(
+    name = "yak-bin",
+    srcs = ["bin/yak.rs"],
+    allow_cache_upload = True,
+    crate = "yak",
+    crate_root = "bin/yak.rs",
+    env = {
+        # `-c buck.set_explicit_version=<version>` sets the version that `--version` prints.
+        "YAK_SET_EXPLICIT_VERSION": read_config("buck", "set_explicit_version", ""),
+    },
+    # `-c yak.emit_relocs=true` keeps ELF relocations in the binary for BOLT.
+    linker_flags = ["-Wl,--emit-relocs"] if read_config("yak", "emit_relocs", "") == "true" else [],
+    rustc_flags = select({
+        ":yak_client_only_setting[build]": ["--cfg=client_only"],
+        "DEFAULT": [],
+    }),
+    deps = [
+        "//app/yak:yak",
+        "//app/yak_build_info:yak_build_info",
+        "//app/yak_certs:yak_certs",
+        "//app/yak_client_ctx:yak_client_ctx",
+        "//app/yak_core:yak_core",
+        "//app/yak_error:yak_error",
+        "//app/yak_events:yak_events",
+        "//app/yak_fs:yak_fs",
+        "//app/yak_wrapper_common:yak_wrapper_common",
+        "//gazebo/dupe:dupe",
+        "//superconsole:superconsole",
+        "//third-party/rust:tracing",
+    ]
+    + select({
+        "DEFAULT": [],
+        "prelude//os:windows": [
+            "//third-party/rust:mimalloc",
+        ],
+    })
+    + select({
+        ":yak_client_only_setting[build]": [],
+        "DEFAULT": [
+            "//app/yak_action_impl:yak_action_impl",
+            "//app/yak_analysis:yak_analysis",
+            "//app/yak_anon_target:yak_anon_target",
+            "//app/yak_build_api:yak_build_api",
+            "//app/yak_build_signals_impl:yak_build_signals_impl",
+            "//app/yak_bxl:yak_bxl",
+            "//app/yak_cfg_constructor:yak_cfg_constructor",
+            "//app/yak_cmd_audit_server:yak_cmd_audit_server",
+            "//app/yak_cmd_docs_server:yak_cmd_docs_server",
+            "//app/yak_cmd_query_server:yak_cmd_query_server",
+            "//app/yak_cmd_starlark_server:yak_cmd_starlark_server",
+            "//app/yak_cmd_targets_server:yak_cmd_targets_server",
+            "//app/yak_configured:yak_configured",
+            "//app/yak_external_cells:yak_external_cells",
+            "//app/yak_interpreter_for_build:yak_interpreter_for_build",
+            "//app/yak_query_impls:yak_query_impls",
+            "//app/yak_server_commands:yak_server_commands",
+            "//app/yak_test:yak_test",
+            "//app/yak_transition:yak_transition",
+            "//app/yak_validation:yak_validation",
+        ],
+    }),
+)
+
+constraint(
+    name = "yak_client_only_setting",
+    default = "unspecified",
+    values = [
+        "build",
+        "unspecified",
+    ],
+    visibility = ["PUBLIC"],
+)
+
+yak_client_transition_alias(
+    name = "yak_client-bin",
+    actual = ":yak-bin",
+    visibility = ["PUBLIC"],
+)

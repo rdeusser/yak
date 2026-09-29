@@ -1,0 +1,16 @@
+load("//build_defs:rust.bzl", "rust_library")
+
+rust_library(
+    name = "yak_query_parser",
+    srcs = glob(["src/**/*.rs"]),
+    deps = [
+        "//app/yak_error:yak_error",
+        "//app/yak_util:yak_util",
+        "//gazebo/dupe:dupe",
+        "//gazebo/gazebo:gazebo",
+        "//third-party/rust:derive_more",
+        "//third-party/rust:enum-map",
+        "//third-party/rust:nom",
+        "//third-party/rust:nom-language",
+    ],
+)

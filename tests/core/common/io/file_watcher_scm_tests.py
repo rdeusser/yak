@@ -94,7 +94,7 @@ async def run_checkout_mergebase_changes_test(
         FileWatcherProvider.RUST_NOTIFY,
     ]:
         # Stats only records the first 100 events (`MAX_FILE_CHANGE_RECORDS` in
-        # app/buck2_file_watcher/src/stats.rs), so we can't verify the results
+        # app/yak_file_watcher/src/stats.rs), so we can't verify the results
         # when making commit transitions
         assert not is_fresh_instance
     else:

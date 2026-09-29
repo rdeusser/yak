@@ -1,0 +1,59 @@
+[package]
+name = "yak_build_api_tests"
+version.workspace = true
+edition.workspace = true
+repository.workspace = true
+license.workspace = true
+autolib = false
+
+[[test]]
+name = "yak_build_api_tests"
+path = "src/lib.rs"
+
+[dev-dependencies]
+allocative.workspace = true
+assert_matches.workspace = true
+async-trait.workspace = true
+ctor.workspace = true
+derivative.workspace = true
+dice.workspace = true
+dupe.workspace = true
+gazebo.workspace = true
+indoc.workspace = true
+itertools.workspace = true
+maplit.workspace = true
+pagable.workspace = true
+serde_json.workspace = true
+sorted_vector_map.workspace = true
+starlark.workspace = true
+starlark_map.workspace = true
+tokio.workspace = true
+yak_action_impl.workspace = true
+yak_analysis.workspace = true
+yak_anon_target.workspace = true
+yak_artifact.workspace = true
+yak_build_api.workspace = true
+yak_build_signals.workspace = true
+yak_certs.workspace = true
+yak_common.workspace = true
+yak_configured.workspace = true
+yak_core.workspace = true
+yak_data.workspace = true
+yak_directory.workspace = true
+yak_error.workspace = true
+yak_events.workspace = true
+yak_execute.workspace = true
+yak_execute_impl.workspace = true
+yak_file_watcher.workspace = true
+yak_fs.workspace = true
+yak_hash.workspace = true
+yak_http.workspace = true
+yak_interpreter.workspace = true
+yak_interpreter_for_build.workspace = true
+yak_node.workspace = true
+yak_test_api.workspace = true
+yak_transition.workspace = true
+yak_util.workspace = true
+
+[lints]
+workspace = true

@@ -1,0 +1,27 @@
+load("//build_defs:rust.bzl", "rust_library")
+
+rust_library(
+    name = "yak_log_common",
+    srcs = glob([
+        "src/**/*.rs",
+    ]),
+    deps = [
+        "//app/yak_client_ctx:yak_client_ctx",
+        "//app/yak_common:yak_common",
+        "//app/yak_data:yak_data",
+        "//app/yak_error:yak_error",
+        "//app/yak_event_log:yak_event_log",
+        "//app/yak_event_observer:yak_event_observer",
+        "//app/yak_events:yak_events",
+        "//app/yak_fs:yak_fs",
+        "//app/yak_hash:yak_hash",
+        "//gazebo/dupe:dupe",
+        "//third-party/rust:clap",
+        "//third-party/rust:derive_more",
+        "//third-party/rust:flate2",
+        "//third-party/rust:futures",
+        "//third-party/rust:serde",
+        "//third-party/rust:serde_json",
+        "//third-party/rust:tokio-stream",
+    ],
+)

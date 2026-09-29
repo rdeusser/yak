@@ -1,0 +1,16 @@
+[package]
+name = "yak_action_parallelism"
+version.workspace = true
+edition.workspace = true
+repository.workspace = true
+license.workspace = true
+
+[dependencies]
+yak_data.workspace = true
+yak_event_observer.workspace = true
+
+[dev-dependencies]
+prost-types.workspace = true
+
+[lints]
+workspace = true

@@ -85,19 +85,19 @@ On Linux on 2026-09-28, a `completion_verify` built with Cargo from `shed/comple
 
 Remove this entry when the completion packages build without `dnf`.
 
-### `buck2_miniperf_test` runs no test
+### `yak_miniperf_test` runs no test
 
-`//app/buck2_miniperf:buck2_miniperf_test` is a `rust_library` over `app/buck2_miniperf/test/lib.rs`, and that file compiles only under `cfg(test)`, so the target builds an empty library. `app/buck2_miniperf/Cargo.toml` has no target for the file.
-The test needs `MINIPERF` and `THREE_BILLION_INSTRUCTIONS` in its environment and the `anyhow`, `bincode`, `tempfile`, and `buck2_miniperf_proto` crates. Meta's `rust_library` macro made a test target from `test_deps` and `test_env`, and the macros in this repository never did.
+`//app/yak_miniperf:yak_miniperf_test` is a `rust_library` over `app/yak_miniperf/test/lib.rs`, and that file compiles only under `cfg(test)`, so the target builds an empty library. `app/yak_miniperf/Cargo.toml` has no target for the file.
+The test needs `MINIPERF` and `THREE_BILLION_INSTRUCTIONS` in its environment and the `anyhow`, `bincode`, `tempfile`, and `yak_miniperf_proto` crates. Meta's `rust_library` macro made a test target from `test_deps` and `test_env`, and the macros in this repository never did.
 
 Remove this entry when a Buck or Cargo target runs the test.
 
 ### `test_perf_thread_instruction_counter` fails where perf events are denied
 
-`per_thread_instruction_counter::tests::test_perf_thread_instruction_counter` in `app/buck2_util/src/per_thread_instruction_counter.rs` unwraps the result of `PerThreadInstructionCounter::init()`.
+`per_thread_instruction_counter::tests::test_perf_thread_instruction_counter` in `app/yak_util/src/per_thread_instruction_counter.rs` unwraps the result of `PerThreadInstructionCounter::init()`.
 Where the host denies `perf_event_open`, `init()` returns `Operation not permitted`, and the test panics.
 The test returns early when `GITHUB_ACTIONS` is set, because it fails with permission denied on GitHub's runners.
-The build file interpreter continues without the counter when `init()` fails (`app/buck2_interpreter_for_build/src/interpreter/interpreter_for_dir.rs`).
+The build file interpreter continues without the counter when `init()` fails (`app/yak_interpreter_for_build/src/interpreter/interpreter_for_dir.rs`).
 On Linux on 2026-09-28, the test failed this way in a container, which stopped `python3 test.py`.
 
 Remove this entry when the test skips or passes wherever `perf_event_open` is denied.
@@ -156,7 +156,7 @@ Remove this entry when split debug info uses flags that clang accepts and no too
 ### A daemon without a Remote Execution backend waits 45 seconds to fail
 
 If an execution platform enables remote execution and no backend answers, each daemon start waits about 45 seconds before the command fails.
-`ReConnectionManager::new` in `app/buck2_server/src/daemon/state.rs` allows 10 connection attempts, and `new_retry` in `app/buck2_execute/src/re/client.rs` sleeps 1, 2, and up to 9 seconds between them.
+`ReConnectionManager::new` in `app/yak_server/src/daemon/state.rs` allows 10 connection attempts, and `new_retry` in `app/yak_execute/src/re/client.rs` sleeps 1, 2, and up to 9 seconds between them.
 In the integration test suite, 23 tests outside the Go tests take 45 seconds or more for this reason.
 
 Remove this entry when a missing backend fails the command without the retry delay, or the delay is configurable.
@@ -170,7 +170,7 @@ Remove this entry when the client reports an initialization failure as soon as t
 
 ### `yak install` seemingly leaves the installer running after a failed build
 
-The installer starts in the `try_compute2` call in `app/buck2_server_commands/src/install.rs`, and nothing stops it when the build side fails, such as on a validation failure.
+The installer starts in the `try_compute2` call in `app/yak_server_commands/src/install.rs`, and nothing stops it when the build side fails, such as on a validation failure.
 
 Remove this entry when a failed build stops the installer.
 
@@ -203,7 +203,7 @@ Remove this entry when every label the Apple rules select on exists in the prelu
 ### A running daemon keeps the packages of a renamed directory
 
 With the default `notify` file watcher, a directory renamed under a running daemon keeps its packages at the old path until the daemon restarts.
-For a rename, `app/buck2_file_watcher/src/notify.rs` passes the renamed path to `file_added_or_removed` and `dir_added_or_removed` in `app/buck2_common/src/file_ops/dice.rs`.
+For a rename, `app/yak_file_watcher/src/notify.rs` passes the renamed path to `file_added_or_removed` and `dir_added_or_removed` in `app/yak_common/src/file_ops/dice.rs`.
 Those calls invalidate the path's metadata and its parent's listing, but not the directory's own listing or the build files under it, so a query against the old path reads the cached listing and build file.
 
 On macOS on 2026-09-27, a project had a `.buckconfig` that sets only `[cells] root = .` and a `pkg/BUCK` that defines one target `a` with a rule returning `DefaultInfo()`.

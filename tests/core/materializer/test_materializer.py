@@ -74,7 +74,7 @@ async def test_modify_dep_materialization(buck: Buck) -> None:
 @buck_test(
     data_dir="deferred_materializer_matching_artifact_optimization",
 )
-@env("YAK_LOG", "buck2_execute_impl::materializers=trace")
+@env("YAK_LOG", "yak_execute_impl::materializers=trace")
 async def test_matching_artifact_optimization(buck: Buck) -> None:
     target = "root//:copy"
     result = await buck.build(target)
@@ -136,7 +136,7 @@ async def test_cache_directory_cleanup(buck: Buck) -> None:
 @buck_test(
     data_dir="deferred_materializer_matching_artifact_optimization",
 )
-@env("YAK_LOG", "buck2_execute_impl::materializers=trace")
+@env("YAK_LOG", "yak_execute_impl::materializers=trace")
 async def test_sqlite_materializer_state_matching_artifact_optimization(
     buck: Buck,
 ) -> None:
@@ -170,7 +170,7 @@ async def test_sqlite_materializer_state_matching_artifact_optimization(
 @buck_test(
     data_dir="deferred_materializer_matching_artifact_optimization",
 )
-@env("YAK_LOG", "buck2_execute_impl::materializers=trace")
+@env("YAK_LOG", "yak_execute_impl::materializers=trace")
 async def test_download_file_sqlite_matching_artifact_optimization(
     buck: Buck,
 ) -> None:
@@ -194,7 +194,7 @@ async def test_download_file_sqlite_matching_artifact_optimization(
 @buck_test(
     data_dir="deferred_materializer_matching_artifact_optimization",
 )
-@env("YAK_LOG", "buck2_execute_impl::materializers=trace")
+@env("YAK_LOG", "yak_execute_impl::materializers=trace")
 async def test_sqlite_materializer_state_disabled(
     buck: Buck,
 ) -> None:
@@ -216,7 +216,7 @@ async def test_sqlite_materializer_state_disabled(
 @buck_test(
     data_dir="deferred_materializer_matching_artifact_optimization",
 )
-@env("YAK_LOG", "buck2_execute_impl::materializers=trace")
+@env("YAK_LOG", "yak_execute_impl::materializers=trace")
 async def test_sqlite_materializer_state_buckconfig_version_change(
     buck: Buck,
 ) -> None:

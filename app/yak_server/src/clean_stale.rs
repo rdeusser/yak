@@ -1,0 +1,95 @@
+/*
+ * Copyright (c) Meta Platforms, Inc. and affiliates.
+ *
+ * This source code is dual-licensed under either the MIT license found in the
+ * LICENSE-MIT file in the root directory of this source tree or the Apache
+ * License, Version 2.0 found in the LICENSE-APACHE file in the root directory
+ * of this source tree. You may select, at your option, one of the
+ * above-listed licenses.
+ */
+
+use async_trait::async_trait;
+use dice::DiceTransaction;
+use yak_error::BuckErrorContext;
+use yak_error::internal_error;
+use yak_execute::materialize::materializer::CleanStaleArtifactsArgs;
+use yak_server_ctx::ctx::ServerCommandContextTrait;
+use yak_server_ctx::partial_result_dispatcher::NoPartialResult;
+use yak_server_ctx::partial_result_dispatcher::PartialResultDispatcher;
+use yak_server_ctx::template::ServerCommandTemplate;
+use yak_server_ctx::template::run_server_command;
+
+use crate::ctx::ServerCommandContext;
+
+pub(crate) async fn clean_stale_command(
+    ctx: &ServerCommandContext<'_>,
+    partial_result_dispatcher: PartialResultDispatcher<NoPartialResult>,
+    req: yak_cli_proto::CleanStaleRequest,
+) -> yak_error::Result<yak_cli_proto::CleanStaleResponse> {
+    run_server_command(
+        CleanStaleServerCommand { req },
+        ctx,
+        partial_result_dispatcher,
+    )
+    .await
+}
+
+struct CleanStaleServerCommand {
+    req: yak_cli_proto::CleanStaleRequest,
+}
+
+#[async_trait]
+impl ServerCommandTemplate for CleanStaleServerCommand {
+    type StartEvent = yak_data::CleanCommandStart;
+    type EndEvent = Box<yak_data::CleanCommandEnd>;
+    type Response = yak_cli_proto::CleanStaleResponse;
+    type PartialResult = NoPartialResult;
+
+    async fn command(
+        &self,
+        server_ctx: &dyn ServerCommandContextTrait,
+        _partial_result_dispatcher: PartialResultDispatcher<Self::PartialResult>,
+        _ctx: DiceTransaction,
+    ) -> yak_error::Result<Self::Response> {
+        server_ctx
+            .cancellation_context()
+            .critical_section(|| async move {
+                let materializer = server_ctx.materializer();
+
+                let policy = if self.req.use_configured_policy {
+                    yak_execute::materialize::materializer::CleanStaleArtifactsPolicy::Configured
+                } else {
+                    let keep_since_time = jiff::Timestamp::from_second(self.req.keep_since_time)
+                        .map_err(|_| internal_error!("Invalid timestamp"))?;
+                    let adaptive_min_ttl = self
+                        .req
+                        .adaptive_min_ttl_seconds
+                        .map(|s| std::time::Duration::from_secs(s.max(0) as u64));
+                    yak_execute::materialize::materializer::CleanStaleArtifactsPolicy::Explicit {
+                        keep_since_time,
+                        adaptive_low_disk_threshold: self.req.adaptive_low_disk_threshold,
+                        adaptive_min_ttl,
+                        adaptive_unmaterialize_active: self.req.adaptive_unmaterialize_active,
+                    }
+                };
+                materializer
+                    .clean_stale_artifacts(CleanStaleArtifactsArgs {
+                        policy,
+                        dry_run: self.req.dry_run,
+                        tracked_only: self.req.tracked_only,
+                    })
+                    .await
+                    .buck_error_context("Failed to clean stale artifacts.")
+            })
+            .await
+    }
+
+    fn end_event(&self, response: &yak_error::Result<Self::Response>) -> Self::EndEvent {
+        let clean_stale_stats = if let Ok(res) = response {
+            res.stats
+        } else {
+            None
+        };
+        Box::new(yak_data::CleanCommandEnd { clean_stale_stats })
+    }
+}

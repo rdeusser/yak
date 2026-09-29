@@ -4,7 +4,7 @@ title: Logging
 ---
 
 yak produces detailed event logs for each invocation, which follow a schema
-outlined in `app/buck2_data/data.proto` in the yak parent directory. The event
+outlined in `app/yak_data/data.proto` in the yak parent directory. The event
 logs that yak produces automatically are always in protobuf zstd-compressed
 format (see [Viewing the event log](#viewing-the-event-log) for more details).
 

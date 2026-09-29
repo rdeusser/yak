@@ -997,7 +997,7 @@ async def _check_uploaded_dep_file_key(buck: Buck, dep_file_key: str) -> None:
 
 @pytest.mark.remote_execution
 @buck_test(data_dir="upload_dep_files")
-@env("YAK_LOG", "buck2_execute_impl::executors::caching=debug")
+@env("YAK_LOG", "yak_execute_impl::executors::caching=debug")
 @env("YAK_TEST_SKIP_ACTION_CACHE_WRITE", "true")
 async def test_re_dep_file_uploads_same_key(buck: Buck) -> None:
     # Test all the cases where the remote dep file key should stay the same
@@ -1035,7 +1035,7 @@ async def test_re_dep_file_uploads_same_key(buck: Buck) -> None:
 
 @pytest.mark.remote_execution
 @buck_test(data_dir="upload_dep_files")
-@env("YAK_LOG", "buck2_execute_impl::executors::caching=debug")
+@env("YAK_LOG", "yak_execute_impl::executors::caching=debug")
 @env("YAK_TEST_SKIP_ACTION_CACHE_WRITE", "true")
 async def test_re_dep_file_uploads_different_key(buck: Buck) -> None:
     # TODO: Mergebase is currently not set in this test.
@@ -1099,7 +1099,7 @@ async def test_re_dep_file_uploads_different_key(buck: Buck) -> None:
 
 @pytest.mark.remote_execution
 @buck_test(data_dir="upload_dep_files")
-@env("YAK_LOG", "buck2_execute_impl::executors::caching=debug")
+@env("YAK_LOG", "yak_execute_impl::executors::caching=debug")
 @env("YAK_TEST_SKIP_ACTION_CACHE_WRITE", "true")
 async def test_dep_file_does_not_upload_when_allow_cache_upload_is_true(
     buck: Buck,
@@ -1124,7 +1124,7 @@ async def test_dep_file_does_not_upload_when_allow_cache_upload_is_true(
 
 @pytest.mark.remote_execution
 @buck_test(data_dir="upload_dep_files")
-@env("YAK_LOG", "buck2_execute_impl::executors::caching=debug")
+@env("YAK_LOG", "yak_execute_impl::executors::caching=debug")
 @env("YAK_TEST_SKIP_ACTION_CACHE_WRITE", "true")
 @env("YAK_TEST_ONLY_REMOTE_DEP_FILE_CACHE", "true")
 async def test_only_do_cache_lookup_when_dep_file_upload_is_enabled(
@@ -1163,7 +1163,7 @@ async def test_only_do_cache_lookup_when_dep_file_upload_is_enabled(
 
 @pytest.mark.remote_execution
 @buck_test(data_dir="upload_dep_files")
-@env("YAK_LOG", "buck2_execute_impl::executors::caching=debug")
+@env("YAK_LOG", "yak_execute_impl::executors::caching=debug")
 @env("YAK_TEST_SKIP_ACTION_CACHE_WRITE", "true")
 async def test_re_dep_file_remote_upload(buck: Buck) -> None:
     target = [
@@ -1183,7 +1183,7 @@ async def test_re_dep_file_remote_upload(buck: Buck) -> None:
 
 @pytest.mark.remote_execution
 @buck_test(data_dir="upload_dep_files", write_invocation_record=True)
-@env("YAK_LOG", "buck2_action_impl=debug,buck2_execute_impl::executors::caching=debug")
+@env("YAK_LOG", "yak_action_impl=debug,yak_execute_impl::executors::caching=debug")
 @env("YAK_TEST_SKIP_ACTION_CACHE_WRITE", "true")
 async def test_re_dep_file_cache_hit_upload(buck: Buck) -> None:
     target = [
@@ -1265,7 +1265,7 @@ async def check_remote_dep_file_cache_query_took_place(buck: Buck) -> str:
 @buck_test(data_dir="upload_dep_files")
 @env(
     "YAK_LOG",
-    "buck2_execute_impl::executors::caching=debug,buck2_execute_impl::executors::action_cache=debug,buck2_action_impl=debug",
+    "yak_execute_impl::executors::caching=debug,yak_execute_impl::executors::action_cache=debug,yak_action_impl=debug",
 )
 # Disable the regular action cache query so that we actually hit the remote dep file cache query.
 @env("YAK_TEST_ONLY_REMOTE_DEP_FILE_CACHE", "true")
@@ -1361,7 +1361,7 @@ async def test_re_dep_file_query_change_tagged_unused_file(buck: Buck) -> None:
 @buck_test(data_dir="upload_dep_files")
 @env(
     "YAK_LOG",
-    "buck2_execute_impl::executors::caching=debug,buck2_execute_impl::executors::action_cache=debug,buck2_action_impl=debug",
+    "yak_execute_impl::executors::caching=debug,yak_execute_impl::executors::action_cache=debug,yak_action_impl=debug",
 )
 # Disable the regular action cache query so that we actually hit the remote dep file cache query.
 @env("YAK_TEST_ONLY_REMOTE_DEP_FILE_CACHE", "true")

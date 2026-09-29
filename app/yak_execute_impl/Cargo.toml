@@ -1,0 +1,66 @@
+[package]
+name = "yak_execute_impl"
+version.workspace = true
+edition.workspace = true
+repository.workspace = true
+license.workspace = true
+
+[dependencies]
+allocative.workspace = true
+async-condvar-fair.workspace = true
+async-trait.workspace = true
+crossbeam-channel.workspace = true
+derivative.workspace = true
+derive_more.workspace = true
+dice_futures.workspace = true
+dupe.workspace = true
+futures.workspace = true
+gazebo.workspace = true
+host_sharing.workspace = true
+itertools.workspace = true
+jiff.workspace = true
+parking_lot.workspace = true
+pin-project.workspace = true
+prost.workspace = true
+remote_execution.workspace = true
+rusqlite.workspace = true
+starlark_map.workspace = true
+tempfile.workspace = true
+tokio.workspace = true
+tokio-retry.workspace = true
+tokio-stream.workspace = true
+tonic.workspace = true
+tracing.workspace = true
+yak_action_metadata_proto.workspace = true
+yak_build_signals.workspace = true
+yak_cli_proto.workspace = true
+yak_common.workspace = true
+yak_core.workspace = true
+yak_data.workspace = true
+yak_directory.workspace = true
+yak_error.workspace = true
+yak_events.workspace = true
+yak_execute.workspace = true
+yak_execute_local.workspace = true
+yak_fs.workspace = true
+yak_hash.workspace = true
+yak_http.workspace = true
+yak_resource_control.workspace = true
+yak_util.workspace = true
+yak_worker_proto.workspace = true
+yak_wrapper_common.workspace = true
+zstd.workspace = true
+
+[dev-dependencies]
+assert_matches.workspace = true
+
+[target.'cfg(target_os = "linux")'.dependencies]
+yak_forkserver.workspace = true
+yak_forkserver_proto.workspace = true
+
+[target.'cfg(target_os = "macos")'.dependencies]
+yak_forkserver.workspace = true
+yak_forkserver_proto.workspace = true
+
+[lints]
+workspace = true

@@ -372,15 +372,15 @@ target's attributes with the configuration applied. The `uquery` command
 will not apply a configuration.
 
 Here is a heavily trimmed version of the outputs of invoking `uquery`
-and `cquery` on `//app/buck2_core:buck2_core`.
+and `cquery` on `//app/yak_core:yak_core`.
 
 ```sh
-> yak uquery -A '"//app/buck2_core:buck2_core"'
+> yak uquery -A '"//app/yak_core:yak_core"'
 {
-  "root//app/buck2_core:buck2_core": {
+  "root//app/yak_core:yak_core": {
     "buck.type": "rust_library",
-    "buck.package": "root//app/buck2_core:YAK",
-    "name": "buck2_core",
+    "buck.package": "root//app/yak_core:YAK",
+    "name": "yak_core",
     "visibility": [
       "PUBLIC"
     ],
@@ -414,14 +414,14 @@ and `cquery` on `//app/buck2_core:buck2_core`.
 ```
 
 ```sh
-> yak cquery -A '"//app/buck2_core:buck2_core"'
+> yak cquery -A '"//app/yak_core:yak_core"'
 {
-  "root//app/buck2_core:buck2_core (prelude//platforms:default#<OMITTED>)": {
+  "root//app/yak_core:yak_core (prelude//platforms:default#<OMITTED>)": {
     "buck.type": "rust_library",
-    "buck.package": "root//app/buck2_core:YAK",
+    "buck.package": "root//app/yak_core:YAK",
     "buck.target_configuration": "prelude//platforms:default#<OMITTED>",
     "buck.execution_platform": "prelude//platforms:default",
-    "name": "buck2_core",
+    "name": "yak_core",
     "visibility": [
       "PUBLIC"
     ],

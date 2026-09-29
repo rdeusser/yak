@@ -3,7 +3,7 @@
 From yak project root, run the following to build yak with cargo
 
 ```sh
-cargo install --path=app/buck2 --root=/tmp
+cargo install --path=app/yak --root=/tmp
 export YAK="/tmp/bin/yak"
 ```
 

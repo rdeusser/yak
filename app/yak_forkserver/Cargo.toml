@@ -1,0 +1,35 @@
+[package]
+name = "yak_forkserver"
+version.workspace = true
+edition.workspace = true
+repository.workspace = true
+license.workspace = true
+
+[dependencies]
+allocative.workspace = true
+arc-swap.workspace = true
+async-trait.workspace = true
+dupe.workspace = true
+futures.workspace = true
+libc.workspace = true
+rand.workspace = true
+tokio.workspace = true
+tokio-stream.workspace = true
+tonic.workspace = true
+yak_common.workspace = true
+yak_core.workspace = true
+yak_data.workspace = true
+yak_error.workspace = true
+yak_execute_local.workspace = true
+yak_forkserver_proto.workspace = true
+yak_fs.workspace = true
+yak_grpc.workspace = true
+yak_resource_control.workspace = true
+yak_util.workspace = true
+
+[target.'cfg(target_os = "linux")'.dependencies]
+nix.workspace = true
+yak_embedded_section.workspace = true
+
+[lints]
+workspace = true

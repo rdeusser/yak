@@ -1,0 +1,55 @@
+[package]
+name = "yak_action_impl"
+version.workspace = true
+edition.workspace = true
+repository.workspace = true
+license.workspace = true
+
+[dependencies]
+allocative.workspace = true
+async-trait.workspace = true
+blake3.workspace = true
+derive_more.workspace = true
+dice.workspace = true
+dice_futures.workspace = true
+dupe.workspace = true
+either.workspace = true
+futures.workspace = true
+gazebo.workspace = true
+hex.workspace = true
+host_sharing.workspace = true
+http.workspace = true
+itertools.workspace = true
+jiff.workspace = true
+pagable.workspace = true
+parking_lot.workspace = true
+remote_execution.workspace = true
+serde_json.workspace = true
+sha1.workspace = true
+smallvec.workspace = true
+sorted_vector_map.workspace = true
+starlark.workspace = true
+starlark_map.workspace = true
+strong_hash.workspace = true
+tracing.workspace = true
+yak_action_metadata_proto.workspace = true
+yak_analysis.workspace = true
+yak_artifact.workspace = true
+yak_build_api.workspace = true
+yak_build_signals.workspace = true
+yak_common.workspace = true
+yak_core.workspace = true
+yak_data.workspace = true
+yak_directory.workspace = true
+yak_error.workspace = true
+yak_events.workspace = true
+yak_execute.workspace = true
+yak_file_watcher.workspace = true
+yak_fs.workspace = true
+yak_hash.workspace = true
+yak_http.workspace = true
+yak_interpreter.workspace = true
+yak_util.workspace = true
+
+[lints]
+workspace = true

@@ -1,0 +1,40 @@
+[package]
+name = "yak_events"
+version.workspace = true
+edition.workspace = true
+repository.workspace = true
+license.workspace = true
+
+[dependencies]
+allocative.workspace = true
+console.workspace = true
+crossbeam-channel.workspace = true
+derive_more.workspace = true
+dupe.workspace = true
+futures.workspace = true
+gazebo.workspace = true
+hostname.workspace = true
+pin-project.workspace = true
+serde.workspace = true
+smallvec.workspace = true
+tokio.workspace = true
+uuid.workspace = true
+yak_build_info.workspace = true
+yak_cli_proto.workspace = true
+yak_core.workspace = true
+yak_data.workspace = true
+yak_error.workspace = true
+yak_hash.workspace = true
+yak_wrapper_common.workspace = true
+
+[target.'cfg(target_os = "linux")'.dependencies]
+sys-info.workspace = true
+
+[target.'cfg(target_os = "macos")'.dependencies]
+sys-info.workspace = true
+
+[target.'cfg(target_os = "windows")'.dependencies]
+winver.workspace = true
+
+[lints]
+workspace = true

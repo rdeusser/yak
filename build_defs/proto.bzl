@@ -22,7 +22,7 @@ def rust_protobuf_library(
     """Compiles protobuf definitions into a Rust library.
 
     `build_script` is the crate's Cargo build script, which calls
-    `buck2_protoc_dev`. It runs as the binary `<name>-build`, the genrule
+    `yak_protoc_dev`. It runs as the binary `<name>-build`, the genrule
     `<name>-proto` holds its output, and the library reads that output
     through `OUT_DIR`, as it would under Cargo.
 
@@ -44,7 +44,7 @@ def rust_protobuf_library(
         name = build_name,
         srcs = [build_script],
         crate_root = build_script,
-        deps = ["//app/buck2_protoc_dev:buck2_protoc_dev"],
+        deps = ["//app/yak_protoc_dev:yak_protoc_dev"],
     )
 
     env = dict(build_env)

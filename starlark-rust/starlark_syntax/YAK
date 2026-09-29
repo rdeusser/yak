@@ -22,7 +22,7 @@ rust_library(
         "//starlark-rust/...",
         # For faster incremental compilation of yak,
         # we pull `starlark::Error` from this crate rather than from `starlark`.
-        "//app/buck2_error/...",
+        "//app/yak_error/...",
     ],
     deps = [
         "//allocative/allocative:allocative",

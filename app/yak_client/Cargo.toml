@@ -1,0 +1,50 @@
+[package]
+name = "yak_client"
+version.workspace = true
+edition.workspace = true
+repository.workspace = true
+license.workspace = true
+
+[dependencies]
+async-recursion.workspace = true
+async-trait.workspace = true
+bytesize.workspace = true
+clap.workspace = true
+dupe.workspace = true
+futures.workspace = true
+gazebo.workspace = true
+humantime.workspace = true
+jiff.workspace = true
+libc.workspace = true
+lsp-server.workspace = true
+prost.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+shlex.workspace = true
+superconsole.workspace = true
+threadpool.workspace = true
+tokio.workspace = true
+tokio-stream.workspace = true
+tokio-util.workspace = true
+tracing.workspace = true
+uuid.workspace = true
+walkdir.workspace = true
+yak_cli_proto.workspace = true
+yak_client_ctx.workspace = true
+yak_common.workspace = true
+yak_core.workspace = true
+yak_data.workspace = true
+yak_error.workspace = true
+yak_fs.workspace = true
+yak_hash.workspace = true
+yak_query_parser.workspace = true
+yak_subscription_proto.workspace = true
+yak_util.workspace = true
+yak_wrapper_common.workspace = true
+
+[dev-dependencies]
+assert_matches.workspace = true
+tempfile.workspace = true
+
+[lints]
+workspace = true

@@ -1,0 +1,29 @@
+load("//build_defs:rust.bzl", "rust_library")
+
+rust_library(
+    name = "yak_file_watcher",
+    srcs = glob(["src/**/*.rs"]),
+    deps = [
+        "//allocative/allocative:allocative",
+        "//app/yak_common:yak_common",
+        "//app/yak_core:yak_core",
+        "//app/yak_data:yak_data",
+        "//app/yak_error:yak_error",
+        "//app/yak_events:yak_events",
+        "//app/yak_fs:yak_fs",
+        "//app/yak_hash:yak_hash",
+        "//app/yak_util:yak_util",
+        "//dice/dice:dice",
+        "//gazebo/dupe:dupe",
+        "//starlark-rust/starlark_map:starlark_map",
+        "//third-party/rust:async-trait",
+        "//third-party/rust:blake3",
+        "//third-party/rust:compact_str",
+        "//third-party/rust:futures",
+        "//third-party/rust:notify",
+        "//third-party/rust:serde",
+        "//third-party/rust:tokio",
+        "//third-party/rust:tracing",
+        "//third-party/rust:watchman_client",
+    ],
+)

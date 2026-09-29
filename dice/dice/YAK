@@ -9,7 +9,7 @@ rust_library(
     features = ["pagable"],
     deps = [
         "//allocative/allocative:allocative",
-        "//app/buck2_hash:buck2_hash",
+        "//app/yak_hash:yak_hash",
         "//dice/dice_core:dice_core",
         "//dice/dice_error:dice_error",
         "//dice/dice_futures:dice_futures",

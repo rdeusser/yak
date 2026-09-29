@@ -1,0 +1,20 @@
+[package]
+name = "yak_error_tests"
+version.workspace = true
+edition.workspace = true
+repository.workspace = true
+license.workspace = true
+autolib = false
+
+[[test]]
+name = "yak_error_tests"
+path = "src/lib.rs"
+
+[dev-dependencies]
+anyhow.workspace = true
+starlark.workspace = true
+yak_error.workspace = true
+yak_util.workspace = true
+
+[lints]
+workspace = true

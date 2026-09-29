@@ -1,0 +1,35 @@
+[package]
+name = "yak_concurrency"
+version.workspace = true
+edition.workspace = true
+repository.workspace = true
+license.workspace = true
+
+[dependencies]
+allocative.workspace = true
+async-condvar-fair.workspace = true
+async-trait.workspace = true
+derive_more.workspace = true
+dice.workspace = true
+dice_futures.workspace = true
+dupe.workspace = true
+futures.workspace = true
+itertools.workspace = true
+parking_lot.workspace = true
+starlark_map.workspace = true
+tokio.workspace = true
+tracing.workspace = true
+yak_cli_proto.workspace = true
+yak_core.workspace = true
+yak_data.workspace = true
+yak_error.workspace = true
+yak_util.workspace = true
+yak_wrapper_common.workspace = true
+
+[dev-dependencies]
+assert_matches.workspace = true
+derivative.workspace = true
+pagable.workspace = true
+
+[lints]
+workspace = true

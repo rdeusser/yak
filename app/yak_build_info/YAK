@@ -1,0 +1,9 @@
+load("//build_defs:rust.bzl", "rust_library")
+
+rust_library(
+    name = "yak_build_info",
+    srcs = glob(["src/**/*.rs"]),
+    deps = [
+        "//app/yak_util:yak_util",
+    ],
+)

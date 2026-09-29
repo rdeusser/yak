@@ -1,0 +1,22 @@
+[package]
+name = "yak_offline_archive"
+version.workspace = true
+edition.workspace = true
+repository.workspace = true
+license.workspace = true
+
+[dependencies]
+serde.workspace = true
+yak_core.workspace = true
+yak_error.workspace = true
+yak_fs.workspace = true
+yak_util.workspace = true
+
+[target.'cfg(target_os = "linux")'.dev-dependencies]
+tempfile.workspace = true
+
+[target.'cfg(target_os = "macos")'.dev-dependencies]
+tempfile.workspace = true
+
+[lints]
+workspace = true

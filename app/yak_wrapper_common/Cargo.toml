@@ -1,0 +1,35 @@
+[package]
+name = "yak_wrapper_common"
+version.workspace = true
+edition.workspace = true
+repository.workspace = true
+license.workspace = true
+
+[dependencies]
+allocative.workspace = true
+derive_more.workspace = true
+dirs.workspace = true
+dupe.workspace = true
+futures.workspace = true
+serde.workspace = true
+sysinfo.workspace = true
+tokio.workspace = true
+uuid.workspace = true
+yak_error.workspace = true
+yak_hash.workspace = true
+
+[dev-dependencies]
+serde_json.workspace = true
+tempfile.workspace = true
+
+[target.'cfg(target_os = "linux")'.dependencies]
+nix.workspace = true
+
+[target.'cfg(target_os = "macos")'.dependencies]
+nix.workspace = true
+
+[target.'cfg(target_os = "windows")'.dependencies]
+windows-sys.workspace = true
+
+[lints]
+workspace = true

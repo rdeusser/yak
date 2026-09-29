@@ -12,7 +12,7 @@ and any other exit code means it failed.
 
 Setting `[test] v2_test_executor` to the path of an executable makes yak use
 that executable as the test runner. The built-in runner in
-[`app/buck2_test_runner`](https://github.com/rdeusser/buck2/tree/main/app/buck2_test_runner)
+[`app/yak_test_runner`](https://github.com/rdeusser/buck2/tree/main/app/yak_test_runner)
 is a sample to start from. A more capable test runner can take on these
 responsibilities:
 

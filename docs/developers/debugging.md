@@ -53,11 +53,11 @@ yak kill
 YAK_LOG=module_name=trace yak <command>
 # Examples
 YAK_LOG=starlark=trace yak uquery cell//path/to:target
-YAK_LOG=buck2_execute_impl::materializers=trace yak build cell//path/to:target
+YAK_LOG=yak_execute_impl::materializers=trace yak build cell//path/to:target
 ```
 
 The client prints its own tracing output to the terminal, and the daemon writes its output to `yakd.stderr`. With `--no-yakd`, the daemon runs inside the client process and its output also goes to the terminal.
 
 ## Tests
 
-`yak test` runs tests through the built-in test executor (`yak internal-test-runner`) unless `[test] v2_test_executor` names another executable. `buck2_test` logs each line the executor prints to stdout or stderr at `debug` level, so `YAK_LOG=buck2_test=debug` shows them while you print-debug a test executor.
+`yak test` runs tests through the built-in test executor (`yak internal-test-runner`) unless `[test] v2_test_executor` names another executable. `yak_test` logs each line the executor prints to stdout or stderr at `debug` level, so `YAK_LOG=yak_test=debug` shows them while you print-debug a test executor.

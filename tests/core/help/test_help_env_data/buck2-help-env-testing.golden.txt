@@ -22,7 +22,7 @@ YAK_DISABLE_MACOS_QOS                        bool                   false
 YAK_HARD_ERROR                               String
 YAK_INSTALLER_SEND_TIMEOUT_S                 u64
 YAK_INSTALLER_TIMEOUT_S                      u64
-YAK_IO_SEMAPHORE                             usize                  buck2_util::threads::available_parallelism()
+YAK_IO_SEMAPHORE                             usize                  yak_util::threads::available_parallelism()
 YAK_IO_THREADS                               usize                  directory_mutation_parallelism()
 YAK_KEEP_DEP_FILE_DIRECTORIES                bool                   false
 YAK_LIB_BACKTRACE                            String

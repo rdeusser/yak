@@ -1,0 +1,12 @@
+load("//build_defs:rust.bzl", "rust_library")
+
+# Computes the distribution of action concurrency over a build for the
+# client's InvocationRecorder.
+rust_library(
+    name = "yak_action_parallelism",
+    srcs = glob(["src/**/*.rs"]),
+    deps = [
+        "//app/yak_data:yak_data",
+        "//app/yak_event_observer:yak_event_observer",
+    ],
+)

@@ -1,0 +1,13 @@
+[package]
+name = "yak_sketches"
+version.workspace = true
+edition.workspace = true
+repository.workspace = true
+license.workspace = true
+
+[dependencies]
+base64.workspace = true
+setsketch.workspace = true
+
+[lints]
+workspace = true

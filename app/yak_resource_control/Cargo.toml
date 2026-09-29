@@ -1,0 +1,33 @@
+[package]
+name = "yak_resource_control"
+version.workspace = true
+edition.workspace = true
+repository.workspace = true
+license.workspace = true
+
+[dependencies]
+allocative.workspace = true
+derive_more.workspace = true
+dupe.workspace = true
+futures.workspace = true
+ref-cast.workspace = true
+tokio.workspace = true
+tokio-util.workspace = true
+yak_common.workspace = true
+yak_core.workspace = true
+yak_data.workspace = true
+yak_error.workspace = true
+yak_events.workspace = true
+yak_fs.workspace = true
+yak_hash.workspace = true
+yak_util.workspace = true
+yak_wrapper_common.workspace = true
+
+[target.'cfg(target_os = "linux")'.dependencies]
+nix.workspace = true
+
+[target.'cfg(target_os = "macos")'.dependencies]
+nix.workspace = true
+
+[lints]
+workspace = true

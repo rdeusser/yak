@@ -1,0 +1,24 @@
+[package]
+name = "yak_cmd_starlark_client"
+version.workspace = true
+edition.workspace = true
+repository.workspace = true
+license.workspace = true
+
+[dependencies]
+async-trait.workspace = true
+clap.workspace = true
+debugserver-types.workspace = true
+futures.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+yak_cli_proto.workspace = true
+yak_client_ctx.workspace = true
+yak_common.workspace = true
+yak_data.workspace = true
+yak_error.workspace = true
+yak_event_observer.workspace = true
+yak_events.workspace = true
+
+[lints]
+workspace = true

@@ -628,2543 +628,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "buck2"
-version = "0.1.0"
-dependencies = [
- "buck2_action_impl",
- "buck2_analysis",
- "buck2_anon_target",
- "buck2_build_api",
- "buck2_build_info",
- "buck2_build_signals_impl",
- "buck2_bxl",
- "buck2_certs",
- "buck2_cfg_constructor",
- "buck2_client",
- "buck2_client_ctx",
- "buck2_cmd_audit_client",
- "buck2_cmd_audit_server",
- "buck2_cmd_completion_client",
- "buck2_cmd_debug_client",
- "buck2_cmd_docs_client",
- "buck2_cmd_docs_server",
- "buck2_cmd_log_client",
- "buck2_cmd_query_server",
- "buck2_cmd_starlark_client",
- "buck2_cmd_starlark_server",
- "buck2_cmd_targets_server",
- "buck2_common",
- "buck2_configured",
- "buck2_core",
- "buck2_daemon",
- "buck2_data",
- "buck2_error",
- "buck2_event_observer",
- "buck2_events",
- "buck2_external_cells",
- "buck2_forkserver",
- "buck2_fs",
- "buck2_interpreter_for_build",
- "buck2_query_impls",
- "buck2_server",
- "buck2_server_commands",
- "buck2_test",
- "buck2_test_runner",
- "buck2_transition",
- "buck2_util",
- "buck2_validation",
- "buck2_wrapper_common",
- "clap",
- "dirs",
- "dupe",
- "libc",
- "mimalloc",
- "nix 0.31.3",
- "superconsole",
- "tikv-jemallocator",
- "tokio",
- "tracing",
- "windows-sys 0.61.2",
-]
-
-[[package]]
-name = "buck2_action_impl"
-version = "0.1.0"
-dependencies = [
- "allocative",
- "async-trait",
- "blake3",
- "buck2_action_metadata_proto",
- "buck2_analysis",
- "buck2_artifact",
- "buck2_build_api",
- "buck2_build_signals",
- "buck2_common",
- "buck2_core",
- "buck2_data",
- "buck2_directory",
- "buck2_error",
- "buck2_events",
- "buck2_execute",
- "buck2_file_watcher",
- "buck2_fs",
- "buck2_hash",
- "buck2_http",
- "buck2_interpreter",
- "buck2_util",
- "derive_more 2.1.1",
- "dice",
- "dice_futures",
- "dupe",
- "either",
- "futures 0.3.34",
- "gazebo",
- "hex",
- "host_sharing",
- "http",
- "itertools 0.15.0",
- "jiff",
- "pagable",
- "parking_lot 0.12.5",
- "remote_execution",
- "serde_json",
- "sha1",
- "smallvec",
- "sorted_vector_map",
- "starlark",
- "starlark_map",
- "strong_hash",
- "tracing",
-]
-
-[[package]]
-name = "buck2_action_impl_tests"
-version = "0.1.0"
-dependencies = [
- "buck2_action_impl",
- "buck2_anon_target",
- "buck2_build_api",
- "buck2_core",
- "buck2_error",
- "buck2_execute",
- "buck2_interpreter",
- "buck2_interpreter_for_build",
- "ctor",
- "dupe",
- "indoc",
- "maplit",
- "starlark",
-]
-
-[[package]]
-name = "buck2_action_metadata_proto"
-version = "0.1.0"
-dependencies = [
- "buck2_protoc_dev",
- "prost",
- "tonic",
- "tonic-prost",
-]
-
-[[package]]
-name = "buck2_action_parallelism"
-version = "0.1.0"
-dependencies = [
- "buck2_data",
- "buck2_event_observer",
- "prost-types",
-]
-
-[[package]]
-name = "buck2_analysis"
-version = "0.1.0"
-dependencies = [
- "allocative",
- "async-trait",
- "buck2_artifact",
- "buck2_build_api",
- "buck2_build_signals",
- "buck2_core",
- "buck2_data",
- "buck2_error",
- "buck2_events",
- "buck2_execute",
- "buck2_hash",
- "buck2_interpreter",
- "buck2_node",
- "buck2_query",
- "buck2_util",
- "derive_more 2.1.1",
- "dice",
- "dupe",
- "either",
- "futures 0.3.34",
- "gazebo",
- "pagable",
- "smallvec",
- "starlark",
- "starlark_map",
-]
-
-[[package]]
-name = "buck2_anon_target"
-version = "0.1.0"
-dependencies = [
- "allocative",
- "async-trait",
- "buck2_analysis",
- "buck2_artifact",
- "buck2_build_api",
- "buck2_build_signals",
- "buck2_configured",
- "buck2_core",
- "buck2_data",
- "buck2_error",
- "buck2_events",
- "buck2_execute",
- "buck2_fs",
- "buck2_hash",
- "buck2_interpreter",
- "buck2_interpreter_for_build",
- "buck2_node",
- "buck2_util",
- "cmp_any",
- "compact_str",
- "derive_more 2.1.1",
- "dice",
- "dice_futures",
- "dupe",
- "either",
- "futures 0.3.34",
- "gazebo",
- "pagable",
- "serde",
- "serde_json",
- "starlark",
- "starlark_map",
- "strong_hash",
-]
-
-[[package]]
-name = "buck2_artifact"
-version = "0.1.0"
-dependencies = [
- "allocative",
- "assert_matches",
- "buck2_common",
- "buck2_core",
- "buck2_data",
- "buck2_error",
- "buck2_execute",
- "buck2_fs",
- "buck2_util",
- "derivative",
- "derive_more 2.1.1",
- "dupe",
- "either",
- "gazebo",
- "pagable",
- "serde",
- "serde_json",
- "starlark",
- "starlark_map",
- "strong_hash",
- "take_mut",
-]
-
-[[package]]
-name = "buck2_build_api"
-version = "0.1.0"
-dependencies = [
- "allocative",
- "async-recursion",
- "async-trait",
- "blake3",
- "buck2_artifact",
- "buck2_build_api_derive",
- "buck2_build_signals",
- "buck2_cli_proto",
- "buck2_common",
- "buck2_core",
- "buck2_data",
- "buck2_directory",
- "buck2_error",
- "buck2_errorformat",
- "buck2_event_observer",
- "buck2_events",
- "buck2_execute",
- "buck2_file_watcher",
- "buck2_fs",
- "buck2_hash",
- "buck2_http",
- "buck2_interpreter",
- "buck2_node",
- "buck2_query",
- "buck2_sketches",
- "buck2_test_api",
- "buck2_util",
- "buck2_wrapper_common",
- "console",
- "derivative",
- "derive_more 2.1.1",
- "dice",
- "dice_futures",
- "display_container",
- "dupe",
- "either",
- "futures 0.3.34",
- "gazebo",
- "indexmap",
- "internment",
- "inventory",
- "itertools 0.15.0",
- "linkme",
- "mini_vec",
- "multimap",
- "pagable",
- "ref-cast",
- "regex",
- "remote_execution",
- "serde",
- "serde_json",
- "setsketch",
- "smallvec",
- "sorted_vector_map",
- "starlark",
- "starlark_map",
- "strong_hash",
- "tokio",
- "tracing",
-]
-
-[[package]]
-name = "buck2_build_api_derive"
-version = "0.1.0"
-dependencies = [
- "convert_case 0.12.0",
- "gazebo",
- "proc-macro2",
- "quote",
- "syn 3.0.6",
-]
-
-[[package]]
-name = "buck2_build_api_tests"
-version = "0.1.0"
-dependencies = [
- "allocative",
- "assert_matches",
- "async-trait",
- "buck2_action_impl",
- "buck2_analysis",
- "buck2_anon_target",
- "buck2_artifact",
- "buck2_build_api",
- "buck2_build_signals",
- "buck2_certs",
- "buck2_common",
- "buck2_configured",
- "buck2_core",
- "buck2_data",
- "buck2_directory",
- "buck2_error",
- "buck2_events",
- "buck2_execute",
- "buck2_execute_impl",
- "buck2_file_watcher",
- "buck2_fs",
- "buck2_hash",
- "buck2_http",
- "buck2_interpreter",
- "buck2_interpreter_for_build",
- "buck2_node",
- "buck2_test_api",
- "buck2_transition",
- "buck2_util",
- "ctor",
- "derivative",
- "dice",
- "dupe",
- "gazebo",
- "indoc",
- "itertools 0.15.0",
- "maplit",
- "pagable",
- "serde_json",
- "sorted_vector_map",
- "starlark",
- "starlark_map",
- "tokio",
-]
-
-[[package]]
-name = "buck2_build_info"
-version = "0.1.0"
-dependencies = [
- "buck2_util",
-]
-
-[[package]]
-name = "buck2_build_signals"
-version = "0.1.0"
-dependencies = [
- "allocative",
- "async-trait",
- "buck2_data",
- "buck2_error",
- "buck2_events",
- "buck2_fs",
- "buck2_hash",
- "buck2_util",
- "cmp_any",
- "derive_more 2.1.1",
- "dice",
- "dupe",
- "gazebo",
- "tokio",
-]
-
-[[package]]
-name = "buck2_build_signals_impl"
-version = "0.1.0"
-dependencies = [
- "async-trait",
- "buck2_analysis",
- "buck2_artifact",
- "buck2_build_api",
- "buck2_build_signals",
- "buck2_common",
- "buck2_core",
- "buck2_critical_path",
- "buck2_data",
- "buck2_error",
- "buck2_events",
- "buck2_hash",
- "buck2_interpreter_for_build",
- "buck2_node",
- "buck2_util",
- "dice",
- "dupe",
- "gazebo",
- "itertools 0.15.0",
- "prost-types",
- "ref-cast",
- "serde",
- "serde_json",
- "smallvec",
- "starlark_map",
- "tokio",
- "tokio-stream",
- "tracing",
-]
-
-[[package]]
-name = "buck2_bxl"
-version = "0.1.0"
-dependencies = [
- "allocative",
- "anyhow",
- "async-recursion",
- "async-trait",
- "buck2_action_impl",
- "buck2_analysis",
- "buck2_anon_target",
- "buck2_artifact",
- "buck2_build_api",
- "buck2_cli_proto",
- "buck2_common",
- "buck2_core",
- "buck2_data",
- "buck2_error",
- "buck2_events",
- "buck2_execute",
- "buck2_fs",
- "buck2_hash",
- "buck2_interpreter",
- "buck2_interpreter_for_build",
- "buck2_node",
- "buck2_profile",
- "buck2_query",
- "buck2_query_parser",
- "buck2_server_ctx",
- "buck2_transition",
- "buck2_util",
- "clap",
- "cmp_any",
- "ctor",
- "derivative",
- "derive_more 2.1.1",
- "dice",
- "dice_futures",
- "display_container",
- "dupe",
- "either",
- "futures 0.3.34",
- "gazebo",
- "itertools 0.15.0",
- "maplit",
- "num-bigint",
- "pagable",
- "serde",
- "serde_json",
- "starlark",
- "starlark_map",
- "strong_hash",
- "tokio",
-]
-
-[[package]]
-name = "buck2_certs"
-version = "0.1.0"
-dependencies = [
- "buck2_error",
- "rustls",
- "rustls-native-certs",
- "rustls-pki-types",
- "tokio",
- "tracing",
-]
-
-[[package]]
-name = "buck2_cfg_constructor"
-version = "0.1.0"
-dependencies = [
- "allocative",
- "async-trait",
- "buck2_build_api",
- "buck2_common",
- "buck2_core",
- "buck2_error",
- "buck2_events",
- "buck2_interpreter",
- "buck2_interpreter_for_build",
- "buck2_node",
- "derive_more 2.1.1",
- "dice",
- "dice_futures",
- "dupe",
- "pagable",
- "starlark",
-]
-
-[[package]]
-name = "buck2_cli_proto"
-version = "0.1.0"
-dependencies = [
- "allocative",
- "buck2_core",
- "buck2_data",
- "buck2_error",
- "buck2_fs",
- "buck2_proto_serde",
- "buck2_protoc_dev",
- "buck2_subscription_proto",
- "bytes",
- "futures 0.3.34",
- "prost",
- "prost-types",
- "serde",
- "tokio",
- "tokio-util 0.7.19",
- "tonic",
- "tonic-prost",
-]
-
-[[package]]
-name = "buck2_client"
-version = "0.1.0"
-dependencies = [
- "assert_matches",
- "async-recursion",
- "async-trait",
- "buck2_cli_proto",
- "buck2_client_ctx",
- "buck2_common",
- "buck2_core",
- "buck2_data",
- "buck2_error",
- "buck2_fs",
- "buck2_hash",
- "buck2_query_parser",
- "buck2_subscription_proto",
- "buck2_util",
- "buck2_wrapper_common",
- "bytesize",
- "clap",
- "dupe",
- "futures 0.3.34",
- "gazebo",
- "humantime",
- "jiff",
- "libc",
- "lsp-server",
- "prost",
- "serde",
- "serde_json",
- "shlex",
- "superconsole",
- "tempfile",
- "threadpool",
- "tokio",
- "tokio-stream",
- "tokio-util 0.7.19",
- "tracing",
- "uuid",
- "walkdir",
-]
-
-[[package]]
-name = "buck2_client_ctx"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "assert_matches",
- "async-trait",
- "blake3",
- "buck2_action_parallelism",
- "buck2_build_info",
- "buck2_cli_proto",
- "buck2_common",
- "buck2_core",
- "buck2_data",
- "buck2_error",
- "buck2_event_log",
- "buck2_event_observer",
- "buck2_events",
- "buck2_fs",
- "buck2_hash",
- "buck2_resource_control",
- "buck2_util",
- "buck2_wrapper_common",
- "bytes",
- "clap",
- "console",
- "crossterm",
- "csv",
- "derivative",
- "derive_more 2.1.1",
- "dupe",
- "futures 0.3.34",
- "games",
- "gazebo",
- "hex",
- "httparse",
- "humantime",
- "indoc",
- "itertools 0.15.0",
- "jiff",
- "libc",
- "lsp-server",
- "memmap2",
- "object 0.40.0",
- "pretty_assertions",
- "prost",
- "prost-types",
- "rand 0.10.3",
- "regex",
- "serde",
- "serde_json",
- "shlex",
- "strum",
- "superconsole",
- "sysinfo",
- "take_mut",
- "tempfile",
- "termios",
- "termwiz",
- "tokio",
- "tokio-stream",
- "tokio-util 0.7.19",
- "toml",
- "tonic",
- "tracing",
- "windows-sys 0.61.2",
-]
-
-[[package]]
-name = "buck2_cmd_audit_client"
-version = "0.1.0"
-dependencies = [
- "async-trait",
- "buck2_cli_proto",
- "buck2_client_ctx",
- "clap",
- "dupe",
- "serde",
- "serde_json",
-]
-
-[[package]]
-name = "buck2_cmd_audit_server"
-version = "0.1.0"
-dependencies = [
- "async-trait",
- "buck2_analysis",
- "buck2_build_api",
- "buck2_cli_proto",
- "buck2_client_ctx",
- "buck2_cmd_audit_client",
- "buck2_common",
- "buck2_core",
- "buck2_data",
- "buck2_error",
- "buck2_events",
- "buck2_execute",
- "buck2_fs",
- "buck2_hash",
- "buck2_interpreter",
- "buck2_node",
- "buck2_query",
- "buck2_server_ctx",
- "buck2_util",
- "derive_more 2.1.1",
- "dice",
- "dupe",
- "futures 0.3.34",
- "gazebo",
- "indent_write",
- "itertools 0.15.0",
- "ref-cast",
- "regex",
- "serde",
- "serde_json",
- "starlark_map",
-]
-
-[[package]]
-name = "buck2_cmd_completion_client"
-version = "0.1.0"
-dependencies = [
- "async-trait",
- "buck2_cli_proto",
- "buck2_client_ctx",
- "buck2_common",
- "buck2_core",
- "buck2_error",
- "buck2_fs",
- "buck2_hash",
- "clap",
- "clap_complete",
- "futures 0.3.34",
- "paste",
- "tokio",
-]
-
-[[package]]
-name = "buck2_cmd_debug_client"
-version = "0.1.0"
-dependencies = [
- "allocative",
- "async-trait",
- "buck2_cli_proto",
- "buck2_client_ctx",
- "buck2_common",
- "buck2_core",
- "buck2_error",
- "buck2_event_log",
- "buck2_fs",
- "buck2_log_common",
- "buck2_offline_archive",
- "clap",
- "gazebo",
- "humantime",
- "prost",
- "serde_json",
- "tokio-stream",
- "tracing",
-]
-
-[[package]]
-name = "buck2_cmd_docs_client"
-version = "0.1.0"
-dependencies = [
- "async-trait",
- "buck2_cli_proto",
- "buck2_client_ctx",
- "buck2_error",
- "buck2_query",
- "clap",
- "dupe",
- "regex",
- "termimad",
-]
-
-[[package]]
-name = "buck2_cmd_docs_server"
-version = "0.1.0"
-dependencies = [
- "async-trait",
- "buck2_cli_proto",
- "buck2_common",
- "buck2_core",
- "buck2_data",
- "buck2_error",
- "buck2_fs",
- "buck2_hash",
- "buck2_interpreter",
- "buck2_interpreter_for_build",
- "buck2_server_ctx",
- "dice",
- "dupe",
- "serde",
- "serde_json",
- "starlark",
-]
-
-[[package]]
-name = "buck2_cmd_log_client"
-version = "0.1.0"
-dependencies = [
- "async-trait",
- "buck2_cli_proto",
- "buck2_client_ctx",
- "buck2_common",
- "buck2_data",
- "buck2_error",
- "buck2_event_log",
- "buck2_event_observer",
- "buck2_events",
- "buck2_fs",
- "buck2_hash",
- "buck2_log_common",
- "buck2_subscription_proto",
- "buck2_util",
- "buck2_wrapper_common",
- "clap",
- "csv",
- "dupe",
- "futures 0.3.34",
- "gazebo",
- "linked-hash-map",
- "prost",
- "prost-types",
- "regex",
- "serde",
- "serde_json",
- "similar",
- "superconsole",
- "tempfile",
- "tokio",
- "tokio-stream",
- "zstd",
-]
-
-[[package]]
-name = "buck2_cmd_query_server"
-version = "0.1.0"
-dependencies = [
- "async-trait",
- "buck2_build_api",
- "buck2_cli_proto",
- "buck2_common",
- "buck2_core",
- "buck2_data",
- "buck2_error",
- "buck2_events",
- "buck2_fs",
- "buck2_hash",
- "buck2_interpreter",
- "buck2_node",
- "buck2_profile",
- "buck2_query",
- "buck2_server_ctx",
- "buck2_util",
- "dice",
- "dupe",
- "futures 0.3.34",
- "gazebo",
- "indent_write",
- "regex",
- "serde",
- "serde_json",
- "starlark_map",
-]
-
-[[package]]
-name = "buck2_cmd_starlark_client"
-version = "0.1.0"
-dependencies = [
- "async-trait",
- "buck2_cli_proto",
- "buck2_client_ctx",
- "buck2_common",
- "buck2_data",
- "buck2_error",
- "buck2_event_observer",
- "buck2_events",
- "clap",
- "debugserver-types",
- "futures 0.3.34",
- "serde",
- "serde_json",
-]
-
-[[package]]
-name = "buck2_cmd_starlark_server"
-version = "0.1.0"
-dependencies = [
- "async-recursion",
- "async-trait",
- "buck2_cli_proto",
- "buck2_client_ctx",
- "buck2_cmd_starlark_client",
- "buck2_common",
- "buck2_core",
- "buck2_data",
- "buck2_error",
- "buck2_events",
- "buck2_fs",
- "buck2_hash",
- "buck2_interpreter",
- "buck2_interpreter_for_build",
- "buck2_server_ctx",
- "dice",
- "dupe",
- "serde_json",
- "starlark",
-]
-
-[[package]]
-name = "buck2_cmd_targets_server"
-version = "0.1.0"
-dependencies = [
- "async-recursion",
- "async-trait",
- "blake3",
- "buck2_artifact",
- "buck2_build_api",
- "buck2_cli_proto",
- "buck2_common",
- "buck2_core",
- "buck2_data",
- "buck2_error",
- "buck2_execute",
- "buck2_fs",
- "buck2_hash",
- "buck2_interpreter",
- "buck2_node",
- "buck2_query",
- "buck2_server_ctx",
- "buck2_util",
- "derive_more 2.1.1",
- "dice",
- "dice_futures",
- "dupe",
- "flate2",
- "futures 0.3.34",
- "gazebo",
- "itertools 0.15.0",
- "os_str_bytes",
- "regex",
- "serde_json",
- "siphasher",
- "starlark_map",
- "tokio",
- "zstd",
-]
-
-[[package]]
-name = "buck2_common"
-version = "0.1.0"
-dependencies = [
- "allocative",
- "assert_matches",
- "async-scoped",
- "async-trait",
- "blake3",
- "buck2_cli_proto",
- "buck2_core",
- "buck2_data",
- "buck2_error",
- "buck2_events",
- "buck2_fs",
- "buck2_grpc",
- "buck2_hash",
- "buck2_http",
- "buck2_util",
- "buck2_wrapper_common",
- "bytes",
- "cmp_any",
- "compact_str",
- "derivative",
- "derive_more 2.1.1",
- "dice",
- "dice_futures",
- "digest 0.10.7",
- "dirs",
- "dupe",
- "futures 0.3.34",
- "gazebo",
- "globset",
- "hex",
- "hyper-util",
- "indoc",
- "itertools 0.15.0",
- "jiff",
- "nix 0.31.3",
- "num_enum",
- "pagable",
- "parking_lot 0.12.5",
- "prost-types",
- "rand 0.10.3",
- "ref-cast",
- "regex",
- "rusqlite",
- "serde",
- "serde_json",
- "sha1",
- "sha2",
- "smallvec",
- "starlark_map",
- "static_interner",
- "strong_hash",
- "strsim",
- "tempfile",
- "test-case",
- "tokio",
- "toml",
- "tonic",
- "tower",
- "tracing",
- "triomphe",
- "xattr",
-]
-
-[[package]]
-name = "buck2_concurrency"
-version = "0.1.0"
-dependencies = [
- "allocative",
- "assert_matches",
- "async-condvar-fair",
- "async-trait",
- "buck2_cli_proto",
- "buck2_core",
- "buck2_data",
- "buck2_error",
- "buck2_util",
- "buck2_wrapper_common",
- "derivative",
- "derive_more 2.1.1",
- "dice",
- "dice_futures",
- "dupe",
- "futures 0.3.34",
- "itertools 0.15.0",
- "pagable",
- "parking_lot 0.12.5",
- "starlark_map",
- "tokio",
- "tracing",
-]
-
-[[package]]
-name = "buck2_configured"
-version = "0.1.0"
-dependencies = [
- "allocative",
- "async-trait",
- "buck2_build_api",
- "buck2_build_signals",
- "buck2_common",
- "buck2_core",
- "buck2_error",
- "buck2_node",
- "buck2_util",
- "derive_more 2.1.1",
- "dice",
- "dice_futures",
- "dupe",
- "futures 0.3.34",
- "gazebo",
- "itertools 0.15.0",
- "pagable",
- "ref-cast",
- "starlark_map",
- "tokio",
-]
-
-[[package]]
-name = "buck2_core"
-version = "0.1.0"
-dependencies = [
- "allocative",
- "assert_matches",
- "blake3",
- "buck2_data",
- "buck2_env",
- "buck2_error",
- "buck2_fs",
- "buck2_hash",
- "buck2_util",
- "cmp_any",
- "common-path",
- "compact_str",
- "ctor",
- "derivative",
- "derive_more 2.1.1",
- "dupe",
- "equivalent",
- "futures 0.3.34",
- "gazebo",
- "hex",
- "hostname",
- "itertools 0.15.0",
- "lock_free_hashtable",
- "memchr",
- "os_str_bytes",
- "pagable",
- "pin-project",
- "rand 0.10.3",
- "ref-cast",
- "regex",
- "sequence_trie",
- "serde",
- "serde_json",
- "smallvec",
- "starlark_map",
- "static_interner",
- "strong_hash",
- "tempfile",
- "test-case",
- "tokio",
- "tracing",
- "tracing-subscriber",
- "triomphe",
-]
-
-[[package]]
-name = "buck2_critical_path"
-version = "0.1.0"
-dependencies = [
- "buck2_error",
- "buck2_hash",
- "crossbeam",
- "derive_more 2.1.1",
- "rand 0.10.3",
- "rand_chacha 0.10.0",
- "rand_distr",
- "starlark_map",
-]
-
-[[package]]
-name = "buck2_daemon"
-version = "0.1.0"
-dependencies = [
- "buck2_action_impl",
- "buck2_certs",
- "buck2_cli_proto",
- "buck2_client_ctx",
- "buck2_common",
- "buck2_core",
- "buck2_data",
- "buck2_error",
- "buck2_events",
- "buck2_fs",
- "buck2_resource_control",
- "buck2_server",
- "buck2_util",
- "clap",
- "dice",
- "dupe",
- "futures 0.3.34",
- "libc",
- "nix 0.31.3",
- "rand 0.10.3",
- "serde_json",
- "tokio",
- "tokio-stream",
- "tracing",
-]
-
-[[package]]
-name = "buck2_data"
-version = "0.1.0"
-dependencies = [
- "allocative",
- "buck2_host_sharing_proto",
- "buck2_miniperf_proto",
- "buck2_proto_serde",
- "buck2_protoc_dev",
- "derive_more 2.1.1",
- "dupe",
- "gazebo",
- "hex",
- "pagable",
- "prost",
- "prost-types",
- "serde",
- "tonic",
- "tonic-prost",
-]
-
-[[package]]
-name = "buck2_directory"
-version = "0.1.0"
-dependencies = [
- "allocative",
- "assert_matches",
- "buck2_core",
- "buck2_error",
- "buck2_fs",
- "buck2_hash",
- "buck2_util",
- "dashmap 6.2.1",
- "derivative",
- "derive_more 2.1.1",
- "dupe",
- "either",
- "gazebo",
- "mini_vec",
- "pagable",
- "sorted_vector_map",
- "starlark_map",
- "strong_hash",
-]
-
-[[package]]
-name = "buck2_downward_api"
-version = "0.1.0"
-dependencies = [
- "async-trait",
- "buck2_error",
- "buck2_hash",
- "tracing",
-]
-
-[[package]]
-name = "buck2_downward_api_proto"
-version = "0.1.0"
-dependencies = [
- "buck2_error",
- "buck2_hash",
- "buck2_protoc_dev",
- "prost",
- "tonic",
- "tonic-prost",
- "tracing",
-]
-
-[[package]]
-name = "buck2_embedded_section"
-version = "0.1.0"
-dependencies = [
- "buck2_error",
- "object 0.40.0",
- "zstd",
-]
-
-[[package]]
-name = "buck2_env"
-version = "0.1.0"
-dependencies = [
- "assert_matches",
- "buck2_error",
- "buck2_hash",
- "dupe",
- "linkme",
- "starlark_map",
- "tracing",
-]
-
-[[package]]
-name = "buck2_error"
-version = "0.1.0"
-dependencies = [
- "allocative",
- "anyhow",
- "buck2_data",
- "buck2_error_derive",
- "clap",
- "derive_more 2.1.1",
- "dice_error",
- "dupe",
- "fancy-regex 0.19.2",
- "hex",
- "http",
- "hyper",
- "hyper-util",
- "libc",
- "nix 0.31.3",
- "prost",
- "prost-types",
- "ref-cast",
- "regex",
- "rusqlite",
- "rustls-native-certs",
- "rustls-pki-types",
- "serde",
- "serde_json",
- "smallvec",
- "starlark_syntax",
- "superconsole",
- "thiserror 2.0.20",
- "tokio",
- "toml",
- "tonic",
- "uuid",
- "watchman_client",
-]
-
-[[package]]
-name = "buck2_error_derive"
-version = "0.1.0"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn 3.0.6",
-]
-
-[[package]]
-name = "buck2_error_tests"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "buck2_error",
- "buck2_util",
- "starlark",
-]
-
-[[package]]
-name = "buck2_errorformat"
-version = "0.1.0"
-dependencies = [
- "buck2_error",
- "fancy-regex 0.19.2",
- "nom 8.0.0",
- "tracing",
-]
-
-[[package]]
-name = "buck2_event_log"
-version = "0.1.0"
-dependencies = [
- "allocative",
- "async-compression",
- "buck2_cli_proto",
- "buck2_common",
- "buck2_data",
- "buck2_error",
- "buck2_event_observer",
- "buck2_events",
- "buck2_fs",
- "buck2_hash",
- "buck2_wrapper_common",
- "dupe",
- "futures 0.3.34",
- "gazebo",
- "itertools 0.15.0",
- "jiff",
- "maplit",
- "pin-project",
- "prost",
- "prost-types",
- "regex",
- "serde",
- "serde_json",
- "shlex",
- "tempfile",
- "tokio",
- "tokio-stream",
- "tokio-util 0.7.19",
- "tracing",
-]
-
-[[package]]
-name = "buck2_event_observer"
-version = "0.1.0"
-dependencies = [
- "assert_matches",
- "buck2_common",
- "buck2_data",
- "buck2_error",
- "buck2_events",
- "buck2_hash",
- "buck2_test_api",
- "buck2_util",
- "buck2_wrapper_common",
- "clap",
- "derivative",
- "dupe",
- "gazebo",
- "linked-hash-map",
- "prost-types",
- "regex",
- "shlex",
- "starlark_map",
- "superconsole",
- "termwiz",
- "tracing",
-]
-
-[[package]]
-name = "buck2_events"
-version = "0.1.0"
-dependencies = [
- "allocative",
- "buck2_build_info",
- "buck2_cli_proto",
- "buck2_core",
- "buck2_data",
- "buck2_error",
- "buck2_hash",
- "buck2_wrapper_common",
- "console",
- "crossbeam-channel",
- "derive_more 2.1.1",
- "dupe",
- "futures 0.3.34",
- "gazebo",
- "hostname",
- "pin-project",
- "serde",
- "smallvec",
- "sys-info",
- "tokio",
- "uuid",
- "winver",
-]
-
-[[package]]
-name = "buck2_execute"
-version = "0.1.0"
-dependencies = [
- "allocative",
- "anyhow",
- "assert_matches",
- "async-recursion",
- "async-trait",
- "buck2_action_metadata_proto",
- "buck2_build_info",
- "buck2_build_signals",
- "buck2_cli_proto",
- "buck2_common",
- "buck2_core",
- "buck2_data",
- "buck2_directory",
- "buck2_error",
- "buck2_events",
- "buck2_fs",
- "buck2_hash",
- "buck2_http",
- "buck2_miniperf_proto",
- "buck2_re_configuration",
- "buck2_util",
- "buck2_wrapper_common",
- "bytes",
- "crossbeam-channel",
- "ctor",
- "derivative",
- "derive_more 2.1.1",
- "dice",
- "dice_futures",
- "digest 0.10.7",
- "dupe",
- "either",
- "faccess",
- "futures 0.3.34",
- "gazebo",
- "hex",
- "host_sharing",
- "http",
- "hyper",
- "itertools 0.15.0",
- "jiff",
- "pagable",
- "pathdiff",
- "prost",
- "prost-types",
- "ref-cast",
- "remote_execution",
- "serde",
- "serde_json",
- "sha1",
- "sha2",
- "smallvec",
- "sorted_vector_map",
- "starlark_map",
- "static_interner",
- "strong_hash",
- "tempfile",
- "tokio",
- "tracing",
-]
-
-[[package]]
-name = "buck2_execute_impl"
-version = "0.1.0"
-dependencies = [
- "allocative",
- "assert_matches",
- "async-condvar-fair",
- "async-trait",
- "buck2_action_metadata_proto",
- "buck2_build_signals",
- "buck2_cli_proto",
- "buck2_common",
- "buck2_core",
- "buck2_data",
- "buck2_directory",
- "buck2_error",
- "buck2_events",
- "buck2_execute",
- "buck2_execute_local",
- "buck2_forkserver",
- "buck2_forkserver_proto",
- "buck2_fs",
- "buck2_hash",
- "buck2_http",
- "buck2_resource_control",
- "buck2_util",
- "buck2_worker_proto",
- "buck2_wrapper_common",
- "crossbeam-channel",
- "derivative",
- "derive_more 2.1.1",
- "dice_futures",
- "dupe",
- "futures 0.3.34",
- "gazebo",
- "host_sharing",
- "itertools 0.15.0",
- "jiff",
- "parking_lot 0.12.5",
- "pin-project",
- "prost",
- "remote_execution",
- "rusqlite",
- "starlark_map",
- "tempfile",
- "tokio",
- "tokio-retry",
- "tokio-stream",
- "tonic",
- "tracing",
- "zstd",
-]
-
-[[package]]
-name = "buck2_execute_local"
-version = "0.1.0"
-dependencies = [
- "assert_matches",
- "async-trait",
- "bincode",
- "buck2_common",
- "buck2_data",
- "buck2_error",
- "buck2_fs",
- "buck2_miniperf_proto",
- "buck2_resource_control",
- "buck2_util",
- "buck2_wrapper_common",
- "bytes",
- "dupe",
- "futures 0.3.34",
- "libc",
- "nix 0.31.3",
- "pin-project",
- "sysinfo",
- "take_mut",
- "tempfile",
- "tokio",
- "tokio-stream",
- "tokio-util 0.7.19",
- "tracing",
- "windows-sys 0.61.2",
-]
-
-[[package]]
-name = "buck2_external_cells"
-version = "0.1.0"
-dependencies = [
- "allocative",
- "async-trait",
- "blake3",
- "buck2_build_api",
- "buck2_common",
- "buck2_core",
- "buck2_directory",
- "buck2_error",
- "buck2_execute",
- "buck2_external_cells_bundled",
- "buck2_fs",
- "buck2_hash",
- "buck2_util",
- "cmp_any",
- "derive_more 2.1.1",
- "dice",
- "dupe",
- "pagable",
- "tokio",
-]
-
-[[package]]
-name = "buck2_external_cells_bundled"
-version = "0.1.0"
-dependencies = [
- "walkdir",
-]
-
-[[package]]
-name = "buck2_file_watcher"
-version = "0.1.0"
-dependencies = [
- "allocative",
- "assert_matches",
- "async-trait",
- "blake3",
- "buck2_common",
- "buck2_core",
- "buck2_data",
- "buck2_error",
- "buck2_events",
- "buck2_fs",
- "buck2_hash",
- "buck2_util",
- "compact_str",
- "dice",
- "dupe",
- "futures 0.3.34",
- "gazebo",
- "notify",
- "serde",
- "starlark_map",
- "tempfile",
- "tokio",
- "tracing",
- "watchman_client",
-]
-
-[[package]]
-name = "buck2_forkserver"
-version = "0.1.0"
-dependencies = [
- "allocative",
- "arc-swap",
- "async-trait",
- "buck2_common",
- "buck2_core",
- "buck2_data",
- "buck2_embedded_section",
- "buck2_error",
- "buck2_execute_local",
- "buck2_forkserver_proto",
- "buck2_fs",
- "buck2_grpc",
- "buck2_resource_control",
- "buck2_util",
- "dupe",
- "futures 0.3.34",
- "libc",
- "nix 0.31.3",
- "rand 0.10.3",
- "tokio",
- "tokio-stream",
- "tonic",
-]
-
-[[package]]
-name = "buck2_forkserver_proto"
-version = "0.1.0"
-dependencies = [
- "buck2_data",
- "buck2_protoc_dev",
- "derive_more 2.1.1",
- "gazebo",
- "prost",
- "prost-types",
- "tonic",
- "tonic-prost",
-]
-
-[[package]]
-name = "buck2_fs"
-version = "0.1.0"
-dependencies = [
- "allocative",
- "assert_matches",
- "buck2_env",
- "buck2_error",
- "buck2_hash",
- "buck2_util",
- "common-path",
- "compact_str",
- "derive_more 2.1.1",
- "dunce",
- "dupe",
- "gazebo",
- "libc",
- "memchr",
- "nix 0.31.3",
- "pagable",
- "ref-cast",
- "serde",
- "serde_json",
- "smallvec",
- "strong_hash",
- "tempfile",
- "tokio",
- "windows-sys 0.61.2",
-]
-
-[[package]]
-name = "buck2_grpc"
-version = "0.1.0"
-dependencies = [
- "buck2_error",
- "futures 0.3.34",
- "hyper",
- "hyper-util",
- "pin-project",
- "tokio",
- "tonic",
- "tower",
-]
-
-[[package]]
-name = "buck2_hash"
-version = "0.1.0"
-dependencies = [
- "dashmap 6.2.1",
- "dupe",
- "fxhash",
- "indexmap",
-]
-
-[[package]]
-name = "buck2_host_sharing_proto"
-version = "0.1.0"
-dependencies = [
- "allocative",
- "buck2_protoc_dev",
- "prost",
- "serde",
- "tonic",
- "tonic-prost",
-]
-
-[[package]]
-name = "buck2_http"
-version = "0.1.0"
-dependencies = [
- "allocative",
- "buck2_certs",
- "buck2_error",
- "bytes",
- "dupe",
- "futures 0.3.34",
- "http",
- "http-body-util",
- "httptest",
- "hyper",
- "hyper-http-proxy",
- "hyper-rustls",
- "hyper-timeout",
- "hyper-util",
- "ipnetwork",
- "pin-project",
- "rustls",
- "tokio",
- "tokio-rustls",
- "tokio-util 0.7.19",
- "tower-service",
- "tracing",
-]
-
-[[package]]
-name = "buck2_install_proto"
-version = "0.1.0"
-dependencies = [
- "buck2_protoc_dev",
- "prost",
- "tonic",
- "tonic-prost",
-]
-
-[[package]]
-name = "buck2_interpreter"
-version = "0.1.0"
-dependencies = [
- "allocative",
- "async-trait",
- "buck2_common",
- "buck2_core",
- "buck2_error",
- "buck2_events",
- "buck2_fs",
- "buck2_hash",
- "buck2_util",
- "derivative",
- "derive_more 2.1.1",
- "dice",
- "dice_futures",
- "dupe",
- "either",
- "fancy-regex 0.19.2",
- "futures 0.3.34",
- "gazebo",
- "itertools 0.15.0",
- "pagable",
- "plist",
- "ref-cast",
- "regex",
- "serde",
- "starlark",
- "starlark_map",
- "strong_hash",
- "tempfile",
- "tokio",
- "triomphe",
-]
-
-[[package]]
-name = "buck2_interpreter_for_build"
-version = "0.1.0"
-dependencies = [
- "allocative",
- "async-trait",
- "buck2_common",
- "buck2_core",
- "buck2_data",
- "buck2_error",
- "buck2_event_observer",
- "buck2_events",
- "buck2_fs",
- "buck2_hash",
- "buck2_interpreter",
- "buck2_node",
- "buck2_query",
- "buck2_query_parser",
- "buck2_util",
- "bumpalo",
- "cmp_any",
- "derivative",
- "derive_more 2.1.1",
- "dice",
- "dice_futures",
- "dupe",
- "either",
- "fancy-regex 0.19.2",
- "futures 0.3.34",
- "gazebo",
- "glob",
- "hashbrown 0.17.1",
- "hex",
- "indoc",
- "itertools 0.15.0",
- "maplit",
- "pagable",
- "quick-xml 0.42.0",
- "serde",
- "serde_json",
- "sha1",
- "sha2",
- "smallvec",
- "starlark",
- "starlark_map",
- "toml",
- "tracing",
- "twox-hash",
-]
-
-[[package]]
-name = "buck2_interpreter_for_build_tests"
-version = "0.1.0"
-dependencies = [
- "buck2_build_api",
- "buck2_common",
- "buck2_core",
- "buck2_error",
- "buck2_events",
- "buck2_interpreter",
- "buck2_interpreter_for_build",
- "buck2_node",
- "buck2_transition",
- "buck2_util",
- "ctor",
- "dice",
- "dupe",
- "futures 0.3.34",
- "gazebo",
- "indoc",
- "serde_json",
- "starlark",
- "tokio",
-]
-
-[[package]]
-name = "buck2_log_common"
-version = "0.1.0"
-dependencies = [
- "buck2_client_ctx",
- "buck2_common",
- "buck2_data",
- "buck2_error",
- "buck2_event_log",
- "buck2_event_observer",
- "buck2_events",
- "buck2_fs",
- "buck2_hash",
- "clap",
- "derive_more 2.1.1",
- "dupe",
- "flate2",
- "futures 0.3.34",
- "serde",
- "serde_json",
- "tokio-stream",
-]
-
-[[package]]
-name = "buck2_miniperf"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "bincode",
- "buck2_miniperf_proto",
- "perf-event",
- "smallvec",
- "thiserror 2.0.20",
-]
-
-[[package]]
-name = "buck2_miniperf_proto"
-version = "0.1.0"
-dependencies = [
- "bincode",
- "dupe",
- "serde",
-]
-
-[[package]]
-name = "buck2_node"
-version = "0.1.0"
-dependencies = [
- "allocative",
- "async-trait",
- "buck2_common",
- "buck2_core",
- "buck2_data",
- "buck2_error",
- "buck2_events",
- "buck2_fs",
- "buck2_hash",
- "buck2_query",
- "buck2_query_parser",
- "buck2_util",
- "cmp_any",
- "derive_more 2.1.1",
- "dice",
- "dice_futures",
- "display_container",
- "dupe",
- "either",
- "futures 0.3.34",
- "gazebo",
- "itertools 0.15.0",
- "memchr",
- "mini_vec",
- "pagable",
- "ref-cast",
- "serde",
- "serde_json",
- "smallvec",
- "starlark",
- "starlark_map",
- "static_interner",
- "strong_hash",
- "strsim",
- "tokio",
- "triomphe",
-]
-
-[[package]]
-name = "buck2_node_tests"
-version = "0.1.0"
-dependencies = [
- "buck2_core",
- "buck2_error",
- "buck2_fs",
- "buck2_node",
- "buck2_util",
- "dupe",
-]
-
-[[package]]
-name = "buck2_offline_archive"
-version = "0.1.0"
-dependencies = [
- "buck2_core",
- "buck2_error",
- "buck2_fs",
- "buck2_util",
- "serde",
- "tempfile",
-]
-
-[[package]]
-name = "buck2_profile"
-version = "0.1.0"
-dependencies = [
- "buck2_cli_proto",
- "buck2_core",
- "buck2_error",
- "buck2_fs",
- "buck2_interpreter",
- "inferno",
- "starlark",
-]
-
-[[package]]
-name = "buck2_proto_serde"
-version = "0.1.0"
-dependencies = [
- "prost-types",
- "serde",
-]
-
-[[package]]
-name = "buck2_protoc_dev"
-version = "0.1.0"
-dependencies = [
- "dunce",
- "protoc-bin-vendored",
- "tonic-prost-build",
-]
-
-[[package]]
-name = "buck2_query"
-version = "0.1.0"
-dependencies = [
- "allocative",
- "async-trait",
- "buck2_core",
- "buck2_error",
- "buck2_hash",
- "buck2_query_derive",
- "buck2_query_parser",
- "buck2_util",
- "derive_more 2.1.1",
- "display_container",
- "dupe",
- "enum-iterator",
- "fancy-regex 0.19.2",
- "futures 0.3.34",
- "gazebo",
- "indexmap",
- "indoc",
- "itertools 0.15.0",
- "pagable",
- "ref-cast",
- "starlark_map",
- "tokio",
- "tracing",
-]
-
-[[package]]
-name = "buck2_query_derive"
-version = "0.1.0"
-dependencies = [
- "itertools 0.15.0",
- "proc-macro2",
- "quote",
- "syn 3.0.6",
- "textwrap",
-]
-
-[[package]]
-name = "buck2_query_impls"
-version = "0.1.0"
-dependencies = [
- "assert_matches",
- "async-trait",
- "buck2_artifact",
- "buck2_build_api",
- "buck2_common",
- "buck2_core",
- "buck2_error",
- "buck2_events",
- "buck2_fs",
- "buck2_hash",
- "buck2_interpreter",
- "buck2_node",
- "buck2_query",
- "buck2_query_parser",
- "buck2_util",
- "dashmap 6.2.1",
- "derive_more 2.1.1",
- "dice",
- "dupe",
- "either",
- "futures 0.3.34",
- "gazebo",
- "itertools 0.15.0",
- "ref-cast",
- "tokio",
- "tracing",
-]
-
-[[package]]
-name = "buck2_query_parser"
-version = "0.1.0"
-dependencies = [
- "buck2_error",
- "buck2_util",
- "derive_more 2.1.1",
- "dupe",
- "enum-map",
- "gazebo",
- "nom 8.0.0",
- "nom-language",
-]
-
-[[package]]
-name = "buck2_re_configuration"
-version = "0.1.0"
-dependencies = [
- "allocative",
- "buck2_common",
- "buck2_error",
-]
-
-[[package]]
-name = "buck2_resource_control"
-version = "0.1.0"
-dependencies = [
- "allocative",
- "buck2_common",
- "buck2_core",
- "buck2_data",
- "buck2_error",
- "buck2_events",
- "buck2_fs",
- "buck2_hash",
- "buck2_util",
- "buck2_wrapper_common",
- "derive_more 2.1.1",
- "dupe",
- "futures 0.3.34",
- "nix 0.31.3",
- "ref-cast",
- "tokio",
- "tokio-util 0.7.19",
-]
-
-[[package]]
-name = "buck2_server"
-version = "0.1.0"
-dependencies = [
- "allocative",
- "assert_matches",
- "async-recursion",
- "async-trait",
- "bincode",
- "buck2_analysis",
- "buck2_build_api",
- "buck2_build_signals",
- "buck2_certs",
- "buck2_cli_proto",
- "buck2_common",
- "buck2_configured",
- "buck2_core",
- "buck2_data",
- "buck2_directory",
- "buck2_error",
- "buck2_event_observer",
- "buck2_events",
- "buck2_execute",
- "buck2_execute_impl",
- "buck2_file_watcher",
- "buck2_forkserver",
- "buck2_fs",
- "buck2_grpc",
- "buck2_hash",
- "buck2_http",
- "buck2_interpreter",
- "buck2_interpreter_for_build",
- "buck2_node",
- "buck2_profile",
- "buck2_re_configuration",
- "buck2_resource_control",
- "buck2_server_ctx",
- "buck2_server_starlark_debug",
- "buck2_subscription_proto",
- "buck2_test",
- "buck2_util",
- "buck2_validation",
- "buck2_wrapper_common",
- "constant_time_eq 0.6.0",
- "crossbeam-channel",
- "dice",
- "dice_futures",
- "dupe",
- "flate2",
- "futures 0.3.34",
- "gazebo",
- "host_sharing",
- "indoc",
- "inferno",
- "itertools 0.15.0",
- "jiff",
- "libc",
- "lsp-server",
- "lsp-types",
- "parking_lot 0.12.5",
- "pin-project",
- "prost",
- "prost-types",
- "psutil",
- "rand 0.10.3",
- "serde_json",
- "shlex",
- "starlark",
- "starlark_lsp",
- "sync_wrapper",
- "tempfile",
- "tokio",
- "tokio-stream",
- "tonic",
- "tower-lsp-server",
- "tracing",
-]
-
-[[package]]
-name = "buck2_server_commands"
-version = "0.1.0"
-dependencies = [
- "async-trait",
- "buck2_artifact",
- "buck2_build_api",
- "buck2_cli_proto",
- "buck2_common",
- "buck2_core",
- "buck2_data",
- "buck2_directory",
- "buck2_error",
- "buck2_events",
- "buck2_execute",
- "buck2_fs",
- "buck2_hash",
- "buck2_install_proto",
- "buck2_interpreter",
- "buck2_node",
- "buck2_query",
- "buck2_server_ctx",
- "buck2_util",
- "dice",
- "dupe",
- "futures 0.3.34",
- "itertools 0.15.0",
- "jiff",
- "starlark_map",
- "tokio",
- "tokio-stream",
- "tonic",
- "tracing",
-]
-
-[[package]]
-name = "buck2_server_ctx"
-version = "0.1.0"
-dependencies = [
- "allocative",
- "async-trait",
- "buck2_build_signals",
- "buck2_cli_proto",
- "buck2_common",
- "buck2_concurrency",
- "buck2_core",
- "buck2_data",
- "buck2_error",
- "buck2_events",
- "buck2_execute",
- "buck2_fs",
- "buck2_hash",
- "buck2_node",
- "buck2_util",
- "buck2_wrapper_common",
- "dice",
- "dice_futures",
- "dupe",
- "futures 0.3.34",
- "gazebo",
- "pin-project",
- "tonic",
- "tracing",
-]
-
-[[package]]
-name = "buck2_server_starlark_debug"
-version = "0.1.0"
-dependencies = [
- "async-trait",
- "buck2_cli_proto",
- "buck2_core",
- "buck2_data",
- "buck2_error",
- "buck2_events",
- "buck2_fs",
- "buck2_hash",
- "buck2_interpreter",
- "buck2_server_ctx",
- "buck2_util",
- "debugserver-types",
- "derive_more 2.1.1",
- "dupe",
- "futures 0.3.34",
- "itertools 0.15.0",
- "serde",
- "serde_json",
- "starlark",
- "tokio",
- "tokio-stream",
- "tracing",
-]
-
-[[package]]
-name = "buck2_sketches"
-version = "0.1.0"
-dependencies = [
- "base64 0.23.1",
- "setsketch",
-]
-
-[[package]]
-name = "buck2_subscription_proto"
-version = "0.1.0"
-dependencies = [
- "allocative",
- "buck2_protoc_dev",
- "derive_more 2.1.1",
- "prost",
- "serde",
- "tonic",
- "tonic-prost",
-]
-
-[[package]]
-name = "buck2_test"
-version = "0.1.0"
-dependencies = [
- "allocative",
- "async-trait",
- "buck2_build_api",
- "buck2_build_signals",
- "buck2_cli_proto",
- "buck2_common",
- "buck2_core",
- "buck2_data",
- "buck2_downward_api",
- "buck2_error",
- "buck2_error_derive",
- "buck2_events",
- "buck2_execute",
- "buck2_execute_impl",
- "buck2_fs",
- "buck2_grpc",
- "buck2_hash",
- "buck2_interpreter",
- "buck2_interpreter_for_build",
- "buck2_node",
- "buck2_resource_control",
- "buck2_server_ctx",
- "buck2_test_api",
- "buck2_util",
- "derive_more 2.1.1",
- "dice",
- "dice_futures",
- "display_container",
- "dupe",
- "futures 0.3.34",
- "host_sharing",
- "itertools 0.15.0",
- "libc",
- "maplit",
- "pagable",
- "remote_execution",
- "serde",
- "serde_json",
- "sorted_vector_map",
- "tokio",
- "tracing",
-]
-
-[[package]]
-name = "buck2_test_api"
-version = "0.1.0"
-dependencies = [
- "allocative",
- "assert_matches",
- "async-trait",
- "buck2_core",
- "buck2_data",
- "buck2_downward_api",
- "buck2_downward_api_proto",
- "buck2_error",
- "buck2_events",
- "buck2_fs",
- "buck2_grpc",
- "buck2_hash",
- "buck2_host_sharing_proto",
- "buck2_test_proto",
- "derivative",
- "derive_more 2.1.1",
- "dupe",
- "futures 0.3.34",
- "gazebo",
- "host_sharing",
- "pagable",
- "prost-types",
- "sorted_vector_map",
- "tokio",
- "tonic",
- "tower-layer",
- "tower-service",
- "tracing",
-]
-
-[[package]]
-name = "buck2_test_proto"
-version = "0.1.0"
-dependencies = [
- "buck2_data",
- "buck2_host_sharing_proto",
- "buck2_protoc_dev",
- "prost",
- "prost-types",
- "tonic",
- "tonic-prost",
-]
-
-[[package]]
-name = "buck2_test_runner"
-version = "0.1.0"
-dependencies = [
- "async-trait",
- "buck2_error",
- "buck2_grpc",
- "buck2_test_api",
- "clap",
- "futures 0.3.34",
- "host_sharing",
- "parking_lot 0.12.5",
- "tokio",
-]
-
-[[package]]
-name = "buck2_transition"
-version = "0.1.0"
-dependencies = [
- "allocative",
- "async-trait",
- "buck2_build_api",
- "buck2_build_api_derive",
- "buck2_core",
- "buck2_error",
- "buck2_events",
- "buck2_hash",
- "buck2_interpreter",
- "buck2_node",
- "derive_more 2.1.1",
- "dice",
- "dice_futures",
- "dupe",
- "either",
- "futures 0.3.34",
- "gazebo",
- "itertools 0.15.0",
- "pagable",
- "ref-cast",
- "starlark",
- "starlark_map",
-]
-
-[[package]]
-name = "buck2_util"
-version = "0.1.0"
-dependencies = [
- "allocative",
- "blake3",
- "buck2_env",
- "buck2_error",
- "buck2_hash",
- "buck2_wrapper_common",
- "dice_futures",
- "dupe",
- "futures 0.3.34",
- "gazebo",
- "libc",
- "mini_vec",
- "pagable",
- "perf-event",
- "regex",
- "serde",
- "serde_json",
- "starlark_map",
- "strong_hash",
- "sysinfo",
- "three_billion_instructions",
- "tokio",
- "tracing",
- "triomphe",
- "windows-sys 0.61.2",
-]
-
-[[package]]
-name = "buck2_validation"
-version = "0.1.0"
-dependencies = [
- "allocative",
- "async-trait",
- "buck2_artifact",
- "buck2_build_api",
- "buck2_core",
- "buck2_error",
- "buck2_execute",
- "buck2_fs",
- "derivative",
- "derive_more 2.1.1",
- "dice",
- "dice_error",
- "dupe",
- "pagable",
- "serde",
- "serde_json",
-]
-
-[[package]]
-name = "buck2_worker_proto"
-version = "0.1.0"
-dependencies = [
- "buck2_protoc_dev",
- "prost",
- "tonic",
- "tonic-prost",
-]
-
-[[package]]
-name = "buck2_wrapper_common"
-version = "0.1.0"
-dependencies = [
- "allocative",
- "buck2_error",
- "buck2_hash",
- "derive_more 2.1.1",
- "dirs",
- "dupe",
- "futures 0.3.34",
- "nix 0.31.3",
- "serde",
- "serde_json",
- "sysinfo",
- "tempfile",
- "tokio",
- "uuid",
- "windows-sys 0.61.2",
-]
-
-[[package]]
 name = "bumpalo"
 version = "3.20.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3942,7 +1405,6 @@ dependencies = [
  "async-trait",
  "bincode",
  "bit-set 0.11.1",
- "buck2_hash",
  "cmp_any",
  "dashmap 6.2.1",
  "derivative",
@@ -3971,6 +1433,7 @@ dependencies = [
  "thiserror 2.0.20",
  "tokio",
  "tracing",
+ "yak_hash",
 ]
 
 [[package]]
@@ -6986,13 +4449,13 @@ dependencies = [
 name = "re_grpc_proto"
 version = "0.1.0"
 dependencies = [
- "buck2_proto_serde",
- "buck2_protoc_dev",
  "prost",
  "prost-types",
  "serde",
  "tonic",
  "tonic-prost",
+ "yak_proto_serde",
+ "yak_protoc_dev",
 ]
 
 [[package]]
@@ -7089,8 +4552,6 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "async-compression",
- "buck2_re_configuration",
- "buck2_util",
  "dupe",
  "futures 0.3.34",
  "gazebo",
@@ -7114,6 +4575,8 @@ dependencies = [
  "tower",
  "tracing",
  "uuid",
+ "yak_re_configuration",
+ "yak_util",
 ]
 
 [[package]]
@@ -10047,6 +7510,2543 @@ checksum = "32e45ad4206f6d2479085147f02bc2ef834ac85886624a23575ae137c8aa8156"
 dependencies = [
  "libc",
  "rustix",
+]
+
+[[package]]
+name = "yak"
+version = "0.1.0"
+dependencies = [
+ "clap",
+ "dirs",
+ "dupe",
+ "libc",
+ "mimalloc",
+ "nix 0.31.3",
+ "superconsole",
+ "tikv-jemallocator",
+ "tokio",
+ "tracing",
+ "windows-sys 0.61.2",
+ "yak_action_impl",
+ "yak_analysis",
+ "yak_anon_target",
+ "yak_build_api",
+ "yak_build_info",
+ "yak_build_signals_impl",
+ "yak_bxl",
+ "yak_certs",
+ "yak_cfg_constructor",
+ "yak_client",
+ "yak_client_ctx",
+ "yak_cmd_audit_client",
+ "yak_cmd_audit_server",
+ "yak_cmd_completion_client",
+ "yak_cmd_debug_client",
+ "yak_cmd_docs_client",
+ "yak_cmd_docs_server",
+ "yak_cmd_log_client",
+ "yak_cmd_query_server",
+ "yak_cmd_starlark_client",
+ "yak_cmd_starlark_server",
+ "yak_cmd_targets_server",
+ "yak_common",
+ "yak_configured",
+ "yak_core",
+ "yak_daemon",
+ "yak_data",
+ "yak_error",
+ "yak_event_observer",
+ "yak_events",
+ "yak_external_cells",
+ "yak_forkserver",
+ "yak_fs",
+ "yak_interpreter_for_build",
+ "yak_query_impls",
+ "yak_server",
+ "yak_server_commands",
+ "yak_test",
+ "yak_test_runner",
+ "yak_transition",
+ "yak_util",
+ "yak_validation",
+ "yak_wrapper_common",
+]
+
+[[package]]
+name = "yak_action_impl"
+version = "0.1.0"
+dependencies = [
+ "allocative",
+ "async-trait",
+ "blake3",
+ "derive_more 2.1.1",
+ "dice",
+ "dice_futures",
+ "dupe",
+ "either",
+ "futures 0.3.34",
+ "gazebo",
+ "hex",
+ "host_sharing",
+ "http",
+ "itertools 0.15.0",
+ "jiff",
+ "pagable",
+ "parking_lot 0.12.5",
+ "remote_execution",
+ "serde_json",
+ "sha1",
+ "smallvec",
+ "sorted_vector_map",
+ "starlark",
+ "starlark_map",
+ "strong_hash",
+ "tracing",
+ "yak_action_metadata_proto",
+ "yak_analysis",
+ "yak_artifact",
+ "yak_build_api",
+ "yak_build_signals",
+ "yak_common",
+ "yak_core",
+ "yak_data",
+ "yak_directory",
+ "yak_error",
+ "yak_events",
+ "yak_execute",
+ "yak_file_watcher",
+ "yak_fs",
+ "yak_hash",
+ "yak_http",
+ "yak_interpreter",
+ "yak_util",
+]
+
+[[package]]
+name = "yak_action_impl_tests"
+version = "0.1.0"
+dependencies = [
+ "ctor",
+ "dupe",
+ "indoc",
+ "maplit",
+ "starlark",
+ "yak_action_impl",
+ "yak_anon_target",
+ "yak_build_api",
+ "yak_core",
+ "yak_error",
+ "yak_execute",
+ "yak_interpreter",
+ "yak_interpreter_for_build",
+]
+
+[[package]]
+name = "yak_action_metadata_proto"
+version = "0.1.0"
+dependencies = [
+ "prost",
+ "tonic",
+ "tonic-prost",
+ "yak_protoc_dev",
+]
+
+[[package]]
+name = "yak_action_parallelism"
+version = "0.1.0"
+dependencies = [
+ "prost-types",
+ "yak_data",
+ "yak_event_observer",
+]
+
+[[package]]
+name = "yak_analysis"
+version = "0.1.0"
+dependencies = [
+ "allocative",
+ "async-trait",
+ "derive_more 2.1.1",
+ "dice",
+ "dupe",
+ "either",
+ "futures 0.3.34",
+ "gazebo",
+ "pagable",
+ "smallvec",
+ "starlark",
+ "starlark_map",
+ "yak_artifact",
+ "yak_build_api",
+ "yak_build_signals",
+ "yak_core",
+ "yak_data",
+ "yak_error",
+ "yak_events",
+ "yak_execute",
+ "yak_hash",
+ "yak_interpreter",
+ "yak_node",
+ "yak_query",
+ "yak_util",
+]
+
+[[package]]
+name = "yak_anon_target"
+version = "0.1.0"
+dependencies = [
+ "allocative",
+ "async-trait",
+ "cmp_any",
+ "compact_str",
+ "derive_more 2.1.1",
+ "dice",
+ "dice_futures",
+ "dupe",
+ "either",
+ "futures 0.3.34",
+ "gazebo",
+ "pagable",
+ "serde",
+ "serde_json",
+ "starlark",
+ "starlark_map",
+ "strong_hash",
+ "yak_analysis",
+ "yak_artifact",
+ "yak_build_api",
+ "yak_build_signals",
+ "yak_configured",
+ "yak_core",
+ "yak_data",
+ "yak_error",
+ "yak_events",
+ "yak_execute",
+ "yak_fs",
+ "yak_hash",
+ "yak_interpreter",
+ "yak_interpreter_for_build",
+ "yak_node",
+ "yak_util",
+]
+
+[[package]]
+name = "yak_artifact"
+version = "0.1.0"
+dependencies = [
+ "allocative",
+ "assert_matches",
+ "derivative",
+ "derive_more 2.1.1",
+ "dupe",
+ "either",
+ "gazebo",
+ "pagable",
+ "serde",
+ "serde_json",
+ "starlark",
+ "starlark_map",
+ "strong_hash",
+ "take_mut",
+ "yak_common",
+ "yak_core",
+ "yak_data",
+ "yak_error",
+ "yak_execute",
+ "yak_fs",
+ "yak_util",
+]
+
+[[package]]
+name = "yak_build_api"
+version = "0.1.0"
+dependencies = [
+ "allocative",
+ "async-recursion",
+ "async-trait",
+ "blake3",
+ "console",
+ "derivative",
+ "derive_more 2.1.1",
+ "dice",
+ "dice_futures",
+ "display_container",
+ "dupe",
+ "either",
+ "futures 0.3.34",
+ "gazebo",
+ "indexmap",
+ "internment",
+ "inventory",
+ "itertools 0.15.0",
+ "linkme",
+ "mini_vec",
+ "multimap",
+ "pagable",
+ "ref-cast",
+ "regex",
+ "remote_execution",
+ "serde",
+ "serde_json",
+ "setsketch",
+ "smallvec",
+ "sorted_vector_map",
+ "starlark",
+ "starlark_map",
+ "strong_hash",
+ "tokio",
+ "tracing",
+ "yak_artifact",
+ "yak_build_api_derive",
+ "yak_build_signals",
+ "yak_cli_proto",
+ "yak_common",
+ "yak_core",
+ "yak_data",
+ "yak_directory",
+ "yak_error",
+ "yak_errorformat",
+ "yak_event_observer",
+ "yak_events",
+ "yak_execute",
+ "yak_file_watcher",
+ "yak_fs",
+ "yak_hash",
+ "yak_http",
+ "yak_interpreter",
+ "yak_node",
+ "yak_query",
+ "yak_sketches",
+ "yak_test_api",
+ "yak_util",
+ "yak_wrapper_common",
+]
+
+[[package]]
+name = "yak_build_api_derive"
+version = "0.1.0"
+dependencies = [
+ "convert_case 0.12.0",
+ "gazebo",
+ "proc-macro2",
+ "quote",
+ "syn 3.0.6",
+]
+
+[[package]]
+name = "yak_build_api_tests"
+version = "0.1.0"
+dependencies = [
+ "allocative",
+ "assert_matches",
+ "async-trait",
+ "ctor",
+ "derivative",
+ "dice",
+ "dupe",
+ "gazebo",
+ "indoc",
+ "itertools 0.15.0",
+ "maplit",
+ "pagable",
+ "serde_json",
+ "sorted_vector_map",
+ "starlark",
+ "starlark_map",
+ "tokio",
+ "yak_action_impl",
+ "yak_analysis",
+ "yak_anon_target",
+ "yak_artifact",
+ "yak_build_api",
+ "yak_build_signals",
+ "yak_certs",
+ "yak_common",
+ "yak_configured",
+ "yak_core",
+ "yak_data",
+ "yak_directory",
+ "yak_error",
+ "yak_events",
+ "yak_execute",
+ "yak_execute_impl",
+ "yak_file_watcher",
+ "yak_fs",
+ "yak_hash",
+ "yak_http",
+ "yak_interpreter",
+ "yak_interpreter_for_build",
+ "yak_node",
+ "yak_test_api",
+ "yak_transition",
+ "yak_util",
+]
+
+[[package]]
+name = "yak_build_info"
+version = "0.1.0"
+dependencies = [
+ "yak_util",
+]
+
+[[package]]
+name = "yak_build_signals"
+version = "0.1.0"
+dependencies = [
+ "allocative",
+ "async-trait",
+ "cmp_any",
+ "derive_more 2.1.1",
+ "dice",
+ "dupe",
+ "gazebo",
+ "tokio",
+ "yak_data",
+ "yak_error",
+ "yak_events",
+ "yak_fs",
+ "yak_hash",
+ "yak_util",
+]
+
+[[package]]
+name = "yak_build_signals_impl"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "dice",
+ "dupe",
+ "gazebo",
+ "itertools 0.15.0",
+ "prost-types",
+ "ref-cast",
+ "serde",
+ "serde_json",
+ "smallvec",
+ "starlark_map",
+ "tokio",
+ "tokio-stream",
+ "tracing",
+ "yak_analysis",
+ "yak_artifact",
+ "yak_build_api",
+ "yak_build_signals",
+ "yak_common",
+ "yak_core",
+ "yak_critical_path",
+ "yak_data",
+ "yak_error",
+ "yak_events",
+ "yak_hash",
+ "yak_interpreter_for_build",
+ "yak_node",
+ "yak_util",
+]
+
+[[package]]
+name = "yak_bxl"
+version = "0.1.0"
+dependencies = [
+ "allocative",
+ "anyhow",
+ "async-recursion",
+ "async-trait",
+ "clap",
+ "cmp_any",
+ "ctor",
+ "derivative",
+ "derive_more 2.1.1",
+ "dice",
+ "dice_futures",
+ "display_container",
+ "dupe",
+ "either",
+ "futures 0.3.34",
+ "gazebo",
+ "itertools 0.15.0",
+ "maplit",
+ "num-bigint",
+ "pagable",
+ "serde",
+ "serde_json",
+ "starlark",
+ "starlark_map",
+ "strong_hash",
+ "tokio",
+ "yak_action_impl",
+ "yak_analysis",
+ "yak_anon_target",
+ "yak_artifact",
+ "yak_build_api",
+ "yak_cli_proto",
+ "yak_common",
+ "yak_core",
+ "yak_data",
+ "yak_error",
+ "yak_events",
+ "yak_execute",
+ "yak_fs",
+ "yak_hash",
+ "yak_interpreter",
+ "yak_interpreter_for_build",
+ "yak_node",
+ "yak_profile",
+ "yak_query",
+ "yak_query_parser",
+ "yak_server_ctx",
+ "yak_transition",
+ "yak_util",
+]
+
+[[package]]
+name = "yak_certs"
+version = "0.1.0"
+dependencies = [
+ "rustls",
+ "rustls-native-certs",
+ "rustls-pki-types",
+ "tokio",
+ "tracing",
+ "yak_error",
+]
+
+[[package]]
+name = "yak_cfg_constructor"
+version = "0.1.0"
+dependencies = [
+ "allocative",
+ "async-trait",
+ "derive_more 2.1.1",
+ "dice",
+ "dice_futures",
+ "dupe",
+ "pagable",
+ "starlark",
+ "yak_build_api",
+ "yak_common",
+ "yak_core",
+ "yak_error",
+ "yak_events",
+ "yak_interpreter",
+ "yak_interpreter_for_build",
+ "yak_node",
+]
+
+[[package]]
+name = "yak_cli_proto"
+version = "0.1.0"
+dependencies = [
+ "allocative",
+ "bytes",
+ "futures 0.3.34",
+ "prost",
+ "prost-types",
+ "serde",
+ "tokio",
+ "tokio-util 0.7.19",
+ "tonic",
+ "tonic-prost",
+ "yak_core",
+ "yak_data",
+ "yak_error",
+ "yak_fs",
+ "yak_proto_serde",
+ "yak_protoc_dev",
+ "yak_subscription_proto",
+]
+
+[[package]]
+name = "yak_client"
+version = "0.1.0"
+dependencies = [
+ "assert_matches",
+ "async-recursion",
+ "async-trait",
+ "bytesize",
+ "clap",
+ "dupe",
+ "futures 0.3.34",
+ "gazebo",
+ "humantime",
+ "jiff",
+ "libc",
+ "lsp-server",
+ "prost",
+ "serde",
+ "serde_json",
+ "shlex",
+ "superconsole",
+ "tempfile",
+ "threadpool",
+ "tokio",
+ "tokio-stream",
+ "tokio-util 0.7.19",
+ "tracing",
+ "uuid",
+ "walkdir",
+ "yak_cli_proto",
+ "yak_client_ctx",
+ "yak_common",
+ "yak_core",
+ "yak_data",
+ "yak_error",
+ "yak_fs",
+ "yak_hash",
+ "yak_query_parser",
+ "yak_subscription_proto",
+ "yak_util",
+ "yak_wrapper_common",
+]
+
+[[package]]
+name = "yak_client_ctx"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "assert_matches",
+ "async-trait",
+ "blake3",
+ "bytes",
+ "clap",
+ "console",
+ "crossterm",
+ "csv",
+ "derivative",
+ "derive_more 2.1.1",
+ "dupe",
+ "futures 0.3.34",
+ "games",
+ "gazebo",
+ "hex",
+ "httparse",
+ "humantime",
+ "indoc",
+ "itertools 0.15.0",
+ "jiff",
+ "libc",
+ "lsp-server",
+ "memmap2",
+ "object 0.40.0",
+ "pretty_assertions",
+ "prost",
+ "prost-types",
+ "rand 0.10.3",
+ "regex",
+ "serde",
+ "serde_json",
+ "shlex",
+ "strum",
+ "superconsole",
+ "sysinfo",
+ "take_mut",
+ "tempfile",
+ "termios",
+ "termwiz",
+ "tokio",
+ "tokio-stream",
+ "tokio-util 0.7.19",
+ "toml",
+ "tonic",
+ "tracing",
+ "windows-sys 0.61.2",
+ "yak_action_parallelism",
+ "yak_build_info",
+ "yak_cli_proto",
+ "yak_common",
+ "yak_core",
+ "yak_data",
+ "yak_error",
+ "yak_event_log",
+ "yak_event_observer",
+ "yak_events",
+ "yak_fs",
+ "yak_hash",
+ "yak_resource_control",
+ "yak_util",
+ "yak_wrapper_common",
+]
+
+[[package]]
+name = "yak_cmd_audit_client"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "clap",
+ "dupe",
+ "serde",
+ "serde_json",
+ "yak_cli_proto",
+ "yak_client_ctx",
+]
+
+[[package]]
+name = "yak_cmd_audit_server"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "derive_more 2.1.1",
+ "dice",
+ "dupe",
+ "futures 0.3.34",
+ "gazebo",
+ "indent_write",
+ "itertools 0.15.0",
+ "ref-cast",
+ "regex",
+ "serde",
+ "serde_json",
+ "starlark_map",
+ "yak_analysis",
+ "yak_build_api",
+ "yak_cli_proto",
+ "yak_client_ctx",
+ "yak_cmd_audit_client",
+ "yak_common",
+ "yak_core",
+ "yak_data",
+ "yak_error",
+ "yak_events",
+ "yak_execute",
+ "yak_fs",
+ "yak_hash",
+ "yak_interpreter",
+ "yak_node",
+ "yak_query",
+ "yak_server_ctx",
+ "yak_util",
+]
+
+[[package]]
+name = "yak_cmd_completion_client"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "clap",
+ "clap_complete",
+ "futures 0.3.34",
+ "paste",
+ "tokio",
+ "yak_cli_proto",
+ "yak_client_ctx",
+ "yak_common",
+ "yak_core",
+ "yak_error",
+ "yak_fs",
+ "yak_hash",
+]
+
+[[package]]
+name = "yak_cmd_debug_client"
+version = "0.1.0"
+dependencies = [
+ "allocative",
+ "async-trait",
+ "clap",
+ "gazebo",
+ "humantime",
+ "prost",
+ "serde_json",
+ "tokio-stream",
+ "tracing",
+ "yak_cli_proto",
+ "yak_client_ctx",
+ "yak_common",
+ "yak_core",
+ "yak_error",
+ "yak_event_log",
+ "yak_fs",
+ "yak_log_common",
+ "yak_offline_archive",
+]
+
+[[package]]
+name = "yak_cmd_docs_client"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "clap",
+ "dupe",
+ "regex",
+ "termimad",
+ "yak_cli_proto",
+ "yak_client_ctx",
+ "yak_error",
+ "yak_query",
+]
+
+[[package]]
+name = "yak_cmd_docs_server"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "dice",
+ "dupe",
+ "serde",
+ "serde_json",
+ "starlark",
+ "yak_cli_proto",
+ "yak_common",
+ "yak_core",
+ "yak_data",
+ "yak_error",
+ "yak_fs",
+ "yak_hash",
+ "yak_interpreter",
+ "yak_interpreter_for_build",
+ "yak_server_ctx",
+]
+
+[[package]]
+name = "yak_cmd_log_client"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "clap",
+ "csv",
+ "dupe",
+ "futures 0.3.34",
+ "gazebo",
+ "linked-hash-map",
+ "prost",
+ "prost-types",
+ "regex",
+ "serde",
+ "serde_json",
+ "similar",
+ "superconsole",
+ "tempfile",
+ "tokio",
+ "tokio-stream",
+ "yak_cli_proto",
+ "yak_client_ctx",
+ "yak_common",
+ "yak_data",
+ "yak_error",
+ "yak_event_log",
+ "yak_event_observer",
+ "yak_events",
+ "yak_fs",
+ "yak_hash",
+ "yak_log_common",
+ "yak_subscription_proto",
+ "yak_util",
+ "yak_wrapper_common",
+ "zstd",
+]
+
+[[package]]
+name = "yak_cmd_query_server"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "dice",
+ "dupe",
+ "futures 0.3.34",
+ "gazebo",
+ "indent_write",
+ "regex",
+ "serde",
+ "serde_json",
+ "starlark_map",
+ "yak_build_api",
+ "yak_cli_proto",
+ "yak_common",
+ "yak_core",
+ "yak_data",
+ "yak_error",
+ "yak_events",
+ "yak_fs",
+ "yak_hash",
+ "yak_interpreter",
+ "yak_node",
+ "yak_profile",
+ "yak_query",
+ "yak_server_ctx",
+ "yak_util",
+]
+
+[[package]]
+name = "yak_cmd_starlark_client"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "clap",
+ "debugserver-types",
+ "futures 0.3.34",
+ "serde",
+ "serde_json",
+ "yak_cli_proto",
+ "yak_client_ctx",
+ "yak_common",
+ "yak_data",
+ "yak_error",
+ "yak_event_observer",
+ "yak_events",
+]
+
+[[package]]
+name = "yak_cmd_starlark_server"
+version = "0.1.0"
+dependencies = [
+ "async-recursion",
+ "async-trait",
+ "dice",
+ "dupe",
+ "serde_json",
+ "starlark",
+ "yak_cli_proto",
+ "yak_client_ctx",
+ "yak_cmd_starlark_client",
+ "yak_common",
+ "yak_core",
+ "yak_data",
+ "yak_error",
+ "yak_events",
+ "yak_fs",
+ "yak_hash",
+ "yak_interpreter",
+ "yak_interpreter_for_build",
+ "yak_server_ctx",
+]
+
+[[package]]
+name = "yak_cmd_targets_server"
+version = "0.1.0"
+dependencies = [
+ "async-recursion",
+ "async-trait",
+ "blake3",
+ "derive_more 2.1.1",
+ "dice",
+ "dice_futures",
+ "dupe",
+ "flate2",
+ "futures 0.3.34",
+ "gazebo",
+ "itertools 0.15.0",
+ "os_str_bytes",
+ "regex",
+ "serde_json",
+ "siphasher",
+ "starlark_map",
+ "tokio",
+ "yak_artifact",
+ "yak_build_api",
+ "yak_cli_proto",
+ "yak_common",
+ "yak_core",
+ "yak_data",
+ "yak_error",
+ "yak_execute",
+ "yak_fs",
+ "yak_hash",
+ "yak_interpreter",
+ "yak_node",
+ "yak_query",
+ "yak_server_ctx",
+ "yak_util",
+ "zstd",
+]
+
+[[package]]
+name = "yak_common"
+version = "0.1.0"
+dependencies = [
+ "allocative",
+ "assert_matches",
+ "async-scoped",
+ "async-trait",
+ "blake3",
+ "bytes",
+ "cmp_any",
+ "compact_str",
+ "derivative",
+ "derive_more 2.1.1",
+ "dice",
+ "dice_futures",
+ "digest 0.10.7",
+ "dirs",
+ "dupe",
+ "futures 0.3.34",
+ "gazebo",
+ "globset",
+ "hex",
+ "hyper-util",
+ "indoc",
+ "itertools 0.15.0",
+ "jiff",
+ "nix 0.31.3",
+ "num_enum",
+ "pagable",
+ "parking_lot 0.12.5",
+ "prost-types",
+ "rand 0.10.3",
+ "ref-cast",
+ "regex",
+ "rusqlite",
+ "serde",
+ "serde_json",
+ "sha1",
+ "sha2",
+ "smallvec",
+ "starlark_map",
+ "static_interner",
+ "strong_hash",
+ "strsim",
+ "tempfile",
+ "test-case",
+ "tokio",
+ "toml",
+ "tonic",
+ "tower",
+ "tracing",
+ "triomphe",
+ "xattr",
+ "yak_cli_proto",
+ "yak_core",
+ "yak_data",
+ "yak_error",
+ "yak_events",
+ "yak_fs",
+ "yak_grpc",
+ "yak_hash",
+ "yak_http",
+ "yak_util",
+ "yak_wrapper_common",
+]
+
+[[package]]
+name = "yak_concurrency"
+version = "0.1.0"
+dependencies = [
+ "allocative",
+ "assert_matches",
+ "async-condvar-fair",
+ "async-trait",
+ "derivative",
+ "derive_more 2.1.1",
+ "dice",
+ "dice_futures",
+ "dupe",
+ "futures 0.3.34",
+ "itertools 0.15.0",
+ "pagable",
+ "parking_lot 0.12.5",
+ "starlark_map",
+ "tokio",
+ "tracing",
+ "yak_cli_proto",
+ "yak_core",
+ "yak_data",
+ "yak_error",
+ "yak_util",
+ "yak_wrapper_common",
+]
+
+[[package]]
+name = "yak_configured"
+version = "0.1.0"
+dependencies = [
+ "allocative",
+ "async-trait",
+ "derive_more 2.1.1",
+ "dice",
+ "dice_futures",
+ "dupe",
+ "futures 0.3.34",
+ "gazebo",
+ "itertools 0.15.0",
+ "pagable",
+ "ref-cast",
+ "starlark_map",
+ "tokio",
+ "yak_build_api",
+ "yak_build_signals",
+ "yak_common",
+ "yak_core",
+ "yak_error",
+ "yak_node",
+ "yak_util",
+]
+
+[[package]]
+name = "yak_core"
+version = "0.1.0"
+dependencies = [
+ "allocative",
+ "assert_matches",
+ "blake3",
+ "cmp_any",
+ "common-path",
+ "compact_str",
+ "ctor",
+ "derivative",
+ "derive_more 2.1.1",
+ "dupe",
+ "equivalent",
+ "futures 0.3.34",
+ "gazebo",
+ "hex",
+ "hostname",
+ "itertools 0.15.0",
+ "lock_free_hashtable",
+ "memchr",
+ "os_str_bytes",
+ "pagable",
+ "pin-project",
+ "rand 0.10.3",
+ "ref-cast",
+ "regex",
+ "sequence_trie",
+ "serde",
+ "serde_json",
+ "smallvec",
+ "starlark_map",
+ "static_interner",
+ "strong_hash",
+ "tempfile",
+ "test-case",
+ "tokio",
+ "tracing",
+ "tracing-subscriber",
+ "triomphe",
+ "yak_data",
+ "yak_env",
+ "yak_error",
+ "yak_fs",
+ "yak_hash",
+ "yak_util",
+]
+
+[[package]]
+name = "yak_critical_path"
+version = "0.1.0"
+dependencies = [
+ "crossbeam",
+ "derive_more 2.1.1",
+ "rand 0.10.3",
+ "rand_chacha 0.10.0",
+ "rand_distr",
+ "starlark_map",
+ "yak_error",
+ "yak_hash",
+]
+
+[[package]]
+name = "yak_daemon"
+version = "0.1.0"
+dependencies = [
+ "clap",
+ "dice",
+ "dupe",
+ "futures 0.3.34",
+ "libc",
+ "nix 0.31.3",
+ "rand 0.10.3",
+ "serde_json",
+ "tokio",
+ "tokio-stream",
+ "tracing",
+ "yak_action_impl",
+ "yak_certs",
+ "yak_cli_proto",
+ "yak_client_ctx",
+ "yak_common",
+ "yak_core",
+ "yak_data",
+ "yak_error",
+ "yak_events",
+ "yak_fs",
+ "yak_resource_control",
+ "yak_server",
+ "yak_util",
+]
+
+[[package]]
+name = "yak_data"
+version = "0.1.0"
+dependencies = [
+ "allocative",
+ "derive_more 2.1.1",
+ "dupe",
+ "gazebo",
+ "hex",
+ "pagable",
+ "prost",
+ "prost-types",
+ "serde",
+ "tonic",
+ "tonic-prost",
+ "yak_host_sharing_proto",
+ "yak_miniperf_proto",
+ "yak_proto_serde",
+ "yak_protoc_dev",
+]
+
+[[package]]
+name = "yak_directory"
+version = "0.1.0"
+dependencies = [
+ "allocative",
+ "assert_matches",
+ "dashmap 6.2.1",
+ "derivative",
+ "derive_more 2.1.1",
+ "dupe",
+ "either",
+ "gazebo",
+ "mini_vec",
+ "pagable",
+ "sorted_vector_map",
+ "starlark_map",
+ "strong_hash",
+ "yak_core",
+ "yak_error",
+ "yak_fs",
+ "yak_hash",
+ "yak_util",
+]
+
+[[package]]
+name = "yak_downward_api"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "tracing",
+ "yak_error",
+ "yak_hash",
+]
+
+[[package]]
+name = "yak_downward_api_proto"
+version = "0.1.0"
+dependencies = [
+ "prost",
+ "tonic",
+ "tonic-prost",
+ "tracing",
+ "yak_error",
+ "yak_hash",
+ "yak_protoc_dev",
+]
+
+[[package]]
+name = "yak_embedded_section"
+version = "0.1.0"
+dependencies = [
+ "object 0.40.0",
+ "yak_error",
+ "zstd",
+]
+
+[[package]]
+name = "yak_env"
+version = "0.1.0"
+dependencies = [
+ "assert_matches",
+ "dupe",
+ "linkme",
+ "starlark_map",
+ "tracing",
+ "yak_error",
+ "yak_hash",
+]
+
+[[package]]
+name = "yak_error"
+version = "0.1.0"
+dependencies = [
+ "allocative",
+ "anyhow",
+ "clap",
+ "derive_more 2.1.1",
+ "dice_error",
+ "dupe",
+ "fancy-regex 0.19.2",
+ "hex",
+ "http",
+ "hyper",
+ "hyper-util",
+ "libc",
+ "nix 0.31.3",
+ "prost",
+ "prost-types",
+ "ref-cast",
+ "regex",
+ "rusqlite",
+ "rustls-native-certs",
+ "rustls-pki-types",
+ "serde",
+ "serde_json",
+ "smallvec",
+ "starlark_syntax",
+ "superconsole",
+ "thiserror 2.0.20",
+ "tokio",
+ "toml",
+ "tonic",
+ "uuid",
+ "watchman_client",
+ "yak_data",
+ "yak_error_derive",
+]
+
+[[package]]
+name = "yak_error_derive"
+version = "0.1.0"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 3.0.6",
+]
+
+[[package]]
+name = "yak_error_tests"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "starlark",
+ "yak_error",
+ "yak_util",
+]
+
+[[package]]
+name = "yak_errorformat"
+version = "0.1.0"
+dependencies = [
+ "fancy-regex 0.19.2",
+ "nom 8.0.0",
+ "tracing",
+ "yak_error",
+]
+
+[[package]]
+name = "yak_event_log"
+version = "0.1.0"
+dependencies = [
+ "allocative",
+ "async-compression",
+ "dupe",
+ "futures 0.3.34",
+ "gazebo",
+ "itertools 0.15.0",
+ "jiff",
+ "maplit",
+ "pin-project",
+ "prost",
+ "prost-types",
+ "regex",
+ "serde",
+ "serde_json",
+ "shlex",
+ "tempfile",
+ "tokio",
+ "tokio-stream",
+ "tokio-util 0.7.19",
+ "tracing",
+ "yak_cli_proto",
+ "yak_common",
+ "yak_data",
+ "yak_error",
+ "yak_event_observer",
+ "yak_events",
+ "yak_fs",
+ "yak_hash",
+ "yak_wrapper_common",
+]
+
+[[package]]
+name = "yak_event_observer"
+version = "0.1.0"
+dependencies = [
+ "assert_matches",
+ "clap",
+ "derivative",
+ "dupe",
+ "gazebo",
+ "linked-hash-map",
+ "prost-types",
+ "regex",
+ "shlex",
+ "starlark_map",
+ "superconsole",
+ "termwiz",
+ "tracing",
+ "yak_common",
+ "yak_data",
+ "yak_error",
+ "yak_events",
+ "yak_hash",
+ "yak_test_api",
+ "yak_util",
+ "yak_wrapper_common",
+]
+
+[[package]]
+name = "yak_events"
+version = "0.1.0"
+dependencies = [
+ "allocative",
+ "console",
+ "crossbeam-channel",
+ "derive_more 2.1.1",
+ "dupe",
+ "futures 0.3.34",
+ "gazebo",
+ "hostname",
+ "pin-project",
+ "serde",
+ "smallvec",
+ "sys-info",
+ "tokio",
+ "uuid",
+ "winver",
+ "yak_build_info",
+ "yak_cli_proto",
+ "yak_core",
+ "yak_data",
+ "yak_error",
+ "yak_hash",
+ "yak_wrapper_common",
+]
+
+[[package]]
+name = "yak_execute"
+version = "0.1.0"
+dependencies = [
+ "allocative",
+ "anyhow",
+ "assert_matches",
+ "async-recursion",
+ "async-trait",
+ "bytes",
+ "crossbeam-channel",
+ "ctor",
+ "derivative",
+ "derive_more 2.1.1",
+ "dice",
+ "dice_futures",
+ "digest 0.10.7",
+ "dupe",
+ "either",
+ "faccess",
+ "futures 0.3.34",
+ "gazebo",
+ "hex",
+ "host_sharing",
+ "http",
+ "hyper",
+ "itertools 0.15.0",
+ "jiff",
+ "pagable",
+ "pathdiff",
+ "prost",
+ "prost-types",
+ "ref-cast",
+ "remote_execution",
+ "serde",
+ "serde_json",
+ "sha1",
+ "sha2",
+ "smallvec",
+ "sorted_vector_map",
+ "starlark_map",
+ "static_interner",
+ "strong_hash",
+ "tempfile",
+ "tokio",
+ "tracing",
+ "yak_action_metadata_proto",
+ "yak_build_info",
+ "yak_build_signals",
+ "yak_cli_proto",
+ "yak_common",
+ "yak_core",
+ "yak_data",
+ "yak_directory",
+ "yak_error",
+ "yak_events",
+ "yak_fs",
+ "yak_hash",
+ "yak_http",
+ "yak_miniperf_proto",
+ "yak_re_configuration",
+ "yak_util",
+ "yak_wrapper_common",
+]
+
+[[package]]
+name = "yak_execute_impl"
+version = "0.1.0"
+dependencies = [
+ "allocative",
+ "assert_matches",
+ "async-condvar-fair",
+ "async-trait",
+ "crossbeam-channel",
+ "derivative",
+ "derive_more 2.1.1",
+ "dice_futures",
+ "dupe",
+ "futures 0.3.34",
+ "gazebo",
+ "host_sharing",
+ "itertools 0.15.0",
+ "jiff",
+ "parking_lot 0.12.5",
+ "pin-project",
+ "prost",
+ "remote_execution",
+ "rusqlite",
+ "starlark_map",
+ "tempfile",
+ "tokio",
+ "tokio-retry",
+ "tokio-stream",
+ "tonic",
+ "tracing",
+ "yak_action_metadata_proto",
+ "yak_build_signals",
+ "yak_cli_proto",
+ "yak_common",
+ "yak_core",
+ "yak_data",
+ "yak_directory",
+ "yak_error",
+ "yak_events",
+ "yak_execute",
+ "yak_execute_local",
+ "yak_forkserver",
+ "yak_forkserver_proto",
+ "yak_fs",
+ "yak_hash",
+ "yak_http",
+ "yak_resource_control",
+ "yak_util",
+ "yak_worker_proto",
+ "yak_wrapper_common",
+ "zstd",
+]
+
+[[package]]
+name = "yak_execute_local"
+version = "0.1.0"
+dependencies = [
+ "assert_matches",
+ "async-trait",
+ "bincode",
+ "bytes",
+ "dupe",
+ "futures 0.3.34",
+ "libc",
+ "nix 0.31.3",
+ "pin-project",
+ "sysinfo",
+ "take_mut",
+ "tempfile",
+ "tokio",
+ "tokio-stream",
+ "tokio-util 0.7.19",
+ "tracing",
+ "windows-sys 0.61.2",
+ "yak_common",
+ "yak_data",
+ "yak_error",
+ "yak_fs",
+ "yak_miniperf_proto",
+ "yak_resource_control",
+ "yak_util",
+ "yak_wrapper_common",
+]
+
+[[package]]
+name = "yak_external_cells"
+version = "0.1.0"
+dependencies = [
+ "allocative",
+ "async-trait",
+ "blake3",
+ "cmp_any",
+ "derive_more 2.1.1",
+ "dice",
+ "dupe",
+ "pagable",
+ "tokio",
+ "yak_build_api",
+ "yak_common",
+ "yak_core",
+ "yak_directory",
+ "yak_error",
+ "yak_execute",
+ "yak_external_cells_bundled",
+ "yak_fs",
+ "yak_hash",
+ "yak_util",
+]
+
+[[package]]
+name = "yak_external_cells_bundled"
+version = "0.1.0"
+dependencies = [
+ "walkdir",
+]
+
+[[package]]
+name = "yak_file_watcher"
+version = "0.1.0"
+dependencies = [
+ "allocative",
+ "assert_matches",
+ "async-trait",
+ "blake3",
+ "compact_str",
+ "dice",
+ "dupe",
+ "futures 0.3.34",
+ "gazebo",
+ "notify",
+ "serde",
+ "starlark_map",
+ "tempfile",
+ "tokio",
+ "tracing",
+ "watchman_client",
+ "yak_common",
+ "yak_core",
+ "yak_data",
+ "yak_error",
+ "yak_events",
+ "yak_fs",
+ "yak_hash",
+ "yak_util",
+]
+
+[[package]]
+name = "yak_forkserver"
+version = "0.1.0"
+dependencies = [
+ "allocative",
+ "arc-swap",
+ "async-trait",
+ "dupe",
+ "futures 0.3.34",
+ "libc",
+ "nix 0.31.3",
+ "rand 0.10.3",
+ "tokio",
+ "tokio-stream",
+ "tonic",
+ "yak_common",
+ "yak_core",
+ "yak_data",
+ "yak_embedded_section",
+ "yak_error",
+ "yak_execute_local",
+ "yak_forkserver_proto",
+ "yak_fs",
+ "yak_grpc",
+ "yak_resource_control",
+ "yak_util",
+]
+
+[[package]]
+name = "yak_forkserver_proto"
+version = "0.1.0"
+dependencies = [
+ "derive_more 2.1.1",
+ "gazebo",
+ "prost",
+ "prost-types",
+ "tonic",
+ "tonic-prost",
+ "yak_data",
+ "yak_protoc_dev",
+]
+
+[[package]]
+name = "yak_fs"
+version = "0.1.0"
+dependencies = [
+ "allocative",
+ "assert_matches",
+ "common-path",
+ "compact_str",
+ "derive_more 2.1.1",
+ "dunce",
+ "dupe",
+ "gazebo",
+ "libc",
+ "memchr",
+ "nix 0.31.3",
+ "pagable",
+ "ref-cast",
+ "serde",
+ "serde_json",
+ "smallvec",
+ "strong_hash",
+ "tempfile",
+ "tokio",
+ "windows-sys 0.61.2",
+ "yak_env",
+ "yak_error",
+ "yak_hash",
+ "yak_util",
+]
+
+[[package]]
+name = "yak_grpc"
+version = "0.1.0"
+dependencies = [
+ "futures 0.3.34",
+ "hyper",
+ "hyper-util",
+ "pin-project",
+ "tokio",
+ "tonic",
+ "tower",
+ "yak_error",
+]
+
+[[package]]
+name = "yak_hash"
+version = "0.1.0"
+dependencies = [
+ "dashmap 6.2.1",
+ "dupe",
+ "fxhash",
+ "indexmap",
+]
+
+[[package]]
+name = "yak_host_sharing_proto"
+version = "0.1.0"
+dependencies = [
+ "allocative",
+ "prost",
+ "serde",
+ "tonic",
+ "tonic-prost",
+ "yak_protoc_dev",
+]
+
+[[package]]
+name = "yak_http"
+version = "0.1.0"
+dependencies = [
+ "allocative",
+ "bytes",
+ "dupe",
+ "futures 0.3.34",
+ "http",
+ "http-body-util",
+ "httptest",
+ "hyper",
+ "hyper-http-proxy",
+ "hyper-rustls",
+ "hyper-timeout",
+ "hyper-util",
+ "ipnetwork",
+ "pin-project",
+ "rustls",
+ "tokio",
+ "tokio-rustls",
+ "tokio-util 0.7.19",
+ "tower-service",
+ "tracing",
+ "yak_certs",
+ "yak_error",
+]
+
+[[package]]
+name = "yak_install_proto"
+version = "0.1.0"
+dependencies = [
+ "prost",
+ "tonic",
+ "tonic-prost",
+ "yak_protoc_dev",
+]
+
+[[package]]
+name = "yak_interpreter"
+version = "0.1.0"
+dependencies = [
+ "allocative",
+ "async-trait",
+ "derivative",
+ "derive_more 2.1.1",
+ "dice",
+ "dice_futures",
+ "dupe",
+ "either",
+ "fancy-regex 0.19.2",
+ "futures 0.3.34",
+ "gazebo",
+ "itertools 0.15.0",
+ "pagable",
+ "plist",
+ "ref-cast",
+ "regex",
+ "serde",
+ "starlark",
+ "starlark_map",
+ "strong_hash",
+ "tempfile",
+ "tokio",
+ "triomphe",
+ "yak_common",
+ "yak_core",
+ "yak_error",
+ "yak_events",
+ "yak_fs",
+ "yak_hash",
+ "yak_util",
+]
+
+[[package]]
+name = "yak_interpreter_for_build"
+version = "0.1.0"
+dependencies = [
+ "allocative",
+ "async-trait",
+ "bumpalo",
+ "cmp_any",
+ "derivative",
+ "derive_more 2.1.1",
+ "dice",
+ "dice_futures",
+ "dupe",
+ "either",
+ "fancy-regex 0.19.2",
+ "futures 0.3.34",
+ "gazebo",
+ "glob",
+ "hashbrown 0.17.1",
+ "hex",
+ "indoc",
+ "itertools 0.15.0",
+ "maplit",
+ "pagable",
+ "quick-xml 0.42.0",
+ "serde",
+ "serde_json",
+ "sha1",
+ "sha2",
+ "smallvec",
+ "starlark",
+ "starlark_map",
+ "toml",
+ "tracing",
+ "twox-hash",
+ "yak_common",
+ "yak_core",
+ "yak_data",
+ "yak_error",
+ "yak_event_observer",
+ "yak_events",
+ "yak_fs",
+ "yak_hash",
+ "yak_interpreter",
+ "yak_node",
+ "yak_query",
+ "yak_query_parser",
+ "yak_util",
+]
+
+[[package]]
+name = "yak_interpreter_for_build_tests"
+version = "0.1.0"
+dependencies = [
+ "ctor",
+ "dice",
+ "dupe",
+ "futures 0.3.34",
+ "gazebo",
+ "indoc",
+ "serde_json",
+ "starlark",
+ "tokio",
+ "yak_build_api",
+ "yak_common",
+ "yak_core",
+ "yak_error",
+ "yak_events",
+ "yak_interpreter",
+ "yak_interpreter_for_build",
+ "yak_node",
+ "yak_transition",
+ "yak_util",
+]
+
+[[package]]
+name = "yak_log_common"
+version = "0.1.0"
+dependencies = [
+ "clap",
+ "derive_more 2.1.1",
+ "dupe",
+ "flate2",
+ "futures 0.3.34",
+ "serde",
+ "serde_json",
+ "tokio-stream",
+ "yak_client_ctx",
+ "yak_common",
+ "yak_data",
+ "yak_error",
+ "yak_event_log",
+ "yak_event_observer",
+ "yak_events",
+ "yak_fs",
+ "yak_hash",
+]
+
+[[package]]
+name = "yak_miniperf"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "bincode",
+ "perf-event",
+ "smallvec",
+ "thiserror 2.0.20",
+ "yak_miniperf_proto",
+]
+
+[[package]]
+name = "yak_miniperf_proto"
+version = "0.1.0"
+dependencies = [
+ "bincode",
+ "dupe",
+ "serde",
+]
+
+[[package]]
+name = "yak_node"
+version = "0.1.0"
+dependencies = [
+ "allocative",
+ "async-trait",
+ "cmp_any",
+ "derive_more 2.1.1",
+ "dice",
+ "dice_futures",
+ "display_container",
+ "dupe",
+ "either",
+ "futures 0.3.34",
+ "gazebo",
+ "itertools 0.15.0",
+ "memchr",
+ "mini_vec",
+ "pagable",
+ "ref-cast",
+ "serde",
+ "serde_json",
+ "smallvec",
+ "starlark",
+ "starlark_map",
+ "static_interner",
+ "strong_hash",
+ "strsim",
+ "tokio",
+ "triomphe",
+ "yak_common",
+ "yak_core",
+ "yak_data",
+ "yak_error",
+ "yak_events",
+ "yak_fs",
+ "yak_hash",
+ "yak_query",
+ "yak_query_parser",
+ "yak_util",
+]
+
+[[package]]
+name = "yak_node_tests"
+version = "0.1.0"
+dependencies = [
+ "dupe",
+ "yak_core",
+ "yak_error",
+ "yak_fs",
+ "yak_node",
+ "yak_util",
+]
+
+[[package]]
+name = "yak_offline_archive"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "tempfile",
+ "yak_core",
+ "yak_error",
+ "yak_fs",
+ "yak_util",
+]
+
+[[package]]
+name = "yak_profile"
+version = "0.1.0"
+dependencies = [
+ "inferno",
+ "starlark",
+ "yak_cli_proto",
+ "yak_core",
+ "yak_error",
+ "yak_fs",
+ "yak_interpreter",
+]
+
+[[package]]
+name = "yak_proto_serde"
+version = "0.1.0"
+dependencies = [
+ "prost-types",
+ "serde",
+]
+
+[[package]]
+name = "yak_protoc_dev"
+version = "0.1.0"
+dependencies = [
+ "dunce",
+ "protoc-bin-vendored",
+ "tonic-prost-build",
+]
+
+[[package]]
+name = "yak_query"
+version = "0.1.0"
+dependencies = [
+ "allocative",
+ "async-trait",
+ "derive_more 2.1.1",
+ "display_container",
+ "dupe",
+ "enum-iterator",
+ "fancy-regex 0.19.2",
+ "futures 0.3.34",
+ "gazebo",
+ "indexmap",
+ "indoc",
+ "itertools 0.15.0",
+ "pagable",
+ "ref-cast",
+ "starlark_map",
+ "tokio",
+ "tracing",
+ "yak_core",
+ "yak_error",
+ "yak_hash",
+ "yak_query_derive",
+ "yak_query_parser",
+ "yak_util",
+]
+
+[[package]]
+name = "yak_query_derive"
+version = "0.1.0"
+dependencies = [
+ "itertools 0.15.0",
+ "proc-macro2",
+ "quote",
+ "syn 3.0.6",
+ "textwrap",
+]
+
+[[package]]
+name = "yak_query_impls"
+version = "0.1.0"
+dependencies = [
+ "assert_matches",
+ "async-trait",
+ "dashmap 6.2.1",
+ "derive_more 2.1.1",
+ "dice",
+ "dupe",
+ "either",
+ "futures 0.3.34",
+ "gazebo",
+ "itertools 0.15.0",
+ "ref-cast",
+ "tokio",
+ "tracing",
+ "yak_artifact",
+ "yak_build_api",
+ "yak_common",
+ "yak_core",
+ "yak_error",
+ "yak_events",
+ "yak_fs",
+ "yak_hash",
+ "yak_interpreter",
+ "yak_node",
+ "yak_query",
+ "yak_query_parser",
+ "yak_util",
+]
+
+[[package]]
+name = "yak_query_parser"
+version = "0.1.0"
+dependencies = [
+ "derive_more 2.1.1",
+ "dupe",
+ "enum-map",
+ "gazebo",
+ "nom 8.0.0",
+ "nom-language",
+ "yak_error",
+ "yak_util",
+]
+
+[[package]]
+name = "yak_re_configuration"
+version = "0.1.0"
+dependencies = [
+ "allocative",
+ "yak_common",
+ "yak_error",
+]
+
+[[package]]
+name = "yak_resource_control"
+version = "0.1.0"
+dependencies = [
+ "allocative",
+ "derive_more 2.1.1",
+ "dupe",
+ "futures 0.3.34",
+ "nix 0.31.3",
+ "ref-cast",
+ "tokio",
+ "tokio-util 0.7.19",
+ "yak_common",
+ "yak_core",
+ "yak_data",
+ "yak_error",
+ "yak_events",
+ "yak_fs",
+ "yak_hash",
+ "yak_util",
+ "yak_wrapper_common",
+]
+
+[[package]]
+name = "yak_server"
+version = "0.1.0"
+dependencies = [
+ "allocative",
+ "assert_matches",
+ "async-recursion",
+ "async-trait",
+ "bincode",
+ "constant_time_eq 0.6.0",
+ "crossbeam-channel",
+ "dice",
+ "dice_futures",
+ "dupe",
+ "flate2",
+ "futures 0.3.34",
+ "gazebo",
+ "host_sharing",
+ "indoc",
+ "inferno",
+ "itertools 0.15.0",
+ "jiff",
+ "libc",
+ "lsp-server",
+ "lsp-types",
+ "parking_lot 0.12.5",
+ "pin-project",
+ "prost",
+ "prost-types",
+ "psutil",
+ "rand 0.10.3",
+ "serde_json",
+ "shlex",
+ "starlark",
+ "starlark_lsp",
+ "sync_wrapper",
+ "tempfile",
+ "tokio",
+ "tokio-stream",
+ "tonic",
+ "tower-lsp-server",
+ "tracing",
+ "yak_analysis",
+ "yak_build_api",
+ "yak_build_signals",
+ "yak_certs",
+ "yak_cli_proto",
+ "yak_common",
+ "yak_configured",
+ "yak_core",
+ "yak_data",
+ "yak_directory",
+ "yak_error",
+ "yak_event_observer",
+ "yak_events",
+ "yak_execute",
+ "yak_execute_impl",
+ "yak_file_watcher",
+ "yak_forkserver",
+ "yak_fs",
+ "yak_grpc",
+ "yak_hash",
+ "yak_http",
+ "yak_interpreter",
+ "yak_interpreter_for_build",
+ "yak_node",
+ "yak_profile",
+ "yak_re_configuration",
+ "yak_resource_control",
+ "yak_server_ctx",
+ "yak_server_starlark_debug",
+ "yak_subscription_proto",
+ "yak_test",
+ "yak_util",
+ "yak_validation",
+ "yak_wrapper_common",
+]
+
+[[package]]
+name = "yak_server_commands"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "dice",
+ "dupe",
+ "futures 0.3.34",
+ "itertools 0.15.0",
+ "jiff",
+ "starlark_map",
+ "tokio",
+ "tokio-stream",
+ "tonic",
+ "tracing",
+ "yak_artifact",
+ "yak_build_api",
+ "yak_cli_proto",
+ "yak_common",
+ "yak_core",
+ "yak_data",
+ "yak_directory",
+ "yak_error",
+ "yak_events",
+ "yak_execute",
+ "yak_fs",
+ "yak_hash",
+ "yak_install_proto",
+ "yak_interpreter",
+ "yak_node",
+ "yak_query",
+ "yak_server_ctx",
+ "yak_util",
+]
+
+[[package]]
+name = "yak_server_ctx"
+version = "0.1.0"
+dependencies = [
+ "allocative",
+ "async-trait",
+ "dice",
+ "dice_futures",
+ "dupe",
+ "futures 0.3.34",
+ "gazebo",
+ "pin-project",
+ "tonic",
+ "tracing",
+ "yak_build_signals",
+ "yak_cli_proto",
+ "yak_common",
+ "yak_concurrency",
+ "yak_core",
+ "yak_data",
+ "yak_error",
+ "yak_events",
+ "yak_execute",
+ "yak_fs",
+ "yak_hash",
+ "yak_node",
+ "yak_util",
+ "yak_wrapper_common",
+]
+
+[[package]]
+name = "yak_server_starlark_debug"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "debugserver-types",
+ "derive_more 2.1.1",
+ "dupe",
+ "futures 0.3.34",
+ "itertools 0.15.0",
+ "serde",
+ "serde_json",
+ "starlark",
+ "tokio",
+ "tokio-stream",
+ "tracing",
+ "yak_cli_proto",
+ "yak_core",
+ "yak_data",
+ "yak_error",
+ "yak_events",
+ "yak_fs",
+ "yak_hash",
+ "yak_interpreter",
+ "yak_server_ctx",
+ "yak_util",
+]
+
+[[package]]
+name = "yak_sketches"
+version = "0.1.0"
+dependencies = [
+ "base64 0.23.1",
+ "setsketch",
+]
+
+[[package]]
+name = "yak_subscription_proto"
+version = "0.1.0"
+dependencies = [
+ "allocative",
+ "derive_more 2.1.1",
+ "prost",
+ "serde",
+ "tonic",
+ "tonic-prost",
+ "yak_protoc_dev",
+]
+
+[[package]]
+name = "yak_test"
+version = "0.1.0"
+dependencies = [
+ "allocative",
+ "async-trait",
+ "derive_more 2.1.1",
+ "dice",
+ "dice_futures",
+ "display_container",
+ "dupe",
+ "futures 0.3.34",
+ "host_sharing",
+ "itertools 0.15.0",
+ "libc",
+ "maplit",
+ "pagable",
+ "remote_execution",
+ "serde",
+ "serde_json",
+ "sorted_vector_map",
+ "tokio",
+ "tracing",
+ "yak_build_api",
+ "yak_build_signals",
+ "yak_cli_proto",
+ "yak_common",
+ "yak_core",
+ "yak_data",
+ "yak_downward_api",
+ "yak_error",
+ "yak_error_derive",
+ "yak_events",
+ "yak_execute",
+ "yak_execute_impl",
+ "yak_fs",
+ "yak_grpc",
+ "yak_hash",
+ "yak_interpreter",
+ "yak_interpreter_for_build",
+ "yak_node",
+ "yak_resource_control",
+ "yak_server_ctx",
+ "yak_test_api",
+ "yak_util",
+]
+
+[[package]]
+name = "yak_test_api"
+version = "0.1.0"
+dependencies = [
+ "allocative",
+ "assert_matches",
+ "async-trait",
+ "derivative",
+ "derive_more 2.1.1",
+ "dupe",
+ "futures 0.3.34",
+ "gazebo",
+ "host_sharing",
+ "pagable",
+ "prost-types",
+ "sorted_vector_map",
+ "tokio",
+ "tonic",
+ "tower-layer",
+ "tower-service",
+ "tracing",
+ "yak_core",
+ "yak_data",
+ "yak_downward_api",
+ "yak_downward_api_proto",
+ "yak_error",
+ "yak_events",
+ "yak_fs",
+ "yak_grpc",
+ "yak_hash",
+ "yak_host_sharing_proto",
+ "yak_test_proto",
+]
+
+[[package]]
+name = "yak_test_proto"
+version = "0.1.0"
+dependencies = [
+ "prost",
+ "prost-types",
+ "tonic",
+ "tonic-prost",
+ "yak_data",
+ "yak_host_sharing_proto",
+ "yak_protoc_dev",
+]
+
+[[package]]
+name = "yak_test_runner"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "clap",
+ "futures 0.3.34",
+ "host_sharing",
+ "parking_lot 0.12.5",
+ "tokio",
+ "yak_error",
+ "yak_grpc",
+ "yak_test_api",
+]
+
+[[package]]
+name = "yak_transition"
+version = "0.1.0"
+dependencies = [
+ "allocative",
+ "async-trait",
+ "derive_more 2.1.1",
+ "dice",
+ "dice_futures",
+ "dupe",
+ "either",
+ "futures 0.3.34",
+ "gazebo",
+ "itertools 0.15.0",
+ "pagable",
+ "ref-cast",
+ "starlark",
+ "starlark_map",
+ "yak_build_api",
+ "yak_build_api_derive",
+ "yak_core",
+ "yak_error",
+ "yak_events",
+ "yak_hash",
+ "yak_interpreter",
+ "yak_node",
+]
+
+[[package]]
+name = "yak_util"
+version = "0.1.0"
+dependencies = [
+ "allocative",
+ "blake3",
+ "dice_futures",
+ "dupe",
+ "futures 0.3.34",
+ "gazebo",
+ "libc",
+ "mini_vec",
+ "pagable",
+ "perf-event",
+ "regex",
+ "serde",
+ "serde_json",
+ "starlark_map",
+ "strong_hash",
+ "sysinfo",
+ "three_billion_instructions",
+ "tokio",
+ "tracing",
+ "triomphe",
+ "windows-sys 0.61.2",
+ "yak_env",
+ "yak_error",
+ "yak_hash",
+ "yak_wrapper_common",
+]
+
+[[package]]
+name = "yak_validation"
+version = "0.1.0"
+dependencies = [
+ "allocative",
+ "async-trait",
+ "derivative",
+ "derive_more 2.1.1",
+ "dice",
+ "dice_error",
+ "dupe",
+ "pagable",
+ "serde",
+ "serde_json",
+ "yak_artifact",
+ "yak_build_api",
+ "yak_core",
+ "yak_error",
+ "yak_execute",
+ "yak_fs",
+]
+
+[[package]]
+name = "yak_worker_proto"
+version = "0.1.0"
+dependencies = [
+ "prost",
+ "tonic",
+ "tonic-prost",
+ "yak_protoc_dev",
+]
+
+[[package]]
+name = "yak_wrapper_common"
+version = "0.1.0"
+dependencies = [
+ "allocative",
+ "derive_more 2.1.1",
+ "dirs",
+ "dupe",
+ "futures 0.3.34",
+ "nix 0.31.3",
+ "serde",
+ "serde_json",
+ "sysinfo",
+ "tempfile",
+ "tokio",
+ "uuid",
+ "windows-sys 0.61.2",
+ "yak_error",
+ "yak_hash",
 ]
 
 [[package]]

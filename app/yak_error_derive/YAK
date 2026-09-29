@@ -1,0 +1,14 @@
+load("//build_defs:rust.bzl", "rust_library")
+
+rust_library(
+    name = "yak_error_derive",
+    srcs = glob(
+        ["src/**/*.rs"],
+    ),
+    proc_macro = True,
+    deps = [
+        "//third-party/rust:proc-macro2",
+        "//third-party/rust:quote",
+        "//third-party/rust:syn",
+    ],
+)

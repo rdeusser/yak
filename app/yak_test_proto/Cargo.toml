@@ -1,0 +1,20 @@
+[package]
+name = "yak_test_proto"
+version.workspace = true
+edition.workspace = true
+repository.workspace = true
+license.workspace = true
+
+[dependencies]
+prost.workspace = true
+prost-types.workspace = true
+tonic.workspace = true
+tonic-prost.workspace = true
+yak_data.workspace = true
+yak_host_sharing_proto.workspace = true
+
+[build-dependencies]
+yak_protoc_dev.workspace = true
+
+[lints]
+workspace = true

@@ -1,0 +1,18 @@
+[package]
+name = "yak_profile"
+version.workspace = true
+edition.workspace = true
+repository.workspace = true
+license.workspace = true
+
+[dependencies]
+inferno.workspace = true
+starlark.workspace = true
+yak_cli_proto.workspace = true
+yak_core.workspace = true
+yak_error.workspace = true
+yak_fs.workspace = true
+yak_interpreter.workspace = true
+
+[lints]
+workspace = true

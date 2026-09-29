@@ -1,0 +1,46 @@
+[package]
+name = "yak_execute_local"
+version.workspace = true
+edition.workspace = true
+repository.workspace = true
+license.workspace = true
+
+[dependencies]
+async-trait.workspace = true
+bincode.workspace = true
+bytes.workspace = true
+futures.workspace = true
+libc.workspace = true
+pin-project.workspace = true
+take_mut.workspace = true
+tokio.workspace = true
+tokio-util.workspace = true
+tracing.workspace = true
+yak_common.workspace = true
+yak_data.workspace = true
+yak_error.workspace = true
+yak_fs.workspace = true
+yak_miniperf_proto.workspace = true
+yak_resource_control.workspace = true
+
+[dev-dependencies]
+assert_matches.workspace = true
+dupe.workspace = true
+sysinfo.workspace = true
+tempfile.workspace = true
+tokio-stream.workspace = true
+yak_util.workspace = true
+
+[target.'cfg(target_os = "linux")'.dependencies]
+nix.workspace = true
+
+[target.'cfg(target_os = "macos")'.dependencies]
+nix.workspace = true
+
+[target.'cfg(target_os = "windows")'.dependencies]
+dupe.workspace = true
+windows-sys.workspace = true
+yak_wrapper_common.workspace = true
+
+[lints]
+workspace = true

@@ -1,0 +1,19 @@
+[package]
+name = "yak_query_parser"
+version.workspace = true
+edition.workspace = true
+repository.workspace = true
+license.workspace = true
+
+[dependencies]
+derive_more.workspace = true
+dupe.workspace = true
+enum-map.workspace = true
+gazebo.workspace = true
+nom.workspace = true
+nom-language.workspace = true
+yak_error.workspace = true
+yak_util.workspace = true
+
+[lints]
+workspace = true

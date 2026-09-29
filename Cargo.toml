@@ -44,103 +44,102 @@ inherits = "release"
 members = [
   "allocative/allocative",
   "allocative/allocative_derive",
-  "app/buck2",
-  "app/buck2_action_impl",
-  "app/buck2_action_impl_tests",
-  "app/buck2_action_metadata_proto",
-  "app/buck2_action_parallelism",
-  "app/buck2_analysis",
-  "app/buck2_anon_target",
-  "app/buck2_artifact",
-  "app/buck2_build_api",
-  "app/buck2_build_api_derive",
-  "app/buck2_build_api_tests",
-  "app/buck2_build_info",
-  "app/buck2_build_signals",
-  "app/buck2_build_signals_impl",
-  "app/buck2_bxl",
-  "app/buck2_certs",
-  "app/buck2_cfg_constructor",
-  "app/buck2_cli_proto",
-  "app/buck2_client",
-  "app/buck2_client_ctx",
-  "app/buck2_cmd_audit_client",
-  "app/buck2_cmd_audit_server",
-  "app/buck2_cmd_completion_client",
-  "app/buck2_cmd_debug_client",
-  "app/buck2_cmd_docs_client",
-  "app/buck2_cmd_docs_server",
-  "app/buck2_cmd_log_client",
-  "app/buck2_cmd_query_server",
-  "app/buck2_cmd_starlark_client",
-  "app/buck2_cmd_starlark_server",
-  "app/buck2_cmd_targets_server",
-  "app/buck2_common",
-  "app/buck2_concurrency",
-  "app/buck2_configured",
-  "app/buck2_core",
-  "app/buck2_critical_path",
-  "app/buck2_daemon",
-  "app/buck2_data",
-  "app/buck2_directory",
-  "app/buck2_downward_api",
-  "app/buck2_downward_api_proto",
-  "app/buck2_embedded_section",
-  "app/buck2_env",
-  "app/buck2_error",
-  "app/buck2_error_derive",
-  "app/buck2_error_tests",
-  "app/buck2_errorformat",
-  "app/buck2_event_log",
-  "app/buck2_event_observer",
-  "app/buck2_events",
-  "app/buck2_execute",
-  "app/buck2_execute_impl",
-  "app/buck2_execute_local",
-  "app/buck2_external_cells",
-  "app/buck2_external_cells_bundled",
-  "app/buck2_file_watcher",
-  "app/buck2_forkserver",
-  "app/buck2_forkserver_proto",
-  "app/buck2_fs",
-  "app/buck2_grpc",
-  "app/buck2_hash",
-  "app/buck2_host_sharing_proto",
-  "app/buck2_http",
-  "app/buck2_install_proto",
-  "app/buck2_interpreter",
-  "app/buck2_interpreter_for_build",
-  "app/buck2_interpreter_for_build_tests",
-  "app/buck2_log_common",
-  "app/buck2_miniperf",
-  "app/buck2_miniperf_proto",
-  "app/buck2_node",
-  "app/buck2_node_tests",
-  "app/buck2_offline_archive",
-  "app/buck2_profile",
-  "app/buck2_proto_serde",
-  "app/buck2_protoc_dev",
-  "app/buck2_query",
-  "app/buck2_query_derive",
-  "app/buck2_query_impls",
-  "app/buck2_query_parser",
-  "app/buck2_re_configuration",
-  "app/buck2_resource_control",
-  "app/buck2_server",
-  "app/buck2_server_commands",
-  "app/buck2_server_ctx",
-  "app/buck2_server_starlark_debug",
-  "app/buck2_subscription_proto",
-  "app/buck2_test",
-  "app/buck2_test_api",
-  "app/buck2_test_proto",
-  "app/buck2_test_runner",
-  "app/buck2_transition",
-  "app/buck2_util",
-  "app/buck2_validation",
-  "app/buck2_worker_proto",
-  "app/buck2_wrapper_common",
-  "buck2_sketches",
+  "app/yak",
+  "app/yak_action_impl",
+  "app/yak_action_impl_tests",
+  "app/yak_action_metadata_proto",
+  "app/yak_action_parallelism",
+  "app/yak_analysis",
+  "app/yak_anon_target",
+  "app/yak_artifact",
+  "app/yak_build_api",
+  "app/yak_build_api_derive",
+  "app/yak_build_api_tests",
+  "app/yak_build_info",
+  "app/yak_build_signals",
+  "app/yak_build_signals_impl",
+  "app/yak_bxl",
+  "app/yak_certs",
+  "app/yak_cfg_constructor",
+  "app/yak_cli_proto",
+  "app/yak_client",
+  "app/yak_client_ctx",
+  "app/yak_cmd_audit_client",
+  "app/yak_cmd_audit_server",
+  "app/yak_cmd_completion_client",
+  "app/yak_cmd_debug_client",
+  "app/yak_cmd_docs_client",
+  "app/yak_cmd_docs_server",
+  "app/yak_cmd_log_client",
+  "app/yak_cmd_query_server",
+  "app/yak_cmd_starlark_client",
+  "app/yak_cmd_starlark_server",
+  "app/yak_cmd_targets_server",
+  "app/yak_common",
+  "app/yak_concurrency",
+  "app/yak_configured",
+  "app/yak_core",
+  "app/yak_critical_path",
+  "app/yak_daemon",
+  "app/yak_data",
+  "app/yak_directory",
+  "app/yak_downward_api",
+  "app/yak_downward_api_proto",
+  "app/yak_embedded_section",
+  "app/yak_env",
+  "app/yak_error",
+  "app/yak_error_derive",
+  "app/yak_error_tests",
+  "app/yak_errorformat",
+  "app/yak_event_log",
+  "app/yak_event_observer",
+  "app/yak_events",
+  "app/yak_execute",
+  "app/yak_execute_impl",
+  "app/yak_execute_local",
+  "app/yak_external_cells",
+  "app/yak_external_cells_bundled",
+  "app/yak_file_watcher",
+  "app/yak_forkserver",
+  "app/yak_forkserver_proto",
+  "app/yak_fs",
+  "app/yak_grpc",
+  "app/yak_hash",
+  "app/yak_host_sharing_proto",
+  "app/yak_http",
+  "app/yak_install_proto",
+  "app/yak_interpreter",
+  "app/yak_interpreter_for_build",
+  "app/yak_interpreter_for_build_tests",
+  "app/yak_log_common",
+  "app/yak_miniperf",
+  "app/yak_miniperf_proto",
+  "app/yak_node",
+  "app/yak_node_tests",
+  "app/yak_offline_archive",
+  "app/yak_profile",
+  "app/yak_proto_serde",
+  "app/yak_protoc_dev",
+  "app/yak_query",
+  "app/yak_query_derive",
+  "app/yak_query_impls",
+  "app/yak_query_parser",
+  "app/yak_re_configuration",
+  "app/yak_resource_control",
+  "app/yak_server",
+  "app/yak_server_commands",
+  "app/yak_server_ctx",
+  "app/yak_server_starlark_debug",
+  "app/yak_subscription_proto",
+  "app/yak_test",
+  "app/yak_test_api",
+  "app/yak_test_proto",
+  "app/yak_test_runner",
+  "app/yak_transition",
+  "app/yak_util",
+  "app/yak_validation",
+  "app/yak_worker_proto",
+  "app/yak_wrapper_common",
   "dice/dice",
   "dice/dice_core",
   "dice/dice_error",
@@ -181,6 +180,7 @@ members = [
   "starlark-rust/starlark_map",
   "starlark-rust/starlark_syntax",
   "tools/starlark_fmt",
+  "yak_sketches",
 ]
 exclude = ["superconsole"]
 resolver = "2"
@@ -211,96 +211,6 @@ base64 = { version = "0.23.1", features = ["alloc"] }
 bincode = { version = "2", features = ["serde"] }
 bit-set = "0.11.1"
 blake3 = { version = "1.8", features = ["mmap", "rayon", "traits-preview"] }
-buck2_action_impl = { path = "app/buck2_action_impl" }
-buck2_action_metadata_proto = { path = "app/buck2_action_metadata_proto" }
-buck2_action_parallelism = { path = "app/buck2_action_parallelism" }
-buck2_analysis = { path = "app/buck2_analysis" }
-buck2_anon_target = { path = "app/buck2_anon_target" }
-buck2_artifact = { path = "app/buck2_artifact" }
-buck2_build_api = { path = "app/buck2_build_api" }
-buck2_build_api_derive = { path = "app/buck2_build_api_derive" }
-buck2_build_info = { path = "app/buck2_build_info" }
-buck2_build_signals = { path = "app/buck2_build_signals" }
-buck2_build_signals_impl = { path = "app/buck2_build_signals_impl" }
-buck2_bxl = { path = "app/buck2_bxl" }
-buck2_certs = { path = "app/buck2_certs" }
-buck2_cfg_constructor = { path = "app/buck2_cfg_constructor" }
-buck2_cli_proto = { path = "app/buck2_cli_proto" }
-buck2_client = { path = "app/buck2_client" }
-buck2_client_ctx = { path = "app/buck2_client_ctx" }
-buck2_cmd_audit_client = { path = "app/buck2_cmd_audit_client" }
-buck2_cmd_audit_server = { path = "app/buck2_cmd_audit_server" }
-buck2_cmd_completion_client = { path = "app/buck2_cmd_completion_client" }
-buck2_cmd_debug_client = { path = "app/buck2_cmd_debug_client" }
-buck2_cmd_docs_client = { path = "app/buck2_cmd_docs_client" }
-buck2_cmd_docs_server = { path = "app/buck2_cmd_docs_server" }
-buck2_cmd_log_client = { path = "app/buck2_cmd_log_client" }
-buck2_cmd_query_server = { path = "app/buck2_cmd_query_server" }
-buck2_cmd_starlark_client = { path = "app/buck2_cmd_starlark_client" }
-buck2_cmd_starlark_server = { path = "app/buck2_cmd_starlark_server" }
-buck2_cmd_targets_server = { path = "app/buck2_cmd_targets_server" }
-buck2_common = { path = "app/buck2_common" }
-buck2_concurrency = { path = "app/buck2_concurrency" }
-buck2_configured = { path = "app/buck2_configured" }
-buck2_core = { path = "app/buck2_core" }
-buck2_critical_path = { path = "app/buck2_critical_path" }
-buck2_daemon = { path = "app/buck2_daemon" }
-buck2_data = { path = "app/buck2_data" }
-buck2_directory = { path = "app/buck2_directory" }
-buck2_downward_api = { path = "app/buck2_downward_api" }
-buck2_downward_api_proto = { path = "app/buck2_downward_api_proto" }
-buck2_embedded_section = { path = "app/buck2_embedded_section" }
-buck2_env = { path = "app/buck2_env" }
-buck2_error = { path = "app/buck2_error" }
-buck2_error_derive = { path = "app/buck2_error_derive" }
-buck2_errorformat = { path = "app/buck2_errorformat" }
-buck2_event_log = { path = "app/buck2_event_log" }
-buck2_event_observer = { path = "app/buck2_event_observer" }
-buck2_events = { path = "app/buck2_events" }
-buck2_execute = { path = "app/buck2_execute" }
-buck2_execute_impl = { path = "app/buck2_execute_impl" }
-buck2_execute_local = { path = "app/buck2_execute_local" }
-buck2_external_cells = { path = "app/buck2_external_cells" }
-buck2_external_cells_bundled = { path = "app/buck2_external_cells_bundled" }
-buck2_file_watcher = { path = "app/buck2_file_watcher" }
-buck2_forkserver = { path = "app/buck2_forkserver" }
-buck2_forkserver_proto = { path = "app/buck2_forkserver_proto" }
-buck2_fs = { path = "app/buck2_fs" }
-buck2_grpc = { path = "app/buck2_grpc" }
-buck2_hash = { path = "app/buck2_hash" }
-buck2_host_sharing_proto = { path = "app/buck2_host_sharing_proto" }
-buck2_http = { path = "app/buck2_http" }
-buck2_install_proto = { path = "app/buck2_install_proto" }
-buck2_interpreter = { path = "app/buck2_interpreter" }
-buck2_interpreter_for_build = { path = "app/buck2_interpreter_for_build" }
-buck2_log_common = { path = "app/buck2_log_common" }
-buck2_miniperf_proto = { path = "app/buck2_miniperf_proto" }
-buck2_node = { path = "app/buck2_node" }
-buck2_offline_archive = { path = "app/buck2_offline_archive" }
-buck2_profile = { path = "app/buck2_profile" }
-buck2_proto_serde = { path = "app/buck2_proto_serde" }
-buck2_protoc_dev = { path = "app/buck2_protoc_dev" }
-buck2_query = { path = "app/buck2_query" }
-buck2_query_derive = { path = "app/buck2_query_derive" }
-buck2_query_impls = { path = "app/buck2_query_impls" }
-buck2_query_parser = { path = "app/buck2_query_parser" }
-buck2_re_configuration = { path = "app/buck2_re_configuration" }
-buck2_resource_control = { path = "app/buck2_resource_control" }
-buck2_server = { path = "app/buck2_server" }
-buck2_server_commands = { path = "app/buck2_server_commands" }
-buck2_server_ctx = { path = "app/buck2_server_ctx" }
-buck2_server_starlark_debug = { path = "app/buck2_server_starlark_debug" }
-buck2_sketches = { path = "buck2_sketches" }
-buck2_subscription_proto = { path = "app/buck2_subscription_proto" }
-buck2_test = { path = "app/buck2_test" }
-buck2_test_api = { path = "app/buck2_test_api" }
-buck2_test_proto = { path = "app/buck2_test_proto" }
-buck2_test_runner = { path = "app/buck2_test_runner" }
-buck2_transition = { path = "app/buck2_transition" }
-buck2_util = { path = "app/buck2_util" }
-buck2_validation = { path = "app/buck2_validation" }
-buck2_worker_proto = { path = "app/buck2_worker_proto" }
-buck2_wrapper_common = { path = "app/buck2_wrapper_common" }
 bumpalo = { version = "3.20.3", features = ["allocator_api", "collections"] }
 bytes = { version = "1.12.1", features = ["serde"] }
 bytesize = "2.7.0"
@@ -508,6 +418,96 @@ watchman_client = "0.9"
 windows-sys = { version = "0.61.2", features = ["Win32_Foundation", "Win32_Globalization", "Win32_NetworkManagement_IpHelper", "Win32_NetworkManagement_Ndis", "Win32_NetworkManagement_WindowsFilteringPlatform", "Win32_Security", "Win32_Security_Authorization", "Win32_Security_Credentials", "Win32_Storage_FileSystem", "Win32_System_Console", "Win32_System_Environment", "Win32_System_IO", "Win32_System_JobObjects", "Win32_System_LibraryLoader", "Win32_System_Memory", "Win32_System_ProcessStatus", "Win32_System_Rpc", "Win32_System_SystemServices", "Win32_System_Threading", "Win32_UI_Shell"] }
 winver = "1"
 xattr = "1.6.1"
+yak_action_impl = { path = "app/yak_action_impl" }
+yak_action_metadata_proto = { path = "app/yak_action_metadata_proto" }
+yak_action_parallelism = { path = "app/yak_action_parallelism" }
+yak_analysis = { path = "app/yak_analysis" }
+yak_anon_target = { path = "app/yak_anon_target" }
+yak_artifact = { path = "app/yak_artifact" }
+yak_build_api = { path = "app/yak_build_api" }
+yak_build_api_derive = { path = "app/yak_build_api_derive" }
+yak_build_info = { path = "app/yak_build_info" }
+yak_build_signals = { path = "app/yak_build_signals" }
+yak_build_signals_impl = { path = "app/yak_build_signals_impl" }
+yak_bxl = { path = "app/yak_bxl" }
+yak_certs = { path = "app/yak_certs" }
+yak_cfg_constructor = { path = "app/yak_cfg_constructor" }
+yak_cli_proto = { path = "app/yak_cli_proto" }
+yak_client = { path = "app/yak_client" }
+yak_client_ctx = { path = "app/yak_client_ctx" }
+yak_cmd_audit_client = { path = "app/yak_cmd_audit_client" }
+yak_cmd_audit_server = { path = "app/yak_cmd_audit_server" }
+yak_cmd_completion_client = { path = "app/yak_cmd_completion_client" }
+yak_cmd_debug_client = { path = "app/yak_cmd_debug_client" }
+yak_cmd_docs_client = { path = "app/yak_cmd_docs_client" }
+yak_cmd_docs_server = { path = "app/yak_cmd_docs_server" }
+yak_cmd_log_client = { path = "app/yak_cmd_log_client" }
+yak_cmd_query_server = { path = "app/yak_cmd_query_server" }
+yak_cmd_starlark_client = { path = "app/yak_cmd_starlark_client" }
+yak_cmd_starlark_server = { path = "app/yak_cmd_starlark_server" }
+yak_cmd_targets_server = { path = "app/yak_cmd_targets_server" }
+yak_common = { path = "app/yak_common" }
+yak_concurrency = { path = "app/yak_concurrency" }
+yak_configured = { path = "app/yak_configured" }
+yak_core = { path = "app/yak_core" }
+yak_critical_path = { path = "app/yak_critical_path" }
+yak_daemon = { path = "app/yak_daemon" }
+yak_data = { path = "app/yak_data" }
+yak_directory = { path = "app/yak_directory" }
+yak_downward_api = { path = "app/yak_downward_api" }
+yak_downward_api_proto = { path = "app/yak_downward_api_proto" }
+yak_embedded_section = { path = "app/yak_embedded_section" }
+yak_env = { path = "app/yak_env" }
+yak_error = { path = "app/yak_error" }
+yak_error_derive = { path = "app/yak_error_derive" }
+yak_errorformat = { path = "app/yak_errorformat" }
+yak_event_log = { path = "app/yak_event_log" }
+yak_event_observer = { path = "app/yak_event_observer" }
+yak_events = { path = "app/yak_events" }
+yak_execute = { path = "app/yak_execute" }
+yak_execute_impl = { path = "app/yak_execute_impl" }
+yak_execute_local = { path = "app/yak_execute_local" }
+yak_external_cells = { path = "app/yak_external_cells" }
+yak_external_cells_bundled = { path = "app/yak_external_cells_bundled" }
+yak_file_watcher = { path = "app/yak_file_watcher" }
+yak_forkserver = { path = "app/yak_forkserver" }
+yak_forkserver_proto = { path = "app/yak_forkserver_proto" }
+yak_fs = { path = "app/yak_fs" }
+yak_grpc = { path = "app/yak_grpc" }
+yak_hash = { path = "app/yak_hash" }
+yak_host_sharing_proto = { path = "app/yak_host_sharing_proto" }
+yak_http = { path = "app/yak_http" }
+yak_install_proto = { path = "app/yak_install_proto" }
+yak_interpreter = { path = "app/yak_interpreter" }
+yak_interpreter_for_build = { path = "app/yak_interpreter_for_build" }
+yak_log_common = { path = "app/yak_log_common" }
+yak_miniperf_proto = { path = "app/yak_miniperf_proto" }
+yak_node = { path = "app/yak_node" }
+yak_offline_archive = { path = "app/yak_offline_archive" }
+yak_profile = { path = "app/yak_profile" }
+yak_proto_serde = { path = "app/yak_proto_serde" }
+yak_protoc_dev = { path = "app/yak_protoc_dev" }
+yak_query = { path = "app/yak_query" }
+yak_query_derive = { path = "app/yak_query_derive" }
+yak_query_impls = { path = "app/yak_query_impls" }
+yak_query_parser = { path = "app/yak_query_parser" }
+yak_re_configuration = { path = "app/yak_re_configuration" }
+yak_resource_control = { path = "app/yak_resource_control" }
+yak_server = { path = "app/yak_server" }
+yak_server_commands = { path = "app/yak_server_commands" }
+yak_server_ctx = { path = "app/yak_server_ctx" }
+yak_server_starlark_debug = { path = "app/yak_server_starlark_debug" }
+yak_sketches = { path = "yak_sketches" }
+yak_subscription_proto = { path = "app/yak_subscription_proto" }
+yak_test = { path = "app/yak_test" }
+yak_test_api = { path = "app/yak_test_api" }
+yak_test_proto = { path = "app/yak_test_proto" }
+yak_test_runner = { path = "app/yak_test_runner" }
+yak_transition = { path = "app/yak_transition" }
+yak_util = { path = "app/yak_util" }
+yak_validation = { path = "app/yak_validation" }
+yak_worker_proto = { path = "app/yak_worker_proto" }
+yak_wrapper_common = { path = "app/yak_wrapper_common" }
 zstd = { version = "0.14.0", features = ["experimental", "zstdmt"] }
 
 [workspace.lints.clippy]
