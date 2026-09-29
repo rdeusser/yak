@@ -380,7 +380,7 @@ impl PersistedDepFileStore {
         // The thread exits when the last sender is dropped, i.e. when the store is dropped. The
         // daemon's store lives in a process-global `LateBinding`, so there it runs until the process
         // exits; the drop path is what lets tests reclaim the thread.
-        thread_spawn("buck2-dep-file-db", move || {
+        thread_spawn("yak-dep-file-db", move || {
             for write in receiver.iter() {
                 let started = Instant::now();
                 let kind = write.with_context(|operation| apply_write(&writer_db, operation));

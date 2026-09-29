@@ -12,7 +12,7 @@
 //!
 //! While this format is provisional and subject to change, `rust-project` and Rusty
 //! take a necessary dependency on these definitions to provide IDE functionality to
-//! buck-based projects. For additional details, see rust-analyzer's [documentation].
+//! yak-based projects. For additional details, see rust-analyzer's [documentation].
 //!
 //! [documentation]: https://rust-analyzer.github.io/book/non_cargo_based_projects.html
 

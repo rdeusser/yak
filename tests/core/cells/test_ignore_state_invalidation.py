@@ -58,21 +58,21 @@ async def check_config_is_different(buck: Buck) -> None:
 
 @buck_test()
 async def test_ignore_state_invalidation_with_re_override_in_arg(buck: Buck) -> None:
-    # Add arg to switch to buck2-user
+    # Add arg to switch to yak-user
     await buck.build(
         "root//:simple",
         "--config",
-        "yak_re_client.override_use_case=buck2-user",
+        "yak_re_client.override_use_case=yak-user",
     )
-    # No arg, default is buck2-default
+    # No arg, default is yak-default
     await buck.build("root//:simple")
     await check_dice_equality(buck)
     await check_config_is_the_same(buck)
-    # Add arg to switch to buck2-user again
+    # Add arg to switch to yak-user again
     await buck.build(
         "root//:simple",
         "--config",
-        "yak_re_client.override_use_case=buck2-user",
+        "yak_re_client.override_use_case=yak-user",
     )
     await check_dice_equality(buck)
     await check_config_is_the_same(buck)
@@ -80,18 +80,18 @@ async def test_ignore_state_invalidation_with_re_override_in_arg(buck: Buck) -> 
 
 @buck_test()
 async def test_ignore_state_invalidation_with_re_override_in_config(buck: Buck) -> None:
-    # Default is buck2-default
+    # Default is yak-default
     await buck.build("root//:simple")
-    # Add config to switch to buck2-user
+    # Add config to switch to yak-user
     with open(buck.cwd / ".yakconfig.local", "w") as f:
         f.write("[yak_re_client]\n")
-        f.write("override_use_case = buck2-user\n")
+        f.write("override_use_case = yak-user\n")
     await buck.build("root//:simple")
     await check_config_is_different(buck)
-    # Add config to return to buck2-default
+    # Add config to return to yak-default
     with open(buck.cwd / ".yakconfig.local", "w") as f:
         f.write("[yak_re_client]\n")
-        f.write("override_use_case = buck2-default\n")
+        f.write("override_use_case = yak-default\n")
     await buck.build("root//:simple")
     await check_config_is_different(buck)
 
@@ -100,19 +100,19 @@ async def test_ignore_state_invalidation_with_re_override_in_config(buck: Buck) 
 async def test_ignore_state_invalidation_with_re_override_in_external_config(
     buck: Buck,
 ) -> None:
-    # Default is buck2-default
+    # Default is yak-default
     await buck.build("root//:simple")
-    # Add config to switch to buck2-user
+    # Add config to switch to yak-user
     with tempfile.NamedTemporaryFile("w", delete=False) as f:
         f.write("[yak_re_client]\n")
-        f.write("override_use_case = buck2-user\n")
+        f.write("override_use_case = yak-user\n")
         f.close()
         await buck.build("root//:simple", "--config-file", f.name)
     await check_config_is_different(buck)
-    # Add config to return to buck2-default
+    # Add config to return to yak-default
     with tempfile.NamedTemporaryFile("w", delete=False) as f:
         f.write("[yak_re_client]\n")
-        f.write("override_use_case = buck2-default\n")
+        f.write("override_use_case = yak-default\n")
         f.close()
         await buck.build("root//:simple", "--config-file", f.name)
     await check_config_is_different(buck)
@@ -126,21 +126,21 @@ async def test_ignore_state_invalidation_with_re_override_in_external_config_sou
         env = os.environ.copy()
         env["YAK_TEST_EXTRA_EXTERNAL_CONFIG"] = temp.name
 
-        # Default is buck2-default
+        # Default is yak-default
         await buck.build("root//:simple", env=env)
 
-        # Add config to switch to buck2-user
+        # Add config to switch to yak-user
         temp.write("[yak_re_client]\n")
-        temp.write("override_use_case = buck2-user\n")
+        temp.write("override_use_case = yak-user\n")
         temp.flush()
         await buck.build("root//:simple", env=env)
         await check_config_is_different(buck)
 
-        # Add config to return to buck2-default
+        # Add config to return to yak-default
         temp.seek(0)
         temp.truncate()
         temp.write("[yak_re_client]\n")
-        temp.write("override_use_case = buck2-default\n")
+        temp.write("override_use_case = yak-default\n")
         temp.flush()
         await buck.build("root//:simple", env=env)
         await check_dice_equality(buck)

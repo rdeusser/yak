@@ -301,7 +301,7 @@ impl BxlContextCoreData {
             self.cell_alias_resolver(),
             self.cell_resolver(),
             // NOTE(nga): we pass cell root as working directory here,
-            //   which is inconsistent with the rest of buck2:
+            //   which is inconsistent with the rest of yak:
             //   The same query `owner(foo.h)` is resolved using
             //   current directory in `yak query`, but relative to cell root in BXL.
             self.cell_root_abs(),

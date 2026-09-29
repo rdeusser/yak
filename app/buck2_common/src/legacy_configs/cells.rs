@@ -348,8 +348,6 @@ impl BuckConfigBasedCells {
 
         // `cells` is preferred over `repositories` since it's more clear, however it's unlikely
         // that we'll ever remove `repositories` since that would break existing projects.
-        //
-        // Note that `cells` is buck2-only
         let repositories = root_config
             .get_section("cells")
             .or_else(|| root_config.get_section("repositories"));

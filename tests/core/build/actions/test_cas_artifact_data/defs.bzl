@@ -13,7 +13,7 @@ def _cas_artifact_out_of_range_expiration_impl(ctx):
         # SHA-256 of the empty file, which matches the default digest algorithm.
         # yak parses the digest before the timestamp, so it must be valid.
         "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855:0",
-        "buck2-testing",
+        "yak-testing",
         expires_after_timestamp = 1 << 62,
     )
     return [DefaultInfo(default_output = out)]

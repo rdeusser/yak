@@ -378,7 +378,7 @@ impl CommandKind {
         }
         thread::scope(|scope| {
             // Spawn a thread to have stack size independent on linker/environment.
-            match thread_spawn_scoped("buck2-main", scope, move || {
+            match thread_spawn_scoped("yak-main", scope, move || {
                 self.exec_no_daemon(
                     common_opts,
                     process,

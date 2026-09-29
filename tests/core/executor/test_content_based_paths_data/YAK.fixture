@@ -116,7 +116,7 @@ cas_artifact_with_content_based_path(
     # The SHA-256 digest of the empty file, which yak can materialize without
     # reading it from the CAS.
     digest = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855:0",
-    use_case = "buck2-testing",
+    use_case = "yak-testing",
     expires_after_timestamp = 0,
 )
 

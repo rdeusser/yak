@@ -850,7 +850,7 @@ impl<T: IoHandler + Allocative> DeferredMaterializerAccessor<T> {
             }
         };
 
-        let command_thread = thread_spawn("buck2-dm", {
+        let command_thread = thread_spawn("yak-dm", {
             move || {
                 let rt = tokio::runtime::Builder::new_current_thread()
                     .enable_all()

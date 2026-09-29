@@ -106,7 +106,7 @@ cas_artifact = rule(
         "expires_after_timestamp": attrs.int(default = 0),
         "is_directory": attrs.bool(default = False),
         "is_tree": attrs.bool(default = False),
-        "use_case": attrs.string(default = "buck2-testing"),
+        "use_case": attrs.string(default = "yak-testing"),
     },
 )
 

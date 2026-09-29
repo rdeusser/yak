@@ -73,7 +73,7 @@ pub async fn kill_command_impl(
                 crate::eprintln!("no yakd server running")?;
             } else {
                 crate::eprintln!(
-                    "unexpected error connecting to Buck2: {:#} \
+                    "unexpected error connecting to yak: {:#} \
                             (no yakd server running?)",
                     e
                 )?;

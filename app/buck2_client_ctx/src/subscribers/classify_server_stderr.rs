@@ -26,7 +26,7 @@ pub(crate) fn classify_server_stderr(
     } else if stderr.contains("has overflowed its stack") {
         // Stderr looks like this:
         // ```
-        // thread 'buck2-dm' has overflowed its stack
+        // thread 'yak-dm' has overflowed its stack
         // ```
         Some(ErrorTag::ServerStackOverflow)
     } else if stderr.contains("Resource temporarily unavailable") {

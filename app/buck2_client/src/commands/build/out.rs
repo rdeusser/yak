@@ -280,7 +280,7 @@ async fn copy_file(src: &Path, dst: &Path) -> buck2_error::Result<()> {
                 .file_name()
                 .internal_error("Output path has no file name")?
                 .to_owned();
-            tmp_name.push(".buck2.tmp");
+            tmp_name.push(".yak.tmp");
             let tmp_path = dir.join(tmp_name);
             tokio::fs::copy(src, &tmp_path).await?;
             tokio::fs::rename(&tmp_path, dest_path).await?;

@@ -44,7 +44,7 @@ pub fn start_in_process_daemon(
     Ok(Some(Box::new(move || {
         let (tx, rx) = std::sync::mpsc::channel();
         // Spawn a thread which runs the daemon.
-        thread_spawn("buck2-no-buckd", move || {
+        thread_spawn("yak-no-yakd", move || {
             let tx_clone = tx.clone();
             let result = DaemonCommand::new_in_process(daemon_startup_config).exec(
                 <dyn LogConfigurationReloadHandle>::noop(),

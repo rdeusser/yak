@@ -48,6 +48,13 @@ Removes the code, configuration, and service clients that only Meta's internal b
 - The examples of the query functions in `yak docs uquery` query this repository's own targets.
 - `docs/developers/perf/scripts/bin_waste.py` takes the path of the binary with `--yak` in place of `--buck2`.
 - The workflows that build and upload the binaries are `.github/workflows/build_yak.yml` and `.github/workflows/upload_yak.yml`, and their version input is `yak_version`.
+- Threads take yak names, such as `yak-main`, `yak-rt`, and `yak-dm`, which thread dumps and panic messages print.
+- The forkserver's process name is `(yak-forkserver)`.
+- `yak build --out` names its temporary file with the suffix `.yak.tmp`. It writes that file when the destination is a running executable.
+- Workers listen on sockets under `/tmp/yak_worker`.
+- The games save their state in `~/.yak_games`.
+- The default Remote Execution use case is `yak-default`.
+- The uploads of `[yak] clean_stale_unmaterialize_upload_enabled` use the Remote Execution use case `yak-local-unmaterialization`.
 
 ### Removed JVM, Android, and JavaScript support
 

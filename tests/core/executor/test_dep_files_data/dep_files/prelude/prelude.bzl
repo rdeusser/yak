@@ -534,7 +534,7 @@ def _canonical_platforms_impl(ctx):
                         local_enabled = True,
                         remote_enabled = True,
                         remote_execution_properties = {"platform": "linux-remote-execution"},
-                        remote_execution_use_case = "buck2-testing",
+                        remote_execution_use_case = "yak-testing",
                         allow_cache_uploads = True,
                         remote_dep_file_cache_enabled = True,
                     ),

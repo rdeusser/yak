@@ -234,7 +234,7 @@ async fn spawn_worker(
 ) -> Result<WorkerHandle, WorkerInitError> {
     // Use fixed length path at /tmp to avoid 108 character limit for unix domain sockets
     let dir_name = format!("{}-{}", dispatcher.trace_id(), worker_id);
-    let worker_dir = AbsNormPathBuf::from("/tmp/buck2_worker".to_owned())
+    let worker_dir = AbsNormPathBuf::from("/tmp/yak_worker".to_owned())
         .map_err(WorkerInitError::InternalError)?
         .join(FileName::unchecked_new(&dir_name));
     let socket_path = worker_dir.join(FileName::unchecked_new("socket"));
@@ -943,7 +943,7 @@ mod worker_handle_tests {
         let (child_exited_observer, child_alive_guard) = LivelinessGuard::create();
         let (_, handle_guard) = LivelinessGuard::create();
         let path = |name: &str| {
-            AbsNormPathBuf::from(format!("/tmp/buck2_worker_test/{name}")).expect("absolute path")
+            AbsNormPathBuf::from(format!("/tmp/yak_worker_test/{name}")).expect("absolute path")
         };
         let handle = WorkerHandle::new(
             WorkerClient::Single(client),

@@ -24,7 +24,7 @@ def _platforms(ctx):
                 "OSFamily": "linux",
                 "container-image": "docker://nativelink-toolchain-buck2:latest",
             },
-            remote_execution_use_case = "buck2-default",
+            remote_execution_use_case = "yak-default",
             remote_output_paths = "output_paths",
         ),
     )

@@ -62,7 +62,7 @@ impl BuckDiceTracker {
             buck2_env!("YAK_DICE_SNAPSHOT_INTERVAL_MS", type=u64, default = 500)
                 .map(Duration::from_millis)?;
 
-        thread_spawn("buck2-dice-tracker", move || {
+        thread_spawn("yak-dice-tracker", move || {
             let runtime = tokio::runtime::Builder::new_current_thread()
                 .enable_all()
                 .build()

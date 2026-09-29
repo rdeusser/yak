@@ -110,8 +110,8 @@ pub struct SnapshotCollector {
     net_io_collector: SystemNetworkIoCollector,
     buck_out_path: Arc<AbsNormPathBuf>,
     cpu_usage_collector: Option<CpuUsageCollector>,
-    /// Handle to the *main* (`buck2-rt`) runtime where DICE / build work runs.
-    /// Snapshot collection itself runs on the smaller `buck2-tn` Tonic
+    /// Handle to the *main* (`yak-rt`) runtime where DICE / build work runs.
+    /// Snapshot collection itself runs on the smaller `yak-tn` Tonic
     /// runtime, so `tokio::runtime::Handle::current()` would otherwise report
     /// the gRPC runtime's pool sizes (which are hardcoded to 2). Always read
     /// metrics from this handle instead.

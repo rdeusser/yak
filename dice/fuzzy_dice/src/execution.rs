@@ -933,7 +933,7 @@ impl DiceExecutionOrder {
                 Operation::ForceDirty { new_ctx_id, var } => {
                     let mut ctx = updater_with_tracker();
                     // Invalidate the computed key, not the injected equation
-                    // store. This is the buck2-file-watcher pattern: dice's
+                    // store. This is the pattern of yak's file watcher: dice's
                     // `InvalidateKind::ForceDirty` marks `EvalVar(var)` stale
                     // so its next touch runs `compute` again; equations are
                     // untouched, so `compute` returns the same value and

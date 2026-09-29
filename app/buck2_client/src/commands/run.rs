@@ -59,7 +59,7 @@ const WRAPPER_ENV_VARS: [&str; 3] = [
 
 /// Build and run the selected target.
 ///
-/// Use `--` to separate arguments to the target from arguments to buck2:
+/// Use `--` to separate arguments to the target from arguments to yak:
 ///
 /// yak run //my/target -- --arg1 --arg2
 ///

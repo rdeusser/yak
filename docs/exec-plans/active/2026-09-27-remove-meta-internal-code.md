@@ -103,6 +103,10 @@ The owner's criteria (2026-09-27):
   - On Linux, `cargo build --bin=buck2`, `cargo fmt --check`, and `python3 test.py buck2_client buck2_client_ctx buck2_server_ctx buck2_wrapper_common` pass. The integration tests give 1726 passed, 230 skipped, and 3 expected failures, as before.
   - On macOS on 2026-09-28, at `04fcc47b52`, which renamed the binary to `yak`, `cargo build --bin=yak` passes, and `python3 test.py` passes clippy and rustdoc. The unit and doc tests pass apart from the paging tests of `starlark`, which fail when they run in parallel (tech-debt tracker, "The paging tests of `starlark` fail when they run in parallel").
   - Remaining: the integration tests and the Buck build on macOS.
+  - Remaining: the `FBBuck2` key in the `Info.plist` of app bundles. `prelude/apple/apple_info_plist.bzl` adds it to each top-level `.app` bundle when `info_plist_identify_build_system` is true. The `apple_bundle` macro takes the default from `[apple] info_plist_identify_build_system`, which is true when unset, so every app bundle carries the key.
+  - Remaining: `prelude/ide_integrations/visual_studio/msvs/absolutize_path.exe`, a 2.6 MB Windows binary with no source in this repository. It turns relative paths in compiler diagnostics into absolute paths, and its help text describes its `LOCAL_ROOT` argument as the path of an fbsource checkout. `gen_mode_configs.bxl` passes it to the generated Visual Studio projects as `AbsolutizePathExe`.
+  - Remaining: 28 `ast-grep-ignore` markers in 17 files, such as `ast-grep-ignore: rust/buck2-no-std-hashmap`. They name rules of Meta's ast-grep configuration, which this repository lacks.
+  - Remaining: the hidden `--skip-targets-with-duplicate-names` flag of the commands that load build files. Its doc comment in `app/buck2_client_ctx/src/common.rs` calls it "a hack for TD" and says not to use it.
 
 ## Surprises & Discoveries
 

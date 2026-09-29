@@ -130,7 +130,7 @@ def _execution_platform(ctx):
                 use_limited_hybrid = True,
                 allow_limited_hybrid_fallbacks = False,
                 allow_hybrid_fallbacks_on_failure = False,
-                remote_execution_use_case = "buck2-testing",
+                remote_execution_use_case = "yak-testing",
                 remote_cache_enabled = ctx.attrs.remote_cache_enabled,
                 allow_cache_uploads = ctx.attrs.allow_cache_uploads,
                 max_cache_upload_mebibytes = 1,

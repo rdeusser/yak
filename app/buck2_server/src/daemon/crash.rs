@@ -38,7 +38,7 @@ fn crash_on_dedicated_thread(
     // Keep intentional crashes on a dedicated thread so their backtraces are isolated
     // from whichever async stack happens to be servicing the request.
     thread::Builder::new()
-        .name("buck2-crash".to_owned())
+        .name("yak-crash".to_owned())
         .spawn(crash)
         .buck_error_context("Failed to spawn crash thread")?
         .join()

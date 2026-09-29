@@ -43,7 +43,7 @@ def _execution_platforms_impl(ctx: AnalysisContext) -> list[Provider]:
                             "OSFamily": platform_name,
                             "container-image": "docker://" + platform_name + "_build",
                         },
-                        remote_execution_use_case = "buck2-default",
+                        remote_execution_use_case = "yak-default",
                         use_windows_path_separators = platform_name == "windows",
                     ),
                 ),

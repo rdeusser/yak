@@ -9,13 +9,13 @@
  */
 
 //! yak's [`TypeIdDomain`]s (providers, transitive sets). Kept in yak rather
-//! than starlark-rust, which is buck2-agnostic and only knows its own
+//! than starlark-rust, which is yak-agnostic and only knows its own
 //! `record`/`enum` domains.
 
 use dupe::Dupe;
 use starlark::values::typing::TypeIdDomain;
 
-/// [`TypeIdDomain`]s for buck2-defined nominal types.
+/// [`TypeIdDomain`]s for yak-defined nominal types.
 #[derive(Copy, Clone, Dupe, Debug, Eq, PartialEq)]
 pub(crate) enum Buck2TypeIdDomain {
     /// A user-defined `provider(...)` type.

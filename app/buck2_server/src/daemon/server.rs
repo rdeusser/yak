@@ -1909,7 +1909,7 @@ fn spawn_shutdown_watchdog(in_process: bool, deadline: tokio::time::Instant) {
     // Panicking is the point rather than a way of giving up on it: nothing else bounds the drain,
     // and the daemon's panic hook `_exit`s, so a daemon that cannot arm its watchdog dies now
     // instead of becoming one that hangs forever.
-    thread_spawn("buck2-shutdown-watchdog", move || {
+    thread_spawn("yak-shutdown-watchdog", move || {
         thread::sleep(deadline.saturating_duration_since(std::time::Instant::now()));
 
         // Clients read `yakd.stderr` to explain why the daemon went away, so make sure the

@@ -47,7 +47,7 @@ pub async fn launch_forkserver(
         .stdin(Stdio::null())
         .stdout(Stdio::inherit()) // TODO
         .stderr(Stdio::inherit()) // TODO
-        .arg0("(buck2-forkserver)")
+        .arg0("(yak-forkserver)")
         .args(args)
         .arg("--fd")
         .arg(server_io.as_raw_fd().to_string())

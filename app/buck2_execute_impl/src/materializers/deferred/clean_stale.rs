@@ -2158,7 +2158,7 @@ impl CleanStaleConfig {
                 property: "clean_stale_unmaterialize_upload_max_bytes",
             })?
             .unwrap_or(1024 * 1024 * 1024);
-        let re_use_case = RemoteExecutorUseCase::new("buck2-local-unmaterialization".to_owned());
+        let re_use_case = RemoteExecutorUseCase::new("yak-local-unmaterialization".to_owned());
         let unmaterialize_upload =
             unmaterialize_upload_enabled.then_some(UnmaterializationUploadConfig {
                 re_use_case,

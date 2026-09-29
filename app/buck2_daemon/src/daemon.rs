@@ -354,7 +354,7 @@ impl DaemonCommand {
         // cachedir.
         verify_buck_out_dir(&paths)?;
 
-        let mut builder = new_tokio_runtime("buck2-rt");
+        let mut builder = new_tokio_runtime("yak-rt");
         builder.enable_all();
 
         if let Some(num_tokio_workers) = server_init_ctx
@@ -403,7 +403,7 @@ impl DaemonCommand {
             .buck_error_context("Error creating Tokio runtime")?;
         let handle = worker_runtime.handle().clone();
 
-        let tonic_runtime = new_tokio_runtime("buck2-tn")
+        let tonic_runtime = new_tokio_runtime("yak-tn")
             .enable_all()
             // These values are arbitrary, but I/O shouldn't take up many threads.
             .worker_threads(2)

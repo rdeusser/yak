@@ -115,7 +115,7 @@ impl BuckBlockingExecutorShared {
 
         for i in 0..io_threads {
             let command_receiver = command_receiver.clone();
-            thread_spawn(&format!("buck-io-{i}"), move || {
+            thread_spawn(&format!("yak-io-{i}"), move || {
                 for ThreadPoolIoRequest {
                     project_fs,
                     sender,

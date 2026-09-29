@@ -36,7 +36,7 @@ pub(crate) fn maybe_schedule_termination() -> buck2_error::Result<()> {
             .map(Duration::from_secs)
             .or_else(buck2_common::self_test_timeout::until_post_test_shutdown)
     {
-        thread_spawn("buck2-terminate-after", move || {
+        thread_spawn("yak-terminate-after", move || {
             const MEASURE_CPU_TIME_FOR: Duration = Duration::from_millis(10);
             let (sleep_before, sleep_after) = match duration.checked_sub(MEASURE_CPU_TIME_FOR) {
                 Some(sleep_before) => (sleep_before, MEASURE_CPU_TIME_FOR),

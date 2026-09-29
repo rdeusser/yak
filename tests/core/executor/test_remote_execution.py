@@ -65,7 +65,7 @@ async def test_re_use_case_override_with_arg(buck: Buck) -> None:
         "--remote-only",
         "--no-remote-cache",
     )
-    await assert_re_use_case(buck, "buck2-testing")
+    await assert_re_use_case(buck, "yak-testing")
     # Change the target input
     with open(buck.cwd / "input.txt", "w") as f:
         f.write(random_string())
@@ -74,9 +74,9 @@ async def test_re_use_case_override_with_arg(buck: Buck) -> None:
         "--remote-only",
         "--no-remote-cache",
         "--config",
-        "yak_re_client.override_use_case=buck2-user",
+        "yak_re_client.override_use_case=yak-user",
     )
-    await assert_re_use_case(buck, "buck2-user")
+    await assert_re_use_case(buck, "yak-user")
 
 
 @buck_test()
@@ -89,19 +89,19 @@ async def test_re_use_case_override_with_config(buck: Buck) -> None:
         "--remote-only",
         "--no-remote-cache",
     )
-    await assert_re_use_case(buck, "buck2-testing")
+    await assert_re_use_case(buck, "yak-testing")
     # Change the target input
     with open(buck.cwd / "input.txt", "w") as f:
         f.write(random_string())
     with open(buck.cwd / ".yakconfig.local", "w") as f:
         f.write("[yak_re_client]\n")
-        f.write("override_use_case = buck2-user\n")
+        f.write("override_use_case = yak-user\n")
     await buck.build(
         "root//:simple",
         "--remote-only",
         "--no-remote-cache",
     )
-    await assert_re_use_case(buck, "buck2-user")
+    await assert_re_use_case(buck, "yak-user")
 
 
 @buck_test()
@@ -114,13 +114,13 @@ async def test_re_use_case_override_with_external_config(buck: Buck) -> None:
         "--remote-only",
         "--no-remote-cache",
     )
-    await assert_re_use_case(buck, "buck2-testing")
+    await assert_re_use_case(buck, "yak-testing")
     # Change the target input
     with open(buck.cwd / "input.txt", "w") as f:
         f.write(random_string())
     with tempfile.NamedTemporaryFile("w", delete=False) as f:
         f.write("[yak_re_client]\n")
-        f.write("override_use_case = buck2-user\n")
+        f.write("override_use_case = yak-user\n")
         f.close()
         await buck.build(
             "root//:simple",
@@ -129,7 +129,7 @@ async def test_re_use_case_override_with_external_config(buck: Buck) -> None:
             "--config-file",
             f.name,
         )
-    await assert_re_use_case(buck, "buck2-user")
+    await assert_re_use_case(buck, "yak-user")
 
 
 @buck_test()
@@ -146,12 +146,12 @@ async def test_re_use_case_override_with_external_config_source(buck: Buck) -> N
             "--no-remote-cache",
             env=env,
         )
-        await assert_re_use_case(buck, "buck2-default")
+        await assert_re_use_case(buck, "yak-default")
         # Change the target input
         with open(buck.cwd / "input.txt", "w") as f:
             f.write(random_string())
         temp.write("[yak_re_client]\n")
-        temp.write("override_use_case = buck2-user\n")
+        temp.write("override_use_case = yak-user\n")
         temp.flush()
         await buck.build(
             "root//:simple",
@@ -159,4 +159,4 @@ async def test_re_use_case_override_with_external_config_source(buck: Buck) -> N
             "--no-remote-cache",
             env=env,
         )
-        await assert_re_use_case(buck, "buck2-user")
+        await assert_re_use_case(buck, "yak-user")
