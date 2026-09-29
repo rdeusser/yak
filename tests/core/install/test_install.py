@@ -19,8 +19,6 @@ from e2e_util.helper.utils import read_timestamps
 
 pytestmark = pytest.mark.needs_binary(
     "INSTALLER_BIN",
-    "FORWARDED_PARAMS_INSTALLER_BIN",
-    "EXTRA_ARGS_VALIDATOR_BIN",
     "EARLY_EXIT_INSTALLER_BIN",
 )
 
@@ -30,14 +28,6 @@ def _setup_sandbox(buck: Buck) -> None:
     installer_bin = os.environ["INSTALLER_BIN"]
     shutil.copy2(installer_bin, buck.cwd / "installer_bin")
     os.chmod(buck.cwd / "installer_bin", 0o755)
-
-    forwarded_params_bin = os.environ["FORWARDED_PARAMS_INSTALLER_BIN"]
-    shutil.copy2(forwarded_params_bin, buck.cwd / "forwarded_params_installer_bin")
-    os.chmod(buck.cwd / "forwarded_params_installer_bin", 0o755)
-
-    extra_args_validator_bin = os.environ["EXTRA_ARGS_VALIDATOR_BIN"]
-    shutil.copy2(extra_args_validator_bin, buck.cwd / "extra_args_validator_bin")
-    os.chmod(buck.cwd / "extra_args_validator_bin", 0o755)
 
     early_exit_installer_bin = os.environ["EARLY_EXIT_INSTALLER_BIN"]
     shutil.copy2(early_exit_installer_bin, buck.cwd / "early_exit_installer_bin")
@@ -176,76 +166,6 @@ async def test_install_id_mismatch(buck: Buck) -> None:
     record = res.invocation_record()
     errors = record["errors"]
     assert len(errors) == 1
-
-
-@buck_test(write_invocation_record=True)
-async def test_installer_needs_forwarded_params(buck: Buck) -> None:
-    _setup_sandbox(buck)
-    res = await expect_failure(
-        buck.install(
-            "root//:installer_server_requires_forwarded_params",
-        ),
-        stderr_regex=r"-r_-e_-d_-s_-x_-a_-i_-w_-u_-k_must_be_passed_to_installer",
-    )
-    record = res.invocation_record()
-    errors = record["errors"]
-    assert len(errors) == 1
-
-
-@buck_test()
-async def test_install_forwards_params(buck: Buck) -> None:
-    _setup_sandbox(buck)
-    await buck.install(
-        "-r",
-        "-e",
-        "-d",
-        "-s",
-        "serial",
-        "-x",
-        "-a",
-        "activity",
-        "-i",
-        "intent",
-        "-w",
-        "-u",
-        "-k",
-        "root//:installer_server_requires_forwarded_params",
-    )
-
-
-@buck_test()
-async def test_install_forwards_params_long_form(buck: Buck) -> None:
-    _setup_sandbox(buck)
-    await buck.install(
-        "--run",
-        "--emulator",
-        "--device",
-        "--serial",
-        "serial",
-        "--all-devices",
-        "--activity",
-        "activity",
-        "--intent-uri",
-        "intent",
-        "--wait-for-debugger",
-        "--uninstall",
-        "--keep",
-        "root//:installer_server_requires_forwarded_params",
-    )
-
-
-@buck_test()
-async def test_install_extra_args_ordered_after_builtin_args(
-    buck: Buck,
-) -> None:
-    _setup_sandbox(buck)
-    await buck.install(
-        "-r",
-        "root//:installer_validates_extra_args_order",
-        "--",
-        "--",
-        "--expected-extra-arg",
-    )
 
 
 @buck_test(write_invocation_record=True)

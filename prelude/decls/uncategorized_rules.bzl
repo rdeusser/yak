@@ -13,8 +13,6 @@
 
 load(":common.bzl", "buck", "prelude_rule")
 
-NdkCxxRuntime = ["system", "gabixx", "stlport", "gnustl", "libcxx"]
-
 legacy_toolchain = prelude_rule(
     name = "legacy_toolchain",
     docs = "",
@@ -31,27 +29,6 @@ legacy_toolchain = prelude_rule(
     ),
 )
 
-ndk_toolchain = prelude_rule(
-    name = "ndk_toolchain",
-    docs = "",
-    examples = None,
-    further = None,
-    attrs = (
-        # @unsorted-dict-items
-        {
-            "cxx_runtime": attrs.option(attrs.enum(NdkCxxRuntime), default = None),
-            "cxx_toolchain": attrs.dep(),
-            "objdump": attrs.source(),
-            "shared_runtime_path": attrs.option(attrs.source(), default = None),
-            "strip_apk_libs_flags": attrs.option(attrs.list(attrs.arg()), default = None),
-        }
-        | buck.licenses_arg()
-        | buck.labels_arg()
-        | buck.contacts_arg()
-    ),
-)
-
 uncategorized_rules = struct(
     legacy_toolchain = legacy_toolchain,
-    ndk_toolchain = ndk_toolchain,
 )

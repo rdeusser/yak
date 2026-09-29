@@ -268,8 +268,6 @@ def cython_static_extension_impl(ctx: AnalysisContext) -> list[Provider]:
     cxx_providers_params = CxxRuleProviderParams(
         compilation_database = True,
         default = False,
-        java_packaging_info = False,
-        java_global_code_info = False,
         linkable_graph = False,
         link_style_outputs = False,
         merged_native_link_info = False,

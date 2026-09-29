@@ -18,12 +18,10 @@ specified in [build files](build_file.md)—typically named YAK.
 Buck2 comes with a collection of built-in build rules for many common build
 procedures. For example:
 
-- Compiling Java code against the Android SDK is a common procedure, so Buck2
-  provides the [`android_library`](../../prelude/rules/android/android_library)
-  build rule
-- The final product of most Android development is an APK, so you can use the
-  [`android_binary`](../../prelude/rules/android/android_binary) build rule to
-  create an APK
+- Compiling a Rust crate is a common procedure, so Buck2 provides the
+  [`rust_library`](../../prelude/rules/rust/rust_library) build rule
+- The final product of most Go development is an executable, so you can use the
+  [`go_binary`](../../prelude/rules/go/go_binary) build rule to create one
 
 ## Source files as inputs to build rules
 
@@ -97,17 +95,17 @@ Dependencies are specified in several ways:
 
 ### Examples:
 
-The output of a [`java_library`](../../prelude/rules/java/java_library) rule is
-a JAR file. If a `java_library` rule specifies another `java_library` rule as a
-dependency, the JAR file produced by the specified rule is added to the
-classpath for the `java_library` that depends on it.
+The output of a [`rust_library`](../../prelude/rules/rust/rust_library) rule is
+a compiled Rust crate. If a `rust_library` rule specifies another
+`rust_library` rule as a dependency, the crate produced by the specified rule is
+available to the crate of the `rust_library` that depends on it.
 
-If a [`java_binary`](../../prelude/rules/java/java_binary) rule specifies a
-`java_library` rule as a dependency, the JAR file for the specified
-`java_library` is available on the classpath for the `java_binary`.
+If a [`rust_binary`](../../prelude/rules/rust/rust_binary) rule specifies a
+`rust_library` rule as a dependency, the crate of the specified `rust_library`
+is linked into the `rust_binary`.
 
-- In addition, the JAR files for any dependencies of the `java_library` rule
-  _are also_ made available to the `java_binary` rule
+- In addition, the crates of any dependencies of the `rust_library` rule _are
+  also_ linked into the `rust_binary`
 - If those dependencies have dependencies of their own, they are added as well
 
 This exhaustive cascade of dependencies is referred to as the rule's _transitive
@@ -149,10 +147,7 @@ With genrules, you can perform arbitrary operations using shell scripts. The
 genrules supported by Buck2 are:
 
 - [`genrule`](../../prelude/rules/core/genrule)
-- [`apk_genrule`](../../prelude/rules/android/apk_genrule)
 - [`cxx_genrule`](../../prelude/rules/cxx/cxx_genrule)
-- [`jar_genrule`](../../prelude/rules/java/jar_genrule)
-- [`js_bundle_genrule`](../../prelude/rules/js/js_bundle_genrule)
 
 ### Multiple output files with genrules
 

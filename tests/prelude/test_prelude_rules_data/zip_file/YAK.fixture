@@ -1,0 +1,190 @@
+load("//:py_assertion.bzl", "py_assertion")
+
+prelude = native
+
+# The output of a rule keeps only its file name in the archive.
+prelude.export_file(
+    name = "generated",
+    src = "data/hello.txt",
+    out = "hello.txt",
+    mode = "copy",
+)
+
+# The output of a filegroup is a directory named after the target, so its
+# files keep their paths under `tree/`.
+prelude.filegroup(
+    name = "tree",
+    srcs = [
+        "data/a.txt",
+        "data/nested/b.txt",
+    ],
+)
+
+prelude.zip_file(
+    name = "layout",
+    srcs = [
+        "data/nested/b.txt",
+        "data/a.txt",
+        ":generated",
+        ":tree",
+    ],
+)
+
+py_assertion(
+    name = "check_layout",
+    script = """
+import sys
+import zipfile
+
+with zipfile.ZipFile(sys.argv[1]) as archive:
+    infos = archive.infolist()
+    names = [info.filename for info in infos]
+    assert names == [
+        "data/",
+        "data/a.txt",
+        "data/nested/",
+        "data/nested/b.txt",
+        "hello.txt",
+        "tree/",
+        "tree/data/",
+        "tree/data/a.txt",
+        "tree/data/nested/",
+        "tree/data/nested/b.txt",
+    ], names
+    assert {info.date_time for info in infos} == {(1985, 2, 1, 0, 0, 0)}
+    assert archive.read("hello.txt") == b"hello\\n"
+    assert archive.read("tree/data/nested/b.txt") == b"b\\n"
+""",
+    script_args = ["$(location :layout)"],
+)
+
+prelude.zip_file(
+    name = "inner",
+    srcs = [
+        "data/a.txt",
+        "data/unused.txt",
+    ],
+)
+
+# Entries from `zip_srcs` keep their names, and a pattern must match a whole
+# entry name to leave it out.
+prelude.zip_file(
+    name = "merged",
+    srcs = ["data/nested/b.txt"],
+    entries_to_exclude = [
+        "data/unused\\.txt",
+        "b\\.txt",
+    ],
+    zip_srcs = [":inner"],
+)
+
+py_assertion(
+    name = "check_merged",
+    script = """
+import sys
+import zipfile
+
+with zipfile.ZipFile(sys.argv[1]) as archive:
+    names = archive.namelist()
+    assert names == ["data/", "data/a.txt", "data/nested/", "data/nested/b.txt"], names
+    assert archive.read("data/a.txt") == b"a\\n"
+""",
+    script_args = ["$(location :merged)"],
+)
+
+prelude.export_file(
+    name = "a_one",
+    src = "one/a.txt",
+    out = "a.txt",
+    mode = "copy",
+)
+
+prelude.export_file(
+    name = "a_two",
+    src = "two/a.txt",
+    out = "a.txt",
+    mode = "copy",
+)
+
+prelude.zip_file(
+    name = "inner_one",
+    srcs = [":a_one"],
+)
+
+prelude.zip_file(
+    name = "overwrite",
+    srcs = [":a_two"],
+    zip_srcs = [":inner_one"],
+)
+
+prelude.zip_file(
+    name = "append",
+    srcs = [":a_two"],
+    on_duplicate_entry = "append",
+    zip_srcs = [":inner_one"],
+)
+
+py_assertion(
+    name = "check_duplicates",
+    script = """
+import sys
+import zipfile
+
+with zipfile.ZipFile(sys.argv[1]) as archive:
+    assert archive.namelist() == ["a.txt"], archive.namelist()
+    assert archive.read("a.txt") == b"two\\n"
+
+with zipfile.ZipFile(sys.argv[2]) as archive:
+    infos = archive.infolist()
+    assert [info.filename for info in infos] == ["a.txt", "a.txt"], infos
+    assert [archive.read(info) for info in infos] == [b"one\\n", b"two\\n"]
+""",
+    script_args = [
+        "$(location :overwrite)",
+        "$(location :append)",
+    ],
+)
+
+prelude.zip_file(
+    name = "permissions",
+    srcs = [
+        "data/a.txt",
+        "run.sh",
+    ],
+)
+
+prelude.zip_file(
+    name = "hardcoded_permissions",
+    srcs = [
+        "data/a.txt",
+        "run.sh",
+    ],
+    hardcode_permissions_for_deterministic_output = True,
+)
+
+py_assertion(
+    name = "check_permissions",
+    script = """
+import stat
+import sys
+import zipfile
+
+def modes(path):
+    with zipfile.ZipFile(path) as archive:
+        return {
+            info.filename: stat.S_IMODE(info.external_attr >> 16)
+            for info in archive.infolist()
+            if not info.is_dir()
+        }
+
+found = modes(sys.argv[1])
+assert found["run.sh"] & stat.S_IXUSR, found
+assert not found["data/a.txt"] & stat.S_IXUSR, found
+found = modes(sys.argv[2])
+assert found == {"data/a.txt": 0o644, "run.sh": 0o644}, found
+""",
+    script_args = [
+        "$(location :permissions)",
+        "$(location :hardcoded_permissions)",
+    ],
+)

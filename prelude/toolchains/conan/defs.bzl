@@ -368,7 +368,6 @@ def conan_component(
         # "exported_preprocessor_flags": attrs.list(attrs.string(), default = []),
         # "import_libs": attrs.dict(key = attrs.string(), value = attrs.source(), sorted = False, default = {}),
         # "include_dirs": attrs.list(attrs.source(), default = []),
-        # "include_in_android_merge_map_output": attrs.bool(),
         # "labels": attrs.list(attrs.string(), default = []),
         # "licenses": attrs.list(attrs.source(), default = []),
         # "provided_shared_libs": attrs.dict(key = attrs.string(), value = attrs.source(), sorted = False, default = {}),

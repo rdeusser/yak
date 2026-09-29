@@ -1389,7 +1389,6 @@ def create_link_group_link(link_group_lib: LinkGroupLib, consumed_library: Share
         lib = link_group_shlib.lib,
         link_args = link_group_shlib.link_args,
         shlib_deps = link_group_shlib.shlib_deps,
-        can_be_asset = link_group_shlib.can_be_asset,
         soname = consumed_library.soname,  # <=== we match original target soname that will symlink to link group
         label = consumed_library.label,
     )

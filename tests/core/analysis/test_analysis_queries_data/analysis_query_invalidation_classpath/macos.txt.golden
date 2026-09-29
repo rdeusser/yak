@@ -1,3 +1,0 @@
-# This file is @generated, regenerate by rerunning the test with `YAK_UPDATE_GOLDEN=1` set
-
-prelude//:dep prelude//:select-dep prelude//:macos-select-dep

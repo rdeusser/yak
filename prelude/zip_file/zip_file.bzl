@@ -33,33 +33,33 @@ def _zip_file_impl(ctx: AnalysisContext) -> list[Provider]:
 
     create_zip_cmd = [
         create_zip_tool,
-        "--output_path",
+        "--output",
         output.as_output(),
-        "--on_duplicate_entry",
+        "--on-duplicate-entry",
         on_duplicate_entry if on_duplicate_entry else "overwrite",
     ]
 
     if srcs:
-        # add artifact and is_source flag pair
+        # Each source takes three lines: its path, its short path, and whether it is a source file.
         srcs_file_cmd = cmd_args(
             [[src, src.short_path, str(src.is_source)] for src in srcs],
         )
         entries_file = ctx.actions.write("entries", srcs_file_cmd, has_content_based_path = True)
 
-        create_zip_cmd.append("--entries_file")
+        create_zip_cmd.append("--entries-file")
         create_zip_cmd.append(entries_file)
         create_zip_cmd.append(cmd_args(hidden = srcs))
 
-    if zip_srcs:
-        create_zip_cmd.append("--zip_sources")
-        create_zip_cmd.append(zip_srcs)
+    for zip_src in zip_srcs:
+        create_zip_cmd.append("--zip-source")
+        create_zip_cmd.append(zip_src)
 
-    if entries_to_exclude:
-        create_zip_cmd.append("--entries_to_exclude")
-        create_zip_cmd.append(entries_to_exclude)
+    # The `=` form lets a pattern start with `-`.
+    for entry_to_exclude in entries_to_exclude:
+        create_zip_cmd.append("--exclude=" + entry_to_exclude)
 
     if hardcode_permissions_for_deterministic_output:
-        create_zip_cmd.append("--hardcode_permissions_for_deterministic_output")
+        create_zip_cmd.append("--hardcode-permissions")
 
     ctx.actions.run(cmd_args(create_zip_cmd), category = "zip")
 

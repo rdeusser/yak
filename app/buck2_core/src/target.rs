@@ -18,7 +18,7 @@
 //! name "foo".
 //!
 //!```ignored
-//! java_library(
+//! cxx_library(
 //!    name = "foo",
 //!    srcs = [ ... ],
 //!    ...

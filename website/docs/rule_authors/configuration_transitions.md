@@ -229,7 +229,7 @@ providers.
 For example:
 
 ```python
-android_binary = rule(
+multi_arch_binary = rule(
     ...
     attrs = {
         "deps": attrs.list(attrs.split_transition_dep(cfg = cpu_split_transition), default = []),
@@ -240,7 +240,7 @@ android_binary = rule(
 When the above is invoked as follows:
 
 ```python
-android_binary(
+multi_arch_binary(
     deps = ["//foo:bar", "//qux:quux"],
 )
 ```

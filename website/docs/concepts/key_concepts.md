@@ -14,8 +14,7 @@ Buck2 has a number of fundamental concepts:
   language or platform. For example, you would use the
   [`cxx_binary`](../../prelude/rules/cxx/cxx_binary) rule to create a C++
   binary, but you would use the
-  [`android_binary`](../../prelude/rules/android/android_binary) rule to create
-  an Android APK.
+  [`go_binary`](../../prelude/rules/go/go_binary) rule to create a Go binary.
 - A [**_build target_**](build_target.md) is a string that uniquely identifies a
   build rule. It can be thought of as a URI for the build rule within the Buck2
   project.

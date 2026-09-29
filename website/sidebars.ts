@@ -141,14 +141,6 @@ export const sidebars: SidebarsConfig = {
                 'users/languages/go/gopackagesdriver',
               ],
             },
-            {
-              type: 'category' as const,
-              label: 'Java',
-              collapsed: false,
-              items: [
-                'users/languages/java/jvm_abis',
-              ],
-            },
           ],
         },
         'users/cheat_sheet',

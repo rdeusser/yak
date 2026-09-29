@@ -354,7 +354,6 @@ apple_binary = prelude_rule(
             "application_extension": attrs.bool(default = False),
             "binary_linker_flags": attrs.list(attrs.arg(), default = []),
             "bridging_header": attrs.option(attrs.source(), default = None),
-            "can_be_asset": attrs.option(attrs.bool(), default = None),
             "cxx_runtime_type": attrs.option(attrs.enum(CxxRuntimeType), default = None),
             "dist_thin_lto_codegen_flags": attrs.list(attrs.arg(), default = []),
             "enable_distributed_thinlto": attrs.bool(default = False),
@@ -665,7 +664,6 @@ apple_library = prelude_rule(
         | apple_common.uses_modules_arg()
         | {
             "bridging_header": attrs.option(attrs.source(), default = None),
-            "can_be_asset": attrs.option(attrs.bool(), default = None),
             "cxx_runtime_type": attrs.option(attrs.enum(CxxRuntimeType), default = None),
             "dist_thin_lto_codegen_flags": attrs.list(attrs.arg(), default = []),
             "enable_distributed_thinlto": attrs.bool(default = False),
@@ -1076,7 +1074,6 @@ apple_test = prelude_rule(
         | apple_common.xcode_product_type_arg()
         | {
             "bridging_header": attrs.option(attrs.source(), default = None),
-            "can_be_asset": attrs.option(attrs.bool(), default = None),
             "cxx_runtime_type": attrs.option(attrs.enum(CxxRuntimeType), default = None),
             "destination_specifier": attrs.dict(key = attrs.string(), value = attrs.string(), sorted = False, default = {}),
             "entitlements_file": attrs.option(attrs.source(), default = None),

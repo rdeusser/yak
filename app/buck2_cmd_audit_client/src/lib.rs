@@ -22,7 +22,6 @@ use buck2_client_ctx::daemon::client::StdoutPartialResultHandler;
 use buck2_client_ctx::events_ctx::EventsCtx;
 use buck2_client_ctx::exit_result::ExitResult;
 use buck2_client_ctx::streaming::StreamingCommand;
-use classpath::AuditClasspathCommand;
 
 use crate::analysis_queries::AuditAnalysisQueriesCommand;
 use crate::cell::AuditCellCommand;
@@ -45,7 +44,6 @@ use crate::visibility::AuditVisibilityCommand;
 
 pub mod analysis_queries;
 pub mod cell;
-pub mod classpath;
 pub mod config;
 pub mod configurations;
 pub mod deferred_materializer;
@@ -67,7 +65,6 @@ pub mod visibility;
 pub enum AuditCommand {
     Cell(AuditCellCommand),
     FilePackage(AuditFilePackageCommand),
-    Classpath(AuditClasspathCommand),
     Config(AuditConfigCommand),
     Configurations(AuditConfigurationsCommand),
     Includes(AuditIncludesCommand),
@@ -106,7 +103,6 @@ impl AuditCommand {
         match self {
             AuditCommand::Cell(cmd) => cmd,
             AuditCommand::FilePackage(cmd) => cmd,
-            AuditCommand::Classpath(cmd) => cmd,
             AuditCommand::Config(cmd) => cmd,
             AuditCommand::Configurations(cmd) => cmd,
             AuditCommand::Includes(cmd) => cmd,

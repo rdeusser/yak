@@ -279,19 +279,19 @@ page for information on how to define a platform.
 Other example:
 
 ```python
-java_binary(
+cxx_binary(
     name = "cats",
     default_target_platform = "//platforms:windows-arm64-dev",
     deps = ["//libs:foo"],
 )
 
-java_binary(
+cxx_binary(
     name = "dogs",
     default_target_platform = "//platforms:mac-x86-dev",
     deps = ["//libs:foo"],
 )
 
-java_library(
+cxx_library(
     name = "foo",
     deps = [
         "//libs:common",
@@ -340,10 +340,10 @@ platforms. Target platforms are the platforms where your code runs,
 and execution platforms are the ones used to run compilers and build tools
 during the build process.
 These are distinct because build tools typically need a different
-configuration. For example, when you are building an app targeting Android
-OS, you will still need to build a compiler for Linux/Mac/Windows. You may
-also want to build the said compiler in release mode for faster
-builds even when building the Android app in development mode.
+configuration. For example, when you are building firmware for an ARM
+microcontroller, you will still need to build a compiler for Linux/Mac/Windows.
+You may also want to build the said compiler in release mode for faster
+builds even when building the firmware in development mode.
 
 For this reason, Buck requires both _target_ platforms and _execution_
 platforms to be defined. The execution platforms are specified via the

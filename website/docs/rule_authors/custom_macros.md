@@ -23,49 +23,49 @@ use the extension, `.bzl`.
 To make your macros accessible to a build file, import them using the `load()`
 function.
 
-In the following example, the macro `java_library_using_guava`, defined in the
-file `java_macros.bzl`, invokes a macro named `java_library` that depends on the
-Google Guava libraries.
+In the following example, the macro `python_library_using_requests`, defined
+in the file `python_macros.bzl`, invokes a macro named `python_library` that
+depends on the Requests library.
 
-**`java_macros.bzl`**
+**`python_macros.bzl`**
 
 ```python
-def java_library_using_guava(
+def python_library_using_requests(
     name,
     srcs=[],
     resources=[],
     deps=[],
     visibility=[]):
-  java_library(
+  python_library(
     name = name,
     srcs = srcs,
     resources = resources,
     deps = [
-      # This assumes this is where Guava is in your project.
-      '//third_party/java/guava:guava',
+      # This assumes this is where Requests is in your project.
+      '//third_party/python/requests:requests',
     ] + deps,
     visibility = visibility,
   )
 ```
 
 Instantiating this macro looks the same as defining a built-in build rule. In
-the following code, we assume that `java_macros.bzl` is stored in the
-subdirectory `libs/java_libs/team_macros`.
+the following code, we assume that `python_macros.bzl` is stored in the
+subdirectory `libs/python_libs/team_macros`.
 
 ```python
 #
 # load the macro from the external file
 #
-load("//libs/java_libs/team_macros:java_macros.bzl", "java_library_using_guava")
+load("//libs/python_libs/team_macros:python_macros.bzl", "python_library_using_requests")
 
 #
 # Calling this function has the side-effect of creating
-# a java_library() rule named 'util' that depends on Guava.
+# a python_library() rule named 'util' that depends on Requests.
 #
-java_library_using_guava(
+python_library_using_requests(
   name = 'util',
-  # Source code that depends on Guava.
-  srcs = glob(['*.java']),
+  # Source code that depends on Requests.
+  srcs = glob(['*.py']),
 )
 ```
 
@@ -81,34 +81,31 @@ drawbacks.
 
 You can also create more sophisticated macros that expand into multiple build
 rules. For example, you could create a macro that produces targets for both
-debug and release versions of an APK:
+debug and release versions of a binary:
 
 ```python
-def create_apks(
+def create_binaries(
     name,
-    manifest,
-    debug_keystore,
-    release_keystore,
-    proguard_config,
+    srcs,
+    debug_flags,
+    release_flags,
     deps):
 
-  # This loop will create two android_binary rules.
+  # This loop will create two cxx_binary rules.
   for type in [ 'debug', 'release' ]:
-    # Select the appropriate keystore.
+    # Select the appropriate compiler flags.
     if type == 'debug':
-      keystore = debug_keystore
+      flags = debug_flags
     else:
-      keystore = release_keystore
+      flags = release_flags
 
-    android_binary(
+    cxx_binary(
       # Note how we must parameterize the name of the
       # target so that we avoid creating two build
       # targets with the same name.
       name = '%s_%s' % (name, type),
-      manifest = manifest,
-      keystore = keystore,
-      package_type = type,
-      proguard_config = proguard_config,
+      srcs = srcs,
+      compiler_flags = flags,
       deps = deps,
       visibility = [
         'PUBLIC',
@@ -120,12 +117,11 @@ As in the previous example, instantiating this macro _looks_ the same as
 specifying a single rule:
 
 ```python
-create_apks(
+create_binaries(
   name = 'chat',
-  manifest = 'AndroidManifest.xml',
-  debug_keystore = '//keystores:debug',
-  release_keystore = '//keystores:prod',
-  proguard_config = 'proguard.cfg',
+  srcs = ['main.cpp'],
+  debug_flags = ['-O0', '-g'],
+  release_flags = ['-O2'],
   deps = [
     # ...
   ],
@@ -152,7 +148,7 @@ developers who don't realize that `chat` is a macro rather than a target.
 
 ```
 buck build //apps/chat:chat              # FAILS
-buck targets --type create_apks          # FAILS
+buck targets --type create_binaries      # FAILS
 ```
 
 ## How to view expanded macros {#viewing}

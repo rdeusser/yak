@@ -633,8 +633,7 @@ impl<'a> ConnectedInstaller<'a> {
                 Data::Digest(file.digest.data())
             }
             DirectoryEntry::Leaf(ActionDirectoryMember::Symlink(symlink)) => {
-                // todo(@lebentle) Use for now to unblock exopackage,
-                // but should follow symlink and validate the target exists and send that
+                // TODO: Follow the symlink, check that its target exists, and send the target.
                 Data::Symlink(symlink.target().as_str().to_owned())
             }
             DirectoryEntry::Leaf(ActionDirectoryMember::ExternalSymlink(symlink)) => {

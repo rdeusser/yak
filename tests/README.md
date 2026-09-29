@@ -64,7 +64,7 @@ The helper programs:
 | `SKETCH_SIZE_BIN` | `shed/setsketch` | `cargo build -p setsketch --bin sketch_size` |
 | `USE_SOME_MEMORY_BIN` | `shed/cgroups/use_some_memory` | It has a Buck target but no Cargo target. |
 | `YAK_COMPLETION_VERIFY` | `shed/completion_verify` | It has a Buck target but no Cargo target. |
-| `INSTALLER_BIN`, `FORWARDED_PARAMS_INSTALLER_BIN`, `EXTRA_ARGS_VALIDATOR_BIN`, `EARLY_EXIT_INSTALLER_BIN` | Installers for the `yak install` tests. | Their sources are not in this repository. |
+| `INSTALLER_BIN`, `EARLY_EXIT_INSTALLER_BIN` | Installers for the `yak install` tests. | Their sources are not in this repository. |
 
 The Watchman tests in `core/io/` skip when `watchman` is not on `PATH`. The Go tests in `prelude/` skip when `go` is not on `PATH`.
 

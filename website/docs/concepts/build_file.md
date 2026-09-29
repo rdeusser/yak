@@ -108,18 +108,17 @@ build file, where:
 For example, if your project had the following `YAK` files:
 
 ```
-java/com/example/base/YAK
-java/com/example/common/YAK
-java/com/example/common/collect/YAK
+example/base/YAK
+example/common/YAK
+example/common/collect/YAK
 ```
 
 Then your build rules would have the following constraints:
 
-- Rules in `java/com/example/base/YAK` can reference any file under
-  `java/com/example/base/`.
-- Rules in `java/com/example/common/YAK` can reference any files under that
-  directory, except for those under `java/com/example/common/collect/`, as
-  those "belong" to the `YAK` file in the `collect` directory.
+- Rules in `example/base/YAK` can reference any file under `example/base/`.
+- Rules in `example/common/YAK` can reference any files under that directory,
+  except for those under `example/common/collect/`, as those "belong" to the
+  `YAK` file in the `collect` directory.
 
 ### Packages dependencies
 
@@ -129,44 +128,42 @@ build packages is to create build rules and use `deps` to refer to that code.
 
 #### An example of cross-package dependencies
 
-Going back to the previous example, suppose code in
-`java/com/example/common/concurrent/` wants to depend on code in
-`java/com/example/common/collect/`.
+Going back to the previous example, suppose code in `example/common/concurrent/`
+wants to depend on code in `example/common/collect/`.
 
-First, the `java/com/example/common/collect/YAK` file would have a build rule
-like:
+First, the `example/common/collect/YAK` file would have a build rule like:
 
 ```python
-java_library(
+python_library(
   name = 'collect',
-  srcs = glob(['*.java']),
-  deps = ['//java/com/example/base:base',],
+  srcs = glob(['*.py']),
+  deps = ['//example/base:base',],
 )
 ```
 
-Then `java/com/example/common/YAK` could have a rule like:
+Then `example/common/YAK` could have a rule like:
 
 ```python
-java_library(
+python_library(
   name = 'concurrent',
-  srcs = glob(['concurrent/*.java']),
+  srcs = glob(['concurrent/*.py']),
   deps = [
-    '//java/com/example/base:base',
-    '//java/com/example/common/collect:collect',
+    '//example/base:base',
+    '//example/common/collect:collect',
   ],
 )
 ```
 
 #### Invalid referencing example
 
-The following **would be invalid** because `java/com/example/common/collect/`
-has its own build file, so `//java/com/example/common/collect:concurrent`
-cannot list `java/com/example/common/collect/*.java` in its `srcs`.
+The following **would be invalid** because `example/common/collect/` has its own
+build file, so `//example/common:concurrent` cannot list
+`example/common/collect/*.py` in its `srcs`.
 
 ```python
-java_library(
+python_library(
   name = 'concurrent',
-  srcs = glob(['collect/*.java', 'concurrent/*.java']),  # Invalid reference
-  deps = ['//java/com/example/base:base',],
+  srcs = glob(['collect/*.py', 'concurrent/*.py']),  # Invalid reference
+  deps = ['//example/base:base',],
 )
 ```

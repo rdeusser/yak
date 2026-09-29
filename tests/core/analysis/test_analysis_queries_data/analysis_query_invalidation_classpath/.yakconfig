@@ -1,6 +1,0 @@
-[buildfile]
-name=YAK.fixture
-
-[repositories]
-root = .
-prelude = .

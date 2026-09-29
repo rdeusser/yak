@@ -30,20 +30,10 @@ prelude.filegroup(
     visibility = ["PUBLIC"],
 )
 
-# The glob in `srcs` stops at the `android/constraints` package, so this copies
-# its build file into the prelude.
-prelude.genrule(
-    name = "copy_android_constraint",
-    out = "YAK",
-    cmd = "cp $(location prelude//android/constraints:files)/YAK $OUT",
-    visibility = ["PUBLIC"],
-)
-
 prelude.filegroup(
     name = "prelude",
     srcs = {
         "": ":files",
-        "android/constraints/YAK": ":copy_android_constraint",
         # explicitly include files that fall off the glob due to package boundary violations
         "cfg/exec_platform/marker/YAK": "//cfg/exec_platform/marker:buck_file",
         "rust/tools/attrs.bzl": "//rust/tools:attrs.bzl",

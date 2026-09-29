@@ -1,0 +1,41 @@
+prelude = native
+
+prelude.export_file(
+    name = "a_one",
+    src = "one/a.txt",
+    out = "a.txt",
+    mode = "copy",
+)
+
+prelude.export_file(
+    name = "a_two",
+    src = "two/a.txt",
+    out = "a.txt",
+    mode = "copy",
+)
+
+prelude.zip_file(
+    name = "inner_one",
+    srcs = [":a_one"],
+)
+
+prelude.zip_file(
+    name = "duplicate_entry",
+    srcs = [":a_two"],
+    on_duplicate_entry = "fail",
+    zip_srcs = [":inner_one"],
+)
+
+prelude.zip_file(
+    name = "duplicate_srcs",
+    srcs = [
+        ":a_one",
+        ":a_two",
+    ],
+)
+
+prelude.zip_file(
+    name = "invalid_exclude",
+    srcs = [":a_one"],
+    entries_to_exclude = ["("],
+)

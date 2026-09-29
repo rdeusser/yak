@@ -16,6 +16,7 @@ import sys
 
 import pytest
 from e2e_util.api.buck import Buck
+from e2e_util.asserts import expect_failure
 from e2e_util.buck_workspace import buck_test
 
 COMMAND_ALIAS_PACKAGES = [
@@ -79,3 +80,24 @@ async def test_command_alias(buck: Buck, package: str) -> None:
 @pytest.mark.parametrize("package", GO_PACKAGES)
 async def test_go(buck: Buck, package: str) -> None:
     await buck.build(f"root//go/{package}/...")
+
+
+@buck_test()
+async def test_zip_file(buck: Buck) -> None:
+    await buck.build("root//zip_file/...")
+
+
+@buck_test()
+@pytest.mark.parametrize(
+    "target, message",
+    [
+        ("duplicate_entry", "Duplicate entry `a.txt` comes from"),
+        ("duplicate_srcs", "Entry `a.txt` comes from both"),
+        ("invalid_exclude", "pattern `\\(` is not a valid regular expression"),
+    ],
+)
+async def test_zip_file_errors(buck: Buck, target: str, message: str) -> None:
+    await expect_failure(
+        buck.build(f"root//zip_file_errors:{target}"),
+        stderr_regex=message,
+    )

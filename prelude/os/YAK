@@ -40,17 +40,6 @@ config_setting(
     visibility = ["PUBLIC"],
 )
 
-prelude.constraint_setting(
-    name = "maybe_building_android_binary",
-    visibility = ["PUBLIC"],
-)
-
-prelude.constraint_value(
-    name = "building_android_binary",
-    constraint_setting = ":maybe_building_android_binary",
-    visibility = ["prelude//..."],
-)
-
 # Rest of Apple's operating systems.
 
 config_setting(

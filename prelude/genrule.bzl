@@ -11,7 +11,6 @@
 load("@prelude//:genrule_local_labels.bzl", "genrule_labels_require_local")
 load("@prelude//:genrule_prefer_local_labels.bzl", "genrule_labels_prefer_local")
 load("@prelude//:genrule_toolchain.bzl", "GenruleToolchainInfo")
-load("@prelude//android:build_only_native_code.bzl", "is_build_only_native_code")
 load("@prelude//os_lookup:defs.bzl", "Os", "OsLookup")
 load("@prelude//utils:expect.bzl", "expect")
 load("@prelude//utils:utils.bzl", "flatten", "value_or")
@@ -84,7 +83,6 @@ def genrule_attributes() -> dict[str, Attr]:
             Should eventually default to true.
         """,
         ),
-        "_build_only_native_code": attrs.default_only(attrs.bool(default = is_build_only_native_code())),
         "_genrule_toolchain": attrs.default_only(attrs.toolchain_dep(default = "toolchains//:genrule", providers = [GenruleToolchainInfo])),
     }
 

@@ -214,8 +214,6 @@ def _build_cxx_python_extension(ctx: AnalysisContext, module_name: str, generate
     cxx_providers = CxxRuleProviderParams(
         compilation_database = True,
         default = False,
-        java_packaging_info = False,
-        java_global_code_info = False,
         linkable_graph = False,
         link_style_outputs = False,
         merged_native_link_info = False,

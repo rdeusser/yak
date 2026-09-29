@@ -44,18 +44,6 @@ async def test_analysis_query_invalidation_deps(buck: Buck) -> None:
     )
 
 
-@buck_test(
-    data_dir="analysis_query_invalidation_classpath",
-)
-async def test_analysis_query_invalidation_classpath(buck: Buck) -> None:
-    """
-    Same as `test_analysis_query_invalidation_deps`, for `classpath()` queries.
-    """
-    await _test_analysis_query_invalidation_impl(
-        buck, name="analysis_query_invalidation_classpath"
-    )
-
-
 @buck_test(data_dir="analysis_query_deps")
 async def test_analysis_query_deps(buck: Buck) -> None:
     deps = await buck.build_without_report(":deps", "--out=-")

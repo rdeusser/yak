@@ -22,6 +22,7 @@ Remove this entry when `yak build //:yak` succeeds on macOS after a fresh `bucki
 On 2026-09-28, the whole suite ran on Linux under Python 3.12 as a user other than root, with `ps` and `lldb` installed and the daemon in a cgroup below the root of its cgroup namespace.
 That run gave 1726 passed, 230 skipped, 3 expected failures, and no other failures.
 After the rename to yak, the same setup gave 1763 passed, 190 skipped, and 3 expected failures, with `BUCK2_COMPLETION_VERIFY` set so the completion tests ran.
+On 2026-09-29, after the removal of the JVM, Android, and JavaScript support, the same setup without a completion helper gave 1728 passed, 223 skipped, and 3 expected failures.
 The skipped tests need a Remote Execution backend, cgroup delegation, helper binaries, Go, or Watchman. The repository has no Remote Execution backend to test against.
 A separate run with Go 1.26, `clang`, and `lld` passed the 30 tests in `tests/prelude/test_prelude_rules.py`, which include the 19 Go tests.
 Whether the GitHub runner puts the daemon in a cgroup below the root of its cgroup namespace is unverified.
@@ -122,48 +123,25 @@ The Algolia configuration in `website/config_impl.ts` pointed at Meta's index an
 
 Remove this entry when the site has a search box.
 
-### The JVM toolchain has targets that do not build
-
-`prelude//toolchains/android/src/dev/yak/android/aapt:merge_android_resource_sources` and `prelude//toolchains/android/src/dev/yak/android/proguard:translator` fail to compile, and `prelude//toolchains/android/third-party:manifest-merger_jar` fails to download version 31.7.3.
-All three fail the same way at `903bfd7a61`.
-Analysis of `prelude//toolchains/android/test/dev/yak/jvm/cd/workertool/grpc:workertool_grpc` fails, because the target depends on `prelude//toolchains/android/third-party:grpc-api`, which sets no visibility. `grpc-api` sets none at `903bfd7a61` either.
-
-Remove this entry when `yak build prelude//toolchains/android/...` succeeds in a project that vendors the prelude.
-
-### JVM tests fail in their JUnit reports
-
-`yak test` reports these failures as passes (see "`yak test` reports failing JVM tests as passing").
-Results are from 2026-09-28, after the move to `dev.yak`, for `yak test prelude//toolchains/android/test/...` in a project that vendors the prelude.
-
-- Under a Java 21 JDK, 29 of the 2684 tests fail.
-- `prelude/toolchains/android/third-party/YAK` defines no Commons IO jar. Six tests in `StubJarTest`, eight in `UnzipTest`, three in `ZipOutputStreamTest`, and one in `ZipScrubberTest` fail with a `NoClassDefFoundError` for a Commons IO class.
-- The system Java toolchain in `prelude/toolchains/java.bzl` sets no source roots, so a resource of a target without `resources_root` keeps its path in the cell. Six tests in `ZipOutputStreamTest`, four in `ZipScrubberTest`, and `DdPlistTest.testXMLWriting` fail because they load a resource by the path of their package.
-- `prelude/toolchains/android/third-party/YAK` pins Byte Buddy 1.15.10, which Mockito 5.20.0 uses to mock classes, and ASM 9.7. Neither reads Java 26 class files. Under a Java 26 JDK, the tests that mock classes fail with `Java 26 (70) is not supported by the current version of Byte Buddy` unless the test JVM runs with `-Dnet.bytebuddy.experimental=true`. 26 tests in `ClassReferenceTrackerTest`, two in `DescriptorFactoryTest`, and two in `SignatureFactoryTest` fail with `Unsupported class file major version 70`.
-
-Remove this entry when the JUnit reports of `yak test prelude//toolchains/android/test/...` show no failures.
-
 ### Examples that fail to load or build
 
 - `examples/toolchains/cxx_zig_toolchain` fails to build with `error: unable to parse command line parameters: NestedResponseFile`. Zig 0.11.0 rejects the nested response files that the prelude's compile argument file uses. `.github/workflows/build-and-examples.yml` sets `continue-on-error` for it.
-- In `examples/android/demoapp`, `yak cquery 'deps(//app/...)'` fails at `prelude//toolchains/android/tools/protobuf:gen-grpc` because the target is configured for the `unspecified_exec` platform.
 - In `examples/with_prelude`, `yak targets //...` fails in `root//third-party/haskell:rts` while coercing `cxx_header_dirs`.
 - In `examples/bxl_tutorial`, `yak targets //...` fails while evaluating `prelude//erlang/erlang_otp_application.bzl`, because the project defines no `toolchains` cell.
-- `examples/with_prelude/android` is a separate project and also part of `examples/with_prelude`'s root cell, so a `yak-out` that the nested project leaves is loaded by the parent's `//...`.
 - `examples/no_prelude/toolchains/go_toolchain.bzl` downloads the `linux-amd64` Go on every Linux host, so `yak build //...` in `examples/no_prelude` fails at `root//go:main` on Linux on ARM. It failed the same way before the rename to yak.
 
-The first five fail the same way at `903bfd7a61`.
+The first three fail the same way at `903bfd7a61`.
 
 Remove each item when its command succeeds.
 
+### The rename plan has an open item for jars that no longer exist
+
+`docs/exec-plans/active/2026-09-28-rename-the-fork.md` lists an open Progress item for bootstrap jars built from the `dev.yak` sources.
+`docs/exec-plans/active/2026-09-29-remove-jvm-and-buck1-compatibility.md` removed the JVM toolchain, its sources, and the jar downloads, so the item has nothing left to build.
+
+Remove this entry when the rename plan closes the item.
+
 ## Defects
-
-### `yak test` reports failing JVM tests as passing
-
-`BaseRunner.runAndExit` in `prelude/toolchains/android/src/dev/yak/testrunner/BaseRunner.java` exits 0 whatever the outcome of the tests, and it records failures only in its report.
-The built-in test runner decides a test's result from its exit code, so a `java_test` whose test methods fail is reported as a pass.
-Meta's Tpx test runner read the report instead, and `TestResultsOutputSender` still writes the Tpx result protocol when Tpx's environment variable is set.
-
-Remove this entry when a `java_test` with a failing assertion fails under `yak test`.
 
 ### `apple_test` cannot run under the built-in test runner
 
@@ -248,8 +226,6 @@ The repository owner plans to remove what still ties the repository to Meta's up
 ### Downloads from upstream releases
 
 - `bootstrap/reindeer` downloads `reindeer` from `facebookincubator/reindeer` releases, and `.github/actions/setup_reindeer/action.yml` installs it from that repository with `cargo install`.
-- The prelude downloads four jars from the `androidToolchain/2025-04-03` release of `facebook/buck2` (`cp_snapshot_generator.jar`, `zip_scrubber_main.jar`, `jar_builder_main.jar`, and `d8_dexer_patched.jar`). The first three hold the `com.facebook.buck` classes that upstream built before this repository moved its sources to `dev.yak`.
-- `examples/android/demoapp/app/libs/external_deps.txt` points at the same release for the Artificer jar.
 - `.github/workflows/release.yml` and `.github/workflows/upload_buck2.yml` publish DotSlash files with the `facebook/dotslash-publish-release` action.
 
 `git grep -n -E 'github\.com/facebook(incubator)?/[^/]+/releases|facebook/dotslash-publish-release|facebookincubator/reindeer reindeer'` lists them.
@@ -258,10 +234,10 @@ Remove each item when the fork publishes its own artifact or drops the download.
 
 ### The Tpx result protocol
 
-The JUnit runner in `prelude/toolchains/android/src/dev/yak/testrunner/` and the Common Test hooks in `prelude/erlang/common_test/` write results for Meta's Tpx test runner.
+The Common Test hooks in `prelude/erlang/common_test/` write results for Meta's Tpx test runner.
 The built-in test runner reads exit codes, so it uses none of that output.
 
-Remove this entry when the runners report results only in a form the built-in runner reads.
+Remove this entry when the hooks report results only in a form the built-in runner reads.
 
 ### `INSIDE_RE_WORKER` checks
 

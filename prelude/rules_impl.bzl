@@ -16,8 +16,6 @@ load("@prelude//:remote_file.bzl", "remote_file_impl")
 load("@prelude//:sh_binary.bzl", "sh_binary_impl")
 load("@prelude//:sh_test.bzl", "sh_test_impl")
 load("@prelude//:test_suite.bzl", "test_suite_impl")
-load("@prelude//android:android.bzl", _android_implemented_rules = "implemented_rules")
-load("@prelude//android:configuration.bzl", "is_building_android_binary_attr")
 load("@prelude//apple:apple_common.bzl", "apple_common")
 load("@prelude//apple:apple_rules_decls.bzl", "apple_rules")
 load("@prelude//configurations:rules.bzl", _config_extra_attributes = "extra_attributes", _config_implemented_rules = "implemented_rules")
@@ -32,7 +30,6 @@ load("@prelude//cxx:link_groups_types.bzl", "LINK_GROUP_MAP_ATTR")
 load("@prelude//cxx:prebuilt_cxx_library_group.bzl", "prebuilt_cxx_library_group_impl")
 load("@prelude//cxx:transformation_spec.bzl", "TransformationKind", "transformation_spec_impl")
 load("@prelude//cxx:windows_resource.bzl", "windows_resource_impl")
-load("@prelude//decls:android_rules.bzl", "android_rules")
 load("@prelude//decls:common.bzl", "IncludeType", "buck")
 load("@prelude//decls:core_rules.bzl", "core_rules")
 load("@prelude//decls:cxx_rules.bzl", "BUILD_INFO_ATTR", "cxx_rules")
@@ -42,9 +39,6 @@ load("@prelude//decls:erlang_rules.bzl", "erlang_rules")
 load("@prelude//decls:git_rules.bzl", "git_rules")
 load("@prelude//decls:go_rules.bzl", "go_rules")
 load("@prelude//decls:haskell_rules.bzl", "haskell_rules")
-load("@prelude//decls:java_rules.bzl", "java_rules")
-load("@prelude//decls:js_rules.bzl", "js_rules")
-load("@prelude//decls:kotlin_rules.bzl", "kotlin_rules")
 load("@prelude//decls:lua_rules.bzl", "lua_rules")
 load("@prelude//decls:ocaml_rules.bzl", "ocaml_rules")
 load("@prelude//decls:python_rules.bzl", "python_rules")
@@ -70,11 +64,7 @@ load("@prelude//haskell:haskell_haddock.bzl", "haskell_haddock_impl")
 load("@prelude//haskell:haskell_ide.bzl", "haskell_ide_impl")
 load("@prelude//haskell:library_info.bzl", "HaskellLibraryProvider")
 load("@prelude//http_archive:http_archive.bzl", "http_archive_impl")
-load("@prelude//java:java.bzl", _java_implemented_rules = "implemented_rules")
-load("@prelude//js:js.bzl", _js_extra_attributes = "extra_attributes", _js_implemented_rules = "implemented_rules")
-load("@prelude//js:worker_tool.bzl", "worker_tool")
 load("@prelude//julia:julia.bzl", _julia_extra_attributes = "extra_attributes", _julia_implemented_rules = "implemented_rules")
-load("@prelude//kotlin:kotlin.bzl", _kotlin_implemented_rules = "implemented_rules")
 load("@prelude//linking:execution_preference.bzl", "link_execution_preference_attr")
 load("@prelude//linking:link_info.bzl", "LinkOrdering")
 load("@prelude//linking:types.bzl", "Linkage")
@@ -99,7 +89,6 @@ load("@prelude//third-party:providers.bzl", "ThirdPartyBuildInfo")
 load("@prelude//transitions:constraint_overrides.bzl", "constraint_overrides")
 load("@prelude//zip_file:zip_file.bzl", _zip_file_extra_attributes = "extra_attributes", _zip_file_implemented_rules = "implemented_rules")
 
-_ANDROID_RULES_KEY = "android"
 _CORE_RULES_KEY = "core"
 _CXX_RULES_KEY = "cxx"
 _CYTHON_RULES_KEY = "cython"
@@ -109,9 +98,6 @@ _GIT_RULES_KEY = "git"
 _GO_RULES_KEY = "go"
 _HASKELL_RULES_KEY = "haskell"
 _APPLE_RULES_KEY = "apple"
-_JAVA_RULES_KEY = "java"
-_JS_RULES_KEY = "js"
-_KOTLIN_RULES_KEY = "kotlin"
 _LUA_RULES_KEY = "lua"
 _OCAML_RULES_KEY = "ocaml"
 _PYTHON_RULES_KEY = "python"
@@ -123,7 +109,6 @@ _JULIA_RULES_KEY = "julia"
 _MATLAB_RULES_KEY = "matlab"
 
 categorized_rule_decl_records = {
-    _ANDROID_RULES_KEY: android_rules,
     _CORE_RULES_KEY: core_rules,
     _CXX_RULES_KEY: cxx_rules,
     _CYTHON_RULES_KEY: cython_rules,
@@ -133,9 +118,6 @@ categorized_rule_decl_records = {
     _GO_RULES_KEY: go_rules,
     _HASKELL_RULES_KEY: haskell_rules,
     _APPLE_RULES_KEY: apple_rules,
-    _JAVA_RULES_KEY: java_rules,
-    _JS_RULES_KEY: js_rules,
-    _KOTLIN_RULES_KEY: kotlin_rules,
     _LUA_RULES_KEY: lua_rules,
     _OCAML_RULES_KEY: ocaml_rules,
     _PYTHON_RULES_KEY: python_rules,
@@ -170,7 +152,6 @@ extra_implemented_rules = struct(
     test_suite = test_suite_impl,
     toolchain_alias = alias_impl,
     versioned_alias = versioned_alias_impl,
-    worker_tool = worker_tool,
     # c#
     csharp_library = csharp_library_impl,
     prebuilt_dotnet_library = prebuilt_dotnet_library_impl,
@@ -230,13 +211,9 @@ extra_implemented_rules = struct(
     python_bootstrap_library = python_bootstrap_library_impl,
     # merged **kwargs
     **_merge_dictionaries([
-        _android_implemented_rules,
         _config_implemented_rules,
         _erlang_implemented_rules,
-        _java_implemented_rules,
-        _js_implemented_rules,
         _julia_implemented_rules,
-        _kotlin_implemented_rules,
         _matlab_implemented_rules,
         _zip_file_implemented_rules,
     ]),
@@ -303,7 +280,6 @@ control how the dependencies of this library are linked, use `link_style` instea
         "third_party_project": attrs.option(attrs.string(), default = None),
         "_cxx_hacks": attrs.default_only(attrs.dep(default = "prelude//cxx/tools:cxx_hacks")),
         "_cxx_toolchain": toolchains_common.cxx(),
-        "_is_building_android_binary": is_building_android_binary_attr(),
     }
     | apple_common.extra_xcode_sources()
     | third_party_common.create_third_party_build_root_attrs()
@@ -536,9 +512,6 @@ _shell_extra_attributes = {
 }
 
 _uncategorized_extra_attributes = {
-    "ndk_toolchain": {
-        "cxx_toolchain": attrs.toolchain_dep(providers = [CxxToolchainInfo, CxxPlatformInfo]),
-    },
 }
 
 _cython_extra_attributes = {
@@ -547,7 +520,6 @@ _cython_extra_attributes = {
 }
 
 categorized_extra_attributes = {
-    _ANDROID_RULES_KEY: {},
     _CORE_RULES_KEY: _core_extra_attributes,
     _CXX_RULES_KEY: cxx_extra_attributes,
     _CYTHON_RULES_KEY: _cython_extra_attributes,
@@ -555,10 +527,7 @@ categorized_extra_attributes = {
     _GO_RULES_KEY: _go_extra_attributes,
     _HASKELL_RULES_KEY: _haskell_extra_attributes,
     _APPLE_RULES_KEY: {},
-    _JAVA_RULES_KEY: {},
-    _JS_RULES_KEY: _js_extra_attributes,
     _JULIA_RULES_KEY: _julia_extra_attributes,
-    _KOTLIN_RULES_KEY: {},
     _MATLAB_RULES_KEY: _matlab_extra_attributes,
     _OCAML_RULES_KEY: _ocaml_extra_attributes,
     _PYTHON_RULES_KEY: _python_extra_attributes,

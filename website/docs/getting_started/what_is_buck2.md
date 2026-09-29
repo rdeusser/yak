@@ -25,8 +25,7 @@ Here are a few key things to know about Buck2:
   default.
 - **Extensible**: Allows developers to easily extend and customize their build
   process. Buck2 runs on various operating systems including Windows, Linux, and
-  macOS, and can build for these platforms as well as for Android, iOS, and
-  others.
+  macOS, and can build for these platforms as well as for iOS and others.
 
 ## Why Use Buck2? Key Advantages
 

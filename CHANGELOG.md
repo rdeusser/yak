@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-Removes the code, configuration, and service clients that only Meta's internal build used, and renames the tool to yak.
+Removes the code, configuration, and service clients that only Meta's internal build used, removes the JVM, Android, and JavaScript support, and renames the tool to yak.
 
 ### Renamed to yak
 
@@ -34,11 +34,32 @@ Removes the code, configuration, and service clients that only Meta's internal b
 - The hidden flag that runs the daemon in the client process is `--no-yakd`, and its variable is `YAK_NO_YAKD`.
 - `host_info()` no longer has a `buck2` field.
 - The integration tests take the binary from `YAK_BINARY` and rewrite golden files when `YAK_UPDATE_GOLDEN` is set.
-- The Java and Kotlin packages of the JVM and Android toolchain are under `dev.yak` in place of `com.facebook.buck`, such as `dev.yak.jvm.java`.
-- Apps that use exopackage extend `dev.yak.android.support.exopackage.ExopackageApplication`.
-- The JUnit runner reads its log levels from the system properties `dev.yak.stdOutLogLevel` and `dev.yak.stdErrLogLevel`.
-- The source ABI and KSP steps pass the annotation processor options `dev.yak.java.generating_abi`, `dev.yak.kotlin.generating_abi`, and `dev.yak.kotlin.ksp_generated_out_path`.
-- The Java classes of the worker protocol are in `dev.yak.worker.model`.
+
+### Removed JVM, Android, and JavaScript support
+
+- The Java, Kotlin, and Android rules and toolchains are removed.
+- `system_demo_toolchains()` no longer defines the Java, Kotlin, Android, and dex toolchains.
+- The JavaScript rules of `prelude/js` are removed, together with `worker_tool`.
+- `ndk_toolchain` is removed.
+- The `prelude//os:building_android_binary`, `prelude//os:maybe_building_android_binary`, and `prelude//runtime/constraints:test_runtime` constraints are removed. `prelude//os:android` stays.
+- `cxx_library`, `cxx_precompiled_header`, `prebuilt_cxx_library`, `apple_binary`, `apple_library`, and `apple_test` lose `can_be_asset`.
+- `cxx_library` and `cxx_precompiled_header` lose `used_by_wrap_script`.
+- `cxx_library`, `cxx_precompiled_header`, `prebuilt_cxx_library`, `prebuilt_cxx_library_group`, and `rust_library` lose `include_in_android_merge_map_output`.
+- `remote_file` no longer accepts `mvn:` URLs. The `[http] maven_repo` and `[http] maven_repo_override` settings are removed with them.
+- `yak audit classpath` is removed. It returned an error for every input.
+- Query attributes no longer have the `classpath()` function.
+- `yak install` loses the Android flags (`--run`, `--emulator`, `--device`, `--serial` or `--udid`, `--all-devices`, `--activity`, `--intent-uri`, `--wait-for-debugger`, `--uninstall`, `--keep`, and their short forms). The arguments after `--` still go to the installer.
+- `prelude/debugging` is removed. It held the BXL half of Meta's internal debugger.
+- `prelude/graphql` is removed. No rule in this repository created its providers.
+
+`zip_file` builds its archive with `prelude//zip_file/tools:create_zip`, a Python script, in place of a Java tool:
+
+- `zip_file` needs a Python bootstrap toolchain in place of a Java runtime.
+- `zip_file_toolchain` takes the tool as `create_zip`, which defaults to `prelude//zip_file/tools:create_zip`.
+- Entries are sorted by name. The Java tool wrote the entries of each archive in `zip_srcs` together.
+- Entries copied from `zip_srcs` keep their permissions. The Java tool dropped them.
+- The directory entries that `zip_file` adds for the parent directories of `srcs` files have the permissions 0755.
+- `entries_to_exclude` patterns use the syntax of Python's `re` module in place of Java's `java.util.regex`.
 
 ### Removed commands and flags
 
@@ -88,7 +109,6 @@ The Bazel Remote Execution API has no field for gang workers, action dependencie
 - A test whose `remote_execution` properties set `dependencies`, `gang_workers`, or `remote_execution_dynamic_image` fails attribute coercion.
 - `get_re_executors_from_props` in `@prelude//tests:re_utils.bzl` loses its `dynamic_image_override` parameter.
 - `remote_test_execution_toolchain` loses `default_run_as_bundle`.
-- `android_instrumentation_test` sets no default executor overrides, and its `re_caps` and `re_use_case` must name the same overrides.
 - The event log no longer reports the `queue_acquiring_dependencies` Remote Execution stage.
 
 ### Documentation links
@@ -102,12 +122,9 @@ The Bazel Remote Execution API has no field for gang workers, action dependencie
 - The `tests.disable_re_tests` buckconfig key replaces `fbcode.disable_re_tests`.
 - `versioned_alias` and versioned parameters select on `config//third-party/<project>/constraints:<version>`, which the `config` cell must define. They selected on `ovr_config//third-party/...` before.
 - A Remote Execution test without a `use_case` no longer falls back to the `tpx-default` use case.
-- A Kotlin target with `abi_generation_mode = "source_only"` fails during analysis. Kotlin supports `class` and `none`.
-- The kapt step passes only the all-open compiler plugin, and standalone KSP passes only symbol-processing plugins. A plugin named `di.jar` went to one of them before, chosen by its `com.facebook.kotlin.di:kspActive` option.
-- The Android installer enables app links only when `--enable-app-links` is passed. It enabled them by default for an allowlist of Meta's apps before.
 - `BuckconfigBackedModifier` no longer has an `oncall` field.
-- Test rules no longer add the labels that only Meta's Tpx test runner read (the `tpx:*` labels on `apple_test`, `android_instrumentation_test`, and the JVM test macros, and `run_as_bundle`).
-- `go_test`, `java_test`, and `android_instrumentation_test` no longer set `TPX_LIST_TESTS_COMMAND`.
+- Test rules no longer add the labels that only Meta's Tpx test runner read (the `tpx:*` labels of `apple_test`, and the `run_as_bundle` label).
+- `go_test` no longer sets `TPX_LIST_TESTS_COMMAND`.
 - `python_needed_coverage_test` no longer sets `TEST_PILOT`.
 - `buck2 run` on a `go_test` without `env` runs the test binary directly. It ran through `inject_test_env.py` before.
 - The `TestListingInfo` provider and the `prelude//go/tools:list_tests` target are removed.
@@ -116,12 +133,9 @@ The Bazel Remote Execution API has no field for gang workers, action dependencie
 Rule attributes and toolchain fields that only Meta's build used are removed:
 
 - Apple rules lose `bundle_telemetry_logger`, `entitlements_verification_check_enabled`, `_fast_adhoc_signing_probe_enabled`, `_meta_apple_library_validation_enabled`, and `_sanitizer_compatibility`. `apple_test` loses `test_device_type`. `AppleToolchainInfo` loses `bundle_telemetry_logger`.
-- `java_test_toolchain` and the Android toolchain lose `list_tests`.
 - C++ rules lose `use_fbcc_rust_wrapper`.
 - `cxx_toolchain` loses `_dumpbin_toolchain_path`.
 - `CxxToolchainInfo` loses `compiler_with_wrapper`.
 - `http_archive` and `http_file` lose `vpnless_urls`.
 - `remote_file` loses `vpnless_url`.
-- JavaScript rules lose `_asset_dest_path_resolver`.
-- `KotlinToolchainInfo` loses `kosabi_applicability_plugin`, `kosabi_jvm_abi_gen_k2_plugin`, and `kosabi_stubs_gen_k2_plugin`.
 - Python rules lose `use_rust_make_par`, `use_rust_make_par_optimizations`, and `opt_by_default_enabled`. `PythonToolchainInfo` loses `gen_lpar_bootstrap`, `make_py_package_live`, and `manifest_module_entries`.

@@ -192,9 +192,9 @@ impl<Env: QueryEnvironment> DefaultQueryFunctionsModule<Env> {
     ///
     /// Arguments *from* and *to* can themselves be expressions, for example:
     /// ```text
-    /// $ yak uquery "allpaths(kind(java_library, '//...'), '//foo:bar')"
+    /// $ yak uquery "allpaths(kind(cxx_library, '//...'), '//foo:bar')"
     /// ```
-    /// shows all the paths between any target with rule type `java_library` in the repository and the target `//foo:bar`.
+    /// shows all the paths between any target with rule type `cxx_library` in the repository and the target `//foo:bar`.
     ///
     /// We recommend using it with the `--output-format=dot` parameter to generate a [Graphviz](https://graphviz.org/) [DOT](https://graphviz.org/doc/info/lang.html) file that can then be rendered as an image.
     ///
@@ -430,8 +430,8 @@ impl<Env: QueryEnvironment> DefaultQueryFunctionsModule<Env> {
     ///
     /// The `first_order_deps()` operator returns a set that contains the first-order dependencies
     /// of the current node. It can be combined with other filter functions, for example,
-    /// `kind(java_library, first_order_deps())` to make the `deps` traversal only traverse
-    /// `java_library` targets. The `first_order_deps()` operator can only be used as an argument
+    /// `kind(cxx_library, first_order_deps())` to make the `deps` traversal only traverse
+    /// `cxx_library` targets. The `first_order_deps()` operator can only be used as an argument
     /// passed to `deps()`.
     ///
     /// The returned values include the nodes from the `targets` argument itself.
@@ -509,9 +509,9 @@ impl<Env: QueryEnvironment> DefaultQueryFunctionsModule<Env> {
     ///
     /// For example:
     /// ```text
-    /// $ yak query "kind('java.*', deps('//foo:bar'))"
+    /// $ yak query "kind('cxx.*', deps('//foo:bar'))"
     /// ```
-    /// This command returns targets matching rule type `java.*` (e.g., `java_library`, `java_binary`) in the transitive dependencies of `//foo:bar`.
+    /// This command returns targets matching rule type `cxx.*` (e.g., `cxx_library`, `cxx_binary`) in the transitive dependencies of `//foo:bar`.
     async fn kind(&self, regex: String, targets: TargetSet<Env::Target>) -> QueryFuncResult<Env> {
         Ok(targets.kind(&regex)?.into())
     }

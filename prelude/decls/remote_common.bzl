@@ -40,7 +40,7 @@ def _urls_arg():
             doc = """
     A list of urls to attempt to download from. They are tried in order, and
      subsequent ones are only tried if the download fails. If validation fails,
-     a new URL is not used. Supported protocols are "http", "https", and "mvn".
+     a new URL is not used. Supported protocols are "http" and "https".
 """,
         ),
     }

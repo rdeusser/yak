@@ -13,10 +13,6 @@ load(
 )
 load("@prelude//:resources.bzl", "gather_resources", "make_resource_info")
 load(
-    "@prelude//android:android_providers.bzl",
-    "merge_android_packageable_info",
-)
-load(
     "@prelude//cxx:linker.bzl",
     "IMPORT_LIBRARY_SUB_TARGET",
     "PDB_SUB_TARGET",
@@ -522,8 +518,6 @@ def rust_library_impl(ctx: AnalysisContext) -> list[Provider]:
         ),
     )
 
-    providers.append(merge_android_packageable_info(ctx.label, ctx.actions, deps))
-
     providers.append(
         rust_analyzer_provider(
             ctx = ctx,
@@ -963,7 +957,6 @@ def _advanced_unstable_link_providers(
                 # if this target actually requested that. Opt ourselves out
                 # if it didn't.
                 ignore_force_static_follows_dependents = preferred_linkage != Linkage("static"),
-                include_in_android_mergemap = getattr(ctx.attrs, "include_in_android_merge_map_output", True),
             ),
         ),
         deps = inherited_graphs + inherited_exported_deps,
@@ -1176,7 +1169,6 @@ def _native_link_providers(
                 shared_libs = shared_libs,
                 linker_flags = _linker_flags(ctx),
                 default_soname = shlib_name,
-                include_in_android_mergemap = getattr(ctx.attrs, "include_in_android_merge_map_output", True),
             ),
         ),
         deps = inherited_link_graphs + inherited_exported_deps,

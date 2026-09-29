@@ -9,8 +9,6 @@
 load("@prelude//zip_file:zip_file_toolchain.bzl", "ZipFileToolchainInfo")
 
 def zip_file_toolchain(name, **kwargs):
-    kwargs["create_zip"] = "prelude//toolchains/android/src/dev/yak/features/zip/rules/utils:zip_binary"
-
     _zip_file_toolchain_rule(name = name, **kwargs)
 
 def _zip_file_toolchain_rule_impl(ctx):
@@ -23,7 +21,7 @@ def _zip_file_toolchain_rule_impl(ctx):
 
 _zip_file_toolchain_rule = rule(
     attrs = {
-        "create_zip": attrs.dep(providers = [RunInfo]),
+        "create_zip": attrs.exec_dep(providers = [RunInfo], default = "prelude//zip_file/tools:create_zip"),
     },
     impl = _zip_file_toolchain_rule_impl,
     is_toolchain_rule = True,

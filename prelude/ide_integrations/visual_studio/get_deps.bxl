@@ -13,14 +13,7 @@ def get_deps(bxl_ctx, targets: bxl.ConfiguredTargetSet) -> typing.Iterable:
 
     # -1 or large value for unbounded traversal
     # Return dependencies in DFS post-order.
-    deps = bxl_ctx.cquery().deps(targets, -1, "target_deps()")
-
-    # Skip special targets that are going to cause trouble in generation and not useful in final solution.
-    block_list = {
-        "toolchains//:android-hack": True,
-    }
-
-    return [dep for dep in deps if dep.label.raw_target() not in block_list]
+    return list(bxl_ctx.cquery().deps(targets, -1, "target_deps()"))
 
 def _main(bxl_ctx):
     targets = flatten_lists(bxl_ctx.cli_args.target)

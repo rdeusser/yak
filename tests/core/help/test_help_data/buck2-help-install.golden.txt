@@ -15,46 +15,6 @@ Options:
       --installer-debug
           Prints installer output to stderr. It might break superconsole
 
-  -r, --run
-          Run an Android activity. Here for compatibility with buck1 - it is automatically forwarded
-          to the installer
-
-  -e, --emulator
-          Use this option to use emulators only on Android. Here for compatibility with buck1 - it
-          is automatically forwarded to the installer
-
-  -d, --device
-          Use this option to use real devices only on Android. Here for compatibility with buck1 -
-          it is automatically forwarded to the installer
-
-  -s, --serial <SERIAL>
-          Use Android device or emulator with specific serial or UDID number. Here for compatibility
-          with buck1 - it is automatically forwarded to the installer
-
-  -x, --all-devices
-          Use all connected Android devices and/or emulators (multi-install mode). Here for
-          compatibility with buck1 - it is automatically forwarded to the installer
-
-  -a, --activity <ACTIVITY>
-          Android activity to launch e.g. com.example/.LoginActivity. Implies -r. Here for
-          compatibility with buck1 - it is automatically forwarded to the installer
-
-  -i, --intent-uri <INTENT_URI>
-          Android Intent URI to launch e.g. fb://profile. Implies -r. Here for compatibility with
-          buck1 - it is automatically forwarded to the installer
-
-  -w, --wait-for-debugger
-          Have the launched Android process wait for the debugger. Here for compatibility with buck1
-          - it is automatically forwarded to the installer
-
-  -u, --uninstall
-          Use this option to uninstall an installed app before installing again. Here for
-          compatibility with buck1 - it is automatically forwarded to the installer
-
-  -k, --keep
-          Use this option to Keep user data when uninstalling. Here for compatibility with buck1 -
-          it is automatically forwarded to the installer
-
       --build-report <PATH>
           Print a build report
 

@@ -6,7 +6,6 @@ repository.workspace = true
 license.workspace = true
 
 [dependencies]
-allocative.workspace = true
 async-trait.workspace = true
 buck2_artifact.workspace = true
 buck2_build_api.workspace = true
@@ -24,15 +23,12 @@ buck2_util.workspace = true
 dashmap.workspace = true
 derive_more.workspace = true
 dice.workspace = true
-dice_futures.workspace = true
 dupe.workspace = true
 either.workspace = true
 futures.workspace = true
 gazebo.workspace = true
 itertools.workspace = true
-pagable.workspace = true
 ref-cast.workspace = true
-starlark.workspace = true
 tokio.workspace = true
 tracing.workspace = true
 

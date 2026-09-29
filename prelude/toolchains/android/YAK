@@ -1,3 +1,0 @@
-load("@prelude//utils:source_listing.bzl", "source_listing")
-
-source_listing()

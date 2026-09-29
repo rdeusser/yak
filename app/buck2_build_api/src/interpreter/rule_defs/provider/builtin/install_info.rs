@@ -32,7 +32,7 @@ use crate as buck2_build_api;
 use crate::interpreter::rule_defs::artifact::starlark_artifact_like::ValueAsInputArtifactLike;
 use crate::interpreter::rule_defs::artifact::starlark_artifact_like::ValueIsInputArtifactAnnotation;
 
-// Provider that signals a rule is installable (ex. android_binary)
+// Provider that signals a rule is installable (ex. apple_bundle)
 
 #[derive(Debug, buck2_error::Error)]
 #[buck2(tag = Input)]

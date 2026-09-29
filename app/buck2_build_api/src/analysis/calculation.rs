@@ -35,7 +35,6 @@ use crate::validation::transitive_validations::TransitiveValidations;
 
 pub static EVAL_ANALYSIS_QUERY: LateBinding<
     for<'a> fn(
-        &'a mut DiceComputations,
         &'a str,
         BuckMutMap<String, ConfiguredTargetNode>,
     ) -> Pin<

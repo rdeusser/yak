@@ -424,19 +424,6 @@ library_attrs = (
               The default is to not use a defile.
         """,
         ),
-        "used_by_wrap_script": attrs.bool(
-            default = False,
-            doc = """
-            When using an exopackage
-              Android, if this parameter is set to `True`, then the library is
-              included in the primary APK even if native libraries would otherwise not be
-              placed in it. This is intended for native libraries that are used by a
-              [wrap.sh](https://developer.android.com/ndk/guides/wrap-script)
-              script, which must be placed in the primary APK. Only one of
-              `can_be_asset` and `used_by_wrap_script` can be set
-              for a rule.
-        """,
-        ),
     }
     | cxx_common.supported_platforms_regex_arg()
     | cxx_common.force_static(force_static_type = attrs.option(attrs.bool(), default = None))
@@ -454,7 +441,6 @@ library_attrs = (
     | {
         "archive_allow_cache_upload": attrs.bool(default = False),
         "bridging_header": attrs.option(attrs.source(), default = None),
-        "can_be_asset": attrs.option(attrs.bool(), default = None),
         "cxx_runtime_type": attrs.option(attrs.enum(CxxRuntimeType), default = None),
         "default_host_platform": attrs.option(attrs.configuration_label(), default = None),
         "default_platform": attrs.option(attrs.string(), default = None),
@@ -501,7 +487,6 @@ library_attrs = (
         "focused_list_target": attrs.option(attrs.dep(), default = None),
         "frameworks": attrs.list(attrs.string(), default = []),
         "headers_as_raw_headers_mode": attrs.option(attrs.enum(HeadersAsRawHeadersMode), default = None),
-        "include_in_android_merge_map_output": attrs.bool(default = True),
         "libraries": attrs.list(attrs.string(), default = []),
         "link_group": attrs.option(attrs.string(), default = None),
         "link_group_map": LINK_GROUP_MAP_ATTR,
@@ -546,7 +531,7 @@ cxx_library = prelude_rule(
 
         Whether a Buck command builds the `cxx_library` is
         determined by the inclusion of a top-level target, such as
-        a `cxx_binary()` or `android_binary()`, that
+        a `cxx_binary()` or `python_binary()`, that
         transitively depends on the `cxx_library`. The set of
         targets specified to the Buck command (`buck build`, `buck run`, etc) must
         include one of these top-level targets in order for Buck to build
@@ -556,7 +541,7 @@ cxx_library = prelude_rule(
 
         *How* Buck builds the library also depends on the specified top-level target.
         For example, a C/C++ binary (`cxx_binary`) would require a static non-PIC build of the library,
-        whereas an Android APK (`android_binary`) would require a shared PIC-enabled build.
+        whereas a Python extension (`cxx_python_extension`) would require a shared PIC-enabled build.
         (PIC stands for position-independent code.)
 
         #### Dependencies of the cxx\\_library also require a top-level target
@@ -1166,7 +1151,6 @@ prebuilt_cxx_library = prelude_rule(
         | cxx_common.local_linker_script_flags_arg()
         | cxx_common.version_arg()
         | {
-            "can_be_asset": attrs.bool(default = False),
             "deffile": attrs.option(
                 attrs.source(),
                 default = None,
@@ -1181,7 +1165,6 @@ prebuilt_cxx_library = prelude_rule(
             "extract_soname": attrs.bool(default = False),
             "frameworks": attrs.list(attrs.string(), default = []),
             "import_lib": attrs.option(attrs.source(), default = None),
-            "include_in_android_merge_map_output": attrs.bool(default = True),
             "libraries": attrs.list(attrs.string(), default = []),
             "link_whole": attrs.bool(default = False),
             "link_without_soname": attrs.bool(default = False),
@@ -1335,7 +1318,6 @@ prebuilt_cxx_library_group = prelude_rule(
             "deps": attrs.list(attrs.dep(), default = []),
             "import_libs": attrs.dict(key = attrs.string(), value = attrs.source(), sorted = False, default = {}),
             "include_dirs": attrs.list(attrs.source(allow_directory = True), default = []),
-            "include_in_android_merge_map_output": attrs.bool(default = True),
             "supports_shared_library_interface": attrs.bool(default = True),
         }
         | buck.licenses_arg()

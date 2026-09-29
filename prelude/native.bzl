@@ -13,7 +13,6 @@
 
 load("@prelude//:paths.bzl", "paths")
 load("@prelude//:rules.bzl", __rules__ = "rules")
-load("@prelude//android:cpu_filters.bzl", "ALL_CPU_FILTERS", "CPU_FILTER_FOR_DEFAULT_PLATFORM")
 load(
     "@prelude//apple:apple_macro_layer.bzl",
     "apple_binary_macro_impl",
@@ -175,79 +174,6 @@ def _at_most_one(*items):
         res = item
 
     return res
-
-def _get_valid_cpu_filters(cpu_filters: [list[str], None]) -> list[str]:
-    if read_root_config("yak", "android_force_single_default_cpu") in ("True", "true"):
-        return [CPU_FILTER_FOR_DEFAULT_PLATFORM]
-
-    cpu_abis_config_string = read_root_config("ndk", "cpu_abis")
-    if cpu_abis_config_string:
-        cpu_abis = [v.strip() for v in cpu_abis_config_string.split(",")]
-        for cpu_abi in cpu_abis:
-            if cpu_abi not in ALL_CPU_FILTERS:
-                fail("Entries in ndk.cpu_abis must be one of {}, but {} is not".format(ALL_CPU_FILTERS, cpu_abi))
-    else:
-        cpu_abis = ALL_CPU_FILTERS
-
-    cpu_filters = cpu_filters or ALL_CPU_FILTERS
-
-    return [cpu_filter for cpu_filter in cpu_filters if cpu_filter in cpu_abis]
-
-def _android_aar_macro_stub(cpu_filters = None, **kwargs):
-    __rules__["android_aar"](cpu_filters = _get_valid_cpu_filters(cpu_filters), **kwargs)
-
-def _convert_kotlin_compiler_plugins(kotlin_compiler_plugins):
-    if type(kotlin_compiler_plugins) == type(select({})):
-        return native.select_map(kotlin_compiler_plugins, _convert_kotlin_compiler_plugins)
-    if type(kotlin_compiler_plugins) == type({}):
-        return [(key, value) for key, value in kotlin_compiler_plugins.items()]
-    else:
-        return kotlin_compiler_plugins
-
-def _kotlin_library_macro_stub(kotlin_compiler_plugins = {}, **kwargs):
-    __rules__["kotlin_library"](kotlin_compiler_plugins = _convert_kotlin_compiler_plugins(kotlin_compiler_plugins), **kwargs)
-
-def _kotlin_test_macro_stub(kotlin_compiler_plugins = {}, **kwargs):
-    __rules__["kotlin_test"](kotlin_compiler_plugins = _convert_kotlin_compiler_plugins(kotlin_compiler_plugins), **kwargs)
-
-def _android_library_macro_stub(kotlin_compiler_plugins = {}, **kwargs):
-    __rules__["android_library"](kotlin_compiler_plugins = _convert_kotlin_compiler_plugins(kotlin_compiler_plugins), **kwargs)
-
-def _robolectric_test_macro_stub(kotlin_compiler_plugins = {}, **kwargs):
-    __rules__["robolectric_test"](kotlin_compiler_plugins = _convert_kotlin_compiler_plugins(kotlin_compiler_plugins), **kwargs)
-
-def _android_binary_macro_stub(allow_r_dot_java_in_secondary_dex = False, cpu_filters = None, primary_dex_patterns = [], **kwargs):
-    if not allow_r_dot_java_in_secondary_dex:
-        primary_dex_patterns = primary_dex_patterns + [
-            "/R^",
-            "/R$",
-            # Pin this to the primary for apps with no primary dex classes.
-            "^dev/yak_generated/AppWithoutResourcesStub^",
-        ]
-
-    # TODO: Accept `select` for `cpu_filters` and apply the same logic as for non-select cases
-    __rules__["android_binary"](
-        allow_r_dot_java_in_secondary_dex = allow_r_dot_java_in_secondary_dex,
-        cpu_filters = cpu_filters if isinstance(cpu_filters, Select) else _get_valid_cpu_filters(cpu_filters),
-        primary_dex_patterns = primary_dex_patterns,
-        **kwargs,
-    )
-
-def _android_bundle_macro_stub(cpu_filters = None, **kwargs):
-    __rules__["android_bundle"](
-        # TODO: Accept `select` for `cpu_filters` and apply the same logic as for non-select cases
-        cpu_filters = cpu_filters if isinstance(cpu_filters, Select) else _get_valid_cpu_filters(cpu_filters),
-        **kwargs,
-    )
-
-def _android_instrumentation_apk_macro_stub(cpu_filters = None, primary_dex_patterns = [], **kwargs):
-    primary_dex_patterns = primary_dex_patterns + [
-        "/R^",
-        "/R$",
-        # Pin this to the primary for apps with no primary dex classes.
-        "^dev/yak_generated/AppWithoutResourcesStub^",
-    ]
-    __rules__["android_instrumentation_apk"](cpu_filters = _get_valid_cpu_filters(cpu_filters), primary_dex_patterns = primary_dex_patterns, **kwargs)
 
 # export_file src defaults to name, despite being string vs source, so adjust it in the macros
 def _export_file_macro_stub(name, src = None, **kwargs):
@@ -411,11 +337,6 @@ def _prebuilt_apple_xcframework_macro_stub(**kwargs):
 # Probably good if they were defined to take in the base rule that
 # they are wrapping and return the wrapped one.
 __extra_rules__ = {
-    "android_aar": _android_aar_macro_stub,
-    "android_binary": _android_binary_macro_stub,
-    "android_bundle": _android_bundle_macro_stub,
-    "android_instrumentation_apk": _android_instrumentation_apk_macro_stub,
-    "android_library": _android_library_macro_stub,
     "apple_binary": _apple_binary_macro_stub,
     "apple_bundle": _apple_bundle_macro_stub,
     "apple_library": _apple_library_macro_stub,
@@ -433,13 +354,10 @@ __extra_rules__ = {
     "erlang_application": _erlang_application_macro_stub,
     "erlang_tests": _erlang_tests_macro_stub,
     "export_file": _export_file_macro_stub,
-    "kotlin_library": _kotlin_library_macro_stub,
-    "kotlin_test": _kotlin_test_macro_stub,
     "prebuilt_apple_framework": _prebuilt_apple_framework_macro_stub,
     "prebuilt_apple_xcframework": _prebuilt_apple_xcframework_macro_stub,
     "prebuilt_cxx_library": _prebuilt_cxx_library_macro_stub,
     "python_library": _python_library_macro_stub,
-    "robolectric_test": _robolectric_test_macro_stub,
     "rust_binary": _rust_binary_macro_stub,
     "rust_library": _rust_library_macro_stub,
     "rust_test": _rust_test_macro_stub,

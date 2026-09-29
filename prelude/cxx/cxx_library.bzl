@@ -19,10 +19,6 @@ load(
     "make_resource_info",
 )
 load(
-    "@prelude//android:android_providers.bzl",
-    "merge_android_packageable_info",
-)
-load(
     "@prelude//apple:apple_frameworks.bzl",
     "apple_build_link_args_with_deduped_flags",
     "apple_create_frameworks_linkable",
@@ -55,11 +51,6 @@ load(
     "XCODE_DATA_SUB_TARGET",
     "XcodeDataInfo",
     "generate_xcode_data",
-)
-load(
-    "@prelude//java:java_providers.bzl",
-    "get_java_packaging_info",
-    "propagate_global_code_info",
 )
 load("@prelude//linking:execution_preference.bzl", "LinkExecutionPreference", "get_link_execution_preference")
 load(
@@ -1214,11 +1205,9 @@ def cxx_library_parameterized(ctx: AnalysisContext, impl_params: CxxRuleConstruc
                     exported_deps = exported_deps,
                     # If we don't have link input for this link style, we pass in `None` so
                     # that omnibus knows to avoid it.
-                    include_in_android_mergemap = getattr(ctx.attrs, "include_in_android_merge_map_output", True) and default_output != None,
                     link_infos = library_outputs.link_infos,
                     shared_libs = shared_libs,
                     linker_flags = linker_flags,
-                    can_be_asset = getattr(ctx.attrs, "can_be_asset", False) or False,
                     stub = getattr(ctx.attrs, "stub", False),
                 ),
                 excluded = {ctx.label: None} if not value_or(ctx.attrs.supports_merged_linking, True) else {},
@@ -1302,20 +1291,6 @@ def cxx_library_parameterized(ctx: AnalysisContext, impl_params: CxxRuleConstruc
 
         providers.append(TemplatePlaceholderInfo(keyed_variables = templ_vars))
 
-    # It is possible (e.g. in a java binary or an Android APK) to have C++ libraries that depend
-    # upon Java libraries (through JNI). In some cases those Java libraries are not depended upon
-    # anywhere else, so we need to expose them here to ensure that they are packaged into the
-    # final binary.
-    if impl_params.generate_providers.java_packaging_info:
-        providers.append(get_java_packaging_info(ctx, deps_all_non_exported_first))
-
-    if impl_params.generate_providers.java_global_code_info:
-        providers.append(propagate_global_code_info(ctx, ctx.attrs.deps + getattr(ctx.attrs, "exported_deps", [])))
-
-    # TODO: this shouldn't be in cxx_library itself, use overlays to remove it.
-    if impl_params.generate_providers.android_packageable_info:
-        providers.append(merge_android_packageable_info(ctx.label, ctx.actions, deps_all_non_exported_first))
-
     bitcode_bundle = default_output.bitcode_bundle if default_output != None else None
     if bitcode_bundle:
         bc_provider = BitcodeBundleInfo(bitcode = bitcode_bundle, bitcode_bundle = ctx.actions.tset(BitcodeTSet, value = bitcode_bundle))
@@ -1371,11 +1346,9 @@ def cxx_library_parameterized(ctx: AnalysisContext, impl_params: CxxRuleConstruc
                             default_link_strategy = _link_strategy_for_some_shared_links(ctx.attrs),
                             deps = non_exported_deps,
                             exported_deps = exported_deps,
-                            include_in_android_mergemap = getattr(ctx.attrs, "include_in_android_merge_map_output", True) and default_output != None,
                             link_infos = library_outputs.link_infos,
                             shared_libs = shared_libs,
                             linker_flags = linker_flags,
-                            can_be_asset = getattr(ctx.attrs, "can_be_asset", False) or False,
                             stub = getattr(ctx.attrs, "stub", False),
                         ),
                         excluded = {ctx.label: None} if not value_or(ctx.attrs.supports_merged_linking, True) else {},

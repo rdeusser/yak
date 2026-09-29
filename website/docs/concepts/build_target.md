@@ -71,8 +71,8 @@ snippet from a build file shows an example of using a relative path.
 
 ```python
 ## Assume this target is in //java/com/example/share/YAK#
-java_binary(
-  name = 'ui_jar',
+cxx_binary(
+  name = 'ui_app',
   deps = [
     ## The following target path
     ##   //java/com/example/share:ui

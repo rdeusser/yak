@@ -88,14 +88,8 @@ LinkableNode = record(
     # The soname this node would use in default link strategies. May be used by non-default
     # link strategies as a lib's soname.
     default_soname = field(str | None),
-    # Records Android's can_be_asset value for the node. This indicates whether the node can be bundled
-    # as an asset in android apks.
-    can_be_asset = field(bool),
     # Collected target sources from the target.
     srcs = field(list[_TargetSourceType]),
-    # Whether the node should appear in the android mergemap (which provides information about the original
-    # soname->final merged lib mapping)
-    include_in_android_mergemap = field(bool),
     # Don't follow dependents on this node even if has preferred linkage static
     ignore_force_static_follows_dependents = field(bool),
     # Should this library only be used for build time linkage
@@ -160,8 +154,6 @@ def create_linkable_node(
     exported_deps: list[Dependency | LinkableGraph] = [],
     link_infos: dict[LibOutputStyle, LinkInfos] = {},
     shared_libs: SharedLibraries = SharedLibraries(libraries = []),
-    can_be_asset: bool = True,
-    include_in_android_mergemap: bool = True,
     linker_flags: [LinkerFlags, None] = None,
     ignore_force_static_follows_dependents: bool = False,
     stub: bool = False,
@@ -184,9 +176,7 @@ def create_linkable_node(
         all_deps = deps + exported_deps,
         link_infos = link_infos,
         shared_libs = shared_libs,
-        can_be_asset = can_be_asset,
         srcs = _get_target_sources(ctx),
-        include_in_android_mergemap = include_in_android_mergemap,
         default_soname = default_soname,
         linker_flags = linker_flags,
         ignore_force_static_follows_dependents = ignore_force_static_follows_dependents,

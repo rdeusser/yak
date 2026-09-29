@@ -213,7 +213,7 @@ providers, which can happen when the target is built, or when one of its
 dependents is.
 
 As an example, the `cxx_binary` rule could be used to create a C++ binary, but
-`android_binary` rule would be used to create an Android APK
+the `go_binary` rule would be used to create a Go binary.
 
 ## Starlark
 

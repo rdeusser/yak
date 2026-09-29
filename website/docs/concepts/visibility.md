@@ -51,50 +51,48 @@ but `//hello:world` does not define `//foo:bar` in its `within_view` list, then
 
 ## Examples
 
-A common library like Guava should be able to be included by any build rule:
+A common library like zlib should be able to be included by any build rule:
 
 ```python
-prebuilt_jar(
-  name = 'guava',
-  binary_jar = 'guava-14.0.1.jar',
+prebuilt_cxx_library(
+  name = 'zlib',
+  static_lib = 'libz.a',
   visibility = ['PUBLIC']
 )
 ```
 
-It is common to restrict the visibility of Android resources to the Java code
-that uses it:
+It is common to restrict the visibility of resource files to the code that uses
+them:
 
 ```python
-android_resource(
-  name = 'ui_res',
-  res = 'res',
-  package = 'com.example',
-  visibility = ['//java/com/example/ui:ui']
+export_file(
+  name = 'ui_strings',
+  src = 'strings.json',
+  visibility = ['//example/ui:ui']
 )
 ```
 
 Or it may be simpler to make it visible to the entire directory in case
-additional build rules are added to `java/com/example/ui/YAK`:
+additional build rules are added to `example/ui/YAK`:
 
 ```python
-android_resource(
-  name = 'ui_res',
-  res = 'res',
-  package = 'com.example',
-  visibility = ['//java/com/example/ui:']
+export_file(
+  name = 'ui_strings',
+  src = 'strings.json',
+  visibility = ['//example/ui:']
 )
 ```
 
 Also, it is common to limit code for testing to be visible only to tests. If you
-define all of your Java unit tests in a folder named `javatests/` in the root of
-your project, then you could define the following rule to ensure that only build
-rules under `javatests/` can depend on JUnit:
+define all of your unit tests in a folder named `tests/` in the root of your
+project, then you could define the following rule to ensure that only build
+rules under `tests/` can depend on GoogleTest:
 
 ```python
-prebuilt_jar(
-  name = 'junit',
-  binary_jar = 'junit-4.11.jar',
-  visibility = ['//javatests/...']
+prebuilt_cxx_library(
+  name = 'gtest',
+  static_lib = 'libgtest.a',
+  visibility = ['//tests/...']
 )
 ```
 
@@ -102,7 +100,7 @@ Finally, restricting the view of a target can be useful for preventing
 dependency creep:
 
 ```python
-java_library(
+cxx_library(
   name = 'example',
   visibility = ['PUBLIC',],
   within_view = ['//foo:bar','//hello:world']

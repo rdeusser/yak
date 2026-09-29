@@ -45,8 +45,6 @@ SharedLibrary = record(
     # TODO(cjhopman): This is currently always available.
     shlib_deps = field(list[str] | None, None),
     stripped_lib = field(Artifact | None, None),
-    can_be_asset = field(bool, False),
-    for_primary_apk = field(bool, False),
     soname = field(Soname),
     label = field(Label),
     extra_outputs = field(dict[str, list[DefaultInfo]], default = {}),
@@ -151,8 +149,6 @@ def create_shlib_from_ctx(
         else None,
         link_args = lib.link_args,
         shlib_deps = None,  # TODO(cjhopman): we need this figured out.
-        can_be_asset = getattr(ctx.attrs, "can_be_asset", False) or False,
-        for_primary_apk = getattr(ctx.attrs, "used_by_wrap_script", False),
         label = ctx.label,
         soname = soname,
         extra_outputs = extra_outputs,

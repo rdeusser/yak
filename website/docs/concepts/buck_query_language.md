@@ -42,7 +42,7 @@ descriptions in the command documentation.
 It is not necessary to quote arguments if they comprise sequences of characters
 drawn from the alphabet, numerals, forward slash (`/`), colon (`:`), period
 (`.`), hyphen (`-`), underscore (`_`), or asterisk (`*`)—and they do not start
-with a hyphen or period. For example, quoting `java_test` is unnecessary.
+with a hyphen or period. For example, quoting `python_test` is unnecessary.
 
 However, we **do recommend** that you quote arguments as a best practice even
 when Buck2 doesn't require it.

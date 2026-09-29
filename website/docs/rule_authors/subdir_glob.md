@@ -7,8 +7,8 @@ title: subdir_glob()
 
 The `subdir_glob()` function is a utility for creating dictionaries that map
 relative paths to source files, making it particularly useful for defining
-header maps for C/C++ libraries and resource mappings for Android projects. For
-more information, see [`glob()`](../api/build/index.md#glob)
+header maps for C/C++ libraries. For more information, see
+[`glob()`](../api/build/index.md#glob)
 
 ## Overview
 

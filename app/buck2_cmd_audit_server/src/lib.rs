@@ -21,7 +21,6 @@ use buck2_server_ctx::partial_result_dispatcher::PartialResultDispatcher;
 
 mod analysis_queries;
 mod cell;
-mod classpath;
 mod common;
 mod config;
 mod configurations;
@@ -85,7 +84,6 @@ impl AuditCommandExt for AuditCommand {
         match self {
             AuditCommand::Cell(cmd) => cmd,
             AuditCommand::FilePackage(cmd) => cmd,
-            AuditCommand::Classpath(cmd) => cmd,
             AuditCommand::Config(cmd) => cmd,
             AuditCommand::Configurations(cmd) => cmd,
             AuditCommand::Includes(cmd) => cmd,

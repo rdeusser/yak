@@ -101,7 +101,6 @@ load(
     "EMPTY_CPREPROCESSOR",
 )
 load("@prelude//cxx:target_sdk_version.bzl", "get_unversioned_target_triple")
-load("@prelude//graphql:graphql.bzl", "graphql_providers")
 load(
     "@prelude//linking:link_info.bzl",
     "ExtraLinkerOutputs",
@@ -199,9 +198,6 @@ def apple_library_impl(ctx: AnalysisContext) -> [Promise, list[Provider]]:
                 rule_type = "apple_library",
                 generate_sub_targets = CxxRuleSubTargetParams(xcode_data = xcode_data_enabled()),
                 generate_providers = CxxRuleProviderParams(
-                    java_packaging_info = False,
-                    java_global_code_info = False,
-                    android_packageable_info = False,
                     omnibus_root = False,
                     # We generate a provider on our own, disable to avoid several providers of same type.
                     cxx_resources_as_apple_resources = False,
@@ -213,7 +209,7 @@ def apple_library_impl(ctx: AnalysisContext) -> [Promise, list[Provider]]:
         )
         output = cxx_library_parameterized(ctx, constructor_params)
 
-        return output.providers + _make_mockingbird_library_info_provider(ctx) + graphql_providers(ctx)
+        return output.providers + _make_mockingbird_library_info_provider(ctx)
 
     if uses_explicit_modules(ctx):
         providers = get_swift_anonymous_targets(ctx, get_apple_library_providers)

@@ -980,33 +980,7 @@ http_file = prelude_rule(
         be downloaded as part of `build` by setting `.yakconfig`
     """,
     examples = """
-        Using `http_file()`, third party packages can be downloaded from
-         an `https` URL and used in java libraries.
-
-        ```
-        http_file(
-          name = 'guava-23-bin',
-          urls = [
-            'http://search.maven.org/remotecontent?filepath=com/google/guava/guava/23.0/guava-23.0.jar',
-          ],
-          sha256 = '7baa80df284117e5b945b19b98d367a85ea7b7801bd358ff657946c3bd1b6596',
-        )
-        http_file(
-          name = 'guava-23-sources',
-          urls = [
-            'http://search.maven.org/remotecontent?filepath=com/google/guava/guava/23.0/guava-23.0-sources.jar',
-          ],
-          sha256 = '37fe8ba804fb3898c3c8f0cbac319cc9daa58400e5f0226a380ac94fb2c3ca14',
-        )
-
-        prebuilt_java_library(
-          name = 'guava-23',
-          binary_jar = ':guava-23-bin',
-          source_jar = ':guava-23-source',
-        )
-        ```
-
-         Tooling can also be fetched with `http_file()` and used by a `genrule()`.
+        Tooling can be fetched with `http_file()` and used by a `genrule()`.
 
         ```
         genrule(
@@ -1020,18 +994,6 @@ http_file = prelude_rule(
           url = 'https://internal-mirror.example.com/bin/thrift-compiler',
           sha256 = 'c24932ccabb66fffb2d7122298f7f1f91e0b1f14e05168e3036333f84bdf58dc',
           executable = True,
-        )
-        ```
-
-         Here's an example of a `http_file()` using a mvn URI which uses a Maven classifier.
-
-        ```
-        http_file(
-          name = 'guava-23-bin',
-          urls = [
-            'mvn:com.google.guava:guava:jar:23.0',
-          ],
-          sha256 = '7baa80df284117e5b945b19b98d367a85ea7b7801bd358ff657946c3bd1b6596',
         )
         ```
     """,
@@ -1103,51 +1065,10 @@ remote_file = prelude_rule(
 
         ```
         remote_file(
-          name = 'android-ndk-r10e-darwin-x86_64',
-          url = 'https://dl.google.com/android/ndk/android-ndk-r10e-darwin-x86_64.bin',
-          sha1 = 'b57c2b9213251180dcab794352bfc9a241bf2557',
-        )
-        ```
-
-         Here's an example of a `remote_file()` using a `mvn` URL being referenced
-         by a `prebuilt_jar()`.
-
-        ```
-        prebuilt_jar(
-          name = 'jetty-all',
-          binary_jar = 'jetty-all-9.2.10.v20150310.jar',
-          source_jar = ':jetty-source',
-        )
-
-        remote_file(
-          name = 'jetty-source',
-          out = 'jetty-all-9.2.10.v20150310-sources.jar',
-          url = 'mvn:org.eclipse.jetty.aggregate:jetty-all:src:9.2.10.v20150310',
-          sha1 = '311da310416d2feb3de227081d7c3f48742d7075',
-        )
-        ```
-
-         Here's an example of a `remote_file()` using a `mvn` URI which uses a
-         non-default maven repository host.
-
-        ```
-        remote_file(
-          name = 'jetty-source',
-          out = 'jetty-all-9.2.10.v20150310-sources.jar',
-          url = 'mvn:https://maven-repo.com:org.eclipse.jetty.aggregate:jetty-all:src:9.2.10.v20150310',
-          sha1 = '311da310416d2feb3de227081d7c3f48742d7075',
-        )
-        ```
-
-         Here's an example of a `remote_file()` using a `mvn` URI which uses a
-         Maven classifier.
-
-        ```
-        remote_file(
-          name = 'groovy-groovysh-indy',
-          out = 'jetty-all-9.2.10.v20150310-sources.jar',
-          url = 'mvn:org.codehaus.groovy:groovy-groovysh:jar:indy:2.4.1',
-          sha1 = '1600fde728c885cc9506cb102deb1b494bd7c130',
+          name = 'protoc-linux-x86_64',
+          url = 'https://github.com/protocolbuffers/protobuf/releases/download/v29.3/protoc-29.3-linux-x86_64.zip',
+          sha256 = '3e866620c5be27664f3d2fa2d656b5f3e09b5152b42f1bedbf427b333e90021a',
+          type = 'exploded_zip',
         )
         ```
     """,
@@ -1158,9 +1079,7 @@ remote_file = prelude_rule(
             "url": attrs.string(
                 validate = validate_uri,
                 doc = """
-                You can specify an `http`, `https`, or a `mvn` URL. If you
-                 specify a `mvn` URL, it will be decoded as described in the
-                 javadocs for MavenUrlDecoder See the example section below.
+                The `http` or `https` URL to download.
             """,
             ),
             "sha1": attrs.string(
@@ -1329,232 +1248,6 @@ versioned_alias = prelude_rule(
     ),
 )
 
-worker_tool = prelude_rule(
-    name = "worker_tool",
-    docs = """
-        Some external tools have high startup costs. To amortize those costs over the whole build
-         rather than paying them for each rule invocation, use the `worker_tool()` rule
-         in conjunction with `genrule()`.
-         Buck then starts the external tool once and reuses it by communicating with it
-         over `stdin` and `stdout` using a simple JSON protocol.
-
-         A `worker_tool` rule can be referenced in the `cmd` parameter of
-         a `genrule` by using the macro:
-
-        ```
-        $(exe //path/to:target)
-        ```
-    """,
-    examples = """
-        Consider the following `build rules`:
-
-        ```
-        #
-        # Buck
-        #
-        worker_tool(
-          name = 'ExternalToolWorker',
-          exe = ':ExternalTool',
-          args = '--arg1 --arg2'
-        )
-
-        sh_binary(
-          name = 'ExternalTool',
-          main = 'external_tool.sh',
-        )
-
-        genrule(
-          name = 'TransformA',
-          out = 'OutputA.txt',
-          cmd = '$(exe :ExternalToolWorker) argA',
-        )
-
-        genrule(
-          name = 'TransformB',
-          out = 'OutputB.txt',
-          cmd = '$(exe :ExternalToolWorker) argB',
-        )
-
-        genrule(
-          name = 'TransformC',
-          out = 'OutputC.txt',
-          cmd = '$(exe :ExternalToolWorker) argC',
-        )
-        ```
-
-         When doing a `buck build` on all three of the above `genrules`, Buck
-         first creates the worker process by invoking:
-
-        ```
-        ./external_tool.sh --arg1 --arg2
-        ```
-
-         Buck then communicates with this process using JSON over `stdin`,
-         starting with a handshake:
-
-        ```
-        [
-          {
-            "id": 0,
-            "type": "handshake",
-            "protocol_version": "0",
-            "capabilities": []
-          }
-        ```
-
-         Buck then waits for the tool to reply on `stdout`:
-
-        ```
-        [
-          {
-            "id": 0,
-            "type": "handshake",
-            "protocol_version": "0",
-            "capabilities": []
-          }
-        ```
-
-         Then, when building the first `genrule`, Buck writes to `stdin`:
-
-        ```
-          ,{
-            "id": 1,
-            "type": "command",
-            "args_path": "/tmp/1.args",
-            "stdout_path": "/tmp/1.out",
-            "stderr_path": "/tmp/1.err"
-          }
-        ```
-
-         The file `/tmp/1.args` contains `argA`. The tool should
-         perform the necessary work for this job and then write the job's output to the files
-         supplied by Buck—in this case, `/tmp/1.out` and `/tmp/1.err`.
-         Once the job is done, the tool should reply to Buck on `stdout` with:
-
-        ```
-          ,{
-            "id": 1,
-            "type": "result",
-            "exit_code": 0
-          }
-        ```
-
-         Once Buck hears back from the first genrule's job, it submits the second genrule's job in the
-         same fashion and awaits the response. When the build is all finished,
-         Buck closes the JSON by writing to `stdin`:
-
-        ```
-        ]
-        ```
-
-         which signals the tool that it should exit after replying on `stdout` with:
-
-        ```
-        ]
-        ```
-
-         In this example, Buck is guaranteed to invoke
-
-        ```
-        ./external_tool.sh --arg1 --arg2
-        ```
-
-         only once during the build. The three jobs corresponding to the three genrules are submitted
-         synchronously to the single worker process.
-
-         Note that the `id` values in the messages are not necessarily increasing or sequential,
-         but they do have to match between the request message and the response message of a given job as
-         well as in the initial handshake.
-
-         If the tool receives a message type it cannot interpret it should answer with:
-
-        ```
-        {
-          "id": &ltn>,
-          "type": "error",
-          "exit_code": 1
-        }
-        ```
-
-         If the tool receives a message type it can interpret, but the other attributes of the
-         message are in an inconsistent state, it should answer with:
-
-        ```
-        {
-          "id": &ltn>,
-          "type": "error",
-          "exit_code": 2
-        }
-        ```
-    """,
-    further = None,
-    attrs = (
-        # @unsorted-dict-items
-        {
-            "exe": attrs.option(
-                attrs.dep(),
-                default = None,
-                doc = """
-                A `build target` for a rule that outputs
-                 an executable, such as an `sh_binary()`.
-                 Buck runs this executable only once per build.
-            """,
-            ),
-            "args": attrs.one_of(
-                attrs.arg(),
-                attrs.list(attrs.arg()),
-                default = [],
-                doc = """
-                A string of args that is passed to the executable represented by `exe` on
-                 initial startup.
-            """,
-            ),
-            "max_workers": attrs.option(
-                attrs.int(),
-                default = None,
-                doc = """
-                The maximum number of workers of this type that Buck starts. Use `-1` to allow
-                 the creation of as many workers as necessary.
-            """,
-            ),
-            "max_workers_per_thread_percent": attrs.option(
-                attrs.int(),
-                default = None,
-                doc = """
-                The maximum ratio of workers of this type that Buck starts per
-                 thread, specified as a positive integer percentage (1-100). Must be
-                 greater than or equal to `1` and less than or equal to `100`.
-                 Only one of `max_workers` and `max_workers_per_thread_percent` may be specified.
-            """,
-            ),
-            "env": attrs.dict(
-                key = attrs.string(),
-                value = attrs.arg(),
-                sorted = False,
-                default = {},
-                doc = """
-                A map of environment variables that is passed to the executable represented
-                 by `exe` on initial startup.
-            """,
-            ),
-            "persistent": attrs.option(
-                attrs.bool(),
-                default = None,
-                doc = """
-                If set to true, Buck does not restart the tool unless the tool itself changes. This means the
-                 tool persists across multiple Buck commands without being shut down and may see the same
-                 rule being built more than once. Be careful not to use this setting with tools that don't expect
-                 to process the same input—with different contents—twice!
-            """,
-            ),
-            "_worker_tool_runner": attrs.default_only(attrs.dep(default = "prelude//js/worker_runner:worker_tool_runner")),
-        }
-        | buck.licenses_arg()
-        | buck.labels_arg()
-        | buck.contacts_arg()
-    ),
-)
-
 zip_file = prelude_rule(
     name = "zip_file",
     docs = """
@@ -1580,26 +1273,31 @@ zip_file = prelude_rule(
             ],
           zip_srcs = [
              # The contents of this zip will be added to the generated zip.
-            'amazing-library-1.0-sources.zip',
+            'assets-1.0.zip',
           ],
           entries_to_exclude = [
-            "com/example/amazinglibrary/Source1.java",
+            "assets/unused/.*",
           ],
         )
         ```
         If you were to examine the generated zip, the contents would look
         something like (assuming the output of
-        "`//some/other:target`" was a file who's path ended with
+        "`//some/other:target`" was a file whose path ended with
          `hello.txt`, the "`dir`" glob found two files,
-        and "`amazing-library-1.0-sources.zip`" contained two Java
-        source files):
+        and "`assets-1.0.zip`" contained `assets/logo.png` and
+        `assets/unused/old.png`):
 
         ```
+        assets/logo.png
+        dir/
         dir/file1.txt
+        dir/subdir/
         dir/subdir/file2.txt
         hello.txt
-        com/example/amazinglibrary/Source2.java
         ```
+
+        Entries are sorted by name. Each parent directory of a file from `srcs`
+        gets its own entry, and every entry has the same timestamp.
     """,
     further = None,
     attrs = (
@@ -1622,7 +1320,8 @@ zip_file = prelude_rule(
 
                  Each `src` will be added to the zip as follows:
                  * If the `src` is the output of another rule, the output
-                 will be included using just the output's file name.
+                 will be included using just the output's file name. If the output
+                 is a directory, its files keep their paths under the directory's name.
                  * If the `src` is a file relative to the rule's
                  declaration, it will be included in the zip with its relative file
                  name.
@@ -1645,9 +1344,10 @@ zip_file = prelude_rule(
                 attrs.regex(),
                 default = [],
                 doc = """
-                List of regex expressions that describe entries that should not be included in the output zip file.
+                List of regular expressions that describe entries that should not be included in the output zip file.
 
-                 The regexes must be defined using `java.util.regex.Pattern` syntax.
+                 An entry is left out when a pattern matches its whole name. The patterns use the syntax of
+                 Python's `re` module.
             """,
             ),
             "hardcode_permissions_for_deterministic_output": attrs.option(
@@ -1705,6 +1405,5 @@ core_rules = struct(
     test_suite = test_suite,
     toolchain_alias = toolchain_alias,
     versioned_alias = versioned_alias,
-    worker_tool = worker_tool,
     zip_file = zip_file,
 )

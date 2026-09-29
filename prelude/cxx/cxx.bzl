@@ -12,10 +12,6 @@ load(
     "gather_resources",
     "make_resource_info",
 )
-load(
-    "@prelude//android:android_providers.bzl",
-    "merge_android_packageable_info",
-)
 load("@prelude//apple:resource_groups.bzl", "create_resource_graph")
 load(
     "@prelude//cxx:compile_types.bzl",
@@ -36,7 +32,6 @@ load(
     "@prelude//cxx:link_groups_types.bzl",
     "LinkGroupInfo",  # @unused Used as a type
 )
-load("@prelude//graphql:graphql.bzl", "graphql_providers")
 load("@prelude//linking:execution_preference.bzl", "LinkExecutionPreference")
 load(
     "@prelude//linking:link_groups.bzl",
@@ -235,16 +230,10 @@ def cxx_library_impl(ctx: AnalysisContext) -> list[Provider]:
     return cxx_library_generate(ctx, "cxx_library")
 
 def cxx_library_generate(ctx: AnalysisContext, rule_type: str) -> list[Provider]:
-    if ctx.attrs.can_be_asset and ctx.attrs.used_by_wrap_script:
-        fail("Cannot use `can_be_asset` and `used_by_wrap_script` in the same rule")
-
-    if ctx.attrs._is_building_android_binary:
-        sub_target_params, provider_params = _get_params_for_android_binary_cxx_library()
-    else:
-        sub_target_params = CxxRuleSubTargetParams(xcode_data = xcode_data_enabled())
-        provider_params = CxxRuleProviderParams(
-            third_party_build = True,
-        )
+    sub_target_params = CxxRuleSubTargetParams(xcode_data = xcode_data_enabled())
+    provider_params = CxxRuleProviderParams(
+        third_party_build = True,
+    )
 
     params = CxxRuleConstructorParams(
         rule_type = rule_type,
@@ -275,7 +264,7 @@ def cxx_library_generate(ctx: AnalysisContext, rule_type: str) -> list[Provider]
         expect_eligible_for_dedupe = getattr(ctx.attrs, "expect_eligible_for_dedupe", False),
     )
     output = cxx_library_parameterized(ctx, params)
-    return output.providers + graphql_providers(ctx)
+    return output.providers
 
 def _only_shared_mappings(group: Group) -> bool:
     """
@@ -817,7 +806,6 @@ def _create_prebuilt_library_providers(
                 link_infos = libraries,
                 shared_libs = shared_libs,
                 linker_flags = linker_flags,
-                can_be_asset = getattr(ctx.attrs, "can_be_asset", False) or False,
                 stub = getattr(ctx.attrs, "stub", False),
             ),
             excluded = {ctx.label: None} if not value_or(ctx.attrs.supports_merged_linking, True) else {},
@@ -832,9 +820,6 @@ def _create_prebuilt_library_providers(
             deps = first_order_deps + exported_first_order_deps,
         ),
     )
-
-    # TODO: this shouldn't be in prebuilt_cxx_library itself, use overlays to remove it.
-    providers.append(merge_android_packageable_info(ctx.label, ctx.actions, first_order_deps + exported_first_order_deps))
 
     apple_resource_graph = create_resource_graph(
         ctx = ctx,
@@ -1105,23 +1090,3 @@ def cxx_test_impl(ctx: AnalysisContext) -> list[Provider]:
         providers.append(GcnoFilesInfo(gcno_files = output.gcno_files))
 
     return providers
-
-def _get_params_for_android_binary_cxx_library() -> (CxxRuleSubTargetParams, CxxRuleProviderParams):
-    sub_target_params = CxxRuleSubTargetParams(
-        argsfiles = False,
-        compilation_database = False,
-        headers = False,
-        link_group_map = False,
-        xcode_data = False,
-        clang_traces = False,
-        objects = False,
-        bitcode_bundle = False,
-    )
-    provider_params = CxxRuleProviderParams(
-        compilation_database = False,
-        omnibus_root = False,
-        preprocessor_for_tests = False,
-        cxx_resources_as_apple_resources = False,
-    )
-
-    return sub_target_params, provider_params

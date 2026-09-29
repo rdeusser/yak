@@ -183,7 +183,7 @@ async fn resolve_queries_impl(
                     resolved_literals.insert(literal.to_owned(), node.dupe());
                 }
 
-                let result = (EVAL_ANALYSIS_QUERY.get()?)(ctx, &query, resolved_literals).await?;
+                let result = (EVAL_ANALYSIS_QUERY.get()?)(&query, resolved_literals).await?;
 
                 // analysis for all the deps in the query result should already have been run since they must
                 // be in our dependency graph, and so we don't worry about parallelizing these lookups.
