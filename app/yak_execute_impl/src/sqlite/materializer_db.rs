@@ -192,7 +192,6 @@ mod tests {
     use itertools::Itertools;
     use parking_lot::Mutex;
     use rusqlite::Connection;
-    use yak_common::cas_digest::TrackedCasDigest;
     use yak_common::file_ops::metadata::FileMetadata;
     use yak_common::file_ops::metadata::Symlink;
     use yak_common::file_ops::metadata::TrackedFileDigest;
@@ -245,7 +244,7 @@ mod tests {
             //     └── qux -> ../foo
             {
                 let digest =
-                    TrackedCasDigest::from_content(b"hello", digest_config.cas_digest_config());
+                    TrackedFileDigest::from_content(b"hello", digest_config.cas_digest_config());
                 let metadata = FileMetadata {
                     digest,
                     is_executable: false,

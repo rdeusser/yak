@@ -16,7 +16,7 @@ use yak_common::cas_digest::CasDigest;
 use yak_common::cas_digest::CasDigestKind;
 use yak_common::cas_digest::CasDigestParseError;
 use yak_common::cas_digest::DigestAlgorithm;
-use yak_common::cas_digest::TrackedCasDigest;
+use yak_common::file_ops::metadata::TrackedFileDigest;
 
 use crate::digest_config::DigestConfig;
 
@@ -102,7 +102,7 @@ impl<Kind: CasDigestKind> CasDigestConversionResultExt
     }
 }
 
-impl<Kind: CasDigestKind> CasDigestToReExt for TrackedCasDigest<Kind> {
+impl CasDigestToReExt for TrackedFileDigest {
     fn to_re(&self) -> TDigest {
         self.data().to_re()
     }

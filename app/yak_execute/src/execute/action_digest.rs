@@ -9,19 +9,12 @@
  */
 
 use yak_common::cas_digest::CasDigest;
-use yak_common::cas_digest::CasDigestConfig;
 use yak_common::cas_digest::CasDigestKind;
-use yak_common::cas_digest::TrackedCasDigest;
 
 pub struct ActionDigestKind {
     _private: (),
 }
 
-impl CasDigestKind for ActionDigestKind {
-    fn empty_digest(_config: CasDigestConfig) -> Option<TrackedCasDigest<Self>> {
-        // No reason to optimize "empty" actions.
-        None
-    }
-}
+impl CasDigestKind for ActionDigestKind {}
 
 pub type ActionDigest = CasDigest<ActionDigestKind>;

@@ -29,9 +29,7 @@ use remote_execution::InlinedBlobWithDigest;
 use remote_execution::NamedDigest;
 use remote_execution::TDigest;
 use remote_execution::UploadRequest;
-use yak_common::cas_digest::TrackedCasDigest;
 use yak_common::file_ops::metadata::FileDigest;
-use yak_common::file_ops::metadata::FileDigestKind;
 use yak_common::file_ops::metadata::TrackedFileDigest;
 use yak_core::execution_types::executor_config::RemoteExecutorUseCase;
 use yak_core::fs::project::ProjectRoot;
@@ -91,10 +89,7 @@ impl Uploader {
         identity: Option<&ReActionIdentity<'_>>,
         digest_config: DigestConfig,
         deduplicate_get_digests_ttl_calls: bool,
-    ) -> yak_error::Result<(
-        Vec<InlinedBlobWithDigest>,
-        YakMutSet<&'a TrackedCasDigest<FileDigestKind>>,
-    )> {
+    ) -> yak_error::Result<(Vec<InlinedBlobWithDigest>, YakMutSet<&'a TrackedFileDigest>)> {
         let now = Timestamp::now();
         let ttl_wanted: i64 = 1;
         let ttl_deadline = now + SignedDuration::from_secs(ttl_wanted);

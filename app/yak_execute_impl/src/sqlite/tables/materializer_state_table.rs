@@ -766,7 +766,7 @@ impl MaterializerStateSqliteTable {
 #[cfg(test)]
 mod tests {
     use assert_matches::assert_matches;
-    use yak_common::cas_digest::TrackedCasDigest;
+    use yak_common::file_ops::metadata::TrackedFileDigest;
     use yak_directory::directory::builder::DirectoryBuilder;
     use yak_directory::directory::dashmap_directory_interner::DashMapDirectoryInterner;
     use yak_execute::directory::new_symlink;
@@ -795,8 +795,10 @@ mod tests {
             let directory = {
                 let mut builder = DirectoryBuilder::empty_non_exhaustive();
                 {
-                    let digest =
-                        TrackedCasDigest::from_content(b"hello", digest_config.cas_digest_config());
+                    let digest = TrackedFileDigest::from_content(
+                        b"hello",
+                        digest_config.cas_digest_config(),
+                    );
                     let metadata = FileMetadata {
                         digest,
                         is_executable: false,
