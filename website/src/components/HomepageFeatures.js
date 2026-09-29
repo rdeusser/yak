@@ -18,9 +18,8 @@ const FeatureList = [
     title: 'Fast',
     description: (
       <>
-        Buck2 is faster than Buck.
-        If you've got nothing to do, Buck2 is significantly faster.
-        If you've got lots to do, Buck2 will start doing it faster and be much closer to the critical path.
+        If you've got nothing to do, yak finishes quickly.
+        If you've got lots to do, yak starts sooner and stays close to the critical path.
       </>
     ),
   },
@@ -29,9 +28,9 @@ const FeatureList = [
     title: 'Reliable',
     description: (
       <>
-        Buck2 rules are hermetic by default. Missing dependencies are errors.
+        yak rules are hermetic by default. Missing dependencies are errors.
         These restrictions apply to both the user-written <code>YAK</code> files and the language rules.
-        Buck2 gives the right result more reliably.
+        yak gives the right result more reliably.
       </>
     ),
   },
@@ -40,8 +39,8 @@ const FeatureList = [
     title: 'Extensible',
     description: (
       <>
-        All rules are written in Starlark, with nothing in the core of Buck2 knowing anything about languages.
-        That means that Buck2 users can define their own rules as first-class citizens.
+        All rules are written in Starlark, with nothing in the core of yak knowing anything about languages.
+        That means that yak users can define their own rules as first-class citizens.
       </>
     ),
   },

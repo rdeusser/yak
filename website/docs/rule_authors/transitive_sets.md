@@ -5,7 +5,7 @@ title: Transitive Sets
 
 Transitive sets enable the propagation of data up dependency trees in a manner
 that is both efficient in Starlark code (low cost of creation, low memory usage)
-and efficient for execution by Buck (edges can be shared instead of having each
+and efficient for execution by yak (edges can be shared instead of having each
 action depend directly on all its inputs).
 
 Examples of where transitive sets are useful include:

@@ -1,11 +1,11 @@
-# Buck2 Core Concepts - Deep Dive
+# yak Core Concepts - Deep Dive
 
-This reference provides detailed explanations of Buck2 core concepts for users
+This reference provides detailed explanations of yak core concepts for users
 who want to go beyond the basic tutorial.
 
 ## Table of Contents
 
-1. [The Buck2 Build Model](#the-buck2-build-model)
+1. [The yak Build Model](#the-yak-build-model)
 2. [Targets in Depth](#targets-in-depth)
 3. [Artifacts](#artifacts)
 4. [Actions](#actions)
@@ -16,9 +16,9 @@ who want to go beyond the basic tutorial.
 
 ---
 
-## The Buck2 Build Model
+## The yak Build Model
 
-Buck2 uses a **declarative, graph-based build model**:
+yak uses a **declarative, graph-based build model**:
 
 1. **Load Phase**: Read and evaluate YAK/BUILD files, create unconfigured
    targets
@@ -28,7 +28,7 @@ Buck2 uses a **declarative, graph-based build model**:
 4. **Execution Phase**: Run actions to produce artifacts
 
 **Key insight:** Rules don't execute commands - they declare what commands
-should be run. Buck2 decides when to actually run them.
+should be run. yak decides when to actually run them.
 
 ---
 
@@ -36,7 +36,7 @@ should be run. Buck2 decides when to actually run them.
 
 ### Target Terminology
 
-**Target** is an overloaded term in Buck2. Be precise:
+**Target** is an overloaded term in yak. Be precise:
 
 #### 1. Unconfigured Target
 
@@ -102,7 +102,7 @@ cpp_binary(
 
 **Understanding Cells:**
 
-A **cell** is a repository or unit of code in Buck2. Cells allow Buck2 to work
+A **cell** is a repository or unit of code in yak. Cells allow yak to work
 with multiple repositories or isolated parts of a monorepo.
 
 - **Explicit cell reference:** `root//app:server`
@@ -148,7 +148,7 @@ Targets form a **Directed Acyclic Graph (DAG)**:
 
 ## Artifacts
 
-Artifacts represent files in Buck2's build model.
+Artifacts represent files in yak's build model.
 
 ### Types of Artifacts
 
@@ -186,18 +186,18 @@ def my_rule_impl(ctx: AnalysisContext):
 
 ### Artifact Paths
 
-Buck2 tracks artifacts symbolically during analysis:
+yak tracks artifacts symbolically during analysis:
 
 ```starlark
 output = ctx.actions.declare_output("foo.txt")
 # At this point, output is just a promise - file doesn't exist yet!
-# Buck2 knows: "If anyone needs foo.txt, run the action that produces it"
+# yak knows: "If anyone needs foo.txt, run the action that produces it"
 ```
 
 ### Bound vs Unbound Artifacts
 
 - **Bound artifact:** Has an action that produces it
-- **Unbound artifact:** Declared but no action produces it (Buck2 error!)
+- **Unbound artifact:** Declared but no action produces it (yak error!)
 
 ```starlark
 # This will error:
@@ -229,7 +229,7 @@ Execute a command:
 ```starlark
 ctx.actions.run(
     cmd_args(["my_tool", input_file, "-o", output.as_output()]),
-    category = "process",        # For Buck2 UI
+    category = "process",        # For yak UI
     env = {"VAR": "value"},      # Environment variables
 )
 ```
@@ -253,7 +253,7 @@ copied = ctx.actions.copy_file("output.txt", src_artifact)
 
 ### Action Inputs and Outputs
 
-Buck2 tracks dependencies automatically:
+yak tracks dependencies automatically:
 
 ```starlark
 def my_rule_impl(ctx: AnalysisContext):
@@ -265,7 +265,7 @@ def my_rule_impl(ctx: AnalysisContext):
     #                       input              output
 
     ctx.actions.run(cmd)
-    # Buck2 now knows:
+    # yak now knows:
     # - This action reads: src
     # - This action writes: output
     # - This action must run after any action that produces src
@@ -273,14 +273,14 @@ def my_rule_impl(ctx: AnalysisContext):
 
 ### Action Caching
 
-Buck2 caches action results based on:
+yak caches action results based on:
 
 - Command line arguments
 - Input file contents (hash)
 - Environment variables
 - Execution configuration
 
-If inputs haven't changed, Buck2 reuses cached outputs.
+If inputs haven't changed, yak reuses cached outputs.
 
 ---
 
@@ -311,7 +311,7 @@ DefaultInfo(
 )
 ```
 
-**Used by `yak build`:** When you run `yak build //target:name`, Buck2
+**Used by `yak build`:** When you run `yak build //target:name`, yak
 builds the artifacts listed in `default_outputs`. This is what determines which
 files get built.
 
@@ -335,7 +335,7 @@ RunInfo(
 )
 ```
 
-**Used by `yak run`:** When you run `yak run //target:name`, Buck2 executes
+**Used by `yak run`:** When you run `yak run //target:name`, yak executes
 the command specified in `RunInfo.args`. The target must provide `RunInfo` to be
 runnable.
 
@@ -345,7 +345,7 @@ runnable.
 # Runs the command from RunInfo.args
 yak run //app:main -- additional_args
 
-# Buck2 will:
+# yak will:
 # 1. Build the target (using DefaultInfo)
 # 2. Execute the command from RunInfo with any additional arguments
 ```
@@ -455,7 +455,7 @@ built. Conceptually, it represents information like:
 {os = linux, cpu = x86_64, compiler = gcc-11, opt_level = opt, ...}
 ```
 
-This is not actual Buck2 syntax - it's a conceptual representation.
+This is not actual yak syntax - it's a conceptual representation.
 
 ### Configuration Platform Files
 
@@ -475,7 +475,7 @@ platform(
 ### How Configurations Are Applied
 
 1. User specifies a target: `yak build //app:main`
-2. Buck2 applies default configuration (or user-specified one)
+2. yak applies default configuration (or user-specified one)
 3. Configuration resolves `select()` expressions
 4. Different platforms → different configured targets
 
@@ -516,7 +516,7 @@ The analysis phase is when rule implementations run.
 
 ### What Happens During Analysis
 
-1. Buck2 walks the configured build graph
+1. yak walks the configured build graph
 2. For each configured target, calls the rule's `impl` function
 3. Rule declares actions and returns providers
 4. No actions are executed - just registered
@@ -585,7 +585,7 @@ Configured Targets → Actions → Artifacts
 
 ### Graph Queries
 
-Buck2 provides tools to inspect the graph:
+yak provides tools to inspect the graph:
 
 #### uquery - Unconfigured target graph
 
@@ -609,10 +609,10 @@ yak aquery "deps(//app:main)"  # Show actions that will run
 
 ### Incremental Builds
 
-Buck2 uses the graph for incrementality:
+yak uses the graph for incrementality:
 
 1. User changes `src/util.cpp`
-2. Buck2 identifies affected artifacts (util.o)
+2. yak identifies affected artifacts (util.o)
 3. Identifies actions that depend on util.o (link action)
 4. Identifies configured targets that depend on those actions (//app:main)
 5. Only re-runs necessary actions
@@ -632,4 +632,4 @@ Buck2 uses the graph for incrementality:
 - **Build Graph**: DAG of targets, actions, and artifacts enabling incremental
   builds
 
-These concepts work together to make Buck2 fast, correct, and scalable.
+These concepts work together to make yak fast, correct, and scalable.

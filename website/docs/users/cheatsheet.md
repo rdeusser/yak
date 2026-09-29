@@ -3,10 +3,10 @@ id: cheat_sheet
 title: Cheat Sheet
 ---
 
-# Buck2 Cheat Sheet
+# yak Cheat Sheet
 
 This section provides example command lines that you can use to obtain
-information about Buck2 and about your build. These techniques can help you to
+information about yak and about your build. These techniques can help you to
 understand how your build works and to troubleshoot issues with your build.
 These examples use the [`yak cquery`](../query/cquery) command. We recommend
 cquery over uquery in most cases because cquery operates on the configured
@@ -38,13 +38,13 @@ yak cquery path/to/dir/...
 
 The `yak cquery` command can accept a
 [build target pattern](../../concepts/target_pattern) as a parameter. If you
-specify a build target pattern, Buck2 evaluates this pattern and shows all the
+specify a build target pattern, yak evaluates this pattern and shows all the
 build targets that match it.
 
 ### How do I specify more than one target to `yak cquery`?
 
 Use the `yak cquery set()` operator. The following command line returns the
-target `main` in the build file in the root of the Buck2 project and all the
+target `main` in the build file in the root of the yak project and all the
 targets from the build file in the `myclass` subdirectory of the root.
 
 ```sh
@@ -61,9 +61,9 @@ of interest.
 yak cquery "deps(foo:bar)" --output-attribute 'name' 'exported_headers'
 ```
 
-The `--output-attribute` option enables you to specify which attributes Buck2
+The `--output-attribute` option enables you to specify which attributes yak
 should return. Instead of returning the names of the targets that match the
-query expression, Buck2 returns the names and values of the specified attributes
+query expression, yak returns the names and values of the specified attributes
 for those targets in JSON format. Attributes are specified as regular
 expressions. For example, `'.*'` matches all attributes. See the
 [`yak cquery` docs](../query/cquery) for more details. The output for the
@@ -81,7 +81,7 @@ example query above might look something like the following.
 
 ### How do I perform a query** \***inside**\* **of a rule?
 
-Buck2 supports certain string parameter macros to be used when defining a
+yak supports certain string parameter macros to be used when defining a
 target. You can use the query macros as such:
 
 ```sh

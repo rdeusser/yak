@@ -65,7 +65,7 @@ but will be added soon.
 
 To write to your own event log when running BXL, you can run your BXL command
 with the `--user-event-log` flag to tell yak where to write the events to.
-Buck2 is aware of the following file extensions: `.json-lines`,
+yak is aware of the following file extensions: `.json-lines`,
 `json-lines.zst`, `.json-lines.gz`, and will compress the files automatically
 for you depending on the extension. If the extension is not one of these, the
 logs will always be written in JSONL format, uncompressed.

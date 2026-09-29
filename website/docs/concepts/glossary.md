@@ -6,13 +6,13 @@ title: Glossary of Terms
 ## .yakconfig
 
 The root of your [project](#project) must contain a configuration file named
-`.yakconfig`. Before executing, Buck2 reads this file to incorporate specified
-customizations. See [.yakconfig](buckconfig.md) for more info.
+`.yakconfig`. Before executing, yak reads this file to incorporate specified
+customizations. See [.yakconfig](yakconfig.md) for more info.
 
 ## Action
 
 An individual, cacheable, ideally hermetic command that's run during the
-[build](#buck-file). It takes [artifacts](#artifact) as inputs and produces
+[build](#yak-file). It takes [artifacts](#artifact) as inputs and produces
 other artifacts as outputs. An example command could be `gcc -o main main.c`,
 which takes the artifact `main.c` (a source file) and produces the artifact
 called `main` (the compiled binary).
@@ -46,8 +46,8 @@ type.
 ## YAK file
 
 A `YAK` file (the name is configurable) is the
-main configuration file that tells Buck2 what to build, what their dependencies
-are, and how to build them. Buck2 takes a `YAK` file as input and evaluates the
+main configuration file that tells yak what to build, what their dependencies
+are, and how to build them. yak takes a `YAK` file as input and evaluates the
 file to declare [targets](#target), which are then used to create a graph of
 dependencies and to derive the [actions](#action) that must be completed to
 build intermediate and final software outputs. A `YAK` file marks a directory
@@ -55,7 +55,7 @@ and any sub-directories not containing a `YAK` file as a [package](#package).
 
 ## BXL
 
-BXL ([Buck eXtension Language](../../bxl)) scripts are written in
+[BXL](../../bxl) scripts are written in
 [Starlark](#starlark) (a restricted subset of Python) and give integrators the
 ability to inspect and interact directly with the yak graph.
 
@@ -67,9 +67,9 @@ BXL scripts can query the [action graph](#action-graph),
 ## Cell
 
 Originally intended to allow for migration of repositories with different setups
-into one monorepo. The cell root always contains a [.yakconfig](#buckconfig),
+into one monorepo. The cell root always contains a [.yakconfig](#yakconfig),
 although the presence of a .yakconfig file doesn't in itself define a cell.
-Cells are specified in the .yakconfig for the Buck [project](#project).
+Cells are specified in the .yakconfig for the yak [project](#project).
 
 ## Configuration
 
@@ -112,7 +112,7 @@ library to use, etc.
 ## Daemon
 
 The Daemon process lives between invocations and is designed to allow for cache
-reuse between Buck2 invocations, which can considerably speed up builds. For
+reuse between yak invocations, which can considerably speed up builds. For
 more information, see [Daemon (yakd)](daemon.md).
 
 ## Dependency
@@ -131,7 +131,7 @@ uploads, which allows users to get cache hits for things that executed locally.
 
 ## Hybrid execution
 
-Allows Buck2 to race local and remote execution and get whichever finishes first
+Allows yak to race local and remote execution and get whichever finishes first
 (unless there's a cache hit, then it will get output from cache). This can
 provide substantial speedup by eliminating the overhead of going to
 [remote execution](#remote-execution-re) when there is enough capacity to
@@ -139,9 +139,9 @@ service the build locally.
 
 ## Isolation dir
 
-Instances of Buck2 share a [daemon](#daemon) if and only if their isolation
+Instances of yak share a [daemon](#daemon) if and only if their isolation
 directory is identical. The isolation directory also influences the output paths
-provided by Buck2. See [Isolation dir](isolation_dir.md) for more info.
+provided by yak. See [Isolation dir](isolation_dir.md) for more info.
 
 ## Modifiers
 
@@ -150,30 +150,30 @@ It's a modification of a constraint from the existing
 unified way to specify build settings on a [project](#project),
 [target](#target), and command line level. It is intended to replace
 [target platforms](#target-platform) and most use cases of
-[.yakconfigs](#buckconfig).
+[.yakconfigs](#yakconfig).
 
 ## Package
 
-A directory that contains a Buck2 [YAK file](#buck-file) and all source files
+A directory that contains a [YAK file](#yak-file) and all source files
 belonging to the same directory as the YAK file, or any of its subdirectories
 that do not contain a YAK file themselves.
 
 ## Prelude
 
-The prelude is a unique `.bzl` file located at `prelude//prelude.bzl`. Buck2
+The prelude is a unique `.bzl` file located at `prelude//prelude.bzl`. yak
 implicitly loads all the symbols defined in the prelude whenever it loads a
-[`YAK`](#buck-file) file. Symbols defined outside the prelude can be imported
+[`YAK`](#yak-file) file. Symbols defined outside the prelude can be imported
 via a `load()` statement.
 
-When you create a Buck2 project using `yak init --git`, it uses the prelude
+When you create a yak project using `yak init --git`, it uses the prelude
 bundled with the `yak` binary. It is viewable at
 https://github.com/rdeusser/buck2/tree/main/prelude.
 
 ## Project
 
-The Outermost directory where there is a [.yakconfig](#buckconfig): also known
+The Outermost directory where there is a [.yakconfig](#yakconfig): also known
 as the [root cell](#cell). The .yakconfig for the project specifies the
-[cells](#cell) that constitute the Buck2 project. Specifically, these cells are
+[cells](#cell) that constitute the yak project. Specifically, these cells are
 specified in the '[cells]' section of the `.yakconfig`. All command invocations
 are executed from the project root.
 
@@ -193,7 +193,7 @@ environment. E.g. `cpu=x86_64, os=windows`
 
 Distributed execution of [actions](#action) on remote workers. It can speed up
 builds significantly by scaling the nodes available for parallel actions, and by
-caching action outputs across Buck2 users.
+caching action outputs across yak users.
 
 ## Rule
 
@@ -205,10 +205,10 @@ rule implementation receives the [attributes](#attribute) of a [target](#target)
 and the [providers](#provider) of its [dependencies](#dependency). It can
 declare new [actions](#action) and [artifacts](#artifact) and must return
 [providers](#provider) that can be used to pass data to its dependents or to
-Buck2 itself.
+yak itself.
 
-Rules are instantiated in [YAK files](#buck-file) to declare targets and set
-their attributes. The rule implementation is called when Buck2 needs its
+Rules are instantiated in [YAK files](#yak-file) to declare targets and set
+their attributes. The rule implementation is called when yak needs its
 providers, which can happen when the target is built, or when one of its
 dependents is.
 
@@ -219,10 +219,10 @@ the `go_binary` rule would be used to create a Go binary.
 
 Starlark is a dialect of Python originally developed by Google for the
 [Bazel build tool](https://bazel.build/rules/language). It is the configuration
-language of the Buck2 build system and the language you use in `.bzl` and
-[`YAK` files](#buck-file) to define and instantiate [rules](#rule).
+language of the yak build system and the language you use in `.bzl` and
+[`YAK` files](#yak-file) to define and instantiate [rules](#rule).
 
-The Buck2 project maintains and uses an open source
+The yak project maintains and uses an open source
 [Starlark interpreter in Rust](https://github.com/rdeusser/buck2/tree/main/starlark-rust).
 
 ## Subtarget
@@ -233,7 +233,7 @@ chaining them, e.g.: `yak build cell//foo:bar[baz][qux]`.
 
 ## Target
 
-An object that is defined in a [YAK file](#buck-file). Targets represent the
+An object that is defined in a [YAK file](#yak-file). Targets represent the
 buildable units of a build from the perspective of the end user. Declared by
 instantiating a [rule](#rule) with attributes. A target has
 [dependencies](#dependency), which are references to other targets.
@@ -242,9 +242,9 @@ instantiating a [rule](#rule) with attributes. A target has
 
 The identifier for a [target](#target). Structured as
 `cell_alias//path/to/package:target`, where `cell_alias//` maps to a
-[cell root](#cell) path (as defined in the [./buckconfig](#buckconfig) of the
+[cell root](#cell) path (as defined in the [./yakconfig](#yakconfig) of the
 cell this target belongs to), `path/to/package` is the [package](#package)
-directory that contains the [YAK file](#buck-file) declaring the target
+directory that contains the [YAK file](#yak-file) declaring the target
 (relative to the mapped cell alias), and `:target` is the target's name.
 
 ## Target pattern
@@ -263,8 +263,8 @@ platform would be the people that eat the meal.
 ## Target universe
 
 A set of configured targets and their transitive deps. In the context of cquery
-and build in the Buck2 CLI, any literals are resolved to all matching targets
-within the universe. Target universe can be passed explicitly on the Buck2 CLI
+and build in the yak CLI, any literals are resolved to all matching targets
+within the universe. Target universe can be passed explicitly on the yak CLI
 via `--target-universe`. If omitted, the target universe will be inferred by
 constructing a universe using all the target literals (and their transitive
 deps) within the query string for cquery.

@@ -8,7 +8,7 @@ simple "Hello, World!" application. Now, we'll take it a step further by
 learning how to create and adding dependencies in our project. This is a common
 scenario where you separate concerns into different modules or libraries.
 
-Our goal is to understand how Buck2 manages dependencies.
+Our goal is to understand how yak manages dependencies.
 
 ## What We'll Do:
 
@@ -28,7 +28,7 @@ Our goal is to understand how Buck2 manages dependencies.
 
 1. Navigate to your project's root directory
 
-Navigate to the `buck2_lab` folder we created in the
+Navigate to the `yak_lab` folder we created in the
 [previous tutorial](../tutorial_first_build).
 
 2. Create the folders needed for your library
@@ -41,7 +41,7 @@ mkdir greeter_lib/src
 Your project should be like this
 
 ```
-buck2_lab
+yak_lab
 ├── greeter_bin
 │   ├── YAK
 │   └── src
@@ -79,7 +79,7 @@ rust_library(
 )
 ```
 
-- `rust_library`: This Buck2 rule is used for compiling Rust libraries.
+- `rust_library`: This yak rule is used for compiling Rust libraries.
 - `name = "library"`: We're naming our library target "library". This name will
   also be used by default as the crate name for Rust.
 - `srcs = ["src/lib.rs"]`: Specifies the source file for this library.
@@ -102,7 +102,7 @@ You will see an output like this:
 ```
 ...
 BUILD SUCCEEDED
-root//buck2_lab/greeter_lib:library /.../greeter_lib/__library__/out/LPPMD/liblibrary-1527a50c.rmeta
+root//yak_lab/greeter_lib:library /.../greeter_lib/__library__/out/LPPMD/liblibrary-1527a50c.rmeta
 ```
 
 Now, navigate back to the project root:
@@ -122,7 +122,7 @@ For `greeter_bin/src/main.rs`, update the code to use `greet` function in
 
 ```rust
 fn main() {
-    let s = library::greet("buck2");
+    let s = library::greet("yak");
     println!("{}", s);
 }
 
@@ -130,7 +130,7 @@ fn main() {
 
 2. Update the binary's YAK file:
 
-In the `greeter_bin` directory (i.e., `buck2_lab/greeter_bin/YAK`), update the
+In the `greeter_bin` directory (i.e., `yak_lab/greeter_bin/YAK`), update the
 YAK file.
 
 ```python
@@ -138,26 +138,26 @@ rust_binary(
     name = "main",
     srcs = ["src/main.rs"],
     # Add the dep to our library
-    deps = ["root//buck2_lab/greeter_lib:library"],
+    deps = ["root//yak_lab/greeter_lib:library"],
 )
 ```
 
 You can also use `yak targets :` command in `greeter_lib` folder to get the
 full target name of the library.
 
-- `deps = ["root//buck2_lab/greeter_lib:library"]`: This is the crucial new
+- `deps = ["root//yak_lab/greeter_lib:library"]`: This is the crucial new
   part!
   - `deps` declares dependencies for this target. It accepts a list of targets.
 
 ## Step 5: Run the Binary
 
 Now, let's build and run our binary application, with dependencies
-`root//buck2_lab/greeter_lib:library`.
+`root//yak_lab/greeter_lib:library`.
 
 1. Run the binary:
 
 ```bash
-yak run root//buck2_lab/greeter_bin:main
+yak run root//yak_lab/greeter_bin:main
 ```
 
 2. Expected output:
@@ -176,14 +176,14 @@ Imagine that as our application grows, we realize we want to log information
 about what's happening inside our functions. This is a common need for debugging
 or just understanding the flow. To help with this, let's say we've prepared a
 simple, shared logging library for you. You can find it at
-https://github.com/rdeusser/buck2/tree/main/website/docs/buck2_lab/logging_lib
-and copy the folder into `buck2_lab` folder.
+https://github.com/rdeusser/buck2/tree/main/website/docs/yak_lab/logging_lib
+and copy the folder into `yak_lab` folder.
 
 Our first step is to make our existing greeter_lib use this new logging_lib.
 
 1. Update `greeter_lib/YAK`:
 
-Now, modify `buck2_lab/greeter_lib/YAK` to declare a dependency on
+Now, modify `yak_lab/greeter_lib/YAK` to declare a dependency on
 `logging_lib`.
 
 ```python
@@ -193,7 +193,7 @@ rust_library(
     visibility = ["PUBLIC"],
     deps = [
         # Add the dep to our logging_lib
-        "root//buck2_lab/logging_lib:logging_lib",
+        "root//yak_lab/logging_lib:logging_lib",
     ],
 )
 ```
@@ -218,7 +218,7 @@ pub fn greet(name: &str) -> String {
 fn main() {
     logging_lib::info("Starting...");
 
-    let message = library::greet("Buck2");
+    let message = library::greet("yak");
     println!("{}", message);
 
     logging_lib::info("Exit.");
@@ -243,7 +243,7 @@ Let's try to run `main`:
 1. Attempt to run the binary:
 
 ```bash
-yak run root//buck2_lab/greeter_bin:main
+yak run root//yak_lab/greeter_bin:main
 ```
 
 2. Expected Outcome: Build Failure!
@@ -252,7 +252,7 @@ You will encounter a compile-time error like this:
 
 ```
 error[E0433]: failed to resolve: use of unresolved module or unlinked crate `logging_lib`
- --> buck2_lab/greeter_bin/src/main.rs:4:5
+ --> yak_lab/greeter_bin/src/main.rs:4:5
   |
 4 |     logging_lib::info("Starting...");
   |     ^^^^^^^^^^^ use of unresolved module or unlinked crate `logging_lib`
@@ -261,7 +261,7 @@ error[E0433]: failed to resolve: use of unresolved module or unlinked crate `log
 
 
 error[E0433]: failed to resolve: use of unresolved module or unlinked crate `logging_lib`
- --> buck2_lab/greeter_bin/src/main.rs:9:5
+ --> yak_lab/greeter_bin/src/main.rs:9:5
   |
 9 |     logging_lib::info("Exit.");
   |     ^^^^^^^^^^^ use of unresolved module or unlinked crate `logging_lib`
@@ -288,7 +288,7 @@ This means that `logging_lib` cannot be found in our `main` binary.
 
 ## Step 9: Fixing the Build - Declaring the Direct Dependency
 
-To fix this, we need to tell Buck2 that `greeter_bin` also has a direct
+To fix this, we need to tell yak that `greeter_bin` also has a direct
 dependency on `logging_lib`.
 
 1. Update `greeter_bin/YAK`:
@@ -298,8 +298,8 @@ rust_binary(
     name = "main",
     srcs = ["src/main.rs"],
     deps = [
-        "root//buck2_lab/greeter_lib:library",
-        "root//buck2_lab/logging_lib:logging_lib",  # Add this line
+        "root//yak_lab/greeter_lib:library",
+        "root//yak_lab/logging_lib:logging_lib",  # Add this line
     ],
 )
 ```
@@ -307,7 +307,7 @@ rust_binary(
 2. Run the binary:
 
 ```bash
-yak run root//buck2_lab/greeter_bin:main
+yak run root//yak_lab/greeter_bin:main
 ```
 
 You should see the output like this:
@@ -318,7 +318,7 @@ BUILD SUCCEEDED - starting your binary
 [INFO] Starting...
 [INFO] Entered greet function in library
 [INFO] Exiting greet function in library
-Hello, Buck2!
+Hello, yak!
 [INFO] Exit.
 ```
 
@@ -336,7 +336,7 @@ graph TD
 
 Congratulations! 🥳
 
-You've successfully created a multi-target Rust project with Buck2, where a
+You've successfully created a multi-target Rust project with yak, where a
 binary depends multiple targets!
 
 We've covered:

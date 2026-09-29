@@ -3,31 +3,29 @@ id: writing_rules
 title: Writing Rules
 ---
 
-This page describes how to write rules for Buck2 and explains the flow for
-implementing rules that are already defined in Buck1.
+This page describes how to write rules for yak.
 
 For a list of the API functions available, see the
 [Build APIs](../../api/build).
 
 :::note
 
-Some functions that build files call like rules, such as a `buck_genrule`
-wrapper around `genrule`, are not actually rules. They are _macros_ (Starlark
-functions that eventually call out the underlying `genrule` _rule_). Macros in
-Buck2 are mostly compatible with Buck1 and should be written in the same way.
+Some functions that build files call like rules, such as a wrapper around
+`genrule`, are not actually rules. They are _macros_ (Starlark functions that
+eventually call out the underlying `genrule` _rule_).
 
 :::
 
 ## Workflow by example
 
-The built-in Buck2 rules are stored in the `prelude` folder in the yak repo.
+The built-in yak rules are stored in the `prelude` folder in the yak repo.
 To add a rule for a language, say `pascal`:
 
 1. Look at
    [prelude/decls](https://github.com/rdeusser/buck2/tree/main/prelude/decls)
-   to see the attributes that are supported in Buck1 and are mirrored into
-   Buck2. If `pascal` was an existing rule, you would see what attributes it
-   takes (often it will be `pascal_library` and `pascal_binary`).
+   to see the attributes of the existing rules. If `pascal` was an existing
+   rule, you would see what attributes it takes (often it will be
+   `pascal_library` and `pascal_binary`).
 
 2. Create a file `pascal.bzl` that will contain your rule implementations. The
    details are explained later, but a dummy rule looks like the following:
@@ -48,7 +46,7 @@ To add a rule for a language, say `pascal`:
 :::note
 
 Before merging a change, it's important that all your Starlark is warning free
-(if you don't want to set up Buck2 for local development, test it in CI).
+(if you don't want to set up yak for local development, test it in CI).
 `yak starlark lint <files>` reports the warnings in the named files.
 
 :::
@@ -85,7 +83,7 @@ In the above snippet:
   `out`, which can be accessed via `ctx.attrs.out`).
 - **Actions** are declared by the rule with things like `ctx.actions.run`, which
   takes a command line. Note that the actions are not run by the rule, but
-  declared, so that Buck2 can run them later.
+  declared, so that yak can run them later.
 - **Artifacts** represent files on disk, which could be source or build outputs
   (`binary` in the above example).
   - For build outputs, the artifact is produced by an action, and the existence
@@ -103,7 +101,7 @@ The output of any actions performed will be materialized in `yak-out`. However,
 only the defined outputs of providers are available for dependent rules to
 consume and only the actions necessary to produce those outputs being consumed
 will be run. By default, the `default_output` of the `DefaultInfo` provider is
-built and output during a `buck build`.
+built and output during a `yak build`.
 
 ### Providers
 
@@ -245,7 +243,7 @@ As an example of a Python helper, see
 [make_comp_db.py](https://github.com/rdeusser/buck2/blob/main/prelude/cxx/tools/make_comp_db.py).
 
 A further advantage of using Python is that these commands can be tested in
-isolation, outside of Buck2.
+isolation, outside of yak.
 
 ## Debugging
 
@@ -261,8 +259,8 @@ assert some properties from it.
 
 ## New rules
 
-If your rule is **not** already in Buck1, then you can define it wherever you
-like, with a preference for it not being in the `prelude`.
+A new rule can be defined wherever you like, with a preference for it not
+being in the `prelude`.
 
 The only advantage of the `prelude` is that rules can be used without a
 corresponding `load`, which is generally considered a misfeature. The attributes

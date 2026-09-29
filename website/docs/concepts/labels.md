@@ -3,7 +3,7 @@ id: labels
 title: Labels
 ---
 
-The term "label" is a little overloaded in Buck2. It can refer to:
+The term "label" is a little overloaded in yak. It can refer to:
 
 - A target identifier composed of its name, cell and path.
 - One or more tag-like strings attached to a target.

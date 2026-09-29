@@ -41,9 +41,9 @@ const themeConfig: ClassicPresetConfig = ({
     },
   },
   navbar: {
-    title: 'Buck2',
+    title: 'yak',
     logo: {
-      alt: 'Buck2 Logo',
+      alt: 'yak logo',
       src: 'img/logo.svg',
     },
     items: [
@@ -113,7 +113,7 @@ const themeConfig: ClassicPresetConfig = ({
 });
 
 const config: DocusaurusConfig = ({
-  title: 'Buck2',
+  title: 'yak',
   // GitHub Pages serves a project site from https://<owner>.github.io/<repository>/.
   url: 'https://rdeusser.github.io',
   baseUrl: '/buck2/',

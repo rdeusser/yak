@@ -22,7 +22,7 @@ This symbol can be accessed from macros using `implicit_package_symbol`
 function.
 
 `get_modes` functions are package-local, but all `BUILD_MODE.bzl` files need to
-be registered in global buckconfig, which is not ideal.
+be registered in global yakconfig, which is not ideal.
 
 Proposed per-package properties can replace `get_modes` mechanism.
 
@@ -80,7 +80,7 @@ Modifying `PACKAGE` file logically invalidates the `YAK` file of this package,
 and all `PACKAGE` and `YAK` files of subpackages. However, `YAK` file
 evaluation may track which package-local values were accessed and only
 invalidate `YAK` files which were potentially affected (similarly to how we do
-it with buckconfigs, with individual properties being projection keys).
+it with yakconfigs, with individual properties being projection keys).
 
 #### `YAK` file API
 

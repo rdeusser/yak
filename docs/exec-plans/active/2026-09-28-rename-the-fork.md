@@ -5,8 +5,9 @@ Follows [the plan contract](../../PLANS.md).
 ## Purpose
 
 The fork is an internal tool of the owner's company named yak.
-After the change, the binary is `yak`, it reads `YAK` files and `.yakconfig` files, it writes `yak-out`, and no source file uses a `com.facebook` Java package other than the Infer annotations (see Decision Log).
-`yak init` in an empty directory writes a `.yakconfig` file, and `git grep -E '(^|[^.[:alnum:]_])com[./]facebook'` finds only the Infer annotation imports and links to upstream GitHub projects outside `docs/exec-plans/` and `CHANGELOG.md`.
+After the change, the binary is `yak`, it reads `YAK` files and `.yakconfig` files, it writes `yak-out`, and no source file uses a `com.facebook` Java package.
+The documentation, the website, and the messages of the binary call the tool yak.
+`yak init` in an empty directory writes a `.yakconfig` file, and `git grep -E '(^|[^.[:alnum:]_])com[./]facebook'` finds only links to upstream GitHub projects outside `docs/exec-plans/` and `CHANGELOG.md`.
 
 ## Progress
 
@@ -26,7 +27,7 @@ After the change, the binary is `yak`, it reads `YAK` files and `.yakconfig` fil
   - On macOS, `cargo build --bin=yak` passes, and `python3 test.py` passes clippy and rustdoc. `cargo test --lib --no-fail-fast` passes 3860 unit tests and fails one of the paging tests of `starlark`, which fail when they run in parallel (see the tech-debt tracker). `cargo test --doc` passes 311 doc tests.
   - On macOS, `yak init --git <dir>` writes `.yakconfig`, `.yakroot`, and a `.gitignore` that lists `/yak-out`. `resolve_deps.bxl:resolve_targets` reports `<project root>/lib` as the source folder of the Windows-only crate in `lib/BUILD`.
   - Remaining on macOS: the integration tests and the Buck build of the repository, which the tech-debt tracker lists as failing.
-- [ ] The owner decides whether the default isolation dir keeps the name `v2`, which puts build output in `yak-out/v2/`.
+- [x] The owner decided that the default isolation dir keeps the name `v2`, which puts build output in `yak-out/v2/` (2026-09-29).
 - [x] Milestone 3: the environment variables take the `YAK_` prefix, and the configuration sections and the flag that say `buck2` or `buckd` take `yak` (2026-09-28).
   - `rename_env.py` and `manual_edits_env.py` in `docs/exec-plans/active/2026-09-28-rename-the-fork/` made the milestone from commit `04fcc47b52`. `rename_env.py` edited 814 files. `cargo fmt --all` and the golden files that the integration tests regenerated complete the change.
   - On Linux, `cargo build --bin=yak` and `cargo fmt --all -- --check` pass. `python3 test.py` passes clippy and rustdoc. `cargo test --lib --no-fail-fast` passes 3865 unit tests and fails only `test_perf_thread_instruction_counter`, and `cargo test --doc` passes 311 doc tests.
@@ -45,11 +46,13 @@ After the change, the binary is `yak`, it reads `YAK` files and `.yakconfig` fil
   - google-java-format 1.36.1 `--dry-run` lists no Java file after the move. ktfmt 0.64 lists the same 20 of the 101 Kotlin files before and after, and it proposes the same changes in them.
   - On Linux, `cargo build --bin=yak` passes, and `python3 test.py buck2_external_cells_bundled buck2_worker_proto` passes. The first crate embeds the prelude, and the second compiles `worker.proto`.
   - `git grep -n -E '(^|[^.[:alnum:]_])com[./]facebook' -- . ':!docs/exec-plans/' ':!CHANGELOG.md' | grep -v -e 'com\.facebook\.infer\.annotation' -e 'https://github\.com/facebook/'` prints nothing.
-- [ ] The prelude downloads bootstrap jars built from the `dev.yak` sources, from a location the owner chooses, in place of the upstream release.
+- [x] The prelude downloads bootstrap jars built from the `dev.yak` sources, from a location the owner chooses, in place of the upstream release. The item was superseded on 2026-09-29, when `docs/exec-plans/completed/2026-09-29-remove-jvm-and-buck1-compatibility.md` removed the JVM toolchain, its sources, and the jar downloads.
   - Under Java 21, the moved sources build `cp_snapshot_generator.jar`, `jar_builder_main.jar`, and `zip_scrubber_main.jar` with `dev.yak` main classes, no `com/facebook` entries, and Java 11 class files, as the upstream jars have.
   - With the three jars served from a local HTTP server in place of the upstream release, `yak build prelude//toolchains/android/...` and `yak test prelude//toolchains/android/test/...` under Java 21 fail in the same actions and list the same 2684 JUnit results as with the upstream jars.
 - [ ] Milestone 5: the Cargo packages and directories take the new name.
-- [ ] Milestone 6: the documentation and the website use the new name.
+- [ ] Milestone 6: the documentation, the website, and the messages and comments of the code use the new name.
+  - [x] The documentation and the website (2026-09-29). `rename_prose.py` in `docs/exec-plans/active/2026-09-28-rename-the-fork/` moved seven pages and directories, deleted the page about Buck1 and five images, and made 1067 replacements in 125 files. Hand edits rewrote the pages about Buck1, redrew five diagrams in Mermaid, and replaced the logo.
+  - [ ] The messages, help text, doc comments, and comments of the code, with the golden files that print them.
 
 ## Surprises & Discoveries
 
@@ -82,6 +85,7 @@ After the change, the binary is `yak`, it reads `YAK` files and `.yakconfig` fil
 - The tech-debt tracker's JUnit entry came from runs of some of the JVM test targets. A run of every target also found failures in `UnzipTest`, `ZipOutputStreamTest`, `ZipScrubberTest`, and `DdPlistTest`, and analysis of `workertool_grpc` fails because `third-party:grpc-api` sets no visibility.
 - The prelude runs the bootstrap jars with `java -jar`, so each jar's manifest names its main class, and the jars from the upstream release keep working after the move.
 - The command rule skips `buck2` after a `/`, which keeps crate paths such as `app/buck2` intact, but it also skipped paths to the binary. `test_is_buck2_exe` in `app/buck2_wrapper_common/src/is_buck2.rs` failed on `/dir/buck2`. `manual_edits.py` renames that path and the binary paths in `docs/developers/perf/scripts/bin_waste.py` and `examples/with_prelude/README.md`.
+- The buckconfig rule changed a heading in `tests/core/docs/test_builtin_docs_data/buck2-golden-docs/build/Select.md`, a golden file that holds the doc comment of `Select` in `app/buck2_interpreter_for_build/src/interpreter/selector.rs`. `test_builtin_docs_golden` compares it with the docs that the binary generates, so `rename_prose.py` skips the directory. The second part of milestone 6 regenerates the file after it changes the doc comment.
 
 ## Decision Log
 
@@ -116,6 +120,17 @@ After the change, the binary is `yak`, it reads `YAK` files and `.yakconfig` fil
 - 2026-09-28: google-java-format 1.36.1 formats every Java file its `--dry-run` lists after the move, so it lists none. The 10 files it would already change hold only lines that the fork's earlier renames shortened.
 - 2026-09-28: The move lands before the bootstrap jars are rebuilt. The owner chooses where the rebuilt jars are stored, and the upstream jars keep working until then.
 - 2026-09-28: The scripts of each milestone live beside this plan in `docs/exec-plans/active/2026-09-28-rename-the-fork/`. `rename_runtime.py` skips `docs/exec-plans/`, so it never rewrites its own patterns.
+- 2026-09-29: The default isolation dir keeps the name `v2`, as the owner chose.
+- 2026-09-29: Milestone 6 covers the name in prose everywhere: the documentation, the website, and the messages, help text, doc comments, and comments of the code. Milestones 1 and 2 renamed files, directories, and variables. Messages such as `Failed to launch Buck2 daemon` kept the old name. The owner labeled milestone 6 as the prose milestone. It lands as two commits, the documentation first.
+- 2026-09-29: Prose writes the name `yak` in lowercase, also at the start of a sentence and in headings, as the earlier milestones did.
+- 2026-09-29: Pages and directories named after Buck take yak names (`what_is_yak.md`, `yakconfig.md`, `yak_out.md`, `query_language.md`, `yak_hanging.md`, `website/docs/yak_lab/`, and `.claude/skills/yak-rule-basics/`). The site keeps no redirects from the old addresses, as yak keeps no fallback to the old file names.
+- 2026-09-29: The site drops the page that compared Buck2 with Buck1 and the lists of articles, videos, projects, and tools about Buck2, because they describe Buck2 and its `BUCK` files. Reindeer stays in the list, because this repository uses it.
+- 2026-09-29: The diagrams that showed Buck names are Mermaid diagrams, so a later rename edits text. `website/static/img/allpaths_example.png` belongs to a doc comment in `app/buck2_query`, so it changes with the code.
+- 2026-09-29: A drawing of a yak replaces the Buck deer logo, which is Meta's brand asset, until the owner picks a logo.
+- 2026-09-29: The talk transcript `website/docs/insights_and_knowledge/modern_dice.md` keeps the speaker's words, and its introduction says that the talk is about Buck2.
+- 2026-09-29: Credits to the upstream project keep the name Buck2, such as the fork notices, the footer of the site, and links to `facebook/buck2`.
+- 2026-09-29: `projectName` and `baseUrl` in `website/config_impl.ts` and the links to the fork's GitHub repository keep `buck2`, because GitHub Pages serves the site under the name of the repository, which changes only when the owner renames it.
+- 2026-09-29: Names that scripts and files read keep `buck` in milestone 6, such as the `buck.type` attributes of query output, the `buck` fixture of the integration tests, and the `gobuckify` tool and its `gobuckify.json`. `gobuckify` mirrors the `buckify` command of `reindeer`, which is not part of this repository.
 
 ## Outcomes & Retrospective
 
@@ -124,6 +139,8 @@ Milestones 1 and 2 landed on 2026-09-28. The binary is `yak`, it reads `YAK` and
 Milestone 4 landed on 2026-09-28. The Java and Kotlin sources use `dev.yak` packages, and the JUnit reports match before and after under Java 26 and Java 21. A relative path that climbs out of a package depends on the depth of the package, and a test run of every target found the one such path. The prelude still downloads the bootstrap jars from the upstream release.
 
 Milestone 3 landed on 2026-09-28. The variables, the configuration sections, and the hidden daemon flag take yak names. Output that sorts or cuts names changes when the names change, so golden files and a test that assumed an order needed updates. A pattern that includes the code around a Rust string literal needs the whole text of the file, because the lexer separates the literal from its code.
+
+The documentation part of milestone 6 landed on 2026-09-29. The documentation and the website call the tool yak, and the site's pages and diagrams use yak names. A rule for the name in prose skips code blocks, because `Buck` names a Python class and `buck.type` names an attribute in the examples. A heading that names the tool changes its anchor, so the links to it change with it, and the link check found five anchors that the earlier renames had already broken. A word rule also rewrote a history of Buck1 and the titles of articles about Buck2, which only a reading of the diff caught.
 
 ## Context and Orientation
 
@@ -140,7 +157,8 @@ The names the binary uses are defined in these files:
 | Files that `init` writes | `app/buck2_client/src/commands/init.rs` |
 | Environment variables | each `buck2_env!` call, with the `YAK_` prefix |
 
-The repository's own Buck build is described in `ARCHITECTURE.md` under "Two build definitions". Most Java and Kotlin sources of the JVM and Android toolchain live under `prelude/toolchains/android/src/com/facebook/` and `prelude/toolchains/android/test/com/facebook/`, and Surprises & Discoveries lists the other three trees. `prelude/toolchains/java.bzl`, `prelude/toolchains/kotlin.bzl`, and `prelude/toolchains/android.bzl` name targets in that tree. The tech-debt tracker lists the four jars that the prelude downloads from an upstream release under "Downloads from upstream releases".
+The repository's own yak build is described in `ARCHITECTURE.md` under "Two build definitions". Milestone 4 moved the Java and Kotlin sources of the JVM and Android toolchain, and `docs/exec-plans/completed/2026-09-29-remove-jvm-and-buck1-compatibility.md` later removed them with the toolchain.
+Milestone 6 edits the prose. The user documentation lives in `website/docs/`, the site's sources in `website/`, and the contributor documentation in `docs/developers/`. `website/gen_docs.py` generates the reference pages from the doc comments of the code and the prelude, so those pages change with the code.
 
 Counts on 2026-09-28, before milestone 1, from the repository root:
 
@@ -166,7 +184,7 @@ A script in `docs/exec-plans/active/2026-09-28-rename-the-fork/` performs each m
 3. Milestone 3. Rename each `BUCK2_` and `BUCK_` variable to the `YAK_` prefix in its `buck2_env!` call and in every reader, including `tests/`, `.github/`, and the documentation. Rename the `[buck2]` configuration sections and the sections that start with `buck2_`, the `--no-buckd` flag, `_BUCK_COMPLETE_BIN`, and the `buck2` field of `host_info()`.
 4. Milestone 4. Move the five `com/facebook` trees to the path of the chosen package root, and update package declarations, imports, `META-INF/services` files, and the labels in `.bzl` and `YAK` files. Change the `java_package` option in the eight `.proto` files, the two JUnit runner system properties, and the three annotation processor options, together with their readers. Leave the `com.facebook.infer.annotation` imports as they are. Build the three bootstrap jars that come from this repository's sources, store them and the patched D8 jar where the owner chooses, and point the prelude's downloads at them.
 5. Milestone 5. Rename the 97 `buck2*` Cargo packages and their directories, with the matching `YAK` targets and `use` paths, the `#[buck2(...)]` attribute of the error derive macro, and the `buck2` and `buck2_client` attributes of `yak_bundle` in `defs.bzl`.
-6. Milestone 6. Update `website/docs/`, `docs/developers/`, `README.md`, `AGENTS.md`, `ARCHITECTURE.md`, and `CHANGELOG.md`, including the name Buck2 in prose, Buck1 commands such as `buck install`, the word buckconfig, the skill directory `.claude/skills/buck2-rule-basics/`, the website's `projectName`, and the publisher of the VS Code extension in `starlark-rust/vscode/package.json`. The links to the fork's GitHub repository change when the repository is renamed.
+6. Milestone 6, in two commits. First, `rename_prose.py` renames the tool in the Markdown files and the website's sources (`website/docs/`, `docs/developers/`, `README.md`, `AGENTS.md`, `ARCHITECTURE.md`, and the other Markdown files), including the name Buck2 in prose, Buck1 commands such as `buck install`, the word buckconfig, and the pages and the skill directory `.claude/skills/buck2-rule-basics/` named after Buck. Hand edits rewrite the pages about Buck1, redraw the diagrams that show Buck names, and change `CHANGELOG.md`, the site's logo, and the publisher of the VS Code extension in `starlark-rust/vscode/package.json`. Second, the messages, help text, doc comments, and comments of the code in `app/`, `prelude/`, `starlark-rust/`, `dice/`, `tests/`, `examples/`, and `.github/` take the name, and the golden files that print them are regenerated. The links to the fork's GitHub repository and the site's `projectName` change when the owner renames the repository.
 
 ## Validation and Acceptance
 
@@ -176,10 +194,11 @@ Commands run from the repository root unless a step names another directory.
 - The integration tests pass against the new binary, with golden files regenerated and reviewed (`tests/README.md`).
 - `target/debug/yak init` in an empty directory writes `.yakconfig` and no `.buckconfig`.
 - `target/debug/yak build //:yak` builds the binary with the repository's own `YAK` files after `reindeer buckify`.
-- In a project that vendors the prelude, `yak build prelude//toolchains/android/...` fails only in the targets the tech-debt tracker lists under "The JVM toolchain has targets that do not build", and in `toolchains//:jdk_system_image` where no Android SDK is installed.
-- The JUnit reports of `yak test prelude//toolchains/android/test/...` list the same failures before and after milestone 4.
-- `git grep -n -E '(^|[^.[:alnum:]_])com[./]facebook' -- . ':!docs/exec-plans/' ':!CHANGELOG.md' | grep -v -e 'com\.facebook\.infer\.annotation' -e 'https://github\.com/facebook/'` prints nothing.
+- For milestone 4, in a project that vendors the prelude, `yak build prelude//toolchains/android/...` fails only in the targets the tech-debt tracker listed under "The JVM toolchain has targets that do not build", and in `toolchains//:jdk_system_image` where no Android SDK is installed. The JUnit reports of `yak test prelude//toolchains/android/test/...` list the same failures before and after the move. The toolchain no longer exists.
+- For milestone 6, `python3 docs/exec-plans/active/2026-09-28-rename-the-fork/check_links.py .` checks the relative links, heading anchors, images, sidebar ids, and redirects of the site. The site cannot be built without its Node packages, so the script stands in for `docusaurus build`. After the documentation commit it prints three problems that it also prints for the commit before (two links of `website/docs/index.md` that it cannot resolve and the sidebar name `ruleSidebar`), and the five broken anchors that it printed before are fixed.
+- `git grep -n -E '(^|[^.[:alnum:]_])com[./]facebook' -- . ':!docs/exec-plans/' ':!CHANGELOG.md' | grep -v -e 'https://github\.com/facebook/'` prints nothing.
 
 ## Idempotence and Recovery
 
 Each milestone's script runs on a clean tree and can be rerun after `git checkout` of the files it changed. To rerun milestones 1 and 2, copy `rename_runtime.py` and `manual_edits.py` out of the checkout, check out `b25e8f97d8`, and run `rename_runtime.py --apply` and then `manual_edits.py` from the repository root. `manual_edits.py` exits with a list of failures when an edit matches a different number of times than it expects. To rerun milestone 3, copy `rename_runtime.py`, `rename_env.py`, and `manual_edits_env.py` out of the checkout together, check out `04fcc47b52`, and run `rename_env.py --apply` and then `manual_edits_env.py`. To rerun milestone 4, copy `rename_runtime.py`, `move_java.py`, and `manual_edits_java.py` out of the checkout together, check out `278a70771a`, run `move_java.py --apply` and then `manual_edits_java.py`, and run google-java-format 1.36.1 with `--replace` on the files that its `--dry-run` lists. Moving the Java sources with `git mv` keeps their history. The bootstrap jars are stored before the prelude points at them, so a failed upload leaves the upstream downloads in place.
+To rerun the documentation part of milestone 6, copy `rename_prose.py` out of the checkout, check out `fe50161a7d`, and run `rename_prose.py --apply` from the repository root. It moves and deletes files with Git before it edits them, so it runs once on a clean tree. The hand edits are in the commit, and `rename_prose.py` without `--apply` lists the lines that still name Buck.

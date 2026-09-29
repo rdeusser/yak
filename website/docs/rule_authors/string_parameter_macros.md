@@ -16,7 +16,7 @@ reproducible across different machine environments.
 ## `$(location //path/to:target)`
 
 Expands to the location of the output of the specified build rule. This means
-that you can refer to the output without needing to be aware of how Buck is
+that you can refer to the output without needing to be aware of how yak is
 storing data on the disk mid-build.
 
 For example:
@@ -46,7 +46,7 @@ Identical to `$(location //path/to:target)`, but the configuration is
 transitioned to the execution platform (see the [page about
 configuration](../concepts/configurations.md) for more information). This
 can be useful when using `genrule` to wrap another build system with
-buck.
+yak.
 
 The target being referenced must expose a `DefaultInfo` (i.e. it must be
 `yak build`able).
@@ -170,7 +170,7 @@ exceed a limit in your operating environment. For example, if you use the
 results of an expanded macro in Bash, it could exceed Bash's command-line
 limits.
 
-To work around these limits, prefix the macro name with the `@` character. Buck
+To work around these limits, prefix the macro name with the `@` character. yak
 then writes the results of the expanded macro to a temporary file and replaces
 the macro with the path to that file _while keeping the `@` prefix_. For
 example:

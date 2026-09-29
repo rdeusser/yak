@@ -1,37 +1,29 @@
 ---
 id: why
-title: Why Buck2
+title: Why yak
 ---
 
-Buck2 is a build system for large, multi-language repositories. This page
+yak is a build system for large, multi-language repositories. This page
 answers the questions:
-[why does Buck2 exist](#why-does-buck2-exist),
-[what's different about Buck2](#whats-different-about-buck2), and
-[why use Buck2](#why-use-buck2).
+[why does yak exist](#why-does-yak-exist),
+[what's different about yak](#whats-different-about-yak), and
+[why use yak](#why-use-yak).
 
-## Why does Buck2 exist?
+## Why does yak exist?
 
 Some organizations keep their code in a very large monorepo, consisting of a
-variety of programming languages, including C++, Python, Rust, Kotlin, Swift,
+variety of programming languages, including C++, Python, Rust, Go, Swift,
 Objective-C, Haskell, OCaml, and more.
 
 These large scale and multi-language repositories are generally beyond the
-capabilities of traditional build systems like `make`. To optimize the build and
-performance of these large systems, Meta (then called Facebook) and Google developed their own
-build systems, respectively Buck and Bazel. While the internal version of Bazel
-was started first (also known as Blaze), Buck was open sourced first (back in
-March 2013), followed by Bazel a few years later (March 2015).
-
-The retroactively named Buck1 was a capable build system, but had significant
-limitations. Meta wrote Buck2 to replace it. Buck2 is a rewrite that aims to
-keep the best bits of Buck1 (with a high degree of target compatibility) but
-also borrows ideas from
+capabilities of traditional build systems like `make`. yak is a fork of Buck2,
+which Meta wrote for such a repository. Its design borrows ideas from
 [academic](https://ndmitchell.com/#shake_10_sep_2012)
 [research](https://ndmitchell.com/#shake_21_apr_2020) and build systems,
 including [Bazel](https://bazel.build/), [Pants](https://www.pantsbuild.org/),
 [Shake](https://shakebuild.com/), [Tup](https://gittup.org/tup/), and more.
 
-Following are aspects common to Buck1 and Buck2 (and in most cases, Bazel):
+yak has these features, and in most cases Bazel has them too:
 
 - **Targets that can be queried** - the build is defined as a series of targets,
   specified in `YAK` files, that depend on other targets. This graph of targets
@@ -44,31 +36,26 @@ Following are aspects common to Buck1 and Buck2 (and in most cases, Bazel):
   Python library that depends on a Rust library, which, in turn depends on a C
   library.
 - **File watching** - at large enough scale, simply looking for changed files is
-  prohibitively expensive. Buck can integrate with
+  prohibitively expensive. yak can integrate with
   [Watchman](https://facebook.github.io/watchman/) to discover which files have
-  changed efficiently. For simplicity of setup, Buck2 defaults to using
+  changed efficiently. For simplicity of setup, yak defaults to using
   `inotify` or similar functionality.
 - **Uses Starlark** - Starlark is a deterministic Python-like language used to
   specify the targets, enabling the definition of targets as literals and more
   advanced manipulation/sharing.
 
-## What's different about Buck2?
+## What's different about yak?
 
-Buck2 has several major differences (as well as many minor differences) from
-Buck1. Of particular note, there are a number that give new efficiency or
-expressiveness (most of these are also different from Bazel).
+Several features of yak give it efficiency or expressiveness that most build
+systems, including Bazel, do not have:
 
-- **Buck2 is written in Rust** - Buck1 was written in Java. One of the
-  advantages of using Rust is the absence of GC pauses, However, Java also has
-  advantages, such as better memory profiling tools.
-- **Buck2 is remote execution first** - local execution is considered a special
-  case of remote execution, in contrast to Buck1 where it was added after. That
-  means that things such as directory hashes can be pre-computed ready to send
-  to remote execution, giving efficiency benefits.
-- **All Buck2 rules are written in Starlark** - whereas, in Buck1, they were
-  written in Java as part of the binary, which makes iteration on rules much
-  faster.
-- **The Buck2 binary is entirely language agnostic** - as a consequence of
+- **yak is written in Rust** - it has no garbage collection pauses.
+- **yak is remote execution first** - local execution is considered a special
+  case of remote execution. That means that things such as directory hashes can
+  be pre-computed ready to send to remote execution, giving efficiency benefits.
+- **All yak rules are written in Starlark** - the rules live outside the binary,
+  which makes iteration on rules much faster.
+- **The yak binary is entirely language agnostic** - as a consequence of
   having all the rules external to the binary, the most important and complex
   rule (such as in C++), don't have access to magic internal features. As a
   result, features have been made available to all rules, including:
@@ -77,7 +64,7 @@ expressiveness (most of these are also different from Bazel).
     changes within them.
   - [Incremental actions](../rule_authors/incremental_actions.md) - the ability
     to have the action short-circuit some subset of the work if run again.
-- **Buck2 uses a dynamic (aka monadic) graph as its underlying computation
+- **yak uses a dynamic (aka monadic) graph as its underlying computation
   engine** - while most dependencies are specified statically, there are two
   particular features that expose dynamic power to rule authors:
   - [Dynamic dependencies](../rule_authors/dynamic_dependencies.md) - enable
@@ -95,29 +82,24 @@ expressiveness (most of these are also different from Bazel).
   to Bazel's [depset](https://bazel.build/rules/lib/depset). But, instead of
   being just a memory optimization, are also wired into the dependency graph,
   providing a reduction in the size of the dependency graph.
-- **Buck2 is not phased** - there are no target graph/action graph phases, just
+- **yak is not phased** - there are no target graph/action graph phases, just
   a series of dependencies in a
   [single graph on DICE](https://github.com/rdeusser/buck2/blob/main/dice/dice/docs/index.md)
-  that result in whatever the user requested. That means that Buck2 can
+  that result in whatever the user requested. That means that yak can
   sometimes parallelise different phases and track changes very precisely.
-- **The Buck2 Starlark implementation is available
+- **The yak Starlark implementation is available
   [as a standalone library](https://github.com/rdeusser/buck2/tree/main/starlark-rust)** -
   this provides features such as IDE integration (both LSP and DAP bindings),
-  linters, typecheckers, and more. These features are integrated into Buck2 to
+  linters, typecheckers, and more. These features are integrated into yak to
   give a better developer experience (which is still evolving).
-- **Buck2 supports configurations** - (such as `select`) to provide
+- **yak supports configurations** - (such as `select`) to provide
   multi-platform/architecture builds, which are heavily inspired by Bazel.
   Within that space, there is a number of small differences, such as
   `toolchain_deps`.
-- **Buck2 is fast** - in tests that compared the two, Buck2 completed builds 2x
-  as fast as Buck1.
 
-For a comprehensive list of benefits, see
-[Benefits Compared to Buck1](benefits/compared_to_buck1.md).
+## Why use yak?
 
-## Why use Buck2?
-
-It would be delightful if you tried out Buck2! But it is early-stage software,
+It would be delightful if you tried out yak! But it is early-stage software,
 so users may run into unexpected issues. If you encounter an issue, please
 report it via [GitHub issues](https://github.com/rdeusser/buck2/issues).
 
@@ -126,4 +108,4 @@ There are some things that aren't quite yet finished:
 - There are not yet mechanisms to build in release mode (that should be achieved
   by modifying the toolchain).
 
-If none of that puts you off, [give Buck2 a go](../getting_started/index.md)!
+If none of that puts you off, [give yak a go](../getting_started/index.md)!

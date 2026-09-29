@@ -20,7 +20,7 @@ It is prohibited to specify both `--modifier` flag and `?` on CLI. This restrict
 
 ## `--show-output`
 
-Buck’s build commands accept a set of `--show-output` flags (ex. `--show-output` and `--show-full-output`) that prints the output location of targets specified on CLI. For example, invoking `yak build repo//foo:bin –show-output` prints
+yak’s build commands accept a set of `--show-output` flags (ex. `--show-output` and `--show-full-output`) that prints the output location of targets specified on CLI. For example, invoking `yak build repo//foo:bin –show-output` prints
 
 ```python
 repo//foo:bin yak-out/v2/gen/repo/57b1cdd23074b8c3/foo/bin
@@ -199,13 +199,13 @@ A possible alternate design is that we add a `per_target_modifiers` section of t
 }
 ```
 
-The main reason to prefer approach #1 is that it better accommodates tools that wrap a user’s buck build invocation and do extra processing on the build report. With approach #2, if a user passes in `repo//foo:bin?opt` as the target pattern to build, then the wrapper tool needs to understand that `?opt` specifies a modifier and that it needs to do a string split on `?` to find the correct section of the build report. With approach #1, it can look up `repo//foo:bin?opt` directly from the build report without understanding that a modifier was used.
+The main reason to prefer approach #1 is that it better accommodates tools that wrap a user’s yak build invocation and do extra processing on the build report. With approach #2, if a user passes in `repo//foo:bin?opt` as the target pattern to build, then the wrapper tool needs to understand that `?opt` specifies a modifier and that it needs to do a string split on `?` to find the correct section of the build report. With approach #1, it can look up `repo//foo:bin?opt` directly from the build report without understanding that a modifier was used.
 
 The benefit of approach #2 is that the `configured` section looks more understandable in this approach than the previous approach, and in general it leads to a shorter build report.
 
 ## Target Universe
 
-A [target universe](../../concepts/glossary.md#target-universe) is a set of configured targets and their transitive deps that Buck looks up from to resolve unconfigured target labels. For example, `yak build repo//lib:singleton --target-universe=repo//foo:bin` will build all configured variants of `repo//lib:singleton` in transitive deps of `repo//foo:bin`. This section applies to all commands that can explicitly use the `--target-universe` flag like `audit providers` and `aquery`.
+A [target universe](../../concepts/glossary.md#target-universe) is a set of configured targets and their transitive deps that yak looks up from to resolve unconfigured target labels. For example, `yak build repo//lib:singleton --target-universe=repo//foo:bin` will build all configured variants of `repo//lib:singleton` in transitive deps of `repo//foo:bin`. This section applies to all commands that can explicitly use the `--target-universe` flag like `audit providers` and `aquery`.
 
 ### Explicit target universe
 
@@ -228,7 +228,7 @@ In cquery, ?-syntax will *only* be allowed in `--target-universe`. This means th
 
 - `yak cquery repo//lib:singleton --target-universe=repo//foo:bin?asan` is allowed
 - `yak cquery repo//lib:singleton?asan –target-universe=repo//foo:bin?asan` and `yak cquery repo//lib:singleton?asan --target-universe=repo//foo:bin` are disallowed.
-- Additionally, `yak cquery repo//lib:singleton?asan` is *disallowed*. The reason for this is that cquery [infers a target universe](../../bxl/explanation/bxl_cquery_vs_cli_cquery.md#cli-buck2-cquery) from all target literals specified in the query when explicit `--target-universe` is not specified. Thus `yak cquery repo//lib:singleton?asan` naturally expands to `yak cquery repo//lib:singleton?asan --target-universe=repo//lib:singleton?asan`.
+- Additionally, `yak cquery repo//lib:singleton?asan` is *disallowed*. The reason for this is that cquery [infers a target universe](../../bxl/explanation/bxl_cquery_vs_cli_cquery.md#cli-yak-cquery) from all target literals specified in the query when explicit `--target-universe` is not specified. Thus `yak cquery repo//lib:singleton?asan` naturally expands to `yak cquery repo//lib:singleton?asan --target-universe=repo//lib:singleton?asan`.
 
 ### Possible relaxation
 
@@ -271,7 +271,7 @@ We may consider relaxing to this behavior in the future if there are demands for
 Additionally, it’s possible that we allow `yak cquery repo//lib:singleton?asan –target-universe=repo//foo:bin `to resolve `repo//lib:singleton` to its configuration with asan applied possibly outside of target universe of `repo//foo:bin` in the future. Unfortunately, this is unintuitive in a couple ways.
 
 - `repo//lib:singleton?asan` likely resolves to a configured target outside of the target universe of `repo//foo:bin?asan`. If we were to respect `asan` modifier when resolving `repo//lib:singleton`, then the build command will build nothing. If we don’t respect `asan` modifier on `repo//lib:singleton`, then we will be ignoring the modifiers specified and building every copy of `repo//lib:singleton` that shows up in deps of `repo//foo:bin`. Neither behavior would be intuitive for the average user.
-- With :`foo?modifiers`, Buck will actively configure `:foo` outside of the target universe. With just `:foo`, buck will not attempt to do that. This behavior is inconsistent and a bit unintuitive.
+- With :`foo?modifiers`, yak will actively configure `:foo` outside of the target universe. With just `:foo`, yak will not attempt to do that. This behavior is inconsistent and a bit unintuitive.
 
 ## Commands that receive unconfigured targets
 

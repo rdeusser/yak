@@ -1,6 +1,6 @@
-## A simple Hello World project using the buck2-prelude
+## A simple Hello World project using the prelude
 
-This example demonstrates how a simple C++ project might be built with Buck2
+This example demonstrates how a simple C++ project might be built with yak
 using the prelude.
 
 In the `toolchains` cell, we define two toolchains needed:

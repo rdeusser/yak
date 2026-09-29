@@ -50,7 +50,7 @@ Some tests need resources that a developer machine usually lacks. They carry a m
 
 | Marker | Needs | Runs when |
 | --- | --- | --- |
-| `remote_execution` | A Remote Execution backend. | `YAK_TEST_RE_CONFIG` names a buckconfig file with the backend's `[yak_re_client]` settings. The harness appends the file to every test project's `.yakconfig`. |
+| `remote_execution` | A Remote Execution backend. | `YAK_TEST_RE_CONFIG` names a yakconfig file with the backend's `[yak_re_client]` settings. The harness appends the file to every test project's `.yakconfig`. |
 | `cgroups` | Linux with a systemd user session that delegates cgroups, because the daemon moves itself into a cgroup with `systemd-run --user`. `@buck_test(disable_daemon_cgroup=False)` adds this marker. | `YAK_TEST_CGROUPS=1` is set. |
 | `needs_binary` | Helper programs named by environment variables. | Every variable that the marker names is set. |
 
@@ -62,8 +62,8 @@ The helper programs:
 | --- | --- | --- |
 | `THREE_BILLION_INSTRUCTIONS_BIN` | `shed/three_billion_instructions` | `cargo build -p three_billion_instructions --bin three_billion_instructions_bin` |
 | `SKETCH_SIZE_BIN` | `shed/setsketch` | `cargo build -p setsketch --bin sketch_size` |
-| `USE_SOME_MEMORY_BIN` | `shed/cgroups/use_some_memory` | It has a Buck target but no Cargo target. |
-| `YAK_COMPLETION_VERIFY` | `shed/completion_verify` | It has a Buck target but no Cargo target. |
+| `USE_SOME_MEMORY_BIN` | `shed/cgroups/use_some_memory` | It has a yak target but no Cargo target. |
+| `YAK_COMPLETION_VERIFY` | `shed/completion_verify` | It has a yak target but no Cargo target. |
 | `INSTALLER_BIN`, `EARLY_EXIT_INSTALLER_BIN` | Installers for the `yak install` tests. | Their sources are not in this repository. |
 
 The Watchman tests in `core/io/` skip when `watchman` is not on `PATH`. The Go tests in `prelude/` skip when `go` is not on `PATH`.
@@ -96,9 +96,9 @@ async def test_build_writes_output(buck: Buck) -> None:
     assert output.read_text() == "hello\n"
 ```
 
-`@buck_test()` copies the data directory into the temporary project, and `data_dir="name"` copies only its subdirectory `name`. Its other arguments add buckconfig values, allow soft errors, and skip operating systems. The docstring of `buck_test` in `e2e_util/buck_workspace.py` lists them.
+`@buck_test()` copies the data directory into the temporary project, and `data_dir="name"` copies only its subdirectory `name`. Its other arguments add yakconfig values, allow soft errors, and skip operating systems. The docstring of `buck_test` in `e2e_util/buck_workspace.py` lists them.
 
-The data directories name their build files `YAK.fixture` through `[buildfile] name` in the project's `.yakconfig`. That name keeps this repository's own Buck build from reading them. `PACKAGE` files keep their usual name.
+The data directories name their build files `YAK.fixture` through `[buildfile] name` in the project's `.yakconfig`. That name keeps this repository's own yak build from reading them. `PACKAGE` files keep their usual name.
 
 A project uses `nano_prelude` with this `.yakconfig`:
 

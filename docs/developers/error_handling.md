@@ -1,8 +1,8 @@
 # Error Handling
 
-Buck2 uses `buck2_error` replacing both `anyhow` and `thiserror`.
+yak uses `buck2_error` replacing both `anyhow` and `thiserror`.
 
-Use of `anyhow` or `thiserror` in `buck2/app` is banned except where there are pre-existing
+Use of `anyhow` or `thiserror` in `app/` is banned except where there are pre-existing
 exceptions or when extremely strongly justified.
 
 ## Result type
@@ -64,7 +64,7 @@ if some_condition {
 }
 ```
 
-## Internal errors (bugs in Buck2 itself)
+## Internal errors (bugs in yak itself)
 
 When reaching a condition that represents an invariant violation and should never fire, panicking
 via `.expect()`, `.unwrap()`, etc. is ok for file-local invariants. For non-file-local, prefer a

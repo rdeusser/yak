@@ -4,7 +4,7 @@ title: Dynamic Dependencies
 ---
 
 Dynamic dependencies allow a rule to use information that was not available when
-the rule was first run at analysis time. Dynamic dependencies in Buck2 are
+the rule was first run at analysis time. Dynamic dependencies in yak are
 implemented using `dynamic_output` and are restricted in their power compared to
 fully generic dynamic dependencies.
 
@@ -28,7 +28,7 @@ Examples of rules requiring dynamic dependencies include:
 
 ## Implementation
 
-Buck2 provides the following function:
+yak provides the following function:
 
 ```python
 ctx.actions.dynamic_output(dynamic, inputs, outputs, lambda ctx: …)

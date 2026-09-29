@@ -1,8 +1,8 @@
-# Buck2 Rule Basics - Interactive Tutorial Skill
+# yak Rule Basics - Interactive Tutorial Skill
 
 ## Overview
 
-This skill provides an interactive, step-by-step tutorial for learning Buck2
+This skill provides an interactive, step-by-step tutorial for learning yak
 fundamentals by writing a simple text processing rule. It guides users through 8
 progressive steps, teaching core concepts like rules, actions, artifacts,
 targets, configurations, and more.
@@ -25,7 +25,7 @@ Unlike traditional tutorials that dump all content at once, this skill:
 Simply invoke the skill:
 
 ```
-use buck2-rule-basics
+use yak-rule-basics
 ```
 
 Claude will:
@@ -105,7 +105,7 @@ Goal → What to do → Code to write → Test → Key concepts → Confirm befo
   - **YAK.example** - Example YAK file showing various patterns
   - **test_input.txt** - Sample input for testing
 - **references/** - Additional documentation
-  - **advanced_patterns.md** - Advanced Buck2 patterns
+  - **advanced_patterns.md** - Advanced yak patterns
   - **concepts.md** - Core concepts reference
 
 ## Teaching Philosophy
@@ -138,7 +138,7 @@ Goal → What to do → Code to write → Test → Key concepts → Confirm befo
 ### Starting Fresh
 
 ```
-User: "I want to learn Buck2"
+User: "I want to learn yak"
 Claude: [Checks for existing files]
 Claude: "Starting fresh! Here's the plan..."
 Claude: [Creates todo list with 8 steps]
@@ -148,7 +148,7 @@ Claude: "Ready for Step 1?"
 ### Resuming
 
 ```
-User: "Continue the Buck2 tutorial"
+User: "Continue the yak tutorial"
 Claude: [Reads existing files]
 Claude: "You're on Step 5! Let's pick up from there."
 Claude: [Resumes with appropriate step]
@@ -188,17 +188,17 @@ Claude: [Helps user explore variations]
 ### If errors occur
 
 - Help debug together
-- Explain what Buck2 is telling us
+- Explain what yak is telling us
 - Turn it into a learning opportunity
 
 ## Next Steps After Completion
 
 Suggest these resources:
 
-1. Explore Buck2's prelude for real production rules
+1. Explore yak's prelude for real production rules
 2. Try more complex rules (multiple outputs, custom providers)
 3. Learn BXL for build introspection
-4. Read the Buck2 documentation for advanced patterns
+4. Read the yak documentation for advanced patterns
 5. Apply learnings to their actual project
 
 ## Maintenance

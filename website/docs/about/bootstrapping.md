@@ -1,11 +1,11 @@
 ---
 id: bootstrapping
-title: Bootstrapping Buck2
+title: Bootstrapping yak
 ---
 
-# Bootstrapping Buck2
+# Bootstrapping yak
 
-Buck2 can be built with `cargo` or `yak`. The Buck build of the source
+yak can be built with `cargo` or `yak`. The yak build of the source
 repository needs a `yak` binary built from the same source, so build one with
 `cargo` first:
 

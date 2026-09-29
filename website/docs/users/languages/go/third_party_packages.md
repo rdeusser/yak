@@ -5,7 +5,7 @@ title: Third-Party Packages
 
 # Third-Party Packages
 
-Buck2 treats third-party Go packages the same way as first-party packages. There
+yak treats third-party Go packages the same way as first-party packages. There
 are multiple ways to add third-party packages to your project, but we recommend
 the following approach:
 
@@ -67,8 +67,8 @@ The `gobuckify.json` file has the following structure:
     {
       "go_os": "linux", // Go OS value
       "go_arch": "amd64", // Go architecture value
-      "buck_os": "config//os:linux", // Buck OS value
-      "buck_arch": "config//cpu:x86_64" // Buck architecture value
+      "buck_os": "config//os:linux", // yak OS value
+      "buck_arch": "config//cpu:x86_64" // yak architecture value
     }
   ],
   "default_tags": ["purego"] // List of tags always passed to `go list`

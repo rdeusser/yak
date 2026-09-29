@@ -3,7 +3,7 @@ id: configurations
 title: Configurations
 ---
 
-Build configurations are how Buck models building the same target in
+Build configurations are how yak models building the same target in
 different ways. This can include (but is not limited to):
 
 - Target architecture
@@ -14,7 +14,7 @@ different ways. This can include (but is not limited to):
 - Sanitizers
 - Passing arbitrary flags to build tools
 
-When building a target, Buck always builds it in a particular
+When building a target, yak always builds it in a particular
 configuration. Build configurations are also sometimes called
 "platforms". While technically separate, those two concepts are almost
 identical.
@@ -96,10 +96,10 @@ Once defined, this constraint can used in various ways, such as:
 
 ## Configuration values
 
-`config_setting` can also include values taken from the buckconfig.
-These can ease a migration from a legacy buckconfig setting to a build
+`config_setting` can also include values taken from the yakconfig.
+These can ease a migration from a legacy yakconfig setting to a build
 constraint by allowing you to `select()` (more on that later) on known
-buckconfig values:
+yakconfig values:
 
 ```python
 config_setting(
@@ -110,7 +110,7 @@ config_setting(
 )
 ```
 
-This setting will be satisfied if the associated buckconfig matches,
+This setting will be satisfied if the associated yakconfig matches,
 i.e. if the user passes `build.fastmode=true` via the `-c`/`--config`
 CLI flag, or if the following is set in the cell's `.yakconfig` file:
 
@@ -119,7 +119,7 @@ CLI flag, or if the following is set in the cell's `.yakconfig` file:
 fastmode = true
 ```
 
-This feature only allows reading buckconfig values, not writing them.
+This feature only allows reading yakconfig values, not writing them.
 
 They are also incompatible with
 [configuration modifiers](./modifiers.md):
@@ -224,7 +224,7 @@ how shortly), the build will just fail (unless
 
 When trying to build a set of targets using a
 [pattern](./target_pattern.md) (e.g. `//some/package:` or
-`//some/package/...`), Buck will simply ignore incompatible targets.
+`//some/package/...`), yak will simply ignore incompatible targets.
 
 See the
 [reference documentation](../../api/build/Select/#target_compatible_with)
@@ -335,7 +335,7 @@ configuration is currently represented as a hash of its values (a
 
 ## Target platform vs execution platform
 
-Buck distinguishes two kinds of platforms: target platforms and execution
+yak distinguishes two kinds of platforms: target platforms and execution
 platforms. Target platforms are the platforms where your code runs,
 and execution platforms are the ones used to run compilers and build tools
 during the build process.
@@ -345,7 +345,7 @@ microcontroller, you will still need to build a compiler for Linux/Mac/Windows.
 You may also want to build the said compiler in release mode for faster
 builds even when building the firmware in development mode.
 
-For this reason, Buck requires both _target_ platforms and _execution_
+For this reason, yak requires both _target_ platforms and _execution_
 platforms to be defined. The execution platforms are specified via the
 `build.execution_platforms` value in `.yakconfig`.
 
@@ -357,7 +357,7 @@ Build configurations are uniquely identified by their hash, which is not
 human friendly.
 
 To determine what constraints are part of a configuration, run
-`yak cquery //...` sot that Buck will discover all existing
+`yak cquery //...` sot that yak will discover all existing
 configurations, then run `yak audit configurations`.
 
 This will list all available configurations and print their composing

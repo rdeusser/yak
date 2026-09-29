@@ -2,7 +2,7 @@
 
 ## Context
 
-Buck has a concept of Visibility for every target. It allows users to define,
+yak has a concept of Visibility for every target. It allows users to define,
 for each target, the targets it can depend on and targets that can depend on it.
 Visibility is specified as an allowlist of targets/target patterns, and any
 target used that falls outside of the allowlist fails visibility checking.
@@ -11,8 +11,8 @@ in buildfiles and [PACKAGE files](../rule_authors/package.md).
 
 Visibility is important to lots of codebase maintainers because it can be used
 to keep projects from pulling in unwanted dependencies. As some examples, app
-teams use Buck visibility to protect app modularity and to define link groups
-for build speed optimizations. Teams also want to use Buck visibility on
+teams use yak visibility to protect app modularity and to define link groups
+for build speed optimizations. Teams also want to use yak visibility on
 [PACKAGE files](../rule_authors/package.md) to enforce repository boundaries,
 although visibility in its current form is likely not fit for enforcing such
 boundaries. Visibility has also been used to allow only certain targets to
@@ -24,7 +24,7 @@ checking is expensive memory-wise because it requires tracking all deps at each
 node. When constructing configured target graph, this cost is already paid for
 when yak checks transitive target compatibility. When constructing the
 unconfigured target graph, however, this is costly, so we avoid checking
-visibility there. (Note that buck does not allow you to specify selects in
+visibility there. (Note that yak does not allow you to specify selects in
 visibility attributes.)
 
 In practice, this means that commands like `cquery` and `build` can enforce

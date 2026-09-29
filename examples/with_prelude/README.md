@@ -4,7 +4,7 @@ From yak project root, run the following to build yak with cargo
 
 ```sh
 cargo install --path=app/buck2 --root=/tmp
-export BUCK2="/tmp/bin/yak"
+export YAK="/tmp/bin/yak"
 ```
 
 ## Run `yak init --git`
@@ -28,6 +28,6 @@ overwritten.
 **_NOTE:_** These commands are currently only supported on Linux and macOS.
 
 ```sh
-$BUCK2 build //ocaml/...
-$BUCK2 run //python/hello_world:main
+$YAK build //ocaml/...
+$YAK run //python/hello_world:main
 ```

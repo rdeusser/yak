@@ -1,21 +1,21 @@
 ---
 id: tutorial_first_build
-title: 'Tutorial: Your First Buck2 Application'
+title: 'Tutorial: Your First yak Application'
 ---
 
 Welcome! This tutorial will help you learn the basics of building your first
-Rust application with Buck2. We will start from the very beginning, guiding you
+Rust application with yak. We will start from the very beginning, guiding you
 step-by-step to get a "Hello, World!" message displayed in your terminal.
 Through this practical exercise, you'll acquire foundational skills for working
-with Buck2.
+with yak.
 
 ## What We'll Do:
 
 1. Set up a simple project directory.
 2. Write a "Hello, World!" program in Rust.
-3. Create a YAK file to tell Buck2 how to build our program.
-4. Build the Rust program using Buck2.
-5. Run our compiled program using Buck2.
+3. Create a YAK file to tell yak how to build our program.
+4. Build the Rust program using yak.
+5. Run our compiled program using yak.
 6. Briefly inspect the build targets we created.
 
 ## Prerequisites:
@@ -23,7 +23,7 @@ with Buck2.
 For this tutorial, we will use Rust. You don't need to know how to write Rust.
 We will only use a few basics of Rust.
 
-- [Follow the previous section to set up Buck2](../install)
+- [Follow the previous section to set up yak](../install)
 - [Set up Rust](https://rustup.rs/)
 
 ## Step 1: Create a New Project
@@ -32,18 +32,18 @@ First, we need to create a new yak project directory and set up a folder to
 put all our files in.
 
 1. Create a new yak project directory and create a new directory named
-   `buck2_lab` inside it.
+   `yak_lab` inside it.
 
 ```bash
 yak init hello_world
 
-mkdir hello_world/buck2_lab
+mkdir hello_world/yak_lab
 
-cd hello_world/buck2_lab
+cd hello_world/yak_lab
 ```
 
-2. Inside `buck2_lab`, create another directory named `greeter_bin`, this is
-   where all files of our Buck2 binary package will be stored.
+2. Inside `yak_lab`, create another directory named `greeter_bin`, this is
+   where all files of our yak binary package will be stored.
 
 ```bash
 mkdir greeter_bin
@@ -59,7 +59,7 @@ mkdir greeter_bin/src
 Our project structure should look like this:
 
 ```
-buck2_lab
+yak_lab
 └── greeter_bin
     └── src
 ```
@@ -78,12 +78,12 @@ fn main() {
 ```
 
 This is the main function of our program. It prints "Hello world!" to the
-console. But we are not done yet, we need to tell Buck2 how to build our
+console. But we are not done yet, we need to tell yak how to build our
 program.
 
 ## Step 3: Defining the Build Target in a YAK File
 
-Next, we need to tell Buck2 about our program and how to build it. We do this
+Next, we need to tell yak about our program and how to build it. We do this
 using a `YAK` file.
 
 1. In the root of your `greeter_bin` directory (not inside src), create a new
@@ -101,23 +101,23 @@ rust_binary(
 Let's briefly see what this does (we'll keep explanations minimal, just enough
 for this step! ):
 
-- `rust_binary` is a Buck2 rule that tells Buck2 how to build a Rust binary.
+- `rust_binary` is a yak rule that tells yak how to build a Rust binary.
 - `name = "main"`: We're giving our build target a name, "main". This is how
-  we'll refer to it in Buck2 commands.
-- `srcs = ["src/main.rs"]`: This tells Buck2 that the source code for this
+  we'll refer to it in yak commands.
+- `srcs = ["src/main.rs"]`: This tells yak that the source code for this
   "main" target is our `src/main.rs` file.
 
 Our project structure should look like this:
 
 ```
-buck2_lab
+yak_lab
 └── greeter_bin
     ├── YAK
     └── src
         └── main.rs
 ```
 
-## Step 4: Building the Application with Buck2
+## Step 4: Building the Application with yak
 
 With our Rust code and YAK file in place, let's build the application!
 
@@ -128,31 +128,31 @@ With our Rust code and YAK file in place, let's build the application!
 yak build :main --show-output
 ```
 
-- `yak build :main` tells Buck2 to build the target named main. The `:main`
+- `yak build :main` tells yak to build the target named main. The `:main`
   part means the target is defined in the YAK file in the root of this package
   (`greeter_bin`).
-- `--show-output` tells Buck2 to show the path of our built binary.
+- `--show-output` tells yak to show the path of our built binary.
 
 3. Expected Output: You should see output similar to this
 
 ```
 ...
 BUILD SUCCEEDED
-root//buck2_lab/greeter_bin:main /.../buck2_lab/yak-out/v2/gen/root/200212f73efcd57d/buck2_lab/greeter_bin/__main__/main
+root//yak_lab/greeter_bin:main /.../yak_lab/yak-out/v2/gen/root/200212f73efcd57d/yak_lab/greeter_bin/__main__/main
 ```
 
-- `BUILD SUCCEEDED` indicates that Buck2 successfully built our target.
-- `root//buck2_lab/greeter_bin:main` is the full target label name of our
+- `BUILD SUCCEEDED` indicates that yak successfully built our target.
+- `root//yak_lab/greeter_bin:main` is the full target label name of our
   target.
 - Think of the `:main` we used in the step 2 as a relative path to the target
   from within its package (`greeter_bin`).
-- The full name `root//buck2_lab/greeter_bin:main` is like an absolute path,
+- The full name `root//yak_lab/greeter_bin:main` is like an absolute path,
   uniquely identifying the target within your entire project.
 - `yak-out/.../__main__/main` is the path of our binary output, relative to
   the project root. You can use `--show-full-output` instead of `--show-output`
   to get the absolute path.
 
-## Step 5: Running Your Application with Buck2
+## Step 5: Running Your Application with yak
 
 Since our target is a runnable target, we can run it by `yak run`
 
@@ -162,7 +162,7 @@ Since our target is a runnable target, we can run it by `yak run`
 yak run :main
 ```
 
-This command tells Buck2 to run the `main` target. Buck2 will build it if it
+This command tells yak to run the `main` target. yak will build it if it
 hasn't been built already, and then execute it. (i.e. We can do this without
 step 4)
 
@@ -176,7 +176,7 @@ There it is! Our program ran successfully and printed the message.
 
 ## Step 6: Inspecting Your Target (Optional)
 
-This step is optional, but it's good to know how you can ask Buck2 about the
+This step is optional, but it's good to know how you can ask yak about the
 targets you've defined.
 
 1. To see the target that we defined (still in the `greeter_bin` directory),
@@ -191,7 +191,7 @@ yak targets :
 This will show all the targets we defined,
 
 ```
-root//buck2_lab/greeter_bin:main
+root//yak_lab/greeter_bin:main
 ```
 
 ## Conclusion
@@ -199,7 +199,7 @@ root//buck2_lab/greeter_bin:main
 Congratulations! 🎉
 
 You have successfully created, built, and run your first application using
-Buck2! We've walked through
+yak! We've walked through
 
 - Setting up the project structure.
 - Writing a simple Rust program.
@@ -208,4 +208,4 @@ Buck2! We've walked through
 - Using `yak run` to execute the program.
 - Using `yak targets` to inspect the target.
 
-You've taken your first concrete steps into the world of Buck2.
+You've taken your first concrete steps into the world of yak.

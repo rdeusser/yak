@@ -23,7 +23,7 @@ cd examples/no_prelude
 ../../target/debug/yak --isolation-dir dev kill
 ```
 
-The repository can also build itself with Buck2. The Buck build loads the prelude bundled in the `yak` binary (`[external_cells] prelude = bundled` in `.yakconfig`), so it needs a binary built from this repository. `bootstrap/reindeer` generates the Buck rules for the third-party crates and needs `dotslash` on `PATH` (see `website/docs/about/bootstrapping.md`):
+The repository can also build itself with yak. The yak build loads the prelude bundled in the `yak` binary (`[external_cells] prelude = bundled` in `.yakconfig`), so it needs a binary built from this repository. `bootstrap/reindeer` generates the yak rules for the third-party crates and needs `dotslash` on `PATH` (see `website/docs/about/bootstrapping.md`):
 
 ```bash
 cargo build --bin=yak
@@ -31,7 +31,7 @@ cargo build --bin=yak
 target/debug/yak build //:yak
 ```
 
-`reindeer` writes `third-party/rust/YAK` and `third-party/rust/Cargo.lock`, and Git ignores both. Until `third-party/rust/YAK` exists, any command that loads the `third-party/rust` package fails with the `reindeer` command to run. The Buck build succeeds on Linux but fails on macOS, as [the tech-debt tracker](../exec-plans/tech-debt-tracker.md) records.
+`reindeer` writes `third-party/rust/YAK` and `third-party/rust/Cargo.lock`, and Git ignores both. Until `third-party/rust/YAK` exists, any command that loads the `third-party/rust` package fails with the `reindeer` command to run. The yak build succeeds on Linux but fails on macOS, as [the tech-debt tracker](../exec-plans/tech-debt-tracker.md) records.
 
 On Windows, the build uses clang-cl when `-c cxx.windows_compiler_type=clang` is on the command line. The `toolchains` cell has no `.yakconfig` of its own, so the setting has no effect in the repository's `.yakconfig`.
 
@@ -98,7 +98,7 @@ Standard `rustfmt` conventions apply, with the options in `rustfmt.toml`. Beyond
 
 ## Error handling
 
-Buck2 uses `buck2_error` replacing both `anyhow` and `thiserror`. The must-knows:
+yak uses `buck2_error` replacing both `anyhow` and `thiserror`. The must-knows:
 
 - Return `buck2_error::Result<T>`.
 - Define error types with `#[derive(Debug, buck2_error::Error)]` and tag them
@@ -116,7 +116,7 @@ Handling](./error_handling.md).
 
 ## Feature gates
 
-Gate new or risky behavior with buckconfig, not environment variables: a
+Gate new or risky behavior with yakconfig, not environment variables: a
 `[yak]`-section key, read where DICE can track it (grep for
 `BuckconfigKeyRef` with `section: "yak"` for the pattern), and named so
 the value flips false -> true as the feature rolls out. Use
@@ -137,7 +137,7 @@ Each crate has a `Cargo.toml` and a `YAK` file, and a dependency change updates 
 
 1. Add the version to `[workspace.dependencies]` in the root `Cargo.toml` if it is new, and name it in the crate's `Cargo.toml` with `workspace = true`.
 2. Add the same dependency to the crate's `YAK` file. Third-party crates are named `//third-party/rust:<crate>`, and crates in this repository are named `//<path>:<crate>` (for example `//app/buck2_core:buck2_core`).
-3. For a new third-party crate, also add it to `third-party/rust/Cargo.toml`, which the Buck build reads through `reindeer`. A crate with a build script, or one that reads Cargo environment variables at compile time, also needs `third-party/rust/fixups/<crate>/fixups.toml`. `reindeer buckify` fails when a fixup configures a build script that the resolved crate versions no longer have, so a dependency change that drops or upgrades a crate can require editing or deleting its fixup.
+3. For a new third-party crate, also add it to `third-party/rust/Cargo.toml`, which the yak build reads through `reindeer`. A crate with a build script, or one that reads Cargo environment variables at compile time, also needs `third-party/rust/fixups/<crate>/fixups.toml`. `reindeer buckify` fails when a fixup configures a build script that the resolved crate versions no longer have, so a dependency change that drops or upgrades a crate can require editing or deleting its fixup.
 4. Check the dependency against the crate dependency rules in `ARCHITECTURE.md`. `target/debug/yak build //app_dep_graph_rules:test_buck2_dep_graph` fails when a dependency breaks one.
 
 ## Debugging and performance

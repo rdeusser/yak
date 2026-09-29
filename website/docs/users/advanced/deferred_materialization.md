@@ -3,8 +3,8 @@ id: deferred_materialization
 title: Deferred Materialization
 ---
 
-When using [Remote Execution](../remote_execution.md), Buck2 operates with
-Deferred Materialization, which means that Buck2 will avoid downloading outputs
+When using [Remote Execution](../remote_execution.md), yak operates with
+Deferred Materialization, which means that yak will avoid downloading outputs
 until they are required by a local action.
 
 This can provide very substantial performance savings on builds that execute
@@ -13,7 +13,7 @@ ever downloading any intermediary outputs.
 
 ## Pitfalls
 
-Buck2's deferred materialization makes assumptions about your Remote Execution
+yak's deferred materialization makes assumptions about your Remote Execution
 backend. In particular, it expects that the TTL returned from action cache
 entries by your Remote Execution backend always exceeds the TTL of all output
 artifacts it references.
@@ -23,7 +23,7 @@ backend. When that happens, builds using Deferred Materialization may fail if
 those artifacts are needed locally.
 
 A kill is necessary to recover from those builds. However, the
-[Restarter](restarter.md) can be used to mitigate this issue by restarting Buck2
+[Restarter](restarter.md) can be used to mitigate this issue by restarting yak
 daemon when it encounters an expired artifact.
 
 The deferred materializer can refresh artifact TTLs periodically, but the
@@ -32,13 +32,13 @@ expose the TTL of artifacts.
 
 ## On-disk state
 
-Buck2 can also optionally track its state on disk in a SQLite database. This
-allows Buck2 to remember what files are on disk across restarts.
+yak can also optionally track its state on disk in a SQLite database. This
+allows yak to remember what files are on disk across restarts.
 
-This can allow Buck2 to avoid re-downloading outputs from your Remote Execution
+This can allow yak to avoid re-downloading outputs from your Remote Execution
 backend if they are already on disk.
 
-To enable, add this to your Buckconfig:
+To enable, add this to your yakconfig:
 
 ```ini
 [yak]
@@ -47,10 +47,10 @@ sqlite_materializer_state = true
 
 ## Deferring Write Actions
 
-To further speedup builds, Buck2 can also be instructed to not execute any
+To further speedup builds, yak can also be instructed to not execute any
 writes on the critical path for a build.
 
-To enable, add this to your Buckconfig:
+To enable, add this to your yakconfig:
 
 ```ini
 [yak]
@@ -58,7 +58,7 @@ defer_write_actions = true
 ```
 
 This mechanism is recommended if you're using the On-disk State, since it means
-Buck can omit writes entirely if the same content is already on disk.
+yak can omit writes entirely if the same content is already on disk.
 
 ## `yak clean --stale`
 
@@ -71,7 +71,7 @@ negatively impact build performance if you are building and rebasing regularly.
 
 Enabling this requires enabling [on-disk state](#on-disk-state) and
 [deferred write actions](#deferring-write-actions), and adding this to your
-Buckconfig:
+yakconfig:
 
 ```ini
 [yak]

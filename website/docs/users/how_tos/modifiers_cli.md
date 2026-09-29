@@ -10,15 +10,15 @@ the `-m`/`--modifiers` flag:
 ```sh
 # Assuming that `//constraints:YAK` contains the appropriate constraint
 # definitions.
-buck build :my_target -m //constraints:debug
-buck build :my_target -m //constraints:release
+yak build :my_target -m //constraints:debug
+yak build :my_target -m //constraints:release
 ```
 
 Aliases can be used as shorthands (see the [setup how-to](./modifiers_setup.md)
 for more information):
 
 ```sh
-buck build :my_target -m debug
+yak build :my_target -m debug
 ```
 
 Additionally, a subset of commands support the `?modifier` syntax, which allows

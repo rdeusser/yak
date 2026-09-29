@@ -15,7 +15,7 @@ yarn install
 ```shell
 # Use the yak on PATH
 yarn generate
-# Build yak from source with ./yak.py, which needs the Buck build of this repository
+# Build yak from source with ./yak.py, which needs the yak build of this repository
 # and a yak on PATH built from this repository
 yarn generate_local
 # Build yak from source with Cargo

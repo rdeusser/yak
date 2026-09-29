@@ -1,6 +1,6 @@
-# Advanced Buck2 Rule Patterns
+# Advanced yak Rule Patterns
 
-Common patterns and best practices for writing production-ready Buck2 rules.
+Common patterns and best practices for writing production-ready yak rules.
 
 ## Table of Contents
 
@@ -151,7 +151,7 @@ def my_rule_impl(ctx: AnalysisContext):
 
 **The manual collection patterns above are simple but inefficient.** In most
 cases, you should use **transitive sets** (`tset`) instead. Transitive sets are
-Buck2's optimized data structure for propagating information up dependency
+yak's optimized data structure for propagating information up dependency
 trees.
 
 **Why transitive sets?**
@@ -214,10 +214,10 @@ def my_binary_impl(ctx: AnalysisContext):
 
 - **Use tsets:** For transitive dependencies (headers, link flags, libraries,
   etc.) - this is the recommended approach
-- **Use manual collection:** Only for simple cases or when learning Buck2 basics
+- **Use manual collection:** Only for simple cases or when learning yak basics
 
-For complete details, see the Buck2 documentation on transitive sets
-(`website/docs/rule_authors/transitive_sets.md` in the Buck2 repository).
+For complete details, see the yak documentation on transitive sets
+(`website/docs/rule_authors/transitive_sets.md` in the yak repository).
 
 ---
 
@@ -568,7 +568,7 @@ my_test = rule(
 | Configuration-Dependent | Platform-specific behavior                                     |
 | Test Rules              | Executable tests with data                                     |
 
-These patterns form the building blocks of production Buck2 rules. Combine them
+These patterns form the building blocks of production yak rules. Combine them
 as needed for your specific use case.
 
 **Note:** For production code, prefer transitive sets over manual dependency

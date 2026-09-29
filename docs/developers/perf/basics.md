@@ -4,7 +4,7 @@ title: Performance Work Basics
 ---
 
 This page is the unconditional read for anyone (human or agent) doing
-performance work on Buck2. Memory profiling, benchmarking, regression
+performance work on yak. Memory profiling, benchmarking, regression
 hunting, and CPU work all assume the model below.
 
 The advice here is never to the exclusion of anything else, particularly not more advanced profiling
@@ -37,8 +37,8 @@ Any one checkout can only have one daemon running at a time. If an existing daem
 a new command is issued using a different version/build of yak, the existing daemon is killed.
 
  - Use `git worktree add` to create additional checkouts
- - If making changes to buck itself, don't run benchmarks in the same checkouts, it will make your
-   rebuilds of buck slow.
+ - If making changes to yak itself, don't run benchmarks in the same checkouts, it will make your
+   rebuilds of yak slow.
  - Usually one checkout for all benchmarking is enough, unless you need persistent daemons
  - Isolation dirs offer some of the same behaviors but are not recommended because they split the
    remote action cache.
@@ -48,7 +48,7 @@ caches.
 
 ## Metrics
 
-Buck2 perf generally cares about three metrics: Peak memory, retained memory at the end of a
+yak perf generally cares about three metrics: Peak memory, retained memory at the end of a
 command, and command duration.
 
 For memory, RSS is technically the metric that is important but jemalloc `allocated` or other stats

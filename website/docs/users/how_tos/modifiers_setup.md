@@ -21,7 +21,7 @@ native.set_cfg_constructor(
 )
 ```
 
-`set_cfg_constructor` is a Buck2 builtin used to setup configuration modifiers.
+`set_cfg_constructor` is a yak builtin used to setup configuration modifiers.
 It supports a few configuration points:
 
 - `stage0` and `stage1` are used to resolve modifiers from the
@@ -33,7 +33,7 @@ It supports a few configuration points:
   supported for legacy reasons, so you should not have to worry about it.
 - `aliases` contains modifier aliases to modifier modifiers. Populate it to make
   aliases available from the CLI.
-- `extra_data` is a value that Buck2 passes unchanged to `stage0` and `stage1`,
+- `extra_data` is a value that yak passes unchanged to `stage0` and `stage1`,
   for data that a custom implementation of those functions needs.
 
 As you can see, `aliases` is the only value that one would commonly want to

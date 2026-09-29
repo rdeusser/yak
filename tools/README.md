@@ -1,4 +1,4 @@
-# buck2/tools
+# tools
 
 Standalone developer tools that may be useful. They live in the yak repo but are not part of the
 yak binary itself.

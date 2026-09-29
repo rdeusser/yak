@@ -147,16 +147,16 @@ Therefore, the following commands do not work, which could be confusing for
 developers who don't realize that `chat` is a macro rather than a target.
 
 ```
-buck build //apps/chat:chat              # FAILS
-buck targets --type create_binaries      # FAILS
+yak build //apps/chat:chat              # FAILS
+yak targets --type create_binaries      # FAILS
 ```
 
 ## How to view expanded macros {#viewing}
 
-Use `buck targets` to view the resulting targets after expanding all macros. The
-following invocation of `buck targets` show the resulting targets from the
+Use `yak targets` to view the resulting targets after expanding all macros. The
+following invocation of `yak targets` show the resulting targets from the
 preceding example, but not the macro that created them.
 
 ```
-buck targets //apps/chat/...
+yak targets //apps/chat/...
 ```

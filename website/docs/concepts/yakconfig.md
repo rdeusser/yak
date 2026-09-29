@@ -1,21 +1,21 @@
 ---
-id: buckconfig
+id: yakconfig
 title: .yakconfig
 ---
 
 The root of your [project](glossary.md#project) must contain a configuration
-file named `.yakconfig`. Before executing, Buck2 reads this file to incorporate
+file named `.yakconfig`. Before executing, yak reads this file to incorporate
 any customizations it specifies.
 
-## Performance impact of Buck2 configuration changes
+## Performance impact of yak configuration changes
 
 Because configuration settings are sometimes included in the cache keys that
-Buck2 uses in its caching system, changes to Buck's configuration can invalidate
-previously-built artifacts in Buck's caches. If this occurs, Buck2 rebuilds
+yak uses in its caching system, changes to yak's configuration can invalidate
+previously-built artifacts in yak's caches. If this occurs, yak rebuilds
 those artifacts, which can impact your build time.
 
 These configuration changes can happen when modifying configuration files and
-command line args. [See more](#precedence-of-buck2-configuration-specifications)
+command line args. [See more](#precedence-of-yak-configuration-specifications)
 
 ## The .yakconfig file uses the INI file format
 
@@ -27,16 +27,16 @@ INI file format; these are discussed below.
 
 ### Other INI file parsers
 
-As mentioned previously, we have extended the INI file parser that Buck2 uses to
+As mentioned previously, we have extended the INI file parser that yak uses to
 parse configuration files. As a result, _INI file parsers provided by other
-languages or libraries are often not able to parse Buck's configuration files
+languages or libraries are often not able to parse yak's configuration files
 successfully_.
 
 ### Dot character not supported in section names
 
 We do not support the use of the _dot_ character (`.`) in section names within
-Buck2 configuration files. For example, the following is **not**
-supported—_although Buck2 does not issue a warning or error_.
+yak configuration files. For example, the following is **not**
+supported—_although yak does not issue a warning or error_.
 
 ```ini
 [foo.bar]
@@ -44,10 +44,10 @@ supported—_although Buck2 does not issue a warning or error_.
 ```
 
 Note that sometimes you might need to define your own custom sections, such as
-for platform flavors for C++ or Python. These scenarios are examples of when you
-should be careful not to introduce the dot character in section names. This
-constraint is because Buck2 uses the dot character to delimit section names and
-key names in other contexts such as the `--config` command-line parameter.
+for the settings of a toolchain. In that case, be careful not to introduce the
+dot character in section names. This constraint is because yak uses the dot
+character to delimit section names and key names in other contexts such as the
+`--config` command-line parameter.
 
 ## Character encoding
 
@@ -68,7 +68,7 @@ problematic. The following escape sequences are supported.
 ## Key values as lists
 
 Although the standard INI format supports only key values that represent a
-single item, Buck2 supports key values that represent a list of items. The
+single item, yak supports key values that represent a list of items. The
 syntax is to separate the items in the list using the space (`0x20`) character.
 For example, a key value for the list of command-line flags to be passed to a
 compiler could be represented as a list of the flags separated by spaces:
@@ -122,7 +122,7 @@ personal settings, such as personal aliases.
 ## Other initialization files
 
 In addition to the `.yakconfig` and `.yakconfig.local` files in the project
-root, Buck2 reads configuration settings from the following additional
+root, yak reads configuration settings from the following additional
 locations, some of which are actually directories:
 
 1. Directory `.yakconfig.d` located in the project root directory.
@@ -132,28 +132,28 @@ locations, some of which are actually directories:
 3. File `yakconfig` and directory `yakconfig.d` located in system directory
    `/etc/`.
 
-Buck2 treats _any_ file—irrespective of name—in a
+yak treats _any_ file—irrespective of name—in a
 `.yakconfig.d`(`yakconfig.d`) directory (excluding files found in
-subdirectories) as a Buck2 configuration file, provided that it adheres to
-`.yakconfig` syntax. For a description of how Buck2 resolves
+subdirectories) as a yak configuration file, provided that it adheres to
+`.yakconfig` syntax. For a description of how yak resolves
 collisions between settings in these configuration files, see the section
-[**Precedence of Buck2 configuration specifications**](#precedence-of-buck2-configuration-specifications)
+[**Precedence of yak configuration specifications**](#precedence-of-yak-configuration-specifications)
 below.
 
 ## Command-line control of configuration
 
-In addition to the above configuration files, Buck2 supports specifying
-additional configuration files from the Buck2 command line using the
+In addition to the above configuration files, yak supports specifying
+additional configuration files from the yak command line using the
 `--config-file` parameter. You can also specify configuration settings
-_individually_ on the Buck2 command line using the `--config` (`-c`) parameter.
+_individually_ on the yak command line using the `--config` (`-c`) parameter.
 Furthermore, you can aggregate these settings into _flag files_ using the
 `--flagfile` parameter. A flag file provides similar functionality to a
 configuration file but uses a different syntax. Flag files are sometimes called
 _mode files_ or _at_ (`@`) files.
 
-## Precedence of Buck2 configuration specifications
+## Precedence of yak configuration specifications
 
-The following list shows the order of precedence for how Buck2 interprets its
+The following list shows the order of precedence for how yak interprets its
 configuration specifications. Settings specified using a method closer to the
 top of the list have higher precedence and will override those lower on the
 list. For example, the `.yakconfig` file in the repo overrides a `.yakconfig`
@@ -183,8 +183,8 @@ key name/value pairs that constitute part of a section. In this second use case,
 you'll need to ensure that the _included_ file is referenced beneath the
 appropriate section in the _including_ file. Because of this additional
 complexity, we recommend that you include only files that contain complete
-sections. **Note:** Inclusion of files is a Buck-specific extension to the INI
-file parser that Buck2 uses. Therefore, if you use this feature, your Buck2
+sections. **Note:** Inclusion of files is a yak-specific extension to the INI
+file parser that yak uses. Therefore, if you use this feature, your yak
 configuration files will probably not be parsable by other more-generic INI file
 parsers. The syntax to include a file is
 
@@ -202,7 +202,7 @@ question mark (`?`).
 ```
 
 If you use this prefix, it is not an error condition if the file does not exist;
-Buck2 just silently continues to process the rest of the configuration file. In
+yak just silently continues to process the rest of the configuration file. In
 the following example, the `.yakconfig` file includes the file
 `cxx-other-platform.include` which exists in the subdirectory
 `cxx-other-platform`. The `.yakconfig` file will also include the file
@@ -214,7 +214,7 @@ exists.
 # .yakconfig
 #
 [cxx]
-  cxxppflags="-D MYMACRO=\"Buck\""
+  cxxppflags="-D MYMACRO=\"yak\""
 
 <file:cxx-other-platform/cxx-other-platform.include>
 
@@ -222,13 +222,13 @@ exists.
 #
 # cxx-other-platform.include
 #
-[cxx#other_platform]
+[cxx_other_platform]
   cxxppflags="-D MYMACRO=\"Watchman\""
 ```
 
 ## Sections
 
-Below is an incomplete list of supported buckconfigs.
+Below is an incomplete list of supported yakconfigs.
 
 ## [alias]
 
@@ -249,13 +249,13 @@ $ yak test apptest
 
 ## [cells]
 
-Lists the cells that constitute the Buck2 project. Buck2 builds that are part of
+Lists the cells that constitute the yak project. yak builds that are part of
 this project—that is, which use this `.yakconfig`—can access the cells
 specified in this section.
 
 ```ini
 [cells]
-    buck = .
+    root = .
     bazel_skylib = ./third-party/skylark/bazel-skylib
 ```
 
@@ -266,7 +266,7 @@ include the current cell in this section, but we consider it a best practice to
 do so:
 
 ```ini
-buck = .
+root = .
 ```
 
 You can view the contents of this section using the `yak audit cell` command.

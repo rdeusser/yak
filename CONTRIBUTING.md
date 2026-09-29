@@ -1,4 +1,4 @@
-# Contributing to Buck2
+# Contributing to yak
 
 We want to make contributing to this project as easy and transparent as
 possible.
@@ -27,6 +27,6 @@ See [here](./docs/developers/basics.md) for the nitty gritty on how to contribut
 
 ## License
 
-By contributing to Buck2, you agree that your contributions will be licensed
+By contributing to yak, you agree that your contributions will be licensed
 under both the [LICENSE-MIT](LICENSE-MIT) and [LICENSE-APACHE](LICENSE-APACHE)
 files in the root directory of this source tree.

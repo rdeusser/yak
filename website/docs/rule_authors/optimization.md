@@ -4,8 +4,8 @@ title: Observability and Optimization
 ---
 
 Optimization involves the use of techniques for determining and improving the
-performance of Buck2 and specific actions performed by Buck2. This page covers
-the internals for developers of Buck2 and provides details of Starlark that are
+performance of yak and specific actions performed by yak. This page covers
+the internals for developers of yak and provides details of Starlark that are
 likely to be relevant to end users.
 
 ## Starlark profiling

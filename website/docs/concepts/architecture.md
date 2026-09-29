@@ -3,13 +3,11 @@ id: architecture
 title: Architectural Model
 ---
 
-import useBaseUrl from '@docusaurus/useBaseUrl';
-
 ## High-level Overview
 
-Buck2 is a build system whose core is written in Rust. Starlark, which is a
-deterministic, immutable version of Python, is used to extend the Buck2 build
-system, enabling Buck2 to be language-agnostic.
+yak is a build system whose core is written in Rust. Starlark, which is a
+deterministic, immutable version of Python, is used to extend the yak build
+system, enabling yak to be language-agnostic.
 
 The high-level flow starts with a user creating a build file (a `YAK` file)
 containing one or more targets, which is specified by the target label, its
@@ -30,16 +28,23 @@ use, this is the `clang` to use). If the target type is a rule, then the macro
 layer is skipped altogether.
 
 This is all orchestrated by the core, which performs operations such as
-executing Buck2 CLI args, generating/updating the dependency graph (which
+executing yak CLI args, generating/updating the dependency graph (which
 contains the configured target nodes, unconfigured target nodes, action nodes,
 among other types of nodes that all allow for incrementality and execution), and
 materializing the artifacts. The core is written in Rust.
 
 The following diagram shows the high-level overview.
 
-<img src={useBaseUrl('/img/buck2_rule_workflow.png')} alt='justifyContent'/>
+```mermaid
+flowchart LR
+  targets["Targets in a YAK file<br/>cpp_binary(name = 'hello', srcs = ['hello.cpp'])"]
+  macros["Macros<br/>cpp_binary(name = 'hello', srcs = ['hello.cpp'], deps = ['asan', 'tsan'], ...)"]
+  rules["Rules<br/>generate the header map<br/>run commands such as clang++ -c hello.cpp"]
+  core["Core<br/>command line, dependency graph, file hashing, ..."]
+  targets --> macros --> rules --> core
+```
 
-The Buck2 CLI runs in a client process, which sends commands to the Buck2 daemon
+The yak CLI runs in a client process, which sends commands to the yak daemon
 via gRPC. The daemon goes through several phases after receiving a request from
 the client: **evaluation, configuration, analysis, execution, and
 materialization** (see [Execution Model](#execution-model), below). When using
@@ -54,7 +59,22 @@ via gRPC.
 The following diagram shows the Execution Model, which consists of 5 phases and
 states.
 
-<img src={useBaseUrl('/img/buck2_architecture.png')} alt='justifyContent'/>
+```mermaid
+flowchart LR
+  user(["yak user"]) -->|"yak build //pkg:target"| client["yak client"]
+  client -->|"build request (gRPC)"| evaluation
+  subgraph daemon [yak daemon]
+    direction TB
+    evaluation["Phase A: evaluation<br/>Starlark interpreter"] --> unconfigured[("State 1:<br/>unconfigured target graph")]
+    unconfigured --> configuration["Phase B: configuration"] --> configured[("State 2:<br/>configured target graph")]
+    configured --> analysis["Phase C: analysis"] --> actions[("State 3:<br/>action graph and providers")]
+    actions --> execution["Phase D: execution<br/>materializer"]
+  end
+  buildfiles["State 0: YAK files<br/>targets, macros, and rules"] --> evaluation
+  execution <--> cache["Remote Execution<br/>action cache"]
+  execution --> outputs["State 4: outputs in yak-out"]
+  execution -->|"build response (gRPC)"| client
+```
 
 Each of the phases and states shown in the Execution Model, are detailed in the
 following sub-sections.
@@ -62,7 +82,7 @@ following sub-sections.
 ### State 0 - Build Files
 
 Build files (commonly referred to as `YAK` files, their default name) are the
-main input to Buck2 and are syntactically Python.
+main input to yak and are syntactically Python.
 
 Each build file is uniquely identified by the directory in which it's located.
 Since all build files have the same name, there cannot be two build files in the
@@ -70,25 +90,25 @@ same directory. This is usually represented as the relative path from the root
 of the project (the directory where the .yakconfig file is).
 
 Each build file has a set of targets. These describe the things the user wants
-Buck2 to know about. Each target has a type and a set of named attributes,
+yak to know about. Each target has a type and a set of named attributes,
 including at least a name (also known as the label) identifying it. Additional
 attributes depend on the type of the target.
 
 ### Phase A: Evaluation
 
-First, Buck2 evaluates a build file, and then constructs an unconfigured target
+First, yak evaluates a build file, and then constructs an unconfigured target
 graph.
 
-Buck2 performs directory listings to discover packages, then evaluates the build
+yak performs directory listings to discover packages, then evaluates the build
 files that were found, expands any macros detected into their underlying rules,
 and then will take rule attributes and convert them from Starlark to Rust types
 to construct a target node, and insert it into the unconfigured target graph,
-which is a smaller portion of Buck2’s larger dependency graph. The target node
+which is a smaller portion of yak’s larger dependency graph. The target node
 consists of a reference to rule implementation, and the set of attributes and
 sources.
 
 The result of evaluation is a list of targets read from the build file mapped to
-a target node in Buck2 unconfigured target graph.
+a target node in yak unconfigured target graph.
 
 ### State 1 - Unconfigured Target Graph is generated
 
@@ -101,10 +121,10 @@ At the end of evaluation, the target nodes are not yet configured. Configuration
 means applying a list of constraints (such as resolving selects to specify the
 right CPU) to make sure the target can be run where it needs to. This is also
 known as target platform resolution, and can be configured within the target,
-the buckconfig, propagated from dependencies, or passed into the CLI. After
+the yakconfig, propagated from dependencies, or passed into the CLI. After
 applying configurations, the target nodes are transformed into configured target
-nodes within the Buck2 configured target graph, which is a smaller portion of
-Buck2’s larger dependency graph.
+nodes within the yak configured target graph, which is a smaller portion of
+yak’s larger dependency graph.
 
 ### State 2 - Configured Target Graph is generated
 
@@ -113,13 +133,13 @@ to generate the action graph.
 
 ### Phase C: Analysis
 
-In the analysis phase, Buck2 constructs a context object (ctx) which contains
+In the analysis phase, yak constructs a context object (ctx) which contains
 relevant information (such as attributes pulled from the configuration stage),
 all converted into Starlark types and made available to the rule. For example,
 the target’s dependencies are turned into a `ProviderCollection`, source files
 are converted into `StarlarkArtifacts`, and String attributes are turned into a
-`StarlarkString`. This ctx object is backed by Buck2’s dependency graph for
-computation and rules use it to tell Buck2 to run actions, create dynamic
+`StarlarkString`. This ctx object is backed by yak’s dependency graph for
+computation and rules use it to tell yak to run actions, create dynamic
 actions, or create new files.
 
 The rule will return a list of providers, which is data that the rule wants to
@@ -131,7 +151,7 @@ outputs are. Some other common built-in providers include RunInfo, TestInfo, and
 InstallInfo.
 
 The end result is a list of providers and actions (inserted into the action
-graph) that Buck2 needs to execute to produce the desired outputs, known as
+graph) that yak needs to execute to produce the desired outputs, known as
 'bound artifacts'.
 
 ### State 3 - Action Graph and Providers are generated
@@ -141,32 +161,32 @@ the execution stage.
 
 ### Phase D: Execute
 
-Execution is where Buck2 takes all the providers (input files from the targets,
+Execution is where yak takes all the providers (input files from the targets,
 args from the command line), runs the actions, and then outputs the computed
 results. The critical path is the theoretical lower bound for the duration of a
 build, which are the slowest set of actions.
 
-Buck2 can be run locally or on remote execution, or in a hybrid manner.
+yak can be run locally or on remote execution, or in a hybrid manner.
 
 For each action, a digest is created which is a hash of an action's command and
-all its inputs. Buck2 then checks if there is a result cached within RE for an
+all its inputs. yak then checks if there is a result cached within RE for an
 action with a given digest.
 
-If there is a cache hit, Buck2 does not need to run the command for the action.
+If there is a cache hit, yak does not need to run the command for the action.
 Instead, the RE returns the output action digest. This digest can be used to
 download the actual output artifacts at a later time. This is known as the **RE
 action cache**.
 
 If there is a cache miss, the action needs to be run either remotely or locally.
-If Buck2 decides to run the action remotely, it will first upload all of the
+If yak decides to run the action remotely, it will first upload all of the
 action's inputs that are missing from the RE's content addressable storage. If
-Buck2 decides to run the action locally, it will first download and materialize
+yak decides to run the action locally, it will first download and materialize
 in `yak-out` all of the action's inputs. These inputs might be outputs of other
 actions and are stored in RE's content addressable storage but are missing on
-the local machine. Only after those steps will Buck2 schedule the action for
+the local machine. Only after those steps will yak schedule the action for
 actual execution.
 
-Buck2 can also decide to run local and remote execution simultaneously (a
+yak can also decide to run local and remote execution simultaneously (a
 process known as racing), and use the result of whichever action finishes first
 to speed up performance. This strategy is known as **hybrid execution**."
 
@@ -181,7 +201,7 @@ handled.
 
 At this point, the build is complete.
 
-If a user ran `yak test`, then there is a final transformation for Buck2 to
+If a user ran `yak test`, then there is a final transformation for yak to
 construct a command for the test runner to execute the actual test.
 
 ### Phase E: Execute tests

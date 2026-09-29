@@ -7,8 +7,8 @@ title: Isolation Directory
 
 ## What is an Isolation Directory?
 
-An isolation directory is a core mechanism in Buck2 that enables multiple
-independent daemon instances to run concurrently. Each Buck2 daemon operates
+An isolation directory is a core mechanism in yak that enables multiple
+independent daemon instances to run concurrently. Each yak daemon operates
 within its own isolation directory, creating a completely separated environment
 for build processes.
 
@@ -16,7 +16,7 @@ The isolation directory serves as a fundamental boundary that:
 
 - Separates cached artifacts between different daemon instances
 - Provides independent build environments with no shared state
-- Allows multiple Buck2 commands to run in parallel
+- Allows multiple yak commands to run in parallel
 
 ## How Isolation Directories Work
 
@@ -38,7 +38,7 @@ project_root/
     └── ...
 ```
 
-By default, Buck2 uses an isolation directory named `v2`, creating all build
+By default, yak uses an isolation directory named `v2`, creating all build
 outputs and metadata within `$PROJECT_ROOT/yak-out/v2`.
 
 ### Important Characteristics
@@ -49,7 +49,7 @@ outputs and metadata within `$PROJECT_ROOT/yak-out/v2`.
      directories
 
 2. **Command Execution Isolation**:
-   - A single Buck2 daemon can generally execute only one command at a time
+   - A single yak daemon can generally execute only one command at a time
    - Different daemons with different isolation directories can execute commands
      concurrently
 
@@ -79,14 +79,14 @@ $ yak --isolation-dir lsp lsp
 
 ### 2. Recursive Invocations
 
-When Buck2 needs to be called from within another Buck2 process, using different
+When yak needs to be called from within another yak process, using different
 isolation directories prevents deadlocks and conflicts.
 
 ```sh
 # Initial build
 $ yak build //some:target
 
-# Within this build, Buck2 might make another call using a different isolation dir
+# Within this build, yak might make another call using a different isolation dir
 $ yak --isolation-dir recursive_dir //dependency:target
 ```
 
@@ -126,7 +126,7 @@ If not specified, the default isolation directory name is `v2`.
 
 ## Command Scope and Isolation Directories
 
-Most Buck2 commands only operate within their specified isolation directory. For
+Most yak commands only operate within their specified isolation directory. For
 example:
 
 - `yak build` only builds using the specified isolation directory
@@ -135,7 +135,7 @@ example:
   directory
 
 There are exceptions, such as `yak killall`, which by default affects all
-Buck2 processes regardless of their isolation directories. Passing
+yak processes regardless of their isolation directories. Passing
 `--in-isolation-dir` to `yak killall` restricts it to processes using that
 isolation directory, and `yak killall --repo` restricts it to processes
 running in the current repository.

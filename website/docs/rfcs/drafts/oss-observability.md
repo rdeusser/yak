@@ -1,4 +1,4 @@
-# Observability for Buck2 OSS
+# Observability for yak
 
 ## Context
 
@@ -19,7 +19,7 @@ but most importantly it supports a protocol called BEP (Build Event Protocol) to
 send events to a remote server. The API is tool agnostic and only provides a
 method to send events of some kind. The type of the events though can be defined
 on a per tool basis. Bazel comes with its own set of events that should be
-almost completely applicable to Buck2 as well, given the similarities between
+almost completely applicable to yak as well, given the similarities between
 the two.
 
 File uploads are performed using the same ByteStream API the RBE protocol uses.
@@ -37,9 +37,9 @@ their own telemetry, rely on a more standardised approach using OTEL or
 Prometheus. Though this is potentially a good idea in terms of maintainability,
 it does not come with build debugging tooling out of the box, unlike BES.
 
-## Buck2's existing BuckEvent
+## yak's existing BuckEvent
 
-Buck2 already has a `BuckEvent` it defines. This could be transformed into a
+yak already has a `BuckEvent` it defines. This could be transformed into a
 format supported by other APIs or a new API and combined with other options
 described in this document.
 
@@ -101,14 +101,14 @@ As previously mentioned, were we to adopt BES, then there'd still be an open
 question: should yak reuse Bazel's events or should we create new ones? There
 are
 [some generalization efforts](https://github.com/bazelbuild/remote-apis/issues/318)
-happening at the moment, however Bazel and Buck2 share lots of similarities.
-Enough that all events are almost perfectly applicable to Buck2, though less
+happening at the moment, however Bazel and yak share lots of similarities.
+Enough that all events are almost perfectly applicable to yak, though less
 useful at times, like with command line options. On the other hand, a new set of
 events would perfectly describe a yak build, but would be prone to more issues
 initially and would require a bigger investment upfront in terms of design and
 development. Alternatively, we could start with a smaller subset of Bazel events
-that are equivalent in Buck2 and then proceed to add the additional events
-needed to properly express the unique behaviours of a Buck2 build.
+that are equivalent in yak and then proceed to add the additional events
+needed to properly express the unique behaviours of a yak build.
 
 ## Proposal
 
@@ -120,7 +120,7 @@ In this case, as it's probably already obvious in the document, said protocol I
 am referring to is BES.
 
 The protocol is by nature very generic and the first iteration could be
-completely based on a subset of events Bazel uses that apply to Buck2:
+completely based on a subset of events Bazel uses that apply to yak:
 
 - Phase 1: create an invocation and send logs to a remote server
 - [Progress](https://github.com/bazelbuild/bazel/blob/38ad73402b213b2a623d0953500b1cfc47c0e851/src/main/java/com/google/devtools/build/lib/buildeventstream/proto/build_event_stream.proto#L291C9-L291C17)
@@ -142,7 +142,7 @@ Additionally, as part of `Phase 1` we would need to implement the client itself,
 a basic streaming strategy (which to begin with could be the simple sync
 approach discussed in `Sync VS Async`) and provide an invocation-id to correlate
 events that may be sent to different servers into a single invocation (this is
-very similar to Buck2's trace id and could in fact be the same, but we should
+very similar to yak's trace id and could in fact be the same, but we should
 make it possible for the user to provide it when invoking the CLI and/or print
 it visibly in the logs).
 
@@ -154,11 +154,11 @@ invocation) to be flushed out.
 
 There are multiple ways in which this proposal can be implemented:
 
-1. Buck2 directly sends Bazel's BEP events and implements the BES protocol
-2. Buck2 implements the BES protocol but sends BuckEvent events but a shim can
-   be built inside Buck2 to turn these events into Bazel's BEP events
-3. Same as above but the shim lives outside of Buck2, so as far as Buck2 is
-   concerned it sends Buck2 BuckEvent via BES
+1. yak directly sends Bazel's BEP events and implements the BES protocol
+2. yak implements the BES protocol but sends BuckEvent events but a shim can
+   be built inside yak to turn these events into Bazel's BEP events
+3. Same as above but the shim lives outside of yak, so as far as yak is
+   concerned it sends yak BuckEvent via BES
 4. Same as 2 but we implement a new API that is BES-like, but not BES
 5. Same as 3 but we implement a new API that is BES-like, but not BES
 
@@ -178,6 +178,6 @@ my second favourite option is 3.
   build events by Bazel
 - BEP (Build Event Protocol): refers to the combination of BES and Bazel
   specific events
-- Invocation: a single execution of a Buck2/Bazel command. An invocation usually
+- Invocation: a single execution of a yak/Bazel command. An invocation usually
   contains a single build or execution of a command, but may contain many in
   case of multiple retries. Initially, build and invocations overlap

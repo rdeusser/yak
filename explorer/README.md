@@ -1,6 +1,6 @@
-# Buck2 Explorer
+# yak Explorer
 
-Explore Buck2 from a GUI.
+Explore yak from a GUI.
 
 `npm install && npm start`
 

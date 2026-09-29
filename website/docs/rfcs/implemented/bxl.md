@@ -1,12 +1,12 @@
-# Buck Extension Language (BXL)
+# BXL
 
-Buck2 will allow more complex introspection and interaction with its graphs via
+yak will allow more complex introspection and interaction with its graphs via
 the `bxl` feature. BXL will be a starlark script that allows integrators to
-interact with `buck` commands like build and query within starlark, creating a
+interact with yak commands like build and query within starlark, creating a
 sequence of operations that introspect, build, and extend the build graph.
 
-These are essentially custom buck operations, defined in Starlark, that still
-follow the constraints of Buck2, which will enable the same level of
+These are essentially custom yak operations, defined in Starlark, that still
+follow the constraints of yak, which will enable the same level of
 incrementality and caching as native yak operations. Furthermore, bxl will
 have subscriptions enabled in the future, where based on the incrementality
 tracking, yak can provide "updated" bxl executions when its known that its
@@ -19,11 +19,11 @@ targeted at solving key issues for IDE integration.
 
 ### Cpp LSP
 
-Lsp prefers to have a single buck command that given a file, returns the
+Lsp prefers to have a single yak command that given a file, returns the
 corresponding compilation database. This requires a single command, i.e a bxl,
 that accepts a file as input, performs `owners` queries, and uses the owning
 target plus the desired file to get the clang flags, and then writes it to disk
-in comp db format. It’s possible to write the same features using buck calls to
+in comp db format. It’s possible to write the same features using yak calls to
 cquery, and build using subtargets to generate compilation database per file.
 However, this requires lsp owners to maintain code in several locations and
 languages, and parse and reserialize data. It also does not provide the same
@@ -46,13 +46,13 @@ With bxl, the graph traversals can be written in starlark, allowing propagation
 of information down the graph, accessing targets’ attributes to analyze
 dependencies, and access providers for artifacts and action information needed
 to output the project file. Project generation also performs directory listings
-that buck2’s dice already performs and caches (I think, need to confirm). Bxl
+that yak’s dice already performs and caches (I think, need to confirm). Bxl
 poses the interesting possibility that we can expose a limited set of IO
 operations that are tracked by dice so bxl can access the same cached file
 operations as rest of yak. Android project generation currently doesn’t write
 project files to yak-out, which prevents it from using yak actions. It will
 have to rely on an external script to process the graph information printed by
-buck and write the actual project files. If it moves to `yak-out` based, then
+yak and write the actual project files. If it moves to `yak-out` based, then
 it can take advantage of creating actions directly using the graph information
 processed, and potentially take advantage of incremental actions api to avoid
 writing the entire graph on each subsequent update.
@@ -68,11 +68,11 @@ uncertain whether xcode itself can make use of push updates.
 
 ### Visual Studio Project
 
-The Visual Studio project generator is a pile of python that converts buck
-query/buck targets output via a variety of heuristics into inputs to a custom
+The Visual Studio project generator is a pile of python that converts
+`yak query` and `yak targets` output via a variety of heuristics into inputs to a custom
 fork gyp which is then invoked to generate visual studio projects for a given
-buck target. Having direct access to
-the internals of buck would allow us to remove the heuristics and possibly even
+yak target. Having direct access to
+the internals of yak would allow us to remove the heuristics and possibly even
 move project generation directly into bxl.
 
 ## Goals

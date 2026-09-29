@@ -6,14 +6,14 @@ title: IDE/Tools Integration (gopackagesdriver)
 # IDE/Linter Integration
 
 [The Go packages driver protocol](https://pkg.go.dev/golang.org/x/tools/go/packages)
-is the standard way to integrate build systems with Go tools. Buck2 implements
+is the standard way to integrate build systems with Go tools. yak implements
 this protocol using BXL API, enabling
 [golang.org/x/tools/go/packages.Load()](https://pkg.go.dev/golang.org/x/tools/go/packages#Load)
-based tools to work with Buck2.
+based tools to work with yak.
 
 ## How to use it? (golangci-lint example)
 
-Set the `GOPACKAGESDRIVER` environment variable to Buck2's gopackagesdriver
+Set the `GOPACKAGESDRIVER` environment variable to yak's gopackagesdriver
 binary path and use your Go tool as usual.
 
 There's no precise specification on how CLI tools should process input
@@ -37,7 +37,7 @@ $ golangci-lint run pattern=root//foo/bar:bar # use pattern= if previous command
 
 Here's an example of using
 [gopls](https://github.com/golang/tools/tree/master/gopls) and VSCode with
-Buck2. You can use the same approach for other IDEs and tools.
+yak. You can use the same approach for other IDEs and tools.
 
 1. Install
    [Go VSCode extension](https://marketplace.visualstudio.com/items?itemName=golang.go).

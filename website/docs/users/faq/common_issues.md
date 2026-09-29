@@ -5,7 +5,7 @@ title: Common Issues
 
 ## Why is stdin being swallowed?
 
-Buck2 offers an interactive console by default.
+yak offers an interactive console by default.
 
 To disable either use an env var: `YAK_NO_INTERACTIVE_CONSOLE` or a flag:
 `--no-interactive-console`
@@ -23,17 +23,13 @@ The resultant path is relative to the root of the repo (such as
 `~/repo_root/...`). For the full path use `--show-full-output` or
 `--show-full-simple-output`.
 
-Note: in Buck1, the path is relative to the enclosing cell (such as
-`~/repo_root/cell/...`).
+## Why is yak hanging?
 
-## Why is Buck2 hanging?
+If yak seems to be doing nothing, it could be caused be a cycle in your
+dependencies, which may cause yak to hang (yak does implement a form of
+cycle detection, but it unfortunately has false negatives).
 
-If Buck2 seems to be doing nothing, it could be caused be a cycle in your
-dependencies, which may cause Buck2 to hang (Buck2 does implement a form of
-cycle detection, but it unfortunately has false negatives). You can confirm this
-by running Buck1, which will report cycles properly.
-
-## How do I get the commands Buck2 executed so I can reproduce them in isolation?
+## How do I get the commands yak executed so I can reproduce them in isolation?
 
 Run `yak log what-ran` after your build to see all the commands that were
 executed.

@@ -8,14 +8,14 @@ target that uses it, even incorporating a shared `logging_lib`. Now, let's
 ensure our `library` target works as expected by adding unit tests. Writing
 tests helps us catch bugs early and refactor with confidence.
 
-Our goal is to learn how to define and run Rust unit tests within the Buck2.
+Our goal is to learn how to define and run Rust unit tests within the yak.
 
 ## What We'll Do:
 
 1. Create a dedicated directory for our library's tests.
 2. Write a simple unit test for the greet function in `greeter_lib`.
 3. Update `greeter_lib/YAK` to define a test target using `rust_test`.
-4. Run the tests using Buck2 and see the results.
+4. Run the tests using yak and see the results.
 
 ## Prerequisites
 
@@ -55,7 +55,7 @@ mod tests {
     #[test]
     fn test_greet() {
         assert_eq!(library::greet("World"), "Hello, World!");
-        assert_eq!(library::greet("Buck2"), "Hello, Buck2!");
+        assert_eq!(library::greet("yak"), "Hello, yak!");
     }
 
     #[test]
@@ -67,7 +67,7 @@ mod tests {
 
 ## Step 3: Updating greeter_lib/YAK to Define the Test Target
 
-Next, we need to tell Buck2 about our test file and how to run it.
+Next, we need to tell yak about our test file and how to run it.
 
 1. Edit `greeter_lib/YAK`:
 
@@ -90,9 +90,9 @@ Key additions and explanations:
 
 - `rust_test(...)`:
   - `name = "test"`: We're naming our test target "test".
-  - `srcs = ["tests/test.rs"]`: Specifies our test source file. Buck2 will
+  - `srcs = ["tests/test.rs"]`: Specifies our test source file. yak will
     compile this as a separate test binary.
-  - `deps = [":library"]`: This is crucial. It tells Buck2 that our test code
+  - `deps = [":library"]`: This is crucial. It tells yak that our test code
     depends on the `:library` target (our `greeter_lib:library`). This makes
     `library` target available to be imported and used within test.rs.
 
@@ -127,13 +127,13 @@ The key is seeing "Pass" and a summary indicating that all your test cases
 Congratulations! ✅
 
 You've successfully added unit tests to your `library` target and run them using
-Buck2!
+yak!
 
 We've learned how to:
 
 - Define a test target using `rust_test` for a Rust library.
 - Execute tests using `yak test` command.
 
-Testing is a vital skill, and now you know how to integrate it into your Buck2
+Testing is a vital skill, and now you know how to integrate it into your yak
 Rust workflow. This allows you to build more robust and reliable libraries and
 applications.

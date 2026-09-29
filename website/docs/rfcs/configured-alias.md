@@ -1,13 +1,12 @@
-# Buck support to implement `configured_alias`
+# yak support to implement `configured_alias`
 
 ## Intro
 
-Currently, Buck 2 lacks `configured_alias` rule support.
+When this RFC was written, no attribute type could hold a configured target, so
+a user-defined rule could not implement `configured_alias`. The prelude now
+defines `configured_alias` with `attrs.configured_dep()`.
 
-`configured_alias` is a builtin rule in Buck v1, and it cannot be currently
-implemented as user defined rule in Buck v2.
-
-This RFC proposes Buck core support for `configured_alias`.
+This RFC proposes yak core support for `configured_alias`.
 
 ## What is `configured_alias`?
 
@@ -24,7 +23,7 @@ configured_alias(
 When this rule is built, it ignores "current" target configuration, and builds
 the "actual" target with the configuration specified as "platform" argument.
 
-## How to implement it in buck v2?
+## How to implement it
 
 ### New rule attribute type: `configured_dep`
 

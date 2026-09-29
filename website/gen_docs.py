@@ -47,8 +47,8 @@ Re-generate by running `website/gen_docs.py`.
 
 
 def buck_command(args: argparse.Namespace) -> str:
-    if args.buck2:
-        return args.buck2
+    if args.yak:
+        return args.yak
     elif args.prod:
         return "yak"
     elif args.cargo:
@@ -62,7 +62,7 @@ def generate_prelude_rules_docs(buck: str) -> None:
         base_dir = DOCS_DIR / "prelude" / "rules"
         setup_gen_dir(base_dir)
         # Actually generate the docs
-        print("Running Buck...")
+        print("Running yak...")
         subprocess.run(
             buck
             + " docs starlark --format=markdown_files --output-dir="
@@ -81,7 +81,7 @@ def generate_prelude_rules_docs(buck: str) -> None:
             shutil.copyfile(orig, dest)
 
         index_file_content = (
-            "# Rules\n\nThese rules are available as standard in Buck2.\n"
+            "# Rules\n\nThese rules are available as standard in yak.\n"
         )
 
         os.makedirs(base_dir, exist_ok=True)
@@ -261,15 +261,15 @@ def main() -> None:
         help="Whether to use a `cargo` built binary.",
     )
     parser.add_argument(
-        "--buck2",
+        "--yak",
         nargs="?",
         help="Whether to use provided binary.",
     )
     args = parser.parse_args()
 
-    # Change to yak directory
-    buck2_dir = Path(__file__).absolute().parent.parent
-    os.chdir(str(buck2_dir))
+    # Change to the repository root
+    repo_root = Path(__file__).absolute().parent.parent
+    os.chdir(str(repo_root))
 
     # Clear the docs folder first so that if we change the names of any
     # objects, we'll remove old docs

@@ -1,6 +1,6 @@
 # Link Groups Explained
 
-This document explains in detail how Buck2's link groups system works — all the
+This document explains in detail how yak's link groups system works — all the
 options, how they interact, and what the resulting binaries look like. It's meant
 to be read top-to-bottom, with each section building on the previous.
 
@@ -371,7 +371,7 @@ Multiple filters on a mapping use AND semantics (all must match).
 | `label:REGEX`                  | Target's labels/tags           | `label:vendor`               |
 | `tag:REGEX`                    | Same as `label:`               | `tag:third_party`            |
 | `target_regex:REGEX`           | Target's `raw_target()` string | `target_regex:caffe2/.*`     |
-| `pattern:BUILD_TARGET_PATTERN` | Buck target pattern            | `pattern:root//caffe2/...` |
+| `pattern:BUILD_TARGET_PATTERN` | yak target pattern            | `pattern:root//caffe2/...` |
 
 ### Filter interaction with tree traversal
 

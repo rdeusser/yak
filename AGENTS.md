@@ -23,7 +23,7 @@ The fork is being renamed to yak. The binary is `yak`, it reads `YAK` build file
 | `prelude/` | Starlark rules and toolchains, which the binary embeds. |
 | `remote_execution/` | The Remote Execution API client. |
 | `allocative/`, `gazebo/`, `pagable*/`, `shed/`, `superconsole/`, `host_sharing/` | Libraries the binary uses. |
-| `YAK` files, `.yakconfig`, `build_defs/`, `toolchains/`, `third-party/`, `bootstrap/` | The Buck build of this repository. |
+| `YAK` files, `.yakconfig`, `build_defs/`, `toolchains/`, `third-party/`, `bootstrap/` | The yak build of this repository. |
 | `examples/` | Example projects to run a build against. |
 | `tests/` | Integration tests (pytest) that run `target/debug/yak` against small projects. `tests/README.md` shows how to run them. |
 | `website/` | The user documentation site. `website/docs/` holds its pages, and `website/gen_docs.py` generates the reference pages into it. |
@@ -49,8 +49,8 @@ To check behavior end to end, run `target/debug/yak` in a project under `example
 
 - Code ported from `facebook/buck2` keeps only its open-source side. Drop `#[cfg(fbcode_build)]` branches, `@oss-disable` lines, `is_open_source()` checks, and `fbcode//` or `fbsource//` labels (`docs/developers/basics.md`).
 - A dependency change updates both the crate's `Cargo.toml` and its `YAK` file. `docs/developers/basics.md` gives the steps, including `third-party/rust/` for new third-party crates.
-- Check new crate dependencies against the late-binding and dependency rules in `ARCHITECTURE.md`. The Buck build checks them (`docs/developers/basics.md`), but CI does not run the Buck build.
-- Read files, buckconfig, and other build state inside DICE computations only through DICE, so invalidation stays correct.
+- Check new crate dependencies against the late-binding and dependency rules in `ARCHITECTURE.md`. The yak build checks them (`docs/developers/basics.md`), but CI does not run the yak build.
+- Read files, yakconfig, and other build state inside DICE computations only through DICE, so invalidation stays correct.
 - `prelude/` changes reach a build only after the binary is rebuilt, because the binary embeds the prelude.
 - When a golden test fails because the expected output changed, regenerate the golden file (`docs/developers/basics.md`) and review its diff.
 - Update the documentation a change affects in the same change (user pages in `website/docs/`, contributor documentation in `docs/developers/`). Update `ARCHITECTURE.md` when a crate, boundary, or invariant it describes changes.
@@ -70,4 +70,4 @@ Record problems found outside the current task in [the tech-debt tracker](docs/e
 
 ## Skills
 
-`.claude/skills/buck2-rule-basics/` is an interactive tutorial for writing a first Buck2 rule. Its `references/` directory summarizes the build model and common rule patterns.
+`.claude/skills/yak-rule-basics/` is an interactive tutorial for writing a first yak rule. Its `references/` directory summarizes the build model and common rule patterns.

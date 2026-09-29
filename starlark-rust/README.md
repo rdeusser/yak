@@ -24,7 +24,7 @@ $> 1+2
 
 This project was started by
 [Damien Martin-Guillerez](https://github.com/damienmg) at
-[Google](https://github.com/google/starlark-rust), and continued in the Buck2
+[Google](https://github.com/google/starlark-rust), and continued in the yak
 repository from version 0.4.0.
 
 ## Features

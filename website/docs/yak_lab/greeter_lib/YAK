@@ -3,7 +3,7 @@ rust_library(
     srcs = ["src/lib.rs"],
     visibility = ["PUBLIC"],
     deps = [
-        "//website/docs/buck2_lab/logging_lib:logging_lib",
+        "//website/docs/yak_lab/logging_lib:logging_lib",
     ],
 )
 

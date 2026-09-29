@@ -62,7 +62,7 @@ Modifying `PACKAGE` file logically invalidates the `YAK` file of this
 directory, and all `PACKAGE` and `YAK` files of sub-`PACKAGE`s. However, `YAK`
 file evaluation may track which `PACKAGE`-local values were accessed and only
 invalidate `YAK` files which were potentially affected (similarly to how we do
-it with buckconfigs).
+it with yakconfigs).
 
 #### [`read_parent_package_value`](../../api/build#read_parent_package_value)
 
@@ -185,7 +185,7 @@ alone cannot get past the cap.
 
 #### [`read_config`](../../api/build#read_config)
 
-`PACKAGE` files are able to call `read_config` to read buckconfigs.
+`PACKAGE` files are able to call `read_config` to read yakconfigs.
 
 ### `YAK`-specific API
 

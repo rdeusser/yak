@@ -94,7 +94,7 @@ supported by the prelude.
 ### Exposing execution dependencies from a toolchain
 
 Toolchains typically expose their tools (compilers, linters, etc.) as
-`attrs.exec_dep()` attributes. This lets Buck2 configure them for the execution
+`attrs.exec_dep()` attributes. This lets yak configure them for the execution
 platform and include them in
 [execution platform resolution](configurations.md#toolchain-deps). Here is an
 example:
@@ -179,7 +179,7 @@ foo_binary = rule(
 
 ## Writing a hermetic toolchain
 
-One of the benefits of Buck2 is that it makes it quite easy to write a hermetic
+One of the benefits of yak is that it makes it quite easy to write a hermetic
 toolchain, meaning one that does not look up tools in the environment, but
 instead explicitly downloads and tracks them as part of the build.
 

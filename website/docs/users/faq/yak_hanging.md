@@ -1,6 +1,6 @@
 ---
-id: buck_hanging
-title: Why is Buck2 hanging?
+id: yak_hanging
+title: Why is yak hanging?
 ---
 
 Let's look at how to troubleshoot when yak hangs, i.e. it just sits there
@@ -73,5 +73,4 @@ breakage, investigate what caused the issue.
 **Cycle in dependencies**: If yak seems to be doing nothing (e.g. CPU usage is
 0%), one of the reasons could be a cycle in your dependencies, which may cause
 yak to hang (yak does implement a form of cycle detection, but it
-unfortunately has false negatives). You can confirm this by running buck1, which
-will report cycles properly.
+unfortunately has false negatives).

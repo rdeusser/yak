@@ -3,7 +3,7 @@ id: validation
 title: Validations
 ---
 
-Validations let a rule author declare additional pass/fail checks that Buck2
+Validations let a rule author declare additional pass/fail checks that yak
 enforces whenever the target is in a requested build's transitive closure.
 A validation succeeds when the action that produces its result artifact
 writes a JSON document signalling success; otherwise the build fails.
@@ -13,10 +13,10 @@ writes a JSON document signalling success; otherwise the build fails.
 A validation attached to target `//A:a` runs whenever a `yak build` or
 `yak test` request resolves a graph that contains `//A:a` as a transitive
 dependency. Validations execute in parallel with the rest of the build —
-they only need to finish before Buck2 reports the requested target complete.
+they only need to finish before yak reports the requested target complete.
 
 Validations are *not* re-run when the producing action's inputs are
-unchanged (standard Buck2 caching).
+unchanged (standard yak caching).
 
 ## Declaring a validation
 
@@ -70,14 +70,14 @@ expected schema works. The schema:
 | `data.status`  | string | yes      | `"success"` or `"failure"`.                 |
 | `data.message` | string | no       | Shown to the user; supply on failure.       |
 
-Buck2 reports three distinct errors if the file is malformed: invalid JSON,
+yak reports three distinct errors if the file is malformed: invalid JSON,
 incompatible version, or schema mismatch.
 
 Additional fields outside the required ones are tolerated and ignored by
-Buck2 — both at the top level (alongside `version` / `data`) and inside
+yak — both at the top level (alongside `version` / `data`) and inside
 `data` (alongside `status` / `message`). This is a deliberate extension
 point: attach structured debug or diagnostic info (timings, tool versions,
-dashboard URLs, anything you want to keep with the verdict) and Buck2
+dashboard URLs, anything you want to keep with the verdict) and yak
 will pass it through unread.
 
 The required fields still define the machine contract — keep them stable.

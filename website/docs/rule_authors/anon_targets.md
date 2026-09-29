@@ -25,7 +25,7 @@ Dynamic dependencies, in their full generality, enable users to do a thing, look
 at the result, then ask for fresh things. However, this full generality is not
 provided as it breaks processes, like query, that power the Target Determinator.
 
-In Buck2, dynamic dependencies are implemented using `dynamic_output`, which
+In yak, dynamic dependencies are implemented using `dynamic_output`, which
 provides users with the ability to create new actions, after running actions,
 then look at the result. `dynamic_output` is restricted in its power when
 compared to fully generic dynamic dependencies, as detailed in the

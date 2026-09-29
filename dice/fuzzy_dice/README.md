@@ -23,7 +23,7 @@ unambiguous regression.
 `yak test` picks up the `#[test]` in `src/main.rs` automatically:
 
 ```sh
-yak test //buck2/dice/fuzzy_dice:fuzzy_dice
+yak test //dice/fuzzy_dice:fuzzy_dice
 ```
 
 The CI test is bounded (small case count, fixed size, no shrinking) — it's a
@@ -32,7 +32,7 @@ smoke test, not a bug hunt. Failures should be reproduced with the deep run.
 ### Deep run
 
 ```sh
-yak run //buck2/dice/fuzzy_dice:fuzzy_dice -- fuzz 10000 10000
+yak run //dice/fuzzy_dice:fuzzy_dice -- fuzz 10000 10000
 ```
 
 Positional args are `max_tests` and `num_tests` (defaults `2_000_000`).
@@ -47,7 +47,7 @@ Known-buggy generator scenarios are still gated by env vars:
 
 ```sh
 NOGEN_TRANSIENTS=1 NOGEN_OUT_OF_ORDER=1 \
-    yak run //buck2/dice/fuzzy_dice:fuzzy_dice -- fuzz 10000 10000
+    yak run //dice/fuzzy_dice:fuzzy_dice -- fuzz 10000 10000
 ```
 
 When a failure is found the input `DiceExecutionOrder` is written to
@@ -65,7 +65,7 @@ Useful flags:
 ### Replay
 
 ```sh
-yak run //buck2/dice/fuzzy_dice:fuzzy_dice -- replay /path/to/input.json
+yak run //dice/fuzzy_dice:fuzzy_dice -- replay /path/to/input.json
 ```
 
 ## Operation vocabulary

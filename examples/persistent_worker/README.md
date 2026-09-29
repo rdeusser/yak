@@ -58,7 +58,7 @@ $ yak clean; yak build : -vstderr
 ...
 stderr for root//:demo-3 (demo):
 ...
-Buck2 persistent worker ...
+yak persistent worker ...
 ...
 ```
 
@@ -106,24 +106,24 @@ Bazel persistent worker ...
 
 ### Starlark
 
-A Buck2 persistent worker is created by a rule that emits the `WorkerInfo`
+A yak persistent worker is created by a rule that emits the `WorkerInfo`
 provider. Setting `supports_bazel_remote_persistent_worker_protocol = True` on
 this provider indicates that this worker is remote execution capable.
 
-Buck2 actions indicate that they can utilize a persistent worker by setting the
+yak actions indicate that they can utilize a persistent worker by setting the
 `exe` parameter to `ctx.actions.run` to `WorkerRunInfo(worker, exe)`, where
 `worker` is a `WorkerInfo` provider, and `exe` defines the fallback executable
 for non persistent-worker execution.
 
-Buck2 actions that want to utilize a remote persistent worker must pass
+yak actions that want to utilize a remote persistent worker must pass
 command-line arguments in an argument file specified as `@argfile`,
 `-flagfile=argfile`, or `--flagfile=argfile` on the command-line.
 
 ### Local Persistent Worker
 
-A locally executed Buck2 persistent worker falls under the
-[Buck2 persistent worker protocol](./proto/buck2/worker.proto): It is started
-and managed by Buck2 and passed a file path in the `WORKER_SOCKET` environment
+A locally executed yak persistent worker falls under the
+[yak persistent worker protocol](./proto/buck2/worker.proto): It is started
+and managed by yak and passed a file path in the `WORKER_SOCKET` environment
 variable where it should create a gRPC Unix domain socket to serve worker
 requests over. Multiple requests may be sent in parallel and expected to be
 served at the same time depending on the `concurrency` attribute of the
@@ -131,7 +131,7 @@ served at the same time depending on the `concurrency` attribute of the
 
 ### Remote Persistent Worker
 
-A remotely executed Buck2 persistent worker falls under the
+A remotely executed yak persistent worker falls under the
 [Bazel persistent worker protocol](./proto/bazel/worker_protocol.proto): It is
 started and managed by the remote execution system. Work requests are sent as
 length prefixed protobuf objects to the standard input of the worker process.

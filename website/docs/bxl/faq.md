@@ -5,10 +5,10 @@ title: FAQs
 
 ## When is my BXL script cached?
 
-The entire BXL script is represented as a single node on the DICE graph (Buck2’s
+The entire BXL script is represented as a single node on the DICE graph (yak’s
 internal dependency graph). When the script’s input changes, the entire node is
 invalidated and needs to be recomputed. For example, if a BXL function calls
-uquery, then uses the result to do a cquery and then a build, if Buck2 detects
+uquery, then uses the result to do a cquery and then a build, if yak detects
 that any of the recorded calls to uquery, cquery, and build changes, then the
 entire BXL script will be reran. The computations themselves (uquery, cquery,
 and build) will still be incrementally evaluated via DICE, so we are not
@@ -41,7 +41,7 @@ but will print out `<ensured artifact bound to <some path>>` via `print()`.
 
 This is intentional because when the ensured artifact is created within BXL, it
 has not been materialized yet. It will be materialized after the BXL script
-finishes executing, and Buck2 core performs some additional actions after the
+finishes executing, and yak core performs some additional actions after the
 BXL script.
 
 This is a safeguard to prevent people from misusing the artifact path and

@@ -16,7 +16,7 @@ Each language directory holds its rules in `rules.bzl` (for example
 
 ## Sample commands
 
-Install Buck2, cd into a project, and run
+Install yak, cd into a project, and run
 
 ```bash
 # List all targets

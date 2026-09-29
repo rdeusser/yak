@@ -8,8 +8,10 @@ import useBaseUrl from '@docusaurus/useBaseUrl';
 # Introduction to Modern Dice
 
 This page is the transcript of a talk about modern DICE, the incremental
-computation engine in Buck2. <a href={useBaseUrl("/assets/Modern_DICE.pdf")}
-target="\_blank">Download Slides</a>
+computation engine of Buck2, which yak is forked from. The speaker's names for
+the tool and its configuration are Buck2's. <a
+href={useBaseUrl("/assets/Modern_DICE.pdf")} target="\_blank">Download
+Slides</a>
 
 I will be talking about modern Dice today. I’ll have to get through. I’ll try to
 be good with time. So I’ll talk a little bit about what Dice is, show how to use
@@ -19,7 +21,7 @@ is.
 ## What is Dice?
 
 So first, what is Dice? Dice is, you know… We first named this before we started
-the yak word; we call it Distributed Incremental Computation Engine. So what
+the buck2 word; we call it Distributed Incremental Computation Engine. So what
 does that mean? Computation Engine part. This is, with Dice, you configure this
 with Dice by sort of providing us with leaf data and then define a set of
 functions that the engine is going to manage for you, right? And then you make a

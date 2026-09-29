@@ -46,7 +46,7 @@ are still conceptually useful).
 
 ## Execution platforms
 
-> To Buck, both execution platforms and the list of them are based on
+> To yak, both execution platforms and the list of them are based on
 > `ExecutionPlatformInfo` and `ExecutionPlatformRegistrationInfo`, but
 > we’ll talk in
 > terms of the `execution_platform` and `execution_platforms` rules.
@@ -60,7 +60,7 @@ There are three main concepts to understand about execution platforms:
 ### Execution platforms
 
 The simplest execution platform setup is the one `yak init` uses. This
-setup gathers constraints from the host machine Buck is running on.
+setup gathers constraints from the host machine yak is running on.
 
 ```ini
 [parser]
@@ -87,7 +87,7 @@ More complex setups are possible. You can:
   everything else).
 - Set up cross compilation, in conjunction with toolchains that will
   provide the right flags.
-- Let buck automatically select from multiple execution platforms
+- Let yak automatically select from multiple execution platforms
   depending on what's being built (for example, most of the build can be
   done on Linux, but the linker might only run on Windows).
 
@@ -162,10 +162,10 @@ ends there.
 In more complex cases, you may have multiple execution platforms. For
 example, you may have a remote build farm that has both Linux and
 Windows machines. When a build is requested for a particular configured
-target, Buck will iterate the platforms provided in the registration
+target, yak will iterate the platforms provided in the registration
 provider, and select the first platform whose configuration matches the
 execution constraints. Basically, some build tools only run on Linux, so
-if the tools need to be built, Buck will configure them to be built for
+if the tools need to be built, yak will configure them to be built for
 Linux, and then when it comes time to run them, it will schedule them to
 run under the Linux execution platform. Other build tools (a
 cross-platform python script) could run anywhere and these will not
@@ -196,7 +196,7 @@ Aside from the way they interact with dependents, exec deps are regular
 targets in the build graph. They may themselves be compiled using their
 own `exec_dep`s, and therefore may need to select their own exec platform
 based on their own exec deps. Each time a target somewhere in the build
-graph has `exec_dep`s, Buck will do another transition through exec
+graph has `exec_dep`s, yak will do another transition through exec
 platform resolution.
 
 You might not notice an incorrectly typed dependency edge if your only
@@ -204,7 +204,7 @@ registered execution platform = your target platform = your host machine
 and you don't do much build configuration, but it matters once you start
 writing your own build tools and compiling for platforms other than your
 host machine. The typical error when you have misconfigured is "exec
-format error" on Linux, where Buck is trying to execute e.g. a Windows
+format error" on Linux, where yak is trying to execute e.g. a Windows
 executable on a Linux machine.
 
 ### Execution platform resolution
@@ -281,7 +281,7 @@ macros share two main properties:
    resolution of the dependent target. This means the exec deps of the
    toolchain behave as if they were attached directly to the dependent
    target. They participate in exec platform resolution for the dependent,
-   so Buck2 finds an exec platform that is compatible with all the tools
+   so yak finds an exec platform that is compatible with all the tools
    in the toolchain.
 
 This has many benefits:

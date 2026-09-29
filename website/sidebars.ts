@@ -35,19 +35,11 @@ export const sidebars: SidebarsConfig = {
     'index',
     {
       type: 'category' as const,
-      label: 'About Buck2',
+      label: 'About yak',
       collapsed: false,
       items: [
         'about/why',
         'about/language_support',
-        {
-          type: 'category' as const,
-          label: 'Benefits',
-          collapsed: false,
-          items: [
-            'about/benefits/compared_to_buck1',
-          ],
-        },
         'about/bootstrapping',
       ],
     },
@@ -60,7 +52,7 @@ export const sidebars: SidebarsConfig = {
           id: 'getting_started/index',
         },
         items: [
-            'getting_started/what_is_buck2',
+            'getting_started/what_is_yak',
             'getting_started/install',
             'getting_started/tutorial_first_build',
             'getting_started/tutorial_adding_dependencies',
@@ -80,14 +72,14 @@ export const sidebars: SidebarsConfig = {
         'concepts/build_file',
         'concepts/build_target',
         'concepts/target_pattern',
-        'concepts/buck_query_language',
-        'concepts/buck_out',
+        'concepts/query_language',
+        'concepts/yak_out',
         'concepts/visibility',
         'concepts/toolchain',
         'concepts/daemon',
         'concepts/labels',
         'concepts/isolation_dir',
-        'concepts/buckconfig',
+        'concepts/yakconfig',
         'concepts/configurations',
         'concepts/modifiers',
         'concepts/transitions',
@@ -96,7 +88,7 @@ export const sidebars: SidebarsConfig = {
     },
     {
       type: 'category' as const,
-      label: 'Buck2 Users',
+      label: 'yak Users',
       collapsed: false,
       items: [
         {
@@ -151,7 +143,7 @@ export const sidebars: SidebarsConfig = {
           items: [
             'users/faq/common_issues',
             'users/faq/starlark_peak_mem',
-            'users/faq/buck_hanging',
+            'users/faq/yak_hanging',
           ],
         },
         {

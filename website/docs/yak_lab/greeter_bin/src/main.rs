@@ -11,7 +11,7 @@
 fn main() {
     logging_lib::info("Starting");
 
-    let str = library::greet("buck2");
+    let str = library::greet("yak");
     println!("{}", str);
 
     logging_lib::info("Done");

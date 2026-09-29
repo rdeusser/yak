@@ -6,7 +6,7 @@ title: Build Target
 # Build Target
 
 A _build target_ is a string that identifies a build target in your project.
-Build targets are used as arguments to Buck2 commands, such as
+Build targets are used as arguments to yak commands, such as
 [`yak build`](../../users/commands/build) and
 [`yak run`](../../users/commands/run). Build targets are also used as
 arguments to [build rules](build_rule.md) to enable one target to reference
@@ -34,7 +34,7 @@ A fully-qualified build target has three components:
    rule.
 
 Note that the name of the build file itself—usually YAK—does _not_ occur in the
-build target. All build files within a given Buck2 project must have the same
+build target. All build files within a given yak project must have the same
 name—defined in the `[buildfile].name` entry of `.yakconfig`. Therefore, it is
 unnecessary to include the name in the target. The full regular expression for a
 fully-qualified build target is as follows:
@@ -44,15 +44,15 @@ fully-qualified build target is as follows:
 |- cell name -|  | package path | |--- target name ----|
 ```
 
-In Buck2, a _cell_ defines a directory tree of one or more Buck2 packages. For
-more information about Buck2 cells and their relationship to packages and
+In yak, a _cell_ defines a directory tree of one or more yak packages. For
+more information about yak cells and their relationship to packages and
 projects, see the [Key Concepts](key_concepts.md) topic. **NOTE:** All target
-paths are assumed to start from the root of the Buck2 project. Buck2 does not
+paths are assumed to start from the root of the yak project. yak does not
 support specifying a target path that starts from a directory below the root.
 Although the double forward slash (`//`) that prefixes target paths can be
 omitted when specifying a target from the command line (see **Pro Tips** below),
-Buck2 still assumes that the path is from the root. Buck2 does support
-_relative_ build paths, but in Buck2, that concept refers to specifying build
+yak still assumes that the path is from the root. yak does support
+_relative_ build paths, but in yak, that concept refers to specifying build
 targets _from within_ a build file. See **Relative build targets** below for
 more details.
 
@@ -93,7 +93,7 @@ Consider the following example of a fully-qualified build target used with the
 yak build cell//java/com/example/share:share
 ```
 
-Although Buck2 is always strict when parsing build targets in build files, Buck2
+Although yak is always strict when parsing build targets in build files, yak
 is flexible when parsing build targets on the command-line. Specifically, the
 leading `//` is optional on the command line, so the above could be:
 
@@ -130,10 +130,10 @@ command-line with less typing.
 
 ## See also
 
-Buck2 supports the ability to define **_aliases_ for build targets**; using
-aliases can improve brevity when specifying targets on the Buck2 command line.
-For more information, see the [`[alias]`](buckconfig.md#alias) section in the
-documentation for [`.yakconfig`](buckconfig.md). A
+yak supports the ability to define **_aliases_ for build targets**; using
+aliases can improve brevity when specifying targets on the yak command line.
+For more information, see the [`[alias]`](yakconfig.md#alias) section in the
+documentation for [`.yakconfig`](yakconfig.md). A
 [**build target pattern**](target_pattern.md) is a string that describes a set
 of one or more build targets. For example, the pattern `//...` is used to build
 an entire project. For more information, see the **Build Target Pattern** topic.

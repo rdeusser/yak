@@ -3,9 +3,9 @@ id: logging
 title: Logging
 ---
 
-Buck2 produces detailed event logs for each invocation, which follow a schema
+yak produces detailed event logs for each invocation, which follow a schema
 outlined in `app/buck2_data/data.proto` in the yak parent directory. The event
-logs that Buck2 produces automatically are always in protobuf zstd-compressed
+logs that yak produces automatically are always in protobuf zstd-compressed
 format (see [Viewing the event log](#viewing-the-event-log) for more details).
 
 ## Event log format
@@ -23,9 +23,9 @@ Invocation {
     command_line_args: List[str],
     # Expanded CLI args, which expand any argsfiles
     expanded_command_line_args: List[str],
-    # Absolute path of the current working directory of the Buck2 command
+    # Absolute path of the current working directory of the yak command
     working_dir: str,
-    # UUID of the Buck2 command
+    # UUID of the yak command
     trace_id: str,
 }
 ```
@@ -48,7 +48,7 @@ Result {
 }
 ```
 
-### Buck events
+### yak events
 
 The rest of the event log contain `BuckEvent`s, which are either
 `SpanStartEvent`s, `SpanEndEvent`s, or `InstantEvent`s.
@@ -60,7 +60,7 @@ Event {
     # When the event was fired. This is always a 2-item list, where the first
     # value is seconds since the Unix epoch, second value is nanoseconds
     timestamp: List[u64],
-    # UUID of the Buck2 command, same one as the invocation header
+    # UUID of the yak command, same one as the invocation header
     trace_id: str,
     # A trace-unique 64-bit integer identifying this event's span ID,
     # if this event begins a new span or belongs to one.
@@ -126,19 +126,19 @@ Event logs can be accessed using commands under `yak log show`, which outputs
 the event logs in JSONL format. You can run `yak log show --help` to see all
 available options. Some useful commands:
 
-- Show the logs for the most recent Buck2 command:
+- Show the logs for the most recent yak command:
 
 ```sh
 yak log show
 ```
 
-- Show the logs for a specific Buck2 command, given the command's UUID:
+- Show the logs for a specific yak command, given the command's UUID:
 
 ```sh
 yak log show --trace-id <UUID>
 ```
 
-- Show the logs for a recent Buck2 command:
+- Show the logs for a recent yak command:
 
 ```sh
 yak log show --recent <NUMBER>

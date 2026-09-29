@@ -1,4 +1,4 @@
-# Buck2
+# Changelog
 
 ## Unreleased
 
@@ -34,6 +34,12 @@ Removes the code, configuration, and service clients that only Meta's internal b
 - The hidden flag that runs the daemon in the client process is `--no-yakd`, and its variable is `YAK_NO_YAKD`.
 - `host_info()` no longer has a `buck2` field.
 - The integration tests take the binary from `YAK_BINARY` and rewrite golden files when `YAK_UPDATE_GOLDEN` is set.
+- The documentation calls the tool yak and its configuration the yakconfig.
+- The site's pages `concepts/buckconfig`, `concepts/buck_out`, `concepts/buck_query_language`, `getting_started/what_is_buck2`, and `users/faq/buck_hanging` moved to `concepts/yakconfig`, `concepts/yak_out`, `concepts/query_language`, `getting_started/what_is_yak`, and `users/faq/yak_hanging`.
+- The site no longer has the page that compared Buck2 with Buck1, or the lists of articles, videos, projects, and tools about Buck2.
+- The site's logo is a yak.
+- `website/gen_docs.py` takes the path of the binary with `--yak` in place of `--buck2`.
+- The publisher of the Starlark extension for VS Code is `yak`.
 
 ### Removed JVM, Android, and JavaScript support
 
@@ -158,7 +164,7 @@ The Bazel Remote Execution API has no field for gang workers, action dependencie
 
 - C++ header units compile with `-DPRELUDE_CPP_HEADER_UNIT=1` in place of `-DFACEBOOK_CPP_HEADER_UNIT=1`.
 - Late-stamped build info goes into an ELF section named `build_info` in place of `fb_build_info`.
-- The `tests.disable_re_tests` buckconfig key replaces `fbcode.disable_re_tests`.
+- The `tests.disable_re_tests` yakconfig key replaces `fbcode.disable_re_tests`.
 - A Remote Execution test without a `use_case` no longer falls back to the `tpx-default` use case.
 - `BuckconfigBackedModifier` no longer has an `oncall` field.
 - Test rules no longer add the labels that only Meta's Tpx test runner read (the `tpx:*` labels of `apple_test`, and the `run_as_bundle` label).

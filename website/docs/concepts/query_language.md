@@ -1,11 +1,11 @@
 ---
-id: buck_query_language
-title: Buck Query Language
+id: query_language
+title: Query Language
 ---
 
-# Buck Query Language
+# Query Language
 
-Buck2's query language provides a powerful way to inspect and analyze the build
+yak's query language provides a powerful way to inspect and analyze the build
 graph. The query language is shared across different query commands
 (`yak uquery`, `yak cquery`, and `yak aquery`), though each command
 operates on different graph representations and supports different sets of
@@ -13,14 +13,14 @@ operators.
 
 ## Query Parameters
 
-The most common parameter for a Buck query operator is an expression that
+The most common parameter for a yak query operator is an expression that
 evaluates to a build target or collection of build targets. Such an expression
 could be:
 
 - An explicit [build target](build_target.md)
 - A [build target pattern](target_pattern.md)
-- A [.yakconfig alias](buckconfig.md)
-- The set of targets returned by another Buck query operator
+- A [.yakconfig alias](yakconfig.md)
+- The set of targets returned by another yak query operator
 
 **Tip:** You can pass an alias directly to the `yak query` command line to see
 what it resolves to. For example:
@@ -31,7 +31,7 @@ yak uquery app
 
 ### Non-target Parameters
 
-In addition to target parameters, some Buck query operators take string
+In addition to target parameters, some yak query operators take string
 parameters such as filenames (`owner()`) or regular expressions (`filter()`).
 
 **Note:** Hover over parameters in query operator syntax to see their
@@ -45,7 +45,7 @@ drawn from the alphabet, numerals, forward slash (`/`), colon (`:`), period
 with a hyphen or period. For example, quoting `python_test` is unnecessary.
 
 However, we **do recommend** that you quote arguments as a best practice even
-when Buck2 doesn't require it.
+when yak doesn't require it.
 
 You should always use quotes when writing scripts that construct `yak query`
 expressions from user-supplied values.
@@ -60,7 +60,7 @@ yak uquery "'//foo:bar=wiz'"
 
 ## Algebraic Set Operations
 
-Buck2's query language supports algebraic set operations for combining query
+yak's query language supports algebraic set operations for combining query
 results.
 
 ### Set Operations: intersection, union, set difference
@@ -127,7 +127,7 @@ to group this list in a query.
 **Example:**
 
 The following command line returns the target `main` in the build file in the
-root of the Buck2 project and all the targets from the build file in the
+root of the yak project and all the targets from the build file in the
 `myclass` subdirectory of the root:
 
 ```sh
@@ -137,7 +137,7 @@ yak uquery "set( '//:main' '//myclass:' )"
 **Example:**
 
 The following command line returns the merged set (union) of dependencies for
-the targets `main` and `subs` in the build file in the root of the Buck2
+the targets `main` and `subs` in the build file in the root of the yak
 project:
 
 ```sh
@@ -155,7 +155,7 @@ yak cquery "testsof(deps(set('target1' 'target2' 'target3')))"
 
 Suppose you now want to know the tests for **each** of these targets; the above
 command returns the union of the tests. Instead of executing one query for the
-entire set of targets, Buck2's query commands provide a way to repeat a query
+entire set of targets, yak's query commands provide a way to repeat a query
 with different targets using a single command. To do this, first define the
 query expression format and then list the input targets, separated by spaces.
 For example:
@@ -214,7 +214,7 @@ yak cquery "testsof(deps(set('//foo:bar' '//foo:baz')))"
 
 ## Query Environments
 
-Buck2 provides different query environments that operate on different graph
+yak provides different query environments that operate on different graph
 representations:
 
 - **Uquery (Unconfigured Query)**: Operates on the unconfigured target graph.
@@ -236,6 +236,6 @@ each environment.
 
 ## See Also
 
-- [Buck2 Cheat Sheet](../users/cheatsheet.md) for practical query examples
+- [yak Cheat Sheet](../users/cheatsheet.md) for practical query examples
 - [Glossary](glossary.md) for definitions of key concepts
 - [Target Patterns](target_pattern.md) for more on specifying targets

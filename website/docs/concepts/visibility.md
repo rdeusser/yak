@@ -40,7 +40,7 @@ exceptions:
   can depend on.
 - _Empty or Unset `visibility` List_: If the `visibility` list is empty or
   unset, then only targets defined in the same
-  [YAK file](./glossary.md#buck-file) can depend upon the current target.
+  [YAK file](./glossary.md#yak-file) can depend upon the current target.
 - _Special Value: `'PUBLIC'`_: `visibility` can be set to a special value
   `'PUBLIC'` which makes a build rule visible to all targets. (Example below)
 
@@ -109,7 +109,7 @@ cxx_library(
 
 ## Auditing visibility
 
-Use [`yak audit visibility`](../../users/commands/audit#buck2-audit-visibility) to verify that no `visibility` constraints
+Use [`yak audit visibility`](../../users/commands/audit#yak-audit-visibility) to verify that no `visibility` constraints
 are violated in the transitive dependency graph of the given targets.
 
 ```sh

@@ -1,4 +1,4 @@
-Buck2 cares about the quality and maintainability of its codebase. Contributors - humans and AI -
+yak cares about the quality and maintainability of its codebase. Contributors - humans and AI -
 are expected to try to leave the code better than they found it. A task that is completed in a
 strict sense but leaves footguns for future contributors is a task completed poorly. AIs are
 encouraged to tell their user if they think a refactoring is needed before a change can reasonably

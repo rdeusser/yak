@@ -5,7 +5,7 @@ title: Benchmarking
 
 [basics.md](basics.md) covers the perf basics shared with profiling. This
 page is benchmarking-specific: variance, sample sizes, fair comparison
-between two versions of Buck or of the repo.
+between two versions of yak or of the repo.
 
 ## Effect sizes
 

@@ -2,7 +2,7 @@
 
 Code which is:
 
-- used by Buck
-- generic, knows nothing of Buck
+- used by yak
+- generic, knows nothing of yak
 - we would rather not have written and would like to get into a different
   package

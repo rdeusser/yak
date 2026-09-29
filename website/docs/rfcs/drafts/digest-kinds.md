@@ -2,14 +2,14 @@
 
 ## Use cases:
 
-- Buck2 needs to support more than just SHA1, since publicly available RE
+- yak needs to support more than just SHA1, since publicly available RE
   providers use SHA256.
 - A deployment can migrate to (potentially keyed) Blake3, and there will be a
   transition period where it needs to support both Blake3 and SHA1.
 
 ## Proposed plan
 
-Make all the ways in which Buck2 _ingests_ digests either configurable or
+Make all the ways in which yak _ingests_ digests either configurable or
 explicit about the type of digest they expect.
 
 Internally, we may keep track of digest types for debugging purposes, but we
@@ -25,7 +25,7 @@ never have a choice about the hash to use.
 For interactions with RE, we'll expose two configurations (this can be on the
 CommandExecutorConfig):
 
-- Preferred hash to use when Buck2 is doing the hashing (e.g. hashing
+- Preferred hash to use when yak is doing the hashing (e.g. hashing
   directories).
 - Accepted hashes.
 
@@ -35,7 +35,7 @@ knowing the format of a digest, it's just a string).
 
 ### Hashes of files
 
-We'll expose the hash to use via a buckconfig. Our
+We'll expose the hash to use via a yakconfig. Our
 things-that-produce-hashes-of-files should either use the config to choose how
 they hash, or fail if they cannot provide the right hash format.
 

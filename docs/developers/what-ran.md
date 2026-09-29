@@ -1,5 +1,5 @@
-Buck2 logs all the commands it runs. So, after you've run a build, you can query
-Buck2 to get access to the exact command it used.
+yak logs all the commands it runs. So, after you've run a build, you can query
+yak to get access to the exact command it used.
 
 To do so, do your build as normal, then run `yak log what-ran`.
 

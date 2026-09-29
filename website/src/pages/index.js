@@ -23,14 +23,14 @@ function HomepageHeader() {
       <div className="container">
         <h1 className="hero__title">{siteConfig.title}</h1>
         <p className="hero__subtitle">
-          A large-scale build tool. The successor to Buck.<br/>
+          A large-scale build tool.<br/>
             Ready for users ∈ &#123;C++, Python, Rust, Haskell, Erlang, OCaml, Go&#125;
         </p>
         <div className={styles.buttons}>
           <Link
             className="button button--secondary button--lg"
             to="/docs/about/why">
-            Why Buck2?
+            Why yak?
           </Link>
           <Link
             className="button button--secondary button--lg"
@@ -47,8 +47,8 @@ export default function Home() {
   const {siteConfig} = useDocusaurusContext();
   return (
     <Layout
-      title="Buck2 build system website"
-      description="Buck2 is an open-source large-scale build system. The successor to Buck.">
+      title="yak build system website"
+      description="yak is an open-source large-scale build system.">
       <HomepageHeader />
       <main>
         <HomepageFeatures />

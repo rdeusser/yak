@@ -5,7 +5,7 @@ title: Memory Profiling
 
 [basics.md](basics.md) covers the headline metrics, the daemon model, and the
 `debug allocator-stats` / `debug heap-dump` / `kill` commands. This page is
-the additional, mostly buck2-specific things that the heap-profiling tool
+the additional, mostly yak-specific things that the heap-profiling tool
 chain will trip you up on.
 
 This page is about *where allocations happen* (the heap profile). For the

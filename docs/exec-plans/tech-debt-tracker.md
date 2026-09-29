@@ -135,13 +135,6 @@ The first three fail the same way at `903bfd7a61`.
 
 Remove each item when its command succeeds.
 
-### The rename plan has an open item for jars that no longer exist
-
-`docs/exec-plans/active/2026-09-28-rename-the-fork.md` lists an open Progress item for bootstrap jars built from the `dev.yak` sources.
-`docs/exec-plans/completed/2026-09-29-remove-jvm-and-buck1-compatibility.md` removed the JVM toolchain, its sources, and the jar downloads, so the item has nothing left to build.
-
-Remove this entry when the rename plan closes the item.
-
 ## Defects
 
 ### `apple_test` cannot run under the built-in test runner
@@ -260,12 +253,11 @@ Remove this entry when the script and its test are deleted, or a rule runs the s
 `docs/exec-plans/completed/2026-09-29-remove-jvm-and-buck1-compatibility.md` removed the Buck1 compatibility code that did nothing or had a replacement.
 The owner chose to keep the Buck1 behaviors that have no replacement, such as the working directory of tests and the `%s` substitution of multiple queries (2026-09-29).
 Comments in code still explain those behaviors and others by comparison with Buck1. `git grep -n -i -E 'buck ?1|buck v1' -- app prelude dice starlark-rust` finds 68 lines in 47 files.
-Some examples and pages still describe removed features:
+Some examples still use the removed JVM and Android support:
 
 - The `genrule` examples in `prelude/decls/core_rules.bzl` build an `AndroidManifest.xml`.
 - The `deps_query` example in `prelude/decls/common.bzl` filters Java annotation processors.
-- `website/docs/concepts/buckconfig.md` mentions the platform flavors of C++ and Python. Target patterns accept no flavors.
 
-Milestone 6 of `docs/exec-plans/active/2026-09-28-rename-the-fork.md` rewrites the prose of the documentation, and its plan of work lists no comments in code.
+The second part of milestone 6 of `docs/exec-plans/active/2026-09-28-rename-the-fork.md` rewrites the comments and examples of the code.
 
 Remove this entry when no comment explains yak's behavior by comparison with Buck1 and every example uses a rule that the prelude defines.

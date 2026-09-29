@@ -3,13 +3,13 @@ id: build_report
 title: Build Report
 ---
 
-The build report is a JSON file that you can ask buck to output which contains
+The build report is a JSON file that you can ask yak to output which contains
 structured information about the result of your build. It is particularly
 valuable for its reporting of _unsuccessful_ outcomes in addition to
 _successful_ ones; usually, most use cases that only need to care about
 successful outcomes are well served by direct usage of the CLI.
 
-To request a build report, pass `--build-report <path>` to `buck build` on the
+To request a build report, pass `--build-report <path>` to `yak build` on the
 CLI.
 
 You can also pass `--build-report-options` with a comma-separated list of
@@ -37,7 +37,7 @@ and `:target[sub]`.
 
 ```python
 BuildReport {
-    # A unique ID identifying this buck invocation. Currently a UUID, however
+    # A unique ID identifying this yak invocation. Currently a UUID, however
     # that may change in the future.
     trace_id: str,
 
@@ -230,7 +230,7 @@ Error {
     cause_index: uint,
 
     # List of error tags associated with the error. The error tags provide hints to the error category
-    # that the error is associated to as determined by Buck2 internally. This is meant to classify errors
+    # that the error is associated to as determined by yak internally. This is meant to classify errors
     # more precisely, helping developers better understand the nature of the error.
     error_tags: list[str],
 

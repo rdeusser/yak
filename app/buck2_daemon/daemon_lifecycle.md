@@ -1,21 +1,21 @@
 # yakd
 
-Buck runs a persistent daemon process (yakd) to reuse work between commands.
-Most work is done by the daemon process. When executing a buck command, the
+yak runs a persistent daemon process (yakd) to reuse work between commands.
+Most work is done by the daemon process. When executing a yak command, the
 process running the command is a client to the yakd server. The yakd server
-exposes a simple grpc service that the client uses to implement the various buck
+exposes a simple grpc service that the client uses to implement the various yak
 commands.
 
 There's a small set of commands/arguments that don't require the daemon
-(`buck help`, cli arg parse failures, `buck version`, ...), but most commands
+(`yak help`, cli arg parse failures, `yak --version`, ...), but most commands
 will require it.
 
-For almost all commands, buck requires that the client and server are the same
-version of buck and may restart yakd to ensure that's the case.
+For almost all commands, yak requires that the client and server are the same
+version of yak and may restart yakd to ensure that's the case.
 
 # daemon process flow
 
-The daemon process is started with the (hidden) `buck daemon` command.
+The daemon process is started with the (hidden) `yak daemon` command.
 
 The daemon process has a simple startup. It will first daemonize itself and
 write its pid to a locked file "yakd.pid" in the "daemon directory" (a
@@ -47,7 +47,7 @@ yakd server it will follow this approach:
    version, daemon startup config, and others) against the client's request
 
 If there is an error during 1-3, or if the constraints are not satisfied, the
-client needs to (re)start the buck daemon. Otherwise, the client can continue as
+client needs to (re)start the yak daemon. Otherwise, the client can continue as
 it now has made a connection with a compatible yakd.
 
 When the client is killing or starting the yakd process, it will grab an
@@ -59,25 +59,25 @@ To start/restart the yakd process, the client does:
 1. lock the "yakd.lifecycle" file
 2. send a kill command to the existing yakd
 3. ensure the yakd process has exited (based on pid)
-4. run a `buck daemon` command to start yakd
+4. run a `yak daemon` command to start yakd
 5. wait for the daemon to start up and the grpc server to be ready
 6. release the "yakd.lifecycle" file
 
 After that, it will repeat the connection steps (including checking the
 constraints after connecting).
 
-# buck kill and other daemon restarts
+# yak kill and other daemon restarts
 
-If there are other invocations currently using the buck daemon when it is killed
+If there are other invocations currently using the yak daemon when it is killed
 or restarted by a client, those invocations will fail due to the early
 disconnection.
 
-Generally, we support concurrent buck invocations using the same buck version,
+Generally, we support concurrent yak invocations using the same yak version,
 but if there are concurrent invocations with different versions, they may
 unexpectedly fail or otherwise work incorrectly. This is sufficient for the
-normal buck workflow where the buckversion is checked into the repo, in that
-case, it's not expected that buck commands will work across a rebase or other
-operation that changes the buckversion.
+normal yak workflow where the repository pins the yak version, in that case,
+it's not expected that yak commands will work across a rebase or other
+operation that changes the pinned version.
 
 # correctness
 
@@ -89,9 +89,9 @@ We have a couple of guarantees here.
    version
 
 The main way that we could run into issues would be if there are multiple
-clients that are racing and they want different versions of buck. In that case,
+clients that are racing and they want different versions of yak. In that case,
 one might cause the other two fail to connect to a yakd with the correct
 version or one of the client's connections may be prematurely disconnected. A
 client **will not** use a server with a mismatched version. While this is a
 failure, no expected workflow would hit this case, all concurrent commands
-should be using the same buck version.
+should be using the same yak version.

@@ -1,6 +1,6 @@
 # Debugging
 
-This page describes how contributors usually debug Buck2. It is descriptive, so use another approach where it works better.
+This page describes how contributors usually debug yak. It is descriptive, so use another approach where it works better.
 
 ## Logic bugs
 
@@ -12,7 +12,7 @@ Most logic bugs are found by reading the code, writing finer-grained tests, or a
 
 [basics.md](./basics.md) shows how to build `target/debug/yak` and run it in a test project with its own isolation directory.
 
-`./yak.py <command>` builds `//:yak_bundle` with the `yak` on `PATH` and runs `<command>` with the result. It needs the Buck build of this repository, which in turn needs a `yak` on `PATH` built from this repository ([basics.md](./basics.md)). The command runs in the isolation directory `v2.self`, which keeps it away from your existing daemon, but large builds get no cache hits there and run slowly.
+`./yak.py <command>` builds `//:yak_bundle` with the `yak` on `PATH` and runs `<command>` with the result. It needs the yak build of this repository, which in turn needs a `yak` on `PATH` built from this repository ([basics.md](./basics.md)). The command runs in the isolation directory `v2.self`, which keeps it away from your existing daemon, but large builds get no cache hits there and run slowly.
 
 ## Event logs
 
@@ -46,7 +46,7 @@ yak kill
 
 ## Tracing
 
-Buck2 also emits sparse `tracing` output. `YAK_LOG` sets the filter, using the [`EnvFilter` syntax](https://docs.rs/tracing-subscriber/0.3/tracing_subscriber/filter/struct.EnvFilter.html). The daemon reads `YAK_LOG` only when it starts, so restart it to change the filter:
+yak also emits sparse `tracing` output. `YAK_LOG` sets the filter, using the [`EnvFilter` syntax](https://docs.rs/tracing-subscriber/0.3/tracing_subscriber/filter/struct.EnvFilter.html). The daemon reads `YAK_LOG` only when it starts, so restart it to change the filter:
 
 ```bash
 yak kill

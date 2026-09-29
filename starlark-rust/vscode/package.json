@@ -10,7 +10,7 @@
         "type": "git",
         "url": "https://github.com/rdeusser/buck2"
     },
-    "publisher": "buck2",
+    "publisher": "yak",
     "categories": [],
     "keywords": [
         "multi-root ready"

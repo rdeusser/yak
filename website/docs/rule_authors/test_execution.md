@@ -3,14 +3,14 @@ id: test_execution
 title: Test Execution
 ---
 
-Test execution in Buck2 is a collaboration with a separate test runner process.
+Test execution in yak is a collaboration with a separate test runner process.
 
-Buck2 ships with a built-in test runner, which runs as
+yak ships with a built-in test runner, which runs as
 `yak internal-test-runner`. It receives the commands defined by
 `ExternalRunnerTestInfo` and runs them. Exit code zero means the test passed,
 and any other exit code means it failed.
 
-Setting `[test] v2_test_executor` to the path of an executable makes Buck2 use
+Setting `[test] v2_test_executor` to the path of an executable makes yak use
 that executable as the test runner. The built-in runner in
 [`app/buck2_test_runner`](https://github.com/rdeusser/buck2/tree/main/app/buck2_test_runner)
 is a sample to start from. A more capable test runner can take on these
@@ -30,21 +30,21 @@ responsibilities:
     choose to bundle multiple tests in a single execution (or not).
   - Reports test results.
 
-In Buck2, rules interact with the test runner via a provider called
+In yak, rules interact with the test runner via a provider called
 `ExternalRunnerTestInfo`.
 
 ## Anatomy of a test run
 
 When a user runs `yak test $targets`:
 
-- Buck2 identifies all matching targets that have an `ExternalRunnerTestInfo`.
-- Buck2 builds all the artifacts referenced by those targets (this will likely
+- yak identifies all matching targets that have an `ExternalRunnerTestInfo`.
+- yak builds all the artifacts referenced by those targets (this will likely
   change eventually to build them only if they are used).
-- Buck2 then notifies the test runner that those tests exist. Currently, the
+- yak then notifies the test runner that those tests exist. Currently, the
   test runner receives a subset of `ExternalRunnerTestInfo`.
-- The test runner can request command execution from Buck2 to list and execute
+- The test runner can request command execution from yak to list and execute
   tests.
-- When it receives command results from Buck2, the test runner may fire off
+- When it receives command results from yak, the test runner may fire off
   events that the end-user will see (such as test results), upload logs
   externally, request further executions, and so on.
 
@@ -75,7 +75,7 @@ which the test runner can interact:
 - `labels` - a set of string labels to pass to the test runner.
 - `contacts` - a list of contacts for the tests, usually the owning team.
 - `executor_overrides` - a key-value mapping of executor configurations that the
-  test runner can use when requesting execution from Buck2.
+  test runner can use when requesting execution from yak.
 - `local_resources` - a key-value mapping from resource type to optional
   `LocalResourceInfo` provider. Provider is used for initialization of that
   resource type. If the value is `None` resource type is ignored even though
@@ -87,7 +87,7 @@ which the test runner can interact:
 For compatibility with Remote Execution (RE), there are two fields that rules
 should set in their `ExternalRunnerTestInfo` if they should be run on RE:
 
-- `use_project_relative_paths` - if `true` (the default is `true`), Buck2 will
+- `use_project_relative_paths` - if `true` (the default is `true`), yak will
   produce relative paths. If not, it'll produce absolute paths.
 - `run_from_project_root` - if `true` (the default is `true`), tests will run
   from the project root (their `cwd` will be the project root, which is
@@ -107,7 +107,7 @@ are provided.
 
 As noted above, the test runner only interacts with a subset of arguments
 provided by rules in `ExternalRunnerTestInfo`. The reason for this is that the
-test runner doesn't get to access, for example, artifacts, that Buck2 knows
+test runner doesn't get to access, for example, artifacts, that yak knows
 about.
 
 Consider the following example:
@@ -117,9 +117,9 @@ binary = ctx.attrs.dep[RunInfo]
 test_info = ExternalRunnerTestInfo(command = [binary, "run-tests"], ...)
 ```
 
-When Buck2 actually runs this command, `binary` is expanded to a path (and
-possibly to more args). Buck2 would also account for any hidden arguments and
-make those available where the command is executed. It is important for Buck2 to
+When yak actually runs this command, `binary` is expanded to a path (and
+possibly to more args). yak would also account for any hidden arguments and
+make those available where the command is executed. It is important for yak to
 retain this capability when running with the test runner.
 
 To that end, all non-trivial arguments present in `command` (and in the values
@@ -132,8 +132,8 @@ This means that the test runner would see the command described above as:
 [ArgHandle(index = 0), Verbatim("foobar")]
 ```
 
-When requesting execution from Buck2, the test runner can use the `ArgHandle`
-and Buck2 will swap it back for the underlying value that was set on the
+When requesting execution from yak, the test runner can use the `ArgHandle`
+and yak will swap it back for the underlying value that was set on the
 provider.
 
 This allows the test runner to introspect and modify parts of the command lines
@@ -154,7 +154,7 @@ platform, and running them needs a simulator.
 
 To support this, `ExternalRunnerTestInfo` allows specifying override platforms,
 which are given a name. The test runner can request execution on them by passing
-their name when it sends execution requests to Buck2, as shown in the following
+their name when it sends execution requests to yak, as shown in the following
 code:
 
 ```python
@@ -203,19 +203,19 @@ To produce paths relative to the cell root for use by tests, use
 
 A test runner can start with a **listing** step, which runs the test binary to
 discover the test cases it contains. The runner marks each listing request as
-cacheable or not, and Buck2 caches the result of a cacheable listing at two
+cacheable or not, and yak caches the result of a cacheable listing at two
 levels:
 
 1. The daemon keeps the result in its DICE computation graph. If you run
-   `yak test` on the same target again without changes, Buck2 skips the
+   `yak test` on the same target again without changes, yak skips the
    listing, so it does not appear in `yak log what-ran` output.
-2. Buck2 looks the listing command up in the remote action cache before it runs
+2. yak looks the listing command up in the remote action cache before it runs
    the command, and uploads the result after running it, so the result survives
    a daemon restart. The `CommandExecutorConfig` that runs the listing controls
    both steps. Its `remote_cache_enabled` field enables the lookup, and its
    `allow_cache_uploads` field enables the upload of a listing that ran locally.
 
-Buck2 caches only listings that exit with code 0, and runs a failed listing
+yak caches only listings that exit with code 0, and runs a failed listing
 again on the next request.
 
 The built-in test runner has no listing step, so this caching applies only to

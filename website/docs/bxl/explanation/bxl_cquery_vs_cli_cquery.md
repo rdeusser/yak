@@ -1,6 +1,6 @@
 ---
 id: bxl_cquery_vs_cli_cquery
-title: BXL cquery vs. Buck2 CLI cquery - Divergence in Configuration Handling
+title: BXL cquery vs. yak CLI cquery - Divergence in Configuration Handling
 ---
 
 ## Overview

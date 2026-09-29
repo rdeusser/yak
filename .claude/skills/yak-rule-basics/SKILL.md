@@ -1,13 +1,13 @@
 ---
-name: buck2-rule-basics
-description: Guide users through writing their first Buck2 rule to learn fundamental concepts including rules, actions, targets, configurations, analysis, and select(). Use this skill when users want to learn Buck2 basics hands-on or need help understanding rule writing.
+name: yak-rule-basics
+description: Guide users through writing their first yak rule to learn fundamental concepts including rules, actions, targets, configurations, analysis, and select(). Use this skill when users want to learn yak basics hands-on or need help understanding rule writing.
 ---
 
-# Buck2 Rule Basics - Interactive Tutorial
+# yak Rule Basics - Interactive Tutorial
 
 ## Overview
 
-This is an **interactive, step-by-step tutorial** that teaches Buck2
+This is an **interactive, step-by-step tutorial** that teaches yak
 fundamentals through hands-on practice. You'll guide users through writing a
 simple text processing rule that converts text to uppercase, explaining core
 concepts as they encounter them.
@@ -16,8 +16,8 @@ concepts as they encounter them.
 
 This skill includes additional reference documentation that you can use to answer deeper questions:
 
-- **`references/concepts.md`** - Deep dive into Buck2 core concepts including:
-  - The Buck2 build model (load, configuration, analysis, execution phases)
+- **`references/concepts.md`** - Deep dive into yak core concepts including:
+  - The yak build model (load, configuration, analysis, execution phases)
   - Targets in depth (unconfigured vs configured, cells, dependencies)
   - Artifacts (source vs build artifacts, bound vs unbound)
   - Actions (properties, caching, inputs/outputs)
@@ -36,7 +36,7 @@ This skill includes additional reference documentation that you can use to answe
   - Testing rules (test runners, test data)
 
 **When to use these references:**
-- User asks "how does X work in Buck2?" → Check `concepts.md`
+- User asks "how does X work in yak?" → Check `concepts.md`
 - User asks "what's the best way to do Y?" → Check `advanced_patterns.md`
 - User wants to go beyond the tutorial → Direct them to these files
 - User encounters advanced concepts → Read relevant sections to explain
@@ -126,14 +126,14 @@ Use TodoWrite to show:
 - Upcoming steps
 - This helps users see the journey
 
-## Important: Use System Buck2 Command
+## Important: Use System yak Command
 
 This tutorial uses the **system `yak` command**, NOT `./yak.py`.
 
 - Use: `yak build`, `yak test`, `yak cquery`, etc.
-- Do NOT use: `./yak.py` (that's for Buck2 development/self-bootstrap)
+- Do NOT use: `./yak.py` (that's for yak development/self-bootstrap)
 
-This ensures the tutorial works for all users with Buck2 installed.
+This ensures the tutorial works for all users with yak installed.
 
 ## Tutorial Structure
 
@@ -141,16 +141,16 @@ The tutorial has 8 progressive steps:
 
 ### Step 0: Setup
 
-Create a Buck2 project that uses the prelude bundled with `yak`, then create
+Create a yak project that uses the prelude bundled with `yak`, then create
 a directory for the tutorial inside it and navigate into it:
 
 **Run this:**
 
 ```bash
-yak init buck2-tutorial-project
-cd buck2-tutorial-project
-mkdir buck2-tutorial
-cd buck2-tutorial
+yak init yak-tutorial-project
+cd yak-tutorial-project
+mkdir yak-tutorial
+cd yak-tutorial
 ```
 
 All following steps will be done in this directory.
@@ -202,7 +202,7 @@ AskUserQuestion:
 
 ### Step 1: Create the Minimal Rule Stub
 
-**Goal:** Get the simplest possible Buck2 rule working.
+**Goal:** Get the simplest possible yak rule working.
 
 **What to do:**
 
@@ -360,7 +360,7 @@ yak build :hello
 ```
 
 **Explain the error:** This error is **expected and good**! We declared an
-output but haven't created an action to produce it. Buck2 is telling us: "You
+output but haven't created an action to produce it. yak is telling us: "You
 promised an output, but didn't say how to make it!"
 
 **Key concepts to explain:**
@@ -404,7 +404,7 @@ def _uppercase_impl(ctx: AnalysisContext) -> list[Provider]:
 python3 -c "import sys; print(open(sys.argv[1]).read().upper(), end='')" "$1" > "$2"
 """
 
-    # Register the action with Buck2
+    # Register the action with yak
     ctx.actions.run(
         cmd_args([
             "/bin/bash",
@@ -433,13 +433,13 @@ cat <output-path>
 
 **Key concepts to explain:**
 
-- **Action**: A command Buck2 will execute (bash script + Python)
+- **Action**: A command yak will execute (bash script + Python)
 - **cmd_args()**: Builds command line, handles artifacts properly
-- **artifact.as_output()**: Marks artifact as output (Buck2 creates parent dirs)
+- **artifact.as_output()**: Marks artifact as output (yak creates parent dirs)
 - **ctx.actions.run()**: Registers action - doesn't execute yet, just declares
-- **Shell redirection**: Use `>` in shell scripts (Buck2 doesn't support
+- **Shell redirection**: Use `>` in shell scripts (yak doesn't support
   redirect_stdout)
-- **Lazy execution**: Buck2 decides when/if to run based on what's needed
+- **Lazy execution**: yak decides when/if to run based on what's needed
 
 **Before moving on — Socratic check:**
 
@@ -470,13 +470,13 @@ error. Advance only once they show they understand.
 yak targets :
 
 # Expected output shows targets like:
-# root//buck2-tutorial:hello
-# root//buck2-tutorial:goodbye
+# root//yak-tutorial:hello
+# root//yak-tutorial:goodbye
 ```
 
 **Explain target name anatomy:**
 
-A full Buck2 target name has three parts:
+A full yak target name has three parts:
 
 ```
 cell//package/path:target_name
@@ -488,12 +488,12 @@ cell//package/path:target_name
 
 **Examples with explanations:**
 
-- `root//buck2-tutorial:hello`
+- `root//yak-tutorial:hello`
   - **Full target name** with all three parts explicitly specified
   - Always valid and unambiguous from anywhere
   - Use this when referring to targets from a different cell/repository
 
-- `//buck2-tutorial:hello`
+- `//yak-tutorial:hello`
   - **Cell name omitted** - defaults to the current repository's cell
   - Since we're working in the `root` cell, `//` is shorthand for `root//`
   - Valid when referring to any target in the same repository/cell
@@ -503,7 +503,7 @@ cell//package/path:target_name
   - **Cell and package path omitted** - only the target name
   - Only valid when you're in the same directory/package
   - Shortest form for referring to targets in the current YAK file
-  - When you run `yak build :hello` from the `buck2-tutorial` directory, Buck2 knows you mean `root//buck2-tutorial:hello`
+  - When you run `yak build :hello` from the `yak-tutorial` directory, yak knows you mean `root//yak-tutorial:hello`
 
 **Now query the targets:**
 
@@ -531,10 +531,10 @@ yak cquery :hello --output-attribute=src
 
 **Show the difference:**
 
-- Unconfigured: `root//buck2-tutorial:hello`
-- Configured: `root//buck2-tutorial:hello (prelude//platforms:default#<hash>)`
+- Unconfigured: `root//yak-tutorial:hello`
+- Configured: `root//yak-tutorial:hello (prelude//platforms:default#<hash>)`
 
-Notice the configuration suffix in parentheses is added when Buck2 applies platform-specific settings.
+Notice the configuration suffix in parentheses is added when yak applies platform-specific settings.
 
 **Before moving on — Socratic check:**
 
@@ -630,7 +630,7 @@ yak build :hello --show-full-output
 - **select()**: Choose values based on configuration
 - **Configuration keys**: Match against platform constraints (os, cpu, etc.)
 - **DEFAULT**: Fallback if no other branch matches
-- **Resolution**: During configuration phase, Buck2 picks one branch
+- **Resolution**: During configuration phase, yak picks one branch
 
 **Before moving on — Socratic check:**
 
@@ -756,14 +756,14 @@ yak cquery "deps(:goodbye)"
 - **attrs.dep()**: Declares an attribute accepting another target
 - **Providers**: Access dependency info via `dep[ProviderType]`
 - **Using dep outputs**: We concatenate dep outputs with our src, showing real usage
-- **Automatic ordering**: Buck2 builds deps first, ensuring outputs are ready
+- **Automatic ordering**: yak builds deps first, ensuring outputs are ready
 - **cmd.add()**: Dynamically add arguments to the command (for variable number of deps)
 
 **Before moving on — Socratic check:**
 
 Run a comprehension check (see "Use the Socratic Method Between Major
 Steps"), generating the question from what this step covered. Aim it at
-how Buck2 knows to build `:hello` before `:goodbye`, and how the rule
+how yak knows to build `:hello` before `:goodbye`, and how the rule
 reaches a dependency's output via `dep[DefaultInfo]`. Advance only once
 they show they understand.
 
@@ -818,7 +818,7 @@ yak build :hello_macro --show-full-output
 
 **Rules:**
 
-- Core Buck2 primitives declared with `rule()`
+- Core yak primitives declared with `rule()`
 - Run during analysis phase
 - Create actions that produce artifacts
 - Can be queried with `yak cquery`/`uquery`
@@ -865,9 +865,9 @@ AskUserQuestion:
 
 Here's how a typical interactive session should flow:
 
-**User:** "I want to learn Buck2"
+**User:** "I want to learn yak"
 
-**Claude:** "Great! I'll guide you through writing your first Buck2 rule. We'll
+**Claude:** "Great! I'll guide you through writing your first yak rule. We'll
 build a simple text converter that uppercases files. I'll guide you
 step-by-step - there are 8 steps total, and we'll test after each one.
 
@@ -886,7 +886,7 @@ progress."
 
 **User:** "Yes"
 
-**Claude:** "Perfect! Step 1 is about creating the simplest possible Buck2
+**Claude:** "Perfect! Step 1 is about creating the simplest possible yak
 rule - one that does nothing but is valid.
 
 I'll create two files:
@@ -919,7 +919,7 @@ again.]
 ## Tips for Teaching
 
 1. **Celebrate small wins**: "Great!", "Perfect!", "It worked!"
-2. **Normalize errors**: "This error is expected!", "Let's see what Buck2 is
+2. **Normalize errors**: "This error is expected!", "Let's see what yak is
    telling us"
 3. **Check understanding with Socratic questions**: Gate each step on a
    comprehension check, not a yes/no "ready?" — see "Use the Socratic
@@ -938,11 +938,11 @@ again.]
 ## Next Steps to Suggest After Completion
 
 1. **Read the reference materials**: This skill includes detailed documentation:
-   - `references/concepts.md` - Deep dive into Buck2 core concepts (build model, targets, artifacts, actions, providers, configurations, build graph)
+   - `references/concepts.md` - Deep dive into yak core concepts (build model, targets, artifacts, actions, providers, configurations, build graph)
    - `references/advanced_patterns.md` - Production-ready patterns (custom providers, transitive sets, toolchains, multiple outputs, testing rules)
-2. **Explore Buck2's prelude**: See real production rules in the `prelude/` directory of the Buck2 repository
+2. **Explore yak's prelude**: See real production rules in the `prelude/` directory of the yak repository
 3. **Try more complex rules**: Multiple outputs, custom providers, transitive dependencies
-4. **Learn BXL**: Buck Extension Language for build introspection
+4. **Learn BXL**: the extension language of yak, for build introspection
 5. **Build something real**: Apply what you learned to your project
 
 **Pro tip:** After completing the tutorial, ask questions like "how do providers work in detail?" or "what are transitive sets?" and I'll reference the appropriate documentation to give you deeper explanations.

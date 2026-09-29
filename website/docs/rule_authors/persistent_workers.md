@@ -3,7 +3,7 @@ id: persistent_workers
 title: Persistent Workers
 ---
 
-Persistent workers are long-lived processes that Buck2 spawns once and reuses
+Persistent workers are long-lived processes that yak spawns once and reuses
 across multiple build actions, avoiding the overhead of repeatedly starting
 heavy processes like compilers. This is particularly useful for JVM-based tools
 where startup cost is significant. Workers are shared across actions within a
@@ -13,7 +13,7 @@ persist across separate invocations.
 ## How worker identity works
 
 Each call to [`WorkerInfo(...)`](../../api/build/WorkerInfo) in Starlark is assigned a unique internal ID.
-Buck2 uses this ID to decide whether to reuse an existing worker process or
+yak uses this ID to decide whether to reuse an existing worker process or
 spawn a new one: actions that reference the **same `WorkerInfo` instance** share
 the same worker process, while actions referencing **different instances** get
 separate workers.
@@ -54,7 +54,7 @@ worker = rule(
 - **`exe`**: The command to start the worker process. Typically a `RunInfo` or
   `cmd_args`.
 - **`concurrency`**: Optional maximum number of concurrent commands the worker
-  can handle. When `None`, Buck2 sends one command at a time.
+  can handle. When `None`, yak sends one command at a time.
 
 Instantiate this in your `YAK` file:
 
@@ -165,10 +165,10 @@ instance with a new ID, resulting in a separate worker process per target.
 
 ## Protocols
 
-Buck2 supports two persistent worker protocols:
+yak supports two persistent worker protocols:
 
-- **Local workers** use a Buck2-specific gRPC protocol over Unix domain sockets.
-  Buck2 passes the socket path in the `WORKER_SOCKET` environment variable.
+- **Local workers** use a yak-specific gRPC protocol over Unix domain sockets.
+  yak passes the socket path in the `WORKER_SOCKET` environment variable.
 - **Remote workers** use the
   [Bazel persistent worker protocol](https://bazel.build/remote/persistent)
   (length-prefixed protobuf over stdin/stdout). Enable this with
@@ -181,4 +181,4 @@ For remote workers, command-line arguments must be passed via an argument file
 
 Workers can be enabled or disabled at the execution platform level via the
 `use_persistent_workers` attribute on `CommandExecutorConfig`, or globally via
-the `build.use_persistent_workers` buckconfig (defaults to `True`).
+the `build.use_persistent_workers` yakconfig (defaults to `True`).

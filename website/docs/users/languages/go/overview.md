@@ -5,31 +5,31 @@ title: Overview
 
 # Overview
 
-This is an overview of using Buck2 to build Go projects. It assumes you have a
-basic understanding of Buck2 and Go. If you are completely new to Buck2, see the
-[Buck2 Getting Started](../../../getting_started/index.md) to learn the basic
+This is an overview of using yak to build Go projects. It assumes you have a
+basic understanding of yak and Go. If you are completely new to yak, see the
+[yak Getting Started](../../../getting_started/index.md) to learn the basic
 concepts.
 
 ## Just need an example?
 
 Check out the
 **[examples/toolchains/go_toolchain](https://github.com/rdeusser/buck2/tree/main/examples/toolchains/go_toolchain)**
-project for an example of a Go project using Buck2. This example supports
+project for an example of a Go project using yak. This example supports
 hermetic toolchains, third-party dependency management, cross-compilation, and
 multiple execution platforms.
 
-## The UX differences between Buck2 and `go build`
+## The UX differences between yak and `go build`
 
-Buck2 is a general-purpose build system, so you need to provide more information
+yak is a general-purpose build system, so you need to provide more information
 about your project:
 
-- You need to tell Buck2 that specific code is Go code. This is done by
+- You need to tell yak that specific code is Go code. This is done by
   declaring targets like `go_binary` in `YAK` files.
-- You need to tell Buck2 where dependencies of a particular target are. This is
+- You need to tell yak where dependencies of a particular target are. This is
   done by adding `deps` to the target definition.
-- You need to configure Buck2 where to find the Go compiler and other tools by
+- You need to configure yak where to find the Go compiler and other tools by
   adding `go_toolchain` to the `toolchains` cell. You also need to map some
-  Buck2 configuration options to Go options like GOOS/GOARCH.
+  yak configuration options to Go options like GOOS/GOARCH.
 
 ## The types of targets
 
@@ -41,7 +41,7 @@ about your project:
 
 ## How to write Go targets
 
-Buck2 offers lots of flexibility in how you can write your targets, but it makes
+yak offers lots of flexibility in how you can write your targets, but it makes
 sense to stick to the following conventions for better compatibility with the
 rest of the Go ecosystem:
 

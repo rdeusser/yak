@@ -1,9 +1,9 @@
 ---
 id: install
-title: Installing Buck2
+title: Installing yak
 ---
 
-## Installing Buck2
+## Installing yak
 
 The latest set of `yak` executables can be found under the
 [`latest` release page](https://github.com/rdeusser/buck2/releases/tag/latest).
@@ -15,11 +15,11 @@ for each user, and ensures a consistent build environment for each commit in the
 repo.
 
 If no prebuilt binary is available for your platform — or you want to hack on
-Buck2 itself — see [Building from Source](#building-from-source) below.
+yak itself — see [Building from Source](#building-from-source) below.
 
 ## Building from Source
 
-Buck2 currently requires a nightly Rust toolchain. The simplest setup is via
+yak currently requires a nightly Rust toolchain. The simplest setup is via
 [rustup](https://rustup.rs/), which provisions the right `rustc`/`cargo` for
 you. Once it's installed, build and install `yak` directly from GitHub:
 
@@ -45,7 +45,7 @@ $Env:PATH += ";$HOME\.cargo\bin"
 
 Verify the install with `yak --help`.
 
-To hack on Buck2, build from a clone of the repo instead:
+To hack on yak, build from a clone of the repo instead:
 
 ```sh
 git clone https://github.com/rdeusser/buck2.git
@@ -56,7 +56,7 @@ cargo install --path=app/buck2
 ### Using Nix
 
 Most [Nix](https://nixos.org/nix) users provision tools directly with Nix
-itself, rather than rustup. The Buck2 source ships a `flake.nix` that exposes a
+itself, rather than rustup. The yak source ships a `flake.nix` that exposes a
 `cargo`/`rustc` development shell:
 
 ```sh
@@ -66,14 +66,14 @@ nix develop . # add 'rustc' and 'cargo' to $PATH
 cargo build --release --bin=yak
 ```
 
-A Nix package (e.g. `nix build .#buck2`) does not yet exist; see `yak` in
-nixpkgs for inspiration for writing one. An `.envrc` using the Nix flake is
+A Nix package (e.g. `nix build .#yak`) does not yet exist; the `buck2` package
+in nixpkgs shows how to write one. An `.envrc` using the Nix flake is
 provided for `direnv` users — `direnv allow` will give a usable development
 environment.
 
 ### `protoc` on non-Tier-1 platforms
 
-Buck2 uses Protocol Buffers extensively, both internally and to talk to remote
+yak uses Protocol Buffers extensively, both internally and to talk to remote
 systems for things like Remote Execution. Compiling the `.proto` files needs
 the `protoc` compiler.
 
@@ -95,7 +95,7 @@ export YAK_BUILD_PROTOC=/opt/protobuf/bin/protoc
 export YAK_BUILD_PROTOC_INCLUDE=/opt/protobuf/include
 ```
 
-### Building Buck2 with Buck2
+### Building yak with yak
 
 See [Bootstrapping](../about/bootstrapping.md) for details. The gist:
 
