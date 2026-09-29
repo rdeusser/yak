@@ -14,6 +14,7 @@ use remote_execution::TCode;
 use tracing::info;
 use tracing::warn;
 use yak_action_metadata_proto::RemoteDepFile;
+use yak_core::execution_types::executor_config::RemoteExecutorUseCase;
 use yak_core::fs::artifact_path_resolver::ArtifactFs;
 use yak_core::yak_env;
 
@@ -46,6 +47,7 @@ pub trait IntoRemoteDepFile: Send {
         digest_config: DigestConfig,
         fs: &ArtifactFs,
         materializer: &dyn Materializer,
+        re_use_case: RemoteExecutorUseCase,
         result: &CommandExecutionResult,
     ) -> yak_error::Result<Option<RemoteDepFile>>;
 }
