@@ -338,7 +338,7 @@ struct PageInAssociation {
     phase: PageInPhase,
 }
 
-/* These signals are distinct from the main Buck event bus because some
+/* These signals are distinct from the main yak event bus because some
  * analysis needs access to the entire build graph, and serializing the
  * entire build graph isn't feasible - therefore, we have these signals
  * with an unserializable but lightweight handle on a RegisteredAction.

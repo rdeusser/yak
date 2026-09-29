@@ -131,7 +131,7 @@ Without an execution platform, this repository's build runs every action locally
 - `explorer/` is an Electron app for exploring the graph. It is not part of the Cargo workspace.
 - `examples/` holds example projects, which the manually triggered `.github/workflows/build-and-examples.yml` builds.
 - `tests/` holds the pytest integration tests, which `.github/workflows/integration-tests.yml` runs on Linux (see `tests/README.md`).
-- `website/` holds the user documentation site, which Docusaurus builds. Its pages live in `website/docs/`, where `website/gen_docs.py` also writes the API, rule, and command reference pages that a built `yak` generates. `.github/workflows/upload_buck2.yml` deploys the built site to the `gh-pages` branch on every push to `main`.
+- `website/` holds the user documentation site, which Docusaurus builds. Its pages live in `website/docs/`, where `website/gen_docs.py` also writes the API, rule, and command reference pages that a built `yak` generates. `.github/workflows/upload_yak.yml` deploys the built site to the `gh-pages` branch on every push to `main`.
 - `docs/` holds contributor documentation (`docs/developers/`), the execution plan contract (`docs/PLANS.md`), and the plans and tech-debt tracker (`docs/exec-plans/`). The site does not include it.
 
 ## Invariants and boundaries
@@ -224,5 +224,5 @@ yak builds on Linux and macOS use the system allocator, because `third-party/rus
 
 ## Planned changes
 
-- The rename to yak continues with the messages and comments of the code and the `buck2*` crates. `docs/exec-plans/active/2026-09-28-rename-the-fork.md` tracks the work.
+- The rename to yak continues with the `buck2*` crates. `docs/exec-plans/active/2026-09-28-rename-the-fork.md` tracks the work.
 - The owner plans to remove what still ties the repository to Meta's upstream projects, such as the downloads from upstream releases. `docs/exec-plans/tech-debt-tracker.md` lists them under Upstream connections.

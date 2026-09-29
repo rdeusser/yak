@@ -629,8 +629,8 @@ def _amend_spec_with_build_uuid(
     # build that produced the cache value.
     #
     # For example, if you did the following:
-    #  - `buck build //my:app` (build uuid X)
-    #  - `buck build //my:app` (build uuid Y)
+    #  - `yak build //my:app` (build uuid X)
+    #  - `yak build //my:app` (build uuid Y)
     #
     # Build Y runs no actions at all (nothing invalidated because synthesized
     # files are not inputs to the action), so `BuildInfo.json` would contain
@@ -652,7 +652,7 @@ def _deduplicate_spec(spec: List[BundleSpecItem]) -> List[BundleSpecItem]:
     # Do not reorder spec items to achieve determinism.
     # Rely on the fact that `dict` preserves key order.
     deduplicated_spec = list(dict.fromkeys(spec))
-    # Force same sorting as in Buck1 for `SourcePathWithAppleBundleDestination`
+    # Sort the spec deterministically.
     # WARNING: This logic is tightly coupled with how spec filtering is done in `_filter_conflicting_paths` method during incremental bundling. Don't change unless you fully understand what is going on here.
     deduplicated_spec.sort()
     return deduplicated_spec

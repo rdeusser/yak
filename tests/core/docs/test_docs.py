@@ -15,7 +15,7 @@ from e2e_util.helper.golden import golden
 
 
 """
-Tests to ensure that the `buck docs` command works as expected
+Tests to ensure that the `yak docs` command works as expected
 """
 
 

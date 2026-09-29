@@ -1,7 +1,7 @@
 # This file is @generated, regenerate by rerunning the test with `YAK_UPDATE_GOLDEN=1` set
 
 [<TIMESTAMP>] Starting new yak daemon...
-Command failed: Failed to connect to buck daemon.
+Command failed: Failed to connect to yak daemon.
     Daemon process info from <BUCKD_INFO>
     daemon dir: <DAEMON_DIR>
     status: <missing>
@@ -11,10 +11,10 @@ Command failed: Failed to connect to buck daemon.
 Caused by:
     0: Error connecting to the daemon, daemon stderr follows:
        <none>
-    1: establishing connection to Buck daemon or start a daemon
+    1: establishing connection to yak daemon or start a daemon
     2: starting new yak daemon for reason: No yakd.info
     3: Error starting yak daemon
-    4: buck daemon startup failed
+    4: yak daemon startup failed
        stdout:
 
        stderr:

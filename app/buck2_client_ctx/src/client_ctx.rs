@@ -302,7 +302,7 @@ impl<'a> ClientCommandContext<'a> {
     }
 }
 
-/// Provides a common interface for buck subcommands that use event subscribers for logging.
+/// Provides a common interface for yak subcommands that use event subscribers for logging.
 /// Executed by a ClientCommandContext.
 #[allow(async_fn_in_trait)]
 pub trait BuckSubcommand {

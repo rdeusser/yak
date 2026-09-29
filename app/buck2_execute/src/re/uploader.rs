@@ -336,9 +336,9 @@ impl Uploader {
                                     return Err(buck2_error::buck2_error!(
                                         buck2_error::ErrorTag::ReCasArtifactExpired,
                                         "Your build requires an artifact that has expired in the RE CAS \
-                                        and Buck does not have it. This likely happened because your Buck daemon \
+                                        and yak does not have it. This likely happened because your yak daemon \
                                         has been online for a long time. This error is currently unrecoverable. \
-                                        To proceed, you should restart Buck using `yak killall`. \
+                                        To proceed, you should restart yak using `yak killall`. \
                                         Debug information: {:#}",
                                         err
                                     ));
@@ -495,7 +495,7 @@ fn error_for_missing_file(
     buck2_error::buck2_error!(
         buck2_error::ErrorTag::ReInvalidGetCasResponse,
         "Action execution requires artifact `{}` but the materializer did not return a matching \
-        file for this path. This error is unrecoverable and you should restart Buck using \
+        file for this path. This error is unrecoverable and you should restart yak using \
         `yak killall`. We would appreciate a bug report. Debug information: {:#}",
         digest,
         cause,

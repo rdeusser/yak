@@ -250,7 +250,7 @@ apple_binary = prelude_rule(
         in the way that they import header files, in order to better accommodate existing conventions.
         See the sections for the `headers` and `exported_headers` attributes for more details.
 
-        Buck enables you to override components of the Apple toolchain with
+        yak enables you to override components of the Apple toolchain with
         alternate tools, either from the Xcode search paths or from directories
         that you specify.
         See `.yakconfig`
@@ -404,7 +404,7 @@ apple_bundle = prelude_rule(
 
         Code signing will embed entitlements pointed to by the `entitlements_file` arg in
         the bundle's `apple_binary`. This is the preferred way to specify entitlements
-        when building with Buck.
+        when building with yak.
 
         If the entitlements file is not present, it falls back to the `CODE_SIGN_ENTITLEMENTS` entry in
          `info_plist_substitutions`.
@@ -483,9 +483,7 @@ apple_bundle = prelude_rule(
                 default = [],
                 doc = """
                 A list of dependencies of this bundle as build targets. You can embed application
-                 extensions by specifying the extension's bundle target. To include a WatchKit app, append the
-                 flavor `#watch` to the target specification. Buck will automatically substitute the appropriate
-                 platform flavor (either `watchsimulator` or `watchos`) based on the parent.
+                 extensions by specifying the extension's bundle target.
             """,
             ),
             "product_name": attrs.option(
@@ -493,7 +491,7 @@ apple_bundle = prelude_rule(
                 default = None,
                 doc = """
                 The name of the resulting bundle and binary. The setting behaves like PRODUCT\\_NAME Xcode build setting.
-                 For example, if your rule is named "MyApp" and extension is "app", by default buck will generate MyApp.app bundle.
+                 For example, if your rule is named "MyApp" and extension is "app", by default yak will generate MyApp.app bundle.
                  But if you will set product name to "SuperApp", bundle will get "SuperApp.app" name.
             """,
             ),
@@ -562,7 +560,7 @@ apple_library = prelude_rule(
         in the way that they import header files, in order to better accommodate existing conventions.
         See the sections for the `headers` and `exported_headers` attributes for more details.
 
-        Buck enables you to override components of the Apple toolchain with
+        yak enables you to override components of the Apple toolchain with
         alternate tools, either from the Xcode search paths or from directories
         that you specify.
         See `.yakconfig`
@@ -963,7 +961,7 @@ apple_test = prelude_rule(
     name = "apple_test",
     docs = """
         An `apple_test()` rule contains Objective-C/C++ code which can be built and used to test
-        code contained in other rules. The tests can be executed by running `buck test`.
+        code contained in other rules. The tests can be executed by running `yak test`.
     """,
     examples = """
         ```

@@ -36,7 +36,7 @@ use crate::sqlite::tables::incremental_state_table::IncrementalStateSqliteTable;
 ///
 /// If you forget to bump this version,
 /// then you can fix forward by bumping the `yak.sqlite_incremental_state_version`
-/// buckconfig in the project root's .yakconfig.
+/// yakconfig in the project root's .yakconfig.
 pub const INCREMENTAL_DB_SCHEMA_VERSION: u64 = 0;
 
 pub(crate) type IncrementalState = BuckDashMap<String, Arc<IncrementalPathMap>>;

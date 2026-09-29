@@ -976,7 +976,7 @@ async fn build_target(
 }
 
 /// Provider types that can be skipped in artifact path sketch computation.
-/// Parsed from `yak.providers_to_skip_in_artifact_path_sketch` buckconfig.
+/// Parsed from `yak.providers_to_skip_in_artifact_path_sketch` yakconfig.
 enum SkipProvider {
     Build,
     Run,

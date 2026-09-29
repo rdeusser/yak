@@ -21,7 +21,7 @@ use crate::complete::path_sanitizer::PathSanitizer;
 use crate::complete::path_sanitizer::SanitizedPath;
 
 /// Companion files that live alongside flagfiles under `mode/` directories but
-/// are not themselves usable as `@flagfile` / `--flagfile` arguments: buckconfig
+/// are not themselves usable as `@flagfile` / `--flagfile` arguments: yakconfig
 /// includes pulled in via `--config-file`, Starlark (`.bzl` and `PACKAGE`),
 /// generators, docs, and metadata.
 const NON_FLAGFILE_EXTENSIONS: &[&str] = &[

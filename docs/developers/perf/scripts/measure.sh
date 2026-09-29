@@ -12,7 +12,7 @@
 # heap profile.
 #
 # Usage:
-#   measure.sh <bin> <tag> -- <buck2 args...>
+#   measure.sh <bin> <tag> -- <yak args...>
 #
 # Example:
 #   measure.sh /tmp/b2a a -- build //some/target -v0 --console=none
@@ -32,7 +32,7 @@ set -u
 OUT_DIR=${OUT_DIR:-/tmp}
 
 if [ "$#" -lt 3 ] || [ "$3" != "--" ]; then
-  echo "usage: $0 <bin> <tag> -- <buck2 args...>" >&2
+  echo "usage: $0 <bin> <tag> -- <yak args...>" >&2
   exit 2
 fi
 BIN=$1

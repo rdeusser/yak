@@ -28,7 +28,7 @@ fn elapsed_cpu_time_as_percents(
     elapsed_cpu_time_us_avg_per_second.checked_div(1_000_000 / 100)
 }
 
-/// Our tests sometimes don't exit Buck 2 cleanly, and they might not get an oppportunity to do so
+/// Our tests sometimes don't exit yak cleanly, and they might not get an oppportunity to do so
 /// if they are terminated. This allows the daemon to self-destruct.
 pub(crate) fn maybe_schedule_termination() -> buck2_error::Result<()> {
     if let Some(duration) =
@@ -57,10 +57,10 @@ pub(crate) fn maybe_schedule_termination() -> buck2_error::Result<()> {
                 elapsed_cpu_time_avg_in_percents
             {
                 format!(
-                    "Buck is exiting after {duration:?} elapsed; avg process CPU in the last {sleep_after:?} is {elapsed_cpu_time_avg_in_percents}%"
+                    "yak is exiting after {duration:?} elapsed; avg process CPU in the last {sleep_after:?} is {elapsed_cpu_time_avg_in_percents}%"
                 )
             } else {
-                format!("Buck is exiting after {duration:?} elapsed")
+                format!("yak is exiting after {duration:?} elapsed")
             };
             let _unused = soft_error!(
                 "schedule_termination_exit",

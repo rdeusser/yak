@@ -85,7 +85,7 @@ pub enum PagableStorageBackend {
 
 impl PagableStorageBackend {
     /// This backend, unless the `PAGABLE_STORAGE_BACKEND` env var is set, in which
-    /// case that overrides it. Lets benchmarks pick a backend without a buckconfig.
+    /// case that overrides it. Lets benchmarks pick a backend without a yakconfig.
     pub fn with_env_override(self) -> anyhow::Result<Self> {
         match std::env::var("PAGABLE_STORAGE_BACKEND") {
             Ok(s) => Ok(s.parse()?),
@@ -112,7 +112,7 @@ impl FromStr for PagableStorageBackend {
     type Err = PagableStorageBackendParseError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        // Empty (the buckconfig default) selects SQLite.
+        // Empty (the yakconfig default) selects SQLite.
         if s.is_empty() || s.eq_ignore_ascii_case("sqlite") {
             Ok(PagableStorageBackend::Sqlite)
         } else if s.eq_ignore_ascii_case("sled") {

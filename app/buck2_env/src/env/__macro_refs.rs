@@ -22,7 +22,7 @@ where
     Ok(T::from_str(v)?)
 }
 
-/// This macro is used to register environment variables that are used by Buck2.
+/// This macro is used to register environment variables that are used by yak.
 ///
 /// The first argument to the macro must always be a string literal with the name of the environment
 /// variable.

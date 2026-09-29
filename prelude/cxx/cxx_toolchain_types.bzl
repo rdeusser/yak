@@ -130,12 +130,12 @@ DepTrackingMode = enum(
     "none",
 )
 
-# TODO: There's a bunch of info encoded in random places in buck
+# TODO: There's a bunch of info encoded in random places in yak
 # derived from information in these toolchains but hardcoded (for example,
 # which file extensions are preprocessable/compilable). We should figure out
 # how to move most of that into these toolchain infos.
 # TODO: The inclusion of compiler and preprocessor in here is really
-# just a legacy thing that was never cleaned up. Historically, buck supported a
+# just a legacy thing that was never cleaned up. Historically, yak supported a
 # mode where compilation was done in two, explicitly separate phases
 # (preprocess and then compile). We don't support that today, and including
 # both of these mostly just ends up with added complexity and with us
@@ -473,7 +473,7 @@ def cxx_toolchain_infos(
         ldflags_shared_extra = apple_extra_darwin_linker_flags(apple_target_triple)
 
     # Provide placeholder mappings, used primarily by cxx_genrule.
-    # We don't support these buck1 placeholders since we can't take an argument.
+    # We don't support these placeholders since we can't take an argument.
     # $(ldflags-pic-filter <pattern>)
     # $(ldflags-shared-filter <pattern>)
     # $(ldflags-static-filter <pattern>)

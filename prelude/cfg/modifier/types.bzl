@@ -20,7 +20,7 @@ ModifierTargetLocation = record()
 # Modifier specified via command line from the user
 ModifierCliLocation = record()
 
-# Modifier specified from buckconfig
+# Modifier specified from yakconfig
 ModifierBuckconfigLocation = record(
     section = str,
     property = str,

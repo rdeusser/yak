@@ -191,7 +191,7 @@ pub(crate) fn to_project_json(
         }
 
         // If an include directory ends with __srcs, use its parent directory.
-        // Buck generates __srcs directories that mirror the source layout,
+        // yak generates __srcs directories that mirror the source layout,
         // and rust-analyzer should resolve to the real source directory.
         include_dirs = include_dirs
             .into_iter()
@@ -248,7 +248,7 @@ pub(crate) fn to_project_json(
         sysroot: Box::new(sysroot),
         crates,
         runnables: vec![Runnable {
-            program: "buck".to_owned(),
+            program: "yak".to_owned(),
             args: vec![
                 "test".to_owned(),
                 CLIENT_METADATA_RUST_PROJECT.to_owned(),
@@ -491,7 +491,7 @@ impl Buck {
 
     /// Invoke `yak` with the given subcommands.
     ///
-    /// Care should be taken to ensure that buck is invoked with the same set
+    /// Care should be taken to ensure that yak is invoked with the same set
     /// options and configuration to avoid invalidating caches.
     fn command<I, S>(&self, subcommands: I) -> Command
     where
@@ -501,13 +501,13 @@ impl Buck {
         let mut cmd = self.command_without_config(subcommands);
         cmd.args([
             "-c=rust.rust_project_build=true",
-            // Buck owner() queries stop at the innermost YAK file unless
+            // yak owner() queries stop at the innermost YAK file unless
             // package_boundary_exceptions is set.
             //
-            // This is arguably a bug in buck, because it's possible for a parent YAK
+            // This is arguably a bug in yak, because it's possible for a parent YAK
             // file to own a file in a subdirectory that has its own YAK file.
             //
-            // Buck probably didn't intend to allow this pattern: it doesn't work when you
+            // yak probably didn't intend to allow this pattern: it doesn't work when you
             // use `srcs = glob()`, but it does work for srcs with explicit paths.
             //
             // The intent of package_boundary_exceptions was to enforce boundaries with an explicit opt-out
@@ -523,9 +523,9 @@ impl Buck {
         cmd
     }
 
-    /// Invoke `buck` with the given subcommands.
+    /// Invoke `yak` with the given subcommands.
     ///
-    /// This method should only be used with buck commands that do not accept
+    /// This method should only be used with yak commands that do not accept
     /// configuration options, such as `root`. [`Buck::command`] should be preferred.
     fn command_without_config<I, S>(&self, subcommands: I) -> Command
     where
@@ -552,7 +552,7 @@ impl Buck {
         cmd
     }
 
-    /// Return the absolute path of the current Buck project root.
+    /// Return the absolute path of the current yak project root.
     pub(crate) fn resolve_project_root(&self) -> Result<PathBuf, anyhow::Error> {
         let mut command = self.command_without_config(["root"]);
         command.arg("--kind=project");
@@ -561,7 +561,7 @@ impl Buck {
         truncate_line_ending(&mut stdout);
 
         if enabled!(Level::TRACE) {
-            trace!(%stdout, "got root from buck");
+            trace!(%stdout, "got root from yak");
         }
 
         Ok(stdout.into())
@@ -597,7 +597,7 @@ impl Buck {
 
         // Set working directory to the containing directory of the target file.
         // This fixes cases where the working directory happens to be inside an
-        // unrelated buck project.
+        // unrelated yak project.
         if let Some(parent_dir) = saved_file.parent() {
             command.current_dir(parent_dir);
         }
@@ -656,7 +656,7 @@ impl Buck {
 
         info!("resolving aliased targets");
         // Recursively expand aliases until we find a target that isn't an alias, or
-        // we've queried buck 5 times.
+        // we've queried yak 5 times.
         for _ in 0..5 {
             let mut alias_destinations = alias_map
                 .values()
@@ -671,7 +671,7 @@ impl Buck {
                 match self.query_aliased_targets(&alias_destinations, universe_targets) {
                     Ok(new_aliases) => new_aliases,
                     Err(_) => {
-                        warn!("buck cquery failed, falling back to best-effort uquery");
+                        warn!("yak cquery failed, falling back to best-effort uquery");
                         self.query_aliased_targets_lossy(&alias_destinations)
                     }
                 };
@@ -732,12 +732,12 @@ impl Buck {
         command.args(targets);
 
         let Ok(output) = command.output() else {
-            warn!("Buck uquery failed");
+            warn!("yak uquery failed");
             return FxHashMap::default();
         };
 
         let Ok(v) = serde_json::from_slice::<serde_json::Value>(&output.stdout) else {
-            warn!("Failed to parse buck uquery output");
+            warn!("Failed to parse yak uquery output");
             return FxHashMap::default();
         };
         deserialize_uquery_alias_info(v)
@@ -778,7 +778,7 @@ impl Buck {
 
         if enabled!(Level::TRACE) {
             for (target, info) in &raw {
-                trace!(%target, ?info, "parsed target from buck");
+                trace!(%target, ?info, "parsed target from yak");
             }
         }
         Ok(raw)
@@ -799,7 +799,7 @@ impl Buck {
             "--",
         ]);
 
-        info!(kind = "progress", ?input, "finding relevant buck targets");
+        info!(kind = "progress", ?input, "finding relevant yak targets");
 
         match input {
             Input::Targets(targets) => {
@@ -880,7 +880,7 @@ where
             let stderr_str = String::from_utf8_lossy(&stderr);
 
             for line in stderr_str.lines() {
-                if let Some(pos) = line.find("Buck UI") {
+                if let Some(pos) = line.find("Build ID") {
                     tracing::info!("{}", &line[pos..]);
                 }
             }
@@ -926,7 +926,7 @@ where
             tracing::debug!(?command, "parsing file output");
 
             for line in String::from_utf8_lossy(&stderr).lines() {
-                if let Some(pos) = line.find("Buck UI") {
+                if let Some(pos) = line.find("Build ID") {
                     tracing::info!("{}", &line[pos..]);
                 }
             }

@@ -19,7 +19,7 @@ use regex::Regex;
 const COMMON_OPTION_HEADINGS: &[&str] = &[
     "Universal Options",
     "Event Log Options",
-    "Buckconfig Options",
+    "yakconfig Options",
     "Console Options",
 ];
 
@@ -158,7 +158,7 @@ InstallInfo(
 )
 ```
 
-Buck connects to the installer using GRPC and sends individual files to install once they have finished building.
+yak connects to the installer using GRPC and sends individual files to install once they have finished building.
 ".to_owned()
     } else {
         format!(

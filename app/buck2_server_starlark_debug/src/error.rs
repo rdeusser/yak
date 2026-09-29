@@ -8,7 +8,7 @@
  * above-listed licenses.
  */
 
-/// Errors from buck's starlark debugger
+/// Errors from yak's starlark debugger
 #[derive(Debug, buck2_error::Error)]
 #[buck2(tag = Tier0)]
 pub(crate) enum StarlarkDebuggerError {
@@ -18,7 +18,7 @@ pub(crate) enum StarlarkDebuggerError {
     DebuggerAlreadyAttached,
 }
 
-/// Internal errors from buck's starlark debugger
+/// Internal errors from yak's starlark debugger
 #[derive(Debug, buck2_error::Error)]
 #[buck2(tag = Tier0)]
 pub(crate) enum StarlarkDebuggerInternalError {

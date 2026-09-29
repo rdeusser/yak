@@ -140,7 +140,7 @@ impl Builder {
     {
         let Self { mut tonic } = self;
 
-        // Buck likes to set $OUT in a genrule, while Cargo likes to set $OUT_DIR.
+        // yak likes to set $OUT in a genrule, while Cargo likes to set $OUT_DIR.
         // If we have $OUT set only, move it into the config
         if get_env("OUT_DIR").is_none() {
             if let Some(out) = get_env("OUT") {

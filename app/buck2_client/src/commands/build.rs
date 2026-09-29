@@ -57,7 +57,7 @@ pub struct BuildCommand {
     #[clap(
         long = "materializations",
         short = 'M',
-        help = "Materialize (or skip) the final artifacts, bypassing buckconfig.",
+        help = "Materialize (or skip) the final artifacts, bypassing yakconfig.",
         ignore_case = true,
         value_enum
     )]
@@ -262,7 +262,7 @@ impl StreamingCommand for BuildCommand {
         };
 
         let console = self.common_opts.console_opts.final_console();
-        print_buck_ui(&console, ctx, events_ctx.used_superconsole)?;
+        print_build_id(&console, ctx, events_ctx.used_superconsole)?;
 
         if success {
             if self.patterns.is_empty() {
@@ -353,15 +353,15 @@ pub(crate) fn print_build_succeeded(
     Ok(())
 }
 
-/// Re-prints the Buck UI URL at command end, but only when a superconsole was
+/// Re-prints the build ID at command end, but only when a superconsole was
 /// actually constructed for the command (`used_superconsole`). Superconsole's
-/// live area showed the URL during the command but clears on exit, so without
-/// the re-print the URL would be gone from scrollback. Simple-console runs
+/// live area showed the ID during the command but clears on exit, so without
+/// the re-print the ID would be gone from scrollback. Simple-console runs
 /// already printed it at command start (simpleconsole.rs) and that line stays
 /// in scrollback, so re-printing would be a duplicate. The flag comes from
 /// `get_console_with_root` via `EventsCtx::used_superconsole`, so it correctly
 /// reports `false` for the `ConsoleType::Auto`-falls-back-to-simple case.
-pub(crate) fn print_buck_ui(
+pub(crate) fn print_build_id(
     console: &FinalConsole,
     ctx: &ClientCommandContext<'_>,
     used_superconsole: bool,

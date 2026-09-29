@@ -57,7 +57,7 @@ impl RemoteExecutionStaticMetadataImpl for RemoteExecutionStaticMetadata {
     }
 }
 
-/// The remote execution configuration, read from the `buck2_re_client` buckconfig section.
+/// The remote execution configuration, read from the `yak_re_client` yakconfig section.
 #[derive(Clone, Debug, Default, Allocative)]
 pub struct Buck2OssReConfiguration {
     /// Address for RBE Content Addresable Storage service (including bytestream uploads service).

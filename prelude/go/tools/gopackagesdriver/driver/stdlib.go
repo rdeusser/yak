@@ -28,15 +28,15 @@ import (
 )
 
 // queryStd resolves packages the "normal" way
-// This is mostly used to resolve builtins and stdlib which buck doesn't know about
-// - stdlibDeps is a special argument, we never add it to roots, as it's always a dependency of buck's package
+// This is mostly used to resolve builtins and stdlib which yak doesn't know about
+// - stdlibDeps is a special argument, we never add it to roots, as it's always a dependency of yak's package
 func queryStd(ctx context.Context, req *packages.DriverRequest, goBinPath string, queryArgs []string) ([]*packages.Package, error) {
-	// If we exist within a buck environment, then use the buck go tool instead
+	// If we exist within a yak environment, then use the yak go tool instead
 	// of the one in the system PATH
 	origPath := os.Getenv("PATH")
 	goBinDir := filepath.Dir(goBinPath)
 	os.Setenv("PATH", fmt.Sprintf("%s:%s", goBinDir, origPath))
-	slog.Info("overriding PATH to use Go from Buck", "dir", goBinDir)
+	slog.Info("overriding PATH to use Go from yak", "dir", goBinDir)
 	defer os.Setenv("PATH", origPath)
 
 	mode := req.Mode

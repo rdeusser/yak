@@ -506,7 +506,7 @@ impl<'a> BuckTestOrchestrator<'a> {
                 //
                 // TODO(arr): is there a better way to check that the output is
                 // in CAS other than checking that the command was executed on
-                // RE? Alternatively, when we make buck upload local testing
+                // RE? Alternatively, when we make yak upload local testing
                 // artifacts to CAS, we can remove this condition altogether.
                 (true, Some(CommandExecutionKind::Remote { .. }), Some(remote_object)) => {
                     let re_client = self.re_client.clone();

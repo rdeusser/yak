@@ -348,7 +348,7 @@ mod tests {
     /// succeed even in environments without a global git config.
     async fn init_git_repo(repo_root: &AbsNormPathBuf) {
         git(repo_root, &["init", "-q"]).await;
-        git(repo_root, &["config", "user.name", "Buck Test"]).await;
+        git(repo_root, &["config", "user.name", "yak Test"]).await;
         git(
             repo_root,
             &["config", "user.email", "buck-test@example.com"],

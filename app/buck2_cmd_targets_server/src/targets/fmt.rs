@@ -713,7 +713,7 @@ pub(crate) fn create_formatter(
         OutputFormat::Text => Ok(Arc::new(TargetNameFormat {
             target_call_stacks,
             target_hash_graph_type: TargetHashGraphType::try_from(other.target_hash_graph_type)
-                .expect("buck cli should send valid target hash graph type"),
+                .expect("yak cli should send valid target hash graph type"),
         })),
         OutputFormat::Json | OutputFormat::JsonLines => Ok(Arc::new(JsonFormat {
             attributes: if other.output_attributes.is_empty() {

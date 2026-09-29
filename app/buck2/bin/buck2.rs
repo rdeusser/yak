@@ -37,7 +37,7 @@ use buck2_wrapper_common::invocation_id::TraceId;
 use dupe::Dupe;
 use superconsole::Stdin;
 
-// Cargo builds use jemalloc on Linux and macOS. A Buck build (`cfg(buck_build)`) uses the system
+// Cargo builds use jemalloc on Linux and macOS. A yak build (`cfg(buck_build)`) uses the system
 // allocator, because `third-party/rust/fixups/tikv-jemalloc-sys` does not build jemalloc.
 #[global_allocator]
 #[cfg(all(any(target_os = "linux", target_os = "macos"), not(buck_build)))]
@@ -68,7 +68,7 @@ fn init_logging() -> buck2_error::Result<Arc<dyn LogConfigurationReloadHandle>> 
 
 fn print_retry() -> buck2_error::Result<()> {
     buck2_client_ctx::eprintln!("============================================================")?;
-    buck2_client_ctx::eprintln!("|| Buck2 has detected that it needs to restart to proceed ||")?;
+    buck2_client_ctx::eprintln!("|| yak has detected that it needs to restart to proceed ||")?;
     buck2_client_ctx::eprintln!("|| Your command will now restart.                         ||")?;
     buck2_client_ctx::eprintln!("============================================================")?;
     buck2_client_ctx::eprintln!()?;
@@ -105,7 +105,7 @@ fn exec_with_logging(
     (shared, res)
 }
 
-// As this main() is used as the entry point for the `buck daemon` command,
+// As this main() is used as the entry point for the `yak daemon` command,
 // it must be single-threaded. Commands that want to be multi-threaded/async
 // will start up their own tokio runtime.
 fn main() -> ! {

@@ -68,8 +68,8 @@ enum WatchmanClientError {
     RequestFailed { inner: watchman_client::Error },
 }
 
-// We use the "new" field. This is marked as deprecated, but buck1 uses it and
-// I'm unaware of issues due to its use there.
+// We use the "new" field. This is marked as deprecated, but I'm unaware of issues due to its
+// use.
 //
 // Putting this in it own mod was the best way to scope the allow(deprecated).
 #[allow(deprecated)]

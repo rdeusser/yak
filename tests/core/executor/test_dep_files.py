@@ -371,7 +371,7 @@ async def check_cache_query(buck: Buck) -> None:
     skip_for_os=["windows"],
 )
 async def test_dep_file_hit_identical_action(buck: Buck) -> None:
-    # For actions that have dep files, buck will query the local dep file cache to see
+    # For actions that have dep files, yak will query the local dep file cache to see
     # if an identical action is stored there. Otherwise, it will fall back to an action cache
     # look up (if enabled) and then to the full dep file query.
     # This test builds a target to build up a dep file cache, then builds the target again
@@ -399,7 +399,7 @@ async def test_dep_file_hit_identical_action(buck: Buck) -> None:
     await check_no_cache_query(buck)
     # Ignoring any simple actions because there can be either one or two symlink dir actions,
     # with the same dice key,
-    # Not sure why but this feels like a DICE bug triggered by the buckconfig change.
+    # Not sure why but this feels like a DICE bug triggered by the yakconfig change.
     await check_execution_kind(
         buck,
         [ACTION_EXECUTION_KIND_LOCAL_ACTION_CACHE],
@@ -430,7 +430,7 @@ async def _execution_kinds(buck: Buck) -> list[int]:
 @buck_test(
     data_dir="dep_files",
     skip_for_os=["windows"],
-    # The persisted dep-file cache is gated on a daemon-startup buckconfig (read once when the daemon
+    # The persisted dep-file cache is gated on a daemon-startup yakconfig (read once when the daemon
     # boots, like the materializer/incremental state dbs), so it must be set here rather than via `-c`.
     extra_buck_config={"yak": {"sqlite_dep_file_state": "true"}},
 )

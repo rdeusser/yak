@@ -32,7 +32,7 @@ system_csharp_toolchain = rule(
     Framework SDKs should be installed at their default location, however this can be customized by changing
     the parameters passed to `system_chsarp_toolchain`.
 
-    The `csc` and `framework_dir` attributes can be buck targets if you would like to check the C# redist bits
+    The `csc` and `framework_dir` attributes can be yak targets if you would like to check the C# redist bits
     into your repo.
 
     Usage:

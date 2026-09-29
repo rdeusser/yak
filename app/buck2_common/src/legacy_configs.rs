@@ -8,8 +8,7 @@
  * above-listed licenses.
  */
 
-//! Contains utilities for dealing with buckv1 concepts (ex. buckv1's
-//! .yakconfig files as configuration)
+//! Contains utilities for reading .yakconfig files as configuration.
 
 mod access;
 pub use access::parse_buckconfig_metadata;

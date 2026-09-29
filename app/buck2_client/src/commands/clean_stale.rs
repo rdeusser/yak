@@ -30,7 +30,7 @@ use buck2_error::internal_error;
 use jiff::SignedDuration;
 use jiff::Timestamp;
 
-/// Clean only old artifacts from a running buck daemon without killing the daemon.
+/// Clean only old artifacts from a running yak daemon without killing the daemon.
 /// This can be interrupted by other commands that run in parallel and request materialization.
 ///
 /// This is a separate command from CleanCommand even though it is invoked with

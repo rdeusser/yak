@@ -22,7 +22,7 @@ async def test_http2_enabled(buck: Buck) -> None:
     status = json.loads(result.stdout)
     assert status["http2"] is True, "http2 is enabled by default"
 
-    # Insert necessary buckconfig to pick up http2 configuration.
+    # Insert necessary yakconfig to pick up http2 configuration.
     with open(f"{buck.cwd}/.yakconfig", "a") as buckconfig:
         buckconfig.writelines(["[http]\n", "http2 = false\n"])
 
@@ -30,4 +30,4 @@ async def test_http2_enabled(buck: Buck) -> None:
     await buck.build()
     result = await buck.status()
     status = json.loads(result.stdout)
-    assert status["http2"] is False, "http2 was disabled by buckconfig"
+    assert status["http2"] is False, "http2 was disabled by yakconfig"

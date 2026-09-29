@@ -11,10 +11,10 @@
 //!
 //! 'ProjectRelativePath's are normalized, platform agnostic, forward pointing
 //! relative paths based at the `project root`.
-//! The `project root` is an 'AbsPath' that corresponds to the root of the buck
-//! process. This is not the current directory where the buck process is
-//! invoked. It is the path of the root of the buck project, which defines the
-//! buck version and configurations.
+//! The `project root` is an 'AbsPath' that corresponds to the root of the yak
+//! process. This is not the current directory where the yak process is
+//! invoked. It is the path of the root of the yak project, which defines the
+//! yak version and configurations.
 //!
 //! The 'ProjectFilesystem' is the filesystem containing the `project root`
 //! information. This file system is used to interact with the

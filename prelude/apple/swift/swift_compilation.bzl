@@ -994,10 +994,10 @@ def _compile_index_store(ctx: AnalysisContext, toolchain: SwiftToolchainInfo, sh
     # swiftc also requires that all output paths are unique, so we can't just use
     # /dev/null as the output path.
     #
-    # Buck requires that all declared outputs are created when the rule succeeds, but we
+    # yak requires that all declared outputs are created when the rule succeeds, but we
     # want to create an index store even if there are errors in the source files.
     #
-    # We solve this by declaring a directory as the buck output, and telling swiftc that
+    # We solve this by declaring a directory as the yak output, and telling swiftc that
     # we want all our .o files there. Our target will then succeed whether or not we
     # create a .o file.
     objects_dir = ctx.actions.declare_output("__indexstore__/objects", dir = True, has_content_based_path = False)
@@ -1117,7 +1117,7 @@ def _compile_with_argsfile(
 def _get_action_properties(
     toolchain: SwiftToolchainInfo, cacheable: bool, build_swift_incrementally: bool, explicit_modules_enabled: bool
 ) -> (bool, ActionExecutionAttributes):  # (allow_cache_upload, ActionExecutionAttributes)
-    # By default, we allow Buck and any command line arguments to determine execution preference.
+    # By default, we allow yak and any command line arguments to determine execution preference.
     # However, based upon certain functionality or execution environments, we modify these
     # default properties for cacheability and performance.
 
@@ -1495,9 +1495,7 @@ def create_swift_dependency_info(
     swift_ast_dump_tset: ArtifactTSet,
     is_macro: bool,
 ):
-    # We pass through the SDK swiftmodules here to match Buck 1 behaviour. This is
-    # pretty loose, but it matches Buck 1 behavior so cannot be improved until
-    # migration is complete.
+    # We pass through the SDK swiftmodules here. This is pretty loose.
     transitive_swiftmodule_deps = _get_swift_paths_tsets(is_macro, deps) + [get_compiled_sdk_swift_deps_tset(ctx, deps_providers)]
 
     if compiled_info:

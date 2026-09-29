@@ -8,7 +8,7 @@
 # above-listed licenses.
 
 # Wrapper script to convert serialized diagnostics output to JSON
-# for Buck error handler consumption. Usage:
+# for yak error handler consumption. Usage:
 #  serialized_diagnostics_to_json_wrapper.sh <serialized_diags_to_json> <output_json> compile args
 serialized_diags_to_json="$1"
 shift

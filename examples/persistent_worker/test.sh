@@ -14,7 +14,7 @@ cat >.yakconfig.local <<EOF
 <file:.yakconfig.no-workers>
 EOF
 yak clean; yak build : -vstderr
-echo "# Verifying Buck2 log" >&2
+echo "# Verifying yak log" >&2
 yak log what-ran --show-std-err --format json \
   | jq -s '
       [
@@ -40,7 +40,7 @@ cat >.yakconfig.local <<EOF
 <file:.yakconfig.local-persistent-workers>
 EOF
 yak clean; yak build : -vstderr
-echo "# Verifying Buck2 log" >&2
+echo "# Verifying yak log" >&2
 yak log what-ran --show-std-err --format json \
   | jq -s '
       [
@@ -53,7 +53,7 @@ yak log what-ran --show-std-err --format json \
           error("expected 5 demo targets, got " + (length | tostring))
         end
       | .[]
-      | if (.reproducer.executor == "Worker" or .reproducer.executor == "WorkerInit") and (.std_err | startswith("Buck2 persistent worker")) then
+      | if (.reproducer.executor == "Worker" or .reproducer.executor == "WorkerInit") and (.std_err | startswith("yak persistent worker")) then
           true
         else
           error("expected local without persistent worker, got " + ([.reproducer.executor, .std_err] | tostring))
@@ -72,7 +72,7 @@ else
 cache_silo_key=$(date +%s.%N).${GITHUB_RUN_ID-0}
 EOF
   yak clean; yak build : -vstderr
-  echo "# Verifying Buck2 log" >&2
+  echo "# Verifying yak log" >&2
   yak log what-ran --show-std-err --format json \
     | jq -s '
         [
@@ -105,7 +105,7 @@ else
 cache_silo_key=$(date +%s.%N).${GITHUB_RUN_ID-0}
 EOF
   yak clean; yak build : -vstderr
-  echo "# Verifying Buck2 log" >&2
+  echo "# Verifying yak log" >&2
   yak log what-ran --show-std-err --format json \
     | jq -s '
         [

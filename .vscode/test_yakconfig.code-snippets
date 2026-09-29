@@ -1,5 +1,5 @@
 {
-	"Nanoprelude buckconfig for core test": {
+	"Nanoprelude yakconfig for core test": {
 		"prefix": "",
 		"body": [
 			"[cells]",
@@ -16,10 +16,10 @@
 			"  name = YAK.fixture",
 			"",
 		],
-		"description": "Inserts a buckconfig that is suitable for use in a core test with the nanoprelude",
+		"description": "Inserts a yakconfig that is suitable for use in a core test with the nanoprelude",
 		"isFileTemplate": true,
 	},
-	"Buckconfig for core test": {
+	"yakconfig for core test": {
 		"prefix": "",
 		"body": [
 			"[cells]",
@@ -29,7 +29,7 @@
 			"  name = YAK.fixture",
 			"",
 		],
-		"description": "Inserts a buckconfig that is suitable for use in a core test",
+		"description": "Inserts a yakconfig that is suitable for use in a core test",
 		"isFileTemplate": true,
 	},
 }

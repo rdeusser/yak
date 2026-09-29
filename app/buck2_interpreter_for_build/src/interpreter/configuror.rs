@@ -77,7 +77,7 @@ pub struct BuildInterpreterConfiguror {
     skip_targets_with_duplicate_names: bool,
     /// Whether to infer a target name when a pattern in a build or bzl file does
     /// not provide one, making `//foo/bar` equivalent to `//foo/bar:bar`.
-    /// Controlled by the `yak.infer_target_names` buckconfig.
+    /// Controlled by the `yak.infer_target_names` yakconfig.
     infer_target_names: InferTargetNames,
     /// For test.
     additional_globals: Option<AdditionalGlobalsFn>,

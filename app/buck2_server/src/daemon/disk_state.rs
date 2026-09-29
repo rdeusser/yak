@@ -264,7 +264,7 @@ pub(crate) async fn maybe_initialize_dep_file_sqlite_db(
     let prune_cutoff = if ttl_days == 0 {
         None
     } else {
-        // `ttl_days` comes from a buckconfig, so it can be absurd. Saturate the multiply and clamp
+        // `ttl_days` comes from a yakconfig, so it can be absurd. Saturate the multiply and clamp
         // to `i64::MAX` before the cast, since `u64::MAX as i64` would otherwise wrap negative and
         // prune everything. Clamping just means "prune nothing", which is what an absurdly long TTL
         // asks for anyway.

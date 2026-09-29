@@ -167,7 +167,7 @@ static SLOW_DEP_FILE_FLUSH_REPORTED: AtomicBool = AtomicBool::new(false);
 fn parse_concurrency(requested: u32) -> Option<usize> {
     let ret: usize = requested
         .try_into()
-        .expect("Buck2 isn't built for 16 bit systems");
+        .expect("yak isn't built for 16 bit systems");
 
     if ret == 0 { None } else { Some(ret) }
 }
@@ -1098,7 +1098,7 @@ fn collect_config_metadata_into(config: &LegacyBuckConfig, data: &mut UserComput
         "client",
     );
 
-    // Soft error if client.id is set in buckconfig (deprecated, will become hard error)
+    // Soft error if client.id is set in yakconfig (deprecated, will become hard error)
     if let Some(client_id) = config.get(BuckconfigKeyRef {
         section: "client",
         property: "id",
@@ -1112,7 +1112,7 @@ fn collect_config_metadata_into(config: &LegacyBuckConfig, data: &mut UserComput
                 "Setting `client.id` via config (`-c|--config client.id={}`) is deprecated \
                  because it invalidates the DICE graph which causes performance loss. \
                  Please migrate to `--client-metadata=id={}` instead. \
-                 This will become a hard error in a future Buck2 release.",
+                 This will become a hard error in a future yak release.",
                 client_id,
                 client_id
             ),
@@ -1257,7 +1257,7 @@ impl ServerCommandContextTrait for ServerCommandContext<'_> {
         Ok(metadata)
     }
 
-    /// Gathers metadata from buckconfig to attach to events for when a command enters the critical
+    /// Gathers metadata from yakconfig to attach to events for when a command enters the critical
     /// section
     async fn config_metadata(
         &self,

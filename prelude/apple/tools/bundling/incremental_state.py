@@ -23,7 +23,7 @@ _VERSION = 8
 class IncrementalStateItem:
     source: Path
     """
-    Path relative to buck project
+    Path relative to yak project
     """
     destination_relative_to_bundle: Path
     digest: Optional[str]

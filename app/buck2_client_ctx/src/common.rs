@@ -189,7 +189,7 @@ impl CommonEventLogOptions {
 /// Defines options for config and configuration related things. Any command that involves the build
 /// graph should include these options.
 #[derive(Debug, clap::Parser, serde::Serialize, serde::Deserialize, Default)]
-#[clap(next_help_heading = "Buckconfig Options")]
+#[clap(next_help_heading = "yakconfig Options")]
 pub struct CommonBuildConfigurationOptions {
     #[clap(
         value_name = "SECTION.OPTION=VALUE",
@@ -495,7 +495,7 @@ impl CommonStarlarkOptions {
 /// Not all the commands have all the options.
 #[derive(Debug, clap::Parser, serde::Serialize, serde::Deserialize, Default)]
 pub struct CommonCommandOptions {
-    /// Buckconfig and similar options.
+    /// yakconfig and similar options.
     #[clap(flatten)]
     pub config_opts: CommonBuildConfigurationOptions,
 

@@ -12,7 +12,7 @@ from e2e_util.api.buck import Buck
 from e2e_util.buck_workspace import buck_test
 
 
-# Test select works with buckconfig.
+# Test select works with yakconfig.
 @buck_test()
 async def test_select_buckconfig(buck: Buck) -> None:
     out = await buck.cquery(

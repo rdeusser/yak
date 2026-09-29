@@ -68,7 +68,7 @@ impl IgnoreSet {
     pub fn from_ignore_spec(spec: &str, root_cell: bool) -> buck2_error::Result<Self> {
         // TODO(cjhopman): There's opportunity to greatly improve the performance of IgnoreSet by
         // constructing special cases for a couple of common patterns we see in ignore specs. We
-        // know that these can get large wins in some places where we've done this same ignore (watchman, buck1's ignores).
+        // know that these can get large wins in some places where we've done this same ignore (watchman).
         // `**/filename`: a filename filter. These can all be merged into one hashset lookup.
         // `**/*.ext`: an extension filter. These can all be merged into one hashset lookup.
         // `**/*x*x*`: just some general glob on the filename alone, can merge these into one GlobSet that just needs to check against the filename.

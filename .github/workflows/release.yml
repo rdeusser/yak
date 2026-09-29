@@ -11,7 +11,7 @@ jobs:
     name: Define the version info for this release
     runs-on: ubuntu-latest
     outputs:
-      buck2_version: ${{ steps.define_version_info.outputs.buck2_version }}
+      yak_version: ${{ steps.define_version_info.outputs.yak_version }}
       tag: ${{ steps.define_version_info.outputs.tag }}
     steps:
       - name: Define version info
@@ -21,19 +21,19 @@ jobs:
           tag=$(date -u +%Y-%m-%d-%H.%M.%S)
 
           echo "tag=$tag" >> "$GITHUB_OUTPUT"
-          echo "buck2_version=$tag-${{ github.sha }}" >> "$GITHUB_OUTPUT"
+          echo "yak_version=$tag-${{ github.sha }}" >> "$GITHUB_OUTPUT"
       - name: Display version info
         run: |
           echo "tag: ${{ steps.define_version_info.outputs.tag }}"
-          echo "buck2_version: ${{ steps.define_version_info.outputs.buck2_version }}"
+          echo "yak_version: ${{ steps.define_version_info.outputs.yak_version }}"
 
   build:
     name: Build `yak`
     needs:
       - set_version_info
-    uses: ./.github/workflows/build_buck2.yml
+    uses: ./.github/workflows/build_yak.yml
     with:
-      buck2_version: ${{ needs.set_version_info.outputs.buck2_version }}
+      yak_version: ${{ needs.set_version_info.outputs.yak_version }}
 
   release:
     name: Release the new tag

@@ -11,28 +11,28 @@
 use buck2_wrapper_common::DOT_YAKCONFIG_D;
 
 pub(crate) enum ExternalConfigSource {
-    // Buckconfig file in the user's home directory
+    // yakconfig file in the user's home directory
     UserFile(&'static str),
 
-    // Buckconfig folder in the user's home directory, assuming all files in this folder are buckconfig
+    // yakconfig folder in the user's home directory, assuming all files in this folder are yakconfig
     UserFolder(&'static str),
 
-    // Global buckconfig file. Repo related config is not allowed
+    // Global yakconfig file. Repo related config is not allowed
     GlobalFile(&'static str),
 
-    // Global buckconfig folder, assuming all files in this folder are buckconfig. Repo related config is not allowed
+    // Global yakconfig folder, assuming all files in this folder are yakconfig. Repo related config is not allowed
     GlobalFolder(&'static str),
 }
 
 pub(crate) enum ProjectConfigSource {
-    // Buckconfig file in the cell relative to project root, such as .yakconfig or .yakconfig.local
+    // yakconfig file in the cell relative to project root, such as .yakconfig or .yakconfig.local
     CellRelativeFile(&'static str),
 
-    // Buckconfig folder in the cell, assuming all files in this folder are buckconfig
+    // yakconfig folder in the cell, assuming all files in this folder are yakconfig
     CellRelativeFolder(&'static str),
 }
 
-/// The default places from which buckconfigs are sourced.
+/// The default places from which yakconfigs are sourced.
 ///
 /// Later entries take precedence over earlier ones, and project configs take precedence over
 /// external configs.

@@ -28,7 +28,7 @@ the thinlto index (which lists the objects actually needed for the final link).
 
 
 Both opt and link plans use indices to refer to other files because it allows the bzl
-code to easily map back to other objects held in buck memory.
+code to easily map back to other objects held in yak memory.
 """
 
 import argparse

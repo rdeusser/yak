@@ -288,7 +288,7 @@ impl<'v> StarlarkValue<'v> for FrozenStarlarkOutputArtifact<'v> {
 
 /// An artifact marked as an output of an action.
 ///
-/// When you create custom actions with `ctx.actions.run()`, you need to tell Buck2 which artifacts
+/// When you create custom actions with `ctx.actions.run()`, you need to tell yak which artifacts
 /// the action will produce. `OutputArtifact` is how you mark a declared artifact as an output.
 ///
 /// ### Common Usage
@@ -320,7 +320,7 @@ impl<'v> StarlarkValue<'v> for FrozenStarlarkOutputArtifact<'v> {
 /// - Every action must have at least one output
 /// - Each declared artifact can only be bound to one action
 /// - All declared artifacts must be bound before the rule finishes
-/// - If you forget to bind a declared artifact, Buck2 will raise an error
+/// - If you forget to bind a declared artifact, yak will raise an error
 #[starlark_module]
 fn output_artifact_methods(builder: &mut MethodsBuilder) {
     /// Returns the input artifact from which this output artifact was constructed

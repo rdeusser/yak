@@ -191,7 +191,7 @@ fn ensure_source_artifact_staged<'a>(
     .boxed()
 }
 
-// These errors should be unreachable, they indicate misuse of the staged ensure artifact (or other buck
+// These errors should be unreachable, they indicate misuse of the staged ensure artifact (or other yak
 // invariant violations), but it's still better to propagate them as Error than to panic!().
 #[derive(Debug, buck2_error::Error)]
 #[buck2(tag = Input)]
@@ -272,7 +272,7 @@ async fn dir_artifact_value(
 ) -> buck2_error::Result<ArtifactValue> {
     // We kept running into this performance footgun where a large directory is declared as a source
     // on a toolchain, and then every `BuildKey` using that toolchain ends up taking a DICE edge on
-    // `PathMetadataKey` of every file inside that directory, blowing up Buck2's memory use.
+    // `PathMetadataKey` of every file inside that directory, blowing up yak's memory use.
     // `DirArtifactValueKey` is an intermediate DICE key to prevent that -  every `BuildKey` using
     // that directory now only depends on one `DirArtifactValueKey`, and that `DirArtifactValueKey`
     // depends on the `PathMetadataKey` of every member of the directory.

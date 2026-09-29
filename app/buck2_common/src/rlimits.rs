@@ -35,7 +35,7 @@ pub fn raise_file_descriptor_limits() -> buck2_error::Result<()> {
     // > nowadays accounted like any other form of memory, thus there should not be any need to
     // > lower the hard limit.
     //
-    // However, this is practically not an issue for Buck for a number of reasons, most importantly
+    // However, this is practically not an issue for yak for a number of reasons, most importantly
     // it is in fact a program that needs a lot of open files. But also, it doesn't matter what the
     // systemd man page says in reality, because if the user hits the soft limit, they're just going
     // to run `ulimit -n 10000000` and move on, so we might as well just do effectively that for
@@ -46,7 +46,7 @@ pub fn raise_file_descriptor_limits() -> buck2_error::Result<()> {
     // And: https://github.com/facebook/buck2/pull/986
     resource::setrlimit(Resource::RLIMIT_NOFILE, hard_limit, hard_limit)
         .with_buck_error_context(|| format!(
-            "Open file descriptor limit is lower than 80,000. Buck needs a lot of FDs. Raising open FD limit from {soft_limit} to hard limit {hard_limit}",
+            "Open file descriptor limit is lower than 80,000. yak needs a lot of FDs. Raising open FD limit from {soft_limit} to hard limit {hard_limit}",
         ))?;
 
     Ok(())

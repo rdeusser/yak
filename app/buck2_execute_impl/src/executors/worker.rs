@@ -326,7 +326,7 @@ async fn spawn_worker(
                 Ok(GatherOutputStatus::Cancelled | GatherOutputStatus::TimedOut(_)) => {
                     WorkerInitError::InternalError(buck2_error!(
                         buck2_error::ErrorTag::WorkerCancelled,
-                        "Worker cancelled by buck"
+                        "Worker cancelled by yak"
                     ))
                 }
                 Err(e) => WorkerInitError::InternalError(e),

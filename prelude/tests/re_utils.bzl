@@ -83,7 +83,7 @@ def get_re_executors_from_props(ctx: AnalysisContext) -> RemoteTestExecutorConfi
     The target's `network_access` policy (if any) is attached to the returned
     `CommandExecutorConfig`(s) so it is enforced for both local and remote test
     execution. When a target has no RE profile, a local-only executor is synthesized
-    so Buck does not fall back to a remote-only build execution platform for a test
+    so yak does not fall back to a remote-only build execution platform for a test
     whose cell-relative paths make it ineligible for RE. The executor is reported with
     `run_from_project_root = False` so the test keeps running in-place rather than
     being switched to project-root/RE-style execution.

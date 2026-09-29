@@ -275,8 +275,8 @@ def create_compile_cmds(
     if len(srcs_with_flags) == 0:
         return CxxCompileCommandOutput()
 
-    # TODO: Buck v1 validates *all* headers used by a compilation
-    # at compile time, but that doing that here/eagerly might be expensive (but
+    # TODO: Validate *all* headers used by a compilation
+    # at compile time. Doing that here/eagerly might be expensive (but
     # we should figure out something).
     _validate_target_headers(target_label, own_preprocessors)
 
@@ -630,7 +630,7 @@ def _compile_single_cxx(
     EXECUTION PHASE: Creates compilation actions for a single source file.
 
     This function runs INSIDE the dynamic action callback (`_cxx_dynamic_compile`),
-    meaning it only executes when Buck2 determines the compilation is actually needed.
+    meaning it only executes when yak determines the compilation is actually needed.
 
     ## Relationship to Declaration Phase
     The output artifacts passed here were declared earlier by `_prepare_cxx_compilation`
@@ -1022,8 +1022,8 @@ def _cxx_dynamic_compile(
     """
     DYNAMIC ACTION CALLBACK: The bridge between declaration and execution phases.
 
-    This function is the implementation for Buck2's `dynamic_output_new` API. It runs
-    LAZILY—only when Buck2 determines that one or more of the declared outputs are
+    This function is the implementation for yak's `dynamic_output_new` API. It runs
+    LAZILY—only when yak determines that one or more of the declared outputs are
     actually needed by the build. This is the key to memory optimization: action
     graphs are not materialized until necessary.
 
@@ -2286,7 +2286,7 @@ def _mk_argsfiles(
             get_flags_for_compiler_type(compiler_info.compiler_type),
             # compiler
             cxx_by_language_ext(impl_params.lang_compiler_flags, ext.value),
-            # ctx.attrs.compiler_flags need to come last to preserve buck1 ordering, this prevents compiler
+            # ctx.attrs.compiler_flags need to come last, which prevents compiler
             # flags ordering-dependent build errors
             impl_params.compiler_flags,
             headers_tag.tag_artifacts(preprocessor.set.project_as_args("include_dirs")),

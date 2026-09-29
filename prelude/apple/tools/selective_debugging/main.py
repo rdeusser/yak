@@ -26,7 +26,7 @@ def _parse_args() -> argparse.Namespace:
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument(
         "--targets-file",
-        help="Path to a json file which contains user-focused Buck targets",
+        help="Path to a json file which contains user-focused yak targets",
     )
     group.add_argument(
         "--spec-file",

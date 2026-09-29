@@ -11,10 +11,10 @@
 #![feature(impl_trait_in_assoc_type)]
 #![feature(decl_macro)]
 
-//! Project-agnostic filesystem utilities for Buck2.
+//! Project-agnostic filesystem utilities for yak.
 //!
 //! This crate contains filesystem types and utilities that have no knowledge
-//! of Buck2 projects, cells, or build artifacts. It provides:
+//! of yak projects, cells, or build artifacts. It provides:
 //! - Path types (ForwardRelativePath, AbsPath, AbsNormPath, FileName)
 //! - Filesystem utilities (fs_util, async_fs_util)
 //! - Working directory management (cwd, working_dir)

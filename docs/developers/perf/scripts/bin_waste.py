@@ -28,7 +28,7 @@ Usage:
   bin_waste.py [stats.json]          # parse a saved stats dump
   bin_waste.py -                     # read stats JSON from stdin
   bin_waste.py --daemon              # run `yak debug allocator-stats` for you
-  bin_waste.py --daemon --buck2 ./yak --isolation-dir v2
+  bin_waste.py --daemon --yak ./yak --isolation-dir v2
 
 The JSON must include per-arena bin stats, i.e. NOT be produced with the
 default `Jmdablxg` options (which suppress them). `--daemon` requests the
@@ -52,7 +52,7 @@ import sys
 def load_stats(args):
     """Return the parsed `jemalloc` stats object."""
     if args.daemon:
-        cmd = [args.buck2]
+        cmd = [args.yak]
         if args.isolation_dir:
             cmd += ["--isolation-dir", args.isolation_dir]
         cmd += ["debug", "allocator-stats", "-o", "J"]
@@ -225,7 +225,7 @@ def main():
         action="store_true",
         help="run `yak debug allocator-stats -o J` to capture stats",
     )
-    ap.add_argument("--buck2", default="yak", help="yak binary for --daemon")
+    ap.add_argument("--yak", default="yak", help="yak binary for --daemon")
     ap.add_argument("--isolation-dir", default=None, help="isolation dir for --daemon")
     ap.add_argument("--top", type=int, default=20, help="size classes to show")
     args = ap.parse_args()

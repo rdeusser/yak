@@ -105,7 +105,7 @@ fn outputter<'a, W: Write + Send + 'a>(
     };
 
     let compression = Compression::try_from(request.compression)
-        .internal_error("buck cli should send valid compression type")?;
+        .internal_error("yak cli should send valid compression type")?;
     let output = match compression {
         Compression::Uncompressed => output,
         Compression::Gzip => Box::new(GzEncoder::new(output, Default::default())),
@@ -211,7 +211,7 @@ async fn targets_with_output(
             if other.streaming {
                 let formatter = create_formatter(request, other)?;
                 let hashing = match TargetHashGraphType::try_from(other.target_hash_graph_type)
-                    .expect("buck cli should send valid target hash graph type")
+                    .expect("yak cli should send valid target hash graph type")
                 {
                     TargetHashGraphType::None => None,
                     _ => Some(other.target_hash_use_fast_hash),

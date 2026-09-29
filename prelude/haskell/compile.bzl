@@ -247,7 +247,7 @@ def compile(ctx: AnalysisContext, link_style: LinkStyle, enable_profiling: bool,
         compile_cmd,
         category = "haskell_compile_" + artifact_suffix.replace("-", "_"),
         # We can't use no_outputs_cleanup because GHC's recompilation checking
-        # is based on file timestamps, and Buck doesn't maintain timestamps when
+        # is based on file timestamps, and yak doesn't maintain timestamps when
         # artifacts may come from RE.
         # TODO: enable this for GHC 9.4 which tracks file changes using hashes
         # not timestamps.

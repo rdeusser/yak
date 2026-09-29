@@ -186,7 +186,7 @@ async def test_daemon_crash(buck: Buck) -> None:
 @env("YAKD_STARTUP_INIT_TIMEOUT", "0")
 async def test_connection_timeout(buck: Buck) -> None:
     res = await expect_failure(buck.targets(":"))
-    assert "timed out before establishing connection to Buck daemon" in res.stderr
+    assert "timed out before establishing connection to yak daemon" in res.stderr
 
     record = res.invocation_record()
 
@@ -436,7 +436,7 @@ async def test_download_failure(buck: Buck) -> None:
     assert error["category"] == "INFRA"
     assert error["category_key"] == "RE_NOT_FOUND:DIGEST_NOT_FOUND"
     assert (
-        "Your build requires materializing an artifact that has expired in the RE CAS and Buck does not have it. This likely happened because your Buck daemon has been online for a long time. This error is currently unrecoverable. To proceed, you should restart Buck using `yak killall`."
+        "Your build requires materializing an artifact that has expired in the RE CAS and yak does not have it. This likely happened because your yak daemon has been online for a long time. This error is currently unrecoverable. To proceed, you should restart yak using `yak killall`."
         in res.stderr
     )
 

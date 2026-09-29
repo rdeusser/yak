@@ -360,8 +360,8 @@ def _extract_global_symbols_from_link_args(
     `-Wl,--export-dynamic-symbol=<sym>`).
     """
 
-    # TODO: This is ported from Buck1, but it might make sense
-    # to explicitly tell Buck about the global symbols, rather than us trying to
+    # TODO: It might make sense
+    # to explicitly tell yak about the global symbols, rather than us trying to
     # extract it from linker flags (which is brittle).
     output = ctx.actions.declare_output(name, has_content_based_path = False)
 

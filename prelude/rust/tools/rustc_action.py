@@ -11,7 +11,7 @@
 # of post-processing on the json-formatted diagnostics:
 # - (preprocessing) resolve env vars referring to paths to absolute paths
 # - write the rendered form to a text diagnostic output, and also to stderr
-# - annotate unused crate messages with buck target info for downstream tooling,
+# - annotate unused crate messages with yak target info for downstream tooling,
 #   and also generated a rendered version
 # - generate a build status json when using failure filtering
 #
@@ -160,7 +160,7 @@ def arg_parse() -> Args:
     )
     parser.add_argument(
         "--buck-target",
-        help="Buck target for crate, used for unused crate diagnostics",
+        help="yak target for crate, used for unused crate diagnostics",
     )
     parser.add_argument(
         "--failure-filter",
@@ -534,7 +534,7 @@ async def main() -> int:  # noqa: C901
             json.dumps(build_status, separators=(",", ":")).encode() + b"\n"
         )
 
-        # OK to actually report success, but keep buck happy by making sure all
+        # OK to actually report success, but keep yak happy by making sure all
         # the required outputs are present
         if got_error_diag and res != 0:
             for _short, path in required_output:

@@ -228,7 +228,7 @@ async def test_sqlite_materializer_state_buckconfig_version_change(
 
     await buck.kill()
 
-    # Bump the buckconfig version of sqlite materializer state to invalidate the existing sqlite db
+    # Bump the yakconfig version of sqlite materializer state to invalidate the existing sqlite db
     replace_in_file(
         "sqlite_materializer_state_version = 0",
         "sqlite_materializer_state_version = 1",

@@ -114,12 +114,12 @@ rust_binary = prelude_rule(
         A rust\\_binary() rule builds a native executable from the supplied set of Rust source files
         and dependencies.
 
-        If you invoke a build with the `check` flavor, then Buck will invoke rustc
+        If you invoke a build with the `check` flavor, then yak will invoke rustc
         to check the code (typecheck, produce warnings, etc), but won't generate an executable code.
         When applied to binaries it produces no output; for libraries it produces metadata for
         consumers of the library.
 
-        Note: Buck is currently tested with (and therefore supports) version 1.32.0 of Rust.
+        Note: yak is currently tested with (and therefore supports) version 1.32.0 of Rust.
     """,
     examples = """
         ```
@@ -184,12 +184,12 @@ rust_library = prelude_rule(
         A rust\\_library() rule builds a native library from the supplied set of Rust source files
         and dependencies.
 
-        If you invoke a build with the `check` flavor, then Buck will invoke rustc
+        If you invoke a build with the `check` flavor, then yak will invoke rustc
         to check the code (typecheck, produce warnings, etc), but won't generate an executable code.
         When applied to binaries it produces no output; for libraries it produces metadata for
         consumers of the library.
 
-        Note: Buck is currently tested with (and therefore supports) version 1.32.0 of Rust.
+        Note: yak is currently tested with (and therefore supports) version 1.32.0 of Rust.
     """,
     examples = """
         ```
@@ -216,7 +216,7 @@ rust_library = prelude_rule(
         | rust_common.features_arg()
         | rust_common.rustc_flags_arg()
         |
-        # linker_flags weren't supported for rust_library in Buck v1 but some
+        # rust_library does not use linker_flags, but some
         # macros pass them anyway. They're typically empty since the
         # config-level flags don't get injected, but it doesn't hurt to accept
         # them and it simplifies the implementation of Rust rules since they
@@ -270,7 +270,7 @@ rust_test = prelude_rule(
         A rust\\_test() rule builds a Rust test native executable from the supplied set of Rust source
         files and dependencies and runs this test.
 
-        Note: Buck is currently tested with (and therefore supports) version 1.32.0 of Rust.
+        Note: yak is currently tested with (and therefore supports) version 1.32.0 of Rust.
     """,
     examples = """
         ```

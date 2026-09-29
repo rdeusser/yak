@@ -174,13 +174,13 @@ cxx_genrule = prelude_rule(
     name = "cxx_genrule",
     docs = """
         A `cxx_genrule()` enables you to run shell commands as part
-        of the Buck build process. A `cxx_genrule()` exposes - through
+        of the yak build process. A `cxx_genrule()` exposes - through
         a set of string parameter macros and variables - information about the
         tools and configuration options used by the
-        Buck environment, specifically those related to the C/C++ toolchain.
+        yak environment, specifically those related to the C/C++ toolchain.
 
         The information exposed through these tools and configuration options is a reflection of:
-        Buck's built-in settings,
+        yak's built-in settings,
         the settings in `.yakconfig`
         and `.yakconfig.local`,
         and the result of various command-line overrides specified through
@@ -205,7 +205,7 @@ cxx_genrule = prelude_rule(
                 doc = """
                 The shell command to run to generate the output file. It is the fallback of `bash`
                  and `cmd_exe`. The shell command can access information
-                 about the buck build environment through a set
+                 about the yak build environment through a set
                  of *macros*, *parameterized macros*, and *variables*.
 
                  #### Macros
@@ -297,11 +297,11 @@ cxx_genrule = prelude_rule(
                 `$(location //path/to:target)`
                 Expands to the path of the output of the build rule. This
                  means that you can refer to these without needing to be aware of
-                 how Buck is storing data on the disk mid-build.
+                 how yak is storing data on the disk mid-build.
 
                 #### Variables
 
-                 Finally, Buck adds the following variables to the environment in
+                 Finally, yak adds the following variables to the environment in
                  which the shell command runs. They are accessed using the following syntax.
                  Note the use of braces rather than parentheses.
 
@@ -502,26 +502,26 @@ cxx_library = prelude_rule(
 
         #### Building requires a specified top-level target
 
-        Whether a Buck command builds the `cxx_library` is
+        Whether a yak command builds the `cxx_library` is
         determined by the inclusion of a top-level target, such as
         a `cxx_binary()` or `python_binary()`, that
         transitively depends on the `cxx_library`. The set of
-        targets specified to the Buck command (`buck build`, `buck run`, etc) must
-        include one of these top-level targets in order for Buck to build
+        targets specified to the yak command (`yak build`, `yak run`, etc) must
+        include one of these top-level targets in order for yak to build
         the `cxx_library`. Note that you could specify the top-level target
         implicitly using a `build target pattern` or you could also specify
-        the top-level target using a buckconfig `alias` defined in `.yakconfig`.
+        the top-level target using a yakconfig `alias` defined in `.yakconfig`.
 
-        *How* Buck builds the library also depends on the specified top-level target.
+        *How* yak builds the library also depends on the specified top-level target.
         For example, a C/C++ binary (`cxx_binary`) would require a static non-PIC build of the library,
         whereas a Python extension (`cxx_python_extension`) would require a shared PIC-enabled build.
         (PIC stands for position-independent code.)
 
         #### Dependencies of the cxx\\_library also require a top-level target
 
-        Similarly, in order for Buck to build a target that
+        Similarly, in order for yak to build a target that
         the `cxx_library` depends on, such as a `cxx_genrule()`,
-        you must specify in the Buck command a top-level target that depends on
+        you must specify in the yak command a top-level target that depends on
         the `cxx_library`. For example, you could specify
         to `build` a `cxx_binary` that
         depends on the `cxx_library`. If you specify as
@@ -794,7 +794,7 @@ cxx_test = prelude_rule(
                 sorted = True,
                 default = [],
                 doc = """
-                This attribute is currently not implemented, and just causes buck to rebuild
+                This attribute is currently not implemented, and just causes yak to rebuild
                  the test file if any of the resources change. This will change in the future
                  to provide a more reliable interface for resource files.
 
@@ -821,7 +821,7 @@ cxx_test = prelude_rule(
                 `$(location //path/to:target)`
                 Expands to the location of the output of the build rule. This
                  means that you can refer to these without needing to be aware of how
-                 Buck is storing data on the disk mid-build.
+                 yak is storing data on the disk mid-build.
             """,
             ),
             "env": attrs.dict(
@@ -839,7 +839,7 @@ cxx_test = prelude_rule(
                 `$(location //path/to:target)`
                 Expands to the location of the output of the build rule. This
                  means that you can refer to these without needing to be aware of how
-                 Buck is storing data on the disk mid-build.
+                 yak is storing data on the disk mid-build.
             """,
             ),
         }
@@ -1075,7 +1075,7 @@ prebuilt_cxx_library = prelude_rule(
                 default = False,
                 doc = """
                 Indicates if this library only consists of headers or not. If this is set to
-                 `True`, Buck will not link this library into any library that depends on it.
+                 `True`, yak will not link this library into any library that depends on it.
             """,
             ),
             "shared_lib": attrs.option(

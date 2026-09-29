@@ -30,8 +30,8 @@ async def test_run_with_transition_without_target_universe(buck: Buck) -> None:
     )
 
     # The transition (deliberately) loses the configuration so that we get the
-    # DEFAULT 'hello buck' from the select in the target definition.
-    assert result.stdout.strip() == "hello buck"
+    # DEFAULT 'hello yak' from the select in the target definition.
+    assert result.stdout.strip() == "hello yak"
 
 
 @buck_test()
@@ -44,8 +44,8 @@ async def test_run_with_transition_with_target_universe(buck: Buck) -> None:
     )
 
     # The transition (deliberately) loses the configuration so that we get the
-    # DEFAULT 'hello buck' from the select in the target definition.
-    assert result.stdout.strip() == "hello buck"
+    # DEFAULT 'hello yak' from the select in the target definition.
+    assert result.stdout.strip() == "hello yak"
 
 
 @buck_test()

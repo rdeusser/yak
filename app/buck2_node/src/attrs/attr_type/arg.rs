@@ -199,8 +199,8 @@ pub enum MacroBase<P: ProvidersLabelMaybeConfigured> {
     Source(CoercedPath),
 
     /// Right now, we defer error for unrecognized macros to the place where they are used. This just allows
-    /// us to progress further into a build and detect more issues. Once we have all (or most) of the buckv1 macros
-    /// recognized we'll remove this and make it an early error.
+    /// us to progress further into a build and detect more issues. Once we recognize all (or most) macros,
+    /// we'll remove this and make it an early error.
     UnrecognizedMacro(Box<UnrecognizedMacro>),
 }
 

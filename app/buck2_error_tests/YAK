@@ -14,7 +14,7 @@ rust_test(
     srcs = glob(["src/**/*.rs"]),
     env = {
         # Some of our tests include testcase files relative to CARGO_MANIFEST_DIR.
-        # This is a hack that allows both `cargo test` and `buck test` to work.
+        # This is a hack that allows both `cargo test` and `yak test` to work.
         "CARGO_MANIFEST_DIR": "$(location :tests)",
     },
     deps = [

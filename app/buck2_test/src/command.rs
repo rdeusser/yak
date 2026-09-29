@@ -549,7 +549,7 @@ async fn test(
         &request.target_cfg,
     );
 
-    // TODO(bobyf) remap exit code for buck reserved exit code
+    // TODO(bobyf) remap exit code for yak reserved exit code
     let executor_exit_code = test_outcome.exit_code()?;
 
     let test_statuses = buck2_cli_proto::test_response::TestStatuses {
@@ -1857,7 +1857,7 @@ fn post_process_test_executor(s: &str) -> buck2_error::Result<PathBuf> {
     match s.split_once("$YAK_BINARY_DIR/") {
         Some(("", rest)) => {
             let exe = AbsPathBuf::new(
-                std::env::current_exe().buck_error_context("Cannot get Buck2 executable")?,
+                std::env::current_exe().buck_error_context("Cannot get yak executable")?,
             )?;
             // On Linux, /proc/self/exe appends " (deleted)" to the path when the
             // binary has been removed from disk (e.g. after a yak upgrade).
@@ -1871,13 +1871,13 @@ fn post_process_test_executor(s: &str) -> buck2_error::Result<PathBuf> {
             let exe = fs_util::canonicalize(&exe)
                 .categorize_tagged(ErrorTag::BuckdExeDeleted)
                 .buck_error_context(
-                    "Failed to canonicalize path to Buck2 executable. Try running `yak kill`.",
+                    "Failed to canonicalize path to yak executable. Try running `yak kill`.",
                 )?;
 
             let exe = exe.as_abs_path();
             let exe_dir = exe
                 .parent()
-                .internal_error("Buck2 executable directory has no parent")?;
+                .internal_error("yak executable directory has no parent")?;
 
             Ok(exe_dir.join(rest).to_path_buf())
         }

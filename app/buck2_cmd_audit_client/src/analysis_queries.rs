@@ -17,7 +17,7 @@ use crate::AuditSubcommand;
 #[derive(Debug, clap::Parser, serde::Serialize, serde::Deserialize)]
 #[clap(
     name = "audit-analysis-queries",
-    about = "buck audit analysis resolving query attrs"
+    about = "yak audit analysis resolving query attrs"
 )]
 pub struct AuditAnalysisQueriesCommand {
     #[clap(

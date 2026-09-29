@@ -145,19 +145,19 @@ impl HttpConfig {
 pub struct SystemWarningConfig {
     /// A threshold that is used to determine the percent of memory yak uses to display memory pressure warnings.
     /// If None, we don't warn the user.
-    /// The corresponding buckconfig is `yak_system_warning.memory_pressure_threshold_percent`.
+    /// The corresponding yakconfig is `yak_system_warning.memory_pressure_threshold_percent`.
     pub memory_pressure_threshold_percent: Option<u64>,
     /// A threshold that is used to determine remaining disk space yak uses to display disk space warnings.
     /// If None, we don't warn the user.
-    /// The corresponding buckconfig is `yak_system_warning.remaining_disk_space_threshold`.
+    /// The corresponding yakconfig is `yak_system_warning.remaining_disk_space_threshold`.
     pub remaining_disk_space_threshold_gb: Option<u64>,
     /// Minimum number of bytes downloaded to measure average download speed.
     /// If None, we don't warn the user.
-    /// The corresponding buckconfig is `yak_system_warning.min_re_download_bytes_threshold`.
+    /// The corresponding yakconfig is `yak_system_warning.min_re_download_bytes_threshold`.
     pub min_re_download_bytes_threshold: Option<u64>,
     /// A threshold that is used to determine if download speed is too low and display a warning.
     /// If None, we don't warn the user.
-    /// The corresponding buckconfig is `yak_system_warning.avg_re_download_bytes_per_sec_threshold`.
+    /// The corresponding yakconfig is `yak_system_warning.avg_re_download_bytes_per_sec_threshold`.
     pub avg_re_download_bytes_per_sec_threshold: Option<u64>,
 }
 
@@ -200,21 +200,21 @@ impl SystemWarningConfig {
 #[derive(Allocative, Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct ResourceControlConfig {
     /// A config to determine if the resource control should be activated or not.
-    /// The corresponding buckconfig is `yak_resource_control.status` that can take
+    /// The corresponding yakconfig is `yak_resource_control.status` that can take
     /// one of `{off | if_available | required}`.
     pub status: ResourceControlStatus,
-    /// If resource control is enabled, buck needs to get a cgroup to run in from somewhere - this is
+    /// If resource control is enabled, yak needs to get a cgroup to run in from somewhere - this is
     /// where.
     pub init: ResourceControlInit,
     /// Maximum allowed memory usage for all work yak manages.
     ///
     /// Accepts either a number of bytes or a percentage of the available resources.
     ///
-    /// The corresponding buckconfig is `yak_resource_control.memory_max`.
+    /// The corresponding yakconfig is `yak_resource_control.memory_max`.
     pub memory_max: Option<String>,
     /// Like `memory_max`, but controls cgroupv2's `memory.high`
     ///
-    /// The corresponding buckconfig is `yak_resource_control.memory_high`.
+    /// The corresponding yakconfig is `yak_resource_control.memory_high`.
     pub memory_high: Option<String>,
     /// A memory threshold that any action is allowed to allocate.
     pub memory_max_per_action: Option<String>,
@@ -340,14 +340,14 @@ impl FromStr for ResourceControlInit {
 
 /// The current version of the resource control algorithm. Say you have some important change to the
 /// algo that fixes a bug. Incrementing this to `N + 1` and setting the
-/// `yak_resource_control.enable_suspension_if_min_algo_version` buckconfig to `N + 1` enables
-/// suspension only if your bug fix is actually included in the version of buck in use
+/// `yak_resource_control.enable_suspension_if_min_algo_version` yakconfig to `N + 1` enables
+/// suspension only if your bug fix is actually included in the version of yak in use
 const RESOURCE_CONTROL_ALGO_VERSION: u32 = 6;
 
 /// The current version of the daemon cgroup wrapping logic. Incrementing this to `N + 1` and
-/// setting `yak_resource_control.min_version_for_gated_status` buckconfig to `N + 1` enables the
+/// setting `yak_resource_control.min_version_for_gated_status` yakconfig to `N + 1` enables the
 /// gated default status (`yak_resource_control.version_gated_default_status`, defaulting to
-/// `if_available`) only if the bug fix is included in the version of buck in use.
+/// `if_available`) only if the bug fix is included in the version of yak in use.
 const DAEMON_CGROUP_VERSION: u32 = 1;
 
 impl ResourceControlConfig {
@@ -471,7 +471,7 @@ pub enum LogDownloadMethod {
 }
 
 /// Pagable DICE storage settings, present (`Some`) only when paging is enabled by
-/// the `hydration` Buck settings or their legacy `buck2_hydration` fallbacks.
+/// the `hydration` yak settings or their legacy `yak_hydration` fallbacks.
 /// `page_out_on_idle` also implies paging is enabled. When present, the daemon
 /// sets up on-disk storage during construction so `yak debug hydration` can
 /// page node values out to / in from disk. Read at startup because it gates that
@@ -490,7 +490,7 @@ pub struct HydrationConfig {
 }
 
 impl HydrationConfig {
-    /// Returns `None` when neither the Buck settings nor their legacy fallbacks
+    /// Returns `None` when neither the yak settings nor their legacy fallbacks
     /// enable paging.
     fn from_config(
         config: &LegacyBuckConfig,
@@ -551,7 +551,7 @@ impl HydrationConfig {
 /// Configurations that are used at startup by the daemon. Those are actually read by the client,
 /// and passed on to the daemon.
 ///
-/// The fields here are often raw String we get from the buckconfig, the daemon will do
+/// The fields here are often raw String we get from the yakconfig, the daemon will do
 /// deserialization once it receives them. That said, this is not a requirement.
 ///
 /// Backwards compatibility on Serialize / Deserialize is not required: if the client cannot read
@@ -658,7 +658,7 @@ impl DaemonStartupConfig {
                         buck2_error::buck2_error!(
                             buck2_error::ErrorTag::Input,
                             "YAK_DISABLE_MACOS_QOS is deprecated. \
-                             Use `[yak] macos_qos_class = skip_lowering` in buckconfig instead. \
+                             Use `[yak] macos_qos_class = skip_lowering` in yakconfig instead. \
                              This will be the default very soon."
                         ),
                         quiet: false,
@@ -821,7 +821,7 @@ mod tests {
         let startup_config = DaemonStartupConfig::new(&config, &settings, false)?;
         let hydration = startup_config
             .hydration
-            .expect("Explicit Buck settings should keep hydration enabled");
+            .expect("Explicit yak settings should keep hydration enabled");
         assert!(!hydration.page_out_on_idle);
         assert!(hydration.allow_multiple_idle_page_outs);
         Ok(())

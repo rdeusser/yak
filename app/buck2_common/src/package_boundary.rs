@@ -60,7 +60,7 @@ impl CellPackageBoundaryExceptions {
             } else {
                 let path = ForwardRelativePath::new(path_str)?;
                 // path.split_first() only returns None if the path is empty.
-                // In the case of the buckconfig `project.package_boundary_exceptions`,
+                // In the case of the yakconfig `project.package_boundary_exceptions`,
                 // we only get an empty path if there is an extra newline, in which case
                 // we can just ignore.
                 if let Some((prefix, subpath)) = path.split_first() {

@@ -62,7 +62,7 @@ impl HashingInfo {
 
 // When cleaning up artifacts in yak-out, std::fs::remove_dir_all() (and
 // non-sudo `rm -rf`) is not able to list/remove files from directories without
-// the read/write/execute bits being set. Since buck and RE make no promises
+// the read/write/execute bits being set. Since yak and RE make no promises
 // about preserving anything other than the execution bit, we normalize the
 // **directory** permissions here on the outputs of local actions to allow for
 // removal later by operations like "prepare output directory" or "clean" or

@@ -10,5 +10,4 @@ def _impl(ctx):
     _ignore = ctx  # buildifier: disable=unused-variable
     return [DefaultInfo()]
 
-# This bzl file cannot be interpreted with Buck1 because there's no `rule` builtin.
 my_rule = rule(impl = _impl, attrs = {})

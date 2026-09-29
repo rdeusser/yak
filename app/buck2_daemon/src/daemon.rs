@@ -58,10 +58,10 @@ enum DaemonError {
     PidFileMismatch(PathBuf, u32, u32),
 }
 
-/// Start or run buck daemon.
+/// Start or run yak daemon.
 ///
 /// This is an internal command, not intended to be used directly.
-/// Buck client invokes it to spawn a server process.
+/// yak client invokes it to spawn a server process.
 #[derive(Clone, Debug, clap::Parser)]
 pub struct DaemonCommand {
     /// Sets the interval for how often the daemon performs consistency checks.
@@ -69,7 +69,7 @@ pub struct DaemonCommand {
     /// by files in the daemon dir.
     #[clap(long, default_value("60"))]
     checker_interval_seconds: u64,
-    /// Run buck daemon but do not daemonize the process.
+    /// Run yak daemon but do not daemonize the process.
     #[clap(long)]
     dont_daemonize: bool,
     /// This flag is set to prevent infinite recursion when the process is restarted
@@ -94,7 +94,7 @@ pub struct DaemonCommand {
     #[clap(long)]
     has_cgroup: bool,
 
-    /// The cgroup path of the process that launched this daemon before Buck moved the daemon into
+    /// The cgroup path of the process that launched this daemon before yak moved the daemon into
     /// its managed cgroup.
     #[clap(long)]
     daemon_originating_cgroup: Option<String>,
@@ -196,7 +196,7 @@ fn verify_buck_out_dir(paths: &InvocationPaths) -> buck2_error::Result<()> {
     })?;
 
     const CACHEDIR_TAG_CONTENTS: &str = r#"Signature: 8a477f597d28d172789f06886806bc55
-# This file is a cache directory tag created by Buck2.
+# This file is a cache directory tag created by yak.
 # For information about cache directory tags, see:
 #    http://www.brynosaurus.com/cachedir/
 "#;
@@ -324,7 +324,7 @@ impl DaemonCommand {
 
         let daemon_id = DaemonId::parse_from_str(&self.daemon_id)?;
 
-        tracing::info!("Starting Buck2 daemon");
+        tracing::info!("Starting yak daemon");
         tracing::info!("Version: {}", BuckVersion::get_version()?);
         tracing::info!("PID: {}", process::id());
         tracing::info!("ID: {}", daemon_id);

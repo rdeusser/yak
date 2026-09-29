@@ -8,8 +8,8 @@
  * above-listed licenses.
  */
 
-/// Buck2 having full control over how FS IO works is beneficial for implementing
-/// IO counters and retry policies that are optimized for Buck2 and virtualized
+/// yak having full control over how FS IO works is beneficial for implementing
+/// IO counters and retry policies that are optimized for yak and virtualized
 /// file systems.
 use std::env;
 use std::fs;
@@ -159,7 +159,7 @@ fn symlink_impl(original: &Path, link: &AbsPath) -> Result<(), IoError> {
     // Canonicalize() will also handle adding the verbatim prefix \\?\, which is required for
     // supporting paths longer than 260
     // In general, it should be OK to opt for absolute / canonical paths when possible as
-    // buck will not read any of these paths.
+    // yak will not read any of these paths.
     let target_canonical = if let Ok(path) = target_abspath.canonicalize() {
         path
     } else {

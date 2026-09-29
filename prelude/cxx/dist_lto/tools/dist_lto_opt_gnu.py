@@ -130,7 +130,7 @@ def _filter_flags(clang_flags: List[str]) -> List[str]:  # noqa: C901
                 #          -Xlinker
                 #          -xxxx    structure
                 # This assumes -mllvm and its arg are provided consecutively,
-                # mostly to handle the case where they come from Buck's
+                # mostly to handle the case where they come from yak's
                 # linker_flags.
                 # TODO: Generalize this logic to handle -Xlinker
                 #       -mllvm -unrelated-flag -Xlinker -actual-mllvm-arg
@@ -304,7 +304,7 @@ def main(argv: List[str]) -> int:
     if dwo is not None:
         # Unfortunately some users manually add `-gno-split-dwarf` to the
         # compiler flags contradicting the --split-dwarf setting. Create an
-        # empty file so buck rules are not missing the file...
+        # empty file so yak rules are not missing the file...
         try:
             with open(dwo, "x") as _:
                 pass

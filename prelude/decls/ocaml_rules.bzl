@@ -20,7 +20,7 @@ ocaml_binary = prelude_rule(
         A ocaml\\_binary() rule builds both native and bytecode executables from the supplied set of OCaml and C source files
          and dependencies.
 
-         Note: Buck is currently tested with 4.X OCaml series.
+         Note: yak is currently tested with 4.X OCaml series.
     """,
     examples = """
         ```
@@ -88,7 +88,7 @@ ocaml_library = prelude_rule(
         A ocaml\\_library() rule builds a native and a bytecode libraries from the
          supplied set of OCaml source files and dependencies.
 
-         Note: Buck is currently tested with 4.X OCaml series.
+         Note: yak is currently tested with 4.X OCaml series.
     """,
     examples = """
         ```

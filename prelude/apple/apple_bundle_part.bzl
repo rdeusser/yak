@@ -351,7 +351,7 @@ def assemble_bundle(
     run_incremental_args = {}
     incremental_state = ctx.actions.declare_output("incremental_state.json", has_content_based_path = False).as_output()
 
-    # Fallback to value from buckconfig
+    # Fallback to value from yakconfig
     incremental_bundling_enabled = ctx.attrs.incremental_bundling_enabled or ctx.attrs._incremental_bundling_enabled
     if incremental_bundling_override != None:
         incremental_bundling_enabled = incremental_bundling_override

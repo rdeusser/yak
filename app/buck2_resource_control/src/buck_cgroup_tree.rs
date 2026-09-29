@@ -88,7 +88,7 @@ pub struct PreppedBuckCgroups {
     ///
     /// Whoever launched the daemon owns this cgroup's attributes. When that's systemd, it rewrites
     /// them from its own configuration of the unit whenever it reapplies that configuration, for
-    /// example on `daemon-reload`. So the only thing buck ever writes here is
+    /// example on `daemon-reload`. So the only thing yak ever writes here is
     /// `cgroup.subtree_control`, which cgroup delegation requires the delegatee to do; everything
     /// else, including daemon-wide resource limits, goes on `allprocs` or below.
     launch: CgroupMinimal,
@@ -102,7 +102,7 @@ impl PreppedBuckCgroups {
     /// Expectation is that the current process was started with something like systemd-run and:
     ///
     ///  1. The cgroup it's in has this process and no others
-    ///  2. Buck2 may manage the child cgroups by itself without interference from outside things;
+    ///  2. yak may manage the child cgroups by itself without interference from outside things;
     ///     in systemd this is the `Delegate=yes` property.
     ///
     /// This function is the part of the cgroup prepping that must be done early on during daemon
@@ -189,13 +189,13 @@ fn resolve_memory_restriction_value(
 ///
 /// Only in use with the action cgroup pool.
 pub struct BuckCgroupTree {
-    /// The topmost cgroup that buck owns outright. See [`PreppedBuckCgroups`] for why its parent
+    /// The topmost cgroup that yak owns outright. See [`PreppedBuckCgroups`] for why its parent
     /// is off limits.
     allprocs: CgroupInternal,
     forkserver_and_actions: CgroupInternal,
     forkserver: CgroupLeaf,
     daemon: CgroupLeaf,
-    /// The resource constraints imposed by the ancestors of the buck cgroup tree
+    /// The resource constraints imposed by the ancestors of the yak cgroup tree
     ///
     /// This does not reflect any of our own configuration
     effective_resource_constraints: EffectiveResourceConstraints,
@@ -205,7 +205,7 @@ pub struct BuckCgroupTree {
 }
 
 impl BuckCgroupTree {
-    /// Finishes setting up buck's cgroups from the prepped ones
+    /// Finishes setting up yak's cgroups from the prepped ones
     pub async fn set_up(
         prepped: PreppedBuckCgroups,
         config: &ResourceControlConfig,
@@ -304,7 +304,7 @@ impl BuckCgroupTree {
         &self.forkserver
     }
 
-    /// The parent cgroup that contains all other cgroups buck manages as descendants
+    /// The parent cgroup that contains all other cgroups yak manages as descendants
     pub fn allprocs(&self) -> &CgroupInternal {
         &self.allprocs
     }

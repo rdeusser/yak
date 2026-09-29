@@ -20,7 +20,7 @@ use tokio::net::TcpStream;
 
 use crate::executor_launcher::ExecutorFuture;
 
-/// Environment variable used to pass the actual username from Buck2 client to the test executor.
+/// Environment variable used to pass the actual username from yak client to the test executor.
 /// This is necessary because in some scenarios yakd may run as a different user than the user who invoked `yak test`.
 const BUCK2_TEST_EXECUTOR_USER_ENV_VAR: &str = "YAK_TEST_EXECUTOR_USER";
 

@@ -68,12 +68,12 @@ func CWD() string {
 	return cwd
 }
 
-// findProjectDirectory finds the absolute buck project directory
+// findProjectDirectory finds the absolute yak project directory
 func findProjectDirectory(ctx context.Context, bucker Bucker) (string, error) {
 	return bucker.Root(ctx)
 }
 
-// newPlatform creates a new actual platform using system libraries and buck
+// newPlatform creates a new actual platform using system libraries and yak
 func newPlatform(ctx context.Context, bucker Bucker, req *packages.DriverRequest) (*realPlatform, error) {
 	rp := &realPlatform{
 		overlay: req.Overlay,
@@ -81,7 +81,7 @@ func newPlatform(ctx context.Context, bucker Bucker, req *packages.DriverRequest
 
 	pd, err := findProjectDirectory(ctx, bucker)
 	if err != nil || pd == "" {
-		return nil, fmt.Errorf("failed to find buck project directory: %w", err)
+		return nil, fmt.Errorf("failed to find yak project directory: %w", err)
 	}
 	rp.projectDir = pd
 

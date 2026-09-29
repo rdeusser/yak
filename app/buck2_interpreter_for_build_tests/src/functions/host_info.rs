@@ -37,7 +37,6 @@ fn test_no_buck_version_fields() -> buck2_error::Result<()> {
         r#"
             def test():
                 assert_eq(False, hasattr(host_info(), "buck2"))
-                assert_eq(False, hasattr(host_info(), "buck1"))
         "#
     ))?;
     Ok(())

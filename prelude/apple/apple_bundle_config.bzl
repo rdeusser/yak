@@ -16,7 +16,7 @@ def _get_code_signing_configuration() -> str:
     is_dry_run = _read_bool("dry_run_code_signing", False)
 
     # This is a kill switch for the feature, it can also be disabled by setting
-    # `apple.fast_adhoc_signing_enabled=false` in a global buckconfig file.
+    # `apple.fast_adhoc_signing_enabled=false` in a global yakconfig file.
     is_fast_adhoc_signing_enabled = _read_bool("fast_adhoc_signing_enabled", True)
 
     is_codesign_execution_bypass_enabled = _read_bool("codesign_execution_bypass", False)

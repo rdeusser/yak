@@ -8,7 +8,7 @@
  * above-listed licenses.
  */
 
-//! Constraints are the building block of buck platforms.
+//! Constraints are the building block of yak platforms.
 //!
 //! A constraint is identified by a "constraint key" defined by a `constraint_setting()`
 //! target. There may be multiple possible values for the constraint, each defined by a

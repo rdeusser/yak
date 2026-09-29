@@ -249,7 +249,7 @@ async def test_testsof(buck: Buck) -> None:
 
 
 # DICE currently may re-evaluate dead nodes ignoring errors, but it cannot ignore panics.
-# Disabling execution platforms through a buckconfig used to cause such a panic,
+# Disabling execution platforms through a yakconfig used to cause such a panic,
 # which made builds fail at random.
 @buck_test(data_dir="toolchain_deps")
 async def test_disabling_of_execution_platforms(buck: Buck) -> None:

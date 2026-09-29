@@ -83,7 +83,7 @@ impl QueryValueDepth {
 
 impl From<u32> for QueryValueDepth {
     fn from(v: u32) -> Self {
-        // For unbounded traversals, buck1 recommends specifying a large value. We'll accept either a negative (like -1) or
+        // For unbounded traversals, we accept either a negative (like -1) or
         // a large value as unbounded. We can't just call it optional because args are positional only in the query syntax
         // and so to specify a filter you need to specify a depth.
         if (0..1_000_000_000).contains(&v) {
@@ -117,7 +117,7 @@ impl From<Option<i32>> for QueryValueDepth {
 
 /// Used as the final result of evaluating a query. A literal at the top-level is treated specially and so this has
 /// a more limited set of possibilities than a general QueryValue (for example `//foo/...` becomes a TargetSet in
-/// `buck query //foo/...` rather than being a String).
+/// `yak query //foo/...` rather than being a String).
 #[derive(Debug, VariantName)]
 pub enum QueryEvaluationValue<T: QueryTarget> {
     TargetSet(TargetSet<T>),

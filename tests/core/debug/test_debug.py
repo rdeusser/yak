@@ -70,7 +70,7 @@ async def test_thread_dump(buck: Buck) -> None:
     # Make sure we don't start a daemon if there isn't one
     await expect_failure(
         buck.debug("thread-dump"),
-        stderr_regex="No running buck daemon",
+        stderr_regex="No running yak daemon",
     )
     # Start the daemon
     await buck.uquery("root//:")

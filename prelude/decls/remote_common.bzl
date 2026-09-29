@@ -26,7 +26,7 @@ def _sha256_arg():
             default = None,
             doc = """
     The [`SHA-256`](//wikipedia.org/wiki/SHA-2) hash of the downloaded artifact.
-     Buck verifies this is correct and fails the fetch command if it doesn't match in order to
+     yak verifies this is correct and fails the fetch command if it doesn't match in order to
      guarantee repeatable builds.
 """,
         ),
@@ -73,7 +73,7 @@ def _unarchive_args():
             default = None,
             doc = """
             An optional name to call the directory that the downloaded artifact is
-            extracted into. Buck will generate a default name if one is not
+            extracted into. yak will generate a default name if one is not
             provided that uses the `name` of the rule.
         """,
         ),

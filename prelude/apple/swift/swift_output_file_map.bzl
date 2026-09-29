@@ -28,7 +28,7 @@ def add_dependencies_output(ctx: AnalysisContext, output_file_map: dict, cmd: cm
     map["emit-module-dependencies"] = cmd_args(buck_dep_file, delimiter = "", format = "{}.raw")
     cmd.add("-emit-dependencies")
 
-    # Add the flags for the wrapper to process the dependency file to Buck format.
+    # Add the flags for the wrapper to process the dependency file to yak format.
     cmd.add(
         "-Xwrapper",
         cmd_args(inputs_tag.tag_artifacts(buck_dep_file), format = "-dependencies-file-output={}"),

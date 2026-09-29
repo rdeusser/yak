@@ -13,7 +13,7 @@ use std::sync::LazyLock;
 use buck2_core::buck2_env;
 use regex::Regex;
 
-/// A key / value metadata pair provided by the client. This will be injected into Buck2's logging.
+/// A key / value metadata pair provided by the client. This will be injected into yak's logging.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct ClientMetadata {
     pub key: String,

@@ -38,13 +38,13 @@
 //! flowing between the DAP client and the starlark evaluation.
 //!
 //! The server also tracks the state of all evaluations so that it can send regularly
-//! debugger snapshots to all current buck commands. Those commands in turn use those snapshots
+//! debugger snapshots to all current yak commands. Those commands in turn use those snapshots
 //! to render a debugger superconsole component so that users aren't left confused about
 //! why their commands are seemingly hanging.
 //!
 //! The server handles a variety of other small adapter functionality. For example,
 //! the DAP client may send source file references as absolute paths, but our starlark
-//! evaluators will only understand them as the project-relative paths that buck
+//! evaluators will only understand them as the project-relative paths that yak
 //! uses and so the server must convert them from/to the client/starlark.
 
 use std::sync::Arc;

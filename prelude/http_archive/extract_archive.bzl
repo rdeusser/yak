@@ -12,7 +12,7 @@ load("@prelude//utils:utils.bzl", "value_or")
 load(":exec_deps.bzl", "HttpArchiveExecDeps")
 load(":unarchive.bzl", "archive_type", "unarchive")
 
-# Buck v2 doesn't support directories as source inputs, while v1 allows that.
+# yak doesn't support directories as source inputs.
 # This rule fills that gap and allows to produce a directory from archive,
 # which then can be used as an input for other rules.
 

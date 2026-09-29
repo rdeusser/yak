@@ -11,7 +11,7 @@
 //! Handles command concurrency.
 //!
 //! `yak` supports limited concurrency for commands.
-//! If there are no buckconfig changes, nor file changes, then commands can be allowed to execute
+//! If there are no yakconfig changes, nor file changes, then commands can be allowed to execute
 //! concurrently. Otherwise, `yak` will block waiting for other commands to finish.
 
 use std::collections::VecDeque;
@@ -73,11 +73,11 @@ use tokio::time::timeout;
 #[buck2(tag = Input)]
 enum ConcurrencyHandlerError {
     #[error(
-        "Recursive invocation of Buck, which is discouraged, but will probably work (using the same state). Trace Ids: {0}. Recursive invocation command: `{1}`"
+        "Recursive invocation of yak, which is discouraged, but will probably work (using the same state). Trace Ids: {0}. Recursive invocation command: `{1}`"
     )]
     NestedInvocationWithSameStates(ConcurrentTraces, String),
     #[error(
-        "Recursive invocation of Buck, with a different state. Use `--isolation-dir` on the inner invocation to fix this. Trace Ids: {0}. Recursive invocation command: `{1}`"
+        "Recursive invocation of yak, with a different state. Use `--isolation-dir` on the inner invocation to fix this. Trace Ids: {0}. Recursive invocation command: `{1}`"
     )]
     #[buck2(input)]
     NestedInvocationWithDifferentStates(ConcurrentTraces, String),
@@ -85,11 +85,11 @@ enum ConcurrencyHandlerError {
     #[buck2(tag = DaemonIsBusy)]
     ExitWhenDifferentState,
 
-    #[error("`--preemptible` was set, and buck daemon preempted this command as another came in.")]
+    #[error("`--preemptible` was set, and yak daemon preempted this command as another came in.")]
     #[buck2(tag = DaemonPreempted)]
     ExitOnPreemption,
 
-    #[error("`--exit-when=notidle` was set, and buck daemon is not idle.")]
+    #[error("`--exit-when=notidle` was set, and yak daemon is not idle.")]
     #[buck2(tag = DaemonIsBusy)]
     ExitOnDaemonNotIdle,
 }
@@ -577,7 +577,7 @@ impl ConcurrencyHandler {
                 drop(data);
                 let queued = self.queued_traces(command_id);
                 return Err(ConcurrencyHandlerError::ExitOnDaemonNotIdle).with_buck_error_context(
-                    || format!("Buck daemon is busy processing another command: {running}{queued}"),
+                    || format!("yak daemon is busy processing another command: {running}{queued}"),
                 );
             }
 
@@ -655,7 +655,7 @@ impl ConcurrencyHandler {
                 let queued = self.queued_traces(command_id);
                 return Err(ConcurrencyHandlerError::ExitWhenDifferentState)
                     .with_buck_error_context(|| {
-                        format!("Buck daemon is busy processing another command: {running}{queued}")
+                        format!("yak daemon is busy processing another command: {running}{queued}")
                     });
             }
 
@@ -741,7 +741,7 @@ impl ConcurrencyHandler {
                         let queued = self.queued_traces(command_id);
                         return Err(early_exit_error).with_buck_error_context(|| {
                             format!(
-                                "Buck daemon is busy processing another command: {running}{queued}"
+                                "yak daemon is busy processing another command: {running}{queued}"
                             )
                         });
                     }
@@ -924,7 +924,7 @@ fn format_command(argv: &[String]) -> String {
     // Skip the executable path so the displayed command consistently starts with `yak`.
     iter.next();
 
-    truncate(&format!("buck2 {}", iter.join(" ")), 500)
+    truncate(&format!("yak {}", iter.join(" ")), 500)
 }
 
 /// Formats an elapsed wait in whole minutes, or seconds while under a minute, so the
@@ -1197,7 +1197,7 @@ mod tests {
         }
     }
 
-    /// The production observer emits buckconfig telemetry; concurrency behaviour does not depend
+    /// The production observer emits yakconfig telemetry; concurrency behaviour does not depend
     /// on it, so tests use one that does nothing.
     struct NoTelemetry;
 
@@ -1302,7 +1302,7 @@ mod tests {
         }
     }
 
-    /// The concurrency manager itself reads no injected keys; the buckconfig data the old inline
+    /// The concurrency manager itself reads no injected keys; the yakconfig data the old inline
     /// telemetry needed is now the observer's concern, and tests use `NoTelemetry`.
     fn make_default_dice() -> Arc<Dice> {
         Dice::builder().build(DetectCycles::Enabled)

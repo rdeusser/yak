@@ -348,7 +348,7 @@ def _test_buckconfig_backed_modifiers_not_applied_to_exec_deps(ctx: bxl.Context)
         "Binary should have buckconfig_backed:enabled from buckconfig-backed modifiers",
     )
 
-    # The binary SHOULD have buckconfig_backed:enabled from buckconfig-backed modifiers
+    # The binary SHOULD have buckconfig_backed:enabled from yakconfig-backed modifiers
     _assert_eq(
         node.get_attr("buckconfig_backed_label"),
         "buckconfig_backed:enabled",
@@ -363,7 +363,7 @@ def _test_buckconfig_backed_modifiers_not_applied_to_exec_deps(ctx: bxl.Context)
     )
 
     # The tool (exec_dep) should NOT have buckconfig_backed:enabled
-    # It should have buckconfig_backed:none because buckconfig-backed modifiers are excluded for exec deps
+    # It should have buckconfig_backed:none because yakconfig-backed modifiers are excluded for exec deps
     _assert_eq(
         exec_dep_node.get_attr("buckconfig_backed_label"),
         "buckconfig_backed:none",
@@ -385,7 +385,7 @@ def _main(ctx: bxl.Context):
     _test_tool_with_os_conditional_modifier_macos(ctx)
     _test_tool_with_cpu_conditional_modifier_arm64(ctx)
 
-    # Buckconfig-backed modifiers test
+    # yakconfig-backed modifiers test
     _test_buckconfig_backed_modifiers_not_applied_to_exec_deps(ctx)
 
     ctx.output.stream("\n✅ All tests passed!")

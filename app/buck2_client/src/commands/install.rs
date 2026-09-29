@@ -26,7 +26,7 @@ use buck2_client_ctx::events_ctx::EventsCtx;
 use buck2_client_ctx::exit_result::ExitResult;
 use buck2_client_ctx::streaming::StreamingCommand;
 
-use crate::commands::build::print_buck_ui;
+use crate::commands::build::print_build_id;
 
 #[derive(Debug, clap::Parser)]
 #[clap(name = "install", about = "Build and install an application")]
@@ -87,7 +87,7 @@ impl StreamingCommand for InstallCommand {
             )
             .await?;
         let console = self.common_opts.console_opts.final_console();
-        print_buck_ui(&console, ctx, events_ctx.used_superconsole)?;
+        print_build_id(&console, ctx, events_ctx.used_superconsole)?;
 
         match response {
             CommandOutcome::Success(_) => {

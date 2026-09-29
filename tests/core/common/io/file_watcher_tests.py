@@ -27,7 +27,7 @@ def git(buck: Buck, *args: str) -> str:
             f"--git-dir={os.path.join(project, '.git')}",
             f"--work-tree={project}",
             "-c",
-            "user.name=buck2 tests",
+            "user.name=yak tests",
             "-c",
             "user.email=tests@example.com",
             *args,

@@ -70,14 +70,14 @@ enum BuckdCommunicationError {
     #[error("call to daemon returned an unexpected result type. got `{0:?}`")]
     #[buck2(tag = Tier0)]
     UnexpectedResultType(command_result::Result),
-    #[error("buck daemon returned an empty CommandResult")]
+    #[error("yak daemon returned an empty CommandResult")]
     #[buck2(tag = Tier0)]
     EmptyCommandResult,
-    #[error("buck daemon request finished without returning a CommandResult")]
+    #[error("yak daemon request finished without returning a CommandResult")]
     #[buck2(tag = MissingCommandResult)]
     MissingCommandResult,
     #[error(
-        "The Buck2 daemon was shut down while executing your command. This happened because: {0}"
+        "The yak daemon was shut down while executing your command. This happened because: {0}"
     )]
     #[buck2(tag = InterruptedByDaemonShutdown)]
     InterruptedByDaemonShutdown(buck2_data::DaemonShutdown),
@@ -192,14 +192,14 @@ impl<'a> DaemonEventsCtx<'a> {
                     return if let Some(oom_reason) = oom_reason {
                         Err(e)
                             .buck_error_context(
-                                format!("Buck2 daemon was killed by an OOM killer due to high memory pressure ({oom_reason}). \
+                                format!("yak daemon was killed by an OOM killer due to high memory pressure ({oom_reason}). \
                                 Common causes are large or numerous build or test targets or \
-                                too many Buck2 daemons running simultaneously."))
+                                too many yak daemons running simultaneously."))
                             .tag(ErrorTag::ClientGrpcStream)
                             .tag(ErrorTag::DaemonOomKilled)
                     } else {
                         Err(e)
-                            .buck_error_context("Buck daemon event bus encountered an error, the root cause (if available) is displayed above this message.")
+                            .buck_error_context("yak daemon event bus encountered an error, the root cause (if available) is displayed above this message.")
                             .tag(ErrorTag::ClientGrpcStream)
                     };
                 }

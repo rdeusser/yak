@@ -8,15 +8,15 @@
 # above-listed licenses.
 
 """
-This script is used to transform an opaque directory Buck artifact filled with
-files into a number of Buck artifacts that can each be operated on individually.
+This script is used to transform an opaque directory yak artifact filled with
+files into a number of yak artifacts that can each be operated on individually.
 
 This script is used to take a directory filled with object files created
 through dynamic_output and a list of name, output destination path pairs.
 For each such pair, we look for a file in the directory matching the name,
 and copy it to the destination path.
 
-This allows buck to declare and operate on each file individually, rather than
+This allows yak to declare and operate on each file individually, rather than
 the entire opaque directory.
 """
 

@@ -56,7 +56,7 @@ impl TargetHashOptions {
         fs: &ProjectRoot,
     ) -> buck2_error::Result<Self> {
         let file_mode = TargetHashFileMode::try_from(request.target_hash_file_mode)
-            .expect("buck cli should send valid target hash file mode");
+            .expect("yak cli should send valid target hash file mode");
         let file_mode = match file_mode {
             TargetHashFileMode::PathsOnly => {
                 let modified_paths = request
@@ -77,7 +77,7 @@ impl TargetHashOptions {
             file_mode,
             fast_hash: request.target_hash_use_fast_hash,
             graph_type: TargetHashGraphType::try_from(request.target_hash_graph_type)
-                .expect("buck cli should send valid target hash graph type"),
+                .expect("yak cli should send valid target hash graph type"),
             recursive: request.target_hash_recursive,
         })
     }

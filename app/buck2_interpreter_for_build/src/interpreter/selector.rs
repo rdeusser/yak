@@ -416,7 +416,7 @@ pub fn register_select_internal(globals: &mut GlobalsBuilder) {
     }
 }
 
-/// The `Select` type represents a conditional attribute value in Buck2.
+/// The `Select` type represents a conditional attribute value in yak.
 ///
 /// `Select` objects are created using the `select()` function and enable build rules to have
 /// different attribute values based on the target's configuration.
@@ -424,7 +424,7 @@ pub fn register_select_internal(globals: &mut GlobalsBuilder) {
 ///
 /// # Resolution Timing
 ///
-/// `Select` objects are resolved during Buck2's **configuration phase**, which happens after
+/// `Select` objects are resolved during yak's **configuration phase**, which happens after
 /// YAK file evaluation but before rule implementation. This means:
 /// - Starlark code in YAK files and macro rules cannot see resolved values
 /// - Use `select_map()` or `select_test()` for macro-level operations
@@ -452,7 +452,7 @@ pub fn register_select_internal(globals: &mut GlobalsBuilder) {
 ///
 /// # Resolution Algorithm
 ///
-/// When Buck2 resolves a `Select`:
+/// When yak resolves a `Select`:
 ///
 /// 1. Evaluates each key of select options
 /// 2. Collects all keys that match the current configuration
@@ -528,7 +528,7 @@ pub fn register_select_internal(globals: &mut GlobalsBuilder) {
 ///     ],
 /// )
 ///
-/// # Match buckconfig values
+/// # Match yakconfig values
 /// config_setting(
 ///     name = "fastmode",
 ///     values = {
@@ -546,11 +546,11 @@ pub fn register_select_internal(globals: &mut GlobalsBuilder) {
 ///
 /// # Platform Selection
 ///
-/// Buck2 determines the target platform through:
+/// yak determines the target platform through:
 ///
 /// 1. `--target-platforms` command-line flag (highest priority)
 /// 2. `default_target_platform` attribute on the target
-/// 3. Cell's default platform from buckconfig
+/// 3. Cell's default platform from yakconfig
 ///
 /// Example:
 /// ```bash
@@ -559,7 +559,7 @@ pub fn register_select_internal(globals: &mut GlobalsBuilder) {
 ///
 /// # Target Compatibility
 ///
-/// Buck2 provides two attributes for platform compatibility:
+/// yak provides two attributes for platform compatibility:
 ///
 /// ## target_compatible_with
 ///
@@ -666,6 +666,6 @@ pub fn register_select_internal(globals: &mut GlobalsBuilder) {
 /// - `select_map()` - Applies a function to all possible values
 /// - `select_test()` - Tests if any value passes a predicate
 /// - `target_compatible_with` - Platform compatibility filtering
-/// - Buck2 docs: "Configurations By Example"
+/// - yak docs: "Configurations By Example"
 #[starlark_module]
 fn selector_methods(builder: &mut MethodsBuilder) {}

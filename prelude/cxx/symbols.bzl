@@ -97,7 +97,7 @@ def _extract_symbol_names(
             # Grab only the symbol name field.
             ' | cut -d" " -f2 '
             +
-            # Strip off ABI Version (@...) when using llvm-nm to keep compat with buck1
+            # Strip off ABI Version (@...) when using llvm-nm
             " | cut -d@ -f1 "
             +
             # Remove ASAN ODR generated symbols: __odr_asan_gen_*. They are

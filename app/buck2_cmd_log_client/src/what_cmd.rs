@@ -15,7 +15,7 @@ use buck2_client_ctx::event_log_options::EventLogOptions;
 use buck2_client_ctx::events_ctx::EventsCtx;
 use buck2_client_ctx::exit_result::ExitResult;
 
-/// Show buck command line arguments from selected invocation.
+/// Show yak command line arguments from selected invocation.
 ///
 /// This command output is not machine readable.
 /// Robots, please use `yak log show`.

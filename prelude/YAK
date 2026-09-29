@@ -23,7 +23,7 @@ srcs = glob(
 )
 
 # Re-export filegroups that are behind package boundary violations for
-# Buck2.
+# yak.
 prelude.filegroup(
     name = "files",
     srcs = srcs,

@@ -44,11 +44,11 @@ pub struct InvocationPaths {
     /// This form of isolation is currently supported primarily for two uses:
     ///
     /// 1. testing - it allows us to run isolated daemons on a project for tests. This is
-    ///    particularly useful to allow a test in a project to recursively invoke buck, but also
+    ///    particularly useful to allow a test in a project to recursively invoke yak, but also
     ///    useful to write tests against a project's macros and rules and using a project's real
     ///    configuration.
     ///
-    /// 2. generally to support recursive buck invocations. while our ideal may be that these
+    /// 2. generally to support recursive yak invocations. while our ideal may be that these
     ///    eventually are not allowed, the most pragmatic approach currently is to support them
     ///    but push them into isolated, temporary daemons.
     pub isolation: FileNameBuf,
@@ -80,7 +80,7 @@ impl TenantPaths {
         &self.isolation
     }
 
-    /// Top-level directory name under the project root used for Buck outputs.
+    /// Top-level directory name under the project root used for yak outputs.
     pub fn buck_out_dir_prefix() -> &'static ProjectRelativePath {
         ProjectRelativePath::unchecked_new("yak-out")
     }

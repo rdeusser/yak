@@ -158,7 +158,7 @@ def calculate_incremental_state(
     spec: List[BundleSpecItem], action_metadata: Dict[Path, str]
 ) -> List[IncrementalStateItem]:
     """
-    `action_metadata` maps Buck project relative paths to hash digest
+    `action_metadata` maps yak project relative paths to hash digest
     for every input file of the action which executes this script
     """
     result = []

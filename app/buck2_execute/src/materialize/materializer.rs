@@ -86,10 +86,10 @@ fn format_directory_entry_leaves(
 #[derive(buck2_error::Error, Debug, Clone, Dupe)]
 #[error(
     "Your build requires materializing an artifact that has expired in the \
-    RE CAS and Buck does not have it. \
-    This likely happened because your Buck daemon \
+    RE CAS and yak does not have it. \
+    This likely happened because your yak daemon \
     has been online for a long time. This error is currently unrecoverable. \
-    To proceed, you should restart Buck using `yak killall`.
+    To proceed, you should restart yak using `yak killall`.
 
 Debug information:
   Path: {}
@@ -300,7 +300,7 @@ pub trait Materializer: Allocative + Send + Sync + 'static {
     /// materializer returns `Some(file_path)`, not [`None`].
     ///
     /// TODO(rafaelc): analyze if we can get rid of this method without making
-    /// Buck2 significantly slower, after we stop deferring local copies of
+    /// yak significantly slower, after we stop deferring local copies of
     /// artifacts that are already on disk.
     async fn get_materialized_file_paths(
         &self,
@@ -772,7 +772,7 @@ pub enum FinalArtifactMaterialization {
 #[buck2(tag = Input)]
 pub enum FinalArtifactMaterializationError {
     #[error(
-        "Invalid value for buckconfig `[yak] materializations`. Got `{0}`. Expected one of `all`, `deferred`, or `deferred_skip_final_artifacts`."
+        "Invalid value for yakconfig `[yak] materializations`. Got `{0}`. Expected one of `all`, `deferred`, or `deferred_skip_final_artifacts`."
     )]
     InvalidValueForConfig(String),
 }

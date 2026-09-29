@@ -122,8 +122,7 @@ message ExternalRunnerSpecRequest {
   ExternalRunnerSpec test_spec = 1;
 }
 
-// A spec representing test targets aiming for maximum compatibility with the
-// external runner spec as defined in buck1.
+// A spec representing test targets for an external test runner.
 message ExternalRunnerSpec {
   // Target the spec belongs to
   ConfiguredTarget target = 1;

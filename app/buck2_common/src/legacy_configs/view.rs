@@ -15,11 +15,11 @@ use std::sync::Arc;
 use crate::legacy_configs::configs::LegacyBuckConfig;
 use crate::legacy_configs::key::BuckconfigKeyRef;
 
-/// Buckconfig trait.
+/// yakconfig trait.
 ///
 /// There are two implementations:
-/// * simple implementation which is backed by a buckconfig object, used in tests
-/// * DICE-backed implementation which records a dependency on buckconfig property in DICE
+/// * simple implementation which is backed by a yakconfig object, used in tests
+/// * DICE-backed implementation which records a dependency on yakconfig property in DICE
 pub trait LegacyBuckConfigView: Debug {
     fn get(&mut self, key: BuckconfigKeyRef) -> buck2_error::Result<Option<Arc<str>>>;
 

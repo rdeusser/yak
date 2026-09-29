@@ -13,7 +13,7 @@ use buck2_events::daemon_id::DaemonId;
 
 use crate::version::BuckVersion;
 
-/// Checks an environment variable to see if we were spawned by a buck daemon and if so, returns the
+/// Checks an environment variable to see if we were spawned by a yak daemon and if so, returns the
 /// UUID of that daemon.
 ///
 /// This is used to detect nested invocations, but returning `Some` does not guarantee that this is

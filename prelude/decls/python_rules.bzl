@@ -189,7 +189,7 @@ def _typing_arg():
             default = False,
             doc = """
     When True (and typing is also True), Pyre type checking runs as a build
-    validation during normal buck build, failing the build on type errors.
+    validation during normal yak build, failing the build on type errors.
 """,
         ),
     }
@@ -326,7 +326,7 @@ prebuilt_python_library = prelude_rule(
         These prebuilt libraries can either be [whl files](https://www.python.org/dev/peps/pep-0427/) or eggs
 
         whls for most packages are available for download from [PyPI](https://pypi.org). The whl used may be
-        downloaded with `remote_file()`. However, Buck does not attempt to infer dependency information from pip,
+        downloaded with `remote_file()`. However, yak does not attempt to infer dependency information from pip,
         so that information will have to be imparted by the user.
 
         To create an egg for a package, run `python setup.py bdist_egg` in the package source distribution.
@@ -456,7 +456,7 @@ python_binary = prelude_rule(
                 default = None,
                 doc = """
                 The package in which the main module should reside in its final
-                 location in the binary. If unset, Buck uses the project-relative directory
+                 location in the binary. If unset, yak uses the project-relative directory
                  that contains the YAK file.
             """,
             ),
@@ -629,10 +629,10 @@ python_test = prelude_rule(
                 default = None,
                 doc = """
                 The main module used to run the tests.
-                 This parameter is normally not needed, as Buck will provide a default main
+                 This parameter is normally not needed, as yak will provide a default main
                  module that runs all tests. However, you can override this with your own
                  module to perform custom initialization or command line processing. Your
-                 custom module can import the standard Buck test main
+                 custom module can import the standard yak test main
                  as `__test_main__`, and can invoke it's normal main function
                  as `__test_main__.main(sys.argv)`.
             """,
@@ -654,7 +654,7 @@ python_test = prelude_rule(
                 `$(location //path/to:target)`
                 Expands to the location of the output of the build rule. This
                  means that you can refer to these without needing to be aware of how
-                 Buck is storing data on the disk mid-build.
+                 yak is storing data on the disk mid-build.
             """,
             ),
         }
@@ -698,7 +698,7 @@ python_bootstrap_binary = prelude_rule(
     name = "python_bootstrap_binary",
     docs = """
         A `python_bootstrap_binary()` rule declares a Python binary intended
-        to be used in scripts that bootstrap other aspects of the Buck2
+        to be used in scripts that bootstrap other aspects of the yak
         prelude. Python bootstrap binaries do not use the Python toolchain
         and, as such, are highly restricted in what they can and can't do.
         In particular, bootstrap binaries can only depend on

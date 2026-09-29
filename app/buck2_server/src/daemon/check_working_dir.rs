@@ -12,7 +12,7 @@ use rand::distr::Alphanumeric;
 use rand::distr::SampleString;
 
 /// `check_working_dir` verifies that the working directory is still readable. A FUSE file system
-/// whose daemon exits uncleanly leaves it unreadable with `ENOTCONN`, and Buck2 cannot recover.
+/// whose daemon exits uncleanly leaves it unreadable with `ENOTCONN`, and yak cannot recover.
 pub fn check_working_dir() -> buck2_error::Result<()> {
     use std::fs;
     use std::io;
@@ -27,9 +27,9 @@ pub fn check_working_dir() -> buck2_error::Result<()> {
     };
 
     if err.kind() == io::ErrorKind::NotConnected {
-        let err = "The file system holding Buck2's working directory disconnected, which happens \
+        let err = "The file system holding yak's working directory disconnected, which happens \
             when a FUSE daemon exits uncleanly. This error is unrecoverable and you should restart \
-            Buck using `yak killall`.";
+            yak using `yak killall`.";
         return Err(buck2_error::buck2_error!(
             buck2_error::ErrorTag::Environment,
             "{}",
@@ -39,7 +39,7 @@ pub fn check_working_dir() -> buck2_error::Result<()> {
 
     if err.kind() != io::ErrorKind::NotFound {
         tracing::warn!(
-            "Buck2 is unable to read its current working directory: {}. Consider restarting",
+            "yak is unable to read its current working directory: {}. Consider restarting",
             err
         );
     }

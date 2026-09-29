@@ -59,7 +59,7 @@ use crate::interpreter::rule_defs::provider::builtin::dep_only_incompatible_roll
 /// ```
 ///
 /// Then register a target of this rule in root .yakconfig under `yak.dep_only_incompatible_info`
-/// buckconfig key. Once registered, soft errors will be fired under category "dep_only_incompatible_foo"
+/// yakconfig key. Once registered, soft errors will be fired under category "dep_only_incompatible_foo"
 /// when a target in `root//foo/...` is dep-only incompatible and likewise `dep_only_incompatible_bar` for
 /// a target in `root//bar/...`.
 #[internal_provider(dep_only_incompatible_info_creator)]

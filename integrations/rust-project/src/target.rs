@@ -120,11 +120,11 @@ pub(crate) struct TargetInfo {
     pub(crate) kind: Kind,
     pub(crate) edition: Option<Edition>,
     pub(crate) srcs: Vec<PathBuf>,
-    /// Mapped srcs are effectively aliases. The key is a buck target
+    /// Mapped srcs are effectively aliases. The key is a yak target
     /// of some kind, and the value is a path/filename that can be
     /// referred to in the rest of the rule.
     ///
-    /// Asking buck to build the targets and tell us the output path
+    /// Asking yak to build the targets and tell us the output path
     /// is how we are able to support generated sources.
     pub(crate) mapped_srcs: FxHashMap<PathBuf, PathBuf>,
     #[serde(rename = "crate")]
@@ -175,7 +175,7 @@ impl TargetInfo {
                 .is_some_and(|rest| rest.starts_with(|c: char| c.is_ascii_digit()));
         if starts_with_version {
             // For targets of the form foo:1.2.3, foo:_1.2.3, or
-            // foo:0.3.0-pre.0, the buck name isn't useful as a display name.
+            // foo:0.3.0-pre.0, the yak name isn't useful as a display name.
             self.crate_name()
         } else {
             self.name
@@ -244,7 +244,7 @@ impl TargetInfo {
     /// <https://github.com/rust-lang/cargo/blob/01e42b9bf1776d78d1714c63b927154539c741b4/src/cargo/core/features.rs#L440>
     /// <https://github.com/rust-lang/rust-analyzer/blob/a8e2add5c74cf4c3b14335eb02afe91061da0e92/crates/load-cargo/src/lib.rs#L308-L309>
     pub(crate) fn is_workspace_member(&self) -> bool {
-        // Buck workspaces define a set of buck projects that you typically edit
+        // yak workspaces define a set of yak projects that you typically edit
         // together, e.g. foo-lib and its corresponding foo-bin.
         //
         // We definitely want watch all these files for changes. Arguably in a
@@ -273,7 +273,7 @@ impl TargetInfo {
     /// of any cell.
     pub(crate) fn is_reindeer_third_party(&self) -> bool {
         // Strip the cell (e.g. `root//`) and the target name (`:foo`) to get
-        // the buck package path.
+        // the yak package path.
         let package = self
             .label
             .split_once("//")

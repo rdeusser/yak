@@ -585,7 +585,7 @@ def _attr_headers_as_raw_headers_mode(ctx: AnalysisContext) -> HeadersAsRawHeade
 
 def _needs_cxx_header_tree_hack(arg: typing.Any) -> bool:
     # The macro $(cxx-header-tree) is used in exactly once place, and its a place which isn't very
-    # Buck v2 compatible. We replace $(cxx-header-tree) with HACK-CXX-HEADER-TREE at attribute time,
+    # compatible with yak. We replace $(cxx-header-tree) with HACK-CXX-HEADER-TREE at attribute time,
     # then here we substitute in the real header tree.
     return "HACK-CXX-HEADER-TREE" in repr(arg)
 

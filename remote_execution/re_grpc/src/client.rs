@@ -180,7 +180,7 @@ pub struct RECapabilities {
     supported_compressors: Vec<Compressor>,
 }
 
-/// Contains runtime options for the remote execution client as set under `buck2_re_client`
+/// Contains runtime options for the remote execution client as set under `yak_re_client`
 pub struct RERuntimeOpts {
     /// Maximum number of concurrent upload requests.
     max_concurrent_uploads_per_action: Option<usize>,

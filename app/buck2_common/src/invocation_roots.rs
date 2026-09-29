@@ -127,11 +127,8 @@ pub fn get_invocation_paths_result(
 /// TODO(cjhopman): We currently place all yakd info into a directory owned by the user.
 /// This is broken when multiple users try to share the same checkout.
 ///
-/// **This is different than the behavior of buck1.**
-///
-/// In buck1, the buck daemon is shared across users. Due to the fact that `buck run`
-/// will run whatever command is returned by the daemon, buck1 has a privilege escalation
-/// vulnerability.
+/// A daemon shared across users would be a privilege escalation vulnerability, because
+/// `yak run` runs whatever command the daemon returns.
 ///
 /// There's a couple ways we could resolve this:
 ///

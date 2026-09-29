@@ -17,7 +17,7 @@ use buck2_error::BuckErrorContext;
 use buck2_error::ErrorTag;
 use buck2_error::buck2_error;
 
-/// Prints a thread dump of the currently running buck daemon to stdout
+/// Prints a thread dump of the currently running yak daemon to stdout
 #[derive(Debug, clap::Parser)]
 pub struct ThreadDumpCommand {}
 
@@ -26,7 +26,7 @@ impl ThreadDumpCommand {
         let paths = ctx.paths()?;
         let daemon_dir = paths.daemon_dir()?;
         let Ok(info) = BuckdProcessInfo::load(&daemon_dir) else {
-            return buck2_error!(ErrorTag::Input, "No running buck daemon").into();
+            return buck2_error!(ErrorTag::Input, "No running yak daemon").into();
         };
 
         ctx.with_runtime(|_| async move {

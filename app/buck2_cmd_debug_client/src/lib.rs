@@ -57,9 +57,9 @@ mod thread_dump;
 mod trace_io;
 
 #[derive(Debug, clap::Parser)]
-#[clap(about = "Hidden debug commands useful for testing buck2")]
+#[clap(about = "Hidden debug commands useful for testing yak")]
 pub enum DebugCommand {
-    /// Deliberately crashes the Buck daemon, for testing purposes.
+    /// Deliberately crashes the yak daemon, for testing purposes.
     Crash(CrashCommand),
     HeapDump(HeapDumpCommand),
     /// Dumps allocator stat
@@ -70,13 +70,13 @@ pub enum DebugCommand {
     InternalVersion(InternalVersionCommand),
     /// Renders an event-log to a Chrome trace file for inspection with a browser.
     ChromeTrace(ChromeTraceCommand),
-    /// Flushes all dep files known to Buck2.
+    /// Flushes all dep files known to yak.
     FlushDepFiles(FlushDepFilesCommand),
     /// Flush PGO profile data from the daemon to disk.
     FlushPgoProfile(FlushPgoProfileCommand),
     /// Forces materialization of a path, even on the deferred materializer
     Materialize(MaterializeCommand),
-    /// Validates that Buck2 and disk agree on the state of files.
+    /// Validates that yak and disk agree on the state of files.
     FileStatus(FileStatusCommand),
     /// Prints yak daemon directory (`~/.yakd/xxx`).
     DaemonDir(DaemonDirCommand),

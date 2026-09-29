@@ -6,11 +6,11 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-# Stores a reference to a Buck .NET DLL target (`Artifact`) or the name of an assembly dll (`str`)
+# Stores a reference to a yak .NET DLL target (`Artifact`) or the name of an assembly dll (`str`)
 # that can be found in the .NET framework SDK directory
 DllReference = record(
     # `str` -> Path to a .NET framework DLL on the local machine.
-    # `Artifact` -> Buck target dependency.
+    # `Artifact` -> yak target dependency.
     reference = field([Artifact, str]),
 )
 
@@ -42,8 +42,8 @@ def generate_target_tset_children(deps: list[typing.Any], ctx: AnalysisContext) 
                     ctx.actions.tset(DllDepTSet, value = DllReference(reference = dep)),
                 )
             else:
-                # Buck target dependency (eg "//buck/path/to:foobar").
-                # Adds all of the dependencies of the Buck target dependency to the tset.
+                # yak target dependency (eg "//buck/path/to:foobar").
+                # Adds all of the dependencies of the yak target dependency to the tset.
                 tset_children.append(dep.get(DotNetLibraryInfo).dll_deps)
 
     return tset_children
@@ -51,7 +51,7 @@ def generate_target_tset_children(deps: list[typing.Any], ctx: AnalysisContext) 
 DotNetLibraryInfo = provider(
     doc = "Information about a .NET library and its dependencies",
     fields = {
-        # A tset of DLLs (System or Buck targets) this library depends on. The
+        # A tset of DLLs (System or yak targets) this library depends on. The
         # `.value` is a reference to the outputting assembly artifact, and the
         # children are the dependencies required to build it.
         "dll_deps": provider_field(DllDepTSet),

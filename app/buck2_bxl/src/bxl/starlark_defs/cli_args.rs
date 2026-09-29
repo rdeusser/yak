@@ -1249,7 +1249,7 @@ pub(crate) fn cli_args_module(registry: &mut GlobalsBuilder) {
     }
 
     /// Takes an arg from cli, reads the specified file as JSON, and returns the parsed object in bxl.
-    /// Supports both relative and absolute paths. Relative paths are resolved relative to the buck project root.
+    /// Supports both relative and absolute paths. Relative paths are resolved relative to the yak project root.
     ///
     /// ### Examples
     ///

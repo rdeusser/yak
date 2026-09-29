@@ -546,7 +546,7 @@ struct BuildDeadlineExpired;
 pub struct BuildConfiguredLabelOptions {
     pub skippable: bool,
     pub graph_properties: GraphPropertiesOptions,
-    /// Resolve the target's run command line (`run_args`). Set only by `buck run`;
+    /// Resolve the target's run command line (`run_args`). Set only by `yak run`;
     pub return_run_args: bool,
 }
 

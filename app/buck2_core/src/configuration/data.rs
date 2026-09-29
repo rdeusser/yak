@@ -57,8 +57,8 @@ enum ConfigurationError {
 enum ConfigurationLookupError {
     #[error("
     Could not find configuration `{0}`. Configuration lookup by string requires
-    that buck has already loaded the configuration through some other mechanism. You can run `yak cquery <some_target>`
-    with a target that uses the configuration (somewhere in its graph) to make buck aware of the configuration first.
+    that yak has already loaded the configuration through some other mechanism. You can run `yak cquery <some_target>`
+    with a target that uses the configuration (somewhere in its graph) to make yak aware of the configuration first.
     ")]
     ConfigNotFound(BoundConfigurationId),
     #[error(
@@ -224,7 +224,7 @@ impl ConfigurationData {
     }
 
     /// Looks up a known configuration from a `Configuration::full_name()` string. Generally
-    /// this is a debugging utility that most buck code shouldn't use, it's primarily useful
+    /// this is a debugging utility that most yak code shouldn't use, it's primarily useful
     /// for resolving configuration strings provided on the command line.
     ///
     /// This can only find configurations that have otherwise already been encountered by
@@ -366,7 +366,7 @@ pub struct ConfigurationDataData {
     pub constraints: BTreeMap<ConstraintKey, ConstraintValue>,
 }
 
-/// We don't use derive(Hash) here because we build Buck 2 on two different versions of Rustc at
+/// We don't use derive(Hash) here because we build yak on two different versions of Rustc at
 /// the moment, and their hashing disagrees <https://github.com/rust-lang/rust/pull/89443>. In any
 /// case, we should control what goes into our hash here.
 #[allow(clippy::derived_hash_with_manual_eq)]

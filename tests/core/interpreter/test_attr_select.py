@@ -18,7 +18,7 @@ async def test_select_fail(buck: Buck) -> None:
     outputs: list[str] = []
 
     async def run(*args: str) -> BuckResult:
-        outputs.append("$ buck " + " ".join(args))
+        outputs.append("$ yak " + " ".join(args))
         try:
             res = await buck.run_buck_command(*args)
             outputs.append(res.stdout)
@@ -85,7 +85,7 @@ async def test_select_incompatible(buck: Buck) -> None:
     outputs: list[str] = []
 
     async def run(*args: str) -> BuckResult:
-        outputs.append("$ buck " + " ".join(args))
+        outputs.append("$ yak " + " ".join(args))
         try:
             res = await buck.run_buck_command(*args)
             outputs.append(res.stdout)

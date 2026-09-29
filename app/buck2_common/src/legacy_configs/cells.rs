@@ -56,15 +56,15 @@ use crate::legacy_configs::path::DOT_YAKCONFIG_LOCAL;
 use crate::legacy_configs::path::ExternalConfigSource;
 use crate::legacy_configs::path::ProjectConfigSource;
 
-/// Buckconfigs can partially be loaded from within dice. However, some parts of what makes up the
-/// buckconfig comes from outside the buildgraph, and this type represents those parts.
+/// yakconfigs can partially be loaded from within dice. However, some parts of what makes up the
+/// yakconfig comes from outside the buildgraph, and this type represents those parts.
 #[derive(Clone, PartialEq, Eq, Allocative, Pagable)]
 pub struct ExternalBuckconfigData {
-    // The result of parsing the buckconfigs coming from either global (e.g. /etc/yakconfig.d) or
+    // The result of parsing the yakconfigs coming from either global (e.g. /etc/yakconfig.d) or
     // user (e.g. ~/.yakconfig.d or $home_dir/.yakconfig.local) files/dirs outside of the repo
-    // The order matters here and reflects the same order these are processed in buck.
+    // The order matters here and reflects the same order these are processed in yak.
     external_path_configs: Vec<ExternalPathBuckconfigData>,
-    // The result of parsing the buckconfigs coming from command line args (e.g. --config or --config-file)
+    // The result of parsing the yakconfigs coming from command line args (e.g. --config or --config-file)
     args: Vec<ResolvedLegacyConfigArg>,
 }
 
@@ -180,7 +180,7 @@ impl ExternalBuckconfigData {
     }
 }
 
-/// Used for creating a CellResolver in a buckv1-compatible way based on values
+/// Used for creating a CellResolver based on values
 /// in .yakconfig in each cell.
 ///
 /// We'll traverse the structure of the `[cells]` sections starting from
@@ -200,7 +200,7 @@ impl BuckConfigBasedCells {
     /// In the client and one place in the daemon, we need access to the alias resolver for the cwd
     /// in some places where we don't have normal dice access
     ///
-    /// This function reads buckconfigs to compute an appropriate cell alias resolver to make that
+    /// This function reads yakconfigs to compute an appropriate cell alias resolver to make that
     /// possible.
     pub async fn get_cell_alias_resolver_for_cwd_fast(
         &self,
@@ -496,7 +496,7 @@ impl BuckConfigBasedCells {
         enum ExternalCellOriginParseError {
             #[error("Unknown external cell origin `{0}`")]
             Unknown(String),
-            #[error("Missing buckconfig `{0}.{1}` for external cell configuration")]
+            #[error("Missing yakconfig `{0}.{1}` for external cell configuration")]
             MissingConfiguration(String, String),
         }
 

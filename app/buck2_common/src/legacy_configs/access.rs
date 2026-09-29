@@ -114,7 +114,7 @@ impl LegacyBuckConfig {
             .map_err(buck2_error::Error::from)
             .with_buck_error_context(|| {
                 format!(
-                    "Invalid value for buckconfig `{}.{}`: conversion to {} failed, value as `{}`",
+                    "Invalid value for yakconfig `{}.{}`: conversion to {} failed, value as `{}`",
                     section.to_owned(),
                     property.to_owned(),
                     std::any::type_name::<T>(),

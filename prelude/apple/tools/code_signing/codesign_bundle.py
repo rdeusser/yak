@@ -76,7 +76,7 @@ class CodesignedPath:
     """
     entitlements: Optional[Path]
     """
-    Path to entitlements to be used when codesigning, relative to buck project
+    Path to entitlements to be used when codesigning, relative to yak project
     """
     flags: List[str]
     """

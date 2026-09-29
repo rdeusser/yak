@@ -146,7 +146,7 @@ pub trait TraversalFilter<T: QueryTarget>: Send + Sync {
     async fn get_children(&self, target: &T) -> buck2_error::Result<TargetSet<T>>;
 }
 
-/// The environment of a Buck query that can evaluate queries to produce a
+/// The environment of a yak query that can evaluate queries to produce a
 /// result.
 #[async_trait]
 pub trait QueryEnvironment: Send + Sync {

@@ -42,8 +42,8 @@ use crate::LogCommandOutputFormatWithWriter;
 use crate::OutputFormatWithWriter;
 use crate::transform_format;
 
-/// Output everything that buck ran from the selected invocation. If no invocation was specified,
-/// use the last buck invocation from this isolation directory.
+/// Output everything that yak ran from the selected invocation. If no invocation was specified,
+/// use the last yak invocation from this isolation directory.
 ///
 /// The output is presented as a series of tab-delimited records with the following structure:
 ///

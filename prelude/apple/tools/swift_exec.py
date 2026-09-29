@@ -120,7 +120,7 @@ def _rewrite_dependency_file(command, out_path):
         raise RuntimeError("-emit-dependencies requires -dependencies-file-output")
 
     # The compiler will output d files in Makefile format with abolute paths,
-    # Buck expects line separated relative paths with no input prefix.
+    # yak expects line separated relative paths with no input prefix.
     output_file_map_path = command[command.index("-output-file-map") + 1]
     with open(output_file_map_path) as f:
         output_file_map = json.load(f)
@@ -211,7 +211,7 @@ def _parse_wrapper_args(
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "-dependencies-file-output",
-        help="Path to write Buck format dependencies file to",
+        help="Path to write yak format dependencies file to",
     )
     parser.add_argument(
         "-ignore-errors",
@@ -373,7 +373,7 @@ def main():
                 # Get the serialized diagnostics output from the output file map.
                 serialized_diags = _get_serialized_diagnostics_path(command)
 
-                # Convert the diagnostics to JSON for the Buck error handler.
+                # Convert the diagnostics to JSON for the yak error handler.
                 subprocess.run(
                     [wrapper_args.serialized_diagnostics_to_json, serialized_diags],
                     stdout=json_out,
@@ -394,7 +394,7 @@ def main():
             )
             sys.exit(1)
 
-        # Rewrite .d files for the format that Buck requires.
+        # Rewrite .d files for the format that yak requires.
         if "-emit-dependencies" in command:
             _rewrite_dependency_file(command, wrapper_args.dependencies_file_output)
 

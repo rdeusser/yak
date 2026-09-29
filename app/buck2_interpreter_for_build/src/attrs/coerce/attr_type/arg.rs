@@ -58,7 +58,7 @@ enum MacroError {
     #[error("Incorrect number of args to macro `{0}` (had {1} args)")]
     InvalidNumberOfArgs(String, usize),
     #[error(
-        "Unrecognized macro `{0}` (with {1} args). If this is shell command substitution rather than a buck macro, escape it as `\\$({0} ...)`"
+        "Unrecognized macro `{0}` (with {1} args). If this is shell command substitution rather than a yak macro, escape it as `\\$({0} ...)`"
     )]
     UnrecognizedMacro(String, usize),
 }

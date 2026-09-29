@@ -23,7 +23,7 @@ def parse_arguments() -> Namespace:
     parser.add_argument("-d", "--dest", type=str, required=True)
     parser.add_argument("-t", "--target", type=str, required=True, nargs="+")
     parser.add_argument(
-        "-c", "--config", action="append", help="Buck configuration flags"
+        "-c", "--config", action="append", help="yak configuration flags"
     )
     parser.add_argument(
         "-s",
@@ -34,7 +34,7 @@ def parse_arguments() -> Namespace:
     parser.add_argument(
         "--isolation-dir",
         type=str,
-        help="Isolation directory for buck2",
+        help="Isolation directory for yak",
     )
     return parser.parse_args()
 
@@ -63,9 +63,9 @@ def run_bxl_and_merge_index(
     isolation_dir_flag = f" --isolation-dir {isolation_dir}" if isolation_dir else ""
     if configs:
         config_flags = " ".join([f"-c {config}" for config in configs])
-        command = f"buck2{isolation_dir_flag} bxl {config_flags} {BXL} -- --target {targets_str}{subtarget_arg}"
+        command = f"yak{isolation_dir_flag} bxl {config_flags} {BXL} -- --target {targets_str}{subtarget_arg}"
     else:
-        command = f"buck2{isolation_dir_flag} bxl {BXL} -- --target {targets_str}{subtarget_arg}"
+        command = f"yak{isolation_dir_flag} bxl {BXL} -- --target {targets_str}{subtarget_arg}"
     process = subprocess.Popen(
         command,
         shell=True,

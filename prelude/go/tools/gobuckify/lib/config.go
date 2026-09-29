@@ -28,7 +28,7 @@ type BuckConfig struct {
 	DepsAttr              string `json:"deps_attr"`                // custom attribute for dependencies e.g. "go_external_deps". Default: "deps"
 }
 
-// PlatformConfig mapping between goos/goarch and buck os/arch
+// PlatformConfig mapping between goos/goarch and yak os/arch
 type PlatformConfig struct {
 	GoOS     string `json:"go_os"`
 	GoArch   string `json:"go_arch"`

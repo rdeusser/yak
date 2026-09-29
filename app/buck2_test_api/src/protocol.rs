@@ -8,10 +8,10 @@
  * above-listed licenses.
  */
 
-//! The traits that defines the protocol between buck and a test executor.
+//! The traits that defines the protocol between yak and a test executor.
 //!
-//! Test executors are expected to implement the trait `TestExecutor`. Buck will need to implement
-//! the trait `Buck` for the test executor to interact against.
+//! Test executors are expected to implement the trait `TestExecutor`. yak implements
+//! the trait `TestOrchestrator` for the test executor to interact against.
 
 use std::time::Duration;
 
@@ -32,7 +32,7 @@ use crate::data::RequiredLocalResources;
 use crate::data::TestResult;
 use crate::data::TestStage;
 
-/// available to buck to interact with the test executor
+/// available to yak to interact with the test executor
 #[async_trait::async_trait]
 pub trait TestExecutor: Send + Sync {
     /// sends an external runner spec to the test executor
@@ -53,7 +53,7 @@ pub trait TestOrchestrator: Send + Sync {
     /// executes the given command and returns the result of the execution
     async fn execute2(
         &self,
-        // information about this execute request for Buck's UX
+        // information about this execute request for yak's UX
         stage: TestStage,
         // the label of the rule being tested
         target: ConfiguredTargetHandle,
@@ -115,7 +115,7 @@ pub trait TestOrchestrator: Send + Sync {
 
     /// Upload a local file to CAS and return its digest.
     ///
-    /// The test executor calls this to upload local test artifacts to CAS. Buck2 handles the
+    /// The test executor calls this to upload local test artifacts to CAS. yak handles the
     /// actual CAS upload using its RE client.
     async fn upload_to_cas(
         &self,
@@ -132,18 +132,18 @@ pub struct ExecPlatformRefinement;
 /// the template name for external test executor to fill with the test execution location
 pub const OUTPUT_DIR: &str = "output_dir";
 
-/// the template name for buck to fill with the commands outputs
+/// the template name for yak to fill with the commands outputs
 pub const OUTPUTS_TEMPLATE: &str = "outputs";
 
-/// the template name for buck to fill with the run cmd based on the test's run information
+/// the template name for yak to fill with the run cmd based on the test's run information
 /// this should be multi-arity
 pub const TEST_RUN_CMD: &str = "test_run_cmd";
 
-/// the template name for buck to fill with the run environment based on the test's run information
+/// the template name for yak to fill with the run environment based on the test's run information
 /// this should be multi-arity
 pub const TEST_RUN_ENV_KEYS: &str = "test_run_env_keys";
 
-/// the template name for buck to fill with the run environment based on the test's run information
+/// the template name for yak to fill with the run environment based on the test's run information
 /// this should be multi-arity
 pub const TEST_RUN_ENV_VALUES: &str = "test_run_env_values";
 

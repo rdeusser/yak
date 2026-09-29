@@ -19,7 +19,7 @@ pub(crate) fn register_sha1(builder: &mut GlobalsBuilder) {
     /// Computes a sha1 digest for a string. Returns the hex representation of the digest.
     ///
     /// ```python
-    /// sha1("Buck2 is the best build system") == "d39e9f9030da819a5be667a409ea979551df6211"
+    /// sha1("yak is the best build system") == "1b40ae7a066087afaae7147598b6d4d7439a685e"
     /// ```
     fn sha1(#[starlark(require = pos)] val: &str) -> starlark::Result<String> {
         let hash = Sha1::digest(val.as_bytes());

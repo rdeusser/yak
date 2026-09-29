@@ -91,7 +91,7 @@ async fn get_daemon_spawner(init: &ResourceControlInit) -> buck2_error::Result<D
                 if !controllers.contains(controller) {
                     return Err(buck2_error::buck2_error!(
                         buck2_error::ErrorTag::Input,
-                        "Buck parent cgroup does not have {} controller enabled",
+                        "yak parent cgroup does not have {} controller enabled",
                         controller
                     ));
                 }
@@ -189,9 +189,6 @@ fn systemd_run_command(
 ) -> std::process::Command {
     let mut cmd = process::background_command("systemd-run");
     cmd.args(SYSTEMD_RUN_SCOPE_ARGS);
-    // N.B. the slice name here is used by BPFJailer to assign the `buck` Role
-    // ID to the daemon process, which is what gives the daemon permission to
-    // exit the jail.
     cmd.arg(format!("--working-directory={working_directory}"));
     cmd.arg(format!("--unit={unit_name}"));
     cmd.arg(program);

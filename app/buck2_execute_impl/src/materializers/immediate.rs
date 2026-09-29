@@ -226,7 +226,7 @@ pub(crate) fn maybe_locked_write(
 /// `tempfile` owns temp naming (random, claimed with create-new semantics, so
 /// nothing that already exists is ever touched) and deletes the temp on drop
 /// when the publish does not complete; the publish rename goes through
-/// `fs_util` so the operation with replace semantics stays in buck's IO
+/// `fs_util` so the operation with replace semantics stays in yak's IO
 /// layer. The temp creation and content write bypass `fs_util` (no IO
 /// counters, retries, or error categorization for those two operations).
 fn write_via_atomic_rename(

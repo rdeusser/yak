@@ -28,7 +28,7 @@ def nested_buck2_args(buck: Buck) -> typing.List[str]:
 async def test_same_state(buck: Buck) -> None:
     await expect_failure(
         buck.build("root//:nested_normal", *nested_buck2_args(buck)),
-        stderr_regex="Recursive invocation of Buck, which is discouraged, but will probably work \\(using the same state\\)",
+        stderr_regex="Recursive invocation of yak, which is discouraged, but will probably work \\(using the same state\\)",
     )
 
 
@@ -49,7 +49,7 @@ async def test_different_state_error(buck: Buck, tmp_path: Path) -> None:
         stderr_regex="Failed to build 'root//:nested_normal",
     )
     res = await buck.log("what-ran", "--failed", "--show-std-err", str(log))
-    assert "Recursive invocation of Buck, with a different state" in res.stdout
+    assert "Recursive invocation of yak, with a different state" in res.stdout
 
 
 @buck_test(allow_soft_errors=True)

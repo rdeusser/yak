@@ -14,7 +14,7 @@ jobs:
     name: Define the version info for this release
     runs-on: ubuntu-latest
     outputs:
-      buck2_version: ${{ steps.define_version_info.outputs.buck2_version }}
+      yak_version: ${{ steps.define_version_info.outputs.yak_version }}
     steps:
       - name: Define version info
         id: define_version_info
@@ -22,17 +22,17 @@ jobs:
           # Specify the release version information
           commit_date=$(echo "${{ github.event.repository.updated_at }}" | sed 's/T.*//')
 
-          echo "buck2_version=$commit_date-${{ github.sha }}" >> "$GITHUB_OUTPUT"
+          echo "yak_version=$commit_date-${{ github.sha }}" >> "$GITHUB_OUTPUT"
       - name: Display version info
-        run: echo ${{ steps.define_version_info.outputs.buck2_version }}
+        run: echo ${{ steps.define_version_info.outputs.yak_version }}
 
   build:
     name: Build `yak`
     needs:
       - set_version_info
-    uses: ./.github/workflows/build_buck2.yml
+    uses: ./.github/workflows/build_yak.yml
     with:
-      buck2_version: ${{ needs.set_version_info.outputs.buck2_version }}
+      yak_version: ${{ needs.set_version_info.outputs.yak_version }}
 
   release_latest:
     name: Release `latest` tag
@@ -125,12 +125,12 @@ jobs:
     steps:
     - name: Checkout
       uses: actions/checkout@v6
-    - name: Download Buck2
+    - name: Download yak
       uses: actions/download-artifact@v7
       with:
         name: yak-x86_64-unknown-linux-gnu
         path: artifacts
-    - name: Decompress Buck2
+    - name: Decompress yak
       run: |
         zstd -d artifacts/yak-x86_64-unknown-linux-gnu.zst -o artifacts/yak-release
         chmod +x artifacts/yak-release

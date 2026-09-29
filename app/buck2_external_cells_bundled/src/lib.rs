@@ -100,7 +100,7 @@ mod tests {
     #[test]
     fn test_bundled_prelude_data() {
         let c = super::PRELUDE;
-        // Make sure there's a buckconfig
+        // Make sure there's a yakconfig
         assert!(c.files.iter().any(|file| {
             file.path == ".yakconfig"
                 && std::str::from_utf8(file.contents)

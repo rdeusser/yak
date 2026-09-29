@@ -34,7 +34,7 @@ class ExitCode(Enum):
 
 
 class InvocationRecord:
-    """Parsed invocation record from a Buck2 command."""
+    """Parsed invocation record from a yak command."""
 
     def __init__(self, path: Path) -> None:
         record_json = json.loads(path.read_text(encoding="utf-8"))
@@ -58,8 +58,8 @@ class InvocationRecord:
 
 class BuckResult(Result):
     """
-    Represents a buck process that has finished running and succeeded.
-    If the buck process failed, proceeds to raise BuckException
+    Represents a yak process that has finished running and succeeded.
+    If the yak process failed, proceeds to raise BuckException
     """
 
     def __init__(
@@ -85,7 +85,7 @@ class BuckResult(Result):
 
 
 class BuckException(Exception, BuckResult):
-    """Represents a Buck process that has finished running and failed."""
+    """Represents a yak process that has finished running and failed."""
 
     def __init__(
         self,
@@ -129,7 +129,7 @@ class BuckException(Exception, BuckResult):
         assert self.process.returncode != 0
 
     def get_exit_code(self) -> ExitCode:
-        """Returns the exit code of a Buck Result when it exits"""
+        """Returns the exit code of a yak Result when it exits"""
         # See https://docs.python.org/3/library/subprocess.html#subprocess.Popen.returncode
         # for negative return code.
         assert self.process.returncode is not None
@@ -208,7 +208,7 @@ LOG_COMPUTE_KEY = "build_api::actions::calculation: compute"
 
 
 class TargetsResult(BuckResult):
-    """Represents a Buck process of a targets command that has finished running"""
+    """Represents a yak process of a targets command that has finished running"""
 
     def __init__(self, base: BuckResult) -> None:
         self.__dict__.update(base.__dict__)
@@ -247,7 +247,7 @@ class TargetsResult(BuckResult):
 
 
 class BuildResult(BuckResult):
-    """Represents a Buck process of a build command that has finished running"""
+    """Represents a yak process of a build command that has finished running"""
 
     def __init__(self, base: BuckResult) -> None:
         self.__dict__.update(base.__dict__)
@@ -279,7 +279,7 @@ class BuildResult(BuckResult):
 
     def get_build_report(self) -> BuildReport:
         """
-        Returns a BuildReport object for a buck v2 build invoked with --build-report.
+        Returns a BuildReport object for a yak build invoked with --build-report.
         Looks for a '{' and parses the build stdout starting from '{' as a json.
         """
         try:
@@ -308,13 +308,13 @@ class BuildResult(BuckResult):
 
 
 class AuditConfigResult(BuckResult):
-    """Represents a Buck process of an audit config command that has finished running"""
+    """Represents a yak process of an audit config command that has finished running"""
 
     def __init__(self, base: BuckResult) -> None:
         self.__dict__.update(base.__dict__)
 
     def get_json(self) -> Dict[str, str]:
-        """Returns a dict of the json sent back by buck"""
+        """Returns a dict of the json sent back by yak"""
         assert "--style=json" in self.buck_args or "--style json" in self.buck_args, (
             "Must add --style=json or `--style json` arg to get json output"
         )

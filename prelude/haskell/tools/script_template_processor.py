@@ -166,7 +166,7 @@ def main() -> int:
     STRING_ARGS = [
         "package_dbs",
         "prebuilt_package_dbs",
-        # Name of the buck target being built, e.g. haxlsh
+        # Name of the yak target being built, e.g. haxlsh
         "target_name",
         "start_ghci",
         # Path to the final iserv script. Used by the final ghci script.

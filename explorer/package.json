@@ -1,7 +1,7 @@
 {
   "name": "buck2_explorer",
   "version": "1.0.0",
-  "description": "Buck2 Explorer",
+  "description": "yak Explorer",
   "main": "main.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
@@ -27,7 +27,7 @@
   "config": {
     "forge": {
       "packagerConfig": {
-        "name": "Buck2 Explorer",
+        "name": "yak Explorer",
         "icon": "icon.icns"
       },
       "makers": [

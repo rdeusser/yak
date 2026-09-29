@@ -132,7 +132,7 @@ pub(crate) struct SceneIdRef(u64);
 
 /// A scene is the unit of work that the scheduler manages.
 ///
-/// You should typically think of this as an action, but in principle it might be anything that buck
+/// You should typically think of this as an action, but in principle it might be anything that yak
 /// does which needs access to significant system resources for some amount of time.
 struct Scene {
     description: SceneDescription,
@@ -207,9 +207,9 @@ pub(crate) struct Scheduler {
     last_parallelism_increase_time: Instant,
     /// Current best estimate for the maximum amount of memory we can use.
     ///
-    /// This is approximately computed as the total memory in use by buck the last time we saw
+    /// This is approximately computed as the total memory in use by yak the last time we saw
     /// significant memory pressure. As a result it doesn't just reflect system-wide limits, but
-    /// also implicitly incorporates information about what processes other than buck are doing.
+    /// also implicitly incorporates information about what processes other than yak are doing.
     ///
     /// FIXME(JakobDegen): Is having a single value for this enough? Should we be averaging over the
     /// last N samples?

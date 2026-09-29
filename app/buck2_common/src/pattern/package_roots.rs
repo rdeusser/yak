@@ -105,7 +105,7 @@ pub async fn collect_package_roots<E>(
             .map(|v| v.is_ignored())
         {
             Ok(true) => {
-                // TODO(cjhopman): Ignoring this matches buck1 behavior, but we'd like this to be an error.
+                // TODO(cjhopman): This is ignored, but we'd like this to be an error.
             }
             Ok(false) => {
                 if seen.insert(path.clone()) {

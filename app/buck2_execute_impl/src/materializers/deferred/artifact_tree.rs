@@ -149,7 +149,7 @@ pub(crate) fn artifact_metadata_matches_entry(
     match (metadata, entry) {
         (DirectoryEntry::Dir(d1), DirectoryEntry::Dir(d2)) => d1.fingerprint() == d2.fingerprint(),
         (DirectoryEntry::Leaf(l1), DirectoryEntry::Leaf(l2)) => {
-            // In Windows, the 'executable bit' absence can cause Buck2 to re-download identical artifacts.
+            // In Windows, the 'executable bit' absence can cause yak to re-download identical artifacts.
             // To avoid this, we exclude the executable bit from the comparison.
             if cfg!(windows) {
                 if let (ActionDirectoryMember::File(meta1), ActionDirectoryMember::File(meta2)) =

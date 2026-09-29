@@ -44,7 +44,7 @@ use buck2_fs::working_dir::AbsWorkingDir;
 use superconsole::Line;
 use superconsole::Span;
 
-use crate::commands::build::print_buck_ui;
+use crate::commands::build::print_build_id;
 use crate::commands::build::print_build_result;
 
 fn forward_output_to_path(
@@ -131,7 +131,7 @@ If include patterns are present, regardless of whether exclude patterns are pres
         long = "build-filtered",
         help = "Whether to build tests that are excluded via labels."
     )]
-    build_filtered_targets: bool, // TODO(bobyf) this flag should always override the buckconfig option when we use it
+    build_filtered_targets: bool, // TODO(bobyf) this flag should always override the yakconfig option when we use it
 
     /// Will allow tests that are compatible with RE (setup to run from the repo root and
     /// use relative paths) to run from RE.
@@ -184,25 +184,25 @@ If include patterns are present, regardless of whether exclude patterns are pres
 
     /// Also build DefaultInfo provider, which is what `yak build` builds.
     ///
-    /// This overrides the `yak.test_builds_targets` buckconfig.
+    /// This overrides the `yak.test_builds_targets` yakconfig.
     #[clap(long, group = "default-info")]
     build_default_info: bool,
 
     /// Do not build DefaultInfo provider.
     ///
-    /// This overrides the `yak.test_builds_targets` buckconfig.
+    /// This overrides the `yak.test_builds_targets` yakconfig.
     #[clap(long, group = "default-info")]
     skip_default_info: bool,
 
     /// Also build RunInfo provider, which builds artifacts needed for `yak run`.
     ///
-    /// This overrides the `yak.test_builds_targets` buckconfig.
+    /// This overrides the `yak.test_builds_targets` yakconfig.
     #[clap(long, group = "run-info")]
     build_run_info: bool,
 
     /// Do not build RunInfo provider.
     ///
-    /// This overrides the `yak.test_builds_targets` buckconfig.
+    /// This overrides the `yak.test_builds_targets` yakconfig.
     #[clap(long, group = "run-info")]
     skip_run_info: bool,
 
@@ -352,7 +352,7 @@ impl StreamingCommand for TestCommand {
         // Warn if no target patterns but label filters are set
         // This usually means the patterns were accidentally consumed as label values
         // NOTE: maybe these should accept just one arg, but that probably breaks users who
-        // are doing buck test //... --include myproject myproject2
+        // are doing yak test //... --include myproject myproject2
         if let Some(suspicious_labels) =
             should_warn_about_flag_position(&self.patterns, &self.include, &self.exclude)
         {
@@ -482,7 +482,7 @@ impl StreamingCommand for TestCommand {
             console.print_error(&format!("{} BUILDS FAILED", build_error_count))?;
         }
 
-        print_buck_ui(&console, ctx, events_ctx.used_superconsole)?;
+        print_build_id(&console, ctx, events_ctx.used_superconsole)?;
 
         let mut line = Line::default();
         line.push(Span::new_unstyled_lossy("Tests finished: "));

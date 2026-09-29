@@ -37,7 +37,7 @@ async def _test_analysis_query_invalidation_impl(buck: Buck, name: str) -> None:
 @buck_test(data_dir="analysis_query_invalidation")
 async def test_analysis_query_invalidation_deps(buck: Buck) -> None:
     """
-    Checks that a `deps()` analysis query sees the dependencies that a buckconfig change selects.
+    Checks that a `deps()` analysis query sees the dependencies that a yakconfig change selects.
     """
     await _test_analysis_query_invalidation_impl(
         buck, name="analysis_query_invalidation"

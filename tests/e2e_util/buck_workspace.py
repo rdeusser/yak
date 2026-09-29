@@ -36,7 +36,7 @@ TESTS_DIR: Path = Path(__file__).resolve().parent.parent
 
 # YAK_BINARY names the binary under test. It defaults to the Cargo debug build.
 BUCK2_BINARY_ENV_VAR = "YAK_BINARY"
-# YAK_TEST_RE_CONFIG names a buckconfig file with the `[yak_re_client]`
+# YAK_TEST_RE_CONFIG names a yakconfig file with the `[yak_re_client]`
 # settings of a Remote Execution backend. Every test project reads it, and tests
 # marked `remote_execution` run only when it is set.
 RE_CONFIG_ENV_VAR = "YAK_TEST_RE_CONFIG"
@@ -78,7 +78,7 @@ async def buck_fixture(  # noqa C901 : "too complex"
     marker: BuckTestMarker,
     test_file: Path,
 ) -> AsyncGenerator[Buck, None]:
-    """Returns a Buck that runs in a new temporary project for the test in `test_file`."""
+    """Returns a yak that runs in a new temporary project for the test in `test_file`."""
 
     binary = buck2_binary()
     if not binary.is_file():
@@ -103,7 +103,7 @@ async def buck_fixture(  # noqa C901 : "too complex"
     env["YAK_TEST_STDIN_BUFFER_SIZE"] = "8"
     # Require the events dispatcher to be set for e2e tests.
     env["ENFORCE_DISPATCHER_SET"] = "true"
-    # Inform buck of the test timeout
+    # Inform yak of the test timeout
     env["YAK_SELF_TEST_TIMEOUT_S"] = "600"
     # Timeout Watchman requests because we often see it hang and crash.
     env["YAK_WATCHMAN_TIMEOUT"] = "30"
@@ -255,7 +255,7 @@ def buck_test(
     write_invocation_record: bool = False,
 ) -> Callable[..., Any]:
     """
-    Defines a buck test. This is a must have decorator on all test case functions.
+    Defines a yak test. This is a must have decorator on all test case functions.
 
     Each test runs in a new temporary project. `buck_test` copies the test's data
     directory (`test_foo_data/` for `test_foo.py`) into the project.
@@ -270,7 +270,7 @@ def buck_test(
         allow_soft_errors:
             Like it says in the arg name. The default is to hard error.
         extra_buck_config:
-            A optional dict of extra buck config to add to the test.
+            A optional dict of extra yak config to add to the test.
             The key is the section name, the value is a dict of key value pairs.
         skip_final_kill:
             Don't run a `yak kill` or `yak clean` at the end of the test

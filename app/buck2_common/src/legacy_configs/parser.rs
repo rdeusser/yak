@@ -57,7 +57,7 @@ enum ConfigError {
         "Couldn't parse line. Expected include directive (`<file:/file.bcfg>`), section(`[some_section]`), or key assignment (`some_key = some_value`). Got `{0}`"
     )]
     InvalidLine(String),
-    #[error("Detected cycles in buckconfig $(config) references: {}", format_cycle(.0))]
+    #[error("Detected cycles in yakconfig $(config) references: {}", format_cycle(.0))]
     ReferenceCycle(Vec<(String, String)>),
 }
 
@@ -81,15 +81,15 @@ impl SectionBuilder {
     }
 }
 
-/// Represents the state associated with a buckconfig that is being parsed right now.
+/// Represents the state associated with a yakconfig that is being parsed right now.
 ///
-/// A buckconfig will generally be parsed by combining multiple command args and files
+/// A yakconfig will generally be parsed by combining multiple command args and files
 #[derive(Debug, Clone, PartialEq, Eq, Allocative, Pagable)]
 pub(crate) struct LegacyConfigParser {
     values: BTreeMap<String, SectionBuilder>,
 }
 
-/// Represents the state associated with parsing a single file into a buckconfig.
+/// Represents the state associated with parsing a single file into a yakconfig.
 struct LegacyConfigFileParser<'p> {
     include_stack: Vec<ConfigFileLocationWithLine>,
     current_file: Option<Arc<ConfigFileLocation>>,
@@ -125,7 +125,7 @@ impl LegacyConfigParser {
         file_parser
             .parse_file_on_stack(path, follow_includes, file_ops)
             .await
-            .with_buck_error_context(|| format!("Error parsing buckconfig `{path}`"))?;
+            .with_buck_error_context(|| format!("Error parsing yakconfig `{path}`"))?;
         file_parser.finish_file();
 
         Ok(())

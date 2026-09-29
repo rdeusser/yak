@@ -151,7 +151,7 @@ async def test_uquery_owner(buck: Buck) -> None:
     result = await buck.uquery("""owner(data/buck/build/data.file)""")
     assert result.stdout == "root//data:data\n"
 
-    # there's no buildfile in the root of the special buck, make sure that works
+    # there's no buildfile in the root of the special yak, make sure that works
     result = await buck.uquery("""owner(special/file)""")
     assert "No owner" in result.stderr
     assert result.stdout == ""
@@ -467,7 +467,7 @@ async def test_multi_uquery(buck: Buck) -> None:
         "data/buck/build/data.file": ["root//data:data"],
     }
 
-    # match buck1's strange handling of multi-query with --output-attribute
+    # A multi-query with --output-attribute merges its results.
     result = await buck.uquery(
         "--json",
         "--output-attribute=name",
@@ -501,7 +501,7 @@ async def test_multi_uquery(buck: Buck) -> None:
     out = await buck.uquery("owner(%s)", "data/buck/build/data.file")
     assert out.stdout == "root//data:data\n"
 
-    # We'd really prefer this to be an error, but Buck1 allows it
+    # We'd really prefer this to be an error
     out = await buck.uquery("owner(%s", "data/buck/build/data.file)")
     assert out.stdout == "root//data:data\n"
 

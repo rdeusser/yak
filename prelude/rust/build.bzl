@@ -672,7 +672,7 @@ def rust_compile(
 
         if clippy_toml:
             # Clippy wants to be given a path to a directory containing a
-            # clippy.toml (or .clippy.toml). Our buckconfig accepts an arbitrary
+            # clippy.toml (or .clippy.toml). Our yakconfig accepts an arbitrary
             # label like //path/to:my-clippy.toml which may not have the
             # filename that clippy looks for. Here we make a directory that
             # symlinks the requested configuration file under the required name.
@@ -1325,7 +1325,7 @@ def _compute_common_args(
     # Buck-built libraries never produce an rlib and dylib containing the same
     # crate hash, since that only occurs when outputting multiple crate types
     # through a single rustc invocation: `--crate-type=rlib --crate-type=dylib`.
-    # In Buck, different crate types are built by different rustc invocations.
+    # In yak, different crate types are built by different rustc invocations.
     # But Cargo does invoke rustc with multiple crate types when you write
     # `[lib] crate-type = ["rlib", "dylib"]` in Cargo.toml, and in fact the
     # standard libraries built by x.py and distributed by Rustup are built this
@@ -1348,7 +1348,7 @@ def _compute_common_args(
         # the linker. This corresponds to `-gno-split-dwarf` in Clang.
         SplitDebugMode("none"): [],
         # Split DWARF: debug info is placed into *.dwo files in the directory
-        # specified by `--out-dir`. In Buck, this directory is usually called
+        # specified by `--out-dir`. In yak, this directory is usually called
         # "extras" that is a sibling of the main output artifact (rlib,
         # staticlib, executable, or shared library).
         #
@@ -1359,7 +1359,7 @@ def _compute_common_args(
         #
         # For each binary target, we have a separate step which involves
         # `llvm-dwp` to combine all the *.dwo files from the dependency graph
-        # into one *.dwp. This is handled as a separate Buck action from the
+        # into one *.dwp. This is handled as a separate yak action from the
         # compiler/linker invocation responsible for linking the executable or
         # shared library artifact.
         #
@@ -1980,7 +1980,7 @@ def process_env(
     #
     # and proc macros using std::fs to read thing like .pest grammars, which
     # would need paths relative to the directory that rustc got invoked in
-    # (which is the repo root in Buck builds).
+    # (which is the repo root in yak builds).
     for key in _DIRECTORY_ENV:
         value = plain_env.pop(key, None)
         if value:

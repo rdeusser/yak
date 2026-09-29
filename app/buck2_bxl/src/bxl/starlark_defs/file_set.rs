@@ -232,7 +232,7 @@ pub(crate) fn file_node_methods(methods: &mut MethodsBuilder) {
 pub(crate) struct StarlarkReadDirSet {
     /// Cell path to the directory/files.
     pub(crate) cell_path: CellPath,
-    /// Files that are not ignored within the buckconfig.
+    /// Files that are not ignored within the yakconfig.
     /// Sorted.
     pub(crate) included: Arc<[SimpleDirEntry]>,
     /// Only return directories when iterating or printing.

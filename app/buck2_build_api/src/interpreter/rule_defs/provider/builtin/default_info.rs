@@ -118,11 +118,11 @@ use crate::interpreter::rule_defs::provider::ProviderCollection;
 /// foo_binary_wrapper(name = "foo", srcs = glob(["*.cpp"]) + [":gen_stuff"])
 ///
 /// # Builds just 'foo' binary. The strip command is never invoked.
-/// $ buck build //subdir:foo
+/// $ yak build //subdir:foo
 ///
 /// # builds the 'foo' binary, because it is needed by the 'strip' command. Ensures that
 /// # both the stripped binary and the debug symbols are built.
-/// $ buck build //subdir:foo[stripped]
+/// $ yak build //subdir:foo[stripped]
 /// ```
 #[internal_provider(default_info_creator)]
 #[derive(

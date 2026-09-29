@@ -147,7 +147,7 @@ def link(
     cmd.add(["--go", go_toolchain.linker])
 
     # Give internally-linked Go binaries a content-hash NT_GNU_BUILD_ID note.
-    # Buck has no artifact content at analysis time, so reserve a zeroed note here
+    # yak has no artifact content at analysis time, so reserve a zeroed note here
     # (-B 0x00..00) that the wrapper fills with sha256 post-link -- rewriting only a
     # still-all-zero descriptor, so an external link keeps its C++-set build-id.
     elf_go_os = ["linux", "android", "freebsd", "netbsd", "openbsd", "dragonfly", "illumos", "solaris"]

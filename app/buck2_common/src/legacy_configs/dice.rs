@@ -46,7 +46,7 @@ use crate::legacy_configs::configs::LegacyBuckConfig;
 use crate::legacy_configs::key::BuckconfigKeyRef;
 use crate::legacy_configs::view::LegacyBuckConfigView;
 
-/// Buckconfig view which queries buckconfig entry from DICE.
+/// yakconfig view which queries yakconfig entry from DICE.
 #[derive(Clone, Dupe)]
 pub struct OpaqueLegacyBuckConfigOnDice<'d> {
     config: Arc<OpaqueValue<'d, LegacyBuckConfigForCellKey>>,
@@ -121,10 +121,10 @@ pub trait HasInjectedLegacyConfigs<'d> {
 
 #[async_trait]
 pub trait HasLegacyConfigs<'d> {
-    /// Get buckconfigs.
+    /// Get yakconfigs.
     ///
-    /// This operation does not record buckconfig as a dependency of current computation.
-    /// Accessing specific buckconfig property, records that key as dependency.
+    /// This operation does not record yakconfig as a dependency of current computation.
+    /// Accessing specific yakconfig property, records that key as dependency.
     async fn get_legacy_config_on_dice(
         &mut self,
         cell_name: CellName,
@@ -135,7 +135,7 @@ pub trait HasLegacyConfigs<'d> {
     ) -> buck2_error::Result<OpaqueLegacyBuckConfigOnDice<'d>>;
 
     /// Use this function carefully: a computation which fetches this key will be recomputed
-    /// if any buckconfig property changes.
+    /// if any yakconfig property changes.
     ///
     /// Consider using `get_legacy_config_property` instead.
     async fn get_legacy_config_for_cell(
@@ -215,7 +215,7 @@ impl Key for LegacyBuckConfigForCellKey {
         let config = BuckConfigBasedCells::parse_single_cell_with_dice(ctx, this_cell.path())
             .await
             .with_buck_error_context(|| {
-                format!("Computing legacy buckconfigs for cell `{}`", self.cell_name)
+                format!("Computing legacy yakconfigs for cell `{}`", self.cell_name)
             })?;
         let config = config.filter_values(is_config_invisible_to_dice);
 
@@ -242,7 +242,7 @@ impl Key for LegacyBuckConfigForCellKey {
 /// The computation `LegacyBuckConfigForCellKey` computation might encounter an error.
 ///
 /// We can't return that error immediately, because we only compute the opaque value. We could
-/// return the error when doing the projection to the buckconfig values, but that would result in us
+/// return the error when doing the projection to the yakconfig values, but that would result in us
 /// increasing the size of the value returned from that computation. Instead, we'll use a different
 /// projection key to extract just the error from the cell computation, and compute that when
 /// constructing the `OpaqueLegacyBuckConfigOnDice`.
@@ -441,7 +441,7 @@ fn is_config_invisible_to_dice(key: &BuckconfigKeyRef) -> bool {
     !CONFIGS_INVISIBLE_TO_DICE.contains(key)
 }
 
-/// A set of buckconfigs that are visibile outside of dice, but not within it. Importantly, changes
+/// A set of yakconfigs that are visibile outside of dice, but not within it. Importantly, changes
 /// to these configs do not cause state invalidations.
 // FIXME(JakobDegen): Error if someone tries to read any of these from in dice
 const CONFIGS_INVISIBLE_TO_DICE: &[BuckconfigKeyRef<'static>] = &[BuckconfigKeyRef {

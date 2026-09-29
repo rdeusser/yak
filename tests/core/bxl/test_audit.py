@@ -35,7 +35,7 @@ async def test_bxl_audit_content_based_output(buck: Buck) -> None:
     result = await buck.build(label, "--show-output")
     path = result.get_build_report().output_for_target(label)
 
-    # resolve the symlink that we get as the output from buck to find the underlying content-based path.
+    # resolve the symlink that we get as the output from yak to find the underlying content-based path.
     path = (buck.cwd / path).resolve()
     # make it a relative path again
     path = path.relative_to(buck.cwd)

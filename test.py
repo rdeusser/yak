@@ -127,7 +127,7 @@ def check_no_changes():
 def clippy(package_args: list[str], fix: bool, target_args: list[str]) -> None:
     """
     Run cargo clippy, failing on any warning. Which lints warn is the
-    workspace's `[workspace.lints]`, the same levels Buck applies.
+    workspace's `[workspace.lints]`, the same levels yak applies.
     """
 
     print_running("clippy")

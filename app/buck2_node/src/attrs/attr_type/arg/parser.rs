@@ -10,12 +10,8 @@
 
 //! Handles parsing macros out of an attrs.arg()
 //!
-//! Much of this behavior is inherited from buckv1, which is documented
-//! here <https://buck.build/function/string_parameter_macros.html> and here
-//! <https://github.com/facebook/buck/blob/5bc82b7c90f1a5c5ac70e2de7d2c2170c289ee79/src/com/facebook/buck/core/macros/MacroFinderAutomaton.java>
-//!
 //! Many rule attributes that accept strings actually accept an attrs.arg(). These allow
-//! users to specify "String parameter macros" that are placeholders that buck will expand
+//! users to specify "String parameter macros" that are placeholders that yak will expand
 //! to their final values later in the build. Common examples of these would `$(location //some:target)`
 //! or `$(exe //some:target)`.
 //!
@@ -36,7 +32,7 @@
 //! A macro consists of that optional write-to-file signifier followed by a type and then zero or more
 //! space-separated args.
 //!
-//! A macro type must be non-empty and consists of characters in `[a-zA-Z0-9_]` followed by whitespace or the
+//! A macro type must be non-empty and consists of characters in `[a-zA-Z0-9_-]` followed by whitespace or the
 //! macro-ending ')'.
 //!
 //! Macro args are separated by whitespace. There are two types of args, "quoted" and "unquoted".
@@ -49,13 +45,9 @@
 //! behavior when they encounter any `(` that will make them continue until the parens are balanced. While an
 //! unquoted arg has seen more `(` than `)`, it will not be terminated by whitespace or `)`.
 //!
-//! We diverge from buckv1 in a handful of known ways.
-//!
-//! 1. buck1 allows pretty much any characters to appear in a macro type. We restrict it to alphanumeric and `_`.
-//!
-//! 2. buck1 disallows spaces entirely within unquoted args. This can be surprising. Unquoted args are generally used for
-//!    the query part of query macros, and in other contexts where buck accepts queries it allows whitespace.
-//!    Example, the string "$(query_outputs deps(//some:target, 3))" would be rejected by buck1 due to the space before the 3.
+//! Unquoted args are generally used for the query part of query macros, so they allow whitespace inside parens, as
+//! other contexts where yak accepts queries do. For example, the string "$(query_outputs deps(//some:target, 3))" has
+//! one arg with a space before the 3.
 //!
 //! Some examples:
 //!
@@ -157,8 +149,6 @@ type Error<'a> = (&'a str, ArgParseError);
 /// A Result includes both some parsed type and a slice of what remains to be parsed.
 type Result<'a, T> = result::Result<(T, &'a str), Error<'a>>;
 
-// We diverge slightly from buckv1 here.
-
 fn consume_whitespace(input: &str) -> &str {
     input.trim_start_matches(|c: char| c.is_ascii_whitespace())
 }
@@ -189,7 +179,7 @@ fn unescape(input: &str) -> String {
 // $(macro deps(123)abc) -> arg1 == "deps(123)", arg2=abc
 // $(macro a(b(c(d)))) -> arg1 == "a(b(b(d))))"
 // ```
-// TODO: that second case seems like a bug in buckv1 and it should be just a single arg. We've preserved the v1 behavior.
+// TODO: that second case seems like a bug and it should be just a single arg.
 fn read_unquoted_arg(input: &str) -> Result<'_, String> {
     let mut has_escapes = false;
     let mut paren_count = 0;
@@ -278,7 +268,7 @@ fn read_macro_arg(input: &str) -> Result<'_, String> {
     }
 }
 
-// This is much stricter than buckv1. v1 allows nearly any character in the macro type. We allow only alphanumeric, '-', and '_'.
+// A macro type allows only alphanumeric characters, '-', and '_'.
 fn read_macro_type(input: &str) -> Result<'_, String> {
     match input.find(|c: char| c.is_whitespace() || c == ')') {
         None => Err((input, ArgParseError::MacroTypeUnfinished)),

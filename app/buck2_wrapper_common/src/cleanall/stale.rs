@@ -177,7 +177,7 @@ impl fmt::Display for ChildOutput {
 
 impl fmt::Display for CleanallErrors {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
-        writeln!(formatter, "Failed to clean stale Buck2 state:")?;
+        writeln!(formatter, "Failed to clean stale yak state:")?;
         for error in &self.0 {
             writeln!(formatter, "- {error:#}")?;
         }
@@ -226,7 +226,7 @@ async fn run_stale_clean_commands(targets: Vec<CleanallTarget>) -> Vec<buck2_err
     errors
 }
 
-/// Runs `yak clean --stale` for every persisted Buck2 project and isolation directory.
+/// Runs `yak clean --stale` for every persisted yak project and isolation directory.
 ///
 /// Returns every child-process failure after all clean commands finish.
 pub async fn cleanall_stale() -> buck2_error::Result<()> {
@@ -258,7 +258,7 @@ mod tests {
 
     #[cfg(unix)]
     const EXPECTED_CLEANALL_ERRORS: &str = concat!(
-        "Failed to clean stale Buck2 state:\n",
+        "Failed to clean stale yak state:\n",
         "- `yak --isolation-dir v2 clean --stale` failed in `/project` with status exit status: 42\n",
         "  [/project:v2] stdout:\n",
         "  [/project:v2] clean stdout\n",
@@ -269,7 +269,7 @@ mod tests {
     );
     #[cfg(windows)]
     const EXPECTED_CLEANALL_ERRORS: &str = concat!(
-        "Failed to clean stale Buck2 state:\n",
+        "Failed to clean stale yak state:\n",
         "- `yak --isolation-dir v2 clean --stale` failed in `/project` with status exit code: 42\n",
         "  [/project:v2] stdout:\n",
         "  [/project:v2] clean stdout\n",

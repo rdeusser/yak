@@ -18,7 +18,7 @@ use crate::daemon_id::DaemonId;
 
 /// `collect_with_extras` returns the result of `collect` merged with `extras`.
 ///
-/// `extras` come from the `[yak_metadata]` buckconfig section. They only fill keys that `collect`
+/// `extras` come from the `[yak_metadata]` yakconfig section. They only fill keys that `collect`
 /// leaves empty, so configuration cannot replace fields such as `hostname` or `daemon_uuid`.
 pub fn collect_with_extras(
     daemon: &DaemonId,

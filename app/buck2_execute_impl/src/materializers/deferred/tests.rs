@@ -703,7 +703,7 @@ mod state_machine {
             let event = events.receive().expect("clean-stale event should be sent");
             if let buck2_data::buck_event::Data::Instant(instant) = event
                 .unpack_buck()
-                .expect("event should be a Buck event")
+                .expect("event should be a yak event")
                 .data()
                 && let Some(buck2_data::instant_event::Data::CleanStaleResult(result)) =
                     instant.data.as_ref()

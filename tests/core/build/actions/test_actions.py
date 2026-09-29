@@ -299,7 +299,7 @@ async def test_download_file_timeout_after_retries(buck: Buck) -> None:
     port = sock.getsockname()[1]
     url = f"http://localhost:{port}"
 
-    # These are daemon startup configs, need these to be written in a buckconfig rather
+    # These are daemon startup configs, need these to be written in a yakconfig rather
     # than passed as an invocation config.
     #
     # Add an aggressive read timeout.

@@ -20,7 +20,7 @@ from e2e_util.buck_workspace import buck_test, env
 # This test intentionally uses the raw frame to verify stdin requests keep the
 # daemon alive without going through the CLI's `--active-commands` helper. The
 # wire shape is stable enough for this test: the subscription API is part of
-# Buck2's client/daemon protocol, and the existing field number for
+# yak's client/daemon protocol, and the existing field number for
 # `subscribe_to_active_commands` must remain backward-compatible.
 SUBSCRIBE_TO_ACTIVE_COMMANDS_REQUEST = b"\x02\x22\x00"
 

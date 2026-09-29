@@ -92,13 +92,13 @@ class _Requirement(collections.namedtuple("_Requirement", ["package", "component
             return cls(None, requirement)
 
     def to_name(self, current_package):
-        """Generate the Buck2 target name for a requirement."""
+        """Generate the yak target name for a requirement."""
         package = self.package or current_package
         component = self.component or package
         return "_component_{}_{}".format(package, component)
 
     def to_label(self, current_package):
-        """Generate the Buck2 label for a requirement.
+        """Generate the yak label for a requirement.
 
         Relative requirements use the given current package's name to refer directly to the component target.
         Absolute requirements refer to the package target or sub-target.
@@ -138,7 +138,7 @@ class _BucklerDepCppComponent(object):
         self.requires = [_Requirement.parse(req) for req in component_info.requires]
 
     def generate(self):
-        """Generate Buck2 target definitions for the component."""
+        """Generate yak target definitions for the component."""
         name = _Requirement(None, self.component_name).to_name(self.package_name)
         deps = [req.to_label(self.package_name) for req in self.requires]
         return """\
@@ -197,7 +197,7 @@ class _BucklerDepCpp(object):
             )
 
     def generate(self):
-        """Generate Buck2 target definitions for the package and its components."""
+        """Generate yak target definitions for the package and its components."""
         result = """\
 
 conan_dep(
@@ -241,10 +241,10 @@ class Buckler(ConanFile):
     name = "buckler"
     version = "0.1"
     description = """\
-Buckler - Conan extension for Buck2
+Buckler - Conan extension for yak
 
 This package provides a
-- [Generator][generator] to import Conan built packages into Buck2.
+- [Generator][generator] to import Conan built packages into yak.
 
 [generator]: https://docs.conan.io/en/latest/reference/generators.html#generators-reference
 """

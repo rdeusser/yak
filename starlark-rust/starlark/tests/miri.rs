@@ -20,7 +20,7 @@
 //!
 //! This is deliberately a standalone Cargo integration test rather than a module under
 //! `src/tests`: the latter would compile the complete unit-test harness, which is far too
-//! expensive under Miri. It is not exposed as a Buck test because Buck does not support
+//! expensive under Miri. It is not exposed as a yak test because yak does not support
 //! running Rust tests through Miri; CI invokes it with `cargo miri test --test miri`.
 //!
 //! This file is compiled both from the `starlark-rust` export, where the `pagable` feature

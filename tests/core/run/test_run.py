@@ -85,7 +85,7 @@ async def test_passing_arguments(buck: Buck) -> None:
 
     await f(["--"], ["val", "--long", "-s", "spa  ces"])
     await f(["--"], ["val", "--", "test"])
-    await f([], ["val", "--", "x"])  # Would work differently in Buck1 (no -- to user)
+    await f([], ["val", "--", "x"])
     await expect_failure(
         buck.run("root//:echo_args", "--not-a-flag"),
         stderr_regex=r"unexpected argument '--not-a-flag'",

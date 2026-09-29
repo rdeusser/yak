@@ -9,7 +9,7 @@
  */
 
 //! This contains the [DebugServer] trait which represents the part of the debug adapter
-//! protocol implemented by the buck debug server and some utilities for working with
+//! protocol implemented by the yak debug server and some utilities for working with
 //! the debug adapter response/request/etc types.
 
 use debugserver_types as dap;
@@ -194,7 +194,7 @@ pub(crate) fn dispatch(
         "stepOut" => ret_none(r, server.step_out(arg(r)?)),
         _ => Err(buck2_error::buck2_error!(
             buck2_error::ErrorTag::Input,
-            "Buck2 debugserver didn't recognize command: {}",
+            "yak debugserver didn't recognize command: {}",
             r.command
         )),
     }

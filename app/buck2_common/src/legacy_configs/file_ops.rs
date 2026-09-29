@@ -141,7 +141,7 @@ impl ConfigParserFileOps for DefaultConfigParserFileOps {
             Ok(read_dir) => read_dir,
             Err(e) if e.kind() == std::io::ErrorKind::NotFound => return Ok(Vec::new()),
             Err(e) if e.kind() == std::io::ErrorKind::NotADirectory => {
-                tracing::warn!("Expected a directory of buckconfig files at: `{}`", path);
+                tracing::warn!("Expected a directory of yakconfig files at: `{}`", path);
                 return Ok(Vec::new());
             }
             Err(e) => return Err(e.into()),
@@ -166,7 +166,7 @@ impl ConfigParserFileOps for DefaultConfigParserFileOps {
                 entries.push(ConfigDirEntry { name, is_dir: true });
             } else {
                 tracing::warn!(
-                    "Expected a directory of buckconfig files at `{}`, but this entry was not a file or directory: `{}`",
+                    "Expected a directory of yakconfig files at `{}`, but this entry was not a file or directory: `{}`",
                     path,
                     name,
                 );

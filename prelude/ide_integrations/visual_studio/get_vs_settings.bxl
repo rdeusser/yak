@@ -45,7 +45,7 @@ def _get_all_header_files(attrs: dict):
     header_list = attrs["headers"] + attrs["exported_headers"].values() + attrs["raw_headers"]
     return dedupe_by_value(header_list)
 
-# Buck target can have same file declared in both headers and srcs and buck will work without any problem,
+# yak target can have same file declared in both headers and srcs and yak will work without any problem,
 # while VS will error out: The item "xxx" already exists under the filter "".
 def _get_headers_and_sources(attrs):
     headers_dict = {h: True for h in _get_all_header_files(attrs)}
@@ -73,7 +73,7 @@ def _get_debug_settings(target: bxl.ConfiguredTargetNode, attrs: dict, attrs_laz
         DEBUG_PWD: "",
         DEBUG_ENV: {key: ";".join(value_list) for (key, value_list) in attrs["env"].items()},
         # When dependency is referenced in [exe] subtarget form, PDB is not automatically materialized and debugging will not be able to load symbols nor stop at breakpoints.
-        # Add additional full buck targets to force buck to build/materialize PDBs to make debugging work.
+        # Add additional full yak targets to force yak to build/materialize PDBs to make debugging work.
         ADDITIONAL_TARGETS: [],
         # Unescape option prefix.
         EXTRA_BUCK_OPTIONS: [_unescape_arg(o) for o in cli_args.extra_buck_options],
@@ -87,7 +87,7 @@ def _get_debug_settings(target: bxl.ConfiguredTargetNode, attrs: dict, attrs_laz
         actual_target_debug_settings = vs_settings_dict[actual_target_label][BY_MODES][default_mode_file]
         debug_settings = {key: actual_target_debug_settings[key] for key in debug_settings}
     elif attrs["buck_type"] == "command_alias" and attrs["exe"]:
-        # Replicate generic command_alias as buck launches exe binary via child process which Visual Studio cannot debug into.
+        # Replicate generic command_alias as yak launches exe binary via child process which Visual Studio cannot debug into.
         exe_target = bxl_ctx.configured_targets(attrs["exe"], modifiers = bxl_ctx.modifiers)
         if exe_target.label in vs_settings_dict:
             debug_settings[DEBUG_CMD] = vs_settings_dict[exe_target.label][BY_MODES][default_mode_file][DEBUG_CMD]

@@ -72,7 +72,7 @@
 //!   refreshed via `epoch` advance before each read.
 
 // The `mallctl` heap metric below links only against jemalloc, so the binary sets it as the global
-// allocator. Only Cargo builds this binary, because the Buck build does not build jemalloc. The
+// allocator. Only Cargo builds this binary, because the yak build does not build jemalloc. The
 // `unprefixed_malloc_on_supported_platforms` feature is what makes plain `mallctl` resolve.
 #[global_allocator]
 #[cfg(any(target_os = "linux", target_os = "macos"))]

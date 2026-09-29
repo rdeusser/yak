@@ -36,7 +36,7 @@ This command starts a development server at `http://localhost:3000/buck2/`. It r
 
 ## Deployment
 
-`.github/workflows/upload_buck2.yml` builds the site and publishes `build/` to the `gh-pages` branch on every push to `main`. GitHub Pages serves that branch at `https://rdeusser.github.io/buck2/` once the repository's Pages settings select it.
+`.github/workflows/upload_yak.yml` builds the site and publishes `build/` to the `gh-pages` branch on every push to `main`. GitHub Pages serves that branch at `https://rdeusser.github.io/buck2/` once the repository's Pages settings select it.
 
 To deploy from a local checkout, generate the reference pages first, because `yarn deploy` builds the site without running `gen_docs.py`:
 

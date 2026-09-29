@@ -60,9 +60,9 @@ enum Command {
         /// subdirectory.
         path: Option<PathBuf>,
     },
-    /// Convert buck's build to a format that rust-analyzer can consume.
+    /// Convert yak's build to a format that rust-analyzer can consume.
     Develop {
-        /// Buck targets to include in rust-project.json.
+        /// yak targets to include in rust-project.json.
         #[clap(required = true, conflicts_with = "files", num_args=1..)]
         targets: Vec<String>,
 
@@ -206,7 +206,7 @@ enum JsonArguments {
     Path(PathBuf),
     /// Path to YAK file.
     Buildfile(PathBuf),
-    /// A named buck target.
+    /// A named yak target.
     Label(String),
 }
 

@@ -26,7 +26,7 @@ pub const ERROR_TAG_UNCLASSIFIED: &str = "UNCLASSIFIED";
     Ord
 )]
 pub enum Tier {
-    // Expected errors in inputs explicitly tracked by buck.
+    // Expected errors in inputs explicitly tracked by yak.
     Input,
     // Errors that may be triggered by issues with the host,
     // resource limits, non-explicit dependencies or potentially
@@ -534,7 +534,7 @@ pub(crate) fn error_tag_category(tag: ErrorTag) -> Option<Tier> {
     tag_metadata(tag).category
 }
 
-// Buck2 is the fallback/default source area, use the first non-buck2 source area.
+// `ErrorSourceArea::Buck2` is the fallback/default source area, use the first other source area.
 pub fn source_area(tags: impl IntoIterator<Item = ErrorTag>) -> ErrorSourceArea {
     tags.into_iter()
         .find_map(|tag| {

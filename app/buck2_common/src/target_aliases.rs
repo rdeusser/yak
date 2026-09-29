@@ -32,7 +32,7 @@ use crate::legacy_configs::dice::HasLegacyConfigs;
 #[derive(buck2_error::Error, Debug)]
 #[buck2(tag = Tier0)]
 enum AliasResolutionError {
-    #[error("No [alias] section in buckconfig")]
+    #[error("No [alias] section in yakconfig")]
     MissingAliasSection,
     #[error("[alias] section does not contain the requested alias")]
     NotAnAlias,
@@ -49,9 +49,9 @@ pub struct BuckConfigTargetAliasResolver {
 
 impl PartialEq for BuckConfigTargetAliasResolver {
     fn eq(&self, other: &BuckConfigTargetAliasResolver) -> bool {
-        // `TargetAliasResolver` only uses `alias` section of buckconfig,
+        // `TargetAliasResolver` only uses `alias` section of yakconfig,
         // comparing only this section is enough.
-        // Please update this code if `TargetAliasResolver` uses other buckconfigs.
+        // Please update this code if `TargetAliasResolver` uses other yakconfigs.
         let self_aliases = self.config.get_section("alias");
         let other_aliases = other.config.get_section("alias");
         match (self_aliases, other_aliases) {

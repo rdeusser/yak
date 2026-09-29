@@ -13,9 +13,8 @@ def _derive_link(artifact):
     if artifact.is_source:
         return artifact.short_path
 
-    # TODO(cjhopman): Reject cross-repo resources. Buck1 does that. It's probably
-    # easier for us (compared to v1) to construct a scheme for them that is
-    # correct, but not necessary yet.
+    # TODO(cjhopman): Reject cross-repo resources. It's probably possible to
+    # construct a scheme for them that is correct, but not necessary yet.
 
     return paths.join(artifact.owner.package, artifact.owner.name)
 
@@ -49,15 +48,10 @@ def _generate_script(
     script_name = name + (".bat" if is_windows else "")
     script = actions.declare_output(script_name, has_content_based_path = has_content_based_path)
 
-    # This is much, much simpler than the buck1 sh_binary template. A couple reasons:
+    # The script stays simple:
     # 1. we don't invoke the script through a symlink and so don't need to use and implement a cross-platform `readlink -e`
-    # 2. we don't construct an invocation-specific sandbox. The implementation of
-    # that in buck1 is pretty crazy and it shouldn't actually be necessary.
-    # 3. we don't construct the cell symlinks. those were also strange. They were
-    # used for the links in the invocation-specific sandbox (so things would
-    # point through the cell symlinks to their original locations). Instead we
-    # construct links directly to things (which buck1 actually also did for its
-    # YAK_DEFAULT_RUNTIME_RESOURCES).
+    # 2. we don't construct an invocation-specific sandbox.
+    # 3. we don't construct cell symlinks. Instead we construct links directly to things.
     if not is_windows:
         script_content = cmd_args(
             "#!/usr/bin/env bash",

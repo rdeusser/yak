@@ -39,7 +39,7 @@ enum ExternalConfigDiffFormat {
     Json,
 }
 
-/// Identifies the diff between external buckconfigs between two commands.
+/// Identifies the diff between external yakconfigs between two commands.
 #[derive(Debug, clap::Parser)]
 pub struct ExternalConfigDiffCommand {
     #[clap(flatten)]
@@ -220,12 +220,12 @@ impl BuckSubcommand for ExternalConfigDiffCommand {
         let (invocation2, events2) = log_path2.unpack_stream().await?;
 
         buck2_client_ctx::println!(
-            "Identifying the diff of external buckconfigs between: \n{} and \n{}",
+            "Identifying the diff of external yakconfigs between: \n{} and \n{}",
             invocation1.display_command_line(),
             invocation2.display_command_line()
         )?;
 
-        // External buckconfigs are stored in the event log in order and can have overrides
+        // External yakconfigs are stored in the event log in order and can have overrides
         // We first resolve them into a single dict
         let (dict1, order1) = get_external_buckconfig_dict(events1).await?;
         let (dict2, order2) = get_external_buckconfig_dict(events2).await?;

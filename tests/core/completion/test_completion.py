@@ -75,7 +75,7 @@ def completion_test(
             # startup in that timing window. Fish also uses the warmed daemon for parity.
             await buck.uquery("//...")
 
-            # The generated completion script invokes Buck recursively. It must inherit the same
+            # The generated completion script invokes yak recursively. It must inherit the same
             # external config and file watcher settings as the warmed daemon.
             actual = subprocess.check_output(
                 script_path.absolute(),

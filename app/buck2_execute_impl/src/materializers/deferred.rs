@@ -115,7 +115,7 @@ use crate::sqlite::materializer_db::MaterializerStateSqliteDb;
 ///   build rules, the affected rule is recomputed and therefore has its
 ///   artifacts re-declared. So when `ensure` is called the materializer has
 ///   up-to-date information about the artifacts.
-/// - file changes during a build are not properly supported by Buck and
+/// - file changes during a build are not properly supported by yak and
 ///   treated as undefined behaviour, so there's no need to worry about them.
 #[derive(Allocative)]
 pub struct DeferredMaterializerAccessor<T: IoHandler + 'static> {
@@ -300,7 +300,7 @@ pub enum AccessTimesUpdates {
 #[buck2(tag = Input)]
 pub enum AccessTimesUpdatesError {
     #[error(
-        "Invalid value for buckconfig `[yak] update_access_times`. Got `{0}`. Expected one of `full`, `partial`  or `disabled`."
+        "Invalid value for yakconfig `[yak] update_access_times`. Got `{0}`. Expected one of `full`, `partial`  or `disabled`."
     )]
     InvalidValueForConfig(String),
 }

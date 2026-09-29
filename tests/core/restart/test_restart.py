@@ -56,13 +56,13 @@ async def test_restart_materializer_corruption(buck: Buck) -> None:
 @pytest.mark.remote_execution
 @buck_test(allow_soft_errors=True)
 async def test_restart_cas_missing(buck: Buck) -> None:
-    # Make sure Buck is not running.
+    # Make sure yak is not running.
     await buck.kill()
 
     # Start a daemon with the `src` file tombstoned. This means we cannot download it from RE.
     await buck.build(env={"YAK_TEST_TOMBSTONED_DIGESTS": TEST_DIGEST})
 
-    # Now build //:stage2. Buck2 must try to download the file, fail, then
+    # Now build //:stage2. yak must try to download the file, fail, then
     # restart the daemon.
     res = await buck.build("//:stage2")
     assert "Your command will now restart" in res.stderr

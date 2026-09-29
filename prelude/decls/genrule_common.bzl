@@ -18,7 +18,7 @@ def _srcs_arg():
             sorted = False,
             default = [],
             doc = """
-    Either a list or a map of the source files which Buck makes available to the shell
+    Either a list or a map of the source files which yak makes available to the shell
      command at the path in the `SRCDIR` environment variable.
      If you specify a list, the source files are the names in the list.
      If you specify a map, the source files are made available as the names in
@@ -36,7 +36,7 @@ def _cmd_arg():
             doc = """
     The shell command to run to generate the output file. It is the
      fallback for `bash` and `cmd_exe` arguments. The following environment variables are populated by
-     Buck and available to the shell command. They are accessed using
+     yak and available to the shell command. They are accessed using
      the syntax:
 
     ```
@@ -154,7 +154,7 @@ def _type_arg():
      underlying logical "type".
 
      For example, if you have the following `cxx_genrule` defined
-     in the root directory of your Buck project
+     in the root directory of your yak project
 
     ```
     cxx_genrule(
@@ -165,10 +165,10 @@ def _type_arg():
     )
     ```
 
-     then the following `buck query` command
+     then the following `yak query` command
 
     ```
-    buck query "attrfilter( type, 'epilog', '//...' )"
+    yak query "attrfilter( type, 'epilog', '//...' )"
     ```
 
      returns

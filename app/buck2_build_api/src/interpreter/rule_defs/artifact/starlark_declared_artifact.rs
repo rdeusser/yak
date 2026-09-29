@@ -170,7 +170,7 @@ impl<'v> StarlarkInputArtifactLike<'v> for StarlarkDeclaredArtifact<'v> {
         // This shouldn't ever be called for StarlarkDeclaredArtifact
         buck2_error!(
             buck2_error::ErrorTag::Tier0,
-            "error trying to use declared artifact as an output, this indicates an internal buck error"
+            "error trying to use declared artifact as an output, this indicates an internal yak error"
         )
     }
 

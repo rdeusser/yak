@@ -69,7 +69,7 @@ async fn parse_command_and_execute(
         .server_execute(
             context,
             partial_result_dispatcher,
-            req.context.expect("buck cli always sets a client context"),
+            req.context.expect("yak cli always sets a client context"),
         )
         .await
 }

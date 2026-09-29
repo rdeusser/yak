@@ -112,7 +112,7 @@ pub fn parse_config_section_and_key(
         .ok_or_else(|| ConfigArgumentParseError::NoSectionDotSeparator(raw_arg.to_owned()))?;
 
     // We only trim the section + key, whitespace in values needs to be preserved. For example,
-    // Buck can be invoked with --config section.key="Some Value" that contains important whitespace.
+    // yak can be invoked with --config section.key="Some Value" that contains important whitespace.
     let trimmed_section = raw_section.trim_start();
     if trimmed_section.find(char::is_whitespace).is_some()
         || raw_key.find(char::is_whitespace).is_some()

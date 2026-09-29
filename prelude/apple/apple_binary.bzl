@@ -100,7 +100,7 @@ def apple_binary_impl(ctx: AnalysisContext) -> [list[Provider], Promise]:
     def get_apple_binary_providers(deps_providers) -> list[Provider]:
         # FIXME: Ideally we'd like to remove the support of "bridging header",
         # cause it affects build time and in general considered a bad practise.
-        # But we need it for now to achieve compatibility with BUCK1.
+        # But targets still set the `bridging_header` attribute.
         objc_bridging_header_flags = _get_bridging_header_flags(ctx)
 
         cxx_srcs, swift_srcs = _filter_swift_srcs(ctx)

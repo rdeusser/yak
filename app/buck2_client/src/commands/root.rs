@@ -41,7 +41,7 @@ impl FromStr for RootKind {
 }
 
 #[derive(Debug, clap::Parser)]
-#[clap(about = "Find buck cell, project or package root")]
+#[clap(about = "Find yak cell, project or package root")]
 pub struct RootCommand {
     #[clap(
         short,

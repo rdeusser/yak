@@ -194,7 +194,7 @@ pub struct BuckdClient {
 #[derive(Debug, buck2_error::Error)]
 #[buck2(tag = Tier0)]
 enum GrpcToStreamError {
-    #[error("buck daemon returned an empty CommandProgress")]
+    #[error("yak daemon returned an empty CommandProgress")]
     EmptyCommandProgress,
 }
 

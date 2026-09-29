@@ -29,7 +29,7 @@ enum TraceIdError {
 
 /// A TraceId is a unique identifier for a trace. Trace IDs are globally unique; their textual form is a v4 UUID.
 ///
-/// TraceIds generally correspond to commands, but they do not have to, e.g. in the case of a Buck daemon producing
+/// TraceIds generally correspond to commands, but they do not have to, e.g. in the case of a yak daemon producing
 /// events even when a command is not running.
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Allocative)]
 pub struct TraceId(

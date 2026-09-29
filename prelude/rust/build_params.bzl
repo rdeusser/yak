@@ -136,7 +136,7 @@ RustcFlags = record(
 RuleType = enum("binary", "library")
 
 # Controls how we build our rust libraries, largely dependent on whether rustc
-# or buck is driving the final linking and whether we are linking the artifact
+# or yak is driving the final linking and whether we are linking the artifact
 # into other rust targets.
 #
 # Rust: In this mode, we build standard rlibs/dylibs. This is the approach that

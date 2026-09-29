@@ -240,8 +240,7 @@ def generate_query_docs(buck: str) -> None:
             + f"id: {x}\n"
             + f"title: {x.title()} Environment\n"
             + "toc_max_heading_level: 4\n"
-            + "---\n"
-            + "\nimport useBaseUrl from '@docusaurus/useBaseUrl';\n\n"
+            + "---\n\n"
             + res.stdout.decode(),
         )
 

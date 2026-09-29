@@ -28,6 +28,6 @@ impl DownwardApi for BuckTestDownwardApi {
     }
 
     async fn external(&self, _data: BuckMutMap<String, String>) -> buck2_error::Result<()> {
-        unimplemented!("need buck event stream to implement")
+        unimplemented!("need yak event stream to implement")
     }
 }

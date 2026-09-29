@@ -64,7 +64,7 @@ async def test_external_buckconfigs(buck: Buck) -> None:
 
     assert len(external_configs) == 5
     external_index = 0
-    # The order is important here. We first have the buckconfig values from external sources
+    # The order is important here. We first have the yakconfig values from external sources
     external_path_configs = external_configs[0]["data"]["GlobalExternalConfigFile"]
     assert (
         external_path_configs["origin_path"]
@@ -95,7 +95,7 @@ async def test_external_buckconfigs(buck: Buck) -> None:
     local_path_configs = external_configs[1]["data"]["GlobalExternalConfigFile"]
     assert len(local_path_configs["values"]) == 2
     assert local_path_configs["origin_path"] == ".yakconfig.local"
-    # Buck orders the values of a config file by section, so the values from
+    # yak orders the values of a config file by section, so the values from
     # the included file come first.
     included_config_value = local_path_configs["values"][0]
     assert (
@@ -112,7 +112,7 @@ async def test_external_buckconfigs(buck: Buck) -> None:
         and local_config_value["value"] == "local_value"
         and not local_config_value["is_cli"]
     )
-    # The rest matches the same order provided by the above buck command
+    # The rest matches the same order provided by the above yak command
     # i.e. modefile, command line config flag, followed by the config file
 
     # We only store the path of the modefile
@@ -198,7 +198,7 @@ async def test_previous_command_with_mismatched_config(
     assert previous_invalidating_command[0]["trace_id"] == trace_id
     sanitized_argv = previous_invalidating_command[0]["sanitized_argv"]
     assert (
-        # sanitized_argv[0] contains the path to the buck executable which is different on every machine
+        # sanitized_argv[0] contains the path to the yak executable which is different on every machine
         sanitized_argv[1] == "build"
         and sanitized_argv[2] == "@root//mode/my_mode"
         and sanitized_argv[3] == "//:test"

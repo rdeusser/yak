@@ -106,7 +106,7 @@ pub(super) struct DeferredMaterializerCommandProcessor<T: 'static> {
     pub(super) io: Arc<T>,
     pub(super) sqlite_db: Option<MaterializerStateSqliteDb>,
     /// The runtime the deferred materializer will spawn futures on. This is normally the runtime
-    /// used by the rest of Buck.
+    /// used by the rest of yak.
     rt: Handle,
     pub(super) defer_write_actions: bool,
     /// Keep track of artifact versions to avoid callbacks clobbering state if the state has moved

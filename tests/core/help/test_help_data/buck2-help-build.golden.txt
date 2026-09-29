@@ -28,7 +28,7 @@ Options:
           Print the output absolute paths, in JSON format
 
   -M, --materializations <MATERIALIZATIONS>
-          Materialize (or skip) the final artifacts, bypassing buckconfig.
+          Materialize (or skip) the final artifacts, bypassing yakconfig.
 
           [possible values: all, none]
 
@@ -141,23 +141,23 @@ Options:
           would unconditionally upload all actions, thus you will not hit any expiration issues.
 
       --fail-fast
-          If Buck hits an error, do as little work as possible before exiting.
+          If yak hits an error, do as little work as possible before exiting.
 
           To illustrate the effect of this flag, consider an invocation of `build :foo :bar`. The
-          default behavior of buck is to do enough work to get a result for the builds of each of
-          `:foo` and `:bar`, and no more. This means that buck will continue to complete the build
-          of `:bar` after the build of `:foo` has failed; however, once one dependency of `:foo` has
+          default behavior of yak is to do enough work to get a result for the builds of each of
+          `:foo` and `:bar`, and no more. This means that yak will continue to complete the build of
+          `:bar` after the build of `:foo` has failed; however, once one dependency of `:foo` has
           failed, other dependencies will be cancelled unless they are needed by `:bar`.
 
-          This flag changes the behavior of buck to not wait on `:bar` to complete once `:foo` has
+          This flag changes the behavior of yak to not wait on `:bar` to complete once `:foo` has
           failed. Generally, this flag only has an effect on builds that specify multiple targets.
 
-          `--keep-going` changes the behavior of buck to not only wait on `:bar` once one dependency
+          `--keep-going` changes the behavior of yak to not only wait on `:bar` once one dependency
           of `:foo` has failed, but to additionally attempt to build other dependencies of `:foo` if
           possible.
 
       --keep-going
-          If Buck hits an error, continue doing as much work as possible before exiting.
+          If yak hits an error, continue doing as much work as possible before exiting.
 
           See `--fail-fast` for more details.
 
@@ -198,7 +198,7 @@ Target Configuration Options:
           constraint value target.
 
       --overall-timeout <TIMEOUT>
-          How long to run the command for. If the timeout is exceeded, Buck2 will exit as quickly as
+          How long to run the command for. If the timeout is exceeded, yak will exit as quickly as
           possible and not run further builds or tests.
 
           In-flight builds and tests will be cancelled. The test orchestrator, if there is one, will
@@ -215,7 +215,7 @@ Target Configuration Options:
 
           For example: `5m 10s`, `500s`.
 
-Buckconfig Options:
+yakconfig Options:
   -c, --config <SECTION.OPTION=VALUE>
           List of config options
 
@@ -381,18 +381,18 @@ Event Log Options:
 
 Universal Options:
       --isolation-dir <ISOLATION_DIR>
-          The name of the directory that Buck2 creates within yak-out for writing outputs and daemon
-          information. If one is not provided, Buck2 creates a directory with the default name.
+          The name of the directory that yak creates within yak-out for writing outputs and daemon
+          information. If one is not provided, yak creates a directory with the default name.
 
-          Instances of Buck2 share a daemon if and only if their isolation directory is identical.
-          The isolation directory also influences the output paths provided by Buck2, and as a
-          result using a non-default isolation dir will cause cache misses (and slower builds).
+          Instances of yak share a daemon if and only if their isolation directory is identical. The
+          isolation directory also influences the output paths provided by yak, and as a result
+          using a non-default isolation dir will cause cache misses (and slower builds).
 
           [env: YAK_ISOLATION_DIR=]
           [default: v2]
 
   -v, --verbose <VERBOSITY>
-          How verbose buck should be while logging.
+          How verbose yak should be while logging.
 
           Values: 0 = Quiet, errors only; 1 = Show status. Default; 2 = more info about errors; 3 =
           more info about everything; 4 = more info about everything + stderr;
@@ -405,11 +405,11 @@ Universal Options:
           [default: 1]
 
       --oncall <ONCALL>
-          The team that owns this command. Buck2 records it in the event log
+          The team that owns this command. yak records it in the event log
 
       --client-metadata <CLIENT_METADATA>
           Metadata key-value pairs to record in the event log. Client metadata must be of the form
           `key=value`, where `key` is a snake_case identifier
 
       --setting <SECTION.KEY=VALUE>
-          Override a Buck setting using `section.key=value`
+          Override a yak setting using `section.key=value`

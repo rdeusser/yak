@@ -29,7 +29,7 @@ pub(crate) fn safe_canonicalize(path: &Path) -> PathBuf {
 pub(crate) fn canonicalize_to_vcs_path(path: &Path, project_root: &Path) -> PathBuf {
     let canonical_path = safe_canonicalize(path);
 
-    // Buck builds Rust code by creating symlinks in yak-out/ to the
+    // yak builds Rust code by creating symlinks in yak-out/ to the
     // files in VCS (e.g. hg, git). This is what rustc sees, but we
     // don't want rust-analyzer to see the files in yak-out. We want
     // rust-analyzer to see the files in their original location, so

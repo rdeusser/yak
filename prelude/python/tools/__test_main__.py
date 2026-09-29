@@ -8,7 +8,7 @@
 # above-listed licenses.
 
 """
-This file contains the main module code for buck python test programs.
+This file contains the main module code for yak python test programs.
 
 By default, this is the main module for all python_test() rules.  However,
 rules can also specify their own custom main_module.  If you write your own
@@ -178,7 +178,7 @@ class CallbackStream:
 class BuckTestResult(unittest.TextTestResult):
     """
     Our own TestResult class that outputs data in a format that can be easily
-    parsed by buck's test runner.
+    parsed by yak's test runner.
     """
 
     def __init__(
@@ -513,7 +513,7 @@ class MainProgram:
         op.add_option(
             "-o",
             "--output",
-            help="Write results to a file in a JSON format to be read by Buck",
+            help="Write results to a file in a JSON format to be read by yak",
         )
         op.add_option(
             "-f",

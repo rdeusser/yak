@@ -14,7 +14,7 @@ from typing import Any
 
 
 def convert_type_check_result(input_path: Path, output_path: Path) -> None:
-    """Convert a Python type-check result to Buck2's ValidationSpec format."""
+    """Convert a Python type-check result to yak's ValidationSpec format."""
     validation: dict[str, object] = {
         "version": 1,
         "data": {"status": "success"},

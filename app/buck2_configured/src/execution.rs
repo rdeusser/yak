@@ -863,7 +863,7 @@ pub(crate) async fn resolve_execution_platform_candidates<M: ResolutionMode>(
 pub(crate) struct ExecutionPlatformResolutionKey {
     /// Determining a compatible execution platform requires checking the target and toolchain's
     /// exec_compatible_with. This in turn requires a ResolvedConfiguration, which resolves the
-    /// buckconfig-related config_setting values based on the cell of the target the configuration
+    /// yakconfig-related config_setting values based on the cell of the target the configuration
     /// is being resolved for.
     target_node_cell: CellNameForConfigurationResolution,
     exec_compatible_with: Arc<[ConfigurationSettingKey]>,

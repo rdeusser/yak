@@ -9,10 +9,10 @@
  */
 
 //! The target platform detector spec is used to define a mapping of `package-prefix` to `target platform target`.
-//! When performing "target platform resolution", if a target doesn't specify a `default_target_platform`, buck
+//! When performing "target platform resolution", if a target doesn't specify a `default_target_platform`, yak
 //! will fallback to the target platform detector to determine the default target platform for that target.
 //!
-//! This is encoded in the buckconfig value `parser.target_platform_detector_spec` and has the format:
+//! This is encoded in the yakconfig value `parser.target_platform_detector_spec` and has the format:
 //!   `kind1:matcher1->platform1 kind2:matcher2->platform2 ...`
 //!
 //! The only supported _kind_ currently is "target". The _platform_ must be a target literal that defines a configuration (for example,
@@ -22,7 +22,7 @@
 //!
 //! An example supported mapping is: `target://foo/...->//:tgt target:cell//bar/...->//:tgt2 target:cell//bar/foo/...->//:tgt`.
 //! This would map `//foo:x` to platform `//:tgt`, `cell//bar:x` to `//:tgt2` and `cell//bar/foo:x` also to `//:tgt2` (the mapping
-//! for `cell//bar/foo/...` has no effect because buck will pick the first matching spec).
+//! for `cell//bar/foo/...` has no effect because yak will pick the first matching spec).
 
 use allocative::Allocative;
 use buck2_core::cells::CellAliasResolver;

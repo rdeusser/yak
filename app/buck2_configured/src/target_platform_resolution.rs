@@ -47,7 +47,7 @@ async fn get_target_platform_detector<'d>(
     ctx: &mut DiceComputations<'d>,
 ) -> buck2_error::Result<&'d TargetPlatformDetector> {
     // This requires a bit of computation so cache it on the graph.
-    // TODO(cjhopman): Should we construct this (and similar buckconfig-derived objects) as part of the buck config itself?
+    // TODO(cjhopman): Should we construct this (and similar yakconfig-derived objects) as part of the yak config itself?
     #[derive(Clone, Display, Debug, Dupe, Eq, Hash, PartialEq, Allocative, Pagable)]
     #[display("TargetPlatformDetectorKey")]
     #[pagable_typetag(dice::DiceKeyDyn)]
@@ -115,7 +115,7 @@ async fn get_default_platform(
     if let Some(target) = detector.detect(target) {
         return get_platform_configuration(ctx, target).await;
     }
-    // TODO(cjhopman): This needs to implement buck1's approach to determining target platform, it's currently missing the fallback to buckconfig parser.target_platform.
+    // TODO(cjhopman): This is missing the fallback to yakconfig parser.target_platform.
     Ok(ConfigurationData::unspecified())
 }
 

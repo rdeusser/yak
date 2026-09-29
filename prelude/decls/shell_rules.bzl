@@ -43,7 +43,7 @@ sh_binary = prelude_rule(
         $ chmod u+x script.sh
 
         # Run the script, and see that it prints out the resource we provided
-        $ buck run //:script
+        $ yak run //:script
         Jobs completed: 4. Time elapsed: 0.2s.
         BUILD SUCCEEDED
         I'm a datafile
@@ -68,14 +68,14 @@ sh_binary = prelude_rule(
 
                  When the script runs, the `$YAK_DEFAULT_RUNTIME_RESOURCES`
                  environment variable specifies the directory that contains these resources.
-                 This directory's location is determined entirely by Buck; the script should
+                 This directory's location is determined entirely by yak; the script should
                  not assume the directory's location.
 
                  The resources are also made available in a tree structure that mirrors
                  their locations in the source and `yak-out` trees. The
                  environment variable `$YAK_PROJECT_ROOT` specifies a directory
                  that contains all the resources, laid out in their locations relative to
-                 the original buck project root.
+                 the original yak project root.
             """,
             ),
             "append_script_extension": attrs.bool(
@@ -145,7 +145,7 @@ sh_test = prelude_rule(
         $ chmod u+x script.sh
 
         # Run the script, and see that one test passes, one fails
-        $ buck test //:script_pass //:script_fail
+        $ yak test //:script_pass //:script_fail
         FAILURE script.sh sh_test
         Building: finished in 0.0 sec (100%) 2/2 jobs, 0 updated
           Total time: 0.0 sec

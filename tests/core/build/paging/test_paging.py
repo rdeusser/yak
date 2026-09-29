@@ -105,7 +105,7 @@ def _disable_idle_page_out(buck: Buck) -> None:
     # Through the settings layer: the fixture's `.yakconfig` sets
     # `page_out_on_idle = true` as a project config, which outranks the external
     # config `extra_buck_config` writes - but settings outrank both, and
-    # `page_out_on_idle` only falls back to buckconfig when settings leave it
+    # `page_out_on_idle` only falls back to yakconfig when settings leave it
     # unset. `enable_paging` stays unset here so the fixture still provides it.
     (buck.get_settings_home_dir() / ".yaksettings.local.toml").write_text(
         "[hydration]\npage_out_on_idle = false\n"

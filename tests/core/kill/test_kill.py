@@ -36,7 +36,7 @@ _BUCK_TEST_DECORATOR = buck_test(
 @env("YAK_TEST_FAIL_YAKD_AUTH", "true")
 async def test_kill_error(buck: Buck) -> None:
     # Performing a build should fail, since we will not be able to authenticate to the
-    # buck daemon
+    # yak daemon
     await expect_failure(buck.build("//:abc"), stderr_regex="injected auth error")
 
     # Kill should succeed, even though we cannot authenticate to the daemon
@@ -47,7 +47,7 @@ async def test_kill_error(buck: Buck) -> None:
 @env("YAK_TEST_FAIL_YAKD_AUTH", "true")
 async def test_clean_error(buck: Buck) -> None:
     # Performing a build should fail, since we will not be able to authenticate to the
-    # buck daemon
+    # yak daemon
     await expect_failure(buck.build("//:abc"), stderr_regex="injected auth error")
 
     # Clean should succeed, even though we cannot authenticate to the daemon

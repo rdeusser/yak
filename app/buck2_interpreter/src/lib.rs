@@ -8,7 +8,7 @@
  * above-listed licenses.
  */
 
-//! Implements Buck's handling of target patterns and parsing of build files.
+//! Implements yak's handling of target patterns and parsing of build files.
 
 pub mod allow_relative_paths;
 pub mod build_context;

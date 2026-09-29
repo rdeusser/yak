@@ -46,8 +46,8 @@ use buck2_wrapper_common::BUCK_WRAPPER_UUID_ENV_VAR;
 use buck2_wrapper_common::BUCK2_WRAPPER_ENV_VAR;
 use serde::Serialize;
 
-use crate::commands::build::print_buck_ui;
 use crate::commands::build::print_build_failed;
+use crate::commands::build::print_build_id;
 use crate::commands::build::print_build_result;
 use crate::commands::build::print_build_succeeded;
 
@@ -144,7 +144,7 @@ impl StreamingCommand for RunCommand {
                         run_info: build_providers::Action::Build as i32,
                         test_info: build_providers::Action::Skip as i32,
                     }),
-                    // `buck run` execs the target, so it needs the resolved run command line.
+                    // `yak run` execs the target, so it needs the resolved run command line.
                     response_options: Some(ResponseOptions {
                         return_outputs: false,
                         return_run_args: true,
@@ -202,7 +202,7 @@ impl StreamingCommand for RunCommand {
             None
         };
 
-        print_buck_ui(&console, ctx, events_ctx.used_superconsole)?;
+        print_build_id(&console, ctx, events_ctx.used_superconsole)?;
         print_build_succeeded(&console, ctx, extra)?;
 
         if let Some(file_path) = self.command_args_file {

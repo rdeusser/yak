@@ -84,7 +84,7 @@ const HYDRATION_ENABLE_PAGING: SettingKey<bool> = SettingKey {
         },
         overridable_in: &[OverrideSource::CommandLine, OverrideSource::LocalSettings],
     },
-    // Absence must remain distinct from `false` while legacy buckconfig is the fallback.
+    // Absence must remain distinct from `false` while legacy yakconfig is the fallback.
     default: None,
 };
 
@@ -96,7 +96,7 @@ const HYDRATION_PAGE_OUT_ON_IDLE: SettingKey<bool> = SettingKey {
         },
         overridable_in: &[OverrideSource::CommandLine, OverrideSource::LocalSettings],
     },
-    // Absence must remain distinct from `false` while legacy buckconfig is the fallback.
+    // Absence must remain distinct from `false` while legacy yakconfig is the fallback.
     default: None,
 };
 
@@ -183,12 +183,12 @@ pub(crate) struct BuckSettingsData {
 pub struct HydrationSection(Arc<HydrationSectionData>);
 
 impl HydrationSection {
-    /// Returns `None` when legacy buckconfig should determine the behavior.
+    /// Returns `None` when legacy yakconfig should determine the behavior.
     pub fn enable_paging(&self) -> Option<bool> {
         HYDRATION_ENABLE_PAGING.resolve(self.0.enable_paging)
     }
 
-    /// Returns `None` when legacy buckconfig should determine the behavior.
+    /// Returns `None` when legacy yakconfig should determine the behavior.
     pub fn page_out_on_idle(&self) -> Option<bool> {
         HYDRATION_PAGE_OUT_ON_IDLE.resolve(self.0.page_out_on_idle)
     }

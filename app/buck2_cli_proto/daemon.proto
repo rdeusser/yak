@@ -38,7 +38,7 @@ message DaemonConstraints {
   // should just proceed with that daemon and they'll get an error later.
   optional ExtraDaemonConstraints extra = 5;
 
-  // Buckconfigs read by the client then passed to the daemon.
+  // yakconfigs read by the client then passed to the daemon.
   optional string daemon_startup_config = 7;
 }
 
@@ -495,7 +495,7 @@ message BuildRequest {
     // Include target outputs? [default: false]
     bool return_outputs = 1;
     // Include the target's resolved run command line? Set only by
-    // `buck run`. [default: false]
+    // `yak run`. [default: false]
     bool return_run_args = 3;
     // TODO(rafaelc): bool return_targets_without_data
   }
@@ -520,7 +520,7 @@ message BuildRequest {
   // Upload final artifacts?
   Uploads final_artifact_uploads = 11;
 
-  // How long to build for? If the timeout is exceeded, Buck2 will exit as
+  // How long to build for? If the timeout is exceeded, yak will exit as
   // quickly as possible and drop in-flight builds. The exit code will be a
   // user failure.
   optional google.protobuf.Duration timeout = 12;
@@ -566,7 +566,7 @@ message TestRequest {
 
   TestSessionOptions session_options = 11;
 
-  // How long to execute tests for? If the timeout is exceeded, Buck2 will exit
+  // How long to execute tests for? If the timeout is exceeded, yak will exit
   // as quickly as possible and not run further tests. In-flight tests will be
   // cancelled. The test orchestrator will be allowed to shut down gracefully.
   // The exit code will be a user failure.
@@ -577,12 +577,12 @@ message TestRequest {
 
   // Whether `DefaultInfo` providers for targets matching `target_patterns`
   // should be built instead of only test providers. When unset, this defaults
-  // to the `yak.test_builds_targets` buckconfig.
+  // to the `yak.test_builds_targets` yakconfig.
   optional bool build_default_info = 15;
 
   // Whether `RunInfo` providers for targets matching `target_patterns`
   // should be built instead of only test providers. When unset, this defaults
-  // to the `yak.test_builds_targets` buckconfig.
+  // to the `yak.test_builds_targets` yakconfig.
   optional bool build_run_info = 16;
 }
 
@@ -966,7 +966,7 @@ message CleanStaleRequest {
   // after the earlier adaptive cleanup passes are insufficient.
   bool adaptive_unmaterialize_active = 7;
   // Resolve the cleanup TTL and low-disk behavior from the daemon's clean-stale
-  // buckconfig. Explicit cleanup policy fields above are ignored when set.
+  // yakconfig. Explicit cleanup policy fields above are ignored when set.
   bool use_configured_policy = 8;
 }
 
@@ -1063,7 +1063,7 @@ message TraceIoResponse {
 }
 
 // Note: When adding new request or response types, some of the declarations in
-// src/lib.rs need to be updated to derive common things for buck's cli package.
+// src/lib.rs need to be updated to derive common things for yak's cli package.
 service DaemonApi {
   rpc Kill(KillRequest) returns (CommandResult);
   rpc Status(StatusRequest) returns (CommandResult);
@@ -1090,7 +1090,7 @@ service DaemonApi {
   rpc NewGenericImpl(NewGenericRequestMessage)
       returns (stream MultiCommandProgress);
 
-  // Crashes the Buck daemon. Unless you are writing tests or checking Buck2's
+  // Crashes the yak daemon. Unless you are writing tests or checking yak's
   // behavior when it crashes, you probably don't want this.
   rpc Unstable_Crash(UnstableCrashRequest) returns (CommandResult);
 

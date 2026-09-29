@@ -31,7 +31,7 @@ function createWindow () {
     mainWindow = new BrowserWindow({
         width: 800,
         height: 600,
-        title: "Buck2 Explorer",
+        title: "yak Explorer",
         icon: `${__dirname}/icon.png`,
         webPreferences: {
             preload: `${__dirname}/preload.js`
@@ -95,7 +95,7 @@ ipcMain.handle('select-buck-dir', async _ => {
     const result = await dialog.showOpenDialog(mainWindow, {
         properties: ['openDirectory'],
         defaultPath: buckDir,
-        message: "Select your Buck2 working directory",
+        message: "Select your yak working directory",
     })
     buckDir = result.filePaths[0];
     return buckDir;

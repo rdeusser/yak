@@ -1,9 +1,9 @@
 # This file is @generated, regenerate by rerunning the test with `YAK_UPDATE_GOLDEN=1` set
 
-$ buck cquery root//:foo -v0 --target-platforms=//:platform1
+$ yak cquery root//:foo -v0 --target-platforms=//:platform1
 root//:foo (root//:platform1#<HASH>)
 
-$ buck cquery root//:foo --console=none -v0 --target-platforms=//:platform2
+$ yak cquery root//:foo --console=none -v0 --target-platforms=//:platform2
 Command failed: 
 Error looking up configured node root//:foo (root//:platform2#<HASH>)
 
@@ -11,7 +11,7 @@ Caused by:
     0: configuring attr `data`
     1: select resolved to select_fail(): fail message
 
-$ buck cquery root//:foo --console=none -v0 --target-platforms=//:platform3
+$ yak cquery root//:foo --console=none -v0 --target-platforms=//:platform3
 Command failed: 
 Error looking up configured node root//:foo (root//:platform3#<HASH>)
 
@@ -19,7 +19,7 @@ Caused by:
     0: configuring attr `data`
     1: select resolved to select_fail(): default fail message
 
-$ buck uquery root//:foo -v0 --output-format=starlark
+$ yak uquery root//:foo -v0 --output-format=starlark
 error_rule(
   name = "foo",
   data = select({
@@ -31,7 +31,7 @@ error_rule(
   within_view = ["PUBLIC"],
 )
 
-$ buck uquery root//:foo -v0 --output-format=json -B
+$ yak uquery root//:foo -v0 --output-format=json -B
 {
   "root//:foo": {
     "buck.type": "error_rule",
@@ -66,7 +66,7 @@ $ buck uquery root//:foo -v0 --output-format=json -B
   }
 }
 
-$ buck uquery root//:foo2 -v0 --output-format=starlark
+$ yak uquery root//:foo2 -v0 --output-format=starlark
 error_rule(
   name = "foo2",
   data = "",
@@ -74,7 +74,7 @@ error_rule(
   within_view = ["PUBLIC"],
 )
 
-$ buck uquery root//:foo2 --console=none -v0 --output-format=starlark -c user.check_bad_coercion=1
+$ yak uquery root//:foo2 --console=none -v0 --output-format=starlark -c user.check_bad_coercion=1
 Command failed: 
 Error evaluating expression:
     root//:foo2

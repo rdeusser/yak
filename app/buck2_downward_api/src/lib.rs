@@ -8,13 +8,13 @@
  * above-listed licenses.
  */
 
-//! The downward api for external processes. This crate defines a trait of downward api that Buck
+//! The downward api for external processes. This crate defines a trait of downward api that yak
 //! will need to handle as the process runner.
 
 use buck2_hash::BuckMutMap;
 use tracing::Level;
 
-/// The API available to processes that Buck will need to handle
+/// The API available to processes that yak will need to handle
 #[async_trait::async_trait]
 pub trait DownwardApi {
     /// indicates to print to the console at a specific log level
@@ -24,8 +24,6 @@ pub trait DownwardApi {
     /// TODO consider if we should have structured log instead of a String message
     async fn log(&self, level: Level, msg: String) -> buck2_error::Result<()>;
 
-    /// reports an externally consumable event containing some data that will be untouched by buck
+    /// reports an externally consumable event containing some data that will be untouched by yak
     async fn external(&self, data: BuckMutMap<String, String>) -> buck2_error::Result<()>;
-
-    // TODO map the StepEvent and TraceEvents in buckv1 to something. Maybe just a single trace event
 }

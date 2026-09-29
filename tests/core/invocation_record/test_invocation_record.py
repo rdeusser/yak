@@ -80,7 +80,7 @@ async def test_has_no_command_result(buck: Buck) -> None:
             "--local-only",
             "--no-remote-cache",
         ),
-        stderr_regex="Buck daemon event bus encountered an error",
+        stderr_regex="yak daemon event bus encountered an error",
     )
 
     record = result.invocation_record()

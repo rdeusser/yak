@@ -39,7 +39,7 @@ def check_cfg_toolchain_graph_cycle_stderr(stderr: str) -> None:
     assert r"Resolving execution platform" in stderr
 
 
-# It's better to fail a test than to hit our test timeout. When cycle detection is not working, buck will just hang. So wrap these in a timeout.
+# It's better to fail a test than to hit our test timeout. When cycle detection is not working, yak will just hang. So wrap these in a timeout.
 async def expect_cycle(
     process: Awaitable[BuckResult],
 ) -> BuckException:

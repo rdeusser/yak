@@ -75,7 +75,7 @@ enum ExitResultVariant {
     /// a new process with the given name and argv.
     /// This is used to implement `yak run`.
     Exec(ExecArgs),
-    /// We failed (i.e. due to a Buck internal error).
+    /// We failed (i.e. due to a yak internal error).
     /// At this time, when execution does fail, we print out the error message to stderr.
     StatusWithErr(ExitCode, buck2_error::Error),
 }
@@ -209,7 +209,7 @@ impl ExitResult {
         status_with_error_report(exit_code, errors)
     }
 
-    /// Buck2 supports being built as both a "full" binary as well as a "client-only" binary.
+    /// yak supports being built as both a "full" binary as well as a "client-only" binary.
     ///
     /// However, some commands (eg `--no-yakd`) are not supported in the client-only binary, and so
     /// when these commands are run, we have to retry them with the full build.
@@ -259,7 +259,7 @@ impl ExitResult {
         let (path, copy_path) = if let Some(buck_log_dir) = buck_log_dir {
             let dir = buck_log_dir.join(ForwardRelativePath::new(&trace_id.to_string())?);
             fs_util::create_dir_all(&dir)?;
-            // this path is used by the buck wrapper, don't change without updating the wrapper.
+            // this path is used by the yak wrapper, don't change without updating the wrapper.
             let path = dir.join(ForwardRelativePath::new("command_report.json")?);
             (path.into_abs_path_buf(), command_report_path)
         } else if let Some(command_report_path) = command_report_path {
@@ -293,7 +293,7 @@ impl ExitResult {
                 if let Some(parent) = report_path.parent() {
                     fs_util::create_dir_all(parent)?;
                 }
-                // buck wrapper depends on command report being written.
+                // yak wrapper depends on command report being written.
                 file.flush()?;
                 // input path from --command-report-path
                 fs_util::copy(path, report_path).categorize_input()?;

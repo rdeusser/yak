@@ -38,7 +38,7 @@ use crate::stats::HttpNetworkStats;
 mod builder;
 pub use builder::HttpClientBuilder;
 
-const DEFAULT_USER_AGENT: &str = "Buck2";
+const DEFAULT_USER_AGENT: &str = "yak";
 
 #[derive(Allocative, Clone, Dupe)]
 pub struct HttpClient {

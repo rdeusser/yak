@@ -58,7 +58,7 @@ pub trait BuckConfigsViewForStarlark {
     ) -> buck2_error::Result<Option<Arc<str>>>;
 }
 
-/// Version of cell buckconfig optimized for fast query from `read_config` Starlark function.
+/// Version of cell yakconfig optimized for fast query from `read_config` Starlark function.
 pub(crate) struct LegacyBuckConfigsForStarlark<'a> {
     configs_view: RefCell<&'a mut (dyn BuckConfigsViewForStarlark + 'a)>,
 }
@@ -146,7 +146,7 @@ impl<'a> LegacyBuckConfigsForStarlark<'a> {
         Ok(value)
     }
 
-    /// Find the buckconfig entry.
+    /// Find the yakconfig entry.
     pub(crate) fn current_cell_get<'v>(
         &self,
         section: StringValue,

@@ -92,10 +92,10 @@ func (b *BuckTarget) Normalise(totalPlatformNumber int) {
 	}
 }
 
-// BuckTargets is a map of buck targets keyed by import path
+// BuckTargets is a map of yak targets keyed by import path
 type BuckTargets map[string]*BuckTarget
 
-// AddPackage adds a package to the buck targets map
+// AddPackage adds a package to the yak targets map
 func (b *BuckTargets) AddPackage(pkg *Package, buckOS, buckArch string) {
 	// If package with the same import path and os/arch already added, its data be replaced
 	var target *BuckTarget

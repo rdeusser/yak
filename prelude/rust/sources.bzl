@@ -65,7 +65,7 @@ def srcs_filegroup_arg():
             default = None,
             doc = """
     Directory of sources already combined together from `srcs` + `mapped_srcs`.
-    This allows sources to be located in a different Buck package than the one
+    This allows sources to be located in a different yak package than the one
     containing the rust_library target which compiles those sources.
 
     When using `srcs_filegroup`, the attributes `srcs` and `mapped_srcs` cannot

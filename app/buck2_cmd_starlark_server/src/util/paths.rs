@@ -55,7 +55,7 @@ async fn starlark_file(
             .await?
             .is_ignored()
     {
-        // File is ignored by Buck, give up on it
+        // File is ignored by yak, give up on it
         return Ok(());
     }
 
@@ -78,9 +78,9 @@ async fn starlark_file(
         FileType::Directory => {
             for x in io.read_dir(proj_path.clone()).await? {
                 let Ok(file_name) = FileName::new(&x.file_name) else {
-                    // Skip files which buck does not like:
+                    // Skip files which yak does not like:
                     // this function works with `CellPath` values,
-                    // which cannot be constructed from paths not acceptable by buck.
+                    // which cannot be constructed from paths not acceptable by yak.
                     continue;
                 };
                 let mut child_path = proj_path.clone();

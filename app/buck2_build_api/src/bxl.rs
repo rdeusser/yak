@@ -9,7 +9,7 @@
  */
 
 //!
-//! bxl is the Buck Extension Language, allowing any integrator to write Starlark code that
+//! bxl is the extension language of yak, allowing any integrator to write Starlark code that
 //! introspects yak internal graphs in a safe, incremental way to perform more complex operations
 
 pub mod build_result;

@@ -102,7 +102,7 @@ def _deps_query_arg():
 
     ```
       "filter({name_regex}, deps('//foo:foo'))".format(name_regex='//.*')
-      "attrfilter(annotation_processors, com.foo.Processor, deps('//foo:foo'))"
+      "attrfilter(labels, generated, deps('//foo:foo'))"
       "deps('//foo:foo', 1)"
     ```
 """,
@@ -116,7 +116,7 @@ def _labels_arg():
             default = [],
             doc = """
     Set of arbitrary strings which allow you to annotate a [build rule](https://rdeusser.github.io/buck2/docs/concepts/build_rule/) with tags
-    that can be searched for over an entire dependency tree using `buck query()`.
+    that can be searched for over an entire dependency tree using `yak query()`.
 """,
         ),
     }
@@ -143,11 +143,11 @@ def _test_label_arg():
             default = [],
             doc = """
     A list of labels to be applied to these tests. These labels are
-     arbitrary text strings and have no meaning within buck itself. They
+     arbitrary text strings and have no meaning within yak itself. They
      can, however, have meaning for you as a test author
      (e.g., `smoke` or `fast`). A label can be
      used to filter or include a specific test rule
-     when executing `buck test`
+     when executing `yak test`
 """,
         ),
     }
@@ -207,7 +207,7 @@ def _licenses_arg():
             default = [],
             doc = """
             Set of license files for this library. To get the list of license files for a given build rule and
-            all of its dependencies, you can use [buck query](https://rdeusser.github.io/buck2/docs/users/commands/query/)
+            all of its dependencies, you can use [yak query](https://rdeusser.github.io/buck2/docs/users/commands/query/)
         """,
         ),
     }

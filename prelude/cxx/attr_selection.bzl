@@ -11,16 +11,11 @@ def cxx_by_language_ext(x: dict[typing.Any, typing.Any], ext: str) -> list[typin
     # lang_compiler_flags is indexed by c_cpp_output/cxx_cpp_output
     # so write a function that can do either
     #
-    # === Buck v1 Compatibility ===
-    #
     # `lang_compiler_flags` keys are coerced to CxxSource,
     # so the allowable values are the lowercase versions of the enum values.
     #
     # The keys themselves should be the _output_ type of the language. For example,
     # for Obj-C, that would be OBJC_CPP_OUTPUT.
-    #
-    # The actual lookup for `lang_compiler_flags` happens in
-    # CxxSourceRuleFactory::getRuleCompileFlags().
     #
     # `lang_preprocessor_flags` keys are also coerced to CxxSource.
     # The keys are the _input_ type of the language. For example, for Obj-C,

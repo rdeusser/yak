@@ -85,7 +85,7 @@ pub async fn kill_command_impl(
             tracing::debug!("Connect timed out: {:#}", e);
 
             // If we timeout, then considering the generous timeout we give ourselves, then
-            // that must mean we're not getting a reply back from Buck, but that we did
+            // that must mean we're not getting a reply back from yak, but that we did
             // succeed in opening a connection to it (because if we didn't, we'd have
             // errored out).
             //
@@ -98,7 +98,7 @@ pub async fn kill_command_impl(
     };
 
     if let Some(pid) = pid {
-        crate::eprintln!("Buck2 daemon pid {} has exited", pid)?;
+        crate::eprintln!("yak daemon pid {} has exited", pid)?;
     }
 
     Ok(())

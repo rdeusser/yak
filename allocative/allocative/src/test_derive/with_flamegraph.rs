@@ -39,7 +39,7 @@ fn test_flamegraph() {
         allocative::test_derive::with_flamegraph::TestData;data;alloc::boxed::Box<[u8]>;ptr 16\n\
         allocative::test_derive::with_flamegraph::TestData;data;alloc::boxed::Box<[u8]>;ptr;u8;data;u8 100\n\
         ",
-        // When running test with buck, crate name is `allocative_unittest`.
+        // When running test with yak, crate name is `allocative_unittest`.
         fg.finish_and_write_flame_graph()
             .replace("allocative_unittest::", "allocative::")
     );

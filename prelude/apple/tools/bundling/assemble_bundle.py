@@ -232,7 +232,7 @@ def _filter_conflicting_paths(
     """
     Filter out conflicting paths leaving only the last item from the conflicting items. That practically means that the last item overrides all other conflicting items which makes:
     1) incremental build deterministic even when there are multiple conflicting destination paths
-    2) bundling result has the same structure as in Buck1 even when there are multiple conflicting destination paths
+    2) bundling result has the same structure as a non-incremental build even when there are multiple conflicting destination paths
     WARNING: This logic is tightly coupled with how spec items are sorted in `assemble_bundle` method. Don't change unless you fully understand what is going on here.
     """
     result = {}

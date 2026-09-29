@@ -110,7 +110,7 @@ async def test_isolation_dir_reserved_prefix_rejected(buck: Buck) -> None:
             stderr_regex="reserved for yak",
         )
     finally:
-        # The fixture teardown runs `buck clean`, which would itself trip the
+        # The fixture teardown runs `yak clean`, which would itself trip the
         # reserved-name rejection with the prefix still set.
         buck.set_isolation_prefix("v2")
 
@@ -129,7 +129,7 @@ async def test_clean_background(buck: Buck) -> None:
     clean_result = await buck.clean("--background")
 
     # Check that the output contains the expected messages
-    assert "Buck-out moved to trash. Now cleaning up..." in clean_result.stderr
+    assert "yak-out moved to trash. Now cleaning up..." in clean_result.stderr
     assert "Tip: Use Ctrl-Z to put this in the background" in clean_result.stderr
     assert (
         "You can run other yak commands while this completes." in clean_result.stderr

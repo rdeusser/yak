@@ -32,7 +32,7 @@ def _do_typing_query_entry_point(ctx: bxl.Context) -> None:
     ctx.output.print_json(files_per_target_typed)
 
 typing_query = bxl_main(
-    doc = ("Queries Buck about a given file to determine if any owning targets have typing " + "in their attributes."),
+    doc = ("Queries yak about a given file to determine if any owning targets have typing " + "in their attributes."),
     impl = _do_typing_query_entry_point,
     cli_args = {
         "source": cli_args.list(

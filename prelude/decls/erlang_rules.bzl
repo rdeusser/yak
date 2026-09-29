@@ -103,7 +103,7 @@ rules_attributes = {
                 yak to generate the `*.app` output file in the applications `ebin/` directory. This is useful during the migration from
                 rebar3 to yak to avoid duplicated entries, of e.g. the `version`.
 
-                Buck2 will use or check all fields present in the template, and fill out the fields with the information provided in the
+                yak will use or check all fields present in the template, and fill out the fields with the information provided in the
                 target, e.g. if the `version` is specified in both, yak will check that they are identical. Otherwise, it uses the
                 information from the template if the target doesn't specify it, and vice versa.
 

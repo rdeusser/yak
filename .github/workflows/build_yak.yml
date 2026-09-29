@@ -3,7 +3,7 @@ name: Build `yak`
 on:
   workflow_call:
     inputs:
-      buck2_version:
+      yak_version:
         description: "Version string stamped into the binaries via YAK_SET_EXPLICIT_VERSION"
         required: true
         type: string
@@ -56,7 +56,7 @@ jobs:
           targets: ${{ matrix.target.triple }}
       - uses: Swatinem/rust-cache@v2
         with:
-          prefix-key: buck2-upload
+          prefix-key: yak-upload
           key: ${{ matrix.target.triple }}
       - uses: actions-rs/install@v0.1
         if: matrix.target.cross
@@ -68,26 +68,25 @@ jobs:
         shell: bash
         run: |
           if [ -n "${{ matrix.target.is_windows }}" ]; then
-            echo "buck2_out=target/${{ matrix.target.triple }}/release/yak.exe" >> "$GITHUB_OUTPUT"
-            echo "buck2_zst=artifacts/yak-${{ matrix.target.triple }}.exe.zst" >> "$GITHUB_OUTPUT"
-            echo "buck2_rust_project_out=target/${{ matrix.target.triple }}/release/rust-project.exe" >> "$GITHUB_OUTPUT"
-            echo "buck2_rust_project_zst=artifacts/rust-project-${{ matrix.target.triple }}.exe.zst" >> "$GITHUB_OUTPUT"
+            echo "yak_out=target/${{ matrix.target.triple }}/release/yak.exe" >> "$GITHUB_OUTPUT"
+            echo "yak_zst=artifacts/yak-${{ matrix.target.triple }}.exe.zst" >> "$GITHUB_OUTPUT"
+            echo "yak_rust_project_out=target/${{ matrix.target.triple }}/release/rust-project.exe" >> "$GITHUB_OUTPUT"
+            echo "yak_rust_project_zst=artifacts/rust-project-${{ matrix.target.triple }}.exe.zst" >> "$GITHUB_OUTPUT"
             echo "starlark_fmt_out=target/${{ matrix.target.triple }}/release/starlark_fmt.exe" >> "$GITHUB_OUTPUT"
             echo "starlark_fmt_zst=artifacts/starlark_fmt-${{ matrix.target.triple }}.exe.zst" >> "$GITHUB_OUTPUT"
           else
-            echo "buck2_out=target/${{ matrix.target.triple }}/release/yak" >> "$GITHUB_OUTPUT"
-            echo "buck2_zst=artifacts/yak-${{ matrix.target.triple }}.zst" >> "$GITHUB_OUTPUT"
-            echo "buck2_rust_project_out=target/${{ matrix.target.triple }}/release/rust-project" >> "$GITHUB_OUTPUT"
-            echo "buck2_rust_project_zst=artifacts/rust-project-${{ matrix.target.triple }}.zst" >> "$GITHUB_OUTPUT"
+            echo "yak_out=target/${{ matrix.target.triple }}/release/yak" >> "$GITHUB_OUTPUT"
+            echo "yak_zst=artifacts/yak-${{ matrix.target.triple }}.zst" >> "$GITHUB_OUTPUT"
+            echo "yak_rust_project_out=target/${{ matrix.target.triple }}/release/rust-project" >> "$GITHUB_OUTPUT"
+            echo "yak_rust_project_zst=artifacts/rust-project-${{ matrix.target.triple }}.zst" >> "$GITHUB_OUTPUT"
             echo "starlark_fmt_out=target/${{ matrix.target.triple }}/release/starlark_fmt" >> "$GITHUB_OUTPUT"
             echo "starlark_fmt_zst=artifacts/starlark_fmt-${{ matrix.target.triple }}.zst" >> "$GITHUB_OUTPUT"
           fi
       - name: Build
         shell: bash
         env:
-          # BUCK2 prefixed variables used within the build to stamp in a version information
-          # YAK_SET_EXPLICIT_VERSION will populate the yak --version string
-          YAK_SET_EXPLICIT_VERSION: ${{ inputs.buck2_version }}
+          # YAK_SET_EXPLICIT_VERSION sets the version that yak --version prints.
+          YAK_SET_EXPLICIT_VERSION: ${{ inputs.yak_version }}
           RUSTFLAGS: "--cfg tokio_unstable -C strip=debuginfo -C codegen-units=1"
         run: |
           # aarch64-linux builds need JEMALLOC_SYS_WITH_LG_PAGE=16
@@ -106,7 +105,7 @@ jobs:
         if: ${{ !matrix.target.cross }}
         shell: bash
         run: |
-          BUCK2="$(pwd)/${{ steps.set_variables.outputs.buck2_out }}"
+          YAK="$(pwd)/${{ steps.set_variables.outputs.yak_out }}"
           cd examples/with_prelude
           # TODO: rust examples don't work on windows + arm64
           if [[ "${{ matrix.target.triple }}" == "aarch64-pc-windows-msvc" ]]; then
@@ -114,7 +113,7 @@ jobs:
           else
             TARGETS="rust/... cpp/... python/..."
           fi
-          "$BUCK2" build $TARGETS -v=2
+          "$YAK" build $TARGETS -v=2
         # TODO: investigate segmentation fault on windows-11-arm
         continue-on-error: ${{ matrix.target.triple == 'aarch64-pc-windows-msvc' }}
       - name: Install zstd
@@ -125,8 +124,8 @@ jobs:
         shell: bash
         run: |
           mkdir artifacts
-          zstd -z ${{ steps.set_variables.outputs.buck2_out }} -o ${{ steps.set_variables.outputs.buck2_zst }}
-          zstd -z ${{ steps.set_variables.outputs.buck2_rust_project_out }} -o ${{ steps.set_variables.outputs.buck2_rust_project_zst }}
+          zstd -z ${{ steps.set_variables.outputs.yak_out }} -o ${{ steps.set_variables.outputs.yak_zst }}
+          zstd -z ${{ steps.set_variables.outputs.yak_rust_project_out }} -o ${{ steps.set_variables.outputs.yak_rust_project_zst }}
           zstd -z ${{ steps.set_variables.outputs.starlark_fmt_out }} -o ${{ steps.set_variables.outputs.starlark_fmt_zst }}
       - name: Upload
         uses: actions/upload-artifact@v6

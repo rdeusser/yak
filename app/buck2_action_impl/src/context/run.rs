@@ -120,20 +120,20 @@ pub(crate) fn analysis_actions_methods_run(methods: &mut MethodsBuilder) {
     /// * `arguments`: must be of type `cmd_args`, or a type convertible to such (such as a list of
     ///   strings and artifacts). See below for detailed description of artifact arguments.
     /// * `env`: environment variables to set when the command is executed.
-    /// * `category`: category and identifier - when used together, identify the action in Buck2's
+    /// * `category`: category and identifier - when used together, identify the action in yak's
     ///   event stream, and must be unique for a given target
     /// * `weight`: used to note how heavy the command is and will typically be set to a higher
     ///   value to indicate that less such commands should be run in parallel (if running locally)
-    /// * `no_outputs_cleanup`: if this flag is set then Buck2 won't clean the outputs of a previous
+    /// * `no_outputs_cleanup`: if this flag is set then yak won't clean the outputs of a previous
     ///   build that might be present on a disk; in which case, command from arguments should be
     ///   responsible for the cleanup (that is useful, for example, when an action is supporting
     ///   incremental mode and its outputs are based on result from a previous build)
     /// * `metadata_env_var` and `meadata_path` should be used together: both set or both unset
     ///     * `metadata_path`: defines a path relative to the result directory for a file with
     ///       action metadata, which will be created right before the command will be run.
-    ///     * Metadata contains the path relative to the Buck2 project root and hash digest for
+    ///     * Metadata contains the path relative to the yak project root and hash digest for
     ///       every action input (this excludes symlinks as they could be resolved by a user script
-    ///       if needed). The resolved path relative to the Buck2 project for the metadata file will
+    ///       if needed). The resolved path relative to the yak project for the metadata file will
     ///       be passed to command from arguments, via the environment variable, with its name set
     ///       by `metadata_env_var`
     ///     * Both `metadata_env_var` and `metadata_path` are useful when making actions behave in
@@ -146,7 +146,7 @@ pub(crate) fn analysis_actions_methods_run(methods: &mut MethodsBuilder) {
     ///       `ctx.actions.artifact_tag()`
     ///     * The tag should be used to mark both the potential inputs (via `tag.tag_artifacts()`)
     ///       and the depfile output that will list the actual inputs used
-    ///     * After execution, Buck2 reads the depfile and only tracks changes to inputs listed in it,
+    ///     * After execution, yak reads the depfile and only tracks changes to inputs listed in it,
     ///       rather than all tagged inputs
     ///     * Depfiles must use Makefile syntax: `output: input1 input2 input3`
     ///     * For complete documentation and examples, see [`ctx.actions.artifact_tag()`](../AnalysisActions#analysisactionsartifact_tag)

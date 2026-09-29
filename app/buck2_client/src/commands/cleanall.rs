@@ -16,7 +16,7 @@ use buck2_client_ctx::events_ctx::EventsCtx;
 use buck2_client_ctx::exit_result::ExitResult;
 use buck2_wrapper_common::CLEAN_STALE_HELP;
 
-/// Clean Buck2 state for every known project and isolation directory.
+/// Clean yak state for every known project and isolation directory.
 #[derive(Debug, clap::Parser)]
 pub struct CleanallCommand {
     #[clap(long, help = CLEAN_STALE_HELP)]

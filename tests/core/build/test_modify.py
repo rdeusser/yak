@@ -70,7 +70,7 @@ async def test_modify_directory(buck: Buck) -> None:
 @pytest.mark.remote_execution
 @buck_test(data_dir="modify_file_during_build")
 async def test_modify_file_during_build(buck: Buck) -> None:
-    # We need to write some random stuff to the file first so that Buck will
+    # We need to write some random stuff to the file first so that yak will
     # have to attempt to upload it to RE (which will fail because by that time
     # we will have overwritten it with other content).
     with open(buck.cwd / "text", "w", encoding="utf-8") as f:
@@ -85,7 +85,7 @@ async def test_modify_file_during_build(buck: Buck) -> None:
 @pytest.mark.remote_execution
 @buck_test(data_dir="modify_file_during_build")
 async def test_file_notify(buck: Buck) -> None:
-    # We need to write some random stuff to the file first so that Buck will
+    # We need to write some random stuff to the file first so that yak will
     # have to attempt to upload it to RE (which will fail because by that time
     # we will have overwritten it with other content).
     with open(buck.cwd / "text", "w", encoding="utf-8") as f:

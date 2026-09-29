@@ -18,7 +18,7 @@ from .simulator import SimulatorType
 
 def _args_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        description="Utility to set up simulators which are used by buck to run tests locally."
+        description="Utility to set up simulators which are used by yak to run tests locally."
     )
     parser.add_argument(
         "--simulator-manager",

@@ -17,11 +17,11 @@
 # Most crates have a crate name determined during analysis: value of the `crate`
 # attribute, or derived using a simple heuristic from the rust_library target's
 # `name` attribute. For these it's easy to give the rlib a correct filename up
-# front and use buck's `ctx.actions.symlinked_dir` to collect them into a
+# front and use yak's `ctx.actions.symlinked_dir` to collect them into a
 # directory. These do not go through this tool.
 #
 # Crates that use `crate_dynamic` have a crate name computed at build time, for
-# example by extracting the name from a .thrift file. Buck needs a filename at
+# example by extracting the name from a .thrift file. yak needs a filename at
 # analysis time for all artifacts, so we name those rlib files using a
 # provisional name and then this tool at build time will symlink them under the
 # real crate name that rustc will recognize.

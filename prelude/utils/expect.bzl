@@ -68,14 +68,14 @@ def expect_type(name: str, check: typing.Callable[[typing.Any], bool], desc: str
 
     See the below functions, like expect_string, for usage examples.
     """
-    expect(check(val), 'Buck target requires "{}" to be a {}', name, desc)
+    expect(check(val), 'yak target requires "{}" to be a {}', name, desc)
 
 def expect_string(name, val):
     expect_type(name, is_string, "string", val)
 
 def expect_string_starts_with(name, val, prefix):
     expect_type(name, is_string, "string", val)
-    expect(val.startswith(prefix), 'Buck target requires "{}" to start with "{}', name, prefix)
+    expect(val.startswith(prefix), 'yak target requires "{}" to start with "{}', name, prefix)
 
 def expect_number(name, val):
     expect_type(name, is_number, "number", val)

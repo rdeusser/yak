@@ -51,7 +51,7 @@ load(
 def main():
     parser = argparse.ArgumentParser(
         prog="conan_update",
-        description="Update the Conan lock-file and the Buck2 package imports.",
+        description="Update the Conan lock-file and the yak package imports.",
     )
     parser.add_argument(
         "--update-label",

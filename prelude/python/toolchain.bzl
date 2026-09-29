@@ -85,7 +85,7 @@ PythonToolchainInfo = provider(
         #
         # The checker must exit successfully whenever it writes valid result
         # JSON, including when that result contains type errors. A nonzero exit
-        # fails the type-checking action before Buck2 can convert the result to
+        # fails the type-checking action before yak can convert the result to
         # validation output.
         "type_checker": provider_field(RunInfo | None, default = None),
         "typeshed_stubs": provider_field(ManifestInfo | None, default = None),

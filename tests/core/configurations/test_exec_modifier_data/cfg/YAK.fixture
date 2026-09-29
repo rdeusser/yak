@@ -50,7 +50,7 @@ constraint(
     execution_modifier = True,
 )
 
-# Buckconfig backed test constraint - used to test buckconfig_backed_modifiers exclusion from exec deps
+# yakconfig backed test constraint - used to test buckconfig_backed_modifiers exclusion from exec deps
 constraint(
     name = "buckconfig_backed",
     values = [

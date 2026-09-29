@@ -75,7 +75,7 @@ def main(argv):
     for env_var in ["CC", "CGO_CFLAGS", "CGO_CPPFLAGS", "CGO_LDFLAGS"]:
         if env_var in env:
             # HACK: Split the value into a list of arguments then join them back.
-            # This is because buck encodes quoted args in a way `go` doesn't like,
+            # This is because yak encodes quoted args in a way `go` doesn't like,
             # but `go_join` does it in a way that `go` expects.
             var_value = go_join(shlex.split(env[env_var]))
             # HACK: Replace %cwd% with the current working directory to make it work when `go` does `cd` to a tmp-dir.

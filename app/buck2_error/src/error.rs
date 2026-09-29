@@ -35,7 +35,7 @@ pub type DynLateFormat = dyn Fn(&mut fmt::Formatter<'_>) -> fmt::Result + Send +
 /// The core error type provided by this crate.
 ///
 /// This type was originally an incremental replacement to `anyhow::Error` but now has almost
-/// entirely replaced it in the Buck2 codebase. It has `From` impls from many common error types.
+/// entirely replaced it in the yak codebase. It has `From` impls from many common error types.
 /// One off conversions are often also done via `from_any_with_tag`, custom errors are generally
 /// created using the `thiserror` inspired derive macro.
 #[derive(allocative::Allocative, Clone, dupe::Dupe)]

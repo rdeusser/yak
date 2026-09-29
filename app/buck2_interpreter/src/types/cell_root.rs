@@ -60,7 +60,7 @@ impl<'v> StarlarkValue<'v> for CellRoot {
     }
 }
 
-/// A `CellRoot` represents the root directory of a cell in Buck2.
+/// A `CellRoot` represents the root directory of a cell in yak.
 ///
 /// `CellRoot` is typically accessed via the `cell_root` attribute on labels (e.g., `ctx.label.cell_root`).
 /// For example, given a label `root//foo:bar`, the `cell_root` would represent `root//`.

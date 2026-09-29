@@ -53,7 +53,7 @@ def get_swiftmodule_change_analysis_output(ctx: AnalysisContext, deps: list[Depe
     # Only populated when `apple.swift_dump_ast_subtarget_enabled` is set, so
     # this is `None` for the vast majority of builds. Ignored by the default
     # bootstrap tool; consumed by richer out-of-tree implementations (see
-    # `apple.swiftmodule_change_analysis` buckconfig) that classify changes
+    # `apple.swiftmodule_change_analysis` yakconfig) that classify changes
     # via AST diffing instead of a raw `.swiftinterface` text diff.
     ast_dump_tsets = [dep[SwiftDependencyInfo].swift_ast_dump_tset for dep in deps if SwiftDependencyInfo in dep]
     ast_tset = make_artifact_tset(
@@ -101,7 +101,7 @@ def get_swiftmodule_change_analysis_output(ctx: AnalysisContext, deps: list[Depe
         command.add("--ast-manifest", ast_manifest)
 
     # The manifest only bakes in each artifact's *path*; without also listing
-    # them as hidden inputs here, Buck2 wouldn't know this action actually
+    # them as hidden inputs here, yak wouldn't know this action actually
     # depends on their content, and `metadata_path` below wouldn't include
     # their digests.
     command.add(cmd_args(hidden = [artifact for artifacts in label_to_artifacts.values() for artifact in artifacts]))
@@ -114,7 +114,7 @@ def get_swiftmodule_change_analysis_output(ctx: AnalysisContext, deps: list[Depe
         prefer_local = True,
         allow_cache_upload = False,
         no_outputs_cleanup = True,
-        # Buck2 already knows a content digest for every one of this
+        # yak already knows a content digest for every one of this
         # action's inputs (it needs one for its own caching); this hands
         # them to the tool as a `path -> digest` JSON file so it can compare
         # digests instead of reading and hashing `.swiftmodule` files itself.

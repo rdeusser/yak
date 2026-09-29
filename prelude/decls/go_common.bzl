@@ -61,7 +61,7 @@ def _link_style_arg():
             doc = """
     Determines whether to build and link this rule's dependencies statically or dynamically. Can be
      one of the following values: `static`, `static_pic` or `shared`.
-     This argument is relevant only if the cgo extension is enabled. Otherwise, Buck ignores this argument.
+     This argument is relevant only if the cgo extension is enabled. Otherwise, yak ignores this argument.
 """,
         ),
     }
@@ -85,7 +85,7 @@ def _package_name_arg():
             attrs.string(),
             default = None,
             doc = """
-    Sets the full name of the package being compiled. This defaults to the path from the buck root.
+    Sets the full name of the package being compiled. This defaults to the path from the yak root.
      (e.g. given a ./.yakconfig, a rule in ./a/b/YAK defaults to package "a/b")
 """,
         ),

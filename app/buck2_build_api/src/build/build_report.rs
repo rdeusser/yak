@@ -161,12 +161,12 @@ pub(crate) struct ConfiguredBuildReportEntry {
     #[serde(skip_serializing_if = "Option::is_none")]
     artifact_size_sketch: Option<String>,
     /// Estimated cardinality of `artifact_count_sketch`. Populated only when the
-    /// `yak.log_sketch_cardinalities` buckconfig is set; the corresponding
+    /// `yak.log_sketch_cardinalities` yakconfig is set; the corresponding
     /// sketch field is left intact in both cases.
     #[serde(skip_serializing_if = "Option::is_none")]
     artifact_count_sketch_cardinality: Option<f64>,
     /// Estimated cardinality of `artifact_size_sketch`. Populated only when the
-    /// `yak.log_sketch_cardinalities` buckconfig is set; the corresponding
+    /// `yak.log_sketch_cardinalities` yakconfig is set; the corresponding
     /// sketch field is left intact in both cases.
     #[serde(skip_serializing_if = "Option::is_none")]
     artifact_size_sketch_cardinality: Option<f64>,
@@ -595,7 +595,7 @@ impl<'a> BuildReportCollector<'a> {
             .total_configured_graph_sketch
             .map(|sketcher| sketcher.into_mergeable_graph_sketch().serialize());
 
-        // Determine error category using existing Buck2 error classification
+        // Determine error category using existing yak error classification
         let error_category = if let Some(best_error_report) = best_error(&all_error_reports) {
             Some(best_error_report.category().to_string())
         } else if self.overall_success {
@@ -1263,7 +1263,7 @@ fn init_streaming_build_report(
     Ok(())
 }
 
-/// Shared by `buck build` and `buck test`. `buck test` keeps its result senders alive past the
+/// Shared by `yak build` and `yak test`. `yak test` keeps its result senders alive past the
 /// build phase, so once the channel closes we stop polling it to avoid busy-looping while
 /// `command_future` is still running.
 pub async fn maybe_stream_build_reports<T>(

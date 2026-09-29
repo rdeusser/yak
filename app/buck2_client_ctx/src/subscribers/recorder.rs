@@ -595,10 +595,10 @@ impl InvocationRecorder {
             },
             // Error should have been reported.
             (Some(_), false) => InvocationOutcome::Unknown,
-            // No exit code means a run command succeeded in calling exec (result of exec is unknown but buck succeeded).
+            // No exit code means a run command succeeded in calling exec (result of exec is unknown but yak succeeded).
             // This should probably be a separate outcome.
             (None, false) => InvocationOutcome::Success,
-            // Exec should not have been called if there were errors in buck.
+            // Exec should not have been called if there were errors in yak.
             (None, true) => InvocationOutcome::Unknown,
         }
     }

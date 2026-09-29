@@ -11,9 +11,9 @@
 #![feature(used_with_arg)]
 
 //!
-//! Events and event streams for Buck2.
+//! Events and event streams for yak.
 //!
-//! The `Event` enum is the set of events that Buck2 can produce. Events can be produced both during the course of
+//! The `Event` enum is the set of events that yak can produce. Events can be produced both during the course of
 //! a command or through background operation (such as DICE invalidations of changed files).
 //!
 //! There are three critical nouns in this data model:
@@ -47,7 +47,7 @@ use crate::sink::channel::ChannelEventSink;
 use crate::source::ChannelEventSource;
 use crate::span::SpanId;
 
-/// An event that can be produced by Buck2. Events are points in time with additional metadata attached to them,
+/// An event that can be produced by yak. Events are points in time with additional metadata attached to them,
 /// depending on the nature of the event.
 ///
 /// Some events are special in that they represent points in time where an operation started or ended. These events
@@ -193,7 +193,7 @@ pub enum Event {
     CommandResult(Box<CommandResult>),
     /// A progress event from this command. Different commands have different types.
     PartialResult(PartialResult),
-    /// A regular buck event. Is the only type to end up in the Event Log
+    /// A regular yak event. Is the only type to end up in the Event Log
     Buck(BuckEvent),
 }
 

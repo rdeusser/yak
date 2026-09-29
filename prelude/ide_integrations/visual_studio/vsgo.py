@@ -176,7 +176,7 @@ def main(
         + mode_files
     )
     if extra_buck_options:
-        # Pass extra buck options verbatim so that run/debug invokes buck using the same options beside target and mode file.
+        # Pass extra yak options verbatim so that run/debug invokes yak using the same options beside target and mode file.
         bxl_cmds += ["--extra_buck_options"] + [
             _escape_arg(o) for o in extra_buck_options
         ]
@@ -251,11 +251,11 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(
         prog="vsgo",
-        description="Visual Studio project generator for buck targets",
+        description="Visual Studio project generator for yak targets",
     )
     parser.add_argument(
         "targets",
-        help="""List of buck targets, aliases and/or patterns. Dependencies and transitive dependencies are automatically pulled in.
+        help="""List of yak targets, aliases and/or patterns. Dependencies and transitive dependencies are automatically pulled in.
 Individual specified targets are preferred over target patterns as the latter will usually pull in unused targets which
 could potentially slow down project generation and project loading significantly. Examples:
     1. Single fully-specified target:
@@ -295,7 +295,7 @@ generating and loading):
     parser.add_argument(
         "--extra_buck_options",
         nargs="+",
-        help="extra options when running buck from generated project settings. Note '-' within option value needs to be escaped, e.g., `vsgo //third-party/semver:basic_example --extra_buck_options '\\-\\-out' 'C:\\open\\temp-out' '\\-\\-local-only'`",
+        help="extra options when running yak from generated project settings. Note '-' within option value needs to be escaped, e.g., `vsgo //third-party/semver:basic_example --extra_buck_options '\\-\\-out' 'C:\\open\\temp-out' '\\-\\-local-only'`",
         default=[],
     )
     parser.add_argument(
@@ -314,13 +314,13 @@ generating and loading):
     parser.add_argument(
         "--target_include_patterns",
         nargs="+",
-        help="include target(s) only if it matches buck target pattern",
+        help="include target(s) only if it matches yak target pattern",
         default=[],
     )
     parser.add_argument(
         "--target_exclude_patterns",
         nargs="+",
-        help="exclude target(s) if it matches buck target pattern",
+        help="exclude target(s) if it matches yak target pattern",
         default=[],
     )
     parser.add_argument(
@@ -331,7 +331,7 @@ generating and loading):
     parser.add_argument(
         "--startup_target",
         action="store",
-        help="buck target to be set as the default startup project",
+        help="yak target to be set as the default startup project",
     )
     parser.add_argument(
         "--bxl_path",

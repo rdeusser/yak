@@ -156,24 +156,24 @@ pub struct CommonBuildOptions {
     #[clap(long)]
     upload_all_actions: bool,
 
-    /// If Buck hits an error, do as little work as possible before exiting.
+    /// If yak hits an error, do as little work as possible before exiting.
     ///
     /// To illustrate the effect of this flag, consider an invocation of `build :foo :bar`. The
-    /// default behavior of buck is to do enough work to get a result for the builds of each of
-    /// `:foo` and `:bar`, and no more. This means that buck will continue to complete the build of
+    /// default behavior of yak is to do enough work to get a result for the builds of each of
+    /// `:foo` and `:bar`, and no more. This means that yak will continue to complete the build of
     /// `:bar` after the build of `:foo` has failed; however, once one dependency of `:foo` has
     /// failed, other dependencies will be cancelled unless they are needed by `:bar`.
     ///
-    /// This flag changes the behavior of buck to not wait on `:bar` to complete once `:foo` has
+    /// This flag changes the behavior of yak to not wait on `:bar` to complete once `:foo` has
     /// failed. Generally, this flag only has an effect on builds that specify multiple targets.
     ///
-    /// `--keep-going` changes the behavior of buck to not only wait on `:bar` once one dependency
+    /// `--keep-going` changes the behavior of yak to not only wait on `:bar` once one dependency
     /// of `:foo` has failed, but to additionally attempt to build other dependencies of `:foo` if
     /// possible.
     #[clap(long, group = "fail-when")]
     fail_fast: bool,
 
-    /// If Buck hits an error, continue doing as much work as possible before exiting.
+    /// If yak hits an error, continue doing as much work as possible before exiting.
     ///
     /// See `--fail-fast` for more details.
     #[clap(long, group = "fail-when")]

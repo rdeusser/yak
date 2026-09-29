@@ -142,14 +142,14 @@ enum ErrorTag {
   // A path was missing while copying a file into yak-out during
   // materialization.
   MATERIALIZE_COPY_MISSING_FILE = 2601;
-  // Could not find buck project root
+  // Could not find yak project root
   NO_BUCK_ROOT = 27;
   // Project root directory no longer exists on disk
   MISSING_PROJECT_ROOT = 2700;
   // The invoking user's home directory no longer exists on disk
   MISSING_HOME_DIR = 2702;
 
-  // Functionality not implemented in Buck2
+  // Functionality not implemented in yak
   UNIMPLEMENTED = 29;
   // Target specified is not found in the package/build file
   MISSING_TARGET = 30;
@@ -158,7 +158,7 @@ enum ErrorTag {
 
   // Path not found for path found in input or source
   MISSING_INPUT_PATH = 32;
-  // Path not found for buck or system path not provided by user
+  // Path not found for yak or system path not provided by user
   MISSING_INTERNAL_PATH = 33;
   // NotADirectory for path found in input or source
   INPUT_PATH_NOT_A_DIRECTORY = 34;
@@ -386,7 +386,7 @@ enum ErrorTag {
   INTERPRETER = 20000;
   KILL_ALL = 21000;
   BUILD_REPORT = 11100;
-  // Reading a buckconfig file from disk
+  // Reading a yakconfig file from disk
   BUCKCONFIG_READ = 23004;
   // Reading the result file produced by a validation
   VALIDATION_RESULT_READ = 24000;

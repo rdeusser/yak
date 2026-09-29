@@ -147,7 +147,7 @@ async def test_no_finalizing_errors(buck: Buck, tmp_path: Path) -> None:
     assert report["finalizing_error_messages"] == []
 
 
-# Should match behavior of command report test in buck wrapper
+# Should match behavior of command report test in yak wrapper
 @buck_test(data_dir="empty_buckconfig")
 async def test_empty_buckconfig(buck: Buck, tmp_path: Path) -> None:
     uuid = "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"

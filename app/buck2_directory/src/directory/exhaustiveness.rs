@@ -25,7 +25,7 @@ use pagable::Pagable;
 ///  - This is exhaustive basically only in the cases where it's inside a directory artifact, which
 ///    we know we've constructed exhaustively.
 ///
-/// Almost nothing in buck needs this - for example, when we send actions to RE or the AC,
+/// Almost nothing in yak needs this - for example, when we send actions to RE or the AC,
 /// directories just are what they are.
 ///
 /// However it is information that we need to retain because we need it in the materializer. In

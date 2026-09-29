@@ -23,7 +23,7 @@ use buck2_fs::working_dir::AbsWorkingDir;
 use crate::subscribers::subscriber::EventSubscriber;
 use crate::ticker::Tick;
 
-/// This EventLog lets us to events emitted by Buck and log them to a file. The events are
+/// This EventLog lets us to events emitted by yak and log them to a file. The events are
 /// serialized as JSON and logged one per line.
 pub(crate) struct EventLog {
     writer: WriteEventLog,

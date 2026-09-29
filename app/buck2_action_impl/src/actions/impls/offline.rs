@@ -40,7 +40,7 @@ pub(crate) async fn declare_copy_to_offline_output_cache(
 }
 
 /// Declares copy materializations to copy offline-cached BuildArtifact outputs
-/// to the build output directory. Used only during offline builds to ensure buck
+/// to the build output directory. Used only during offline builds to ensure yak
 /// does not make any network requests.
 ///
 /// Returns ActionOutputs with all requested outputs on success.

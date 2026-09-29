@@ -78,7 +78,7 @@ use crate::super_package::eval_ctx::PackageFileEvalCtx;
 const DEFAULT_STARLARK_MEMORY_USAGE_LIMIT: u64 = 2 * (1 << 30);
 
 #[derive(Debug, buck2_error::Error)]
-#[error("Tabs are not allowed in Buck files: `{0}`")]
+#[error("Tabs are not allowed in build files: `{0}`")]
 #[buck2(input)]
 struct StarlarkTabsError(OwnedStarlarkPath);
 

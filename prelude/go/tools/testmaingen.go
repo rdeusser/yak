@@ -425,7 +425,7 @@ func init() {
 }
 
 func main() {
-	// Buck ensures that resources defined on the test targets live in the same
+	// yak ensures that resources defined on the test targets live in the same
 	// directory as the binary. We change the working directory to this
 	// directory to make sure that tests can read test fixtures relative to the
 	// current working directory. This matches behavior with "go test" from the

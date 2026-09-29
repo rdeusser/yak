@@ -33,10 +33,8 @@ _BUILD_ROOT_LABELS = set([
     "windows_long_path_issue",  # Windows: relative path length exceeds PATH_MAX, program cannot access file
 ])
 
-# In Buck1 the SRCS environment variable is only set if the substring SRCS is on the command line.
-# That's a horrible heuristic, and doesn't account for users accessing $SRCS from a shell script.
-# But in some cases, $SRCS is so large it breaks the process limit, so have a label to opt in to
-# that behavior.
+# In some cases, $SRCS is so large it breaks the process limit, so have a label that leaves the
+# SRCS environment variable unset.
 _NO_SRCS_ENVIRONMENT_LABEL = "no_srcs_environment"
 
 def _requires_build_root(ctx: AnalysisContext) -> bool:
@@ -86,8 +84,8 @@ def genrule_impl(ctx: AnalysisContext) -> list[Provider]:
     #   src - sources files
     #   out - where outputs go
     # `src` is the current directory
-    # Buck1 uses `.` as output, but that won't work since
-    # Buck2 clears the output directory before execution, and thus src/sh too.
+    # `.` can't be the output, because yak clears the output directory before
+    # execution, and thus src/sh too.
     return process_genrule(ctx, ctx.attrs.out, ctx.attrs.outs)
 
 def _project_output(out: Artifact, path: str) -> Artifact:

@@ -100,7 +100,7 @@ pub fn get_action_digest(commands: &[CommandExecution]) -> Option<String> {
     None
 }
 
-/// Trait for things that can be converted into protobuf messages, for ease of emitting events. There are many core Buck
+/// Trait for things that can be converted into protobuf messages, for ease of emitting events. There are many core yak
 /// types that are represented in the Daemon API that use this trait to ease conversion.
 pub trait ToProtoMessage {
     type Message: prost::Message;

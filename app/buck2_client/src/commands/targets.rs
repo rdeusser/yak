@@ -46,7 +46,7 @@ enum TargetsError {
     IncompatibleArguments,
 }
 
-// Use non-camel case so the possible values match buck1's
+// The possible values are snake case, such as `paths_only`.
 #[allow(non_camel_case_types)]
 #[derive(Debug, Clone, Dupe, clap::ValueEnum)]
 #[clap(rename_all = "snake_case")]

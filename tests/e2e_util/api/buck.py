@@ -26,7 +26,7 @@ from e2e_util.api.subscribe import SubscribeClient
 
 
 class Buck(Executable):
-    """Instantiates a Buck object with a executable path"""
+    """Instantiates a yak object with a executable path"""
 
     def __init__(
         self,
@@ -757,7 +757,7 @@ class Buck(Executable):
         *argv: str,
     ) -> list[str]:
         """
-        Returns a list of strings representing the buck command
+        Returns a list of strings representing the yak command
         """
         cmd_to_run = [str(self.path_to_executable)]
         if self.isolation_prefix:
@@ -880,7 +880,7 @@ class Buck(Executable):
         stdout: int = subprocess.PIPE,
         stderr: int = subprocess.PIPE,
     ) -> Process[Result, Exception]:
-        raise NotImplementedError("Buck does not use execute.")
+        raise NotImplementedError("yak does not use execute.")
 
     def init(
         self,

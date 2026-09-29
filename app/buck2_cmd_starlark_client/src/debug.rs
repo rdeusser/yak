@@ -37,7 +37,7 @@ use futures::StreamExt;
 /// Run the starlark debug adapter protocol server
 ///
 /// This forwards requests received on stdin to a debug server running in the
-/// buck daemon. DAP events and responses are returned from the daemon and sent
+/// yak daemon. DAP events and responses are returned from the daemon and sent
 /// to this command's stdout.
 #[derive(Debug, clap::Parser)]
 #[clap(name = "starlark-debug-attach")]

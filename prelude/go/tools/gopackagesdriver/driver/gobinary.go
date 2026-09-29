@@ -18,7 +18,7 @@ import (
 	"strings"
 )
 
-// getGoBinary creates a temporary Go binary wrapper that uses Buck2
+// getGoBinary creates a temporary Go binary wrapper that uses yak
 // Won't work on Windows
 func getGoBinary() (string, func(), error) {
 	tmpDir, err := os.MkdirTemp("", "go-bin-*")

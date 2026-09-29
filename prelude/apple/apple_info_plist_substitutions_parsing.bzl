@@ -11,7 +11,7 @@ load("@prelude//utils:selects.bzl", "selects")
 # `apple_bundle.info_plist_substitutions` might contain `CODE_SIGN_ENTITLEMENTS` key which (as per v1 documentation):
 #
 # > Code signing will embed entitlements pointed to by the entitlements_file arg in the bundle's apple_binary.
-# > This is the preferred way to specify entitlements when building with Buck.
+# > This is the preferred way to specify entitlements when building with yak.
 # > If the entitlements file is not present, it falls back to the CODE_SIGN_ENTITLEMENTS entry in info_plist_substitutions.
 #
 # In order to properly depend on this fallback entitlements file (and manipulate it) we have to convert this text entry into the source artifact.

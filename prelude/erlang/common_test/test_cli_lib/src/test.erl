@@ -79,7 +79,7 @@ Print a description of all available commands.
 """.
 -spec help() -> ok.
 help() ->
-    io:format("Buck2 Common Test Runner Shell Interface~n~n"),
+    io:format("yak Common Test Runner Shell Interface~n~n"),
     [
         print_help(F, A)
      || {F, A} <- ?MODULE:module_info(exports),

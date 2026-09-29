@@ -10,8 +10,8 @@
 
 //!
 //! # Cell
-//! A 'Cell' is sub-project within the main project for Buck. All files
-//! reachable by Buck is belongs to a single Cell.
+//! A 'Cell' is sub-project within the main project for yak. All files
+//! reachable by yak is belongs to a single Cell.
 //! Cells can be sub-directories of other cells, but that makes that
 //! sub-directory part of the sub-cell and no longer part of the parent cell.
 //! For example, let's say there's cells 'parent-cell' and 'sub-cell' declared
@@ -57,7 +57,7 @@
 //! inaccessible from the cell context that doesn't declare them.
 //!
 //! ### The Empty Cell Alias
-//! The empty cell alias is a special alias injected by Buck to represent the
+//! The empty cell alias is a special alias injected by yak to represent the
 //! current contextual cell. That means, inside `mycell` cell, references to the
 //! 'CellAlias' `""` will resolve to the `mycell` cell.
 //!

@@ -14,7 +14,7 @@
 # dump too.
 #
 # Usage:
-#   peak_watch.sh <bin> <tag> -- <buck2 args...>
+#   peak_watch.sh <bin> <tag> -- <yak args...>
 #
 # Example:
 #   peak_watch.sh /tmp/b2x x -- targets //... --num-threads=30 --no-cache
@@ -45,7 +45,7 @@ POLL_S=${POLL_S:-5}
 SLEEP_S=${SLEEP_S:-10}
 
 if [ "$#" -lt 3 ] || [ "$3" != "--" ]; then
-  echo "usage: $0 <bin> <tag> -- <buck2 args...>" >&2
+  echo "usage: $0 <bin> <tag> -- <yak args...>" >&2
   exit 2
 fi
 BIN=$1

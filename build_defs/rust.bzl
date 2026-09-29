@@ -6,10 +6,10 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-"""Rust rules for the Buck build of this repository.
+"""Rust rules for the yak build of this repository.
 
 Each macro calls the prelude rule of the same name with `--cfg=buck_build`
-added to `rustc_flags`, so code can check `cfg(buck_build)` where the Buck
+added to `rustc_flags`, so code can check `cfg(buck_build)` where the yak
 and Cargo builds differ. Targets are public unless they set `visibility`.
 """
 

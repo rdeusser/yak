@@ -38,7 +38,7 @@ use buck2_offline_archive::OfflineArchiveManifest;
 use buck2_offline_archive::RelativeSymlink;
 use buck2_offline_archive::RepositoryMetadata;
 
-/// Enable I/O tracing in the buck daemon so we keep track of which files
+/// Enable I/O tracing in the yak daemon so we keep track of which files
 /// go into a build.
 #[derive(Debug, clap::Parser)]
 pub struct TraceIoCommand {

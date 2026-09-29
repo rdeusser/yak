@@ -80,8 +80,8 @@ def _buck_config_log_keys(json: bool) -> set[(str, str)]:
     if not log_section_and_key:
         return set()
 
-    # Unfortunately, due to buckconfigs allowing `.`, it's possible to have multiple
-    # ambiguous section/key for a single buckconfig, so check for that here.
+    # Unfortunately, due to yakconfigs allowing `.`, it's possible to have multiple
+    # ambiguous section/key for a single yakconfig, so check for that here.
     result = set()
     splits = log_section_and_key.split(".")
     for i in range(1, len(splits)):
@@ -115,7 +115,7 @@ def _log_read_config(read_func, section: str, key: str, default = None):
             | maybe_callstack_dict,
         }
 
-        # This only prints if buckconfig is set
+        # This only prints if yakconfig is set
         # buildifier: disable=print
         print(json.encode(output))
 
@@ -129,13 +129,13 @@ def _log_read_config(read_func, section: str, key: str, default = None):
                 | maybe_value_dict,
             }
 
-            # This only prints if buckconfig is set
+            # This only prints if yakconfig is set
             # buildifier: disable=print
             print(json.encode(output))
 
     if _BUCKCONFIG_LOG_KEYS:
         if (section, key) in _BUCKCONFIG_LOG_KEYS:
-            # This only prints if buckconfig is set
+            # This only prints if yakconfig is set
             # Need to do everything in one print statement because otherwise lines from parallel print
             # invocations at load time will get interlaced
             # buildifier: disable=print

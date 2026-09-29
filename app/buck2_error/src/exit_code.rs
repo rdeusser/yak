@@ -8,7 +8,7 @@
  * above-listed licenses.
  */
 
-/// Common exit codes for buck with stronger semantic meanings
+/// Common exit codes for yak with stronger semantic meanings
 ///
 /// The exit code is u8 integer and has the following meanings for common exit codes.
 /// - Success             : 0

@@ -15,7 +15,7 @@ use buck2_error::BuckErrorContext;
 use buck2_error::ErrorTag;
 use object::Object;
 
-/// Provides information about this buck version.
+/// Provides information about this yak version.
 pub struct BuckVersion {
     version: String,
     internal_exe_hash: String,
@@ -102,7 +102,7 @@ impl BuckVersion {
         })
     }
 
-    /// Provides a globally unique identifier for this buck executable.
+    /// Provides a globally unique identifier for this yak executable.
     pub fn unique_id(&self) -> &str {
         &self.internal_exe_hash
     }

@@ -26,7 +26,7 @@ async def test_cquery_filter_should_not_include_configuration(buck: Buck) -> Non
     ] == _replace_hash(result.stdout).splitlines()
 
     # Now check the behavior of `filter()`.
-    # `filter()` function checks unconfigured target label, as Buck1 does.
+    # `filter()` function checks unconfigured target label.
     result = await buck.cquery(r"filter('^root//:bbbbb$', //...)")
     assert [
         "root//:bbbbb (root//:aaaaa#<HASH>)",

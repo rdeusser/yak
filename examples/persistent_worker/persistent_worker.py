@@ -7,10 +7,10 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
-"""Buck2 local and remote persistent worker and action runner.
+"""yak local and remote persistent worker and action runner.
 
 This script can:
-- Execute build requests as a Buck2 local persistent worker.
+- Execute build requests as a yak local persistent worker.
 - Execute build requests as a remote persistent worker through Bazel protocol.
 """
 
@@ -32,14 +32,14 @@ import proto.buck2.worker_pb2_grpc as buck2_pb2_grpc
 
 @dataclass
 class Request:
-    """Universal worker request, independent of Buck2 or Bazel protocol."""
+    """Universal worker request, independent of yak or Bazel protocol."""
 
     argv: list[str]
 
 
 @dataclass
 class Response:
-    """Universal worker response, independent of Buck2 or Bazel protocol."""
+    """Universal worker response, independent of yak or Bazel protocol."""
 
     exit_code: int
     stderr: str
@@ -55,7 +55,7 @@ class RecoverableArgumentParser(argparse.ArgumentParser):
 
 
 class Implementation:
-    """Universal worker implementation, independent of Buck2 or Bazel protocol."""
+    """Universal worker implementation, independent of yak or Bazel protocol."""
 
     def __init__(self):
         self.parser = RecoverableArgumentParser(
@@ -93,14 +93,14 @@ class Implementation:
 
 
 class Buck2Servicer(buck2_pb2_grpc.WorkerServicer):
-    """Buck2 remote persistent worker implementation."""
+    """yak remote persistent worker implementation."""
 
     def __init__(self):
         self.impl = Implementation()
 
     def Execute(self, request, context):
         _ = context
-        print("BUCK2", request, file=sys.stderr)
+        print("YAK", request, file=sys.stderr)
         # Decode arguments as UTF-8 strings.
         argv = [arg.decode("utf-8") for arg in request.argv]
         response = self.impl.execute(Request(argv=argv))
@@ -109,7 +109,7 @@ class Buck2Servicer(buck2_pb2_grpc.WorkerServicer):
         cwd = os.getcwd()
         return buck2_pb2.ExecuteResponse(
             exit_code=response.exit_code,
-            stderr=f"Buck2 persistent worker {host} {pid} {cwd}\n" + response.stderr,
+            stderr=f"yak persistent worker {host} {pid} {cwd}\n" + response.stderr,
         )
 
 
@@ -147,8 +147,8 @@ def main():
     (args, rest) = parser.parse_known_args()
 
     if socket_path := os.getenv("WORKER_SOCKET"):
-        # Buck2 persistent worker mode
-        print("BUCK2 WORKER START", file=sys.stderr)
+        # yak persistent worker mode
+        print("YAK WORKER START", file=sys.stderr)
         if rest:
             rest_joined = " ".join(map(shlex.quote, rest))
             print(f"Unexpected arguments: {rest_joined}\n", file=sys.stderr)

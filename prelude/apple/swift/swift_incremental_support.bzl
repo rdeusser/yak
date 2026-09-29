@@ -199,8 +199,8 @@ def _get_incremental_compilation_flags_and_objects(
 ) -> IncrementalCompilationOutput:
     extra_hidden = [output_swiftdoc.as_output()] if output_swiftdoc else []
 
-    # Match the driver -j to the Buck `weight` (num_threads) so the frontend-thread count matches
-    # the permits Buck reserves. Otherwise -j was always 6 while weight could be 1, oversubscribing
+    # Match the driver -j to the yak `weight` (num_threads) so the frontend-thread count matches
+    # the permits yak reserves. Otherwise -j was always 6 while weight could be 1, oversubscribing
     # up to ~6x and under-counting CPU in the (weight-based) low-pass-filter capacity.
     num_threads = _get_incremental_num_threads(num_srcs)
     cmd = cmd_args(

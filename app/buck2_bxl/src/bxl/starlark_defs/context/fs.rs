@@ -157,7 +157,7 @@ async fn try_exists(
 /// detect simple properties of artifacts, and source directories.
 #[starlark_module]
 fn fs_operations(builder: &mut MethodsBuilder) {
-    /// Check if a path exists on disk, taking advantage of Buck's cached filesystem.
+    /// Check if a path exists on disk, taking advantage of yak's cached filesystem.
     /// Takes in a literal, a source artifact (via `artifact`), or a `file_node`.
     ///
     /// Sample usage:

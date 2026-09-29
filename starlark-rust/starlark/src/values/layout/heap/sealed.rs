@@ -209,7 +209,7 @@ impl HeapSerializationNonce {
 #[derive(Allocative)]
 #[allow(clippy::non_send_fields_in_send_ty)]
 struct FrozenFrozenHeap {
-    // Keeps content-identical heap incarnations in distinct cache entries while Buck2 still has
+    // Keeps content-identical heap incarnations in distinct cache entries while yak still has
     // load-bearing frozen-value pointer identity. Remove this once distinct equal-content
     // allocations are interchangeable; the nonce prevents independent serializations from
     // sharing a `DataKey`.

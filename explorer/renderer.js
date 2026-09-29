@@ -142,7 +142,7 @@ addTab("providers", /(Providers|[A-Z][A-Za-z]*Info)/, async () => {
 });
 
 function update_buckdir(dir) {
-    $buckdir.title = "Buck2 directory: " + dir;
+    $buckdir.title = "yak directory: " + dir;
 }
 
 $buckdir.addEventListener('click', async (e) => {

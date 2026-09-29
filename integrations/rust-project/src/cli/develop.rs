@@ -216,7 +216,7 @@ impl Develop {
                         .map(|p| format!("{}", p.display()))
                         .collect::<Vec<_>>()
                         .join(", ");
-                    anyhow::anyhow!("Could not find buck targets that own {}", pretty_paths)
+                    anyhow::anyhow!("Could not find yak targets that own {}", pretty_paths)
                 }
                 Input::Buildfile(paths) => {
                     let pretty_paths = paths
@@ -310,7 +310,7 @@ impl Develop {
         )
     }
 
-    /// For every Rust file, return the relevant buck targets that should be used to configure rust-analyzer.
+    /// For every Rust file, return the relevant yak targets that should be used to configure rust-analyzer.
     pub(crate) fn related_targets(
         &self,
         input: Input,

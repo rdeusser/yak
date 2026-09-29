@@ -9,7 +9,7 @@
  */
 
 //!
-//! A 'Package' in Buck corresponds to the subdirectories containing the
+//! A 'Package' in yak corresponds to the subdirectories containing the
 //! repository sources that are accessible to the targets defined in the build
 //! file of current package. Each 'Package' can only contain one build file.
 //!
@@ -73,7 +73,7 @@ use crate::pattern::pattern::Modifiers;
 /// (for example, attempt to gather package listing for a package fails
 /// if it is a directory, but does not have a build file).
 ///
-/// A **valid** Buck2 package is defined by:
+/// A **valid** yak package is defined by:
 /// - A `YAK` file that designates the root of the package.
 /// - All files in the YAK file’s directory and its subdirectories,
 ///   provided that none of those subdirectories contain their own `YAK` file.

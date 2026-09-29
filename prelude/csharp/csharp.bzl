@@ -40,7 +40,7 @@ def csharp_library_impl(ctx: AnalysisContext) -> list[Provider]:
     cmd.append("/noconfig")
 
     # Don't reference mscorlib.dll unless asked for. This is required for targets that target
-    # embedded platforms such as Silverlight or WASM. (Originally for Buck1 compatibility.)
+    # embedded platforms such as Silverlight or WASM.
     cmd.append("/nostdlib")
 
     # Don't search any paths for .NET libraries unless explicitly referenced with `/lib:{}`.
@@ -51,7 +51,7 @@ def csharp_library_impl(ctx: AnalysisContext) -> list[Provider]:
     cmd.append(cmd_args(toolchain.framework_dirs[ctx.attrs.framework_ver], format = "/lib:{}"))
 
     # Add a `/reference:{name}` argument for each dependency.
-    # Buck target refs should be absolute paths and system assemblies just the DLL name.
+    # yak target refs should be absolute paths and system assemblies just the DLL name.
     child_deps = generate_target_tset_children(ctx.attrs.deps, ctx)
     deps_tset = ctx.actions.tset(DllDepTSet, children = child_deps)
 

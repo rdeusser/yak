@@ -203,7 +203,7 @@ impl CommandExecutor {
                     name: "persistentWorkerKey".to_owned(),
                     value: key.to_string(),
                 });
-                // TODO[AH] Ideally, Buck2 could generate an argfile on the fly.
+                // TODO[AH] Ideally, yak could generate an argfile on the fly.
                 for arg in request.args() {
                     if !(arg.starts_with("@")
                         || arg.starts_with("-flagfile")

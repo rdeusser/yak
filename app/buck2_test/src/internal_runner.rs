@@ -11,7 +11,7 @@
 //! In-process test runner for `InternalRunnerTestInfo`.
 //!
 //! Drives the listing → parse_test_listing callback → per-test execution flow
-//! entirely within the Buck2 process, using the `TestOrchestrator` trait
+//! entirely within the yak process, using the `TestOrchestrator` trait
 //! directly (no gRPC, no subprocess).
 
 use std::time::Duration;

@@ -17,7 +17,6 @@ class IReadProvisioningProfileCommandFactory(metaclass=ABCMeta):
         raise NotImplementedError
 
 
-# See `DEFAULT_READ_COMMAND` in `AppleConfig.java` in Buck v1
 OPENSSL_PROV_PROFILE_READ_COMMAND = [
     "openssl",
     "smime",

@@ -17,7 +17,7 @@ use buck2_client_ctx::events_ctx::EventsCtx;
 use buck2_client_ctx::exit_result::ExitResult;
 use buck2_client_ctx::subscribers::stdout_stderr_forwarder::StdoutStderrForwarder;
 
-/// Change the log filter that's currently applied by the Buck2 daemon.
+/// Change the log filter that's currently applied by the yak daemon.
 #[derive(Debug, clap::Parser)]
 #[clap()]
 pub struct SetLogFilterCommand {

@@ -49,7 +49,7 @@ async def test_test_all_recursive(buck: Buck) -> None:
 
 @buck_test(write_invocation_record=True)
 async def test_test_non_test_rule_logs_actual_rule_type(buck: Buck) -> None:
-    # `buck test` against a non-test rule logs that rule's actual type in
+    # `yak test` against a non-test rule logs that rule's actual type in
     # `target_rule_type_names`.
     res = await buck.test("//:not_a_test_target")
     check_rule_type_names(res, ["not_a_test"])

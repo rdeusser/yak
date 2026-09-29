@@ -1152,7 +1152,7 @@ mod tests {
     #[test]
     fn test_extract_symlink_chain() -> buck2_error::Result<()> {
         // Crank up the difficulty: l1 points through d3/f, but through l2. We need all of those in
-        // the deps! In practice, this tends to not happen in Buck 2 because we always dereference
+        // the deps! In practice, this tends to not happen in yak because we always dereference
         // symlinks and traverse them, but might a well support it properly.
         let digest_config = DigestConfig::testing_default();
 

@@ -156,11 +156,11 @@ enum ConfigurationInfoError {
     #[error("key `{0}` in constraints dict does not match constraint value `{1}`")]
     ConstraintsKeyValueMismatch(String, String),
     #[error(
-        "`ConfigurationInfo` cannot have buckconfigs or root buckconfigs when it is used to create a platform"
+        "`ConfigurationInfo` cannot have yakconfigs or root yakconfigs when it is used to create a platform"
     )]
     BuckConfigsNotAllowed,
     #[error(
-        "key `{0}` appears in both `values` and `root_values`; a buckconfig may only be checked in one cell"
+        "key `{0}` appears in both `values` and `root_values`; a yakconfig may only be checked in one cell"
     )]
     DuplicateKeyAcrossValuesAndRootValues(String),
 }
@@ -258,7 +258,7 @@ fn configuration_info_methods(builder: &mut MethodsBuilder) {
         Ok(this.constraints)
     }
 
-    /// A dictionary of buckconfig section.key pairs and their values (evaluated from target cell).
+    /// A dictionary of yakconfig section.key pairs and their values (evaluated from target cell).
     #[starlark(attribute)]
     fn values<'v>(
         this: &ConfigurationInfo<'v>,
@@ -266,7 +266,7 @@ fn configuration_info_methods(builder: &mut MethodsBuilder) {
         Ok(this.values)
     }
 
-    /// A dictionary of buckconfig section.key pairs and their values (evaluated from root cell).
+    /// A dictionary of yakconfig section.key pairs and their values (evaluated from root cell).
     #[starlark(attribute)]
     fn root_values<'v>(
         this: &ConfigurationInfo<'v>,
@@ -503,11 +503,11 @@ mod tests {
             };
 
             let Err(err) = info.to_configuration_data() else {
-                panic!("root buckconfigs should not be accepted for platforms");
+                panic!("root yakconfigs should not be accepted for platforms");
             };
 
             assert!(
-                err.to_string().contains("buckconfigs or root buckconfigs"),
+                err.to_string().contains("yakconfigs or root yakconfigs"),
                 "unexpected error: {err:#}"
             );
         });

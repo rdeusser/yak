@@ -32,7 +32,7 @@ type Commander interface {
 
 type shellCommander struct{}
 
-// Bucker is a mockable interface of the buck functionality this package uses
+// Bucker is a mockable interface of the yak functionality this package uses
 type Bucker interface {
 	Root(ctx context.Context) (string, error)
 	BXL(ctx context.Context, label string, args []string) ([]byte, error)

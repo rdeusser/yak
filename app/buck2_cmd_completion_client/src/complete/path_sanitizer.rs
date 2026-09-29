@@ -177,9 +177,9 @@ impl PathSanitizer {
     ///
     /// Both `given_fragment` and `proper_cell_path` refer to the same path,
     /// but `given_fragment` is user input and may be malformed in ways that
-    /// buck will not tolerate. (absolute, cross-cell, absolute, ../, etc)
+    /// yak will not tolerate. (absolute, cross-cell, absolute, ../, etc)
     ///
-    /// This function returns true if `given_fragment` is acceptable to buck
+    /// This function returns true if `given_fragment` is acceptable to yak
     /// as a relative reference to a path in the cell that `proper_cell_path`
     /// is based on.
     fn is_normalized_path_and_in_cell(

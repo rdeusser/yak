@@ -44,7 +44,7 @@ UseHeaderUnitsMode = enum(
     # rebuilt when PCM files would be). You can enable these to trace and model the
     # behaviour of module-enabled builds before actually migrating to them. This steps
     # helps estimate the overhead of precompiling modules in terms of additional
-    # uncached Buck actions.
+    # uncached yak actions.
     "stub",
 )
 
@@ -58,7 +58,7 @@ DepFileType = enum(
 
 HeadersDepFiles = record(
     # An executable to wrap the actual command with for post-processing of dep
-    # files into the format that Buck2 recognizes (i.e. one artifact per line).
+    # files into the format that yak recognizes (i.e. one artifact per line).
     processor = field(cmd_args),
     # The tag that was added to headers.
     tag = field(ArtifactTag),

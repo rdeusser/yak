@@ -131,7 +131,7 @@ impl<'a, T> ForwardingState<'a, T> {
 /// to the server and return back responses. Usually this is for commands that
 /// act as API endpoints over stdin/stdout like language servers, etc.
 ///
-/// We need to provide a 'static stream for Tonic to send to the Buck2 daemon,
+/// We need to provide a 'static stream for Tonic to send to the yak daemon,
 /// but we don't want to borrow stdin statically (though in practice that
 /// doesn't really matter because the way the command ends is when stdin is
 /// empty). So, what we do instead is that we forward stdin only while the

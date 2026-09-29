@@ -23,7 +23,7 @@ use serde::Serialize;
 use crate::client_utils;
 
 // Version for serialized BuildCount on disk.
-// Update if changing BuildCount to allow building with deployed and compiled buck on the same rev.
+// Update if changing BuildCount to allow building with deployed and compiled yak on the same rev.
 pub const BUILD_COUNT_VERSION: u64 = 2;
 
 #[derive(

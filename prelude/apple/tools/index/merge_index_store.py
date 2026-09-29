@@ -41,7 +41,7 @@ def merge_directory(source: str, destination: str) -> None:
         # We want a single destination directory containing all the record and unit
         # files from all the source directories.
         #
-        # There's no built-in way to merge directories in buck. In Python, there is
+        # There's no built-in way to merge directories in yak. In Python, there is
         # `shutil.copytree(source, dest, dirs_exist_ok=True)` but that overwrites
         # files in the destination when there are multiple sources with the same
         # file. That's slower.

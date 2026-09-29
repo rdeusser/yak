@@ -48,7 +48,7 @@ pub enum ConsoleType {
 
 impl ConsoleType {
     /// Returns true if this console type may use a superconsole.
-    /// Used to decide whether to print Buck UI / Build ID at the end of a build,
+    /// Used to decide whether to print the build ID at the end of a build,
     /// since the superconsole's live area (which shows it during the build) gets cleared.
     pub fn maybe_superconsole(self) -> bool {
         matches!(self, ConsoleType::Super | ConsoleType::Auto)

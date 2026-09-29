@@ -111,7 +111,7 @@ async def test_corrupted_buckd_info(buck: Buck, corrupt: str) -> None:
 @buck_test()
 async def test_recovers_when_daemon_pid_cannot_be_killed(buck: Buck) -> None:
     # A stale yakd.info can name a pid we cannot kill (e.g. one reused by a
-    # process owned by another user). Buck must report the failed kill and start
+    # process owned by another user). yak must report the failed kill and start
     # a fresh daemon rather than aborting, which used to leave yakd.info in
     # place so every later invocation failed the same way.
     await buck.targets("//:rule")
@@ -263,7 +263,7 @@ async def test_prev_daemon_dir(buck: Buck) -> None:
     # check logs contain yakd pid and don't match
     assert extract_pid(new_daemon_stderr) != extract_pid(killed_daemon_stderr)
 
-    assert "triggered shutdown: `buck kill` was invoked" in killed_daemon_stderr
+    assert "triggered shutdown: `yak kill` was invoked" in killed_daemon_stderr
 
 
 @buck_test()

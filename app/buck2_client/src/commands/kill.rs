@@ -19,7 +19,7 @@ use buck2_client_ctx::events_ctx::EventsCtx;
 use buck2_client_ctx::exit_result::ExitResult;
 use buck2_client_ctx::startup_deadline::StartupDeadline;
 
-/// Kill the buck daemon.
+/// Kill the yak daemon.
 ///
 /// Note there's also `yak killall` and `yak clean`.
 ///
@@ -51,7 +51,7 @@ impl BuckSubcommand for KillCommand {
 
         buck2_client_ctx::daemon::client::kill::kill_command_impl(
             &lifecycle_lock,
-            "`buck kill` was invoked",
+            "`yak kill` was invoked",
         )
         .await
         .into()

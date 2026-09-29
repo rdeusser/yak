@@ -8,7 +8,7 @@
  * above-listed licenses.
  */
 
-//! The context containing the available buck commands and query operations for `bxl` functions.
+//! The context containing the available yak commands and query operations for `bxl` functions.
 
 use std::cell::RefCell;
 use std::fmt::Display;

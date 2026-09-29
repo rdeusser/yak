@@ -46,14 +46,14 @@ enum ValidationInfoError {
 ///
 /// When a target carrying `ValidationInfo` is reachable via a transitive
 /// dependency edge from a target requested on the command line (e.g.
-/// `yak build`, `yak test`), Buck2 schedules every `ValidationSpec`
+/// `yak build`, `yak test`), yak schedules every `ValidationSpec`
 /// it carries before the requested action is considered complete. A
 /// failed required validation causes the build to fail; an optional
 /// validation is skipped unless the user opts in via
 /// `--enable-optional-validations <name>`.
 ///
 /// Validations run in parallel with the build of the requested target —
-/// they only have to finish before Buck2 reports success.
+/// they only have to finish before yak reports success.
 ///
 /// Constraints enforced at construction / freezing time:
 /// - `validations` must be a non-empty list of `ValidationSpec` values.

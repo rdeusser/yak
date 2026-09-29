@@ -334,7 +334,7 @@ go_test = prelude_rule(
                 attrs.string(),
                 default = None,
                 doc = """
-                Sets the full name of the test package being compiled. This defaults to the path from the buck
+                Sets the full name of the test package being compiled. This defaults to the path from the yak
                  root with "\\_test" appended. (e.g. given a ./.yakconfig, a rule in ./a/b/YAK defaults to package "a/b\\_test")
 
                  Note: if you want to test packages internally (i.e. same package name), use the `target_under_test`

@@ -8,7 +8,7 @@
 
 def cxx_toolchain_macro_impl(cxx_toolchain_rule = None, **kwargs):
     # An explicit `generate_linker_maps` attribute on the cxx_toolchain() target
-    # takes priority over the `cxx.linker_map_enabled` buckconfig.
+    # takes priority over the `cxx.linker_map_enabled` yakconfig.
     if "generate_linker_maps" not in kwargs:
         kwargs["generate_linker_maps"] = read_root_config("cxx", "linker_map_enabled", "").lower() == "true"
 

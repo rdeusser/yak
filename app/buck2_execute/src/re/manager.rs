@@ -79,7 +79,7 @@ use crate::re::uploader::UploadStats;
 /// When all existing [ReConnectionHandle] (for a particular [ReConnectionManager]) are dropped, the
 /// underlying connection will be closed.
 ///
-/// This approach allows us to ensure that all RE interactions for a particular buck command use the
+/// This approach allows us to ensure that all RE interactions for a particular yak command use the
 /// same RE session. Concurrent commands will share an RE session.
 
 #[derive(Clone, Allocative)]

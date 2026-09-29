@@ -10,7 +10,7 @@
 
 use tokio::task::JoinError;
 
-/// We consider buck's critical path computation to be a core feature of buck and so
+/// We consider yak's critical path computation to be a core feature of yak and so
 /// treat failures severely, but logically the command results don't really depend on it and
 /// so failing a build on a spurious critical path computation failure is a high cost.
 ///

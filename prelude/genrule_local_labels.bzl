@@ -27,7 +27,7 @@ _GENRULE_LOCAL_LABELS = set([
     # Gathers non-deterministic build info, such as the revision from version
     # control.
     "non_deterministic_build_info",
-    # Some call "buck run" & "buck root" recursively.
+    # Some call "yak run" & "yak root" recursively.
     "uses_buck_run",
     # Some antlir genrules use cpio for unpacking rpms
     "uses_cpio",
@@ -64,7 +64,7 @@ _GENRULE_LOCAL_LABELS = set([
     "uses_local_filesystem_abspaths",
     # Use local GPUs with latest Nvidia libs which are not available in RE yet
     "uses_lower_locally",
-    # Makes recursive calls to buck
+    # Makes recursive calls to yak
     "uses_buck",
     # Uses files in the repo that it doesn't declare as dependencies
     "uses_undeclared_inputs",
@@ -108,7 +108,7 @@ _GENRULE_LOCAL_LABELS = set([
     "dangling_output_symlink",
     # Uses Apple's codesign command which might not be in RE
     "uses_codesign",
-    # The compilation databases produced by Buck have paths relative to the
+    # The compilation databases produced by yak have paths relative to the
     # project root. This isn't compatible with RE.
     "uses_compilation_database",
     # Uses checkpolicy which is not on RE

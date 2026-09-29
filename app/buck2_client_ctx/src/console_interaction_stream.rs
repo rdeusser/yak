@@ -83,10 +83,10 @@ mod interactive_terminal {
             // background those may end up clobbering the termios state and the following can
             // happen:
             //
-            // - Process starts 1 buck, which sets noecho.
-            // - Process starts another buck, which reads the tty state, reads noecho.
-            // - The first buck exits and resets echo.
-            // - The second buck exits and resets noecho (since that's what it read)
+            // - Process starts 1 yak, which sets noecho.
+            // - Process starts another yak, which reads the tty state, reads noecho.
+            // - The first yak exits and resets echo.
+            // - The second yak exits and resets noecho (since that's what it read)
             //
             // We check stderr because if stderr is a TTY the user will see a bunch of consoles
             // interleaving and that would probably tell them something's wrong.

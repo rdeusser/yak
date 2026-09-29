@@ -43,7 +43,7 @@ def location_to_string(location: ModifierLocation) -> str:
     if isinstance(location, ModifierCliLocation):
         return _CLI_LOCATION_STR
     if isinstance(location, ModifierBuckconfigLocation):
-        return "buckconfig {}.{}".format(location.section, location.property)
+        return "yakconfig {}.{}".format(location.section, location.property)
     fail("Internal error. Unrecognized location type `{}` for location `{}`".format(type(location), location))
 
 def get_tagged_modifiers(
@@ -108,8 +108,8 @@ def get_modifier_info(refs: dict[str, ProviderCollection], modifier: Modifier, l
                     buckconfig_values = cfg_info.values | root_values
                     soft_error(
                         "starlark_config_setting_non_empty_buckconfig_values_in_conditional_modifier",
-                        "config_setting `{}` defines buckconfig values {} which are NOT supported in conditional modifiers.\n".format(key, buckconfig_values)
-                        + "These buckconfig values are being IGNORED.\n\n"
+                        "config_setting `{}` defines yakconfig values {} which are NOT supported in conditional modifiers.\n".format(key, buckconfig_values)
+                        + "These yakconfig values are being IGNORED.\n\n"
                         + "Action required: Remove the `values` and `root_values` parameters from this config_setting {} and use only `constraint_values` instead.\n".format(
                             key
                         )

@@ -236,7 +236,7 @@ pub struct CommandExecutionResult {
     pub rejected_execution: Option<CommandExecutionReport>,
     /// Why the main action-result upload did or did not occur.
     pub cache_upload_result: buck2_data::UploadResult,
-    /// Why dep file information for this action did or did not get uploaded to cache, by Buck2.
+    /// Why dep file information for this action did or did not get uploaded to cache, by yak.
     pub dep_file_cache_upload_result: buck2_data::UploadResult,
     // Remote dep file key, if we did upload a dep file entry
     pub dep_file_key: Option<DepFileDigest>,

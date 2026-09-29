@@ -39,7 +39,7 @@ pub trait FileWatcher: Allocative + Send + Sync + 'static {
     ) -> buck2_error::Result<(DiceTransactionUpdater, Mergebase)>;
 }
 
-/// Parse the `dice_clear_on_mergebase_change` config, honoring both the buckconfig
+/// Parse the `dice_clear_on_mergebase_change` config, honoring both the yakconfig
 /// and the `YAK_TEST_SKIP_DICE_CLEAR_ON_MERGEBASE_CHANGE` env var override.
 pub(crate) fn dice_clear_on_mergebase_change(
     root_config: &LegacyBuckConfig,

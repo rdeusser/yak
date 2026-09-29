@@ -99,7 +99,7 @@ def get_incremental_swiftmodule_action_attrs():
 def _apple_bundle_like_common_attrs():
     # `apple_bundle()` and `apple_test()` share a common set of extra attrs
     attribs = {
-        # Target-level attribute always takes precedence over buckconfigs.
+        # Target-level attribute always takes precedence over yakconfigs.
         "code_signing_configuration": attrs.option(attrs.enum(CodeSignConfiguration.values()), default = None),
         "codesign_type": attrs.option(attrs.enum(CodeSignType.values()), default = None),
         "fast_adhoc_signing_enabled": attrs.option(attrs.bool(), default = None),

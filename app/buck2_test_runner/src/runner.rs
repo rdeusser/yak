@@ -37,9 +37,9 @@ use crate::config::EnvValue;
 
 pub type SpecReceiver = UnboundedReceiver<ExternalRunnerSpec>;
 
-/// Internal test runner implementation for Buck2.
+/// Internal test runner implementation for yak.
 ///
-/// This is a basic test runner intended to be used by the open-source Buck2 build
+/// This is a basic test runner intended to be used by the open-source yak build
 /// if no external test runner is provided. This ensures that `yak test` works
 /// out-of-the-box for open-source users.
 ///
@@ -101,7 +101,7 @@ impl Buck2TestRunner {
 
                 Ok(test_status)
             })
-            // Use an arbitrarily large buffer -- execution throttling will be handled by the Buck2
+            // Use an arbitrarily large buffer -- execution throttling will be handled by the yak
             // executor, so no need to hold back on requests here.
             .buffer_unordered(10000)
             // If any individual test failed, consider the entire run to have failed.

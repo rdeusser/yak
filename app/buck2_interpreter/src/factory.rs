@@ -105,7 +105,7 @@ impl StarlarkEvaluatorProvider {
     }
 
     /// This constructs an appropriate StarlarkEvaluatorProvider to set up
-    /// profiling/instrumentation/debugging in a starlark Evaluator for buck.
+    /// profiling/instrumentation/debugging in a starlark Evaluator for yak.
     /// The kind is used for the thread name when debugging and for enabling pattern-based profiling.
     pub async fn new(
         ctx: &mut DiceComputations<'_>,

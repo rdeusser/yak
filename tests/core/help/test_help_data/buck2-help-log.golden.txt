@@ -5,12 +5,12 @@ Commands for interacting with yak logs
 Usage: yak log [OPTIONS] <COMMAND>
 
 Commands:
-  what-ran           Output everything that buck ran from the selected invocation. If no invocation
-                     was specified, use the last buck invocation from this isolation directory
+  what-ran           Output everything that yak ran from the selected invocation. If no invocation
+                     was specified, use the last yak invocation from this isolation directory
   what-failed        Outputs every command that failed in the selected invocation
   path               Output the path to the selected log
   show               Outputs the log in JSON format from selected invocation
-  cmd                Show buck command line arguments from selected invocation
+  cmd                Show yak command line arguments from selected invocation
   what-up            Show the spans that were open when the log ended
   what-materialized  Outputs materializations from selected invocation
   what-uploaded      Outputs stats about uploads to RE from the selected invocation
@@ -32,18 +32,18 @@ Options:
 
 Universal Options:
       --isolation-dir <ISOLATION_DIR>
-          The name of the directory that Buck2 creates within yak-out for writing outputs and daemon
-          information. If one is not provided, Buck2 creates a directory with the default name.
+          The name of the directory that yak creates within yak-out for writing outputs and daemon
+          information. If one is not provided, yak creates a directory with the default name.
 
-          Instances of Buck2 share a daemon if and only if their isolation directory is identical.
-          The isolation directory also influences the output paths provided by Buck2, and as a
-          result using a non-default isolation dir will cause cache misses (and slower builds).
+          Instances of yak share a daemon if and only if their isolation directory is identical. The
+          isolation directory also influences the output paths provided by yak, and as a result
+          using a non-default isolation dir will cause cache misses (and slower builds).
 
           [env: YAK_ISOLATION_DIR=]
           [default: v2]
 
   -v, --verbose <VERBOSITY>
-          How verbose buck should be while logging.
+          How verbose yak should be while logging.
 
           Values: 0 = Quiet, errors only; 1 = Show status. Default; 2 = more info about errors; 3 =
           more info about everything; 4 = more info about everything + stderr;
@@ -56,11 +56,11 @@ Universal Options:
           [default: 1]
 
       --oncall <ONCALL>
-          The team that owns this command. Buck2 records it in the event log
+          The team that owns this command. yak records it in the event log
 
       --client-metadata <CLIENT_METADATA>
           Metadata key-value pairs to record in the event log. Client metadata must be of the form
           `key=value`, where `key` is a snake_case identifier
 
       --setting <SECTION.KEY=VALUE>
-          Override a Buck setting using `section.key=value`
+          Override a yak setting using `section.key=value`

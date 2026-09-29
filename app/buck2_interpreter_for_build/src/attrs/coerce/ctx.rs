@@ -87,7 +87,7 @@ pub struct BuildAttrCoercionContext {
     package_boundary_exception: bool,
     /// Whether to infer a target name when a pattern does not provide one,
     /// making `//foo/bar` equivalent to `//foo/bar:bar`. Controlled by the
-    /// `yak.infer_target_names` buckconfig.
+    /// `yak.infer_target_names` yakconfig.
     infer_target_names: InferTargetNames,
     /// Allocator for `label_cache`.
     alloc: Bump,

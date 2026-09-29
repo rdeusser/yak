@@ -57,11 +57,11 @@ impl Provenance {
 #[derive(buck2_error::Error, Debug)]
 #[buck2(input)]
 enum SettingsError {
-    #[error("Error parsing buck settings: {0}")]
+    #[error("Error parsing yak settings: {0}")]
     Parse(toml::de::Error),
     #[error("YAK_SETTINGS_OVERRIDE file `{0}` does not exist")]
     OverrideFileMissing(String),
-    #[error("Buck setting `{key}` cannot be overridden from {origin}")]
+    #[error("yak setting `{key}` cannot be overridden from {origin}")]
     InvalidOverride {
         key: String,
         origin: Arc<Provenance>,
@@ -599,7 +599,7 @@ mod tests {
         assert_eq!(
             error.to_string(),
             format!(
-                "Buck setting `test_section.test_flag` cannot be overridden from local settings file `{}`",
+                "yak setting `test_section.test_flag` cannot be overridden from local settings file `{}`",
                 path.display()
             )
         );
@@ -619,7 +619,7 @@ mod tests {
         .unwrap_err();
         assert_eq!(
             error.to_string(),
-            "Buck setting `test_section.test_flag` cannot be overridden from `--setting`"
+            "yak setting `test_section.test_flag` cannot be overridden from `--setting`"
         );
     }
 

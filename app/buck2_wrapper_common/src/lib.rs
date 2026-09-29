@@ -10,7 +10,7 @@
 
 //! Code shared between `buck2_wrapper` and `yak`.
 //!
-//! Careful! The wrapper is not released as part of the regular buck version bumps,
+//! Careful! The wrapper is not released as part of the regular yak version bumps,
 //! meaning code changes here are not "atomically" updated.
 
 #![feature(once_cell_try)]
@@ -57,7 +57,7 @@ pub const CLEAN_STALE_HELP: &str =
     "Delete artifacts from yak-out using the configured clean-stale policy";
 pub const DOT_YAKCONFIG_D: &str = ".yakconfig.d";
 
-/// Returns the home directory used for Buck2 state.
+/// Returns the home directory used for yak state.
 pub fn buck2_home_dir() -> Option<PathBuf> {
     std::env::var_os(BUCK2_TEST_HOME_DIR_ENV_VAR)
         .map(PathBuf::from)
@@ -259,7 +259,7 @@ fn find_buck2_processes(collect_cwd: bool) -> Vec<ProcessInfo> {
         .collect()
 }
 
-/// Kills all running Buck2 processes matching `filter`, except this process's hierarchy.
+/// Kills all running yak processes matching `filter`, except this process's hierarchy.
 /// Processes the filter cannot attribute are reported and left alone. Returns whether it
 /// succeeded without errors.
 pub fn killall(filter: &KillallFilter, write: impl Fn(String)) -> bool {
@@ -506,7 +506,7 @@ mod tests {
         let fake_buck2 = temp_dir.join("yak");
         fs::copy("/bin/sh", &fake_buck2).expect("test yak executable should be copied");
 
-        // Under OSS `cargo test` (all tests share one process, unlike buck's
+        // Under OSS `cargo test` (all tests share one process, unlike yak's
         // per-test process isolation) a sibling test's `fork` can inherit the
         // write fd `fs::copy` briefly holds on `fake_buck2`, making `exec` fail
         // with ETXTBSY until that fd clears. Retry past the window.

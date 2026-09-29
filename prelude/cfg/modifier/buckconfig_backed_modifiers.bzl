@@ -57,7 +57,7 @@ _buckconfig_backed_modifiers = rule(
     },
 )
 
-# Supports specifying one or more modifiers or platforms that can be enabled by a buckconfig.
+# Supports specifying one or more modifiers or platforms that can be enabled by a yakconfig.
 BuckconfigBackedModifier = record(
     section = str,
     property = str,
@@ -94,12 +94,12 @@ def buckconfig_backed_modifiers(
     name: str, pre_platform: list[BuckconfigBackedModifier], post_platform: list[BuckconfigBackedModifier], pre_cli: list[BuckconfigBackedModifier]
 ):
     """
-    Enable buckconfigs to become modifiers.
+    Enable yakconfigs to become modifiers.
     We need this so that we can migrate `read_config`s to selects without having to worry about
-    having all builds specifying these buckconfigs to specify modifiers for them instead.
+    having all builds specifying these yakconfigs to specify modifiers for them instead.
 
-    Buckconfigs are read from `toolchains` cell in order to identify buckconfigs
-    specified in modefiles on CLI, as opposed to buckconfigs specified in .yakconfig files per cells.
+    yakconfigs are read from `toolchains` cell in order to identify yakconfigs
+    specified in modefiles on CLI, as opposed to yakconfigs specified in .yakconfig files per cells.
 
     Each `BuckconfigBackedModifier` entry can specify `modifiers` (individual constraint value targets)
     and/or `platforms` (platform targets whose constraints are applied). At least one must be non-empty.

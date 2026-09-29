@@ -248,7 +248,7 @@ impl<T: SpanTrackable> Roots<T> {
 }
 
 /// SpanTracker tracks ongoing spans received via handle() (those are typically produced by
-/// the Buck daemon). Internally, we keep track of:
+/// the yak daemon). Internally, we keep track of:
 ///
 /// - Ongoing spans that are roots. Those will be rendered on their own line in the console.
 /// - All ongoing spans by id. This is used to access spans by id, such as when looking for

@@ -36,7 +36,7 @@ use buck2_fs::paths::abs_path::AbsPathBuf;
 use buck2_fs::working_dir::AbsWorkingDir;
 use prost::Message;
 
-/// Lazy-computed immediate config data. This is produced by reading the root buckconfig (but not
+/// Lazy-computed immediate config data. This is produced by reading the root yakconfig (but not
 /// processing any includes).
 struct ImmediateConfigContextData {
     cell_resolver: CellResolver,

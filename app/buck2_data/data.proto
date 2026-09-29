@@ -18,7 +18,7 @@ import "host_sharing.proto";
 
 package buck.data;
 
-// A single event originating from Buck. Its semantics depend on the `data`
+// A single event originating from yak. Its semantics depend on the `data`
 // member.
 message BuckEvent {
   reserved 2047;
@@ -91,7 +91,7 @@ message SpanStartEvent {
     DepFileUploadStart dep_file_upload = 88;
     ComputeDetailedAggregatedMetricsStart compute_detailed_aggregated_metrics =
         89;
-    // Used in Buck unit tests.
+    // Used in yak unit tests.
     FakeStart fake = 999;
   }
 }
@@ -144,7 +144,7 @@ message SpanEndEvent {
     DepFileUploadEnd dep_file_upload = 88;
     ComputeDetailedAggregatedMetricsEnd compute_detailed_aggregated_metrics =
         89;
-    // Used in Buck unit tests.
+    // Used in yak unit tests.
     FakeEnd fake = 999;
   }
 }
@@ -185,7 +185,7 @@ message StarlarkUserEvent {
 message CommandOptions {
   // The value passed to the `-j` flag or equivalent
   uint64 configured_parallelism = 1;
-  // The parallelism available to buck, independent of the value configured by
+  // The parallelism available to yak, independent of the value configured by
   // the user
   uint64 available_parallelism = 2;
 }
@@ -355,7 +355,7 @@ message InstantEvent {
     // Event sent when creating a new configuration.
     ConfigurationCreated configuration_created = 46;
 
-    // Tracks values of external buckconfigs
+    // Tracks values of external yakconfigs
     BuckconfigInputValues buckconfig_input_values = 47;
 
     CellHasNewConfigs cell_has_new_configs = 48;
@@ -408,7 +408,7 @@ message EndOfTestResults {
 }
 
 message BuckconfigInputValues {
-  // Buckconfigs are computed by joining together values from a number of
+  // yakconfigs are computed by joining together values from a number of
   // different inputs (repo, well-known directories, CLI). Each of these is
   // represented as a component, and they are applied in the given order,
   // with later components overriding earlier ones
@@ -429,7 +429,7 @@ message ConfigValue {
   string value = 3;
   optional string cell = 4;
   // whether config is provided by the command line (either single arg or config
-  // flag). Set to false for values coming from external buckconfigs (e.g.
+  // flag). Set to false for values coming from external yakconfigs (e.g.
   // /etc/yakconfig.d or $home_dir/.yakconfig.local)
   bool is_cli = 5;
 }
@@ -438,7 +438,7 @@ message ConfigFile {
   oneof data {
     // If the config file is project relative (except .yakconfig.local), the
     // path of the file. We only store the path, not actual values of
-    // project-relative buckconfigs because they are huge/costly to store
+    // project-relative yakconfigs because they are huge/costly to store
     string project_relative_path = 1;
     // If the config file is external or project-relative .yakconfig.local, we
     // store all the config values in a list along with the path the file is
@@ -469,7 +469,7 @@ message DebugAdapterCommandSnapshot {
 }
 
 // The DebugAdapterSnapshot is sent to all commands when a debugger is attached
-// to buck, it contains imformation about the currently paused threads.
+// to yak, it contains imformation about the currently paused threads.
 message DebugAdapterSnapshot {
   // The handle for the command receiving this snapshot, it can be used to
   // distinguish which of the per-handle snapshots is from this command and
@@ -776,7 +776,7 @@ message CriticalPathEntry2 {
   google.protobuf.Duration user_duration = 3;
 
   // The total duration for this entry, which might include runtime not
-  // controlled by the user (e.g. Buck querying caches, etc.)
+  // controlled by the user (e.g. yak querying caches, etc.)
   google.protobuf.Duration total_duration = 4;
 
   // The maximum improvement possible for this node. This should be compared to
@@ -863,7 +863,7 @@ message TopLevelTargetMetrics {
   // Wall-clock time in milliseconds from the start of the build at which this
   // top-level target succeeded, failed, or timed out.
   // The exact point in time at which the build is deemed to have started is set
-  // in the Buck2 daemon, so use this to compare durations but don't add it to a
+  // in the yak daemon, so use this to compare durations but don't add it to a
   // start timestamp to produce an end timestamp.
   optional uint64 wall_clock_completion_ms = 10;
 }
@@ -969,7 +969,7 @@ message ResourceControlEvent {
   // out over just including everything
   map<string, string> metadata = 13;
 
-  // Ancestor cgroup constraints that may limit Buck2 processes
+  // Ancestor cgroup constraints that may limit yak processes
   optional AncestorCgroupConstraints ancestor_cgroup_constraints = 14;
 
   // Arbitrary tags for categorizing events (e.g. experimental algorithm
@@ -978,7 +978,7 @@ message ResourceControlEvent {
 }
 
 // Memory constraints inherited from ancestor cgroups in the hierarchy.
-// Captures memory limits that ancestor cgroups impose on Buck2 processes.
+// Captures memory limits that ancestor cgroups impose on yak processes.
 message AncestorCgroupConstraints {
   optional uint64 memory_max = 1;
   optional uint64 memory_high = 2;
@@ -1364,7 +1364,7 @@ message CommandStart {
   // Metadata associated with this build. Values in this map have no particular
   // semantics and are useful for logging and telemetry only.
   //
-  // The metadata cannot contain information from buckconfig or dice state
+  // The metadata cannot contain information from yakconfig or dice state
   map<string, string> metadata = 1;
 
   repeated string cli_args = 2;
@@ -1407,7 +1407,7 @@ message CommandCriticalStart {
   // Metadata associated with this build. Values in this map have no particular
   // semantics and are useful for logging and telemetry only.
   //
-  // The metadata will contain information from buckconfigs
+  // The metadata will contain information from yakconfigs
   map<string, string> metadata = 1;
 
   // DICE transaction version number.
@@ -1492,7 +1492,7 @@ message CommandEnd {
   }
 
   // This should eventually be deleted. Retaining only so that ingress
-  // can process invocation records from old buck versions.
+  // can process invocation records from old yak versions.
   bool is_success = 2;
 
   optional BuildResult build_result = 5;
@@ -1508,7 +1508,7 @@ message CommandCriticalEnd {
   // Metadata associated with this command. Values in this map have no
   // particular semantics and are useful for logging and telemetry only.
   //
-  // The metadata will contain information from buckconfigs
+  // The metadata will contain information from yakconfigs
   map<string, string> metadata = 1;
 }
 
@@ -2124,7 +2124,7 @@ enum ExpectedEligibleForDedupe {
 // boolean values. They've been converted to this `*_cache_upload_result` with
 // values from this enum, but it's important that the semantic meaning of the
 // 0/1 values here match the false/true meanings of the old `did_*` fields. That
-// way old buck instances that still generate true/false are interpreted
+// way old yak instances that still generate true/false are interpreted
 // correctly by new ingress/buck clients.
 enum UploadResult {
   UPLOAD_RESULT_DID_NOT_UPLOAD_UNSPECIFIED = 0;
@@ -2652,7 +2652,7 @@ message BuildArtifact {
 }
 
 // A target pattern, representing a set of targets. See
-// `<https://rdeusser.github.io/buck2/docs/concepts/target_pattern>` for Buck's
+// `<https://rdeusser.github.io/buck2/docs/concepts/target_pattern>` for yak's
 // documentation on target patterns.
 message TargetPattern {
   string value = 1;
@@ -2915,7 +2915,7 @@ message InvocationRecord {
   optional uint64 compressed_event_log_size_bytes = 65;
   optional bool has_end_of_stream = 67;
   optional string critical_path_backend = 68;
-  // Retained so that ingress can populate outcome for old buck versions.
+  // Retained so that ingress can populate outcome for old yak versions.
   // Delete later.
   optional bool instant_command_is_success = 69;
   // Optional - total time for final artifact materializations.
@@ -2942,8 +2942,8 @@ message InvocationRecord {
   repeated string target_rule_type_names = 80;
   // Time elapsed from a build's start until first test discovery begins.
   optional uint64 time_to_first_test_discovery_ms = 81;
-  // Tracks whether buckconfigs were invalidated between invocations (e.g. due
-  // to modefile changes or another buck command in between)
+  // Tracks whether yakconfigs were invalidated between invocations (e.g. due
+  // to modefile changes or another yak command in between)
   // For the first command after daemon start or for the first time these
   // configs are observed in each state (cell, command etc.), it will be set
   // to true.
@@ -3014,7 +3014,7 @@ message InvocationRecord {
   optional string previous_uuid_with_mismatched_config = 243;
   optional string file_watcher = 244;
 
-  // Buck2 binary start time, if invoked through the wrapper, then it will be
+  // yak binary start time, if invoked through the wrapper, then it will be
   // the wrapper start time as that'd be more accurate
   optional uint64 wrapper_start_time = 246;
   uint64 exec_time_ms = 248;
@@ -3022,10 +3022,10 @@ message InvocationRecord {
   // Exit code that should have been returned by the yak client process,
   // unless it failed after finalizing logging.
   // This will be missing for run commands where the command succeeds in
-  // buck and the RunInfo binary starts executing.
+  // yak and the RunInfo binary starts executing.
   optional uint32 exit_code = 249;
 
-  // If command returned an exit code and it originated from buck, this is
+  // If command returned an exit code and it originated from yak, this is
   // the meaning of the exit code (e.g. SUCCESS).
   // If the exit code was from an external source, this is that source
   // (e.g. TEST_RUNNER)
@@ -3112,13 +3112,13 @@ message InvocationRecord {
   optional double peak_normalized_system_load1 = 432;
   optional double peak_normalized_system_load5 = 433;
 
-  // Peak swap usage (bytes) of all Buck2 processes during the invocation,
+  // Peak swap usage (bytes) of all yak processes during the invocation,
   // from allprocs cgroup memory.swap.current.
   uint64 memory_max_swap_bytes_allprocs = 434;
-  // Peak memory pressure (PSI full avg10 %) of all Buck2
+  // Peak memory pressure (PSI full avg10 %) of all yak
   // processes during the invocation, from allprocs cgroup memory.pressure.
   double memory_max_pressure_10s_avg_allprocs = 435;
-  // Peak memory pressure (PSI full avg60 %) of all Buck2
+  // Peak memory pressure (PSI full avg60 %) of all yak
   // processes during the invocation, from allprocs cgroup memory.pressure.
   double memory_max_pressure_60s_avg_allprocs = 436;
 

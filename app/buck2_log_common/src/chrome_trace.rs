@@ -21,7 +21,7 @@
 // are traditionally process id and thread id.
 //
 // In these traces, it's not really practical to assign the actual  pid/tid that
-// produced the BuckEvents in the logs to the TraceEvent objects. MUCH of buck's
+// produced the BuckEvents in the logs to the TraceEvent objects. MUCH of yak's
 // work is done in asynchronous futures, and the thread assignments for them are
 // (somewhat) irrelevant. If an action execution future gets moved between
 // executor threads, say, we would still like to represent the spans as relating
@@ -336,7 +336,7 @@ impl ChromeTraceInstant {
 
 // N.B. "Process" and "Thread" here are chrome/perfetto TraceEvent json object
 // terms. See comments at the top of this file about how the pid/tid field map
-// to how we use them to represent buck's activity in a trace.
+// to how we use them to represent yak's activity in a trace.
 #[allow(dead_code)] // Process isn't used at this time, but is included for completeness.
 enum ChromeTraceMetadataKind {
     Process { pid: u64 },

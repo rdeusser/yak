@@ -43,7 +43,7 @@ pub fn process_stats() -> ProcessStats {
     }
 
     let rss_bytes = if cfg!(target_os = "linux") {
-        // Buck2 snapshot is made once per second, so this shouldn't be too expensive.
+        // yak snapshot is made once per second, so this shouldn't be too expensive.
         ProcSelfStat::read().map(|stat| {
             // `getconf PAGESIZE`, but practically it's always 4096.
             stat.rss * 4096

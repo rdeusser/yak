@@ -326,7 +326,7 @@ mod tests {
         });
     }
 
-    // Buck builds tests with panic=abort, where unwinding does not exist;
+    // yak builds tests with panic=abort, where unwinding does not exist;
     // this test is meaningful only in unwind builds such as Cargo's.
     #[cfg(panic = "unwind")]
     #[test]
@@ -345,7 +345,7 @@ mod tests {
         });
     }
 
-    // Buck builds tests with panic=abort, where unwinding does not exist;
+    // yak builds tests with panic=abort, where unwinding does not exist;
     // this test is meaningful only in unwind builds such as Cargo's.
     #[cfg(all(debug_assertions, panic = "unwind"))]
     #[test]

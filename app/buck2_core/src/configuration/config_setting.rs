@@ -21,14 +21,14 @@ use crate::configuration::constraints::ConstraintValue;
 pub struct ConfigSettingData {
     // contains the full specification of the platform configuration
     pub constraints: BTreeMap<ConstraintKey, ConstraintValue>,
-    // contains mappings of `section.key` to `value` for buckconfigs.
+    // contains mappings of `section.key` to `value` for yakconfigs.
     // `buckconfigs` are evaluated from the target's cell (like `read_config`).
     // `root_buckconfigs` are evaluated from the root cell (like `read_root_config`).
     // TODO(scottcao): Make this into a Vec<ConfigArgumentPair> for more structured data
     // This can't be done right now because ConfigArgumentPair lives in buck2_common
     // and buck2_core cannot depend on buck2_common.
     pub buckconfigs: BTreeMap<String, String>,
-    /// Buckconfigs that are always evaluated from the root cell's .yakconfig.
+    /// yakconfigs that are always evaluated from the root cell's .yakconfig.
     pub root_buckconfigs: BTreeMap<String, String>,
 }
 

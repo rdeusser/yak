@@ -16,7 +16,7 @@ from typing import Callable, Dict, Iterable, TypeVar
 class Result:
     """
     Represents a process that has finished running and succeeded.
-    If the buck process failed, it should raise Exception
+    If the yak process failed, it should raise Exception
     """
 
     def __init__(

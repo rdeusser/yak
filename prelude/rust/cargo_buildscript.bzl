@@ -109,7 +109,7 @@ def _make_cc_shim(ctx: AnalysisContext, name: str, cmd: cmd_args) -> cmd_args:
     resources, in a script that can be invoked from any directory.
 
     Different crates' build scripts run $CC from inside of $OUT_DIR, or from
-    /tmp, not necessarily only from the directory that Buck gives to the build
+    /tmp, not necessarily only from the directory that yak gives to the build
     script execution. Also they pass arguments to $CC which are relative to the
     directory they chose to run it in.
 

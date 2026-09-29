@@ -96,7 +96,7 @@ async fn configuration_matches(
         }
     }
 
-    // Cell used for buckconfigs is set to cell of target that applies select to match Buck v1 behavior.
+    // Cell used for yakconfigs is set to cell of target that applies select.
     // Eventually, we want this to be the cell of the platform instead.
     for (raw_section_and_key, config_value) in &constraints_and_configs.buckconfigs {
         let config_section_and_key = parse_config_section_and_key(raw_section_and_key, None)?;

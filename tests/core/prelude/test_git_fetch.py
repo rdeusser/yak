@@ -20,7 +20,7 @@ def _git(args: list[str], cwd: Path) -> str:
 def _init_repo(cwd: Path) -> str:
     """Create the repository to fetch from, and return the commit to pin.
 
-    It sits next to the project rather than inside it, so that buck neither sees it as
+    It sits next to the project rather than inside it, so that yak neither sees it as
     source nor watches it.
     """
     repo = (cwd.parent / "remote").absolute()

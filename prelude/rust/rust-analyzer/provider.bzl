@@ -28,10 +28,10 @@ RustAnalyzerInfo = provider(
         "available_proc_macros": list[Dependency],
         # The name of the crate for the target.
         "crate": CrateName,
-        # The root source for the rust target (typically lib.rs, main.rs), relative to the buck target file.
+        # The root source for the rust target (typically lib.rs, main.rs), relative to the yak target file.
         "crate_root": str,
         "edition": str,
-        # The processed env as produced by the buck build prelude. Some env vars like `OUT_DIR` and `CARGO_MANIFEST_DIR`
+        # The processed env as produced by the yak build prelude. Some env vars like `OUT_DIR` and `CARGO_MANIFEST_DIR`
         # will be made into absolute paths.
         "env": dict[str, cmd_args],
         "features": list[str],

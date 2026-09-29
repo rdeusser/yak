@@ -102,7 +102,7 @@ policy or a duration if specified, without killing the daemon",
     /// `yak-out` can contain untracked artifacts for different reasons:
     ///  - Outputs from aborted actions
     ///  - State getting deleted (e.g., new buckversion that changes the on-disk state format)
-    ///  - Writing to `yak-out` without being expected by Buck
+    ///  - Writing to `yak-out` without being expected by yak
     #[clap(long = "tracked-only", requires = "stale")]
     tracked_only: bool,
 
@@ -299,7 +299,7 @@ async fn clean(
             }
         }
 
-        console.print_stderr("Buck-out moved to trash. Now cleaning up...")?;
+        console.print_stderr("yak-out moved to trash. Now cleaning up...")?;
         console.print_stderr(
             "Tip: Use Ctrl-Z to put this in the background, or run in a new terminal.",
         )?;
@@ -623,7 +623,7 @@ fn clean_buck_out_pass(path: &AbsNormPathBuf, state: &Arc<CleanProgressState>) -
         Err(_) => Vec::new(),
     };
 
-    // Note that the root itself is never removed: buck's cwd is typically the directory that is
+    // Note that the root itself is never removed: yak's cwd is typically the directory that is
     // passed in here, which means that on Windows we often fail to delete it if we don't clean up
     // all our child processes. Leaving zombies around isn't great though...
     //

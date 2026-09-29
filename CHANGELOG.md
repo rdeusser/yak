@@ -40,6 +40,13 @@ Removes the code, configuration, and service clients that only Meta's internal b
 - The site's logo is a yak.
 - `website/gen_docs.py` takes the path of the binary with `--yak` in place of `--buck2`.
 - The publisher of the Starlark extension for VS Code is `yak`.
+- The messages, help text, and doc comments of the binary and the prelude call the tool yak and its configuration the yakconfig.
+- HTTP requests name `yak` as the user agent.
+- The example target in the `YAK` file that `yak init` writes prints `BUILT BY YAK`.
+- The `rust-project.json` that `rust-project` writes tells rust-analyzer to run tests with `yak test` in place of `buck test`.
+- The examples of the query functions in `yak docs uquery` query this repository's own targets.
+- `docs/developers/perf/scripts/bin_waste.py` takes the path of the binary with `--yak` in place of `--buck2`.
+- The workflows that build and upload the binaries are `.github/workflows/build_yak.yml` and `.github/workflows/upload_yak.yml`, and their version input is `yak_version`.
 
 ### Removed JVM, Android, and JavaScript support
 

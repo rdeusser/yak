@@ -92,11 +92,11 @@ fn parse_isolation_dir(s: &str) -> buck2_error::Result<FileNameBuf> {
 #[derive(Clone, Debug, clap::Parser)]
 #[clap(next_help_heading = "Universal Options")]
 struct BeforeSubcommandOptions {
-    /// The name of the directory that Buck2 creates within yak-out for writing outputs and daemon
-    /// information. If one is not provided, Buck2 creates a directory with the default name.
+    /// The name of the directory that yak creates within yak-out for writing outputs and daemon
+    /// information. If one is not provided, yak creates a directory with the default name.
     ///
-    /// Instances of Buck2 share a daemon if and only if their isolation directory is identical.
-    /// The isolation directory also influences the output paths provided by Buck2,
+    /// Instances of yak share a daemon if and only if their isolation directory is identical.
+    /// The isolation directory also influences the output paths provided by yak,
     /// and as a result using a non-default isolation dir will cause cache misses (and slower builds).
     #[clap(
         value_parser = buck_error_clap_parser(parse_isolation_dir),
@@ -107,7 +107,7 @@ struct BeforeSubcommandOptions {
     )]
     isolation_dir: FileNameBuf,
 
-    /// How verbose buck should be while logging.
+    /// How verbose yak should be while logging.
     ///
     /// Values:
     /// 0 = Quiet, errors only;
@@ -128,7 +128,7 @@ struct BeforeSubcommandOptions {
     )]
     verbosity: Verbosity,
 
-    /// The team that owns this command. Buck2 records it in the event log.
+    /// The team that owns this command. yak records it in the event log.
     #[clap(long, global = true)]
     oncall: Option<String>,
 
@@ -137,7 +137,7 @@ struct BeforeSubcommandOptions {
     #[clap(long, global = true, value_parser = buck_error_clap_parser(parse_client_metadata))]
     client_metadata: Vec<ClientMetadata>,
 
-    /// Override a Buck setting using `section.key=value`.
+    /// Override a yak setting using `section.key=value`.
     #[clap(
         long = "setting",
         value_name = "SECTION.KEY=VALUE",
@@ -147,7 +147,7 @@ struct BeforeSubcommandOptions {
     )]
     settings: Vec<SettingOverride>,
 
-    /// Do not launch a daemon process, run buck server in client process.
+    /// Do not launch a daemon process, run yak server in client process.
     ///
     /// Note even when running in no-yakd mode, it still writes state files.
     /// In particular, this command effectively kills yakd process

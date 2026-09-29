@@ -62,7 +62,7 @@ use crate::interpreter::rule_defs::provider::builtin::external_runner_test_info:
 use crate::interpreter::rule_defs::provider::builtin::worker_info::WorkerInfo;
 use crate::interpreter::rule_defs::required_test_local_resource::StarlarkRequiredTestLocalResource;
 
-/// Provider that signals that a rule can be tested using Buck2's internal test
+/// Provider that signals that a rule can be tested using yak's internal test
 /// runner, bypassing the external test executor. This provider has the same API as
 /// `ExternalRunnerTestInfo` but uses a different execution strategy.
 #[internal_provider(internal_runner_test_info_creator)]

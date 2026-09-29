@@ -37,7 +37,7 @@ _APPLE_STDERR_ERROR_CATEGORIES = [
     ErrorEnricher(matcher = "no such file or directory", category = "no_such_file_failure"),
     # user errors
     ErrorEnricher(matcher = "unknown target", category = "unknown_buck_target_failure"),
-    # buck configuration issues
+    # yak configuration issues
     ErrorEnricher(matcher = "unknown cell alias", category = "unknown_cell_alias_failure"),
 ]
 

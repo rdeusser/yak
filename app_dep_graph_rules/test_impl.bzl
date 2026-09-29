@@ -11,7 +11,7 @@ load(":rules.bzl", "BANNED_DEP_PATHS", "LATE_BINDING_ONLY_CRATES", "TOP_LEVEL_ON
 def _check_client_to_re_path(ctx: AnalysisContext):
     path = ctx.attrs.client_to_re_path
     if len(path) != 0:
-        m = "Buck2 client binary may not have a dependency on `//remote_execution/`!"
+        m = "yak client binary may not have a dependency on `//remote_execution/`!"
         m += "\nDependency path:"
         m += "".join(["\n" + str(t) for t in path])
         fail(m)

@@ -852,7 +852,7 @@ pub struct DaemonStateData {
     /// A unique identifier for this instance of the daemon
     pub daemon_id: DaemonId,
 
-    /// Cgroup path of the process that launched this daemon before Buck moved the daemon into its
+    /// Cgroup path of the process that launched this daemon before yak moved the daemon into its
     /// managed cgroup.
     pub daemon_originating_cgroup: Option<String>,
 
@@ -1117,9 +1117,9 @@ impl DaemonState {
             if stale {
                 Err(buck2_error!(
                     buck2_error::ErrorTag::DaemonStaleWorkingDir,
-                    "Buck appears to be running in a stale working directory. \
+                    "yak appears to be running in a stale working directory. \
                      This will likely lead to failed or slow builds. \
-                     To remediate, restart Buck2."
+                     To remediate, restart yak."
                 ))
             } else {
                 Ok(())
@@ -1143,7 +1143,7 @@ fn convert_algorithm_kind(kind: DigestAlgorithmFamily) -> buck2_error::Result<Di
         DigestAlgorithmFamily::Sha256 => DigestAlgorithm::Sha256,
         DigestAlgorithmFamily::Blake3 => DigestAlgorithm::Blake3,
         DigestAlgorithmFamily::Blake3Keyed => {
-            // Keyed BLAKE3 needs a key, and no buckconfig provides one yet.
+            // Keyed BLAKE3 needs a key, and no yakconfig provides one yet.
             return Err(buck2_error::buck2_error!(
                 buck2_error::ErrorTag::Input,
                 "{} is not supported",
@@ -1158,7 +1158,7 @@ const DEFAULT_MAX_REDIRECTS: usize = 10;
 const DEFAULT_CONNECT_TIMEOUT_MS: u64 = 5000;
 const DEFAULT_READ_TIMEOUT_MS: u64 = 10000;
 
-/// Customize an http client based on http.* legacy buckconfigs.
+/// Customize an http client based on http.* legacy yakconfigs.
 async fn http_client_from_startup_config(
     config: &DaemonStartupConfig,
 ) -> buck2_error::Result<HttpClientBuilder> {

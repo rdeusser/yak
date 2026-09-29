@@ -65,7 +65,7 @@ pub static GET_EXECUTION_PLATFORMS: LateBinding<&'static dyn GetExecutionPlatfor
 
 pub trait GetExecutionPlatforms<'d>: Send {
     /// Returns a list of the configured execution platforms. This looks up the providers on the target
-    /// configured **in the root cell's buckconfig** with key `build.execution_platforms`. If there's no
+    /// configured **in the root cell's yakconfig** with key `build.execution_platforms`. If there's no
     /// value configured, it will return `None` which indicates we should fallback to the legacy execution
     /// platform behavior.
     fn get_execution_platforms<'a>(

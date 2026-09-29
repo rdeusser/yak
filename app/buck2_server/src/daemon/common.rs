@@ -59,7 +59,7 @@ use buck2_resource_control::memory_tracker::MemoryTrackerHandle;
 use dupe::Dupe;
 use host_sharing::HostSharingBroker;
 
-/// For each buck invocations, we'll have a single CommandExecutorFactory. This contains shared
+/// For each yak invocations, we'll have a single CommandExecutorFactory. This contains shared
 /// state used by all command executor strategies.
 pub struct CommandExecutorFactory {
     re_connection: Arc<ReConnectionHandle>,

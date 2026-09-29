@@ -34,7 +34,7 @@ PostConstraintAnalysisParams = record(
 )
 
 def _get_buckconfig_backed_modifiers(extra_data: struct, configuring_exec_dep: bool) -> str | None:
-    # If we are configuring an exec dep, we don't want to apply any modifiers from buckconfig.
+    # If we are configuring an exec dep, we don't want to apply any modifiers from yakconfig.
     if configuring_exec_dep:
         return None
     return getattr(extra_data, "buckconfig_backed_modifiers", None)

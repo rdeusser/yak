@@ -35,7 +35,7 @@ def _cxx_toolchain():
     # Portions of the macro layers use the `default_deps` attribute to set this
     # to the `:cxx_no_default_deps` option. If a targets has within_view checks
     # that don't list `toolchains//:` they will experience an error. We can avoid
-    # this by ensuring the `within_deps` checks inside buck see either of the
+    # this by ensuring the `within_deps` checks inside yak see either of the
     # toolchains below as a possible default value, even though one of them is
     # never able to be selected in this expression.
     return _toolchain(lang, [], default = select({"DEFAULT": "toolchains//:" + lang, "config//:none": "toolchains//:cxx_no_default_deps"}))

@@ -2,7 +2,7 @@
 name = "buck-resources"
 version = "1.0.0"
 edition.workspace = true
-description = "Load resource paths from a resources.json produced by Buck"
+description = "Load resource paths from a resources.json produced by yak"
 repository.workspace = true
 license.workspace = true
 autotests = false

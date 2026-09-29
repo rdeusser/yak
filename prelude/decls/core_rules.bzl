@@ -197,7 +197,7 @@ command_alias = prelude_rule(
                 doc = """
                 A string of arguments that is passed to the executable specified by
                  `exe` at startup. These arguments support a subset of
-                 Buck's `string parameter macros`
+                 yak's `string parameter macros`
                 . Only the
                  `$(location ...)` and `$(exe ...)` macros are supported currently.
             """,
@@ -241,7 +241,7 @@ config_setting = prelude_rule(
     name = "config_setting",
     docs = """
         `config_setting()` accepts a list of `constraint_values` and a list of values
-        (buckconfig keys + expected values) and matches if all of those match.
+        (yakconfig keys + expected values) and matches if all of those match.
 
         This is implemented as forming a single `ConfigurationInfo` from the union of the
         referenced values and the config keys.
@@ -258,7 +258,7 @@ config_setting = prelude_rule(
                 sorted = False,
                 default = {},
                 doc = """
-                    Buckconfig key -> expected value, evaluated from the target's cell (like `read_config`).
+                    yakconfig key -> expected value, evaluated from the target's cell (like `read_config`).
                     A given `section.key` may appear in either `values` or `root_values`, but not both.
                 """,
             ),
@@ -268,7 +268,7 @@ config_setting = prelude_rule(
                 sorted = False,
                 default = {},
                 doc = """
-                    Buckconfig key -> expected value, evaluated from the root cell (like `read_root_config`).
+                    yakconfig key -> expected value, evaluated from the root cell (like `read_root_config`).
                     A given `section.key` may appear in either `values` or `root_values`, but not both.
                 """,
             ),
@@ -589,7 +589,7 @@ export_file = prelude_rule(
                 attrs.enum(ExportFileDescriptionMode),
                 default = None,
                 doc = """
-                How files are referenced internally in buck.
+                How files are referenced internally in yak.
                  If set to 'copy', then a full copy will be made into the new location in yak-out.
                  If set to 'reference', the original file will be used by internal build rules in-place.
                  However, this mode does not work across repositories or if the 'out' property is set.
@@ -677,52 +677,52 @@ genrule = prelude_rule(
          command. It must produce a single output file or folder.
     """,
     examples = """
-        This genrule() uses a Python script to derive a new
-         `AndroidManifest.xml` from an
-         `AndroidManifest.xml` in the source tree.
+        This genrule() uses a Python script to derive a
+         `config.json` from a
+         `config.in` template in the source tree.
         Note you don't need to prepend execution commands with
-         `python`: Buck knows how to execute different
+         `python`: yak knows how to execute different
         kinds of binaries using `$(exe)` command.
 
         ```
         genrule(
-          name = 'generate_manifest',
+          name = 'generate_config',
           srcs = [
-            'AndroidManifest.xml',
+            'config.in',
           ],
-          bash = '$(exe //python/android:basic_to_full) ' \
-              '$SRCDIR/AndroidManifest.xml > $OUT',
-          cmd_exe = '$(exe //python/android:basic_to_full) ' \
-              '%SRCDIR%\\AndroidManifest.xml > %OUT%',
-          out = 'AndroidManifest.xml',
+          bash = '$(exe //python/config:expand_template) ' \
+              '$SRCDIR/config.in > $OUT',
+          cmd_exe = '$(exe //python/config:expand_template) ' \
+              '%SRCDIR%\\config.in > %OUT%',
+          out = 'config.json',
         )
         ```
 
         ```
         genrule(
-          name = 'generate_manifest_with_named_outputs',
+          name = 'generate_config_with_named_outputs',
           srcs = [
-            'AndroidManifest.xml',
+            'config.in',
           ],
-          bash = '$(exe //python/android:basic_to_full) ' \
-              '$SRCDIR/AndroidManifest.xml > $OUT/AndroidManifest.xml',
-          cmd_exe = '$(exe //python/android:basic_to_full) ' \
-              '%SRCDIR%\\AndroidManifest.xml > %OUT%\\AndroidManifest.xml',
+          bash = '$(exe //python/config:expand_template) ' \
+              '$SRCDIR/config.in > $OUT/config.json',
+          cmd_exe = '$(exe //python/config:expand_template) ' \
+              '%SRCDIR%\\config.in > %OUT%\\config.json',
           outs =  {
-            "manifest": [ "AndroidManifest.xml" ],
+            "config": [ "config.json" ],
           },
-          default_outs = [ "AndroidManifest.xml" ],
+          default_outs = [ "config.json" ],
         )
         ```
 
         For named outputs, build with any of the following:
 
         ```
-          buck build //:generate_manifest_with_named_outputs
+          yak build //:generate_config_with_named_outputs
         ```
 
         ```
-          buck build //:generate_manifest_with_named_outputs[manifest]
+          yak build //:generate_config_with_named_outputs[config]
         ```
 
         Consume in `srcs` with:
@@ -730,22 +730,22 @@ genrule = prelude_rule(
         ```
         export_file(
             name = "magic1",
-            src = ":generate_manifest_with_named_outputs",
-            out = "some_dir_to_copy_to/AndroidManifest.xml",
+            src = ":generate_config_with_named_outputs",
+            out = "some_dir_to_copy_to/config.json",
         )
         ```
 
         ```
         export_file(
             name = "magic2",
-            src = ":generate_manifest_with_named_outputs[manifest]",
-            out = "some_dir_to_copy_to/AndroidManifest.xml",
+            src = ":generate_config_with_named_outputs[config]",
+            out = "some_dir_to_copy_to/config.json",
         )
         ```
 
-        Note that `magic1` consumes `generate_manifest_with_named_outputs`'s default
-        output. `magic2` consumes `generate_manifest_with_named_outputs`'s named
-        output "manifest," which happen to be pointing to the same output as the default output in this
+        Note that `magic1` consumes `generate_config_with_named_outputs`'s default
+        output. `magic2` consumes `generate_config_with_named_outputs`'s named
+        output "config," which happen to be pointing to the same output as the default output in this
         case, but they do not have to point to the same output.
     """,
     further = None,
@@ -864,7 +864,7 @@ genrule = prelude_rule(
                 default = None,
                 doc = """
                 Whether the output of the genrule is itself executable. Marking an output as
-                 executable makes `buck run` and `$(exe ...)` macro
+                 executable makes `yak run` and `$(exe ...)` macro
                  expansion work with this target.
             """,
             ),
@@ -990,7 +990,7 @@ http_file = prelude_rule(
                 attrs.string(),
                 default = None,
                 doc = """
-                An optional name to call the downloaded artifact. Buck will generate a default name if one is not
+                An optional name to call the downloaded artifact. yak will generate a default name if one is not
                  provided that uses the `name` of the rule.
             """,
             ),
@@ -1060,7 +1060,7 @@ remote_file = prelude_rule(
                 default = "",
                 doc = """
                 The [`SHA-1`](//wikipedia.org/wiki/SHA-1) hash of the downloaded artifact.
-                 Buck verifies this is correct and fails the fetch command if it doesn't match in order to
+                 yak verifies this is correct and fails the fetch command if it doesn't match in order to
                  guarantee repeatable builds.
             """,
             ),
@@ -1068,7 +1068,7 @@ remote_file = prelude_rule(
                 attrs.int(),
                 default = None,
                 doc = """
-                Size in bytes of the downloaded artifact. Buck verifies this is correct and fails the fetch
+                Size in bytes of the downloaded artifact. yak verifies this is correct and fails the fetch
                  command if it doesn't match (only when a SHA-1 hash is used).
             """,
             ),
@@ -1076,7 +1076,7 @@ remote_file = prelude_rule(
                 attrs.string(),
                 default = None,
                 doc = """
-                An optional name to call the downloaded artifact. Buck will generate a default name if one is not
+                An optional name to call the downloaded artifact. yak will generate a default name if one is not
                  provided that uses the `name` of the rule.
             """,
             ),
@@ -1090,7 +1090,7 @@ remote_file = prelude_rule(
                 Regular data file.
                 `executable`
 
-                 Executable file. Buck will ensure that output has appropriate permissions if applicable.
+                 Executable file. yak will ensure that output has appropriate permissions if applicable.
 
                 `exploded_zip`
 
@@ -1111,8 +1111,8 @@ test_suite = prelude_rule(
     docs = """
         A `test_suite()` is used to create a grouping of tests that should all be run by just testing this rule.
 
-        This rule can then be given to `buck test`, and all tests that it depends on will be invoked.
-         Note that the test\\_suite() target is not tested itself, it just tells buck to run other
+        This rule can then be given to `yak test`, and all tests that it depends on will be invoked.
+         Note that the test\\_suite() target is not tested itself, it just tells yak to run other
          tests. It will not show up in calls to the external runner nor in the normal test output.
     """,
     examples = """
@@ -1161,7 +1161,7 @@ test_suite = prelude_rule(
         Yields output like this when run:
 
         ```
-        $ buck test //:slow_tests
+        $ yak test //:slow_tests
         ...
         RESULTS FOR //instrumentation_tests:instrumentation_tests //integration_tests:integration_tests
         PASS    <100ms  1 Passed   0 Skipped   0 Failed   //instrumentation_tests:instrumentation_tests
@@ -1169,7 +1169,7 @@ test_suite = prelude_rule(
         TESTS PASSED
         ...
 
-        $ buck test //:all_tests
+        $ yak test //:all_tests
         RESULTS FOR //instrumentation_tests:instrumentation_tests //integration_tests:integration_tests //unit_tests:unit_tests
         PASS    <100ms  1 Passed   0 Skipped   0 Failed   //instrumentation_tests:instrumentation_tests
         PASS    <100ms  1 Passed   0 Skipped   0 Failed   //integration_tests:integration_tests
@@ -1181,8 +1181,8 @@ test_suite = prelude_rule(
     attrs = (
         # @unsorted-dict-items
         {
-            # Buck1 query treated the `tests` attribute of test_suite as deps, and Buck2 query does not.
-            # `test_deps` is a deps attribute, so a macro that sets `test_deps = tests` gets the Buck1 query behavior.
+            # yak query does not treat the `tests` attribute of test_suite as deps.
+            # `test_deps` is a deps attribute, so a macro that sets `test_deps = tests` makes query follow the tests.
             "test_deps": attrs.list(attrs.dep(), default = []),
         }
         | buck.licenses_arg()
@@ -1312,7 +1312,7 @@ zip_file = prelude_rule(
                 attrs.bool(),
                 default = None,
                 doc = """
-                If set to true, Buck hardcodes the permissions in order to ensures that all files have the same
+                If set to true, yak hardcodes the permissions in order to ensures that all files have the same
                 permissions regardless of the platform on which the zip was generated.
             """,
             ),
@@ -1320,7 +1320,7 @@ zip_file = prelude_rule(
                 OnDuplicateEntry,
                 default = "overwrite",
                 doc = """
-                Action performed when Buck detects that zip\\_file input contains multiple entries with the same
+                Action performed when yak detects that zip\\_file input contains multiple entries with the same
                  name.
 
                  The valid values are:

@@ -78,7 +78,7 @@ fn capabilities() -> serde_json::Value {
         // note that some capabilities have the word "support" and some "supports" this seems to be according to the spec
         "supportTerminateDebuggee": false,
         "supportSuspendDebuggee": false,
-        // This is different from starlark's `dap_capabilities`. The buck starlark debugger treats
+        // This is different from starlark's `dap_capabilities`. The yak starlark debugger treats
         // each ongoing starlark Evaluation as a separate thread and handles requests appropriately.
         "supportsSingleThreadExecutionRequests": true,
 
@@ -92,7 +92,7 @@ enum DebuggerError {
     InvalidSetBreakpoints(dap::SetBreakpointsArguments),
 }
 
-/// The buck starlark debugger server. Most of the work is managed by the single-threaded server state.
+/// The yak starlark debugger server. Most of the work is managed by the single-threaded server state.
 ///
 /// There will be several references to the BuckStarlarkDebuggerServer instance and it will forward messages
 /// along to the state.
@@ -103,7 +103,7 @@ pub(crate) struct BuckStarlarkDebuggerServer {
     /// When debugging a starlark evaluation, we wrap it in tokio::task::block_in_place (so that when it is paused
     /// it doesn't block a tokio worker thread), but we still want to ensure that we aren't over-saturating the
     /// local resources so we use this semaphore to limit how many evaluation can currently run.
-    /// TODO(cjhopman): It probably actually makes sense for this to be a more general mechanism in buck so that
+    /// TODO(cjhopman): It probably actually makes sense for this to be a more general mechanism in yak so that
     /// long-running things aren't holding tokio workers busy without yielding. That'd then also better integrate
     /// with user-requested resource limits (e.g. `-j 4`).
     eval_semaphore: Arc<Semaphore>,
@@ -188,7 +188,7 @@ impl BuckStarlarkDebuggerServer {
             Err(..) => {
                 // This indicates the state thread is shutting down (or hit an internal error).
                 // That could be due to the debugger detaching from yak. This does not indicate
-                // an error for other on-going buck commands, and so we'll allow starlark execution
+                // an error for other on-going yak commands, and so we'll allow starlark execution
                 // to continue as normal. In this case, the hook_id doesn't matter.
                 (HookId(u32::MAX), None)
             }
@@ -263,7 +263,7 @@ enum ServerMessage {
 /// The ServerState is the main thing implementing the debug adapter protocol.
 ///
 /// It runs on a single thread to more easily handle the concurrent requests and events
-/// from the DAP client and buck's multithreaded starlark evaluation.
+/// from the DAP client and yak's multithreaded starlark evaluation.
 #[derive(Debug)]
 struct ServerState {
     /// Sends messages back to the DAP client. Errors on this channel indicate the
@@ -277,7 +277,7 @@ struct ServerState {
     /// The project root is used to get the current source code to resolve breakpoints.
     project_root: ProjectRoot,
 
-    /// Currently executing buck commands, this is primarily used to send debugger snapshots.
+    /// Currently executing yak commands, this is primarily used to send debugger snapshots.
     current_commands: BuckMutMap<HandleId, CommandState>,
 
     /// Current starlark evaluation hooks.
@@ -405,7 +405,7 @@ impl DebugServer for ServerState {
         &mut self,
         mut x: dap::SetBreakpointsArguments,
     ) -> buck2_error::Result<dap::SetBreakpointsResponseBody> {
-        // buck will use the project-relative paths when parsing asts with the starlark interpreter. We need to match that.
+        // yak will use the project-relative paths when parsing asts with the starlark interpreter. We need to match that.
         let source = x
             .source
             .path
@@ -753,7 +753,7 @@ impl ServerState {
     ///
     /// This is sent even when nothing is currently stopped but won't ever be sent if a
     /// debugger isn't attached, and so when a command receives the snapshot it can know
-    /// that a debugger is attached to the buck daemon.
+    /// that a debugger is attached to the yak daemon.
     fn get_snapshot(&self) -> buck2_data::DebugAdapterSnapshot {
         let mut current_handles = IntentionallyStdHashMap::new();
 
@@ -1001,7 +1001,7 @@ struct HookState {
     /// of the starlark operation on the thread (e.g. "load_buildfile:some_cell//some/package").
     pseudo_thread_name: String,
     /// If the evaluation is stopped (for example, at a breakpoint) this is a description of where
-    /// it's stopped at. This is used for the debugger snapshots so that buck commands can provide
+    /// it's stopped at. This is used for the debugger snapshots so that yak commands can provide
     /// UI affordances for the stopped evaluations.
     stopped_at: Option<String>,
     /// The id of the corresponding handle (also used for snapshots so a command can tell if a

@@ -17,7 +17,6 @@ from .info_plist_metadata import InfoPlistMetadata
 from .provisioning_profile_metadata import ProvisioningProfileMetadata
 
 
-# Buck v1 corresponding code is in `ProvisioningProfileCopyStep::execute` in `ProvisioningProfileCopyStep.java`
 def prepare_info_plist(
     info_plist: Path,
     info_plist_metadata: InfoPlistMetadata,
@@ -33,7 +32,6 @@ def prepare_info_plist(
     return Path(output_path)
 
 
-# Equivalent Buck v1 code is in `ProvisioningProfileCopyStep.java` in `ProvisioningProfileCopyStep::getInfoPlistAdditionalKeys` method.
 def _additional_keys(
     info_plist_metadata: InfoPlistMetadata, profile: ProvisioningProfileMetadata
 ) -> Dict[str, Any]:

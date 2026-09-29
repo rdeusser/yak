@@ -116,7 +116,7 @@ cxx_tools_info_toolchain(
             "/INCREMENTAL:NO",
         ] + select({
             "root//buck2_utils/configuration:configuration[debug]": [],
-            # Converted /LTCG:incremental to /LTCG because I'm guessing incremental actions won't work well with Buck2
+            # Converted /LTCG:incremental to /LTCG because I'm guessing incremental actions won't work well with yak
             "root//buck2_utils/configuration:configuration[release]": [
                 "/OPT:REF",
                 "/OPT:ICF",

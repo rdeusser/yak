@@ -300,7 +300,7 @@ cross_config_run = rule(
     impl = _cross_config_run_impl,
     attrs = {
         "marker_content": attrs.string(),
-        # Unused by the action; only used to force a DICE recompute across builds via a buckconfig change
+        # Unused by the action; only used to force a DICE recompute across builds via a yakconfig change
         "_ignored": attrs.string(default = ""),
     },
 )

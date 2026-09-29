@@ -16,7 +16,7 @@
 //!   sub-menu. Continue is greyed out (via `has_save_fn` callback) when
 //!   no save file exists, preventing invalid selections.
 //!
-//! - **Animated title**: "BUCK2 GAMES" with a cycling dot animation
+//! - **Animated title**: "YAK GAMES" with a cycling dot animation
 //!   (`. .. ... `) driven by the tick counter.
 //!
 //! - **High scores entry**: the game list includes a "High Scores" item
@@ -233,7 +233,7 @@ impl Component for Menu {
 
                 // Animate the title
                 let dots = ".".repeat((self.tick_count as usize / 8) % 4);
-                let title = format!(" BUCK2 GAMES{:<17}", dots);
+                let title = format!(" YAK GAMES{:<19}", dots);
                 lines.push(bordered_line(vec![Span::new_unstyled_lossy(&title)]));
 
                 lines.push(hline("╠", "╣"));

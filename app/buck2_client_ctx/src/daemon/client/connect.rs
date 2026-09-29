@@ -349,7 +349,7 @@ impl<'a> BuckdLifecycle<'a> {
         //   ```
         //   Which regresses from 15s to 80s when `RUST_LIB_BACKTRACE` is set. So we disable
         //   backtraces in the daemon unless the user has explicitly asked for them. We
-        //   intentionally avoid considering the `RUST_BACKTRACE` variables that buck was invoked
+        //   intentionally avoid considering the `RUST_BACKTRACE` variables that yak was invoked
         //   with, because a lot of Rust tooling sets those without meaning to influence this
         //   behavior.
         daemon_env_vars.push((
@@ -365,8 +365,8 @@ impl<'a> BuckdLifecycle<'a> {
 
         if cfg!(unix) {
             // On Unix we spawn a process which forks and exits, and here we wait for that spawned
-            // process to terminate. That process is usually the Buck daemon executable, but may be
-            // the installed Buck wrapper, which runs the daemon on our behalf after unsandboxing it.
+            // process to terminate. That process is usually the yak daemon executable, but may be
+            // the installed yak wrapper, which runs the daemon on our behalf after unsandboxing it.
             let ExecutableAndArgs { executable, args } =
                 get_unix_daemon_and_args(options, args).await?;
 
@@ -657,7 +657,7 @@ impl BootstrapBuckdClient {
 /// If the daemon does not match constraints (different version or does not enable I/O tracing),
 /// it will kill it and restart it with the correct constraints.
 /// This behavior can be overridden by passing `BuckdConnectOptions::ExistingOnly`.
-/// In that case, then any existing buck daemon (regardless of constraint) is accepted.
+/// In that case, then any existing yak daemon (regardless of constraint) is accepted.
 pub async fn connect_buckd(
     options: BuckdConnectOptions,
     events_ctx: &mut EventsCtx,
@@ -678,7 +678,7 @@ pub async fn establish_connection_existing(
     let deadline = StartupDeadline::duration_from_now(buckd_startup_timeout()?)?;
     deadline
         .run(
-            "establishing connection to existing Buck daemon",
+            "establishing connection to existing yak daemon",
             async move {
                 BuckdProcessInfo::load(daemon_dir)?
                     .create_channel()
@@ -701,7 +701,7 @@ async fn establish_connection(
     let deadline = StartupDeadline::duration_from_now(timeout)?;
     deadline
         .down(
-            "establishing connection to Buck daemon or start a daemon",
+            "establishing connection to yak daemon or start a daemon",
             |timeout| establish_connection_inner(paths, options, timeout, events_ctx),
         )
         .await
@@ -739,7 +739,7 @@ async fn establish_connection_inner(
 
     let res = deadline
         .half()?
-        .run("connecting to existing buck daemon", {
+        .run("connecting to existing yak daemon", {
             try_connect_existing_before_acquiring_lifecycle_lock(&daemon_dir, constraints).map(Ok)
         })
         .await;
@@ -795,7 +795,7 @@ async fn establish_connection_inner(
 
                         deadline
                             .run(
-                                "sending kill command to the Buck daemon",
+                                "sending kill command to the yak daemon",
                                 client.kill_for_constraints_mismatch(),
                             )
                             .await?;
@@ -1106,7 +1106,7 @@ pub fn get_daemon_exe() -> buck2_error::Result<PathBuf> {
 #[allow(clippy::large_enum_variant)]
 #[buck2(tag = DaemonConnect)]
 enum BuckdConnectError {
-    #[error("buck daemon startup failed\nstdout:\n{stdout}\nstderr:\n{stderr}")]
+    #[error("yak daemon startup failed\nstdout:\n{stdout}\nstderr:\n{stderr}")]
     #[buck2(tag = DaemonStartupFailed)]
     BuckDaemonStartupFailed {
         stdout: String,
@@ -1114,14 +1114,14 @@ enum BuckdConnectError {
         #[source]
         exit_status_error: buck2_error::Error,
     },
-    #[error("Failed to launch Buck2 daemon: {error:#}")]
+    #[error("Failed to launch yak daemon: {error:#}")]
     #[buck2(tag = DaemonLaunchFailed)]
     BuckDaemonLaunchFailed {
         #[source]
         error: buck2_error::Error,
     },
     #[error(
-        "during buck daemon startup, the started process did not match constraints ({reason}).\nexpected: {expected:?}\nactual: {actual:?}"
+        "during yak daemon startup, the started process did not match constraints ({reason}).\nexpected: {expected:?}\nactual: {actual:?}"
     )]
     #[buck2(tag = DaemonConstraintsWrongAfterStart)]
     BuckDaemonConstraintWrongAfterStart {
@@ -1215,7 +1215,7 @@ async fn daemon_connect_error(
     };
 
     let error_message = format!(
-        "Failed to connect to buck daemon.
+        "Failed to connect to yak daemon.
     {daemon_process_info}
 
     Try {kill_command}running `{delete_command}` and your command afterwards"

@@ -671,7 +671,7 @@ impl StatefulSuperConsole {
         }))
     }
 
-    /// Construct a console suitable for use by the Buck2 CLI. We use non-blocking output here
+    /// Construct a console suitable for use by the yak CLI. We use non-blocking output here
     /// because we do all our event processing on a single thread, so that if stderr is blocked
     /// (e.g.  because the client is using a resumable remote terminal and they've temporarily
     /// disconnected), we don't delay ingesting new events.
@@ -1260,7 +1260,7 @@ impl StatefulSuperConsoleImpl {
                 if !self.shown_interactive_console_message {
                     self.shown_interactive_console_message = true;
                     self.handle_stderr(&format!(
-                        "Buck2 has an interactive console; input is consumed. \
+                        "yak has an interactive console; input is consumed. \
                          Press `h` for help or set {}=true to disable.",
                         BUCK_NO_INTERACTIVE_CONSOLE
                     ))
@@ -1911,7 +1911,7 @@ mod tests {
             DrawMode::Normal,
         )?;
 
-        // Buck UI/Build ID + Test UI, each on one line
+        // Build ID + Test UI, each on one line
         assert_eq!(full.len(), 2);
 
         let multiline = SessionInfoComponent {
@@ -1929,7 +1929,7 @@ mod tests {
         )?;
 
         // Width too narrow for all on one line, so each splits into header + value:
-        // Buck UI header, Buck UI value, Test UI header, Test UI value
+        // Build ID header, Build ID value, Test UI header, Test UI value
         assert_eq!(multiline.len(), 4);
 
         let too_small = SessionInfoComponent {

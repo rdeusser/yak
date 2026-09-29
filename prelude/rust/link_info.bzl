@@ -637,7 +637,7 @@ def normalize_crate(label: str | ResolvedStringWithMacros) -> str | ResolvedStri
 
 def attr_simple_crate_for_filenames(ctx: AnalysisContext) -> str:
     """
-    A "good enough" identifier to use in filenames. Buck wants to have filenames
+    A "good enough" identifier to use in filenames. yak wants to have filenames
     of artifacts figured out before we begin building them. Normally we want a
     crate foo to produce artifact libfoo.rlib; but if crate_dynamic is being
     used, the true crate name is not known until later. In this situation we use

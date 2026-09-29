@@ -28,7 +28,7 @@ def filegroup_impl(ctx):
                 fail("filegroup {} has srcs with duplicate names: {} and {}".format(ctx.label, src, srcs[src.short_path]))
             srcs[src.short_path] = src
 
-    # It seems that buck1 always copies, and that's important for Python rules
+    # Copying is important for Python rules
     if ctx.attrs.copy:
         output = ctx.actions.copied_dir(
             output_name,

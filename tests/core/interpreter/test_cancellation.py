@@ -71,7 +71,7 @@ async def test_cancellation(buck: Buck, stage: str) -> None:
     # this test will time out.
     try:
         assert a.process.returncode != 0
-        assert "buck daemon preempted this command" in a.stderr
+        assert "yak daemon preempted this command" in a.stderr
         b.check_returncode()
     except Exception:
         print("A STDERR:\n", a.stdout, "\n\nA STDOUT:\n", a.stderr)

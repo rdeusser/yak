@@ -18,7 +18,7 @@ load(
 CudaCompileInfo = record(
     # Output base filename without extension
     filename = field(str),
-    # Buck action identifier
+    # yak action identifier
     identifier = field(str),
     # Output sub-directory where all CUDA compilation artifacts will go to
     output_prefix = field(str),
@@ -26,10 +26,10 @@ CudaCompileInfo = record(
 )
 
 CudaCompileStyle = enum(
-    # Use NVCC as the compiler driver and compile a CUDA file in a single Buck
+    # Use NVCC as the compiler driver and compile a CUDA file in a single yak
     # action.
     "mono",
-    # NVCC provides the compilation plan, but use one Buck action per compilation
+    # NVCC provides the compilation plan, but use one yak action per compilation
     # sub-command.
     "dist",
 )
@@ -94,7 +94,7 @@ def cuda_mono_compile(
 ) -> None:
     """
     Compile a CUDA file monolithically using NVCC as the compiler driver.
-    All compilation happens in a single Buck action.
+    All compilation happens in a single yak action.
     """
 
     # Bind the object output for monolithic NVCC compilation.
@@ -134,7 +134,7 @@ def cuda_distributed_compile(
     Set up distributed compilation for a CUDA file: optionally register the
     nvcc -dryrun prepare action that produces the target's shared compilation
     plan, and return the spec from which create_cuda_distributed_compiles
-    later creates one Buck action per NVCC sub-command.
+    later creates one yak action per NVCC sub-command.
 
     Compilation modes that require a whole-program device link step are NOT
     supported here: relocatable device code (-rdc=true / --device-c), device
@@ -553,7 +553,7 @@ def _nvcc_dynamic_compile(
                 subcmd.add(cmd_args(hidden = [file2artifact[f] for f in cmd_node["hidden"]]))
 
             # Host-compiler sub-actions pin a declared header closure; dep files
-            # let the compiler report what it actually read so buck can prune the
+            # let the compiler report what it actually read so yak can prune the
             # rest from the action key.
             action_dep_files = {}
             if input_kind != "cuda_tool" and headers_dep_files != None:

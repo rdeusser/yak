@@ -246,7 +246,7 @@ impl FileChangeTracker {
         self.paths_to_dirty.insert(PathMetadataKey(path.clone()));
     }
 
-    /// Normally, buck does not need the file watcher to tell it that a directory's entries have
+    /// Normally, yak does not need the file watcher to tell it that a directory's entries have
     /// changed. However, in some cases file watcher want to force-invalidate directory listings,
     /// and so this exists. It should not normally be used.
     pub fn dir_entries_changed_force_invalidate(&mut self, path: CellPath) {

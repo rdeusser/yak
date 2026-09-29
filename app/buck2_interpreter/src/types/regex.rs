@@ -185,7 +185,7 @@ pub fn register_buck_regex(builder: &mut GlobalsBuilder) {
     ///
     /// ## Fanciness
     ///
-    /// Buck2 regexes support two backing implementations:
+    /// yak regexes support two backing implementations:
     ///
     /// - With `fancy = False` (the default), [the `regex`
     ///   crate](https://docs.rs/regex/latest/regex/#syntax) is used. These regular expressions

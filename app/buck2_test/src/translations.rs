@@ -8,7 +8,7 @@
  * above-listed licenses.
  */
 
-//! Translation between buck core data and the test spec data types
+//! Translation between yak core data and the test spec data types
 
 use buck2_common::file_ops::metadata::FileDigest;
 use buck2_core::cells::CellResolver;

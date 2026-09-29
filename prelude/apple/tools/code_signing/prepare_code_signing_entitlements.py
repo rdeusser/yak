@@ -65,7 +65,6 @@ def postprocess_entitlements(
             plistlib.dump(entitlements, f, fmt=plistlib.FMT_XML)
 
 
-# Buck v1 corresponding code is in `ProvisioningProfileCopyStep::execute` in `ProvisioningProfileCopyStep.java`
 def prepare_code_signing_entitlements(
     entitlements_path: Optional[Path],
     bundle_id: str,

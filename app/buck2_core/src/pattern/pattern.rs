@@ -1203,7 +1203,6 @@ fn resolve_target_alias<T>(
 where
     T: PatternType,
 {
-    // Imported from Buck1
     static ALIAS_REGEX: LazyLock<Regex> =
         LazyLock::new(|| Regex::new("^[a-zA-Z_-][a-zA-Z0-9_-]*$").unwrap());
 

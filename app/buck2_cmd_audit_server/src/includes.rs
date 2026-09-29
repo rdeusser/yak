@@ -185,8 +185,8 @@ fn resolve_path(
     current_cell_abs_path: &AbsNormPath,
     path: &str,
 ) -> buck2_error::Result<CellPath> {
-    // To match buck1, if the path is absolute we use it as-is, but if not it is treated
-    // as relative to the working dir cell root (not the working dir).
+    // An absolute path is used as-is, and a relative path is treated as relative to
+    // the working dir cell root (not the working dir).
     // The easiest way to consistently handle non-canonical paths
     // is to just resolve to absolute here, and then relativize.
     //
@@ -255,10 +255,9 @@ impl ServerAuditSubcommand for AuditIncludesCommand {
                 // them. After we print the results, we'll propagate an error if there is one.
                 if self.json {
                     let mut ser = serde_json::Serializer::pretty(&mut stdout);
-                    // buck1 has a bug where it doesn't properly handle >1 arg when passed --json
-                    // it also, sadly, prints just a single list of outputs for that case. we match
-                    // buck1's behavior for 1 successful file and print a dictionary for multiple. This is
-                    // unfortunate, but we hope that users can migrate to the equivalent query commands instead.
+                    // For one successful file, print the list of its includes. For multiple files,
+                    // print a dictionary. We hope that users can migrate to the equivalent query
+                    // commands instead.
                     if let Some((_path, Ok(includes))) = results.as_singleton() {
                         includes.serialize(&mut ser)?
                     } else {
@@ -287,7 +286,7 @@ impl ServerAuditSubcommand for AuditIncludesCommand {
                                 // intentionally add a blank line after the header
                                 writeln!(stdout, "# {path}\n")?;
                                 for include in includes {
-                                    // To match buck1, we print absolute paths.
+                                    // Includes are printed as absolute paths.
                                     writeln!(stdout, "{include}")?;
                                 }
                             }

@@ -252,7 +252,7 @@ impl<'v> ActionsRegistry<'v> {
         }
 
         Ok(move |analysis_value_fetcher: &AnalysisValueFetcher| {
-            // Buck2 has an invariant that pairs of categories and identifiers are unique throughout a build. That
+            // yak has an invariant that pairs of categories and identifiers are unique throughout a build. That
             // invariant is enforced here, using observed_names to keep track of the categories and identifiers that we've seen.
             let mut observed_names: BuckMutMap<Category, BuckMutSet<String>> =
                 BuckMutMap::default();
