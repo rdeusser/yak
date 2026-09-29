@@ -42,6 +42,7 @@ Removes the code, configuration, and service clients that only Meta's internal b
 - The publisher of the Starlark extension for VS Code is `yak`.
 - The messages, help text, and doc comments of the binary and the prelude call the tool yak and its configuration the yakconfig.
 - HTTP requests name `yak` as the user agent.
+- The Visual Studio projects that `vsgo` generates build with `yak`. They ran `buck2`.
 - The example target in the `YAK` file that `yak init` writes prints `BUILT BY YAK`.
 - The `rust-project.json` that `rust-project` writes tells rust-analyzer to run tests with `yak test` in place of `buck test`.
 - The examples of the query functions in `yak docs uquery` query this repository's own targets.

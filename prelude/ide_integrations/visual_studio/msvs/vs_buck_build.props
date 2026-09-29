@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <!--
-      Overrides for default VS targets which allow building a project with buck instead of MSBuild.
+      Overrides for default VS targets which allow building a project with yak instead of MSBuild.
   -->
   <PropertyGroup>
-      <vs_buck_path>buck2</vs_buck_path>
+      <vs_buck_path>yak</vs_buck_path>
       <vs_buck_build_command>$(AbsolutizePathExe) --local_root $(RepoRoot) -- $(vs_buck_path) $(ImmediateBuckOptions) build @$(BuckModeFile) $(BuckConfig) $(BuckTarget)</vs_buck_build_command>
   </PropertyGroup>
   <Target Name="Build">

@@ -60,6 +60,7 @@ The documentation, the website, and the messages of the binary call the tool yak
     - On Linux, `cargo build --bin=yak` and `cargo fmt --all -- --check` pass. `python3 test.py` passes clippy and rustdoc. `cargo test --lib --no-fail-fast` passes 3865 unit tests and fails only `test_perf_thread_instruction_counter`, and `cargo test --doc` passes 311 doc tests.
     - On Linux, the integration tests give 1727 passed, 223 skipped, and 3 expected failures after the golden files are regenerated.
     - On Linux, after `buckify`, `yak build //:yak`, `yak build //app_dep_graph_rules:test_buck2_dep_graph`, `yak targets //...`, and the `resolve_deps.bxl` run of the repository succeed. `yak build //... -v 2` succeeds in `examples/toolchains/python_toolchain` and fails in `examples/no_prelude` only at the Go download.
+    - A follow-up commit renamed the tool in seven comments of file types that the rules do not parse, and in the `vs_buck_path` property of `prelude/ide_integrations/visual_studio/msvs/vs_buck_build.props`. On Linux, `cargo build --bin=yak` passes, and the integration tests that read the edited test data (`test_empty_buckconfig.py`, `test_git.py`, and `test_targets_imports_toml.py`) pass.
     - The runs above used an earlier tree of this change, which differed in six comments and one string. On the final tree, on Linux, `cargo build --bin=yak`, `cargo fmt --all -- --check`, and rustdoc pass, and the 55 integration tests in `tests/core/help`, `tests/core/docs`, `test_attr_select.py`, `test_error_categorization.py`, and `tests/core/invocation_record` give 50 passed and 5 skipped.
 
 ## Surprises & Discoveries
@@ -101,6 +102,7 @@ The documentation, the website, and the messages of the binary call the tool yak
 - rustfmt sorts `use` lines, so renaming `print_buck_ui` to `print_build_id` moved an import in `app/buck2_client/src/commands/run.rs`. `manual_edits_code.py` writes the import in its sorted place, and `cargo fmt --all` changes nothing after the scripts.
 - The parser test cases in `starlark-rust/starlark_syntax/testcases/` are copies of other projects' files, such as a Gerrit macro that names Buck's native `gwt_binary` rule. `rename_code_prose.py` skips the directory.
 - Two comments in `prelude/apple/` spell Buck1 as `BUCK1`, which the report of `rename_code_prose.py` does not match. A case-insensitive `git grep` found them.
+- The `Clean` target of `prelude/ide_integrations/visual_studio/msvs/vs_buck_build.props` ran `yak clean` after commit `04fcc47b52`, but its `vs_buck_path` property still named `buck2`, so the projects that `vsgo` generates built with a binary that no longer exists. The command rule of `rename_runtime.py` required a space, a quote, punctuation, or the end of the line after `buck2`, and the property value ends at `<`. The rules of `rename_code_prose.py` parse only Rust, Python, Starlark, and C-style sources.
 
 ## Decision Log
 
