@@ -30,6 +30,8 @@ use yak_node::nodes::unconfigured::TargetNode;
 use yak_node::target_calculation::ConfiguredTargetCalculation;
 use yak_query::query::syntax::simple::eval::set::TargetSet;
 
+use crate::exec_only::is_exec_only;
+
 // Returns a tuple of compatible targets, incompatible targets, and target-level errors.
 // NOTE: This function returns Result<(..., Vec<Error>)> to support keep-going:
 // - When keep_going = false: Returns Err(e) immediately on first error
@@ -181,9 +183,15 @@ pub async fn get_compatible_targets(
     let (compatible_targets, incompatible_targets, target_errors) =
         split_compatible_incompatible(maybe_compatible_targets, keep_going)?;
 
-    if !incompatible_targets.is_empty() {
+    let mut listed = Vec::new();
+    for reason in &incompatible_targets {
+        if !is_exec_only(ctx, reason).await? {
+            listed.push(&reason.target);
+        }
+    }
+    if !listed.is_empty() {
         console_message(IncompatiblePlatformReason::skipping_message_for_multiple(
-            incompatible_targets.iter().map(|r| &r.target),
+            listed,
         ));
     }
 

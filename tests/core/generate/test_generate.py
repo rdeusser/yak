@@ -193,3 +193,8 @@ async def test_generate_builds_a_build_script_only_for_its_run(yak: Yak) -> None
     ]
     assert "root//:seven" in built
     assert [target for target in built if "build-script-build" in target] == []
+    # They build only for an execution platform, so the build does not list
+    # them as skipped.
+    assert "incompatible" not in result.stderr, result.stderr
+    result = await yak.test("//...")
+    assert "incompatible" not in result.stderr, result.stderr

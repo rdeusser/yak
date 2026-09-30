@@ -59,6 +59,7 @@ use crate::build::graph_properties::GraphPropertiesOptions;
 use crate::build::graph_properties::GraphPropertiesValues;
 use crate::build::outputs::get_outputs_for_top_level_target;
 use crate::build_signals::HasBuildSignals;
+use crate::exec_only::is_exec_only;
 use crate::interpreter::rule_defs::provider::builtin::run_info::OwnedRunInfo;
 use crate::interpreter::rule_defs::provider::builtin::run_info::RunInfo;
 use crate::keep_going::KeepGoing;
@@ -250,8 +251,10 @@ impl BuildTargetResultBuilder {
         };
         let elapsed = Instant::now() - self.build_start;
         match variant {
-            ConfiguredBuildEventVariant::SkippedIncompatible => {
-                self.incompatible_targets.insert(label.target().dupe());
+            ConfiguredBuildEventVariant::SkippedIncompatible { exec_only } => {
+                if !exec_only {
+                    self.incompatible_targets.insert(label.target().dupe());
+                }
                 self.res.entry(label.dupe()).or_insert(None);
             }
             ConfiguredBuildEventVariant::MapModifiers { modifiers } => {
@@ -486,7 +489,11 @@ pub enum ConfiguredBuildEventExecutionVariant {
 }
 
 pub enum ConfiguredBuildEventVariant {
-    SkippedIncompatible,
+    SkippedIncompatible {
+        /// The target builds only for an execution platform, so the build does not list it
+        /// among the skipped targets.
+        exec_only: bool,
+    },
     MapModifiers {
         modifiers: Modifiers,
     },
@@ -596,9 +603,10 @@ async fn build_configured_label_inner(
         MaybeCompatible::Incompatible(reason) => {
             if opts.skippable {
                 tracing::debug!("{}", reason.skipping_message(providers_label.target()));
+                let exec_only = is_exec_only(&mut ctx.get(), &reason).await?;
                 event_consumer.consume_configured(ConfiguredBuildEvent {
                     label: providers_label.dupe(),
-                    variant: ConfiguredBuildEventVariant::SkippedIncompatible,
+                    variant: ConfiguredBuildEventVariant::SkippedIncompatible { exec_only },
                 });
                 return Ok(());
             } else {
