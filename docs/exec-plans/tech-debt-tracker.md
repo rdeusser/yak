@@ -133,6 +133,13 @@ Only fbcc, Meta's compiler wrapper, understands the flag, so a plain clang rejec
 
 Remove this entry when split debug info uses flags that clang accepts and no tool expects the fbcc command layout.
 
+### Generated projects have no remote cache, and a shared cache could serve another toolchain's outputs
+
+yak can run every action locally, look it up in a Remote Execution API cache first, and upload the result. An execution platform whose `CommandExecutorConfig` enables local execution, `remote_cache_enabled`, and `allow_cache_uploads` selects that mode (`app/yak_build_api/src/interpreter/rule_defs/command_executor_config.rs`), and `[yak_re_client]` names the cache's addresses. The owner wants a remote cache before remote execution (2026-09-30).
+`yak generate` and `yak init` write projects that use `prelude//platforms:default`, which offers no setting for it.
+The toolchains of `system_toolchains()` in `prelude/toolchains/system.bzl` run `rustc`, `clang`, and the other tools from `PATH`, and an action's key covers its command line and inputs but not the tool binary. Two machines with different `rustc` versions compute the same key for an action, so a shared cache could return one machine's output to the other.
+Remove this entry when a generated project can turn on a remote cache from `.yakconfig`, and each toolchain puts the identity of its tools, such as a digest of `rustc -vV`, into the keys of its actions.
+
 ### A daemon without a Remote Execution backend waits 45 seconds to fail
 
 If an execution platform enables remote execution and no backend answers, each daemon start waits about 45 seconds before the command fails.
