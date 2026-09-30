@@ -22,6 +22,8 @@ use yak_common::io::IoProvider;
 use yak_common::legacy_configs::configs::LegacyYakConfig;
 use yak_common::legacy_configs::dice::SetLegacyConfigs;
 use yak_common::legacy_configs::key::YakconfigKeyRef;
+use yak_common::settings::YakSettings;
+use yak_common::settings::dice::SetYakSettings;
 use yak_core::rollout_percentage::RolloutPercentage;
 use yak_execute::digest_config::DigestConfig;
 use yak_execute::digest_config::SetDigestConfig;
@@ -37,6 +39,7 @@ pub async fn configure_dice_for_yak(
     digest_config: DigestConfig,
     root_config: Option<&LegacyYakConfig>,
     detect_cycles: Option<DetectCycles>,
+    yak_settings: YakSettings,
     // Path to open pagable DICE storage at, or `None` to leave paging disabled.
     dice_state_path: Option<&Path>,
     // On-disk backend for pagable storage (`yak_hydration.pagable_storage_backend`).
@@ -60,6 +63,7 @@ pub async fn configure_dice_for_yak(
     let mut dice = Dice::builder();
     dice.set_io_provider(io);
     dice.set_digest_config(digest_config);
+    dice.set_yak_settings(yak_settings);
     let invalidation_tracking_enabled = match root_config {
         Some(c) => c
             .parse::<RolloutPercentage>(YakconfigKeyRef {

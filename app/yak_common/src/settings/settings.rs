@@ -130,7 +130,19 @@ const HYDRATION_PAGE_OUT_ON_IDLE_ISOLATION_DIR_SCOPE: SettingKey<PageOutOnIdleIs
         default: Some(PageOutOnIdleIsolationDirScope::All),
     };
 
+const ANALYSIS_RECORD_REQUESTED_ANON_TARGETS: SettingKey<bool> = SettingKey {
+    metadata: SettingKeyMetadata {
+        key: SettingKeyRef {
+            section: "analysis",
+            name: "record_requested_anon_targets",
+        },
+        overridable_in: &[OverrideSource::CommandLine, OverrideSource::LocalSettings],
+    },
+    default: Some(true),
+};
+
 pub(crate) static ALL_SETTING_METADATA: &[SettingKeyMetadata] = &[
+    ANALYSIS_RECORD_REQUESTED_ANON_TARGETS.metadata,
     HYDRATION_ENABLE_PAGING.metadata,
     HYDRATION_PAGE_OUT_ON_IDLE.metadata,
     HYDRATION_PAGE_OUT_ON_IDLE_ISOLATION_DIR_SCOPE.metadata,
@@ -142,6 +154,12 @@ pub(crate) fn find_setting_metadata<'a>(
     key: SettingKeyRef<'_>,
 ) -> Option<&'a SettingKeyMetadata> {
     metadata.iter().find(|metadata| metadata.key == key)
+}
+
+#[derive(Debug, Default, Deserialize, Serialize, PartialEq, Eq, Allocative)]
+#[serde(deny_unknown_fields)]
+struct AnalysisSectionData {
+    record_requested_anon_targets: Option<bool>,
 }
 
 #[derive(Debug, Default, Deserialize, Serialize, PartialEq, Eq, Allocative)]
@@ -162,9 +180,35 @@ struct HydrationSectionData {
 #[serde(deny_unknown_fields)]
 pub(crate) struct YakSettingsData {
     #[serde(default)]
+    analysis: AnalysisSectionData,
+    #[serde(default)]
     hydration: HydrationSectionData,
     #[serde(default)]
     log_download: LogDownloadSectionData,
+}
+
+/// Settings controlling what analysis records beyond its providers.
+#[derive(
+    Clone,
+    Dupe,
+    Debug,
+    Default,
+    Serialize,
+    Deserialize,
+    PartialEq,
+    Eq,
+    Allocative
+)]
+#[serde(transparent)]
+pub struct AnalysisSection(Arc<AnalysisSectionData>);
+
+impl AnalysisSection {
+    /// Whether each analysis keeps the list of anon targets it requested.
+    pub fn record_requested_anon_targets(&self) -> bool {
+        ANALYSIS_RECORD_REQUESTED_ANON_TARGETS
+            .resolve(self.0.record_requested_anon_targets)
+            .expect("record_requested_anon_targets should have a default")
+    }
 }
 
 /// Settings controlling hydration/paging behavior.
@@ -233,6 +277,8 @@ impl LogDownloadSection {
 #[serde(deny_unknown_fields)]
 pub struct YakSettings {
     #[serde(default)]
+    pub analysis: AnalysisSection,
+    #[serde(default)]
     pub hydration: HydrationSection,
     #[serde(default)]
     pub log_download: LogDownloadSection,
@@ -241,6 +287,7 @@ pub struct YakSettings {
 impl From<YakSettingsData> for YakSettings {
     fn from(data: YakSettingsData) -> Self {
         Self {
+            analysis: AnalysisSection(Arc::new(data.analysis)),
             hydration: HydrationSection(Arc::new(data.hydration)),
             log_download: LogDownloadSection(Arc::new(data.log_download)),
         }

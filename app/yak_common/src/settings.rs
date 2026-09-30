@@ -11,6 +11,7 @@
 //! Typed yak settings, replaces yakconfig for core yak settings.
 
 pub mod args;
+pub mod dice;
 pub mod parser;
 mod path;
 pub mod settings;

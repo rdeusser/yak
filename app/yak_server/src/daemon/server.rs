@@ -284,6 +284,7 @@ impl TenantStateInitPreferences {
             digest_config,
             Some(root_config),
             self.detect_cycles,
+            self.daemon_startup_config.yak_settings.dupe(),
             hydration.map(|_| dice_state_path),
             hydration.map_or_else(Default::default, |h| h.pagable_storage_backend),
         )

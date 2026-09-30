@@ -14,14 +14,19 @@ use std::rc::Rc;
 use async_trait::async_trait;
 use dice::DiceComputations;
 use starlark::eval::Evaluator;
+use yak_core::deferred::base_deferred_key::BaseDeferredKey;
 use yak_interpreter::factory::ReentrantStarlarkEvaluator;
 
 #[async_trait(?Send)]
 pub trait AnonPromisesDyn<'v>: 'v {
+    /// Resolves the pending promises. When `record_requested` is set, returns the
+    /// anon target keys that were resolved (as the allocations DICE shares between
+    /// requesters); otherwise returns nothing.
     async fn run_promises<'a, 'e: 'a>(
         self: Box<Self>,
         accessor: &mut dyn RunAnonPromisesAccessor<'v, 'a, 'e>,
-    ) -> yak_error::Result<()>
+        record_requested: bool,
+    ) -> yak_error::Result<Vec<BaseDeferredKey>>
     where
         'v: 'a;
 }
