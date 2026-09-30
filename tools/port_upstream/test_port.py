@@ -360,6 +360,17 @@ class MergeTest(unittest.TestCase):
             port.apply_edits_by_content(["x\n", "old\n", "b\n"], base, upstream),
         )
 
+    def test_edits_apply_to_a_pruned_file_by_content(self) -> None:
+        base = "".join(f"line {i}\n" for i in range(40))
+        theirs = base.replace("line 30\n", "line thirty\n")
+        ours = "".join(f"line {i}\n" for i in range(0, 40, 3)).replace(
+            "line 3\n", "line three\n"
+        )
+        result, conflict, _ = port.merge(ours, base, theirs)
+        self.assertFalse(conflict)
+        self.assertIn("line thirty\n", result)
+        self.assertIn("line three\n", result)
+
     def test_use_runs_sort_before_a_merge(self) -> None:
         base = port.sort_use_runs("use a::B;\nuse a::Old;\nuse a::C;\n")
         ours = port.sort_use_runs("use a::B;\nuse a::C;\nuse a::Old;\n")

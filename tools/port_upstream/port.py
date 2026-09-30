@@ -501,7 +501,27 @@ def merge(ours: str, base: str, theirs: str) -> tuple[str, bool, list[str]]:
         merged = result.stdout.decode()
         if result.returncode == 0:
             return merged, False, []
-        return resolve_conflicts(merged)
+        resolved, remaining, notes = resolve_conflicts(merged)
+        if not remaining:
+            return resolved, False, notes
+        # Conflict blocks can miss the fork's copy of the lines that upstream
+        # changed when the fork pruned much of a file, such as a lock file.
+        # Upstream's edits then apply to the whole file where their lines occur once.
+        base_lines = base.splitlines(keepends=True)
+        placed = apply_edits_by_content(
+            ours.splitlines(keepends=True),
+            base_lines,
+            edits(base_lines, theirs.splitlines(keepends=True)),
+        )
+        if placed is None:
+            return resolved, True, notes
+        return (
+            "".join(placed),
+            False,
+            [
+                "applied upstream's edits to the whole file where the lines they replace occur once"
+            ],
+        )
 
 
 CONFLICT = re.compile(
