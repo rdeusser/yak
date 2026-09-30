@@ -8432,6 +8432,7 @@ dependencies = [
  "serde_json",
  "siphasher",
  "starlark_map",
+ "strong_hash",
  "tokio",
  "yak_artifact",
  "yak_build_api",
