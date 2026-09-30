@@ -125,8 +125,13 @@ async def test_cache_directory_cleanup(yak: Yak) -> None:
     # Need to run a command to start the daemon.
     await yak.audit_config()
 
+    # The dep file state is on by default whenever the materializer state is.
     cache_dir_listing = sorted(list(cache_dir.iterdir()))
-    assert cache_dir_listing == [incremental_state_dir, materializer_state_dir]
+    assert cache_dir_listing == [
+        cache_dir / "dep_file_state",
+        incremental_state_dir,
+        materializer_state_dir,
+    ]
 
     await yak.kill()
     disable_sqlite_materializer_state(yak)
