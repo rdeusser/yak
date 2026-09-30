@@ -178,6 +178,7 @@ export const sidebars: SidebarsConfig = {
             'users/advanced/restarter',
             'users/advanced/in_memory_cache',
             'users/advanced/external_cells',
+            'users/advanced/changed_since',
           ],
         },
       ],

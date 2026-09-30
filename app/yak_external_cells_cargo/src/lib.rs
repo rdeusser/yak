@@ -11,6 +11,7 @@
 
 pub mod cfg;
 mod graph;
+mod inputs;
 pub mod metadata;
 mod starlark;
 mod third_party;
@@ -21,6 +22,7 @@ mod tests;
 
 pub use graph::CargoPlatform;
 pub use graph::DEFAULT_PLATFORMS;
+pub use inputs::is_metadata_input;
 pub use third_party::ThirdParty;
 pub use third_party::ThirdPartyPackage;
 pub use third_party::generate_third_party;

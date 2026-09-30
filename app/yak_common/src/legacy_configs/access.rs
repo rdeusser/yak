@@ -8,6 +8,8 @@
  * above-listed licenses.
  */
 
+use std::collections::BTreeMap;
+use std::collections::BTreeSet;
 use std::str::FromStr;
 use std::sync::Arc;
 
@@ -177,6 +179,28 @@ impl LegacyYakConfig {
         }
 
         Ok(Self::parse_value::<ParseList<T>>(key, value)?.map(|l| l.0))
+    }
+
+    /// Returns the first key, as `section.property`, whose resolved value differs between the two
+    /// configurations or that only one of them sets.
+    pub(crate) fn first_different_key(&self, other: &Self) -> Option<String> {
+        let sections: BTreeSet<&String> = self.sections().chain(other.sections()).collect();
+        for section in sections {
+            let values = |config: &Self| -> BTreeMap<String, String> {
+                config
+                    .get_section(section)
+                    .into_iter()
+                    .flat_map(|s| s.iter())
+                    .map(|(key, value)| (key.to_owned(), value.as_str().to_owned()))
+                    .collect()
+            };
+            let (mine, theirs) = (values(self), values(other));
+            let keys: BTreeSet<&String> = mine.keys().chain(theirs.keys()).collect();
+            if let Some(key) = keys.into_iter().find(|k| mine.get(*k) != theirs.get(*k)) {
+                return Some(format!("{section}.{key}"));
+            }
+        }
+        None
     }
 
     pub fn sections(&self) -> impl Iterator<Item = &String> {

@@ -87,6 +87,16 @@ pub struct ConfigDirEntry {
     pub(crate) is_dir: bool,
 }
 
+impl ConfigDirEntry {
+    pub fn new(name: FileNameBuf, is_dir: bool) -> Self {
+        Self { name, is_dir }
+    }
+
+    pub fn name(&self) -> &FileNameBuf {
+        &self.name
+    }
+}
+
 #[async_trait::async_trait]
 #[allow(private_interfaces)]
 pub trait ConfigParserFileOps: Send + Sync {
@@ -105,8 +115,15 @@ enum ReadDirError {
     NotUtf8(String, String),
 }
 
-pub(crate) struct DefaultConfigParserFileOps {
+/// `DefaultConfigParserFileOps` reads configuration files from the file system.
+pub struct DefaultConfigParserFileOps {
     pub(crate) project_fs: ProjectRoot,
+}
+
+impl DefaultConfigParserFileOps {
+    pub fn new(project_fs: ProjectRoot) -> Self {
+        Self { project_fs }
+    }
 }
 
 #[async_trait::async_trait]

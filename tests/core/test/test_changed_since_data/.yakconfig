@@ -1,0 +1,8 @@
+[cells]
+    root = .
+[cell_aliases]
+    prelude = root
+[buildfile]
+    name = YAK.fixture
+[test]
+    changed_since_select_all = tools

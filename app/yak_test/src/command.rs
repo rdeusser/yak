@@ -111,6 +111,8 @@ use yak_test_api::data::TestStatus;
 use yak_test_api::protocol::TestExecutor;
 use yak_test_api::protocol::TestOrchestrator;
 
+use crate::changed_since;
+use crate::changed_since::Selection;
 use crate::downward_api::YakTestDownwardApi;
 use crate::executor_launcher::ExecutorLaunch;
 use crate::executor_launcher::ExecutorLauncher;
@@ -464,6 +466,38 @@ async fn test(
     )
     .await?;
 
+    let selected = match &request.changed_since {
+        None => None,
+        Some(changes) => {
+            let since = format!(
+                "`{}` (merge base {:.12})",
+                changes.revision, changes.merge_base
+            );
+            match changed_since::select(
+                &ctx,
+                changes,
+                &resolved_pattern,
+                global_cfg_options.target_platform.as_ref(),
+            )
+            .await?
+            {
+                Selection::All(reason) => {
+                    console_message(format!(
+                        "Testing every matched target, because since {since} {reason}."
+                    ));
+                    None
+                }
+                Selection::Targets { selected, matched } => {
+                    console_message(format!(
+                        "Testing {} of {matched} matched targets, the ones that changes since {since} can affect.",
+                        selected.len()
+                    ));
+                    Some(selected)
+                }
+            }
+        }
+    };
+
     let launcher: Box<dyn ExecutorLauncher> = Box::new(OutOfProcessTestExecutor {
         executable: test_executor,
         args: test_executor_args,
@@ -528,6 +562,7 @@ async fn test(
         request.ignore_tests_attribute,
         build_default_info,
         build_run_info,
+        selected,
         streaming_build_result_tx,
     );
 
@@ -674,6 +709,7 @@ async fn test_targets(
     ignore_tests_attribute: bool,
     build_default_info: bool,
     build_run_info: bool,
+    selected: Option<Arc<YakMutSet<TargetLabel>>>,
     streaming_build_result_tx: Option<UnboundedSender<BuildTargetResult>>,
 ) -> yak_error::Result<TestOutcome> {
     let session = Arc::new(session);
@@ -792,6 +828,7 @@ async fn test_targets(
                         ignore_tests_attribute,
                         build_default_info,
                         build_run_info,
+                        selected: selected.as_ref(),
                     },
                     streaming_build_result_tx,
                 );
@@ -986,6 +1023,8 @@ struct TestDriverState<'a, 'e> {
     ignore_tests_attribute: bool,
     build_default_info: bool,
     build_run_info: bool,
+    /// The targets that `--changed-since` selected, when it was given.
+    selected: Option<&'a Arc<YakMutSet<TargetLabel>>>,
 }
 
 /// Maintains the state of an ongoing test execution.
@@ -1177,27 +1216,31 @@ impl<'a, 'e> TestDriver<'a, 'e> {
                     }
                 }
 
-                let labels =
-                    targets
-                        .into_iter()
-                        .map(|((target_name, providers_pattern), target_node)| {
-                            // Emit one rule-type event per CLI-resolved top-level target so the
-                            // invocation recorder can populate
-                            // `InvocationRecord.target_rule_type_names`. Covers every rule kind,
-                            // including non-test rules like `genrule`/`cxx_library` siblings that
-                            // tests get bundled with via macros.
-                            instant_event(yak_data::TargetRuleTypeName {
-                                rule_type: target_node.rule_type().name().to_owned(),
-                            });
-                            (
-                                providers_pattern.into_providers_label_with_modifiers(
-                                    package.dupe(),
-                                    target_name.as_ref(),
-                                    modifiers.dupe(),
-                                ),
-                                target_node.test_config_unification_rollout(),
-                            )
+                let labels = targets
+                    .into_iter()
+                    .filter(|(_, target_node)| {
+                        state
+                            .selected
+                            .is_none_or(|selected| selected.contains(target_node.label()))
+                    })
+                    .map(|((target_name, providers_pattern), target_node)| {
+                        // Emit one rule-type event per CLI-resolved top-level target so the
+                        // invocation recorder can populate
+                        // `InvocationRecord.target_rule_type_names`. Covers every rule kind,
+                        // including non-test rules like `genrule`/`cxx_library` siblings that
+                        // tests get bundled with via macros.
+                        instant_event(yak_data::TargetRuleTypeName {
+                            rule_type: target_node.rule_type().name().to_owned(),
                         });
+                        (
+                            providers_pattern.into_providers_label_with_modifiers(
+                                package.dupe(),
+                                target_name.as_ref(),
+                                modifiers.dupe(),
+                            ),
+                            target_node.test_config_unification_rollout(),
+                        )
+                    });
                 let work = labels
                     .into_iter()
                     .map(|(label_with_modifiers, test_config_unification_rollout)| {

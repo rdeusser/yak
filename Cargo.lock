@@ -9876,6 +9876,7 @@ dependencies = [
  "yak_events",
  "yak_execute",
  "yak_execute_impl",
+ "yak_external_cells_cargo",
  "yak_fs",
  "yak_grpc",
  "yak_hash",

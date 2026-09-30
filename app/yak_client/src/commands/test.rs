@@ -46,6 +46,7 @@ use yak_fs::working_dir::AbsWorkingDir;
 
 use crate::commands::build::print_build_id;
 use crate::commands::build::print_build_result;
+use crate::commands::changed_since;
 
 fn forward_output_to_path(
     output: &str,
@@ -145,6 +146,14 @@ If include patterns are present, regardless of whether exclude patterns are pres
 
     #[clap(name = "TARGET_PATTERNS", help = "Patterns to test", value_hint = clap::ValueHint::Other)]
     patterns: Vec<String>,
+
+    /// Test only the targets that the changes since a Git revision can affect.
+    ///
+    /// The revision is anything Git resolves to a commit, such as a branch, a tag, or a commit ID.
+    /// The changes are those between the working tree, including untracked files, and the merge
+    /// base of the revision and `HEAD`.
+    #[clap(long, value_name = "REVISION")]
+    changed_since: Option<String>,
 
     /// Writes the test executor stdout to the provided path
     ///
@@ -387,6 +396,13 @@ impl StreamingCommand for TestCommand {
 
         let context = ctx.client_context(matches, &self)?;
 
+        let changed_since = match &self.changed_since {
+            Some(revision) => {
+                Some(changed_since::changed_since(ctx.paths()?.project_root(), revision).await?)
+            }
+            None => None,
+        };
+
         let build_default_info = if self.skip_default_info {
             Some(false)
         } else if self.build_default_info {
@@ -428,6 +444,7 @@ impl StreamingCommand for TestCommand {
                     ignore_tests_attribute: self.ignore_tests_attribute,
                     build_default_info,
                     build_run_info,
+                    changed_since,
                 },
                 events_ctx,
                 ctx.console_interaction_stream(&self.common_opts.console_opts),

@@ -10,6 +10,7 @@
 
 pub mod build;
 pub mod bxl;
+mod changed_since;
 pub mod clean;
 pub mod clean_stale;
 pub mod cleanall;

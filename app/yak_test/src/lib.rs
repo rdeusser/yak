@@ -12,6 +12,7 @@
 
 //! Implementation of test running.
 
+mod changed_since;
 pub mod command;
 pub mod downward_api;
 pub mod executor_launcher;

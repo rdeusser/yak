@@ -583,6 +583,27 @@ message TestRequest {
   // should be built instead of only test providers. When unset, this defaults
   // to the `yak.test_builds_targets` yakconfig.
   optional bool build_run_info = 16;
+
+  // When set, only the targets that the changes can affect are tested.
+  optional ChangedFiles changed_since = 17;
+}
+
+// The files that changed since a Git revision. Paths are relative to the
+// project root.
+message ChangedFiles {
+  // The revision as the user gave it.
+  string revision = 1;
+  // The commit that the changes are relative to, the merge base of the
+  // revision and `HEAD`.
+  string merge_base = 2;
+  repeated string added = 3;
+  repeated string removed = 4;
+  repeated string modified = 5;
+  // Submodules whose commit or contents changed.
+  repeated string submodules = 6;
+  // The first difference between the project configuration at the merge base
+  // and the current one, if there is one.
+  optional string config_difference = 7;
 }
 
 message BxlRequest {

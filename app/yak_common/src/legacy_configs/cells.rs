@@ -272,6 +272,37 @@ impl YakConfigBasedCells {
         .await
     }
 
+    /// Describes the first difference between the project configuration that `current` reads and
+    /// the one that `other` reads, or returns `None` when both define the same cells and every
+    /// cell that is not external has the same configuration values. Command line configuration
+    /// applies to both alike, so it is left out. The root configuration defines the origin of each
+    /// external cell, so comparing the cells covers external cells.
+    pub async fn describe_difference(
+        current: &mut dyn ConfigParserFileOps,
+        other: &mut dyn ConfigParserFileOps,
+    ) -> yak_error::Result<Option<String>> {
+        let current_cells = Self::parse_with_file_ops_and_options(current, &[], true).await?;
+        let other_cells = Self::parse_with_file_ops_and_options(other, &[], true).await?;
+        if current_cells.cell_resolver != other_cells.cell_resolver {
+            return Ok(Some("the cells of the project".to_owned()));
+        }
+        for (cell, instance) in current_cells.cell_resolver.cells() {
+            if instance.external().is_some() {
+                continue;
+            }
+            let current_config = current_cells
+                .parse_single_cell_with_file_ops(cell, current)
+                .await?;
+            let other_config = other_cells
+                .parse_single_cell_with_file_ops(cell, other)
+                .await?;
+            if let Some(key) = current_config.first_different_key(&other_config) {
+                return Ok(Some(format!("`{key}` in cell `{cell}`")));
+            }
+        }
+        Ok(None)
+    }
+
     async fn parse_with_file_ops_and_options(
         file_ops: &mut dyn ConfigParserFileOps,
         config_args: &[yak_cli_proto::ConfigOverride],
@@ -1349,6 +1380,48 @@ mod tests {
         let e = format!("{e:?}");
         assert!(e.contains("not a valid SHA1 digest"), "error: {e}");
 
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_describe_difference() -> yak_error::Result<()> {
+        let root = indoc!(
+            r#"
+                [cells]
+                    root = .
+                    other = other/
+                <file:included.yakconfig>
+            "#
+        );
+        let other = "[cells]\n  root = ..\n  other = .\n[rust]\n  edition = 2024\n";
+        let files = |included: &'static str, other: &'static str| {
+            TestConfigParserFileOps::new(&[
+                (".yakconfig", root),
+                ("included.yakconfig", included),
+                ("other/.yakconfig", other),
+            ])
+        };
+        let describe = |mut a: TestConfigParserFileOps, mut b: TestConfigParserFileOps| async move {
+            YakConfigBasedCells::describe_difference(&mut a, &mut b).await
+        };
+
+        let same = "[build]\n  jobs = 2\n";
+        assert_eq!(
+            None,
+            describe(files(same, other)?, files(same, other)?).await?
+        );
+        assert_eq!(
+            Some("`build.jobs` in cell `root`".to_owned()),
+            describe(files(same, other)?, files("[build]\n  jobs = 3\n", other)?).await?
+        );
+        assert_eq!(
+            Some("`rust.edition` in cell `other`".to_owned()),
+            describe(
+                files(same, other)?,
+                files(same, "[cells]\n  root = ..\n  other = .\n")?
+            )
+            .await?
+        );
         Ok(())
     }
 }
