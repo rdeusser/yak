@@ -16,8 +16,8 @@ To see it working, run `yak generate` in a Cargo workspace and a Go module, coun
 
 - [x] The owner chooses the direction: the Cargo and Go files stay the source of truth, and yak derives its build files from them (2026-09-29).
 - [x] The owner chooses to resolve dependencies by running `cargo` and `go` (2026-09-29).
-- [ ] Milestone 1, prototype: a `YAK` file builds a crate from its own `Cargo.toml` through `load()`.
-- [ ] Milestone 2, prototype: prelude rules build third-party crates from crates.io that `cargo metadata` describes, including a proc macro and a build script.
+- [x] Milestone 1, prototype: a `YAK` file builds a crate from its own `Cargo.toml` through `load()` (2026-09-30). The approach is kept.
+- [x] Milestone 2, prototype: prelude rules build third-party crates from crates.io that `cargo metadata` describes, including a proc macro and a build script (2026-09-30). The approach is kept for one platform. Resolving several platforms remains for milestone 3.
 - [ ] Milestone 3: the `cargo` external cell origin.
 - [ ] Milestone 4: the prelude macro for first-party crates.
 - [ ] Milestone 5: `yak generate` for Cargo workspaces.
@@ -26,7 +26,20 @@ To see it working, run `yak generate` in a Cargo workspace and a Go module, coun
 
 ## Surprises & Discoveries
 
-None yet.
+- Milestone 1 (2026-09-30): a `YAK` file of five lines builds a crate from its `Cargo.toml`. The project had a workspace `Cargo.toml` with `[workspace.package] edition`, a library crate `util`, and a crate `hello` with a library, a binary, and `util = { path = "../util" }`. Each crate's `YAK` file was:
+
+  ```python
+  load(":Cargo.toml", manifest = "value")
+  load("//:Cargo.toml", workspace = "value")
+  load("//:cargo.bzl", "cargo_package")
+
+  cargo_package(manifest, workspace)
+  ```
+
+  `cargo_package` (46 lines) took the name, the edition (inherited through `edition.workspace = true`), and the path dependencies from the manifest, and globbed `src/**/*.rs`. `yak run //hello:hello-bin` and `cargo run -p hello` both printed `HELLO FROM UTIL`. After the dependency on `util` was removed from `hello/Cargo.toml`, the next `yak build //hello:hello-bin` failed with ``error[E0433]: cannot find module or crate `util` in this scope``, and restoring it made the build pass. An edit to `Cargo.toml` reaches the build without regenerating the `YAK` file.
+- Milestone 2 (2026-09-30): third-party crates build from `cargo metadata` output with the prelude's rules. The project depended on `serde` with `derive`, `serde_json`, `libc`, and `memchr` under `[target.'cfg(unix)'.dependencies]`, which resolve to 13 packages. A script read `cargo metadata --locked --format-version 1 --filter-platform aarch64-apple-darwin` and the checksums in `Cargo.lock`, and wrote per crate an `http_archive` of `https://static.crates.io/crates/<name>/<name>-<version>.crate`, a `cargo.rust_library` (with `proc_macro` for `serde_derive`), and for crates with a build script a `cargo.rust_binary` and a `buildscript_run`. The library took the build script's results through `env = {"OUT_DIR": "$(location :<id>-build-script-run[out_dir])"}` and `rustc_flags = ["@$(location :<id>-build-script-run[rustc_flags])"]`. `yak run //app:app` printed `{"pid":7,"found":2}`, as `cargo run -p app` did.
+- `buildscript_run` sets only `CARGO_PKG_NAME` and `CARGO_PKG_VERSION` (`prelude/rust/cargo_buildscript.bzl`). `serde_core`'s build script failed with `called Result::unwrap() on an Err value: NotPresent` because it reads `CARGO_PKG_VERSION_PATCH`. Cargo also sets the `CARGO_PKG_VERSION_MAJOR`, `_MINOR`, `_PATCH`, and `_PRE` parts, which the rule can derive from `version`, and package metadata such as `CARGO_PKG_AUTHORS`, which comes from the manifest. The prototype passed them through `env`.
+- `cargo metadata` reports one feature set per package (`resolve.nodes[].features`). Cargo's version 2 resolver can build a package with different features for build dependencies and proc macros than for normal dependencies, so this feature set can be a superset of what `cargo build` uses for one of them. The prototype's crates did not exercise the difference.
 
 ## Decision Log
 
