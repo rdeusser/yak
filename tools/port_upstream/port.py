@@ -1106,36 +1106,48 @@ def update_lock_files(git: Git, commit: str) -> list[str]:
         before = lock_versions(decode(git.blob(f"{commit}^", upstream_path)) or "")
         after = lock_versions(decode(git.blob(commit, upstream_path)) or "")
         manifest = str(git.root / Path(target).parent / "Cargo.toml")
+        moves = {}
         for name in sorted(set(before) & set(after)):
             old, new = before[name] - after[name], after[name] - before[name]
-            if len(old) != 1 or len(new) != 1:
-                continue
-            (old_version,), (new_version,) = old, new
-            # An update can move other packages too, such as a derive crate
-            # released with its crate, so the lock file is read again each time.
-            ours = lock_versions((git.root / target).read_text())
-            if old_version not in ours.get(name, set()):
-                continue
-            result = subprocess.run(
-                [
-                    "cargo",
-                    "update",
-                    "--manifest-path",
-                    manifest,
-                    "-p",
-                    f"{name}@{old_version}",
-                    "--precise",
-                    new_version,
-                ],
-                cwd=git.root,
-                capture_output=True,
-                text=True,
-                check=False,
-            )
-            if result.returncode != 0:
-                problems.append(
-                    f"{target}: cargo update {name}@{old_version} --precise {new_version}: {result.stderr.strip()}"
+            if len(old) == 1 and len(new) == 1:
+                moves[name] = (next(iter(old)), next(iter(new)))
+        # One update can move other packages, such as a derive crate released
+        # with its crate, and can fail until another package has moved, such
+        # as a dependency whose requirement allows only the new version. The
+        # updates repeat while any of them succeeds, and the lock file is read
+        # again before each.
+        failures: dict[str, str] = {}
+        while moves:
+            failures = {}
+            for name, (old_version, new_version) in sorted(moves.items()):
+                ours = lock_versions((git.root / target).read_text()).get(name, set())
+                if new_version in ours or old_version not in ours:
+                    continue
+                result = subprocess.run(
+                    [
+                        "cargo",
+                        "update",
+                        "--manifest-path",
+                        manifest,
+                        "-p",
+                        f"{name}@{old_version}",
+                        "--precise",
+                        new_version,
+                    ],
+                    cwd=git.root,
+                    capture_output=True,
+                    text=True,
+                    check=False,
                 )
+                if result.returncode != 0:
+                    failures[name] = (
+                        f"{target}: cargo update {name}@{old_version} --precise {new_version}: "
+                        f"{result.stderr.strip()}"
+                    )
+            if len(failures) == len(moves):
+                break
+            moves = {name: moves[name] for name in failures}
+        problems.extend(failures.values())
         result = subprocess.run(
             ["cargo", "metadata", "--format-version", "1", "--manifest-path", manifest],
             cwd=git.root,
