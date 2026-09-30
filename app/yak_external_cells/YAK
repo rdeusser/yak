@@ -12,6 +12,7 @@ rust_library(
         "//app/yak_error:yak_error",
         "//app/yak_execute:yak_execute",
         "//app/yak_external_cells_bundled:yak_external_cells_bundled",
+        "//app/yak_external_cells_cargo:yak_external_cells_cargo",
         "//app/yak_fs:yak_fs",
         "//app/yak_hash:yak_hash",
         "//app/yak_util:yak_util",
@@ -22,6 +23,7 @@ rust_library(
         "//third-party/rust:async-trait",
         "//third-party/rust:blake3",
         "//third-party/rust:derive_more",
+        "//third-party/rust:futures",
         "//third-party/rust:tokio",
     ],
 )

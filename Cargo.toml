@@ -99,6 +99,7 @@ members = [
   "app/yak_execute_local",
   "app/yak_external_cells",
   "app/yak_external_cells_bundled",
+  "app/yak_external_cells_cargo",
   "app/yak_file_watcher",
   "app/yak_forkserver",
   "app/yak_forkserver_proto",
@@ -469,6 +470,7 @@ yak_execute_impl = { path = "app/yak_execute_impl" }
 yak_execute_local = { path = "app/yak_execute_local" }
 yak_external_cells = { path = "app/yak_external_cells" }
 yak_external_cells_bundled = { path = "app/yak_external_cells_bundled" }
+yak_external_cells_cargo = { path = "app/yak_external_cells_cargo" }
 yak_file_watcher = { path = "app/yak_file_watcher" }
 yak_forkserver = { path = "app/yak_forkserver" }
 yak_forkserver_proto = { path = "app/yak_forkserver_proto" }

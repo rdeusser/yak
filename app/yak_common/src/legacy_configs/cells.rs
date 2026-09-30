@@ -20,12 +20,14 @@ use yak_core::cells::CellResolver;
 use yak_core::cells::alias::NonEmptyCellAlias;
 use yak_core::cells::cell_root_path::CellRootPath;
 use yak_core::cells::cell_root_path::CellRootPathBuf;
+use yak_core::cells::external::CargoCellSetup;
 use yak_core::cells::external::ExternalCellOrigin;
 use yak_core::cells::external::GitCellSetup;
 use yak_core::cells::external::GitObjectFormat;
 use yak_core::cells::name::CellName;
 use yak_core::fs::project::ProjectRoot;
 use yak_core::fs::project_rel_path::ProjectRelativePath;
+use yak_core::fs::project_rel_path::ProjectRelativePathBuf;
 use yak_core::yak_env;
 use yak_error::YakErrorContext;
 use yak_fs::paths::RelativePath;
@@ -531,6 +533,12 @@ impl YakConfigBasedCells {
                 git_origin: get_config(section, "git_origin")?.into(),
                 commit: Arc::from(commit),
                 object_format,
+            }))
+        } else if value == "cargo" {
+            let section = &format!("external_cell_{}", cell.as_str());
+            let manifest = get_config(section, "manifest").unwrap_or("Cargo.toml");
+            Ok(ExternalCellOrigin::Cargo(CargoCellSetup {
+                manifest: Arc::new(ProjectRelativePathBuf::try_from(manifest.to_owned())?),
             }))
         } else {
             Err(ExternalCellOriginParseError::Unknown(value.to_owned()).into())

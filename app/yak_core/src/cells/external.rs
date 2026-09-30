@@ -19,11 +19,32 @@ use pagable::Pagable;
 use yak_error::yak_error;
 
 use crate::cells::name::CellName;
+use crate::fs::project_rel_path::ProjectRelativePathBuf;
 
 #[derive(Debug, Clone, Dupe, Allocative, PartialEq, Eq, Pagable)]
 pub enum ExternalCellOrigin {
     Bundled(CellName),
     Git(GitCellSetup),
+    Cargo(CargoCellSetup),
+}
+
+/// CargoCellSetup configures a cell whose build files describe the third-party packages of a
+/// Cargo workspace, as `cargo metadata` resolves them.
+#[derive(
+    Debug,
+    derive_more::Display,
+    Clone,
+    Dupe,
+    allocative::Allocative,
+    PartialEq,
+    Eq,
+    Hash,
+    Pagable
+)]
+#[display("cargo({})", manifest)]
+pub struct CargoCellSetup {
+    /// The workspace's `Cargo.toml`, relative to the project root.
+    pub manifest: Arc<ProjectRelativePathBuf>,
 }
 
 #[derive(
@@ -50,6 +71,7 @@ impl fmt::Display for ExternalCellOrigin {
         match self {
             Self::Bundled(cell) => write!(f, "bundled({cell})"),
             Self::Git(git) => write!(f, "{git}"),
+            Self::Cargo(cargo) => write!(f, "{cargo}"),
         }
     }
 }

@@ -9070,6 +9070,7 @@ dependencies = [
  "derive_more 2.1.1",
  "dice",
  "dupe",
+ "futures 0.3.34",
  "pagable",
  "tokio",
  "yak_build_api",
@@ -9079,6 +9080,7 @@ dependencies = [
  "yak_error",
  "yak_execute",
  "yak_external_cells_bundled",
+ "yak_external_cells_cargo",
  "yak_fs",
  "yak_hash",
  "yak_util",
@@ -9089,6 +9091,16 @@ name = "yak_external_cells_bundled"
 version = "0.1.0"
 dependencies = [
  "walkdir",
+]
+
+[[package]]
+name = "yak_external_cells_cargo"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "toml",
+ "yak_error",
 ]
 
 [[package]]
