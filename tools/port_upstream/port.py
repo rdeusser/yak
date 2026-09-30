@@ -1019,7 +1019,7 @@ def port_files(git: Git, commit: str, paths: PathMap) -> Outcome:
         added_markers = meta_markers(result) - meta_markers(ours)
         if added_markers:
             outcome.review.append(
-                f"{new_target}: adds lines for Meta's internal build: {sorted(added_markers)[0]}"
+                f"{new_target}: adds lines for Meta's internal build: {min(added_markers)}"
             )
         if new_target != ours_path:
             (git.root / ours_path).unlink()
