@@ -121,7 +121,8 @@ knobs.
 
 The fork split from `facebook/buck2` at commit `903bfd7a61` (2026-09-25) and does not merge upstream again.
 A fix or feature from upstream reaches the fork only when someone ports its commit.
-To see what upstream changed since the split, fetch `https://github.com/facebook/buck2.git` and list its commits after `903bfd7a61`.
+[`tools/port_upstream/port.py`](../../tools/port_upstream/README.md) fetches upstream, lists the commits after `903bfd7a61` that are neither ported nor skipped, and ports them in order with the fork's names.
+It stops at a commit that conflicts with the fork, and `tools/port_upstream/skipped.txt` records each commit that the fork does not take, with the reason.
 
 A ported commit takes the fork's names:
 
