@@ -16,8 +16,8 @@ To see it working, change one crate of a Cargo workspace and run `yak test --cha
 - [x] The owner chooses declared, enforced run-time files for tests (2026-09-30).
 - [x] Milestone 1, prototype: dropped in favor of integration tests for each case in Validation (Decision Log).
 - [x] Milestone 2: `yak test --changed-since`, selecting from the current graph (`app/yak_test/src/changed_since.rs`, `app/yak_client/src/commands/changed_since.rs`, `tests/core/test/test_changed_since.py`).
-- [ ] Milestone 3: member tests read only their package's files and the files that `[package.metadata.yak] test-data` declares, and run from their package's directory. Implemented (`run_from_manifest_dir`, `ExternalRunnerTestInfo.working_directory`), and the checks remain.
-- [ ] Milestone 4: documentation and validation against Roost.
+- [x] Milestone 3: member tests read only their package's files and the files that `[package.metadata.yak] test-data` declares, and run from their package's directory (`run_from_manifest_dir`, `ExternalRunnerTestInfo.working_directory`). `tests/core/generate/test_generate.py` covers a declared file and the failure after its declaration is removed (2026-09-30).
+- [x] Milestone 4: documentation and validation against Roost. `yak test //...` in Roost passed 8 of 8 targets after Roost declared its test data, and `--changed-since HEAD` selected 28 of 28 matched targets with its `Cargo.toml` files edited (2026-09-30).
 - [ ] Milestone 5: evaluate the changed packages at the merge base and compare their targets, so that a changed package selects only the targets that differ.
 
 ## Surprises & Discoveries
@@ -87,4 +87,4 @@ Each case runs in a project under `tests/`, with the expected selection:
 
 ## Idempotence and Recovery
 
-`--changed-since` writes nothing into the repository. The worktree of the merge base lives under `yak-out` and is recreated when a run finds it at another commit. A run that fails partway leaves the worktree and its daemon, which the next run reuses or `yak clean` removes.
+`--changed-since` writes nothing into the repository and reads Git only through commands that leave the index and the working tree unchanged. A run that fails can be repeated as is. Milestone 5 adds a worktree of the merge base under `yak-out`, which a run recreates when it finds the worktree at another commit and which `yak clean` removes.
