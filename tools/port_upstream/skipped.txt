@@ -15,3 +15,9 @@ ecbef94bc6e8d2b6928a25459af338e7bded965d changes only files that the fork remove
 c44629c5a76ea01a66519d86e5857052e8fb06b8 changes only files that the fork removed, in bootstrap/reindeer
 08ab357537a7aad29b5312ad462c264326c5f912 the fork already has the change
 8ea659c4937b8875d3fff97cf39684f18c9bcc0a changes only files that the fork removed, in tests/e2e
+9e04248c3e64e0a1c17f31e4bfe201faf58ff7d0 changes only files that the fork removed, in prelude/toolchains
+6d69363147b6e07e7ed768eab8a64222a5569bc3 changes only files that the fork removed, in prelude/android
+76dfc00cdf384f5924b3b984274e12a126399867 changes only files that the fork removed, in prelude/toolchains
+4a39c1af7bc25958ad571deec625923f70e3315e changes only files that the fork removed, in prelude/go
+a0d67eda26dd180043ede04e64198d073945a2f6 changes the AIDL execution platform of the Android toolchain, which the fork removed
+1f3bcd7d4f18d6280cd2d366d414d52d971f548d changes the sysroot choice for Meta's repository, which the fork removed from rust-project
