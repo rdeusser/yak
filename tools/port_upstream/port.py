@@ -56,9 +56,12 @@ OSS_ENABLE = re.compile(r"\s*(?:#|//)\s*@oss-enable\s*$")
 MOVES = {
     "prelude/toolchains/demo.bzl": "prelude/toolchains/system.bzl",
 }
-LABELS = [
+# Labels of Meta's repository that name this repository's code or its vendored
+# crates, and names that the fork changed when it removed Meta's internal build.
+REPLACEMENTS = [
     (re.compile(r"fbsource//third-party/rust:"), "//third-party/rust:"),
     (re.compile(r"(?:fbcode)?//buck2/"), "//"),
+    (re.compile(r"\berror_on_oss\b"), "hard_error"),
 ]
 
 
@@ -75,7 +78,7 @@ def yak_name(match: re.Match) -> str:
 def rename(text: str) -> str:
     """Replaces the upstream names in `text` with yak names, apart from text that
     names the upstream project."""
-    for pattern, replacement in LABELS:
+    for pattern, replacement in REPLACEMENTS:
         text = pattern.sub(replacement, text)
     out = []
     last = 0

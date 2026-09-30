@@ -35,6 +35,11 @@ class RenameTest(unittest.TestCase):
         )
 
 
+class ForkNamesTest(unittest.TestCase):
+    def test_soft_errors_take_the_fork_option_name(self) -> None:
+        self.assertEqual("hard_error: true", port.rename("error_on_oss: true"))
+
+
 class OpenSourceSideTest(unittest.TestCase):
     def test_keeps_enabled_lines_and_drops_disabled_lines(self) -> None:
         text = (
