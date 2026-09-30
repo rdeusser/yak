@@ -1194,12 +1194,18 @@ def apply(git: Git, commit: str, auto_commit: bool) -> bool:
             "   Resolve the files above, then run `port.py continue`, or `port.py abort`."
         )
         return False
-    finish(git, commit)
+    finish(git, commit, written)
     return True
 
 
-def finish(git: Git, commit: str, note: str = "") -> None:
-    git.run("add", "-u", "--", ".", NOT_THE_LEDGER)
+def finish(git: Git, commit: str, paths: list[str], note: str = "") -> None:
+    """Commits the port of `commit`. The files that the port wrote are staged
+    again, so their resolutions count, and any other change is committed only
+    when it is staged."""
+    head = git.files("HEAD")
+    present = [p for p in paths if (git.root / p).exists() or p in head]
+    if present:
+        git.run("add", "-A", "--", *present)
     unmerged = git.text(
         "diff", "--cached", "--name-only", "-G^(<<<<<<<|>>>>>>>) "
     ).split()
@@ -1372,7 +1378,8 @@ def main() -> None:
     elif args.command == "continue":
         if not state.exists():
             raise SystemExit("No port is in progress.")
-        finish(git, json.loads(state.read_text())["commit"], args.note)
+        in_progress = json.loads(state.read_text())
+        finish(git, in_progress["commit"], in_progress["paths"], args.note)
     elif args.command == "abort":
         if not state.exists():
             raise SystemExit("No port is in progress.")
