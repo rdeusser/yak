@@ -61,6 +61,25 @@ class ForkNamesTest(unittest.TestCase):
         )
 
 
+class TransformPathTest(unittest.TestCase):
+    def test_targets_files_take_the_yak_build_file_name(self) -> None:
+        self.assertEqual(
+            "tests/a_data/YAK.fixture",
+            port.transform_path("tests/a_data/TARGETS.fixture"),
+        )
+        self.assertEqual(
+            "app/yak_core/YAK", port.transform_path("app/buck2_core/TARGETS")
+        )
+        self.assertEqual(
+            "templates/TARGETS_BIN", port.transform_path("templates/TARGETS_BIN")
+        )
+
+    def test_fixture_names_in_contents_take_the_yak_name(self) -> None:
+        self.assertEqual(
+            'yak.cwd / "YAK.fixture"', port.rename('buck.cwd / "TARGETS.fixture"')
+        )
+
+
 class OpenSourceSideTest(unittest.TestCase):
     def test_keeps_enabled_lines_and_drops_disabled_lines(self) -> None:
         text = (

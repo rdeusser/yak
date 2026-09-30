@@ -67,6 +67,7 @@ REPLACEMENTS = [
     (re.compile(r"\bbuck2\.tests\."), ""),
     (re.compile(r"^# pyre-strict\n\n*", re.MULTILINE), ""),
     (re.compile(r"^#!/usr/bin/env fbpython\n", re.MULTILINE), ""),
+    (re.compile(r"\bTARGETS(\.fixture|\.test)\b"), r"YAK\1"),
 ]
 # Arguments of upstream's test decorator for Meta's file systems, which the
 # fork's `yak_test` does not take.
@@ -139,8 +140,14 @@ def drop_test_arguments(text: str) -> str:
     return "".join(out)
 
 
+# Upstream build files named `TARGETS`, which the fork names `YAK`.
+TARGETS_FILE = re.compile(r"(?<![\w-])TARGETS(?:\.v2)?(\.fixture|\.test)?(?![\w-])")
+
+
 def transform_path(path: str) -> str:
-    return rename(path)
+    directory, _, name = rename(path).rpartition("/")
+    name = TARGETS_FILE.sub(r"YAK\1", name)
+    return f"{directory}/{name}" if directory else name
 
 
 class Git:
