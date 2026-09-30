@@ -434,6 +434,8 @@ async fn copy_package_sources(
             cancellations
                 .critical_section(|| async {
                     let io = ctx.get_blocking_executor();
+                    // Held until the copy is reported below.
+                    let output_lease = materializer.prepare_outputs(vec![path.to_owned()]).await?;
                     io.execute_io(
                         Box::new(CleanOutputPaths {
                             paths: vec![path.to_owned()],
@@ -470,10 +472,13 @@ async fn copy_package_sources(
                             .shared(&*INTERNER)
                     });
                     materializer
-                        .declare_existing(vec![DeclareArtifactPayload {
-                            path: path.to_owned(),
-                            artifact: ArtifactValue::new(entry, None),
-                        }])
+                        .declare_existing(
+                            &output_lease,
+                            vec![DeclareArtifactPayload {
+                                path: path.to_owned(),
+                                artifact: ArtifactValue::new(entry, None),
+                            }],
+                        )
                         .await
                 })
                 .await
