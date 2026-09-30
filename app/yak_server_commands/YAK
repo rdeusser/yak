@@ -32,6 +32,8 @@ rust_library(
         "//third-party/rust:futures",
         "//third-party/rust:itertools",
         "//third-party/rust:jiff",
+        "//third-party/rust:regex",
+        "//third-party/rust:serde_json",
         "//third-party/rust:tokio",
         "//third-party/rust:tokio-stream",
         "//third-party/rust:tonic",

@@ -21,6 +21,7 @@ use crate::TargetCfg;
 pub enum NewGenericRequest {
     Materialize(MaterializeRequest),
     DebugEval(DebugEvalRequest),
+    DebugAnonTargets(AnonTargetsRequest),
     ExpandExternalCells(ExpandExternalCellsRequest),
     Complete(CompleteRequest),
     Docs(DocsRequest),
@@ -30,6 +31,7 @@ pub enum NewGenericRequest {
 pub enum NewGenericResponse {
     Materialize(MaterializeResponse),
     DebugEval(DebugEvalResponse),
+    DebugAnonTargets(AnonTargetsResponse),
     ExpandExternalCells(ExpandExternalCellsResponse),
     Complete(CompleteResponse),
     Docs(DocsResponse),
@@ -51,6 +53,24 @@ pub struct DebugEvalRequest {
 
 #[derive(Serialize, Deserialize)]
 pub struct DebugEvalResponse {}
+
+#[derive(Serialize, Deserialize)]
+pub struct AnonTargetsRequest {
+    pub patterns: Vec<String>,
+    pub target_cfg: TargetCfg,
+    /// Also report which analyses requested each anon target.
+    pub with_requesters: bool,
+    pub json: bool,
+    /// Regexes selecting the attributes to output (cquery `--output-attribute` semantics:
+    /// search mode, `yak.`-prefixed special attributes included). Non-empty implies JSON.
+    pub output_attributes: Vec<String>,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct AnonTargetsResponse {
+    /// The rendered output, printed by the client.
+    pub serialized: String,
+}
 
 #[derive(Serialize, Deserialize)]
 pub enum ExpandExternalCellsRequest {

@@ -9,6 +9,8 @@
  */
 
 use async_trait::async_trait;
+use yak_cli_proto::new_generic::AnonTargetsRequest;
+use yak_cli_proto::new_generic::AnonTargetsResponse;
 use yak_cli_proto::new_generic::CompleteRequest;
 use yak_cli_proto::new_generic::CompleteResponse;
 use yak_cli_proto::new_generic::DebugEvalRequest;
@@ -46,6 +48,11 @@ pub trait OtherServerCommands: Send + Sync + 'static {
         ctx: &dyn ServerCommandContextTrait,
         req: DebugEvalRequest,
     ) -> yak_error::Result<DebugEvalResponse>;
+    async fn debug_anon_targets(
+        &self,
+        ctx: &dyn ServerCommandContextTrait,
+        req: AnonTargetsRequest,
+    ) -> yak_error::Result<AnonTargetsResponse>;
     async fn expand_external_cells(
         &self,
         ctx: &dyn ServerCommandContextTrait,

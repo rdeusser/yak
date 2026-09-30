@@ -1,0 +1,14 @@
+# This file is @generated, regenerate by rerunning the test with `YAK_UPDATE_GOLDEN=1` set
+
+{
+  "anon//:_anon_leaf (anon: <HASH>) (<unspecified>)": {
+    "yak.package": "anon//",
+    "yak.type": "root//prelude.bzl:_anon_leaf",
+    "suffix": "from-mid"
+  },
+  "anon//:_anon_mid (anon: <HASH>) (<unspecified>)": {
+    "yak.package": "anon//",
+    "yak.type": "root//prelude.bzl:_anon_mid",
+    "level": 1
+  }
+}

@@ -9,6 +9,8 @@
  */
 
 use async_trait::async_trait;
+use yak_cli_proto::new_generic::AnonTargetsRequest;
+use yak_cli_proto::new_generic::AnonTargetsResponse;
 use yak_cli_proto::new_generic::CompleteRequest;
 use yak_cli_proto::new_generic::CompleteResponse;
 use yak_cli_proto::new_generic::DebugEvalRequest;
@@ -23,6 +25,7 @@ use yak_server_ctx::partial_result_dispatcher::PartialResultDispatcher;
 
 use crate::build::build_command;
 use crate::complete::complete_command;
+use crate::debug_anon_targets::debug_anon_targets_command;
 use crate::debug_eval::debug_eval_command;
 use crate::expand_external_cells::expand_external_cells_command;
 use crate::install::install_command;
@@ -62,6 +65,14 @@ impl OtherServerCommands for OtherServerCommandsInstance {
         req: DebugEvalRequest,
     ) -> yak_error::Result<DebugEvalResponse> {
         debug_eval_command(ctx, req).await
+    }
+
+    async fn debug_anon_targets(
+        &self,
+        ctx: &dyn ServerCommandContextTrait,
+        req: AnonTargetsRequest,
+    ) -> yak_error::Result<AnonTargetsResponse> {
+        debug_anon_targets_command(ctx, req).await
     }
 
     async fn expand_external_cells(
