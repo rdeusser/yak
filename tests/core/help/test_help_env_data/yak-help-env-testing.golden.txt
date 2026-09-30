@@ -32,7 +32,6 @@ YAK_NO_INTERACTIVE_CONSOLE                   String
 YAK_OFFLINE_BUILD                            String
 YAK_PARANOID                                 bool
 YAK_PARANOID_PATH                            String
-YAK_RE_CONNECT_TIMEOUT_S                     u64                    120
 YAK_PREFER_REMOTE                            String
 YAK_RE_CONNECT_TIMEOUT_S                     u64                   120
 YAK_RE_DOWNLOAD_CONCURRENCY                  usize                 256

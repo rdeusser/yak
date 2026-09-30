@@ -6,6 +6,9 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
+from __future__ import annotations
+
+import json
 import re
 
 import pytest

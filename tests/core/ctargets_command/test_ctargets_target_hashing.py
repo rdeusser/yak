@@ -12,10 +12,10 @@ import json
 import re
 
 import pytest
-from yak.tests.e2e_util.api.yak import Yak
-from yak.tests.e2e_util.asserts import expect_failure
-from yak.tests.e2e_util.yak_workspace import yak_test
-from yak.tests.e2e_util.helper.golden import golden_replace_cfg_hash
+from e2e_util.api.yak import Yak
+from e2e_util.asserts import expect_failure
+from e2e_util.yak_workspace import yak_test
+from e2e_util.helper.golden import golden_replace_cfg_hash
 
 
 _HASH_REGEX: re.Pattern[str] = re.compile(r"^(?:[0-9a-f]{32}|[0-9a-f]{64})$")
@@ -171,7 +171,7 @@ async def test_hash_tracks_dependency_attributes_only(
     args = ("--target-hash-recursive",) if recursive else ()
     baseline = await _target_hash(yak, "root//:parent?root//:linux", *args)
 
-    targets_file = yak.cwd / "TARGETS.fixture"
+    targets_file = yak.cwd / "YAK.fixture"
     targets_file.write_text(
         targets_file.read_text().replace("unrelated-before", "unrelated-after")
     )
@@ -365,7 +365,7 @@ async def test_hash_tracks_swapped_dependency_contents(yak: Yak) -> None:
     baseline = await _target_hash(yak, target, recursive_arg)
     local_baseline = await _target_hash(yak, target)
 
-    targets_file = yak.cwd / "TARGETS.fixture"
+    targets_file = yak.cwd / "YAK.fixture"
     targets_file.write_text(
         targets_file.read_text()
         .replace('":linux": "linux"', '":linux": "macos"')
