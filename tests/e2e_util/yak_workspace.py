@@ -126,7 +126,10 @@ async def yak_fixture(  # noqa C901 : "too complex"
         env["YAK_TEST_DISABLE_DAEMON_CGROUP"] = "true"
     env["YAK_TEST_SKIP_DEFAULT_EXTERNAL_CONFIG"] = "true"
 
-    base_dir = Path(tempfile.mkdtemp())
+    # yak reports paths with symlinks resolved. On macOS the temporary directory
+    # is under `/var`, a symlink to `/private/var`, so the tests work from the
+    # resolved path to compare paths with yak's.
+    base_dir = Path(tempfile.mkdtemp()).resolve()
     keep_temp = os.environ.get("YAK_E2E_KEEP_TEMP") == "1"
 
     # Keep the daemon directories (`~/.yak/yakd`) of the test inside its

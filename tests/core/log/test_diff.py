@@ -164,21 +164,25 @@ async def test_config_diff_command_command_line(yak: Yak) -> None:
     )
     summary_diffs = [d for d in parse_json_diffs(out.stdout) if "FullDiff" not in d]
     assert len(summary_diffs) == 3
+    # Each diff is a one-entry dict from its kind to its fields.
+    by_key = {
+        fields["key"]: (kind, fields)
+        for diff in summary_diffs
+        for kind, fields in diff.items()
+    }
 
-    assert (
-        summary_diffs[0]["Changed"]["key"] == "test.yak_output"
-        and summary_diffs[0]["Changed"]["old_value"] == "changed_old"
-        and summary_diffs[0]["Changed"]["new_value"] == "changed_new"
-    )
+    kind, fields = by_key["test.yak_output"]
+    assert kind == "Changed"
+    assert fields["old_value"] == "changed_old"
+    assert fields["new_value"] == "changed_new"
 
-    assert (
-        summary_diffs[1]["FirstOnly"]["key"] == "test.first"
-        and summary_diffs[1]["FirstOnly"]["value"] == "overwrite_x"
-    )
-    assert (
-        summary_diffs[2]["SecondOnly"]["key"] == "test.second"
-        and summary_diffs[2]["SecondOnly"]["value"] == "x"
-    )
+    kind, fields = by_key["test.first"]
+    assert kind == "FirstOnly"
+    assert fields["value"] == "overwrite_x"
+
+    kind, fields = by_key["test.second"]
+    assert kind == "SecondOnly"
+    assert fields["value"] == "x"
 
 
 @yak_test()

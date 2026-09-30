@@ -55,13 +55,13 @@ complete_test(
 complete_test(
     name="test_provides_targets_in_nested_cell",
     input="yak:",
-    expected=["yak:yak", "yak:symlinked_yak_and_runner"],
+    expected=["yak:symlinked_yak_and_runner", "yak:yak"],
     cwd="cell1",
 )
 
 complete_test(
     name="test_completes_a_partial_target",
-    input="yak:bu",
+    input="yak:ya",
     expected=["yak:yak"],
     cwd="cell1",
 )
@@ -75,26 +75,26 @@ complete_test(
 complete_test(
     name="test_completes_other_cell_from_subdirectory",
     input="cell1//yak:",
-    expected=["cell1//yak:yak", "cell1//yak:symlinked_yak_and_runner"],
+    expected=["cell1//yak:symlinked_yak_and_runner", "cell1//yak:yak"],
     cwd="baredir0",
 )
 
 complete_test(
     name="test_expands_cell_to_canonical_with_colon",
     input="cell1/yak:",
-    expected=["cell1//yak:yak", "cell1//yak:symlinked_yak_and_runner"],
+    expected=["cell1//yak:symlinked_yak_and_runner", "cell1//yak:yak"],
 )
 
 complete_test(
     name="test_expands_cell_to_canonical_with_partial_target",
-    input="cell1/yak:bu",
+    input="cell1/yak:ya",
     expected=["cell1//yak:yak"],
 )
 
 complete_test(
     name="test_expands_target_for_bare_colon",
     input=":",
-    expected=[":yak", ":symlinked_yak_and_runner"],
+    expected=[":symlinked_yak_and_runner", ":yak"],
     cwd="cell1/yak",
 )
 
@@ -102,8 +102,8 @@ complete_test(
     name="test_target_completion_with_aliased_cells",
     input="cell1_alias//yak:",
     expected=[
-        "cell1_alias//yak:yak",
         "cell1_alias//yak:symlinked_yak_and_runner",
+        "cell1_alias//yak:yak",
     ],
     cwd="cell1/yak/fake_prelude",
 )
