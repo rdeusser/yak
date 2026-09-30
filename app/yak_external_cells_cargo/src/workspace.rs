@@ -76,6 +76,11 @@ def _profile_files(member, files):
 
 def _declare_member(member):
     srcs = glob(member["srcs"], exclude = member["srcs_exclude"])
+
+    # A test reads its member's files and its declared test data from a copy of them, so a read of
+    # another file fails.
+    own_srcs = {f: None for f in srcs}
+    test_srcs = srcs + [f for f in glob(member["test_data"]) if f not in own_srcs]
     env = dict(member["env"])
     rustc_flags = []
     names = member["rules"]
@@ -160,7 +165,7 @@ def _declare_member(member):
             name = lib["unittest"],
             crate = lib["crate"],
             crate_root = lib["crate_root"],
-            srcs = srcs,
+            srcs = test_srcs,
             edition = lib["edition"],
             features = member["features"],
             deps = member["test_deps"] + script_deps,
@@ -168,7 +173,7 @@ def _declare_member(member):
             env = env,
             rustc_flags = rustc_flags,
             cargo_target_files = profile_files,
-            manifest_dir_in_project = True,
+            run_from_manifest_dir = True,
         )
 
     for target in member["bins"]:
@@ -194,7 +199,7 @@ def _declare_member(member):
                 name = target["unittest"],
                 crate = target["crate"],
                 crate_root = target["crate_root"],
-                srcs = srcs,
+                srcs = test_srcs,
                 edition = target["edition"],
                 features = member["features"],
                 deps = member["test_deps"] + own + script_deps,
@@ -202,7 +207,7 @@ def _declare_member(member):
                 env = env,
                 rustc_flags = rustc_flags,
                 cargo_target_files = profile_files,
-                manifest_dir_in_project = True,
+                run_from_manifest_dir = True,
             )
 
     for example in member["examples"]:
@@ -233,7 +238,7 @@ def _declare_member(member):
             name = target["rule"],
             crate = target["crate"],
             crate_root = target["crate_root"],
-            srcs = srcs,
+            srcs = test_srcs,
             edition = target["edition"],
             features = member["features"],
             deps = member["test_deps"] + own + script_deps,
@@ -241,7 +246,7 @@ def _declare_member(member):
             env = test_env,
             rustc_flags = rustc_flags,
             cargo_target_files = profile_files,
-            manifest_dir_in_project = True,
+            run_from_manifest_dir = True,
         )
 "#;
 
@@ -252,23 +257,35 @@ fn has_kind(t: &Target, kind: &str) -> bool {
     t.kind.iter().any(|k| k == kind)
 }
 
-/// The patterns of `[package.metadata.yak] include`, which name files outside the member's
-/// directory that the member reads, relative to the member's directory.
-fn includes(package: &Package) -> yak_error::Result<Vec<String>> {
-    let Some(include) = package
+/// The path patterns of `[package.metadata.yak] <key>`, relative to the workspace's directory.
+fn metadata_patterns(
+    package: &Package,
+    dir: &str,
+    key: &'static str,
+) -> yak_error::Result<Vec<String>> {
+    let Some(patterns) = package
         .metadata
         .as_ref()
         .and_then(|m| m.get("yak"))
-        .and_then(|yak| yak.get("include"))
+        .and_then(|yak| yak.get(key))
     else {
         return Ok(Vec::new());
     };
-    let invalid = || GenerateError::InvalidInclude(package.name.clone());
-    include
+    let invalid = || GenerateError::InvalidPatterns(key, package.name.clone());
+    patterns
         .as_array()
         .ok_or_else(invalid)?
         .iter()
-        .map(|pattern| Ok(pattern.as_str().ok_or_else(invalid)?.to_owned()))
+        .map(|pattern| {
+            let pattern = pattern.as_str().ok_or_else(invalid)?;
+            Ok(workspace_pattern(dir, pattern).ok_or_else(|| {
+                GenerateError::PatternOutsideWorkspace(
+                    key,
+                    package.name.clone(),
+                    pattern.to_owned(),
+                )
+            })?)
+        })
         .collect()
 }
 
@@ -424,11 +441,9 @@ pub fn generate_workspace(
             .iter()
             .map(|p| format!("{prefix}{p}"))
             .collect();
-        for pattern in includes(package)? {
-            srcs.push(workspace_pattern(dir, &pattern).ok_or_else(|| {
-                GenerateError::IncludeOutsideWorkspace(package.name.clone(), pattern.clone())
-            })?);
-        }
+        srcs.extend(metadata_patterns(package, dir, "include")?);
+        // Its tests also read the files that `[package.metadata.yak] test-data` names.
+        let test_data = metadata_patterns(package, dir, "test-data")?;
         let mut srcs_exclude: Vec<String> = if dir.is_empty() {
             WORKSPACE_EXCLUDES.iter().map(|p| (*p).to_owned()).collect()
         } else {
@@ -543,6 +558,7 @@ pub fn generate_workspace(
             ("dir".to_owned(), Value::str(dir)),
             ("srcs".to_owned(), Value::strs(srcs)),
             ("srcs_exclude".to_owned(), Value::strs(srcs_exclude)),
+            ("test_data".to_owned(), Value::strs(test_data)),
             (
                 "features".to_owned(),
                 Value::strs(node.features.iter().cloned()),

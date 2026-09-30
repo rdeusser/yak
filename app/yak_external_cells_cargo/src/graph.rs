@@ -39,13 +39,13 @@ pub(crate) enum GenerateError {
     )]
     DuplicateTarget(String),
     #[error(
-        "`[package.metadata.yak] include` of package `{0}` must be a list of path patterns, relative to the package's directory"
+        "`[package.metadata.yak] {0}` of package `{1}` must be a list of path patterns, relative to the package's directory"
     )]
-    InvalidInclude(String),
+    InvalidPatterns(&'static str, String),
     #[error(
-        "`[package.metadata.yak] include` of package `{0}` names `{1}`, which is outside the workspace"
+        "`[package.metadata.yak] {0}` of package `{1}` names `{2}`, which is outside the workspace"
     )]
-    IncludeOutsideWorkspace(String, String),
+    PatternOutsideWorkspace(&'static str, String, String),
     #[error("`cargo metadata` names package `{0}`, which it does not describe")]
     UnknownPackage(String),
     #[error("Package `{0}` has no library, but `{1}` depends on it")]

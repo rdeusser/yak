@@ -873,7 +873,28 @@ def rust_test_impl(ctx: AnalysisContext) -> list[Provider]:
         allow_cache_upload = False,
         output_dir = "deps" if cargo_target_files else "",
     )
-    args = cmd_args(args, hidden = cargo_target_files)
+    env = ctx.attrs.env | ctx.attrs.run_env
+
+    # At run time, `CARGO_MANIFEST_DIR` names the directory that `env!("CARGO_MANIFEST_DIR")` names
+    # at compile time, as `process_env` resolves it.
+    manifest_dir = env.get("CARGO_MANIFEST_DIR")
+    if manifest_dir != None and len(cmd_args(manifest_dir).inputs) == 0:
+        manifest_dir = cmd_args(
+            compile_ctx.symlinked_srcs,
+            compile_ctx.path_sep,
+            manifest_dir,
+            delimiter = "",
+        )
+        env = env | {"CARGO_MANIFEST_DIR": manifest_dir}
+    working_directory = None
+    if ctx.attrs.run_from_manifest_dir:
+        if manifest_dir == None:
+            fail("`run_from_manifest_dir` needs `CARGO_MANIFEST_DIR` in `env`")
+        working_directory = manifest_dir
+    args = cmd_args(
+        args,
+        hidden = cargo_target_files + ([compile_ctx.symlinked_srcs] if working_directory else []),
+    )
 
     # Setup RE executors based on the `remote_execution` param.
     re_executors = get_re_executors_from_props(ctx)
@@ -884,13 +905,15 @@ def rust_test_impl(ctx: AnalysisContext) -> list[Provider]:
             ExternalRunnerTestInfo(
                 type = "rust",
                 command = [args],
-                env = ctx.attrs.env | ctx.attrs.run_env,
+                env = env,
                 labels = ctx.attrs.labels,
                 contacts = ctx.attrs.contacts,
                 default_executor = re_executors.default_executor,
                 executor_overrides = re_executors.executor_overrides,
                 run_from_project_root = True,
-                use_project_relative_paths = True,
+                # Paths relative to the project root would not resolve from the working directory.
+                use_project_relative_paths = working_directory == None,
+                working_directory = working_directory,
             ),
         )
         + providers

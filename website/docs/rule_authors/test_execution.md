@@ -93,6 +93,14 @@ should set in their `ExternalRunnerTestInfo` if they should be run on RE:
   from the project root (their `cwd` will be the project root, which is
   the same as all build commands). If `false`, it'll be the cell root.
 
+`working_directory` names a directory for the test to run in, such as
+`cmd_args(srcs_dir, "/pkg", delimiter = "")` for a directory inside an output of
+the rule. It takes precedence over `run_from_project_root`, and yak builds the
+artifacts it names before the test runs. Paths relative to the project root do
+not resolve from another directory, so a test with a `working_directory` should
+also set `use_project_relative_paths = False`. `rust_test` sets it when
+`run_from_manifest_dir` is set.
+
 Note that passing `--unstable-allow-all-tests-on-re` to `yak test` will
 override those fields and set them to `true`, since they are a pre-requisite to
 run on RE. In contrast, passing `--unstable-allow-compatible-tests-on-re` will

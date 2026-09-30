@@ -68,9 +68,10 @@ The tests run as `cargo test` runs them:
   examples sit where Cargo puts them in its `target/debug/` directory. A test
   that looks for an example in the `examples` directory two levels above its
   own binary finds it.
-- `CARGO_MANIFEST_DIR` names the package's directory in the project, so a test
-  can read files of the workspace at run time. A crate that reads files outside
-  its directory at compile time still lists them, as the next section shows.
+- A test runs in a copy of its package's files and the files it declares, from
+  the package's directory in the copy. `CARGO_MANIFEST_DIR` names that
+  directory at compile time and at run time, so a test finds its package's
+  files through `CARGO_MANIFEST_DIR` or a relative path, as under `cargo test`.
 - An integration test gets `CARGO_BIN_EXE_<binary>` for each binary of its
   package.
 
@@ -92,6 +93,22 @@ include = ["../../README.md", "../../assets/*.json"]
 
 Cargo ignores the `[package.metadata]` table. Each entry is a glob pattern, and
 it must name files inside the workspace.
+
+A test that reads files outside its package's directory at run time lists them
+in `test-data`:
+
+```toml
+[package.metadata.yak]
+test-data = ["../testdata/**", "../../scripts/*.sh"]
+```
+
+The copy that a test runs in holds only its package's files, the `include`
+files, and the `test-data` files, so a test that reads another file fails. The
+declarations tell
+[`yak test --changed-since`](../../advanced/changed_since.md) which tests a
+change to a file can affect. A change to a `test-data` file selects the
+package's tests, and a change to an `include` file also selects the tests of
+every package that depends on it.
 
 ## Third-party crates
 
@@ -145,10 +162,8 @@ after a dependency changes.
   `windows-gnu`, and `windows-msvc`.
 - `cargo_workspace()` declares no targets for benchmarks, and it runs no
   doctests.
-- Tests run from the root of the project. Cargo runs them from the package's
-  directory, so a test that opens a relative path, such as
-  `File::open("tests/data.txt")`, fails. A path joined to `CARGO_MANIFEST_DIR`
-  works under both.
+- A test that opens an absolute path into the project reads the file whether
+  or not it declares it.
 - A build file in a directory inside the workspace, such as one for another
   language, makes that directory a separate package, and the members' globs
   skip its files.

@@ -92,6 +92,11 @@ pub struct ExternalRunnerTestInfo<'v> {
     /// Defaults to `True`.
     run_from_project_root: ValueOfUnchecked<'v, bool>,
 
+    /// The directory to run this test in, such as `cmd_args(artifact, "/sub/dir", delimiter = "")`.
+    /// It takes precedence over `run_from_project_root`. The test's inputs must include the
+    /// directory.
+    working_directory: ValueOfUnchecked<'v, Value<'static>>,
+
     /// Default executor to use to run tests. If none is
     /// passed we will default to the execution platform.
     default_executor: Option<ValueTyped<'v, StarlarkCommandExecutorConfig>>,
@@ -161,6 +166,18 @@ impl<'v> ExternalRunnerTestInfo<'v> {
             .unwrap_or(true)
     }
 
+    pub fn working_directory(&self) -> Option<&'v dyn CommandLineArgLike<'v>> {
+        let value = self.working_directory.get();
+        if value.is_none() {
+            return None;
+        }
+        Some(
+            ValueAsCommandLineLike::unpack_value_err(value)
+                .expect("checked during construction")
+                .0,
+        )
+    }
+
     pub fn default_executor(&self) -> Option<&'v StarlarkCommandExecutorConfig> {
         self.default_executor.map(|v| v.as_ref())
     }
@@ -225,6 +242,10 @@ impl<'v> ExternalRunnerTestInfo<'v> {
 
         for (_, arglike) in self.env() {
             arglike.visit_artifacts(visitor)?;
+        }
+
+        if let Some(working_directory) = self.working_directory() {
+            working_directory.visit_artifacts(visitor)?;
         }
 
         // Ignoring local resources as those are built on-demand.
@@ -479,6 +500,12 @@ fn validate_external_runner_test_info<'v>(
     })?;
     NoneOr::<bool>::unpack_value(info.run_from_project_root.get())?
         .internal_error("`run_from_project_root` must be a bool if provided")?;
+    let working_directory = info.working_directory.get();
+    if !working_directory.is_none() {
+        ValueAsCommandLineLike::unpack_value_err(working_directory).with_yak_error_context(
+            || "`working_directory` must be a command line argument, such as `cmd_args`",
+        )?;
+    }
     NoneOr::<bool>::unpack_value(info.supports_test_execution_caching.get())?.ok_or_else(|| {
         internal_error!("`supports_test_execution_caching` must be a bool if provided")
     })?;
@@ -501,6 +528,7 @@ fn external_runner_test_info_creator(globals: &mut GlobalsBuilder) {
         #[starlark(require = named, default = NoneType)] contacts: Value<'v>,
         #[starlark(require = named, default = NoneType)] use_project_relative_paths: Value<'v>,
         #[starlark(require = named, default = NoneType)] run_from_project_root: Value<'v>,
+        #[starlark(require = named, default = NoneType)] working_directory: Value<'v>,
         #[starlark(require = named, default = NoneOr::None)] default_executor: NoneOr<
             ValueTyped<'v, StarlarkCommandExecutorConfig>,
         >,
@@ -520,6 +548,7 @@ fn external_runner_test_info_creator(globals: &mut GlobalsBuilder) {
             contacts: ValueOfUnchecked::new(contacts),
             use_project_relative_paths: ValueOfUnchecked::new(use_project_relative_paths),
             run_from_project_root: ValueOfUnchecked::new(run_from_project_root),
+            working_directory: ValueOfUnchecked::new(working_directory),
             default_executor: default_executor.into_option(),
             executor_overrides: ValueOfUnchecked::new(executor_overrides),
             local_resources: ValueOfUnchecked::new(local_resources),

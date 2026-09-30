@@ -14,3 +14,7 @@ required-features = ["extra"]
 [[example]]
 name = "plugin"
 crate-type = ["cdylib"]
+
+# The tests read `shared.txt` from the workspace's directory.
+[package.metadata.yak]
+test-data = ["../shared.txt"]

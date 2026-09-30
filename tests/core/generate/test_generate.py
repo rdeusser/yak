@@ -13,6 +13,7 @@ from pathlib import Path
 import pytest
 from e2e_util.api.yak import Yak
 from e2e_util.api.yak_result import YakException
+from e2e_util.asserts import expect_failure
 from e2e_util.yak_workspace import yak_test
 
 WORKSPACE_BUILD_FILE = """load("@crates//:workspace.bzl", "cargo_workspace")
@@ -213,4 +214,12 @@ async def test_generate_runs_tests_as_cargo_test_does(yak: Yak) -> None:
     assert "root//:extra" not in targets
     result = await yak.test("//...")
     summary = re.sub("\x1b\\[[0-9;]*m", "", result.stderr)
-    assert "Pass 3. Fail 0." in summary, result.stderr
+    assert "Pass 4. Fail 0." in summary, result.stderr
+
+    # A test reads only its package's files and the files it declares.
+    manifest = yak.cwd / "probe" / "Cargo.toml"
+    manifest.write_text(manifest.read_text().replace('test-data = ["../shared.txt"]', ""))
+    await expect_failure(
+        yak.test("//:probe-unittest"),
+        stderr_regex="reads_a_workspace_file_at_run_time",
+    )

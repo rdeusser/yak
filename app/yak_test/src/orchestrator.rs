@@ -247,6 +247,13 @@ impl OwnedTestInfo {
         }
     }
 
+    fn working_directory<'v>(&'v self) -> Option<&'v dyn CommandLineArgLike<'v>> {
+        match self {
+            Self::External(info) => info.as_ref().value().as_ref().working_directory(),
+            Self::Internal(_) => None,
+        }
+    }
+
     fn local_resources(&self) -> YakIndexMap<&str, Option<&ConfiguredProvidersLabel>> {
         match self {
             Self::External(info) => info.as_ref().value().as_ref().local_resources(),
@@ -1689,7 +1696,7 @@ impl YakTestOrchestrator<'_> {
 
         let mut supports_re = true;
 
-        let cwd;
+        let mut cwd;
         let (expanded_cmd, expanded_env, ensured_inputs, expanded_worker) = {
             cwd = if test_info.run_from_project_root() || opts.force_run_from_project_root {
                 CellRootPathBuf::new(ProjectRelativePathBuf::unchecked_new("".to_owned()))
@@ -1721,7 +1728,7 @@ impl YakTestOrchestrator<'_> {
                 })
                 .await?;
 
-            let (expanded_cmd, expanded_env, expanded_worker) = if test_info
+            let (expanded_cmd, expanded_env, expanded_worker, working_directory) = if test_info
                 .use_project_relative_paths()
                 || opts.force_use_project_relative_paths
             {
@@ -1730,6 +1737,9 @@ impl YakTestOrchestrator<'_> {
                 supports_re = false;
                 expander.expand(&ensured_inputs, true)
             }?;
+            if let Some(working_directory) = working_directory {
+                cwd = CellRootPathBuf::new(working_directory);
+            }
             (expanded_cmd, expanded_env, ensured_inputs, expanded_worker)
         };
 
@@ -2126,6 +2136,9 @@ impl<'a> Execute2RequestExpander<'a> {
         if let Some(worker_exe) = worker_exe {
             worker_exe.visit_artifacts(&mut artifact_visitor)?;
         }
+        if let Some(working_directory) = test_info.working_directory() {
+            working_directory.visit_artifacts(&mut artifact_visitor)?;
+        }
 
         Ok(artifact_visitor.inputs)
     }
@@ -2185,6 +2198,7 @@ impl<'a> Execute2RequestExpander<'a> {
         Vec<String>,
         SortedVectorMap<String, String>,
         Option<WorkerSpec>,
+        Option<ProjectRelativePathBuf>,
     )> {
         let Execute2RequestExpander {
             test_info,
@@ -2289,7 +2303,30 @@ impl<'a> Execute2RequestExpander<'a> {
             _ => None,
         };
 
-        Ok((expanded_cmd, expanded_env, expanded_worker))
+        // The working directory is relative to the project root, whatever form the paths of the
+        // command take.
+        let working_directory = match test_info.working_directory() {
+            Some(directory) => {
+                let mut rendered = SingletonCommandLineSink::new();
+                let mut fmt = CommandLineBuilder::new_with_options(
+                    &mut rendered,
+                    &artifact_path_mapping,
+                    self.fs,
+                    false,
+                    None,
+                );
+                directory.add_to_command_line(&mut fmt)?;
+                Some(ProjectRelativePathBuf::try_from(rendered.finalize()?)?)
+            }
+            None => None,
+        };
+
+        Ok((
+            expanded_cmd,
+            expanded_env,
+            expanded_worker,
+            working_directory,
+        ))
     }
 }
 

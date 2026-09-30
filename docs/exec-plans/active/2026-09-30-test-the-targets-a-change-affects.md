@@ -14,10 +14,11 @@ To see it working, change one crate of a Cargo workspace and run `yak test --cha
 
 - [x] The owner chooses a flag on `yak test` that takes any Git revision (2026-09-30).
 - [x] The owner chooses declared, enforced run-time files for tests (2026-09-30).
-- [ ] Milestone 1, prototype: compute the selection from two `yak targets` dumps for the cases in Validation, and compare it with the tests that fail after each change.
-- [ ] Milestone 2: `yak test --changed-since`.
-- [ ] Milestone 3: member tests read only their package's files and the files that `[package.metadata.yak] test-data` declares, and run from their package's directory.
+- [x] Milestone 1, prototype: dropped in favor of integration tests for each case in Validation (Decision Log).
+- [x] Milestone 2: `yak test --changed-since`, selecting from the current graph (`app/yak_test/src/changed_since.rs`, `app/yak_client/src/commands/changed_since.rs`, `tests/core/test/test_changed_since.py`).
+- [ ] Milestone 3: member tests read only their package's files and the files that `[package.metadata.yak] test-data` declares, and run from their package's directory. Implemented (`run_from_manifest_dir`, `ExternalRunnerTestInfo.working_directory`), and the checks remain.
 - [ ] Milestone 4: documentation and validation against Roost.
+- [ ] Milestone 5: evaluate the changed packages at the merge base and compare their targets, so that a changed package selects only the targets that differ.
 
 ## Surprises & Discoveries
 
@@ -27,12 +28,26 @@ To see it working, change one crate of a Cargo workspace and run `yak test --cha
 - `yak targets` keeps every flag that `btd`'s dumps use (`--streaming`, `--keep-going`, `--no-cache`, `--show-unconfigured-target-hash`, `--json-lines`, `--imports`, `--package-values-regex`).
 - Member tests of a Cargo workspace set `manifest_dir_in_project` (`prelude/decls/rust_rules.bzl`), so they can read any file of the workspace at run time through `CARGO_MANIFEST_DIR`, and no attribute declares those reads. Roost's `roost-unittest` runs `../roost-terminal/testdata/sh`, reads `../../rscript/api.ts`, and runs Git in its package's directory. A selection that trusts declared inputs would skip it after a change to `testdata/sh`.
 
+- The unconfigured graph names targets that do not exist, such as `toolchains//:cxx_no_default_deps`, which a prelude attribute names by default and no configured target reaches. Counting every missing dependency as changed selected 15 of the 16 targets of `tests/core/generate/test_generate_data/workspace` with no change at all.
+- A Cargo workspace that `yak generate` sets up defines every member's targets in the root package. A file that appears or disappears anywhere in the workspace, or a change to a `Cargo.toml`, marks that package, so it selects every test of the workspace. An edit to an existing source selects only the targets that have it as an input and their dependents: in `workspace`, an edit to `app/src/main.rs` selected `app` and its test, 2 of 16 targets.
+- The runtime `CARGO_MANIFEST_DIR` of a `rust_test` was the plain value of `env`, which is relative to the crate's sources and does not resolve from the project root.
+
 ## Decision Log
 
 - 2026-09-30: The flag takes a Git revision and compares the working tree with the merge base of the revision and `HEAD` (owner). Git resolves the revision with `git rev-parse --verify <revision>^{commit}`.
 - 2026-09-30: The selection follows `btd`'s rules without the options that shrink it: a changed `.yakconfig` selects every test, prelude `.bzl` changes count, no `.bzl` file is exempt, and reverse dependencies have no depth limit. Unconfigured hashes compare the graph with every `select()` branch, so a dependency that one platform adds still counts.
 - 2026-09-30: A test declares the files it reads at run time, and yak enforces the declaration (owner). An enforced declaration keeps the selection both correct and small. Treating every workspace file as an input of every member test is correct without changes to tests, but any change to a workspace would select all of its member tests. Unchecked declarations, like `ci_srcs`, keep the selection small, but a missing entry skips a test silently.
 - 2026-09-30: A member lists the files its tests read in `[package.metadata.yak] test-data`, as glob patterns relative to its directory, like `include`. The files join the sources of the member's tests, so their changes select the tests. `CARGO_MANIFEST_DIR` of a member test names the member's directory in the compile action's symlinked sources, which hold the member's files and the declared files at their workspace paths, and `manifest_dir_in_project` goes away. The test runs from that directory, as Cargo runs a test from its package's directory, with the symlinked sources as an input of the test command. A read of an undeclared file through `CARGO_MANIFEST_DIR` or a relative path then fails, and so does running Git there, because the tree is no checkout. A read through an absolute path into the project is not enforced, which needs a sandbox.
+
+- 2026-09-30: The selection reads the current graph only, and needs no second daemon. Evaluating a package depends only on the files it reads (its build file, the `PACKAGE` files above it, the files it loads, the listing of its directory, the configuration, and the external cells it reads), so a package whose inputs did not change evaluates as it did at the merge base, including its errors. A package whose inputs changed counts as changed in full, which costs precision (Surprises & Discoveries). Milestone 5 recovers it.
+- 2026-09-30: The client parses the configuration of the merge base from Git and compares it with the current one, instead of listing the configuration files. A list misses a file that an include names, and an ignored, untracked file such as `.yakconfig.local` belongs to the machine and is read from disk for both.
+- 2026-09-30: A missing target counts as changed only when its package changed, and a directory without a build file counts as changed only when a change lies under it. Evaluation is deterministic, so the target was missing at the merge base too otherwise.
+- 2026-09-30: A changed package that defines a configuration target selects every test. Transitions and modifiers refer to configuration targets without a dependency edge, so no traversal reaches them.
+- 2026-09-30: A matched target's target platform, from `--target-platforms` or `[parser] target_platform_detector_spec`, and the execution platforms of `[build] execution_platforms` are dependencies of the target for the selection.
+- 2026-09-30: `rust-toolchain`, `rust-toolchain.toml`, and the paths in `[test] changed_since_select_all` select every test. rustup picks the compiler of every Rust action from the first two, and no action declares them.
+- 2026-09-30: `test-data` files are sources of the member's tests only. As `include` files, they would also be inputs of the member's library, so a change to one would select the tests of every package that depends on it.
+- 2026-09-30: `ExternalRunnerTestInfo.working_directory` sets a test's working directory, and `rust_test` with `run_from_manifest_dir` runs from its manifest directory in the crate's copy of its sources, with absolute paths. A launcher script could change directory without a provider field, but it adds a process to every test and needs a shell on each platform.
+- 2026-09-30: The prototype of milestone 1 is dropped. Integration tests exercise each case of Validation against the implementation.
 
 ## Outcomes & Retrospective
 
@@ -48,13 +63,12 @@ Nothing yet.
 
 ## Plan of Work
 
-1. Resolve the revision and the merge base with Git, and list the changed paths with `git diff --name-status --no-renames -z <merge base>` and `git ls-files --others --exclude-standard -z`. A rename counts as a deletion and an addition.
-2. Build both graphs from as little evaluation as possible, as `btd/src/rerun.rs` does. The running daemon already holds the change's graph. If only sources changed, with no file added or removed, the two graphs differ only in the contents of inputs, and no second graph is needed. Otherwise, evaluate at the merge base only the packages the change can alter, from a `git worktree` of it with a daemon in its own isolation directory, and take every other package from the change's graph. A change to `.yakconfig`, `.yakconfig.local`, `.yakconfig.d/`, a file the configuration includes, or the files an external cell reads (`Cargo.toml`, `Cargo.lock`, `.cargo/config.toml`, `go.mod`, `go.sum`, `go.work`) re-evaluates the affected cell or everything. Keep each merge base's evaluation in `yak-out`, keyed by its commit, so later runs against the same merge base reuse it.
-3. Mark changed targets as `btd` does, with the Decision Log's settings, then select the test targets among the changed targets and their reverse dependencies.
-4. Run the selected tests, as `yak test` runs a pattern's tests. Report how many tests the selection skipped, and why each selected test was selected under `--verbose`.
-5. Add `test-data` to the member macro (`app/yak_external_cells_cargo/src/workspace.rs`), remove `manifest_dir_in_project` from `prelude/decls/rust_rules.bzl` and `prelude/rust/build.bzl`, and run `rust_test` from a directory that its target names. `ExternalRunnerTestInfo` has no working directory beyond `run_from_project_root`, so this needs a field or a launcher. Roost then lists `../roost-terminal/testdata/**` and `../../rscript/**` in `crates/roost/Cargo.toml`, and the test that runs Git in its package's directory needs a change in Roost.
+1. The client (`app/yak_client/src/commands/changed_since.rs`) resolves the revision and the merge base with Git, lists the changed paths with `git diff --raw -z --no-renames --relative <merge base>` and `git ls-files --others --exclude-standard -z`, drops `yak-out`, and compares the configuration of the merge base with the current one (`YakConfigBasedCells::describe_difference`). It sends them as `TestRequest.changed_since`.
+2. The daemon (`app/yak_test/src/changed_since.rs`) evaluates every package of the cells in the project, marks the packages whose evaluation can differ, and walks the dependencies of the matched targets, including configuration dependencies and platforms. It returns every target when a rule of Decision Log selects every test.
+3. The test driver (`app/yak_test/src/command.rs`) tests only the selected targets, and prints how many it tests or why it tests all of them.
+4. Member tests of a Cargo workspace take their `test-data` files as sources and run with `run_from_manifest_dir` (`app/yak_external_cells_cargo/src/workspace.rs`, `prelude/rust/rust_binary.bzl`), which sets `ExternalRunnerTestInfo.working_directory` (`app/yak_build_api`, `app/yak_test/src/orchestrator.rs`). Roost lists its tests' files in `crates/roost/Cargo.toml` and `crates/roost-script/Cargo.toml`.
 
-No proposal yet for reusing the base revision's dump across runs, which CI would want for a busy `main`.
+Milestone 5 evaluates the changed packages in a `git worktree` of the merge base, with a daemon in its own isolation directory, and compares the unconfigured hashes of their targets with the current ones. A target whose hash and rule are unchanged is not changed. No proposal yet for reusing that evaluation across runs.
 
 ## Validation and Acceptance
 

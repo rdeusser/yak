@@ -334,12 +334,13 @@ rust_test = prelude_rule(
                 them.
             """,
             ),
-            "manifest_dir_in_project": attrs.bool(
+            "run_from_manifest_dir": attrs.bool(
                 default = False,
                 doc = """
-                Resolve `CARGO_MANIFEST_DIR` in `env` against the project root, as Cargo sets it to
-                the package's directory, in place of the crate's copy of its sources. A test that
-                reads the package's files at run time then finds the files that `srcs` leaves out.
+                Run the test from the directory that `CARGO_MANIFEST_DIR` in `env` names in the
+                crate's copy of its sources, as Cargo runs a test from its package's directory, and
+                give the test absolute paths, as Cargo does. The copy holds only `srcs`, so a test
+                that reads another file of the project fails.
             """,
             ),
             "framework": attrs.bool(
