@@ -18,6 +18,8 @@ pub(crate) enum Value {
     Bool(bool),
     List(Vec<Value>),
     Dict(Vec<(String, Value)>),
+    /// A Starlark expression, written as is, such as a call of `glob`.
+    Expr(String),
 }
 
 impl Value {
@@ -34,6 +36,7 @@ impl Value {
             Value::None => out.push_str("None"),
             Value::Str(s) => quote(s, out),
             Value::Bool(b) => out.push_str(if *b { "True" } else { "False" }),
+            Value::Expr(expr) => out.push_str(expr),
             Value::List(items) => {
                 out.push('[');
                 for (i, item) in items.iter().enumerate() {

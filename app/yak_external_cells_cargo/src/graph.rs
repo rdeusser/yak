@@ -27,15 +27,13 @@ use crate::starlark::Value;
 #[yak(tag = Input)]
 pub(crate) enum GenerateError {
     #[error(
-        "`{0}` comes from `{1}`. The cargo cell builds third-party packages from crates.io only."
-    )]
-    UnsupportedSource(String, String),
-    #[error(
         "`{0}` is a path dependency outside the workspace. Add it to the workspace's `members`."
     )]
     PathOutsideWorkspace(String),
-    #[error("`Cargo.lock` has no checksum for `{0}`")]
-    MissingChecksum(String),
+    #[error(
+        "Two packages of the dependency graph have the directory `{0}` in the cargo cell, which keeps one copy of sources per directory"
+    )]
+    DuplicatePackage(String),
     #[error("`cargo metadata` names package `{0}`, which it does not describe")]
     UnknownPackage(String),
     #[error("Package `{0}` has no library, but `{1}` depends on it")]

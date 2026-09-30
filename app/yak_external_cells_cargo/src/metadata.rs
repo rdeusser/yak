@@ -6,10 +6,7 @@
  * above-listed licenses.
  */
 
-//! The parts of `cargo metadata --format-version 1` output and of `Cargo.lock` that the cell
-//! reads.
-
-use std::collections::HashMap;
+//! The parts of `cargo metadata --format-version 1` output that the cell reads.
 
 use serde::Deserialize;
 
@@ -55,7 +52,7 @@ impl WorkspaceLayout {
     }
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Clone, Deserialize)]
 pub struct Package {
     pub id: String,
     pub name: String,
@@ -75,7 +72,7 @@ pub struct Package {
     pub links: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Clone, Deserialize)]
 pub struct Target {
     pub name: String,
     /// Such as `lib`, `rlib`, `proc-macro`, `bin`, `test`, or `custom-build`.
@@ -133,39 +130,5 @@ pub struct DepKind {
 impl Metadata {
     pub fn parse(json: &str) -> yak_error::Result<Metadata> {
         Ok(serde_json::from_str(json)?)
-    }
-}
-
-/// Checksums maps each registry package of `Cargo.lock` to its SHA-256 checksum.
-pub struct Checksums(HashMap<(String, String), String>);
-
-#[derive(Deserialize)]
-struct Lockfile {
-    #[serde(default)]
-    package: Vec<LockedPackage>,
-}
-
-#[derive(Deserialize)]
-struct LockedPackage {
-    name: String,
-    version: String,
-    checksum: Option<String>,
-}
-
-impl Checksums {
-    pub fn parse(cargo_lock: &str) -> yak_error::Result<Checksums> {
-        let lock: Lockfile = toml::from_str(cargo_lock)?;
-        Ok(Checksums(
-            lock.package
-                .into_iter()
-                .filter_map(|p| Some(((p.name, p.version), p.checksum?)))
-                .collect(),
-        ))
-    }
-
-    pub fn get(&self, name: &str, version: &str) -> Option<&str> {
-        self.0
-            .get(&(name.to_owned(), version.to_owned()))
-            .map(String::as_str)
     }
 }

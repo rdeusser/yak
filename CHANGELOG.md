@@ -7,7 +7,8 @@ Removes the code, configuration, and service clients that only Meta's internal b
 ### Cargo workspaces
 
 - `yak generate` writes the build files of a Cargo workspace: a three-line `YAK` file per workspace member, and the `crates` cell in `.yakconfig`. Without a `.yakconfig`, it also writes the files of `yak init`.
-- The `cargo` external cell origin generates, from `cargo metadata`, a target for each crates.io package of a workspace and the `cargo_workspace_member` macro that declares a member's targets. `[external_cell_<name>] manifest` names the workspace's `Cargo.toml`.
+- The `cargo` external cell origin generates, from `cargo metadata`, a package for each third-party package of a workspace and the `cargo_workspace_member` macro that declares a member's targets. `[external_cell_<name>] manifest` names the workspace's `Cargo.toml`.
+- The `cargo` cell builds each third-party package from the sources that Cargo downloaded, so packages from private registries, replaced sources, vendored directories, and Git build as they do with `cargo build`.
 - `buildscript_run` sets `CARGO_PKG_VERSION_MAJOR`, `CARGO_PKG_VERSION_MINOR`, `CARGO_PKG_VERSION_PATCH`, `CARGO_PKG_VERSION_PRE`, `DEBUG`, `NUM_JOBS`, `PROFILE`, and `RUSTDOC` for build scripts, as Cargo does. It sets `OPT_LEVEL` always, to `0` when the toolchain's flags set no optimization level.
 - When a build script fails, `buildscript_run` prints the script's stdout, where `cargo::error=` messages go.
 - The C compiler that `buildscript_run` gives build scripts can be named without a path, such as `clang` in `system_demo_toolchains`. It failed with `FileNotFoundError` before, because the wrapper ran it without searching `PATH`.

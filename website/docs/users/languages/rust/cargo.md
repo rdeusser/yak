@@ -64,23 +64,39 @@ output satisfies the condition.
 
 ## Third-party crates
 
-The `crates` cell holds a target for each crates.io package in the dependency
-graph, named `<name>-<version>`, such as `crates//:serde-1.0.228`. A crate with
-one version in the graph also has an alias named after the crate, such as
-`crates//:serde`. Each crate downloads from crates.io in a build action, which
-checks it against the checksum in `Cargo.lock`.
+The `crates` cell holds a package for each third-party package in the
+dependency graph, in a directory named `<name>-<version>`, such as
+`crates//serde-1.0.229`. A package that does not come from crates.io, such as
+one from Git or a private registry, has a hash of its source appended, such as
+`crates//mylib-0.3.0-1a2b3c4d`, so that another commit or registry gets another
+directory. The package's library is named after the package, such
+as `crates//serde-1.0.229:serde`. The root of the cell has an alias named
+`<name>-<version>` for each package, and an alias named after the package when
+it has one version in the graph, such as `crates//:serde`.
 
-The daemon generates the cell's files in memory, so no third-party target is
-checked in. It runs `cargo metadata --locked` when a `Cargo.toml` or
-`Cargo.lock` of the workspace changes, and `rustc --print cfg --target <triple>`
-for each platform. The machine that runs the daemon therefore needs `cargo` and
-`rustc`. `Cargo.lock` must be up to date, which `cargo build` or
-`cargo update --workspace` ensures after a dependency changes.
+The daemon runs `cargo metadata --locked` when a `Cargo.toml` or `Cargo.lock`
+of the workspace changes, and `rustc --print cfg --target <triple>` for each
+platform. `cargo metadata` downloads each package that is not in Cargo's cache
+and checks it against `Cargo.lock`. It follows the workspace's
+`.cargo/config.toml` and Cargo's credentials, so a package from crates.io, from
+a private registry, from a mirror that source replacement names, from a
+`vendor/` directory, or from Git builds as it does with `cargo build`. The first
+build that reads a package's files copies them from where Cargo put them into
+`yak-out`. Build actions then need no network access.
+
+The daemon generates the build files in memory, so no third-party target is
+checked in. The machine that runs the daemon needs `cargo`, `rustc`, and the
+network access and credentials that `cargo build` needs there. The daemon keeps
+the environment it started with, so run `yak kill` after changing an
+environment variable that Cargo reads, such as a registry token. `Cargo.lock`
+must be up to date, which `cargo build` or `cargo update --workspace` ensures
+after a dependency changes.
 
 ## Limitations
 
-- The cell builds third-party packages from crates.io only. A dependency from
-  Git, from another registry, or from a path outside the workspace is an error.
+- A path dependency outside the workspace is an error, because the cell
+  treats a package's sources as unchanging. Add the package to the workspace's
+  `members`.
 - `cargo metadata` reports one feature set per package. Cargo can build a
   package that is both a build dependency and a normal dependency with a
   different feature set for each, and yak builds it with the union of both.

@@ -7,6 +7,5 @@ rust_library(
         "//app/yak_error:yak_error",
         "//third-party/rust:serde",
         "//third-party/rust:serde_json",
-        "//third-party/rust:toml",
     ],
 )

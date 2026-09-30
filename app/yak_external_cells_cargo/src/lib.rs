@@ -21,5 +21,7 @@ mod tests;
 
 pub use graph::CargoPlatform;
 pub use graph::DEFAULT_PLATFORMS;
+pub use third_party::ThirdParty;
+pub use third_party::ThirdPartyPackage;
 pub use third_party::generate_third_party;
 pub use workspace::generate_workspace;

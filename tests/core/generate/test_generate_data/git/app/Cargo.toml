@@ -1,0 +1,9 @@
+[package]
+name = "app"
+version = "0.1.0"
+edition = "2024"
+
+# The test replaces GREET_REPOSITORY with the URL of the Git repository that it
+# creates from `greet/`.
+[dependencies]
+greet = { git = "GREET_REPOSITORY" }

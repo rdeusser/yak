@@ -18,11 +18,11 @@ use crate::graph::crate_name;
 use crate::graph::lib_target;
 use crate::graph::package_env;
 use crate::graph::relative_to;
-use crate::graph::target_id;
 use crate::metadata::Metadata;
 use crate::metadata::Package;
 use crate::metadata::Target;
 use crate::starlark::Value;
+use crate::third_party::library_label;
 
 /// The macro that a member's build file calls. `_MEMBERS` maps the directory of each member,
 /// relative to the project root, to its data.
@@ -207,7 +207,7 @@ pub fn generate_workspace(
         if graph.is_member(&p.id) {
             Ok(format!("//{}:{}", member_dir(p)?, lib_rule(p)))
         } else {
-            Ok(format!("{cell}//:{}", target_id(p)))
+            Ok(format!("{cell}{}", library_label(p)))
         }
     };
 

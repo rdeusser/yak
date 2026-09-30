@@ -1,0 +1,7 @@
+# Cargo takes crates.io packages from `vendor/`, as it would from a mirror
+# that source replacement names.
+[source.crates-io]
+replace-with = "vendored-sources"
+
+[source.vendored-sources]
+directory = "vendor"
