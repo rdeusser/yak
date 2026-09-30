@@ -42,6 +42,24 @@ class ForkNamesTest(unittest.TestCase):
     def test_soft_errors_take_the_fork_option_name(self) -> None:
         self.assertEqual("hard_error: true", port.rename("error_on_oss: true"))
 
+    def test_test_decorators_drop_arguments_the_fork_lacks(self) -> None:
+        self.assertEqual(
+            '@yak_test()\n@yak_test(skip_for_os=["windows"])\nfileinput.input(p, inplace=True)\n',
+            port.transform(
+                "@buck_test(setup_eden=False)\n"
+                '@buck_test(inplace=False, skip_for_os=["windows"])\n'
+                "fileinput.input(p, inplace=True)\n"
+            ),
+        )
+
+    def test_integration_tests_take_the_fork_imports(self) -> None:
+        self.assertEqual(
+            "# licenses.\n\nfrom e2e_util.api.yak import Yak\n",
+            port.rename(
+                "# licenses.\n\n# pyre-strict\n\n\nfrom buck2.tests.e2e_util.api.buck import Buck\n"
+            ),
+        )
+
 
 class OpenSourceSideTest(unittest.TestCase):
     def test_keeps_enabled_lines_and_drops_disabled_lines(self) -> None:

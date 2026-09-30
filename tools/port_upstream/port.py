@@ -62,7 +62,15 @@ REPLACEMENTS = [
     (re.compile(r"fbsource//third-party/rust:"), "//third-party/rust:"),
     (re.compile(r"(?:fbcode)?//buck2/"), "//"),
     (re.compile(r"\berror_on_oss\b"), "hard_error"),
+    # The integration tests import `e2e_util` from `tests/`, and Pyre does not
+    # check them.
+    (re.compile(r"\bbuck2\.tests\."), ""),
+    (re.compile(r"^# pyre-strict\n\n*", re.MULTILINE), ""),
+    (re.compile(r"^#!/usr/bin/env fbpython\n", re.MULTILINE), ""),
 ]
+# Arguments of upstream's test decorator for Meta's file systems, which the
+# fork's `yak_test` does not take.
+TEST_ARGUMENT = re.compile(r"\b(?:setup_eden|inplace)\s*=\s*(?:True|False)\s*,?\s*")
 
 
 def yak_name(match: re.Match) -> str:
@@ -106,7 +114,29 @@ def open_source_side(text: str) -> str:
 
 def transform(text: str) -> str:
     """The yak form of the contents of an upstream file."""
-    return rename(open_source_side(text))
+    return drop_test_arguments(rename(open_source_side(text)))
+
+
+def drop_test_arguments(text: str) -> str:
+    """Drops the arguments of `@yak_test(...)` decorators that the fork's
+    `yak_test` does not take."""
+    out = []
+    position = 0
+    for match in re.finditer(r"@yak_test\(", text):
+        if match.start() < position:
+            continue
+        depth = 1
+        end = match.end()
+        while end < len(text) and depth:
+            depth += {"(": 1, ")": -1}.get(text[end], 0)
+            end += 1
+        arguments = TEST_ARGUMENT.sub("", text[match.end() : end - 1])
+        if not arguments.strip():
+            arguments = ""
+        out.append(text[position : match.end()] + arguments + ")")
+        position = end
+    out.append(text[position:])
+    return "".join(out)
 
 
 def transform_path(path: str) -> str:
