@@ -15,8 +15,11 @@ use yak_core::fs::project_rel_path::ProjectRelativePath;
 pub mod dep_files;
 pub mod file_watcher;
 mod fs_hash_crawler;
+#[cfg(target_os = "macos")]
+mod fsevents;
 pub mod mergebase;
 mod notify;
+mod rescan;
 mod stats;
 mod watchman;
 

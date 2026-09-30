@@ -35,6 +35,11 @@ impl FileWatcherStats {
         }
     }
 
+    /// The stats that `finish` completes with the recorded changes.
+    pub(crate) fn base_mut(&mut self) -> &mut yak_data::FileWatcherStats {
+        &mut self.stats
+    }
+
     /// I have seen an event that I am ignoring
     pub(crate) fn add_ignored(&mut self, count: u64) {
         self.stats.events_total += count;

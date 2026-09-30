@@ -9114,6 +9114,7 @@ dependencies = [
  "compact_str",
  "dice",
  "dupe",
+ "fsevent-sys",
  "futures 0.3.34",
  "gazebo",
  "notify",

@@ -18,6 +18,14 @@ changes. The yak daemon excludes from monitoring any subtrees of the project
 file system that are specified in the `[project].ignore` setting of
 `.yakconfig`.
 
+The operating system can drop file system events when many files change at
+once, such as while a build writes its outputs. The default file watcher then
+compares the size, modification time, and status change time of every file in
+the project with its previous crawl, and invalidates only the files that
+differ. The crawl skips `yak-out`, the `.git`, `.hg`, `.jj`, and `.sl`
+directories, and the ignored subtrees. On macOS, the watcher also leaves
+`yak-out` out of the events it receives.
+
 You can see detailed information about the status of the daemon by running
 `yak status`.
 

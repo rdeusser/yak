@@ -18,14 +18,17 @@ use dice::DiceTransactionUpdater;
 use dupe::Dupe;
 use notify::EventKind;
 use notify::RecommendedWatcher;
+#[cfg(not(target_os = "macos"))]
 use notify::Watcher;
 use notify::event::CreateKind;
 use notify::event::MetadataKind;
 use notify::event::ModifyKind;
 use notify::event::RemoveKind;
 use starlark_map::ordered_set::OrderedSet;
+use tokio::task::spawn_blocking;
 use tracing::debug;
 use tracing::info;
+use tracing::warn;
 use yak_common::file_ops::dice::FileChangeTracker;
 use yak_common::ignores::ignore_set::IgnoreSet;
 use yak_common::invocation_paths::InvocationPaths;
@@ -42,6 +45,7 @@ use yak_hash::StdYakHashMap;
 
 use crate::file_watcher::FileWatcher;
 use crate::mergebase::Mergebase;
+use crate::rescan::Snapshot;
 use crate::stats::FileWatcherStats;
 
 fn ignore_event_kind(event_kind: EventKind) -> bool {
@@ -126,29 +130,10 @@ impl NotifyFileData {
         Ok(())
     }
 
-    fn sync(self) -> (yak_data::FileWatcherStats, Option<FileChangeTracker>) {
+    fn sync(self) -> Synced {
         // The changes that go into the DICE transaction
         let mut changed = FileChangeTracker::new();
-        // If we missed events, sync2() will drop the entire DICE graph. Surface that to
-        // telemetry/UI by reusing the fresh-instance fields the watchman path uses for
-        // the equivalent wipe.
-        let base = if self.missed_events {
-            yak_data::FileWatcherStats {
-                fresh_instance: true,
-                fresh_instance_data: Some(yak_data::FreshInstance {
-                    new_mergebase: false,
-                    cleared_dice: true,
-                    cleared_dep_files: false,
-                }),
-                incomplete_events_reason: Some(
-                    "notify dropped events (kernel queue overflow)".to_owned(),
-                ),
-                ..Default::default()
-            }
-        } else {
-            Default::default()
-        };
-        let mut stats = FileWatcherStats::new(base, self.events.len());
+        let mut stats = FileWatcherStats::new(Default::default(), self.events.len());
         stats.add_ignored(self.ignored);
 
         for (cell_path, event_kind) in self.events {
@@ -256,24 +241,59 @@ impl NotifyFileData {
             }
         }
 
-        let stats = stats.finish();
-        let changed = if self.missed_events {
-            None
-        } else {
-            Some(changed)
-        };
-
-        (stats, changed)
+        Synced {
+            stats,
+            changed,
+            missed_events: self.missed_events,
+        }
     }
+}
+
+/// The stats of a sync that drops the DICE graph because it cannot tell which files changed,
+/// reported with the fields that watchman's fresh instance uses for the same wipe.
+fn clear_graph(mut stats: FileWatcherStats) -> yak_data::FileWatcherStats {
+    let base = stats.base_mut();
+    base.fresh_instance = true;
+    base.fresh_instance_data = Some(yak_data::FreshInstance {
+        new_mergebase: false,
+        cleared_dice: true,
+        cleared_dep_files: false,
+    });
+    base.incomplete_events_reason =
+        Some("notify dropped events (kernel queue overflow)".to_owned());
+    stats.finish()
+}
+
+/// The events of one sync, and whether the operating system dropped some.
+struct Synced {
+    stats: FileWatcherStats,
+    changed: FileChangeTracker,
+    missed_events: bool,
+}
+
+/// The source of file system events, which delivers them until it is dropped.
+enum EventSource {
+    #[cfg(target_os = "macos")]
+    FsEvents(#[expect(dead_code)] crate::fsevents::FsEventsWatcher),
+    #[cfg_attr(target_os = "macos", expect(dead_code))]
+    Notify(#[expect(dead_code)] RecommendedWatcher),
 }
 
 #[derive(Allocative)]
 pub struct NotifyFileWatcher {
     #[allocative(skip)]
-    #[expect(unused)]
-    // FIXME(JakobDegen): Clarify if this just needs to be kept alive or can be removed?
-    watcher: RecommendedWatcher,
+    #[expect(dead_code)]
+    events: EventSource,
     data: Arc<Mutex<yak_error::Result<NotifyFileData>>>,
+    root: ProjectRoot,
+    #[allocative(skip)]
+    cells: CellResolver,
+    #[allocative(skip)]
+    ignore_specs: Arc<StdYakHashMap<CellName, IgnoreSet>>,
+    /// The project's files at the last crawl, which a rescan after dropped events compares with.
+    /// It is taken at the first sync.
+    #[allocative(skip)]
+    snapshot: Mutex<Option<Snapshot>>,
 }
 
 impl NotifyFileWatcher {
@@ -285,22 +305,63 @@ impl NotifyFileWatcher {
         let data = Arc::new(Mutex::new(Ok(NotifyFileData::new())));
         let data2 = data.dupe();
         let root2 = root.dupe();
-        let mut watcher = notify::recommended_watcher(move |event| {
+        let cells2 = cells.dupe();
+        let ignore_specs = Arc::new(ignore_specs);
+        let ignore_specs2 = ignore_specs.dupe();
+        let handler = move |event| {
             let mut guard = data2.lock().unwrap();
             if let Ok(state) = &mut *guard {
-                if let Err(e) = state.process(event, &root2, &cells, &ignore_specs) {
+                if let Err(e) = state.process(event, &root2, &cells2, &ignore_specs2) {
                     *guard = Err(e);
                 }
             }
+        };
+        let events = Self::watch(root, handler)?;
+        Ok(Self {
+            events,
+            data,
+            root: root.dupe(),
+            cells,
+            ignore_specs,
+            snapshot: Mutex::new(None),
         })
-        .map_err(|e| from_any_with_tag(e, yak_error::ErrorTag::NotifyWatcher))?;
+    }
+
+    /// On macOS, the FSEvents stream leaves out `yak-out`, whose events can overflow the stream
+    /// during a build and make FSEvents drop events of the project.
+    #[cfg(target_os = "macos")]
+    fn watch(
+        root: &ProjectRoot,
+        handler: impl FnMut(notify::Result<notify::Event>) + Send + 'static,
+    ) -> yak_error::Result<EventSource> {
+        let root = root.root().as_path();
+        let yak_out = root.join(InvocationPaths::yak_out_dir_prefix().as_str());
+        Ok(EventSource::FsEvents(
+            crate::fsevents::FsEventsWatcher::new(root, &[yak_out], Box::new(handler))?,
+        ))
+    }
+
+    #[cfg(not(target_os = "macos"))]
+    fn watch(
+        root: &ProjectRoot,
+        handler: impl FnMut(notify::Result<notify::Event>) + Send + 'static,
+    ) -> yak_error::Result<EventSource> {
+        let mut watcher = notify::recommended_watcher(handler)
+            .map_err(|e| from_any_with_tag(e, yak_error::ErrorTag::NotifyWatcher))?;
         watcher
             .watch(root.root().as_path(), notify::RecursiveMode::Recursive)
             .map_err(|e| from_any_with_tag(e, yak_error::ErrorTag::NotifyWatcher))?;
-        Ok(Self { watcher, data })
+        Ok(EventSource::Notify(watcher))
     }
 
-    fn sync2(
+    async fn crawl(&self) -> yak_error::Result<Snapshot> {
+        let root = self.root.dupe();
+        let cells = self.cells.dupe();
+        let ignore_specs = self.ignore_specs.dupe();
+        spawn_blocking(move || Snapshot::crawl(&root, &cells, &ignore_specs)).await?
+    }
+
+    async fn sync2(
         &self,
         mut dice: DiceTransactionUpdater,
     ) -> yak_error::Result<(yak_data::FileWatcherStats, DiceTransactionUpdater)> {
@@ -308,14 +369,39 @@ impl NotifyFileWatcher {
             let mut guard = self.data.lock().unwrap();
             mem::replace(&mut *guard, Ok(NotifyFileData::new()))
         };
-        let (stats, changes) = old?.sync();
-        if let Some(changes) = changes {
-            changes.write_to_dice(&mut dice)?;
-        } else {
-            // We missed some file system notifications, so we drop everything
-            dice = dice.unstable_take();
+        let Synced {
+            mut stats,
+            mut changed,
+            missed_events,
+        } = old?.sync();
+
+        let previous = self.snapshot.lock().unwrap().take();
+        match (previous, missed_events) {
+            (Some(previous), false) => *self.snapshot.lock().unwrap() = Some(previous),
+            // The first sync takes the snapshot that later rescans compare with.
+            (None, false) => match self.crawl().await {
+                Ok(snapshot) => *self.snapshot.lock().unwrap() = Some(snapshot),
+                Err(e) => warn!("FileWatcher: Could not crawl the project: {e:#}"),
+            },
+            // The operating system dropped events, so the files that changed since the last
+            // crawl are found by crawling again.
+            (Some(previous), true) => match self.crawl().await {
+                Ok(snapshot) => {
+                    let count = previous.changes(&snapshot, &self.cells, &mut changed, &mut stats);
+                    *self.snapshot.lock().unwrap() = Some(snapshot);
+                    stats.base_mut().incomplete_events_reason = Some(format!(
+                        "notify dropped events, and a rescan of the project found {count} changed paths"
+                    ));
+                }
+                Err(e) => {
+                    warn!("FileWatcher: Could not crawl the project: {e:#}");
+                    return Ok((clear_graph(stats), dice.unstable_take()));
+                }
+            },
+            (None, true) => return Ok((clear_graph(stats), dice.unstable_take())),
         }
-        Ok((stats, dice))
+        changed.write_to_dice(&mut dice)?;
+        Ok((stats.finish(), dice))
     }
 }
 
@@ -330,7 +416,7 @@ impl FileWatcher for NotifyFileWatcher {
                 provider: yak_data::FileWatcherProvider::RustNotify as i32,
             },
             async {
-                let (stats, res) = match self.sync2(dice) {
+                let (stats, res) = match self.sync2(dice).await {
                     Ok((stats, dice)) => {
                         let mergebase = Mergebase(Arc::new(stats.branched_from_revision.clone()));
                         ((Some(stats)), Ok((dice, mergebase)))
@@ -401,30 +487,24 @@ mod tests {
         assert!(state.missed_events);
     }
 
-    /// Missed events: the sync result carries no tracker (the caller drops the graph) and the
-    /// stats surface the wipe the same way watchman's fresh-instance path does.
     #[test]
-    fn sync_with_missed_events_reports_fresh_instance_and_drops_changes() {
+    fn sync_reports_missed_events() {
         let mut state = NotifyFileData::new();
         state.missed_events = true;
-        let (stats, changes) = state.sync();
-        assert!(changes.is_none(), "missed events must drop the tracker");
+        assert!(state.sync().missed_events);
+        assert!(!NotifyFileData::new().sync().missed_events);
+    }
+
+    /// A sync that cannot tell which files changed surfaces the wipe the same way watchman's
+    /// fresh-instance path does.
+    #[test]
+    fn clear_graph_reports_fresh_instance() {
+        let stats = clear_graph(FileWatcherStats::new(Default::default(), 0));
         assert!(stats.fresh_instance);
         let fresh = stats
             .fresh_instance_data
             .expect("fresh instance data populated");
         assert!(fresh.cleared_dice);
         assert!(stats.incomplete_events_reason.is_some());
-    }
-
-    #[test]
-    fn sync_without_missed_events_returns_changes() {
-        let (stats, changes) = NotifyFileData::new().sync();
-        assert!(
-            changes.is_some(),
-            "no missed events: incremental tracker must survive"
-        );
-        assert!(!stats.fresh_instance);
-        assert!(stats.incomplete_events_reason.is_none());
     }
 }

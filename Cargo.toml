@@ -251,6 +251,7 @@ faccess = "0.2.4"
 fancy-regex = "0.19.2"
 flate2 = { version = "1.1.10", features = ["rust_backend"], default-features = false }
 fnv = "1.0"
+fsevent-sys = "4.1.0"
 futures = { version = "0.3.34", features = ["async-await", "compat"] }
 futures-intrusive = "0.5.0"
 fxhash = "0.2.1"

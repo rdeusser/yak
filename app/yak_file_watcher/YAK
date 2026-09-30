@@ -25,5 +25,10 @@ rust_library(
         "//third-party/rust:tokio",
         "//third-party/rust:tracing",
         "//third-party/rust:watchman_client",
-    ],
+    ] + select({
+        "DEFAULT": [],
+        "prelude//os:macos": [
+            "//third-party/rust:fsevent-sys",
+        ],
+    }),
 )

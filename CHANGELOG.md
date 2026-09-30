@@ -16,6 +16,11 @@ Removes the code, configuration, and service clients that only Meta's internal b
 - `buildscript_run` copies the shared libraries in the `cargo:rustc-link-search` directories of `OUT_DIR` into its `shared_libs` output, and passes that directory to the links of dependents. A Rust binary gets an rpath to the `shared_libs` directory of every build script among its dependencies, so it loads those libraries under `yak run` and `yak test`.
 - The C compiler that `buildscript_run` gives build scripts can be named without a path, such as `clang` in `system_demo_toolchains`. It failed with `FileNotFoundError` before, because the wrapper ran it without searching `PATH`.
 
+### File watching
+
+- When the operating system drops file system events, the default file watcher crawls the project and invalidates the files whose size, modification time, or status change time differ from its previous crawl. It cleared the DICE graph before, so the next build analyzed every target again. On macOS, the outputs that the build rewrote made FSEvents drop events again, so a no-op build of a workspace with 775 packages took 4 seconds, and it now takes 0.05 seconds.
+- On macOS, the file watcher reads FSEvents directly and leaves `yak-out` out of the stream.
+
 ### Renamed to yak
 
 - The binary is `yak`, and `cargo build --bin=yak` builds it.

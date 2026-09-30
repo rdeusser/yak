@@ -28,6 +28,9 @@ yak_fs.workspace = true
 yak_hash.workspace = true
 yak_util.workspace = true
 
+[target.'cfg(target_os = "macos")'.dependencies]
+fsevent-sys.workspace = true
+
 [dev-dependencies]
 tempfile.workspace = true
 
