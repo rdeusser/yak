@@ -88,6 +88,12 @@ class ForkNamesTest(unittest.TestCase):
             ),
         )
 
+    def test_review_references_are_dropped(self) -> None:
+        self.assertEqual(
+            "on a large analysis when",
+            port.rename("on a large analysis (D66773980) when"),
+        )
+
     def test_golden_headers_take_the_fork_wording(self) -> None:
         self.assertEqual(
             "regenerate by rerunning the test with `YAK_UPDATE_GOLDEN=1` set",

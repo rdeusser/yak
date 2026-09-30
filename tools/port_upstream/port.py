@@ -77,6 +77,8 @@ REPLACEMENTS = [
         "",
     ),
     (re.compile(r"[ \t]+# *pyre-(?:fixme|ignore)\b[^\n]*"), ""),
+    # References to Meta's code reviews.
+    (re.compile(r" \(D\d{5,}\)"), ""),
     # Names that the fork gave to Meta's names.
     (re.compile(r"\bfb_build_info\b"), "build_info"),
     (re.compile(r"\b(BUCK2|YAK)_TEST_TPX_USE_TCP\b"), r"\1_TEST_EXECUTOR_USE_TCP"),
