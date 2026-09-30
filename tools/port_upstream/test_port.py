@@ -74,6 +74,12 @@ class ForkNamesTest(unittest.TestCase):
             ),
         )
 
+    def test_re_platforms_are_cloned(self) -> None:
+        self.assertEqual(
+            "Some(platform.clone()), ctx.re_platform()",
+            port.rename("Some(re_platform(platform)), ctx.re_platform()"),
+        )
+
     def test_golden_headers_take_the_fork_wording(self) -> None:
         self.assertEqual(
             "regenerate by rerunning the test with `YAK_UPDATE_GOLDEN=1` set",
