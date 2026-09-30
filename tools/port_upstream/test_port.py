@@ -26,6 +26,9 @@ class RenameTest(unittest.TestCase):
         text = "See https://github.com/facebook/buck2/issues/1, buck.build, and Buck1."
         self.assertEqual(text, port.rename(text))
 
+    def test_calls_named_like_the_upstream_site_take_yak_names(self) -> None:
+        self.assertEqual("await yak.build(", port.rename("await buck.build("))
+
     def test_labels_of_meta_repository_name_this_repository(self) -> None:
         self.assertEqual(
             '"//third-party/rust:tokio", "//app/yak_core:yak_core"',

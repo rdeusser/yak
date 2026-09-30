@@ -43,7 +43,7 @@ NOT_THE_LEDGER = f":!{SKIPPED.relative_to(TOOL_DIR.parent.parent)}"
 # Text that names the upstream project keeps its upstream names.
 PROTECTED = re.compile(
     r"github\.com/facebook(?:incubator)?/buck2?(?:-change-detector)?\b"
-    r"|buck2?\.build\b"
+    r"|buck2?\.build\b(?!\()"
     r"|Buck1\b"
     r"|facebook/buck2?\b"
 )
