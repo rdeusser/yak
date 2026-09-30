@@ -738,7 +738,7 @@ def build_file_labels(text: str) -> dict[tuple[str, str], set[str]]:
         if opens:
             attr = opens.group(1)
             continue
-        if attr and re.match(r"^\s+\],?\s*$", line):
+        if attr and re.match(r"^\s+\]", line):
             attr = None
             continue
         label = LABEL_LINE.match(line)
@@ -863,7 +863,7 @@ def edit_list(
             current_rule = name.group(1)
         if current_rule == rule and re.match(rf"^\s+{attr} = \[\s*$", line):
             start = i
-        elif start is not None and end is None and re.match(r"^\s+\],?\s*$", line):
+        elif start is not None and end is None and re.match(r"^\s+\]", line):
             end = i
             break
     if start is None or end is None:

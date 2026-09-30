@@ -142,6 +142,15 @@ class BuildFileTest(unittest.TestCase):
             result,
         )
 
+    def test_a_list_that_continues_with_a_select_takes_the_changes(self) -> None:
+        yak_file = YAK_FILE.replace("    ],\n)", '    ] + select({"DEFAULT": []}),\n)')
+        after = UPSTREAM_BEFORE.replace('        "//third-party/rust:tokio",\n', "")
+        result, needs_review = port.port_build_file(yak_file, UPSTREAM_BEFORE, after)
+        self.assertFalse(needs_review)
+        self.assertEqual(
+            yak_file.replace('        "//third-party/rust:tokio",\n', ""), result
+        )
+
     def test_other_changes_need_review(self) -> None:
         after = UPSTREAM_BEFORE.replace('oncall("build_infra")', 'oncall("other")')
         result, needs_review = port.port_build_file(YAK_FILE, UPSTREAM_BEFORE, after)
