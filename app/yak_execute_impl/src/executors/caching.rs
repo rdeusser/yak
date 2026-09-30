@@ -513,7 +513,7 @@ impl CacheUploader {
 yak_util::size_assert::words_of_async_fn_future!(
     CacheUploader::upload_dep_file,
     (_, _, _, _, _, _, _),
-    ~540
+    ~175
 );
 
 #[derive(Debug, yak_error::Error)]
