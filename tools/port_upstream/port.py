@@ -473,6 +473,29 @@ def resolve_conflicts(merged: str) -> tuple[str, bool, list[str]]:
     return CONFLICT.sub(resolve, merged), remaining, notes
 
 
+def rustfmt(git: Git, text: str | None) -> str | None:
+    """Formats Rust source as the fork formats it. The yak names are shorter
+    than the upstream names, so `rustfmt` wraps the fork's lines differently
+    from upstream's. Returns `text` unchanged when `rustfmt` rejects it."""
+    if text is None:
+        return None
+    result = subprocess.run(
+        [
+            "rustfmt",
+            "--edition",
+            "2024",
+            "--config-path",
+            str(git.root / "rustfmt.toml"),
+        ],
+        cwd=git.root,
+        input=text,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    return result.stdout if result.returncode == 0 else text
+
+
 def adopt_fork_spelling(ours: str, base: str, theirs: str) -> tuple[str, str]:
     """Rewrites the lines of `base` and `theirs` that differ from a line of the
     fork's file only in the case of `yak` to the fork's line. The fork writes
@@ -711,6 +734,8 @@ def port_files(git: Git, commit: str, paths: PathMap) -> Outcome:
         )
         base = transform(base) if base is not None else None
         theirs = transform(theirs) if theirs is not None else None
+        if name.endswith(".rs"):
+            base, theirs = (rustfmt(git, s) for s in (base, theirs))
         if None not in (ours, base, theirs):
             base, theirs = adopt_fork_spelling(ours, base, theirs)
         if name.endswith(".rs") and None not in (ours, base, theirs):
