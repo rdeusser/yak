@@ -1,1 +1,17 @@
 # Upstream commits that the fork does not take: the full hash, then the reason.
+d71408b529dc51e32c08ba67427073fe0688e269 2dd549a751 reverts its change to Cargo.toml
+2dd549a75157d6d1568f38f31b101548c84f4ed0 reverts d71408b529
+c81f14674c977b2e35fa8e733c1f3d387dae5c33 builds on the agent context, which the fork removed with --agent-context
+2492caececb27530287730b95bbe55a27eaeb719 builds on the agent context, which the fork removed with --agent-context
+2086020d74d928206ba382f2c376b094299abca3 builds on the agent context, which the fork removed with --agent-context
+dd013f1d3753169685d3cef1c8d3c720899e66bd builds on the agent context, which the fork removed with --agent-context
+53b7afdd07d8f1466957d24ecc1d10b606bdeb7f builds on the agent context, which the fork removed with --agent-context
+ff83290b9bdd3c0fdb4aad9057f51972074fb466 builds on the agent context, which the fork removed with --agent-context
+90e3dcb05f9e0d3f7863bb0205992994b5ff6e0e builds on the agent context, which the fork removed with --agent-context
+2c0bceeabeaa07a0c88ef75be3c02e1078277248 changes only files that the fork removed, in prelude/android, prelude/java
+afccf1161da0c683975fa0fe38b9cb9538edab6d changes only files that the fork removed, in prelude/java
+889aa6995811ff73eee02ed21d6af10fd7a5eff3 changes only files that the fork removed, in prelude/java, prelude/jvm, prelude/kotlin, prelude/toolchains/android/src/com/facebook/buck/cd/resources/proto, prelude/toolchains/android/src/com/facebook/buck/jvm/cd, prelude/toolchains/android/src/com/facebook/buck/jvm/cd/command, prelude/toolchains/android/src/com/facebook/buck/jvm/java/stepsbuilder/javacd/main, prelude/toolchains/android/src/com/facebook/buck/jvm/kotlin/cd/workertool, prelude/toolchains/android/test/com/facebook/buck/jvm/cd, prelude/toolchains/android/test/com/facebook/buck/jvm/cd/serialization/kotlin
+ecbef94bc6e8d2b6928a25459af338e7bded965d changes only files that the fork removed, in tests/e2e
+c44629c5a76ea01a66519d86e5857052e8fb06b8 changes only files that the fork removed, in bootstrap/reindeer
+08ab357537a7aad29b5312ad462c264326c5f912 the fork already has the change
+8ea659c4937b8875d3fff97cf39684f18c9bcc0a changes only files that the fork removed, in tests/e2e
