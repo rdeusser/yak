@@ -542,10 +542,38 @@ def resolve_conflicts(merged: str) -> tuple[str, bool, list[str]]:
                 f"kept the fork's deletion of {len(base)} lines that upstream changed, from `{first}`"
             )
             return ""
+        placed = apply_edits_by_content(ours, base, edits(base, theirs))
+        if placed is not None:
+            notes.append(
+                f"applied upstream's edits where the lines they replace occur once, from `{next((line.strip() for line in ours if line.strip()), '')}`"
+            )
+            return "".join(placed)
         remaining = True
         return block.group(0)
 
     return CONFLICT.sub(resolve, merged), remaining, notes
+
+
+def apply_edits_by_content(
+    ours: list[str], base: list[str], upstream: list[tuple[int, int, list[str]]]
+) -> list[str] | None:
+    """Applies each upstream edit that replaces lines to the place in `ours`
+    where those lines occur once, such as a version in a lock file that the
+    fork pruned. Returns None when an edit only inserts lines, or when the
+    lines it replaces do not occur exactly once."""
+    result = list(ours)
+    for start, end, lines in upstream:
+        replaced = base[start:end]
+        if not replaced:
+            return None
+        n = len(replaced)
+        places = [
+            i for i in range(len(result) - n + 1) if result[i : i + n] == replaced
+        ]
+        if len(places) != 1:
+            return None
+        result[places[0] : places[0] + n] = lines
+    return result
 
 
 def rustfmt(git: Git, text: str | None) -> str | None:

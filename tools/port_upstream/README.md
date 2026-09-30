@@ -39,6 +39,7 @@ In `Cargo.toml` files, the upstream sides' dependency entries take the fork's or
 
 - The two sides change adjacent lines, and their edits do not overlap.
 - The fork deleted the lines that upstream changed, and upstream added no more lines than it replaced. The output notes each such block.
+- Each upstream edit replaces lines that occur once in the fork's side of the block, such as a version in a lock file that the fork pruned. The output notes each such block.
 
 A file that already holds every upstream edit, such as a golden file that the fork regenerated, stays as it is. A file that holds some of them is marked for review.
 

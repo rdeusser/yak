@@ -341,6 +341,17 @@ class MergeTest(unittest.TestCase):
         self.assertTrue(conflict)
         self.assertEqual([], notes)
 
+    def test_replacements_apply_where_their_lines_occur_once(self) -> None:
+        base = ["a\n", "old\n", "b\n"]
+        upstream = port.edits(base, ["a\n", "new\n", "b\n"])
+        self.assertEqual(
+            ["x\n", "new\n", "y\n"],
+            port.apply_edits_by_content(["x\n", "old\n", "y\n"], base, upstream),
+        )
+        self.assertIsNone(
+            port.apply_edits_by_content(["old\n", "old\n"], base, upstream)
+        )
+
     def test_use_runs_sort_before_a_merge(self) -> None:
         base = port.sort_use_runs("use a::B;\nuse a::Old;\nuse a::C;\n")
         ours = port.sort_use_runs("use a::B;\nuse a::C;\nuse a::Old;\n")
