@@ -15,6 +15,8 @@ use serde::Deserialize;
 pub struct Metadata {
     pub packages: Vec<Package>,
     pub workspace_members: Vec<String>,
+    /// The absolute path of the workspace's root directory.
+    pub workspace_root: String,
     pub resolve: Resolve,
 }
 
@@ -70,6 +72,9 @@ pub struct Package {
     pub repository: Option<String>,
     pub license: Option<String>,
     pub links: Option<String>,
+    /// The package's `[package.metadata]` table, which Cargo leaves to other tools.
+    #[serde(default)]
+    pub metadata: Option<serde_json::Value>,
 }
 
 #[derive(Debug, Clone, Deserialize)]

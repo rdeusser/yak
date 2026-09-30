@@ -2,7 +2,7 @@ include!(concat!(env!("OUT_DIR"), "/major.rs"));
 
 pub fn describe() -> String {
     format!(
-        "{} {} major={} build_script={} description={} origin={}",
+        "{} {} major={} build_script={} description={} origin={} banner={}",
         env!("CARGO_PKG_NAME"),
         env!("CARGO_PKG_VERSION"),
         MAJOR,
@@ -10,5 +10,7 @@ pub fn describe() -> String {
         env!("CARGO_PKG_DESCRIPTION"),
         // A file in a hidden directory, which the crate reads as Cargo lets it.
         include_str!("../.config/origin.txt"),
+        // A file outside the crate's directory.
+        include_str!("../../shared/banner.txt"),
     )
 }

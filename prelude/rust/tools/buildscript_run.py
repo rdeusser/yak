@@ -31,6 +31,13 @@ def eprint(*args: Any, **kwargs: Any) -> None:
     print(*args, end="\n", file=sys.stderr, flush=True, **kwargs)
 
 
+def quote_arg(arg: str) -> str:
+    """Quotes an argument of a linker argument file that contains whitespace."""
+    if any(c.isspace() for c in arg):
+        return '"' + arg.replace("\\", "\\\\").replace('"', '\\"') + '"'
+    return arg
+
+
 def cfg_env(rustc_cfg: Path) -> dict[str, str]:
     with rustc_cfg.open(encoding="utf-8") as f:
         lines = f.readlines()
@@ -194,6 +201,8 @@ class Args(NamedTuple):
     manifest_dir: Path
     create_cwd: Path
     outfile: IO[str]
+    linker_flags: Optional[IO[str]]
+    linker_search_flag: str
     rustc_link_lib: bool
     rustc_link_search: bool
 
@@ -206,6 +215,9 @@ def arg_parse() -> Args:
     parser.add_argument("--manifest-dir", type=Path, required=True)
     parser.add_argument("--create-cwd", type=Path, required=True)
     parser.add_argument("--outfile", type=argparse.FileType("w"), required=True)
+    # The linker flags that every link of a dependent needs, as an argument file.
+    parser.add_argument("--linker-flags", type=argparse.FileType("w"))
+    parser.add_argument("--linker-search-flag", type=str, default="-L")
     parser.add_argument("--rustc-link-lib", action="store_true")
     parser.add_argument("--rustc-link-search", action="store_true")
 
@@ -268,6 +280,7 @@ def main() -> None:  # noqa: C901
         return None
 
     flags = ""
+    linker_flags = ""
     for line in script_output.split("\n"):
         cargo_rustc_cfg_match = cargo_rustc_cfg_pattern.match(line)
         if cargo_rustc_cfg_match:
@@ -302,12 +315,18 @@ def main() -> None:  # noqa: C901
             elif path.startswith(TOOL_CWD):
                 relative_path = path[len(TOOL_CWD) :]
                 flags += f"-L{kind}$(abspath {relative_path})\n"
-            else:
-                # Disregard link search not located within the build script's out dir.
-                pass
+            elif os.path.isabs(path):
+                # A directory of the host, such as the one where pkg-config
+                # found a system library. rustc records the script's
+                # `rustc-link-lib` for the links of dependents, but not the
+                # search path, so dependents get it through `--linker-flags`.
+                flags += f"-L{kind}{path}\n"
+                linker_flags += f"{args.linker_search_flag}{quote_arg(path)}\n"
             continue
         print(line, end="\n")
     args.outfile.write(flags)
+    if args.linker_flags:
+        args.linker_flags.write(linker_flags)
 
 
 if __name__ == "__main__":

@@ -25,11 +25,11 @@ use yak_util::process::background_command;
 
 use crate::commands::init;
 
-/// The build file of a workspace member. The cargo cell generates the targets from
-/// `cargo metadata` each time a manifest changes.
-const MEMBER_BUILD_FILE: &str = "load(\"@crates//:workspace.bzl\", \"cargo_workspace_member\")\n\
-                                 \n\
-                                 cargo_workspace_member()\n";
+/// The build file at the root of the workspace. The cargo cell generates the members' targets
+/// from `cargo metadata` each time a manifest changes.
+const WORKSPACE_BUILD_FILE: &str = "load(\"@crates//:workspace.bzl\", \"cargo_workspace\")\n\
+                                    \n\
+                                    cargo_workspace()\n";
 
 /// The comment above the cargo cell's configuration.
 const CARGO_CELL_COMMENT: &str =
@@ -54,9 +54,10 @@ fn cargo_cell_config() -> String {
 
 /// Writes the build files that let yak build the Cargo workspace at \[PATH\].
 ///
-/// Each workspace member gets a `YAK` file that declares its targets from its `Cargo.toml`, and
-/// `.yakconfig` gains the `crates` cell, which builds the third-party crates in `Cargo.lock`. The
-/// generated files do not list dependencies, so an edit to a manifest needs no new run.
+/// The `YAK` file at the root of the workspace declares the targets of every workspace member from
+/// its `Cargo.toml`, and `.yakconfig` gains the `crates` cell, which builds the third-party crates
+/// in `Cargo.lock`. The generated files do not list dependencies, so an edit to a manifest needs
+/// no new run.
 #[derive(Debug, clap::Parser)]
 #[clap(
     name = "generate",
@@ -67,7 +68,7 @@ pub struct GenerateCommand {
     #[clap(default_value = ".")]
     path: PathArg,
 
-    /// Replace the build files of workspace members that differ from the generated ones.
+    /// Replace a `YAK` file at the root of the workspace that differs from the generated one.
     #[clap(long)]
     force: bool,
 
@@ -224,34 +225,44 @@ fn exec_impl(
         ));
     }
 
+    // All members' targets are in the package at the root of the workspace, which a build file
+    // in a member's directory would cut the member out of.
+    let members = layout.member_dirs()?;
+    let splitting: Vec<String> = members
+        .iter()
+        .filter(|dir| !dir.is_empty() && root.join(dir.as_str()).join("YAK").exists())
+        .map(|dir| format!("`{dir}/YAK`"))
+        .collect();
+    if !splitting.is_empty() {
+        return Err(yak_error!(
+            ErrorTag::Input,
+            "{} would make workspace members packages of their own, which the build file at the \
+             root of the workspace cannot reach. Remove them and run `yak generate` again.",
+            splitting.join(", ")
+        ));
+    }
+
     let config = configure_project(root)?;
     ignore_yak_out(root)?;
-
-    let mut kept = Vec::new();
-    let mut written = 0;
-    let mut unchanged = 0;
-    for dir in layout.member_dirs()? {
-        let path = root.join(&dir).join("YAK");
-        match write_if_changed(&path, MEMBER_BUILD_FILE, cmd.force)? {
-            Written::Created | Written::Replaced => written += 1,
-            Written::Unchanged => unchanged += 1,
-            Written::Kept => kept.push(path),
-        }
-    }
+    let build_file = root.join("YAK");
+    let written = write_if_changed(&build_file, WORKSPACE_BUILD_FILE, cmd.force)?;
 
     match config {
         Written::Created => console.print_success("Created `.yakconfig` with the `crates` cell")?,
         Written::Replaced => console.print_success("Added the `crates` cell to `.yakconfig`")?,
         Written::Unchanged | Written::Kept => {}
     }
-    console.print_success(&format!(
-        "Wrote the build files of {written} workspace members, and left {unchanged} unchanged"
-    ))?;
-    for path in &kept {
-        console.print_warning(&format!(
-            "Kept `{}`, which differs from the generated build file. Pass `--force` to replace it.",
-            path.display()
-        ))?;
+    match written {
+        Written::Created | Written::Replaced => console.print_success(&format!(
+            "Wrote `YAK`, which declares the targets of {} workspace members",
+            members.len()
+        ))?,
+        Written::Unchanged => console.print_success("`YAK` is up to date")?,
+        Written::Kept => console.print_warning(&format!(
+            "Kept `{}`, which differs from the generated build file. Pass `--force` to replace \
+             it, or add its two lines to it.",
+            build_file.display()
+        ))?,
     }
     Ok(())
 }

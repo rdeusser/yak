@@ -6,27 +6,31 @@
 
 import os
 import subprocess
+import sys
 from pathlib import Path
 
+import pytest
 from e2e_util.api.yak import Yak
+from e2e_util.api.yak_result import YakException
 from e2e_util.yak_workspace import yak_test
 
-MEMBER_BUILD_FILE = """load("@crates//:workspace.bzl", "cargo_workspace_member")
+WORKSPACE_BUILD_FILE = """load("@crates//:workspace.bzl", "cargo_workspace")
 
-cargo_workspace_member()
+cargo_workspace()
 """
 
 
 @yak_test(data_dir="workspace")
 async def test_generate_builds_the_workspace(yak: Yak) -> None:
     await yak.generate()
+    assert (yak.cwd / "YAK").read_text() == WORKSPACE_BUILD_FILE
     for member in ["app", "util"]:
-        assert (yak.cwd / member / "YAK").read_text() == MEMBER_BUILD_FILE
+        assert not (yak.cwd / member / "YAK").exists()
 
-    result = await yak.run("//app:app")
+    result = await yak.run("//:app")
     assert (
         result.stdout
-        == "util 1.2.3-beta.1 major=1 build_script=yes description=first description origin=hidden\n"
+        == "util 1.2.3-beta.1 major=1 build_script=yes description=first description origin=hidden banner=shared\n"
     )
 
     # The cell reads the manifests, so an edit reaches the next build without
@@ -35,8 +39,10 @@ async def test_generate_builds_the_workspace(yak: Yak) -> None:
     manifest.write_text(
         manifest.read_text().replace("first description", "second description")
     )
-    result = await yak.run("//app:app")
-    assert result.stdout.endswith("description=second description origin=hidden\n")
+    result = await yak.run("//:app")
+    assert result.stdout.endswith(
+        "description=second description origin=hidden banner=shared\n"
+    )
 
 
 @yak_test(data_dir="workspace")
@@ -45,15 +51,13 @@ async def test_generate_twice_changes_nothing(yak: Yak) -> None:
     config = (yak.cwd / ".yakconfig").read_text()
 
     result = await yak.generate()
-    assert "Wrote the build files of 0 workspace members, and left 2 unchanged" in (
-        result.stderr
-    )
+    assert "`YAK` is up to date" in result.stderr
     assert (yak.cwd / ".yakconfig").read_text() == config
 
 
 @yak_test(data_dir="workspace")
 async def test_generate_keeps_a_different_build_file(yak: Yak) -> None:
-    build_file = yak.cwd / "app" / "YAK"
+    build_file = yak.cwd / "YAK"
     build_file.write_text("# hand-written\n")
 
     result = await yak.generate()
@@ -61,7 +65,19 @@ async def test_generate_keeps_a_different_build_file(yak: Yak) -> None:
     assert build_file.read_text() == "# hand-written\n"
 
     await yak.generate("--force")
-    assert build_file.read_text() == MEMBER_BUILD_FILE
+    assert build_file.read_text() == WORKSPACE_BUILD_FILE
+
+
+@yak_test(data_dir="workspace")
+async def test_generate_rejects_a_build_file_in_a_member(yak: Yak) -> None:
+    await yak.generate()
+    # The file would make `app` a package of its own, outside the workspace's package.
+    (yak.cwd / "app" / "YAK").write_text("# hand-written\n")
+    with pytest.raises(YakException) as e:
+        await yak.generate("--force")
+    assert "`app/YAK` would make workspace members packages of their own" in str(
+        e.value
+    )
 
 
 @yak_test(data_dir="vendored")
@@ -70,7 +86,7 @@ async def test_generate_builds_replaced_sources(yak: Yak) -> None:
     # mirror of a private registry. The cell takes each package from where
     # Cargo put it.
     await yak.generate()
-    result = await yak.run("//app:app")
+    result = await yak.run("//:app")
     assert result.stdout == "hello from vendored\n"
 
 
@@ -103,7 +119,7 @@ async def test_generate_builds_a_git_dependency_at_its_locked_commit(
     )
 
     await yak.generate()
-    result = await yak.run("//app:app")
+    result = await yak.run("//:app")
     assert result.stdout == "hello from the first commit\n"
 
     # A new commit keeps the package's version. The cell copies the new sources
@@ -114,5 +130,36 @@ async def test_generate_builds_a_git_dependency_at_its_locked_commit(
     subprocess.run(
         ["cargo", "update", "-p", "greet"], cwd=yak.cwd, env=cargo_env, check=True
     )
-    result = await yak.run("//app:app")
+    result = await yak.run("//:app")
     assert result.stdout == "hello from the second commit\n"
+
+
+def build_host_library(directory: Path) -> None:
+    """Builds `libhostanswer.a`, whose `host_answer` returns 42, in `directory`."""
+    source = directory / "answer.c"
+    source.write_text("int host_answer(void) { return 42; }\n")
+    subprocess.run(
+        ["cc", "-c", str(source), "-o", str(directory / "answer.o")], check=True
+    )
+    # Apple's `ar` writes the member alignment that the macOS linker requires.
+    ar = ["xcrun", "ar"] if sys.platform == "darwin" else ["ar"]
+    subprocess.run(
+        [*ar, "rcs", str(directory / "libhostanswer.a"), str(directory / "answer.o")],
+        check=True,
+    )
+
+
+@yak_test(data_dir="hostlib")
+async def test_generate_links_a_host_library_of_a_build_script(yak: Yak) -> None:
+    # The build script of `host` names a library in a directory outside the
+    # project, as one that finds a system library through pkg-config does. The
+    # link of `app` needs the directory, which rustc does not record in the
+    # library of `host`.
+    host_lib_dir = yak.cwd.parent / "host-lib"
+    host_lib_dir.mkdir()
+    build_host_library(host_lib_dir)
+    (yak.cwd / "host" / "host-lib-dir.txt").write_text(str(host_lib_dir))
+
+    await yak.generate()
+    result = await yak.run("//:app")
+    assert result.stdout == "answer=42\n"

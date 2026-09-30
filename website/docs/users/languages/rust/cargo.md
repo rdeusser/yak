@@ -21,13 +21,12 @@ yak build //...
 
 `yak generate` writes these files:
 
-- A `YAK` file in the directory of each workspace member, with these three
-  lines:
+- A `YAK` file at the root of the workspace, with these three lines:
 
   ```python
-  load("@crates//:workspace.bzl", "cargo_workspace_member")
+  load("@crates//:workspace.bzl", "cargo_workspace")
 
-  cargo_workspace_member()
+  cargo_workspace()
   ```
 
 - The `crates` cell in `.yakconfig`, with the `cargo` origin. If the project
@@ -35,32 +34,48 @@ yak build //...
   `toolchains/YAK` files that `yak init` writes.
 - `/yak-out` in `.gitignore`, if a `.gitignore` exists and does not ignore it.
 
-The build files list no dependencies, so an edit to a `Cargo.toml` reaches the
-next build without another `yak generate`. Run it again after adding a
-workspace member. A run writes only the files whose contents differ. It keeps a
-member's `YAK` file that differs from the generated one, and `--force` replaces
-it.
+The build file lists no dependencies, so an edit to a `Cargo.toml` reaches the
+next build without another `yak generate`, and so does a new workspace member.
+A run writes only the files whose contents differ. It keeps a `YAK` file at the
+root that differs from the generated one, and `--force` replaces it. It stops
+with an error if a member's directory has a `YAK` file of its own, because that
+file would make the member a separate package.
 
 ## Targets
 
-`cargo_workspace_member()` declares the targets of the member in its directory,
-from the output of `cargo metadata`:
+`cargo_workspace()` declares the targets of every workspace member from the
+output of `cargo metadata`. All of them are targets of the package at the root
+of the workspace:
 
-| Cargo target               | yak target                                                                                              |
-| -------------------------- | ------------------------------------------------------------------------------------------------------- |
-| The library                | A `rust_library` named after the package, or `<package>-lib` if a binary has the package's name         |
-| The library's unit tests   | A `rust_test` named `<library>-unittest`                                                                |
-| Each binary                | A `rust_binary` named after the binary                                                                  |
-| Each integration test      | A `rust_test` named after the test                                                                      |
-| The build script           | `<package>-build-script-build`, which compiles it, and `<package>-build-script-run`, which runs it      |
+| Cargo target               | yak target                                                                                                   |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| The library                | A `rust_library` named after the package, or `<package>-lib` if a binary has the package's name              |
+| The library's unit tests   | A `rust_test` named `<package>-unittest`                                                                     |
+| Each binary                | A `rust_binary` named after the binary, or `<package>-<binary>` if two members have binaries of that name    |
+| Each integration test      | A `rust_test` named `<package>-<test>`                                                                       |
+| The build script           | `<package>-build-script-build`, which compiles it, and `<package>-build-script-run`, which runs it           |
 
-For example, `yak run //crates/app:app` runs the binary `app` of the member in
-`crates/app`, and `yak test //...` runs every test of the workspace.
+For example, `yak run //:app` runs the binary `app`, and `yak test //...` runs
+every test of the workspace.
 
 Each target builds with the features that Cargo resolves for its package. Tests
 also get the package's dev-dependencies. A dependency under
 `[target.'cfg(...)'.dependencies]` applies on the platforms whose `rustc --print cfg`
 output satisfies the condition.
+
+## Files outside a crate's directory
+
+A crate builds with the files of its own directory. A crate that also reads
+files elsewhere in the workspace, such as `include_str!("../../README.md")`,
+lists them in its `Cargo.toml`, relative to its directory:
+
+```toml
+[package.metadata.yak]
+include = ["../../README.md", "../../assets/*.json"]
+```
+
+Cargo ignores the `[package.metadata]` table. Each entry is a glob pattern, and
+it must name files inside the workspace.
 
 ## Third-party crates
 
@@ -104,10 +119,18 @@ after a dependency changes.
   `prelude//rust/cargo_package.bzl`: `linux-arm64`, `linux-riscv64`,
   `linux-x86_64`, `macos-arm64`, `macos-x86_64`, `wasi`, `wasm32`,
   `windows-gnu`, and `windows-msvc`.
-- A crate builds with the files of its own directory. A crate that reads a file
-  outside it, such as `include_str!("../../README.md")`, fails to compile.
+- Cargo adds the directories that build scripts name in
+  `cargo:rustc-link-search` inside its `target` directory to the dynamic
+  library path of the tests and binaries it runs, and yak does not. A binary
+  that links a dynamic library from a build script's `OUT_DIR` fails to load
+  it under `yak run` and `yak test`.
+- `cargo_workspace()` declares no targets for examples or benchmarks. A test
+  that looks for an example in Cargo's `target` directory fails.
+- A build file in a directory inside the workspace, such as one for another
+  language, makes that directory a separate package, and the members' globs
+  skip its files.
 - `yak generate` runs in the root of a Cargo workspace whose directory is also
   the root of the yak project. For a workspace in a subdirectory of a project,
   configure the cell by hand, as
   [the `cargo` origin](../../advanced/external_cells.md#the-cargo-origin)
-  shows, and write the members' `YAK` files.
+  shows, and write the `YAK` file at the root of the workspace.

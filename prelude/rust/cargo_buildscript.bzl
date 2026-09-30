@@ -12,7 +12,7 @@
 #     buildscript_genrule = "buildscript_run"
 #
 
-load("@prelude//cxx:cxx_toolchain_types.bzl", "CxxToolchainInfo")
+load("@prelude//cxx:cxx_toolchain_types.bzl", "CxxToolchainInfo", "LinkerType")
 load(
     "@prelude//cxx:preprocessor.bzl",
     "cxx_inherited_preprocessor_infos",
@@ -21,7 +21,19 @@ load(
 load("@prelude//cxx:target_sdk_version.bzl", "get_target_triple")
 load("@prelude//decls:common.bzl", "yak")
 load("@prelude//decls:toolchains_common.bzl", "toolchains_common")
-load("@prelude//linking:link_info.bzl", "LinkInfosTSet", "LinkStrategy", "MergedLinkInfo")
+load("@prelude//linking:link_groups.bzl", "EMPTY_LINK_GROUP_LIB_INFO")
+load(
+    "@prelude//linking:link_info.bzl",
+    "LibOutputStyle",
+    "LinkInfo",
+    "LinkInfos",
+    "LinkInfosTSet",
+    "LinkStrategy",
+    "MergedLinkInfo",
+    "create_merged_link_info",
+)
+load("@prelude//linking:linkable_graph.bzl", "create_linkable_graph")
+load("@prelude//linking:shared_libraries.bzl", "EMPTY_SHARED_LIBRARY_INFO")
 load("@prelude//os_lookup:defs.bzl", "Os", "OsLookup", "ScriptLanguage")
 load("@prelude//rust:rust_toolchain.bzl", "RustToolchainInfo")
 load("@prelude//rust:targets.bzl", "targets")
@@ -223,6 +235,7 @@ def _cargo_buildscript_impl(ctx: AnalysisContext) -> list[Provider]:
     cwd = ctx.actions.declare_output("cwd", dir = True, has_content_based_path = True)
     out_dir = ctx.actions.declare_output("OUT_DIR", dir = True, has_content_based_path = True)
     rustc_flags = ctx.actions.declare_output("rustc_flags", has_content_based_path = True)
+    linker_flags = ctx.actions.declare_output("linker_flags", has_content_based_path = True)
 
     if ctx.attrs.manifest_dir != None:
         manifest_dir = ctx.attrs.manifest_dir[DefaultInfo].default_outputs[0]
@@ -236,7 +249,10 @@ def _cargo_buildscript_impl(ctx: AnalysisContext) -> list[Provider]:
         cmd_args("--manifest-dir=", manifest_dir, delimiter = ""),
         cmd_args("--create-cwd=", cwd.as_output(), delimiter = ""),
         cmd_args("--outfile=", rustc_flags.as_output(), delimiter = ""),
+        cmd_args("--linker-flags=", linker_flags.as_output(), delimiter = ""),
     ]
+    if cxx_toolchain_info.linker_info.type == LinkerType("windows"):
+        cmd.append("--linker-search-flag=/LIBPATH:")
 
     if ctx.attrs.rustc_link_lib:
         cmd.append("--rustc-link-lib")
@@ -374,14 +390,31 @@ def _cargo_buildscript_impl(ctx: AnalysisContext) -> list[Provider]:
         category = "buildscript",
     )
 
+    # A library that depends on this target passes `linker_flags` to every
+    # link that includes it. The file holds the search paths of the host
+    # libraries that the script names, which rustc does not record in the
+    # library's metadata.
+    link = LinkInfo(
+        name = ctx.attrs.name,
+        pre_flags = [cmd_args(linker_flags, format = "@{}")],
+    )
     return [
         DefaultInfo(
             default_output = None,
             sub_targets = {
+                "linker_flags": [DefaultInfo(default_output = linker_flags)],
                 "out_dir": [DefaultInfo(default_output = out_dir)],
                 "rustc_flags": [DefaultInfo(default_output = rustc_flags)],
             },
-        )
+        ),
+        EMPTY_SHARED_LIBRARY_INFO,
+        EMPTY_LINK_GROUP_LIB_INFO,
+        create_linkable_graph(ctx),
+        create_merged_link_info(
+            ctx,
+            cxx_toolchain_info.pic_behavior,
+            {output_style: LinkInfos(default = link) for output_style in LibOutputStyle},
+        ),
     ]
 
 _cargo_buildscript_rule = rule(

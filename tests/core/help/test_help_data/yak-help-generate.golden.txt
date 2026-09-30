@@ -2,9 +2,10 @@
 
 Writes the build files that let yak build the Cargo workspace at \[PATH\].
 
-Each workspace member gets a `YAK` file that declares its targets from its `Cargo.toml`, and
-`.yakconfig` gains the `crates` cell, which builds the third-party crates in `Cargo.lock`. The
-generated files do not list dependencies, so an edit to a manifest needs no new run.
+The `YAK` file at the root of the workspace declares the targets of every workspace member from its
+`Cargo.toml`, and `.yakconfig` gains the `crates` cell, which builds the third-party crates in
+`Cargo.lock`. The generated files do not list dependencies, so an edit to a manifest needs no new
+run.
 
 Usage: yak generate [OPTIONS] [PATH]
 
@@ -16,7 +17,7 @@ Arguments:
 
 Options:
       --force
-          Replace the build files of workspace members that differ from the generated ones
+          Replace a `YAK` file at the root of the workspace that differs from the generated one
 
   -h, --help
           Print help (see a summary with '-h')

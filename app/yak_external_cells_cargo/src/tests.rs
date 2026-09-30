@@ -104,6 +104,7 @@ fn metadata_json() -> String {
     json!({
         "packages": packages,
         "workspace_members": ["path+file:///ws/app#0.1.0"],
+        "workspace_root": "/ws",
         "resolve": {"nodes": nodes},
     })
     .to_string()
@@ -180,8 +181,9 @@ fn test_library_deps_features_and_platforms() {
     assert!(serde.contains("crate_root = \"src/lib.rs\""));
     assert!(serde.contains("srcs = glob([\"**\", \"**/.*\", \"**/.*/**\"], exclude = [\"YAK\"])"));
     assert!(serde.contains("features = [\"default\", \"std\"]"));
-    // The renamed proc macro applies everywhere; libc only on the Unix platform.
-    assert!(serde.contains("deps = []"));
+    // The renamed proc macro applies everywhere; libc only on the Unix platform. The run of the
+    // build script carries the search paths of host libraries to dependents' links.
+    assert!(serde.contains("deps = [\":serde-build-script-run\"]"));
     assert!(
         serde.contains("named_deps = {\"derive_impl\": \"//serde_derive-1.0.0:serde_derive\"}")
     );
@@ -278,6 +280,7 @@ fn workspace_metadata() -> Metadata {
         "version": "0.2.0",
         "source": null,
         "manifest_path": "/ws/util/Cargo.toml",
+        "metadata": {"yak": {"include": ["../shared/*.txt"]}},
         "targets": [
             {"name": "util", "kind": ["lib"], "src_path": "/ws/util/src/lib.rs", "edition": "2024"},
             {"name": "build-script-build", "kind": ["custom-build"], "src_path": "/ws/util/build.rs", "edition": "2024"},
@@ -309,51 +312,165 @@ fn workspace_metadata() -> Metadata {
     Metadata::parse(&value.to_string()).unwrap()
 }
 
+/// `workspace.bzl` for a workspace in the directory `ws` of the project.
 fn generate_workspace_bzl() -> String {
     crate::generate_workspace(
         &workspace_metadata(),
         &platforms(),
-        std::path::Path::new("/ws"),
+        std::path::Path::new("/"),
         "crates",
     )
     .unwrap()
 }
 
+/// The data of the member in `dir`.
+fn member<'a>(out: &'a str, dir: &str) -> &'a str {
+    let start = out
+        .find(&format!("\"dir\": \"{dir}\""))
+        .unwrap_or_else(|| panic!("no member `{dir}` in:\n{out}"));
+    let end = out[start..]
+        .find("}, {\"name\"")
+        .map_or(out.len(), |i| start + i);
+    &out[start..end]
+}
+
 #[test]
 fn test_workspace_member_labels() {
     let out = generate_workspace_bzl();
+    assert!(out.contains("_WORKSPACE_DIR = \"ws\""));
+    let app = member(&out, "app");
     // `app` has a bin named like the package, so its library is `app-lib`.
     assert!(
-        out.contains(
-            "\"lib\": {\"rule\": \"app-lib\", \"crate\": \"app\", \"crate_root\": \"src/lib.rs\""
+        app.contains(
+            "\"lib\": {\"rule\": \"app-lib\", \"crate\": \"app\", \"crate_root\": \"app/src/lib.rs\""
         ),
-        "{out}"
+        "{app}"
     );
-    assert!(out.contains(
-        "\"bins\": [{\"rule\": \"app\", \"crate\": \"app\", \"crate_root\": \"src/main.rs\""
+    assert!(app.contains(
+        "\"bins\": [{\"rule\": \"app\", \"crate\": \"app\", \"crate_root\": \"app/src/main.rs\""
     ));
-    // Third-party dependencies name the cargo cell, and members name their directory.
-    assert!(out.contains(
-        "\"deps\": [\"crates//serde-1.0.1-beta.2:serde\", \"crates//memchr-2.0.0:memchr\", \"//util:util\"]"
+    // Third-party dependencies name the cargo cell, and members name the workspace's package.
+    assert!(app.contains(
+        "\"deps\": [\"crates//serde-1.0.1-beta.2:serde\", \"crates//memchr-2.0.0:memchr\", \"//ws:util\"]"
     ));
+    assert!(app.contains("\"srcs\": [\"app/**\", \"app/**/.*\", \"app/**/.*/**\"]"));
+    assert!(app.contains("\"srcs_exclude\": [\"app/target/**\"]"));
+    assert!(app.contains("\"CARGO_MANIFEST_DIR\": \"app\""));
 }
 
 #[test]
 fn test_workspace_member_build_script_features_and_tests() {
     let out = generate_workspace_bzl();
-    let util = &out[out.find("\"util\": {").unwrap()..];
+    let util = member(&out, "util");
     assert!(util.contains("\"features\": [\"fast\"]"));
-    assert!(util.contains("\"build_script\": {\"rule\": \"\", \"crate\": \"build_script_build\", \"crate_root\": \"build.rs\", \"edition\": \"2024\"}"));
+    assert!(util.contains("\"build_script\": {\"rule\": \"\", \"crate\": \"build_script_build\", \"crate_root\": \"util/build.rs\", \"edition\": \"2024\"}"));
     assert!(util.contains("\"build_deps\": [\"crates//memchr-2.0.0:memchr\"]"));
+    assert!(out.contains("script_deps = [\":\" + names[\"build_script_run\"]]"));
+    // Integration tests are named after their package, because all members share a package.
     assert!(util.contains(
-        "\"tests\": [{\"rule\": \"smoke\", \"crate\": \"smoke\", \"crate_root\": \"tests/smoke.rs\""
+        "\"tests\": [{\"rule\": \"util-smoke\", \"crate\": \"smoke\", \"crate_root\": \"util/tests/smoke.rs\""
     ));
+    assert!(util.contains("\"unittest\": \"util-unittest\""));
+    assert!(util.contains("\"build_script_run\": \"util-build-script-run\""));
     // The dev dependency applies to tests on Unix only.
     assert!(util.contains(
         "\"test_platform\": {\"linux-x86_64\": {\"deps\": [\"crates//libc-0.2.0:libc\"]}}"
     ));
-    assert!(util.contains("\"CARGO_MANIFEST_DIR\": \".\""));
-    assert!(out.contains("def cargo_workspace_member():"));
+    assert!(out.contains("def cargo_workspace():"));
+}
+
+#[test]
+fn test_workspace_member_includes_files_outside_its_directory() {
+    let out = generate_workspace_bzl();
+    assert!(
+        member(&out, "util").contains(
+            "\"srcs\": [\"util/**\", \"util/**/.*\", \"util/**/.*/**\", \"shared/*.txt\"]"
+        )
+    );
+
+    let mut metadata = workspace_metadata();
+    util_include(
+        &mut metadata,
+        json!({"yak": {"include": ["../../outside.txt"]}}),
+    );
+    let err =
+        crate::generate_workspace(&metadata, &platforms(), std::path::Path::new("/"), "crates")
+            .unwrap_err();
+    assert!(
+        err.to_string()
+            .contains("names `../../outside.txt`, which is outside the workspace"),
+        "{err}"
+    );
+
+    util_include(&mut metadata, json!({"yak": {"include": "shared"}}));
+    let err =
+        crate::generate_workspace(&metadata, &platforms(), std::path::Path::new("/"), "crates")
+            .unwrap_err();
+    assert!(
+        err.to_string().contains("must be a list of path patterns"),
+        "{err}"
+    );
+}
+
+fn util_include(metadata: &mut Metadata, value: serde_json::Value) {
+    let util = metadata
+        .packages
+        .iter_mut()
+        .find(|p| p.name == "util")
+        .unwrap();
+    util.metadata = Some(value);
+}
+
+#[test]
+fn test_workspace_member_at_the_root_excludes_the_other_members() {
+    let mut metadata = workspace_metadata();
+    let app = metadata
+        .packages
+        .iter_mut()
+        .find(|p| p.name == "app")
+        .unwrap();
+    app.manifest_path = "/ws/Cargo.toml".to_owned();
+    for target in &mut app.targets {
+        target.src_path = target.src_path.replace("/ws/app/", "/ws/");
+    }
+    let out = crate::generate_workspace(
+        &metadata,
+        &platforms(),
+        std::path::Path::new("/ws"),
+        "crates",
+    )
+    .unwrap();
+    assert!(out.contains("_WORKSPACE_DIR = \"\""));
+    let root = member(&out, "");
+    assert!(
+        root.contains("\"srcs\": [\"**\", \"**/.*\", \"**/.*/**\"]"),
+        "{root}"
+    );
+    assert!(root.contains(
+        "\"srcs_exclude\": [\".git/**\", \"target/**\", \"yak-out/**\", \"YAK\", \"util/**\"]"
+    ));
+    assert!(root.contains("\"CARGO_MANIFEST_DIR\": \".\""));
+    assert!(root.contains("\"//:util\""));
+}
+
+#[test]
+fn test_workspace_duplicate_target_fails() {
+    let mut metadata = workspace_metadata();
+    // An integration test named `unittest` gets the name of the library's unit tests.
+    let util = metadata
+        .packages
+        .iter_mut()
+        .find(|p| p.name == "util")
+        .unwrap();
+    util.targets[2].name = "unittest".to_owned();
+    let err =
+        crate::generate_workspace(&metadata, &platforms(), std::path::Path::new("/"), "crates")
+            .unwrap_err();
+    assert!(
+        err.to_string()
+            .contains("Two targets of the Cargo workspace are named `util-unittest`"),
+        "{err}"
+    );
 }
 
 #[test]

@@ -34,6 +34,18 @@ pub(crate) enum GenerateError {
         "Two packages of the dependency graph have the directory `{0}` in the cargo cell, which keeps one copy of sources per directory"
     )]
     DuplicatePackage(String),
+    #[error(
+        "Two targets of the Cargo workspace are named `{0}`. The members' targets share the package at the workspace's root."
+    )]
+    DuplicateTarget(String),
+    #[error(
+        "`[package.metadata.yak] include` of package `{0}` must be a list of path patterns, relative to the package's directory"
+    )]
+    InvalidInclude(String),
+    #[error(
+        "`[package.metadata.yak] include` of package `{0}` names `{1}`, which is outside the workspace"
+    )]
+    IncludeOutsideWorkspace(String, String),
     #[error("`cargo metadata` names package `{0}`, which it does not describe")]
     UnknownPackage(String),
     #[error("Package `{0}` has no library, but `{1}` depends on it")]
