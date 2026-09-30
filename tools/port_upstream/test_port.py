@@ -80,6 +80,14 @@ class ForkNamesTest(unittest.TestCase):
             port.rename("Some(re_platform(platform)), ctx.re_platform()"),
         )
 
+    def test_settings_take_the_open_source_default(self) -> None:
+        self.assertEqual(
+            "    default: Some(false),\n",
+            port.rename(
+                "    internal_default: Some(true),\n    oss_default: Some(false),\n"
+            ),
+        )
+
     def test_golden_headers_take_the_fork_wording(self) -> None:
         self.assertEqual(
             "regenerate by rerunning the test with `YAK_UPDATE_GOLDEN=1` set",

@@ -85,6 +85,13 @@ REPLACEMENTS = [
     # The fork's Remote Execution platform is the protocol's platform, which
     # upstream converts with `re_platform`.
     (re.compile(r"(?<![.\w])re_platform\(platform\)"), "platform.clone()"),
+    # The fork's settings have one default, which is upstream's open-source default.
+    (
+        re.compile(
+            r"^([ \t]*)internal_default: [^\n]*\n[ \t]*oss_default: ", re.MULTILINE
+        ),
+        r"\1default: ",
+    ),
     (
         re.compile(
             r"regenerate by re-running test with `-- --env [A-Z0-9]+_UPDATE_GOLDEN=1` appended to the test command"
