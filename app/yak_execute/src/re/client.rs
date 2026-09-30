@@ -64,6 +64,7 @@ use yak_data::ReQueueNoWorkerAvailable;
 use yak_data::ReQueueOverQuota;
 use yak_error::YakErrorContext;
 use yak_error::YakErrorOptionContext;
+use yak_error::conversion::from_any_with_tag;
 use yak_error::yak_error;
 use yak_fs::error::IoResultExt;
 use yak_fs::fs_util;
@@ -429,7 +430,7 @@ impl RemoteExecutionClient {
     pub async fn write_action_result(
         &self,
         digest: ActionDigest,
-        result: TActionResult2,
+        result: &mut TActionResult2,
         use_case: RemoteExecutorUseCase,
         platform: &RE::Platform,
         write_type: ActionCacheWriteType,
@@ -1283,36 +1284,39 @@ impl RemoteExecutionClientImpl {
     async fn write_action_result(
         &self,
         digest: ActionDigest,
-        result: TActionResult2,
+        result: &mut TActionResult2,
         use_case: RemoteExecutorUseCase,
         platform: &RE::Platform,
         write_type: ActionCacheWriteType,
     ) -> yak_error::Result<WriteActionResultResponse> {
+        // The request needs to own the result; lend it for the call and hand it back
+        // whether or not the write succeeded.
+        let request = WriteActionResultRequest {
+            action_digest: digest.to_re(),
+            action_result: std::mem::take(result),
+            platform: Some(platform.clone()),
+            ..Default::default()
+        };
         let attributes =
             BTreeMap::from([("write_type".to_owned(), write_type.as_str().to_owned())]);
+        let metadata = RemoteExecutionMetadata {
+            platform: Some(platform.clone()),
+            client_context: Some(TClientContextMetadata {
+                attributes,
+                ..Default::default()
+            }),
+            ..use_case.metadata(None)
+        };
         let response = with_error_handler(
             "write_action_result",
             self.get_session_id(),
             self.client()
                 .get_action_cache_client()
-                .write_action_result(
-                    &RemoteExecutionMetadata {
-                        platform: Some(platform.clone()),
-                        client_context: Some(TClientContextMetadata {
-                            attributes,
-                            ..Default::default()
-                        }),
-                        ..use_case.metadata(None)
-                    },
-                    &WriteActionResultRequest {
-                        action_digest: digest.to_re(),
-                        action_result: result,
-                        platform: Some(platform.clone()),
-                        ..Default::default()
-                    },
-                )
+                .write_action_result(&metadata, &request)
                 .await,
-        )?;
+        );
+        *result = request.action_result;
+        let response = response?;
 
         Ok(response)
     }

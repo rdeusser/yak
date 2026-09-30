@@ -232,7 +232,7 @@ pub trait UploadCache: Send + Sync {
         &self,
         info: &CacheUploadInfo<'_>,
         execution_result: &CommandExecutionResult,
-        re_result: Option<TActionResult2>,
+        re_result: Option<&mut TActionResult2>,
         dep_file_bundle: Option<&mut dyn IntoRemoteDepFile>,
         action_digest_and_blobs: &ActionDigestAndBlobs,
     ) -> yak_error::Result<CacheUploadResults>;
@@ -247,7 +247,7 @@ impl UploadCache for NoOpCacheUploader {
         &self,
         _info: &CacheUploadInfo<'_>,
         _execution_result: &CommandExecutionResult,
-        _re_result: Option<TActionResult2>,
+        _re_result: Option<&mut TActionResult2>,
         _dep_file_bundle: Option<&mut dyn IntoRemoteDepFile>,
         _action_digest_and_blobs: &ActionDigestAndBlobs,
     ) -> yak_error::Result<CacheUploadResults> {

@@ -685,7 +685,7 @@ impl ActionExecutionCtx for YakActionExecutionContext<'_, '_> {
         &mut self,
         action_digest_and_blobs: &ActionDigestAndBlobs,
         execution_result: &CommandExecutionResult,
-        re_result: Option<TActionResult2>,
+        re_result: Option<&mut TActionResult2>,
         dep_file_bundle: Option<&mut dyn IntoRemoteDepFile>,
     ) -> yak_error::Result<CacheUploadResults> {
         let action = self.target();
