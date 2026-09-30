@@ -177,6 +177,27 @@ class MergeTest(unittest.TestCase):
         self.assertTrue(conflict)
 
 
+class AlreadyAppliedTest(unittest.TestCase):
+    BASE = "YAK_PARANOID_PATH  String\nYAK_RE_DOWNLOAD  usize\n"
+    THEIRS = "YAK_PARANOID_PATH  String\nYAK_RE_CONNECT_TIMEOUT_S  u64\nYAK_RE_DOWNLOAD  usize\n"
+
+    def test_a_file_with_every_edit_is_applied(self) -> None:
+        ours = "YAK_PARANOID_PATH  String\nYAK_PREFER_REMOTE  String\nYAK_RE_CONNECT_TIMEOUT_S  u64\nYAK_RE_DOWNLOAD  usize\n"
+        self.assertIs(
+            port.Applied.ALL, port.already_applied(ours, self.BASE, self.THEIRS)
+        )
+
+    def test_a_file_without_the_edit_is_not_applied(self) -> None:
+        self.assertIs(
+            port.Applied.NONE, port.already_applied(self.BASE, self.BASE, self.THEIRS)
+        )
+
+    def test_short_lines_never_count(self) -> None:
+        base = "fn a() {\n    x();\n}\n"
+        theirs = "fn a() {\n    x();\n}\n}\n"
+        self.assertIs(port.Applied.NONE, port.already_applied(base, base, theirs))
+
+
 class LockVersionsTest(unittest.TestCase):
     def test_lists_each_version_of_a_package(self) -> None:
         text = '[[package]]\nname = "syn"\nversion = "1.0.1"\n\n[[package]]\nname = "syn"\nversion = "2.0.3"\n'

@@ -19,6 +19,7 @@ Run `port.py --help` for the commands.
 import argparse
 import dataclasses
 import difflib
+import enum
 import json
 import os
 import re
@@ -469,6 +470,40 @@ def edits(base: list[str], other: list[str]) -> list[tuple[int, int, list[str]]]
     ]
 
 
+class Applied(enum.Enum):
+    NONE = enum.auto()
+    SOME = enum.auto()
+    ALL = enum.auto()
+
+
+def already_applied(ours: str, base: str, theirs: str) -> Applied:
+    """Whether the fork's file already has upstream's edits, such as a golden
+    file that the fork regenerated. A merge would apply such an edit a second
+    time. An edit counts as applied when the fork's file holds the lines it
+    adds and lacks the lines it replaces. Lines that are too short to identify
+    a place, such as `}`, never count."""
+    ours_lines = ours.splitlines(keepends=True)
+    upstream = edits(base.splitlines(keepends=True), theirs.splitlines(keepends=True))
+    base_lines = base.splitlines(keepends=True)
+    applied = 0
+    for start, end, lines in upstream:
+        replaced = base_lines[start:end]
+        if (
+            any(len(line.strip()) >= 8 for line in lines)
+            and contains(ours_lines, lines)
+            and not (replaced and contains(ours_lines, replaced))
+        ):
+            applied += 1
+    if applied == 0:
+        return Applied.NONE
+    return Applied.ALL if applied == len(upstream) else Applied.SOME
+
+
+def contains(lines: list[str], block: list[str]) -> bool:
+    n = len(block)
+    return any(lines[i : i + n] == block for i in range(len(lines) - n + 1))
+
+
 def combine_edits(
     base: list[str],
     ours: list[tuple[int, int, list[str]]],
@@ -663,6 +698,13 @@ def port_files(git: Git, commit: str, paths: PathMap) -> Outcome:
                 )
             conflict = False
         else:
+            applied = already_applied(ours, base, theirs)
+            if applied is Applied.ALL:
+                continue
+            if applied is Applied.SOME:
+                outcome.review.append(
+                    f"{ours_path}: the fork already has some of upstream's edits to {upstream_path}"
+                )
             result, conflict = merge(ours, base, theirs)
         if new_target != ours_path:
             (git.root / ours_path).unlink()
@@ -837,7 +879,7 @@ def apply(git: Git, commit: str, auto_commit: bool) -> bool:
         print(f"   CONFLICT  {path}")
 
     if not outcome.written and not outcome.lock_files:
-        areas = sorted({str(Path(p).parent) for p in outcome.dropped})
+        areas = sorted({"/".join(Path(p).parts[:2]) for p in outcome.dropped})
         reason = "changes only files that the fork removed, in " + ", ".join(areas)
         record_skip(commit, reason)
         print(f"   skipped: {reason}")
