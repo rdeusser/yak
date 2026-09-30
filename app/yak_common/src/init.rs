@@ -484,8 +484,6 @@ pub struct HydrationConfig {
     /// Idle page-out only runs when at least this many GiB of disk are free to
     /// write the paged-out values to.
     pub page_out_min_free_disk_gb: u64,
-    /// Allow automatic idle page-out to run more than once per daemon.
-    pub allow_multiple_idle_page_outs: bool,
 }
 
 impl HydrationConfig {
@@ -537,12 +535,6 @@ impl HydrationConfig {
                     property: "page_out_min_free_disk_gb",
                 })?
                 .unwrap_or(100),
-            allow_multiple_idle_page_outs: config
-                .parse(YakconfigKeyRef {
-                    section: "yak_hydration",
-                    property: "allow_multiple_idle_page_outs",
-                })?
-                .unwrap_or(false),
         }))
     }
 }
@@ -767,7 +759,6 @@ mod tests {
             )
             .expect("Idle page-out should enable hydration");
         assert!(hydration.page_out_on_idle);
-        assert!(!hydration.allow_multiple_idle_page_outs);
         Ok(())
     }
 
@@ -780,7 +771,6 @@ mod tests {
                     r#"
                     [yak_hydration]
                     page_out_on_idle = true
-                    allow_multiple_idle_page_outs = true
                     "#
                 ),
             )],
@@ -792,7 +782,6 @@ mod tests {
             .hydration
             .expect("Legacy idle page-out config should enable hydration");
         assert!(hydration.page_out_on_idle);
-        assert!(hydration.allow_multiple_idle_page_outs);
         Ok(())
     }
 
@@ -806,7 +795,6 @@ mod tests {
                     [yak_hydration]
                     enable_paging = true
                     page_out_on_idle = true
-                    allow_multiple_idle_page_outs = true
                     "#
                 ),
             )],
@@ -821,7 +809,6 @@ mod tests {
             .hydration
             .expect("Explicit yak settings should keep hydration enabled");
         assert!(!hydration.page_out_on_idle);
-        assert!(hydration.allow_multiple_idle_page_outs);
         Ok(())
     }
 
