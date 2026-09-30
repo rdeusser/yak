@@ -176,3 +176,20 @@ async def test_generate_runs_a_binary_that_loads_a_build_script_shared_library(
     result = await yak.run("//:app")
     assert result.stdout == "seven=7\n"
     await yak.test("//:seven-unittest")
+
+
+@yak_test(data_dir="sharedlib")
+async def test_generate_builds_a_build_script_only_for_its_run(yak: Yak) -> None:
+    # The build script of `seven` has an alias per Cargo platform, which its run
+    # target selects from. `//...` builds the library, whose build script run
+    # builds the script for the execution platform, and skips the script and
+    # the aliases.
+    await yak.generate()
+    result = await yak.build("//...", "--show-output")
+    built = [
+        line.split()[0]
+        for line in result.stdout.splitlines()
+        if line.startswith("root//")
+    ]
+    assert "root//:seven" in built
+    assert [target for target in built if "build-script-build" in target] == []

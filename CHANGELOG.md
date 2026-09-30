@@ -16,6 +16,7 @@ Removes the code, configuration, and service clients that only Meta's internal b
 - `buildscript_run` copies the shared libraries in the `cargo:rustc-link-search` directories of `OUT_DIR` into its `shared_libs` output, and passes that directory to the links of dependents. A Rust binary gets an rpath to the `shared_libs` directory of every build script among its dependencies, so it loads those libraries under `yak run` and `yak test`.
 - The C compiler that `buildscript_run` gives build scripts can be named without a path, such as `clang` in `system_demo_toolchains`. It failed with `FileNotFoundError` before, because the wrapper ran it without searching `PATH`.
 - `buildscript_run` removes the symlinks in the build script's current directory after the script exits, and resolves the paths under `CARGO_MANIFEST_DIR` that the script prints to the files they name. The local action cache persisted no build script run before, because the output held symlinks to the action's inputs, so every build script ran again after the daemon restarted.
+- A workspace member's build script and its aliases for each Cargo platform build only for the execution platform of the script's run target. `yak build //...` built them for the target platform and for each of 9 Cargo platforms before, which was 35% of the actions of a clean build of a workspace with 775 packages.
 
 ### File watching
 
