@@ -27,6 +27,7 @@ use remote_execution::ActionResultResponse;
 use remote_execution::InlinedBlobWithDigest;
 use remote_execution::NamedDigest;
 use remote_execution::NamedDigestWithPermissions;
+use remote_execution::RemoteExecutionMetadata;
 use remote_execution::TActionResult2;
 use remote_execution::TDigest;
 use remote_execution::WriteActionResultResponse;
@@ -315,6 +316,8 @@ pub struct UnconfiguredRemoteExecutionClient {
 pub struct ManagedRemoteExecutionClient {
     inner: UnconfiguredRemoteExecutionClient,
     pub use_case: RemoteExecutorUseCase,
+    /// Built once per client; calls borrow it if they aren't associated with an action.
+    no_action_metadata: Arc<RemoteExecutionMetadata>,
 }
 
 impl UnconfiguredRemoteExecutionClient {
@@ -322,6 +325,7 @@ impl UnconfiguredRemoteExecutionClient {
         ManagedRemoteExecutionClient {
             inner: self,
             use_case,
+            no_action_metadata: Arc::new(use_case.metadata(None)),
         }
     }
 
@@ -362,7 +366,12 @@ impl ManagedRemoteExecutionClient {
         self.lock()?
             .get()
             .await?
-            .action_cache(action_digest, self.use_case, platform)
+            .action_cache(
+                action_digest,
+                &self.no_action_metadata,
+                self.use_case,
+                platform,
+            )
             .await
     }
 
@@ -407,7 +416,7 @@ impl ManagedRemoteExecutionClient {
                 files_with_digest,
                 directories,
                 inlined_blobs_with_digest,
-                self.use_case,
+                &self.no_action_metadata,
             )
             .await
     }
@@ -455,7 +464,7 @@ impl ManagedRemoteExecutionClient {
             .lock()?
             .get()
             .await?
-            .materialize_files(files, self.use_case)
+            .materialize_files(files, &self.no_action_metadata)
             .await;
         self.classify_cas_result(info, result)
     }
@@ -479,7 +488,7 @@ impl ManagedRemoteExecutionClient {
         self.lock()?
             .get()
             .await?
-            .download_blob(digest, self.use_case)
+            .download_blob(digest, &self.no_action_metadata)
             .await
     }
 
@@ -487,7 +496,7 @@ impl ManagedRemoteExecutionClient {
         self.lock()?
             .get()
             .await?
-            .upload_blob(blob, self.use_case)
+            .upload_blob(blob, &self.no_action_metadata)
             .await
     }
 
@@ -500,7 +509,7 @@ impl ManagedRemoteExecutionClient {
             .lock()?
             .get()
             .await?
-            .get_digest_expirations(digests, &self.use_case.metadata(None))
+            .get_digest_expirations(digests, &self.no_action_metadata)
             .await;
         self.classify_cas_result(info, result)
     }
@@ -515,7 +524,7 @@ impl ManagedRemoteExecutionClient {
             .lock()?
             .get()
             .await?
-            .extend_digest_ttl(digests, ttl, self.use_case)
+            .extend_digest_ttl(digests, ttl, &self.no_action_metadata)
             .await;
         self.classify_cas_result(info, result)
     }
