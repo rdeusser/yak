@@ -470,7 +470,7 @@ impl RepoState {
             )
             .await?;
 
-        // The cache is opt-in and best-effort, so a store that cannot be built leaves the
+        // The cache is best-effort, so a store that cannot be built leaves the
         // repo running without persistence rather than failing startup.
         let persisted_dep_file_cache = dep_file_db.and_then(|dep_file_db| {
             match PersistedDepFileStore::try_new(dep_file_db, digest_config) {

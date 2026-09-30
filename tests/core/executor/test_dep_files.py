@@ -426,13 +426,11 @@ async def _execution_kinds(yak: Yak) -> list[int]:
 # The persisted local dep-file cache reloads across daemon restarts. After a restart the in-memory
 # cache is gone, but the entry is reloaded from the sqlite db and, because the outputs are still
 # materialized on disk, the identical action is served from the LOCAL_ACTION_CACHE without
-# re-executing. The `_disabled` control proves this only happens with the feature enabled.
+# re-executing. The feature is on by default. The `_disabled` control proves this only happens with
+# the feature enabled.
 @yak_test(
     data_dir="dep_files",
     skip_for_os=["windows"],
-    # The persisted dep-file cache is gated on a daemon-startup yakconfig (read once when the daemon
-    # boots, like the materializer/incremental state dbs), so it must be set here rather than via `-c`.
-    extra_yak_config={"yak": {"sqlite_dep_file_state": "true"}},
 )
 async def test_dep_file_hit_persisted_across_restart(yak: Yak) -> None:
     args = [
@@ -521,10 +519,13 @@ async def test_persisted_dep_file_hit_survives_clean_stale(
 @yak_test(
     data_dir="dep_files",
     skip_for_os=["windows"],
+    # The persisted dep-file cache is gated on a daemon-startup yakconfig (read once when the daemon
+    # boots, like the materializer/incremental state dbs), so it must be set here rather than via `-c`.
+    extra_yak_config={"yak": {"sqlite_dep_file_state": "false"}},
 )
 async def test_dep_file_not_persisted_across_restart_when_disabled(yak: Yak) -> None:
-    # Control for `test_dep_file_hit_persisted_across_restart`: with the feature disabled (the
-    # default), a restart loses the cache and the identical action re-executes locally.
+    # Control for `test_dep_file_hit_persisted_across_restart`: with the feature disabled, a
+    # restart loses the cache and the identical action re-executes locally.
     args = [
         "app:app_with_dummy_config",
         "--local-only",

@@ -32,17 +32,27 @@ expose the TTL of artifacts.
 
 ## On-disk state
 
-yak can also optionally track its state on disk in a SQLite database. This
-allows yak to remember what files are on disk across restarts.
+yak tracks the files it has written to `yak-out` in a SQLite database, so it
+remembers them across daemon restarts and does not download outputs from a
+Remote Execution backend again when they are already on disk.
 
-This can allow yak to avoid re-downloading outputs from your Remote Execution
-backend if they are already on disk.
+yak also records each command that ran locally in a second database, with the
+digests of its command line and inputs and the outputs it produced. After a
+restart, a command whose command line and inputs match a recorded one reuses
+its outputs, as long as they are still in `yak-out`, and does not run again. A
+command that declares dep files reuses them only when all of its inputs match,
+because the comparison of the inputs its dep files name does not survive a
+restart. An entry is pruned 7 days after its command last ran, which
+`sqlite_dep_file_state_ttl_days` changes, and `sqlite_dep_file_state_max_entries`
+limits the number of entries.
 
-To enable, add this to your yakconfig:
+Both databases are on by default. The record of actions needs the materializer
+state. To turn them off, add this to your yakconfig:
 
 ```ini
 [yak]
-sqlite_materializer_state = true
+sqlite_materializer_state = false
+sqlite_dep_file_state = false
 ```
 
 ## Deferring Write Actions

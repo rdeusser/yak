@@ -23,6 +23,10 @@ Removes the code, configuration, and service clients that only Meta's internal b
 - When the operating system drops file system events, the default file watcher crawls the project and invalidates the files whose size, modification time, or status change time differ from its previous crawl. It cleared the DICE graph before, so the next build analyzed every target again. On macOS, the outputs that the build rewrote made FSEvents drop events again, so a no-op build of a workspace with 775 packages took 4 seconds, and it now takes 0.05 seconds.
 - On macOS, the file watcher reads FSEvents directly and leaves `yak-out` out of the stream.
 
+### Daemon
+
+- The local action cache persists across daemon restarts by default (`[yak] sqlite_dep_file_state`). A build after `yak kill`, or after a new `yak` binary restarted the daemon, ran every command again before. `sqlite_dep_file_state = false` turns it off.
+
 ### Renamed to yak
 
 - The binary is `yak`, and `cargo build --bin=yak` builds it.

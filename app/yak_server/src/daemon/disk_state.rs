@@ -200,18 +200,17 @@ pub(crate) async fn maybe_initialize_dep_file_sqlite_db(
     root_config: &LegacyYakConfig,
     daemon_id: &DaemonId,
 ) -> yak_error::Result<Option<DepFileStateSqliteDb>> {
-    // Opt-in (Phase 1), enabled with `yak.sqlite_dep_file_state = true` -- but only meaningful with
-    // the materializer state db. A cross-restart hit re-validates outputs via
-    // `Materializer::declare_match`, which after a restart only reports a match if the materializer
-    // reloaded its tracked state from sqlite. Without `sqlite_materializer_state` that tree is empty
-    // post-restart, so no reloaded entry could ever hit and persisting them would be pure overhead.
-    let requested = root_config
-        .parse(YakconfigKeyRef {
-            section: "yak",
-            property: "sqlite_dep_file_state",
-        })?
-        .unwrap_or(false);
-    if requested && !options.sqlite_materializer_state {
+    // On unless `yak.sqlite_dep_file_state = false`, but only meaningful with the materializer
+    // state db. A cross-restart hit re-validates outputs via `Materializer::declare_match`, which
+    // after a restart only reports a match if the materializer reloaded its tracked state from
+    // sqlite. Without `sqlite_materializer_state` that tree is empty post-restart, so no reloaded
+    // entry could ever hit and persisting them would be pure overhead.
+    let configured: Option<bool> = root_config.parse(YakconfigKeyRef {
+        section: "yak",
+        property: "sqlite_dep_file_state",
+    })?;
+    let requested = configured.unwrap_or(true);
+    if configured == Some(true) && !options.sqlite_materializer_state {
         tracing::warn!(
             "Ignoring `yak.sqlite_dep_file_state`: it needs `yak.sqlite_materializer_state`, \
              which is disabled. The persisted dep-file cache re-validates outputs against the \
@@ -220,10 +219,10 @@ pub(crate) async fn maybe_initialize_dep_file_sqlite_db(
     }
     let enabled = requested && options.sqlite_materializer_state;
     if !enabled {
-        // When disabled, delete the db so a future enabled invocation can't use stale entries. This
-        // is the default path, so a failure here must not take the daemon down for a feature nobody
-        // enabled: a db that survives still cannot serve a stale entry, since every reloaded entry
-        // is re-validated against the action's digests and the materializer before use.
+        // When disabled, delete the db so a future enabled invocation can't use stale entries. A
+        // failure here must not take the daemon down for a feature that is off: a db that survives
+        // still cannot serve a stale entry, since every reloaded entry is re-validated against the
+        // action's digests and the materializer before use.
         let removed = io_executor
             .execute_io_inline(|| {
                 fs_util::remove_all(paths.dep_file_state_path())
@@ -276,7 +275,7 @@ pub(crate) async fn maybe_initialize_dep_file_sqlite_db(
         property: "sqlite_dep_file_state_max_entries",
     })?;
 
-    // An opt-in cache that fails safe to a miss on every lookup should not keep the daemon from
+    // A cache that fails safe to a miss on every lookup should not keep the daemon from
     // starting because its db will not open, so a failure here disables persistence for the session
     // instead of propagating. This mirrors the install site, which treats a store that cannot be
     // built the same way.
