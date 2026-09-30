@@ -68,6 +68,18 @@ REPLACEMENTS = [
     (re.compile(r"^# pyre-strict\n\n*", re.MULTILINE), ""),
     (re.compile(r"^#!/usr/bin/env fbpython\n", re.MULTILINE), ""),
     (re.compile(r"\bTARGETS(\.fixture|\.test)\b"), r"YAK\1"),
+    # Markers of Meta's linters and of Pyre, which the fork does not run.
+    (
+        re.compile(
+            r"^[ \t]*(?:#|//) *(?:@(?:lint-ignore(?:-every)?|nolint|noautodeps|no-autodeps)|pyre-(?:fixme|ignore))\b.*\n",
+            re.MULTILINE,
+        ),
+        "",
+    ),
+    (re.compile(r"[ \t]+# *pyre-(?:fixme|ignore)\b[^\n]*"), ""),
+    # Names that the fork gave to Meta's names.
+    (re.compile(r"\bfb_build_info\b"), "build_info"),
+    (re.compile(r"\b(BUCK2|YAK)_TEST_TPX_USE_TCP\b"), r"\1_TEST_EXECUTOR_USE_TCP"),
     (
         re.compile(
             r"regenerate by re-running test with `-- --env [A-Z0-9]+_UPDATE_GOLDEN=1` appended to the test command"

@@ -52,6 +52,20 @@ class ForkNamesTest(unittest.TestCase):
             ),
         )
 
+    def test_linter_markers_are_dropped(self) -> None:
+        self.assertEqual(
+            "x = 1\nimport a\n",
+            port.rename(
+                "# @nolint\nx = 1  # pyre-ignore[16]\n    # pyre-fixme[6]: why\nimport a\n"
+            ),
+        )
+
+    def test_meta_names_take_the_fork_names(self) -> None:
+        self.assertEqual(
+            "build_info YAK_TEST_EXECUTOR_USE_TCP",
+            port.rename("fb_build_info BUCK2_TEST_TPX_USE_TCP"),
+        )
+
     def test_golden_headers_take_the_fork_wording(self) -> None:
         self.assertEqual(
             "regenerate by rerunning the test with `YAK_UPDATE_GOLDEN=1` set",
