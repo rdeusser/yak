@@ -609,21 +609,15 @@ impl RemoteExecutionClientImpl {
             }
         }
 
-        let res = with_error_handler(
-            "action_cache",
-            self.get_session_id(),
-            self.client()
-                .get_action_cache_client()
-                .get_action_result(
-                    metadata,
-                    ActionResultRequest {
-                        digest: action_digest.to_re(),
-                        platform: Some(platform.clone()),
-                        ..Default::default()
-                    },
-                )
-                .await,
+        let lookup = self.client().get_action_cache_client().get_action_result(
+            metadata,
+            ActionResultRequest {
+                digest: action_digest.to_re(),
+                platform: Some(platform.clone()),
+                ..Default::default()
+            },
         );
+        let res = with_error_handler("action_cache", self.get_session_id(), lookup.await);
 
         let res = match res {
             Ok(r) => Some(r),
@@ -1088,19 +1082,20 @@ impl RemoteExecutionClientImpl {
             ));
         }
         let expected_blobs = digests.len();
+        let download = {
+            let metadata = use_case.metadata(identity);
+            self.client().get_cas_client().download(
+                &metadata,
+                DownloadRequest {
+                    inlined_digests: Some(digests),
+                    ..Default::default()
+                },
+            )
+        };
         let response = with_error_handler(
             "download_typed_blobs",
             self.get_session_id(),
-            self.client()
-                .get_cas_client()
-                .download(
-                    &use_case.metadata(identity),
-                    DownloadRequest {
-                        inlined_digests: Some(digests),
-                        ..Default::default()
-                    },
-                )
-                .await,
+            download.await,
         )?;
 
         let mut blobs: Vec<T> = Vec::with_capacity(expected_blobs);
@@ -1131,22 +1126,15 @@ impl RemoteExecutionClientImpl {
         metadata: &RemoteExecutionMetadata,
     ) -> yak_error::Result<(Vec<u8>, TLocalCacheStats)> {
         let re_action = format!("download_blob for digest {digest}");
-        let response = with_error_handler(
-            re_action.as_str(),
-            self.get_session_id(),
-            self.client()
-                .get_cas_client()
-                .download(
-                    metadata,
-                    DownloadRequest {
-                        inlined_digests: Some(vec![digest.clone()]),
-                        ..Default::default()
-                    },
-                )
-                // boxed() to segment the future
-                .boxed()
-                .await,
-        )?;
+        let download = self.client().get_cas_client().download(
+            metadata,
+            DownloadRequest {
+                inlined_digests: Some(vec![digest.clone()]),
+                ..Default::default()
+            },
+        );
+        let response =
+            with_error_handler(re_action.as_str(), self.get_session_id(), download.await)?;
 
         response
             .inlined_blobs
@@ -1193,20 +1181,15 @@ impl RemoteExecutionClientImpl {
                 .await
                 .yak_error_context("Failed to acquire download_files_semapore")?;
 
-            let response = with_error_handler(
-                "materialize_files",
-                self.get_session_id(),
-                self.client()
-                    .get_cas_client()
-                    .download(
-                        metadata,
-                        DownloadRequest {
-                            file_digests: Some(chunk),
-                            ..Default::default()
-                        },
-                    )
-                    .await,
-            )?;
+            let download = self.client().get_cas_client().download(
+                metadata,
+                DownloadRequest {
+                    file_digests: Some(chunk),
+                    ..Default::default()
+                },
+            );
+            let response =
+                with_error_handler("materialize_files", self.get_session_id(), download.await)?;
 
             yak_error::Ok(response.local_cache_stats)
         });
