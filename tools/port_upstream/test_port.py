@@ -352,6 +352,14 @@ class MergeTest(unittest.TestCase):
             port.apply_edits_by_content(["old\n", "old\n"], base, upstream)
         )
 
+    def test_edits_of_lines_the_fork_deleted_are_left_out(self) -> None:
+        base = ["a\n", "old\n", "b\n", "gone\n"]
+        upstream = port.edits(base, ["a\n", "new\n", "b\n", "changed\n"])
+        self.assertEqual(
+            ["x\n", "new\n", "b\n"],
+            port.apply_edits_by_content(["x\n", "old\n", "b\n"], base, upstream),
+        )
+
     def test_use_runs_sort_before_a_merge(self) -> None:
         base = port.sort_use_runs("use a::B;\nuse a::Old;\nuse a::C;\n")
         ours = port.sort_use_runs("use a::B;\nuse a::C;\nuse a::Old;\n")

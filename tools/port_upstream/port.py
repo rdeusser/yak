@@ -559,12 +559,12 @@ def apply_edits_by_content(
 ) -> list[str] | None:
     """Applies each upstream edit that replaces lines to the place in `ours`
     where those lines occur once, such as a version in a lock file that the
-    fork pruned. An edit of lines that `ours` lacks, which adds no more lines
-    than it replaces, changed lines that the fork deleted and is left out.
-    Returns None when an edit only inserts lines, when the lines it replaces
-    occur more than once, or when no edit applies."""
+    fork pruned. An edit of lines that the fork deleted, which adds no more
+    lines than it replaces, is left out. Returns None when an edit only
+    inserts lines, or when the lines it replaces occur more than once or were
+    changed by the fork."""
     result = list(ours)
-    applied = 0
+    deleted = [(i1, i2) for i1, i2, kept in edits(base, ours) if not kept]
     for start, end, lines in upstream:
         replaced = base[start:end]
         if not replaced:
@@ -573,13 +573,13 @@ def apply_edits_by_content(
         places = [
             i for i in range(len(result) - n + 1) if result[i : i + n] == replaced
         ]
-        if not places and len(lines) <= n:
+        fork_deleted = any(i1 <= start and end <= i2 for i1, i2 in deleted)
+        if not places and fork_deleted and len(lines) <= n:
             continue
         if len(places) != 1:
             return None
         result[places[0] : places[0] + n] = lines
-        applied += 1
-    return result if applied else None
+    return result
 
 
 def rustfmt(git: Git, text: str | None) -> str | None:
