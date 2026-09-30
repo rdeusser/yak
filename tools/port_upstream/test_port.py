@@ -66,6 +66,14 @@ class ForkNamesTest(unittest.TestCase):
             port.rename("fb_build_info BUCK2_TEST_TPX_USE_TCP"),
         )
 
+    def test_re_metadata_takes_no_fbcode_argument(self) -> None:
+        self.assertEqual(
+            "with_re_metadata(req, metadata\n)",
+            port.rename(
+                "with_re_metadata(req, metadata, self.runtime_opts.use_fbcode_metadata,\n)"
+            ),
+        )
+
     def test_golden_headers_take_the_fork_wording(self) -> None:
         self.assertEqual(
             "regenerate by rerunning the test with `YAK_UPDATE_GOLDEN=1` set",

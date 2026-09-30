@@ -80,6 +80,8 @@ REPLACEMENTS = [
     # Names that the fork gave to Meta's names.
     (re.compile(r"\bfb_build_info\b"), "build_info"),
     (re.compile(r"\b(BUCK2|YAK)_TEST_TPX_USE_TCP\b"), r"\1_TEST_EXECUTOR_USE_TCP"),
+    # The fork's Remote Execution client sends only the open-source metadata.
+    (re.compile(r",\s*self\.runtime_opts\.use_fbcode_metadata,?(?=\s*\))"), ""),
     (
         re.compile(
             r"regenerate by re-running test with `-- --env [A-Z0-9]+_UPDATE_GOLDEN=1` appended to the test command"
