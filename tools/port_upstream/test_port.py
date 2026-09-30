@@ -195,6 +195,16 @@ class MergeTest(unittest.TestCase):
         )
 
 
+class SpellingTest(unittest.TestCase):
+    def test_lines_take_the_fork_spelling_of_the_name(self) -> None:
+        ours = 'msg("yak daemon is busy")\n'
+        base = 'msg("Yak daemon is busy")\n'
+        theirs = 'msg("Yak daemon is busy")\nnew()\n'
+        self.assertEqual(
+            (ours, ours + "new()\n"), port.adopt_fork_spelling(ours, base, theirs)
+        )
+
+
 class LockVersionsTest(unittest.TestCase):
     def test_lists_each_version_of_a_package(self) -> None:
         text = '[[package]]\nname = "syn"\nversion = "1.0.1"\n\n[[package]]\nname = "syn"\nversion = "2.0.3"\n'

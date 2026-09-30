@@ -473,6 +473,27 @@ def resolve_conflicts(merged: str) -> tuple[str, bool, list[str]]:
     return CONFLICT.sub(resolve, merged), remaining, notes
 
 
+def adopt_fork_spelling(ours: str, base: str, theirs: str) -> tuple[str, str]:
+    """Rewrites the lines of `base` and `theirs` that differ from a line of the
+    fork's file only in the case of `yak` to the fork's line. The fork writes
+    the tool's name in lowercase in some prose where the renamed upstream text
+    has `Yak`, and those lines would otherwise conflict."""
+    fork = {}
+    for line in ours.splitlines(keepends=True):
+        fork.setdefault(line.replace("Yak", "yak"), line)
+    ours_lines = set(fork.values())
+
+    def adopt(text: str) -> str:
+        lines = []
+        for line in text.splitlines(keepends=True):
+            if line not in ours_lines and "Yak" in line:
+                line = fork.get(line.replace("Yak", "yak"), line)
+            lines.append(line)
+        return "".join(lines)
+
+    return adopt(base), adopt(theirs)
+
+
 USE_LINE = re.compile(r"^(?:pub(?:\([^)]*\))? )?use [^{}\n]*;\n", re.MULTILINE)
 
 
@@ -690,6 +711,8 @@ def port_files(git: Git, commit: str, paths: PathMap) -> Outcome:
         )
         base = transform(base) if base is not None else None
         theirs = transform(theirs) if theirs is not None else None
+        if None not in (ours, base, theirs):
+            base, theirs = adopt_fork_spelling(ours, base, theirs)
         if name.endswith(".rs") and None not in (ours, base, theirs):
             ours, base, theirs = (sort_use_runs(s) for s in (ours, base, theirs))
 
