@@ -57,7 +57,7 @@ A commit that needs attention stops with its files staged and lists them:
 | Mark | Meaning |
 | --- | --- |
 | `CONFLICT` | The file has conflict markers, or upstream deleted a file that the fork changed. |
-| `REVIEW` | Upstream changed a build file beyond its dependency lists. |
+| `REVIEW` | Upstream changed a build file beyond its dependency lists, the fork already has some of upstream's edits, or the port adds lines for Meta's internal build, such as `#[cfg(fbcode_build)]`. |
 | `PROBLEM` | A `cargo` command failed. |
 
 The path map is cached in `.git/yak-port/` by the tree of `HEAD` and the source of `port.py`.

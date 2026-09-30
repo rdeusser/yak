@@ -1016,6 +1016,11 @@ def port_files(git: Git, commit: str, paths: PathMap) -> Outcome:
                 )
             result, conflict, notes = merge(ours, base, theirs)
             outcome.notes.extend(f"{ours_path}: {note}" for note in notes)
+        added_markers = meta_markers(result) - meta_markers(ours)
+        if added_markers:
+            outcome.review.append(
+                f"{new_target}: adds lines for Meta's internal build: {sorted(added_markers)[0]}"
+            )
         if new_target != ours_path:
             (git.root / ours_path).unlink()
             outcome.written.append(ours_path)
@@ -1024,6 +1029,16 @@ def port_files(git: Git, commit: str, paths: PathMap) -> Outcome:
         if conflict:
             outcome.conflicts.append(new_target)
     return outcome
+
+
+META_MARKER = re.compile(
+    r"fbcode_build|is_open_source\(|fbsource|fbcode//|@oss-(?:disable|enable)"
+)
+
+
+def meta_markers(text: str) -> set[str]:
+    """The lines of `text` that serve only Meta's internal build."""
+    return {line.strip() for line in text.splitlines() if META_MARKER.search(line)}
 
 
 def write(path: Path, data: bytes) -> None:

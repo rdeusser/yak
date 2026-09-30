@@ -376,6 +376,14 @@ class DependencyRunsTest(unittest.TestCase):
         )
 
 
+class MetaMarkersTest(unittest.TestCase):
+    def test_lines_for_meta_builds_are_found(self) -> None:
+        self.assertEqual(
+            {"#[cfg(not(fbcode_build))]"},
+            port.meta_markers("#[cfg(not(fbcode_build))]\nuse tracing::instrument;\n"),
+        )
+
+
 class LockVersionsTest(unittest.TestCase):
     def test_lists_each_version_of_a_package(self) -> None:
         text = '[[package]]\nname = "syn"\nversion = "1.0.1"\n\n[[package]]\nname = "syn"\nversion = "2.0.3"\n'
