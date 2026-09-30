@@ -1013,7 +1013,7 @@ DROPPED_LINES = re.compile(
 )
 
 
-def commit_message(git: Git, commit: str) -> str:
+def commit_message(git: Git, commit: str, note: str = "") -> str:
     """The message of the yak commit: the upstream message with yak names,
     without Meta's review metadata and test plan, and with the trailer that
     names the upstream commit."""
@@ -1031,6 +1031,8 @@ def commit_message(git: Git, commit: str) -> str:
     message = rename(subject)
     if text:
         message += "\n\n" + rename(text)
+    if note:
+        message += "\n\n" + note.strip()
     return message + f"\n\n{TRAILER}{full}\n"
 
 
@@ -1107,7 +1109,7 @@ def apply(git: Git, commit: str, auto_commit: bool) -> bool:
     return True
 
 
-def finish(git: Git, commit: str) -> None:
+def finish(git: Git, commit: str, note: str = "") -> None:
     git.run("add", "-u", "--", ".", NOT_THE_LEDGER)
     unmerged = git.text(
         "diff", "--cached", "--name-only", "-G^(<<<<<<<|>>>>>>>) "
@@ -1144,7 +1146,7 @@ def finish(git: Git, commit: str) -> None:
             f"--date={date}",
             "-F",
             "-",
-            input=commit_message(git, commit).encode(),
+            input=commit_message(git, commit, note).encode(),
         )
         print("   committed " + git.text("log", "-1", "--format=%h").strip())
     state_file(git).unlink(missing_ok=True)
@@ -1176,7 +1178,14 @@ def main() -> None:
         help="port the pending commits in order, stopping at the first that needs attention",
     )
     p.add_argument("--limit", type=int, default=0, help="stop after this many commits")
-    sub.add_parser("continue", help="commit the port in progress after resolving it")
+    p = sub.add_parser(
+        "continue", help="commit the port in progress after resolving it"
+    )
+    p.add_argument(
+        "--note",
+        default="",
+        help="a paragraph for the commit message on how the port differs from upstream",
+    )
     sub.add_parser("abort", help="discard the port in progress")
     p = sub.add_parser(
         "skip", help=f"record that the fork does not take a commit, in {SKIPPED.name}"
@@ -1223,7 +1232,7 @@ def main() -> None:
     elif args.command == "continue":
         if not state.exists():
             raise SystemExit("No port is in progress.")
-        finish(git, json.loads(state.read_text())["commit"])
+        finish(git, json.loads(state.read_text())["commit"], args.note)
     elif args.command == "abort":
         if not state.exists():
             raise SystemExit("No port is in progress.")

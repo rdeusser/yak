@@ -11,7 +11,7 @@ It needs Python 3.10 or later, Git, and Cargo, and runs from any directory of th
 | `port.py pending` | Lists the upstream commits after the fork point that are neither ported nor skipped, oldest first. |
 | `port.py run [--limit N]` | Ports the pending commits in order and stops at the first one that needs attention. |
 | `port.py apply <commit> [--no-commit]` | Ports one commit. |
-| `port.py continue` | Commits the port in progress after its files are resolved. |
+| `port.py continue [--note TEXT]` | Commits the port in progress after its files are resolved. The note says how the port differs from upstream. |
 | `port.py abort` | Resets the files that the port in progress wrote. |
 | `port.py skip <commit> <reason>` | Records that the fork does not take a commit. |
 | `port.py message <commit>` | Prints the commit message that a port of the commit gets. |
