@@ -52,6 +52,14 @@ class ForkNamesTest(unittest.TestCase):
             ),
         )
 
+    def test_golden_headers_take_the_fork_wording(self) -> None:
+        self.assertEqual(
+            "regenerate by rerunning the test with `YAK_UPDATE_GOLDEN=1` set",
+            port.rename(
+                "regenerate by re-running test with `-- --env BUCK2_UPDATE_GOLDEN=1` appended to the test command"
+            ),
+        )
+
     def test_integration_tests_take_the_fork_imports(self) -> None:
         self.assertEqual(
             "# licenses.\n\nfrom e2e_util.api.yak import Yak\n",
@@ -275,6 +283,13 @@ class MergeTest(unittest.TestCase):
         self.assertEqual(("a\nz\n", False), (result, conflict))
         self.assertEqual(1, len(notes))
 
+    def test_additions_in_lines_the_fork_deleted_conflict(self) -> None:
+        base = "a\n# old\nz\n"
+        theirs = "a\n# new\nimport json\nz\n"
+        _, conflict, notes = port.merge("a\nz\n", base, theirs)
+        self.assertTrue(conflict)
+        self.assertEqual([], notes)
+
     def test_use_runs_sort_before_a_merge(self) -> None:
         base = port.sort_use_runs("use a::B;\nuse a::Old;\nuse a::C;\n")
         ours = port.sort_use_runs("use a::B;\nuse a::C;\nuse a::Old;\n")
@@ -292,6 +307,27 @@ class SpellingTest(unittest.TestCase):
         theirs = 'msg("Yak daemon is busy")\nnew()\n'
         self.assertEqual(
             (ours, ours + "new()\n"), port.adopt_fork_spelling(ours, base, theirs)
+        )
+
+
+class DependencyRunsTest(unittest.TestCase):
+    def test_dependency_tables_take_the_fork_order_before_a_merge(self) -> None:
+        ours = "[dependencies]\nanyhow.workspace = true\nyak_core.workspace = true\nbytes.workspace = true\n"
+        base = port.order_dependency_runs(
+            "[dependencies]\nyak_core.workspace = true\nanyhow.workspace = true\nbytes.workspace = true\n",
+            ours,
+        )
+        theirs = port.order_dependency_runs(
+            "[dependencies]\nyak_core.workspace = true\nanyhow.workspace = true\nbytes.workspace = true\nstrong_hash.workspace = true\n",
+            ours,
+        )
+        self.assertEqual(
+            (
+                "[dependencies]\nanyhow.workspace = true\nstrong_hash.workspace = true\nyak_core.workspace = true\nbytes.workspace = true\n",
+                False,
+                [],
+            ),
+            port.merge(ours, base, theirs),
         )
 
 

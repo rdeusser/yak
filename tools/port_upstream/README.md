@@ -14,6 +14,7 @@ It needs Python 3.10 or later, Git, and Cargo, and runs from any directory of th
 | `port.py continue [--note TEXT]` | Commits the port in progress after its files are resolved. The note says how the port differs from upstream. |
 | `port.py abort` | Resets the files that the port in progress wrote. |
 | `port.py skip <commit> <reason>` | Records that the fork does not take a commit. |
+| `port.py check <port>...` | Lists the lines that the upstream commit of each port adds and the port does not. |
 | `port.py message <commit>` | Prints the commit message that a port of the commit gets. |
 
 A ported commit keeps the upstream author and author date and ends with `Ported from facebook/buck2@<hash>`.
@@ -33,10 +34,11 @@ The contents of the file before and after the upstream commit take the yak names
 Lines that upstream marks `@oss-disable` are dropped, and lines that it marks `@oss-enable` are kept.
 `git merge-file` applies the difference between the two to the file of this repository.
 In Rust files, each run of one-line `use` items is sorted on all three sides first, because the yak names sort differently from the upstream names.
+In `Cargo.toml` files, the upstream sides' dependency entries take the fork's order first, for the same reason.
 `port.py` resolves two kinds of conflict block:
 
 - The two sides change adjacent lines, and their edits do not overlap.
-- The fork deleted the lines that upstream changed. The output notes each such block.
+- The fork deleted the lines that upstream changed, and upstream added no more lines than it replaced. The output notes each such block.
 
 A file that already holds every upstream edit, such as a golden file that the fork regenerated, stays as it is. A file that holds some of them is marked for review.
 

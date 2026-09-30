@@ -68,6 +68,12 @@ REPLACEMENTS = [
     (re.compile(r"^# pyre-strict\n\n*", re.MULTILINE), ""),
     (re.compile(r"^#!/usr/bin/env fbpython\n", re.MULTILINE), ""),
     (re.compile(r"\bTARGETS(\.fixture|\.test)\b"), r"YAK\1"),
+    (
+        re.compile(
+            r"regenerate by re-running test with `-- --env [A-Z0-9]+_UPDATE_GOLDEN=1` appended to the test command"
+        ),
+        "regenerate by rerunning the test with `YAK_UPDATE_GOLDEN=1` set",
+    ),
 ]
 # Arguments of upstream's test decorator for Meta's file systems, which the
 # fork's `yak_test` does not take.
@@ -486,7 +492,7 @@ def resolve_conflicts(merged: str) -> tuple[str, bool, list[str]]:
       reports a conflict when the edits are adjacent, such as when the fork
       removed the line after a line that upstream changed.
     - The fork deleted the lines that upstream changed, as it deleted Meta's
-      internal code.
+      internal code, and upstream added no more lines than it replaced.
 
     Returns the result, whether conflicts remain, and notes on the blocks
     resolved by keeping the fork's deletion."""
@@ -501,7 +507,10 @@ def resolve_conflicts(merged: str) -> tuple[str, bool, list[str]]:
         combined = combine_edits(base, edits(base, ours), edits(base, theirs))
         if combined is not None:
             return "".join(combined)
-        if not ours:
+        added = [line for line in theirs if line not in base]
+        removed = [line for line in base if line not in theirs]
+        # Upstream changed the deleted lines, and added no more than it replaced.
+        if not ours and len(added) <= len(removed):
             first = next((line.strip() for line in base if line.strip()), "")
             notes.append(
                 f"kept the fork's deletion of {len(base)} lines that upstream changed, from `{first}`"
@@ -555,6 +564,65 @@ def adopt_fork_spelling(ours: str, base: str, theirs: str) -> tuple[str, str]:
         return "".join(lines)
 
     return adopt(base), adopt(theirs)
+
+
+DEPENDENCY_LINE = re.compile(r"^[A-Za-z0-9_-]+(?:\.workspace)?\s*=.*[^\[{,]\n")
+
+
+def dependency_name(line: str) -> str:
+    return re.split(r"[.\s=]", line, maxsplit=1)[0]
+
+
+def dependency_order(text: str) -> dict[str, list[str]]:
+    """The dependency names of each table of a `Cargo.toml`, in file order."""
+    order: dict[str, list[str]] = {}
+    table = ""
+    for line in text.splitlines(keepends=True):
+        if line.startswith("["):
+            table = line.strip()
+        elif DEPENDENCY_LINE.fullmatch(line):
+            order.setdefault(table, []).append(dependency_name(line))
+    return order
+
+
+def order_dependency_runs(text: str, reference: str) -> str:
+    """Orders each run of one-line entries in the dependency tables of a
+    `Cargo.toml` as `reference` orders them. The fork keeps its own order, and
+    the renamed upstream entries are in the order of the upstream names. An
+    entry that `reference` lacks goes before the first entry of `reference`
+    that sorts after it."""
+    order = dependency_order(reference)
+    result = []
+    run: list[str] = []
+    table = ""
+
+    def flush() -> None:
+        names = order.get(table, [])
+
+        def key(line: str) -> tuple[int, str]:
+            name = dependency_name(line)
+            if name in names:
+                return (2 * names.index(name) + 1, name)
+            after = next(
+                (i for i, other in enumerate(names) if other > name), len(names)
+            )
+            return (2 * after, name)
+
+        result.extend(sorted(run, key=key))
+        run.clear()
+
+    for line in text.splitlines(keepends=True):
+        if line.startswith("["):
+            flush()
+            table = line.strip()
+            result.append(line)
+        elif "dependencies" in table and DEPENDENCY_LINE.fullmatch(line):
+            run.append(line)
+        else:
+            flush()
+            result.append(line)
+    flush()
+    return "".join(result)
 
 
 USE_LINE = re.compile(r"^(?:pub(?:\([^)]*\))? )?use [^{}\n]*;\n", re.MULTILINE)
@@ -857,6 +925,8 @@ def port_files(git: Git, commit: str, paths: PathMap) -> Outcome:
             base, theirs = adopt_fork_spelling(ours, base, theirs)
         if name.endswith(".rs") and None not in (ours, base, theirs):
             ours, base, theirs = (sort_use_runs(s) for s in (ours, base, theirs))
+        if name == "Cargo.toml" and None not in (ours, base, theirs):
+            base, theirs = (order_dependency_runs(s, ours) for s in (base, theirs))
 
         if change.status == "D":
             if ours_bytes is None:
@@ -1159,6 +1229,50 @@ def finish(git: Git, commit: str, note: str = "") -> None:
     state_file(git).unlink(missing_ok=True)
 
 
+def check(git: Git, port: str) -> list[str]:
+    """Lists the lines that the upstream commit of a port adds and the port
+    does not, per file. A resolution or a merge rule that dropped an upstream
+    addition shows up here, among the additions the fork left out on
+    purpose."""
+    message = git.text("show", "-s", "--format=%B", port)
+    found = re.search(re.escape(TRAILER) + r"([0-9a-f]{40})", message)
+    if not found:
+        raise SystemExit(f"{port} does not name an upstream commit.")
+    upstream = found.group(1)
+    paths = build_path_map(git)
+    ported_lines: dict[str, set[str]] = {}
+    current: set[str] = set()
+    for line in git.text(
+        "show", "--format=", "--unified=0", "--no-ext-diff", port
+    ).splitlines():
+        if line.startswith("+++ "):
+            current = ported_lines.setdefault(line[6:], set())
+        elif line.startswith("+"):
+            current.add(line[1:].strip())
+    missing = []
+    for change in upstream_changes(git, upstream):
+        if not change.new or Path(change.new).name == "Cargo.lock":
+            continue
+        target = paths.target(change.new)
+        if target is None:
+            continue
+        before = (
+            transform(decode(git.blob(f"{upstream}^", change.old)) or "")
+            if change.old
+            else ""
+        )
+        after = transform(decode(git.blob(upstream, change.new)) or "")
+        if change.new.endswith(".rs"):
+            before, after = rustfmt(git, before), rustfmt(git, after)
+        before_lines = {line.strip() for line in before.splitlines()}
+        ours = ported_lines.get(target, set())
+        for line in after.splitlines():
+            stripped = line.strip()
+            if stripped and stripped not in before_lines and stripped not in ours:
+                missing.append(f"{target}: {stripped}")
+    return missing
+
+
 def record_skip(commit: str, reason: str) -> None:
     with open(SKIPPED, "a") as f:
         f.write(f"{commit} {reason}\n")
@@ -1199,6 +1313,13 @@ def main() -> None:
     )
     p.add_argument("commit")
     p.add_argument("reason")
+    p = sub.add_parser(
+        "check",
+        help="list the lines that the upstream commit of a port adds and the port does not",
+    )
+    p.add_argument(
+        "ports", nargs="+", help="commits of this repository that port upstream commits"
+    )
     p = sub.add_parser(
         "message", help="print the yak commit message of an upstream commit"
     )
@@ -1257,6 +1378,13 @@ def main() -> None:
     elif args.command == "skip":
         commit = git.text("rev-parse", "--verify", f"{args.commit}^{{commit}}").strip()
         record_skip(commit, args.reason)
+    elif args.command == "check":
+        for port in args.ports:
+            subject = git.text("show", "-s", "--format=%h %s", port).strip()
+            missing = check(git, port)
+            print(f"== {subject}: {len(missing)} upstream lines missing")
+            for line in missing:
+                print(f"   {line}")
     elif args.command == "message":
         print(commit_message(git, args.commit), end="")
 
