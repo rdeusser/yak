@@ -1,7 +1,7 @@
 # port_upstream
 
 `port.py` ports commits of `facebook/buck2` to this repository, one commit here for each upstream commit.
-It needs Python 3.9 or later, Git, and Cargo, and runs from any directory of the repository.
+It needs Python 3.10 or later, Git, and Cargo, and runs from any directory of the repository.
 
 ## Commands
 
@@ -12,7 +12,7 @@ It needs Python 3.9 or later, Git, and Cargo, and runs from any directory of the
 | `port.py run [--limit N]` | Ports the pending commits in order and stops at the first one that needs attention. |
 | `port.py apply <commit> [--no-commit]` | Ports one commit. |
 | `port.py continue` | Commits the port in progress after its files are resolved. |
-| `port.py abort` | Discards the port in progress. |
+| `port.py abort` | Resets the files that the port in progress wrote. |
 | `port.py skip <commit> <reason>` | Records that the fork does not take a commit. |
 | `port.py message <commit>` | Prints the commit message that a port of the commit gets. |
 
@@ -31,13 +31,14 @@ Each file that the upstream commit changes takes its path in this repository:
 The contents of the file before and after the upstream commit take the yak names.
 `rename` lists the names and the text about the upstream project that keeps its names.
 Lines that upstream marks `@oss-disable` are dropped, and lines that it marks `@oss-enable` are kept.
-`git merge-file` applies the difference between the two to the file of this repository and leaves conflict markers where they overlap.
+`git merge-file` applies the difference between the two to the file of this repository.
+`git merge-file` also reports a conflict where the two sides change adjacent lines, and `port.py` resolves those blocks when the two sides' edits do not overlap.
 
 Build files take the labels that the upstream change adds to or removes from a list of a rule, and keep their lists sorted.
 A build file change that does more is marked for review.
 
 `Cargo.lock` files are not merged.
-Each package that the upstream commit moves from one version to another moves the same way with `cargo update --precise`, and `cargo metadata` resolves the requirements of the ported `Cargo.toml` files.
+When the port finishes, each package that the upstream commit moves from one version to another moves the same way with `cargo update --precise`, and `cargo metadata` resolves the requirements of the ported `Cargo.toml` files.
 
 The imports of ported Rust files are sorted again with `rustfmt`, because the yak names sort differently.
 

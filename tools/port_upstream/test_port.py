@@ -158,6 +158,25 @@ class PathMapTest(unittest.TestCase):
         )
 
 
+class MergeTest(unittest.TestCase):
+    def test_edits_to_adjacent_lines_combine(self) -> None:
+        base = "a\nhyper = 1\nhyperlocal = 1\nz\n"
+        ours = "a\nhyper = 1\nz\n"
+        theirs = "a\nhyper = 2\nhyperlocal = 1\nz\n"
+        self.assertEqual(("a\nhyper = 2\nz\n", False), port.merge(ours, base, theirs))
+
+    def test_edits_to_the_same_line_conflict(self) -> None:
+        base = "a\nb\nc\n"
+        result, conflict = port.merge("a\nB\nc\n", base, "a\nbb\nc\n")
+        self.assertTrue(conflict)
+        self.assertIn("<<<<<<< yak", result)
+
+    def test_insertions_at_the_same_line_conflict(self) -> None:
+        base = "a\nc\n"
+        _, conflict = port.merge("a\nours\nc\n", base, "a\ntheirs\nc\n")
+        self.assertTrue(conflict)
+
+
 class LockVersionsTest(unittest.TestCase):
     def test_lists_each_version_of_a_package(self) -> None:
         text = '[[package]]\nname = "syn"\nversion = "1.0.1"\n\n[[package]]\nname = "syn"\nversion = "2.0.3"\n'

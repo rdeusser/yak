@@ -18,6 +18,7 @@ Run `port.py --help` for the commands.
 
 import argparse
 import dataclasses
+import difflib
 import json
 import os
 import re
@@ -423,7 +424,75 @@ def merge(ours: str, base: str, theirs: str) -> tuple[str, bool]:
         )
         if result.returncode < 0 or result.returncode > 127:
             raise SystemExit(f"git merge-file failed: {result.stderr.decode()}")
-        return result.stdout.decode(), result.returncode > 0
+        merged = result.stdout.decode()
+        if result.returncode == 0:
+            return merged, False
+        return resolve_separate_edits(merged)
+
+
+CONFLICT = re.compile(
+    r"^<<<<<<< yak\n(.*?)^\|\|\|\|\|\|\| upstream-before\n(.*?)^=======\n(.*?)^>>>>>>> upstream\n",
+    re.MULTILINE | re.DOTALL,
+)
+
+
+def resolve_separate_edits(merged: str) -> tuple[str, bool]:
+    """Resolves the conflict blocks of `git merge-file --diff3` output in which
+    the two sides edit separate lines of the merge base. `git merge-file`
+    reports a conflict when the edits are adjacent, such as when the fork
+    removed the line after a line that upstream changed. Returns the result and
+    whether conflicts remain."""
+    remaining = False
+
+    def resolve(block: re.Match) -> str:
+        nonlocal remaining
+        ours, base, theirs = (
+            block.group(i).splitlines(keepends=True) for i in (1, 2, 3)
+        )
+        combined = combine_edits(base, edits(base, ours), edits(base, theirs))
+        if combined is None:
+            remaining = True
+            return block.group(0)
+        return "".join(combined)
+
+    return CONFLICT.sub(resolve, merged), remaining
+
+
+def edits(base: list[str], other: list[str]) -> list[tuple[int, int, list[str]]]:
+    """The edits that turn `base` into `other`, each as the range of base lines
+    it replaces and the lines that replace them."""
+    matcher = difflib.SequenceMatcher(None, base, other, autojunk=False)
+    return [
+        (i1, i2, other[j1:j2])
+        for op, i1, i2, j1, j2 in matcher.get_opcodes()
+        if op != "equal"
+    ]
+
+
+def combine_edits(
+    base: list[str],
+    ours: list[tuple[int, int, list[str]]],
+    theirs: list[tuple[int, int, list[str]]],
+) -> list[str] | None:
+    """Applies both sides' edits to `base`, or returns None when an edit of one
+    side overlaps an edit of the other. An edit that both sides made counts
+    once."""
+    theirs = [e for e in theirs if e not in ours]
+    for a1, a2, _ in ours:
+        for b1, b2, _ in theirs:
+            if max(a1, b1) < min(a2, b2) or (a1 == a2 == b1 == b2):
+                return None
+            # An insertion inside the other side's range overlaps it.
+            if (a1 == a2 and b1 < a1 < b2) or (b1 == b2 and a1 < b1 < a2):
+                return None
+    result = []
+    position = 0
+    for start, end, lines in sorted(ours + theirs, key=lambda e: (e[0], e[1])):
+        result.extend(base[position:start])
+        result.extend(lines)
+        position = max(position, end)
+    result.extend(base[position:])
+    return result
 
 
 BUILD_FILES = {"BUCK", "BUCK.v2", "TARGETS", "TARGETS.v2"}
@@ -619,16 +688,17 @@ def lock_versions(text: str) -> dict[str, set[str]]:
     return versions
 
 
-def update_lock_files(git: Git, commit: str, outcome: Outcome) -> list[str]:
+def update_lock_files(git: Git, commit: str) -> list[str]:
     """Replays the version changes of upstream's Cargo.lock files. Merging lock
     files line by line produces invalid files, so each package whose version
     upstream moved from one version to another moves the same way with `cargo
     update --precise`. `cargo metadata` then resolves the requirements that the
-    ported `Cargo.toml` files changed. Returns the problems found."""
+    ported `Cargo.toml` files changed, so it runs after their conflicts are
+    resolved. Returns the problems found."""
     problems = []
     for upstream_path in lock_upstream_paths(git, commit):
         target = transform_path(upstream_path)
-        if target not in outcome.lock_files:
+        if not (git.root / target).exists():
             continue
         before = lock_versions(decode(git.blob(f"{commit}^", upstream_path)) or "")
         after = lock_versions(decode(git.blob(commit, upstream_path)) or "")
@@ -672,7 +742,7 @@ def update_lock_files(git: Git, commit: str, outcome: Outcome) -> list[str]:
         )
         if result.returncode != 0:
             problems.append(f"{target}: cargo metadata: {result.stderr.strip()}")
-        outcome.written.append(target)
+        git.run("add", "--", target)
     return problems
 
 
@@ -755,7 +825,6 @@ def apply(git: Git, commit: str, auto_commit: bool) -> bool:
         )
     paths = build_path_map(git)
     outcome = port_files(git, commit, paths)
-    problems = update_lock_files(git, commit, outcome)
     subject = git.text("show", "-s", "--format=%h %s", commit).strip()
     print(f"== {subject}")
     for path in outcome.dropped:
@@ -766,19 +835,17 @@ def apply(git: Git, commit: str, auto_commit: bool) -> bool:
         print(f"   REVIEW    {path}")
     for path in outcome.conflicts:
         print(f"   CONFLICT  {path}")
-    for problem in problems:
-        print(f"   PROBLEM   {problem}")
 
-    if not outcome.written:
+    if not outcome.written and not outcome.lock_files:
         areas = sorted({str(Path(p).parent) for p in outcome.dropped})
         reason = "changes only files that the fork removed, in " + ", ".join(areas)
         record_skip(commit, reason)
         print(f"   skipped: {reason}")
         return True
-    written = sorted(set(outcome.written))
+    written = sorted(set(outcome.written) | set(outcome.lock_files))
     git.run("add", "-A", "--", *written)
-    state_file(git).write_text(commit)
-    if outcome.conflicts or outcome.review or problems or not auto_commit:
+    state_file(git).write_text(json.dumps({"commit": commit, "paths": written}))
+    if outcome.conflicts or outcome.review or not auto_commit:
         print(
             "   Resolve the files above, then run `port.py continue`, or `port.py abort`."
         )
@@ -794,6 +861,13 @@ def finish(git: Git, commit: str) -> None:
     ).split()
     if unmerged:
         raise SystemExit("Conflict markers remain in: " + ", ".join(unmerged))
+    problems = update_lock_files(git, commit)
+    for problem in problems:
+        print(f"   PROBLEM   {problem}")
+    if problems:
+        raise SystemExit(
+            "Fix the lock files, then run `port.py continue`, or `port.py abort`."
+        )
     # The yak names sort differently from the upstream names, so the imports of
     # ported Rust files need sorting again.
     rust = [
@@ -875,7 +949,7 @@ def main() -> None:
     state = state_file(git)
     if args.command in ("apply", "run") and state.exists():
         raise SystemExit(
-            f"A port of {state.read_text()} is in progress. Run `port.py continue` or `port.py abort`."
+            f"A port of {json.loads(state.read_text())['commit']} is in progress. Run `port.py continue` or `port.py abort`."
         )
 
     if args.command == "fetch":
@@ -896,14 +970,20 @@ def main() -> None:
     elif args.command == "continue":
         if not state.exists():
             raise SystemExit("No port is in progress.")
-        finish(git, state.read_text().strip())
+        finish(git, json.loads(state.read_text())["commit"])
     elif args.command == "abort":
         if not state.exists():
             raise SystemExit("No port is in progress.")
-        ledger = SKIPPED.read_bytes() if SKIPPED.exists() else None
-        git.run("reset", "-q", "--hard", "HEAD")
-        if ledger is not None:
-            SKIPPED.write_bytes(ledger)
+        # Only the files that the port wrote are reset, so that other changes,
+        # such as changes to this tool, stay.
+        paths = json.loads(state.read_text())["paths"]
+        git.run("reset", "-q", "HEAD", "--", *paths)
+        head = git.files("HEAD")
+        for path in paths:
+            if path in head:
+                git.run("checkout", "HEAD", "--", path)
+            else:
+                (git.root / path).unlink(missing_ok=True)
         state.unlink()
     elif args.command == "skip":
         commit = git.text("rev-parse", "--verify", f"{args.commit}^{{commit}}").strip()
