@@ -47,16 +47,32 @@ file would make the member a separate package.
 output of `cargo metadata`. All of them are targets of the package at the root
 of the workspace:
 
-| Cargo target               | yak target                                                                                                   |
-| -------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| The library                | A `rust_library` named after the package, or `<package>-lib` if a binary has the package's name              |
-| The library's unit tests   | A `rust_test` named `<package>-unittest`                                                                     |
-| Each binary                | A `rust_binary` named after the binary, or `<package>-<binary>` if two members have binaries of that name    |
-| Each integration test      | A `rust_test` named `<package>-<test>`                                                                       |
-| The build script           | `<package>-build-script-build`, which compiles it, and `<package>-build-script-run`, which runs it           |
+| Cargo target               | yak target                                                                                                                |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| The library                | A `rust_library` named after the package, or `<package>-lib` if a binary has the package's name                           |
+| The library's unit tests   | A `rust_test` named `<package>-unittest`                                                                                  |
+| Each binary                | A `rust_binary` named after the binary, or `<package>-<binary>` if two members have binaries of that name                 |
+| A binary's unit tests      | A `rust_test` named `<package>-unittest` for a binary named after a package without a library, or `<package>-<binary>-unittest` |
+| Each integration test      | A `rust_test` named `<package>-<test>`                                                                                    |
+| Each example               | A `rust_binary`, or a `rust_library` for a library example, named `<package>-example-<example>`                           |
+| The build script           | `<package>-build-script-build`, which compiles it, and `<package>-build-script-run`, which runs it                        |
 
 For example, `yak run //:app` runs the binary `app`, and `yak test //...` runs
-every test of the workspace.
+the tests that `cargo test` runs. A target whose `required-features` are not
+all enabled has no yak target, and a target with `test = false` has no test
+target.
+
+The tests run as `cargo test` runs them:
+
+- A test runs from a `deps/` directory, and its package's binaries and
+  examples sit where Cargo puts them in its `target/debug/` directory. A test
+  that looks for an example in the `examples` directory two levels above its
+  own binary finds it.
+- `CARGO_MANIFEST_DIR` names the package's directory in the project, so a test
+  can read files of the workspace at run time. A crate that reads files outside
+  its directory at compile time still lists them, as the next section shows.
+- An integration test gets `CARGO_BIN_EXE_<binary>` for each binary of its
+  package.
 
 Each target builds with the features that Cargo resolves for its package. Tests
 also get the package's dev-dependencies. A dependency under
@@ -127,8 +143,12 @@ after a dependency changes.
   `prelude//rust/cargo_package.bzl`: `linux-arm64`, `linux-riscv64`,
   `linux-x86_64`, `macos-arm64`, `macos-x86_64`, `wasi`, `wasm32`,
   `windows-gnu`, and `windows-msvc`.
-- `cargo_workspace()` declares no targets for examples or benchmarks. A test
-  that looks for an example in Cargo's `target` directory fails.
+- `cargo_workspace()` declares no targets for benchmarks, and it runs no
+  doctests.
+- Tests run from the root of the project. Cargo runs them from the package's
+  directory, so a test that opens a relative path, such as
+  `File::open("tests/data.txt")`, fails. A path joined to `CARGO_MANIFEST_DIR`
+  works under both.
 - A build file in a directory inside the workspace, such as one for another
   language, makes that directory a separate package, and the members' globs
   skip its files.

@@ -1763,7 +1763,11 @@ def _rustc_invoke(
 ) -> Invoke:
     toolchain_info = compile_ctx.toolchain_info
 
-    plain_env, path_env = process_env(compile_ctx, toolchain_info.rustc_env | ctx.attrs.env)
+    plain_env, path_env = process_env(
+        compile_ctx,
+        toolchain_info.rustc_env | ctx.attrs.env,
+        manifest_dir_in_project = getattr(ctx.attrs, "manifest_dir_in_project", False),
+    )
 
     more_plain_env, more_path_env = process_env(compile_ctx, env)
     plain_env.update(more_plain_env)
@@ -1918,7 +1922,10 @@ _DIRECTORY_ENV = [
 # distinguish path from non-path. (This will not work if the value contains both
 # path and non-path content, but we'll burn that bridge when we get to it.)
 def process_env(
-    compile_ctx: CompileContext, env: dict[str, str | ResolvedStringWithMacros | Artifact], escape_for_rustc_action: bool = True
+    compile_ctx: CompileContext,
+    env: dict[str, str | ResolvedStringWithMacros | Artifact],
+    escape_for_rustc_action: bool = True,
+    manifest_dir_in_project: bool = False,
 ) -> (dict[str, cmd_args], dict[str, cmd_args]):
     # Values with inputs (ie artifact references).
     path_env = {}
@@ -1981,9 +1988,17 @@ def process_env(
     # and proc macros using std::fs to read thing like .pest grammars, which
     # would need paths relative to the directory that rustc got invoked in
     # (which is the repo root in yak builds).
+    #
+    # With `manifest_dir_in_project`, CARGO_MANIFEST_DIR is a directory of the
+    # project, relative to the project root, which rustc_action.py also makes
+    # absolute. A test then reads the package's files at run time from the
+    # project, as it does under `cargo test`, including files that `srcs` leaves
+    # out.
     for key in _DIRECTORY_ENV:
         value = plain_env.pop(key, None)
-        if value:
+        if value and key == "CARGO_MANIFEST_DIR" and manifest_dir_in_project:
+            path_env[key] = value
+        elif value:
             path_env[key] = cmd_args(
                 compile_ctx.symlinked_srcs,
                 compile_ctx.path_sep,

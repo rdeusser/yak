@@ -5,6 +5,7 @@
 # above-listed licenses.
 
 import os
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -198,3 +199,18 @@ async def test_generate_builds_a_build_script_only_for_its_run(yak: Yak) -> None
     assert "incompatible" not in result.stderr, result.stderr
     result = await yak.test("//...")
     assert "incompatible" not in result.stderr, result.stderr
+
+
+@yak_test(data_dir="cargotest")
+async def test_generate_runs_tests_as_cargo_test_does(yak: Yak) -> None:
+    # The tests find the package's examples from their own path, and the
+    # integration test runs the binary through `CARGO_BIN_EXE_probe`.
+    await yak.generate()
+    targets = (await yak.targets("//:")).stdout.split()
+    assert "root//:probe-example-plugin" in targets
+    assert "root//:probe-probe-unittest" in targets
+    # `extra` needs a feature that is off, so Cargo skips it.
+    assert "root//:extra" not in targets
+    result = await yak.test("//...")
+    summary = re.sub("\x1b\\[[0-9;]*m", "", result.stderr)
+    assert "Pass 3. Fail 0." in summary, result.stderr

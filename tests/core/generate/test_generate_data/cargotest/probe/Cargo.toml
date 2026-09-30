@@ -1,0 +1,16 @@
+[package]
+name = "probe"
+version = "0.1.0"
+edition = "2024"
+
+[features]
+extra = []
+
+# Cargo skips a target whose required features are off.
+[[bin]]
+name = "extra"
+required-features = ["extra"]
+
+[[example]]
+name = "plugin"
+crate-type = ["cdylib"]

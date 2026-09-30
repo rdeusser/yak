@@ -200,7 +200,9 @@ def _rust_binary_common(
     default_roots: list[str],
     extra_flags: list[str],
     allow_cache_upload: bool,
+    output_dir: str = "",
 ) -> (list[Provider], cmd_args):
+    """`output_dir`, when set, is the directory of the target's outputs that holds the executable."""
     toolchain_info = compile_ctx.toolchain_info
 
     simple_crate = attr_simple_crate_for_filenames(ctx)
@@ -373,14 +375,20 @@ def _rust_binary_common(
     # RPATH that survives co-location) and get content-addressing from the
     # bundle dir instead. Static binaries reuse their content-based exe in the
     # bundle directly (no RPATH to break).
-    exe_content_based = content_based_output and not needs_shlib_tree and not use_bolt
+    # An executable in `output_dir` sits beside other outputs of the target at config-based paths.
+    exe_content_based = content_based_output and not needs_shlib_tree and not use_bolt and not output_dir
+
+    def declare_exe(filename):
+        if output_dir:
+            return ctx.actions.declare_output(output_dir, filename, has_content_based_path = exe_content_based)
+        return ctx.actions.declare_output(filename, has_content_based_path = exe_content_based)
+
     if links_via_cxx:
         # cxx performs the terminal link (see `rust_link_binary` below) and its
         # own post-link processing, so the output has to be named the way those
         # stages expect; we must not stamp again here.
-        predeclared_output = ctx.actions.declare_output(
+        predeclared_output = declare_exe(
             output_filename(compile_ctx, simple_crate, Emit("link"), params, get_cxx_post_link_suffix(ctx)),
-            has_content_based_path = exe_content_based,
         )
 
         # final_output is whatever cxx returns, set after the link below.
@@ -388,12 +396,12 @@ def _rust_binary_common(
         # rpath and symlink-tree are computed against the pre-stamped output
         shlib_args_output = predeclared_output
     elif enable_late_build_info_stamping:
-        predeclared_output = ctx.actions.declare_output(unstamped_name, has_content_based_path = exe_content_based)
-        final_output = ctx.actions.declare_output(name, has_content_based_path = exe_content_based)
+        predeclared_output = declare_exe(unstamped_name)
+        final_output = declare_exe(name)
         shlib_args_output = final_output
     else:
         # If not using late build info stamping, then the output will be stamped eagerly in rust_compile
-        predeclared_output = ctx.actions.declare_output(name, has_content_based_path = exe_content_based)
+        predeclared_output = declare_exe(name)
         final_output = predeclared_output
         shlib_args_output = final_output
 
@@ -847,6 +855,13 @@ def rust_test_impl(ctx: AnalysisContext) -> list[Provider]:
     if ctx.attrs.framework:
         extra_flags += ["--test"]
 
+    # Cargo puts a test in `deps/` of its profile directory, beside the other targets it built.
+    # A test can find those from its own path.
+    cargo_target_files = [
+        ctx.actions.symlink_file(path, file, has_content_based_path = False)
+        for path, file in ctx.attrs.cargo_target_files.items()
+    ]
+
     providers, args = _rust_binary_common(
         ctx = ctx,
         compile_ctx = compile_ctx,
@@ -856,7 +871,9 @@ def rust_test_impl(ctx: AnalysisContext) -> list[Provider]:
         default_roots = ctx.attrs.default_roots or ["main.rs", "lib.rs"],
         extra_flags = extra_flags,
         allow_cache_upload = False,
+        output_dir = "deps" if cargo_target_files else "",
     )
+    args = cmd_args(args, hidden = cargo_target_files)
 
     # Setup RE executors based on the `remote_execution` param.
     re_executors = get_re_executors_from_props(ctx)

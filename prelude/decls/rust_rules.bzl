@@ -322,6 +322,26 @@ rust_test = prelude_rule(
         | _rust_analyzer_target_kind("test")
         | _RUST_EXECUTABLE_ATTRIBUTES
         | {
+            "cargo_target_files": attrs.dict(
+                key = attrs.string(),
+                value = attrs.source(),
+                sorted = False,
+                default = {},
+                doc = """
+                Files that Cargo would put in the profile directory of its target directory, such
+                as `examples/libprobe.so`, keyed by their path there. When set, the test runs from
+                `deps/`, as Cargo runs it, so a test that finds these files from its own path finds
+                them.
+            """,
+            ),
+            "manifest_dir_in_project": attrs.bool(
+                default = False,
+                doc = """
+                Resolve `CARGO_MANIFEST_DIR` in `env` against the project root, as Cargo sets it to
+                the package's directory, in place of the crate's copy of its sources. A test that
+                reads the package's files at run time then finds the files that `srcs` leaves out.
+            """,
+            ),
             "framework": attrs.bool(
                 default = True,
                 doc = """

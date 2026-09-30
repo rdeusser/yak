@@ -44,6 +44,36 @@ def cargo_workspace():
 def _declare(rule, platform, **kwargs):
     rule(**apply_platform_attrs(platform, kwargs))
 
+# The file names of Cargo's outputs on each platform, formatted with the target's name.
+_MACOS_FILES = struct(exe = "{}", dylib = "lib{}.dylib", staticlib = "lib{}.a")
+_LINUX_FILES = struct(exe = "{}", dylib = "lib{}.so", staticlib = "lib{}.a")
+_WINDOWS_FILES = struct(exe = "{}.exe", dylib = "{}.dll", staticlib = "{}.lib")
+
+# The sub-target of a `rust_library` that builds each crate type of a library example.
+_EXAMPLE_SUB_TARGETS = {
+    "cdylib": ("[cdylib]", "dylib"),
+    "dylib": ("[dylib]", "dylib"),
+    "staticlib": ("[staticlib]", "staticlib"),
+}
+
+def _profile_files(member, files):
+    """The member's binaries and examples at their paths in Cargo's profile directory, where
+    `cargo test` builds them and a test can find them from its own path."""
+    out = {}
+    for target in member["bins"]:
+        out[files.exe.format(target["name"])] = ":" + target["rule"]
+    for example in member["examples"]:
+        if example["crate_types"] == ["bin"]:
+            out["examples/" + files.exe.format(example["name"])] = ":" + example["rule"]
+            continue
+        stem = example["name"].replace("-", "_")
+        for crate_type in example["crate_types"]:
+            if crate_type in _EXAMPLE_SUB_TARGETS:
+                sub_target, kind = _EXAMPLE_SUB_TARGETS[crate_type]
+                name = getattr(files, kind).format(stem)
+                out["examples/" + name] = ":" + example["rule"] + sub_target
+    return out
+
 def _declare_member(member):
     srcs = glob(member["srcs"], exclude = member["srcs_exclude"])
     env = dict(member["env"])
@@ -97,6 +127,12 @@ def _declare_member(member):
         rustc_flags.append("@$(location :{}[rustc_flags])".format(names["build_script_run"]))
         script_deps = [":" + names["build_script_run"]]
 
+    profile_files = select({
+        "DEFAULT": _profile_files(member, _LINUX_FILES),
+        "prelude//os:macos": _profile_files(member, _MACOS_FILES),
+        "prelude//os:windows": _profile_files(member, _WINDOWS_FILES),
+    })
+
     lib = member["lib"]
     own = []
     if lib != None:
@@ -117,10 +153,11 @@ def _declare_member(member):
             rustc_flags = rustc_flags,
             visibility = ["PUBLIC"],
         )
+    if lib != None and lib["unittest"] != None:
         _declare(
             native.rust_test,
             member["test_platform"],
-            name = names["unittest"],
+            name = lib["unittest"],
             crate = lib["crate"],
             crate_root = lib["crate_root"],
             srcs = srcs,
@@ -130,6 +167,8 @@ def _declare_member(member):
             named_deps = member["test_named_deps"],
             env = env,
             rustc_flags = rustc_flags,
+            cargo_target_files = profile_files,
+            manifest_dir_in_project = True,
         )
 
     for target in member["bins"]:
@@ -148,6 +187,44 @@ def _declare_member(member):
             rustc_flags = rustc_flags,
             visibility = ["PUBLIC"],
         )
+        if target["unittest"] != None:
+            _declare(
+                native.rust_test,
+                member["test_platform"],
+                name = target["unittest"],
+                crate = target["crate"],
+                crate_root = target["crate_root"],
+                srcs = srcs,
+                edition = target["edition"],
+                features = member["features"],
+                deps = member["test_deps"] + own + script_deps,
+                named_deps = member["test_named_deps"],
+                env = env,
+                rustc_flags = rustc_flags,
+                cargo_target_files = profile_files,
+                manifest_dir_in_project = True,
+            )
+
+    for example in member["examples"]:
+        _declare(
+            native.rust_binary if example["crate_types"] == ["bin"] else native.rust_library,
+            member["test_platform"],
+            name = example["rule"],
+            crate = example["crate"],
+            crate_root = example["crate_root"],
+            srcs = srcs,
+            edition = example["edition"],
+            features = member["features"],
+            deps = member["test_deps"] + own + script_deps,
+            named_deps = member["test_named_deps"],
+            env = env,
+            rustc_flags = rustc_flags,
+        )
+
+    # Cargo gives integration tests the paths of the package's binaries.
+    test_env = dict(env)
+    for target in member["bins"]:
+        test_env["CARGO_BIN_EXE_" + target["name"]] = "$(location :{})".format(target["rule"])
 
     for target in member["tests"]:
         _declare(
@@ -161,8 +238,10 @@ def _declare_member(member):
             features = member["features"],
             deps = member["test_deps"] + own + script_deps,
             named_deps = member["test_named_deps"],
-            env = env,
+            env = test_env,
             rustc_flags = rustc_flags,
+            cargo_target_files = profile_files,
+            manifest_dir_in_project = True,
         )
 "#;
 
@@ -362,34 +441,86 @@ pub fn generate_workspace(
                 .map(|(_, other)| format!("{other}/**")),
         );
 
+        // Cargo skips the targets whose required features are off, and `cargo test` runs the
+        // tests of the library, binaries, and integration tests that do not set `test = false`.
+        let features = &node.features;
         let lib = match lib_target(package) {
-            Some(lib) => target_value(
-                lib,
-                add_rule(names.lib(package))?,
-                member_dir,
-                dir,
-                vec![("proc_macro".to_owned(), Value::Bool(lib.is_proc_macro()))],
-            )?,
+            Some(lib) => {
+                let unittest = if lib.test {
+                    Value::Str(add_rule(format!("{}-unittest", package.name))?)
+                } else {
+                    Value::None
+                };
+                target_value(
+                    lib,
+                    add_rule(names.lib(package))?,
+                    member_dir,
+                    dir,
+                    vec![
+                        ("proc_macro".to_owned(), Value::Bool(lib.is_proc_macro())),
+                        ("unittest".to_owned(), unittest),
+                    ],
+                )?
+            }
             None => Value::None,
         };
         let build_script = match package.targets.iter().find(|t| t.is_build_script()) {
             Some(script) => target_value(script, String::new(), member_dir, dir, Vec::new())?,
             None => Value::None,
         };
+        let enabled = |kind: &'static str| {
+            package
+                .targets
+                .iter()
+                .filter(move |t| has_kind(t, kind) && t.is_enabled(features))
+        };
         let mut bins = Vec::new();
-        for target in package.targets.iter().filter(|t| has_kind(t, "bin")) {
+        for target in enabled("bin") {
             let rule = add_rule(names.bin(package, target))?;
-            bins.push(target_value(target, rule, member_dir, dir, Vec::new())?);
+            let unittest = if !target.test {
+                Value::None
+            } else if lib_target(package).is_none() && target.name == package.name {
+                Value::Str(add_rule(format!("{}-unittest", package.name))?)
+            } else {
+                Value::Str(add_rule(format!(
+                    "{}-{}-unittest",
+                    package.name, target.name
+                ))?)
+            };
+            bins.push(target_value(
+                target,
+                rule,
+                member_dir,
+                dir,
+                vec![
+                    ("name".to_owned(), Value::str(&target.name)),
+                    ("unittest".to_owned(), unittest),
+                ],
+            )?);
         }
         let mut tests = Vec::new();
-        for target in package.targets.iter().filter(|t| has_kind(t, "test")) {
+        for target in enabled("test").filter(|t| t.test) {
             let rule = add_rule(format!("{}-{}", package.name, target.name))?;
             tests.push(target_value(target, rule, member_dir, dir, Vec::new())?);
         }
-        let mut rule_names = vec![(
-            "unittest".to_owned(),
-            Value::Str(add_rule(format!("{}-unittest", package.name))?),
-        )];
+        let mut examples = Vec::new();
+        for target in enabled("example") {
+            let rule = add_rule(format!("{}-example-{}", package.name, target.name))?;
+            examples.push(target_value(
+                target,
+                rule,
+                member_dir,
+                dir,
+                vec![
+                    ("name".to_owned(), Value::str(&target.name)),
+                    (
+                        "crate_types".to_owned(),
+                        Value::strs(target.crate_types.iter().cloned()),
+                    ),
+                ],
+            )?);
+        }
+        let mut rule_names = Vec::new();
         for (key, suffix) in [
             ("manifest_dir", "manifest-dir"),
             ("build_script_build", "build-script-build"),
@@ -421,6 +552,7 @@ pub fn generate_workspace(
             ("lib".to_owned(), lib),
             ("bins".to_owned(), Value::List(bins)),
             ("tests".to_owned(), Value::List(tests)),
+            ("examples".to_owned(), Value::List(examples)),
             ("build_script".to_owned(), build_script),
         ];
         fields.extend(deps_fields("", &deps.normal));

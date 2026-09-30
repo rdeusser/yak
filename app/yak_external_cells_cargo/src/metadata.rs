@@ -84,9 +84,34 @@ pub struct Target {
     pub kind: Vec<String>,
     pub src_path: String,
     pub edition: String,
+    /// Such as `bin`, `lib`, `rlib`, `cdylib`, or `staticlib`.
+    #[serde(default)]
+    pub crate_types: Vec<String>,
+    /// The features without which Cargo skips the target.
+    #[serde(default, rename = "required-features")]
+    pub required_features: Vec<String>,
+    /// Whether `cargo test` runs the target's tests.
+    #[serde(default = "default_test")]
+    pub test: bool,
+}
+
+fn default_test() -> bool {
+    true
 }
 
 impl Target {
+    /// Reports whether Cargo builds the target when the package has `features` enabled. A
+    /// required feature of the form `dependency/feature` counts as enabled when the feature
+    /// before the slash is.
+    pub fn is_enabled(&self, features: &[String]) -> bool {
+        self.required_features.iter().all(|required| {
+            let feature = required
+                .split_once('/')
+                .map_or(required.as_str(), |(feature, _)| feature);
+            features.iter().any(|f| f == feature)
+        })
+    }
+
     pub fn is_lib(&self) -> bool {
         self.kind
             .iter()
