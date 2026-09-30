@@ -41,6 +41,13 @@ Options:
           Will run tests to on RE even if they are missing required settings (running from the root
           + relative paths). Those required settings just get overridden
 
+      --changed-since <REVISION>
+          Test only the targets that the changes since a Git revision can affect.
+
+          The revision is anything Git resolves to a commit, such as a branch, a tag, or a commit
+          ID. The changes are those between the working tree, including untracked files, and the
+          merge base of the revision and `HEAD`.
+
       --test-executor-stdout <TEST_EXECUTOR_STDOUT>
           Writes the test executor stdout to the provided path
 
