@@ -249,8 +249,16 @@ def _cargo_buildscript_impl(ctx: AnalysisContext) -> list[Provider]:
     env["CARGO"] = "/bin/false"
     env["CARGO_PKG_NAME"] = ctx.attrs.package_name
     env["CARGO_PKG_VERSION"] = ctx.attrs.version
+    release, _, pre = ctx.attrs.version.partition("-")
+    version_parts = (release.split(".") + ["", "", ""])[:3]
+    env["CARGO_PKG_VERSION_MAJOR"] = version_parts[0]
+    env["CARGO_PKG_VERSION_MINOR"] = version_parts[1]
+    env["CARGO_PKG_VERSION_PATCH"] = version_parts[2]
+    env["CARGO_PKG_VERSION_PRE"] = pre
     env["OUT_DIR"] = out_dir.as_output()
     env["RUSTC"] = _make_rustc_shim(ctx, cwd)
+    if rust_toolchain_info.rustdoc:
+        env["RUSTDOC"] = cmd_args(rust_toolchain_info.rustdoc, delimiter = " ", relative_to = cwd)
     env["RUSTC_LINKER"] = "/bin/false"
     env["RUST_BACKTRACE"] = "1"
 
@@ -275,13 +283,23 @@ def _cargo_buildscript_impl(ctx: AnalysisContext) -> list[Provider]:
         upper_feature = feature.upper().replace("-", "_")
         env["CARGO_FEATURE_{}".format(upper_feature)] = "1"
 
+    # Cargo always sets these, and some build scripts read them without a fallback.
+    opt_level = "0"
+    debug = "false"
     for flag in rust_toolchain_info.rustc_flags:
         if isinstance(flag, ResolvedStringWithMacros):
             flag = str(flag)[1:-1]
         if flag.startswith("-Copt-level="):
             opt_level = flag.removeprefix("-Copt-level=")
-            if opt_level.isdigit():
-                env["OPT_LEVEL"] = opt_level
+        elif flag == "-g" or (flag.startswith("-Cdebuginfo=") and flag != "-Cdebuginfo=0"):
+            debug = "true"
+    env["OPT_LEVEL"] = opt_level
+    env["PROFILE"] = "debug" if opt_level == "0" else "release"
+    env["DEBUG"] = debug
+
+    # The number of jobs a build script may run. One keeps the script's own
+    # parallelism from competing with the actions yak runs at once.
+    env["NUM_JOBS"] = "1"
 
     # C and C++ compilers for bindgen.
     target_triple = get_target_triple(ctx)

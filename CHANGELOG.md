@@ -4,6 +4,14 @@
 
 Removes the code, configuration, and service clients that only Meta's internal build used, removes the JVM, Android, and JavaScript support and the Buck1 compatibility code, and renames the tool to yak.
 
+### Cargo workspaces
+
+- `yak generate` writes the build files of a Cargo workspace: a three-line `YAK` file per workspace member, and the `crates` cell in `.yakconfig`. Without a `.yakconfig`, it also writes the files of `yak init`.
+- The `cargo` external cell origin generates, from `cargo metadata`, a target for each crates.io package of a workspace and the `cargo_workspace_member` macro that declares a member's targets. `[external_cell_<name>] manifest` names the workspace's `Cargo.toml`.
+- `buildscript_run` sets `CARGO_PKG_VERSION_MAJOR`, `CARGO_PKG_VERSION_MINOR`, `CARGO_PKG_VERSION_PATCH`, `CARGO_PKG_VERSION_PRE`, `DEBUG`, `NUM_JOBS`, `PROFILE`, and `RUSTDOC` for build scripts, as Cargo does. It sets `OPT_LEVEL` always, to `0` when the toolchain's flags set no optimization level.
+- When a build script fails, `buildscript_run` prints the script's stdout, where `cargo::error=` messages go.
+- The C compiler that `buildscript_run` gives build scripts can be named without a path, such as `clang` in `system_demo_toolchains`. It failed with `FileNotFoundError` before, because the wrapper ran it without searching `PATH`.
+
 ### Renamed to yak
 
 - The binary is `yak`, and `cargo build --bin=yak` builds it.

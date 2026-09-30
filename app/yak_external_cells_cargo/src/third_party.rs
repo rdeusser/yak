@@ -152,6 +152,10 @@ pub fn generate_third_party(
                     ("features", features.clone()),
                     ("manifest_dir", Value::str(format!(":{archive}"))),
                     ("env", Value::Dict(env.clone())),
+                    // Cargo links the libraries that a build script names, such as a C
+                    // library that the script compiled into `OUT_DIR`.
+                    ("rustc_link_lib", Value::Bool(true)),
+                    ("rustc_link_search", Value::Bool(true)),
                 ],
             );
             env.push((

@@ -122,7 +122,22 @@ fn exec_impl(
     set_up_project(&absolute, git, !cmd.no_prelude)
 }
 
-fn initialize_yakconfig(repo_root: &AbsPath, prelude: bool, git: bool) -> yak_error::Result<()> {
+/// ExternalCell is a cell of a new `.yakconfig` beyond those of `yak init`.
+pub(crate) struct ExternalCell {
+    pub(crate) name: &'static str,
+    pub(crate) path: &'static str,
+    pub(crate) origin: &'static str,
+    /// The comment above the cell's `[external_cells]` entry.
+    pub(crate) comment: &'static str,
+}
+
+/// Writes `.yakconfig`. The `external_cells` need the prelude.
+pub(crate) fn initialize_yakconfig(
+    repo_root: &AbsPath,
+    prelude: bool,
+    git: bool,
+    external_cells: &[ExternalCell],
+) -> yak_error::Result<()> {
     let mut yakconfig = std::fs::File::create(repo_root.join(".yakconfig"))?;
     writeln!(yakconfig, "[cells]")?;
     writeln!(yakconfig, "  root = .")?;
@@ -131,6 +146,9 @@ fn initialize_yakconfig(repo_root: &AbsPath, prelude: bool, git: bool) -> yak_er
     if prelude {
         writeln!(yakconfig, "  prelude = prelude")?;
         writeln!(yakconfig, "  toolchains = toolchains")?;
+        for cell in external_cells {
+            writeln!(yakconfig, "  {} = {}", cell.name, cell.path)?;
+        }
         writeln!(yakconfig)?;
         writeln!(yakconfig, "[cell_aliases]")?;
         writeln!(yakconfig, "  config = prelude")?;
@@ -145,14 +163,26 @@ fn initialize_yakconfig(repo_root: &AbsPath, prelude: bool, git: bool) -> yak_er
         )?;
         writeln!(yakconfig, "[external_cells]")?;
         writeln!(yakconfig, "  prelude = bundled")?;
+        for cell in external_cells {
+            writeln!(yakconfig, "# {}", cell.comment)?;
+            writeln!(yakconfig, "  {} = {}", cell.name, cell.origin)?;
+        }
         writeln!(yakconfig)?;
         writeln!(yakconfig, "[parser]")?;
-        writeln!(
+        write!(
             yakconfig,
             "  target_platform_detector_spec = target:root//...->prelude//platforms:default \\
     target:prelude//...->prelude//platforms:default \\
     target:toolchains//...->prelude//platforms:default"
         )?;
+        for cell in external_cells {
+            write!(
+                yakconfig,
+                " \\\n    target:{}//...->prelude//platforms:default",
+                cell.name
+            )?;
+        }
+        writeln!(yakconfig)?;
         writeln!(yakconfig)?;
         writeln!(yakconfig, "[build]")?;
         writeln!(
@@ -169,7 +199,7 @@ fn initialize_yakconfig(repo_root: &AbsPath, prelude: bool, git: bool) -> yak_er
     Ok(())
 }
 
-fn initialize_toolchains_yak(repo_root: &AbsPath) -> yak_error::Result<()> {
+pub(crate) fn initialize_toolchains_yak(repo_root: &AbsPath) -> yak_error::Result<()> {
     std::fs::write(
         repo_root.join("YAK"),
         r#"
@@ -212,7 +242,7 @@ fn set_up_gitignore(repo_root: &AbsPath) -> yak_error::Result<()> {
     Ok(())
 }
 
-fn set_up_yakroot(repo_root: &AbsPath) -> yak_error::Result<()> {
+pub(crate) fn set_up_yakroot(repo_root: &AbsPath) -> yak_error::Result<()> {
     fs_util::write(repo_root.join(".yakroot"), "").categorize_internal()?;
     Ok(())
 }
@@ -243,7 +273,7 @@ fn set_up_project(repo_root: &AbsPath, git: bool, prelude: bool) -> yak_error::R
         return Ok(());
     }
 
-    initialize_yakconfig(repo_root, prelude, git)?;
+    initialize_yakconfig(repo_root, prelude, git, &[])?;
     if prelude {
         let toolchains = repo_root.join("toolchains");
         if !toolchains.exists() {
@@ -323,7 +353,7 @@ mod tests {
         fs_util::create_dir_all(tempdir_path)?;
 
         let yakconfig_path = tempdir_path.join(".yakconfig");
-        initialize_yakconfig(tempdir_path, true, true)?;
+        initialize_yakconfig(tempdir_path, true, true, &[])?;
         let actual_yakconfig = fs_util::read_to_string(yakconfig_path)?;
         let expected_yakconfig = "[cells]
   root = .
@@ -361,7 +391,7 @@ mod tests {
         fs_util::create_dir_all(tempdir_path)?;
 
         let yakconfig_path = tempdir_path.join(".yakconfig");
-        initialize_yakconfig(tempdir_path, false, false)?;
+        initialize_yakconfig(tempdir_path, false, false, &[])?;
         let actual_yakconfig = fs_util::read_to_string(yakconfig_path)?;
         let expected_yakconfig = "[cells]
   root = .

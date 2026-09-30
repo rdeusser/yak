@@ -33,7 +33,7 @@ Paths are relative to the repository root. Rust crates under `app/` share the `y
 
 - `app/yak` is the `yak` binary. `main` in `bin/yak.rs` initializes every late binding before any thread starts, and `src/lib.rs` defines the top-level command line and dispatches each subcommand.
 - `app/yak_client_ctx` is the client runtime. It connects to or starts the daemon (`connect_yakd`, `BootstrapYakdClient`), runs commands (`StreamingCommand`), and fans daemon events out to each `EventSubscriber`, such as the superconsole and the event log writer.
-- `app/yak_client` implements most client commands (`build`, `test`, `targets`, `kill`, `status`, and others) in `src/commands/`.
+- `app/yak_client` implements most client commands (`build`, `test`, `targets`, `kill`, `status`, `init`, `generate`, and others) in `src/commands/`.
 - `app/yak_cmd_*_client` crates implement the remaining client commands (`audit`, `completion`, `debug`, `docs`, `log`, `starlark`).
 - `app/yak_daemon` is the `yak daemon` process. It daemonizes, writes `yakd.pid` and `yakd.info` in the daemon directory (`~/.yak/yakd/<project root>/<isolation dir>/`), and starts the server. `app/yak_daemon/daemon_lifecycle.md` describes the startup, connection, and shutdown protocol.
 - `app/yak_cli_proto` defines the client-daemon protocol. `daemon.proto` declares `service DaemonApi`.
@@ -67,7 +67,8 @@ A client restarts the daemon when the daemon's `DaemonConstraints` do not satisf
 - `app/yak_interpreter` holds the Starlark plumbing that build files, `.bzl` files, and BXL share (module paths, loaded modules, and the slots that downstream crates fill with globals).
 - `app/yak_interpreter_for_build` evaluates `YAK`, `.bzl`, and `PACKAGE` files and defines the build-file globals (`rule`, `attrs`, `select`, `read_config`, and others). `InterpreterResultsKey` and `EvalImportKey` live in `src/interpreter/calculation.rs`. `AttributeSpecExt::parse_params` checks each attribute value against the rule's `AttributeSpec` and converts it to a `CoercedAttr` through `AttrTypeCoerce` (`src/attrs/coerce.rs` and `src/attrs/coerce/`).
 - `app/yak_node` defines the target graph (`TargetNode`, `ConfiguredTargetNode`, `CoercedAttr`, `ConfiguredAttr`) and the traits through which other crates request nodes.
-- `app/yak_external_cells` serves cells whose files come from outside the repository, from the binary (`bundled`) or from Git (`git`). `app/yak_external_cells_bundled` embeds `prelude/` in the binary at compile time (`build.rs` under Cargo, a generated `prelude/contents.rs` under yak).
+- `app/yak_external_cells` serves cells whose files come from outside the repository, from the binary (`bundled`), from Git (`git`), or from a Cargo workspace (`cargo`). `app/yak_external_cells_bundled` embeds `prelude/` in the binary at compile time (`build.rs` under Cargo, a generated `prelude/contents.rs` under yak).
+- `app/yak_external_cells_cargo` translates `cargo metadata` output into the `cargo` cell's files, a `YAK` file of third-party crates and a `workspace.bzl` of the workspace members. It evaluates `cfg(...)` conditions against `rustc --print cfg` output. Its functions do no I/O. The `cargo` origin in `app/yak_external_cells/src/cargo.rs` runs `cargo` and `rustc` and reads the manifests through DICE, and `yak generate` reads the member list with it.
 
 ### Configuration
 

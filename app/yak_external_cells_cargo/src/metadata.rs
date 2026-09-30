@@ -21,6 +21,40 @@ pub struct Metadata {
     pub resolve: Resolve,
 }
 
+/// WorkspaceLayout is the output of `cargo metadata --no-deps --format-version 1`, which
+/// describes the workspace members without resolving their dependencies.
+#[derive(Debug, Deserialize)]
+pub struct WorkspaceLayout {
+    pub packages: Vec<Package>,
+    pub workspace_members: Vec<String>,
+    pub workspace_root: String,
+}
+
+impl WorkspaceLayout {
+    pub fn parse(json: &str) -> yak_error::Result<WorkspaceLayout> {
+        Ok(serde_json::from_str(json)?)
+    }
+
+    /// The directories of the workspace members, relative to the workspace root, with forward
+    /// slashes and sorted. The directory of a member at the root is empty.
+    pub fn member_dirs(&self) -> yak_error::Result<Vec<String>> {
+        let root = std::path::Path::new(&self.workspace_root);
+        let mut dirs = self
+            .packages
+            .iter()
+            .filter(|p| self.workspace_members.contains(&p.id))
+            .map(|p| {
+                let dir = std::path::Path::new(&p.manifest_path)
+                    .parent()
+                    .unwrap_or(std::path::Path::new(""));
+                crate::graph::relative_to(root, &dir.to_string_lossy())
+            })
+            .collect::<yak_error::Result<Vec<_>>>()?;
+        dirs.sort();
+        Ok(dirs)
+    }
+}
+
 #[derive(Debug, Deserialize)]
 pub struct Package {
     pub id: String,

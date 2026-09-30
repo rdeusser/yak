@@ -33,7 +33,8 @@ def cargo_workspace_member():
     if member == None:
         fail("`{}` is not the directory of a member of the Cargo workspace".format(package_name()))
 
-    srcs = glob(["**"], exclude = ["target/**", "YAK"])
+    # `**` matches no name that starts with a dot, and Cargo compiles against every file.
+    srcs = glob(["**", "**/.*", "**/.*/**"], exclude = ["target/**", "YAK"])
     env = dict(member["env"])
     rustc_flags = []
 
@@ -61,6 +62,8 @@ def cargo_workspace_member():
             features = member["features"],
             manifest_dir = ":" + member["name"] + "-manifest-dir",
             env = env,
+            rustc_link_lib = True,
+            rustc_link_search = True,
         )
         env["OUT_DIR"] = "$(location :{}-build-script-run[out_dir])".format(member["name"])
         rustc_flags.append("@$(location :{}-build-script-run[rustc_flags])".format(member["name"]))

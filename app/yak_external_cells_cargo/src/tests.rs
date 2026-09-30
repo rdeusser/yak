@@ -242,6 +242,7 @@ fn test_build_script_takes_build_deps() {
     );
     assert!(run.contains("buildscript_rule = \":serde-1.0.1-beta.2-build-script-build\""));
     assert!(run.contains("manifest_dir = \":serde-1.0.1-beta.2.crate\""));
+    assert!(run.contains("rustc_link_lib = True,\n    rustc_link_search = True,"));
 }
 
 #[test]
@@ -359,4 +360,32 @@ fn test_workspace_member_build_script_features_and_tests() {
     );
     assert!(util.contains("\"CARGO_MANIFEST_DIR\": \".\""));
     assert!(out.contains("def cargo_workspace_member():"));
+}
+
+#[test]
+fn test_workspace_layout_member_dirs() {
+    let layout = crate::metadata::WorkspaceLayout::parse(
+        &json!({
+            "packages": [
+                {"id": "path+file:///ws#root@0.1.0", "name": "root", "version": "0.1.0", "source": null,
+                 "manifest_path": "/ws/Cargo.toml", "targets": []},
+                {"id": "path+file:///ws/crates/b#0.1.0", "name": "b", "version": "0.1.0", "source": null,
+                 "manifest_path": "/ws/crates/b/Cargo.toml", "targets": []},
+                {"id": "path+file:///ws/crates/a#0.1.0", "name": "a", "version": "0.1.0", "source": null,
+                 "manifest_path": "/ws/crates/a/Cargo.toml", "targets": []},
+                {"id": "path+file:///elsewhere#0.1.0", "name": "elsewhere", "version": "0.1.0", "source": null,
+                 "manifest_path": "/elsewhere/Cargo.toml", "targets": []},
+            ],
+            "workspace_members": [
+                "path+file:///ws#root@0.1.0",
+                "path+file:///ws/crates/b#0.1.0",
+                "path+file:///ws/crates/a#0.1.0",
+            ],
+            "workspace_root": "/ws",
+            "resolve": null,
+        })
+        .to_string(),
+    )
+    .unwrap();
+    assert_eq!(layout.member_dirs().unwrap(), ["", "crates/a", "crates/b"]);
 }

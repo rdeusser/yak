@@ -35,6 +35,7 @@ yak_common.workspace = true
 yak_core.workspace = true
 yak_data.workspace = true
 yak_error.workspace = true
+yak_external_cells_cargo.workspace = true
 yak_fs.workspace = true
 yak_hash.workspace = true
 yak_query_parser.workspace = true

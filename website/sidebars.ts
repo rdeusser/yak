@@ -131,6 +131,12 @@ export const sidebars: SidebarsConfig = {
                 'users/languages/go/gopackagesdriver',
               ],
             },
+            {
+              type: 'category' as const,
+              label: 'Rust',
+              collapsed: false,
+              items: ['users/languages/rust/cargo'],
+            },
           ],
         },
         'users/cheat_sheet',

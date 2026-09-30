@@ -21,6 +21,7 @@ use yak_client::commands::clean::CleanCommand;
 use yak_client::commands::cleanall::CleanallCommand;
 use yak_client::commands::ctargets::ConfiguredTargetsCommand;
 use yak_client::commands::expand_external_cell::ExpandExternalCellsCommand;
+use yak_client::commands::generate::GenerateCommand;
 use yak_client::commands::help_env::HelpEnvCommand;
 use yak_client::commands::init::InitCommand;
 use yak_client::commands::install::InstallCommand;
@@ -314,6 +315,7 @@ pub(crate) enum CommandKind {
     HelpEnv(HelpEnvCommand),
     Test(TestCommand),
     Cquery(CqueryCommand),
+    Generate(GenerateCommand),
     Init(InitCommand),
     ExpandExternalCell(ExpandExternalCellsCommand),
     Install(InstallCommand),
@@ -503,6 +505,7 @@ impl CommandKind {
             CommandKind::Completion(cmd) => cmd.exec(Opt::command(), matches, command_ctx),
             CommandKind::Docs(cmd) => cmd.exec(Opt::command(), matches, command_ctx, events_ctx),
             CommandKind::Profile(cmd) => cmd.exec(matches, command_ctx, events_ctx),
+            CommandKind::Generate(cmd) => cmd.exec(matches, command_ctx),
             CommandKind::Init(cmd) => cmd.exec(matches, command_ctx),
             CommandKind::Install(cmd) => command_ctx.exec(cmd, matches, events_ctx),
             CommandKind::Log(cmd) => cmd.exec(matches, command_ctx, events_ctx),
@@ -546,6 +549,7 @@ impl CommandKind {
             CommandKind::Completion(_) => "completion",
             CommandKind::Docs(_) => "docs",
             CommandKind::Profile(_) => "profile",
+            CommandKind::Generate(_) => "generate",
             CommandKind::Init(_) => "init",
             CommandKind::Install(cmd) => cmd.logging_name(),
             CommandKind::Log(cmd) => cmd.command_name(),

@@ -882,6 +882,21 @@ class Yak(Executable):
     ) -> Process[Result, Exception]:
         raise NotImplementedError("yak does not use execute.")
 
+    def generate(
+        self,
+        *argv: str,
+        input: Optional[bytes] = None,
+        rel_cwd: Optional[Path] = None,
+        env: Optional[Dict[str, str]] = None,
+    ) -> Process[YakResult, YakException]:
+        return self._run_yak_command(
+            "generate",
+            *argv,
+            input=input,
+            rel_cwd=rel_cwd,
+            env=env,
+        )
+
     def init(
         self,
         *argv: str,

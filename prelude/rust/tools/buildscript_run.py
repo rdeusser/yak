@@ -180,6 +180,10 @@ def run_buildscript(
         print(f"Failed to run {buildscript} because {ex}", file=sys.stderr)
         sys.exit(1)
     except subprocess.CalledProcessError as ex:
+        # A failing script can report why on stdout, as `cargo::error=` lines
+        # do, so show it as Cargo does.
+        if ex.stdout:
+            eprint(f"--- stdout of {buildscript}\n{ex.stdout}")
         sys.exit(ex.returncode)
 
 

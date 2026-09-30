@@ -44,8 +44,8 @@ configuration.
 
 ## Origins
 
-yak currently supports three external cell origins: `bundled`, `git`, and
-`disabled`.
+yak currently supports four external cell origins: `bundled`, `git`, `cargo`,
+and `disabled`.
 
 ### The `bundled` origin
 
@@ -74,6 +74,32 @@ and `commit`, like this:
 ```
 
 The `commit_hash` value must be a sha1, it cannot be eg a branch name.
+
+### The `cargo` origin
+
+The `cargo` origin generates a cell from a Cargo workspace. It accepts one
+additional configuration parameter, `manifest`, the project-relative path of the
+workspace's root `Cargo.toml`, which defaults to `Cargo.toml`:
+
+```ini
+[cells]
+  root = .
+  crates = .crates
+
+[external_cells]
+  crates = cargo
+
+[external_cell_crates]
+  manifest = rust/Cargo.toml
+```
+
+The cell's path names no directory in the project, because the daemon generates
+the cell's files in memory from `cargo metadata`. Its `YAK` file declares a
+target for each third-party crate, and its `workspace.bzl` file declares the
+`cargo_workspace_member` macro for the workspace members' build files.
+`yak generate` configures this cell for a Cargo workspace at the project root,
+and [Cargo workspaces](../languages/rust/cargo.md) describes the targets.
+`yak expand-external-cell` does not support this origin.
 
 ### The `disabled` origin
 

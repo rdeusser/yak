@@ -8090,6 +8090,7 @@ dependencies = [
  "yak_core",
  "yak_data",
  "yak_error",
+ "yak_external_cells_cargo",
  "yak_fs",
  "yak_hash",
  "yak_query_parser",
