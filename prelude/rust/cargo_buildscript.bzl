@@ -52,6 +52,8 @@ load(
 load(":dep_context.bzl", "DepCollectionContext")
 load(
     ":link_info.bzl",
+    "BuildScriptSharedLibDirs",
+    "BuildScriptSharedLibsInfo",
     "DEFAULT_STATIC_LINK_STRATEGY",
     "RustProcMacroPlugin",
     "gather_explicit_sysroot_deps",
@@ -236,6 +238,7 @@ def _cargo_buildscript_impl(ctx: AnalysisContext) -> list[Provider]:
     out_dir = ctx.actions.declare_output("OUT_DIR", dir = True, has_content_based_path = True)
     rustc_flags = ctx.actions.declare_output("rustc_flags", has_content_based_path = True)
     linker_flags = ctx.actions.declare_output("linker_flags", has_content_based_path = True)
+    shared_libs = ctx.actions.declare_output("shared_libs", dir = True, has_content_based_path = True)
 
     if ctx.attrs.manifest_dir != None:
         manifest_dir = ctx.attrs.manifest_dir[DefaultInfo].default_outputs[0]
@@ -250,9 +253,12 @@ def _cargo_buildscript_impl(ctx: AnalysisContext) -> list[Provider]:
         cmd_args("--create-cwd=", cwd.as_output(), delimiter = ""),
         cmd_args("--outfile=", rustc_flags.as_output(), delimiter = ""),
         cmd_args("--linker-flags=", linker_flags.as_output(), delimiter = ""),
+        cmd_args("--shared-libs=", shared_libs.as_output(), delimiter = ""),
     ]
+    linker_search_flag = "-L"
     if cxx_toolchain_info.linker_info.type == LinkerType("windows"):
-        cmd.append("--linker-search-flag=/LIBPATH:")
+        linker_search_flag = "/LIBPATH:"
+    cmd.append("--linker-search-flag=" + linker_search_flag)
 
     if ctx.attrs.rustc_link_lib:
         cmd.append("--rustc-link-lib")
@@ -390,13 +396,17 @@ def _cargo_buildscript_impl(ctx: AnalysisContext) -> list[Provider]:
         category = "buildscript",
     )
 
-    # A library that depends on this target passes `linker_flags` to every
-    # link that includes it. The file holds the search paths of the host
-    # libraries that the script names, which rustc does not record in the
-    # library's metadata.
+    # A library that depends on this target passes these flags to every link
+    # that includes it, because rustc does not record the library's search
+    # paths in its metadata. `linker_flags` holds the directories of the host
+    # libraries that the script names, and `shared_libs` holds the shared
+    # libraries of its `OUT_DIR`.
     link = LinkInfo(
         name = ctx.attrs.name,
-        pre_flags = [cmd_args(linker_flags, format = "@{}")],
+        pre_flags = [
+            cmd_args(linker_flags, format = "@{}"),
+            cmd_args(shared_libs, format = linker_search_flag + "{}"),
+        ],
     )
     return [
         DefaultInfo(
@@ -405,7 +415,13 @@ def _cargo_buildscript_impl(ctx: AnalysisContext) -> list[Provider]:
                 "linker_flags": [DefaultInfo(default_output = linker_flags)],
                 "out_dir": [DefaultInfo(default_output = out_dir)],
                 "rustc_flags": [DefaultInfo(default_output = rustc_flags)],
+                "shared_libs": [DefaultInfo(default_output = shared_libs)],
             },
+        ),
+        # The binaries that depend on this target load the shared libraries
+        # that the script linked from its `OUT_DIR`.
+        BuildScriptSharedLibsInfo(
+            dirs = ctx.actions.tset(BuildScriptSharedLibDirs, value = shared_libs),
         ),
         EMPTY_SHARED_LIBRARY_INFO,
         EMPTY_LINK_GROUP_LIB_INFO,

@@ -101,6 +101,7 @@ load(
 load(":dep_context.bzl", "DepCollectionContext")
 load(
     ":link_info.bzl",
+    "BuildScriptSharedLibsInfo",
     "DEFAULT_STATIC_LIB_OUTPUT_STYLE",
     "DEFAULT_STATIC_LINK_STRATEGY",
     "RustExportedLinkDeps",
@@ -112,6 +113,7 @@ load(
     "TransitiveDeps",
     "attr_crate",
     "dfs_dedupe_by_label",
+    "inherited_build_script_shared_lib_dirs",
     "inherited_exported_link_deps",
     "inherited_link_group_lib_infos",
     "inherited_linkable_graphs",
@@ -525,6 +527,9 @@ def rust_library_impl(ctx: AnalysisContext) -> list[Provider]:
             default_roots = _DEFAULT_ROOTS,
         )
     )
+    providers.append(BuildScriptSharedLibsInfo(
+        dirs = inherited_build_script_shared_lib_dirs(ctx, compile_ctx.dep_ctx),
+    ))
 
     return providers
 

@@ -50,6 +50,7 @@ def run_buildscript(tmp_path: Path, lines: list[str]) -> tuple[list[str], str]:
             f"--create-cwd={tmp_path / 'cwd'}",
             f"--outfile={outfile}",
             f"--linker-flags={linker_flags}",
+            f"--shared-libs={tmp_path / 'shared_libs'}",
             "--rustc-link-lib",
             "--rustc-link-search",
         ],
@@ -101,4 +102,27 @@ def test_relative_link_search_is_dropped(tmp_path: Path) -> None:
         tmp_path, ["cargo:rustc-link-search=native=lib"]
     )
     assert flags == []
+    assert linker_flags == ""
+
+
+def test_shared_libraries_in_out_dir_are_copied(tmp_path: Path) -> None:
+    lib_dir = tmp_path / "out" / "lib"
+    lib_dir.mkdir(parents=True)
+    for name in ["libseven.dylib", "libseven.so.1", "seven.dll", "libseven.a"]:
+        (lib_dir / name).write_text(name)
+    flags, linker_flags = run_buildscript(
+        tmp_path,
+        [
+            f"cargo:rustc-link-search=native={lib_dir.resolve()}",
+            "cargo:rustc-link-lib=dylib=seven",
+        ],
+    )
+    assert flags == ["-Lnative=${__BUILDSCRIPT_OUT_DIR__}/lib", "-ldylib=seven"]
+    # Binaries that link the library load it from `shared_libs`, and a static
+    # library is part of the Rust library that links it.
+    assert sorted(p.name for p in (tmp_path / "shared_libs").iterdir()) == [
+        "libseven.dylib",
+        "libseven.so.1",
+        "seven.dll",
+    ]
     assert linker_flags == ""

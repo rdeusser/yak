@@ -13,6 +13,7 @@ Removes the code, configuration, and service clients that only Meta's internal b
 - `buildscript_run` sets `CARGO_PKG_VERSION_MAJOR`, `CARGO_PKG_VERSION_MINOR`, `CARGO_PKG_VERSION_PATCH`, `CARGO_PKG_VERSION_PRE`, `DEBUG`, `NUM_JOBS`, `PROFILE`, and `RUSTDOC` for build scripts, as Cargo does. It sets `OPT_LEVEL` always, to `0` when the toolchain's flags set no optimization level.
 - When a build script fails, `buildscript_run` prints the script's stdout, where `cargo::error=` messages go.
 - `buildscript_run` keeps a `cargo:rustc-link-search` directory outside `OUT_DIR`, such as the one where pkg-config found a system library, and passes it to the links of the libraries that depend on the run target. It dropped the directory before, so a link that needed the library failed with `library not found`.
+- `buildscript_run` copies the shared libraries in the `cargo:rustc-link-search` directories of `OUT_DIR` into its `shared_libs` output, and passes that directory to the links of dependents. A Rust binary gets an rpath to the `shared_libs` directory of every build script among its dependencies, so it loads those libraries under `yak run` and `yak test`.
 - The C compiler that `buildscript_run` gives build scripts can be named without a path, such as `clang` in `system_demo_toolchains`. It failed with `FileNotFoundError` before, because the wrapper ran it without searching `PATH`.
 
 ### Renamed to yak

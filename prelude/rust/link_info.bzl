@@ -188,6 +188,26 @@ RustLinkableGraphs = transitive_set()
 # Set of list[Dependency]
 RustExportedLinkDeps = transitive_set()
 
+def _project_dir_args(dir: Artifact):
+    return dir
+
+def _has_dirs(children: list[bool], dir: Artifact | None) -> bool:
+    return dir != None or any(children)
+
+# Set of the directories into which build scripts copied the shared libraries
+# of their `OUT_DIR`. The binaries that link those libraries load them from
+# these directories at run time.
+BuildScriptSharedLibDirs = transitive_set(
+    args_projections = {"dirs": _project_dir_args},
+    reductions = {"has_dirs": _has_dirs},
+)
+
+# BuildScriptSharedLibsInfo is provided by `buildscript_run` and by Rust
+# libraries, which pass on the directories of their dependencies.
+BuildScriptSharedLibsInfo = provider(fields = {
+    "dirs": provider_field(BuildScriptSharedLibDirs),
+})
+
 # Output of a Rust compilation
 RustLinkInfo = provider(
     # @unsorted-dict-items
@@ -587,6 +607,16 @@ def inherited_native_link_deps(ctx: AnalysisContext, dep_ctx: DepCollectionConte
         RustNativeLinkDeps,
         value = [(dep.label.configured_target(), dep[MergedLinkInfo]) for dep in _native_link_dependencies(ctx, dep_ctx)],
         children = [info.native_link_deps for info in _rust_non_proc_macro_link_infos(ctx, dep_ctx)],
+    )
+
+def inherited_build_script_shared_lib_dirs(ctx: AnalysisContext, dep_ctx: DepCollectionContext) -> BuildScriptSharedLibDirs:
+    return ctx.actions.tset(
+        BuildScriptSharedLibDirs,
+        children = [
+            d.dep[BuildScriptSharedLibsInfo].dirs
+            for d in resolve_deps(ctx, dep_ctx)
+            if BuildScriptSharedLibsInfo in d.dep
+        ],
     )
 
 def inherited_merged_link_infos(ctx: AnalysisContext, dep_ctx: DepCollectionContext) -> list[MergedLinkInfo]:

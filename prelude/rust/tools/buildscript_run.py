@@ -13,6 +13,7 @@ Run a crate's Cargo buildscript.
 import argparse
 import os
 import re
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -36,6 +37,27 @@ def quote_arg(arg: str) -> str:
     if any(c.isspace() for c in arg):
         return '"' + arg.replace("\\", "\\\\").replace('"', '\\"') + '"'
     return arg
+
+
+SHARED_LIBRARY_PATTERN: re.Pattern[str] = re.compile(r".*(\.dylib|\.dll|\.so(\.[0-9]+)*)$")
+
+
+def copy_shared_libraries(search_dir: str, shared_libs: Path) -> None:
+    """Copies the shared libraries of `search_dir` into `shared_libs`.
+
+    Cargo puts the search paths inside its target directory on the dynamic
+    library path of the programs it runs. The binaries that link these
+    libraries load them from `shared_libs` instead, whose path is known
+    before the build script runs.
+    """
+    if not os.path.isdir(search_dir):
+        return
+    for name in sorted(os.listdir(search_dir)):
+        path = os.path.join(search_dir, name)
+        target = shared_libs / name
+        if SHARED_LIBRARY_PATTERN.match(name) and os.path.isfile(path):
+            if not target.exists():
+                shutil.copy2(path, target)
 
 
 def cfg_env(rustc_cfg: Path) -> dict[str, str]:
@@ -203,6 +225,7 @@ class Args(NamedTuple):
     outfile: IO[str]
     linker_flags: Optional[IO[str]]
     linker_search_flag: str
+    shared_libs: Optional[Path]
     rustc_link_lib: bool
     rustc_link_search: bool
 
@@ -218,6 +241,9 @@ def arg_parse() -> Args:
     # The linker flags that every link of a dependent needs, as an argument file.
     parser.add_argument("--linker-flags", type=argparse.FileType("w"))
     parser.add_argument("--linker-search-flag", type=str, default="-L")
+    # The directory that receives the shared libraries of the search paths in
+    # `OUT_DIR`.
+    parser.add_argument("--shared-libs", type=Path)
     parser.add_argument("--rustc-link-lib", action="store_true")
     parser.add_argument("--rustc-link-search", action="store_true")
 
@@ -281,6 +307,8 @@ def main() -> None:  # noqa: C901
 
     flags = ""
     linker_flags = ""
+    if args.shared_libs:
+        args.shared_libs.mkdir(parents=True, exist_ok=True)
     for line in script_output.split("\n"):
         cargo_rustc_cfg_match = cargo_rustc_cfg_pattern.match(line)
         if cargo_rustc_cfg_match:
@@ -312,6 +340,8 @@ def main() -> None:  # noqa: C901
             reanchored = reanchor_out_dir(path)
             if reanchored is not None:
                 flags += f"-L{kind}{reanchored}\n"
+                if args.shared_libs:
+                    copy_shared_libraries(path, args.shared_libs)
             elif path.startswith(TOOL_CWD):
                 relative_path = path[len(TOOL_CWD) :]
                 flags += f"-L{kind}$(abspath {relative_path})\n"

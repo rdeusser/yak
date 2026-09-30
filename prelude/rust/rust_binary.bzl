@@ -26,6 +26,7 @@ load(
 load("@prelude//cxx:cxx_link_utility.bzl", "executable_shared_lib_arguments")
 load(
     "@prelude//cxx:cxx_toolchain_types.bzl",
+    "LinkerType",
     "PicBehavior",
     "RuntimeDependencyHandling",
 )
@@ -39,7 +40,7 @@ load(
     "build_shared_libs_for_symlink_tree",
     "get_link_group_map_json",
 )
-load("@prelude//cxx:linker.bzl", "DUMPBIN_SUB_TARGET", "PDB_SUB_TARGET", "get_dumpbin_providers", "get_pdb_providers")
+load("@prelude//cxx:linker.bzl", "DUMPBIN_SUB_TARGET", "PDB_SUB_TARGET", "get_dumpbin_providers", "get_pdb_providers", "get_rpath_origin")
 load("@prelude//cxx:transformation_spec.bzl", "build_transformation_spec_context")
 load(
     "@prelude//dist:dist_info.bzl",
@@ -104,6 +105,7 @@ load(
     ":link_info.bzl",
     "DEFAULT_STATIC_LINK_STRATEGY",
     "attr_simple_crate_for_filenames",
+    "inherited_build_script_shared_lib_dirs",
     "inherited_external_debug_info",
     "inherited_linkable_graphs",
     "inherited_rust_cxx_link_group_info",
@@ -423,7 +425,24 @@ def _rust_binary_common(
         if generated_build_info:
             generated_build_info_link_args.extend(generated_build_info.linker_flags)
             generated_build_info_link_args.extend(compile_generated_build_info(ctx, generated_build_info).objects)
-    extra_link_args = executable_shlib_args.extra_link_args + generated_build_info_link_args
+
+    # Cargo puts the directories that build scripts link shared libraries from
+    # on the library path of the programs it runs. The binary finds those
+    # libraries in the build scripts' `shared_libs` directories instead,
+    # through an rpath relative to the binary.
+    build_script_lib_dirs = inherited_build_script_shared_lib_dirs(ctx, compile_ctx.dep_ctx)
+    build_script_rpath_args = []
+    build_script_runtime_files = []
+    linker_type = compile_ctx.cxx_toolchain_info.linker_info.type
+    if linker_type != LinkerType("windows") and build_script_lib_dirs.reduce("has_dirs"):
+        build_script_rpath_args.append(cmd_args(
+            build_script_lib_dirs.project_as_args("dirs"),
+            format = "-Wl,-rpath,{}/{{}}".format(get_rpath_origin(linker_type)),
+            relative_to = (shlib_args_output, 1),
+        ))
+        build_script_runtime_files.append(build_script_lib_dirs.project_as_args("dirs"))
+
+    extra_link_args = executable_shlib_args.extra_link_args + generated_build_info_link_args + build_script_rpath_args
 
     # Compile rust binary. Under `Emit("rlib")`, this only compiles: rustc's
     # synthesized objects are extracted and linked below.
@@ -489,7 +508,7 @@ def _rust_binary_common(
     elif enable_late_build_info_stamping:
         stamp_build_info(ctx, link.output, final_output)
 
-    args = cmd_args(final_output, hidden = executable_shlib_args.runtime_files)
+    args = cmd_args(final_output, hidden = executable_shlib_args.runtime_files + build_script_runtime_files)
     external_debug_info = project_artifacts(
         actions = ctx.actions,
         tsets = inherited_external_debug_info(

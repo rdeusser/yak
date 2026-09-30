@@ -99,6 +99,14 @@ a private registry, from a mirror that source replacement names, from a
 build that reads a package's files copies them from where Cargo put them into
 `yak-out`. Build actions then need no network access.
 
+A build script can link a library that it builds into its `OUT_DIR` or finds
+on the machine, such as through pkg-config. The links of the crates that
+depend on the package get the library's directory, as with Cargo. yak copies
+the shared libraries of an `OUT_DIR` into the build script's `shared_libs`
+output, and a binary that links them finds them there through an rpath
+relative to the binary. Cargo puts those directories on the dynamic library
+path of the programs it runs.
+
 The daemon generates the build files in memory, so no third-party target is
 checked in. The machine that runs the daemon needs `cargo`, `rustc`, and the
 network access and credentials that `cargo build` needs there. The daemon keeps
@@ -119,11 +127,6 @@ after a dependency changes.
   `prelude//rust/cargo_package.bzl`: `linux-arm64`, `linux-riscv64`,
   `linux-x86_64`, `macos-arm64`, `macos-x86_64`, `wasi`, `wasm32`,
   `windows-gnu`, and `windows-msvc`.
-- Cargo adds the directories that build scripts name in
-  `cargo:rustc-link-search` inside its `target` directory to the dynamic
-  library path of the tests and binaries it runs, and yak does not. A binary
-  that links a dynamic library from a build script's `OUT_DIR` fails to load
-  it under `yak run` and `yak test`.
 - `cargo_workspace()` declares no targets for examples or benchmarks. A test
   that looks for an example in Cargo's `target` directory fails.
 - A build file in a directory inside the workspace, such as one for another

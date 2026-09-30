@@ -163,3 +163,16 @@ async def test_generate_links_a_host_library_of_a_build_script(yak: Yak) -> None
     await yak.generate()
     result = await yak.run("//:app")
     assert result.stdout == "answer=42\n"
+
+
+@yak_test(data_dir="sharedlib")
+async def test_generate_runs_a_binary_that_loads_a_build_script_shared_library(
+    yak: Yak,
+) -> None:
+    # The build script of `seven` compiles `libseven` into its `OUT_DIR` and
+    # links it, as Cargo lets a build script do. Cargo puts the directory on
+    # the dynamic library path of the programs it runs, and so does yak.
+    await yak.generate()
+    result = await yak.run("//:app")
+    assert result.stdout == "seven=7\n"
+    await yak.test("//:seven-unittest")
