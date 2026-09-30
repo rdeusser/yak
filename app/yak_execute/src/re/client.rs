@@ -227,7 +227,6 @@ impl RemoteExecutionClient {
         &self,
         action_digest: ActionDigest,
         metadata: &RemoteExecutionMetadata,
-        use_case: RemoteExecutorUseCase,
         platform: &RE::Platform,
     ) -> yak_error::Result<Option<ActionResultResponse>> {
         let _ac = self.data.client.action_cache_semaphore.acquire().await;
@@ -237,7 +236,7 @@ impl RemoteExecutionClient {
             .op(self
                 .data
                 .client
-                .action_cache(action_digest, metadata, use_case, platform))
+                .action_cache(action_digest, metadata, platform))
             .await
     }
 
@@ -600,7 +599,6 @@ impl RemoteExecutionClientImpl {
         &self,
         action_digest: ActionDigest,
         metadata: &RemoteExecutionMetadata,
-        use_case: RemoteExecutorUseCase,
         platform: &RE::Platform,
     ) -> yak_error::Result<Option<ActionResultResponse>> {
         if let Some(m) = &*INDUCED_CACHE_MISSES {

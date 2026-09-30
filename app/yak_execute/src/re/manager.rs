@@ -366,12 +366,7 @@ impl ManagedRemoteExecutionClient {
         self.lock()?
             .get()
             .await?
-            .action_cache(
-                action_digest,
-                &self.no_action_metadata,
-                self.use_case,
-                platform,
-            )
+            .action_cache(action_digest, &self.no_action_metadata, platform)
             .await
     }
 
