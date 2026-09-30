@@ -13,10 +13,10 @@ To see it working, change one crate of a Cargo workspace and run `yak test --cha
 ## Progress
 
 - [x] The owner chooses a flag on `yak test` that takes any Git revision (2026-09-30).
-- [ ] Decide how a test declares the files it reads at run time (Decision Log, open).
+- [x] The owner chooses declared, enforced run-time files for tests (2026-09-30).
 - [ ] Milestone 1, prototype: compute the selection from two `yak targets` dumps for the cases in Validation, and compare it with the tests that fail after each change.
 - [ ] Milestone 2: `yak test --changed-since`.
-- [ ] Milestone 3: files that tests read at run time, as decided.
+- [ ] Milestone 3: member tests read only their package's files and the files that `[package.metadata.yak] test-data` declares, and run from their package's directory.
 - [ ] Milestone 4: documentation and validation against Roost.
 
 ## Surprises & Discoveries
@@ -31,7 +31,8 @@ To see it working, change one crate of a Cargo workspace and run `yak test --cha
 
 - 2026-09-30: The flag takes a Git revision and compares the working tree with the merge base of the revision and `HEAD` (owner). Git resolves the revision with `git rev-parse --verify <revision>^{commit}`.
 - 2026-09-30: The selection follows `btd`'s rules without the options that shrink it: a changed `.yakconfig` selects every test, prelude `.bzl` changes count, no `.bzl` file is exempt, and reverse dependencies have no depth limit. Unconfigured hashes compare the graph with every `select()` branch, so a dependency that one platform adds still counts.
-- Open: how a test declares the files it reads at run time. Enforcing the declaration keeps the selection both correct and small, but tests that read undeclared files then fail until they declare them. Treating every workspace file as an input of every member test is correct without changes to tests, but any change to a workspace selects all of its member tests. Unchecked declarations, like `ci_srcs`, keep the selection small, but a missing entry skips a test silently.
+- 2026-09-30: A test declares the files it reads at run time, and yak enforces the declaration (owner). An enforced declaration keeps the selection both correct and small. Treating every workspace file as an input of every member test is correct without changes to tests, but any change to a workspace would select all of its member tests. Unchecked declarations, like `ci_srcs`, keep the selection small, but a missing entry skips a test silently.
+- 2026-09-30: A member lists the files its tests read in `[package.metadata.yak] test-data`, as glob patterns relative to its directory, like `include`. The files join the sources of the member's tests, so their changes select the tests. `CARGO_MANIFEST_DIR` of a member test names the member's directory in the compile action's symlinked sources, which hold the member's files and the declared files at their workspace paths, and `manifest_dir_in_project` goes away. The test runs from that directory, as Cargo runs a test from its package's directory, with the symlinked sources as an input of the test command. A read of an undeclared file through `CARGO_MANIFEST_DIR` or a relative path then fails, and so does running Git there, because the tree is no checkout. A read through an absolute path into the project is not enforced, which needs a sandbox.
 
 ## Outcomes & Retrospective
 
@@ -51,7 +52,7 @@ Nothing yet.
 2. Build both graphs from as little evaluation as possible, as `btd/src/rerun.rs` does. The running daemon already holds the change's graph. If only sources changed, with no file added or removed, the two graphs differ only in the contents of inputs, and no second graph is needed. Otherwise, evaluate at the merge base only the packages the change can alter, from a `git worktree` of it with a daemon in its own isolation directory, and take every other package from the change's graph. A change to `.yakconfig`, `.yakconfig.local`, `.yakconfig.d/`, a file the configuration includes, or the files an external cell reads (`Cargo.toml`, `Cargo.lock`, `.cargo/config.toml`, `go.mod`, `go.sum`, `go.work`) re-evaluates the affected cell or everything. Keep each merge base's evaluation in `yak-out`, keyed by its commit, so later runs against the same merge base reuse it.
 3. Mark changed targets as `btd` does, with the Decision Log's settings, then select the test targets among the changed targets and their reverse dependencies.
 4. Run the selected tests, as `yak test` runs a pattern's tests. Report how many tests the selection skipped, and why each selected test was selected under `--verbose`.
-5. Implement the decision on files that tests read at run time.
+5. Add `test-data` to the member macro (`app/yak_external_cells_cargo/src/workspace.rs`), remove `manifest_dir_in_project` from `prelude/decls/rust_rules.bzl` and `prelude/rust/build.bzl`, and run `rust_test` from a directory that its target names. `ExternalRunnerTestInfo` has no working directory beyond `run_from_project_root`, so this needs a field or a launcher. Roost then lists `../roost-terminal/testdata/**` and `../../rscript/**` in `crates/roost/Cargo.toml`, and the test that runs Git in its package's directory needs a change in Roost.
 
 No proposal yet for reusing the base revision's dump across runs, which CI would want for a busy `main`.
 
