@@ -3,6 +3,8 @@ yak-out
 /.direnv
 .yakconfig.local
 .envrc.local
+# Python writes these when the tests import the prelude's tools.
+__pycache__/
 
 # symlinks
 /examples/with_prelude/prelude
