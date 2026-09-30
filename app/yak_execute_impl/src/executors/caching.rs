@@ -509,13 +509,6 @@ impl CacheUploader {
     }
 }
 
-#[cfg(fbcode_build)] // Relies on fbcode future sizes
-yak_util::size_assert::words_of_async_fn_future!(
-    CacheUploader::upload_dep_file,
-    (_, _, _, _, _, _, _),
-    ~175
-);
-
 #[derive(Debug, yak_error::Error)]
 #[error("Missing action result for dep file key `{0}`")]
 #[yak(tag = Tier0)]

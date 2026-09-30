@@ -120,10 +120,3 @@ impl ActionCacheUploadPermissionChecker {
             .yak_error_context("Upload for permission check")
     }
 }
-
-#[cfg(fbcode_build)] // Relies on fbcode future sizes
-yak_util::size_assert::words_of_async_fn_future!(
-    ActionCacheUploadPermissionChecker::has_permission_to_upload_to_cache,
-    (_, _, _, _),
-    ~77
-);

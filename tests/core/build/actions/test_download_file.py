@@ -42,7 +42,7 @@ def sha256_hex(content: bytes) -> str:
     return hashlib.sha256(content).hexdigest()
 
 
-def use_fbsource_digests(yak: Yak) -> None:
+def prefer_another_digest(yak: Yak) -> None:
     """Prefers SHA256 and allows SHA1, so a checksum's algorithm is not the one the download
     would hash with. Upstream prefers BLAKE3-KEYED, which yak does not support."""
     with open(yak.cwd / ".yakconfig", "a") as yakconfig:
@@ -282,7 +282,7 @@ async def test_a_content_based_path_under_a_different_preferred_digest(
 ) -> None:
     # The output's value is what consumers resolve a content-based path from, so it has to be
     # the value the path was built from: the declared one, under the checksum's algorithm.
-    use_fbsource_digests(yak)
+    prefer_another_digest(yak)
     content = random_string().encode()
     async with StaticHttpServer({"/file": content}) as server:
         assert (

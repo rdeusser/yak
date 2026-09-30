@@ -6,9 +6,6 @@ root = .
 prelude = prelude
 
 [cell_aliases]
-fbsource = root
-yak = root
-fbcode = root
 config = prelude
 ovr_config = prelude
 toolchains = prelude
