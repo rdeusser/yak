@@ -1304,7 +1304,7 @@ impl RemoteExecutionClientImpl {
                         }),
                         ..use_case.metadata(None)
                     },
-                    WriteActionResultRequest {
+                    &WriteActionResultRequest {
                         action_digest: digest.to_re(),
                         action_result: result,
                         platform: Some(platform.clone()),

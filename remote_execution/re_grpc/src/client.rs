@@ -103,9 +103,9 @@ use crate::response::*;
 
 const DEFAULT_MAX_TOTAL_BATCH_SIZE: usize = 4 * 1000 * 1000;
 
-fn tdigest_to(tdigest: TDigest) -> Digest {
+fn tdigest_to(tdigest: &TDigest) -> Digest {
     Digest {
-        hash: tdigest.hash,
+        hash: tdigest.hash.clone(),
         size_bytes: tdigest.size_in_bytes,
     }
 }
@@ -138,7 +138,7 @@ fn check_status(status: Status) -> Result<(), REClientError> {
     })
 }
 
-fn ttimestamp_to(ts: TTimestamp) -> ::prost_types::Timestamp {
+fn ttimestamp_to(ts: &TTimestamp) -> ::prost_types::Timestamp {
     ::prost_types::Timestamp {
         seconds: ts.seconds,
         nanos: ts.nanos,
@@ -156,10 +156,10 @@ fn ttimestamp_from(ts: Option<::prost_types::Timestamp>) -> TTimestamp {
     }
 }
 
-fn tany_to(any: TAny) -> ::prost_types::Any {
+fn tany_to(any: &TAny) -> ::prost_types::Any {
     ::prost_types::Any {
-        type_url: any.type_url,
-        value: any.value,
+        type_url: any.type_url.clone(),
+        value: any.value.clone(),
     }
 }
 
@@ -694,7 +694,7 @@ impl REClient {
                 .get_action_result(with_re_metadata(
                     GetActionResultRequest {
                         instance_name: self.instance_name.as_str().to_owned(),
-                        action_digest: Some(tdigest_to(request.digest.clone())),
+                        action_digest: Some(tdigest_to(&request.digest)),
                         ..Default::default()
                     },
                     metadata,
@@ -712,9 +712,9 @@ impl REClient {
     pub async fn write_action_result(
         &self,
         metadata: &RemoteExecutionMetadata,
-        request: WriteActionResultRequest,
+        request: &WriteActionResultRequest,
     ) -> anyhow::Result<WriteActionResultResponse> {
-        let action_result = convert_t_action_result2(request.action_result)?;
+        let action_result = convert_t_action_result2(&request.action_result)?;
 
         retry(|| async {
             let res = self
@@ -723,7 +723,7 @@ impl REClient {
                 .update_action_result(with_re_metadata(
                     UpdateActionResultRequest {
                         instance_name: self.instance_name.as_str().to_owned(),
-                        action_digest: Some(tdigest_to(request.action_digest.clone())),
+                        action_digest: Some(tdigest_to(&request.action_digest)),
                         action_result: Some(action_result.clone()),
                         results_cache_policy: None,
                         ..Default::default()
@@ -748,7 +748,7 @@ impl REClient {
         // TODO(aloiscochard): Map those properly in the request
         // use crate::proto::build::bazel::remote::execution::v2::ExecutionPolicy;
 
-        let action_digest = tdigest_to(execute_request.action_digest.clone());
+        let action_digest = tdigest_to(&execute_request.action_digest);
         let priority = execute_request
             .execution_policy
             .map(|ep| ep.priority)
@@ -987,7 +987,7 @@ impl REClient {
             // Send a request and notify others of the result
             if !digests_to_check.is_empty() {
                 tracing::debug!(num_digests = digests_to_check.len(), "FindMissingBlobs");
-                let blob_digests: Vec<_> = digests_to_check.map(|b| tdigest_to(b.clone()));
+                let blob_digests: Vec<_> = digests_to_check.map(tdigest_to);
                 let resp: FindMissingBlobsResponse = retry(|| async {
                     let resp = self
                         .cas_client()
@@ -1207,72 +1207,67 @@ fn convert_action_result(action_result: ActionResult) -> anyhow::Result<TActionR
     Ok(action_result)
 }
 
-fn convert_t_action_result2(t_action_result: TActionResult2) -> anyhow::Result<ActionResult> {
-    let t_execution_metadata = t_action_result.execution_metadata;
+fn convert_t_action_result2(t_action_result: &TActionResult2) -> anyhow::Result<ActionResult> {
+    let t_execution_metadata = &t_action_result.execution_metadata;
     let virtual_execution_duration = prost_types::Duration::try_from(
         t_execution_metadata
             .execution_completed_timestamp
             .saturating_duration_since(&t_execution_metadata.execution_start_timestamp),
     )?;
     let execution_metadata = Some(ExecutedActionMetadata {
-        worker: t_execution_metadata.worker,
-        queued_timestamp: Some(ttimestamp_to(t_execution_metadata.queued_timestamp)),
-        worker_start_timestamp: Some(ttimestamp_to(t_execution_metadata.worker_start_timestamp)),
+        worker: t_execution_metadata.worker.clone(),
+        queued_timestamp: Some(ttimestamp_to(&t_execution_metadata.queued_timestamp)),
+        worker_start_timestamp: Some(ttimestamp_to(&t_execution_metadata.worker_start_timestamp)),
         worker_completed_timestamp: Some(ttimestamp_to(
-            t_execution_metadata.worker_completed_timestamp,
+            &t_execution_metadata.worker_completed_timestamp,
         )),
         input_fetch_start_timestamp: Some(ttimestamp_to(
-            t_execution_metadata.input_fetch_start_timestamp,
+            &t_execution_metadata.input_fetch_start_timestamp,
         )),
         input_fetch_completed_timestamp: Some(ttimestamp_to(
-            t_execution_metadata.input_fetch_completed_timestamp,
+            &t_execution_metadata.input_fetch_completed_timestamp,
         )),
         execution_start_timestamp: Some(ttimestamp_to(
-            t_execution_metadata.execution_start_timestamp,
+            &t_execution_metadata.execution_start_timestamp,
         )),
         execution_completed_timestamp: Some(ttimestamp_to(
-            t_execution_metadata.execution_completed_timestamp,
+            &t_execution_metadata.execution_completed_timestamp,
         )),
         virtual_execution_duration: Some(virtual_execution_duration),
         output_upload_start_timestamp: Some(ttimestamp_to(
-            t_execution_metadata.output_upload_start_timestamp,
+            &t_execution_metadata.output_upload_start_timestamp,
         )),
         output_upload_completed_timestamp: Some(ttimestamp_to(
-            t_execution_metadata.output_upload_completed_timestamp,
+            &t_execution_metadata.output_upload_completed_timestamp,
         )),
-        auxiliary_metadata: t_execution_metadata.auxiliary_metadata.into_map(tany_to),
+        auxiliary_metadata: t_execution_metadata.auxiliary_metadata.map(tany_to),
     });
 
-    let output_files = t_action_result
-        .output_files
-        .into_map(|output_file| OutputFile {
-            path: output_file.name,
-            digest: Some(tdigest_to(output_file.digest.digest)),
-            is_executable: output_file.executable,
-            contents: Vec::new(),
+    let output_files = t_action_result.output_files.map(|output_file| OutputFile {
+        path: output_file.name.clone(),
+        digest: Some(tdigest_to(&output_file.digest.digest)),
+        is_executable: output_file.executable,
+        contents: Vec::new(),
+        node_properties: None,
+    });
+
+    let output_symlinks = t_action_result
+        .output_symlinks
+        .map(|output_symlink| OutputSymlink {
+            path: output_symlink.name.clone(),
+            target: output_symlink.target.clone(),
             node_properties: None,
         });
 
-    let output_symlinks =
-        t_action_result
-            .output_symlinks
-            .into_map(|output_symlink| OutputSymlink {
-                path: output_symlink.name,
-                target: output_symlink.target,
-                node_properties: None,
-            });
-
-    let output_directories = t_action_result
-        .output_directories
-        .into_map(|output_directory| {
-            let digest = tdigest_to(output_directory.tree_digest);
-            OutputDirectory {
-                path: output_directory.path,
-                tree_digest: Some(digest.clone()),
-                is_topologically_sorted: false,
-                root_directory_digest: None,
-            }
-        });
+    let output_directories = t_action_result.output_directories.map(|output_directory| {
+        let digest = tdigest_to(&output_directory.tree_digest);
+        OutputDirectory {
+            path: output_directory.path.clone(),
+            tree_digest: Some(digest.clone()),
+            is_topologically_sorted: false,
+            root_directory_digest: None,
+        }
+    });
 
     let action_result = ActionResult {
         output_files,
@@ -1280,9 +1275,9 @@ fn convert_t_action_result2(t_action_result: TActionResult2) -> anyhow::Result<A
         output_directories,
         exit_code: t_action_result.exit_code,
         stdout_raw: Vec::new(),
-        stdout_digest: t_action_result.stdout_digest.map(tdigest_to),
+        stdout_digest: t_action_result.stdout_digest.as_ref().map(tdigest_to),
         stderr_raw: Vec::new(),
-        stderr_digest: t_action_result.stderr_digest.map(tdigest_to),
+        stderr_digest: t_action_result.stderr_digest.as_ref().map(tdigest_to),
         execution_metadata,
         ..Default::default()
     };
@@ -1374,7 +1369,7 @@ where
         .iter()
         .map(|req| &req.named_digest.digest)
         .chain(inlined_digests.iter())
-        .map(|d| tdigest_to(d.clone()))
+        .map(tdigest_to)
         .filter(|d| d.size_bytes > 0)
     {
         if digest.size_bytes as usize >= max_total_batch_size {
@@ -1670,7 +1665,7 @@ where
                 match blob {
                     BatchUploadRequest::Blob(blob) => {
                         re_request.requests.push(Request {
-                            digest: Some(tdigest_to(blob.digest.clone())),
+                            digest: Some(tdigest_to(&blob.digest)),
                             data: blob.blob.clone(),
                             compressor: compressor::Value::Identity as i32,
                         });
@@ -1684,7 +1679,7 @@ where
                         fin.read_to_end(&mut data).await?;
 
                         re_request.requests.push(Request {
-                            digest: Some(tdigest_to(file.digest.clone())),
+                            digest: Some(tdigest_to(&file.digest)),
                             data,
                             compressor: compressor::Value::Identity as i32,
                         });
@@ -1858,12 +1853,12 @@ mod tests {
             responses: vec![
                 // Reply out of order
                 batch_read_blobs_response::Response {
-                    digest: Some(tdigest_to(digest2.clone())),
+                    digest: Some(tdigest_to(&digest2)),
                     data: vec![4, 5, 6],
                     ..Default::default()
                 },
                 batch_read_blobs_response::Response {
-                    digest: Some(tdigest_to(digest1.clone())),
+                    digest: Some(tdigest_to(&digest1)),
                     data: vec![1, 2, 3],
                     ..Default::default()
                 },
@@ -1881,8 +1876,8 @@ mod tests {
                 let digest2 = digest2.clone();
                 async move {
                     assert_eq!(req.digests.len(), 2);
-                    assert_eq!(req.digests[0], tdigest_to(digest1));
-                    assert_eq!(req.digests[1], tdigest_to(digest2));
+                    assert_eq!(req.digests[0], tdigest_to(&digest1));
+                    assert_eq!(req.digests[1], tdigest_to(&digest2));
                     Ok(res.clone())
                 }
             },
@@ -1963,7 +1958,7 @@ mod tests {
             responses: vec![
                 // Reply out of order
                 batch_read_blobs_response::Response {
-                    digest: Some(tdigest_to(digest1.clone())),
+                    digest: Some(tdigest_to(&digest1)),
                     data: vec![1, 2, 3],
                     ..Default::default()
                 },
@@ -1987,7 +1982,7 @@ mod tests {
                 let digest1 = digest1.clone();
                 async move {
                     assert_eq!(req.digests.len(), 1);
-                    assert_eq!(req.digests[0], tdigest_to(digest1));
+                    assert_eq!(req.digests[0], tdigest_to(&digest1));
                     Ok(res.clone())
                 }
             },
@@ -2047,12 +2042,12 @@ mod tests {
             responses: vec![
                 // Reply out of order
                 batch_read_blobs_response::Response {
-                    digest: Some(tdigest_to(digest2.clone())),
+                    digest: Some(tdigest_to(&digest2)),
                     data: vec![4, 5, 6],
                     ..Default::default()
                 },
                 batch_read_blobs_response::Response {
-                    digest: Some(tdigest_to(digest1.clone())),
+                    digest: Some(tdigest_to(&digest1)),
                     data: vec![1, 2, 3],
                     ..Default::default()
                 },
@@ -2070,8 +2065,8 @@ mod tests {
                 let digest2 = digest2.clone();
                 async move {
                     assert_eq!(req.digests.len(), 2);
-                    assert_eq!(req.digests[0], tdigest_to(digest1));
-                    assert_eq!(req.digests[1], tdigest_to(digest2));
+                    assert_eq!(req.digests[0], tdigest_to(&digest1));
+                    assert_eq!(req.digests[1], tdigest_to(&digest2));
                     Ok(res)
                 }
             },
@@ -2197,7 +2192,7 @@ mod tests {
             responses: vec![
                 // Reply out of order
                 batch_read_blobs_response::Response {
-                    digest: Some(tdigest_to(digest1.clone())),
+                    digest: Some(tdigest_to(&digest1)),
                     data: vec![1, 2, 3],
                     ..Default::default()
                 },
@@ -2225,7 +2220,7 @@ mod tests {
                 let digest1 = digest1.clone();
                 async move {
                     assert_eq!(req.digests.len(), 1);
-                    assert_eq!(req.digests[0], tdigest_to(digest1));
+                    assert_eq!(req.digests[0], tdigest_to(&digest1));
                     Ok(res)
                 }
             },
@@ -2370,11 +2365,11 @@ mod tests {
             responses: vec![
                 // Reply out of order
                 batch_update_blobs_response::Response {
-                    digest: Some(tdigest_to(digest2.clone())),
+                    digest: Some(tdigest_to(&digest2)),
                     status: Some(Status::default()),
                 },
                 batch_update_blobs_response::Response {
-                    digest: Some(tdigest_to(digest1.clone())),
+                    digest: Some(tdigest_to(&digest1)),
                     status: Some(Status::default()),
                 },
             ],
@@ -2392,9 +2387,9 @@ mod tests {
                 let digest2 = digest2.clone();
                 async move {
                     assert_eq!(req.requests.len(), 2);
-                    assert_eq!(req.requests[0].digest, Some(tdigest_to(digest1)));
+                    assert_eq!(req.requests[0].digest, Some(tdigest_to(&digest1)));
                     assert_eq!(req.requests[0].data, b"aaa");
-                    assert_eq!(req.requests[1].digest, Some(tdigest_to(digest2)));
+                    assert_eq!(req.requests[1].digest, Some(tdigest_to(&digest2)));
                     assert_eq!(req.requests[1].data, b"bbb");
                     Ok(res)
                 }
@@ -2454,11 +2449,11 @@ mod tests {
             responses: vec![
                 // Reply out of order
                 batch_update_blobs_response::Response {
-                    digest: Some(tdigest_to(digest2.clone())),
+                    digest: Some(tdigest_to(&digest2)),
                     status: Some(Status::default()),
                 },
                 batch_update_blobs_response::Response {
-                    digest: Some(tdigest_to(digest1.clone())),
+                    digest: Some(tdigest_to(&digest1)),
                     status: Some(Status::default()),
                 },
             ],
@@ -2475,7 +2470,7 @@ mod tests {
                 let digest1 = digest1.clone();
                 async move {
                     assert_eq!(req.requests.len(), 1);
-                    assert_eq!(req.requests[0].digest, Some(tdigest_to(digest1)));
+                    assert_eq!(req.requests[0].digest, Some(tdigest_to(&digest1)));
                     assert_eq!(req.requests[0].data, b"aaa");
                     Ok(res)
                 }
@@ -2534,7 +2529,7 @@ mod tests {
 
         let res = BatchUpdateBlobsResponse {
             responses: vec![batch_update_blobs_response::Response {
-                digest: Some(tdigest_to(digest2.clone())),
+                digest: Some(tdigest_to(&digest2)),
                 status: Some(Status::default()),
             }],
         };
@@ -2551,7 +2546,7 @@ mod tests {
                 let blob_data1 = blob_data1.clone();
                 async move {
                     assert_eq!(req.requests.len(), 1);
-                    assert_eq!(req.requests[0].digest, Some(tdigest_to(digest1)));
+                    assert_eq!(req.requests[0].digest, Some(tdigest_to(&digest1)));
                     assert_eq!(req.requests[0].data, blob_data1);
                     Ok(res)
                 }
