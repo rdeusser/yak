@@ -21,8 +21,14 @@ BUILDSCRIPT_RUN: Path = (
 )
 
 
-def run_buildscript(tmp_path: Path, lines: list[str]) -> tuple[list[str], str]:
-    """Runs a build script that prints `lines`.
+def run_buildscript(
+    tmp_path: Path, lines: list[str], manifest_files: tuple[str, ...] = ()
+) -> tuple[list[str], str]:
+    """Runs a build script that prints `lines`, with `$CARGO_MANIFEST_DIR`
+    replaced by the directory the runner gives it.
+
+    The manifest directory holds `manifest_files`, and the script writes
+    `written.txt` to its current directory.
 
     Returns the rustc flags and the linker argument file for dependents.
 
@@ -30,13 +36,21 @@ def run_buildscript(tmp_path: Path, lines: list[str]) -> tuple[list[str], str]:
     """
     script = tmp_path / "build-script"
     script.write_text(
-        f"#!{sys.executable}\nfor line in {lines!r}:\n    print(line)\n"
+        f"#!{sys.executable}\n"
+        "import os\n"
+        "open('written.txt', 'w').close()\n"
+        f"for line in {lines!r}:\n"
+        "    print(line.replace('$CARGO_MANIFEST_DIR', os.environ['CARGO_MANIFEST_DIR']))\n"
     )
     script.chmod(0o755)
     rustc_cfg = tmp_path / "rustc_cfg"
     rustc_cfg.write_text('unix\ntarget_os="linux"\n')
     manifest_dir = tmp_path / "manifest"
     manifest_dir.mkdir()
+    for name in manifest_files:
+        path = manifest_dir / name
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(name)
     out_dir = tmp_path / "out"
     outfile = tmp_path / "rustc_flags"
     linker_flags = tmp_path / "linker_flags"
@@ -126,3 +140,31 @@ def test_shared_libraries_in_out_dir_are_copied(tmp_path: Path) -> None:
         "seven.dll",
     ]
     assert linker_flags == ""
+
+
+def test_paths_in_the_current_directory_resolve_to_the_manifest_directory(
+    tmp_path: Path,
+) -> None:
+    manifest_dir = (tmp_path / "manifest").resolve()
+    flags, linker_flags = run_buildscript(
+        tmp_path,
+        [
+            "cargo:rustc-env=MANIFEST=$CARGO_MANIFEST_DIR",
+            "cargo:rustc-env=DATA=$CARGO_MANIFEST_DIR/data/table.txt",
+            "cargo:rustc-link-search=native=$CARGO_MANIFEST_DIR/lib",
+        ],
+        manifest_files=("data/table.txt", "lib/libprebuilt.a"),
+    )
+    manifest = os.path.relpath(manifest_dir, tmp_path.resolve())
+    assert flags == [
+        f"--env-set=MANIFEST=$(abspath {manifest})",
+        f"--env-set=DATA=$(abspath {manifest}/data/table.txt)",
+        f"-Lnative=$(abspath {manifest}/lib)",
+    ]
+    assert linker_flags == ""
+
+
+def test_current_directory_keeps_no_symlinks(tmp_path: Path) -> None:
+    run_buildscript(tmp_path, [], manifest_files=("src/lib.rs", "Cargo.toml"))
+    # The local action cache persists only outputs without symlinks to inputs.
+    assert [p.name for p in (tmp_path / "cwd").iterdir()] == ["written.txt"]

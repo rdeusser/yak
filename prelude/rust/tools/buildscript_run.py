@@ -84,9 +84,12 @@ def cfg_env(rustc_cfg: Path) -> dict[str, str]:
     return cfgs
 
 
-def create_cwd(path: Path, manifest_dir: Path) -> Path:
+def create_cwd(path: Path, manifest_dir: Path) -> list[Path]:
     """Create a directory with most of the same contents as manifest_dir, but
     excluding Rustup's rust-toolchain.toml configuration file.
+
+    Returns the symlinks it created, which `remove_cwd_links` removes after the
+    build script exits.
 
     Keeping rust-toolchain.toml goes wrong in the situation that all of the
     following happen:
@@ -131,6 +134,7 @@ def create_cwd(path: Path, manifest_dir: Path) -> Path:
 
     path.mkdir(exist_ok=True)
 
+    links = []
     for dir_entry in manifest_dir.iterdir():
         if dir_entry.name not in ["rust-toolchain", "rust-toolchain.toml"]:
             link = path.joinpath(dir_entry.name)
@@ -138,8 +142,23 @@ def create_cwd(path: Path, manifest_dir: Path) -> Path:
             link.symlink_to(
                 os.path.relpath(dir_entry, path), target_is_directory=dir_entry.is_dir()
             )
+            links.append(link)
 
-    return path
+    return links
+
+
+def remove_cwd_links(links: list[Path]) -> None:
+    """Remove the symlinks that `create_cwd` created.
+
+    The symlinks point into the manifest directory, which is an input of the
+    action. The local action cache does not persist an output that holds
+    symlinks to inputs, so leaving them would make every build script run again
+    after the daemon restarts. Files that the build script wrote to its current
+    directory stay.
+    """
+    for link in links:
+        if link.is_symlink():
+            link.unlink()
 
 
 # In some environments, invoking the rustc binary may actually invoke another
@@ -260,8 +279,10 @@ def main() -> None:  # noqa: C901
     os.makedirs(out_dir, exist_ok=True)
     env["OUT_DIR"] = os.path.abspath(out_dir)
 
-    cwd = create_cwd(args.create_cwd, args.manifest_dir)
-    env["CARGO_MANIFEST_DIR"] = os.path.abspath(cwd)
+    cwd = args.create_cwd
+    cwd_links = create_cwd(cwd, args.manifest_dir)
+    cwd_abs = os.path.abspath(cwd)
+    env["CARGO_MANIFEST_DIR"] = cwd_abs
 
     env = dict(os.environ, **env)
 
@@ -297,6 +318,15 @@ def main() -> None:  # noqa: C901
     )
     out_dir_abs = env["OUT_DIR"]
 
+    # Resolve a path inside the build script's current directory through the
+    # symlinks that `remove_cwd_links` removes.
+    def resolve_cwd(path: str) -> str:
+        if path == cwd_abs:
+            return os.path.abspath(args.manifest_dir)
+        if path.startswith(cwd_abs + os.sep):
+            return os.path.realpath(path)
+        return path
+
     # Rewrite a path inside OUT_DIR to OUT_DIR_SENTINEL; None if it is elsewhere.
     def reanchor_out_dir(path: str) -> Optional[str]:
         if path == out_dir_abs:
@@ -318,7 +348,7 @@ def main() -> None:  # noqa: C901
         cargo_rustc_env_match = cargo_rustc_env_pattern.match(line)
         if cargo_rustc_env_match:
             key = cargo_rustc_env_match.group(1)
-            value = cargo_rustc_env_match.group(2)
+            value = resolve_cwd(cargo_rustc_env_match.group(2))
             reanchored = reanchor_out_dir(value)
             if reanchored is not None:
                 flags += f"--env-set={key}={reanchored}\n"
@@ -336,7 +366,7 @@ def main() -> None:  # noqa: C901
         cargo_rustc_link_search_match = cargo_rustc_link_search_pattern.match(line)
         if args.rustc_link_search and cargo_rustc_link_search_match:
             kind = cargo_rustc_link_search_match.group(1) or ""
-            path = cargo_rustc_link_search_match.group(2)
+            path = resolve_cwd(cargo_rustc_link_search_match.group(2))
             reanchored = reanchor_out_dir(path)
             if reanchored is not None:
                 flags += f"-L{kind}{reanchored}\n"
@@ -354,6 +384,7 @@ def main() -> None:  # noqa: C901
                 linker_flags += f"{args.linker_search_flag}{quote_arg(path)}\n"
             continue
         print(line, end="\n")
+    remove_cwd_links(cwd_links)
     args.outfile.write(flags)
     if args.linker_flags:
         args.linker_flags.write(linker_flags)
