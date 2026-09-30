@@ -41,6 +41,7 @@ In Rust files, each run of one-line `use` items is sorted on all three sides fir
 A file that already holds every upstream edit, such as a golden file that the fork regenerated, stays as it is. A file that holds some of them is marked for review.
 
 Build files take the labels that the upstream change adds to or removes from a list of a rule, and keep their lists sorted.
+The crate's `Cargo.toml` takes the same changes to `deps` and `test_deps`, as `<name>.workspace = true` lines, because upstream generates its `Cargo.toml` files from its build files.
 A build file change that does more is marked for review.
 
 `Cargo.lock` files are not merged.

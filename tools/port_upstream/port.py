@@ -671,6 +671,81 @@ def port_build_file(ours: str, base: str, theirs: str) -> tuple[str, bool]:
     return "".join(lines), other
 
 
+CARGO_SECTIONS = {"deps": "dependencies", "test_deps": "dev-dependencies"}
+
+
+def port_cargo_manifest(
+    manifest: str,
+    base: str,
+    theirs: str,
+    build_file: str,
+    workspace_deps: set[str],
+) -> tuple[str, list[str]]:
+    """Ports the dependency changes of an upstream build file to the crate's
+    `Cargo.toml`. Upstream generates its `Cargo.toml` files from its build
+    files, and the fork keeps both by hand. A label added to `deps` or
+    `test_deps` adds `<name>.workspace = true` to `[dependencies]` or
+    `[dev-dependencies]`, and a label that the ported build file no longer
+    names removes its line. Returns the result and the dependencies that the
+    workspace does not define."""
+    before, after = build_file_labels(base), build_file_labels(theirs)
+    remaining = (
+        set().union(*build_file_labels(build_file).values()) if build_file else set()
+    )
+    problems = []
+    lines = manifest.splitlines(keepends=True)
+    for (rule, attr), labels in sorted(after.items()):
+        section = CARGO_SECTIONS.get(attr)
+        if section is None:
+            continue
+        for label in sorted(labels - before.get((rule, attr), set())):
+            name = label.rsplit(":", 1)[-1]
+            if name not in workspace_deps:
+                problems.append(
+                    f"`{name}` from `{label}` is not in `[workspace.dependencies]`"
+                )
+                continue
+            lines = add_cargo_dependency(lines, section, name)
+    for (rule, attr), labels in sorted(before.items()):
+        if attr not in CARGO_SECTIONS:
+            continue
+        for label in sorted(labels - after.get((rule, attr), set()) - remaining):
+            name = label.rsplit(":", 1)[-1]
+            lines = [
+                line
+                for line in lines
+                if not line.startswith(f"{name}.workspace = true")
+            ]
+    return "".join(lines), problems
+
+
+def add_cargo_dependency(lines: list[str], section: str, name: str) -> list[str]:
+    entry = f"{name}.workspace = true\n"
+    if entry in lines:
+        return lines
+    header = f"[{section}]\n"
+    if header not in lines:
+        at = next(
+            (i for i, line in enumerate(lines) if line.startswith("[lints]")),
+            len(lines),
+        )
+        return lines[:at] + [header, entry, "\n"] + lines[at:]
+    start = lines.index(header) + 1
+    end = start
+    while end < len(lines) and lines[end].strip() and not lines[end].startswith("["):
+        end += 1
+    body = sorted(
+        lines[start:end] + [entry], key=lambda line: line.split(".")[0].split(" ")[0]
+    )
+    return lines[:start] + body + lines[end:]
+
+
+def workspace_dependencies(root: Path) -> set[str]:
+    text = (root / "Cargo.toml").read_text()
+    section = text.split("[workspace.dependencies]", 1)[1].split("\n[", 1)[0]
+    return set(re.findall(r"^([A-Za-z0-9_-]+)\s*=", section, re.MULTILINE))
+
+
 def edit_list(
     lines: list[str], key: tuple[str, str], removed: set[str], added: set[str]
 ) -> list[str] | None:
@@ -788,6 +863,18 @@ def port_files(git: Git, commit: str, paths: PathMap) -> Outcome:
                     f"{ours_path}: upstream changed {upstream_path} beyond its dependency lists"
                 )
             conflict = False
+            manifest_path = Path(new_target).parent / "Cargo.toml"
+            if (git.root / manifest_path).exists():
+                manifest = (git.root / manifest_path).read_text()
+                ported, problems = port_cargo_manifest(
+                    manifest, base, theirs, result, workspace_dependencies(git.root)
+                )
+                outcome.review.extend(
+                    f"{manifest_path}: {problem}" for problem in problems
+                )
+                if ported != manifest:
+                    write(git.root / manifest_path, ported.encode())
+                    outcome.written.append(str(manifest_path))
         else:
             applied = already_applied(ours, base, theirs)
             if applied is Applied.ALL:

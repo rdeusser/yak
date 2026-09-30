@@ -113,6 +113,51 @@ class BuildFileTest(unittest.TestCase):
         self.assertEqual(YAK_FILE, result)
 
 
+MANIFEST = """[package]
+name = "yak_test"
+
+[dependencies]
+serde.workspace = true
+tokio.workspace = true
+yak_core.workspace = true
+
+[lints]
+workspace = true
+"""
+
+
+class CargoManifestTest(unittest.TestCase):
+    def test_dependency_changes_reach_the_manifest(self) -> None:
+        after = UPSTREAM_BEFORE.replace(
+            '        "//third-party/rust:tokio",\n',
+            '        "//third-party/rust:itertools",\n',
+        )
+        yak_file, _ = port.port_build_file(YAK_FILE, UPSTREAM_BEFORE, after)
+        result, problems = port.port_cargo_manifest(
+            MANIFEST, UPSTREAM_BEFORE, after, yak_file, {"itertools", "serde", "tokio"}
+        )
+        self.assertEqual([], problems)
+        self.assertEqual(
+            MANIFEST.replace(
+                "serde.workspace = true\ntokio.workspace = true\n",
+                "itertools.workspace = true\nserde.workspace = true\n",
+            ),
+            result,
+        )
+
+    def test_a_dependency_the_workspace_lacks_is_a_problem(self) -> None:
+        after = UPSTREAM_BEFORE.replace(
+            '        "//third-party/rust:tokio",\n',
+            '        "//third-party/rust:tokio",\n        "//third-party/rust:unknown",\n',
+        )
+        yak_file, _ = port.port_build_file(YAK_FILE, UPSTREAM_BEFORE, after)
+        result, problems = port.port_cargo_manifest(
+            MANIFEST, UPSTREAM_BEFORE, after, yak_file, {"serde", "tokio"}
+        )
+        self.assertEqual(MANIFEST, result)
+        self.assertEqual(1, len(problems))
+
+
 class PathMapTest(unittest.TestCase):
     def path_map(self) -> port.PathMap:
         head = {
