@@ -801,6 +801,13 @@ async fn establish_connection_inner(
 
                         reason.to_daemon_was_started_reason()
                     }
+                    // `yakd.info` outlives the daemon, such as after `yak kill`, so its process can be
+                    // gone. There is nothing to kill then.
+                    Err(reason @ yak_data::DaemonWasStartedReason::NoDaemonProcess) => {
+                        events_ctx.eprintln("Starting new yak daemon...").await?;
+
+                        reason
+                    }
                     Err(reason) => {
                         events_ctx
                             .eprintln(&format!(

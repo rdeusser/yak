@@ -137,6 +137,17 @@ async def test_recovers_when_daemon_pid_cannot_be_killed(yak: Yak) -> None:
 
 
 @yak_test()
+async def test_starts_a_daemon_after_kill_without_killing(yak: Yak) -> None:
+    # `yak kill` leaves yakd.info naming a process that has exited, so the next
+    # invocation has no daemon to kill.
+    await yak.targets("//:rule")
+    await yak.kill()
+    result = await yak.targets("//:rule")
+    assert "Starting new yak daemon" in result.stderr, result.stderr
+    assert "killing daemon" not in result.stderr, result.stderr
+
+
+@yak_test()
 async def test_process_title(yak: Yak) -> None:
     await yak.build()  # Start the daemon
     status = await yak.status()
@@ -292,7 +303,7 @@ async def test_recovers_promptly_after_inactivity_shutdown(yak: Yak) -> None:
     result = await yak.targets("//:rule")
     elapsed = time.time() - start
 
-    assert "yak daemon is not running" in result.stderr, result.stderr
+    assert "Starting new yak daemon" in result.stderr, result.stderr
     # Well inside the 20s budget. A regression into the timeout path fails the
     # command outright, so this only guards against getting slow but succeeding.
     assert elapsed < 15.0, f"took {elapsed:.2f}s to recover"
