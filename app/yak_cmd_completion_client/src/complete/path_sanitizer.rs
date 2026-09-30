@@ -346,7 +346,7 @@ mod tests {
         let uut =
             PathSanitizer::new(&cell_configs(&cwd)?, &cwd, &find_invocation_roots(&cwd)?).await?;
 
-        uut.sanitize("root//baredir0/yakdir0a")?;
+        uut.sanitize("root//baredir0/builddir0a")?;
 
         Ok(())
     }
@@ -357,18 +357,18 @@ mod tests {
         let uut =
             PathSanitizer::new(&cell_configs(&cwd)?, &cwd, &find_invocation_roots(&cwd)?).await?;
 
-        uut.sanitize("baredir0/yakdir0a")?;
+        uut.sanitize("baredir0/builddir0a")?;
 
         Ok(())
     }
 
-    testy!(canonical_path_in_root_from_root(in_root()?, "root//baredir0/yakdir0a") -> {
-        abs_path: from_root("baredir0/yakdir0a"),
-        canonical: "root//baredir0/yakdir0a",
+    testy!(canonical_path_in_root_from_root(in_root()?, "root//baredir0/builddir0a") -> {
+        abs_path: from_root("baredir0/builddir0a"),
+        canonical: "root//baredir0/builddir0a",
         cell_name: "root",
-        cell_path: "baredir0/yakdir0a",
-        given: "root//baredir0/yakdir0a",
-        to_string: "root//baredir0/yakdir0a",
+        cell_path: "baredir0/builddir0a",
+        given: "root//baredir0/builddir0a",
+        to_string: "root//baredir0/builddir0a",
     });
 
     testy!(anonymous_cell_from_root(in_root()?, "//") -> {
@@ -380,40 +380,40 @@ mod tests {
         to_string: "//",
     });
 
-    testy!(canonical_cell_path_from_root(in_root()?, "cell1//yak") -> {
-        abs_path: from_root("cell1/yak"),
-        canonical: "cell1//yak",
+    testy!(canonical_cell_path_from_root(in_root()?, "cell1//build") -> {
+        abs_path: from_root("cell1/build"),
+        canonical: "cell1//build",
         cell_name: "cell1",
         cell_path: "yak",
-        given: "cell1//yak",
-        to_string: "cell1//yak",
+        given: "cell1//build",
+        to_string: "cell1//build",
     });
 
-    testy!(relative_path_from_root(in_root()?, "baredir0/yakdir0a") -> {
-        abs_path: from_root("baredir0/yakdir0a"),
-        canonical: "root//baredir0/yakdir0a",
+    testy!(relative_path_from_root(in_root()?, "baredir0/builddir0a") -> {
+        abs_path: from_root("baredir0/builddir0a"),
+        canonical: "root//baredir0/builddir0a",
         cell_name: "root",
-        cell_path: "baredir0/yakdir0a",
-        given: "baredir0/yakdir0a",
-        to_string: "baredir0/yakdir0a",
+        cell_path: "baredir0/builddir0a",
+        given: "baredir0/builddir0a",
+        to_string: "baredir0/builddir0a",
     });
 
-    testy!(cross_cell_forward_path_from_root(in_root()?, "cell1/yak") -> {
-        abs_path: from_root("cell1/yak"),
-        canonical: "cell1//yak",
+    testy!(cross_cell_forward_path_from_root(in_root()?, "cell1/build") -> {
+        abs_path: from_root("cell1/build"),
+        canonical: "cell1//build",
         cell_name: "cell1",
         cell_path: "yak",
-        given: "cell1//yak", // YakPath is documented as correcting this to cell1//yak
-        to_string: "cell1//yak",
+        given: "cell1//build", // YakPath is documented as correcting this to cell1//build
+        to_string: "cell1//build",
     });
 
-    testy!(corrects_malformed_cross_cell_forward_path_from_root(in_root()?, "root//cell1/yak") -> {
-        abs_path: from_root("cell1/yak"),
-        canonical: "cell1//yak",
+    testy!(corrects_malformed_cross_cell_forward_path_from_root(in_root()?, "root//cell1/build") -> {
+        abs_path: from_root("cell1/build"),
+        canonical: "cell1//build",
         cell_name: "cell1",
         cell_path: "yak",
-        given: "cell1//yak",
-        to_string: "cell1//yak",
+        given: "cell1//build",
+        to_string: "cell1//build",
     });
 
     #[tokio::test]
@@ -488,31 +488,31 @@ mod tests {
         to_string: "root//baredir0",
     });
 
-    testy!(absolute_path_in_subcell(in_dir("cell1")?, &abs_str_from_root("cell1/yak")?) -> {
-        abs_path: from_root("cell1/yak"),
-        canonical: "cell1//yak",
+    testy!(absolute_path_in_subcell(in_dir("cell1")?, &abs_str_from_root("cell1/build")?) -> {
+        abs_path: from_root("cell1/build"),
+        canonical: "cell1//build",
         cell_name: "cell1",
         cell_path: "yak",
-        given: "cell1//yak",
-        to_string: "cell1//yak",
+        given: "cell1//build",
+        to_string: "cell1//build",
     });
 
-    testy!(aliased_cell(in_dir("cell1/yak/prelude")?, "cell1_alias//yak") -> {
-        abs_path: from_root("cell1/yak"),
-        canonical: "cell1//yak",
+    testy!(aliased_cell(in_dir("cell1/build/prelude")?, "cell1_alias//build") -> {
+        abs_path: from_root("cell1/build"),
+        canonical: "cell1//build",
         cell_name: "cell1",
         cell_path: "yak",
-        given: "cell1_alias//yak",
-        to_string: "cell1_alias//yak",
+        given: "cell1_alias//build",
+        to_string: "cell1_alias//build",
     });
 
     #[tokio::test]
     async fn test_creation_returns_error_on_non_local_alias() -> yak_error::Result<()> {
-        let cwd = in_dir("cell1/yak")?;
+        let cwd = in_dir("cell1/build")?;
         let uut =
             PathSanitizer::new(&cell_configs(&cwd)?, &cwd, &find_invocation_roots(&cwd)?).await?;
 
-        assert!(uut.sanitize("cell1_alias//yak").is_err());
+        assert!(uut.sanitize("cell1_alias//build").is_err());
 
         Ok(())
     }

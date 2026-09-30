@@ -204,9 +204,12 @@ mod tests {
         let (roots, cwd) = in_root()?;
         let uut = PackageCompleter::new(&cwd, &roots).await?;
 
-        let actual = uut.complete("baredir0/yak").await?;
+        let actual = uut.complete("baredir0/build").await?;
 
-        assert_eq!(actual, vec!["baredir0/yakdir0b/", "baredir0/yakdir0b:",]);
+        assert_eq!(
+            actual,
+            vec!["baredir0/builddir0b/", "baredir0/builddir0b:",]
+        );
         Ok(())
     }
 
@@ -215,9 +218,12 @@ mod tests {
         let (roots, cwd) = in_root()?;
         let uut = PackageCompleter::new(&cwd, &roots).await?;
 
-        let actual = uut.complete("baredir0/yakdir0b").await?;
+        let actual = uut.complete("baredir0/builddir0b").await?;
 
-        assert_eq!(actual, vec!["baredir0/yakdir0b/", "baredir0/yakdir0b:",]);
+        assert_eq!(
+            actual,
+            vec!["baredir0/builddir0b/", "baredir0/builddir0b:",]
+        );
         Ok(())
     }
 
@@ -228,7 +234,7 @@ mod tests {
 
         let actual = uut.complete("b").await?;
 
-        assert_eq!(actual, vec!["baredir0a/", "yakdir0b/", "yakdir0b:",]);
+        assert_eq!(actual, vec!["baredir0a/", "builddir0b/", "builddir0b:",]);
         Ok(())
     }
 
@@ -329,8 +335,8 @@ mod tests {
             actual,
             vec![
                 "baredir0/baredir0a/",
-                "baredir0/yakdir0b/",
-                "baredir0/yakdir0b:"
+                "baredir0/builddir0b/",
+                "baredir0/builddir0b:"
             ]
         );
         Ok(())
@@ -341,9 +347,12 @@ mod tests {
         let (roots, cwd) = in_root()?;
         let uut = PackageCompleter::new(&cwd, &roots).await?;
 
-        let actual = uut.complete("baredir0/yakdir0b").await?;
+        let actual = uut.complete("baredir0/builddir0b").await?;
 
-        assert_eq!(actual, vec!["baredir0/yakdir0b/", "baredir0/yakdir0b:",]);
+        assert_eq!(
+            actual,
+            vec!["baredir0/builddir0b/", "baredir0/builddir0b:",]
+        );
         Ok(())
     }
 
@@ -355,7 +364,7 @@ mod tests {
 
         let actual = uut.complete("cell1//").await?;
 
-        assert_eq!(actual, vec!["cell1//:", "cell1//yak/", "cell1//yak:"]);
+        assert_eq!(actual, vec!["cell1//:", "cell1//build/", "cell1//build:"]);
         Ok(())
     }
 
@@ -366,7 +375,7 @@ mod tests {
 
         let actual = uut.complete("cell1//").await?;
 
-        assert_eq!(actual, vec!["cell1//:", "cell1//yak/", "cell1//yak:"]);
+        assert_eq!(actual, vec!["cell1//:", "cell1//build/", "cell1//build:"]);
         Ok(())
     }
 
@@ -375,9 +384,9 @@ mod tests {
         let (roots, cwd) = in_root()?;
         let uut = PackageCompleter::new(&cwd, &roots).await?;
 
-        let actual = uut.complete("cell1/yak").await?;
+        let actual = uut.complete("cell1/build").await?;
 
-        assert_eq!(actual, vec!["cell1//yak"]);
+        assert_eq!(actual, vec!["cell1//build"]);
         Ok(())
     }
 
@@ -397,9 +406,9 @@ mod tests {
         let (roots, cwd) = in_root()?;
         let uut = PackageCompleter::new(&cwd, &roots).await?;
 
-        let actual = uut.complete("cell1//yak").await?;
+        let actual = uut.complete("cell1//build").await?;
 
-        assert_eq!(actual, vec!["cell1//yak/", "cell1//yak:"]);
+        assert_eq!(actual, vec!["cell1//build/", "cell1//build:"]);
         Ok(())
     }
 
@@ -409,9 +418,9 @@ mod tests {
         let (roots, cwd) = in_dir("baredir0")?;
         let uut = PackageCompleter::new(&cwd, &roots).await?;
 
-        let actual = uut.complete("cell1//yak").await?;
+        let actual = uut.complete("cell1//build").await?;
 
-        assert_eq!(actual, vec!["cell1//yak/", "cell1//yak:"]);
+        assert_eq!(actual, vec!["cell1//build/", "cell1//build:"]);
         Ok(())
     }
 
@@ -446,7 +455,7 @@ mod tests {
 
         let actual = uut.complete("b").await?;
 
-        assert_eq!(actual, vec!["baredir0a/", "yakdir0b/", "yakdir0b:",]);
+        assert_eq!(actual, vec!["baredir0a/", "builddir0b/", "builddir0b:",]);
         Ok(())
     }
 
@@ -489,8 +498,8 @@ mod tests {
                 "//",
                 "//:",
                 ":",
-                "yak/",
-                "yak:",
+                "build/",
+                "build:",
                 "cell1//",
                 "cell1//:",
                 "cell2//",
@@ -544,7 +553,7 @@ mod tests {
 
         let actual = uut.complete("//").await?;
 
-        assert_eq!(actual, vec!["//:", "//yak/", "//yak:"]);
+        assert_eq!(actual, vec!["//:", "//build/", "//build:"]);
         Ok(())
     }
 
@@ -585,18 +594,18 @@ mod tests {
     #[tokio::test]
     async fn test_package_completion_completes_packages_with_cell_aliases_as_aliases() -> TestResult
     {
-        let (roots, cwd) = in_dir("cell1/yak/prelude")?;
+        let (roots, cwd) = in_dir("cell1/build/prelude")?;
         let uut = PackageCompleter::new(&cwd, &roots).await?;
 
         let actual = uut.complete("cell1_alias//b").await?;
 
-        assert_eq!(actual, vec!["cell1_alias//yak/", "cell1_alias//yak:"]);
+        assert_eq!(actual, vec!["cell1_alias//build/", "cell1_alias//build:"]);
         Ok(())
     }
 
     #[tokio::test]
     async fn test_package_completion_only_uses_aliases_in_cells_definining_them() -> TestResult {
-        let (roots, cwd) = in_dir("cell1/yak")?;
+        let (roots, cwd) = in_dir("cell1/build")?;
         let uut = PackageCompleter::new(&cwd, &roots).await?;
 
         let actual_result = uut.complete("cell1_alias//b").await;
@@ -607,7 +616,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_completes_cell_aliases_alongside_cells() -> TestResult {
-        let (roots, cwd) = in_dir("cell1/yak/prelude")?;
+        let (roots, cwd) = in_dir("cell1/build/prelude")?;
         let uut = PackageCompleter::new(&cwd, &roots).await?;
 
         let actual = uut.complete("cell1").await?;

@@ -91,10 +91,10 @@ mod tests {
     fn test_truncate() {
         assert_eq!(&truncate(MSG, 0), "<<omitted>>");
         assert_eq!(&truncate(MSG, TRUNCATION_MSG.len()), "<<omitted>>");
-        assert_eq!(&truncate(MSG, 30), "rdeps(set<<omitted>>li:yak)");
+        assert_eq!(&truncate(MSG, 30), "rdeps(set<<omitted>>/cli:yak)");
         assert_eq!(
             &truncate(MSG, 50),
-            "rdeps(set(root//buc<<omitted>>t//yak/cli:yak)"
+            "rdeps(set(root//yak<<omitted>> root//yak/cli:yak)"
         );
     }
 

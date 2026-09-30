@@ -141,7 +141,7 @@ mod tests {
             context_lines,
             [
                 "",
-                "    rdeps(set(root//yak/... other//t<<omitted>>yak/...), root//yak/cli:yak)",
+                "    rdeps(set(root//yak/... other//too<<omitted>>apple/yak/...), root//yak/cli:yak)",
                 "    ^-----------------------------------------------------------------------------^",
                 "",
             ]
