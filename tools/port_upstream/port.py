@@ -282,6 +282,56 @@ def dirs_of(files: set[str]) -> set[str]:
     return dirs
 
 
+def plausible_moves(
+    moved: dict[str, str], removed: set[str], fork: list[str]
+) -> tuple[dict[str, str], set[str]]:
+    """Separates the moves that Git's rename detection found from pairs of a
+    deleted file and an unrelated new one of similar content, such as a stub
+    that the fork deleted and a small test fixture that it added. A move keeps
+    a related file name. It also keeps the name of its directory, moves up
+    into an ancestor directory, or leaves a directory that the fork did not
+    mostly delete. The other pairs count as deleted files. Returns the moves
+    and the deleted files."""
+    by_dir: dict[str, list[str]] = {}
+    for f in fork:
+        by_dir.setdefault(f.rpartition("/")[0], []).append(f)
+    kept, dropped = {}, set(removed)
+    for src, dst in moved.items():
+        src_dir, _, src_name = src.rpartition("/")
+        dst_dir, _, dst_name = dst.rpartition("/")
+        siblings = by_dir.get(src_dir, [])
+        survived = sum(1 for f in siblings if f in removed) * 2 <= len(siblings)
+        same_place = src_dir.rpartition("/")[2] == dst_dir.rpartition("/")[
+            2
+        ] or src_dir.startswith(dst_dir + "/")
+        if related_names(src_name, dst_name) and (same_place or survived):
+            kept[src] = dst
+        else:
+            dropped.add(src)
+    return kept, dropped
+
+
+def related_names(a: str, b: str) -> bool:
+    """Whether one file name's stem holds the other's, such as
+    `yak_query_language.md` and `query_language.md`. Names that start with a
+    dot compare whole."""
+    a_stem = a.partition(".")[0].lower() or a.lower()
+    b_stem = b.partition(".")[0].lower() or b.lower()
+    return a_stem in b_stem or b_stem in a_stem
+
+
+def removed_directories(fork: list[str], removed: set[str]) -> set[str]:
+    """The directories of the fork point whose files the fork mostly deleted."""
+    total: dict[str, int] = {}
+    deleted: dict[str, int] = {}
+    for f in fork:
+        for d in dirs_of({f}):
+            total[d] = total.get(d, 0) + 1
+            if f in removed:
+                deleted[d] = deleted.get(d, 0) + 1
+    return {d for d, n in total.items() if deleted.get(d, 0) * 2 > n}
+
+
 def build_path_map(git: Git) -> PathMap:
     """Writes the fork point with yak names into a tree, and compares it with
     `HEAD`. The result is cached in `.git/yak-port/` by the tree of `HEAD` and
@@ -330,7 +380,8 @@ def build_path_map(git: Git) -> PathMap:
         }
         cache.write_text(json.dumps(data))
     head_files = git.files("HEAD")
-    moved = data["moved"]
+    moved, removed = plausible_moves(data["moved"], set(data["removed"]), data["fork"])
+    mostly_removed = removed_directories(data["fork"], removed)
     dirs = {}
     for src, dst in moved.items():
         # Strip the path components that the two paths share at their ends, so
@@ -339,12 +390,12 @@ def build_path_map(git: Git) -> PathMap:
         while len(s) > 1 and len(d) > 1 and s[-1] == d[-1]:
             s.pop()
             d.pop()
-        if len(s) < len(src.split("/")):
+        if len(s) < len(src.split("/")) and "/".join(s) not in mostly_removed:
             dirs.setdefault("/".join(s), "/".join(d))
     return PathMap(
         head_files=head_files,
         moved=moved,
-        removed=set(data["removed"]),
+        removed=removed,
         dirs=dirs,
         head_dirs=dirs_of(head_files),
         fork_dirs=dirs_of(set(data["fork"])),

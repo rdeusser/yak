@@ -420,6 +420,43 @@ class MetaMarkersTest(unittest.TestCase):
         )
 
 
+class PlausibleMovesTest(unittest.TestCase):
+    def test_moves_of_unrelated_files_out_of_deleted_directories_are_deletions(
+        self,
+    ) -> None:
+        fork = ["shim/a.bzl", "shim/config.bzl", "shim/b.bzl", "docs/x.md", "docs/y.md"]
+        moved = {
+            "shim/config.bzl": "tests/data/rules/config.bzl",
+            "docs/x.md": "website/docs/x.md",
+            "docs/y.md": "website/docs/yak_y.md",
+        }
+        kept, removed = port.plausible_moves(moved, {"shim/a.bzl", "shim/b.bzl"}, fork)
+        self.assertEqual(
+            {"docs/x.md": "website/docs/x.md", "docs/y.md": "website/docs/yak_y.md"},
+            kept,
+        )
+        self.assertEqual({"shim/a.bzl", "shim/b.bzl", "shim/config.bzl"}, removed)
+
+    def test_unrelated_names_are_not_moves(self) -> None:
+        kept, removed = port.plausible_moves(
+            {"tests/a/fixups.toml": "tests/b/prelude.bzl"},
+            set(),
+            ["tests/a/fixups.toml"],
+        )
+        self.assertEqual(({}, {"tests/a/fixups.toml"}), (kept, removed))
+
+    def test_dot_files_compare_whole_names(self) -> None:
+        self.assertTrue(port.related_names(".gitignore", ".gitignore"))
+        self.assertFalse(port.related_names(".yakroot", ".yakconfig"))
+
+    def test_directories_that_the_fork_mostly_deleted(self) -> None:
+        fork = ["shim/a", "shim/b", "shim/c/d", "keep/e", "keep/f"]
+        self.assertEqual(
+            {"shim", "shim/c"},
+            port.removed_directories(fork, {"shim/a", "shim/c/d", "keep/e"}),
+        )
+
+
 class LockVersionsTest(unittest.TestCase):
     def test_lists_each_version_of_a_package(self) -> None:
         text = '[[package]]\nname = "syn"\nversion = "1.0.1"\n\n[[package]]\nname = "syn"\nversion = "2.0.3"\n'

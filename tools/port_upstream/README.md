@@ -26,7 +26,7 @@ A ported commit keeps the upstream author and author date and ends with `Ported 
 Each file that the upstream commit changes takes its path in this repository:
 
 1. The upstream names in the path take the yak form (`app/buck2_core/BUCK` becomes `app/yak_core/YAK`).
-2. A file that the fork moved takes its new path. Git's rename detection between the fork point with yak names and `HEAD` finds the moves, and `MOVES` in `port.py` lists the moves that it misses.
+2. A file that the fork moved takes its new path. Git's rename detection between the fork point with yak names and `HEAD` finds the moves, and `MOVES` in `port.py` lists the moves that it misses. A pair that rename detection finds counts as a move when the file names are related, and when the file keeps its directory's name, moves up into an ancestor, or leaves a directory that the fork kept. Other pairs, such as a deleted stub and a new test fixture of similar content, count as a deleted file.
 3. A file that the fork deleted, or a new file in a directory that the fork deleted, is dropped.
 
 The contents of the file before and after the upstream commit take the yak names.
