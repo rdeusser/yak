@@ -560,8 +560,9 @@ def already_applied(ours: str, base: str, theirs: str) -> Applied:
     """Whether the fork's file already has upstream's edits, such as a golden
     file that the fork regenerated. A merge would apply such an edit a second
     time. An edit counts as applied when the fork's file holds the lines it
-    adds and lacks the lines it replaces. Lines that are too short to identify
-    a place, such as `}`, never count."""
+    adds, upstream's file before the edit lacked them, and the fork's file
+    lacks the lines it replaces. Lines that are too short to identify a place,
+    such as `}`, never count."""
     ours_lines = ours.splitlines(keepends=True)
     upstream = edits(base.splitlines(keepends=True), theirs.splitlines(keepends=True))
     base_lines = base.splitlines(keepends=True)
@@ -571,6 +572,7 @@ def already_applied(ours: str, base: str, theirs: str) -> Applied:
         if (
             any(len(line.strip()) >= 8 for line in lines)
             and contains(ours_lines, lines)
+            and not contains(base_lines, lines)
             and not (replaced and contains(ours_lines, replaced))
         ):
             applied += 1
