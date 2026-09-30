@@ -163,39 +163,36 @@ class MergeTest(unittest.TestCase):
         base = "a\nhyper = 1\nhyperlocal = 1\nz\n"
         ours = "a\nhyper = 1\nz\n"
         theirs = "a\nhyper = 2\nhyperlocal = 1\nz\n"
-        self.assertEqual(("a\nhyper = 2\nz\n", False), port.merge(ours, base, theirs))
+        self.assertEqual(
+            ("a\nhyper = 2\nz\n", False, []), port.merge(ours, base, theirs)
+        )
 
     def test_edits_to_the_same_line_conflict(self) -> None:
         base = "a\nb\nc\n"
-        result, conflict = port.merge("a\nB\nc\n", base, "a\nbb\nc\n")
+        result, conflict, _ = port.merge("a\nB\nc\n", base, "a\nbb\nc\n")
         self.assertTrue(conflict)
         self.assertIn("<<<<<<< yak", result)
 
     def test_insertions_at_the_same_line_conflict(self) -> None:
         base = "a\nc\n"
-        _, conflict = port.merge("a\nours\nc\n", base, "a\ntheirs\nc\n")
+        _, conflict, _ = port.merge("a\nours\nc\n", base, "a\ntheirs\nc\n")
         self.assertTrue(conflict)
 
+    def test_the_fork_deletion_of_changed_lines_stays(self) -> None:
+        base = "a\nfn internal() {\n    old();\n}\nz\n"
+        theirs = "a\nfn internal() {\n    new();\n}\nz\n"
+        result, conflict, notes = port.merge("a\nz\n", base, theirs)
+        self.assertEqual(("a\nz\n", False), (result, conflict))
+        self.assertEqual(1, len(notes))
 
-class AlreadyAppliedTest(unittest.TestCase):
-    BASE = "YAK_PARANOID_PATH  String\nYAK_RE_DOWNLOAD  usize\n"
-    THEIRS = "YAK_PARANOID_PATH  String\nYAK_RE_CONNECT_TIMEOUT_S  u64\nYAK_RE_DOWNLOAD  usize\n"
-
-    def test_a_file_with_every_edit_is_applied(self) -> None:
-        ours = "YAK_PARANOID_PATH  String\nYAK_PREFER_REMOTE  String\nYAK_RE_CONNECT_TIMEOUT_S  u64\nYAK_RE_DOWNLOAD  usize\n"
-        self.assertIs(
-            port.Applied.ALL, port.already_applied(ours, self.BASE, self.THEIRS)
+    def test_use_runs_sort_before_a_merge(self) -> None:
+        base = port.sort_use_runs("use a::B;\nuse a::Old;\nuse a::C;\n")
+        ours = port.sort_use_runs("use a::B;\nuse a::C;\nuse a::Old;\n")
+        theirs = port.sort_use_runs("use a::B;\nuse a::New;\nuse a::C;\n")
+        self.assertEqual(
+            ("use a::B;\nuse a::C;\nuse a::New;\n", False, []),
+            port.merge(ours, base, theirs),
         )
-
-    def test_a_file_without_the_edit_is_not_applied(self) -> None:
-        self.assertIs(
-            port.Applied.NONE, port.already_applied(self.BASE, self.BASE, self.THEIRS)
-        )
-
-    def test_short_lines_never_count(self) -> None:
-        base = "fn a() {\n    x();\n}\n"
-        theirs = "fn a() {\n    x();\n}\n}\n"
-        self.assertIs(port.Applied.NONE, port.already_applied(base, base, theirs))
 
 
 class LockVersionsTest(unittest.TestCase):

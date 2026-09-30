@@ -32,7 +32,13 @@ The contents of the file before and after the upstream commit take the yak names
 `rename` lists the names and the text about the upstream project that keeps its names.
 Lines that upstream marks `@oss-disable` are dropped, and lines that it marks `@oss-enable` are kept.
 `git merge-file` applies the difference between the two to the file of this repository.
-`git merge-file` also reports a conflict where the two sides change adjacent lines, and `port.py` resolves those blocks when the two sides' edits do not overlap.
+In Rust files, each run of one-line `use` items is sorted on all three sides first, because the yak names sort differently from the upstream names.
+`port.py` resolves two kinds of conflict block:
+
+- The two sides change adjacent lines, and their edits do not overlap.
+- The fork deleted the lines that upstream changed. The output notes each such block.
+
+A file that already holds every upstream edit, such as a golden file that the fork regenerated, stays as it is. A file that holds some of them is marked for review.
 
 Build files take the labels that the upstream change adds to or removes from a list of a rule, and keep their lists sorted.
 A build file change that does more is marked for review.
@@ -40,7 +46,7 @@ A build file change that does more is marked for review.
 `Cargo.lock` files are not merged.
 When the port finishes, each package that the upstream commit moves from one version to another moves the same way with `cargo update --precise`, and `cargo metadata` resolves the requirements of the ported `Cargo.toml` files.
 
-The imports of ported Rust files are sorted again with `rustfmt`, because the yak names sort differently.
+`rustfmt` formats the ported Rust files when the port finishes.
 
 A commit whose files the fork removed is recorded in `skipped.txt` without a commit.
 A commit that needs attention stops with its files staged and lists them:

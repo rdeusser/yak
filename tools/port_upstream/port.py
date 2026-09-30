@@ -386,6 +386,7 @@ class Outcome:
     review: list[str] = dataclasses.field(default_factory=list)
     dropped: list[str] = dataclasses.field(default_factory=list)
     lock_files: list[str] = dataclasses.field(default_factory=list)
+    notes: list[str] = dataclasses.field(default_factory=list)
 
 
 def decode(data: bytes | None) -> str | None:
@@ -397,9 +398,9 @@ def decode(data: bytes | None) -> str | None:
         return None
 
 
-def merge(ours: str, base: str, theirs: str) -> tuple[str, bool]:
-    """Three-way merges text with `git merge-file`, and returns the result and
-    whether it has conflicts."""
+def merge(ours: str, base: str, theirs: str) -> tuple[str, bool, list[str]]:
+    """Three-way merges text with `git merge-file`. Returns the result, whether
+    it has conflicts, and notes on the conflicts that were resolved."""
     with tempfile.TemporaryDirectory() as tmp:
         paths = []
         for name, text in (("yak", ours), ("before", base), ("upstream", theirs)):
@@ -427,8 +428,8 @@ def merge(ours: str, base: str, theirs: str) -> tuple[str, bool]:
             raise SystemExit(f"git merge-file failed: {result.stderr.decode()}")
         merged = result.stdout.decode()
         if result.returncode == 0:
-            return merged, False
-        return resolve_separate_edits(merged)
+            return merged, False, []
+        return resolve_conflicts(merged)
 
 
 CONFLICT = re.compile(
@@ -437,13 +438,20 @@ CONFLICT = re.compile(
 )
 
 
-def resolve_separate_edits(merged: str) -> tuple[str, bool]:
-    """Resolves the conflict blocks of `git merge-file --diff3` output in which
-    the two sides edit separate lines of the merge base. `git merge-file`
-    reports a conflict when the edits are adjacent, such as when the fork
-    removed the line after a line that upstream changed. Returns the result and
-    whether conflicts remain."""
+def resolve_conflicts(merged: str) -> tuple[str, bool, list[str]]:
+    """Resolves the conflict blocks of `git merge-file --diff3` output that
+    have a safe resolution:
+
+    - The two sides edit separate lines of the merge base. `git merge-file`
+      reports a conflict when the edits are adjacent, such as when the fork
+      removed the line after a line that upstream changed.
+    - The fork deleted the lines that upstream changed, as it deleted Meta's
+      internal code.
+
+    Returns the result, whether conflicts remain, and notes on the blocks
+    resolved by keeping the fork's deletion."""
     remaining = False
+    notes = []
 
     def resolve(block: re.Match) -> str:
         nonlocal remaining
@@ -451,12 +459,40 @@ def resolve_separate_edits(merged: str) -> tuple[str, bool]:
             block.group(i).splitlines(keepends=True) for i in (1, 2, 3)
         )
         combined = combine_edits(base, edits(base, ours), edits(base, theirs))
-        if combined is None:
-            remaining = True
-            return block.group(0)
-        return "".join(combined)
+        if combined is not None:
+            return "".join(combined)
+        if not ours:
+            first = next((line.strip() for line in base if line.strip()), "")
+            notes.append(
+                f"kept the fork's deletion of {len(base)} lines that upstream changed, from `{first}`"
+            )
+            return ""
+        remaining = True
+        return block.group(0)
 
-    return CONFLICT.sub(resolve, merged), remaining
+    return CONFLICT.sub(resolve, merged), remaining, notes
+
+
+USE_LINE = re.compile(r"^(?:pub(?:\([^)]*\))? )?use [^{}\n]*;\n", re.MULTILINE)
+
+
+def sort_use_runs(text: str) -> str:
+    """Sorts each run of one-line `use` items. The yak names sort differently
+    from the upstream names, so the fork's imports are in another order than
+    upstream's. Sorting all three sides before a merge keeps the order out of
+    the merge, and `rustfmt` sorts the result as the fork does."""
+    lines = text.splitlines(keepends=True)
+    result = []
+    run: list[str] = []
+    for line in lines:
+        if USE_LINE.fullmatch(line):
+            run.append(line)
+            continue
+        result.extend(sorted(run))
+        run = []
+        result.append(line)
+    result.extend(sorted(run))
+    return "".join(result)
 
 
 def edits(base: list[str], other: list[str]) -> list[tuple[int, int, list[str]]]:
@@ -654,6 +690,8 @@ def port_files(git: Git, commit: str, paths: PathMap) -> Outcome:
         )
         base = transform(base) if base is not None else None
         theirs = transform(theirs) if theirs is not None else None
+        if name.endswith(".rs") and None not in (ours, base, theirs):
+            ours, base, theirs = (sort_use_runs(s) for s in (ours, base, theirs))
 
         if change.status == "D":
             if ours_bytes is None:
@@ -705,7 +743,8 @@ def port_files(git: Git, commit: str, paths: PathMap) -> Outcome:
                 outcome.review.append(
                     f"{ours_path}: the fork already has some of upstream's edits to {upstream_path}"
                 )
-            result, conflict = merge(ours, base, theirs)
+            result, conflict, notes = merge(ours, base, theirs)
+            outcome.notes.extend(f"{ours_path}: {note}" for note in notes)
         if new_target != ours_path:
             (git.root / ours_path).unlink()
             outcome.written.append(ours_path)
@@ -873,6 +912,8 @@ def apply(git: Git, commit: str, auto_commit: bool) -> bool:
         print(f"   dropped   {path}")
     for path in outcome.written:
         print(f"   ported    {path}")
+    for note in outcome.notes:
+        print(f"   note      {note}")
     for path in outcome.review:
         print(f"   REVIEW    {path}")
     for path in outcome.conflicts:
