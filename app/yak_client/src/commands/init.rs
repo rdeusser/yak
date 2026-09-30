@@ -203,11 +203,10 @@ pub(crate) fn initialize_toolchains_yak(repo_root: &AbsPath) -> yak_error::Resul
     std::fs::write(
         repo_root.join("YAK"),
         r#"
-load("@prelude//toolchains:demo.bzl", "system_demo_toolchains")
+load("@prelude//toolchains:system.bzl", "system_toolchains")
 
-# All the default toolchains, suitable for a quick demo or early prototyping.
-# Most real projects should copy/paste the implementation to configure them.
-system_demo_toolchains()
+# A toolchain for each language, using the compilers and tools on `PATH`.
+system_toolchains()
 "#
         .trim(),
     )?;

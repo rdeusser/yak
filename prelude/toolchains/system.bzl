@@ -24,10 +24,11 @@ load("@prelude//toolchains:zip_file.bzl", "zip_file_toolchain")
 load("@prelude//toolchains/go:system_go_bootstrap_toolchain.bzl", "system_go_bootstrap_toolchain")
 load("@prelude//toolchains/go:system_go_toolchain.bzl", "system_go_toolchain")
 
-def system_demo_toolchains():
+def system_toolchains():
     """
-    All the default toolchains, suitable for a quick demo or early prototyping.
-    Most real projects should copy/paste the implementation to configure them.
+    Declares a toolchain for each language that the prelude supports, using the
+    compilers and tools on `PATH`. A project that needs other tools declares its
+    toolchains with the rules that this macro calls.
     """
     system_cxx_toolchain(
         name = "cxx",

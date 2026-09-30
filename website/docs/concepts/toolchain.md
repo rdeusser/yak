@@ -24,9 +24,9 @@ their C++ compiler, linker, etc. the same way:
 Defining those in a toolchain lets us decouple those project-specific concerns
 from generic build rules.
 
-When running `yak init`, yak sets up some demo toolchains via the
-`system_demo_toolchains` macro. Those expect to find the relevant tools in the
-user's `PATH`.
+`yak init` writes a `toolchains` cell that calls the `system_toolchains`
+macro, which declares a toolchain for each language that runs the compilers and
+tools on the `PATH`.
 
 For more information about defining toolchains, see the
 [relevant page in the Rule Authors section](../rule_authors/writing_toolchains.md).

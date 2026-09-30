@@ -21,10 +21,9 @@ toolchain deps.
 
 ## Writing a custom toolchain
 
-The prelude exposes a few demo toolchains with specific configurations (e.g.
-hardcoded compiler and linker flags), that expect to find the tools on the
-`PATH`. Many users will want more control over those toolchains. Several options
-are available:
+The prelude's system toolchains run the tools on the `PATH` with fixed
+compiler and linker flags. A project that needs more control over its
+toolchains has these options:
 
 - Defining a custom toolchain for a language that is supported in the prelude.
   One can then either:
@@ -37,14 +36,13 @@ are available:
 
 ### Writing a prelude-compatible toolchain
 
-People will often first encounter toolchains when they want to switch off of the
-demo toolchains that `yak init` uses by default. For example, one might want
-to tweak which compiler is used, which flags are passed to it, or where it is
-fetched from.
+A project usually writes its own toolchain to change which compiler the
+toolchains of `yak init` run, which flags they pass to it, or where it comes
+from.
 
 The most straightforward thing to do first is to instantiate one of the "system"
 toolchain rules that the prelude offers. Studying the toolchains defined by the
-`system_demo_toolchains` macro in `@prelude//toolchains:demo.bzl` is a good way
+`system_toolchains` macro in `@prelude//toolchains:system.bzl` is a good way
 to get started.
 
 For example, here is how one could define a C++ toolchain that builds projects

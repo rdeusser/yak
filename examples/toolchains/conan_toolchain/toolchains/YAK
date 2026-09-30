@@ -1,4 +1,4 @@
-load("@prelude//toolchains:demo.bzl", "system_demo_toolchains")
+load("@prelude//toolchains:system.bzl", "system_toolchains")
 load("@prelude//toolchains/conan:defs.bzl", "conan_init", "conan_profile", "system_conan_toolchain")
 
 system_conan_toolchain(
@@ -65,6 +65,5 @@ conan_init(
     visibility = ["PUBLIC"],
 )
 
-# All the default toolchains, suitable for a quick demo or early prototyping.
-# Most real projects should copy/paste the implementation to configure them.
-system_demo_toolchains()
+# A toolchain for each language, using the compilers and tools on `PATH`.
+system_toolchains()

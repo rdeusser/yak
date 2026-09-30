@@ -7,7 +7,7 @@
 # above-listed licenses.
 
 # Tests rules of the bundled prelude with the toolchains that
-# `system_demo_toolchains()` finds on the host. Each package in the test data
+# `system_toolchains()` finds on the host. Each package in the test data
 # uses a rule and declares `py_assertion` targets, whose actions run a Python
 # script against the rule's outputs, so building a package runs its checks.
 
@@ -39,7 +39,7 @@ _needs_go = pytest.mark.skipif(shutil.which("go") is None, reason="needs Go")
 # with "combining dwarf failed: no room to add dwarf info".
 _external_link = pytest.mark.skipif(
     sys.platform == "darwin",
-    reason="Go external linking with the demo C++ toolchain fails on macOS",
+    reason="Go external linking with the system C++ toolchain fails on macOS",
 )
 
 GO_PACKAGES = [
