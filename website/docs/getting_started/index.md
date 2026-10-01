@@ -53,6 +53,21 @@ Dive deeper into yak's core concepts by revisiting what you built in the
 tutorials with a focus on understanding the underlying terminology and
 architecture.
 
+## Existing Cargo and Go projects
+
+`yak generate` sets up a Cargo workspace or Go modules to build with yak. It
+writes a three-line `YAK` file next to each `Cargo.toml` and `go.mod`, and the
+targets come from Cargo's and Go's own metadata:
+
+```sh
+yak generate
+yak build //...
+yak test //...
+```
+
+[Cargo workspaces](../users/languages/rust/cargo.md) and
+[Go modules](../users/languages/go/modules.md) describe the targets.
+
 ## Prerequisites
 
 - Basic familiarity with command line tools

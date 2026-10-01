@@ -28,7 +28,7 @@ To see it working, run `yak generate` in a Cargo workspace and a Go module, coun
   - [x] 7c: `yak generate` for Go modules (2026-10-01). `test_generate_builds_each_go_module` generates a project with a module at its root and one in `services/api`, runs both binaries, and runs the second module's test.
   - [x] 7d: integration tests, and validation against a public module with many dependencies (2026-10-01). In the GitHub CLI, `yak test //...` passed 249 of 250 test targets, and `go test ./...` passed all 250 packages.
 - [x] Milestone 8 (2026-10-01): a package per `Cargo.toml`. Each member's `YAK` file calls `cargo_package()`, and the root of a virtual workspace calls `cargo_workspace()`. Labels in build files infer the target name, as on the command line, so `//crates/roost-terminal` names `//crates/roost-terminal:roost-terminal`.
-- [ ] Milestone 9: documentation, and validation against Roost and the example projects.
+- [x] Milestone 9 (2026-10-01): documentation, and validation against Roost and the example projects.
 
 ## Surprises & Discoveries
 
@@ -116,7 +116,17 @@ To see it working, run `yak generate` in a Cargo workspace and a Go module, coun
 
 ## Outcomes & Retrospective
 
-Nothing yet.
+Completed 2026-10-01.
+
+- `yak generate` sets up a Cargo workspace and the Go modules below a directory. In Roost, it wrote 49 lines across 9 files from nothing: a three-line `YAK` file at the root and in each of 6 crates, `.yakconfig`, and `toolchains/YAK`. Reindeer wrote 12,000 lines for the same project.
+- In Roost, `cargo build --workspace` built 6 workspace targets (5 libraries and the `roost` binary), and `yak build //...` built a target for each of them, along with the tests and examples. `yak test //...` passed 8 of 8 tests with 2 `filegroup`s declared as test data.
+- In the GitHub CLI, `yak generate` wrote one `YAK` file, `yak build //:gh` ran 2,357 commands, and `yak test //...` passed 249 of 250 test targets. The failing test fails under `go test` too when the binary sits outside `/var`.
+- Of the example projects, none has a `Cargo.toml` or `go.mod`. `examples/hello_world` and `examples/no_prelude` build with the final binary. `examples/with_prelude` needs OCaml, opam, and Erlang, and its other targets build.
+- Running `cargo` and `go` in the daemon kept the generated files small, because dependencies, features, and platform conditions never reach a checked-in file. The cost is that the daemon's machine needs both tools and their registry access.
+- Two layouts changed after their first version. All Cargo members started in the package at the workspace's root, which let globs reach any file. A package per `Cargo.toml` replaced it, with exports and `test_data` labels for files of other packages. Declarations in `[package.metadata.yak]` moved to the build file, and a scan of the Rust sources replaced most of them.
+- Go test data and the stale copies of `go_test` resources were found only by running real projects' tests. Validation against a large public project found 3 prelude defects that the small fixtures did not.
+
+Remaining work is in the tech-debt tracker: a Go test cannot rebuild a dependency against the package under test, Go binaries carry no module version, and the `notify` file watcher can miss a file that was created milliseconds before a command.
 
 ## Context and Orientation
 
@@ -164,7 +174,8 @@ Milestones 1 and 2 are prototypes. Each tests an assumption that later milestone
    - 7b. The `go` origin. `ExternalCellOrigin` gains `Go(GoCellSetup)`, whose `module` is the project-relative path of a `go.mod`, parsed from `[external_cell_<name>] module` in `app/yak_common/src/legacy_configs/cells.rs`. A new crate `app/yak_external_cells_go` parses `go list -json` output into typed packages and writes the cell's files: the root `YAK` file of aliases, a `YAK` file per module version, and `module.bzl`, which holds the first-party packages' data and the `go_module` and `go_package` macros. It does no I/O, and its unit tests use recorded `go list` output. `app/yak_external_cells/src/go.rs` reads `go.mod` and `go.sum` through DICE, lists the module's directories through DICE, reads the header of each `.go` file through a DICE key per file, runs `go list -e -deps -test -json ./...` with `GOWORK=off` for each GOOS and GOARCH pair, and copies each module version from the module cache into `yak-out` when a build first reads it. `resolve_external_cell_source` gains the `go` arm, and `changed_since.rs` treats the cell as changed when a `go.mod`, `go.sum`, or `go.work` changes.
    - 7c. `yak generate` writes the `go_module()` file and the cell's configuration for each `go.mod` it finds.
    - 7d. Integration tests that build and test small Go modules and compare their output with `go run` and `go test`, and a public module with many dependencies.
-8. Documentation in `website/docs/` for `yak generate` and the two origins, `ARCHITECTURE.md` for the new crates and origins, and `CHANGELOG.md`.
+8. A package per `Cargo.toml`. `cargo_package()` in each member's build file declares the member's targets, with its sources mapped to their paths in the workspace. The cell exports the files that a member includes from other generated packages, and the Rust rules take `package_srcs` for the files of targets in other packages.
+9. Documentation in `website/docs/` for `yak generate` and the two origins, `ARCHITECTURE.md` for the new crates and origins, and `CHANGELOG.md`.
 
 ## Validation and Acceptance
 

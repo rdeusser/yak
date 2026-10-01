@@ -196,6 +196,8 @@ after a dependency changes.
   doctests.
 - A test that opens an absolute path into the project reads the file whether
   or not it declares it.
+- The scan for included files also reads `include_str!` calls in comments, so
+  a file that a comment names and that exists becomes an input of the crate.
 - A build file in a directory inside a member, such as one for another
   language, makes that directory a separate package, and the member's globs
   skip its files.
