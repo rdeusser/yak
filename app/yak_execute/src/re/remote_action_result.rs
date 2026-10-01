@@ -30,7 +30,14 @@ use crate::re::manager::ManagedRemoteExecutionClient;
 use crate::re::queue_stats::QueueStats;
 use crate::re::streams::RemoteCommandStdStreams;
 
-pub struct ActionCacheResult(pub ActionResultResponse, pub yak_data::CacheType);
+/// RemoteCacheType is the remote cache that served an action result.
+#[derive(Copy, Clone, Debug)]
+pub enum RemoteCacheType {
+    ActionCache,
+    RemoteDepFileCache,
+}
+
+pub struct ActionCacheResult(pub ActionResultResponse, pub RemoteCacheType);
 
 pub trait RemoteActionResult: Send + Sync {
     fn output_files(&self) -> &[TFile];
@@ -127,8 +134,8 @@ impl RemoteActionResult for ActionCacheResult {
 
     fn execution_kind(&self, details: RemoteCommandExecutionDetails) -> CommandExecutionKind {
         match self.1 {
-            yak_data::CacheType::ActionCache => CommandExecutionKind::ActionCache { details },
-            yak_data::CacheType::RemoteDepFileCache => {
+            RemoteCacheType::ActionCache => CommandExecutionKind::ActionCache { details },
+            RemoteCacheType::RemoteDepFileCache => {
                 CommandExecutionKind::RemoteDepFileCache { details }
             }
         }

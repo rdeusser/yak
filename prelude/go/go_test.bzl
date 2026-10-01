@@ -224,6 +224,7 @@ def go_test_impl(ctx: AnalysisContext) -> list[Provider]:
             executor_overrides = re_executors.executor_overrides,
             run_from_project_root = True,
             use_project_relative_paths = re_executors.use_project_relative_paths,
+            supports_test_execution_caching = ctx.attrs.supports_test_execution_caching,
         ),
     ) + [
         DefaultInfo(

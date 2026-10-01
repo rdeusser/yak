@@ -207,6 +207,36 @@ Tests can be run from the cell root by setting `run_from_project_root = False`.
 To produce paths relative to the cell root for use by tests, use
 `relative_to(ctx.label.cell_root)` on `cmd_args`.
 
+## Caching Test Results
+
+When `ExternalRunnerTestInfo` sets `supports_test_execution_caching = True`,
+`yak test` reports an earlier pass of the test in place of running it again,
+as `go test` does. `rust_test` and `go_test` take an attribute of the same
+name, which defaults to `False` because a test can read files of the project
+that it does not declare. The `cargo` and `go` external cells set it on the
+tests they declare, because each of those tests runs in a copy of its declared
+files.
+
+A pass counts for a later run when these are unchanged:
+
+- The test command, its environment, and the contents of each of its inputs,
+  such as the test binary, its resources, and its declared test data. These
+  make up the command's action digest.
+- The values of the environment variables that a local test takes from the
+  daemon, such as `PATH` and `HOME`.
+
+yak keeps a pass in `yak-out/<isolation dir>/cache/test_results`, so a daemon
+restart keeps it, and deleting that directory empties the cache. yak stores
+only passes, so a failing or timed-out test runs on every request. It stores no
+test that declares outputs, and no test whose stdout or stderr exceeds 1 MiB.
+
+A cached pass prints as `✓ Pass (cached)`, with the output of the run it came
+from, and `yak log what-ran` lists its command with the `local_cache` executor.
+`yak test --no-test-cache` runs every selected test and records the new passes.
+
+When the test's executor has `remote_cache_enabled`, yak also looks the test
+command up in the remote action cache before running it.
+
 ## Caching Test Listings
 
 A test runner can start with a **listing** step, which runs the test binary to

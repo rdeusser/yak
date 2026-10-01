@@ -1585,7 +1585,7 @@ fn lines_for_command_details(
                     help_message.with(Color::DarkRed),
                 )]));
             }
-            Some(Command::OmittedLocalCommand(..)) | None => {
+            Some(Command::OmittedLocalCommand(..)) | Some(Command::LocalCacheHit(..)) | None => {
                 // Nothing to show in this case.
             }
             Some(Command::WorkerInitCommand(worker_init_command)) => {

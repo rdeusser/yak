@@ -388,6 +388,7 @@ impl TryFrom<yak_test_proto::TestResult> for TestResult {
             duration,
             details,
             max_memory_used_bytes,
+            cached,
         } = s;
 
         let duration = duration
@@ -406,6 +407,7 @@ impl TryFrom<yak_test_proto::TestResult> for TestResult {
             duration,
             max_memory_used_bytes,
             details,
+            cached,
         })
     }
 }
@@ -431,6 +433,7 @@ impl TryInto<yak_test_proto::TestResult> for TestResult {
             msg: self.msg.map(|msg| OptionalMsg { msg }),
             duration: self.duration.try_map(|d| d.try_into())?,
             max_memory_used_bytes: self.max_memory_used_bytes,
+            cached: self.cached,
         })
     }
 }

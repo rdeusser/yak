@@ -238,6 +238,7 @@ def _declare_member(member, include, test_data):
             rustc_flags = rustc_flags,
             cargo_target_files = profile_files,
             run_from_manifest_dir = True,
+            supports_test_execution_caching = True,
         )
 
     for target in member["bins"]:
@@ -275,6 +276,7 @@ def _declare_member(member, include, test_data):
                 rustc_flags = rustc_flags,
                 cargo_target_files = profile_files,
                 run_from_manifest_dir = True,
+                supports_test_execution_caching = True,
             )
 
     for example in member["examples"]:
@@ -316,6 +318,7 @@ def _declare_member(member, include, test_data):
             rustc_flags = rustc_flags,
             cargo_target_files = profile_files,
             run_from_manifest_dir = True,
+            supports_test_execution_caching = True,
         )
 
     # `//crates/foo` names the member's library or binary when its package has another name.

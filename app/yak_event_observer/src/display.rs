@@ -651,6 +651,7 @@ pub fn display_executor_stage(
             match yak_data::CacheType::try_from(cache_query.cache_type).unwrap() {
                 yak_data::CacheType::ActionCache => "re_action_cache",
                 yak_data::CacheType::RemoteDepFileCache => "re_dep_file_cache",
+                yak_data::CacheType::LocalActionCache => "local_cache",
             }
         }
         Stage::CacheHit(..) => "re_download",
@@ -785,6 +786,7 @@ pub fn format_test_result(
         status,
         duration,
         details,
+        cached,
         ..
     } = test_result;
     let status = TestStatus::try_from(*status)?;
@@ -806,6 +808,7 @@ pub fn format_test_result(
         TestStatus::FATAL => Span::new_styled("⚠ Fatal".to_owned().red()),
         TestStatus::TIMEOUT => Span::new_styled("✉ Timeout".to_owned().cyan()),
         TestStatus::INFRA_FAILURE => Span::new_styled("🛠 Infra Failure".to_owned().magenta()),
+        TestStatus::PASS if *cached => Span::new_styled("✓ Pass (cached)".to_owned().green()),
         TestStatus::PASS => Span::new_styled("✓ Pass".to_owned().green()),
         TestStatus::LISTING_SUCCESS => Span::new_styled("✓ Listing success".to_owned().green()),
         TestStatus::UNKNOWN => Span::new_styled("? Unknown".to_owned().cyan()),
@@ -923,7 +926,9 @@ impl ActionErrorDisplay<'_> {
                 Some(Command::RemoteCommand(remote_command)) => {
                     append!("Remote action digest: '{}'", remote_command.action_digest);
                 }
-                Some(Command::OmittedLocalCommand(..)) | None => {
+                Some(Command::OmittedLocalCommand(..))
+                | Some(Command::LocalCacheHit(..))
+                | None => {
                     // Nothing to show in this case.
                 }
             };
@@ -1060,7 +1065,9 @@ fn failure_reason_for_command_execution(
         use yak_data::command_execution_kind::Command;
         match command_kind.command {
             Some(Command::RemoteCommand(..)) => "Remote ",
-            Some(Command::LocalCommand(..)) | Some(Command::OmittedLocalCommand(..)) => "Local ",
+            Some(Command::LocalCommand(..))
+            | Some(Command::OmittedLocalCommand(..))
+            | Some(Command::LocalCacheHit(..)) => "Local ",
             Some(Command::WorkerInitCommand(..)) => "Local Worker Initialization ",
             Some(Command::WorkerCommand(..)) => "Local Worker ",
             None => "",

@@ -9882,6 +9882,7 @@ dependencies = [
  "serde",
  "serde_json",
  "sorted_vector_map",
+ "tempfile",
  "tokio",
  "tracing",
  "yak_build_api",

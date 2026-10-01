@@ -73,57 +73,29 @@ async def test_remote_test_execution_cached(yak: Yak) -> None:
 
 
 @yak_test()
-async def test_local_test_execution_not_cached(yak: Yak) -> None:
+async def test_local_test_execution_cached(yak: Yak) -> None:
     seed = random_string()
-    args = [
+    config = [
         "-c",
         "test.local_enabled=true",
         "-c",
         "test.remote_enabled=false",
         "-c",
         f"test.seed={seed}",
-        "//:cacheable_test",
     ]
 
-    await yak.test(*args)
+    async def second_run_executor(target: str) -> str:
+        await yak.test(*config, target)
+        await yak.test(*config, target)
+        test_runs = [
+            entry for entry in await read_what_ran(yak) if entry["reason"] == "test.run"
+        ]
+        assert len(test_runs) == 1, (
+            f"Expected exactly one test.run entry, got {len(test_runs)}"
+        )
+        return test_runs[0]["reproducer"]["executor"]
 
-    await yak.test(*args)
-    second_what_ran = await read_what_ran(yak)
-    second_test_runs = [
-        entry for entry in second_what_ran if entry["reason"] == "test.run"
-    ]
-    assert len(second_test_runs) == 1, (
-        f"Expected exactly one test.run entry, got {len(second_test_runs)}"
-    )
-    assert second_test_runs[0]["reproducer"]["executor"] == "Local", (
-        "Expected test to run locally, not be cached!"
-    )
-
-
-@pytest.mark.remote_execution
-@yak_test()
-async def test_remote_test_execution_not_cached_with_no_remote_cache(
-    yak: Yak,
-) -> None:
-    args = [
-        "-c",
-        "test.local_enabled=false",
-        "-c",
-        "test.remote_enabled=true",
-        "--no-remote-cache",
-        "//:cacheable_test",
-    ]
-
-    await yak.test(*args)
-
-    await yak.test(*args)
-    second_what_ran = await read_what_ran(yak)
-    second_test_runs = [
-        entry for entry in second_what_ran if entry["reason"] == "test.run"
-    ]
-    assert len(second_test_runs) == 1, (
-        f"Expected exactly one test.run entry, got {len(second_test_runs)}"
-    )
-    assert second_test_runs[0]["reproducer"]["executor"] == "Re", (
-        "Expected test to run remotely, not be cached!"
-    )
+    # A pass of a test that supports caching counts for the next run, and a
+    # pass of any other test does not.
+    assert await second_run_executor("//:cacheable_test") == "LocalCache"
+    assert await second_run_executor("//:test") == "Local"

@@ -91,6 +91,9 @@ pub fn get_action_digest(commands: &[CommandExecution]) -> Option<String> {
                         command_execution_kind::Command::OmittedLocalCommand(
                             omitted_local_command,
                         ) => Some(omitted_local_command.action_digest.to_owned()),
+                        command_execution_kind::Command::LocalCacheHit(local_cache_hit) => {
+                            Some(local_cache_hit.action_digest.to_owned())
+                        }
                         _ => None,
                     };
                 }

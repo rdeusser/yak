@@ -144,6 +144,15 @@ If include patterns are present, regardless of whether exclude patterns are pres
     #[clap(long, group = "re_options", alias = "unstable-force-tests-on-re")]
     unstable_allow_all_tests_on_re: bool,
 
+    /// Run every selected test, including a test that passed before with the same inputs.
+    ///
+    /// Without this flag, a test that supports caching, such as a test that the `cargo` or `go`
+    /// external cell declares, reports its earlier pass in place of running again when its command
+    /// and the contents of its inputs are unchanged. A pass under this flag is still recorded for
+    /// later runs.
+    #[clap(long)]
+    no_test_cache: bool,
+
     #[clap(name = "TARGET_PATTERNS", help = "Patterns to test", value_hint = clap::ValueHint::Other)]
     patterns: Vec<String>,
 
@@ -439,6 +448,7 @@ impl StreamingCommand for TestCommand {
                             || self.unstable_allow_all_tests_on_re,
                         force_use_project_relative_paths: self.unstable_allow_all_tests_on_re,
                         force_run_from_project_root: self.unstable_allow_all_tests_on_re,
+                        no_test_cache: self.no_test_cache,
                     }),
                     timeout: self.timeout_options.overall_timeout()?,
                     ignore_tests_attribute: self.ignore_tests_attribute,

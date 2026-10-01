@@ -38,6 +38,7 @@ use yak_execute::re::error::RemoteExecutionError;
 use yak_execute::re::manager::ManagedRemoteExecutionClient;
 use yak_execute::re::output_trees_download_config::OutputTreesDownloadConfig;
 use yak_execute::re::remote_action_result::ActionCacheResult;
+use yak_execute::re::remote_action_result::RemoteCacheType;
 use yak_util::time_span::TimeSpan;
 
 use crate::incremental_actions_helper::save_content_based_incremental_state;
@@ -195,7 +196,11 @@ async fn query_action_cache_and_download_result(
         command.request.paths(),
     );
 
-    let response = ActionCacheResult(response, cache_type.to_proto());
+    let remote_cache_type = match &cache_type {
+        CacheType::ActionCache => RemoteCacheType::ActionCache,
+        CacheType::RemoteDepFileCache(_) => RemoteCacheType::RemoteDepFileCache,
+    };
+    let response = ActionCacheResult(response, remote_cache_type);
     let res = download_action_results(
         request,
         TimeSpan::start_now(),

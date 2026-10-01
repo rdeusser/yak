@@ -187,6 +187,7 @@ pub async fn run_internal_test(
                             duration: Some(result.execution_time),
                             details: format_execution_output(&result.stdout, &result.stderr),
                             max_memory_used_bytes: result.max_memory_used_bytes,
+                            cached: result.was_cached(),
                         };
                         orchestrator
                             .report_test_result(test_result)
@@ -230,6 +231,7 @@ pub async fn run_internal_test(
                         duration: Some(result.execution_time),
                         details: format_execution_output(&result.stdout, &result.stderr),
                         max_memory_used_bytes: result.max_memory_used_bytes,
+                        cached: result.was_cached(),
                     };
                     orchestrator
                         .report_test_result(test_result)
@@ -245,6 +247,7 @@ pub async fn run_internal_test(
                             duration: res.duration,
                             details: res.details.unwrap_or_default(),
                             max_memory_used_bytes: result.max_memory_used_bytes,
+                            cached: result.was_cached(),
                         };
                         orchestrator
                             .report_test_result(test_result)
@@ -262,6 +265,7 @@ pub async fn run_internal_test(
                     duration: None,
                     details: String::new(),
                     max_memory_used_bytes: None,
+                    cached: false,
                 };
                 orchestrator
                     .report_test_result(test_result)
@@ -277,6 +281,7 @@ pub async fn run_internal_test(
                     duration: None,
                     details: String::new(),
                     max_memory_used_bytes: None,
+                    cached: false,
                 };
                 orchestrator
                     .report_test_result(test_result)

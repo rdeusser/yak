@@ -95,6 +95,9 @@ message TestResult {
   google.protobuf.Duration duration = 7; // Optional
   string details = 8; // Required
   optional uint64 max_memory_used_bytes = 9;
+  // Whether the result is an earlier pass that a cache served, in place of a
+  // run.
+  bool cached = 10;
 }
 
 message ReportTestResultRequest {

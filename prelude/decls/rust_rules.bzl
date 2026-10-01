@@ -337,6 +337,14 @@ rust_test = prelude_rule(
                 them.
             """,
             ),
+            "supports_test_execution_caching": attrs.bool(
+                default = False,
+                doc = """
+                Whether `yak test` reuses an earlier pass of this test when the test command and the
+                contents of its inputs are unchanged, in place of running it. Set it only for a
+                test that reads no file outside its declared inputs.
+            """,
+            ),
             "run_from_manifest_dir": attrs.bool(
                 default = False,
                 doc = """

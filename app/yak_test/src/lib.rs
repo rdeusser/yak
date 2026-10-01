@@ -24,6 +24,7 @@ pub mod orchestrator;
 pub(crate) mod remote_storage;
 pub mod session;
 pub(crate) mod tcp;
+pub(crate) mod test_result_cache;
 pub mod translations;
 #[cfg(unix)]
 pub(crate) mod unix;

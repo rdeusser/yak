@@ -49,6 +49,9 @@ pub enum CommandExecutionKind {
         /// was passed to build options
         materialized_outputs_for_failed_actions: Option<Vec<ProjectRelativePathBuf>>,
     },
+    /// This action was served by the local cache of passing test results and not executed.
+    #[display("local_action_cache")]
+    LocalActionCache { digest: ActionDigest },
     /// This action was served by the action cache and not executed.
     #[display("action_cache")]
     ActionCache {
@@ -88,6 +91,7 @@ impl CommandExecutionKind {
             },
             Self::ActionCache { .. } => yak_data::ActionExecutionKind::ActionCache,
             Self::RemoteDepFileCache { .. } => yak_data::ActionExecutionKind::RemoteDepFileCache,
+            Self::LocalActionCache { .. } => yak_data::ActionExecutionKind::LocalActionCache,
         }
     }
 
@@ -133,6 +137,9 @@ impl CommandExecutionKind {
                     })
                 }
             }
+            Self::LocalActionCache { digest } => Command::LocalCacheHit(yak_data::LocalCacheHit {
+                action_digest: digest.to_string(),
+            }),
             Self::Remote {
                 details,
                 queue_time,

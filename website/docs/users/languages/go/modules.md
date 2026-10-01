@@ -90,6 +90,13 @@ The test of `pkg/verify` then reads `../testdata/bundle.json`. A read of a file
 that is not declared fails, so a test cannot depend on a file that yak does not
 track. `go_package()` takes `test_data` as well.
 
+A test that passed reports that pass in place of running again while the test
+binary and the files it reads are unchanged, as with `go test`, and the output
+shows `✓ Pass (cached)`. `yak test --no-test-cache` runs every test, as
+`go test -count=1` does.
+[Caching test results](../../../rule_authors/test_execution.md#caching-test-results)
+lists what a pass depends on.
+
 ## Build files below the module's root
 
 A build file in a directory below the module's root makes that directory a

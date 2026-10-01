@@ -236,15 +236,11 @@ impl CommandReproducer {
     pub fn executor(&self) -> String {
         match self {
             Self::CacheQuery(..) => "cache_query".to_owned(),
-            Self::CacheHit(cache) => {
-                let cache_type = cache.cache_type;
-                match yak_data::CacheHitType::try_from(cache_type) {
-                    Ok(yak_data::CacheHitType::RemoteDepFileCache) => {
-                        "re_dep_file_cache".to_owned()
-                    }
-                    _ => "cache".to_owned(),
-                }
-            }
+            Self::CacheHit(cache) => match yak_data::CacheType::try_from(cache.cache_type) {
+                Ok(yak_data::CacheType::RemoteDepFileCache) => "re_dep_file_cache".to_owned(),
+                Ok(yak_data::CacheType::LocalActionCache) => "local_cache".to_owned(),
+                Ok(yak_data::CacheType::ActionCache) | Err(_) => "cache".to_owned(),
+            },
             Self::LocalDepFileCacheHit => "dep_file".to_owned(),
             Self::ReExecute(execute) => executor_with_platform(execute),
             Self::LocalExecute(..) => "local".to_owned(),

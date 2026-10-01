@@ -14,6 +14,7 @@ from pathlib import Path
 import pytest
 from e2e_util.api.yak import Yak
 from e2e_util.asserts import expect_failure
+from e2e_util.helper.test_runs import last_test_run_executors
 from e2e_util.yak_workspace import yak_test
 
 pytestmark = pytest.mark.skipif(shutil.which("go") is None, reason="needs Go")
@@ -75,6 +76,10 @@ async def test_go_cell_runs_internal_and_external_tests(yak: Yak) -> None:
     result = await yak.test("//...")
     summary = re.sub("\x1b\\[[0-9;]*m", "", result.stderr)
     assert "Pass 2. Fail 0." in summary, result.stderr
+
+    # A passing test of the cell runs again only when its inputs change.
+    await yak.test("//:greet-test")
+    assert await last_test_run_executors(yak) == ["local_cache"]
 
     # The test target holds the package's tests and its external tests.
     for name, test in [

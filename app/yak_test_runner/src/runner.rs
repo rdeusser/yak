@@ -233,6 +233,7 @@ fn get_test_result(
             execution_result.stdout, execution_result.stderr
         ),
         max_memory_used_bytes: execution_result.max_memory_used_bytes,
+        cached: execution_result.was_cached(),
     }
 }
 

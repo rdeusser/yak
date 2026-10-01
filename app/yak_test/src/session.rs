@@ -28,14 +28,19 @@ pub struct TestSessionOptions {
     pub allow_re: bool,
     pub force_use_project_relative_paths: bool,
     pub force_run_from_project_root: bool,
+    /// Whether every test runs, in place of reporting an earlier pass with the same inputs.
+    pub no_test_cache: bool,
 }
 
 impl fmt::Display for TestSessionOptions {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
-            "allow_re = {}, force_use_project_relative_paths = {}, force_run_from_project_root = {}",
-            self.allow_re, self.force_use_project_relative_paths, self.force_run_from_project_root
+            "allow_re = {}, force_use_project_relative_paths = {}, force_run_from_project_root = {}, no_test_cache = {}",
+            self.allow_re,
+            self.force_use_project_relative_paths,
+            self.force_run_from_project_root,
+            self.no_test_cache
         )
     }
 }

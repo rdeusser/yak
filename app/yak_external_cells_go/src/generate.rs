@@ -416,6 +416,8 @@ def _declare(package, dir, resources):
             deps = test["deps"],
             resources = resources,
             working_directory = dir,
+            # The test runs in a copy of its declared files, so its inputs are all it reads.
+            supports_test_execution_caching = True,
         )
     else:
         # A test of a `main` package, or of a package with only test files, compiles the
@@ -429,6 +431,8 @@ def _declare(package, dir, resources):
             deps = package["deps"] + test["deps"],
             resources = resources,
             working_directory = dir,
+            # The test runs in a copy of its declared files, so its inputs are all it reads.
+            supports_test_execution_caching = True,
         )
 "#;
 

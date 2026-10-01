@@ -536,6 +536,9 @@ message TestSessionOptions {
   bool allow_re = 10;
   bool force_use_project_relative_paths = 11;
   bool force_run_from_project_root = 12;
+  // Whether every selected test runs, in place of reporting an earlier pass
+  // with the same inputs. New passes are still recorded.
+  bool no_test_cache = 13;
 }
 
 message TestRequest {

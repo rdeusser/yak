@@ -389,6 +389,9 @@ impl WhatRanOutputWriter for OutputFormatWithWriter<'_> {
                             digest: &cache_hit.action_digest,
                             action_key: cache_hit.action_key.as_deref(),
                         },
+                        yak_data::CacheType::LocalActionCache => JsonReproducer::LocalCache {
+                            digest: &cache_hit.action_digest,
+                        },
                     },
                     CommandReproducer::LocalDepFileCacheHit => JsonReproducer::LocalDepFileCache,
                     CommandReproducer::ReExecute(re_execute) => {
@@ -539,6 +542,10 @@ mod json_reproducer {
             action_key: Option<&'a str>,
         },
         LocalDepFileCache,
+        /// A pass from the local store of test results.
+        LocalCache {
+            digest: &'a str,
+        },
         Re {
             digest: &'a str,
             platform_properties: YakIndexMap<&'a str, &'a str>,

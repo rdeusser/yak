@@ -38,6 +38,7 @@ pub fn get_last_command_execution_kind(
             Some(Command::WorkerCommand(_)) | Some(Command::WorkerInitCommand(_)) => {
                 LastCommandExecutionKind::LocalWorker
             }
+            Some(Command::LocalCacheHit(..)) => LastCommandExecutionKind::Cached,
             Some(Command::RemoteCommand(yak_data::RemoteCommand {
                 cache_hit: true,
                 cache_hit_type,

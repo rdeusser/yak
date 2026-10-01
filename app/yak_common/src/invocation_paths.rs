@@ -142,6 +142,7 @@ impl TenantPaths {
             FileName::unchecked_new("materializer_state"),
             FileName::unchecked_new("incremental_state"),
             FileName::unchecked_new("dep_file_state"),
+            FileName::unchecked_new(TEST_RESULTS_DIR_NAME),
         ]
     }
 }
@@ -305,6 +306,7 @@ impl InvocationPaths {
             self.materializer_state_dir_name(),
             self.incremental_state_dir_name(),
             self.dep_file_state_dir_name(),
+            FileName::unchecked_new(TEST_RESULTS_DIR_NAME),
         ]
     }
 
@@ -330,6 +332,10 @@ impl InvocationPaths {
 /// location under yak-out. yak never stores its own state there, and `clean --all` deletes
 /// it like any other reserved entry, so contents must be disposable.
 pub const RESERVED_YAK_OUT_PREFIX: &str = "._yak";
+
+/// TEST_RESULTS_DIR_NAME is the directory of the cache directory that holds the stored passes of
+/// tests.
+pub const TEST_RESULTS_DIR_NAME: &str = "test_results";
 
 #[cfg(test)]
 mod tests {

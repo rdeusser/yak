@@ -355,6 +355,14 @@ go_test = prelude_rule(
                  to duplicate them.
             """,
             ),
+            "supports_test_execution_caching": attrs.bool(
+                default = False,
+                doc = """
+                Whether `yak test` reuses an earlier pass of this test when the test command and the
+                contents of its inputs are unchanged, in place of running it. Set it only for a
+                test that reads no file outside its declared inputs.
+            """,
+            ),
             "external_tests_only": attrs.bool(
                 default = False,
                 doc = """

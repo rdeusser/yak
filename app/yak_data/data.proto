@@ -1347,6 +1347,9 @@ message TestResult {
   string details = 8; // Required
   ConfiguredTargetLabel target_label = 9;
   optional uint64 max_memory_used_bytes = 10;
+  // Whether the result is an earlier pass that the local store or a remote
+  // cache served, in place of a run.
+  bool cached = 11;
 }
 
 // At the beginning of discovery, the test orchestrator will advertise
@@ -1855,6 +1858,10 @@ message OmittedLocalCommand {
   string action_digest = 1;
 }
 
+message LocalCacheHit {
+  string action_digest = 1;
+}
+
 message CommandExecutionDetails {
   reserved 6, 7, 8, 9, 10, 11, 12, 35;
 
@@ -1884,6 +1891,8 @@ message CommandExecutionKind {
     WorkerInitCommand worker_init_command = 4;
     // The command, if executed by a local worker.
     WorkerCommand worker_command = 5;
+    // The command, if the local store of passing test results served it.
+    LocalCacheHit local_cache_hit = 6;
   }
 }
 
@@ -2325,6 +2334,8 @@ message PrepareAction {}
 enum CacheType {
   CACHE_TYPE_ACTION_CACHE = 0;
   CACHE_TYPE_REMOTE_DEP_FILE_CACHE = 1;
+  // The local store of passing test results.
+  CACHE_TYPE_LOCAL_ACTION_CACHE = 2;
 }
 
 message CacheQuery {

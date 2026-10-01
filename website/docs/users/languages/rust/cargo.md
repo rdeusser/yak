@@ -87,6 +87,12 @@ The tests run as `cargo test` runs them:
 - An integration test gets `CARGO_BIN_EXE_<binary>` for each binary of its
   package.
 
+A test that passed reports that pass in place of running again while the test
+binary and the files it declares are unchanged, as `go test` does, and the
+output shows `✓ Pass (cached)`. `yak test --no-test-cache` runs every test.
+[Caching test results](../../../rule_authors/test_execution.md#caching-test-results)
+lists what a pass depends on.
+
 Each target builds with the features that Cargo resolves for its package. Tests
 also get the package's dev-dependencies. A dependency under
 `[target.'cfg(...)'.dependencies]` applies on the platforms whose `rustc --print cfg`

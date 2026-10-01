@@ -513,6 +513,7 @@ async fn test(
         allow_re: options.allow_re,
         force_use_project_relative_paths: options.force_use_project_relative_paths,
         force_run_from_project_root: options.force_run_from_project_root,
+        no_test_cache: options.no_test_cache,
     });
 
     let build_opts = request

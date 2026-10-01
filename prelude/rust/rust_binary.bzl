@@ -914,6 +914,7 @@ def rust_test_impl(ctx: AnalysisContext) -> list[Provider]:
                 # Paths relative to the project root would not resolve from the working directory.
                 use_project_relative_paths = working_directory == None,
                 working_directory = working_directory,
+                supports_test_execution_caching = ctx.attrs.supports_test_execution_caching,
             ),
         )
         + providers

@@ -125,6 +125,8 @@ pub struct TestResult {
     pub duration: Option<Duration>,
     // the max memory used by the test
     pub max_memory_used_bytes: Option<u64>,
+    // whether the result is an earlier pass that a cache served, in place of a run
+    pub cached: bool,
     // the output of the test execution (combining stdout and stderr)
     pub details: String,
 }
@@ -464,6 +466,30 @@ pub struct ExecutionResult2 {
     /// seems to have very little value. We just validate it's sent.
     pub execution_details: ExecutionDetails,
     pub command_execution: Option<yak_data::CommandExecution>,
+}
+
+impl ExecutionResult2 {
+    /// Whether a cache served the result, in place of a run of the command.
+    pub fn was_cached(&self) -> bool {
+        use yak_data::command_execution_kind::Command;
+
+        match self
+            .execution_details
+            .execution_kind
+            .as_ref()
+            .and_then(|kind| kind.command.as_ref())
+        {
+            Some(Command::LocalCacheHit(..)) => true,
+            Some(Command::RemoteCommand(remote)) => remote.cache_hit,
+            Some(
+                Command::LocalCommand(..)
+                | Command::OmittedLocalCommand(..)
+                | Command::WorkerInitCommand(..)
+                | Command::WorkerCommand(..),
+            )
+            | None => false,
+        }
+    }
 }
 
 pub enum CancellationReason {

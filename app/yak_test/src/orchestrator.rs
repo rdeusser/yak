@@ -78,6 +78,7 @@ use yak_build_signals::env::NodeDuration;
 use yak_build_signals::env::WaitingData;
 use yak_common::dice::cells::HasCellResolver;
 use yak_common::events::HasEvents;
+use yak_common::invocation_paths::TEST_RESULTS_DIR_NAME;
 use yak_common::legacy_configs::dice::HasLegacyConfigs;
 use yak_common::legacy_configs::key::YakconfigKeyRef;
 use yak_common::liveliness_observer::LivelinessObserver;
@@ -122,6 +123,7 @@ use yak_execute::execute::command_executor::CommandExecutor;
 use yak_execute::execute::environment_inheritance::EnvironmentInheritance;
 use yak_execute::execute::kind::CommandExecutionKind;
 use yak_execute::execute::manager::CommandExecutionManager;
+use yak_execute::execute::output::CommandStdStreams;
 use yak_execute::execute::prepared::NoOpCommandOptionalExecutor;
 use yak_execute::execute::prepared::PreparedCommand;
 use yak_execute::execute::request::CommandExecutionInput;
@@ -147,6 +149,7 @@ use yak_execute_impl::executors::local::create_output_dirs;
 use yak_execute_impl::executors::local::materialize_inputs;
 use yak_execute_impl::executors::local::output_paths;
 use yak_execute_impl::executors::local::prep_scratch_path;
+use yak_fs::paths::file_name::FileName;
 use yak_fs::paths::forward_rel_path::ForwardRelativePath;
 use yak_fs::paths::forward_rel_path::ForwardRelativePathBuf;
 use yak_hash::YakIndexMap;
@@ -177,6 +180,7 @@ use yak_test_api::data::TestResult;
 use yak_test_api::data::TestStage;
 use yak_test_api::data::convert::host_sharing_requirements_to_grpc;
 use yak_test_api::protocol::TestOrchestrator;
+use yak_util::time_span::TimeSpan;
 
 use crate::command::InternalRunnerConfig;
 use crate::local_resource_api::LocalResourcesSetupResult;
@@ -186,6 +190,9 @@ use crate::local_resource_setup::required_providers;
 use crate::remote_storage;
 use crate::session::TestSession;
 use crate::session::TestSessionOptions;
+use crate::test_result_cache::TestResultCache;
+use crate::test_result_cache::TestResultCaching;
+use crate::test_result_cache::TestResultKey;
 use crate::translations;
 
 const MAX_SUFFIX_LEN: usize = 1024;
@@ -599,8 +606,11 @@ impl<'a> YakTestOrchestrator<'a> {
         } = key;
         let fs = dice.get_artifact_fs().await?;
         let test_info = Self::get_test_info(dice, &test_target, internal_runner_config).await?;
-        let effective_test_execution_caching =
-            test_info.supports_test_execution_caching() && !disable_test_execution_caching;
+        let test_result_caching = TestResultCaching::new(
+            test_info.supports_test_execution_caching(),
+            disable_test_execution_caching || options.no_test_cache,
+        );
+        let effective_test_execution_caching = test_result_caching.looks_up();
         let disable_local_network_isolation =
             Self::disable_local_network_isolation(stage.as_ref(), &test_info);
         let test_executor = Self::get_test_executor(
@@ -706,7 +716,7 @@ impl<'a> YakTestOrchestrator<'a> {
             execution_request,
             liveliness_observer.dupe(),
             test_executor.re_cache_enabled(),
-            effective_test_execution_caching,
+            test_result_caching,
         )
         .boxed()
         .await?;
@@ -1201,6 +1211,26 @@ impl TestOrchestrator for YakTestOrchestrator<'_> {
         })
     }
 }
+
+/// The streams of a test command that passed in a local run and declared no outputs, which the
+/// local store of test results can keep.
+fn local_pass_streams(result: &CommandExecutionResult) -> Option<(&[u8], &[u8])> {
+    let ran_locally = matches!(
+        result.report.status,
+        CommandExecutionStatus::Success {
+            execution_kind: CommandExecutionKind::Local { .. },
+        }
+    );
+    match &result.report.std_streams {
+        CommandStdStreams::Local { stdout, stderr }
+            if ran_locally && result.report.exit_code == Some(0) && result.outputs.is_empty() =>
+        {
+            Some((stdout, stderr))
+        }
+        _ => None,
+    }
+}
+
 #[derive(Allocative, Clone)]
 struct ExecuteData {
     pub stdout: ExecutionStream,
@@ -1243,7 +1273,7 @@ impl YakTestOrchestrator<'_> {
         request: CommandExecutionRequest,
         liveliness_observer: Arc<dyn LivelinessObserver>,
         re_cache_enabled: bool,
-        supports_test_execution_caching: bool,
+        test_result_caching: TestResultCaching,
     ) -> Result<ExecuteData, ExecuteError> {
         let events = dice.per_transaction_data().get_dispatcher().dupe();
         let manager = CommandExecutionManager::new(
@@ -1345,6 +1375,36 @@ impl YakTestOrchestrator<'_> {
             TestStage::Testing {
                 suite, testcases, ..
             } => {
+                let artifact_fs = match dice.get_artifact_fs().await {
+                    Ok(artifact_fs) => artifact_fs,
+                    Err(e) => return Err(ExecuteError::Error(e)),
+                };
+                let test_results = TestResultCache::new(
+                    artifact_fs
+                        .fs()
+                        .resolve(artifact_fs.yak_out_path_resolver().root())
+                        .join(FileName::unchecked_new("cache"))
+                        .join(FileName::unchecked_new(TEST_RESULTS_DIR_NAME)),
+                );
+                let action_digest = prepared_action.action_and_blobs.action.dupe();
+                let key = test_result_caching.records().then(|| {
+                    TestResultKey::new(
+                        &action_digest,
+                        request.local_environment_inheritance(),
+                        digest_config.cas_digest_config(),
+                    )
+                });
+                // A store that cannot be read only costs a run of the test.
+                let cached = match &key {
+                    Some(key) if test_result_caching.looks_up() => {
+                        test_results.get(key).await.unwrap_or_else(|e| {
+                            tracing::warn!("Failed to read a stored test result: {e}");
+                            None
+                        })
+                    }
+                    _ => None,
+                };
+                let stage_events = events.dupe();
                 let test_suite = Some(TestSuite {
                     suite_name: suite.clone(),
                     test_names: testcases.clone(),
@@ -1353,9 +1413,36 @@ impl YakTestOrchestrator<'_> {
                 let start = TestRunStart {
                     suite: test_suite.clone(),
                 };
-                events
+                let result = events
                     .span_async(start, async move {
-                        let result = if supports_test_execution_caching {
+                        let result = if let Some(pass) = cached {
+                            let stage = yak_data::ExecutorStageStart {
+                                stage: Some(
+                                    yak_data::CacheHit {
+                                        action_digest: action_digest.to_string(),
+                                        action_key: None,
+                                        cache_type: yak_data::CacheType::LocalActionCache.into(),
+                                    }
+                                    .into(),
+                                ),
+                            };
+                            stage_events
+                                .span_async(stage, async {
+                                    let result = manager.claim().await.success(
+                                        CommandExecutionKind::LocalActionCache {
+                                            digest: action_digest.dupe(),
+                                        },
+                                        Default::default(),
+                                        CommandStdStreams::Local {
+                                            stdout: pass.stdout,
+                                            stderr: pass.stderr,
+                                        },
+                                        CommandExecutionMetadata::empty(TimeSpan::empty_now()),
+                                    );
+                                    (result, yak_data::ExecutorStageEnd::default())
+                                })
+                                .await
+                        } else if test_result_caching.looks_up() {
                             match executor
                                 .action_cache(manager, &prepared_command, cancellation)
                                 .await
@@ -1387,7 +1474,16 @@ impl YakTestOrchestrator<'_> {
                         };
                         (result, end)
                     })
-                    .await
+                    .await;
+                // A stored pass is not a local run, so it is not stored again.
+                if let Some(key) = &key
+                    && let Some((stdout, stderr)) = local_pass_streams(&result)
+                {
+                    if let Err(e) = test_results.put(key, stdout, stderr).await {
+                        tracing::warn!("Failed to store a test result: {e}");
+                    }
+                }
+                result
             }
         };
         let command_execution = Some(
@@ -2677,6 +2773,7 @@ mod tests {
                     duration: Some(Duration::from_micros(1)),
                     details: "1".to_owned(),
                     max_memory_used_bytes: None,
+                    cached: false,
                 })
                 .await?;
 
@@ -2689,6 +2786,7 @@ mod tests {
                     duration: Some(Duration::from_micros(2)),
                     details: "2".to_owned(),
                     max_memory_used_bytes: None,
+                    cached: false,
                 })
                 .await?;
 
@@ -2711,6 +2809,7 @@ mod tests {
                     duration: Some(Duration::from_micros(1)),
                     details: "1".to_owned(),
                     max_memory_used_bytes: None,
+                    cached: false,
                 }),
                 ExecutorMessage::TestResult(TestResult {
                     target,
@@ -2721,6 +2820,7 @@ mod tests {
                     duration: Some(Duration::from_micros(2)),
                     details: "2".to_owned(),
                     max_memory_used_bytes: None,
+                    cached: false,
                 }),
                 ExecutorMessage::ExitCode(0),
             ]

@@ -202,6 +202,9 @@ fn get_action_digest(command_details: Option<&CommandExecutionDetails>) -> Optio
                 Some(Command::OmittedLocalCommand(omitted_local_command)) => {
                     Some(omitted_local_command.action_digest.to_owned())
                 }
+                Some(Command::LocalCacheHit(local_cache_hit)) => {
+                    Some(local_cache_hit.action_digest.to_owned())
+                }
                 _ => None,
             }
         } else {
