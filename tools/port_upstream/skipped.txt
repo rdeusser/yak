@@ -23,3 +23,4 @@ a0d67eda26dd180043ede04e64198d073945a2f6 changes the AIDL execution platform of 
 1f3bcd7d4f18d6280cd2d366d414d52d971f548d changes the sysroot choice for Meta's repository, which the fork removed from rust-project
 eb9622b0bb44a781e09e55a7526e31f6370573e2 changes only files that the fork removed, in prelude/toolchains
 35e4987f6fa9b8092e3564d1b8107bca20dd1f27 changes only files that the fork removed, in shim/build_defs, shim/third-party, shim/tools
+c2620f20add78082c6365c3122930ccac098c2b5 adds a sub-target that collects native build commands for Android apps, which the fork removed
