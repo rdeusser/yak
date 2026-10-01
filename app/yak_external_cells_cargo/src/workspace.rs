@@ -29,31 +29,67 @@ use crate::graph::crate_name;
 use crate::graph::lib_target;
 use crate::graph::package_env;
 use crate::graph::relative_to;
+use crate::includes::IncludedFile;
 use crate::includes::IncludedPath;
 use crate::metadata::Metadata;
 use crate::metadata::Package;
 use crate::metadata::Target;
 use crate::third_party::library_label;
 
-/// The macro that the workspace's build file calls. `_WORKSPACE_DIR` is the directory of the
-/// workspace relative to the project root, and `_MEMBERS` holds the data of each member.
+/// The macros that the build files of the workspace call. `_WORKSPACE_DIR` is the directory of
+/// the workspace relative to the project root, `_MEMBERS` holds the data of each member by its
+/// package, and `_EXPORTS` holds, by package, the files of the package that other members include
+/// and the packages that include each.
 const MACRO: &str = r#"
-def cargo_workspace(include = {}, test_data = {}):
-    """Declares the targets of the members of the Cargo workspace in this directory.
+def cargo_package(include = [], test_data = []):
+    """Declares the targets of the member of the Cargo workspace in this directory.
 
-    A member builds from the files of its directory and the files that its Rust sources name in
-    `include!`, `include_str!`, and `include_bytes!`. `include` maps a member's package name to
-    the patterns of other files that its crates read at compile time, and `test_data` to the
-    patterns of the files that its tests read at run time, relative to this directory."""
+    The member builds from the files of its directory and the files that its Rust sources name in
+    `include!`, `include_str!`, and `include_bytes!`. `include` names the targets of other
+    packages whose files its crates read at compile time, and `test_data` the targets whose files
+    its tests read at run time, such as `filegroup`s. Their files appear at their paths in the
+    workspace."""
+    member = _MEMBERS.get(package_name())
+    if member == None:
+        fail("`cargo_package()` belongs in the build file of a member of the Cargo workspace at `{}`, and `{}` is not one".format(_WORKSPACE_DIR or ".", package_name() or "."))
+    _declare_exports()
+    _declare_member(member, _package_dirs(include, "include"), _package_dirs(test_data, "test_data"))
+
+def cargo_workspace():
+    """Declares the files of the root of the Cargo workspace in this directory that its members
+    include, when the root is no member."""
     if package_name() != _WORKSPACE_DIR:
         fail("`cargo_workspace()` belongs in the build file of `{}`, the root of the Cargo workspace".format(_WORKSPACE_DIR or "."))
-    names = [member["name"] for member in _MEMBERS]
-    for arg, value in [("include", include), ("test_data", test_data)]:
-        for name in value:
-            if name not in names:
-                fail("`{}` names `{}`, which is not a package of the workspace's members".format(arg, name))
-    for member in _MEMBERS:
-        _declare_member(member, include.get(member["name"], []), test_data.get(member["name"], []))
+    if package_name() in _MEMBERS:
+        fail("The root of the Cargo workspace is a member, so its build file calls `cargo_package()`")
+    _declare_exports()
+
+def _declare_exports():
+    for path, users in _EXPORTS.get(package_name(), {}).items():
+        native.export_file(
+            name = path,
+            src = path,
+            visibility = ["//{}:".format(user) for user in users],
+        )
+
+def _package_dirs(labels, arg):
+    """The directory of each target's package relative to the workspace's directory, by label."""
+    prefix = _WORKSPACE_DIR + "/" if _WORKSPACE_DIR else ""
+    dirs = {}
+    for label in labels:
+        if label.startswith(":"):
+            package = package_name()
+        elif label.startswith("//"):
+            package = label.removeprefix("//").split(":")[0]
+        else:
+            fail("`{}` takes labels of targets in this cell, such as `//crates/data:testdata`, and `{}` is not one".format(arg, label))
+        if package == _WORKSPACE_DIR:
+            dirs[label] = ""
+        elif package.startswith(prefix):
+            dirs[label] = package.removeprefix(prefix)
+        else:
+            fail("`{}` names `{}`, whose package is outside the Cargo workspace at `{}`".format(arg, label, _WORKSPACE_DIR or "."))
+    return dirs
 
 def _declare(rule, platform, **kwargs):
     rule(**apply_platform_attrs(platform, kwargs))
@@ -89,16 +125,20 @@ def _profile_files(member, files):
     return out
 
 def _declare_member(member, include, test_data):
-    srcs = glob(member["srcs"], exclude = member["srcs_exclude"])
-    own_srcs = {f: None for f in srcs}
-    for f in glob(member["include"] + include):
-        if f not in own_srcs:
-            own_srcs[f] = None
-            srcs.append(f)
+    srcs = glob(["**", "**/.*", "**/.*/**"], exclude = member["srcs_exclude"])
 
-    # A test reads its member's files and its declared test data from a copy of them, so a read of
-    # another file fails.
-    test_srcs = srcs + [f for f in glob(test_data) if f not in own_srcs]
+    # A crate's sources sit at their paths in the workspace, so that a path that leaves the
+    # member's directory, such as `include_str!("../../README.md")`, resolves as with Cargo.
+    prefix = member["dir"] + "/" if member["dir"] else ""
+    mapped_srcs = {f: prefix + f for f in srcs}
+    package_srcs = dict(member["include"])
+    package_srcs.update(include)
+
+    # A test reads its member's files, its included files, and its test data from a copy of them,
+    # so a read of another file fails.
+    test_package_srcs = dict(package_srcs)
+    test_package_srcs.update(test_data)
+
     env = dict(member["env"])
     rustc_flags = []
     names = member["rules"]
@@ -115,16 +155,16 @@ def _declare_member(member, include, test_data):
         exec_only = [get_exec_platform_marker()]
 
         # The build script runs in the member's directory, which holds the member's own files.
-        prefix = member["dir"] + "/" if member["dir"] else ""
         native.filegroup(
             name = names["manifest_dir"],
-            srcs = {f.removeprefix(prefix): f for f in srcs if f.startswith(prefix)},
+            srcs = srcs,
         )
         cargo.rust_binary(
             name = names["build_script_build"],
             crate = "build_script_build",
             crate_root = script["crate_root"],
-            srcs = srcs,
+            mapped_srcs = mapped_srcs,
+            package_srcs = package_srcs,
             edition = script["edition"],
             features = member["features"],
             deps = member["build_deps"],
@@ -156,6 +196,9 @@ def _declare_member(member, include, test_data):
         "prelude//os:windows": _profile_files(member, _WINDOWS_FILES),
     })
 
+    # `yak test` on the library or a binary runs the tests of the member, as `cargo test` does.
+    tests = [":" + rule for rule in member["test_rules"]]
+
     lib = member["lib"]
     own = []
     if lib != None:
@@ -166,7 +209,8 @@ def _declare_member(member, include, test_data):
             name = lib["rule"],
             crate = lib["crate"],
             crate_root = lib["crate_root"],
-            srcs = srcs,
+            mapped_srcs = mapped_srcs,
+            package_srcs = package_srcs,
             edition = lib["edition"],
             proc_macro = lib["proc_macro"],
             features = member["features"],
@@ -174,6 +218,7 @@ def _declare_member(member, include, test_data):
             named_deps = member["named_deps"],
             env = env,
             rustc_flags = rustc_flags,
+            tests = tests,
             visibility = ["PUBLIC"],
         )
     if lib != None and lib["unittest"] != None:
@@ -183,7 +228,8 @@ def _declare_member(member, include, test_data):
             name = lib["unittest"],
             crate = lib["crate"],
             crate_root = lib["crate_root"],
-            srcs = test_srcs,
+            mapped_srcs = mapped_srcs,
+            package_srcs = test_package_srcs,
             edition = lib["edition"],
             features = member["features"],
             deps = member["test_deps"] + script_deps,
@@ -201,13 +247,15 @@ def _declare_member(member, include, test_data):
             name = target["rule"],
             crate = target["crate"],
             crate_root = target["crate_root"],
-            srcs = srcs,
+            mapped_srcs = mapped_srcs,
+            package_srcs = package_srcs,
             edition = target["edition"],
             features = member["features"],
             deps = member["deps"] + own + script_deps,
             named_deps = member["named_deps"],
             env = env,
             rustc_flags = rustc_flags,
+            tests = tests,
             visibility = ["PUBLIC"],
         )
         if target["unittest"] != None:
@@ -217,7 +265,8 @@ def _declare_member(member, include, test_data):
                 name = target["unittest"],
                 crate = target["crate"],
                 crate_root = target["crate_root"],
-                srcs = test_srcs,
+                mapped_srcs = mapped_srcs,
+                package_srcs = test_package_srcs,
                 edition = target["edition"],
                 features = member["features"],
                 deps = member["test_deps"] + own + script_deps,
@@ -235,7 +284,8 @@ def _declare_member(member, include, test_data):
             name = example["rule"],
             crate = example["crate"],
             crate_root = example["crate_root"],
-            srcs = srcs,
+            mapped_srcs = mapped_srcs,
+            package_srcs = package_srcs,
             edition = example["edition"],
             features = member["features"],
             deps = member["test_deps"] + own + script_deps,
@@ -256,7 +306,8 @@ def _declare_member(member, include, test_data):
             name = target["rule"],
             crate = target["crate"],
             crate_root = target["crate_root"],
-            srcs = test_srcs,
+            mapped_srcs = mapped_srcs,
+            package_srcs = test_package_srcs,
             edition = target["edition"],
             features = member["features"],
             deps = member["test_deps"] + own + script_deps,
@@ -266,6 +317,11 @@ def _declare_member(member, include, test_data):
             cargo_target_files = profile_files,
             run_from_manifest_dir = True,
         )
+
+    # `//crates/foo` names the member's library or binary when its package has another name.
+    alias = member["alias"]
+    if alias != None:
+        native.alias(name = alias["name"], actual = ":" + alias["actual"], visibility = ["PUBLIC"])
 "#;
 
 /// Files of the workspace's directory that no member builds from.
@@ -275,16 +331,12 @@ fn has_kind(t: &Target, kind: &str) -> bool {
     t.kind.iter().any(|k| k == kind)
 }
 
-/// The files outside the member's directory `dir` that its Rust files include, relative to the
-/// workspace's directory and sorted.
-fn member_includes(dir: &str, includes: Option<&Vec<(String, IncludedPath)>>) -> Vec<String> {
-    let prefix = if dir.is_empty() {
-        String::new()
-    } else {
-        format!("{dir}/")
-    };
+/// The paths that the Rust files of the member in `dir` include, relative to the workspace's
+/// directory and sorted. `includes` holds each include with the path of its file, relative to the
+/// workspace's directory.
+pub fn resolve_includes(dir: &str, includes: &[(String, IncludedPath)]) -> Vec<String> {
     let mut paths = BTreeSet::new();
-    for (file, included) in includes.into_iter().flatten() {
+    for (file, included) in includes {
         let (base, path) = match included {
             IncludedPath::RelativeToSource(path) => (
                 file.rsplit_once('/').map_or("", |(parent, _)| parent),
@@ -295,12 +347,7 @@ fn member_includes(dir: &str, includes: Option<&Vec<(String, IncludedPath)>>) ->
         // A file outside the workspace belongs to no member's package. The scan also finds calls
         // in comments, so such a path fails the crate's compilation instead of the cell, if the
         // crate reads it.
-        let Some(resolved) = workspace_pattern(base, path) else {
-            continue;
-        };
-        // A member's own files are its sources already. The root member's sources leave out the
-        // directories of the other members.
-        if dir.is_empty() || !resolved.starts_with(&prefix) {
+        if let Some(resolved) = workspace_pattern(base, path) {
             paths.insert(resolved);
         }
     }
@@ -324,38 +371,38 @@ fn workspace_pattern(dir: &str, pattern: &str) -> Option<String> {
     Some(parts.join("/"))
 }
 
-/// The rule names of the members' targets, which share one package. Each member's library is
-/// named after its package, or `<package>-lib` when a binary has that name. A binary keeps its
-/// name, so that `yak run //:<binary>` runs it, unless two members have binaries of that name.
-struct RuleNames {
-    bin_counts: HashMap<String, usize>,
+/// The rule name of the member's library: the package's name, or `<package>-lib` when a binary of
+/// the package has that name.
+fn lib_rule(package: &Package) -> String {
+    let bin_named_like_package = package
+        .targets
+        .iter()
+        .any(|t| has_kind(t, "bin") && t.name == package.name);
+    if bin_named_like_package {
+        format!("{}-lib", package.name)
+    } else {
+        package.name.clone()
+    }
 }
 
-impl RuleNames {
-    fn new(members: &[&Package]) -> RuleNames {
-        let mut bin_counts = HashMap::new();
-        for package in members {
-            for target in package.targets.iter().filter(|t| has_kind(t, "bin")) {
-                *bin_counts.entry(target.name.clone()).or_default() += 1;
-            }
-        }
-        RuleNames { bin_counts }
+/// Adds `rule` to the rule names of the member `package`, which must differ.
+fn add_rule(
+    rules: &mut HashSet<String>,
+    package: &Package,
+    rule: String,
+) -> yak_error::Result<String> {
+    if !rules.insert(rule.clone()) {
+        return Err(GenerateError::DuplicateTarget(rule, package.name.clone()).into());
     }
+    Ok(rule)
+}
 
-    fn lib(&self, package: &Package) -> String {
-        if self.bin_counts.contains_key(&package.name) {
-            format!("{}-lib", package.name)
-        } else {
-            package.name.clone()
-        }
-    }
-
-    fn bin(&self, package: &Package, bin: &Target) -> String {
-        if self.bin_counts[&bin.name] > 1 {
-            format!("{}-{}", package.name, bin.name)
-        } else {
-            bin.name.clone()
-        }
+/// `base/path`, or `path` when `base` is empty.
+fn join_dir(base: &str, path: &str) -> String {
+    match (base.is_empty(), path.is_empty()) {
+        (true, _) => path.to_owned(),
+        (false, true) => base.to_owned(),
+        (false, false) => format!("{base}/{path}"),
     }
 }
 
@@ -415,14 +462,13 @@ pub fn member_dirs(metadata: &Metadata) -> yak_error::Result<Vec<String>> {
 /// Writes `workspace.bzl` for the members of the workspace. `project_root` is the directory
 /// that the workspace's directory is relative to, and `cell` is the name of the cargo cell that
 /// holds the third-party packages. `includes` maps the directory of a member, relative to the
-/// workspace's directory, to the paths that its Rust files include, each with the file's path
-/// relative to the workspace's directory.
+/// workspace's directory, to the files of other packages that its Rust files include.
 pub fn generate_workspace(
     metadata: &Metadata,
     platforms: &[CargoPlatform],
     project_root: &Path,
     cell: &str,
-    includes: &BTreeMap<String, Vec<(String, IncludedPath)>>,
+    includes: &BTreeMap<String, Vec<IncludedFile>>,
 ) -> yak_error::Result<String> {
     let graph = Graph::new(metadata);
     let workspace_root = PathBuf::from(&metadata.workspace_root);
@@ -435,23 +481,26 @@ pub fn generate_workspace(
         members.push((package, dir));
     }
     members.sort_by(|a, b| a.1.cmp(&b.1));
-    let names = RuleNames::new(&members.iter().map(|(p, _)| *p).collect::<Vec<_>>());
+    let member_packages: HashMap<&str, &Package> =
+        members.iter().map(|(p, d)| (d.as_str(), *p)).collect();
 
+    // Each member's targets are in the package of its directory.
     let label = |p: &Package| -> yak_error::Result<String> {
         if graph.is_member(&p.id) {
-            Ok(format!("//{workspace_dir}:{}", names.lib(p)))
+            let dir = relative_to(&workspace_root, &manifest_dir(p).to_string_lossy())?;
+            Ok(format!(
+                "//{}:{}",
+                join_dir(&workspace_dir, &dir),
+                lib_rule(p)
+            ))
         } else {
             Ok(format!("{cell}{}", library_label(p)))
         }
     };
 
-    let mut rules: HashSet<String> = HashSet::new();
-    let mut add_rule = |rule: String| -> yak_error::Result<String> {
-        if !rules.insert(rule.clone()) {
-            return Err(GenerateError::DuplicateTarget(rule).into());
-        }
-        Ok(rule)
-    };
+    // The files that each package that the cell declares, a member or the workspace's root,
+    // exports to the members that include them, by package.
+    let mut exports: BTreeMap<String, BTreeMap<String, BTreeSet<String>>> = BTreeMap::new();
 
     let mut values = Vec::new();
     for (package, dir) in &members {
@@ -474,43 +523,54 @@ pub fn generate_workspace(
             return Err(GenerateError::MetadataMoved(package.name.clone()).into());
         }
 
-        // A member builds from the files of its directory, apart from the members inside it,
-        // and from the files outside it that its Rust files include.
-        let prefix = if dir.is_empty() {
-            String::new()
-        } else {
-            format!("{dir}/")
-        };
-        let srcs: Vec<String> = ["**", "**/.*", "**/.*/**"]
-            .iter()
-            .map(|p| format!("{prefix}{p}"))
-            .collect();
-        let include = member_includes(dir, includes.get(dir.as_str()));
-        let mut srcs_exclude: Vec<String> = if dir.is_empty() {
+        let package_dir = join_dir(&workspace_dir, dir);
+        let mut rules: HashSet<String> = HashSet::new();
+
+        // A member builds from the files of its package and the files of other packages that its
+        // Rust files include, which their packages export when the cell declares them.
+        let srcs_exclude: Vec<String> = if dir.is_empty() {
             WORKSPACE_EXCLUDES.iter().map(|p| (*p).to_owned()).collect()
         } else {
-            vec![format!("{prefix}target/**")]
+            vec!["target/**".to_owned(), "YAK".to_owned()]
         };
-        srcs_exclude.extend(
-            members
-                .iter()
-                .filter(|(_, other)| other != dir && other.starts_with(&prefix))
-                .map(|(_, other)| format!("{other}/**")),
-        );
+        let mut include = Vec::new();
+        for file in includes.get(dir.as_str()).into_iter().flatten() {
+            if file.owner == *dir {
+                continue;
+            }
+            let owner_package = join_dir(&workspace_dir, &file.owner);
+            let name = match file.path.strip_prefix(&file.owner) {
+                Some(rest) if file.owner.is_empty() => rest.to_owned(),
+                Some(rest) => rest.trim_start_matches('/').to_owned(),
+                None => file.path.clone(),
+            };
+            include.push((format!("//{owner_package}:{name}"), Value::str(&file.owner)));
+            if file.owner.is_empty() || member_packages.contains_key(file.owner.as_str()) {
+                exports
+                    .entry(owner_package)
+                    .or_default()
+                    .entry(name)
+                    .or_default()
+                    .insert(package_dir.clone());
+            }
+        }
 
         // Cargo skips the targets whose required features are off, and `cargo test` runs the
         // tests of the library, binaries, and integration tests that do not set `test = false`.
         let features = &node.features;
+        let mut test_rules = Vec::new();
         let lib = match lib_target(package) {
             Some(lib) => {
                 let unittest = if lib.test {
-                    Value::Str(add_rule(format!("{}-unittest", package.name))?)
+                    let rule = add_rule(&mut rules, package, format!("{}-unittest", package.name))?;
+                    test_rules.push(rule.clone());
+                    Value::Str(rule)
                 } else {
                     Value::None
                 };
                 target_value(
                     lib,
-                    add_rule(names.lib(package))?,
+                    add_rule(&mut rules, package, lib_rule(package))?,
                     member_dir,
                     dir,
                     vec![
@@ -531,19 +591,29 @@ pub fn generate_workspace(
                 .iter()
                 .filter(move |t| has_kind(t, kind) && t.is_enabled(features))
         };
+        let mut bin_rules = Vec::new();
         let mut bins = Vec::new();
         for target in enabled("bin") {
-            let rule = add_rule(names.bin(package, target))?;
+            let rule = add_rule(&mut rules, package, target.name.clone())?;
+            bin_rules.push(rule.clone());
             let unittest = if !target.test {
                 Value::None
             } else if lib_target(package).is_none() && target.name == package.name {
-                Value::Str(add_rule(format!("{}-unittest", package.name))?)
+                Value::Str(add_rule(
+                    &mut rules,
+                    package,
+                    format!("{}-unittest", package.name),
+                )?)
             } else {
-                Value::Str(add_rule(format!(
-                    "{}-{}-unittest",
-                    package.name, target.name
-                ))?)
+                Value::Str(add_rule(
+                    &mut rules,
+                    package,
+                    format!("{}-{}-unittest", package.name, target.name),
+                )?)
             };
+            if let Value::Str(rule) = &unittest {
+                test_rules.push(rule.clone());
+            }
             bins.push(target_value(
                 target,
                 rule,
@@ -557,12 +627,21 @@ pub fn generate_workspace(
         }
         let mut tests = Vec::new();
         for target in enabled("test").filter(|t| t.test) {
-            let rule = add_rule(format!("{}-{}", package.name, target.name))?;
+            let rule = add_rule(
+                &mut rules,
+                package,
+                format!("{}-{}", package.name, target.name),
+            )?;
+            test_rules.push(rule.clone());
             tests.push(target_value(target, rule, member_dir, dir, Vec::new())?);
         }
         let mut examples = Vec::new();
         for target in enabled("example") {
-            let rule = add_rule(format!("{}-example-{}", package.name, target.name))?;
+            let rule = add_rule(
+                &mut rules,
+                package,
+                format!("{}-example-{}", package.name, target.name),
+            )?;
             examples.push(target_value(
                 target,
                 rule,
@@ -585,9 +664,33 @@ pub fn generate_workspace(
         ] {
             rule_names.push((
                 key.to_owned(),
-                Value::Str(add_rule(format!("{}-{suffix}", package.name))?),
+                Value::Str(add_rule(
+                    &mut rules,
+                    package,
+                    format!("{}-{suffix}", package.name),
+                )?),
             ));
         }
+
+        // `//crates/foo` names `//crates/foo:foo`, which is the library, or else the only binary.
+        let dir_name = package_dir.rsplit('/').next().unwrap_or_default();
+        let primary = if lib_target(package).is_some() {
+            Some(lib_rule(package))
+        } else if let [bin] = bin_rules.as_slice() {
+            Some(bin.clone())
+        } else {
+            None
+        };
+        let alias = match primary {
+            Some(actual) if !dir_name.is_empty() && !rules.contains(dir_name) => {
+                add_rule(&mut rules, package, dir_name.to_owned())?;
+                Value::Dict(vec![
+                    ("name".to_owned(), Value::str(dir_name)),
+                    ("actual".to_owned(), Value::Str(actual)),
+                ])
+            }
+            _ => Value::None,
+        };
 
         let mut env = package_env(package);
         env.push((
@@ -598,9 +701,8 @@ pub fn generate_workspace(
             ("name".to_owned(), Value::str(&package.name)),
             ("version".to_owned(), Value::str(&package.version)),
             ("dir".to_owned(), Value::str(dir)),
-            ("srcs".to_owned(), Value::strs(srcs)),
             ("srcs_exclude".to_owned(), Value::strs(srcs_exclude)),
-            ("include".to_owned(), Value::strs(include)),
+            ("include".to_owned(), Value::Dict(include)),
             (
                 "features".to_owned(),
                 Value::strs(node.features.iter().cloned()),
@@ -610,13 +712,15 @@ pub fn generate_workspace(
             ("lib".to_owned(), lib),
             ("bins".to_owned(), Value::List(bins)),
             ("tests".to_owned(), Value::List(tests)),
+            ("test_rules".to_owned(), Value::strs(test_rules)),
             ("examples".to_owned(), Value::List(examples)),
             ("build_script".to_owned(), build_script),
+            ("alias".to_owned(), alias),
         ];
         fields.extend(deps_fields("", &deps.normal));
         fields.extend(deps_fields("build_", &deps.build));
         fields.extend(deps_fields("test_", &test));
-        values.push(Value::Dict(fields));
+        values.push((package_dir, Value::Dict(fields)));
     }
 
     let mut out = String::from(
@@ -628,7 +732,25 @@ pub fn generate_workspace(
     );
     Value::str(&workspace_dir).render(&mut out);
     out.push_str("\n\n_MEMBERS = ");
-    Value::List(values).render(&mut out);
+    Value::Dict(values).render(&mut out);
+    out.push_str("\n\n_EXPORTS = ");
+    Value::Dict(
+        exports
+            .into_iter()
+            .map(|(package, files)| {
+                (
+                    package,
+                    Value::Dict(
+                        files
+                            .into_iter()
+                            .map(|(file, users)| (file, Value::strs(users)))
+                            .collect(),
+                    ),
+                )
+            })
+            .collect(),
+    )
+    .render(&mut out);
     out.push('\n');
     out.push_str(MACRO);
     Ok(out)

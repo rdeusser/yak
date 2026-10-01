@@ -19,4 +19,4 @@ Caused by:
              "someattr": attrs.transition_dep(default = "notaproperlabel", cfg = _transiti...
        
     3: Error parsing target pattern `notaproperlabel`
-    4: Expected pattern to contain `:`, trailing `/...` or literal `...`.
+    4: Target pattern must be absolute (e.g. `//package:target`). Relative patterns like `:target` are not permitted in this context.

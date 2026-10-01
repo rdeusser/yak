@@ -41,8 +41,7 @@ directories that `go` skips in `./...` (names that start with `.` or `_`, and
 
 A run writes only the files whose contents differ. It keeps a `YAK` file that
 differs from the generated one, and `--force` replaces it. In a directory that
-is also the root of a Cargo workspace, the build file calls `cargo_workspace()`
-too.
+also holds a `Cargo.toml`, the build file calls the Cargo macro too.
 
 The cell runs `go list` for macOS, Linux, and Windows on `amd64` and `arm64`,
 and each target's dependencies select on the prelude's `os` and `cpu`

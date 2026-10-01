@@ -19,6 +19,17 @@ pub enum IncludedPath {
     RelativeToManifestDir(String),
 }
 
+/// IncludedFile is a file that a member's Rust files include from a package other than the
+/// member's.
+#[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct IncludedFile {
+    /// The file's path relative to the workspace's directory.
+    pub path: String,
+    /// The directory of the package that owns the file, the nearest directory at or above the file
+    /// with a build file, relative to the workspace's directory.
+    pub owner: String,
+}
+
 const MACROS: &[&str] = &["include_str!", "include_bytes!", "include!"];
 
 /// The paths that `source` includes with a string literal or with

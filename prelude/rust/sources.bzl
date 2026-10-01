@@ -6,6 +6,8 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
+load("@prelude//:artifacts.bzl", "ArtifactGroupInfo")
+
 def _get_artifacts(sources: Artifact) -> list[Artifact]:
     return [sources]
 
@@ -58,6 +60,25 @@ def mapped_srcs_arg():
         ),
     }
 
+def package_srcs_arg():
+    return {
+        "package_srcs": attrs.dict(
+            key = attrs.dep(),
+            value = attrs.string(),
+            sorted = False,
+            default = {},
+            doc = """
+    Adds the files of targets in other packages to the source tree, each below a
+    directory of the tree at its path in the target's package. The files are the
+    target's `ArtifactGroupInfo` artifacts, such as the files of a `filegroup`,
+    or else its default outputs. For example,
+    `package_srcs = {"//crates/data:testdata": "crates/data"}` places
+    `crates/data/testdata/input.json` at that path, so that a crate whose
+    sources are mapped to their paths in a Cargo workspace can read it.
+""",
+        ),
+    }
+
 def srcs_filegroup_arg():
     return {
         "srcs_filegroup": attrs.option(
@@ -85,11 +106,16 @@ def symlinked_srcs(ctx: AnalysisContext) -> Artifact:
             fail("crate_root is required when using srcs_filegroup")
         return srcs_filegroup[DefaultInfo].default_outputs[0]
 
-    if not ctx.attrs.srcs and not ctx.attrs.mapped_srcs:
+    if not ctx.attrs.srcs and not ctx.attrs.mapped_srcs and not getattr(ctx.attrs, "package_srcs", {}):
         fail("crate has no srcs, mapped_srcs, or srcs_filegroup")
 
     srcs = {src.short_path: src for src in ctx.attrs.srcs}
     srcs.update({k: v for v, k in ctx.attrs.mapped_srcs.items()})
+    for dep, dir in getattr(ctx.attrs, "package_srcs", {}).items():
+        group = dep.get(ArtifactGroupInfo)
+        artifacts = group.artifacts if group else dep[DefaultInfo].default_outputs
+        for artifact in artifacts:
+            srcs[dir + "/" + artifact.short_path if dir else artifact.short_path] = artifact
 
     use_cbp = getattr(ctx.attrs, "use_content_based_paths", False)
 

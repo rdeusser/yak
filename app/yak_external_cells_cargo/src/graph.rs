@@ -36,11 +36,11 @@ pub(crate) enum GenerateError {
     )]
     DuplicatePackage(String),
     #[error(
-        "Two targets of the Cargo workspace are named `{0}`. The members' targets share the package at the workspace's root."
+        "Two targets of the Cargo package `{1}` are named `{0}`, because the targets of a member share the package of its directory"
     )]
-    DuplicateTarget(String),
+    DuplicateTarget(String, String),
     #[error(
-        "`[package.metadata.yak]` of package `{0}` is no longer read. Name the files that its crates read in `include = {{\"{0}\": [...]}}` of the workspace's `cargo_workspace()`, and the files that its tests read in `test_data`. The cell finds the files of `include!`, `include_str!`, and `include_bytes!` by itself."
+        "`[package.metadata.yak]` of package `{0}` is no longer read. Name the targets whose files its crates read in `include` of `cargo_package()` in its build file, and the targets whose files its tests read in `test_data`. The cell finds the files of `include!`, `include_str!`, and `include_bytes!` by itself."
     )]
     MetadataMoved(String),
     #[error("`cargo metadata` names package `{0}`, which it does not describe")]

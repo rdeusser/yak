@@ -523,7 +523,7 @@ impl<'a> YakLspContext<'a> {
                     },
                 )
                 .await?
-                .unwrap_or(false)
+                .unwrap_or(true)
             {
                 InferTargetNames::Yes
             } else {

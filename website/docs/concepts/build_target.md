@@ -82,6 +82,14 @@ cxx_binary(
 )
 ```
 
+#### Targets named after their package's directory
+
+A build target whose name is the last component of its package path can omit
+the name, so `//lib/greeting` names `//lib/greeting:greeting`. This holds in
+build files, `.bzl` files, and on the command line. Setting
+`[yak] infer_target_names = false` in `.yakconfig` makes the short form an error
+in build and `.bzl` files.
+
 ## Command-line Pro Tips
 
 Here are some ways that you can reduce your typing when you specify build

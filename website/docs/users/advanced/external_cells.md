@@ -97,8 +97,9 @@ The cell's path names no directory in the project. The daemon generates the
 cell's build files in memory from `cargo metadata`, and it copies each
 third-party package's sources from where Cargo downloaded them. The cell has a
 package per third-party crate, a `YAK` file with an alias for each, and a
-`workspace.bzl` file with the `cargo_workspace` macro, which the build file at
-the root of the workspace calls to declare the members' targets.
+`workspace.bzl` file with the `cargo_package` macro, which each member's build
+file calls to declare the member's targets, and the `cargo_workspace` macro,
+which the build file at the root of a virtual workspace calls.
 `yak generate` configures this cell for a Cargo workspace at the project root,
 and [Cargo workspaces](../languages/rust/cargo.md) describes the targets.
 `yak expand-external-cell` does not support this origin.

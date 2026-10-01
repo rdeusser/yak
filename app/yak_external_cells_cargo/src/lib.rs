@@ -28,3 +28,4 @@ pub use third_party::ThirdPartyPackage;
 pub use third_party::generate_third_party;
 pub use workspace::generate_workspace;
 pub use workspace::member_dirs;
+pub use workspace::resolve_includes;

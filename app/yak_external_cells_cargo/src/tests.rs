@@ -14,6 +14,7 @@ use crate::CargoPlatform;
 use crate::ThirdParty;
 use crate::cfg::TargetCfg;
 use crate::generate_third_party;
+use crate::includes::IncludedFile;
 use crate::includes::IncludedPath;
 use crate::metadata::Metadata;
 
@@ -322,7 +323,7 @@ fn generate_workspace_bzl() -> String {
         &platforms(),
         std::path::Path::new("/"),
         "crates",
-        &util_includes("../../shared/banner.txt"),
+        &util_includes(),
     )
     .unwrap()
 }
@@ -332,8 +333,9 @@ fn member<'a>(out: &'a str, dir: &str) -> &'a str {
     let start = out
         .find(&format!("\"dir\": \"{dir}\""))
         .unwrap_or_else(|| panic!("no member `{dir}` in:\n{out}"));
+    // The next member's version follows its name and precedes its directory.
     let end = out[start..]
-        .find("}, {\"name\"")
+        .find(", \"version\": ")
         .map_or(out.len(), |i| start + i);
     &out[start..end]
 }
@@ -342,6 +344,11 @@ fn member<'a>(out: &'a str, dir: &str) -> &'a str {
 fn test_workspace_member_labels() {
     let out = generate_workspace_bzl();
     assert!(out.contains("_WORKSPACE_DIR = \"ws\""));
+    // Each member's data is keyed by its package.
+    assert!(
+        out.contains("_MEMBERS = {\"ws/app\": {\"name\": \"app\""),
+        "{out}"
+    );
     let app = member(&out, "app");
     // `app` has a bin named like the package, so its library is `app-lib`.
     assert!(
@@ -353,13 +360,15 @@ fn test_workspace_member_labels() {
     assert!(app.contains(
         "\"bins\": [{\"rule\": \"app\", \"crate\": \"app\", \"crate_root\": \"app/src/main.rs\""
     ));
-    // Third-party dependencies name the cargo cell, and members name the workspace's package.
+    // Third-party dependencies name the cargo cell, and members name the package of their
+    // directory.
     assert!(app.contains(
-        "\"deps\": [\"crates//serde-1.0.1-beta.2:serde\", \"crates//memchr-2.0.0:memchr\", \"//ws:util\"]"
+        "\"deps\": [\"crates//serde-1.0.1-beta.2:serde\", \"crates//memchr-2.0.0:memchr\", \"//ws/util:util\"]"
     ));
-    assert!(app.contains("\"srcs\": [\"app/**\", \"app/**/.*\", \"app/**/.*/**\"]"));
-    assert!(app.contains("\"srcs_exclude\": [\"app/target/**\"]"));
+    assert!(app.contains("\"srcs_exclude\": [\"target/**\", \"YAK\"]"));
     assert!(app.contains("\"CARGO_MANIFEST_DIR\": \"app\""));
+    // `//ws/app` names the binary, which keeps the package's name.
+    assert!(app.contains("\"alias\": None"), "{app}");
 }
 
 #[test]
@@ -370,61 +379,83 @@ fn test_workspace_member_build_script_features_and_tests() {
     assert!(util.contains("\"build_script\": {\"rule\": \"\", \"crate\": \"build_script_build\", \"crate_root\": \"util/build.rs\", \"edition\": \"2024\"}"));
     assert!(util.contains("\"build_deps\": [\"crates//memchr-2.0.0:memchr\"]"));
     assert!(out.contains("script_deps = [\":\" + names[\"build_script_run\"]]"));
-    // Integration tests are named after their package, because all members share a package.
     assert!(util.contains(
         "\"tests\": [{\"rule\": \"util-smoke\", \"crate\": \"smoke\", \"crate_root\": \"util/tests/smoke.rs\""
     ));
     assert!(util.contains("\"unittest\": \"util-unittest\""));
+    // The library and binaries list the member's tests, so `yak test //ws/util` runs them.
+    assert!(util.contains("\"test_rules\": [\"util-unittest\", \"util-smoke\"]"));
     assert!(util.contains("\"build_script_run\": \"util-build-script-run\""));
     // The dev dependency applies to tests on Unix only.
     assert!(util.contains(
         "\"test_platform\": {\"linux-x86_64\": {\"deps\": [\"crates//libc-0.2.0:libc\"]}}"
     ));
-    assert!(out.contains("def cargo_workspace(include = {}, test_data = {}):"));
+    assert!(out.contains("def cargo_package(include = [], test_data = []):"));
+    assert!(out.contains("def cargo_workspace():"));
 }
 
-/// The includes of a workspace whose `util/src/lib.rs` includes `path`.
-fn util_includes(path: &str) -> BTreeMap<String, Vec<(String, IncludedPath)>> {
+#[test]
+fn test_workspace_member_alias_names_the_library_by_directory() {
+    let mut metadata = workspace_metadata();
+    let util = metadata
+        .packages
+        .iter_mut()
+        .find(|p| p.name == "util")
+        .unwrap();
+    util.manifest_path = "/ws/crates/utility/Cargo.toml".to_owned();
+    for target in &mut util.targets {
+        target.src_path = target.src_path.replace("/ws/util/", "/ws/crates/utility/");
+    }
+    let out = crate::generate_workspace(
+        &metadata,
+        &platforms(),
+        std::path::Path::new("/"),
+        "crates",
+        &BTreeMap::new(),
+    )
+    .unwrap();
+    assert!(
+        member(&out, "crates/utility")
+            .contains("\"alias\": {\"name\": \"utility\", \"actual\": \"util\"}"),
+        "{out}"
+    );
+    assert!(member(&out, "app").contains("\"//ws/crates/utility:util\""));
+}
+
+/// The includes of a workspace whose `util/src/lib.rs` includes a file of the workspace's root,
+/// a file of a hand-written package, a file of `app`, and a file of its own.
+fn util_includes() -> BTreeMap<String, Vec<IncludedFile>> {
+    let file = |path: &str, owner: &str| IncludedFile {
+        path: path.to_owned(),
+        owner: owner.to_owned(),
+    };
     BTreeMap::from([(
         "util".to_owned(),
         vec![
-            (
-                "util/src/lib.rs".to_owned(),
-                IncludedPath::RelativeToSource(path.to_owned()),
-            ),
-            (
-                "util/src/lib.rs".to_owned(),
-                IncludedPath::RelativeToSource("own.txt".to_owned()),
-            ),
-            (
-                "util/src/lib.rs".to_owned(),
-                IncludedPath::RelativeToManifestDir("/../shared/manifest.txt".to_owned()),
-            ),
+            file("shared/banner.txt", ""),
+            file("assets/logo.png", "assets"),
+            file("app/data.txt", "app"),
+            file("util/own.txt", "util"),
         ],
     )])
 }
 
 #[test]
-fn test_workspace_member_includes_files_outside_its_directory() {
+fn test_workspace_member_includes_files_of_other_packages() {
     let out = generate_workspace_bzl();
-    // `own.txt` is in the member's directory, so its sources have it already.
+    // A file of the member's own package is one of its sources already.
     assert!(
-        member(&out, "util")
-            .contains("\"include\": [\"shared/banner.txt\", \"shared/manifest.txt\"]"),
+        member(&out, "util").contains(
+            "\"include\": {\"//ws:shared/banner.txt\": \"\", \"//ws/assets:logo.png\": \"assets\", \"//ws/app:data.txt\": \"app\"}"
+        ),
         "{out}"
     );
-
-    // A path outside the workspace belongs to no member.
-    let out = crate::generate_workspace(
-        &workspace_metadata(),
-        &platforms(),
-        std::path::Path::new("/"),
-        "crates",
-        &util_includes("../../../outside.txt"),
-    )
-    .unwrap();
+    // The packages that the cell declares export the files to `util`. The hand-written build file
+    // of `assets` declares its own target.
     assert!(
-        member(&out, "util").contains("\"include\": [\"shared/manifest.txt\"]"),
+        out.contains(
+            "_EXPORTS = {\"ws\": {\"shared/banner.txt\": [\"ws/util\"]}, \"ws/app\": {\"data.txt\": [\"ws/util\"]}}"
+        ),
         "{out}"
     );
 
@@ -451,7 +482,38 @@ fn test_workspace_member_includes_files_outside_its_directory() {
 }
 
 #[test]
-fn test_workspace_member_at_the_root_excludes_the_other_members() {
+fn test_resolve_includes() {
+    let includes = [
+        (
+            "util/src/lib.rs".to_owned(),
+            IncludedPath::RelativeToSource("../../shared/banner.txt".to_owned()),
+        ),
+        (
+            "util/src/lib.rs".to_owned(),
+            IncludedPath::RelativeToSource("own.txt".to_owned()),
+        ),
+        (
+            "util/src/lib.rs".to_owned(),
+            IncludedPath::RelativeToManifestDir("/../shared/manifest.txt".to_owned()),
+        ),
+        // A path outside the workspace belongs to no member.
+        (
+            "util/src/lib.rs".to_owned(),
+            IncludedPath::RelativeToSource("../../../outside.txt".to_owned()),
+        ),
+    ];
+    assert_eq!(
+        crate::resolve_includes("util", &includes),
+        [
+            "shared/banner.txt",
+            "shared/manifest.txt",
+            "util/src/own.txt"
+        ]
+    );
+}
+
+#[test]
+fn test_workspace_member_at_the_root() {
     let mut metadata = workspace_metadata();
     let app = metadata
         .packages
@@ -471,16 +533,17 @@ fn test_workspace_member_at_the_root_excludes_the_other_members() {
     )
     .unwrap();
     assert!(out.contains("_WORKSPACE_DIR = \"\""));
-    let root = member(&out, "");
     assert!(
-        root.contains("\"srcs\": [\"**\", \"**/.*\", \"**/.*/**\"]"),
-        "{root}"
+        out.contains("_MEMBERS = {\"\": {\"name\": \"app\""),
+        "{out}"
     );
-    assert!(root.contains(
-        "\"srcs_exclude\": [\".git/**\", \"target/**\", \"yak-out/**\", \"YAK\", \"util/**\"]"
-    ));
+    let root = member(&out, "");
+    // Members below the root are packages of their own, which a glob leaves out.
+    assert!(
+        root.contains("\"srcs_exclude\": [\".git/**\", \"target/**\", \"yak-out/**\", \"YAK\"]")
+    );
     assert!(root.contains("\"CARGO_MANIFEST_DIR\": \".\""));
-    assert!(root.contains("\"//:util\""));
+    assert!(root.contains("\"//util:util\""));
 }
 
 #[test]
@@ -503,7 +566,7 @@ fn test_workspace_duplicate_target_fails() {
     .unwrap_err();
     assert!(
         err.to_string()
-            .contains("Two targets of the Cargo workspace are named `util-unittest`"),
+            .contains("Two targets of the Cargo package `util` are named `util-unittest`"),
         "{err}"
     );
 }

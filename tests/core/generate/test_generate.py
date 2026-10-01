@@ -22,15 +22,20 @@ WORKSPACE_BUILD_FILE = """load("@crates//:workspace.bzl", "cargo_workspace")
 cargo_workspace()
 """
 
+MEMBER_BUILD_FILE = """load("@crates//:workspace.bzl", "cargo_package")
+
+cargo_package()
+"""
+
 
 @yak_test(data_dir="workspace")
 async def test_generate_builds_the_workspace(yak: Yak) -> None:
     await yak.generate()
     assert (yak.cwd / "YAK").read_text() == WORKSPACE_BUILD_FILE
     for member in ["app", "util"]:
-        assert not (yak.cwd / member / "YAK").exists()
+        assert (yak.cwd / member / "YAK").read_text() == MEMBER_BUILD_FILE
 
-    result = await yak.run("//:app")
+    result = await yak.run("//app")
     assert (
         result.stdout
         == "util 1.2.3-beta.1 major=1 build_script=yes description=first description origin=hidden banner=shared\n"
@@ -42,7 +47,7 @@ async def test_generate_builds_the_workspace(yak: Yak) -> None:
     manifest.write_text(
         manifest.read_text().replace("first description", "second description")
     )
-    result = await yak.run("//:app")
+    result = await yak.run("//app")
     assert result.stdout.endswith(
         "description=second description origin=hidden banner=shared\n"
     )
@@ -51,7 +56,7 @@ async def test_generate_builds_the_workspace(yak: Yak) -> None:
     # file outside the crate's directory builds without a declaration.
     lib = yak.cwd / "util" / "src" / "lib.rs"
     lib.write_text(lib.read_text().replace("shared/banner.txt", "shared/footer.txt"))
-    result = await yak.run("//:app")
+    result = await yak.run("//app")
     assert result.stdout.endswith("origin=hidden banner=footer\n")
 
 
@@ -78,25 +83,13 @@ async def test_generate_keeps_a_different_build_file(yak: Yak) -> None:
     assert build_file.read_text() == WORKSPACE_BUILD_FILE
 
 
-@yak_test(data_dir="workspace")
-async def test_generate_rejects_a_build_file_in_a_member(yak: Yak) -> None:
-    await yak.generate()
-    # The file would make `app` a package of its own, outside the workspace's package.
-    (yak.cwd / "app" / "YAK").write_text("# hand-written\n")
-    with pytest.raises(YakException) as e:
-        await yak.generate("--force")
-    assert "`app/YAK` would make workspace members packages of their own" in str(
-        e.value
-    )
-
-
 @yak_test(data_dir="vendored")
 async def test_generate_builds_replaced_sources(yak: Yak) -> None:
     # `.cargo/config.toml` replaces crates.io with `vendor/`, as it would with a
     # mirror of a private registry. The cell takes each package from where
     # Cargo put it.
     await yak.generate()
-    result = await yak.run("//:app")
+    result = await yak.run("//app")
     assert result.stdout == "hello from vendored\n"
 
 
@@ -129,7 +122,7 @@ async def test_generate_builds_a_git_dependency_at_its_locked_commit(
     )
 
     await yak.generate()
-    result = await yak.run("//:app")
+    result = await yak.run("//app")
     assert result.stdout == "hello from the first commit\n"
 
     # A new commit keeps the package's version. The cell copies the new sources
@@ -140,7 +133,7 @@ async def test_generate_builds_a_git_dependency_at_its_locked_commit(
     subprocess.run(
         ["cargo", "update", "-p", "greet"], cwd=yak.cwd, env=cargo_env, check=True
     )
-    result = await yak.run("//:app")
+    result = await yak.run("//app")
     assert result.stdout == "hello from the second commit\n"
 
 
@@ -171,7 +164,7 @@ async def test_generate_links_a_host_library_of_a_build_script(yak: Yak) -> None
     (yak.cwd / "host" / "host-lib-dir.txt").write_text(str(host_lib_dir))
 
     await yak.generate()
-    result = await yak.run("//:app")
+    result = await yak.run("//app")
     assert result.stdout == "answer=42\n"
 
 
@@ -183,9 +176,9 @@ async def test_generate_runs_a_binary_that_loads_a_build_script_shared_library(
     # links it, as Cargo lets a build script do. Cargo puts the directory on
     # the dynamic library path of the programs it runs, and so does yak.
     await yak.generate()
-    result = await yak.run("//:app")
+    result = await yak.run("//app")
     assert result.stdout == "seven=7\n"
-    await yak.test("//:seven-unittest")
+    await yak.test("//seven:seven-unittest")
 
 
 @yak_test(data_dir="sharedlib")
@@ -201,7 +194,7 @@ async def test_generate_builds_a_build_script_only_for_its_run(yak: Yak) -> None
         for line in result.stdout.splitlines()
         if line.startswith("root//")
     ]
-    assert "root//:seven" in built
+    assert "root//seven:seven" in built
     assert [target for target in built if "build-script-build" in target] == []
     # They build only for an execution platform, so the build does not list
     # them as skipped.
@@ -215,46 +208,54 @@ async def test_generate_runs_tests_as_cargo_test_does(yak: Yak) -> None:
     # The tests find the package's examples from their own path, and the
     # integration test runs the binary through `CARGO_BIN_EXE_probe`.
     await yak.generate()
-    targets = (await yak.targets("//:")).stdout.split()
-    assert "root//:probe-example-plugin" in targets
-    assert "root//:probe-probe-unittest" in targets
+    targets = (await yak.targets("//probe:")).stdout.split()
+    assert "root//probe:probe-example-plugin" in targets
+    assert "root//probe:probe-probe-unittest" in targets
     # `extra` needs a feature that is off, so Cargo skips it.
-    assert "root//:extra" not in targets
-    # The tests read `shared.txt` from the workspace's directory.
+    assert "root//probe:extra" not in targets
+
+    # The tests read `shared.txt` from the workspace's directory, which the
+    # build file at the root exports.
     (yak.cwd / "YAK").write_text(
-        WORKSPACE_BUILD_FILE.replace(
-            "cargo_workspace()",
-            'cargo_workspace(test_data = {"probe": ["shared.txt"]})',
+        WORKSPACE_BUILD_FILE
+        + '\nexport_file(name = "shared.txt", visibility = ["//probe:"])\n'
+    )
+    probe_build_file = yak.cwd / "probe" / "YAK"
+    probe_build_file.write_text(
+        MEMBER_BUILD_FILE.replace(
+            "cargo_package()", 'cargo_package(test_data = ["//:shared.txt"])'
         )
     )
-    result = await yak.test("//...")
+    # `//probe` names the binary, which lists the package's tests.
+    result = await yak.test("//probe")
     summary = re.sub("\x1b\\[[0-9;]*m", "", result.stderr)
     assert "Pass 4. Fail 0." in summary, result.stderr
 
     # A test reads only its package's files and the files it declares.
-    (yak.cwd / "YAK").write_text(WORKSPACE_BUILD_FILE)
+    probe_build_file.write_text(MEMBER_BUILD_FILE)
     await expect_failure(
-        yak.test("//:probe-unittest"),
+        yak.test("//probe:probe-unittest"),
         stderr_regex="reads_a_workspace_file_at_run_time",
     )
 
-    (yak.cwd / "YAK").write_text(
-        WORKSPACE_BUILD_FILE.replace(
-            "cargo_workspace()", 'cargo_workspace(test_data = {"prob": []})'
+    probe_build_file.write_text(
+        MEMBER_BUILD_FILE.replace(
+            "cargo_package()", 'cargo_package(test_data = ["shared.txt"])'
         )
     )
     await expect_failure(
-        yak.targets("//:"),
-        stderr_regex="`test_data` names `prob`, which is not a package of the workspace's members",
+        yak.targets("//probe:"),
+        stderr_regex="`test_data` takes labels of targets in this cell",
     )
 
     # The manifest no longer declares yak's inputs.
+    probe_build_file.write_text(MEMBER_BUILD_FILE)
     manifest = yak.cwd / "probe" / "Cargo.toml"
     manifest.write_text(
         manifest.read_text() + '\n[package.metadata.yak]\ntest-data = ["../shared.txt"]\n'
     )
     await expect_failure(
-        yak.targets("//:"),
+        yak.targets("//probe:"),
         stderr_regex="`\\[package.metadata.yak\\]` of package `probe` is no longer read",
     )
 

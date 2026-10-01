@@ -100,9 +100,9 @@ fn cell_config(cell: &init::ExternalCell) -> String {
 
 /// Writes the build files that let yak build the Cargo workspace and the Go modules at \[PATH\].
 ///
-/// If \[PATH\] holds a Cargo workspace, the `YAK` file at its root declares the targets of every
-/// workspace member from its `Cargo.toml`, and `.yakconfig` gains the `crates` cell, which builds
-/// the third-party crates in `Cargo.lock`. Each Go module below \[PATH\] gets a `YAK` file next to
+/// If \[PATH\] holds a Cargo workspace, each member gets a `YAK` file next to its `Cargo.toml`,
+/// which declares the member's targets, and so does the root of the workspace. `.yakconfig` gains
+/// the `crates` cell, which builds the third-party crates in `Cargo.lock`. Each Go module below \[PATH\] gets a `YAK` file next to
 /// its `go.mod`, which declares the targets of its packages, and a go cell, which builds its
 /// third-party modules. The generated files do not list dependencies, so an edit to a manifest
 /// or an import needs no new run.
@@ -331,38 +331,32 @@ fn exec_impl(
             ));
         }
 
-        // All members' targets are in the package at the root of the workspace, which a build
-        // file in a member's directory would cut the member out of.
+        // Each member's targets are in the package of its directory. The build file of a virtual
+        // workspace's root declares the files there that members include.
         let members = layout.member_dirs()?;
-        let mut splitting: Vec<String> = members
-            .iter()
-            .filter(|dir| !dir.is_empty() && root.join(dir.as_str()).join("YAK").exists())
-            .map(|dir| format!("`{dir}/YAK`"))
-            .collect();
-        splitting.extend(
-            go_modules
-                .iter()
-                .filter(|dir| !dir.is_empty() && members.contains(dir))
-                .map(|dir| format!("the Go module's `{dir}/YAK`")),
-        );
-        if !splitting.is_empty() {
-            return Err(yak_error!(
-                ErrorTag::Input,
-                "{} would make workspace members packages of their own, which the build file at \
-                 the root of the workspace cannot reach. Remove them and run `yak generate` again.",
-                splitting.join(", ")
-            ));
-        }
         let cell = cargo_cell();
-        calls.entry(String::new()).or_default().push((
-            cell.name.clone(),
-            "workspace.bzl",
-            "cargo_workspace",
-        ));
-        descriptions.entry(String::new()).or_default().push(format!(
-            "the targets of {} workspace members",
-            members.len()
-        ));
+        for dir in &members {
+            calls.entry(dir.clone()).or_default().push((
+                cell.name.clone(),
+                "workspace.bzl",
+                "cargo_package",
+            ));
+            descriptions
+                .entry(dir.clone())
+                .or_default()
+                .push("the targets of its Cargo package".to_owned());
+        }
+        if !members.iter().any(|dir| dir.is_empty()) {
+            calls.entry(String::new()).or_default().push((
+                cell.name.clone(),
+                "workspace.bzl",
+                "cargo_workspace",
+            ));
+            descriptions
+                .entry(String::new())
+                .or_default()
+                .push("the files of the workspace's root that its members include".to_owned());
+        }
         cells.push(cell);
     }
     for dir in &go_modules {

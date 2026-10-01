@@ -696,7 +696,7 @@ impl DiceUpdater for DiceCommandUpdater<'_, '_> {
                 section: "yak",
                 property: "infer_target_names",
             })?
-            .unwrap_or(false)
+            .unwrap_or(true)
         {
             InferTargetNames::Yes
         } else {

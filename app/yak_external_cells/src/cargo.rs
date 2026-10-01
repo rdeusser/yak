@@ -48,11 +48,14 @@ use yak_external_cells_cargo::DEFAULT_PLATFORMS;
 use yak_external_cells_cargo::cfg::TargetCfg;
 use yak_external_cells_cargo::generate_third_party;
 use yak_external_cells_cargo::generate_workspace;
+use yak_external_cells_cargo::includes::IncludedFile;
 use yak_external_cells_cargo::includes::IncludedPath;
 use yak_external_cells_cargo::includes::included_paths;
 use yak_external_cells_cargo::member_dirs;
 use yak_external_cells_cargo::metadata::Metadata;
+use yak_external_cells_cargo::resolve_includes;
 use yak_fs::paths::abs_path::AbsPath;
+use yak_fs::paths::file_name::FileNameBuf;
 use yak_fs::paths::forward_rel_path::ForwardRelativePath;
 
 use crate::generated::BUILD_FILE;
@@ -256,10 +259,10 @@ impl Key for RustFileIncludesKey {
 #[derive(Allocative, PartialEq, Eq, Debug)]
 struct IncludedPaths(#[allocative(skip)] Vec<IncludedPath>);
 
-/// The paths that each member's Rust files include, keyed by the member's directory relative to
-/// the workspace's directory, each with the file's path relative to the workspace's directory.
+/// The existing files that each member's Rust files include, keyed by the member's directory
+/// relative to the workspace's directory.
 #[derive(Allocative, PartialEq, Eq, Debug)]
-struct WorkspaceIncludes(#[allocative(skip)] BTreeMap<String, Vec<(String, IncludedPath)>>);
+struct WorkspaceIncludes(#[allocative(skip)] BTreeMap<String, Vec<IncludedFile>>);
 
 /// Directory names that the include scan skips: hidden directories, Cargo's and yak's output
 /// directories, and npm's packages, none of which holds a member's Rust sources.
@@ -343,10 +346,53 @@ async fn read_includes(
                 .push((rel.clone(), path.clone()));
         }
     }
-    for files in includes.values_mut() {
-        files.sort();
+
+    let build_file_names = DiceFileComputations::buildfiles(ctx, in_workspace("")?.cell())
+        .await?
+        .dupe();
+    let mut files: BTreeMap<String, Vec<IncludedFile>> = BTreeMap::new();
+    for (member, member_includes) in includes {
+        for path in resolve_includes(&member, &member_includes) {
+            // The scan also finds calls in comments, which can name files that do not exist.
+            let cell_path = in_workspace(&path)?;
+            if DiceFileComputations::read_path_metadata_if_exists(ctx, cell_path.as_ref())
+                .await?
+                .is_none()
+            {
+                continue;
+            }
+            // A file that no build file of the workspace owns is in no package, and the crate
+            // that includes it fails to compile.
+            if let Some(owner) = owning_dir(ctx, &path, &build_file_names, &in_workspace).await? {
+                files
+                    .entry(member.clone())
+                    .or_default()
+                    .push(IncludedFile { path, owner });
+            }
+        }
     }
-    Ok(WorkspaceIncludes(includes))
+    Ok(WorkspaceIncludes(files))
+}
+
+/// The nearest directory at or above the file `path` that has a build file, relative to the
+/// workspace's directory, as long as it is in the workspace.
+async fn owning_dir(
+    ctx: &mut DiceComputations<'_>,
+    path: &str,
+    build_file_names: &[FileNameBuf],
+    in_workspace: &impl Fn(&str) -> yak_error::Result<CellPath>,
+) -> yak_error::Result<Option<String>> {
+    let mut dir = path.rsplit_once('/').map_or("", |(parent, _)| parent);
+    loop {
+        let listing = DiceFileComputations::read_dir(ctx, in_workspace(dir)?.as_ref()).await?;
+        if build_file_names.iter().any(|name| listing.contains(name)) {
+            return Ok(Some(dir.to_owned()));
+        }
+        if dir.is_empty() {
+            return Ok(None);
+        }
+        dir = dir.rsplit_once('/').map_or("", |(parent, _)| parent);
+    }
 }
 
 fn relative_join(dir: &str, name: &str) -> String {
