@@ -2,13 +2,13 @@
 
 {
   "anon//:_anon_leaf (anon: <HASH>) (<unspecified>)": {
+    "suffix": "from-mid",
     "yak.package": "anon//",
-    "yak.type": "root//prelude.bzl:_anon_leaf",
-    "suffix": "from-mid"
+    "yak.type": "root//prelude.bzl:_anon_leaf"
   },
   "anon//:_anon_mid (anon: <HASH>) (<unspecified>)": {
+    "level": 1,
     "yak.package": "anon//",
-    "yak.type": "root//prelude.bzl:_anon_mid",
-    "level": 1
+    "yak.type": "root//prelude.bzl:_anon_mid"
   }
 }
