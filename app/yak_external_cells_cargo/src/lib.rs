@@ -13,7 +13,6 @@ pub mod cfg;
 mod graph;
 mod inputs;
 pub mod metadata;
-mod starlark;
 mod third_party;
 mod workspace;
 

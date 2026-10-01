@@ -21,6 +21,7 @@ rust_library(
         "//app/yak_grpc:yak_grpc",
         "//app/yak_hash:yak_hash",
         "//app/yak_external_cells_cargo:yak_external_cells_cargo",
+        "//app/yak_external_cells_go:yak_external_cells_go",
         "//app/yak_interpreter:yak_interpreter",
         "//app/yak_interpreter_for_build:yak_interpreter_for_build",
         "//app/yak_node:yak_node",

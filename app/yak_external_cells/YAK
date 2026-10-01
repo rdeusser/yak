@@ -13,6 +13,7 @@ rust_library(
         "//app/yak_execute:yak_execute",
         "//app/yak_external_cells_bundled:yak_external_cells_bundled",
         "//app/yak_external_cells_cargo:yak_external_cells_cargo",
+        "//app/yak_external_cells_go:yak_external_cells_go",
         "//app/yak_fs:yak_fs",
         "//app/yak_hash:yak_hash",
         "//app/yak_util:yak_util",

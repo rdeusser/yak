@@ -1,0 +1,3 @@
+load("@prelude//toolchains:system.bzl", "system_toolchains")
+
+system_toolchains()

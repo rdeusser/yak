@@ -14,6 +14,8 @@ use std::collections::BTreeSet;
 use std::collections::HashMap;
 use std::collections::HashSet;
 
+use yak_external_cells_starlark::Value;
+
 use crate::cfg::PlatformCondition;
 use crate::cfg::TargetCfg;
 use crate::metadata::DepKind;
@@ -21,7 +23,6 @@ use crate::metadata::Metadata;
 use crate::metadata::Node;
 use crate::metadata::Package;
 use crate::metadata::Target;
-use crate::starlark::Value;
 
 #[derive(yak_error::Error, Debug)]
 #[yak(tag = Input)]

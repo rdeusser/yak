@@ -12,6 +12,9 @@
 use std::collections::HashMap;
 use std::path::Path;
 
+use yak_external_cells_starlark::Value;
+use yak_external_cells_starlark::call;
+
 use crate::graph::CargoPlatform;
 use crate::graph::GenerateError;
 use crate::graph::Graph;
@@ -23,8 +26,6 @@ use crate::graph::target_id;
 use crate::metadata::Metadata;
 use crate::metadata::Node;
 use crate::metadata::Package;
-use crate::starlark::Value;
-use crate::starlark::call;
 
 /// The sources of a package in the cell, which are all the files of its directory except the
 /// generated build file. `**` matches no name that starts with a dot.

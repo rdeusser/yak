@@ -23,6 +23,12 @@ Removes the code, configuration, and service clients that only Meta's internal b
 - `ExternalRunnerTestInfo` takes `working_directory`, the directory a test runs in.
 - A build or test of a pattern does not list the targets it skips because their `target_compatible_with` requires the execution platform marker (`[build] exec_platform_marker`), such as a workspace member's build script. Those targets build only as exec dependencies. Other incompatible targets are listed as before.
 
+### Go modules
+
+- The `go` external cell origin generates, from `go list`, a package for each third-party module version of a Go module and the `go_module` and `go_package` macros that declare the targets of the module's packages. `[external_cell_<name>] module` names the module's `go.mod`. `go_module()` in the build file next to `go.mod` declares a library, binary, or test target for each package, and `go_package()` declares them in a build file below the module's root. Third-party packages are aliases named by import path, such as `gomod//:golang.org/x/sys/unix`, and their dependencies select on the operating system and CPU where Go's build constraints differ.
+- The `go` cell runs `go list` again only when `go.mod`, `go.sum`, the names of the module's files, or the imports, build constraints, package clauses, or `//go:embed` lines of its Go files change.
+- `yak test --changed-since` tests the targets that load a `go` cell's `module.bzl` when a Go file, `go.mod`, `go.sum`, or a build file in the module changes, or when a file appears or disappears in the module.
+
 ### Testing
 
 - `go_test` builds external tests, the test files that declare `package <name>_test`, into a package of their own that imports the package under test with its own test files, as `go test` does. It failed with `External tests are not supported` before.

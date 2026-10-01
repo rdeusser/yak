@@ -93,6 +93,7 @@ pub(crate) async fn select(
         ctx,
         cells,
         changes,
+        changed_go_cells: YakMutSet::default(),
         packages: YakMutMap::default(),
     };
     graph.load_project().await?;
@@ -237,6 +238,8 @@ struct Graph<'a> {
     ctx: &'a DiceTransaction,
     cells: CellResolver,
     changes: Changes,
+    /// The go cells whose files can differ from the merge base.
+    changed_go_cells: YakMutSet<CellName>,
     packages: YakMutMap<PackageLabel, Package>,
 }
 
@@ -268,13 +271,56 @@ impl Graph<'_> {
     fn external_cell_changed(&self, cell: CellName) -> yak_error::Result<bool> {
         Ok(match self.cells.get(cell)?.external() {
             Some(ExternalCellOrigin::Cargo(_)) => self.changes.cargo_metadata,
+            Some(ExternalCellOrigin::Go(_)) => self.changed_go_cells.contains(&cell),
             Some(ExternalCellOrigin::Bundled(_) | ExternalCellOrigin::Git(_)) | None => false,
         })
+    }
+
+    /// Finds the go cells with a changed input in their module's directory.
+    async fn find_changed_go_cells(&mut self) -> yak_error::Result<()> {
+        let go_cells: Vec<(CellName, ProjectRelativePathBuf)> = self
+            .cells
+            .cells()
+            .filter_map(|(name, instance)| match instance.external() {
+                Some(ExternalCellOrigin::Go(setup)) => Some((
+                    name,
+                    setup
+                        .module
+                        .parent()
+                        .unwrap_or(ProjectRelativePath::empty())
+                        .to_owned(),
+                )),
+                _ => None,
+            })
+            .collect();
+        for (cell, module_dir) in go_cells {
+            let build_files = self
+                .ctx
+                .ctx()
+                .get_buildfiles(self.cells.find(&module_dir))
+                .await?
+                .dupe();
+            let names: Vec<&str> = build_files.iter().map(|n| n.as_str()).collect();
+            let changed = self.changes.paths.iter().any(|path| {
+                path.strip_prefix_opt(&module_dir).is_some_and(|rel| {
+                    yak_external_cells_go::is_cell_input(
+                        rel.as_str(),
+                        self.changes.added_or_removed.contains(path),
+                        &names,
+                    )
+                })
+            });
+            if changed {
+                self.changed_go_cells.insert(cell);
+            }
+        }
+        Ok(())
     }
 
     /// Evaluates every package of the cells in the project and decides which can differ from the
     /// merge base.
     async fn load_project(&mut self) -> yak_error::Result<()> {
+        self.find_changed_go_cells().await?;
         let roots: Vec<CellPath> = self
             .cells
             .cells()

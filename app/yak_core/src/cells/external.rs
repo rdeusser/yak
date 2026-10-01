@@ -26,6 +26,7 @@ pub enum ExternalCellOrigin {
     Bundled(CellName),
     Git(GitCellSetup),
     Cargo(CargoCellSetup),
+    Go(GoCellSetup),
 }
 
 /// CargoCellSetup configures a cell whose build files describe the third-party packages of a
@@ -45,6 +46,25 @@ pub enum ExternalCellOrigin {
 pub struct CargoCellSetup {
     /// The workspace's `Cargo.toml`, relative to the project root.
     pub manifest: Arc<ProjectRelativePathBuf>,
+}
+
+/// GoCellSetup configures a cell whose build files describe the packages of a Go module and its
+/// dependencies, as `go list` resolves them.
+#[derive(
+    Debug,
+    derive_more::Display,
+    Clone,
+    Dupe,
+    allocative::Allocative,
+    PartialEq,
+    Eq,
+    Hash,
+    Pagable
+)]
+#[display("go({})", module)]
+pub struct GoCellSetup {
+    /// The module's `go.mod`, relative to the project root.
+    pub module: Arc<ProjectRelativePathBuf>,
 }
 
 #[derive(
@@ -72,6 +92,7 @@ impl fmt::Display for ExternalCellOrigin {
             Self::Bundled(cell) => write!(f, "bundled({cell})"),
             Self::Git(git) => write!(f, "{git}"),
             Self::Cargo(cargo) => write!(f, "{cargo}"),
+            Self::Go(go) => write!(f, "{go}"),
         }
     }
 }

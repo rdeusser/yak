@@ -1,0 +1,15 @@
+[package]
+name = "yak_external_cells_go"
+version.workspace = true
+edition.workspace = true
+repository.workspace = true
+license.workspace = true
+
+[dependencies]
+serde.workspace = true
+serde_json.workspace = true
+yak_error.workspace = true
+yak_external_cells_starlark.workspace = true
+
+[lints]
+workspace = true

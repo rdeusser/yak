@@ -36,6 +36,7 @@ yak_events.workspace = true
 yak_execute.workspace = true
 yak_execute_impl.workspace = true
 yak_external_cells_cargo.workspace = true
+yak_external_cells_go.workspace = true
 yak_fs.workspace = true
 yak_grpc.workspace = true
 yak_hash.workspace = true

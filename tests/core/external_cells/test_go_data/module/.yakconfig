@@ -1,0 +1,23 @@
+[cells]
+  root = .
+  prelude = prelude
+  toolchains = toolchains
+  gomod = .gomod
+
+[cell_aliases]
+  config = prelude
+
+[buildfile]
+  name = YAK.fixture
+
+[external_cells]
+  prelude = bundled
+  gomod = go
+
+[external_cell_gomod]
+  module = go.mod
+
+[parser]
+  target_platform_detector_spec = target:root//...->prelude//platforms:default \
+    target:gomod//...->prelude//platforms:default \
+    target:toolchains//...->prelude//platforms:default

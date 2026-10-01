@@ -207,6 +207,40 @@ After `yak kill`, the same query failed because `pkg` does not exist. The Linux 
 
 Remove this entry when the query after the rename fails without a daemon restart.
 
+### A command can miss a file created just before it starts
+
+With the default `notify` file watcher, a command that starts milliseconds after a file is created can miss that file until the next command.
+`NotifyFileWatcher::sync2` in `app/yak_file_watcher/src/notify.rs` takes the events that have arrived when the command starts, and macOS delivers FSEvents asynchronously, so an event can arrive after the sync.
+
+On macOS on 2026-09-30, a loop created a file in a package of a Go module, ran `yak build //...` or `yak targets //...`, deleted the file, and ran the command again.
+In 17 rounds over 3 runs of the loop, 5 first commands did not see the new file. In 1 of those rounds the next command saw it, and in the other 4 the creation and the deletion both went unseen.
+Later runs of 8 and 20 rounds missed none. The Linux behavior was not checked.
+
+Remove this entry when the sync waits for the events of changes made before the command started, as Watchman's sync cookie does.
+
+### Go cells support no workspace, vendoring, or local replacement
+
+`app/yak_external_cells/src/go.rs` runs `go list` with `GOWORK=off`, so a `go.work` file does not apply, and it fails when the module has a `vendor/modules.txt`.
+`generate` in `app/yak_external_cells_go/src/generate.rs` fails when a `replace` directive names a local directory, because the cell would copy that directory without reading its files through DICE.
+`test_go_cell_rejects_a_vendored_module` in `tests/core/external_cells/test_go.py` checks the vendoring error.
+
+Remove this entry when a go cell builds a module of a `go.work` file, a vendored module, and a module with a local replacement.
+
+### Go cells resolve dependencies with cgo enabled
+
+`app/yak_external_cells/src/go.rs` runs `go list` with `CGO_ENABLED=1` for each platform.
+The prelude's Go rules enable cgo only when a C++ toolchain is available (`cgo_enabled` in `prelude/decls/go_common.bzl`), so a package built without cgo can import a package that only its non-cgo files name, and that dependency is missing from its target.
+
+Remove this entry when the dependencies of a go cell's targets select on whether cgo is enabled.
+
+### Go module paths that differ only in case share a directory on macOS
+
+A go cell copies each third-party module version to a directory named `<module path>@<version>` in `yak-out`.
+Go's module cache writes an upper-case letter as `!` and its lower-case letter, because macOS file systems ignore case by default, and the cell does not.
+Two module paths that differ only in case would share a directory there. No project has shown it.
+
+Remove this entry when the cell escapes module paths as the module cache does.
+
 ## Upstream connections
 
 The repository owner plans to remove what still ties the repository to Meta's upstream projects. Links that credit upstream issues, pull requests, and projects stay.

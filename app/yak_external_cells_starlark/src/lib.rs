@@ -6,13 +6,13 @@
  * above-listed licenses.
  */
 
-//! Writes the Starlark values of generated build files.
+//! Writes the Starlark values of the build files that generated external cells serve.
 
 use std::fmt::Write;
 
 /// Value is a Starlark value that a generated build file passes to a rule.
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub(crate) enum Value {
+pub enum Value {
     None,
     Str(String),
     Bool(bool),
@@ -23,15 +23,15 @@ pub(crate) enum Value {
 }
 
 impl Value {
-    pub(crate) fn str(s: impl Into<String>) -> Value {
+    pub fn str(s: impl Into<String>) -> Value {
         Value::Str(s.into())
     }
 
-    pub(crate) fn strs<S: Into<String>>(items: impl IntoIterator<Item = S>) -> Value {
+    pub fn strs<S: Into<String>>(items: impl IntoIterator<Item = S>) -> Value {
         Value::List(items.into_iter().map(Value::str).collect())
     }
 
-    pub(crate) fn render(&self, out: &mut String) {
+    pub fn render(&self, out: &mut String) {
         match self {
             Value::None => out.push_str("None"),
             Value::Str(s) => quote(s, out),
@@ -83,7 +83,7 @@ fn quote(s: &str, out: &mut String) {
 }
 
 /// Writes a call of `function` with one keyword argument per line.
-pub(crate) fn call(out: &mut String, function: &str, kwargs: &[(&str, Value)]) {
+pub fn call(out: &mut String, function: &str, kwargs: &[(&str, Value)]) {
     out.push_str(function);
     out.push_str("(\n");
     for (name, value) in kwargs {

@@ -24,6 +24,7 @@ yak_error.workspace = true
 yak_execute.workspace = true
 yak_external_cells_bundled.workspace = true
 yak_external_cells_cargo.workspace = true
+yak_external_cells_go.workspace = true
 yak_fs.workspace = true
 yak_hash.workspace = true
 yak_util.workspace = true

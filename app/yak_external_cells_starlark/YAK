@@ -1,0 +1,6 @@
+load("//build_defs:rust.bzl", "rust_library")
+
+rust_library(
+    name = "yak_external_cells_starlark",
+    srcs = glob(["src/**/*.rs"]),
+)

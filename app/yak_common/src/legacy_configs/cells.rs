@@ -24,6 +24,7 @@ use yak_core::cells::external::CargoCellSetup;
 use yak_core::cells::external::ExternalCellOrigin;
 use yak_core::cells::external::GitCellSetup;
 use yak_core::cells::external::GitObjectFormat;
+use yak_core::cells::external::GoCellSetup;
 use yak_core::cells::name::CellName;
 use yak_core::fs::project::ProjectRoot;
 use yak_core::fs::project_rel_path::ProjectRelativePath;
@@ -570,6 +571,12 @@ impl YakConfigBasedCells {
             let manifest = get_config(section, "manifest").unwrap_or("Cargo.toml");
             Ok(ExternalCellOrigin::Cargo(CargoCellSetup {
                 manifest: Arc::new(ProjectRelativePathBuf::try_from(manifest.to_owned())?),
+            }))
+        } else if value == "go" {
+            let section = &format!("external_cell_{}", cell.as_str());
+            let module = get_config(section, "module").unwrap_or("go.mod");
+            Ok(ExternalCellOrigin::Go(GoCellSetup {
+                module: Arc::new(ProjectRelativePathBuf::try_from(module.to_owned())?),
             }))
         } else {
             Err(ExternalCellOriginParseError::Unknown(value.to_owned()).into())

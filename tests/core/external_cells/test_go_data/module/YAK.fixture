@@ -1,0 +1,3 @@
+load("@gomod//:module.bzl", "go_module")
+
+go_module()

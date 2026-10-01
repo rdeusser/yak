@@ -127,6 +127,7 @@ export const sidebars: SidebarsConfig = {
               collapsed: false,
               items: [
                 'users/languages/go/overview',
+                'users/languages/go/modules',
                 'users/languages/go/toolchains',
                 'users/languages/go/gopackagesdriver',
               ],

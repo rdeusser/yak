@@ -5,6 +5,7 @@ rust_library(
     srcs = glob(["src/**/*.rs"]),
     deps = [
         "//app/yak_error:yak_error",
+        "//app/yak_external_cells_starlark:yak_external_cells_starlark",
         "//third-party/rust:serde",
         "//third-party/rust:serde_json",
     ],

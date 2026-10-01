@@ -103,6 +103,34 @@ the root of the workspace calls to declare the members' targets.
 and [Cargo workspaces](../languages/rust/cargo.md) describes the targets.
 `yak expand-external-cell` does not support this origin.
 
+### The `go` origin
+
+The `go` origin generates a cell from a Go module. It accepts one additional
+configuration parameter, `module`, the project-relative path of the module's
+`go.mod`, which defaults to `go.mod`:
+
+```ini
+[cells]
+  root = .
+  gomod = .gomod
+
+[external_cells]
+  gomod = go
+
+[external_cell_gomod]
+  module = services/api/go.mod
+```
+
+Each Go module of a project has a cell of its own, because the versions of its
+dependencies come from its own `go.mod`. The daemon generates the cell's build
+files in memory from `go list`, and it copies each third-party module version
+from Go's module cache. The cell has a package per module version, named
+`<module path>@<version>`, a `YAK` file with an alias for each third-party
+package named by its import path, such as `gomod//:golang.org/x/sys/unix`, and
+a `module.bzl` file with the `go_module` and `go_package` macros.
+[Go modules](../languages/go/modules.md) describes the targets.
+`yak expand-external-cell` does not support this origin.
+
 ### The `disabled` origin
 
 The `disabled` origin indicates that the cell is a normal cell, not an external

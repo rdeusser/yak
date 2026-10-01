@@ -337,6 +337,7 @@ impl YakOutPathResolver {
                 ExternalCellOrigin::Bundled(_) => ForwardRelativePath::new("bundled").unwrap(),
                 ExternalCellOrigin::Git(_) => ForwardRelativePath::new("git").unwrap(),
                 ExternalCellOrigin::Cargo(_) => ForwardRelativePath::new("cargo").unwrap(),
+                ExternalCellOrigin::Go(_) => ForwardRelativePath::new("go").unwrap(),
             },
             match &origin {
                 ExternalCellOrigin::Bundled(cell) => {
@@ -345,9 +346,10 @@ impl YakOutPathResolver {
                 ExternalCellOrigin::Git(setup) => {
                     ForwardRelativePath::new(setup.commit.as_ref()).unwrap()
                 }
-                // The cell's build files are generated for one workspace, so the path of its
-                // manifest identifies them.
+                // The cell's build files are generated for one workspace or module, so the path
+                // of its manifest identifies them.
                 ExternalCellOrigin::Cargo(setup) => setup.manifest.as_forward_relative_path(),
+                ExternalCellOrigin::Go(setup) => setup.module.as_forward_relative_path(),
             },
             path.as_ref(),
         ]))

@@ -9084,6 +9084,7 @@ dependencies = [
  "yak_execute",
  "yak_external_cells_bundled",
  "yak_external_cells_cargo",
+ "yak_external_cells_go",
  "yak_fs",
  "yak_hash",
  "yak_util",
@@ -9103,7 +9104,22 @@ dependencies = [
  "serde",
  "serde_json",
  "yak_error",
+ "yak_external_cells_starlark",
 ]
+
+[[package]]
+name = "yak_external_cells_go"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "yak_error",
+ "yak_external_cells_starlark",
+]
+
+[[package]]
+name = "yak_external_cells_starlark"
+version = "0.1.0"
 
 [[package]]
 name = "yak_file_watcher"
@@ -9881,6 +9897,7 @@ dependencies = [
  "yak_execute",
  "yak_execute_impl",
  "yak_external_cells_cargo",
+ "yak_external_cells_go",
  "yak_fs",
  "yak_grpc",
  "yak_hash",

@@ -17,6 +17,8 @@ use std::path::Component;
 use std::path::Path;
 use std::path::PathBuf;
 
+use yak_external_cells_starlark::Value;
+
 use crate::graph::CargoPlatform;
 use crate::graph::Deps;
 use crate::graph::GenerateError;
@@ -28,7 +30,6 @@ use crate::graph::relative_to;
 use crate::metadata::Metadata;
 use crate::metadata::Package;
 use crate::metadata::Target;
-use crate::starlark::Value;
 use crate::third_party::library_label;
 
 /// The macro that the workspace's build file calls. `_WORKSPACE_DIR` is the directory of the

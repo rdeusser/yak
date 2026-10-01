@@ -24,7 +24,9 @@ use yak_core::fs::project_rel_path::ProjectRelativePathBuf;
 
 mod bundled;
 mod cargo;
+mod generated;
 mod git;
+mod go;
 
 struct ConcreteExternalCellsImpl;
 
@@ -52,6 +54,9 @@ impl yak_common::external_cells::ExternalCellsImpl for ConcreteExternalCellsImpl
             }
             ExternalCellOrigin::Cargo(setup) => {
                 Ok(cargo::get_file_ops_delegate(ctx, cell_name, setup).await? as _)
+            }
+            ExternalCellOrigin::Go(setup) => {
+                Ok(go::get_file_ops_delegate(ctx, cell_name, setup).await? as _)
             }
         }
     }
@@ -94,6 +99,7 @@ impl yak_common::external_cells::ExternalCellsImpl for ConcreteExternalCellsImpl
             ExternalCellOrigin::Bundled(cell) => bundled::materialize_all(ctx, cell).await?,
             ExternalCellOrigin::Git(setup) => git::materialize_all(ctx, cell, setup).await?,
             ExternalCellOrigin::Cargo(setup) => cargo::materialize_all(ctx, cell, setup).await?,
+            ExternalCellOrigin::Go(setup) => go::materialize_all(ctx, cell, setup).await?,
         };
 
         Ok(io.project_root().copy(&materialized_path, &dest_path)?)
