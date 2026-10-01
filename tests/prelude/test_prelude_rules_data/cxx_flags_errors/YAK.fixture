@@ -1,0 +1,12 @@
+prelude = native
+
+prelude.export_file(
+    name = "not_flags",
+    src = "lib.c",
+)
+
+prelude.cxx_library(
+    name = "consumer",
+    srcs = ["lib.c"],
+    flags = [":not_flags"],
+)

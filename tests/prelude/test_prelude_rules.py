@@ -83,6 +83,19 @@ async def test_go(yak: Yak, package: str) -> None:
 
 
 @yak_test()
+async def test_cxx_flags(yak: Yak) -> None:
+    await yak.build("root//cxx_flags/...")
+
+
+@yak_test()
+async def test_cxx_flags_rejects_other_targets(yak: Yak) -> None:
+    await expect_failure(
+        yak.build("root//cxx_flags_errors:consumer"),
+        stderr_regex="CxxFlagsInfo",
+    )
+
+
+@yak_test()
 async def test_zip_file(yak: Yak) -> None:
     await yak.build("root//zip_file/...")
 

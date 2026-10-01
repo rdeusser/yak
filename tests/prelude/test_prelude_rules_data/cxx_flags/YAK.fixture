@@ -1,0 +1,46 @@
+prelude = native
+
+# Each layer undefines LEVEL and defines it again, so the value that a source
+# sees names the layer whose flags applied last.
+prelude.cxx_flags(
+    name = "base",
+    preprocessor_flags = [
+        "-DFROM_BASE=1",
+        "-DLEVEL=1",
+    ],
+)
+
+prelude.cxx_flags(
+    name = "child",
+    preprocessor_flags = [
+        "-ULEVEL",
+        "-DLEVEL=2",
+    ],
+    deps = [":base"],
+)
+
+prelude.cxx_library(
+    name = "child_only",
+    srcs = ["child_only.c"],
+    flags = [":child"],
+)
+
+# `:base` is already a dependency of `:child`, so it applies once, before `:child`.
+prelude.cxx_library(
+    name = "repeated",
+    srcs = ["child_only.c"],
+    flags = [
+        ":child",
+        ":base",
+    ],
+)
+
+prelude.cxx_library(
+    name = "target_flags",
+    srcs = ["target_flags.c"],
+    flags = [":child"],
+    preprocessor_flags = [
+        "-ULEVEL",
+        "-DLEVEL=3",
+    ],
+)
