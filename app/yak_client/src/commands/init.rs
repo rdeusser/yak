@@ -124,11 +124,27 @@ fn exec_impl(
 
 /// ExternalCell is a cell of a new `.yakconfig` beyond those of `yak init`.
 pub(crate) struct ExternalCell {
-    pub(crate) name: &'static str,
-    pub(crate) path: &'static str,
+    pub(crate) name: String,
+    pub(crate) path: String,
     pub(crate) origin: &'static str,
     /// The comment above the cell's `[external_cells]` entry.
-    pub(crate) comment: &'static str,
+    pub(crate) comment: String,
+    /// The entries of the cell's `[external_cell_<name>]` section, which is left out when empty.
+    pub(crate) settings: Vec<(&'static str, String)>,
+}
+
+impl ExternalCell {
+    /// The cell's `[external_cell_<name>]` section, empty when the cell has no settings.
+    pub(crate) fn settings_section(&self) -> String {
+        if self.settings.is_empty() {
+            return String::new();
+        }
+        let mut section = format!("\n[external_cell_{}]\n", self.name);
+        for (key, value) in &self.settings {
+            section.push_str(&format!("  {key} = {value}\n"));
+        }
+        section
+    }
 }
 
 /// Writes `.yakconfig`. The `external_cells` need the prelude.
@@ -166,6 +182,9 @@ pub(crate) fn initialize_yakconfig(
         for cell in external_cells {
             writeln!(yakconfig, "# {}", cell.comment)?;
             writeln!(yakconfig, "  {} = {}", cell.name, cell.origin)?;
+        }
+        for cell in external_cells {
+            write!(yakconfig, "{}", cell.settings_section())?;
         }
         writeln!(yakconfig)?;
         writeln!(yakconfig, "[parser]")?;

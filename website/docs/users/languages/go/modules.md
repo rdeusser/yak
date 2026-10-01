@@ -6,16 +6,43 @@ title: Go modules
 # Go modules
 
 A [`go` external cell](../../advanced/external_cells.md#the-go-origin) declares
-the targets of a Go module from its `go.mod` and its sources. The build file in
-the module's directory loads `go_module` from the cell and calls it:
+the targets of a Go module from its `go.mod` and its sources. `go.mod`, `go.sum`,
+and the imports of the module's files stay the source of truth, and `go build`
+keeps working.
 
-```python
-# File: YAK, next to go.mod
+## Generating the build files
 
-load("@gomod//:module.bzl", "go_module")
+Run `yak generate` in the directory that holds the project's Go modules, then
+build:
 
-go_module()
+```sh
+yak generate
+yak build //...
 ```
+
+`yak generate` finds each `go.mod` below the directory, skipping the
+directories that `go` skips in `./...` (names that start with `.` or `_`, and
+`testdata`) and `vendor`. It writes these files:
+
+- A `YAK` file next to each `go.mod`, with these three lines:
+
+  ```python
+  load("@gomod//:module.bzl", "go_module")
+
+  go_module()
+  ```
+
+- A go cell for each module in `.yakconfig`. The module at the root of the
+  project has the cell `gomod`, and the module in `services/api` has the cell
+  `gomod_services_api`. If the project has no `.yakconfig`, the command also
+  writes the `.yakroot`, `.yakconfig`, and `toolchains/YAK` files that
+  `yak init` writes.
+- `/yak-out` in `.gitignore`, if a `.gitignore` exists and does not ignore it.
+
+A run writes only the files whose contents differ. It keeps a `YAK` file that
+differs from the generated one, and `--force` replaces it. In a directory that
+is also the root of a Cargo workspace, the build file calls `cargo_workspace()`
+too.
 
 The cell runs `go list` for macOS, Linux, and Windows on `amd64` and `arm64`,
 and each target's dependencies select on the prelude's `os` and `cpu`

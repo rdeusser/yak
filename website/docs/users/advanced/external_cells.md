@@ -128,7 +128,8 @@ from Go's module cache. The cell has a package per module version, named
 `<module path>@<version>`, a `YAK` file with an alias for each third-party
 package named by its import path, such as `gomod//:golang.org/x/sys/unix`, and
 a `module.bzl` file with the `go_module` and `go_package` macros.
-[Go modules](../languages/go/modules.md) describes the targets.
+`yak generate` configures a cell for each Go module below the project root,
+and [Go modules](../languages/go/modules.md) describes the targets.
 `yak expand-external-cell` does not support this origin.
 
 ### The `disabled` origin

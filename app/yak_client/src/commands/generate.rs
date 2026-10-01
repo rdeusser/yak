@@ -6,6 +6,8 @@
  * above-listed licenses.
  */
 
+use std::collections::BTreeMap;
+
 use yak_client_ctx::client_ctx::ClientCommandContext;
 use yak_client_ctx::common::YakArgMatches;
 use yak_client_ctx::common::ui::CommonConsoleOptions;
@@ -25,50 +27,97 @@ use yak_util::process::background_command;
 
 use crate::commands::init;
 
-/// The build file at the root of the workspace. The cargo cell generates the members' targets
-/// from `cargo metadata` each time a manifest changes.
-const WORKSPACE_BUILD_FILE: &str = "load(\"@crates//:workspace.bzl\", \"cargo_workspace\")\n\
-                                    \n\
-                                    cargo_workspace()\n";
+/// The cargo cell. Its path names no directory, because the cell exists only in memory. It
+/// generates the members' targets from `cargo metadata` each time a manifest changes.
+fn cargo_cell() -> init::ExternalCell {
+    init::ExternalCell {
+        name: "crates".to_owned(),
+        path: ".crates".to_owned(),
+        origin: "cargo",
+        comment: "The third-party crates of the Cargo workspace, which yak generates from `cargo metadata`."
+            .to_owned(),
+        settings: Vec::new(),
+    }
+}
 
-/// The comment above the cargo cell's configuration.
-const CARGO_CELL_COMMENT: &str =
-    "The third-party crates of the Cargo workspace, which yak generates from `cargo metadata`.";
+/// The go cell of the Go module in `dir`, relative to the project root. Its path names no
+/// directory either. The module at the root
+/// has the cell `gomod`, and any other the cell `gomod_<dir>`, with each character of the
+/// directory that is not a letter or digit replaced by `_`.
+fn go_cell(dir: &str) -> init::ExternalCell {
+    let name = if dir.is_empty() {
+        "gomod".to_owned()
+    } else {
+        let suffix: String = dir
+            .chars()
+            .map(|c| if c.is_ascii_alphanumeric() { c } else { '_' })
+            .collect();
+        format!("gomod_{suffix}")
+    };
+    let module = if dir.is_empty() {
+        "go.mod".to_owned()
+    } else {
+        format!("{dir}/go.mod")
+    };
+    init::ExternalCell {
+        path: format!(".{name}"),
+        name,
+        origin: "go",
+        comment: format!(
+            "The packages of the Go module `{module}` and its dependencies, which yak generates from `go list`."
+        ),
+        settings: vec![("module", module)],
+    }
+}
 
-/// The cargo cell. Its path names no directory, because the cell exists only in memory.
-const CARGO_CELL: init::ExternalCell = init::ExternalCell {
-    name: "crates",
-    path: ".crates",
-    origin: "cargo",
-    comment: CARGO_CELL_COMMENT,
-};
+/// The build file of a directory, which loads and calls the macros of `cells` (the cell name and
+/// the macro's file and name, in order).
+fn build_file(calls: &[(String, &str, &str)]) -> String {
+    let mut contents = String::new();
+    for (cell, file, name) in calls {
+        contents.push_str(&format!("load(\"@{cell}//:{file}\", \"{name}\")\n"));
+    }
+    contents.push('\n');
+    for (_, _, name) in calls {
+        contents.push_str(&format!("{name}()\n"));
+    }
+    contents
+}
 
-/// The lines that an existing `.yakconfig` gains, as sections that the parser merges with the
-/// earlier sections of the same name.
-fn cargo_cell_config() -> String {
+/// The lines that an existing `.yakconfig` gains for `cell`, as sections that the parser merges
+/// with the earlier sections of the same name.
+fn cell_config(cell: &init::ExternalCell) -> String {
     format!(
-        "\n# {}\n[cells]\n  {} = {}\n\n[external_cells]\n  {} = {}\n",
-        CARGO_CELL.comment, CARGO_CELL.name, CARGO_CELL.path, CARGO_CELL.name, CARGO_CELL.origin
+        "\n# {}\n[cells]\n  {} = {}\n\n[external_cells]\n  {} = {}\n{}",
+        cell.comment,
+        cell.name,
+        cell.path,
+        cell.name,
+        cell.origin,
+        cell.settings_section()
     )
 }
 
-/// Writes the build files that let yak build the Cargo workspace at \[PATH\].
+/// Writes the build files that let yak build the Cargo workspace and the Go modules at \[PATH\].
 ///
-/// The `YAK` file at the root of the workspace declares the targets of every workspace member from
-/// its `Cargo.toml`, and `.yakconfig` gains the `crates` cell, which builds the third-party crates
-/// in `Cargo.lock`. The generated files do not list dependencies, so an edit to a manifest needs
-/// no new run.
+/// If \[PATH\] holds a Cargo workspace, the `YAK` file at its root declares the targets of every
+/// workspace member from its `Cargo.toml`, and `.yakconfig` gains the `crates` cell, which builds
+/// the third-party crates in `Cargo.lock`. Each Go module below \[PATH\] gets a `YAK` file next to
+/// its `go.mod`, which declares the targets of its packages, and a go cell, which builds its
+/// third-party modules. The generated files do not list dependencies, so an edit to a manifest
+/// or an import needs no new run.
 #[derive(Debug, clap::Parser)]
 #[clap(
     name = "generate",
-    about = "Generate build files for a Cargo workspace"
+    about = "Generate build files for a Cargo workspace and Go modules"
 )]
 pub struct GenerateCommand {
-    /// The directory of the Cargo workspace, which becomes the root of the yak project.
+    /// The directory of the Cargo workspace or the Go modules, which becomes the root of the yak
+    /// project.
     #[clap(default_value = ".")]
     path: PathArg,
 
-    /// Replace a `YAK` file at the root of the workspace that differs from the generated one.
+    /// Replace a generated `YAK` file that differs from the generated one.
     #[clap(long)]
     force: bool,
 
@@ -135,13 +184,13 @@ fn workspace_layout(root: &AbsPath) -> yak_error::Result<WorkspaceLayout> {
     WorkspaceLayout::parse(&String::from_utf8(output.stdout)?)
 }
 
-/// Adds the cargo cell to `.yakconfig`, and creates the project files of `yak init` when the
-/// project has no `.yakconfig`.
-fn configure_project(root: &AbsPath) -> yak_error::Result<Written> {
+/// Adds `cells` to `.yakconfig`, and creates the project files of `yak init` when the project has
+/// no `.yakconfig`.
+fn configure_project(root: &AbsPath, cells: &[init::ExternalCell]) -> yak_error::Result<Written> {
     let config_path = root.join(".yakconfig");
-    let Some(config) = fs_util::read_to_string_if_exists(&config_path)? else {
+    let Some(mut config) = fs_util::read_to_string_if_exists(&config_path)? else {
         init::set_up_yakroot(root)?;
-        init::initialize_yakconfig(root, true, false, &[CARGO_CELL])?;
+        init::initialize_yakconfig(root, true, false, cells)?;
         let toolchains = root.join("toolchains");
         if !toolchains.exists() {
             fs_util::create_dir(&toolchains).categorize_internal()?;
@@ -150,33 +199,82 @@ fn configure_project(root: &AbsPath) -> yak_error::Result<Written> {
         return Ok(Written::Created);
     };
 
-    let assigns_cell = |line: &str| {
-        line.trim()
-            .split_once('=')
-            .is_some_and(|(key, _)| key.trim() == CARGO_CELL.name)
-    };
-    let is_cargo_origin = |line: &str| {
-        line.trim().split_once('=').is_some_and(|(key, value)| {
-            key.trim() == CARGO_CELL.name && value.trim() == CARGO_CELL.origin
-        })
-    };
-    if config.lines().any(is_cargo_origin) {
+    let mut added = false;
+    for cell in cells {
+        let assigns_cell = |line: &str| {
+            line.trim()
+                .split_once('=')
+                .is_some_and(|(key, _)| key.trim() == cell.name)
+        };
+        let is_origin = |line: &str| {
+            line.trim()
+                .split_once('=')
+                .is_some_and(|(key, value)| key.trim() == cell.name && value.trim() == cell.origin)
+        };
+        if config.lines().any(is_origin) {
+            continue;
+        }
+        if config.lines().any(assigns_cell) {
+            return Err(yak_error!(
+                ErrorTag::Input,
+                "`{}` already sets `{}`, which `yak generate` configures as a {} cell",
+                config_path.display(),
+                cell.name,
+                cell.origin
+            ));
+        }
+        if !config.is_empty() && !config.ends_with('\n') {
+            config.push('\n');
+        }
+        config.push_str(&cell_config(cell));
+        added = true;
+    }
+    if !added {
         return Ok(Written::Unchanged);
     }
-    if config.lines().any(assigns_cell) {
-        return Err(yak_error!(
-            ErrorTag::Input,
-            "`{}` already sets `{}`, which `yak generate` configures as the cargo cell",
-            config_path.display(),
-            CARGO_CELL.name
-        ));
-    }
-    let mut config = config;
-    if !config.is_empty() && !config.ends_with('\n') {
-        config.push('\n');
-    }
-    fs_util::write(&config_path, config + &cargo_cell_config()).categorize_internal()?;
+    fs_util::write(&config_path, config).categorize_internal()?;
     Ok(Written::Replaced)
+}
+
+/// The directories below `root` that hold a `go.mod`, relative to it, sorted. It skips the
+/// directories that `go` skips in `./...` (names starting with `.` or `_`, and `testdata`),
+/// `vendor`, and the output directories of yak, Cargo, and npm.
+fn go_module_dirs(root: &AbsPath) -> yak_error::Result<Vec<String>> {
+    let mut dirs = Vec::new();
+    let mut pending = vec![String::new()];
+    while let Some(dir) = pending.pop() {
+        let path = if dir.is_empty() {
+            root.to_owned()
+        } else {
+            root.join(dir.as_str())
+        };
+        for entry in std::fs::read_dir(path.as_path())
+            .with_yak_error_context(|| format!("Error listing `{}`", path.display()))?
+        {
+            let entry = entry?;
+            let Some(name) = entry.file_name().to_str().map(str::to_owned) else {
+                continue;
+            };
+            let file_type = entry.file_type()?;
+            if file_type.is_file() && name == "go.mod" {
+                dirs.push(dir.clone());
+            } else if file_type.is_dir()
+                && !name.starts_with(['.', '_'])
+                && !matches!(
+                    name.as_str(),
+                    "testdata" | "vendor" | "yak-out" | "target" | "node_modules"
+                )
+            {
+                pending.push(if dir.is_empty() {
+                    name
+                } else {
+                    format!("{dir}/{name}")
+                });
+            }
+        }
+    }
+    dirs.sort();
+    Ok(dirs)
 }
 
 /// Adds `/yak-out` to an existing `.gitignore` that does not ignore it.
@@ -205,66 +303,135 @@ fn exec_impl(
 ) -> yak_error::Result<()> {
     let root = fs_util::canonicalize(cmd.path.resolve(&ctx.working_dir)).categorize_internal()?;
     let root = root.as_abs_path();
-    if !root.join("Cargo.toml").exists() {
+    let cargo = root.join("Cargo.toml").exists();
+    let go_modules = go_module_dirs(root)?;
+    if !cargo && go_modules.is_empty() {
         return Err(yak_error!(
             ErrorTag::Input,
-            "`{}` has no `Cargo.toml`. `yak generate` runs in the root of a Cargo workspace.",
+            "`{}` has no `Cargo.toml` and no Go module. `yak generate` runs in the root of a \
+             Cargo workspace or in a directory that holds Go modules.",
             root.display()
         ));
     }
 
-    let layout = workspace_layout(root)?;
-    let workspace_root =
-        fs_util::canonicalize(AbsPath::new(&layout.workspace_root)?).categorize_internal()?;
-    if workspace_root.as_abs_path() != root {
-        return Err(yak_error!(
-            ErrorTag::Input,
-            "`{}` is a member of the Cargo workspace at `{}`. Run `yak generate` there.",
-            root.display(),
-            workspace_root.display()
+    let mut cells = Vec::new();
+    // The macros that the build file of each directory calls, by directory.
+    let mut calls: BTreeMap<String, Vec<(String, &str, &str)>> = BTreeMap::new();
+    let mut descriptions: BTreeMap<String, Vec<String>> = BTreeMap::new();
+    if cargo {
+        let layout = workspace_layout(root)?;
+        let workspace_root =
+            fs_util::canonicalize(AbsPath::new(&layout.workspace_root)?).categorize_internal()?;
+        if workspace_root.as_abs_path() != root {
+            return Err(yak_error!(
+                ErrorTag::Input,
+                "`{}` is a member of the Cargo workspace at `{}`. Run `yak generate` there.",
+                root.display(),
+                workspace_root.display()
+            ));
+        }
+
+        // All members' targets are in the package at the root of the workspace, which a build
+        // file in a member's directory would cut the member out of.
+        let members = layout.member_dirs()?;
+        let mut splitting: Vec<String> = members
+            .iter()
+            .filter(|dir| !dir.is_empty() && root.join(dir.as_str()).join("YAK").exists())
+            .map(|dir| format!("`{dir}/YAK`"))
+            .collect();
+        splitting.extend(
+            go_modules
+                .iter()
+                .filter(|dir| !dir.is_empty() && members.contains(dir))
+                .map(|dir| format!("the Go module's `{dir}/YAK`")),
+        );
+        if !splitting.is_empty() {
+            return Err(yak_error!(
+                ErrorTag::Input,
+                "{} would make workspace members packages of their own, which the build file at \
+                 the root of the workspace cannot reach. Remove them and run `yak generate` again.",
+                splitting.join(", ")
+            ));
+        }
+        let cell = cargo_cell();
+        calls.entry(String::new()).or_default().push((
+            cell.name.clone(),
+            "workspace.bzl",
+            "cargo_workspace",
         ));
+        descriptions.entry(String::new()).or_default().push(format!(
+            "the targets of {} workspace members",
+            members.len()
+        ));
+        cells.push(cell);
+    }
+    for dir in &go_modules {
+        let cell = go_cell(dir);
+        if let Some(other) = cells.iter().find(|c| c.name == cell.name) {
+            return Err(yak_error!(
+                ErrorTag::Input,
+                "The Go modules in `{dir}` and of `{}` would both have the cell `{}`",
+                other
+                    .settings
+                    .first()
+                    .map_or("", |(_, module)| module.as_str()),
+                cell.name
+            ));
+        }
+        calls
+            .entry(dir.clone())
+            .or_default()
+            .push((cell.name.clone(), "module.bzl", "go_module"));
+        descriptions
+            .entry(dir.clone())
+            .or_default()
+            .push("the targets of the Go module's packages".to_owned());
+        cells.push(cell);
     }
 
-    // All members' targets are in the package at the root of the workspace, which a build file
-    // in a member's directory would cut the member out of.
-    let members = layout.member_dirs()?;
-    let splitting: Vec<String> = members
-        .iter()
-        .filter(|dir| !dir.is_empty() && root.join(dir.as_str()).join("YAK").exists())
-        .map(|dir| format!("`{dir}/YAK`"))
-        .collect();
-    if !splitting.is_empty() {
-        return Err(yak_error!(
-            ErrorTag::Input,
-            "{} would make workspace members packages of their own, which the build file at the \
-             root of the workspace cannot reach. Remove them and run `yak generate` again.",
-            splitting.join(", ")
-        ));
-    }
-
-    let config = configure_project(root)?;
+    let config = configure_project(root, &cells)?;
     ignore_yak_out(root)?;
-    let build_file = root.join("YAK");
-    let written = write_if_changed(&build_file, WORKSPACE_BUILD_FILE, cmd.force)?;
-
     match config {
-        Written::Created => console.print_success("Created `.yakconfig` with the `crates` cell")?,
-        Written::Replaced => console.print_success("Added the `crates` cell to `.yakconfig`")?,
+        Written::Created => console.print_success(&format!(
+            "Created `.yakconfig` with the cells {}",
+            cell_names(&cells)
+        ))?,
+        Written::Replaced => console.print_success(&format!(
+            "Configured {} in `.yakconfig`",
+            cell_names(&cells)
+        ))?,
         Written::Unchanged | Written::Kept => {}
     }
-    match written {
-        Written::Created | Written::Replaced => console.print_success(&format!(
-            "Wrote `YAK`, which declares the targets of {} workspace members",
-            members.len()
-        ))?,
-        Written::Unchanged => console.print_success("`YAK` is up to date")?,
-        Written::Kept => console.print_warning(&format!(
-            "Kept `{}`, which differs from the generated build file. Pass `--force` to replace \
-             it, or add its two lines to it.",
-            build_file.display()
-        ))?,
+    for (dir, calls) in &calls {
+        let relative = if dir.is_empty() {
+            "YAK".to_owned()
+        } else {
+            format!("{dir}/YAK")
+        };
+        let path = root.join(relative.as_str());
+        match write_if_changed(&path, &build_file(calls), cmd.force)? {
+            Written::Created | Written::Replaced => console.print_success(&format!(
+                "Wrote `{relative}`, which declares {}",
+                descriptions[dir].join(" and ")
+            ))?,
+            Written::Unchanged => console.print_success(&format!("`{relative}` is up to date"))?,
+            Written::Kept => console.print_warning(&format!(
+                "Kept `{}`, which differs from the generated build file. Pass `--force` to \
+                 replace it, or add the generated lines to it:\n{}",
+                path.display(),
+                build_file(calls)
+            ))?,
+        }
     }
     Ok(())
+}
+
+fn cell_names(cells: &[init::ExternalCell]) -> String {
+    cells
+        .iter()
+        .map(|c| format!("`{}`", c.name))
+        .collect::<Vec<_>>()
+        .join(", ")
 }
 
 #[cfg(test)]
@@ -297,13 +464,21 @@ mod tests {
         let dir = tempfile::tempdir().unwrap();
         let root = AbsPath::new(dir.path()).unwrap();
         fs_util::write(root.join(".yakconfig"), "[cells]\n  root = .").unwrap();
-        assert_eq!(configure_project(root).unwrap(), Written::Replaced);
-        assert_eq!(configure_project(root).unwrap(), Written::Unchanged);
+        let cells = [cargo_cell(), go_cell("services/api")];
+        assert_eq!(configure_project(root, &cells).unwrap(), Written::Replaced);
+        assert_eq!(configure_project(root, &cells).unwrap(), Written::Unchanged);
         let config = fs_util::read_to_string(root.join(".yakconfig")).unwrap();
         assert_eq!(
             config,
-            format!("[cells]\n  root = .\n{}", cargo_cell_config())
+            format!(
+                "[cells]\n  root = .\n{}{}",
+                cell_config(&cells[0]),
+                cell_config(&cells[1])
+            )
         );
+        assert!(config.ends_with(
+            "[external_cells]\n  gomod_services_api = go\n\n[external_cell_gomod_services_api]\n  module = services/api/go.mod\n"
+        ));
     }
 
     #[test]
@@ -311,7 +486,43 @@ mod tests {
         let dir = tempfile::tempdir().unwrap();
         let root = AbsPath::new(dir.path()).unwrap();
         fs_util::write(root.join(".yakconfig"), "[cells]\n  crates = third-party\n").unwrap();
-        assert!(configure_project(root).is_err());
+        assert!(configure_project(root, &[cargo_cell()]).is_err());
+    }
+
+    #[test]
+    fn test_build_file() {
+        assert_eq!(
+            build_file(&[
+                ("crates".to_owned(), "workspace.bzl", "cargo_workspace"),
+                ("gomod".to_owned(), "module.bzl", "go_module"),
+            ]),
+            "load(\"@crates//:workspace.bzl\", \"cargo_workspace\")\nload(\"@gomod//:module.bzl\", \"go_module\")\n\ncargo_workspace()\ngo_module()\n"
+        );
+    }
+
+    #[test]
+    fn test_go_module_dirs() {
+        let dir = tempfile::tempdir().unwrap();
+        let root = AbsPath::new(dir.path()).unwrap();
+        for module in [
+            "",
+            "services/api",
+            "services/api/testdata/fixture",
+            ".hidden/m",
+            "yak-out/m",
+            "tools/_old",
+        ] {
+            let path = if module.is_empty() {
+                root.to_owned()
+            } else {
+                root.join(module)
+            };
+            fs_util::create_dir_all(&path).unwrap();
+            fs_util::write(path.join("go.mod"), "module m\n").unwrap();
+        }
+        assert_eq!(go_module_dirs(root).unwrap(), ["", "services/api"]);
+        assert_eq!(go_cell("services/api").name, "gomod_services_api");
+        assert_eq!(go_cell("").name, "gomod");
     }
 
     #[test]

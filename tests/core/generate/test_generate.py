@@ -6,6 +6,7 @@
 
 import os
 import re
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -223,3 +224,32 @@ async def test_generate_runs_tests_as_cargo_test_does(yak: Yak) -> None:
         yak.test("//:probe-unittest"),
         stderr_regex="reads_a_workspace_file_at_run_time",
     )
+
+
+@pytest.mark.skipif(shutil.which("go") is None, reason="needs Go")
+@yak_test(data_dir="gomodules")
+async def test_generate_builds_each_go_module(yak: Yak) -> None:
+    await yak.generate()
+    assert (yak.cwd / "YAK").read_text() == (
+        'load("@gomod//:module.bzl", "go_module")\n\ngo_module()\n'
+    )
+    assert (yak.cwd / "services" / "api" / "YAK").read_text() == (
+        'load("@gomod_services_api//:module.bzl", "go_module")\n\ngo_module()\n'
+    )
+    # Go leaves modules in `testdata` out of `./...`, and so does `yak generate`.
+    assert not (yak.cwd / "services" / "api" / "testdata" / "fixture" / "YAK").exists()
+    config = (yak.cwd / ".yakconfig").read_text()
+    assert "[external_cell_gomod_services_api]\n  module = services/api/go.mod\n" in config
+
+    result = await yak.run("//:hello")
+    assert result.stdout == "hello from the root module\n"
+    result = await yak.run("//services/api:api")
+    assert result.stdout == "api serves 3\n"
+    result = await yak.test("//services/api/...")
+    summary = re.sub("\x1b\\[[0-9;]*m", "", result.stderr)
+    assert "Pass 1. Fail 0." in summary, result.stderr
+
+    result = await yak.generate()
+    assert "`YAK` is up to date" in result.stderr
+    assert "`services/api/YAK` is up to date" in result.stderr
+    assert (yak.cwd / ".yakconfig").read_text() == config

@@ -39,7 +39,9 @@ next build without another `yak generate`, and so does a new workspace member.
 A run writes only the files whose contents differ. It keeps a `YAK` file at the
 root that differs from the generated one, and `--force` replaces it. It stops
 with an error if a member's directory has a `YAK` file of its own, because that
-file would make the member a separate package.
+file would make the member a separate package. It also writes the build files
+of the Go modules in the directory, as [Go modules](../go/modules.md)
+describes.
 
 ## Targets
 
@@ -167,8 +169,8 @@ after a dependency changes.
 - A build file in a directory inside the workspace, such as one for another
   language, makes that directory a separate package, and the members' globs
   skip its files.
-- `yak generate` runs in the root of a Cargo workspace whose directory is also
-  the root of the yak project. For a workspace in a subdirectory of a project,
+- `yak generate` sets up a Cargo workspace whose directory is the root of the
+  yak project. For a workspace in a subdirectory of a project,
   configure the cell by hand, as
   [the `cargo` origin](../../advanced/external_cells.md#the-cargo-origin)
   shows, and write the `YAK` file at the root of the workspace.
