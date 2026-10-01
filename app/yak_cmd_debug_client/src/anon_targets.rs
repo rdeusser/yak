@@ -82,7 +82,7 @@ impl StreamingCommand for AnonTargetsCommand {
                     target_cfg: self.target_cfg.target_cfg(),
                     with_requesters: self.with_requesters,
                     json: self.json,
-                    output_attributes: self.attributes.get()?,
+                    output_attributes: self.attributes.get(),
                 }),
                 events_ctx,
                 ctx.console_interaction_stream(&self.common_opts.console_opts),
