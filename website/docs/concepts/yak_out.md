@@ -20,3 +20,8 @@ run `yak build --help` or `yak targets --help`.
 yak targets --show-output <target>
 yak build --show-output <target>
 ```
+
+`yak-out` holds a `go.mod` that declares a module of its own. The Go tool leaves
+a directory with its own `go.mod` out of the `./...` pattern of the module
+around it, so `go build ./...` and `go test ./...` in a Go module at the
+project root skip the Go sources that builds copy into `yak-out`.

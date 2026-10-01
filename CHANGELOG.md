@@ -35,6 +35,7 @@ Removes the code, configuration, and service clients that only Meta's internal b
 
 ### Daemon
 
+- The daemon writes `yak-out/go.mod`, so `go build ./...`, `go test ./...`, and `go list ./...` in a Go module at the project root skip `yak-out`. They failed before on the Go sources that builds copy there.
 - The local action cache persists across daemon restarts by default (`[yak] sqlite_dep_file_state`). A build after `yak kill`, or after a new `yak` binary restarted the daemon, ran every command again before. `sqlite_dep_file_state = false` turns it off.
 - After `yak kill`, or after the daemon exited on its own, the next command prints `Starting new yak daemon...`. It printed `Could not connect to yak daemon (yak daemon is not running), killing daemon..` before, because `yakd.info` outlives the daemon.
 

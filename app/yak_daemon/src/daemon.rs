@@ -207,6 +207,18 @@ fn verify_yak_out_dir(paths: &InvocationPaths) -> yak_error::Result<()> {
         file.write_all(CACHEDIR_TAG_CONTENTS.as_bytes())?;
     }
 
+    // The Go tool treats a directory with a `go.mod` as a module of its own, so the `./...`
+    // pattern of a Go module at the project root skips the Go sources that builds put in yak-out.
+    let yak_out = paths
+        .project_root()
+        .root()
+        .join(InvocationPaths::yak_out_dir_prefix());
+    if let Some(mut file) =
+        fs_util::create_file_if_not_exists(yak_out.join(ForwardRelativePath::new("go.mod")?))?
+    {
+        file.write_all(b"module yak-out\n")?;
+    }
+
     Ok(())
 }
 

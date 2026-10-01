@@ -257,6 +257,14 @@ async def test_yak_out_is_cache_dir(yak: Yak) -> None:
 
 
 @yak_test()
+async def test_yak_out_is_go_module(yak: Yak) -> None:
+    await yak.targets(":")  # Start a daemon
+    root = await yak.root()
+    go_mod = Path(root.stdout.strip()) / "yak-out" / "go.mod"
+    assert go_mod.read_text(encoding="utf-8") == "module yak-out\n"
+
+
+@yak_test()
 async def test_prev_daemon_dir(yak: Yak) -> None:
     await yak.targets(":")  # Start a daemon
     await yak.kill()
