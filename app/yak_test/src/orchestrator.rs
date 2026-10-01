@@ -644,6 +644,7 @@ impl<'a> YakTestOrchestrator<'a> {
             supports_re,
             declared_outputs,
             worker,
+            absolute_paths,
         } = test_executable_expanded;
 
         let input_deps_action_keys: Vec<_> = ensured_inputs
@@ -704,6 +705,7 @@ impl<'a> YakTestOrchestrator<'a> {
             required_resources,
             worker,
             disable_local_network_isolation,
+            absolute_paths,
         )
         .boxed()
         .await?;
@@ -1110,6 +1112,7 @@ impl TestOrchestrator for YakTestOrchestrator<'_> {
             supports_re: _,
             declared_outputs,
             worker,
+            absolute_paths,
         } = test_executable_expanded;
 
         let execution_request = Self::create_command_execution_request(
@@ -1126,6 +1129,7 @@ impl TestOrchestrator for YakTestOrchestrator<'_> {
             vec![],
             worker,
             disable_local_network_isolation,
+            absolute_paths,
         )
         .await?;
 
@@ -1811,6 +1815,8 @@ impl YakTestOrchestrator<'_> {
         let mut declared_outputs = YakIndexMap::<YakOutTestPath, OutputCreationBehavior>::new();
 
         let mut supports_re = true;
+        let absolute_paths =
+            !(test_info.use_project_relative_paths() || opts.force_use_project_relative_paths);
 
         let mut cwd;
         let (expanded_cmd, expanded_env, ensured_inputs, expanded_worker) = {
@@ -1844,15 +1850,11 @@ impl YakTestOrchestrator<'_> {
                 })
                 .await?;
 
-            let (expanded_cmd, expanded_env, expanded_worker, working_directory) = if test_info
-                .use_project_relative_paths()
-                || opts.force_use_project_relative_paths
-            {
-                expander.expand(&ensured_inputs, false)
-            } else {
+            if absolute_paths {
                 supports_re = false;
-                expander.expand(&ensured_inputs, true)
-            }?;
+            }
+            let (expanded_cmd, expanded_env, expanded_worker, working_directory) =
+                expander.expand(&ensured_inputs, absolute_paths)?;
             if let Some(working_directory) = working_directory {
                 cwd = CellRootPathBuf::new(working_directory);
             }
@@ -1872,6 +1874,7 @@ impl YakTestOrchestrator<'_> {
             declared_outputs,
             supports_re,
             worker: expanded_worker,
+            absolute_paths,
         })
     }
 
@@ -1889,6 +1892,7 @@ impl YakTestOrchestrator<'_> {
         required_local_resources: Vec<LocalResourceState>,
         worker: Option<WorkerSpec>,
         disable_local_network_isolation: bool,
+        absolute_paths: bool,
     ) -> yak_error::Result<CommandExecutionRequest> {
         let inputs = ensured_inputs
             .into_iter()
@@ -1929,6 +1933,9 @@ impl YakTestOrchestrator<'_> {
             .with_required_local_resources(required_local_resources)?
             .with_disable_local_network_isolation(disable_local_network_isolation)
             .with_is_test();
+        if absolute_paths {
+            request = request.with_absolute_paths_under(fs.fs().root().to_buf());
+        }
         if let Some(timeout) = timeout {
             request = request.with_timeout(timeout)
         }
@@ -2488,6 +2495,8 @@ struct ExpandedTestExecutable {
     supports_re: bool,
     declared_outputs: YakIndexMap<YakOutTestPath, OutputCreationBehavior>,
     worker: Option<WorkerSpec>,
+    /// Whether `cmd` and `env` name paths by absolute path.
+    absolute_paths: bool,
 }
 
 fn create_prepare_for_local_execution_result(

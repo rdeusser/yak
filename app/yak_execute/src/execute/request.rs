@@ -39,6 +39,8 @@ use yak_directory::directory::directory::Directory;
 use yak_directory::directory::directory_iterator::DirectoryIterator;
 use yak_directory::directory::fingerprinted_directory::FingerprintedDirectory;
 use yak_error::yak_error;
+use yak_fs::paths::abs_norm_path::AbsNormPath;
+use yak_fs::paths::abs_norm_path::AbsNormPathBuf;
 use yak_hash::YakIndexSet;
 
 use super::dep_file_digest::DepFileDigest;
@@ -401,6 +403,11 @@ pub struct CommandExecutionRequest {
     /// ignoring the inherited `network_access` policy; no effect on RE. Set by the test
     /// orchestrator's `disable_local_network_isolation`, which explains the rationale.
     disable_local_network_isolation: bool,
+
+    /// The project root, when the arguments and environment name paths under it by absolute
+    /// path. The action digest covers them with `PROJECT_ROOT_PLACEHOLDER` in place of the root,
+    /// so it does not depend on where the project is.
+    absolute_paths_root: Option<AbsNormPathBuf>,
 }
 
 impl CommandExecutionRequest {
@@ -436,6 +443,7 @@ impl CommandExecutionRequest {
             skip_resource_control: false,
             network_access: None,
             disable_local_network_isolation: false,
+            absolute_paths_root: None,
         }
     }
 
@@ -670,6 +678,16 @@ impl CommandExecutionRequest {
 
     pub fn is_test(&self) -> bool {
         self.is_test
+    }
+
+    /// Records that the arguments and environment name paths under `root` by absolute path.
+    pub fn with_absolute_paths_under(mut self, root: AbsNormPathBuf) -> Self {
+        self.absolute_paths_root = Some(root);
+        self
+    }
+
+    pub fn absolute_paths_root(&self) -> Option<&AbsNormPath> {
+        self.absolute_paths_root.as_deref()
     }
 
     pub fn with_skip_resource_control(mut self) -> Self {

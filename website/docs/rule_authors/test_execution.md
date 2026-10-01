@@ -225,6 +225,12 @@ A pass counts for a later run when these are unchanged:
 - The values of the environment variables that a local test takes from the
   daemon, such as `PATH` and `HOME`.
 
+A test with `use_project_relative_paths = False` gets absolute paths in its
+command and environment. The action digest covers those paths with
+`${YAK_PROJECT_ROOT}` in place of the project root, so two checkouts of a project
+at different paths compute the same digest for the same test. The test still
+runs with the real paths.
+
 yak keeps a pass in `yak-out/<isolation dir>/cache/test_results`, so a daemon
 restart keeps it, and deleting that directory empties the cache. yak stores
 only passes, so a failing or timed-out test runs on every request. It stores no

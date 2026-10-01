@@ -8,6 +8,7 @@
  * above-listed licenses.
  */
 
+use std::borrow::Cow;
 use std::ops::ControlFlow;
 use std::sync::Arc;
 use std::time::Duration;
@@ -44,6 +45,7 @@ use crate::execute::prepared::PreparedAction;
 use crate::execute::prepared::PreparedCommand;
 use crate::execute::prepared::PreparedCommandExecutor;
 use crate::execute::prepared::PreparedCommandOptionalExecutor;
+use crate::execute::project_root_placeholder::replace_project_root;
 use crate::execute::request::CommandExecutionRequest;
 use crate::execute::request::ExecutorPreference;
 use crate::execute::request::OutputType;
@@ -228,12 +230,22 @@ impl CommandExecutor {
                 .network_access()
                 .map(ExecutorNetworkAccess::from)
                 .or(self.0.options.network_access);
+            let mut args = request.args().to_vec();
+            let mut all_args = all_args;
+            let mut env = Cow::Borrowed(request.env());
+            if let Some(root) = request.absolute_paths_root() {
+                let root = root.as_path().to_string_lossy();
+                let replace = |value: &String| replace_project_root(value, &root).into_owned();
+                args = args.iter().map(replace).collect();
+                all_args = all_args.iter().map(replace).collect();
+                env = Cow::Owned(env.iter().map(|(k, v)| (k.clone(), replace(v))).collect());
+            }
             let action = re_create_action(
-                request.args().to_vec(),
+                args,
                 all_args,
                 request.paths().output_paths(),
                 request.working_directory(),
-                request.env(),
+                &env,
                 input_digest,
                 request.timeout(),
                 platform,
