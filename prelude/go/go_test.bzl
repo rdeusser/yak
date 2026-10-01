@@ -35,6 +35,7 @@ def _gen_test_main(
     coverage_mode: [GoCoverageMode, None],
     cover_packages: list[str],  # packages those are included for coverage
     test_go_files_argsfile: Artifact,
+    xtest_go_files_argsfile: Artifact,
 ) -> Artifact:
     """
     Generate a `main.go` which calls tests from the given sources.
@@ -52,6 +53,9 @@ def _gen_test_main(
         cover_pkgs_argsfile = ctx.actions.declare_output("cover_pkgs_argsfile", has_content_based_path = True)
         ctx.actions.write(cover_pkgs_argsfile, [["--cover-pkgs", pkg] for pkg in cover_packages])
         cmd.append(cmd_args(cover_pkgs_argsfile, format = "@{}"))
+    # The flags of the external test files come before the internal test files, which are
+    # positional arguments.
+    cmd.append(cmd_args(xtest_go_files_argsfile, format = "@{}"))
     cmd.append(cmd_args(test_go_files_argsfile, format = "@{}"))
     ctx.actions.run(cmd_args(cmd), category = "go_test_main_gen", allow_cache_upload = ctx.attrs._go_toolchain[GoToolchainInfo].allow_cache_upload)
     return output
@@ -121,9 +125,33 @@ def go_test_impl(ctx: AnalysisContext) -> list[Provider]:
 
     pkgs[pkg_import_path] = tests
 
+    # Compile the external tests (`package <name>_test`) into a package of their own, which
+    # imports the package above with its tests, as `go test` does.
+    xtests, _, xtest_go_files_argsfile = declare_package_build(
+        ctx = ctx,
+        pkg_import_path = pkg_import_path + "_test",
+        main = False,
+        sources = GoSourceInputs(
+            srcs = srcs,
+            embed_srcs = from_named_set(ctx.attrs.embed_srcs),
+            package_root = ctx.attrs.package_root,
+        ),
+        cgo_build_context = cgo_build_context,
+        config = GoBuildConfig(
+            compiler_flags = ctx.attrs.compiler_flags,
+            build_tags = ctx.attrs._build_tags,
+            cgo_enabled = cgo_enabled,
+            x_tests = True,
+        ),
+        pkgs = {pkg_import_path: tests},
+        deps = deps,
+        cgo_gen_dir_name = "cgo_gen_xtest",
+    )
+    pkgs[pkg_import_path + "_test"] = xtests
+
     # Generate a 'main.go' file (test runner) which runs the actual tests from the package above.
     # Build the it as a separate package (<foo>.test) - which imports and invokes the test package.
-    gen_main = _gen_test_main(ctx, pkg_import_path, coverage_mode, cover_packages, test_go_files_argsfile)
+    gen_main = _gen_test_main(ctx, pkg_import_path, coverage_mode, cover_packages, test_go_files_argsfile, xtest_go_files_argsfile)
     main, _, _ = declare_package_build(
         ctx = ctx,
         pkg_import_path = pkg_import_path + ".test",

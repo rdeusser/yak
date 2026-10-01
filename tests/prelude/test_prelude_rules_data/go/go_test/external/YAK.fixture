@@ -1,0 +1,33 @@
+load("//:py_assertion.bzl", "py_assertion")
+
+prelude = native
+
+prelude.go_library(
+    name = "calc",
+    package_name = "calc",
+    srcs = ["calc.go"],
+)
+
+# The external tests (`package calc_test`) import the package with its own test files, so
+# they see the names that `export_test.go` declares.
+prelude.go_test(
+    name = "test",
+    srcs = [
+        "calc_ext_test.go",
+        "calc_test.go",
+        "export_test.go",
+    ],
+    target_under_test = ":calc",
+)
+
+py_assertion(
+    name = "check_output",
+    script = """
+import subprocess
+import sys
+output = subprocess.check_output([sys.argv[1], "-test.v"]).decode()
+for test in ["TestDouble", "TestAdd", "TestExported"]:
+    assert "--- PASS: " + test in output, output
+""",
+    script_args = ["$(location_exec :test)"],
+)

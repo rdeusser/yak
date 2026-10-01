@@ -25,6 +25,7 @@ Removes the code, configuration, and service clients that only Meta's internal b
 
 ### Testing
 
+- `go_test` builds external tests, the test files that declare `package <name>_test`, into a package of their own that imports the package under test with its own test files, as `go test` does. It failed with `External tests are not supported` before.
 - `yak test --changed-since <revision>` tests only the matched targets that the changes since a Git revision can affect. The changes are those between the working tree and the merge base of the revision and `HEAD`. A change to the configuration, a submodule, a configuration target, `rust-toolchain.toml`, or a path in `[test] changed_since_select_all` tests every matched target.
 
 ### File watching

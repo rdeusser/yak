@@ -270,6 +270,11 @@ go_test = prelude_rule(
          specified Go source and resource files—and a generated main file. It's
          similar to the `go test` command.
 
+         Test files that declare `package <name>_test` form an external test
+         package. It compiles separately and imports the package under test
+         with its own test files, as `go test` does, so it can use the names
+         that an `export_test.go` file declares.
+
          If your test requires static files you should specify these in
          the **resources** argument. If you do not specify these
          files, they won't be available when your test runs.

@@ -32,6 +32,9 @@ GoBuildConfig = record(
     coverage_mode = field(GoCoverageMode | None, None),
     cgo_enabled = field(bool, False),
     with_tests = field(bool, False),
+    # Build the external test package, `<package>_test`, from the files of the sources that
+    # declare it, in place of the package itself.
+    x_tests = field(bool, False),
 )
 
 GoSourceInputs = record(
@@ -76,7 +79,7 @@ def declare_package_build(
 
     package_root = sources.package_root if sources.package_root != None else infer_package_root(srcs)
 
-    go_list_out = go_list(actions, go_toolchain, pkg_import_path, srcs, package_root, config.build_tags, config.cgo_enabled, with_tests = config.with_tests)
+    go_list_out = go_list(actions, go_toolchain, pkg_import_path, srcs, package_root, config.build_tags, config.cgo_enabled, with_tests = config.with_tests or config.x_tests)
 
     test_go_files_argsfile = actions.declare_output(paths.basename(pkg_import_path) + "_test_go_files.go_package_argsfile", has_content_based_path = True)
 
@@ -152,17 +155,21 @@ def _build_package_action_impl(
     if go_list.error != None:
         fail("Invalid go package: {}", go_list.error.err)
 
-    if len(go_list.x_test_go_files) > 0:
-        fail("External tests are not supported, remove suffix '_test' from package declaration '{}': {}", go_list.name, target_label)
-
     go_stdlib_value = go_stdlib_value.providers[GoStdlibDynamicValue]
+
+    if config.x_tests:
+        build_go_list = _go_list_for_x_tests(actions, pkg_import_path, go_list)
+        test_files = cmd_args(go_list.x_test_go_files, format = "--xtest-file={}")
+    else:
+        build_go_list = go_list_for_build(go_list, config.with_tests)
+        test_files = cmd_args(go_list.test_go_files if config.with_tests else [])
 
     result = build_package(
         actions = actions,
         target_label = target_label,
         go_toolchain = go_toolchain,
         cgo_build_context = cgo_build_context,
-        go_list = go_list_for_build(go_list, config.with_tests),
+        go_list = build_go_list,
         params = BuildPackageParams(
             main = main,
             standard = False,
@@ -178,7 +185,7 @@ def _build_package_action_impl(
         ),
     )
 
-    actions.write(test_go_files_argsfile, cmd_args((go_list.test_go_files if config.with_tests else []), ""))
+    actions.write(test_go_files_argsfile, cmd_args(test_files, ""))
     actions.copy_dir(cgo_gen_dir, result.cgo_gen_dir)
 
     actions.copy_file(out_x, result.x_file)
@@ -247,6 +254,29 @@ def go_list_for_build(go_list_out: GoListOut, with_tests: bool) -> BuildPackageG
         embed_patterns = embed_patterns,
         cgo_cflags = go_list_out.cgo_cflags,
         cgo_cppflags = go_list_out.cgo_cppflags,
+    )
+
+def _go_list_for_x_tests(actions: AnalysisActions, pkg_import_path: str, go_list_out: GoListOut) -> BuildPackageGoList:
+    """
+    The files of the external test package. A package without external tests gets a file
+    that only declares the package, so that every test binary has the package to link.
+    """
+    pkg_name = go_list_out.name + "_test"
+    go_files = go_list_out.x_test_go_files
+    if not go_files:
+        go_files = [actions.write(paths.basename(pkg_import_path) + "_xtest_stub.go", "package {}\n".format(pkg_name))]
+    return BuildPackageGoList(
+        pkg_name = pkg_name,
+        go_files = go_files,
+        cgo_files = [],
+        s_files = [],
+        h_files = [],
+        c_cxx_files = [],
+        syso_files = [],
+        imports = set(go_list_out.x_test_imports),
+        embed_patterns = go_list_out.x_test_embed_patterns,
+        cgo_cflags = [],
+        cgo_cppflags = [],
     )
 
 BuildPackageParams = record(

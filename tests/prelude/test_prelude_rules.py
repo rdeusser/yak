@@ -55,6 +55,7 @@ GO_PACKAGES = [
     "go_exported_library",
     "go_test/basic",
     "go_test/coverage",
+    "go_test/external",
     "go_test/resources",
     "go_test/target_under_test",
 ] + [

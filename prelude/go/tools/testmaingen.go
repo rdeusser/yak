@@ -57,12 +57,27 @@ func (s stringSetFlag) String() string {
 	return strings.Join(slices.Collect(maps.Keys(s)), ",")
 }
 
+// A flag that collects the values of each of its uses, in order.
+type stringListFlag []string
+
+// Set implements the flag.Value interface for stringListFlag
+func (s *stringListFlag) Set(value string) error {
+	*s = append(*s, value)
+	return nil
+}
+
+// String implements the flag.Value interface for stringListFlag
+func (s *stringListFlag) String() string {
+	return strings.Join(*s, ",")
+}
+
 // Flags
 var (
 	pkgImportPath string
 	outputFile    string
 	testCoverMode string
 	coverPkgs     = make(stringSetFlag)
+	xtestFiles    stringListFlag
 )
 
 func init() {
@@ -70,6 +85,7 @@ func init() {
 	flag.StringVar(&outputFile, "output", "", "The path to the output file. Default to stdout.")
 	flag.Var(&coverPkgs, "cover-pkgs", "A comma-separated list of packages to gather coverage info on")
 	flag.StringVar(&testCoverMode, "cover-mode", "", "Cover mode (see `go tool cover`)")
+	flag.Var(&xtestFiles, "xtest-file", "A file of the external test package (`package <name>_test`)")
 }
 
 // Resolve argsfiles in args (e.g. `@file.txt`).
@@ -102,7 +118,7 @@ func main() {
 		testCoverPaths = append(testCoverPaths, importPath)
 	}
 
-	testFuncs, err := loadTestFuncsFromFiles(pkgImportPath, flag.Args())
+	testFuncs, err := loadTestFuncsFromFiles(pkgImportPath, flag.Args(), xtestFiles)
 	if err != nil {
 		log.Fatalln("Could not read test files:", err)
 	}
@@ -128,7 +144,7 @@ func main() {
 	}
 }
 
-func loadTestFuncsFromFiles(packageImportPath string, files []string) (*testFuncs, error) {
+func loadTestFuncsFromFiles(packageImportPath string, files []string, xtestFiles []string) (*testFuncs, error) {
 	t := &testFuncs{
 		Package: &Package{
 			ImportPath: packageImportPath,
@@ -136,6 +152,11 @@ func loadTestFuncsFromFiles(packageImportPath string, files []string) (*testFunc
 	}
 	for _, filename := range files {
 		if err := t.load(filename, "_test", &t.ImportTest, &t.NeedTest); err != nil {
+			return nil, err
+		}
+	}
+	for _, filename := range xtestFiles {
+		if err := t.load(filename, "_xtest", &t.ImportXtest, &t.NeedXtest); err != nil {
 			return nil, err
 		}
 	}
