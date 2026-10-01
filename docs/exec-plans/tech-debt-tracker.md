@@ -116,6 +116,12 @@ The first three fail the same way at `903bfd7a61`.
 
 Remove each item when its command succeeds.
 
+### `cas_artifact` has no test
+
+The `cas_artifact` rule fetches a blob or directory tree from the Remote Execution CAS by a digest that the build file names.
+Its only test, `test_cas_artifact`, built targets whose digests name content in Meta's CAS with BLAKE3-KEYED digests, so the fork removed it, and it removed it again on 2026-09-30 after a port brought it back.
+Remove this entry when a test uploads known content to a test CAS and builds a `cas_artifact` target that fetches it.
+
 ## Defects
 
 ### `apple_test` cannot run under the built-in test runner

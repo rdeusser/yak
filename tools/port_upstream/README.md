@@ -66,6 +66,20 @@ A commit that needs attention stops with its files staged and lists them:
 
 The path map is cached in `.git/yak-port/` by the tree of `HEAD` and the source of `port.py`.
 
+## Fork differences that ports meet
+
+`REPLACEMENTS` in `port.py` handles the differences that have a fixed spelling.
+These differences need a manual adaptation, recorded in the port's `--note`:
+
+- The fork defaults to SHA-256 digests and has no BLAKE3-KEYED. Upstream tests that declare SHA-1 checksums set `YAK_DEFAULT_DIGEST_ALGORITHM` to `SHA1`.
+- Tests that need Remote Execution carry `@pytest.mark.remote_execution`, and upstream tests of fixtures under `tests/targets` have no fixtures in the fork.
+- The Remote Execution client records no costs or digest traces.
+- `tag_error!` has no `task` or `action_cache_is_corrupted` fields.
+- Settings sections have no rollout metadata.
+- `CommonAttributeArgs::get` returns the attribute list without an error.
+- Fixtures that use `?modifier` need a `PACKAGE` file with `set_cfg_constructor`.
+- The fork has no proxy allowlist and no VPN-less URL for downloads.
+
 ## Tests
 
 `python3 tools/port_upstream/test_port.py` runs the unit tests.
