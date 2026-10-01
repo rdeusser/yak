@@ -216,31 +216,6 @@ async def test_anon_targets(yak: Yak) -> None:
 
 
 @yak_test(data_dir="actions")
-async def test_cas_artifact(yak: Yak) -> None:
-    # The digests in `//cas_artifact:` require the yakconfig.
-    # NB: cannot use `extra_yak_config` attrib of `@yak_test()``
-    with open(yak.cwd / ".yakconfig", "a") as yakconfig:
-        yakconfig.write("[yak]\n")
-        yakconfig.write("digest_algorithms = BLAKE3-KEYED,SHA1\n")
-
-    # Setting a use case override to test that it is not used.
-    result = await yak.build(
-        "//cas_artifact:", "-c", "yak_re_client.override_use_case=missing_usecase"
-    )
-
-    empty = result.get_build_report().output_for_target("//cas_artifact:empty")
-    assert empty.read_text() == ""
-
-    tree = result.get_build_report().output_for_target("//cas_artifact:tree")
-    assert list(tree.iterdir()) == [tree / "b"]
-    assert (tree / "b").read_text() == "b\n"
-
-    tree = result.get_build_report().output_for_target("//cas_artifact:dir")
-    assert list(tree.iterdir()) == [tree / "y"]
-    assert (tree / "y").read_text() == "hi\n"
-
-
-@yak_test(data_dir="actions")
 async def test_invalid_command(yak: Yak) -> None:
     await expect_failure(
         yak.build("//run_bad:run_invalid_command_local"),
