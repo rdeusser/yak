@@ -3,8 +3,3 @@ name = "util"
 version = "1.2.3-beta.1"
 description = "first description"
 edition.workspace = true
-
-# Cargo leaves this table to other tools. yak builds `util` with the files of
-# its own directory and the files that `include` names.
-[package.metadata.yak]
-include = ["../shared/banner.txt"]

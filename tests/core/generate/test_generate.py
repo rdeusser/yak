@@ -47,6 +47,13 @@ async def test_generate_builds_the_workspace(yak: Yak) -> None:
         "description=second description origin=hidden banner=shared\n"
     )
 
+    # The cell finds the files that the crate includes, so a new include of a
+    # file outside the crate's directory builds without a declaration.
+    lib = yak.cwd / "util" / "src" / "lib.rs"
+    lib.write_text(lib.read_text().replace("shared/banner.txt", "shared/footer.txt"))
+    result = await yak.run("//:app")
+    assert result.stdout.endswith("origin=hidden banner=footer\n")
+
 
 @yak_test(data_dir="workspace")
 async def test_generate_twice_changes_nothing(yak: Yak) -> None:
@@ -213,16 +220,42 @@ async def test_generate_runs_tests_as_cargo_test_does(yak: Yak) -> None:
     assert "root//:probe-probe-unittest" in targets
     # `extra` needs a feature that is off, so Cargo skips it.
     assert "root//:extra" not in targets
+    # The tests read `shared.txt` from the workspace's directory.
+    (yak.cwd / "YAK").write_text(
+        WORKSPACE_BUILD_FILE.replace(
+            "cargo_workspace()",
+            'cargo_workspace(test_data = {"probe": ["shared.txt"]})',
+        )
+    )
     result = await yak.test("//...")
     summary = re.sub("\x1b\\[[0-9;]*m", "", result.stderr)
     assert "Pass 4. Fail 0." in summary, result.stderr
 
     # A test reads only its package's files and the files it declares.
-    manifest = yak.cwd / "probe" / "Cargo.toml"
-    manifest.write_text(manifest.read_text().replace('test-data = ["../shared.txt"]', ""))
+    (yak.cwd / "YAK").write_text(WORKSPACE_BUILD_FILE)
     await expect_failure(
         yak.test("//:probe-unittest"),
         stderr_regex="reads_a_workspace_file_at_run_time",
+    )
+
+    (yak.cwd / "YAK").write_text(
+        WORKSPACE_BUILD_FILE.replace(
+            "cargo_workspace()", 'cargo_workspace(test_data = {"prob": []})'
+        )
+    )
+    await expect_failure(
+        yak.targets("//:"),
+        stderr_regex="`test_data` names `prob`, which is not a package of the workspace's members",
+    )
+
+    # The manifest no longer declares yak's inputs.
+    manifest = yak.cwd / "probe" / "Cargo.toml"
+    manifest.write_text(
+        manifest.read_text() + '\n[package.metadata.yak]\ntest-data = ["../shared.txt"]\n'
+    )
+    await expect_failure(
+        yak.targets("//:"),
+        stderr_regex="`\\[package.metadata.yak\\]` of package `probe` is no longer read",
     )
 
 

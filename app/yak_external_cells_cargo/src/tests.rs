@@ -6,12 +6,15 @@
  * above-listed licenses.
  */
 
+use std::collections::BTreeMap;
+
 use serde_json::json;
 
 use crate::CargoPlatform;
 use crate::ThirdParty;
 use crate::cfg::TargetCfg;
 use crate::generate_third_party;
+use crate::includes::IncludedPath;
 use crate::metadata::Metadata;
 
 const REGISTRY: &str = "registry+https://github.com/rust-lang/crates.io-index";
@@ -280,7 +283,7 @@ fn workspace_metadata() -> Metadata {
         "version": "0.2.0",
         "source": null,
         "manifest_path": "/ws/util/Cargo.toml",
-        "metadata": {"yak": {"include": ["../shared/*.txt"]}},
+        "metadata": null,
         "targets": [
             {"name": "util", "kind": ["lib"], "src_path": "/ws/util/src/lib.rs", "edition": "2024"},
             {"name": "build-script-build", "kind": ["custom-build"], "src_path": "/ws/util/build.rs", "edition": "2024"},
@@ -319,6 +322,7 @@ fn generate_workspace_bzl() -> String {
         &platforms(),
         std::path::Path::new("/"),
         "crates",
+        &util_includes("../../shared/banner.txt"),
     )
     .unwrap()
 }
@@ -376,49 +380,74 @@ fn test_workspace_member_build_script_features_and_tests() {
     assert!(util.contains(
         "\"test_platform\": {\"linux-x86_64\": {\"deps\": [\"crates//libc-0.2.0:libc\"]}}"
     ));
-    assert!(out.contains("def cargo_workspace():"));
+    assert!(out.contains("def cargo_workspace(include = {}, test_data = {}):"));
+}
+
+/// The includes of a workspace whose `util/src/lib.rs` includes `path`.
+fn util_includes(path: &str) -> BTreeMap<String, Vec<(String, IncludedPath)>> {
+    BTreeMap::from([(
+        "util".to_owned(),
+        vec![
+            (
+                "util/src/lib.rs".to_owned(),
+                IncludedPath::RelativeToSource(path.to_owned()),
+            ),
+            (
+                "util/src/lib.rs".to_owned(),
+                IncludedPath::RelativeToSource("own.txt".to_owned()),
+            ),
+            (
+                "util/src/lib.rs".to_owned(),
+                IncludedPath::RelativeToManifestDir("/../shared/manifest.txt".to_owned()),
+            ),
+        ],
+    )])
 }
 
 #[test]
 fn test_workspace_member_includes_files_outside_its_directory() {
     let out = generate_workspace_bzl();
+    // `own.txt` is in the member's directory, so its sources have it already.
     assert!(
-        member(&out, "util").contains(
-            "\"srcs\": [\"util/**\", \"util/**/.*\", \"util/**/.*/**\", \"shared/*.txt\"]"
-        )
+        member(&out, "util")
+            .contains("\"include\": [\"shared/banner.txt\", \"shared/manifest.txt\"]"),
+        "{out}"
+    );
+
+    // A path outside the workspace belongs to no member.
+    let out = crate::generate_workspace(
+        &workspace_metadata(),
+        &platforms(),
+        std::path::Path::new("/"),
+        "crates",
+        &util_includes("../../../outside.txt"),
+    )
+    .unwrap();
+    assert!(
+        member(&out, "util").contains("\"include\": [\"shared/manifest.txt\"]"),
+        "{out}"
     );
 
     let mut metadata = workspace_metadata();
-    util_include(
-        &mut metadata,
-        json!({"yak": {"include": ["../../outside.txt"]}}),
-    );
-    let err =
-        crate::generate_workspace(&metadata, &platforms(), std::path::Path::new("/"), "crates")
-            .unwrap_err();
-    assert!(
-        err.to_string()
-            .contains("names `../../outside.txt`, which is outside the workspace"),
-        "{err}"
-    );
-
-    util_include(&mut metadata, json!({"yak": {"include": "shared"}}));
-    let err =
-        crate::generate_workspace(&metadata, &platforms(), std::path::Path::new("/"), "crates")
-            .unwrap_err();
-    assert!(
-        err.to_string().contains("must be a list of path patterns"),
-        "{err}"
-    );
-}
-
-fn util_include(metadata: &mut Metadata, value: serde_json::Value) {
     let util = metadata
         .packages
         .iter_mut()
         .find(|p| p.name == "util")
         .unwrap();
-    util.metadata = Some(value);
+    util.metadata = Some(json!({"yak": {"test-data": ["../shared.txt"]}}));
+    let err = crate::generate_workspace(
+        &metadata,
+        &platforms(),
+        std::path::Path::new("/"),
+        "crates",
+        &BTreeMap::new(),
+    )
+    .unwrap_err();
+    assert!(
+        err.to_string()
+            .contains("`[package.metadata.yak]` of package `util` is no longer read"),
+        "{err}"
+    );
 }
 
 #[test]
@@ -438,6 +467,7 @@ fn test_workspace_member_at_the_root_excludes_the_other_members() {
         &platforms(),
         std::path::Path::new("/ws"),
         "crates",
+        &BTreeMap::new(),
     )
     .unwrap();
     assert!(out.contains("_WORKSPACE_DIR = \"\""));
@@ -463,9 +493,14 @@ fn test_workspace_duplicate_target_fails() {
         .find(|p| p.name == "util")
         .unwrap();
     util.targets[2].name = "unittest".to_owned();
-    let err =
-        crate::generate_workspace(&metadata, &platforms(), std::path::Path::new("/"), "crates")
-            .unwrap_err();
+    let err = crate::generate_workspace(
+        &metadata,
+        &platforms(),
+        std::path::Path::new("/"),
+        "crates",
+        &BTreeMap::new(),
+    )
+    .unwrap_err();
     assert!(
         err.to_string()
             .contains("Two targets of the Cargo workspace are named `util-unittest`"),

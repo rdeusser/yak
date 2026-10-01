@@ -11,6 +11,7 @@
 
 pub mod cfg;
 mod graph;
+pub mod includes;
 mod inputs;
 pub mod metadata;
 mod third_party;
@@ -26,3 +27,4 @@ pub use third_party::ThirdParty;
 pub use third_party::ThirdPartyPackage;
 pub use third_party::generate_third_party;
 pub use workspace::generate_workspace;
+pub use workspace::member_dirs;

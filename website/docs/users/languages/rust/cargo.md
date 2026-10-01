@@ -84,33 +84,33 @@ output satisfies the condition.
 
 ## Files outside a crate's directory
 
-A crate builds with the files of its own directory. A crate that also reads
-files elsewhere in the workspace, such as `include_str!("../../README.md")`,
-lists them in its `Cargo.toml`, relative to its directory:
+A crate builds with the files of its own directory and the files that its Rust
+files name in `include!`, `include_str!`, or `include_bytes!`, such as
+`include_str!("../../README.md")`. The cell finds those files in a string
+literal argument and in `concat!(env!("CARGO_MANIFEST_DIR"), "/path")`. A
+crate that reads other files at compile time, such as a build script that reads
+`../../schema/*.json`, names them in `include` of `cargo_workspace()`, keyed by
+the package's name, with glob patterns relative to the workspace's directory:
 
-```toml
-[package.metadata.yak]
-include = ["../../README.md", "../../assets/*.json"]
+```python
+load("@crates//:workspace.bzl", "cargo_workspace")
+
+cargo_workspace(
+    include = {"server": ["schema/*.json"]},
+    test_data = {"server": ["testdata/**", "scripts/*.sh"]},
+)
 ```
 
-Cargo ignores the `[package.metadata]` table. Each entry is a glob pattern, and
-it must name files inside the workspace.
-
-A test that reads files outside its package's directory at run time lists them
-in `test-data`:
-
-```toml
-[package.metadata.yak]
-test-data = ["../testdata/**", "../../scripts/*.sh"]
-```
-
-The copy that a test runs in holds only its package's files, the `include`
-files, and the `test-data` files, so a test that reads another file fails. The
-declarations tell
+A test that reads files outside its package's directory at run time names them
+in `test_data`. The copy that a test runs in holds only its package's files,
+its included files, and its `test_data` files, so a test that reads another
+file fails. The declarations tell
 [`yak test --changed-since`](../../advanced/changed_since.md) which tests a
-change to a file can affect. A change to a `test-data` file selects the
-package's tests, and a change to an `include` file also selects the tests of
+change to a file can affect. A change to a `test_data` file selects the
+package's tests, and a change to an included file also selects the tests of
 every package that depends on it.
+
+A `[package.metadata.yak]` table in a `Cargo.toml` is an error.
 
 ## Third-party crates
 

@@ -11,6 +11,8 @@
 //! the workspace only calls the macro, so all members are targets of one package, and a crate
 //! can read files of the workspace outside its own directory.
 
+use std::collections::BTreeMap;
+use std::collections::BTreeSet;
 use std::collections::HashMap;
 use std::collections::HashSet;
 use std::path::Component;
@@ -27,6 +29,7 @@ use crate::graph::crate_name;
 use crate::graph::lib_target;
 use crate::graph::package_env;
 use crate::graph::relative_to;
+use crate::includes::IncludedPath;
 use crate::metadata::Metadata;
 use crate::metadata::Package;
 use crate::metadata::Target;
@@ -35,12 +38,22 @@ use crate::third_party::library_label;
 /// The macro that the workspace's build file calls. `_WORKSPACE_DIR` is the directory of the
 /// workspace relative to the project root, and `_MEMBERS` holds the data of each member.
 const MACRO: &str = r#"
-def cargo_workspace():
-    """Declares the targets of the members of the Cargo workspace in this directory."""
+def cargo_workspace(include = {}, test_data = {}):
+    """Declares the targets of the members of the Cargo workspace in this directory.
+
+    A member builds from the files of its directory and the files that its Rust sources name in
+    `include!`, `include_str!`, and `include_bytes!`. `include` maps a member's package name to
+    the patterns of other files that its crates read at compile time, and `test_data` to the
+    patterns of the files that its tests read at run time, relative to this directory."""
     if package_name() != _WORKSPACE_DIR:
         fail("`cargo_workspace()` belongs in the build file of `{}`, the root of the Cargo workspace".format(_WORKSPACE_DIR or "."))
+    names = [member["name"] for member in _MEMBERS]
+    for arg, value in [("include", include), ("test_data", test_data)]:
+        for name in value:
+            if name not in names:
+                fail("`{}` names `{}`, which is not a package of the workspace's members".format(arg, name))
     for member in _MEMBERS:
-        _declare_member(member)
+        _declare_member(member, include.get(member["name"], []), test_data.get(member["name"], []))
 
 def _declare(rule, platform, **kwargs):
     rule(**apply_platform_attrs(platform, kwargs))
@@ -75,13 +88,17 @@ def _profile_files(member, files):
                 out["examples/" + name] = ":" + example["rule"] + sub_target
     return out
 
-def _declare_member(member):
+def _declare_member(member, include, test_data):
     srcs = glob(member["srcs"], exclude = member["srcs_exclude"])
+    own_srcs = {f: None for f in srcs}
+    for f in glob(member["include"] + include):
+        if f not in own_srcs:
+            own_srcs[f] = None
+            srcs.append(f)
 
     # A test reads its member's files and its declared test data from a copy of them, so a read of
     # another file fails.
-    own_srcs = {f: None for f in srcs}
-    test_srcs = srcs + [f for f in glob(member["test_data"]) if f not in own_srcs]
+    test_srcs = srcs + [f for f in glob(test_data) if f not in own_srcs]
     env = dict(member["env"])
     rustc_flags = []
     names = member["rules"]
@@ -258,36 +275,36 @@ fn has_kind(t: &Target, kind: &str) -> bool {
     t.kind.iter().any(|k| k == kind)
 }
 
-/// The path patterns of `[package.metadata.yak] <key>`, relative to the workspace's directory.
-fn metadata_patterns(
-    package: &Package,
-    dir: &str,
-    key: &'static str,
-) -> yak_error::Result<Vec<String>> {
-    let Some(patterns) = package
-        .metadata
-        .as_ref()
-        .and_then(|m| m.get("yak"))
-        .and_then(|yak| yak.get(key))
-    else {
-        return Ok(Vec::new());
+/// The files outside the member's directory `dir` that its Rust files include, relative to the
+/// workspace's directory and sorted.
+fn member_includes(dir: &str, includes: Option<&Vec<(String, IncludedPath)>>) -> Vec<String> {
+    let prefix = if dir.is_empty() {
+        String::new()
+    } else {
+        format!("{dir}/")
     };
-    let invalid = || GenerateError::InvalidPatterns(key, package.name.clone());
-    patterns
-        .as_array()
-        .ok_or_else(invalid)?
-        .iter()
-        .map(|pattern| {
-            let pattern = pattern.as_str().ok_or_else(invalid)?;
-            Ok(workspace_pattern(dir, pattern).ok_or_else(|| {
-                GenerateError::PatternOutsideWorkspace(
-                    key,
-                    package.name.clone(),
-                    pattern.to_owned(),
-                )
-            })?)
-        })
-        .collect()
+    let mut paths = BTreeSet::new();
+    for (file, included) in includes.into_iter().flatten() {
+        let (base, path) = match included {
+            IncludedPath::RelativeToSource(path) => (
+                file.rsplit_once('/').map_or("", |(parent, _)| parent),
+                path.as_str(),
+            ),
+            IncludedPath::RelativeToManifestDir(path) => (dir, path.trim_start_matches('/')),
+        };
+        // A file outside the workspace belongs to no member's package. The scan also finds calls
+        // in comments, so such a path fails the crate's compilation instead of the cell, if the
+        // crate reads it.
+        let Some(resolved) = workspace_pattern(base, path) else {
+            continue;
+        };
+        // A member's own files are its sources already. The root member's sources leave out the
+        // directories of the other members.
+        if dir.is_empty() || !resolved.starts_with(&prefix) {
+            paths.insert(resolved);
+        }
+    }
+    paths.into_iter().collect()
 }
 
 /// `dir/pattern` with `.` and `..` resolved, relative to the workspace's directory, or `None`
@@ -381,14 +398,31 @@ fn manifest_dir(package: &Package) -> &Path {
         .unwrap_or(Path::new(""))
 }
 
+/// The directories of the workspace's members, relative to the workspace's directory.
+pub fn member_dirs(metadata: &Metadata) -> yak_error::Result<Vec<String>> {
+    let graph = Graph::new(metadata);
+    let workspace_root = PathBuf::from(&metadata.workspace_root);
+    metadata
+        .workspace_members
+        .iter()
+        .map(|id| {
+            let package = graph.package(id)?;
+            relative_to(&workspace_root, &manifest_dir(package).to_string_lossy())
+        })
+        .collect()
+}
+
 /// Writes `workspace.bzl` for the members of the workspace. `project_root` is the directory
 /// that the workspace's directory is relative to, and `cell` is the name of the cargo cell that
-/// holds the third-party packages.
+/// holds the third-party packages. `includes` maps the directory of a member, relative to the
+/// workspace's directory, to the paths that its Rust files include, each with the file's path
+/// relative to the workspace's directory.
 pub fn generate_workspace(
     metadata: &Metadata,
     platforms: &[CargoPlatform],
     project_root: &Path,
     cell: &str,
+    includes: &BTreeMap<String, Vec<(String, IncludedPath)>>,
 ) -> yak_error::Result<String> {
     let graph = Graph::new(metadata);
     let workspace_root = PathBuf::from(&metadata.workspace_root);
@@ -431,20 +465,27 @@ pub fn generate_workspace(
         let deps = graph.deps(node, platforms, label)?;
         let test = deps.normal.merged(&deps.dev);
 
+        if package
+            .metadata
+            .as_ref()
+            .and_then(|m| m.get("yak"))
+            .is_some()
+        {
+            return Err(GenerateError::MetadataMoved(package.name.clone()).into());
+        }
+
         // A member builds from the files of its directory, apart from the members inside it,
-        // and from the files that `[package.metadata.yak] include` names.
+        // and from the files outside it that its Rust files include.
         let prefix = if dir.is_empty() {
             String::new()
         } else {
             format!("{dir}/")
         };
-        let mut srcs: Vec<String> = ["**", "**/.*", "**/.*/**"]
+        let srcs: Vec<String> = ["**", "**/.*", "**/.*/**"]
             .iter()
             .map(|p| format!("{prefix}{p}"))
             .collect();
-        srcs.extend(metadata_patterns(package, dir, "include")?);
-        // Its tests also read the files that `[package.metadata.yak] test-data` names.
-        let test_data = metadata_patterns(package, dir, "test-data")?;
+        let include = member_includes(dir, includes.get(dir.as_str()));
         let mut srcs_exclude: Vec<String> = if dir.is_empty() {
             WORKSPACE_EXCLUDES.iter().map(|p| (*p).to_owned()).collect()
         } else {
@@ -559,7 +600,7 @@ pub fn generate_workspace(
             ("dir".to_owned(), Value::str(dir)),
             ("srcs".to_owned(), Value::strs(srcs)),
             ("srcs_exclude".to_owned(), Value::strs(srcs_exclude)),
-            ("test_data".to_owned(), Value::strs(test_data)),
+            ("include".to_owned(), Value::strs(include)),
             (
                 "features".to_owned(),
                 Value::strs(node.features.iter().cloned()),

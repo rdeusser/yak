@@ -40,13 +40,9 @@ pub(crate) enum GenerateError {
     )]
     DuplicateTarget(String),
     #[error(
-        "`[package.metadata.yak] {0}` of package `{1}` must be a list of path patterns, relative to the package's directory"
+        "`[package.metadata.yak]` of package `{0}` is no longer read. Name the files that its crates read in `include = {{\"{0}\": [...]}}` of the workspace's `cargo_workspace()`, and the files that its tests read in `test_data`. The cell finds the files of `include!`, `include_str!`, and `include_bytes!` by itself."
     )]
-    InvalidPatterns(&'static str, String),
-    #[error(
-        "`[package.metadata.yak] {0}` of package `{1}` names `{2}`, which is outside the workspace"
-    )]
-    PatternOutsideWorkspace(&'static str, String, String),
+    MetadataMoved(String),
     #[error("`cargo metadata` names package `{0}`, which it does not describe")]
     UnknownPackage(String),
     #[error("Package `{0}` has no library, but `{1}` depends on it")]
