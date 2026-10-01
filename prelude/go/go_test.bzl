@@ -22,7 +22,7 @@ load(
     "value_or",
 )
 load(":cgo_builder.bzl", "get_cgo_build_context")
-load(":compile.bzl", "GoTestInfo")
+load(":compile.bzl", "GoPkgCompileInfo", "GoTestInfo")
 load(":coverage.bzl", "GoCoverageMode")
 load(":link.bzl", "GoBuildMode", "get_inherited_link_pkgs", "link")
 load(":package_builder.bzl", "GoBuildConfig", "GoSourceInputs", "declare_package_build")
@@ -47,6 +47,13 @@ def _gen_test_main(
     # if ctx.attrs.coverage_mode:
     cmd.append(cmd_args(output.as_output(), format = "--output={}"))
     cmd.append(cmd_args(pkg_import_path, format = "--import-path={}"))
+
+    # The test runs in the directory of its resources, which sits next to the binary that `link`
+    # writes to the target's name.
+    working_directory = [_resources_dir_name(ctx).rsplit("/", 1)[-1]]
+    if ctx.attrs.working_directory:
+        working_directory.append(ctx.attrs.working_directory)
+    cmd.append(cmd_args("/".join(working_directory), format = "--working-directory={}"))
     if coverage_mode != None:
         cmd.extend(["--cover-mode", coverage_mode.value])
     if cover_packages:
@@ -59,6 +66,9 @@ def _gen_test_main(
     cmd.append(cmd_args(test_go_files_argsfile, format = "@{}"))
     ctx.actions.run(cmd_args(cmd), category = "go_test_main_gen", allow_cache_upload = ctx.attrs._go_toolchain[GoToolchainInfo].allow_cache_upload)
     return output
+
+def _resources_dir_name(ctx: AnalysisContext) -> str:
+    return ctx.label.name + "-resources"
 
 def is_subpackage_of(other_pkg_import_path: str, pkg_import_path: str) -> bool:
     return pkg_import_path == other_pkg_import_path or other_pkg_import_path.startswith(pkg_import_path + "/")
@@ -111,10 +121,18 @@ def go_test_impl(ctx: AnalysisContext) -> list[Provider]:
         deps = deps,
     )
 
+    # A package without test files of its own is linked as `target_under_test` builds it, so
+    # that the dependencies of its external tests that import it link the same package.
+    under_test = tests
+    if ctx.attrs.external_tests_only:
+        if not ctx.attrs.target_under_test:
+            fail("`external_tests_only` needs `target_under_test`")
+        under_test = ctx.attrs.target_under_test[GoPkgCompileInfo].pkgs[pkg_import_path]
+
     cover_packages = []
 
     # Cover the test package itself
-    if tests.coverage_instrumented:
+    if under_test.coverage_instrumented:
         cover_packages.append(pkg_import_path)
 
     # Get all packages that are linked to the test (i.e. the entire dependency tree)
@@ -123,7 +141,7 @@ def go_test_impl(ctx: AnalysisContext) -> list[Provider]:
             # Cover dependencies with coverage instrumented
             cover_packages.append(import_path)
 
-    pkgs[pkg_import_path] = tests
+    pkgs[pkg_import_path] = under_test
 
     # Compile the external tests (`package <name>_test`) into a package of their own, which
     # imports the package above with its tests, as `go test` does.
@@ -143,7 +161,7 @@ def go_test_impl(ctx: AnalysisContext) -> list[Provider]:
             cgo_enabled = cgo_enabled,
             x_tests = True,
         ),
-        pkgs = {pkg_import_path: tests},
+        pkgs = {pkg_import_path: under_test},
         deps = deps,
         cgo_gen_dir_name = "cgo_gen_xtest",
     )
@@ -181,12 +199,15 @@ def go_test_impl(ctx: AnalysisContext) -> list[Provider]:
         external_linker_flags = ctx.attrs.external_linker_flags,
     )
 
-    # As per v1, copy in resources next to binary.
-    copied_resources = []
-    for resource in ctx.attrs.resources:
-        copied_resources.append(ctx.actions.copy_file(resource.short_path, resource, has_content_based_path = False))
+    # Copy the resources into one directory next to the binary, at their paths in the package. The
+    # directory is one output, so a resource that the target no longer lists leaves it.
+    resources_dir = ctx.actions.copied_dir(
+        _resources_dir_name(ctx),
+        {resource.short_path: resource for resource in ctx.attrs.resources},
+        has_content_based_path = False,
+    )
 
-    run_cmd = cmd_args(bin, hidden = [runtime_files, external_debug_info] + copied_resources)
+    run_cmd = cmd_args(bin, hidden = [runtime_files, external_debug_info, resources_dir])
 
     # Setup RE executors based on the `remote_execution` param.
     re_executors = get_re_executors_from_props(ctx)
@@ -207,7 +228,7 @@ def go_test_impl(ctx: AnalysisContext) -> list[Provider]:
     ) + [
         DefaultInfo(
             default_output = bin,
-            other_outputs = [gen_main] + runtime_files + external_debug_info + copied_resources,
+            other_outputs = [gen_main, resources_dir] + runtime_files + external_debug_info,
         ),
         tests_pkg_info,
     ]

@@ -338,34 +338,47 @@ fn srcs_glob(dir: &str) -> String {
 /// module's root, to its data, and `_MISSING_GO_PACKAGE` lists the directories whose build file
 /// owns a Go package but does not call `go_package()`.
 const MACROS: &str = r#"
-def go_module():
+def go_module(test_data = {}):
     """Declares the targets of the Go packages of the module in this directory. The build file
     of a directory below declares the packages in that directory and the directories below it
-    with `go_package()`."""
+    with `go_package()`.
+
+    A test reads the files of its package's directory, apart from the directories of other
+    packages, and runs in that directory, as with `go test`. `test_data` maps the directory of a
+    package, relative to this one, to the patterns of the other files its tests read, such as
+    `{"pkg/verify": ["pkg/testdata/**"]}`."""
     if package_name() != _MODULE_DIR:
         fail("`go_module()` belongs in the build file of `{}`, the directory of the Go module's `go.mod`".format(_MODULE_DIR or "."))
     if _MISSING_GO_PACKAGE:
         fail("The build file of `{}` does not call `go_package()`, which declares the targets of the Go packages in its directory and the directories below it".format(_MISSING_GO_PACKAGE[0]))
-    _declare_owned("")
+    _declare_owned("", test_data)
 
-def go_package():
+def go_package(test_data = {}):
     """Declares the targets of the Go packages in this directory and the directories below it
-    that have no build file of their own."""
+    that have no build file of their own. `test_data` is as for `go_module()`."""
     owner = package_name()
     if _MODULE_DIR:
         owner = owner.removeprefix(_MODULE_DIR + "/")
-    if not _declare_owned(owner):
+    if not _declare_owned(owner, test_data):
         fail("`{}` and the directories below it hold no Go package of the module in `{}`".format(package_name(), _MODULE_DIR or "."))
 
-def _declare_owned(owner):
-    declared = False
-    for package in _PACKAGES.values():
-        if package["owner"] == owner:
-            _declare(package, package["dir"])
-            declared = True
-    return declared
+def _declare_owned(owner, test_data):
+    owned = [p for p in _PACKAGES.values() if p["owner"] == owner]
+    dirs = [p["dir"] for p in owned]
+    for dir in test_data:
+        if dir not in dirs:
+            fail("`test_data` names `{}`, which holds no Go package of this build file".format(dir))
+    for package in owned:
+        dir = package["dir"]
+        prefix = dir + "/" if dir else ""
 
-def _declare(package, dir):
+        # The directories of the build file's other packages below this one.
+        nested = [d + "/**" for d in dirs if d != dir and d.startswith(prefix)]
+        resources = glob([prefix + "**"], exclude = nested) + glob(test_data.get(dir, []))
+        _declare(package, dir, resources)
+    return len(owned) > 0
+
+def _declare(package, dir, resources):
     prefix = dir + "/" if dir else ""
     srcs = glob([prefix + p for p in _SRC_PATTERNS], exclude = [prefix + "*_test.go"])
     embeds = {prefix + f: prefix + f for f in package["embeds"]}
@@ -399,7 +412,10 @@ def _declare(package, dir):
             srcs = glob([prefix + "*_test.go"]),
             embed_srcs = test_embeds,
             target_under_test = ":" + name,
+            external_tests_only = test["external_only"],
             deps = test["deps"],
+            resources = resources,
+            working_directory = dir,
         )
     else:
         # A test of a `main` package, or of a package with only test files, compiles the
@@ -411,6 +427,8 @@ def _declare(package, dir):
             srcs = glob([prefix + p for p in _SRC_PATTERNS]),
             embed_srcs = test_embeds,
             deps = package["deps"] + test["deps"],
+            resources = resources,
+            working_directory = dir,
         )
 "#;
 
@@ -522,9 +540,14 @@ pub fn generate(inputs: &ModuleInputs<'_>) -> yak_error::Result<GoCell> {
                     .chain(&p.x_test_embed_files)
                     .collect()
             });
+            // Without test files of its own, the package links as its library target builds it.
+            let external_only = m
+                .present()
+                .all(|p| p.test_go_files.is_empty() && !p.x_test_go_files.is_empty());
             Value::Dict(vec![
                 ("embeds".to_owned(), Value::strs(test_embeds)),
                 ("deps".to_owned(), test_deps),
+                ("external_only".to_owned(), Value::Bool(external_only)),
             ])
         } else {
             Value::None

@@ -102,10 +102,10 @@ fn first_party_packages_are_data_of_the_module_file() {
         "{module}"
     );
     assert!(
-        module.contains(r#""greet": {"import_path": "example.com/m/greet", "kind": "library", "name": "greet", "owner": "", "dir": "greet", "embeds": ["greeting.txt"], "deps": [], "test": {"embeds": ["greeting.txt"], "deps": ["gomod//golang.org/x/term@v0.46.0:golang.org/x/term"]}}"#),
+        module.contains(r#""greet": {"import_path": "example.com/m/greet", "kind": "library", "name": "greet", "owner": "", "dir": "greet", "embeds": ["greeting.txt"], "deps": [], "test": {"embeds": ["greeting.txt"], "deps": ["gomod//golang.org/x/term@v0.46.0:golang.org/x/term"], "external_only": False}}"#),
         "{module}"
     );
-    assert!(module.contains("def go_module():"));
+    assert!(module.contains("def go_module(test_data = {}):"));
 }
 
 #[test]
@@ -182,5 +182,26 @@ fn a_local_replacement_fails() {
     assert!(
         error.contains("`example.com/lib` is replaced by a local directory"),
         "{error}"
+    );
+}
+
+#[test]
+fn a_package_with_only_external_tests_links_its_library() {
+    let output = format!(
+        r#"{{"ImportPath": "example.com/m/a", "Name": "a", "GoFiles": ["a.go"], "XTestGoFiles": ["a_ext_test.go"], "XTestImports": ["example.com/m/a"], {MAIN}}}"#
+    );
+    let listings = vec![parse_list(&output).unwrap()];
+    let cell = generate(&ModuleInputs {
+        module_dir: "",
+        cell: "gomod",
+        listings: &listings,
+        build_files: &BTreeMap::new(),
+    })
+    .unwrap();
+    assert!(
+        cell.module_file
+            .contains(r#""test": {"embeds": [], "deps": [], "external_only": True}"#),
+        "{}",
+        cell.module_file
     );
 }

@@ -68,6 +68,29 @@ as `cmd/a/server` and `cmd/b/server`. Any other name that two packages share
 is an error. In a module with the packages `cmd/app` and `greet`,
 `yak run //:app` runs the binary and `yak test //...` runs the tests of `greet`.
 
+## Test data
+
+A test runs in its package's directory, as with `go test`, and reads the files
+of that directory and of the directories below it, apart from the directories
+of other Go packages. A test that reads `testdata/input.json` or
+`fixtures/repo.git` needs no declaration. A test that reads files elsewhere
+names them in `test_data`, which maps the directory of a package, relative to
+the build file, to glob patterns relative to the build file:
+
+```python
+load("@gomod//:module.bzl", "go_module")
+
+go_module(
+    test_data = {
+        "pkg/verify": ["pkg/testdata/**"],
+    },
+)
+```
+
+The test of `pkg/verify` then reads `../testdata/bundle.json`. A read of a file
+that is not declared fails, so a test cannot depend on a file that yak does not
+track. `go_package()` takes `test_data` as well.
+
 ## Build files below the module's root
 
 A build file in a directory below the module's root makes that directory a
@@ -95,5 +118,12 @@ and names its directory.
   apply. A project with several modules configures a cell for each.
 - A module that vendors its dependencies in `vendor/` fails, and so does a
   `replace` directive that names a local directory.
+- A package with internal tests (`package <name>` in a `_test.go` file) whose
+  external tests import a package that imports it fails to build, because the
+  test would link two builds of the package. `go test` builds such a dependency
+  again against the package with its internal tests. A package with only
+  external tests builds.
+- A binary does not carry the module's version in its build information
+  (`debug.ReadBuildInfo`), which `go build` takes from Git.
 - The cell lists each platform with `CGO_ENABLED=1`. A target built with cgo
   disabled can lack a dependency that only its non-cgo files import.

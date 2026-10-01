@@ -70,9 +70,11 @@ async def test_go_cell_runs_a_binary(yak: Yak) -> None:
 @yak_test(data_dir="module")
 async def test_go_cell_runs_internal_and_external_tests(yak: Yak) -> None:
     use_module_proxy(yak)
+    # `internal/fmtx` has only external tests, which import a package that
+    # imports `fmtx`, so the test links `fmtx` as its library target builds it.
     result = await yak.test("//...")
     summary = re.sub("\x1b\\[[0-9;]*m", "", result.stderr)
-    assert "Pass 1. Fail 0." in summary, result.stderr
+    assert "Pass 2. Fail 0." in summary, result.stderr
 
     # The test target holds the package's tests and its external tests.
     for name, test in [
@@ -87,6 +89,30 @@ async def test_go_cell_runs_internal_and_external_tests(yak: Yak) -> None:
 
 
 @yak_test(data_dir="module")
+async def test_go_cell_tests_read_their_package_and_declared_files(yak: Yak) -> None:
+    use_module_proxy(yak)
+    # `greet`'s test reads `testdata/names.txt` of its own directory, and
+    # `../shared/words.txt`, which the build file declares.
+    await yak.test("//:greet-test")
+
+    (yak.cwd / "YAK.fixture").write_text(
+        'load("@gomod//:module.bzl", "go_module")\n\ngo_module()\n'
+    )
+    await expect_failure(
+        yak.test("//:greet-test"),
+        stderr_regex="open ../shared/words.txt: no such file or directory",
+    )
+
+    (yak.cwd / "YAK.fixture").write_text(
+        'load("@gomod//:module.bzl", "go_module")\n\ngo_module(test_data = {"nothing": []})\n'
+    )
+    await expect_failure(
+        yak.targets("//:"),
+        stderr_regex="`test_data` names `nothing`, which holds no Go package of this build file",
+    )
+
+
+@yak_test(data_dir="module")
 async def test_go_cell_declares_a_package_below_the_module_root(yak: Yak) -> None:
     use_module_proxy(yak)
     targets = await yak.targets("//...")
@@ -94,6 +120,9 @@ async def test_go_cell_declares_a_package_below_the_module_root(yak: Yak) -> Non
         "root//:app",
         "root//:greet",
         "root//:greet-test",
+        "root//:internal/fmtx",
+        "root//:internal/fmtx-test",
+        "root//:internal/report",
         "root//tools:version",
     ]
     result = await yak.run("//tools:version")
@@ -173,4 +202,4 @@ async def test_changed_since_follows_the_inputs_of_the_go_cell(yak: Yak) -> None
     ))
     result = await yak.test("--changed-since", "HEAD", "//...")
     summary = re.sub("\x1b\\[[0-9;]*m", "", result.stderr)
-    assert "Pass 1. Fail 0." in summary, result.stderr
+    assert "Pass 2. Fail 0." in summary, result.stderr

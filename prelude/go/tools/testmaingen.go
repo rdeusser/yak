@@ -78,6 +78,7 @@ var (
 	testCoverMode string
 	coverPkgs     = make(stringSetFlag)
 	xtestFiles    stringListFlag
+	workingDir    string
 )
 
 func init() {
@@ -86,6 +87,7 @@ func init() {
 	flag.Var(&coverPkgs, "cover-pkgs", "A comma-separated list of packages to gather coverage info on")
 	flag.StringVar(&testCoverMode, "cover-mode", "", "Cover mode (see `go tool cover`)")
 	flag.Var(&xtestFiles, "xtest-file", "A file of the external test package (`package <name>_test`)")
+	flag.StringVar(&workingDir, "working-directory", "", "The directory the test runs in, relative to the directory of the test binary")
 }
 
 // Resolve argsfiles in args (e.g. `@file.txt`).
@@ -122,6 +124,7 @@ func main() {
 	if err != nil {
 		log.Fatalln("Could not read test files:", err)
 	}
+	testFuncs.WorkingDirectory = workingDir
 	// Coverage enabled
 	if testCoverMode != "" {
 		testFuncs.Cover = &TestCover{
@@ -243,6 +246,9 @@ type testFuncs struct {
 	ImportXtest bool
 	NeedXtest   bool
 	Cover       *TestCover
+	// WorkingDirectory is the directory the test runs in, relative to the directory of the
+	// test binary.
+	WorkingDirectory string
 }
 
 // ImportPath returns the import path of the package being tested, if it is within GOPATH.
@@ -446,17 +452,16 @@ func init() {
 }
 
 func main() {
-	// yak ensures that resources defined on the test targets live in the same
-	// directory as the binary. We change the working directory to this
-	// directory to make sure that tests can read test fixtures relative to the
-	// current working directory. This matches behavior with "go test" from the
-	// test author perspective.
+	// yak copies the resources of the test target into a directory next to the
+	// binary. The test runs in that directory, or in the directory below it that
+	// the -working-directory flag names, so that tests read their fixtures relative to
+	// the current working directory, as with "go test".
 	execPath, err := os.Executable()
 	if err != nil {
 		os.Stderr.WriteString("Unable to get path to test binary executable.")
 		os.Exit(1)
 	}
-	execDir := filepath.Dir(execPath)
+	execDir := filepath.Join(filepath.Dir(execPath), {{.WorkingDirectory | printf "%q"}})
 	err = os.Chdir(execDir)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to change directory to %s.", execDir)

@@ -355,6 +355,16 @@ go_test = prelude_rule(
                  to duplicate them.
             """,
             ),
+            "external_tests_only": attrs.bool(
+                default = False,
+                doc = """
+                Whether the package of `target_under_test` has no test files of its own, so that
+                 `srcs` holds only external tests (`package <name>_test`). The test then links the
+                 package as `target_under_test` builds it, as `go test` does, in place of compiling
+                 it again with its tests. A dependency of the external tests that imports the
+                 package then links the same package as the test.
+            """,
+            ),
         }
         | go_common.deps_arg()
         | go_common.link_style_arg()
@@ -390,6 +400,17 @@ go_test = prelude_rule(
                 Static files that are symlinked into the working directory of the
                  test. You can access these files in your test by opening them using
                  relative paths, such as `ioutil.ReadFile("testdata/input")`.
+            """,
+            ),
+            "working_directory": attrs.string(
+                default = "",
+                doc = """
+                The directory that the test runs in, relative to the directory that holds the
+                 `resources` at their paths in the target's package, where the test runs by
+                 default. `go test` runs a test in the
+                 directory of its package, so a test whose `package_root` names a directory below
+                 the target's package sets this to the same directory, and reads `testdata/input`
+                 and `../shared/input` from there.
             """,
             ),
         }

@@ -233,6 +233,21 @@ The prelude's Go rules enable cgo only when a C++ toolchain is available (`cgo_e
 
 Remove this entry when the dependencies of a go cell's targets select on whether cgo is enabled.
 
+### A Go test cannot rebuild a dependency against the package under test
+
+A package with internal tests whose external tests import a package that imports it fails analysis with `conflict for package` in `merge_pkgs` (`prelude/go/packages.bzl`).
+`go test` compiles such a dependency again against the package with its internal tests, and `go_test` links the dependency as its own target builds it.
+`go_test` with `external_tests_only` covers the packages without internal tests, such as `pkg/cmd/auth/shared/gitcredentials` in the GitHub CLI.
+
+Remove this entry when `go_test` builds the dependencies of external tests that import the package under test against its test variant.
+
+### Go binaries carry no module version
+
+`go build` stamps the main module's version, taken from Git, into the build information that `debug.ReadBuildInfo` returns, and the prelude's `go_binary` does not.
+On 2026-10-01, `gh version` printed `gh version DEV` for the GitHub CLI built by yak and `gh version 2.102.0+dirty` for the one `go build` built.
+
+Remove this entry when a `go_binary` reports its module's version as `go build` does, or the documentation says how to stamp one.
+
 ### Go module paths that differ only in case share a directory on macOS
 
 A go cell copies each third-party module version to a directory named `<module path>@<version>` in `yak-out`.
