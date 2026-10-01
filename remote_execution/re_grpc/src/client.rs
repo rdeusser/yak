@@ -248,9 +248,14 @@ impl REClientBuilder {
             .context("Failed to create channel config")?;
 
         // Create a single channel for fetching capabilities. Other channels are created
-        // on-demand through the connection pool.
-        let engine_address = opts.engine_address.as_ref().context("No engine address")?;
-        let capabilities_channel = create_channel(&channel_config, engine_address)
+        // on-demand through the connection pool. A remote cache without remote execution has
+        // no engine, and its CAS endpoint serves the capabilities.
+        let capabilities_address = opts
+            .engine_address
+            .as_ref()
+            .or(opts.cas_address.as_ref())
+            .context("No engine or CAS address")?;
+        let capabilities_channel = create_channel(&channel_config, capabilities_address)
             .context("Error creating Capabilities channel")?;
 
         let interceptor = InjectHeadersInterceptor::new(&opts.http_headers)?;
@@ -341,7 +346,7 @@ impl REClientBuilder {
             max_decoding_msg_size,
             interceptor,
             cas_address,
-            engine_address.clone(),
+            opts.engine_address.clone(),
             action_cache_address,
         ))
     }
@@ -487,7 +492,9 @@ pub struct REClient {
     max_decoding_msg_size: usize,
     interceptor: InjectHeadersInterceptor,
     cas_address: String,
-    engine_address: String,
+    /// The address of the execution service, which a remote cache without remote execution
+    /// lacks.
+    engine_address: Option<String>,
     action_cache_address: String,
 }
 
@@ -660,7 +667,7 @@ impl REClient {
         max_decoding_msg_size: usize,
         interceptor: InjectHeadersInterceptor,
         cas_address: String,
-        engine_address: String,
+        engine_address: Option<String>,
         action_cache_address: String,
     ) -> Self {
         REClient {
@@ -1127,7 +1134,11 @@ impl REClient {
     }
 
     async fn execution_client(&self) -> anyhow::Result<ExecutionClient<GrpcService>> {
-        let channel = self.pool.get(&self.engine_address).await?;
+        let engine_address = self
+            .engine_address
+            .as_ref()
+            .context("Remote execution needs `[yak_re_client] engine_address`")?;
+        let channel = self.pool.get(engine_address).await?;
         Ok(ExecutionClient::new(InterceptedService::new(
             channel,
             self.interceptor.dupe(),

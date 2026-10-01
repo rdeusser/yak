@@ -14,7 +14,7 @@ Commands:
   help-env              Print help for environment variables used by yak
   test                  Build and test the specified targets
   cquery                Perform queries on the configured target graph
-  generate              Generate build files for a Cargo workspace
+  generate              Generate build files for a Cargo workspace and Go modules
   init                  Initialize a yak project
   expand-external-cell  Expand the contents of an external cell into the repo
   install               Build and install an application

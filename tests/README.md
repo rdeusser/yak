@@ -51,6 +51,7 @@ Some tests need resources that a developer machine usually lacks. They carry a m
 | Marker | Needs | Runs when |
 | --- | --- | --- |
 | `remote_execution` | A Remote Execution backend. | `YAK_TEST_RE_CONFIG` names a yakconfig file with the backend's `[yak_re_client]` settings. The harness appends the file to every test project's `.yakconfig`. |
+| `remote_cache` | A remote cache, such as bazel-remote. `@yak_test(remote_cache=True)` adds this marker. | `YAK_TEST_REMOTE_CACHE_CONFIG` names a yakconfig file with the cache's `[yak_re_client]` settings (`action_cache_address` and `cas_address`). The harness appends the file to the project's `.yakconfig`. |
 | `cgroups` | Linux with a systemd user session that delegates cgroups, because the daemon moves itself into a cgroup with `systemd-run --user`. `@yak_test(disable_daemon_cgroup=False)` adds this marker. | `YAK_TEST_CGROUPS=1` is set. |
 | `needs_binary` | Helper programs named by environment variables. | Every variable that the marker names is set. |
 

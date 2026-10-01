@@ -10,6 +10,7 @@ from pathlib import Path
 from e2e_util.api.yak import Yak
 from e2e_util.asserts import expect_failure
 from e2e_util.helper.test_runs import last_test_run_executors
+from e2e_util.helper.utils import random_string
 from e2e_util.yak_workspace import yak_test
 
 
@@ -83,5 +84,35 @@ async def test_the_key_does_not_depend_on_the_checkout_path(yak: Yak) -> None:
         await other.test("//calc")
         assert len(stored_keys(yak.cwd)) == 1
         assert stored_keys(yak.cwd) == stored_keys(other_checkout)
+    finally:
+        await other.kill()
+
+
+@yak_test(
+    data_dir="workspace",
+    remote_cache=True,
+    extra_yak_config={"build": {"remote_cache": "read_write"}},
+)
+async def test_a_pass_counts_in_another_checkout(yak: Yak) -> None:
+    await yak.generate()
+    other_checkout = yak.cwd.parent / "other_checkout"
+    shutil.copytree(yak.cwd, other_checkout, ignore=shutil.ignore_patterns("yak-out"))
+    other = Yak(
+        yak.path_to_executable, encoding="utf-8", env=yak._env, cwd=other_checkout
+    )
+
+    # Each run uploads its pass, so the test needs a seed that no earlier run
+    # against the same cache has seen.
+    (yak.cwd / "calc" / "data.txt").write_text(f"ok\n{random_string()}\n")
+    shutil.copy2(yak.cwd / "calc" / "data.txt", other_checkout / "calc" / "data.txt")
+
+    await yak.test("//calc")
+    assert await last_test_run_executors(yak) == ["local"]
+    try:
+        # The other checkout has its own daemon and an empty local store, so
+        # the pass comes from the remote cache.
+        result = await other.test("//calc")
+        assert await last_test_run_executors(other) == ["cache"]
+        assert "Pass (cached): root//calc:calc-unittest" in result.stderr
     finally:
         await other.kill()

@@ -89,6 +89,8 @@ use yak_core::execution_types::executor_config::CommandGenerationOptions;
 use yak_core::execution_types::executor_config::Executor;
 use yak_core::execution_types::executor_config::LocalExecutorOptions;
 use yak_core::execution_types::executor_config::PathSeparatorKind;
+use yak_core::execution_types::executor_config::RemoteEnabledExecutor;
+use yak_core::execution_types::executor_config::RemoteEnabledExecutorOptions;
 use yak_core::fs::artifact_path_resolver::ArtifactFs;
 use yak_core::fs::project_rel_path::ProjectRelativePathBuf;
 use yak_core::fs::yak_out_path::YakOutTestPath;
@@ -610,7 +612,6 @@ impl<'a> YakTestOrchestrator<'a> {
             test_info.supports_test_execution_caching(),
             disable_test_execution_caching || options.no_test_cache,
         );
-        let effective_test_execution_caching = test_result_caching.looks_up();
         let disable_local_network_isolation =
             Self::disable_local_network_isolation(stage.as_ref(), &test_info);
         let test_executor = Self::get_test_executor(
@@ -620,7 +621,7 @@ impl<'a> YakTestOrchestrator<'a> {
             executor_override,
             fs,
             &stage,
-            effective_test_execution_caching,
+            test_result_caching,
         )
         .await?;
         let test_executable_expanded = Self::expand_test_executable(
@@ -1088,7 +1089,7 @@ impl TestOrchestrator for YakTestOrchestrator<'_> {
             None,
             fs,
             &stage,
-            false,
+            TestResultCaching::Off,
         )
         .await?;
         let test_executable_expanded = Self::expand_test_executable(
@@ -1216,18 +1217,46 @@ impl TestOrchestrator for YakTestOrchestrator<'_> {
     }
 }
 
-/// The streams of a test command that passed in a local run and declared no outputs, which the
-/// local store of test results can keep.
-fn local_pass_streams(result: &CommandExecutionResult) -> Option<(&[u8], &[u8])> {
-    let ran_locally = matches!(
+/// with_platform_remote_cache returns the executor configuration of a test that runs on a local
+/// executor of its own, such as the one that the prelude gives a test without a remote execution
+/// profile, with the remote cache of its execution platform. A pass of the test is then looked up
+/// and uploaded where the platform's build actions are.
+fn with_platform_remote_cache<'a>(
+    test_config: &'a CommandExecutorConfig,
+    platform_config: &CommandExecutorConfig,
+) -> Cow<'a, CommandExecutorConfig> {
+    match (&test_config.executor, &platform_config.executor) {
+        (Executor::Local(local), Executor::RemoteEnabled(platform))
+            if platform.remote_cache_enabled =>
+        {
+            Cow::Owned(CommandExecutorConfig {
+                executor: Executor::RemoteEnabled(RemoteEnabledExecutorOptions {
+                    executor: RemoteEnabledExecutor::Local(local.clone()),
+                    ..platform.clone()
+                }),
+                options: test_config.options.dupe(),
+            })
+        }
+        _ => Cow::Borrowed(test_config),
+    }
+}
+
+/// Whether a test command ran locally and exited with code 0.
+fn passed_locally(result: &CommandExecutionResult) -> bool {
+    matches!(
         result.report.status,
         CommandExecutionStatus::Success {
             execution_kind: CommandExecutionKind::Local { .. },
         }
-    );
+    ) && result.report.exit_code == Some(0)
+}
+
+/// The streams of a test command that passed in a local run and declared no outputs, which the
+/// local store of test results can keep.
+fn local_pass_streams(result: &CommandExecutionResult) -> Option<(&[u8], &[u8])> {
     match &result.report.std_streams {
         CommandStdStreams::Local { stdout, stderr }
-            if ran_locally && result.report.exit_code == Some(0) && result.outputs.is_empty() =>
+            if passed_locally(result) && result.outputs.is_empty() =>
         {
             Some((stdout, stderr))
         }
@@ -1487,6 +1516,29 @@ impl YakTestOrchestrator<'_> {
                         tracing::warn!("Failed to store a test result: {e}");
                     }
                 }
+                // The remote cache gets every local pass, including one with outputs, which the
+                // uploader stores with the result. The executor uploads nothing when the
+                // executor configuration does not allow cache uploads.
+                if test_result_caching.records() && passed_locally(&result) {
+                    let info = CacheUploadInfo {
+                        target: &test_target as _,
+                        digest_config,
+                        mergebase: &None,
+                        re_platform: executor.re_platform(),
+                    };
+                    if let Err(e) = executor
+                        .cache_upload(
+                            &info,
+                            &result,
+                            None,
+                            None,
+                            &prepared_action.action_and_blobs,
+                        )
+                        .await
+                    {
+                        tracing::warn!("Failed to upload a test result: {e:#}");
+                    }
+                }
                 result
             }
         };
@@ -1594,22 +1646,34 @@ impl YakTestOrchestrator<'_> {
         test_target_node: &'a ConfiguredTargetNode,
         executor_override: Option<&'a CommandExecutorConfig>,
         stage: &TestStage,
-        supports_test_execution_caching: bool,
+        test_result_caching: TestResultCaching,
     ) -> yak_error::Result<Cow<'a, CommandExecutorConfig>> {
-        let executor_config = match executor_override {
-            Some(o) => o,
-            None => test_target_node
+        let platform_config = || {
+            test_target_node
                 .execution_platform_resolution()
                 .executor_config()
-                .yak_error_context("Error accessing executor config")?,
+                .yak_error_context("Error accessing executor config")
+        };
+        let executor_config = match executor_override {
+            Some(o) => o,
+            None => platform_config()?,
         };
 
         if let TestStage::Listing { .. } = &stage {
             return Ok(Cow::Borrowed(executor_config));
         }
 
-        if supports_test_execution_caching {
-            return Ok(Cow::Borrowed(executor_config));
+        // The remote cache stays on when the test's passes are recorded, even when lookups are
+        // off, because the daemon uploads nothing without it.
+        if test_result_caching.records() {
+            // Only a test's own executor can lack the platform's remote cache.
+            return match (&executor_config.executor, executor_override) {
+                (Executor::Local(_), Some(_)) => Ok(with_platform_remote_cache(
+                    executor_config,
+                    platform_config()?,
+                )),
+                _ => Ok(Cow::Borrowed(executor_config)),
+            };
         }
 
         match &executor_config.executor {
@@ -1633,7 +1697,7 @@ impl YakTestOrchestrator<'_> {
         fs: &ArtifactFs,
         executor_config: &CommandExecutorConfig,
         stage: &TestStage,
-        supports_test_execution_caching: bool,
+        test_result_caching: TestResultCaching,
     ) -> yak_error::Result<CommandExecutor> {
         let CommandExecutorResponse {
             executor,
@@ -1646,17 +1710,18 @@ impl YakTestOrchestrator<'_> {
 
         let (cache_uploader, action_cache_checker) = match stage {
             TestStage::Listing { .. } => (cache_uploader, action_cache_checker),
-            TestStage::Testing { .. } => {
-                (
-                    // We never upload local test executions
-                    Arc::new(NoOpCacheUploader {}) as _,
-                    if supports_test_execution_caching {
-                        action_cache_checker
-                    } else {
-                        Arc::new(NoOpCommandOptionalExecutor {}) as _
-                    },
-                )
-            }
+            TestStage::Testing { .. } => (
+                if test_result_caching.records() {
+                    cache_uploader
+                } else {
+                    Arc::new(NoOpCacheUploader {}) as _
+                },
+                if test_result_caching.looks_up() {
+                    action_cache_checker
+                } else {
+                    Arc::new(NoOpCommandOptionalExecutor {}) as _
+                },
+            ),
         };
 
         let executor = CommandExecutor::new(
@@ -1744,7 +1809,7 @@ impl YakTestOrchestrator<'_> {
         executor_override: Option<Arc<ExecutorConfigOverride>>,
         fs: &ArtifactFs,
         stage: &TestStage,
-        supports_test_execution_caching: bool,
+        test_result_caching: TestResultCaching,
     ) -> yak_error::Result<TestExecutor> {
         // NOTE: get_providers() implicitly calls this already but it's not the end of the world
         // since this will get cached in DICE.
@@ -1781,17 +1846,12 @@ impl YakTestOrchestrator<'_> {
             node,
             resolved_executor_override.as_ref().map(|a| &***a),
             stage,
-            supports_test_execution_caching,
+            test_result_caching,
         )?;
 
-        let executor = Self::get_command_executor(
-            dice,
-            fs,
-            &executor_config,
-            stage,
-            supports_test_execution_caching,
-        )
-        .yak_error_context("Error constructing CommandExecutor")?;
+        let executor =
+            Self::get_command_executor(dice, fs, &executor_config, stage, test_result_caching)
+                .yak_error_context("Error constructing CommandExecutor")?;
 
         Ok(TestExecutor {
             test_executor: executor,

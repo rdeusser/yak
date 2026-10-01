@@ -241,7 +241,15 @@ from, and `yak log what-ran` lists its command with the `local_cache` executor.
 `yak test --no-test-cache` runs every selected test and records the new passes.
 
 When the test's executor has `remote_cache_enabled`, yak also looks the test
-command up in the remote action cache before running it.
+command up in the remote action cache before running it, under its action
+digest. When the executor also has `allow_cache_uploads`, yak uploads each pass
+of a local run, so that a pass on one machine counts on every machine that uses
+the cache. A test whose own executor is local-only uses the remote cache of its
+execution platform. `yak test --no-test-cache` skips the lookup and still
+uploads. A pass from the remote cache prints as `✓ Pass (cached)`, and
+`yak log what-ran` lists it with the `cache` executor.
+[Remote cache without remote execution](../users/remote_execution.md#remote-cache-without-remote-execution)
+sets up a cache for the default execution platform.
 
 ## Caching Test Listings
 

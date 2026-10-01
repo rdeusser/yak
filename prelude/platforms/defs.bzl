@@ -21,6 +21,8 @@ def _execution_platform_impl(ctx: AnalysisContext) -> list[Provider]:
         executor_config = CommandExecutorConfig(
             local_enabled = True,
             remote_enabled = False,
+            remote_cache_enabled = ctx.attrs.remote_cache != "off",
+            allow_cache_uploads = ctx.attrs.remote_cache == "read_write",
             use_windows_path_separators = ctx.attrs.use_windows_path_separators,
         ),
     )
@@ -40,6 +42,10 @@ execution_platform = rule(
     attrs = {
         "cpu_configuration": attrs.dep(providers = [ConfigurationInfo]),
         "os_configuration": attrs.dep(providers = [ConfigurationInfo]),
+        # Whether actions and tests look up their results in the remote cache that
+        # `[yak_re_client]` names (`read`), and also upload the results of local runs
+        # (`read_write`).
+        "remote_cache": attrs.enum(["off", "read", "read_write"], default = "off"),
         "use_windows_path_separators": attrs.bool(),
     },
 )

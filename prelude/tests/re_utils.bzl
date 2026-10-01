@@ -129,8 +129,9 @@ def _get_re_executors(ctx: AnalysisContext, re_arg: ReArg) -> RemoteTestExecutor
         # the rule's build execution platform: that platform may be remote-only when
         # cross-building, even though the target binary must run on the local host.
         #
-        # `remote_cache_enabled = False` keeps this a plain `Executor::Local`, and
-        # nothing is uploaded from here anyway (`allow_cache_uploads` is False).
+        # `remote_cache_enabled = False` keeps this a plain `Executor::Local`. For a
+        # test with `supports_test_execution_caching`, the test orchestrator adds the
+        # remote cache of the execution platform.
         executor = CommandExecutorConfig(local_enabled = True, remote_enabled = False, remote_cache_enabled = False, **_network_access_kwargs(network_access))
         return RemoteTestExecutorConfig(default_executor = executor)
 

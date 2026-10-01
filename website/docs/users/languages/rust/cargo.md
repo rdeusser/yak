@@ -92,6 +92,9 @@ binary and the files it declares are unchanged, as `go test` does, and the
 output shows `✓ Pass (cached)`. `yak test --no-test-cache` runs every test.
 [Caching test results](../../../rule_authors/test_execution.md#caching-test-results)
 lists what a pass depends on.
+With `[build] remote_cache` set, passes are shared through a
+[remote cache](../../remote_execution.md#remote-cache-without-remote-execution),
+so a CI job runs only the tests whose inputs changed since a run that uploaded.
 
 Each target builds with the features that Cargo resolves for its package. Tests
 also get the package's dev-dependencies. A dependency under

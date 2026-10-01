@@ -14,6 +14,7 @@ from e2e_util.yak_workspace import (  # noqa F401
     yak_binary,
     CGROUPS_ENV_VAR,
     RE_CONFIG_ENV_VAR,
+    REMOTE_CACHE_CONFIG_ENV_VAR,
 )
 
 
@@ -26,6 +27,10 @@ def pytest_runtest_setup(item: pytest.Item) -> None:
         RE_CONFIG_ENV_VAR
     ):
         pytest.skip(f"needs a Remote Execution backend ({RE_CONFIG_ENV_VAR} is unset)")
+    if item.get_closest_marker("remote_cache") and not os.environ.get(
+        REMOTE_CACHE_CONFIG_ENV_VAR
+    ):
+        pytest.skip(f"needs a remote cache ({REMOTE_CACHE_CONFIG_ENV_VAR} is unset)")
     if item.get_closest_marker("cgroups") and os.environ.get(CGROUPS_ENV_VAR) != "1":
         pytest.skip(f"needs cgroup delegation ({CGROUPS_ENV_VAR} is not 1)")
     for marker in item.iter_markers("needs_binary"):

@@ -7,7 +7,7 @@ mod tests {
     #[test]
     fn reads_its_data() {
         let data = std::fs::read_to_string("data.txt").unwrap();
-        assert_eq!(data.trim(), "ok");
+        assert_eq!(data.lines().next(), Some("ok"));
         assert_eq!(super::double(2), 4);
     }
 }

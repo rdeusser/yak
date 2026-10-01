@@ -41,6 +41,14 @@ Options:
           Will run tests to on RE even if they are missing required settings (running from the root
           + relative paths). Those required settings just get overridden
 
+      --no-test-cache
+          Run every selected test, including a test that passed before with the same inputs.
+
+          Without this flag, a test that supports caching, such as a test that the `cargo` or `go`
+          external cell declares, reports its earlier pass in place of running again when its
+          command and the contents of its inputs are unchanged. A pass under this flag is still
+          recorded for later runs.
+
       --changed-since <REVISION>
           Test only the targets that the changes since a Git revision can affect.
 

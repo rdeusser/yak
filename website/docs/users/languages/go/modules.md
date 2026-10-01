@@ -96,6 +96,9 @@ shows `✓ Pass (cached)`. `yak test --no-test-cache` runs every test, as
 `go test -count=1` does.
 [Caching test results](../../../rule_authors/test_execution.md#caching-test-results)
 lists what a pass depends on.
+With `[build] remote_cache` set, passes are shared through a
+[remote cache](../../remote_execution.md#remote-cache-without-remote-execution),
+so a CI job runs only the tests whose inputs changed since a run that uploaded.
 
 ## Build files below the module's root
 

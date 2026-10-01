@@ -40,6 +40,9 @@ YAK_BINARY_ENV_VAR = "YAK_BINARY"
 # settings of a Remote Execution backend. Every test project reads it, and tests
 # marked `remote_execution` run only when it is set.
 RE_CONFIG_ENV_VAR = "YAK_TEST_RE_CONFIG"
+# Tests marked `remote_cache` run only when YAK_TEST_REMOTE_CACHE_CONFIG names a
+# yakconfig file with the `[yak_re_client]` settings of a remote cache.
+REMOTE_CACHE_CONFIG_ENV_VAR = "YAK_TEST_REMOTE_CACHE_CONFIG"
 # Tests marked `cgroups` run only when YAK_TEST_CGROUPS is 1.
 CGROUPS_ENV_VAR = "YAK_TEST_CGROUPS"
 
@@ -51,6 +54,7 @@ YakTestMarker = namedtuple(
         "extra_yak_config",
         "skip_final_kill",
         "disable_daemon_cgroup",
+        "remote_cache",
         "write_invocation_record",
     ],
 )
@@ -176,6 +180,9 @@ async def yak_fixture(  # noqa C901 : "too complex"
         re_config = os.environ.get(RE_CONFIG_ENV_VAR)
         if re_config:
             extra_config_lines.append(Path(re_config).read_text() + "\n")
+        if marker.remote_cache:
+            remote_cache_config = os.environ[REMOTE_CACHE_CONFIG_ENV_VAR]
+            extra_config_lines.append(Path(remote_cache_config).read_text() + "\n")
 
         for section, config in marker.extra_yak_config.items():
             extra_config_lines.append(f"[{section}]\n")
@@ -256,6 +263,7 @@ def yak_test(
     skip_final_kill: bool = False,
     disable_daemon_cgroup: bool = True,
     write_invocation_record: bool = False,
+    remote_cache: bool = False,
 ) -> Callable[..., Any]:
     """
     Defines a yak test. This is a must have decorator on all test case functions.
@@ -283,6 +291,9 @@ def yak_test(
         write_invocation_record:
             Makes each command write its invocation record, which
             `YakResult.invocation_record()` reads.
+        remote_cache:
+            Appends the yakconfig file that YAK_TEST_REMOTE_CACHE_CONFIG names
+            to the project's configuration, and marks the test `remote_cache`.
     """
 
     for p in skip_for_os:
@@ -298,11 +309,14 @@ def yak_test(
                 skip_final_kill=skip_final_kill,
                 disable_daemon_cgroup=disable_daemon_cgroup,
                 write_invocation_record=write_invocation_record,
+                remote_cache=remote_cache,
             )
         )
     ]
     if not disable_daemon_cgroup:
         marks.append(pytest.mark.cgroups)
+    if remote_cache:
+        marks.append(pytest.mark.remote_cache)
     current_os = platform.system().lower()
     if current_os in skip_for_os:
         marks.append(pytest.mark.skip(reason=f"test does not support {current_os}"))

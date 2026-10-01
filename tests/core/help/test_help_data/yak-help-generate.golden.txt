@@ -1,23 +1,26 @@
 # This file is @generated, regenerate by rerunning the test with `YAK_UPDATE_GOLDEN=1` set
 
-Writes the build files that let yak build the Cargo workspace at \[PATH\].
+Writes the build files that let yak build the Cargo workspace and the Go modules at \[PATH\].
 
-The `YAK` file at the root of the workspace declares the targets of every workspace member from its
-`Cargo.toml`, and `.yakconfig` gains the `crates` cell, which builds the third-party crates in
-`Cargo.lock`. The generated files do not list dependencies, so an edit to a manifest needs no new
-run.
+If \[PATH\] holds a Cargo workspace, each member gets a `YAK` file next to its `Cargo.toml`, which
+declares the member's targets, and so does the root of the workspace. `.yakconfig` gains the
+`crates` cell, which builds the third-party crates in `Cargo.lock`. Each Go module below \[PATH\]
+gets a `YAK` file next to its `go.mod`, which declares the targets of its packages, and a go cell,
+which builds its third-party modules. The generated files do not list dependencies, so an edit to a
+manifest or an import needs no new run.
 
 Usage: yak generate [OPTIONS] [PATH]
 
 Arguments:
   [PATH]
-          The directory of the Cargo workspace, which becomes the root of the yak project
+          The directory of the Cargo workspace or the Go modules, which becomes the root of the yak
+          project
 
           [default: .]
 
 Options:
       --force
-          Replace a `YAK` file at the root of the workspace that differs from the generated one
+          Replace a generated `YAK` file that differs from the generated one
 
   -h, --help
           Print help (see a summary with '-h')

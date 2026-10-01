@@ -21,7 +21,9 @@ Configuration for remote execution can be found under `[yak_re_client]` in
 
 Keys supported include:
 
-- `engine_address` - address to your RE's engine.
+- `engine_address` - address to your RE's engine. A remote cache without
+  remote execution needs no engine, and yak then fetches the server's
+  capabilities from `cas_address`.
 - `action_cache_address` - address to your action cache endpoint.
 - `cas_address` - address to your content-addressable storage (CAS) endpoint.
 - `tls_ca_certs` - path to a CA certificates bundle. This must be PEM-encoded.
@@ -70,3 +72,36 @@ as follows:
 - `remote_execution_properties` - other additional properties.
   - If the RE engine requires a container image, this can be done by setting
     `container-image` to an image URL, as is done in the example above.
+
+## Remote cache without remote execution
+
+A remote cache, such as
+[bazel-remote](https://github.com/buchgr/bazel-remote), stores the results of
+actions and tests that ran on one machine, so that other machines reuse them in
+place of running them. It needs `action_cache_address` and `cas_address`:
+
+```ini
+[yak_re_client]
+  action_cache_address = grpc://cache.example.com:9092
+  cas_address = grpc://cache.example.com:9092
+
+[build]
+  remote_cache = read_write
+```
+
+`[build] remote_cache` configures the remote cache of the default execution
+platform, `prelude//platforms:default`, which `yak init` and `yak generate`
+select:
+
+- `off`, the default, uses no remote cache.
+- `read` looks up the results of actions and of tests that support caching in
+  the remote cache.
+- `read_write` also uploads the passes of tests that support caching after they
+  run locally, and the results of actions that set `allow_cache_upload = True`.
+
+A CI job that sets `read_write` and developer machines that set `read` share
+the results of CI. A test that runs on a local executor of its own, as a test
+without a remote execution profile does, uses the remote cache of its execution
+platform. [Caching test results](../rule_authors/test_execution.md#caching-test-results)
+describes which tests support caching.
+
