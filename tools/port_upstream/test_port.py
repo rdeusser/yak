@@ -457,6 +457,24 @@ class PlausibleMovesTest(unittest.TestCase):
         )
 
 
+class FirstReferenceTest(unittest.TestCase):
+    def test_loads_of_dropped_files_are_found(self) -> None:
+        line = 'load("@prelude//android:native_build_commands.bzl", "EMIT")'
+        self.assertEqual(
+            line,
+            port.first_reference(
+                ["x = 1", line], ["prelude/android/native_build_commands.bzl"]
+            ),
+        )
+
+    def test_generic_names_are_ignored(self) -> None:
+        self.assertIsNone(
+            port.first_reference(
+                ['load("//android:defs.bzl", "x")'], ["prelude/android/defs.bzl"]
+            )
+        )
+
+
 class LockVersionsTest(unittest.TestCase):
     def test_lists_each_version_of_a_package(self) -> None:
         text = '[[package]]\nname = "syn"\nversion = "1.0.1"\n\n[[package]]\nname = "syn"\nversion = "2.0.3"\n'

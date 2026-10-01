@@ -1017,6 +1017,7 @@ def edit_list(
 
 def port_files(git: Git, commit: str, paths: PathMap) -> Outcome:
     outcome = Outcome()
+    added_lines: dict[str, list[str]] = {}
     for change in upstream_changes(git, commit):
         upstream_path = change.new or change.old
         name = Path(upstream_path).name
@@ -1076,6 +1077,8 @@ def port_files(git: Git, commit: str, paths: PathMap) -> Outcome:
             data = theirs.encode() if theirs is not None else theirs_bytes
             write(git.root / target, data)
             outcome.written.append(target)
+            if theirs is not None:
+                added_lines[target] = theirs.splitlines()
             if name in BUILD_FILES:
                 outcome.review.append(
                     f"{target}: upstream added build file {change.new}"
@@ -1123,6 +1126,10 @@ def port_files(git: Git, commit: str, paths: PathMap) -> Outcome:
                 )
             result, conflict, notes = merge(ours, base, theirs)
             outcome.notes.extend(f"{ours_path}: {note}" for note in notes)
+        ours_lines = set(ours.splitlines())
+        added_lines[new_target] = [
+            line for line in result.splitlines() if line not in ours_lines
+        ]
         added_markers = meta_markers(result) - meta_markers(ours)
         if added_markers:
             outcome.review.append(
@@ -1135,7 +1142,34 @@ def port_files(git: Git, commit: str, paths: PathMap) -> Outcome:
         outcome.written.append(new_target)
         if conflict:
             outcome.conflicts.append(new_target)
+    for target, lines in added_lines.items():
+        reference = first_reference(lines, outcome.dropped)
+        if reference:
+            outcome.review.append(f"{target}: refers to a dropped file: {reference}")
     return outcome
+
+
+def first_reference(lines: list[str], dropped: list[str]) -> str | None:
+    """The first of `lines` that names one of the `dropped` upstream files by
+    its directory and stem, such as `android:native_build_commands.bzl` in a
+    Starlark load or `android.native_build_commands` in a Python import."""
+    patterns = []
+    for path in dropped:
+        parts = transform_path(path).split("/")
+        stem = parts[-1].partition(".")[0]
+        if len(parts) < 2 or len(stem) < 4 or stem in GENERIC_STEMS:
+            continue
+        patterns.append(
+            re.compile(rf"\b{re.escape(parts[-2])}[/:.]{re.escape(stem)}\b")
+        )
+    for line in lines:
+        if any(p.search(line) for p in patterns):
+            return line.strip()
+    return None
+
+
+# File stems too common to identify a file in a reference.
+GENERIC_STEMS = {"main", "defs", "__init__", "README", "CHANGELOG", "LICENSE"}
 
 
 META_MARKER = re.compile(

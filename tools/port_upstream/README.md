@@ -35,11 +35,14 @@ Lines that upstream marks `@oss-disable` are dropped, and lines that it marks `@
 `git merge-file` applies the difference between the two to the file of this repository.
 In Rust files, each run of one-line `use` items is sorted on all three sides first, because the yak names sort differently from the upstream names.
 In `Cargo.toml` files, the upstream sides' dependency entries take the fork's order first, for the same reason.
-`port.py` resolves two kinds of conflict block:
+`port.py` resolves three kinds of conflict block:
 
 - The two sides change adjacent lines, and their edits do not overlap.
 - The fork deleted the lines that upstream changed, and upstream added no more lines than it replaced. The output notes each such block.
 - Each upstream edit replaces lines that occur once in the fork's side of the block, such as a version in a lock file that the fork pruned. The output notes each such block.
+
+If blocks remain, upstream's edits apply to the whole file when the lines that each edit replaces occur once in it, or fall in lines that the fork deleted.
+This resolves files that the fork pruned heavily, where `git merge-file` aligns the blocks away from the fork's copy of the changed lines.
 
 A file that already holds every upstream edit, such as a golden file that the fork regenerated, stays as it is. A file that holds some of them is marked for review.
 
@@ -58,7 +61,7 @@ A commit that needs attention stops with its files staged and lists them:
 | Mark | Meaning |
 | --- | --- |
 | `CONFLICT` | The file has conflict markers, or upstream deleted a file that the fork changed. |
-| `REVIEW` | Upstream changed a build file beyond its dependency lists, the fork already has some of upstream's edits, or the port adds lines for Meta's internal build, such as `#[cfg(fbcode_build)]`. |
+| `REVIEW` | Upstream changed a build file beyond its dependency lists, the fork already has some of upstream's edits, the port adds lines for Meta's internal build, such as `#[cfg(fbcode_build)]`, or the port adds a reference to a file that it dropped, such as a `load` of a file in `prelude/android`. |
 | `PROBLEM` | A `cargo` command failed. |
 
 The path map is cached in `.git/yak-port/` by the tree of `HEAD` and the source of `port.py`.
