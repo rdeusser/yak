@@ -196,6 +196,7 @@ fn configure_project(root: &AbsPath, cells: &[init::ExternalCell]) -> yak_error:
     let config_path = root.join(".yakconfig");
     let Some(mut config) = fs_util::read_to_string_if_exists(&config_path)? else {
         init::set_up_yakroot(root)?;
+        init::set_up_watchmanconfig(root)?;
         init::initialize_yakconfig(root, true, false, cells)?;
         let toolchains = root.join("toolchains");
         if !toolchains.exists() {

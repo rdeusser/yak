@@ -241,6 +241,9 @@ pub(crate) trait SyncableQueryProcessor: Send + Sync {
 
 /// commands to be sent to the SyncableQueryHandler.
 enum SyncableQueryCommand<T, P> {
+    /// Sends the query of the next sync, so Watchman's sync cookie can arrive while the command
+    /// does other work.
+    Prefetch,
     Sync(P, oneshot::Sender<yak_error::Result<(T, P)>>),
 }
 
@@ -288,6 +291,9 @@ struct SyncableQueryHandler<T, P> {
     mergebase_with: Option<String>,
     dice_clear_on_mergebase_change: bool,
     control_rx: UnboundedReceiver<SyncableQueryCommand<T, P>>,
+    /// The result of the query that the last `Prefetch` sent, which the next sync uses. The
+    /// clock only advances in a sync, so a later prefetch returns every event of an earlier one.
+    prefetched: Option<yak_error::Result<WatchmanSyncResult>>,
 }
 
 impl<T, P> SyncableQueryHandler<T, P>
@@ -306,6 +312,10 @@ where
 
         loop {
             match self.control_rx.recv().await {
+                Some(SyncableQueryCommand::Prefetch) => {
+                    // A failure here makes the sync reconnect.
+                    self.prefetched = Some(self.sync_query(&mut client).await);
+                }
                 Some(SyncableQueryCommand::Sync(dice, sync_tx)) => {
                     let res = self.sync(dice, &mut client).await;
 
@@ -328,7 +338,11 @@ where
         payload: P,
         client: &mut Option<WatchmanClient>,
     ) -> yak_error::Result<(T, P)> {
-        let sync_res = match self.sync_query(client).await {
+        let first = match self.prefetched.take() {
+            Some(res) => res,
+            None => self.sync_query(client).await,
+        };
+        let sync_res = match first {
             Ok(res) => Ok(res),
             Err(e) => self
                 .reconnect_and_sync_query(client)
@@ -517,6 +531,12 @@ where
     T: Send + 'static,
     P: Send + 'static,
 {
+    /// Sends the query of the next `sync` without waiting for it.
+    pub(crate) fn prefetch(&self) {
+        // If the handler has exited, the next `sync` reports it.
+        let _ignore = self.control_tx.send(SyncableQueryCommand::Prefetch);
+    }
+
     /// Ensures that the processor has been sent all changes that watchman has seen.
     pub(crate) fn sync(
         &self,
@@ -585,6 +605,7 @@ where
                 dice_clear_on_mergebase_change,
                 processor,
                 control_rx,
+                prefetched: None,
             };
             handler.run_loop().await
         });

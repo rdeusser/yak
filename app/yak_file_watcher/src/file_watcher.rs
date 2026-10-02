@@ -8,11 +8,13 @@
  * above-listed licenses.
  */
 
+use std::env;
 use std::sync::Arc;
 
 use allocative::Allocative;
 use async_trait::async_trait;
 use dice::DiceTransactionUpdater;
+use tracing::info;
 use yak_common::ignores::ignore_set::IgnoreSet;
 use yak_common::legacy_configs::configs::LegacyYakConfig;
 use yak_common::legacy_configs::key::YakconfigKeyRef;
@@ -64,6 +66,61 @@ pub(crate) fn dice_clear_on_mergebase_change(
     Ok(config_value && !env_skip)
 }
 
+/// The context of an error of a Watchman watcher that `yak.file_watcher = auto` selected.
+pub(crate) const AUTO_WATCHMAN_HINT: &str = "`yak.file_watcher = auto` selected Watchman because \
+     `WATCHMAN_SOCK` is set or `watchman` is on `PATH`. Set `yak.file_watcher = notify` in \
+     `.yakconfig` to use the notify watcher";
+
+/// The watcher that `yak.file_watcher` selects.
+#[derive(Debug, PartialEq)]
+enum Selection {
+    Watchman { selected_by_auto: bool },
+    Notify,
+    FsHashCrawler,
+}
+
+impl Selection {
+    /// Parses `yak.file_watcher`. `auto`, the default, selects Watchman when it is installed and
+    /// the notify watcher otherwise.
+    fn parse(
+        value: Option<&str>,
+        watchman_installed: impl FnOnce() -> bool,
+    ) -> yak_error::Result<Selection> {
+        match value.unwrap_or("auto") {
+            "auto" if watchman_installed() => Ok(Selection::Watchman {
+                selected_by_auto: true,
+            }),
+            "auto" | "notify" => Ok(Selection::Notify),
+            "watchman" => Ok(Selection::Watchman {
+                selected_by_auto: false,
+            }),
+            "fs_hash_crawler" => Ok(Selection::FsHashCrawler),
+            other => Err(yak_error!(
+                ErrorTag::Input,
+                "Invalid yak.file_watcher `{other}`. The values are `auto`, `watchman`, \
+                 `notify`, and `fs_hash_crawler`"
+            )),
+        }
+    }
+}
+
+/// Whether the daemon can reach Watchman: `WATCHMAN_SOCK` names its socket, or `watchman` is on
+/// the daemon's `PATH`.
+fn watchman_installed() -> bool {
+    if env::var_os("WATCHMAN_SOCK").is_some() {
+        return true;
+    }
+    let Some(path) = env::var_os("PATH") else {
+        return false;
+    };
+    let name = if cfg!(windows) {
+        "watchman.exe"
+    } else {
+        "watchman"
+    };
+    env::split_paths(&path).any(|dir| dir.join(name).is_file())
+}
+
 impl dyn FileWatcher {
     /// Create a new FileWatcher. Note that this is not async, since it's called during daemon
     /// startup and shouldn't be doing any work that could warrant suspending.
@@ -83,39 +140,74 @@ impl dyn FileWatcher {
             ));
         }
 
-        let default = "notify";
+        let value = root_config.get(YakconfigKeyRef {
+            section: "yak",
+            property: "file_watcher",
+        });
+        let selection = Selection::parse(value, watchman_installed)?;
+        info!("FileWatcher: Selected {selection:?}");
 
-        let watcher_conf = root_config
-            .get(YakconfigKeyRef {
-                section: "yak",
-                property: "file_watcher",
-            })
-            .unwrap_or(default);
-
-        match watcher_conf {
-            "watchman" => Ok(Arc::new(
-                WatchmanFileWatcher::new(
+        match selection {
+            Selection::Watchman { selected_by_auto } => {
+                let watcher = WatchmanFileWatcher::new(
                     project_root.root(),
                     root_config,
                     cells,
                     ignore_specs,
                     dep_file_cache,
+                    selected_by_auto,
                 )
-                .yak_error_context("Creating watchman file watcher")?,
-            )),
-            "notify" => Ok(Arc::new(
+                .yak_error_context("Creating watchman file watcher");
+                let watcher = if selected_by_auto {
+                    watcher.yak_error_context(AUTO_WATCHMAN_HINT)?
+                } else {
+                    watcher?
+                };
+                Ok(Arc::new(watcher))
+            }
+            Selection::Notify => Ok(Arc::new(
                 NotifyFileWatcher::new(project_root, cells, ignore_specs)
                     .yak_error_context("Creating notify file watcher")?,
             )),
-            "fs_hash_crawler" => Ok(Arc::new(
+            Selection::FsHashCrawler => Ok(Arc::new(
                 FsHashCrawler::new(project_root, cells, ignore_specs)
                     .yak_error_context("Creating fs_crawler file watcher")?,
             )),
-            other => Err(yak_error!(
-                yak_error::ErrorTag::Tier0,
-                "Invalid yak.file_watcher: {}",
-                other
-            )),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::Selection;
+
+    #[test]
+    fn test_selection() {
+        let parse = |value, installed| Selection::parse(value, || installed).unwrap();
+        assert_eq!(
+            parse(None, true),
+            Selection::Watchman {
+                selected_by_auto: true
+            }
+        );
+        assert_eq!(parse(None, false), Selection::Notify);
+        assert_eq!(
+            parse(Some("auto"), true),
+            Selection::Watchman {
+                selected_by_auto: true
+            }
+        );
+        assert_eq!(
+            parse(Some("watchman"), false),
+            Selection::Watchman {
+                selected_by_auto: false
+            }
+        );
+        assert_eq!(parse(Some("notify"), true), Selection::Notify);
+        assert_eq!(
+            parse(Some("fs_hash_crawler"), true),
+            Selection::FsHashCrawler
+        );
+        assert!(Selection::parse(Some("inotify"), || true).is_err());
     }
 }

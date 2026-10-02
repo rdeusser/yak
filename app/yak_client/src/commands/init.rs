@@ -260,6 +260,16 @@ fn set_up_gitignore(repo_root: &AbsPath) -> yak_error::Result<()> {
     Ok(())
 }
 
+/// Writes a `.watchmanconfig` that keeps Watchman from watching `yak-out`, unless the project has
+/// one. `yak.file_watcher = auto` selects Watchman when it is installed.
+pub(crate) fn set_up_watchmanconfig(repo_root: &AbsPath) -> yak_error::Result<()> {
+    let path = repo_root.join(".watchmanconfig");
+    if !path.exists() {
+        fs_util::write(path, "{\"ignore_dirs\": [\"yak-out\"]}\n").categorize_internal()?;
+    }
+    Ok(())
+}
+
 pub(crate) fn set_up_yakroot(repo_root: &AbsPath) -> yak_error::Result<()> {
     fs_util::write(repo_root.join(".yakroot"), "").categorize_internal()?;
     Ok(())
@@ -267,6 +277,7 @@ pub(crate) fn set_up_yakroot(repo_root: &AbsPath) -> yak_error::Result<()> {
 
 fn set_up_project(repo_root: &AbsPath, git: bool, prelude: bool) -> yak_error::Result<()> {
     set_up_yakroot(repo_root)?;
+    set_up_watchmanconfig(repo_root)?;
 
     if git {
         if !background_command("git")
@@ -314,6 +325,24 @@ mod tests {
     use crate::commands::init::initialize_yakconfig;
     use crate::commands::init::set_up_gitignore;
     use crate::commands::init::set_up_project;
+    use crate::commands::init::set_up_watchmanconfig;
+
+    #[test]
+    fn test_watchmanconfig() -> yak_error::Result<()> {
+        let tempdir = tempfile::tempdir()?;
+        let tempdir_path = AbsPath::new(tempdir.path())?;
+        let path = tempdir_path.join(".watchmanconfig");
+
+        set_up_watchmanconfig(tempdir_path)?;
+        let config: serde_json::Value = serde_json::from_str(&fs_util::read_to_string(&path)?)?;
+        assert_eq!(config, serde_json::json!({"ignore_dirs": ["yak-out"]}));
+
+        // An existing .watchmanconfig stays as it is
+        fs_util::write(&path, "{}\n")?;
+        set_up_watchmanconfig(tempdir_path)?;
+        assert_eq!(fs_util::read_to_string(&path)?, "{}\n");
+        Ok(())
+    }
 
     #[test]
     fn test_set_up_project_with_prelude_no_git() -> yak_error::Result<()> {
@@ -325,6 +354,7 @@ mod tests {
         // no git, with prelude
         set_up_project(tempdir_path, false, true)?;
         assert!(tempdir_path.join(".yakconfig").exists());
+        assert!(tempdir_path.join(".watchmanconfig").exists());
         assert!(tempdir_path.join("toolchains").exists());
         assert!(tempdir_path.join("toolchains/YAK").exists());
         assert!(tempdir_path.join("YAK").exists());

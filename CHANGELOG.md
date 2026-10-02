@@ -58,10 +58,14 @@ Removes the code, configuration, and service clients that only Meta's internal b
 
 ### File watching
 
-- When the operating system drops file system events, the default file watcher crawls the project and invalidates the files whose size, modification time, or status change time differ from its previous crawl. It cleared the DICE graph before, so the next build analyzed every target again. On macOS, the outputs that the build rewrote made FSEvents drop events again, so a no-op build of a workspace with 775 packages took 4 seconds, and it now takes 0.05 seconds.
+- When the operating system drops file system events, the `notify` file watcher crawls the project and invalidates the files whose size, modification time, or status change time differ from its previous crawl. It cleared the DICE graph before, so the next build analyzed every target again. On macOS, the outputs that the build rewrote made FSEvents drop events again, so a no-op build of a workspace with 775 packages took 4 seconds, and it now takes 0.05 seconds.
 - On macOS, the file watcher reads FSEvents directly and leaves `yak-out` out of the stream.
-- The default file watcher invalidates the paths under a renamed, removed, or replaced directory. FSEvents and inotify report such a directory as one event, and a query of a package under the old path answered from the cached listing and build file until the daemon restarted.
-- The default file watcher writes a sync marker file at the start of each command and waits for its event, so the command sees every change made before it started. FSEvents delivers events about 12 milliseconds after a change on macOS, and a command that started within that time could build the old contents of a file.
+- The `notify` file watcher invalidates the paths under a renamed, removed, or replaced directory. FSEvents and inotify report such a directory as one event, and a query of a package under the old path answered from the cached listing and build file until the daemon restarted.
+- The `notify` file watcher writes a sync marker file at the start of each command and waits for its event, so the command sees every change made before it started. FSEvents delivers events about 12 milliseconds after a change on macOS, and a command that started within that time could build the old contents of a file.
+- `yak.file_watcher` defaults to `auto`, which selects Watchman when `WATCHMAN_SOCK` is set or `watchman` is on the daemon's `PATH`, and the `notify` watcher otherwise. The default was `notify`. If an auto-selected Watchman fails, the error names `yak.file_watcher = notify`.
+- The Watchman watcher sends its query at the start of each command's DICE update, so Watchman's wait for its sync cookie overlaps the configuration loading. A no-op build of `//gazebo/dupe:dupe` in this repository took 58 ms with Watchman and 44 ms with `notify` before, and both take 46 to 48 ms now.
+- The Watchman query leaves out the files under `yak-out`.
+- `yak init` writes a `.watchmanconfig` that lists `yak-out` in `ignore_dirs` when the project has none, and so does `yak generate` when it creates a project.
 
 ### Daemon
 

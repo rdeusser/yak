@@ -273,3 +273,36 @@ You can view the contents of this section using the `yak audit cell` command.
 
 `[repositories]` is additionally supported as a deprecated alternative name for
 this section.
+
+## [yak]
+
+### file_watcher
+
+Selects how the daemon learns which files changed between commands.
+
+```ini
+[yak]
+  file_watcher = auto
+```
+
+- `auto`, the default, selects `watchman` when the `WATCHMAN_SOCK` environment
+  variable is set or `watchman` is on the daemon's `PATH`, and `notify`
+  otherwise. If an installed Watchman fails, the command fails, and the error
+  names `file_watcher = notify`.
+- `watchman` queries [Watchman](https://facebook.github.io/watchman/), which
+  must be installed.
+- `notify` watches the project with FSEvents on macOS and the operating
+  system's file notifications elsewhere.
+- `fs_hash_crawler` hashes every file of the project at the start of each
+  command.
+
+The daemon reads `file_watcher` from the configuration files when it starts, so
+a `-c` flag does not change the watcher.
+
+Watchman watches every directory of its root unless `.watchmanconfig` lists the
+directory in `ignore_dirs`. `yak init` writes a `.watchmanconfig` that lists
+`yak-out`, so Watchman does not watch the build's outputs:
+
+```json
+{"ignore_dirs": ["yak-out"]}
+```

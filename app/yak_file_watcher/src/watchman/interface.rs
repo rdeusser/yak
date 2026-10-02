@@ -15,17 +15,20 @@ use async_trait::async_trait;
 use dice::DiceTransactionUpdater;
 use tracing::debug;
 use tracing::info;
+use watchman_client::expr::DirNameTerm;
 use watchman_client::expr::Expr;
 use watchman_client::prelude::Connector;
 use watchman_client::prelude::FileType;
 use yak_common::file_ops::dice::FileChangeTracker;
 use yak_common::ignores::ignore_set::IgnoreSet;
+use yak_common::invocation_paths::InvocationPaths;
 use yak_common::legacy_configs::configs::LegacyYakConfig;
 use yak_common::legacy_configs::key::YakconfigKeyRef;
 use yak_core::cells::CellResolver;
 use yak_core::cells::name::CellName;
 use yak_core::fs::project_rel_path::ProjectRelativePath;
 use yak_core::rollout_percentage::RolloutPercentage;
+use yak_error::YakErrorContext;
 use yak_error::internal_error;
 use yak_events::dispatch::span_async;
 use yak_fs::paths::abs_norm_path::AbsNormPath;
@@ -346,6 +349,9 @@ impl SyncableQueryProcessor for WatchmanQueryProcessor {
 pub(crate) struct WatchmanFileWatcher {
     #[allocative(skip)]
     query: SyncableQuery<yak_data::FileWatcherStats, DiceTransactionUpdater>,
+    /// Whether `yak.file_watcher = auto` selected Watchman, in which case an error names the
+    /// setting that selects the notify watcher.
+    selected_by_auto: bool,
 }
 
 /// The watchman query is constructed once on daemon startup. It is an unfiltered watchman query
@@ -359,6 +365,7 @@ impl WatchmanFileWatcher {
         cells: CellResolver,
         ignore_specs: StdYakHashMap<CellName, IgnoreSet>,
         dep_file_cache: Arc<dyn DepFileCache>,
+        selected_by_auto: bool,
     ) -> yak_error::Result<Self> {
         let watchman_merge_base = root_config
             .get(YakconfigKeyRef {
@@ -398,10 +405,18 @@ impl WatchmanFileWatcher {
         let query = SyncableQuery::new(
             Connector::new(),
             project_root,
-            Expr::Any(vec![
-                Expr::FileType(FileType::Regular),
-                Expr::FileType(FileType::Directory),
-                Expr::FileType(FileType::Symlink),
+            Expr::All(vec![
+                Expr::Any(vec![
+                    Expr::FileType(FileType::Regular),
+                    Expr::FileType(FileType::Directory),
+                    Expr::FileType(FileType::Symlink),
+                ]),
+                // The build writes its outputs to `yak-out`, and the ignore set drops their
+                // events after Watchman sends them.
+                Expr::Not(Box::new(Expr::DirName(DirNameTerm {
+                    path: InvocationPaths::yak_out_dir_prefix().as_str().into(),
+                    depth: None,
+                }))),
             ]),
             Box::new(WatchmanQueryProcessor {
                 cells,
@@ -418,12 +433,19 @@ impl WatchmanFileWatcher {
             dice_clear_on_mergebase_change,
         )?;
 
-        Ok(Self { query })
+        Ok(Self {
+            query,
+            selected_by_auto,
+        })
     }
 }
 
 #[async_trait]
 impl FileWatcher for WatchmanFileWatcher {
+    fn start_sync(&self) {
+        self.query.prefetch();
+    }
+
     async fn sync(
         &self,
         dice: DiceTransactionUpdater,
@@ -438,6 +460,10 @@ impl FileWatcher for WatchmanFileWatcher {
                         let mergebase = Mergebase(Arc::new(stats.branched_from_revision.clone()));
                         ((Some(stats)), Ok((dice, mergebase)))
                     }
+                    Err(e) if self.selected_by_auto => (
+                        None,
+                        Err(e).yak_error_context(crate::file_watcher::AUTO_WATCHMAN_HINT),
+                    ),
                     Err(e) => (None, Err(e)),
                 };
                 (res, yak_data::FileWatcherEnd { stats })
