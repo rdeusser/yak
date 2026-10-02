@@ -171,13 +171,6 @@ In the integration test suite, 23 tests outside the Go tests take 45 seconds or 
 
 Remove this entry when a missing backend fails the command without the retry delay, or the delay is configurable.
 
-### A failed daemon start waits out the startup timeout
-
-When daemon initialization fails, the client waits for the whole startup timeout before it reports the error.
-`test_init_data_timeout` and `test_daemon_startup_error` in `tests/core/build/test_error_categorization.py` each take about 120 seconds.
-
-Remove this entry when the client reports an initialization failure as soon as the daemon exits.
-
 ### `yak install` seemingly leaves the installer running after a failed build
 
 The installer starts in the `try_compute2` call in `app/yak_server_commands/src/install.rs`, and nothing stops it when the build side fails, such as on a validation failure.

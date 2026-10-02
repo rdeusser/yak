@@ -565,7 +565,9 @@ async def test_action_error_has_categorization(yak: Yak) -> None:
 
 
 @yak_test(write_invocation_record=True, skip_for_os=["windows"])
-@env("YAK_TEST_INIT_DATA_SLEEP_SECS", "120")
+# The daemon must serve after the client's 5-second timeout, and the teardown's
+# `yak kill` waits until it serves.
+@env("YAK_TEST_INIT_DATA_SLEEP_SECS", "15")
 @env("YAKD_STARTUP_INIT_TIMEOUT", "5")
 async def test_init_data_timeout(yak: Yak) -> None:
     res = await expect_failure(yak.targets(":"))
