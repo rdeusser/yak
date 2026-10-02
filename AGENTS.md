@@ -42,6 +42,7 @@ Run these commands from the repository root. `rust-toolchain.toml` pins the nigh
 
 CI (`.github/workflows/build-and-test.yml`) runs `cargo build --bin=yak` and then `python3 test.py --ci` on Linux, macOS, and Windows.
 `.github/workflows/integration-tests.yml` runs the integration tests on Linux.
+`.github/workflows/build-with-yak.yml` builds `//app/yak:yak` and `//app_dep_graph_rules:test_yak_dep_graph` with the Cargo-built binary on Linux.
 Run `test.py` for every package you changed. Run it without packages when a change reaches crates that many others depend on, such as `yak_core` or `yak_common`.
 To check behavior end to end, run `target/debug/yak` in a project under `examples/` with its own `--isolation-dir`, as `docs/developers/basics.md` shows.
 
@@ -50,7 +51,7 @@ To check behavior end to end, run `target/debug/yak` in a project under `example
 - The fork does not merge `facebook/buck2`. It ports single upstream commits under yak names, as `docs/developers/basics.md` describes.
 - Code ported from `facebook/buck2` keeps only its open-source side. Drop `#[cfg(fbcode_build)]` branches, `@oss-disable` lines, `is_open_source()` checks, and `fbcode//` or `fbsource//` labels (`docs/developers/basics.md`).
 - A dependency change updates the crate's `Cargo.toml` and `Cargo.lock`. `yak generate` derives the `YAK` files of the crates from them, and `docs/developers/basics.md` gives the steps.
-- Check new crate dependencies against the late-binding and dependency rules in `ARCHITECTURE.md`. The yak build checks them (`docs/developers/basics.md`), but CI does not run the yak build.
+- Check new crate dependencies against the late-binding and dependency rules in `ARCHITECTURE.md`. The yak build checks them (`docs/developers/basics.md`).
 - Read files, yakconfig, and other build state inside DICE computations only through DICE, so invalidation stays correct.
 - `prelude/` changes reach a build only after the binary is rebuilt, because the binary embeds the prelude.
 - When a golden test fails because the expected output changed, regenerate the golden file (`docs/developers/basics.md`) and review its diff.

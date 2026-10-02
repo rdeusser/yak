@@ -30,12 +30,10 @@ Whether the GitHub runner puts the daemon in a cgroup below the root of its cgro
 
 Remove this entry when the workflow passes.
 
-### The crate dependency rules run only in the Yak build
+### The yak build of yak has not run in GitHub Actions
 
-`//app_dep_graph_rules:test_yak_dep_graph` checks the rules in `app_dep_graph_rules/rules.bzl` during analysis, and `yak build //app_dep_graph_rules:test_yak_dep_graph` succeeded on macOS on 2026-10-02, with the build files that `yak generate` writes.
-CI runs no Yak build, so a change that breaks a rule passes CI.
-
-Remove this entry when CI runs the check.
+`.github/workflows/build-with-yak.yml` builds `//app/yak:yak` and `//app_dep_graph_rules:test_yak_dep_graph` on `ubuntu-latest`. Its commands succeeded in a Linux container only with `debug = "line-tables-only"`, because the compile of `starlark` with the full debug information of `[profile.dev]` peaked at 5.0 GB (`docs/exec-plans/completed/2026-10-02-build-yak-with-yak.md`). The job builds with 2 jobs to stay within the runner's 16 GB, and it relies on the disk that its `Free disk space` step frees. Neither limit has been measured on a runner.
+Remove this entry when the workflow passes on `main`.
 
 ### Two Rust tests are compiled out
 

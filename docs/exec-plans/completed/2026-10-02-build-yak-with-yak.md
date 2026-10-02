@@ -21,7 +21,8 @@ The repository owner requires the self-build (2026-10-02).
 - [x] Plan of Work item 5: members' crates name their files relative to the workspace's directory, through `srcs_path` of the Rust rules (2026-10-02). `test_generate_runs_a_build_script_in_the_workspace_layout` checks `file!()`.
 - [x] Plan of Work item 6: the repository builds from generated `YAK` files (2026-10-02). On macOS, `yak build //app/yak:yak //app/yak:yak_client-bin //:yak_bundle //app_dep_graph_rules:test_yak_dep_graph` succeeds, and the check rejects a dependency of `yak_test_runner` on `yak_cmd_debug_client`. With `YAK_BINARY` set to the self-built binary, `tests/core/build`, `tests/core/test`, `tests/core/prelude`, and `tests/core/generate` gave 434 passed, 39 skipped, 3 expected failures, and 1 failure, `test_many_rebound_outputs_incremental_rebuild` (finding 12). `test_generate_includes_the_files_of_another_cell` covers `include` of another cell's `source_listing`. The 4 crates that joined the workspace build with yak, `yak test //dice/fuzzy_dice: //starlark-rust/benchmark_memory:` passes, and the 37 tests of `tests/core/completion` pass on macOS with `YAK_COMPLETION_VERIFY` set to the Cargo-built `completion_verify`.
 - [x] Plan of Work item 7: the cell applies the `dev` profile of the workspace (2026-10-02, finding 18). `test_profile_settings_reach_every_crate` covers the flags of the generated targets. `test_generate_applies_the_dev_profile` builds a member with `debug-assertions = false` and `panic = "abort"` that links a crate calling through `C-unwind`, and checks that its test unwinds. On macOS, the self-build of `//app/yak:yak //app/yak:yak_client-bin //:yak_bundle //app_dep_graph_rules:test_yak_dep_graph` succeeds, and the self-built binary is 150 MB. With `YAK_BINARY` set to it, `tests/core/build`, `tests/core/test`, `tests/core/prelude`, and `tests/core/generate` gave 436 passed, 39 skipped, and 3 expected failures, and `test_many_rebound_outputs_incremental_rebuild` passed in 91 seconds. The dependency check queries the crates in the configuration of the binary's transition, and it still rejects a dependency of `yak_test_runner` on `yak_cmd_debug_client`.
-- [ ] Plan of Work item 8.
+- [x] Plan of Work item 8: `.github/workflows/build-with-yak.yml` builds `//app/yak:yak` and `//app_dep_graph_rules:test_yak_dep_graph` with the Cargo-built binary on Linux (2026-10-02). Its commands succeeded in 10 minutes in a `debian:bookworm-slim` container on aarch64 with 2 jobs and `debug = "line-tables-only"` in `.cargo/config.toml`. With the full debug information of `[profile.dev]`, the compile of `starlark` alone peaked at 5.0 GB and the kernel killed it in the container's 5.8 GiB. The workflow builds with 2 jobs, because the runner of a public repository has 16 GB. The workflow has not run in GitHub Actions.
+- [x] Validation: on macOS, `YAK_BINARY=<self-built yak> tests/.venv/bin/python -m pytest tests -n 8` gave 1854 passed, 208 skipped, 3 xfailed, and 1 failed (2026-10-02). The failure, `test_lsp_daemon_inactivity_shutdown_recovers_with_different_version` of `tests/core/lsp/test_lsp.py`, passed on a rerun with the self-built binary and with the Cargo-built one.
 
 ## Surprises & Discoveries
 
@@ -61,7 +62,13 @@ The prototype ran on 2026-10-02 against a copy of `dfdf0496bf` on macOS, with `y
 
 ## Outcomes & Retrospective
 
-The prototype built a working binary, so the generated build is the approach. Items 1 to 7 are done, and the repository builds `//app/yak:yak` from the build files that `yak generate` writes, with the settings of `[profile.dev]`.
+The prototype built a working binary, so the generated build is the approach. Items 1 to 8 are done. The repository builds `//app/yak:yak` from the build files that `yak generate` writes, with the settings of `[profile.dev]`, and `.github/workflows/build-with-yak.yml` runs that build and the crate dependency check on Linux.
+
+The fixes went into the `cargo` cell, so other Cargo workspaces get them too: `[project] ignore`, `rustflags`, the workspace layout of build scripts, `DEP_<links>_<key>`, `file!()` paths, and the `dev` profile. The repository keeps 4 kinds of hand-written targets beside the generated ones (`ARCHITECTURE.md`, "Generated build files").
+
+The prototype's workarounds found every gap but one. The profile's `panic = "abort"` failed only at the final link of the self-build (finding 18), because the fixtures of the cell's tests held no crate that calls through `C-unwind`. `test_generate_applies_the_dev_profile` now links one.
+
+The tech-debt tracker records what remains: the workflow has not run in GitHub Actions, 2 Rust tests are compiled out, and the C++ toolchain has no tool identity.
 
 ## Context and Orientation
 
