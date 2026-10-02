@@ -22,13 +22,17 @@ BUILDSCRIPT_RUN: Path = (
 
 
 def run_buildscript(
-    tmp_path: Path, lines: list[str], manifest_files: tuple[str, ...] = ()
+    tmp_path: Path,
+    lines: list[str],
+    manifest_files: tuple[str, ...] = (),
+    manifest_subdir: str = "",
 ) -> tuple[list[str], str]:
     """Runs a build script that prints `lines`, with `$CARGO_MANIFEST_DIR`
-    replaced by the directory the runner gives it.
+    replaced by the directory the runner gives it and `$READ(<path>)` by the
+    contents of the file at that path relative to the script's directory.
 
-    The manifest directory holds `manifest_files`, and the script writes
-    `written.txt` to its current directory.
+    The manifest directory holds `manifest_files`, and the script runs in its
+    `manifest_subdir` and writes `written.txt` there.
 
     Returns the rustc flags and the linker argument file for dependents.
 
@@ -37,10 +41,11 @@ def run_buildscript(
     script = tmp_path / "build-script"
     script.write_text(
         f"#!{sys.executable}\n"
-        "import os\n"
+        "import os, re\n"
         "open('written.txt', 'w').close()\n"
         f"for line in {lines!r}:\n"
-        "    print(line.replace('$CARGO_MANIFEST_DIR', os.environ['CARGO_MANIFEST_DIR']))\n"
+        "    line = line.replace('$CARGO_MANIFEST_DIR', os.environ['CARGO_MANIFEST_DIR'])\n"
+        "    print(re.sub(r'\\$READ\\((.*?)\\)', lambda m: open(m.group(1)).read(), line))\n"
     )
     script.chmod(0o755)
     rustc_cfg = tmp_path / "rustc_cfg"
@@ -61,7 +66,8 @@ def run_buildscript(
             f"--buildscript={script}",
             f"--rustc-cfg={rustc_cfg}",
             f"--manifest-dir={manifest_dir}",
-            f"--create-cwd={tmp_path / 'cwd'}",
+            f"--manifest-subdir={manifest_subdir}",
+            f"--create-cwd={tmp_path / 'cwd' / manifest_subdir}",
             f"--outfile={outfile}",
             f"--linker-flags={linker_flags}",
             f"--shared-libs={tmp_path / 'shared_libs'}",
@@ -168,3 +174,36 @@ def test_current_directory_keeps_no_symlinks(tmp_path: Path) -> None:
     run_buildscript(tmp_path, [], manifest_files=("src/lib.rs", "Cargo.toml"))
     # The local action cache persists only outputs without symlinks to inputs.
     assert [p.name for p in (tmp_path / "cwd").iterdir()] == ["written.txt"]
+
+
+def test_package_below_the_root_of_the_tree_reads_its_siblings(
+    tmp_path: Path,
+) -> None:
+    # A protobuf build script of a workspace member reads the `.proto` files
+    # of another member through a path relative to its own directory.
+    manifest_dir = (tmp_path / "manifest").resolve()
+    flags, _ = run_buildscript(
+        tmp_path,
+        [
+            "cargo:rustc-env=API=$READ(../../proto/api.proto)",
+            "cargo:rustc-env=PROTO=$CARGO_MANIFEST_DIR/../../proto/api.proto",
+            "cargo:rustc-env=MANIFEST=$CARGO_MANIFEST_DIR",
+        ],
+        manifest_files=(
+            "crates/gen/Cargo.toml",
+            "proto/api.proto",
+        ),
+        manifest_subdir="crates/gen",
+    )
+    manifest = os.path.relpath(manifest_dir, tmp_path.resolve())
+    assert flags == [
+        "--env-set=API=proto/api.proto",
+        f"--env-set=PROTO=$(abspath {manifest}/proto/api.proto)",
+        f"--env-set=MANIFEST=$(abspath {manifest}/crates/gen)",
+    ]
+    # The links around the package's directory are gone too.
+    assert [p.name for p in (tmp_path / "cwd").iterdir()] == ["crates"]
+    assert [p.name for p in (tmp_path / "cwd" / "crates").iterdir()] == ["gen"]
+    assert [p.name for p in (tmp_path / "cwd" / "crates" / "gen").iterdir()] == [
+        "written.txt"
+    ]

@@ -194,6 +194,21 @@ async def test_generate_links_a_host_library_of_a_build_script(yak: Yak) -> None
     assert result.stdout == "answer=42\n"
 
 
+@yak_test(data_dir="buildscriptinclude")
+async def test_generate_runs_a_build_script_in_the_workspace_layout(yak: Yak) -> None:
+    # The build script of `crates/gen` reads `../../proto/api.txt`, which
+    # `include` of its build file declares, from the package's directory.
+    await yak.generate()
+    result = await yak.run("//crates/gen")
+    assert result.stdout == "api=v1\n"
+
+    # The file is an input of the script's run, so an edit reaches the next
+    # build.
+    (yak.cwd / "proto" / "api.txt").write_text("v2\n")
+    result = await yak.run("//crates/gen")
+    assert result.stdout == "api=v2\n"
+
+
 @yak_test(data_dir="sharedlib")
 async def test_generate_runs_a_binary_that_loads_a_build_script_shared_library(
     yak: Yak,

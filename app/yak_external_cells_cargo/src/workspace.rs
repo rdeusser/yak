@@ -156,11 +156,6 @@ def _declare_member(member, include, test_data):
         # platform and for every Cargo platform.
         exec_only = [get_exec_platform_marker()]
 
-        # The build script runs in the member's directory, which holds the member's own files.
-        native.filegroup(
-            name = names["manifest_dir"],
-            srcs = srcs,
-        )
         cargo.rust_binary(
             name = names["build_script_build"],
             crate = "build_script_build",
@@ -183,7 +178,11 @@ def _declare_member(member, include, test_data):
             package_name = member["name"],
             version = member["version"],
             features = member["features"],
-            manifest_dir = ":" + names["manifest_dir"],
+            # The build script runs in the member's directory of a tree with the crate's sources,
+            # so that a path that leaves the directory, such as `../proto/api.proto`, resolves.
+            filegroup_for_manifest_dir = {path: f for f, path in mapped_srcs.items()},
+            manifest_subdir = member["dir"],
+            package_srcs = package_srcs,
             buildscript_compatible_with = exec_only,
             env = env,
             rustc_link_lib = True,
@@ -665,7 +664,6 @@ pub fn generate_workspace(
         }
         let mut rule_names = Vec::new();
         for (key, suffix) in [
-            ("manifest_dir", "manifest-dir"),
             ("build_script_build", "build-script-build"),
             ("build_script_run", "build-script-run"),
         ] {

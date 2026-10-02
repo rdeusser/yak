@@ -79,6 +79,16 @@ def package_srcs_arg():
         ),
     }
 
+def package_srcs_files(package_srcs: dict[Dependency, str]) -> dict[str, Artifact]:
+    """The files of `package_srcs` by their paths in the source tree."""
+    files = {}
+    for dep, dir in package_srcs.items():
+        group = dep.get(ArtifactGroupInfo)
+        artifacts = group.artifacts if group else dep[DefaultInfo].default_outputs
+        for artifact in artifacts:
+            files[dir + "/" + artifact.short_path if dir else artifact.short_path] = artifact
+    return files
+
 def srcs_filegroup_arg():
     return {
         "srcs_filegroup": attrs.option(
@@ -111,11 +121,7 @@ def symlinked_srcs(ctx: AnalysisContext) -> Artifact:
 
     srcs = {src.short_path: src for src in ctx.attrs.srcs}
     srcs.update({k: v for v, k in ctx.attrs.mapped_srcs.items()})
-    for dep, dir in getattr(ctx.attrs, "package_srcs", {}).items():
-        group = dep.get(ArtifactGroupInfo)
-        artifacts = group.artifacts if group else dep[DefaultInfo].default_outputs
-        for artifact in artifacts:
-            srcs[dir + "/" + artifact.short_path if dir else artifact.short_path] = artifact
+    srcs.update(package_srcs_files(getattr(ctx.attrs, "package_srcs", {})))
 
     use_cbp = getattr(ctx.attrs, "use_content_based_paths", False)
 

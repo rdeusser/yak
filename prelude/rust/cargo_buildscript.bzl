@@ -60,6 +60,7 @@ load(
     "resolve_rust_deps_inner",
 )
 load(":rust_toolchain.bzl", "PanicRuntime")
+load(":sources.bzl", "package_srcs_files")
 
 def _make_rustc_shim(ctx: AnalysisContext, cwd: Artifact) -> cmd_args:
     # Build scripts expect to receive a `rustc` which "just works." However,
@@ -234,22 +235,30 @@ def _cargo_buildscript_impl(ctx: AnalysisContext) -> list[Provider]:
     cxx_toolchain_info = ctx.attrs._cxx_toolchain[CxxToolchainInfo]
     rust_toolchain_info = ctx.attrs._rust_toolchain[RustToolchainInfo]
 
-    cwd = ctx.actions.declare_output("cwd", dir = True, has_content_based_path = True)
+    # The script runs in the package's directory inside a copy of the manifest tree, so that a
+    # relative path out of the package, such as `../proto/api.proto`, resolves as with Cargo.
+    subdir = ctx.attrs.manifest_subdir
+    cwd = ctx.actions.declare_output("cwd/" + subdir if subdir else "cwd", dir = True, has_content_based_path = True)
     out_dir = ctx.actions.declare_output("OUT_DIR", dir = True, has_content_based_path = True)
     rustc_flags = ctx.actions.declare_output("rustc_flags", has_content_based_path = True)
     linker_flags = ctx.actions.declare_output("linker_flags", has_content_based_path = True)
     shared_libs = ctx.actions.declare_output("shared_libs", dir = True, has_content_based_path = True)
 
     if ctx.attrs.manifest_dir != None:
+        if ctx.attrs.package_srcs or subdir:
+            fail("`package_srcs` and `manifest_subdir` take the files of `filegroup_for_manifest_dir`, not of `manifest_dir`")
         manifest_dir = ctx.attrs.manifest_dir[DefaultInfo].default_outputs[0]
     else:
-        manifest_dir = ctx.actions.symlinked_dir("manifest_dir", ctx.attrs.filegroup_for_manifest_dir, has_content_based_path = True)
+        manifest_srcs = dict(ctx.attrs.filegroup_for_manifest_dir)
+        manifest_srcs.update(package_srcs_files(ctx.attrs.package_srcs))
+        manifest_dir = ctx.actions.symlinked_dir("manifest_dir", manifest_srcs, has_content_based_path = True)
 
     cmd = [
         ctx.attrs.runner[RunInfo],
         cmd_args("--buildscript=", ctx.attrs.buildscript[RunInfo], delimiter = ""),
         cmd_args("--rustc-cfg=", ctx.attrs.rustc_cfg[DefaultInfo].default_outputs[0], delimiter = ""),
         cmd_args("--manifest-dir=", manifest_dir, delimiter = ""),
+        "--manifest-subdir=" + subdir,
         cmd_args("--create-cwd=", cwd.as_output(), delimiter = ""),
         cmd_args("--outfile=", rustc_flags.as_output(), delimiter = ""),
         cmd_args("--linker-flags=", linker_flags.as_output(), delimiter = ""),
@@ -450,7 +459,14 @@ _cargo_buildscript_rule = rule(
         "features": attrs.list(attrs.string(), default = []),
         "filegroup_for_manifest_dir": attrs.option(attrs.dict(key = attrs.string(), value = attrs.source()), default = None),
         "manifest_dir": attrs.option(attrs.dep(), default = None),
+        # The directory of the package in the tree of `filegroup_for_manifest_dir`, where the
+        # script runs and which `CARGO_MANIFEST_DIR` names.
+        "manifest_subdir": attrs.string(default = ""),
         "package_name": attrs.string(),
+        # The files of targets in other packages that the script reads, each placed below a
+        # directory of the tree of `filegroup_for_manifest_dir`, as in `package_srcs` of the Rust
+        # rules.
+        "package_srcs": attrs.dict(key = attrs.dep(), value = attrs.string(), sorted = False, default = {}),
         "runner": attrs.default_only(attrs.exec_dep(providers = [RunInfo], default = "prelude//rust/tools:buildscript_run")),
         # *IMPORTANT* rustc_cfg must be a `dep` and not an `exec_dep` because
         # we want the `rustc --cfg` for the target platform, not the exec platform.
@@ -485,14 +501,14 @@ def buildscript_run(
 ):
     kwargs = apply_platform_attrs(platform, kwargs)
 
-    if manifest_dir == None and local_manifest_dir == None:
+    filegroup_for_manifest_dir = kwargs.pop("filegroup_for_manifest_dir", None)
+    if manifest_dir == None and local_manifest_dir == None and filegroup_for_manifest_dir == None:
         existing_filegroup_name = "{}-{}.crate".format(package_name, version)
         if rule_exists(existing_filegroup_name):
             manifest_dir = ":{}".format(existing_filegroup_name)
         else:
             local_manifest_dir = "vendor/{}-{}".format(package_name, version)
 
-    filegroup_for_manifest_dir = None
     if local_manifest_dir != None:
         prefix_with_trailing_slash = "{}/".format(local_manifest_dir)
         filegroup_for_manifest_dir = {path.removeprefix(prefix_with_trailing_slash): path for path in glob(["{}/**".format(local_manifest_dir)])}

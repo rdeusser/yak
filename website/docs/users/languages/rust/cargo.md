@@ -203,6 +203,12 @@ read from the environment of each command.
 
 ## Build scripts
 
+A workspace member's build script runs in the member's directory of a copy of
+the member's files and its included files, at their paths in the workspace. A
+script that reads `../proto/api.proto` finds the file when `include` of
+`cargo_package()` names a target with it, and an edit of the file runs the
+script again. `CARGO_MANIFEST_DIR` names the member's directory in the copy.
+
 A build script can link a library that it builds into its `OUT_DIR` or finds
 on the machine, such as through pkg-config. The links of the crates that
 depend on the package get the library's directory, as with Cargo. yak copies

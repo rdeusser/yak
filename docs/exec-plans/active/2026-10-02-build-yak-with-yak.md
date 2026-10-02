@@ -16,7 +16,8 @@ The repository owner requires the self-build (2026-10-02).
 - [ ] Decide how the prelude reaches `yak_external_cells_bundled` (Decision Log).
 - [x] Plan of Work item 1: `yak generate` skips ignored directories (2026-10-02).
 - [x] Plan of Work item 2: the `cargo` cell applies the `rustflags` of Cargo's configuration (2026-10-02).
-- [ ] Plan of Work items 3 to 8.
+- [x] Plan of Work item 3: a workspace member's build script runs in the member's directory of a tree with the workspace's layout, the member's files, and the files of `include` (2026-10-02). `test_generate_runs_a_build_script_in_the_workspace_layout` covers it. The protobuf crates of this repository build this way once they declare their `.proto` files (item 6).
+- [ ] Plan of Work items 4 to 8.
 
 ## Surprises & Discoveries
 

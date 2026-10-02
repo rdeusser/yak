@@ -84,9 +84,14 @@ def cfg_env(rustc_cfg: Path) -> dict[str, str]:
     return cfgs
 
 
-def create_cwd(path: Path, manifest_dir: Path) -> list[Path]:
-    """Create a directory with most of the same contents as manifest_dir, but
+def create_cwd(root: Path, manifest_dir: Path, subdir: str) -> list[Path]:
+    """Create a tree at root with most of the same contents as manifest_dir, but
     excluding Rustup's rust-toolchain.toml configuration file.
+
+    The entries of the tree are symlinks into manifest_dir, except for the
+    directories on the way to `subdir`, where the build script runs. A relative
+    path out of the script's directory, such as `../proto/api.proto`, resolves
+    as it does from `subdir` of manifest_dir.
 
     Returns the symlinks it created, which `remove_cwd_links` removes after the
     build script exits.
@@ -132,17 +137,26 @@ def create_cwd(path: Path, manifest_dir: Path) -> list[Path]:
     place.
     """
 
-    path.mkdir(exist_ok=True)
-
+    parts = [part for part in subdir.split("/") if part]
     links = []
-    for dir_entry in manifest_dir.iterdir():
-        if dir_entry.name not in ["rust-toolchain", "rust-toolchain.toml"]:
-            link = path.joinpath(dir_entry.name)
+    tree_dir = root
+    source_dir = manifest_dir
+    for depth in range(len(parts) + 1):
+        tree_dir.mkdir(parents=True, exist_ok=True)
+        next_part = parts[depth] if depth < len(parts) else None
+        for dir_entry in source_dir.iterdir():
+            if dir_entry.name in ["rust-toolchain", "rust-toolchain.toml", next_part]:
+                continue
+            link = tree_dir.joinpath(dir_entry.name)
             link.unlink(missing_ok=True)
             link.symlink_to(
-                os.path.relpath(dir_entry, path), target_is_directory=dir_entry.is_dir()
+                os.path.relpath(dir_entry, tree_dir),
+                target_is_directory=dir_entry.is_dir(),
             )
             links.append(link)
+        if next_part is not None:
+            tree_dir = tree_dir.joinpath(next_part)
+            source_dir = source_dir.joinpath(next_part)
 
     return links
 
@@ -240,6 +254,7 @@ class Args(NamedTuple):
     rustc_cfg: Path
     rustc_host_tuple: Optional[Path]
     manifest_dir: Path
+    manifest_subdir: str
     create_cwd: Path
     outfile: IO[str]
     linker_flags: Optional[IO[str]]
@@ -255,6 +270,9 @@ def arg_parse() -> Args:
     parser.add_argument("--rustc-cfg", type=Path, required=True)
     parser.add_argument("--rustc-host-tuple", type=Path)
     parser.add_argument("--manifest-dir", type=Path, required=True)
+    # The directory of the package in the tree of `--manifest-dir`, which
+    # `--create-cwd` names in the tree that it creates.
+    parser.add_argument("--manifest-subdir", type=str, default="")
     parser.add_argument("--create-cwd", type=Path, required=True)
     parser.add_argument("--outfile", type=argparse.FileType("w"), required=True)
     # The linker flags that every link of a dependent needs, as an argument file.
@@ -280,8 +298,13 @@ def main() -> None:  # noqa: C901
     env["OUT_DIR"] = os.path.abspath(out_dir)
 
     cwd = args.create_cwd
-    cwd_links = create_cwd(cwd, args.manifest_dir)
+    cwd_root = cwd
+    for part in args.manifest_subdir.split("/"):
+        if part:
+            cwd_root = cwd_root.parent
+    cwd_links = create_cwd(cwd_root, args.manifest_dir, args.manifest_subdir)
     cwd_abs = os.path.abspath(cwd)
+    cwd_root_abs = os.path.abspath(cwd_root)
     env["CARGO_MANIFEST_DIR"] = cwd_abs
 
     env = dict(os.environ, **env)
@@ -318,12 +341,12 @@ def main() -> None:  # noqa: C901
     )
     out_dir_abs = env["OUT_DIR"]
 
-    # Resolve a path inside the build script's current directory through the
-    # symlinks that `remove_cwd_links` removes.
+    # Resolve a path inside the tree of the build script's current directory
+    # through the symlinks that `remove_cwd_links` removes.
     def resolve_cwd(path: str) -> str:
         if path == cwd_abs:
-            return os.path.abspath(args.manifest_dir)
-        if path.startswith(cwd_abs + os.sep):
+            return os.path.abspath(args.manifest_dir.joinpath(args.manifest_subdir))
+        if path.startswith(cwd_root_abs + os.sep):
             return os.path.realpath(path)
         return path
 
