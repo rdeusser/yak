@@ -139,12 +139,17 @@ Only fbcc, Meta's compiler wrapper, understands the flag, so a plain clang rejec
 
 Remove this entry when split debug info uses flags that clang accepts and no tool expects the fbcc command layout.
 
-### Generated projects have no remote cache, and a shared cache could serve another toolchain's outputs
+### A shared cache could serve another toolchain's outputs
 
-yak can run every action locally, look it up in a Remote Execution API cache first, and upload the result. An execution platform whose `CommandExecutorConfig` enables local execution, `remote_cache_enabled`, and `allow_cache_uploads` selects that mode (`app/yak_build_api/src/interpreter/rule_defs/command_executor_config.rs`), and `[yak_re_client]` names the cache's addresses. The owner wants a remote cache before remote execution (2026-09-30).
-`yak generate` and `yak init` write projects that use `prelude//platforms:default`, which offers no setting for it.
+`[build] remote_cache` turns on a remote cache for `prelude//platforms:default`, which `yak generate` and `yak init` select, and `[yak] default_allow_cache_upload` uploads the results of build actions (2026-10-01, `docs/exec-plans/completed/2026-10-01-cache-passing-test-results.md`).
 The toolchains of `system_toolchains()` in `prelude/toolchains/system.bzl` run `rustc`, `clang`, and the other tools from `PATH`, and an action's key covers its command line and inputs but not the tool binary. Two machines with different `rustc` versions compute the same key for an action, so a shared cache could return one machine's output to the other.
-Remove this entry when a generated project can turn on a remote cache from `.yakconfig`, and each toolchain puts the identity of its tools, such as a digest of `rustc -vV`, into the keys of its actions.
+A test's key covers its test binary, so a cached pass is safe to share. A build action's key does not cover the compiler that runs it.
+Remove this entry when each toolchain puts the identity of its tools, such as a digest of `rustc -vV`, into the keys of its actions.
+
+### The C compiles of the Go standard library miss a shared cache
+
+On 2026-10-01, two checkouts of the GitHub CLI at different paths shared 4373 of 4390 build actions through bazel-remote. The other 17 were the `c_compile` actions of `prelude//go/tools:stdlib` for the cgo files of the runtime, such as `goroot/src/runtime/cgo/gcc_unix.c`, whose action digests differ between the checkouts.
+Remove this entry when those actions get the same digest in two checkouts of one project.
 
 ### A daemon without a Remote Execution backend waits 45 seconds to fail
 

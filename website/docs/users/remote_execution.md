@@ -99,8 +99,21 @@ select:
 - `read_write` also uploads the passes of tests that support caching after they
   run locally, and the results of actions that set `allow_cache_upload = True`.
 
-A CI job that sets `read_write` and developer machines that set `read` share
-the results of CI. A test that runs on a local executor of its own, as a test
+`[yak] default_allow_cache_upload = true` uploads the results of every build
+action that runs locally, so that other machines skip its compile as well:
+
+```ini
+[build]
+  remote_cache = read_write
+
+[yak]
+  default_allow_cache_upload = true
+```
+
+A CI job with this configuration and developer machines that set
+`remote_cache = read` share the results of CI. `--upload-all-actions` serves
+remote execution, which needs every action's inputs in the CAS, and does not
+upload the results of local actions. A test that runs on a local executor of its own, as a test
 without a remote execution profile does, uses the remote cache of its execution
 platform. [Caching test results](../rule_authors/test_execution.md#caching-test-results)
 describes which tests support caching.

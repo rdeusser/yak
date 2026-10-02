@@ -514,6 +514,11 @@ enum BatchUploadRequest {
     File(NamedDigest),
 }
 
+/// BATCH_ENTRY_OVERHEAD_BYTES limits the bytes that one entry of a `BatchUpdateBlobsRequest` adds
+/// beside its data and digest hash: the tags and lengths of the entry, its digest, its data, and
+/// its compressor, and the digest's size.
+const BATCH_ENTRY_OVERHEAD_BYTES: i64 = 32;
+
 /// Builds up a vector of batch upload requests based upon the maximum allowed message size.
 #[derive(Default)]
 struct BatchUploadReqAggregator {
@@ -532,21 +537,25 @@ impl BatchUploadReqAggregator {
     }
 
     pub fn push(&mut self, req: BatchUploadRequest) {
-        let size_in_bytes = match &req {
-            BatchUploadRequest::Blob(blob) => blob.digest.size_in_bytes,
-            BatchUploadRequest::File(file) => file.digest.size_in_bytes,
+        let digest = match &req {
+            BatchUploadRequest::Blob(blob) => &blob.digest,
+            BatchUploadRequest::File(file) => &file.digest,
         };
 
         // As an optimization, we can silently skip uploading empty blobs
-        if size_in_bytes == 0 {
+        if digest.size_in_bytes == 0 {
             return;
         }
 
-        self.curr_request_size += size_in_bytes;
+        // Each entry carries its digest and framing beside its data, which adds up past the
+        // message limit of a server in a batch of thousands of small files.
+        let encoded_size =
+            digest.size_in_bytes + digest.hash.len() as i64 + BATCH_ENTRY_OVERHEAD_BYTES;
+        self.curr_request_size += encoded_size;
 
-        if self.curr_request_size >= self.max_msg_size {
+        if self.curr_request_size >= self.max_msg_size && !self.curr_req.is_empty() {
             self.requests.push(std::mem::take(&mut self.curr_req));
-            self.curr_request_size = size_in_bytes;
+            self.curr_request_size = encoded_size;
         }
         self.curr_req.push(req);
     }
@@ -1859,6 +1868,45 @@ mod tests {
     use re_grpc_proto::build::bazel::remote::execution::v2::batch_update_blobs_response;
 
     use super::*;
+
+    #[test]
+    fn test_batches_fit_the_message_limit_with_their_digests() {
+        let max_msg_size = 10_000;
+        let mut aggregator = BatchUploadReqAggregator::new(max_msg_size);
+        for i in 0..1000 {
+            let hash = format!("{i:064x}");
+            aggregator.push(BatchUploadRequest::Blob(InlinedBlobWithDigest {
+                blob: vec![b'x'; 40],
+                digest: TDigest {
+                    hash,
+                    size_in_bytes: 40,
+                    ..Default::default()
+                },
+                ..Default::default()
+            }));
+        }
+        let batches = aggregator.done();
+        assert!(batches.len() > 1);
+        assert_eq!(batches.iter().map(Vec::len).sum::<usize>(), 1000);
+        for batch in batches {
+            assert!(!batch.is_empty());
+            let request = BatchUpdateBlobsRequest {
+                requests: batch
+                    .into_iter()
+                    .map(|req| match req {
+                        BatchUploadRequest::Blob(blob) => Request {
+                            digest: Some(tdigest_to(&blob.digest)),
+                            data: blob.blob,
+                            compressor: compressor::Value::Identity as i32,
+                        },
+                        BatchUploadRequest::File(_) => unreachable!(),
+                    })
+                    .collect(),
+                ..Default::default()
+            };
+            assert!(request.encoded_len() <= max_msg_size);
+        }
+    }
 
     #[tokio::test]
     async fn test_download_named() -> anyhow::Result<()> {

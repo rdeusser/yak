@@ -103,7 +103,7 @@ Without an execution platform, this repository's build runs every action locally
 
 ### Tests
 
-- `app/yak_test` is the daemon side of `yak test` (`YakTestOrchestrator`, `TestExecutionKey`). It launches a test executor process and serves the orchestrator API to it over gRPC.
+- `app/yak_test` is the daemon side of `yak test` (`YakTestOrchestrator`, `TestExecutionKey`). It launches a test executor process and serves the orchestrator API to it over gRPC. It keeps the passes of tests that support caching in `yak-out/<isolation dir>/cache/test_results` (`test_result_cache.rs`), and looks them up in and uploads them to a remote cache through the test's executor.
 - `app/yak_test_api` and `app/yak_test_proto` define the protocol between yak and a test executor (`TestExecutor`, `TestOrchestrator`).
 - `app/yak_test_runner` is the built-in test executor, which runs as `yak internal-test-runner`. yak uses it unless `[test] v2_test_executor` names another executable.
 

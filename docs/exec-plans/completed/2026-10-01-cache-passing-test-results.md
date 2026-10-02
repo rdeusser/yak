@@ -16,7 +16,7 @@ To see it working, run `yak test //...` twice in a Cargo workspace. The second r
 - [x] Milestone 2: `yak test --no-test-cache`, the cached-pass display, and documentation.
 - [x] Milestone 3: action digests of tests that do not depend on the path of the checkout.
 - [x] Milestone 4: lookups in and uploads to a remote action cache.
-- [ ] Milestone 5: validation against Roost and the GitHub CLI.
+- [x] Milestone 5: validation against Roost and the GitHub CLI.
 
 ## Surprises & Discoveries
 
@@ -30,7 +30,8 @@ To see it working, run `yak test //...` twice in a Cargo workspace. The second r
 - The prelude gives a test without a remote execution profile a local executor of its own, with `remote_cache_enabled = False` (`prelude/tests/re_utils.bzl`), so that a remote-only build platform does not run it. Such a test never reached the remote cache of its execution platform, and the orchestrator also gave the Testing stage a no-op uploader.
 - `prelude//platforms:default`, which `yak init` and `yak generate` select, had no remote cache settings.
 - The gRPC client required `[yak_re_client] engine_address` to fetch capabilities, so a cache without remote execution, such as bazel-remote, failed every lookup with `No engine address`.
-- A build action uploads its result only when it sets `allow_cache_upload = True` or under `--upload-all-actions`.
+- A build action uploads its result only when it sets `allow_cache_upload = True` or `[yak] default_allow_cache_upload` is true. `--upload-all-actions` uploads the inputs that remote execution needs and no results.
+- Under `--upload-all-actions`, Roost's build failed 3 actions with `received message larger than max (4591212 vs. 4194304)`. bazel-remote advertises no batch limit, and its gRPC server accepts 4 MiB messages. The client kept the blob bytes of a `BatchUpdateBlobsRequest` under its default of 4,000,000 bytes, but each entry also carries its digest and framing, and the request for `gpui` held thousands of small files. The aggregator now counts about 100 bytes per entry (`BATCH_ENTRY_OVERHEAD_BYTES` plus the hash).
 
 ## Decision Log
 
@@ -48,7 +49,24 @@ To see it working, run `yak test //...` twice in a Cargo workspace. The second r
 
 ## Outcomes & Retrospective
 
-Nothing yet.
+Completed 2026-10-01. `yak test` reports an earlier pass of a test that supports caching in place of running it, from the local store under `yak-out/<isolation dir>/cache/test_results` or from a remote cache, and `--no-test-cache` runs every test. The `cargo` and `go` cells declare their tests with `supports_test_execution_caching`.
+
+Measurements on macOS (Apple silicon), against bazel-remote in Docker with an empty cache. Checkout A had `[build] remote_cache = read_write` and `[yak] default_allow_cache_upload = true`, and checkout B, a copy at another path with its own daemon, had `remote_cache = read_write`.
+
+| Project | Run | Time | Tests | Build actions |
+| --- | --- | --- | --- | --- |
+| Roost (8 tests) | A, first | 243 s | 8 ran | 2230 ran |
+| Roost | A, second | 0 s | 8 from the local store | none |
+| Roost | A, after a comment added to `roost-syntax` | 8 s | 1 ran, 7 from the local store | 6 ran |
+| Roost | B, first | 9 s | 8 from the remote cache | 2229 from the remote cache |
+| GitHub CLI (250 tests) | A, first | 211 s | 250 ran, 8 failed | 4390 ran |
+| GitHub CLI | A, second | 0 s | 242 from the local store, 8 failures ran | none |
+| GitHub CLI | A, after an exported constant added to `pkg/jsoncolor` | 72 s | 71 ran, 179 from the local store | 218 ran |
+| GitHub CLI | B, first | 26 s | 242 from the remote cache, 8 failures ran | 4373 from the remote cache, 17 ran |
+
+The 8 GitHub CLI failures read `pkg/cmd/attestation/test/data`, which belongs to another package, and pass once a `test_data` declaration names it. A failure is never cached, so they run every time. The 17 uncached actions are recorded in the tech-debt tracker.
+
+The work found three problems outside its plan: the prelude's local executor for tests had no remote cache, the gRPC client required an engine address for a cache-only server, and batched uploads exceeded a 4 MiB message limit. Each is fixed with a test. A shared cache can still serve one compiler's build outputs to a machine with another compiler, as the tech-debt tracker records.
 
 ## Context and Orientation
 
