@@ -57,7 +57,7 @@ impl SuperConsoleOutput for TestOutput {
                     .as_bytes()
                     .iter()
                     .copied()
-                    .chain(buffer.into_iter())
+                    .chain(buffer)
                     .collect::<Vec<u8>>();
                 self.frames.push(output);
                 Ok(())

@@ -193,11 +193,11 @@ impl Line {
         if span.is_empty() {
             return;
         }
-        if let Some(last) = self.0.last_mut() {
-            if last.is_mergeable_with(&span) {
-                last.content.to_mut().push_str(&span.content);
-                return;
-            }
+        if let Some(last) = self.0.last_mut()
+            && last.is_mergeable_with(&span)
+        {
+            last.content.to_mut().push_str(&span.content);
+            return;
         }
         self.0.push(span);
     }

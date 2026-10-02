@@ -113,7 +113,7 @@ Without an execution platform, this repository's build runs every action locally
 - `app/yak_events` creates and dispatches events inside a process (`EventDispatcher`, `EventSink`).
 - `app/yak_event_log` writes and reads event logs. Each command writes `yak-out/<isolation dir>/log/<timestamp>_<command>_<trace id>_events.pb.zst`.
 - `app/yak_cmd_log_client` implements `yak log`, which reads those files (`what-ran`, `what-failed`, `critical-path`, `replay`, and others).
-- `app/yak_event_observer` aggregates events into the state the consoles render. `superconsole/` is the terminal UI library. `Cargo.toml` excludes it from the workspace and uses it as a path dependency.
+- `app/yak_event_observer` aggregates events into the state the consoles render. `superconsole/` is the terminal UI library, a member of the workspace.
 - `app/yak_critical_path`, `app/yak_build_signals`, and `app/yak_build_signals_impl` compute the critical path of a build.
 
 ### Rules and libraries
