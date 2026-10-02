@@ -18,12 +18,14 @@ use yak_error::YakErrorContext;
 use yak_fs::fs_util::uncategorized as fs_util;
 use yak_wrapper_common::KillallFilter;
 
-/// Kill all yak processes on the machine
+/// Kill the yak processes of the current repository
 ///
-/// By default this kills every yak process regardless of repository or isolation dir.
-/// Passing `--in-isolation-dir` narrows the kill to processes using that isolation dir, and
-/// `--repo` narrows it to processes running in the current repository. Processes that
-/// cannot be checked against the requested filter are skipped and reported.
+/// By default this kills every yak process running in the current repository, whatever its
+/// isolation dir. `--global` kills the yak processes of every repository on the machine, and
+/// `--in-isolation-dir` narrows either kill to processes using that isolation dir. Processes
+/// that cannot be checked against the requested filter are skipped and reported.
+///
+/// The local actions that the killed processes started are killed too.
 #[derive(Debug, clap::Parser)]
 #[clap(verbatim_doc_comment)]
 pub struct KillallCommand {
@@ -34,9 +36,9 @@ pub struct KillallCommand {
     #[clap(long, value_name = "ISOLATION_DIR")]
     in_isolation_dir: Option<String>,
 
-    /// Only kill yak processes running in the current repository (project root).
-    #[clap(long)]
-    repo: bool,
+    /// Kill the yak processes of every repository on the machine.
+    #[clap(short, long)]
+    global: bool,
 
     #[clap(flatten)]
     pub(crate) event_log_opts: CommonEventLogOptions,
@@ -51,17 +53,17 @@ impl YakSubcommand for KillallCommand {
         ctx: ClientCommandContext<'_>,
         _events_ctx: &mut EventsCtx,
     ) -> ExitResult {
-        let project_root = self
-            .repo
-            .then(|| {
-                // Process working directories are read fully resolved from the OS, so
-                // canonicalize the root to make the comparison symlink-insensitive.
-                let paths = ctx
-                    .paths()
-                    .yak_error_context("`--repo` requires running from within a repository")?;
-                yak_error::Ok(fs_util::canonicalize(paths.project_root().root())?.into_path_buf())
-            })
-            .transpose()?;
+        let project_root = if self.global {
+            None
+        } else {
+            // Process working directories are read fully resolved from the OS, so
+            // canonicalize the root to make the comparison symlink-insensitive.
+            let paths = ctx.paths().yak_error_context(
+                "`yak killall` kills the yak processes of the current repository. \
+                Run it inside a repository, or pass `--global` to kill those of every repository",
+            )?;
+            Some(fs_util::canonicalize(paths.project_root().root())?.into_path_buf())
+        };
 
         let filter = KillallFilter {
             isolation_dir: self.in_isolation_dir,

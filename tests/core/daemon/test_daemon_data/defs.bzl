@@ -20,3 +20,29 @@ long_running = rule(
     impl = _long_running_impl,
     attrs = {},
 )
+
+# The action starts a child, writes "<action pid> <child pid>" to the file that
+# `-c test.pid_file=<path>` names, and sleeps.
+_SPAWNS_CHILD = """
+import os, subprocess, sys, time
+child = subprocess.Popen([sys.executable, "-c", "import time; time.sleep(999999)"])
+with open(sys.argv[1] + ".tmp", "w") as f:
+    f.write(f"{os.getpid()} {child.pid}")
+os.rename(sys.argv[1] + ".tmp", sys.argv[1])
+time.sleep(999999)
+"""
+
+def _spawns_child_impl(ctx: AnalysisContext) -> list[Provider]:
+    out = ctx.actions.declare_output("out", has_content_based_path = False)
+    ctx.actions.run(
+        ["python3", "-c", _SPAWNS_CHILD, read_root_config("test", "pid_file"), out.as_output()],
+        category = "test",
+        identifier = "spawns_child",
+    )
+
+    return [DefaultInfo(out)]
+
+spawns_child = rule(
+    impl = _spawns_child_impl,
+    attrs = {},
+)

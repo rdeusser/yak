@@ -74,6 +74,9 @@ Removes the code, configuration, and service clients that only Meta's internal b
 - The daemon writes `yak-out/go.mod`, so `go build ./...`, `go test ./...`, and `go list ./...` in a Go module at the project root skip `yak-out`. They failed before on the Go sources that builds copy there.
 - The local action cache persists across daemon restarts by default (`[yak] sqlite_dep_file_state`). A build after `yak kill`, or after a new `yak` binary restarted the daemon, ran every command again before. `sqlite_dep_file_state = false` turns it off.
 - After `yak kill`, or after the daemon exited on its own, the next command prints `Starting new yak daemon...`. It printed `Could not connect to yak daemon (yak daemon is not running), killing daemon..` before, because `yakd.info` outlives the daemon.
+- On Linux and macOS, the local actions of a daemon stop when `yak kill` stops the daemon or when a signal kills it. The forkserver exits when the daemon's socket closes, and it now kills the process group of each action it still runs. The actions and the processes they started kept running before, and a run of the integration tests left 115 of them.
+- `yak killall` kills the yak processes of the current repository, and `yak killall --global` (`-g`) kills those of every repository. It killed the processes of every repository before, and `--repo` limited it to the current one. Outside a repository, `yak killall` fails and names `--global`.
+- `yak killall` kills the process groups of the local actions that the killed processes started. It sends `KILL` to the forkserver, which then cannot stop them.
 
 ### Labels
 

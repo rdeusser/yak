@@ -19,7 +19,7 @@ Commands:
   expand-external-cell  Expand the contents of an external cell into the repo
   install               Build and install an application
   kill                  Kill the yak daemon
-  killall               Kill all yak processes on the machine
+  killall               Kill the yak processes of the current repository
   root                  Find yak cell, project or package root
   query                 Alias for `uquery`
   run                   Build and run the selected target

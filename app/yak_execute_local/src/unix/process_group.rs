@@ -83,6 +83,24 @@ pub(crate) struct ProcessGroupImpl {
     cgroup: Option<Cgroup<NoMemoryMonitoring, CgroupKindLeaf>>,
 }
 
+/// Dropping a process group whose leader has not been reaped kills the group. A command's future
+/// is dropped without a cancellation when the forkserver exits because the daemon closed its
+/// socket, and without this the command keeps running with no parent to stop it.
+///
+/// The group ID is the leader's PID, which no other process can take while the leader is
+/// unreaped.
+impl Drop for ProcessGroupImpl {
+    fn drop(&mut self) {
+        let Some(pid) = self.inner.id().and_then(|id| i32::try_from(id).ok()) else {
+            return;
+        };
+        match signal::killpg(Pid::from_raw(pid), Signal::SIGKILL) {
+            Ok(()) | Err(nix::errno::Errno::ESRCH) => {}
+            Err(e) => tracing::warn!("Failed to kill process group {pid} on drop: {e}"),
+        }
+    }
+}
+
 impl ProcessGroupImpl {
     pub(crate) fn take_stdout(&mut self) -> Option<ChildStdout> {
         self.inner.stdout.take()

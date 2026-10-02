@@ -44,6 +44,22 @@ pub(crate) fn kill(pid: Pid) -> yak_error::Result<Option<KilledProcessHandleImpl
     }
 }
 
+pub(crate) fn kill_process_group_led_by(pid: Pid) -> yak_error::Result<()> {
+    let pid_nix = pid.to_nix()?;
+    match nix::unistd::getpgid(Some(pid_nix)) {
+        Ok(pgid) if pgid == pid_nix => {}
+        Ok(_) | Err(nix::errno::Errno::ESRCH) => return Ok(()),
+        Err(e) => {
+            return Err(e)
+                .with_yak_error_context(|| format!("Failed to get the group of pid {pid}"));
+        }
+    }
+    match nix::sys::signal::killpg(pid_nix, Signal::SIGKILL) {
+        Ok(()) | Err(nix::errno::Errno::ESRCH) => Ok(()),
+        Err(e) => Err(e).with_yak_error_context(|| format!("Failed to kill process group {pid}")),
+    }
+}
+
 pub(crate) struct KilledProcessHandleImpl {
     pid: Pid,
 }

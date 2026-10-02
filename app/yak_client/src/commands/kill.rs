@@ -23,7 +23,8 @@ use yak_client_ctx::startup_deadline::StartupDeadline;
 ///
 /// Note there's also `yak killall` and `yak clean`.
 ///
-/// `yak killall` kills all the yak processes on the machine.
+/// `yak killall` kills all the yak processes of the current repository, and `yak killall --global`
+/// kills those of every repository.
 ///
 /// `yak clean` kills the yak daemon and also deletes the yak state files.
 #[derive(Debug, clap::Parser)]

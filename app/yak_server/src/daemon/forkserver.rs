@@ -41,7 +41,7 @@ pub async fn maybe_launch_forkserver(
         yak_forkserver::launch::launch_forkserver(
             exe,
             // `--isolation-dir` is not read by the forkserver itself; it is carried on the
-            // command line so that `yak killall --isolation-dir` can attribute the process.
+            // command line so that `yak killall --in-isolation-dir` can attribute the process.
             &["forkserver", "--isolation-dir", isolation_dir.as_str()],
             forkserver_state_dir,
             cgroup_tree,

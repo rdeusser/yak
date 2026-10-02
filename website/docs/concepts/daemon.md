@@ -53,8 +53,9 @@ To do that, run using the `--isolation-dir` option
 The daemon is also killed when:
 
 - The `yak killall` command is run. By default it kills every yak process
-  on the machine. Pass `--in-isolation-dir <dir>` to kill only the processes
-  that use that isolation dir, and `--repo` to kill only the processes that run
-  in the current repository.
+  running in the current repository. Pass `--global` (`-g`) to kill the yak
+  processes of every repository, and `--in-isolation-dir <dir>` to kill only
+  the processes that use that isolation dir. It also kills the local actions
+  that those processes started.
 - A command runs with a `yak` binary of a different version than the daemon.
   The client then restarts the daemon.

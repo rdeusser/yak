@@ -191,13 +191,18 @@ The strict `xfail` markers on two tests in `tests/core/build/test_symlinks.py` a
 
 Remove this entry when those tests pass without the markers.
 
-### Local actions outlive a killed daemon
+### Some local actions outlive a killed forkserver
 
-`yak kill` leaves the daemon's running local actions behind on macOS and Linux.
-Runs of `tests/core/daemon/test_concurrency.py` and `tests/core/daemon/test_daemon.py` left `python3` processes from test actions running on both systems, 42 of them on macOS.
-On Linux on 2026-09-28, `tests/core/daemon/test_concurrency.py` left 13 such processes before the rename to yak, and the whole suite left 13 after it.
+The forkserver kills the process group of each local action when it exits, and `yak killall` kills those groups before it kills the forkserver.
+Three cases still leave processes running:
 
-Remove this entry when killing the daemon stops its local actions.
+- A signal that kills the forkserver itself, such as the Linux out-of-memory killer, leaves its actions running with init as their parent.
+- With `[yak] forkserver` turned off, the daemon starts the actions itself, and a signal that kills the daemon leaves them running.
+- A process that an action starts in a new process group or session, such as a daemonized server, survives every kill. On Linux, the action cgroups that `[yak_resource_control] status` enables contain such processes, but macOS has no equivalent.
+
+On Linux, `PR_SET_PDEATHSIG` in each action's leader would cover the first two cases for the leader alone.
+
+Remove this entry when killing the forkserver or the daemon stops every process its actions started.
 
 ### Apple rules select on configuration the prelude does not define
 

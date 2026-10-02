@@ -49,6 +49,15 @@ impl KilledProcessHandle {
     }
 }
 
+/// Kills the process group that `pid` leads with `KILL`. Does nothing if `pid` does not lead a
+/// process group or has exited.
+///
+/// Windows has no process groups. There a job object kills an action's processes when the
+/// process that started the action exits.
+pub fn kill_process_group_led_by(pid: Pid) -> yak_error::Result<()> {
+    imp::kill_process_group_led_by(pid)
+}
+
 /// Get the status of a given process according to sysinfo.
 pub fn get_sysinfo_status(pid: Pid) -> Option<sysinfo::ProcessStatus> {
     use sysinfo::ProcessRefreshKind;

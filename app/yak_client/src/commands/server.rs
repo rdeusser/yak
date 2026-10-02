@@ -29,7 +29,7 @@ use crate::commands::status::process_status;
 Using this command can ensure the daemon is running.
 
 To stop a specific server, use `yak kill` and add `--isolation-dir` for a specific instance.
-To stop all instances, use `yak killall`."
+To stop all instances in this repository, use `yak killall`, and add `--global` for every repository."
 )]
 pub struct ServerCommand {
     #[clap(

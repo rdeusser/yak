@@ -9,8 +9,10 @@
 import asyncio
 import contextlib
 import json
+import os
 import platform
 import re
+import signal
 import subprocess
 import time
 from pathlib import Path
@@ -357,3 +359,64 @@ async def test_inactivity_shutdown_exits_with_a_command_in_flight(yak: Yak) -> N
         # terminated rather than the daemon being left alive and unusable.
         with contextlib.suppress(YakException):
             await subscriber.__aexit__(None, None, None)
+
+
+def _process_exists(pid: int) -> bool:
+    try:
+        os.kill(pid, 0)
+    except ProcessLookupError:
+        return False
+    return True
+
+
+@pytest.mark.skipif(platform.system() == "Windows", reason="uses process groups")
+@pytest.mark.parametrize("stop", ["kill", "killall", "sigkill"])
+@yak_test()
+async def test_stopping_the_daemon_stops_local_actions(
+    yak: Yak, tmp_path: Path, stop: str
+) -> None:
+    # The action and the child it starts must both stop, whether the daemon
+    # shuts down or is killed without running any of its cleanup.
+    pid_file = tmp_path / "pids"
+
+    async def run_build() -> None:
+        await yak.build(
+            ":spawns_child",
+            "--local-only",
+            "--no-remote-cache",
+            "-c",
+            f"test.pid_file={pid_file}",
+        )
+
+    build = asyncio.create_task(run_build())
+    try:
+        for _ in range(600):
+            if pid_file.exists() or build.done():
+                break
+            await asyncio.sleep(0.1)
+        if build.done():
+            await build
+        pids = [int(pid) for pid in pid_file.read_text().split()]
+        assert len(pids) == 2, pids
+        assert all(_process_exists(pid) for pid in pids)
+
+        if stop == "kill":
+            await yak.kill()
+        elif stop == "killall":
+            # `killall` sends KILL to the forkserver too, so only `killall` itself can
+            # stop the actions.
+            await yak.run_yak_command("killall")
+        else:
+            daemon_dir = await yak.get_daemon_dir()
+            with open(f"{daemon_dir}/yakd.info") as f:
+                os.kill(json.load(f)["pid"], signal.SIGKILL)
+
+        for _ in range(100):
+            if not any(_process_exists(pid) for pid in pids):
+                break
+            await asyncio.sleep(0.1)
+        running = [pid for pid in pids if _process_exists(pid)]
+        assert running == [], f"processes of the action still run: {running}"
+    finally:
+        build.cancel()
+        await asyncio.gather(build, return_exceptions=True)

@@ -26,6 +26,10 @@ pub(crate) fn process_exists(pid: Pid) -> yak_error::Result<bool> {
     Ok(WinapiProcessHandle::open_for_info(pid).is_some())
 }
 
+pub(crate) fn kill_process_group_led_by(_pid: Pid) -> yak_error::Result<()> {
+    Ok(())
+}
+
 pub(crate) fn kill(pid: Pid) -> yak_error::Result<Option<KilledProcessHandleImpl>> {
     let handle = match WinapiProcessHandle::open_for_terminate(pid) {
         Some(proc_handle) => proc_handle,

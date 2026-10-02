@@ -134,11 +134,11 @@ example:
 - `yak kill` only kills the daemon associated with the specified isolation
   directory
 
-There are exceptions, such as `yak killall`, which by default affects all
-yak processes regardless of their isolation directories. Passing
-`--in-isolation-dir` to `yak killall` restricts it to processes using that
-isolation directory, and `yak killall --repo` restricts it to processes
-running in the current repository.
+There are exceptions, such as `yak killall`, which by default affects the
+yak processes of the current repository regardless of their isolation
+directories. Passing `--in-isolation-dir` to `yak killall` restricts it to
+processes using that isolation directory, and `yak killall --global` extends it
+to the yak processes of every repository.
 
 ## Example Use Cases
 

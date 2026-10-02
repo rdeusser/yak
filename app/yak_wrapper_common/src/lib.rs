@@ -24,6 +24,7 @@ use sysinfo::ProcessRefreshKind;
 use sysinfo::ProcessesToUpdate;
 use sysinfo::System;
 use sysinfo::UpdateKind;
+use yak_hash::YakMutMap;
 use yak_hash::YakMutSet;
 
 use crate::is_yak::is_yak_exe;
@@ -70,9 +71,13 @@ struct ProcessInfo {
     name: String,
     isolation_dir: Option<String>,
     cwd: Option<PathBuf>,
+    /// The process's children that are not yak processes, such as the local actions that a
+    /// daemon or forkserver started.
+    children: Vec<Pid>,
 }
 
-/// Restricts which yak processes [`killall`] targets. The default value matches every process.
+/// Restricts which yak processes [`killall`] targets. The default value matches every process,
+/// which `yak killall --global` uses.
 ///
 /// Both criteria are best-effort: they rely on information read from each candidate process
 /// (command line and working directory). Processes for which that information is unavailable
@@ -221,9 +226,28 @@ fn find_yak_processes(collect_cwd: bool) -> Vec<ProcessInfo> {
                     name: process.name().to_string_lossy().into_owned(),
                     isolation_dir: None,
                     cwd: None,
+                    children: Vec::new(),
                 },
             ));
         }
+    }
+
+    let yak_pids = yak_processes
+        .iter()
+        .map(|(pid, _)| *pid)
+        .collect::<YakMutSet<_>>();
+    let mut children = YakMutMap::<sysinfo::Pid, Vec<Pid>>::default();
+    for (sys_pid, process) in system.processes() {
+        if let Some(parent) = process.parent()
+            && yak_pids.contains(&parent)
+            && !yak_pids.contains(sys_pid)
+            && let Ok(pid) = Pid::from_u32(sys_pid.as_u32())
+        {
+            children.entry(parent).or_default().push(pid);
+        }
+    }
+    for (pid, process_info) in &mut yak_processes {
+        process_info.children = children.remove(pid).unwrap_or_default();
     }
 
     let matched_pids = yak_processes
@@ -330,6 +354,14 @@ pub fn killall(filter: &KillallFilter, write: impl Fn(String)) -> bool {
 
     let mut processes_still_alive: Vec<(ProcessInfo, _)> = Vec::new();
     for process in yak_processes {
+        // A daemon or forkserver starts each local action as the leader of a new process group.
+        // Once the parent dies, the actions belong to init and nothing can find them, so their
+        // groups go first.
+        for child in &process.children {
+            if let Err(e) = kill::kill_process_group_led_by(*child) {
+                printer.failed_to_kill(&process, e);
+            }
+        }
         match kill::kill(process.pid) {
             Ok(Some(handle)) => processes_still_alive.push((process, handle)),
             Ok(None) => {}
@@ -404,6 +436,7 @@ mod tests {
             name: "yak".to_owned(),
             isolation_dir: isolation_dir.map(str::to_owned),
             cwd: cwd.map(PathBuf::from),
+            children: Vec::new(),
         };
         let filter = |isolation_dir: Option<&str>, project_root: Option<&str>| KillallFilter {
             isolation_dir: isolation_dir.map(str::to_owned),
