@@ -98,6 +98,10 @@ With `[build] remote_cache` set, passes are shared through a
 [remote cache](../../remote_execution.md#remote-cache-without-remote-execution),
 so a CI job runs only the tests whose inputs changed since a run that uploaded.
 
+A member's crates name their files relative to the workspace's directory in
+`file!()`, panic locations, and debug information, as with Cargo, such as
+`crates/server/src/main.rs`.
+
 Each target builds with the features that Cargo resolves for its package. Tests
 also get the package's dev-dependencies. A dependency under
 `[target.'cfg(...)'.dependencies]` applies on the platforms whose `rustc --print cfg`

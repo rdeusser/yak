@@ -7,7 +7,7 @@
 # above-listed licenses.
 
 load("@prelude//rust:link_info.bzl", "RustProcMacroPlugin")
-load("@prelude//rust:sources.bzl", "mapped_srcs_arg", "package_srcs_arg", "srcs_arg", "srcs_filegroup_arg")
+load("@prelude//rust:sources.bzl", "mapped_srcs_arg", "package_srcs_arg", "srcs_arg", "srcs_filegroup_arg", "srcs_path_arg")
 load(":toolchains_common.bzl", "toolchains_common")
 
 def rust_target_dep(is_binary: bool) -> Attr:
@@ -227,6 +227,7 @@ rust_common = struct(
     build_and_run_env_arg = _build_and_run_env_arg,
     mapped_srcs_arg = mapped_srcs_arg,
     package_srcs_arg = package_srcs_arg,
+    srcs_path_arg = srcs_path_arg,
     named_deps_arg = _named_deps_arg,
     rust_toolchain_arg = _rust_toolchain_arg,
     cxx_toolchain_arg = _cxx_toolchain_arg,

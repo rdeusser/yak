@@ -79,6 +79,23 @@ def package_srcs_arg():
         ),
     }
 
+def srcs_path_arg():
+    return {
+        "srcs_path": attrs.option(
+            attrs.string(),
+            default = None,
+            doc = """
+    The directory of the cell that the root of the crate's source tree stands
+    for in the paths that rustc records, such as in `file!()`, panic locations,
+    and debug information. By default it is the directory of the target's
+    package. A crate whose `mapped_srcs` place its sources at their paths in a
+    Cargo workspace sets the workspace's directory, such as `""` for a
+    workspace at the root of the cell, so that the paths match those of a Cargo
+    build.
+""",
+        ),
+    }
+
 def package_srcs_files(package_srcs: dict[Dependency, str]) -> dict[str, Artifact]:
     """The files of `package_srcs` by their paths in the source tree."""
     files = {}

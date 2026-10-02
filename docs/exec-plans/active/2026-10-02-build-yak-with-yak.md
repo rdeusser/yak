@@ -13,12 +13,13 @@ The repository owner requires the self-build (2026-10-02).
 ## Progress
 
 - [x] Prototype: run `yak generate` on a copy of the repository and build `//app/yak:yak`, working around each failure to reach the next (2026-10-02, Surprises & Discoveries).
-- [ ] Decide how the prelude reaches `yak_external_cells_bundled` (Decision Log).
+- [x] Decide how the prelude reaches `yak_external_cells_bundled` (2026-10-02, Decision Log).
 - [x] Plan of Work item 1: `yak generate` skips ignored directories (2026-10-02).
 - [x] Plan of Work item 2: the `cargo` cell applies the `rustflags` of Cargo's configuration (2026-10-02).
 - [x] Plan of Work item 3: a workspace member's build script runs in the member's directory of a tree with the workspace's layout, the member's files, and the files of `include` (2026-10-02). `test_generate_runs_a_build_script_in_the_workspace_layout` covers it. The protobuf crates of this repository build this way once they declare their `.proto` files (item 6).
 - [x] Plan of Work item 4: build scripts get `DEP_<links>_<key>` from the build scripts of their normal dependencies with `links` (2026-10-02). `test_generate_passes_links_metadata_to_build_scripts` covers it, and a workspace that depends on `aws-lc-rs` 1.18.1 builds and runs.
-- [ ] Plan of Work items 5 to 8.
+- [x] Plan of Work item 5: members' crates name their files relative to the workspace's directory, through `srcs_path` of the Rust rules (2026-10-02). `test_generate_runs_a_build_script_in_the_workspace_layout` checks `file!()`.
+- [ ] Plan of Work items 6 to 8.
 
 ## Surprises & Discoveries
 
@@ -43,7 +44,7 @@ The prototype ran on 2026-10-02 against a copy of `dfdf0496bf` on macOS, with `y
 
 - 2026-10-02: `superconsole` becomes a workspace member and loses its own `[workspace]` and lock file (owner: it does not need to publish on its own).
 - 2026-10-02: The repository stays on nightly Rust and `cfg(tokio_unstable)` until stable Rust and tokio offer what it uses (owner), so the `cargo` cell passes `[build] rustflags` through (Plan of Work, item 2). The tech-debt tracker lists what stable lacks.
-- No decision yet on how the prelude reaches `yak_external_cells_bundled` (finding 7).
+- 2026-10-02: The repository's `prelude` cell reads `prelude/` from the repository instead of the copy bundled in the running binary, and `include` of `cargo_package()` takes targets of other cells, so `yak_external_cells_bundled` names the prelude's files through targets of the `prelude` cell (finding 7). A prelude edit then reaches builds in the repository without a rebuild of the binary, but an edit that the running binary cannot evaluate breaks those builds until the binary is rebuilt. The rejected alternative, a directory argument of `cargo_package()`, keeps the bundled prelude but gives the files no target, so `yak test --changed-since` cannot select the crate after a prelude edit.
 
 ## Outcomes & Retrospective
 
@@ -62,7 +63,7 @@ The prototype built a working binary, so the generated build is the approach. No
 Each item names the finding it resolves. The order puts the cell's general Cargo fidelity first, because other Cargo workspaces need it too.
 
 1. `yak generate` skips the directories of `[project] ignore` (finding 2).
-2. The cell passes `[build] rustflags` and `target.<triple>.rustflags` of `.cargo/config.toml` (and `RUSTFLAGS`) to `rustc --print cfg` and to every crate it builds (finding 10).
+2. The cell passes `[build] rustflags` and `target.<triple>.rustflags` of `.cargo/config.toml` to `rustc --print cfg` and to every crate it builds (finding 10). It does not read `RUSTFLAGS`, which Cargo reads from the environment of each command.
 3. A build script runs in a directory with the workspace layout around its package and the files that `include` names, as tests with `run_from_manifest_dir` do (finding 6).
 4. `buildscript_run` passes `DEP_<links>_<key>` from the build scripts of `links` packages to the build scripts of their dependents (finding 8).
 5. Members compile from paths that give `file!()` the paths of a Cargo build, for example with `--remap-path-prefix` (finding 11).

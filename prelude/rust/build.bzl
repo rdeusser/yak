@@ -288,6 +288,25 @@ def generate_rustdoc_coverage(
 
     return output
 
+def _remap_srcs_arg(ctx: AnalysisContext, compile_ctx: CompileContext) -> cmd_args:
+    """The flag that names the source tree in the paths that rustc records by `srcs_path`, or else
+    by the directory of the target's package."""
+    srcs_path = getattr(ctx.attrs, "srcs_path", None)
+    if srcs_path == None:
+        mapped = cmd_args(compile_ctx.symlinked_srcs.owner.path, compile_ctx.path_sep, delimiter = "")
+    elif srcs_path:
+        mapped = cmd_args(srcs_path, compile_ctx.path_sep, delimiter = "")
+    else:
+        mapped = cmd_args()
+    return cmd_args(
+        "--remap-path-prefix=",
+        compile_ctx.symlinked_srcs,
+        compile_ctx.path_sep,
+        "=",
+        mapped,
+        delimiter = "",
+    )
+
 def generate_rustdoc_test(
     ctx: AnalysisContext,
     compile_ctx: CompileContext,
@@ -442,15 +461,7 @@ def generate_rustdoc_test(
         cmd_args("--test-runtool-arg=--resources=", resources, delimiter = ""),
         "--color=always",
         "--test-args=--color=always",
-        cmd_args(
-            "--remap-path-prefix=",
-            compile_ctx.symlinked_srcs,
-            compile_ctx.path_sep,
-            "=",
-            compile_ctx.symlinked_srcs.owner.path,
-            compile_ctx.path_sep,
-            delimiter = "",
-        ),
+        _remap_srcs_arg(ctx, compile_ctx),
         hidden = [
             transitive_srcs.project_as_args("artifacts"),
             link_args_output.hidden,
@@ -621,15 +632,7 @@ def rust_compile(
         # Report unused --extern crates in the notification stream.
         ["--json=unused-externs-silent", "-Wunused-crate-dependencies"] if toolchain_info.report_unused_deps else [],
         common_args.args,
-        cmd_args(
-            "--remap-path-prefix=",
-            compile_ctx.symlinked_srcs,
-            compile_ctx.path_sep,
-            "=",
-            compile_ctx.symlinked_srcs.owner.path,
-            compile_ctx.path_sep,
-            delimiter = "",
-        ),
+        _remap_srcs_arg(ctx, compile_ctx),
         ["-Zremap-cwd-prefix=."] if toolchain_info.nightly_features else [],
         extra_flags,
     )

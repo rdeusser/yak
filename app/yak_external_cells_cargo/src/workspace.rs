@@ -95,7 +95,9 @@ def _package_dirs(labels, arg):
     return dirs
 
 def _declare(rule, platform, **kwargs):
-    rule(**apply_platform_attrs(platform, kwargs))
+    # The sources sit at their paths in the workspace, so `file!()` and panic locations name
+    # them relative to the workspace's directory, as with Cargo.
+    rule(srcs_path = _WORKSPACE_DIR, **apply_platform_attrs(platform, kwargs))
 
 # The file names of Cargo's outputs on each platform, formatted with the target's name.
 _MACOS_FILES = struct(exe = "{}", dylib = "lib{}.dylib", staticlib = "lib{}.a")
@@ -162,6 +164,7 @@ def _declare_member(member, include, test_data):
             crate = "build_script_build",
             crate_root = script["crate_root"],
             mapped_srcs = mapped_srcs,
+            srcs_path = _WORKSPACE_DIR,
             package_srcs = package_srcs,
             edition = script["edition"],
             features = member["features"],

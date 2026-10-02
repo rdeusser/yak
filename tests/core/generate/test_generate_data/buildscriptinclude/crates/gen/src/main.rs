@@ -1,3 +1,3 @@
 fn main() {
-    println!("api={}", env!("API"));
+    println!("api={} file={}", env!("API"), file!());
 }

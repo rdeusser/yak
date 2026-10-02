@@ -200,13 +200,15 @@ async def test_generate_runs_a_build_script_in_the_workspace_layout(yak: Yak) ->
     # `include` of its build file declares, from the package's directory.
     await yak.generate()
     result = await yak.run("//crates/gen")
-    assert result.stdout == "api=v1\n"
+    # `file!()` names the file relative to the workspace's directory, as with
+    # Cargo.
+    assert result.stdout == "api=v1 file=crates/gen/src/main.rs\n"
 
     # The file is an input of the script's run, so an edit reaches the next
     # build.
     (yak.cwd / "proto" / "api.txt").write_text("v2\n")
     result = await yak.run("//crates/gen")
-    assert result.stdout == "api=v2\n"
+    assert result.stdout == "api=v2 file=crates/gen/src/main.rs\n"
 
 
 @yak_test(data_dir="linksmetadata")
