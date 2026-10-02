@@ -58,6 +58,36 @@ pub struct CargoPlatform {
     pub name: String,
     pub triple: String,
     pub cfg: TargetCfg,
+    /// The flags that Cargo's configuration passes to every `rustc` for the platform.
+    pub rustflags: Vec<String>,
+}
+
+/// PlatformFlags holds the `rustflags` of the platforms: in `all` when every platform has the
+/// same flags, and otherwise in `by_platform`, keyed by platform name.
+pub(crate) struct PlatformFlags {
+    pub(crate) all: Vec<String>,
+    by_platform: BTreeMap<String, Vec<String>>,
+}
+
+impl PlatformFlags {
+    pub(crate) fn new(platforms: &[CargoPlatform]) -> PlatformFlags {
+        match platforms.split_first() {
+            Some((first, rest)) if rest.iter().all(|p| p.rustflags == first.rustflags) => {
+                PlatformFlags {
+                    all: first.rustflags.clone(),
+                    by_platform: BTreeMap::new(),
+                }
+            }
+            _ => PlatformFlags {
+                all: Vec::new(),
+                by_platform: platforms
+                    .iter()
+                    .filter(|p| !p.rustflags.is_empty())
+                    .map(|p| (p.name.clone(), p.rustflags.clone()))
+                    .collect(),
+            },
+        }
+    }
 }
 
 /// DEFAULT_PLATFORMS pairs the names of `DEFAULT_CARGO_PLATFORMS` in
@@ -186,12 +216,14 @@ impl Deps {
         named_deps_value(&self.named_deps)
     }
 
-    /// The `platform` attribute of the Cargo macros of `prelude/rust/cargo_package.bzl`.
-    pub(crate) fn platform_value(&self) -> Value {
+    /// The `platform` attribute of the Cargo macros of `prelude/rust/cargo_package.bzl`, with the
+    /// `rustflags` of the platforms whose flags differ.
+    pub(crate) fn platform_value(&self, flags: &PlatformFlags) -> Value {
         let names: BTreeSet<&String> = self
             .platform_deps
             .keys()
             .chain(self.platform_named_deps.keys())
+            .chain(flags.by_platform.keys())
             .collect();
         Value::Dict(
             names
@@ -203,6 +235,12 @@ impl Deps {
                     }
                     if let Some(named) = self.platform_named_deps.get(name) {
                         attrs.push(("named_deps".to_owned(), named_deps_value(named)));
+                    }
+                    if let Some(rustflags) = flags.by_platform.get(name) {
+                        attrs.push((
+                            "rustc_flags".to_owned(),
+                            Value::strs(rustflags.iter().cloned()),
+                        ));
                     }
                     (name.clone(), Value::Dict(attrs))
                 })

@@ -25,6 +25,7 @@ use crate::graph::CargoPlatform;
 use crate::graph::Deps;
 use crate::graph::GenerateError;
 use crate::graph::Graph;
+use crate::graph::PlatformFlags;
 use crate::graph::crate_name;
 use crate::graph::lib_target;
 use crate::graph::package_env;
@@ -38,8 +39,9 @@ use crate::third_party::library_label;
 
 /// The macros that the build files of the workspace call. `_WORKSPACE_DIR` is the directory of
 /// the workspace relative to the project root, `_MEMBERS` holds the data of each member by its
-/// package, and `_EXPORTS` holds, by package, the files of the package that other members include
-/// and the packages that include each.
+/// package, `_EXPORTS` holds, by package, the files of the package that other members include
+/// and the packages that include each, and `_RUSTFLAGS` holds the flags of Cargo's configuration
+/// when every platform has the same. The `platform` data of a member holds them otherwise.
 const MACRO: &str = r#"
 def cargo_package(include = [], test_data = []):
     """Declares the targets of the member of the Cargo workspace in this directory.
@@ -140,7 +142,7 @@ def _declare_member(member, include, test_data):
     test_package_srcs.update(test_data)
 
     env = dict(member["env"])
-    rustc_flags = []
+    rustc_flags = list(_RUSTFLAGS)
     names = member["rules"]
 
     # The run target of the build script carries the search paths of the host libraries that the
@@ -171,6 +173,7 @@ def _declare_member(member, include, test_data):
             named_deps = member["build_named_deps"],
             platform = member["build_platform"],
             env = env,
+            rustc_flags = _RUSTFLAGS,
             target_compatible_with = exec_only,
             visibility = [],
         )
@@ -434,11 +437,11 @@ fn target_value(
     Ok(Value::Dict(fields))
 }
 
-fn deps_fields(prefix: &str, deps: &Deps) -> Vec<(String, Value)> {
+fn deps_fields(prefix: &str, deps: &Deps, flags: &PlatformFlags) -> Vec<(String, Value)> {
     vec![
         (format!("{prefix}deps"), deps.deps_value()),
         (format!("{prefix}named_deps"), deps.named_deps_value()),
-        (format!("{prefix}platform"), deps.platform_value()),
+        (format!("{prefix}platform"), deps.platform_value(flags)),
     ]
 }
 
@@ -474,6 +477,7 @@ pub fn generate_workspace(
     includes: &BTreeMap<String, Vec<IncludedFile>>,
 ) -> yak_error::Result<String> {
     let graph = Graph::new(metadata);
+    let flags = PlatformFlags::new(platforms);
     let workspace_root = PathBuf::from(&metadata.workspace_root);
     let workspace_dir = relative_to(project_root, &metadata.workspace_root)?;
 
@@ -720,9 +724,9 @@ pub fn generate_workspace(
             ("build_script".to_owned(), build_script),
             ("alias".to_owned(), alias),
         ];
-        fields.extend(deps_fields("", &deps.normal));
-        fields.extend(deps_fields("build_", &deps.build));
-        fields.extend(deps_fields("test_", &test));
+        fields.extend(deps_fields("", &deps.normal, &flags));
+        fields.extend(deps_fields("build_", &deps.build, &flags));
+        fields.extend(deps_fields("test_", &test, &flags));
         values.push((package_dir, Value::Dict(fields)));
     }
 
@@ -754,6 +758,8 @@ pub fn generate_workspace(
             .collect(),
     )
     .render(&mut out);
+    out.push_str("\n\n_RUSTFLAGS = ");
+    Value::strs(flags.all.iter().cloned()).render(&mut out);
     out.push('\n');
     out.push_str(MACRO);
     Ok(out)

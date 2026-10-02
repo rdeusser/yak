@@ -22,7 +22,8 @@ yak build //...
 
 `yak generate` finds each `go.mod` below the directory, skipping the
 directories that `go` skips in `./...` (names that start with `.` or `_`, and
-`testdata`) and `vendor`. It writes these files:
+`testdata`), `vendor`, and the directories that `[project] ignore` of
+`.yakconfig` lists. It writes these files:
 
 - A `YAK` file next to each `go.mod`, with these three lines:
 

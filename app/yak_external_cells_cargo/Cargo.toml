@@ -8,6 +8,7 @@ license.workspace = true
 [dependencies]
 serde.workspace = true
 serde_json.workspace = true
+toml.workspace = true
 yak_error.workspace = true
 yak_external_cells_starlark.workspace = true
 

@@ -14,6 +14,7 @@ mod graph;
 pub mod includes;
 mod inputs;
 pub mod metadata;
+pub mod rustflags;
 mod third_party;
 mod workspace;
 

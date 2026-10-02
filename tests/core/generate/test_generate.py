@@ -93,6 +93,32 @@ async def test_generate_builds_replaced_sources(yak: Yak) -> None:
     assert result.stdout == "hello from vendored\n"
 
 
+@yak_test(data_dir="vendored")
+async def test_generate_applies_the_rustflags_of_the_cargo_configuration(
+    yak: Yak,
+) -> None:
+    (yak.cwd / "app" / "src" / "main.rs").write_text(
+        'fn main() {\n    println!("{} flag={}", greet::greeting(), cfg!(yak_flag));\n}\n'
+    )
+    config = yak.cwd / ".cargo" / "config.toml"
+    vendoring = config.read_text()
+    config.write_text(vendoring + '\n[build]\nrustflags = ["--cfg", "yak_flag"]\n')
+    await yak.generate()
+    result = await yak.run("//app")
+    assert result.stdout == "hello from vendored flag=true\n"
+
+    # A `target` setting that matches the platform replaces `build.rustflags`,
+    # and the cell reads the configuration through DICE, so the edit reaches
+    # the next build.
+    config.write_text(
+        vendoring
+        + '\n[build]\nrustflags = ["--cfg", "yak_flag"]\n'
+        + "\n[target.'cfg(all())']\nrustflags = []\n"
+    )
+    result = await yak.run("//app")
+    assert result.stdout == "hello from vendored flag=false\n"
+
+
 def commit(repository: Path, message: str) -> None:
     for argv in (["add", "."], ["commit", "-q", "-m", message]):
         subprocess.run(
@@ -287,3 +313,14 @@ async def test_generate_builds_each_go_module(yak: Yak) -> None:
     assert "`YAK` is up to date" in result.stderr
     assert "`services/api/YAK` is up to date" in result.stderr
     assert (yak.cwd / ".yakconfig").read_text() == config
+
+
+@yak_test(data_dir="gomodules")
+async def test_generate_skips_ignored_go_modules(yak: Yak) -> None:
+    (yak.cwd / ".yakconfig").write_text(
+        "[cells]\n  root = .\n\n[project]\n  ignore = services\n"
+    )
+    await yak.generate()
+    assert (yak.cwd / "YAK").exists()
+    assert not (yak.cwd / "services" / "api" / "YAK").exists()
+    assert "gomod_services_api" not in (yak.cwd / ".yakconfig").read_text()

@@ -16,12 +16,18 @@ use yak_client_ctx::final_console::FinalConsole;
 use yak_client_ctx::path_arg::PathArg;
 use yak_common::argv::Argv;
 use yak_common::argv::SanitizedArgv;
+use yak_common::ignores::ignore_set::IgnoreSet;
+use yak_common::legacy_configs::cells::YakConfigBasedCells;
+use yak_common::legacy_configs::key::YakconfigKeyRef;
+use yak_core::cells::paths::CellRelativePath;
+use yak_core::fs::project::ProjectRoot;
 use yak_error::ErrorTag;
 use yak_error::YakErrorContext;
 use yak_error::yak_error;
 use yak_external_cells_cargo::metadata::WorkspaceLayout;
 use yak_fs::error::IoResultExt;
 use yak_fs::fs_util;
+use yak_fs::paths::abs_norm_path::AbsNormPathBuf;
 use yak_fs::paths::abs_path::AbsPath;
 use yak_util::process::background_command;
 
@@ -236,10 +242,31 @@ fn configure_project(root: &AbsPath, cells: &[init::ExternalCell]) -> yak_error:
     Ok(Written::Replaced)
 }
 
+/// The paths that `project.ignore` of the project at `root` ignores. A directory without
+/// `.yakconfig` ignores only `yak-out`.
+fn project_ignores(root: &AbsPath) -> yak_error::Result<IgnoreSet> {
+    if !root.join(".yakconfig").exists() {
+        return IgnoreSet::from_ignore_spec("", true);
+    }
+    let project = ProjectRoot::new(AbsNormPathBuf::new(root.to_path_buf())?)?;
+    let cells =
+        futures::executor::block_on(YakConfigBasedCells::parse_with_config_args(&project, &[]))?;
+    IgnoreSet::from_ignore_spec(
+        cells
+            .root_config
+            .get(YakconfigKeyRef {
+                section: "project",
+                property: "ignore",
+            })
+            .unwrap_or(""),
+        true,
+    )
+}
+
 /// The directories below `root` that hold a `go.mod`, relative to it, sorted. It skips the
-/// directories that `go` skips in `./...` (names starting with `.` or `_`, and `testdata`),
-/// `vendor`, and the output directories of yak, Cargo, and npm.
-fn go_module_dirs(root: &AbsPath) -> yak_error::Result<Vec<String>> {
+/// directories that `ignores` matches, the directories that `go` skips in `./...` (names starting
+/// with `.` or `_`, and `testdata`), `vendor`, and the output directories of Cargo and npm.
+fn go_module_dirs(root: &AbsPath, ignores: &IgnoreSet) -> yak_error::Result<Vec<String>> {
     let mut dirs = Vec::new();
     let mut pending = vec![String::new()];
     while let Some(dir) = pending.pop() {
@@ -262,14 +289,17 @@ fn go_module_dirs(root: &AbsPath) -> yak_error::Result<Vec<String>> {
                 && !name.starts_with(['.', '_'])
                 && !matches!(
                     name.as_str(),
-                    "testdata" | "vendor" | "yak-out" | "target" | "node_modules"
+                    "testdata" | "vendor" | "target" | "node_modules"
                 )
             {
-                pending.push(if dir.is_empty() {
+                let child = if dir.is_empty() {
                     name
                 } else {
                     format!("{dir}/{name}")
-                });
+                };
+                if !ignores.is_match(CellRelativePath::unchecked_new(&child)) {
+                    pending.push(child);
+                }
             }
         }
     }
@@ -304,7 +334,8 @@ fn exec_impl(
     let root = fs_util::canonicalize(cmd.path.resolve(&ctx.working_dir)).categorize_internal()?;
     let root = root.as_abs_path();
     let cargo = root.join("Cargo.toml").exists();
-    let go_modules = go_module_dirs(root)?;
+    let ignores = project_ignores(root)?;
+    let go_modules = go_module_dirs(root, &ignores)?;
     if !cargo && go_modules.is_empty() {
         return Err(yak_error!(
             ErrorTag::Input,
@@ -332,8 +363,13 @@ fn exec_impl(
         }
 
         // Each member's targets are in the package of its directory. The build file of a virtual
-        // workspace's root declares the files there that members include.
-        let members = layout.member_dirs()?;
+        // workspace's root declares the files there that members include. Yak reads no build file
+        // in an ignored directory.
+        let members: Vec<String> = layout
+            .member_dirs()?
+            .into_iter()
+            .filter(|dir| !ignores.is_match(CellRelativePath::unchecked_new(dir)))
+            .collect();
         let cell = cargo_cell();
         for dir in &members {
             calls.entry(dir.clone()).or_default().push((
@@ -514,9 +550,40 @@ mod tests {
             fs_util::create_dir_all(&path).unwrap();
             fs_util::write(path.join("go.mod"), "module m\n").unwrap();
         }
-        assert_eq!(go_module_dirs(root).unwrap(), ["", "services/api"]);
+        let ignores = IgnoreSet::from_ignore_spec("", true).unwrap();
+        assert_eq!(
+            go_module_dirs(root, &ignores).unwrap(),
+            ["", "services/api"]
+        );
         assert_eq!(go_cell("services/api").name, "gomod_services_api");
         assert_eq!(go_cell("").name, "gomod");
+    }
+
+    #[test]
+    fn test_go_module_dirs_skips_ignored_dirs() {
+        let dir = tempfile::tempdir().unwrap();
+        let root = fs_util::canonicalize(AbsPath::new(dir.path()).unwrap()).unwrap();
+        let root = root.as_abs_path();
+        for module in [
+            "services/api",
+            "tests/fixture",
+            "tools/gen/old",
+            "tools/gen/new",
+        ] {
+            let path = root.join(module);
+            fs_util::create_dir_all(&path).unwrap();
+            fs_util::write(path.join("go.mod"), "module m\n").unwrap();
+        }
+        fs_util::write(
+            root.join(".yakconfig"),
+            "[cells]\n  root = .\n\n[project]\n  ignore = tests, tools/*/old\n",
+        )
+        .unwrap();
+        let ignores = project_ignores(root).unwrap();
+        assert_eq!(
+            go_module_dirs(root, &ignores).unwrap(),
+            ["services/api", "tools/gen/new"]
+        );
     }
 
     #[test]

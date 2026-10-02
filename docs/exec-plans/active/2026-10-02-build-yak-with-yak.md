@@ -14,7 +14,9 @@ The repository owner requires the self-build (2026-10-02).
 
 - [x] Prototype: run `yak generate` on a copy of the repository and build `//app/yak:yak`, working around each failure to reach the next (2026-10-02, Surprises & Discoveries).
 - [ ] Decide how the prelude reaches `yak_external_cells_bundled` (Decision Log).
-- [ ] Milestones of the Plan of Work.
+- [x] Plan of Work item 1: `yak generate` skips ignored directories (2026-10-02).
+- [x] Plan of Work item 2: the `cargo` cell applies the `rustflags` of Cargo's configuration (2026-10-02).
+- [ ] Plan of Work items 3 to 8.
 
 ## Surprises & Discoveries
 
@@ -31,7 +33,7 @@ The prototype ran on 2026-10-02 against a copy of `dfdf0496bf` on macOS, with `y
 9. `aws-lc-rs` is in the graph only through the default features of `rustls` and `hyper-rustls`. `app/yak_certs/src/certs.rs` installs `rustls::crypto::ring::default_provider()`, so yak compiles two TLS crypto libraries and uses `ring`. With `default-features = false` and the features yak uses, the lock file loses 40 lines and `aws-lc-rs` leaves the graph.
 10. The cell ignores `[build] rustflags` of `.cargo/config.toml`, which sets `--cfg tokio_unstable`. It evaluates `cfg(...)` conditions with plain `rustc --print cfg --target <triple>` (`platforms` in `app/yak_external_cells/src/cargo.rs`), so tokio lost its `cfg(tokio_unstable)` dependency on `tracing`, and it compiles crates without the flag, so `yak_server` and `yak_daemon` lost tokio's unstable metrics. A `rustc` wrapper that adds the flag to `--print cfg`, with the flag in the Rust toolchain's `rustc_flags`, emulated Cargo's behavior, and `//app/yak:yak` then built (307 seconds, after earlier builds had built most crates).
 11. With the workarounds of findings 3, 6, 7, 9, and 10, the self-built binary passed 427 of 430 tests of `tests/core/build`, `tests/core/test`, `tests/core/prelude`, and `tests/core/generate` (`YAK_BINARY` set to it). `test_action_error` and `test_yak_fail` of `tests/core/build/test_error_categorization.py` failed because source paths are doubled, such as `yak_build_api/app/yak_build_api/src/actions/errors/action_error.rs`, where the Cargo build gives `yak_build_api/src/...`. The cell compiles a member from a copy that nests the workspace path below the package, which changes `file!()`, panic locations, and error tags.
-12. `test_many_rebound_outputs_incremental_rebuild` of `tests/core/build/actions/test_dynamic_output.py` took 612 seconds with the self-built binary and 116 seconds with the Cargo-built one. `yak cquery 'deps(//app/yak:yak)'` took 8.2 and 9.1 seconds, so graph evaluation is not slower. No cause found yet. The self-built binary is 510 MB and the Cargo-built one 205 MB.
+12. `test_many_rebound_outputs_incremental_rebuild` of `tests/core/build/actions/test_dynamic_output.py` took 612 seconds with the self-built binary and 116 seconds with the Cargo-built one. `yak cquery 'deps(//app/yak:yak)'` took 8.2 and 9.1 seconds, so graph evaluation is not slower. `Cargo.toml` sets `opt-level = 1` for the `dev` profile, which the cell does not apply, so the likely cause is that the self-built binary is unoptimized (unverified). The self-built binary is 510 MB and the Cargo-built one 205 MB.
 13. `toolchains/YAK` declares the repository's toolchains by hand, so its actions get no tool identities (`docs/exec-plans/completed/2026-10-01-key-actions-on-their-tools.md`).
 14. 5 crates outside the workspace keep hand-written `YAK` files that name `//third-party/rust` targets: `dice/fuzzy_dice`, `shed/cgroups/use_some_memory`, `shed/completion_verify`, `starlark-rust/benchmark_memory`, and `starlark-rust/starlark/fuzz`.
 
@@ -63,7 +65,7 @@ Each item names the finding it resolves. The order puts the cell's general Cargo
 4. `buildscript_run` passes `DEP_<links>_<key>` from the build scripts of `links` packages to the build scripts of their dependents (finding 8).
 5. Members compile from paths that give `file!()` the paths of a Cargo build, for example with `--remap-path-prefix` (finding 11).
 6. The repository: `superconsole` joins the workspace, `rustls` and `hyper-rustls` drop their default features, the protobuf crates declare their `.proto` files, the root `YAK` keeps its hand-written targets beside `cargo_workspace()`, the prelude reaches `yak_external_cells_bundled` as decided, `toolchains/YAK` uses tool identities, and the 5 crates outside the workspace build (findings 3, 4, 7, 9, 13, 14).
-7. Find the cause of finding 12.
+7. Confirm the cause of finding 12, and decide whether the cell applies the `opt-level` of Cargo's profiles.
 8. CI builds `//app/yak:yak` and runs `//app_dep_graph_rules:test_yak_dep_graph`.
 
 ## Validation and Acceptance

@@ -124,11 +124,13 @@ fn platforms() -> Vec<CargoPlatform> {
             name: "linux-x86_64".to_owned(),
             triple: "x86_64-unknown-linux-gnu".to_owned(),
             cfg: TargetCfg::parse("unix\ntarget_os=\"linux\"").unwrap(),
+            rustflags: Vec::new(),
         },
         CargoPlatform {
             name: "windows-msvc".to_owned(),
             triple: "x86_64-pc-windows-msvc".to_owned(),
             cfg: TargetCfg::parse("windows\ntarget_os=\"windows\"").unwrap(),
+            rustflags: Vec::new(),
         },
     ]
 }
@@ -226,6 +228,71 @@ fn test_build_script_takes_build_deps() {
     assert!(run.contains("buildscript_rule = \":serde-build-script-build\""));
     assert!(run.contains("manifest_dir = \":serde-manifest-dir\""));
     assert!(run.contains("rustc_link_lib = True,\n    rustc_link_search = True,"));
+}
+
+/// The platforms of `platforms()` with the `rustflags` of each.
+fn platforms_with_rustflags(linux: &[&str], windows: &[&str]) -> Vec<CargoPlatform> {
+    let mut platforms = platforms();
+    platforms[0].rustflags = linux.iter().map(|f| (*f).to_owned()).collect();
+    platforms[1].rustflags = windows.iter().map(|f| (*f).to_owned()).collect();
+    platforms
+}
+
+#[test]
+fn test_rustflags_of_every_platform_apply_to_every_crate() {
+    let flags = ["--cfg", "tokio_unstable"];
+    let third_party =
+        generate_third_party(&metadata(), &platforms_with_rustflags(&flags, &flags)).unwrap();
+    let out = build_file(&third_party, "serde-1.0.1-beta.2");
+    let serde = call_starting(&out, "cargo.rust_library(\n    name = \"serde\"");
+    assert!(serde.contains(
+        "rustc_flags = [\"--cfg\", \"tokio_unstable\", \"@$(location :serde-build-script-run[rustc_flags])\"]"
+    ));
+    let script = call_starting(
+        &out,
+        "cargo.rust_binary(\n    name = \"serde-build-script-build\"",
+    );
+    assert!(script.contains("rustc_flags = [\"--cfg\", \"tokio_unstable\"]"));
+
+    let workspace = crate::generate_workspace(
+        &workspace_metadata(),
+        &platforms_with_rustflags(&flags, &flags),
+        std::path::Path::new("/"),
+        "crates",
+        &util_includes(),
+    )
+    .unwrap();
+    assert!(workspace.contains("\n_RUSTFLAGS = [\"--cfg\", \"tokio_unstable\"]\n"));
+    assert!(workspace.contains("rustc_flags = list(_RUSTFLAGS)"));
+    assert!(workspace.contains("rustc_flags = _RUSTFLAGS,"));
+}
+
+#[test]
+fn test_rustflags_that_differ_by_platform_select_on_it() {
+    let platforms = platforms_with_rustflags(&["-Ctarget-cpu=native"], &[]);
+    let third_party = generate_third_party(&metadata(), &platforms).unwrap();
+    let out = build_file(&third_party, "memchr-2.0.0");
+    let memchr = call_starting(&out, "cargo.rust_library(");
+    assert!(memchr.contains("rustc_flags = []"), "{memchr}");
+    assert!(
+        memchr.contains(
+            "platform = {\"linux-x86_64\": {\"rustc_flags\": [\"-Ctarget-cpu=native\"]}}"
+        ),
+        "{memchr}"
+    );
+
+    let workspace = crate::generate_workspace(
+        &workspace_metadata(),
+        &platforms,
+        std::path::Path::new("/"),
+        "crates",
+        &util_includes(),
+    )
+    .unwrap();
+    assert!(workspace.contains("\n_RUSTFLAGS = []\n"));
+    assert!(member(&workspace, "util").contains(
+        "\"test_platform\": {\"linux-x86_64\": {\"deps\": [\"crates//libc-0.2.0:libc\"], \"rustc_flags\": [\"-Ctarget-cpu=native\"]}}"
+    ));
 }
 
 #[test]

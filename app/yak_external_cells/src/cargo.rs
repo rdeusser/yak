@@ -14,11 +14,13 @@
 //! `generated.rs` serves. Cargo checked the package's sources against `Cargo.lock` when it
 //! downloaded them, and `cargo metadata` follows the workspace's `.cargo/config.toml`, so
 //! packages from private registries, replaced sources, and Git build as they do with
-//! `cargo build`.
+//! `cargo build`. The `rustflags` of the same configuration apply to every crate of the cell and
+//! of the workspace.
 
 use std::collections::BTreeMap;
 use std::collections::BTreeSet;
 use std::path::Path;
+use std::path::PathBuf;
 use std::sync::Arc;
 
 use allocative::Allocative;
@@ -54,6 +56,8 @@ use yak_external_cells_cargo::includes::included_paths;
 use yak_external_cells_cargo::member_dirs;
 use yak_external_cells_cargo::metadata::Metadata;
 use yak_external_cells_cargo::resolve_includes;
+use yak_external_cells_cargo::rustflags::ConfigFile;
+use yak_external_cells_cargo::rustflags::RustFlags;
 use yak_fs::paths::abs_path::AbsPath;
 use yak_fs::paths::file_name::FileNameBuf;
 use yak_fs::paths::forward_rel_path::ForwardRelativePath;
@@ -80,31 +84,129 @@ enum CargoCellError {
     MissingManifest(String),
 }
 
-/// The Cargo platforms of the prelude, with the cfg values that `rustc` reports for each.
-async fn platforms(dir: &AbsPath) -> yak_error::Result<Vec<CargoPlatform>> {
-    let outputs =
-        futures::future::try_join_all(DEFAULT_PLATFORMS.iter().map(|(_, triple)| async move {
-            run(
-                "cargo",
-                "rustc",
-                &["--print", "cfg", "--target", triple],
-                &[],
-                dir,
-            )
-            .await
-        }))
-        .await?;
-    DEFAULT_PLATFORMS
-        .iter()
-        .zip(outputs)
-        .map(|((name, triple), output)| {
-            Ok(CargoPlatform {
-                name: (*name).to_owned(),
-                triple: (*triple).to_owned(),
-                cfg: TargetCfg::parse(&output)?,
-            })
-        })
-        .collect()
+/// The cfg values that `rustc` reports for `triple` when it runs with `flags`.
+async fn target_cfg(dir: &AbsPath, triple: &str, flags: &[String]) -> yak_error::Result<TargetCfg> {
+    let mut args = vec!["--print", "cfg", "--target", triple];
+    args.extend(flags.iter().map(String::as_str));
+    TargetCfg::parse(&run("cargo", "rustc", &args, &[], dir).await?)
+}
+
+/// The Cargo platform of the prelude named `name`, with the flags that `rustflags` gives it and
+/// the cfg values that `rustc` reports with them. A `cfg(...)` setting of `rustflags` matches the
+/// cfg values of the flags without it, as Cargo matches it.
+async fn platform(
+    dir: &AbsPath,
+    name: &str,
+    triple: &str,
+    rustflags: &RustFlags,
+) -> yak_error::Result<CargoPlatform> {
+    let mut flags = rustflags.for_target(triple, None);
+    let mut cfg = target_cfg(dir, triple, &flags).await?;
+    if rustflags.has_cfg_targets() {
+        let cfg_flags = rustflags.for_target(triple, Some(&cfg));
+        if cfg_flags != flags {
+            cfg = target_cfg(dir, triple, &cfg_flags).await?;
+            flags = cfg_flags;
+        }
+    }
+    Ok(CargoPlatform {
+        name: name.to_owned(),
+        triple: triple.to_owned(),
+        cfg,
+        rustflags: flags,
+    })
+}
+
+/// The Cargo platforms of the prelude, with their flags and cfg values.
+async fn platforms(dir: &AbsPath, rustflags: &RustFlags) -> yak_error::Result<Vec<CargoPlatform>> {
+    futures::future::try_join_all(
+        DEFAULT_PLATFORMS
+            .iter()
+            .map(|(name, triple)| platform(dir, name, triple, rustflags)),
+    )
+    .await
+}
+
+/// The names of a Cargo configuration file in a `.cargo` directory or in Cargo's home. Cargo
+/// reads `config` when both exist.
+const CONFIG_FILE_NAMES: [&str; 2] = ["config", "config.toml"];
+
+/// Reads the `rustflags` of the Cargo configuration files that apply in the workspace of
+/// `workspace_dir`: those of `$CARGO_HOME` and of the `.cargo` directories of the workspace's
+/// directory and its parents. The files in the project are read through DICE, so that editing
+/// one computes the cell again. A change to a file outside the project takes effect when the cell
+/// is next computed.
+async fn read_rustflags(
+    ctx: &mut DiceComputations<'_>,
+    workspace_dir: &ProjectRelativePath,
+) -> yak_error::Result<RustFlags> {
+    let cells = ctx.get_cell_resolver().await?;
+    let project_root = ctx.global_data().get_io_provider().project_root().dupe();
+
+    // From the workspace's directory up to the root of the file system, the order of decreasing
+    // precedence.
+    let mut files: Vec<ConfigFile> = Vec::new();
+    let mut cargo_dirs: Vec<PathBuf> = Vec::new();
+    let mut dir = Some(workspace_dir);
+    while let Some(project_dir) = dir {
+        let cargo_dir = project_dir.join(ForwardRelativePath::new(".cargo")?);
+        cargo_dirs.push(project_root.resolve(&cargo_dir).to_path_buf());
+        for name in CONFIG_FILE_NAMES {
+            let path = cargo_dir.join(ForwardRelativePath::new(name)?);
+            if let Some(contents) =
+                DiceFileComputations::read_file_if_exists(ctx, cells.get_cell_path(&path).as_ref())
+                    .await?
+            {
+                files.push(ConfigFile {
+                    path: path.to_string(),
+                    contents,
+                });
+                break;
+            }
+        }
+        dir = project_dir.parent();
+    }
+    for outside in project_root.root().as_path().ancestors().skip(1) {
+        let cargo_dir = outside.join(".cargo");
+        if let Some(file) = read_config_file(&cargo_dir).await? {
+            files.push(file);
+        }
+        cargo_dirs.push(cargo_dir);
+    }
+    let cargo_home = std::env::var_os("CARGO_HOME")
+        .map(PathBuf::from)
+        .or_else(|| dirs::home_dir().map(|home| home.join(".cargo")));
+    if let Some(cargo_home) = cargo_home
+        && !cargo_dirs.contains(&cargo_home)
+        && let Some(file) = read_config_file(&cargo_home).await?
+    {
+        files.push(file);
+    }
+    files.reverse();
+    RustFlags::parse(&files)
+}
+
+/// The configuration file in `cargo_dir`, a directory outside the project.
+async fn read_config_file(cargo_dir: &Path) -> yak_error::Result<Option<ConfigFile>> {
+    for name in CONFIG_FILE_NAMES {
+        let path = cargo_dir.join(name);
+        match tokio::fs::read_to_string(&path).await {
+            Ok(contents) => {
+                return Ok(Some(ConfigFile {
+                    path: path.display().to_string(),
+                    contents,
+                }));
+            }
+            Err(e) if e.kind() == std::io::ErrorKind::NotFound => {}
+            Err(e) => {
+                return Err(yak_error::Error::from(e).context(format!(
+                    "Error reading Cargo configuration `{}`",
+                    path.display()
+                )));
+            }
+        }
+    }
+    Ok(None)
 }
 
 /// The output of `cargo metadata` for a workspace, and the platforms that its targets select on.
@@ -116,7 +218,8 @@ struct CargoWorkspace {
     platforms: Vec<CargoPlatform>,
 }
 
-/// Runs `cargo metadata` and `rustc --print cfg` for the workspace of `setup`.
+/// Runs `cargo metadata` and `rustc --print cfg` for the workspace of `setup`, and reads the
+/// `rustflags` of its Cargo configuration.
 async fn read_workspace(
     ctx: &mut DiceComputations<'_>,
     setup: &CargoCellSetup,
@@ -176,7 +279,8 @@ async fn read_workspace(
         .await?;
     }
 
-    let platforms = platforms(&abs_dir).await?;
+    let rustflags = read_rustflags(ctx, workspace_dir).await?;
+    let platforms = platforms(&abs_dir, &rustflags).await?;
     Ok(CargoWorkspace {
         metadata,
         platforms,

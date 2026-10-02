@@ -24,6 +24,7 @@ rust_library(
         "//third-party/rust:async-trait",
         "//third-party/rust:blake3",
         "//third-party/rust:derive_more",
+        "//third-party/rust:dirs",
         "//third-party/rust:futures",
         "//third-party/rust:tokio",
     ],

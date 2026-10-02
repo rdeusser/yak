@@ -9072,6 +9072,7 @@ dependencies = [
  "cmp_any",
  "derive_more 2.1.1",
  "dice",
+ "dirs",
  "dupe",
  "futures 0.3.34",
  "pagable",
@@ -9103,6 +9104,7 @@ version = "0.1.0"
 dependencies = [
  "serde",
  "serde_json",
+ "toml",
  "yak_error",
  "yak_external_cells_starlark",
 ]

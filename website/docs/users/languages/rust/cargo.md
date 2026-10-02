@@ -21,7 +21,9 @@ yak build //...
 
 `yak generate` writes these files:
 
-- A `YAK` file next to each member's `Cargo.toml`, with these three lines:
+- A `YAK` file next to each member's `Cargo.toml`, with these three lines. A
+  member in a directory that `[project] ignore` of `.yakconfig` lists gets none,
+  because yak reads no build file there.
 
   ```python
   load("@crates//:workspace.bzl", "cargo_package")
@@ -173,6 +175,33 @@ that source replacement names, from a `vendor/` directory, or from Git builds as
 it does with `cargo build`. The first
 build that reads a package's files copies them from where Cargo put them into
 `yak-out`. Build actions then need no network access.
+
+## Compiler flags
+
+The `rustflags` of Cargo's configuration files apply to every crate of the
+workspace and of the `crates` cell, including build scripts and procedural
+macros, as they do with `cargo build` without `--target`. The cell reads
+`build.rustflags` and `target.<triple>.rustflags` from the `.cargo/config.toml`
+(or `.cargo/config`) of the workspace's directory and of each of its parents,
+and from `$CARGO_HOME/config.toml`. A `target.'cfg(...)'.rustflags` setting
+applies where its expression matches. It merges the files as Cargo merges them,
+and a matching `target` setting replaces `build.rustflags`. `rustc --print cfg`
+runs with the flags of its platform, so a flag such as `--cfg tokio_unstable`
+also selects the dependencies that Cargo selects with it.
+
+```toml
+# .cargo/config.toml
+[build]
+rustflags = ["--cfg", "tokio_unstable"]
+```
+
+An edit of a configuration file in the project reaches the next build. An edit
+of one outside it, such as in `$CARGO_HOME`, reaches the build after the next
+change of a `Cargo.toml` or `Cargo.lock`, or after `yak kill`. The cell does not
+read the `RUSTFLAGS` and `CARGO_ENCODED_RUSTFLAGS` variables, which Cargo would
+read from the environment of each command.
+
+## Build scripts
 
 A build script can link a library that it builds into its `OUT_DIR` or finds
 on the machine, such as through pkg-config. The links of the crates that
