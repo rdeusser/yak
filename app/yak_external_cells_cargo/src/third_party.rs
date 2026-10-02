@@ -89,6 +89,11 @@ pub(crate) fn library_label(package: &Package) -> String {
     format!("//{}:{}", cell_dir(package), package.name)
 }
 
+/// The label of the run target of the build script of `package`, relative to the cell.
+pub(crate) fn script_run_label(package: &Package) -> String {
+    format!("//{}:{}-build-script-run", cell_dir(package), package.name)
+}
+
 fn package_dir(package: &Package) -> &Path {
     Path::new(&package.manifest_path)
         .parent()
@@ -106,8 +111,13 @@ fn build_file(
         return Ok(None);
     };
     let dir = package_dir(package);
-    let deps = graph.deps(node, platforms, |p| Ok(library_label(p)))?;
-    let (normal, build) = (deps.normal, deps.build);
+    let deps = graph.deps(
+        node,
+        platforms,
+        |p| Ok(library_label(p)),
+        |p| Ok(script_run_label(p)),
+    )?;
+    let (normal, build, links) = (deps.normal, deps.build, deps.links);
     let features = Value::strs(node.features.iter().cloned());
     let flags = PlatformFlags::new(platforms);
     let mut env = package_env(package);
@@ -153,26 +163,31 @@ fn build_file(
                 ("visibility", Value::strs::<&str>([])),
             ],
         );
-        call(
-            &mut out,
-            "buildscript_run",
-            &[
-                ("name", Value::str(format!("{name}-build-script-run"))),
-                (
-                    "buildscript_rule",
-                    Value::str(format!(":{name}-build-script-build")),
-                ),
-                ("package_name", Value::str(name)),
-                ("version", Value::str(&package.version)),
-                ("features", features.clone()),
-                ("manifest_dir", Value::str(format!(":{name}-manifest-dir"))),
-                ("env", Value::Dict(env.clone())),
-                // Cargo links the libraries that a build script names, such as a C library that
-                // the script compiled into `OUT_DIR`.
-                ("rustc_link_lib", Value::Bool(true)),
-                ("rustc_link_search", Value::Bool(true)),
-            ],
-        );
+        let mut run_kwargs = vec![
+            ("name", Value::str(format!("{name}-build-script-run"))),
+            (
+                "buildscript_rule",
+                Value::str(format!(":{name}-build-script-build")),
+            ),
+            ("package_name", Value::str(name)),
+            ("version", Value::str(&package.version)),
+            ("features", features.clone()),
+            ("manifest_dir", Value::str(format!(":{name}-manifest-dir"))),
+            ("env", Value::Dict(env.clone())),
+            // Cargo links the libraries that a build script names, such as a C library that
+            // the script compiled into `OUT_DIR`.
+            ("rustc_link_lib", Value::Bool(true)),
+            ("rustc_link_search", Value::Bool(true)),
+        ];
+        // The build scripts of dependents read the metadata of a package with `links`.
+        if package.links.is_some() {
+            run_kwargs.push(("visibility", Value::strs(["PUBLIC"])));
+        }
+        if !links.is_empty() {
+            run_kwargs.push(("links_deps", links.deps_value()));
+            run_kwargs.push(("platform", links.platform_deps_value("links_deps")));
+        }
+        call(&mut out, "buildscript_run", &run_kwargs);
         env.push((
             "OUT_DIR".to_owned(),
             Value::str(format!("$(location :{name}-build-script-run[out_dir])")),

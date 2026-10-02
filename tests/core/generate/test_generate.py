@@ -209,6 +209,16 @@ async def test_generate_runs_a_build_script_in_the_workspace_layout(yak: Yak) ->
     assert result.stdout == "api=v2\n"
 
 
+@yak_test(data_dir="linksmetadata")
+async def test_generate_passes_links_metadata_to_build_scripts(yak: Yak) -> None:
+    # `sys` sets `links = "answer"`, and its build script reports a directory
+    # in its `OUT_DIR` and one of its own files. The build script of `app`
+    # reads them through `DEP_ANSWER_INCLUDE` and `DEP_ANSWER_DATA_DIR`.
+    await yak.generate()
+    result = await yak.run("//app")
+    assert result.stdout == "answer=42 (forty-two)\n"
+
+
 @yak_test(data_dir="sharedlib")
 async def test_generate_runs_a_binary_that_loads_a_build_script_shared_library(
     yak: Yak,

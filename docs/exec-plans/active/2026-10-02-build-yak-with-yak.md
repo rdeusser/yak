@@ -17,7 +17,8 @@ The repository owner requires the self-build (2026-10-02).
 - [x] Plan of Work item 1: `yak generate` skips ignored directories (2026-10-02).
 - [x] Plan of Work item 2: the `cargo` cell applies the `rustflags` of Cargo's configuration (2026-10-02).
 - [x] Plan of Work item 3: a workspace member's build script runs in the member's directory of a tree with the workspace's layout, the member's files, and the files of `include` (2026-10-02). `test_generate_runs_a_build_script_in_the_workspace_layout` covers it. The protobuf crates of this repository build this way once they declare their `.proto` files (item 6).
-- [ ] Plan of Work items 4 to 8.
+- [x] Plan of Work item 4: build scripts get `DEP_<links>_<key>` from the build scripts of their normal dependencies with `links` (2026-10-02). `test_generate_passes_links_metadata_to_build_scripts` covers it, and a workspace that depends on `aws-lc-rs` 1.18.1 builds and runs.
+- [ ] Plan of Work items 5 to 8.
 
 ## Surprises & Discoveries
 

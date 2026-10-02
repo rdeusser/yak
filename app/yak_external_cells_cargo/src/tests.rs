@@ -230,6 +230,50 @@ fn test_build_script_takes_build_deps() {
     assert!(run.contains("rustc_link_lib = True,\n    rustc_link_search = True,"));
 }
 
+#[test]
+fn test_build_script_takes_the_runs_of_normal_deps_with_links() {
+    // `libc` (a normal dependency of `serde` on Unix) and `memchr` 1 (a build dependency) set
+    // `links` and have build scripts. Cargo passes the metadata of `libc` alone to the build
+    // script of `serde`.
+    let mut json: serde_json::Value = serde_json::from_str(&metadata_json()).unwrap();
+    for package in json["packages"].as_array_mut().unwrap() {
+        let (name, version) = match (package["name"].as_str(), package["version"].as_str()) {
+            (Some(name @ ("libc" | "memchr")), Some(version @ ("0.2.0" | "1.0.0"))) => {
+                (name.to_owned(), version.to_owned())
+            }
+            _ => continue,
+        };
+        package["links"] = json!(name);
+        package["targets"]
+            .as_array_mut()
+            .unwrap()
+            .push(build_script(&name, &version));
+    }
+    let metadata = Metadata::parse(&json.to_string()).unwrap();
+    let third_party = generate_third_party(&metadata, &platforms()).unwrap();
+    let out = build_file(&third_party, "serde-1.0.1-beta.2");
+    let run = call_starting(
+        &out,
+        "buildscript_run(\n    name = \"serde-build-script-run\"",
+    );
+    assert!(run.contains("links_deps = []"), "{run}");
+    assert!(
+        run.contains(
+            "platform = {\"linux-x86_64\": {\"links_deps\": [\"//libc-0.2.0:libc-build-script-run\"]}}"
+        ),
+        "{run}"
+    );
+    assert!(!run.contains("memchr"), "{run}");
+    // The run of the build script of `libc` writes metadata when it gets `CARGO_MANIFEST_LINKS`.
+    let libc = build_file(&third_party, "libc-0.2.0");
+    let libc_run = call_starting(
+        &libc,
+        "buildscript_run(\n    name = \"libc-build-script-run\"",
+    );
+    assert!(libc_run.contains("\"CARGO_MANIFEST_LINKS\": \"libc\""));
+    assert!(libc_run.contains("visibility = [\"PUBLIC\"]"));
+}
+
 /// The platforms of `platforms()` with the `rustflags` of each.
 fn platforms_with_rustflags(linux: &[&str], windows: &[&str]) -> Vec<CargoPlatform> {
     let mut platforms = platforms();

@@ -62,6 +62,16 @@ load(
 load(":rust_toolchain.bzl", "PanicRuntime")
 load(":sources.bzl", "package_srcs_files")
 
+# The metadata that a build script of a package with `links` prints, which Cargo passes to the
+# build scripts of the packages that depend on it as `DEP_<links>_<key>`.
+BuildScriptMetadataInfo = provider(fields = {
+    # The `DEP_<links>_<key>=<value>` lines, with placeholders for paths in the script's
+    # `OUT_DIR` and manifest directory.
+    "metadata": provider_field(Artifact),
+    "out_dir": provider_field(Artifact),
+    "manifest_dir": provider_field(Artifact),
+})
+
 def _make_rustc_shim(ctx: AnalysisContext, cwd: Artifact) -> cmd_args:
     # Build scripts expect to receive a `rustc` which "just works." However,
     # our rustc sometimes has no sysroot available, so we need to make a shim
@@ -243,6 +253,7 @@ def _cargo_buildscript_impl(ctx: AnalysisContext) -> list[Provider]:
     rustc_flags = ctx.actions.declare_output("rustc_flags", has_content_based_path = True)
     linker_flags = ctx.actions.declare_output("linker_flags", has_content_based_path = True)
     shared_libs = ctx.actions.declare_output("shared_libs", dir = True, has_content_based_path = True)
+    metadata = ctx.actions.declare_output("metadata", has_content_based_path = True)
 
     if ctx.attrs.manifest_dir != None:
         if ctx.attrs.package_srcs or subdir:
@@ -263,7 +274,11 @@ def _cargo_buildscript_impl(ctx: AnalysisContext) -> list[Provider]:
         cmd_args("--outfile=", rustc_flags.as_output(), delimiter = ""),
         cmd_args("--linker-flags=", linker_flags.as_output(), delimiter = ""),
         cmd_args("--shared-libs=", shared_libs.as_output(), delimiter = ""),
+        cmd_args("--metadata=", metadata.as_output(), delimiter = ""),
     ]
+    for dep in ctx.attrs.links_deps:
+        info = dep[BuildScriptMetadataInfo]
+        cmd.append(cmd_args("--dep-metadata", info.metadata, info.out_dir, info.manifest_dir))
     linker_search_flag = "-L"
     if cxx_toolchain_info.linker_info.type == LinkerType("windows"):
         linker_search_flag = "/LIBPATH:"
@@ -429,11 +444,13 @@ def _cargo_buildscript_impl(ctx: AnalysisContext) -> list[Provider]:
             default_output = None,
             sub_targets = {
                 "linker_flags": [DefaultInfo(default_output = linker_flags)],
+                "metadata": [DefaultInfo(default_output = metadata)],
                 "out_dir": [DefaultInfo(default_output = out_dir)],
                 "rustc_flags": [DefaultInfo(default_output = rustc_flags)],
                 "shared_libs": [DefaultInfo(default_output = shared_libs)],
             },
         ),
+        BuildScriptMetadataInfo(metadata = metadata, out_dir = out_dir, manifest_dir = manifest_dir),
         # The binaries that depend on this target load the shared libraries
         # that the script linked from its `OUT_DIR`.
         BuildScriptSharedLibsInfo(
@@ -458,6 +475,9 @@ _cargo_buildscript_rule = rule(
         "env": attrs.dict(key = attrs.string(), value = attrs.arg(), default = {}),
         "features": attrs.list(attrs.string(), default = []),
         "filegroup_for_manifest_dir": attrs.option(attrs.dict(key = attrs.string(), value = attrs.source()), default = None),
+        # The run targets of the build scripts of the package's normal dependencies with `links`,
+        # whose metadata the script gets as `DEP_<links>_<key>`.
+        "links_deps": attrs.list(attrs.dep(providers = [BuildScriptMetadataInfo]), default = []),
         "manifest_dir": attrs.option(attrs.dep(), default = None),
         # The directory of the package in the tree of `filegroup_for_manifest_dir`, where the
         # script runs and which `CARGO_MANIFEST_DIR` names.

@@ -36,6 +36,7 @@ use crate::metadata::Metadata;
 use crate::metadata::Package;
 use crate::metadata::Target;
 use crate::third_party::library_label;
+use crate::third_party::script_run_label;
 
 /// The macros that the build files of the workspace call. `_WORKSPACE_DIR` is the directory of
 /// the workspace relative to the project root, `_MEMBERS` holds the data of each member by its
@@ -183,7 +184,11 @@ def _declare_member(member, include, test_data):
             filegroup_for_manifest_dir = {path: f for f, path in mapped_srcs.items()},
             manifest_subdir = member["dir"],
             package_srcs = package_srcs,
+            links_deps = member["links_deps"],
+            platform = member["links_platform"],
             buildscript_compatible_with = exec_only,
+            # The build scripts of dependents read the metadata of a package with `links`.
+            visibility = ["PUBLIC"] if "CARGO_MANIFEST_LINKS" in env else [],
             env = env,
             rustc_link_lib = True,
             rustc_link_search = True,
@@ -503,6 +508,18 @@ pub fn generate_workspace(
             Ok(format!("{cell}{}", library_label(p)))
         }
     };
+    let run_label = |p: &Package| -> yak_error::Result<String> {
+        if graph.is_member(&p.id) {
+            let dir = relative_to(&workspace_root, &manifest_dir(p).to_string_lossy())?;
+            Ok(format!(
+                "//{}:{}-build-script-run",
+                join_dir(&workspace_dir, &dir),
+                p.name
+            ))
+        } else {
+            Ok(format!("{cell}{}", script_run_label(p)))
+        }
+    };
 
     // The files that each package that the cell declares, a member or the workspace's root,
     // exports to the members that include them, by package.
@@ -517,7 +534,7 @@ pub fn generate_workspace(
             .find(|n| n.id == package.id)
             .ok_or_else(|| GenerateError::UnknownPackage(package.id.clone()))?;
         let member_dir = manifest_dir(package);
-        let deps = graph.deps(node, platforms, label)?;
+        let deps = graph.deps(node, platforms, label, run_label)?;
         let test = deps.normal.merged(&deps.dev);
 
         if package
@@ -725,6 +742,11 @@ pub fn generate_workspace(
         fields.extend(deps_fields("", &deps.normal, &flags));
         fields.extend(deps_fields("build_", &deps.build, &flags));
         fields.extend(deps_fields("test_", &test, &flags));
+        fields.push(("links_deps".to_owned(), deps.links.deps_value()));
+        fields.push((
+            "links_platform".to_owned(),
+            deps.links.platform_deps_value("links_deps"),
+        ));
         values.push((package_dir, Value::Dict(fields)));
     }
 

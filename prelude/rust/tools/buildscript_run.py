@@ -27,6 +27,32 @@ TOOL_CWD: str = os.path.join(os.getcwd(), "")
 # We later replace this sentinel with the actual content-addressed path, once that is known.
 OUT_DIR_SENTINEL: str = "${__BUILDSCRIPT_OUT_DIR__}"
 
+# Marks paths in the manifest directory in the metadata of a build script. The
+# runs of dependents replace it with the path of that directory.
+MANIFEST_DIR_SENTINEL: str = "${__BUILDSCRIPT_MANIFEST_DIR__}"
+
+# The keys of `cargo:KEY=VALUE` lines that are instructions, as opposed to
+# metadata (Cargo's `RESERVED_PREFIXES`).
+RESERVED_PREFIXES: tuple[str, ...] = (
+    "rustc-flags=",
+    "rustc-link-lib=",
+    "rustc-link-search=",
+    "rustc-link-arg-cdylib=",
+    "rustc-cdylib-link-arg=",
+    "rustc-link-arg-bins=",
+    "rustc-link-arg-bin=",
+    "rustc-link-arg-tests=",
+    "rustc-link-arg-benches=",
+    "rustc-link-arg-examples=",
+    "rustc-link-arg=",
+    "rustc-cfg=",
+    "rustc-check-cfg=",
+    "rustc-env=",
+    "warning=",
+    "rerun-if-changed=",
+    "rerun-if-env-changed=",
+)
+
 
 def eprint(*args: Any, **kwargs: Any) -> None:
     print(*args, end="\n", file=sys.stderr, flush=True, **kwargs)
@@ -58,6 +84,45 @@ def copy_shared_libraries(search_dir: str, shared_libs: Path) -> None:
         if SHARED_LIBRARY_PATTERN.match(name) and os.path.isfile(path):
             if not target.exists():
                 shutil.copy2(path, target)
+
+
+def envify(s: str) -> str:
+    """Cargo's name of `s` in an environment variable."""
+    return s.upper().replace("-", "_")
+
+
+def metadata_entry(line: str) -> Optional[tuple[str, str]]:
+    """The key and value of a `cargo::metadata=KEY=VALUE` line, or of a
+    `cargo:KEY=VALUE` line whose key is not an instruction."""
+    line = line.strip()
+    if line.startswith("cargo::"):
+        data = line.removeprefix("cargo::")
+        if not data.startswith("metadata="):
+            return None
+        data = data.removeprefix("metadata=")
+    elif line.startswith("cargo:"):
+        data = line.removeprefix("cargo:")
+        if data.startswith(RESERVED_PREFIXES):
+            return None
+    else:
+        return None
+    key, sep, value = data.partition("=")
+    if not sep:
+        return None
+    return key, value.rstrip()
+
+
+def dep_metadata_env(dep_metadata: list[list[Path]]) -> dict[str, str]:
+    """The `DEP_<links>_<key>` variables of the metadata files of dependencies,
+    each with the `OUT_DIR` and manifest directory its placeholders name."""
+    env = {}
+    for metadata, out_dir, manifest_dir in dep_metadata:
+        for line in metadata.read_text(encoding="utf-8").splitlines():
+            name, _, value = line.partition("=")
+            env[name] = value.replace(
+                OUT_DIR_SENTINEL, os.path.abspath(out_dir)
+            ).replace(MANIFEST_DIR_SENTINEL, os.path.abspath(manifest_dir))
+    return env
 
 
 def cfg_env(rustc_cfg: Path) -> dict[str, str]:
@@ -262,6 +327,8 @@ class Args(NamedTuple):
     shared_libs: Optional[Path]
     rustc_link_lib: bool
     rustc_link_search: bool
+    metadata: Optional[IO[str]]
+    dep_metadata: list[list[Path]]
 
 
 def arg_parse() -> Args:
@@ -283,6 +350,14 @@ def arg_parse() -> Args:
     parser.add_argument("--shared-libs", type=Path)
     parser.add_argument("--rustc-link-lib", action="store_true")
     parser.add_argument("--rustc-link-search", action="store_true")
+    # The file that receives the `DEP_<links>_<key>` variables of the script's
+    # metadata, when the package sets `links`.
+    parser.add_argument("--metadata", type=argparse.FileType("w"))
+    # The metadata file, `OUT_DIR`, and manifest directory of the build script
+    # of a dependency with `links`.
+    parser.add_argument(
+        "--dep-metadata", type=Path, nargs=3, action="append", default=[]
+    )
 
     return Args(**vars(parser.parse_args()))
 
@@ -291,6 +366,7 @@ def main() -> None:  # noqa: C901
     args = arg_parse()
 
     env = cfg_env(args.rustc_cfg)
+    env.update(dep_metadata_env(args.dep_metadata))
 
     out_dir = os.getenv("OUT_DIR")
     assert out_dir is not None, "OUT_DIR env is missing"
@@ -358,11 +434,32 @@ def main() -> None:  # noqa: C901
             return OUT_DIR_SENTINEL + path[len(out_dir_abs) :]
         return None
 
+    # Rewrite a path in OUT_DIR or in the manifest directory to its placeholder.
+    def metadata_value(value: str) -> str:
+        reanchored = reanchor_out_dir(value)
+        if reanchored is not None:
+            return reanchored
+        if value == cwd_root_abs:
+            return MANIFEST_DIR_SENTINEL
+        if value.startswith(cwd_root_abs + os.sep):
+            return MANIFEST_DIR_SENTINEL + value[len(cwd_root_abs) :]
+        return value
+
+    # Cargo passes metadata on only from the build script of a package with
+    # `links`.
+    links = env.get("CARGO_MANIFEST_LINKS")
+    metadata = ""
     flags = ""
     linker_flags = ""
     if args.shared_libs:
         args.shared_libs.mkdir(parents=True, exist_ok=True)
     for line in script_output.split("\n"):
+        entry = metadata_entry(line)
+        if entry:
+            key, value = entry
+            if links:
+                metadata += f"DEP_{envify(links)}_{envify(key)}={metadata_value(value)}\n"
+            continue
         cargo_rustc_cfg_match = cargo_rustc_cfg_pattern.match(line)
         if cargo_rustc_cfg_match:
             value = cargo_rustc_cfg_match.group(1)
@@ -411,6 +508,8 @@ def main() -> None:  # noqa: C901
     args.outfile.write(flags)
     if args.linker_flags:
         args.linker_flags.write(linker_flags)
+    if args.metadata:
+        args.metadata.write(metadata)
 
 
 if __name__ == "__main__":

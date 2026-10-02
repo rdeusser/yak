@@ -208,6 +208,13 @@ impl Deps {
         merged
     }
 
+    pub(crate) fn is_empty(&self) -> bool {
+        self.deps.is_empty()
+            && self.named_deps.is_empty()
+            && self.platform_deps.is_empty()
+            && self.platform_named_deps.is_empty()
+    }
+
     pub(crate) fn deps_value(&self) -> Value {
         Value::strs(self.deps.iter().cloned())
     }
@@ -247,6 +254,22 @@ impl Deps {
                 .collect(),
         )
     }
+
+    /// The `platform` attribute of a Cargo macro that takes the dependencies that apply on some
+    /// platforms as `attr`.
+    pub(crate) fn platform_deps_value(&self, attr: &str) -> Value {
+        Value::Dict(
+            self.platform_deps
+                .iter()
+                .map(|(name, deps)| {
+                    (
+                        name.clone(),
+                        Value::Dict(vec![(attr.to_owned(), Value::strs(deps.iter().cloned()))]),
+                    )
+                })
+                .collect(),
+        )
+    }
 }
 
 fn named_deps_value(named: &[(String, String)]) -> Value {
@@ -264,6 +287,9 @@ pub(crate) struct NodeDeps {
     pub(crate) normal: Deps,
     pub(crate) build: Deps,
     pub(crate) dev: Deps,
+    /// The build script runs of the normal dependencies whose packages set `links`, whose
+    /// metadata Cargo passes to the package's build script as `DEP_<links>_<key>`.
+    pub(crate) links: Deps,
 }
 
 pub(crate) struct Graph<'a> {
@@ -298,12 +324,14 @@ impl<'a> Graph<'a> {
         self.members.contains(id)
     }
 
-    /// The dependencies of `node` by kind. `label` names the library target of a dependency.
+    /// The dependencies of `node` by kind. `label` names the library target of a dependency, and
+    /// `script_run_label` the run target of its build script.
     pub(crate) fn deps(
         &self,
         node: &Node,
         platforms: &[CargoPlatform],
         label: impl Fn(&Package) -> yak_error::Result<String>,
+        script_run_label: impl Fn(&Package) -> yak_error::Result<String>,
     ) -> yak_error::Result<NodeDeps> {
         let dependent = self.package(&node.id)?;
         let mut deps = NodeDeps::default();
@@ -328,6 +356,17 @@ impl<'a> Graph<'a> {
                     into.add(
                         extern_name.clone(),
                         label.clone(),
+                        applies_on(&kinds, platforms)?,
+                    );
+                }
+            }
+            if package.links.is_some() && package.targets.iter().any(|t| t.is_build_script()) {
+                let kinds: Vec<&DepKind> =
+                    dep.dep_kinds.iter().filter(|k| k.kind.is_none()).collect();
+                if !kinds.is_empty() {
+                    deps.links.add(
+                        None,
+                        script_run_label(package)?,
                         applies_on(&kinds, platforms)?,
                     );
                 }

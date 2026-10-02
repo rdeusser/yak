@@ -209,6 +209,13 @@ script that reads `../proto/api.proto` finds the file when `include` of
 `cargo_package()` names a target with it, and an edit of the file runs the
 script again. `CARGO_MANIFEST_DIR` names the member's directory in the copy.
 
+The build script of a package that sets `links` can report metadata with
+`cargo::metadata=KEY=VALUE`, or with `cargo:KEY=VALUE` for a key that is no
+instruction. As with Cargo, the build scripts of the packages that depend on it
+as a normal dependency get the value as `DEP_<links>_<KEY>`, such as the include
+directory that `aws-lc-sys` reports to `aws-lc-rs`. A path in the reporting script's `OUT_DIR` or package directory names the same
+file in the dependent's build.
+
 A build script can link a library that it builds into its `OUT_DIR` or finds
 on the machine, such as through pkg-config. The links of the crates that
 depend on the package get the library's directory, as with Cargo. yak copies

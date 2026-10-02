@@ -11,6 +11,7 @@ import os
 import subprocess
 import sys
 from pathlib import Path
+from typing import Optional
 
 BUILDSCRIPT_RUN: Path = (
     Path(__file__).resolve().parents[3]
@@ -26,13 +27,17 @@ def run_buildscript(
     lines: list[str],
     manifest_files: tuple[str, ...] = (),
     manifest_subdir: str = "",
+    extra_args: tuple[str, ...] = (),
+    extra_env: Optional[dict[str, str]] = None,
 ) -> tuple[list[str], str]:
     """Runs a build script that prints `lines`, with `$CARGO_MANIFEST_DIR`
-    replaced by the directory the runner gives it and `$READ(<path>)` by the
-    contents of the file at that path relative to the script's directory.
+    replaced by the directory the runner gives it, `$READ(<path>)` by the
+    contents of the file at that path relative to the script's directory, and
+    `$ENV(<name>)` by the value of that variable.
 
     The manifest directory holds `manifest_files`, and the script runs in its
-    `manifest_subdir` and writes `written.txt` there.
+    `manifest_subdir` and writes `written.txt` there. The runner writes the
+    script's metadata to `metadata`.
 
     Returns the rustc flags and the linker argument file for dependents.
 
@@ -45,6 +50,7 @@ def run_buildscript(
         "open('written.txt', 'w').close()\n"
         f"for line in {lines!r}:\n"
         "    line = line.replace('$CARGO_MANIFEST_DIR', os.environ['CARGO_MANIFEST_DIR'])\n"
+        "    line = re.sub(r'\\$ENV\\((.*?)\\)', lambda m: os.environ[m.group(1)], line)\n"
         "    print(re.sub(r'\\$READ\\((.*?)\\)', lambda m: open(m.group(1)).read(), line))\n"
     )
     script.chmod(0o755)
@@ -71,8 +77,10 @@ def run_buildscript(
             f"--outfile={outfile}",
             f"--linker-flags={linker_flags}",
             f"--shared-libs={tmp_path / 'shared_libs'}",
+            f"--metadata={tmp_path / 'metadata'}",
             "--rustc-link-lib",
             "--rustc-link-search",
+            *extra_args,
         ],
         check=True,
         cwd=tmp_path,
@@ -81,6 +89,7 @@ def run_buildscript(
             OUT_DIR=str(out_dir),
             RUSTC="true",
             TARGET="x86_64-unknown-linux-gnu",
+            **(extra_env or {}),
         ),
     )
     return outfile.read_text().splitlines(), linker_flags.read_text()
@@ -206,4 +215,57 @@ def test_package_below_the_root_of_the_tree_reads_its_siblings(
     assert [p.name for p in (tmp_path / "cwd" / "crates").iterdir()] == ["gen"]
     assert [p.name for p in (tmp_path / "cwd" / "crates" / "gen").iterdir()] == [
         "written.txt"
+    ]
+
+
+def test_metadata_of_a_links_package_names_its_paths_by_placeholder(
+    tmp_path: Path,
+) -> None:
+    out_dir = (tmp_path / "out").resolve()
+    flags, _ = run_buildscript(
+        tmp_path,
+        [
+            f"cargo::metadata=include={out_dir}/include",
+            "cargo:root=$CARGO_MANIFEST_DIR/src",
+            "cargo:version-number=1.2",
+            "cargo:rustc-cfg=feature_probe",
+        ],
+        extra_env={"CARGO_MANIFEST_LINKS": "aws-lc"},
+    )
+    assert flags == ["--cfg=feature_probe"]
+    assert (tmp_path / "metadata").read_text() == (
+        "DEP_AWS_LC_INCLUDE=${__BUILDSCRIPT_OUT_DIR__}/include\n"
+        "DEP_AWS_LC_ROOT=${__BUILDSCRIPT_MANIFEST_DIR__}/src\n"
+        "DEP_AWS_LC_VERSION_NUMBER=1.2\n"
+    )
+
+
+def test_metadata_of_a_package_without_links_is_dropped(tmp_path: Path) -> None:
+    run_buildscript(tmp_path, ["cargo::metadata=include=/usr/include"])
+    assert (tmp_path / "metadata").read_text() == ""
+
+
+def test_metadata_of_dependencies_reaches_the_script(tmp_path: Path) -> None:
+    dep = tmp_path / "dep"
+    dep.mkdir()
+    (dep / "metadata").write_text(
+        "DEP_AWS_LC_INCLUDE=${__BUILDSCRIPT_OUT_DIR__}/include\n"
+        "DEP_AWS_LC_ROOT=${__BUILDSCRIPT_MANIFEST_DIR__}/src\n"
+    )
+    flags, _ = run_buildscript(
+        tmp_path,
+        [
+            "cargo:rustc-env=INCLUDE=$ENV(DEP_AWS_LC_INCLUDE)",
+            "cargo:rustc-env=ROOT=$ENV(DEP_AWS_LC_ROOT)",
+        ],
+        extra_args=(
+            "--dep-metadata",
+            str(dep / "metadata"),
+            str(dep / "out"),
+            str(dep / "manifest"),
+        ),
+    )
+    assert flags == [
+        "--env-set=INCLUDE=$(abspath dep/out/include)",
+        "--env-set=ROOT=$(abspath dep/manifest/src)",
     ]
