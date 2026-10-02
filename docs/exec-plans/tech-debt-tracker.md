@@ -10,6 +10,15 @@ Counts and results are from 2026-09-26 unless an entry gives another date. Comma
 The `YAK` files of the repository name third-party crates as `//third-party/rust:<crate>`, but the repository no longer has a `third-party/rust` package or a tool that generates one, so `yak build //:yak` fails to load.
 Remove this entry when the repository defines its third-party Rust crates for yak again.
 
+### The repository needs nightly Rust and tokio's unstable API
+
+`rust-toolchain.toml` pins a nightly toolchain, and the crates enable 23 unstable features. On 2026-10-02, most had stable replacements of one or a few lines each, or mechanical rewrites (30 `try` blocks, 21 `box` patterns, 8 trait aliases, 10 `macro` definitions). Two features need API changes:
+- `try_trait_v2` lets about 170 functions use `?` on `ExitResult`, `CommandOutcome`, and `ResultMaybeCompatible` (`app/yak_client_ctx/src/exit_result.rs`).
+- `async_fn_traits` names `AsyncFnOnce::CallOnceFuture` in 15 `Send` bounds of `dice/dice/src/api/computations.rs`, which about 120 callers of `compute_join` and its relatives rely on.
+`.cargo/config.toml` sets `--cfg tokio_unstable` because `app/yak_server/src/snapshot.rs` and `app/yak_daemon/src/daemon.rs` read 21 unstable runtime metrics. Three of them (the blocking queue depth and the counts of blocking threads) reach the superconsole IO header and the Chrome trace, and the rest reach only the event log.
+`rustfmt.toml` sets unstable import options, and `.github/actions/build_release/action.yml` and `build_debug/action.yml` pass `-Z unstable-options --artifact-dir`.
+Remove this entry when stable Rust and stable tokio provide these features, or when the code stops using them.
+
 ### The integration tests have not passed in CI
 
 `.github/workflows/integration-tests.yml` runs `pytest tests` on Linux against a debug build, and no run of it has completed.
