@@ -29,9 +29,14 @@ def system_toolchains():
     Declares a toolchain for each language that the prelude supports, using the
     compilers and tools on `PATH`. A project that needs other tools declares its
     toolchains with the rules that this macro calls.
+
+    Each toolchain gets the identity of its tool from `[tool_identity]`, which
+    the daemon computes from the tool's version output, so the actions that run
+    a tool run again when the tool changes.
     """
     system_cxx_toolchain(
         name = "cxx",
+        tool_identity = read_root_config("tool_identity", "clang", ""),
         visibility = ["PUBLIC"],
     )
 
@@ -42,11 +47,13 @@ def system_toolchains():
 
     system_go_toolchain(
         name = "go",
+        tool_identity = read_root_config("tool_identity", "go", ""),
         visibility = ["PUBLIC"],
     )
 
     system_go_bootstrap_toolchain(
         name = "go_bootstrap",
+        tool_identity = read_root_config("tool_identity", "go", ""),
         visibility = ["PUBLIC"],
     )
 
@@ -78,6 +85,7 @@ def system_toolchains():
 
     system_rust_toolchain(
         name = "rust",
+        tool_identity = read_root_config("tool_identity", "rustc", ""),
         default_edition = "2021",
         visibility = ["PUBLIC"],
     )

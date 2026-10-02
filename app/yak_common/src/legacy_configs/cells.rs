@@ -40,6 +40,7 @@ use crate::dice::cells::HasCellResolver;
 use crate::dice::data::HasIoProvider;
 use crate::external_cells::EXTERNAL_CELLS_IMPL;
 use crate::legacy_configs::aggregator::CellsAggregator;
+use crate::legacy_configs::args::ComputedConfigValue;
 use crate::legacy_configs::args::ResolvedLegacyConfigArg;
 use crate::legacy_configs::args::resolve_config_args;
 use crate::legacy_configs::args::to_proto_config_args;
@@ -102,7 +103,8 @@ impl ExternalYakconfigData {
                 .args
                 .into_iter()
                 .filter(|arg| match arg {
-                    ResolvedLegacyConfigArg::Flag(flag) => {
+                    ResolvedLegacyConfigArg::Flag(flag)
+                    | ResolvedLegacyConfigArg::Computed(flag) => {
                         flag.cell.is_some()
                             || filter(&YakconfigKeyRef {
                                 section: &flag.section,
@@ -251,10 +253,21 @@ impl YakConfigBasedCells {
         project_fs: &ProjectRoot,
         config_args: &[yak_cli_proto::ConfigOverride],
     ) -> yak_error::Result<Self> {
+        Self::parse_with_computed_values_and_config_args(project_fs, &[], config_args).await
+    }
+
+    /// parse_with_computed_values_and_config_args parses the configuration with the values that
+    /// the daemon computed for the command, which the command line's arguments override.
+    pub async fn parse_with_computed_values_and_config_args(
+        project_fs: &ProjectRoot,
+        computed_values: &[ComputedConfigValue],
+        config_args: &[yak_cli_proto::ConfigOverride],
+    ) -> yak_error::Result<Self> {
         Self::parse_with_file_ops_and_options(
             &mut DefaultConfigParserFileOps {
                 project_fs: project_fs.dupe(),
             },
+            computed_values,
             config_args,
             false, /* follow includes */
         )
@@ -267,6 +280,7 @@ impl YakConfigBasedCells {
     ) -> yak_error::Result<Self> {
         Self::parse_with_file_ops_and_options(
             file_ops,
+            &[],
             config_args,
             true, /* follow includes */
         )
@@ -282,8 +296,8 @@ impl YakConfigBasedCells {
         current: &mut dyn ConfigParserFileOps,
         other: &mut dyn ConfigParserFileOps,
     ) -> yak_error::Result<Option<String>> {
-        let current_cells = Self::parse_with_file_ops_and_options(current, &[], true).await?;
-        let other_cells = Self::parse_with_file_ops_and_options(other, &[], true).await?;
+        let current_cells = Self::parse_with_file_ops_and_options(current, &[], &[], true).await?;
+        let other_cells = Self::parse_with_file_ops_and_options(other, &[], &[], true).await?;
         if current_cells.cell_resolver != other_cells.cell_resolver {
             return Ok(Some("the cells of the project".to_owned()));
         }
@@ -306,16 +320,23 @@ impl YakConfigBasedCells {
 
     async fn parse_with_file_ops_and_options(
         file_ops: &mut dyn ConfigParserFileOps,
+        computed_values: &[ComputedConfigValue],
         config_args: &[yak_cli_proto::ConfigOverride],
         follow_includes: bool,
     ) -> yak_error::Result<Self> {
-        Self::parse_with_file_ops_and_options_inner(file_ops, config_args, follow_includes)
-            .await
-            .yak_error_context("Parsing cells")
+        Self::parse_with_file_ops_and_options_inner(
+            file_ops,
+            computed_values,
+            config_args,
+            follow_includes,
+        )
+        .await
+        .yak_error_context("Parsing cells")
     }
 
     async fn parse_with_file_ops_and_options_inner(
         file_ops: &mut dyn ConfigParserFileOps,
+        computed_values: &[ComputedConfigValue],
         config_args: &[yak_cli_proto::ConfigOverride],
         follow_includes: bool,
     ) -> yak_error::Result<Self> {
@@ -353,8 +374,13 @@ impl YakConfigBasedCells {
             trace: Default::default(),
         };
 
+        // The computed values come first, so that the command line's arguments override them.
+        let mut processed_config_args: Vec<ResolvedLegacyConfigArg> = computed_values
+            .iter()
+            .map(ComputedConfigValue::resolve)
+            .collect();
         // NOTE: This will _not_ perform IO unless it needs to.
-        let processed_config_args = resolve_config_args(config_args, &mut file_ops).await?;
+        processed_config_args.extend(resolve_config_args(config_args, &mut file_ops).await?);
 
         let external_paths = get_external_yakconfig_paths(&mut file_ops).await?;
         let started_parse = LegacyYakConfig::start_parse_for_external_files(
@@ -694,6 +720,8 @@ mod tests {
     use crate::external_cells::EXTERNAL_CELLS_IMPL;
     use crate::external_cells::ExternalCellsImpl;
     use crate::file_ops::delegate::FileOpsDelegate;
+    use crate::legacy_configs::args::ComputedConfigValue;
+    use crate::legacy_configs::args::to_proto_config_args;
     use crate::legacy_configs::cells::YakConfigBasedCells;
     use crate::legacy_configs::configs::testing::TestConfigParserFileOps;
     use crate::legacy_configs::configs::tests::assert_config_value;
@@ -1133,6 +1161,43 @@ mod tests {
             .await?;
 
         assert_config_value(&config, "some_section", "key", "value1");
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_computed_values_apply_under_config_args() -> yak_error::Result<()> {
+        let mut file_ops = TestConfigParserFileOps::new(&[(
+            ".yakconfig",
+            indoc!(
+                r#"
+                        [repositories]
+                            root = .
+                            other = other
+                    "#
+            ),
+        )])?;
+        let computed = |key: &str| ComputedConfigValue {
+            section: "tool_identity".to_owned(),
+            key: key.to_owned(),
+            value: "computed".to_owned(),
+        };
+
+        let cells = YakConfigBasedCells::parse_with_file_ops_and_options(
+            &mut file_ops,
+            &[computed("rustc"), computed("go")],
+            &[ConfigOverride::flag_no_cell("tool_identity.go=pinned")],
+            true,
+        )
+        .await?;
+        let config = cells
+            .parse_single_cell_with_file_ops(CellName::testing_new("other"), &mut file_ops)
+            .await?;
+
+        assert_config_value(&config, "tool_identity", "rustc", "computed");
+        assert_config_value(&config, "tool_identity", "go", "pinned");
+        // The events report the command line's argument and leave the computed values out.
+        assert_eq!(to_proto_config_args(&cells.external_data.args).len(), 1);
 
         Ok(())
     }

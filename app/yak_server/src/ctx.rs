@@ -150,6 +150,7 @@ use crate::paging::PagingManager;
 use crate::profile_patterns::FileWritingProfileEventListener;
 use crate::profiling_manager::StarlarkProfilingManager;
 use crate::snapshot::SnapshotCollector;
+use crate::tool_identity::tool_identities;
 
 #[derive(Debug, yak_error::Error)]
 #[yak(tag = Environment)]
@@ -574,8 +575,10 @@ impl ServerCommandContext<'_> {
         &self,
         dice_ctx: &mut DiceComputations<'_>,
     ) -> yak_error::Result<YakConfigBasedCells> {
-        let new_configs = YakConfigBasedCells::parse_with_config_args(
-            self.base_context.repo().paths.project_root(),
+        let project_root = self.base_context.repo().paths.project_root();
+        let new_configs = YakConfigBasedCells::parse_with_computed_values_and_config_args(
+            project_root,
+            &tool_identities(project_root.root().as_path()).await,
             &self.config_overrides,
         )
         .await?;

@@ -29,6 +29,7 @@ load("@prelude//decls:common.bzl", "yak")
 load("@prelude//linking:link_info.bzl", "LinkOrdering", "LinkStyle")
 load("@prelude//linking:lto.bzl", "LtoMode")
 load("@prelude//os_lookup:defs.bzl", "Os", "OsLookup")
+load("@prelude//toolchains:tool_identity.bzl", "tool_identity_attr")
 
 CxxToolsInfo = provider(
     fields = {
@@ -100,6 +101,8 @@ def _cxx_tools_info_toolchain_impl(ctx: AnalysisContext):
     return _cxx_toolchain_from_cxx_tools_info(ctx, ctx.attrs.cxx_tools_info[CxxToolsInfo])
 
 def _cxx_toolchain_from_cxx_tools_info(ctx: AnalysisContext, cxx_tools_info: CxxToolsInfo, target_name = "x86_64"):
+    # The identity is an input of every action that runs the compiler, assembler, or linker.
+    identity = ctx.actions.write("compiler.identity", ctx.attrs.tool_identity)
     os = ctx.attrs._target_os_type[OsLookup].os
     archiver_supports_argfiles = os != Os("macos")
     additional_linker_flags = ["-fuse-ld=lld"] if os == Os("linux") and cxx_tools_info.linker != "g++" and cxx_tools_info.cxx_compiler != "g++" else []
@@ -149,7 +152,7 @@ def _cxx_toolchain_from_cxx_tools_info(ctx: AnalysisContext, cxx_tools_info: Cxx
         CxxToolchainInfo(
             internal_tools = ctx.attrs.internal_tools[CxxInternalTools],
             linker_info = LinkerInfo(
-                linker = _run_info(cxx_tools_info.linker),
+                linker = _run_info(cxx_tools_info.linker, identity),
                 linker_flags = additional_linker_flags + ctx.attrs.link_flags,
                 post_linker_flags = ctx.attrs.post_link_flags,
                 archiver = _run_info(cxx_tools_info.archiver),
@@ -189,7 +192,7 @@ def _cxx_toolchain_from_cxx_tools_info(ctx: AnalysisContext, cxx_tools_info: Cxx
                 dwp = None,
             ),
             cxx_compiler_info = CxxCompilerInfo(
-                compiler = _run_info(cxx_tools_info.cxx_compiler),
+                compiler = _run_info(cxx_tools_info.cxx_compiler, identity),
                 preprocessor_flags = [],
                 compiler_flags = ctx.attrs.cxx_flags,
                 compiler_type = cxx_tools_info.compiler_type,
@@ -197,19 +200,19 @@ def _cxx_toolchain_from_cxx_tools_info(ctx: AnalysisContext, cxx_tools_info: Cxx
                 supports_content_based_paths = ctx.attrs.supports_content_based_paths,
             ),
             c_compiler_info = CCompilerInfo(
-                compiler = _run_info(cxx_tools_info.compiler),
+                compiler = _run_info(cxx_tools_info.compiler, identity),
                 preprocessor_flags = [],
                 compiler_flags = ctx.attrs.c_flags,
                 compiler_type = cxx_tools_info.compiler_type,
                 supports_content_based_paths = ctx.attrs.supports_content_based_paths,
             ),
             as_compiler_info = CCompilerInfo(
-                compiler = _run_info(cxx_tools_info.compiler),
+                compiler = _run_info(cxx_tools_info.compiler, identity),
                 compiler_type = cxx_tools_info.compiler_type,
                 supports_content_based_paths = ctx.attrs.supports_content_based_paths,
             ),
             asm_compiler_info = CCompilerInfo(
-                compiler = _run_info(cxx_tools_info.asm_compiler),
+                compiler = _run_info(cxx_tools_info.asm_compiler, identity),
                 compiler_type = cxx_tools_info.asm_compiler_type,
             ),
             cvtres_compiler_info = CvtresCompilerInfo(
@@ -234,8 +237,10 @@ def _cxx_toolchain_from_cxx_tools_info(ctx: AnalysisContext, cxx_tools_info: Cxx
         CxxPlatformInfo(name = target_name),
     ]
 
-def _run_info(args):
-    return None if args == None else RunInfo(args = [args])
+def _run_info(args, identity = None):
+    if args == None:
+        return None
+    return RunInfo(args = cmd_args(args, hidden = [identity] if identity != None else []))
 
 system_cxx_toolchain = rule(
     impl = _system_cxx_toolchain_impl,
@@ -258,6 +263,7 @@ system_cxx_toolchain = rule(
         "rc_compiler": attrs.option(attrs.string(), default = None),
         "rc_flags": attrs.list(attrs.arg(), default = []),
         "supports_content_based_paths": attrs.bool(default = False),
+        "tool_identity": tool_identity_attr(),
         "_cxx_tools_info": attrs.exec_dep(
             providers = [CxxToolsInfo],
             default = "prelude//toolchains/msvc:msvc_tools" if host_info().os.is_windows else "prelude//toolchains/cxx/clang:path_clang_tools",
@@ -294,6 +300,7 @@ cxx_tools_info_toolchain = rule(
         "post_link_flags": attrs.list(attrs.arg(), default = []),
         "rc_flags": attrs.list(attrs.arg(), default = []),
         "supports_content_based_paths": attrs.bool(default = False),
+        "tool_identity": tool_identity_attr(),
         "_target_os_type": yak.target_os_type_arg(),
     },
     is_toolchain_rule = True,

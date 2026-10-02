@@ -1,0 +1,14 @@
+prelude = native
+
+prelude.rust_library(
+    name = "rust_lib",
+    srcs = ["lib.rs"],
+    crate_root = "lib.rs",
+    edition = "2021",
+)
+
+prelude.go_library(
+    name = "go_lib",
+    srcs = ["lib.go"],
+    package_name = "golib",
+)

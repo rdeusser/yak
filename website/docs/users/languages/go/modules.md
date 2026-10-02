@@ -50,7 +50,7 @@ versions that `go.mod` selects, checked against `go.sum`. A new import, a new
 file, or a change to `go.mod` reaches the next build without a generator step.
 The cell runs `go list` again only when the names of the module's files, the
 build constraints, package clauses, imports, or `//go:embed` lines of its Go
-files, or `go.mod` or `go.sum` change.
+files, `go.mod`, `go.sum`, or the output of `go version` change.
 
 ## The targets
 

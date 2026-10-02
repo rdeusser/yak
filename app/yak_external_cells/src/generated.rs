@@ -44,6 +44,8 @@ use yak_common::file_ops::metadata::RawPathMetadata;
 use yak_common::file_ops::metadata::TrackedFileDigest;
 use yak_common::io::IoProvider;
 use yak_common::io::fs::FsIoProvider;
+use yak_common::legacy_configs::dice::HasLegacyConfigs;
+use yak_common::legacy_configs::key::YakconfigKeyRef;
 use yak_core::cells::cell_path::CellPath;
 use yak_core::cells::external::ExternalCellOrigin;
 use yak_core::cells::name::CellName;
@@ -558,6 +560,21 @@ async fn copy_package_sources(
     ctx.compute(&PackageSourcesKey(Arc::new(path), source_dir))
         .await?
         .clone()
+}
+
+/// tool_identity reads `tool_identity.<tool>` of the root cell through DICE, so that a computation
+/// that runs `tool` runs again when the daemon finds another version of it.
+pub(crate) async fn tool_identity<'d>(
+    ctx: &mut DiceComputations<'d>,
+    tool: &str,
+) -> yak_error::Result<Option<Arc<str>>> {
+    ctx.get_legacy_root_config_on_dice().await?.lookup(
+        ctx,
+        YakconfigKeyRef {
+            section: "tool_identity",
+            property: tool,
+        },
+    )
 }
 
 /// Runs `program` with `args` and the environment variables `env` in `dir`, and returns its

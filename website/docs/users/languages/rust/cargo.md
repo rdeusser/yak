@@ -164,12 +164,13 @@ as `crates//serde-1.0.229:serde`. The root of the cell has an alias named
 it has one version in the graph, such as `crates//:serde`.
 
 The daemon runs `cargo metadata --locked` when a `Cargo.toml` or `Cargo.lock`
-of the workspace changes, and `rustc --print cfg --target <triple>` for each
-platform. `cargo metadata` downloads each package that is not in Cargo's cache
-and checks it against `Cargo.lock`. It follows the workspace's
-`.cargo/config.toml` and Cargo's credentials, so a package from crates.io, from
-a private registry, from a mirror that source replacement names, from a
-`vendor/` directory, or from Git builds as it does with `cargo build`. The first
+of the workspace or the output of `rustc -vV` changes, and
+`rustc --print cfg --target <triple>` for each platform. `cargo metadata`
+downloads each package that is not in Cargo's cache and checks it against
+`Cargo.lock`. It follows the workspace's `.cargo/config.toml` and Cargo's
+credentials, so a package from crates.io, from a private registry, from a mirror
+that source replacement names, from a `vendor/` directory, or from Git builds as
+it does with `cargo build`. The first
 build that reads a package's files copies them from where Cargo put them into
 `yak-out`. Build actions then need no network access.
 

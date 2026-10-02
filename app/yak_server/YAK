@@ -48,6 +48,7 @@ rust_library(
         "//third-party/rust:async-recursion",
         "//third-party/rust:async-trait",
         "//third-party/rust:bincode",
+        "//third-party/rust:blake3",
         "//third-party/rust:constant_time_eq",
         "//third-party/rust:crossbeam-channel",
         "//third-party/rust:flate2",

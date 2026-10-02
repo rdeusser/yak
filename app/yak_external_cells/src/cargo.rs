@@ -64,6 +64,7 @@ use crate::generated::GeneratedFile;
 use crate::generated::GeneratedFileOpsDelegate;
 use crate::generated::GeneratedPackage;
 use crate::generated::run;
+use crate::generated::tool_identity;
 
 /// The file whose `cargo_workspace_member` macro declares the targets of a workspace member.
 const WORKSPACE_FILE: &str = "workspace.bzl";
@@ -133,6 +134,10 @@ async fn read_workspace(
     DiceFileComputations::read_file_if_exists(ctx, cells.get_cell_path(&lock_path).as_ref())
         .await?
         .ok_or_else(|| CargoCellError::MissingLockFile(manifest.to_string()))?;
+
+    // `cargo metadata` and `rustc --print cfg` come from the Rust toolchain, so a change of the
+    // toolchain computes the cell again.
+    tool_identity(ctx, "rustc").await?;
 
     let project_root = ctx.global_data().get_io_provider().project_root().dupe();
     let abs_dir = project_root.resolve(workspace_dir);

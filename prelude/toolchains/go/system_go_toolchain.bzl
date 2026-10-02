@@ -8,6 +8,7 @@
 
 load("@prelude//go:toolchain.bzl", "GoToolchainInfo")
 load("@prelude//os_lookup:defs.bzl", "ScriptLanguage")
+load("@prelude//toolchains:tool_identity.bzl", "tool_identity_attr")
 load("@prelude//utils:cmd_script.bzl", "cmd_script")
 
 def go_platform() -> (str, str):
@@ -35,7 +36,10 @@ def _system_go_toolchain_impl(ctx):
     go_os, go_arch = go_platform()
 
     script_language = ScriptLanguage("bat" if go_os == "windows" else "sh")
-    go = "go.exe" if go_os == "windows" else "go"
+
+    # The identity is an input of every action that runs `go` or a file of its `GOROOT`.
+    identity = ctx.actions.write("go.identity", ctx.attrs.tool_identity)
+    go = cmd_args("go.exe" if go_os == "windows" else "go", hidden = identity)
 
     go_root = ctx.actions.declare_output("goroot", dir = True, has_content_based_path = True)
 
@@ -43,7 +47,10 @@ def _system_go_toolchain_impl(ctx):
     # Since we don't know the user's GOROOT location at analysis time, we copy it
     # at build time. A symlink won't work because .project() requires a real directory.
     # We use a Go binary for the copy as it's more portable than shell scripts.
-    ctx.actions.run([ctx.attrs.copy_goroot[RunInfo], "-o", go_root.as_output()], category = "go_copy_goroot")
+    ctx.actions.run(
+        cmd_args(ctx.attrs.copy_goroot[RunInfo], "-o", go_root.as_output(), hidden = identity),
+        category = "go_copy_goroot",
+    )
 
     suffix = ".exe" if go_os == "windows" else ""
     tool_prefix = "pkg/tool/{}_{}".format(go_os, go_arch)
@@ -93,6 +100,7 @@ system_go_toolchain = rule(
         "gen_embedcfg": attrs.default_only(attrs.dep(providers = [RunInfo], default = "prelude//go/tools:gen_embedcfg")),
         "go_wrapper": attrs.default_only(attrs.dep(providers = [RunInfo], default = "prelude//go/tools:go_wrapper")),
         "pkg_analyzer": attrs.default_only(attrs.dep(providers = [RunInfo], default = "prelude//go/tools:pkg_analyzer")),
+        "tool_identity": tool_identity_attr(),
     },
     is_toolchain_rule = True,
 )

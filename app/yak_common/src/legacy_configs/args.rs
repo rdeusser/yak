@@ -32,6 +32,30 @@ pub(crate) enum ResolvedLegacyConfigArg {
     Flag(ResolvedConfigFlag),
     /// A file containing additional config values (in `.yakconfig` format).
     File(ResolvedConfigFile),
+    /// A value that the daemon computes at the start of a command, such as `tool_identity.rustc`.
+    /// It applies to every cell before the command line's arguments, and it is not a component of
+    /// the configuration that the command's events report.
+    Computed(ResolvedConfigFlag),
+}
+
+/// ComputedConfigValue is a configuration value that the daemon computes at the start of a
+/// command, such as `tool_identity.rustc`.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct ComputedConfigValue {
+    pub section: String,
+    pub key: String,
+    pub value: String,
+}
+
+impl ComputedConfigValue {
+    pub(crate) fn resolve(&self) -> ResolvedLegacyConfigArg {
+        ResolvedLegacyConfigArg::Computed(ResolvedConfigFlag {
+            section: self.section.clone(),
+            key: self.key.clone(),
+            value: Some(self.value.clone()),
+            cell: None,
+        })
+    }
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, allocative::Allocative, Pagable)]
@@ -149,8 +173,9 @@ pub(crate) fn to_proto_config_args(
     use yak_data::yakconfig_component::Data::ConfigValue;
 
     args.iter()
-        .map(|arg| {
+        .filter_map(|arg| {
             let data = match arg {
+                ResolvedLegacyConfigArg::Computed(_) => return None,
                 ResolvedLegacyConfigArg::Flag(resolved_config_flag) => {
                     ConfigValue(yak_data::ConfigValue {
                         section: resolved_config_flag.section.to_owned(),
@@ -180,7 +205,7 @@ pub(crate) fn to_proto_config_args(
                     })
                 }
             };
-            yak_data::YakconfigComponent { data: Some(data) }
+            Some(yak_data::YakconfigComponent { data: Some(data) })
         })
         .collect()
 }

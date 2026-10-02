@@ -305,7 +305,8 @@ impl LegacyYakConfig {
 
         for config_arg in config_args {
             match config_arg {
-                ResolvedLegacyConfigArg::Flag(config_value) => {
+                ResolvedLegacyConfigArg::Flag(config_value)
+                | ResolvedLegacyConfigArg::Computed(config_value) => {
                     parser.apply_config_arg(config_value, current_cell)?
                 }
                 ResolvedLegacyConfigArg::File(ResolvedConfigFile::Project(path)) => {

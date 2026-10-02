@@ -14,9 +14,9 @@
 //! module's files against `go.sum` when it downloaded them.
 //!
 //! The cell runs `go list` again only when its inputs change: `go.mod`, `go.sum`, the names of
-//! the module's files, the header of each Go file (`yak_external_cells_go::go_file_header`), and
-//! which build files below the module's root call `go_package()`. Editing a function body
-//! leaves them unchanged.
+//! the module's files, the header of each Go file (`yak_external_cells_go::go_file_header`),
+//! which build files below the module's root call `go_package()`, and the identity of `go`
+//! (`tool_identity.go`). Editing a function body leaves them unchanged.
 
 use std::collections::BTreeMap;
 use std::sync::Arc;
@@ -56,6 +56,7 @@ use crate::generated::GeneratedFile;
 use crate::generated::GeneratedFileOpsDelegate;
 use crate::generated::GeneratedPackage;
 use crate::generated::run;
+use crate::generated::tool_identity;
 
 /// The file whose `go_module` and `go_package` macros declare the targets of the module's
 /// packages.
@@ -85,6 +86,9 @@ struct GoModuleInputs {
     /// The directories below the module's root, relative to it, that have a build file, each
     /// with whether that file calls `go_package()`.
     build_files: BTreeMap<String, bool>,
+    /// The identity of `go` (`tool_identity.go`), whose version decides the standard library
+    /// and what `go list` reports.
+    go_identity: Option<Arc<str>>,
 }
 
 #[derive(
@@ -235,6 +239,7 @@ async fn read_inputs(
         go_sum,
         files,
         build_files,
+        go_identity: tool_identity(ctx, "go").await?,
     })
 }
 

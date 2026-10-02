@@ -26,6 +26,9 @@ Keys supported include:
   capabilities from `cas_address`.
 - `action_cache_address` - address to your action cache endpoint.
 - `cas_address` - address to your content-addressable storage (CAS) endpoint.
+- `tls` - whether to connect with TLS. The default is `true`. A server that
+  serves plaintext gRPC, such as a local bazel-remote, needs `tls = false`, and
+  without it every request fails with `The service is currently unavailable`.
 - `tls_ca_certs` - path to a CA certificates bundle. This must be PEM-encoded.
   If none is set, a default bundle will be used. This path contains environment
   variables using shell interpolation syntax (i.e. $VAR). They will be
@@ -78,7 +81,8 @@ as follows:
 A remote cache, such as
 [bazel-remote](https://github.com/buchgr/bazel-remote), stores the results of
 actions and tests that ran on one machine, so that other machines reuse them in
-place of running them. It needs `action_cache_address` and `cas_address`:
+place of running them. It needs `action_cache_address` and `cas_address`, and
+`tls = false` when the cache serves plaintext gRPC:
 
 ```ini
 [yak_re_client]
@@ -117,4 +121,11 @@ upload the results of local actions. A test that runs on a local executor of its
 without a remote execution profile does, uses the remote cache of its execution
 platform. [Caching test results](../rule_authors/test_execution.md#caching-test-results)
 describes which tests support caching.
+
+The key of an action that runs a compiler of `system_toolchains` covers the
+identity of that compiler, which the daemon computes from its version output
+([Toolchains](../concepts/toolchain.md)). Machines with different versions of
+`rustc`, `go`, or `clang` store and look up different results for the actions
+that run them. The identity is that of the compiler on the machine that runs
+`yak`, so it does not describe the compilers of remote execution workers.
 

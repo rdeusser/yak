@@ -8,6 +8,7 @@
 
 load("@prelude//go_bootstrap:go_bootstrap.bzl", "GoBootstrapToolchainInfo")
 load("@prelude//os_lookup:defs.bzl", "ScriptLanguage")
+load("@prelude//toolchains:tool_identity.bzl", "tool_identity_attr")
 load("@prelude//utils:cmd_script.bzl", "cmd_script")
 
 def go_platform() -> (str, str):
@@ -35,9 +36,10 @@ def _system_go_bootstrap_toolchain_impl(ctx):
     go_os, go_arch = go_platform()
 
     script_language = ScriptLanguage("bat" if go_os == "windows" else "sh")
-    go = "go.exe" if go_os == "windows" else "go"
+    identity = ctx.actions.write("go.identity", ctx.attrs.tool_identity)
+    go = cmd_args("go.exe" if go_os == "windows" else "go", hidden = identity)
 
-    go_cmd = cmd_script(ctx.actions, "go", cmd_args(go), script_language)
+    go_cmd = cmd_script(ctx.actions, "go", go, script_language)
 
     return [
         DefaultInfo(),
@@ -58,6 +60,7 @@ system_go_bootstrap_toolchain = rule(
   )""",
     attrs = {
         "go_wrapper": attrs.default_only(attrs.dep(providers = [RunInfo], default = "prelude//go_bootstrap/tools:go_wrapper_py")),
+        "tool_identity": tool_identity_attr(),
     },
     is_toolchain_rule = True,
 )

@@ -28,5 +28,15 @@ from generic build rules.
 macro, which declares a toolchain for each language that runs the compilers and
 tools on the `PATH`.
 
+The compilers on the `PATH` are not inputs of the actions that run them, so the
+daemon computes an identity for each at the start of every command. It runs
+`rustc -vV`, `go version`, and `clang --version` in the project root, where
+`rustup` reads `rust-toolchain.toml`, and sets `tool_identity.rustc`,
+`tool_identity.go`, and `tool_identity.clang` to digests of their output. Each
+toolchain of `system_toolchains` puts its tool's identity into the key of every
+action that runs the tool. After a compiler upgrade, the actions that run that
+compiler run again, and the actions of other languages keep their results.
+`-c tool_identity.rustc=<value>` sets an identity in place of the computed one.
+
 For more information about defining toolchains, see the
 [relevant page in the Rule Authors section](../rule_authors/writing_toolchains.md).

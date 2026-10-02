@@ -1,0 +1,4 @@
+load("@prelude//toolchains:system.bzl", "system_toolchains")
+
+# Toolchains that use the compilers and interpreters installed on the host.
+system_toolchains()

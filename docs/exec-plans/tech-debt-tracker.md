@@ -139,12 +139,15 @@ Only fbcc, Meta's compiler wrapper, understands the flag, so a plain clang rejec
 
 Remove this entry when split debug info uses flags that clang accepts and no tool expects the fbcc command layout.
 
-### A shared cache could serve another toolchain's outputs
+### Every command waits for the tool identities
 
-`[build] remote_cache` turns on a remote cache for `prelude//platforms:default`, which `yak generate` and `yak init` select, and `[yak] default_allow_cache_upload` uploads the results of build actions (2026-10-01, `docs/exec-plans/completed/2026-10-01-cache-passing-test-results.md`).
-The toolchains of `system_toolchains()` in `prelude/toolchains/system.bzl` run `rustc`, `clang`, and the other tools from `PATH`, and an action's key covers its command line and inputs but not the tool binary. Two machines with different `rustc` versions compute the same key for an action, so a shared cache could return one machine's output to the other.
-A test's key covers its test binary, so a cached pass is safe to share. A build action's key does not cover the compiler that runs it.
-Remove this entry when each toolchain puts the identity of its tools, such as a digest of `rustc -vV`, into the keys of its actions.
+At the start of each command, the daemon runs `rustc -vV`, `go version`, and `clang --version` and waits for all three (`app/yak_server/src/tool_identity.rs`). On 2026-10-01, on an aarch64 macOS machine, the three took a median of 21 ms in parallel, and a no-op `yak build` took a median of 34 ms with them.
+Remove this entry when the daemon computes the identities without running the tools on every command, or a measurement shows their cost is below 5% of a no-op build.
+
+### The system C++ toolchain on Windows carries the identity of clang
+
+`system_toolchains()` passes `tool_identity.clang` to `system_cxx_toolchain`, which runs the MSVC tools of `prelude//toolchains/msvc:msvc_tools` on Windows. An upgrade of MSVC leaves the keys of C and C++ actions unchanged there. The archiver of the toolchain (`ar` on other systems) carries no identity.
+Remove this entry when the Windows toolchain carries an identity of the MSVC compiler.
 
 ### The C compiles of the Go standard library miss a shared cache
 
@@ -212,14 +215,15 @@ After `yak kill`, the same query failed because `pkg` does not exist. The Linux 
 
 Remove this entry when the query after the rename fails without a daemon restart.
 
-### A command can miss a file created just before it starts
+### A command can miss a file changed just before it starts
 
-With the default `notify` file watcher, a command that starts milliseconds after a file is created can miss that file until the next command.
+With the default `notify` file watcher, a command that starts milliseconds after a file is created or edited can miss the change until the next command.
 `NotifyFileWatcher::sync2` in `app/yak_file_watcher/src/notify.rs` takes the events that have arrived when the command starts, and macOS delivers FSEvents asynchronously, so an event can arrive after the sync.
 
 On macOS on 2026-09-30, a loop created a file in a package of a Go module, ran `yak build //...` or `yak targets //...`, deleted the file, and ran the command again.
 In 17 rounds over 3 runs of the loop, 5 first commands did not see the new file. In 1 of those rounds the next command saw it, and in the other 4 the creation and the deletion both went unseen.
 Later runs of 8 and 20 rounds missed none. The Linux behavior was not checked.
+On 2026-10-01, `tests/core/build/test_modify.py::test_modify_genrule_notify` failed once in a full run of the integration suite on macOS, where the build after an edit printed the old contents of the file, and it passed in 3 reruns.
 
 Remove this entry when the sync waits for the events of changes made before the command started, as Watchman's sync cookie does.
 

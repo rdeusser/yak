@@ -9676,6 +9676,7 @@ dependencies = [
  "async-recursion",
  "async-trait",
  "bincode",
+ "blake3",
  "constant_time_eq 0.6.0",
  "crossbeam-channel",
  "dice",

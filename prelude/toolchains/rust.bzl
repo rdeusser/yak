@@ -7,6 +7,7 @@
 # above-listed licenses.
 
 load("@prelude//rust:rust_toolchain.bzl", "PanicRuntime", "RustToolchainInfo")
+load("@prelude//toolchains:tool_identity.bzl", "tool_identity_attr")
 
 _DEFAULT_TRIPLE = select({
     "prelude//os:linux": select({
@@ -36,13 +37,15 @@ _DEFAULT_TRIPLE = select({
 })
 
 def _system_rust_toolchain_impl(ctx):
+    # The identity is an input of every action that runs a tool of the toolchain.
+    identity = ctx.actions.write("rustc.identity", ctx.attrs.tool_identity)
     return [
         DefaultInfo(),
         RustToolchainInfo(
             allow_lints = ctx.attrs.allow_lints,
-            clippy_driver = RunInfo(args = ["clippy-driver"]),
+            clippy_driver = RunInfo(args = cmd_args("clippy-driver", hidden = identity)),
             clippy_toml = ctx.attrs.clippy_toml[DefaultInfo].default_outputs[0] if ctx.attrs.clippy_toml else None,
-            compiler = RunInfo(args = ["rustc"]),
+            compiler = RunInfo(args = cmd_args("rustc", hidden = identity)),
             default_edition = ctx.attrs.default_edition,
             panic_runtime = PanicRuntime("unwind"),
             deny_lints = ctx.attrs.deny_lints,
@@ -53,7 +56,7 @@ def _system_rust_toolchain_impl(ctx):
             rustc_flags = ctx.attrs.rustc_flags,
             rustc_target_triple = ctx.attrs.rustc_target_triple,
             rustc_test_flags = ctx.attrs.rustc_test_flags,
-            rustdoc = RunInfo(args = ["rustdoc"]),
+            rustdoc = RunInfo(args = cmd_args("rustdoc", hidden = identity)),
             rustdoc_flags = ctx.attrs.rustdoc_flags,
             warn_lints = ctx.attrs.warn_lints,
         ),
@@ -74,6 +77,7 @@ system_rust_toolchain = rule(
         "rustc_target_triple": attrs.string(default = _DEFAULT_TRIPLE),
         "rustc_test_flags": attrs.list(attrs.arg(), default = []),
         "rustdoc_flags": attrs.list(attrs.arg(), default = []),
+        "tool_identity": tool_identity_attr(),
         "warn_lints": attrs.list(attrs.string(), default = []),
     },
     is_toolchain_rule = True,
