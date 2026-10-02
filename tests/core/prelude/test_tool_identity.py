@@ -130,3 +130,26 @@ async def test_a_changed_go_computes_the_go_cell_again(yak: Yak) -> None:
 
     await yak.targets("//:", "-c", "tool_identity.go=other")
     assert runs(log, "list") > list_runs
+
+
+@_needs_posix
+@pytest.mark.skipif(shutil.which("go") is None, reason="needs Go")
+@yak_test(data_dir="rules")
+async def test_an_unchanged_tool_runs_once(yak: Yak) -> None:
+    log = log_runs_of(yak, "go")
+    await yak.audit_config("tool_identity.go")
+    await yak.audit_config("tool_identity.go")
+    assert runs(log, "version") == 1
+
+    # A pinned identity runs nothing.
+    await yak.audit_config("tool_identity.go", "-c", "tool_identity.go=pinned")
+    assert runs(log, "version") == 1
+
+    # The wrapper is the file on `PATH`, so replacing it runs the tool again.
+    wrapper = log.parent / "go"
+    replacement = log.parent / "go.new"
+    replacement.write_text(wrapper.read_text() + "\n")
+    replacement.chmod(0o755)
+    replacement.replace(wrapper)
+    await yak.audit_config("tool_identity.go")
+    assert runs(log, "version") == 2

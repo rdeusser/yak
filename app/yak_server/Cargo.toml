@@ -15,6 +15,7 @@ constant_time_eq.workspace = true
 crossbeam-channel.workspace = true
 dice.workspace = true
 dice_futures.workspace = true
+dirs.workspace = true
 dupe.workspace = true
 flate2.workspace = true
 futures.workspace = true

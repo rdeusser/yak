@@ -121,6 +121,12 @@ The `cas_artifact` rule fetches a blob or directory tree from the Remote Executi
 Its only test, `test_cas_artifact`, built targets whose digests name content in Meta's CAS with BLAKE3-KEYED digests, so the fork removed it, and it removed it again on 2026-09-30 after a port brought it back.
 Remove this entry when a test uploads known content to a test CAS and builds a `cas_artifact` target that fetches it.
 
+### Two integration tests fail under the load of the full suite
+
+On 2026-10-02, on macOS, the two full runs of `tests/.venv/bin/python -m pytest tests -n auto` after the Remote Execution retries were removed each failed `test_daemon_killed` (`tests/core/build/test_error_categorization.py`) and `test_many_rebound_outputs_incremental_rebuild` (`tests/core/build/actions/test_dynamic_output.py`). Both passed when run alone, and both passed in the full run before that change, in which 23 tests waited 45 seconds without work.
+`test_many_rebound_outputs_incremental_rebuild` took 98 seconds alone and passed the 600-second limit of pytest-timeout in the suite. In `test_daemon_killed`, `wait_for_daemon_pid` read no output from `yak status`.
+Remove this entry when both tests pass 3 full runs in a row.
+
 ## Defects
 
 ### `apple_test` cannot run under the built-in test runner
@@ -142,11 +148,6 @@ Remove this entry when split debug info uses flags that clang accepts and no too
 
 The `CC` that `buildscript_run` gives build scripts links through `--ld-path=<LD>`, and `LD` runs the toolchain's linker driver with each argument passed through as `-Wl,<arg>` (`prelude/rust/cargo_buildscript.bzl`). For `clang -static`, the driver behind `LD` receives `-static` only as a linker argument, so it adds a dynamic loader to a link of static startup files. On 2026-10-02, in `debian:bookworm-slim` with clang 14 and lld, `clang -static --ld-path=<LD> m.c s.c` linked a program that crashed at startup, and plain `clang -static` linked one that ran. Executables and shared libraries link correctly.
 Remove this entry when `CC` links static executables that run.
-
-### Every command waits for the tool identities
-
-At the start of each command, the daemon runs `rustc -vV`, `go version`, and `clang --version` and waits for all three (`app/yak_server/src/tool_identity.rs`). On 2026-10-01, on an aarch64 macOS machine, the three took a median of 21 ms in parallel, and a no-op `yak build` took a median of 34 ms with them.
-Remove this entry when the daemon computes the identities without running the tools on every command, or a measurement shows their cost is below 5% of a no-op build.
 
 ### The system C++ toolchain on Windows carries the identity of clang
 

@@ -9758,6 +9758,7 @@ dependencies = [
  "crossbeam-channel",
  "dice",
  "dice_futures",
+ "dirs",
  "dupe",
  "flate2",
  "futures 0.3.34",

@@ -108,6 +108,7 @@ use crate::daemon::server::TenantStateInitPreferences;
 use crate::daemon::server::YakdServerInitPreferences;
 use crate::paging::PageOutThresholds;
 use crate::snapshot::DepFileDbSizeSampler;
+use crate::tool_identity::ToolIdentities;
 
 /// For a yakd process there is a single DaemonState created at startup and never destroyed.
 #[derive(Allocative)]
@@ -226,6 +227,10 @@ pub struct RepoState {
     /// Resource-pressure thresholds for automatic idle page-out, selected for this tenant's
     /// isolation. `None` disables automatic idle page-out for this tenant.
     pub(crate) page_out_on_idle: Option<PageOutThresholds>,
+
+    /// The identities of the tools on `PATH`, which each command adds to its configuration.
+    #[allocative(skip)]
+    pub(crate) tool_identities: ToolIdentities,
 }
 
 struct TenantStateInit<'a> {
@@ -604,6 +609,7 @@ impl TenantState {
         ];
 
         let dice_manager = ConcurrencyHandler::new(dice);
+        let tool_identities = ToolIdentities::new(paths.project_root().root().as_path());
         let repo = Arc::new(RepoState {
             paths,
             file_watcher,
@@ -638,6 +644,7 @@ impl TenantState {
                 .unwrap_or_else(RolloutPercentage::never)
                 .roll(),
             page_out_on_idle,
+            tool_identities,
         });
 
         Ok(Arc::new(Self { repo, dice_manager }))
