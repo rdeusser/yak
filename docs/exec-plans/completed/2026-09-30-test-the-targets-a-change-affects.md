@@ -18,7 +18,7 @@ To see it working, change one crate of a Cargo workspace and run `yak test --cha
 - [x] Milestone 2: `yak test --changed-since`, selecting from the current graph (`app/yak_test/src/changed_since.rs`, `app/yak_client/src/commands/changed_since.rs`, `tests/core/test/test_changed_since.py`).
 - [x] Milestone 3: member tests read only their package's files and the files that `[package.metadata.yak] test-data` declares, and run from their package's directory (`run_from_manifest_dir`, `ExternalRunnerTestInfo.working_directory`). `tests/core/generate/test_generate.py` covers a declared file and the failure after its declaration is removed (2026-09-30).
 - [x] Milestone 4: documentation and validation against Roost. `yak test //...` in Roost passed 8 of 8 targets after Roost declared its test data, and `--changed-since HEAD` selected 28 of 28 matched targets with its `Cargo.toml` files edited (2026-09-30).
-- [ ] Milestone 5: evaluate the changed packages at the merge base and compare their targets, so that a changed package selects only the targets that differ.
+- [x] Milestone 5: dropped (Decision Log, 2026-10-02). It would have evaluated the changed packages at the merge base and compared their targets, so that a changed package selected only the targets that differ.
 
 ## Surprises & Discoveries
 
@@ -48,10 +48,23 @@ To see it working, change one crate of a Cargo workspace and run `yak test --cha
 - 2026-09-30: `test-data` files are sources of the member's tests only. As `include` files, they would also be inputs of the member's library, so a change to one would select the tests of every package that depends on it.
 - 2026-09-30: `ExternalRunnerTestInfo.working_directory` sets a test's working directory, and `rust_test` with `run_from_manifest_dir` runs from its manifest directory in the crate's copy of its sources, with absolute paths. A launcher script could change directory without a provider field, but it adds a process to every test and needs a shell on each platform.
 - 2026-09-30: The prototype of milestone 1 is dropped. Integration tests exercise each case of Validation against the implementation.
+- 2026-10-02: Milestone 5 is dropped (owner). It would select fewer targets after an edit to a build file that changes none of them, but it needs a worktree of the merge base and a second daemon on every run. The test result cache (`docs/exec-plans/completed/2026-10-01-cache-passing-test-results.md`) now reports a cached pass for a selected test whose command and inputs are unchanged, so the extra targets cost analysis and a cache lookup each. An edit that changes a target's input files changes its hash too, so milestone 5 would have selected those tests as well.
 
 ## Outcomes & Retrospective
 
-Nothing yet.
+`yak test --changed-since <revision>` tests the matched targets that the changes since the merge base of the revision and `HEAD` can affect, from the current graph alone. Milestones 2 to 4 met every case of Validation, and Roost passed with its test data declared (milestone 4).
+
+A package that can differ counts as changed in full. On 2026-10-02, in a copy of `tests/core/test/test_test_result_cache_data/workspace` after `yak generate` and a commit, `yak test //... --changed-since HEAD` gave:
+
+| Change | Selection | Test |
+| --- | --- | --- |
+| A comment in `calc/YAK` | 2 of 2 matched targets | `Pass (cached)` in 0.0 s |
+| A comment in `calc/Cargo.toml` | 2 of 2 | ran, because `Cargo.toml` is in the copy of the package that the test runs in |
+| A new function in `calc/src/lib.rs` | 2 of 2 | ran |
+
+The first row is the precision that milestone 5 would have recovered. The test result cache turned that test into a lookup, which is why milestone 5 was dropped. Tests of rules that do not support test result caching, such as a `rust_test` outside a cargo cell by default, still run when a package edit selects them.
+
+A change to any file that `cargo metadata` reads marks the cargo cell changed, and with it every member package that loads the cell's macros. On 2026-10-02, in a copy of `tests/core/generate/test_generate_data/workspace` after `yak generate`, a passing `yak test //...`, and a comment in `app/Cargo.toml`, `yak test //... --changed-since HEAD` selected 17 of 17 matched targets, and both of the workspace's tests reported `Pass (cached)`. This case is the largest selection that milestone 5 would have narrowed.
 
 ## Context and Orientation
 
@@ -68,7 +81,7 @@ Nothing yet.
 3. The test driver (`app/yak_test/src/command.rs`) tests only the selected targets, and prints how many it tests or why it tests all of them.
 4. Member tests of a Cargo workspace take their `test-data` files as sources and run with `run_from_manifest_dir` (`app/yak_external_cells_cargo/src/workspace.rs`, `prelude/rust/rust_binary.bzl`), which sets `ExternalRunnerTestInfo.working_directory` (`app/yak_build_api`, `app/yak_test/src/orchestrator.rs`). Roost lists its tests' files in `crates/roost/Cargo.toml` and `crates/roost-script/Cargo.toml`.
 
-Milestone 5 evaluates the changed packages in a `git worktree` of the merge base, with a daemon in its own isolation directory, and compares the unconfigured hashes of their targets with the current ones. A target whose hash and rule are unchanged is not changed. No proposal yet for reusing that evaluation across runs.
+Milestone 5, which the Decision Log drops, would have evaluated the changed packages in a `git worktree` of the merge base, with a daemon in its own isolation directory, and compared the unconfigured hashes of their targets with the current ones.
 
 ## Validation and Acceptance
 
@@ -87,4 +100,4 @@ Each case runs in a project under `tests/`, with the expected selection:
 
 ## Idempotence and Recovery
 
-`--changed-since` writes nothing into the repository and reads Git only through commands that leave the index and the working tree unchanged. A run that fails can be repeated as is. Milestone 5 adds a worktree of the merge base under `yak-out`, which a run recreates when it finds the worktree at another commit and which `yak clean` removes.
+`--changed-since` writes nothing into the repository and reads Git only through commands that leave the index and the working tree unchanged. A run that fails can be repeated as is.

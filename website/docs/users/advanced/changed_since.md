@@ -42,6 +42,12 @@ target platform, and the execution platforms. yak tests each matched target that
 is affected, and each matched target whose `tests` attribute names an affected
 target.
 
+A package that can differ counts as changed in full, so an edit to a build file
+that changes none of its targets still selects them. A selected test whose
+command and inputs are unchanged, and whose rule supports
+[caching test results](../../rule_authors/test_execution.md#caching-test-results),
+reports a cached pass without building or running anything.
+
 yak tests every matched target when:
 
 - the configuration of a cell at the merge base differs from its current
