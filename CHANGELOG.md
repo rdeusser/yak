@@ -256,6 +256,8 @@ The Bazel Remote Execution API has no field for gang workers, action dependencie
 - `remote_test_execution_toolchain` loses `default_run_as_bundle`.
 - The event log no longer reports the `queue_acquiring_dependencies` Remote Execution stage.
 
+A command that needs Remote Execution or a remote cache fails at once if `[yak_re_client]` has no CAS or action cache address, names a TLS file that cannot be read, or holds an invalid header. The error names `[yak_re_client] address`. Such a command retried the connection for about 45 seconds before, because the client labeled a configuration error as a Remote Execution error. A backend that does not answer still gets 9 retries.
+
 ### Documentation links
 
 - Help text and error messages link to https://rdeusser.github.io/yak/.

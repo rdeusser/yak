@@ -240,28 +240,58 @@ impl Compressor {
 
 pub struct REClientBuilder;
 
+/// REClientConfig is a Remote Execution configuration whose addresses, TLS files, and headers
+/// were read and checked. Creating it does no network I/O, so an error from
+/// [`REClientBuilder::configure`] is a configuration error that a retry cannot fix.
+pub struct REClientConfig {
+    opts: YakOssReConfiguration,
+    channel_config: ChannelConfig,
+    /// The channel to the endpoint that serves the capabilities. A remote cache without remote
+    /// execution has no engine, and its CAS endpoint serves them.
+    capabilities_channel: Channel,
+    interceptor: InjectHeadersInterceptor,
+    cas_address: String,
+    action_cache_address: String,
+}
+
 impl REClientBuilder {
-    pub async fn build_and_connect(opts: &YakOssReConfiguration) -> anyhow::Result<REClient> {
-        // Create channel config once (reads TLS files)
+    /// configure reads and checks the configuration of a client without connecting to the
+    /// backend.
+    pub async fn configure(opts: &YakOssReConfiguration) -> anyhow::Result<REClientConfig> {
+        let cas_address = opts.cas_address.clone().context("No CAS address")?;
+        let action_cache_address = opts
+            .action_cache_address
+            .clone()
+            .context("No action cache address")?;
+        let capabilities_address = opts.engine_address.as_ref().unwrap_or(&cas_address);
+
+        // Reads the TLS files.
         let channel_config = ChannelConfig::new(opts)
             .await
             .context("Failed to create channel config")?;
-
-        // Create a single channel for fetching capabilities. Other channels are created
-        // on-demand through the connection pool. A remote cache without remote execution has
-        // no engine, and its CAS endpoint serves the capabilities.
-        let capabilities_address = opts
-            .engine_address
-            .as_ref()
-            .or(opts.cas_address.as_ref())
-            .context("No engine or CAS address")?;
         let capabilities_channel = create_channel(&channel_config, capabilities_address)
             .context("Error creating Capabilities channel")?;
-
         let interceptor = InjectHeadersInterceptor::new(&opts.http_headers)?;
 
-        let mut capabilities_client =
-            CapabilitiesClient::with_interceptor(capabilities_channel, interceptor.dupe());
+        Ok(REClientConfig {
+            opts: opts.clone(),
+            channel_config,
+            capabilities_channel,
+            interceptor,
+            cas_address,
+            action_cache_address,
+        })
+    }
+
+    /// connect fetches the backend's capabilities and creates a client. The connection pool
+    /// creates the other channels on demand.
+    pub async fn connect(config: &REClientConfig) -> anyhow::Result<REClient> {
+        let opts = &config.opts;
+
+        let mut capabilities_client = CapabilitiesClient::with_interceptor(
+            config.capabilities_channel.clone(),
+            config.interceptor.dupe(),
+        );
 
         if let Some(max_decoding_message_size) = opts.max_decoding_message_size {
             capabilities_client =
@@ -314,13 +344,6 @@ impl REClientBuilder {
             None
         };
 
-        // Extract addresses
-        let cas_address = opts.cas_address.clone().context("No CAS address")?;
-        let action_cache_address = opts
-            .action_cache_address
-            .clone()
-            .context("No action cache address")?;
-
         // Create connection pool
         let min_connections = opts.min_connections.unwrap_or(1).max(1);
         let max_connections = opts.max_connections.unwrap_or(100).max(min_connections);
@@ -329,7 +352,7 @@ impl REClientBuilder {
             max_connections,
             max_concurrency_per_connection: opts.max_concurrency_per_connection.unwrap_or(100),
         };
-        let pool = ChannelPool::new(pool_config, channel_config);
+        let pool = ChannelPool::new(pool_config, config.channel_config.clone());
 
         Ok(REClient::new(
             RERuntimeOpts {
@@ -344,10 +367,10 @@ impl REClientBuilder {
             bystream_compressor,
             pool,
             max_decoding_msg_size,
-            interceptor,
-            cas_address,
+            config.interceptor.dupe(),
+            config.cas_address.clone(),
             opts.engine_address.clone(),
-            action_cache_address,
+            config.action_cache_address.clone(),
         ))
     }
 

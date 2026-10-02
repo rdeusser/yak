@@ -163,13 +163,10 @@ Remove this entry when the toolchain carries an identity of its compiler.
 On 2026-10-01, two checkouts of the GitHub CLI at different paths shared 4373 of 4390 build actions through bazel-remote. The other 17 were the `c_compile` actions of `prelude//go/tools:stdlib` for the cgo files of the runtime, such as `goroot/src/runtime/cgo/gcc_unix.c`, whose action digests differ between the checkouts.
 Remove this entry when those actions get the same digest in two checkouts of one project.
 
-### A daemon without a Remote Execution backend waits 45 seconds to fail
+### An executor error that a user can fix reads as an internal error
 
-If an execution platform enables remote execution and no backend answers, each daemon start waits about 45 seconds before the command fails.
-`ReConnectionManager::new` in `app/yak_server/src/daemon/state.rs` allows 10 connection attempts, and `new_retry` in `app/yak_execute/src/re/client.rs` sleeps 1, 2, and up to 9 seconds between them.
-In the integration test suite, 23 tests outside the Go tests take 45 seconds or more for this reason.
-
-Remove this entry when a missing backend fails the command without the retry delay, or the delay is configurable.
+The build report renders every error of an executor stage as `Internal error (stage: <stage>): <error>` (`app/yak_event_observer/src/display.rs`), whatever the error's tag. On 2026-10-02, a `--remote-only` build without `[yak_re_client]` addresses reported `Internal error (stage: remote_upload_error): Invalid Remote Execution configuration`, although the error carries the `Input` tag.
+Remove this entry when the report renders an error with the `Input` tag without the internal error label.
 
 ### `yak install` seemingly leaves the installer running after a failed build
 

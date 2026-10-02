@@ -6,6 +6,8 @@
 # of this source tree. You may select, at your option, one of the
 # above-listed licenses.
 
+import os
+import time
 from typing import Optional
 
 import pytest
@@ -406,3 +408,24 @@ async def test_hybrid_executor_remote_queuing_fallback(yak: Yak) -> None:
     assert record["run_remote_count"] == 0
     assert record["run_fallback_count"] == 1
     assert await scheduling_mode(yak) == "FallbackReQueueEstimate"
+
+
+@pytest.mark.skipif(
+    bool(os.environ.get("YAK_TEST_RE_CONFIG")),
+    reason="needs a configuration without a Remote Execution address",
+)
+@yak_test()
+async def test_remote_only_without_address_fails_promptly(yak: Yak) -> None:
+    # A retry cannot fix a missing address, so the command fails without the
+    # 45 seconds of connection retries.
+    start = time.monotonic()
+    await expect_failure(
+        yak.build(
+            "root//executor_fallback_tests:local_only_full_hybrid",
+            "--remote-only",
+            "-c",
+            f"test.cache_buster={random_string()}",
+        ),
+        stderr_regex=r"Set `\[yak_re_client\] address`",
+    )
+    assert time.monotonic() - start < 15

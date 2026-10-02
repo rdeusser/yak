@@ -39,6 +39,7 @@ use remote_execution::NamedDigestWithPermissions;
 use remote_execution::OperationMetadata;
 use remote_execution::REClient;
 use remote_execution::REClientBuilder;
+use remote_execution::REClientConfig;
 use remote_execution::RemoteExecutionMetadata;
 use remote_execution::Stage;
 use remote_execution::TActionResult2;
@@ -157,7 +158,10 @@ struct RemoteExecutionClientData {
 }
 
 impl RemoteExecutionClient {
-    pub async fn new(re_config: &RemoteExecutionConfig) -> yak_error::Result<Self> {
+    async fn connect(
+        re_config: &RemoteExecutionConfig,
+        client_config: &REClientConfig,
+    ) -> yak_error::Result<Self> {
         if yak_env!("YAK_TEST_FAIL_CONNECT", bool, applicability = testing)? {
             return Err(yak_error!(
                 yak_error::ErrorTag::Input,
@@ -168,7 +172,7 @@ impl RemoteExecutionClient {
         // Creating the client normally takes seconds. Every command sharing the connection waits
         // on it, so an attempt that wedges must fail rather than hang them all. 0 removes the bound.
         let timeout_s = yak_env!("YAK_RE_CONNECT_TIMEOUT_S", type = u64, default = 120)?;
-        let create = RemoteExecutionClientImpl::new(re_config);
+        let create = RemoteExecutionClientImpl::new(re_config, client_config);
         let client = if timeout_s == 0 {
             create.await?
         } else {
@@ -200,9 +204,18 @@ impl RemoteExecutionClient {
     }
 
     pub async fn new_retry(re_config: &RemoteExecutionConfig) -> yak_error::Result<Self> {
+        // A retry reads the same configuration, so a configuration error fails at once.
+        let client_config = REClientBuilder::configure(&re_config.static_metadata.0)
+            .await
+            .map_err(|e| from_any_with_tag(e, yak_error::ErrorTag::Input))
+            .yak_error_context(
+                "Invalid Remote Execution configuration. Set `[yak_re_client] address`, or \
+                `cas_address` and `action_cache_address`",
+            )?;
+
         // Loop happens times-1 times at most
         for i in 1..re_config.connection_retries {
-            match Self::new(re_config).await {
+            match Self::connect(re_config, &client_config).await {
                 Ok(v) => return Ok(v),
                 Err(e) => {
                     if e.find_typed_context::<RemoteExecutionError>().is_none() {
@@ -220,7 +233,7 @@ impl RemoteExecutionClient {
                 }
             }
         }
-        Self::new(re_config).await
+        Self::connect(re_config, &client_config).await
     }
 
     pub async fn action_cache(
@@ -549,7 +562,10 @@ static INDUCED_CACHE_MISSES: LazyLock<Option<YakMutMap<String, AtomicBool>>> =
     });
 
 impl RemoteExecutionClientImpl {
-    async fn new(re_config: &RemoteExecutionConfig) -> yak_error::Result<Self> {
+    async fn new(
+        re_config: &RemoteExecutionConfig,
+        client_config: &REClientConfig,
+    ) -> yak_error::Result<Self> {
         let op_name = "REClientBuilder";
         tracing::info!("Creating a new RE client");
 
@@ -565,7 +581,7 @@ impl RemoteExecutionClientImpl {
                 with_error_handler(
                     op_name,
                     "<none>",
-                    REClientBuilder::build_and_connect(&static_metadata.0).await,
+                    REClientBuilder::connect(client_config).await,
                 )?
             };
 

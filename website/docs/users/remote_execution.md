@@ -21,6 +21,7 @@ Configuration for remote execution can be found under `[yak_re_client]` in
 
 Keys supported include:
 
+- `address` - the address of every endpoint that the keys below leave unset.
 - `engine_address` - address to your RE's engine. A remote cache without
   remote execution needs no engine, and yak then fetches the server's
   capabilities from `cas_address`.
@@ -43,6 +44,12 @@ Keys supported include:
   interpolation syntax ($VAR). They will be substituted before reading the file.
 - `instance_name` - an instance name to pass on execution, action cache, and CAS
   requests.
+
+A command that needs Remote Execution or a remote cache fails at once if the
+configuration has no CAS or action cache address, names a TLS file that cannot
+be read, or holds an invalid header. If the backend does not answer, yak retries
+the connection 9 times over about 45 seconds, which covers a backend that is
+restarting.
 
 yak uses `SHA256` for all its hashing by default. If your RE engine requires
 something else, this can be configured in `.yakconfig` as follows:
