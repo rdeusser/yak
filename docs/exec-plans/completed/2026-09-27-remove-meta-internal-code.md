@@ -75,7 +75,7 @@ The owner's criteria (2026-09-27):
   - The lockfiles were pruned by script without npm or yarn, so the Docusaurus build is unverified.
 - [x] Milestone 6, remaining: `buck2.build` links in Rust and the prelude point at the fork's site (2026-09-28). The links in `shim/` go with milestone 4.
 - [x] Milestone 7: shortlist names (see Decision Log).
-- [ ] Milestone 8: drop the `none` cell aliases, sweep for remaining references, and validate the whole workspace.
+- [x] Milestone 8: drop the `none` cell aliases, sweep for remaining references, and validate the whole workspace (2026-10-02).
   - The 11 example `.buckconfig` files no longer declare the `none` cell or the Meta cell aliases (2026-09-28). The load check ran `buck2 targets //...` and `buck2 cquery //...` in each example project with the working-tree prelude vendored into it:
     - `hello_world`, `bootstrap`, `toolchains/cxx_zig_toolchain`, `toolchains/go_toolchain`, and `toolchains/python_toolchain` give the same targets as before.
     - `android/demoapp` gives the same targets apart from the `com.example.demoapp` package.
@@ -110,7 +110,12 @@ The owner's criteria (2026-09-27):
     - The `# @no-autodeps` marker of `prelude/ide_integrations/visual_studio/YAK` is removed, and a comment in `prelude/apple/apple_modular_utility.bzl` no longer names MobileOnDemand and arc focus.
     - Comments and names that contrasted Meta's internal build with the open-source build are gone from `app/` and `prelude/`. `HttpClientBuilder::oss()` is `https_with_system_roots_and_proxy_from_env()`, and `@prelude//cfg/modifier:alias.bzl` exports `ALIASES` in place of `OSS_ALIASES`. `yak_external_cells` no longer allows `stable_features`, which a comment justified with Meta's stable rustc.
     - On Linux, before the comment and name edits, `cargo build --bin=yak`, `cargo fmt --all -- --check`, clippy, and rustdoc pass, and the unit and doc tests give the results of milestone 5. The integration tests did not run.
-  - Remaining: `prelude/ide_integrations/visual_studio/msvs/absolutize_path.exe`, a 2.6 MB Windows binary with no source in this repository. It turns relative paths in compiler diagnostics into absolute paths, and its help text describes its `LOCAL_ROOT` argument as the path of an fbsource checkout. `gen_mode_configs.bxl` passes it to the generated Visual Studio projects as `AbsolutizePathExe`.
+  - On 2026-10-02, `init.rs` and the `.yakconfig` files of the repository and the examples declare no `none` cell, and the rename plan removed `absolutize_path.exe` (`docs/exec-plans/completed/2026-09-28-rename-the-fork.md`).
+  - A sweep of tracked and untracked files on 2026-10-02 finds `fbcode`, `fbsource`, `oss-disable`, `oss-enable`, `fbpython`, `@nolint`, `pyre-strict`, and a diff ID only in `tools/port_upstream/` and in the porting guidance of `AGENTS.md` and `docs/developers/basics.md`, which name them so that a port drops them. It finds no `internalfb`, `is_full_meta_repo`, Scuba, Manifold, `com.facebook`, Tupperware, or task IDs outside `docs/exec-plans/` and `CHANGELOG.md`.
+  - On macOS on 2026-10-02, `python3 test.py` passes, and the integration tests give 1844 passed, 208 skipped, 3 expected failures, and 1 failure, `test_modify_genrule_notify`, which passed in 3 reruns (tech-debt tracker, "A command can miss a file changed just before it starts").
+  - On Linux on 2026-10-02, `cargo build --bin=yak`, `cargo fmt --check`, clippy, rustdoc, and the doc tests pass, and the unit tests fail only in `test_perf_thread_instruction_counter`, which needs `perf_event_open`. The integration tests gave 2 failures that two fixes resolve (tech-debt tracker, "The integration tests have not passed in CI").
+  - The yak build of this repository does not load, because it has no third-party crates (tech-debt tracker, "The yak build of this repository has no third-party crates"), so `yak build //:yak` is not validated.
+  - On 2026-09-29, `prelude/ide_integrations/visual_studio/msvs/absolutize_path.exe` remained, a 2.6 MB Windows binary with no source in this repository. It turns relative paths in compiler diagnostics into absolute paths, and its help text describes its `LOCAL_ROOT` argument as the path of an fbsource checkout. `gen_mode_configs.bxl` passes it to the generated Visual Studio projects as `AbsolutizePathExe`.
 
 ## Surprises & Discoveries
 
@@ -189,11 +194,11 @@ The owner's criteria (2026-09-27):
 
 ## Outcomes & Retrospective
 
-As of 2026-09-28, milestones 1 through 7 are done, and milestone 8 waits on validation on macOS.
-On Linux, the Cargo build, `python3 test.py`, and the integration tests pass, and the Yak build builds every target outside `third-party/rust/` apart from the two `//shed/completion_verify` packages that need `dnf`.
+Milestones 1 through 8 are done (2026-10-02).
+On Linux and macOS, the Cargo build, `python3 test.py`, and the integration tests pass, apart from the environmental failures that the tech-debt tracker records. On 2026-09-28, the yak build built every target outside `third-party/rust/` apart from the two `//shed/completion_verify` packages that need `dnf`. The rename removed the tool that generated `third-party/rust/`, and the yak build of this repository has not loaded since (tech-debt tracker).
 No code path sends data to a Meta service.
 The tech-debt tracker lists what still ties the repository to upstream projects under "Upstream connections" (release downloads, the `com.facebook` packages, the Tpx result protocol, `INSIDE_RE_WORKER`, and `gen_bytecode_bundle.py`).
-The rename waits for the owner's choice from the shortlist.
+The rename to yak followed in its own plan (`docs/exec-plans/completed/2026-09-28-rename-the-fork.md`).
 
 Some tests and targets passed only with Meta's defaults, such as hybrid Remote Execution for projects without execution platforms and jemalloc from the toolchain. Their failures after the removal gave generic messages, and each needed its mechanism traced before it was marked, fixed, or deleted.
 `git grep` skips untracked files, so the sweeps of this work need `--untracked` to cover the new documents.
