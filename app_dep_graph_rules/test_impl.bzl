@@ -20,9 +20,14 @@ def _outside_app_yak(targets):
     # The library and binaries of `app/yak` share the dependencies of its `Cargo.toml`.
     return filter(lambda t: not str(t.label).startswith("root//app/yak:"), targets)
 
+def _check_in_graph(all_paths, crate):
+    if len(all_paths) == 0:
+        fail("`" + crate + "` is not a dependency of `" + _YAK_BIN + "`, so `app_dep_graph_rules/rules.bzl` names a crate that the check cannot test")
+
 def _check_late_binding_only(ctx: AnalysisContext):
-    for all_paths in ctx.attrs.late_binding_only_paths:
+    for all_paths, crate in zip(ctx.attrs.late_binding_only_paths, LATE_BINDING_ONLY_CRATES):
         all_paths = list(all_paths)
+        _check_in_graph(all_paths, crate)
         target = all_paths.pop()
         remainder = _outside_app_yak(all_paths)
         if len(remainder) != 0:
@@ -31,8 +36,9 @@ def _check_late_binding_only(ctx: AnalysisContext):
             fail(m)
 
 def _check_top_level_only(ctx: AnalysisContext):
-    for all_paths in ctx.attrs.top_level_only_paths:
+    for all_paths, crate in zip(ctx.attrs.top_level_only_paths, TOP_LEVEL_ONLY_CRATES):
         all_paths = list(all_paths)
+        _check_in_graph(all_paths, crate)
         target = all_paths.pop()
         remainder = _outside_app_yak(all_paths)
 
@@ -75,6 +81,11 @@ _RE_CLIENT_TARGET = "//remote_execution/re_grpc:remote_execution"
 
 _CLIENT_TO_RE = "somepath({}, filter(root//remote_execution/, deps({})) + {})".format(_CLIENT_BIN, _CLIENT_BIN, _RE_CLIENT_TARGET)
 
+def _paths_to(crate):
+    # The binary compiles its dependencies in the configuration of its incoming transition, so the
+    # query takes the crate from the binary's dependencies to configure both ends alike.
+    return "allpaths({}, filter('^root{}$', deps({})))".format(_YAK_BIN, crate, _YAK_BIN)
+
 def test_yak_dep_graph(name):
     banned_dep_paths = []
     for a, b in BANNED_DEP_PATHS:
@@ -91,6 +102,6 @@ def test_yak_dep_graph(name):
         name = name,
         banned_dep_paths = banned_dep_paths,
         client_to_re_path = _CLIENT_TO_RE,
-        late_binding_only_paths = ["allpaths({}, {})".format(_YAK_BIN, c) for c in LATE_BINDING_ONLY_CRATES],
-        top_level_only_paths = ["allpaths({}, {})".format(_YAK_BIN, c) for c in TOP_LEVEL_ONLY_CRATES],
+        late_binding_only_paths = [_paths_to(c) for c in LATE_BINDING_ONLY_CRATES],
+        top_level_only_paths = [_paths_to(c) for c in TOP_LEVEL_ONLY_CRATES],
     )

@@ -209,6 +209,47 @@ change of a `Cargo.toml` or `Cargo.lock`, or after `yak kill`. The cell does not
 read the `RUSTFLAGS` and `CARGO_ENCODED_RUSTFLAGS` variables, which Cargo would
 read from the environment of each command.
 
+## Profiles
+
+Each crate compiles with the settings of Cargo's `dev` profile, which
+`cargo build` uses. The cell reads the `[profile.dev]` table of the workspace's
+`Cargo.toml` and of the configuration files that the `rustflags` come from, and
+a configuration file takes precedence over the manifest. It passes these
+settings to `rustc` before the `rustflags`:
+
+| Setting            | Flag                                 |
+| ------------------ | ------------------------------------ |
+| `opt-level`        | `-Copt-level`                        |
+| `debug`            | `-Cdebuginfo`                        |
+| `debug-assertions` | `-Cdebug-assertions`                 |
+| `overflow-checks`  | `-Coverflow-checks`                  |
+| `codegen-units`    | `-Ccodegen-units`                    |
+| `panic`            | `-Cpanic`, as described below        |
+
+A crate without a setting gets Cargo's default: no optimization, full debug
+information, and debug assertions and overflow checks on.
+
+```toml
+# Cargo.toml
+[profile.dev]
+opt-level = 1
+panic = "abort"
+```
+
+As with Cargo, build scripts and procedural macros compile without
+optimization or debug information unless `[profile.dev.build-override]` sets
+them. `[profile.dev.package."*"]` applies to the packages outside the
+workspace, and `[profile.dev.package.<name>]` to the named package, also with a
+version, such as `serde@1.0.229`. A build script gets `OPT_LEVEL`, `DEBUG`, and
+`PROFILE` from the settings of the crate it builds for.
+
+With `panic = "abort"`, a member's binaries and binary examples compile with
+`-Cpanic=abort` together with every crate they depend on, as with
+`cargo build`. Tests, build scripts, and procedural macros unwind, so a library
+that both a binary and a test depend on compiles once with each strategy. The
+binaries get the incoming transition `prelude//rust/panic:panic_transition[abort]`,
+and each crate selects the flag on `prelude//rust/panic:panic[abort]`.
+
 ## Build scripts
 
 A workspace member's build script runs in the member's directory of a copy of
@@ -254,6 +295,13 @@ after a dependency changes.
   `windows-gnu`, and `windows-msvc`.
 - `cargo_package()` declares no targets for benchmarks, and it runs no
   doctests.
+- The cell applies the profile settings in the table of
+  [Profiles](#profiles) and ignores the others, such as `lto`, `strip`, and
+  `split-debuginfo`. It does not read the `CARGO_PROFILE_DEV_*` variables, and
+  it has no release profile.
+- Cargo compiles a dependency of a build script or procedural macro with the
+  settings of `build-override`, and a second time with the profile when a crate
+  also depends on it. yak compiles each dependency once, with the profile.
 - A test that opens an absolute path into the project reads the file whether
   or not it declares it.
 - The scan for included files also reads `include_str!` calls in comments, so

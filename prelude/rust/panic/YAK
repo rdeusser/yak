@@ -1,0 +1,26 @@
+load("@prelude//rust/buildscript:buildscript_platform.bzl", "transitions_for_constraint")
+load("@prelude//utils:source_listing.bzl", "source_listing")
+
+source_listing()
+
+# The panic strategy of the Rust crates of a configuration. `abort` adds
+# `-Cpanic=abort` to the crates that select on it. Cargo compiles a binary and
+# its dependencies with the strategy of the profile, and tests and build
+# scripts with `unwind`, so a crate graph can need both.
+constraint(
+    name = "panic",
+    default = "unwind",
+    values = [
+        "abort",
+        "unwind",
+    ],
+    visibility = ["PUBLIC"],
+)
+
+# `:panic_transition[abort]` is an incoming transition that compiles a binary
+# and its dependencies with `-Cpanic=abort`.
+transitions_for_constraint(
+    name = "panic_transition",
+    constraint = ":panic",
+    visibility = ["PUBLIC"],
+)

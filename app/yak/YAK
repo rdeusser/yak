@@ -7,14 +7,23 @@ cargo_package()
 # compiles the `yak` crate with `--cfg client_only` and without the daemon and
 # server crates. Cargo has no build of it, because a Cargo package builds with
 # one set of dependencies, so these targets are written by hand. Their
-# dependencies are those of `Cargo.toml` without the server crates, and the
-# `--cfg tokio_unstable` flag repeats `.cargo/config.toml`. A crate with
-# several versions in `Cargo.lock`, such as `nix`, is named with the version
-# that the `yak` package resolves.
+# dependencies are those of `Cargo.toml` without the server crates. The
+# `--cfg tokio_unstable` flag repeats `.cargo/config.toml`, and the other flags
+# and the binary's transition repeat `[profile.dev]` of `Cargo.toml`, with
+# `opt-level = 1` and `panic = "abort"`. A crate with several versions in
+# `Cargo.lock`, such as `nix`, is named with the version that the `yak` package
+# resolves.
 _CLIENT_ONLY_RUSTC_FLAGS = [
     "--cfg=client_only",
+    "-Copt-level=1",
+    "-Cdebuginfo=2",
+    "-Cdebug-assertions=on",
+    "-Coverflow-checks=on",
     "--cfg=tokio_unstable",
-]
+] + select({
+    "DEFAULT": [],
+    "prelude//rust/panic:panic[abort]": ["-Cpanic=abort"],
+})
 
 rust_library(
     name = "yak_client-lib",
@@ -73,6 +82,7 @@ rust_binary(
     crate_root = "bin/yak.rs",
     edition = "2024",
     rustc_flags = _CLIENT_ONLY_RUSTC_FLAGS,
+    incoming_transition = "prelude//rust/panic:panic_transition[abort]",
     deps = [
         ":yak_client-lib",
         "crates//:tracing",

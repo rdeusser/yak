@@ -20,7 +20,8 @@ The repository owner requires the self-build (2026-10-02).
 - [x] Plan of Work item 4: build scripts get `DEP_<links>_<key>` from the build scripts of their normal dependencies with `links` (2026-10-02). `test_generate_passes_links_metadata_to_build_scripts` covers it, and a workspace that depends on `aws-lc-rs` 1.18.1 builds and runs.
 - [x] Plan of Work item 5: members' crates name their files relative to the workspace's directory, through `srcs_path` of the Rust rules (2026-10-02). `test_generate_runs_a_build_script_in_the_workspace_layout` checks `file!()`.
 - [x] Plan of Work item 6: the repository builds from generated `YAK` files (2026-10-02). On macOS, `yak build //app/yak:yak //app/yak:yak_client-bin //:yak_bundle //app_dep_graph_rules:test_yak_dep_graph` succeeds, and the check rejects a dependency of `yak_test_runner` on `yak_cmd_debug_client`. With `YAK_BINARY` set to the self-built binary, `tests/core/build`, `tests/core/test`, `tests/core/prelude`, and `tests/core/generate` gave 434 passed, 39 skipped, 3 expected failures, and 1 failure, `test_many_rebound_outputs_incremental_rebuild` (finding 12). `test_generate_includes_the_files_of_another_cell` covers `include` of another cell's `source_listing`. The 4 crates that joined the workspace build with yak, `yak test //dice/fuzzy_dice: //starlark-rust/benchmark_memory:` passes, and the 37 tests of `tests/core/completion` pass on macOS with `YAK_COMPLETION_VERIFY` set to the Cargo-built `completion_verify`.
-- [ ] Plan of Work items 7 and 8.
+- [x] Plan of Work item 7: the cell applies the `dev` profile of the workspace (2026-10-02, finding 18). `test_profile_settings_reach_every_crate` covers the flags of the generated targets. `test_generate_applies_the_dev_profile` builds a member with `debug-assertions = false` and `panic = "abort"` that links a crate calling through `C-unwind`, and checks that its test unwinds. On macOS, the self-build of `//app/yak:yak //app/yak:yak_client-bin //:yak_bundle //app_dep_graph_rules:test_yak_dep_graph` succeeds, and the self-built binary is 150 MB. With `YAK_BINARY` set to it, `tests/core/build`, `tests/core/test`, `tests/core/prelude`, and `tests/core/generate` gave 436 passed, 39 skipped, and 3 expected failures, and `test_many_rebound_outputs_incremental_rebuild` passed in 91 seconds. The dependency check queries the crates in the configuration of the binary's transition, and it still rejects a dependency of `yak_test_runner` on `yak_cmd_debug_client`.
+- [ ] Plan of Work item 8.
 
 ## Surprises & Discoveries
 
@@ -43,6 +44,7 @@ The prototype ran on 2026-10-02 against a copy of `dfdf0496bf` on macOS, with `y
 15. `crates//:nix` does not exist, because `Cargo.lock` holds two versions of `nix`. The cell declares an alias without a version only for a crate with one version in the lock, so a hand-written target names `crates//:nix-0.31.3`.
 16. `//app_dep_graph_rules:test_yak_dep_graph` failed on `root//app/yak:yak-lib`, which depends on `yak_anon_target`. A Cargo package gives its library the dependencies of its binaries, so the library of `app/yak` depends on every crate that only the binary may depend on. The check now treats every target of `app/yak` as the top level.
 17. A build script runs in a tree of symbolic links, so `walkdir` in `app/yak_external_cells_bundled/build.rs` needs `follow_links(true)`. The crate compiles in another directory than the one the build script ran in, so its `include_bytes!` paths start from `CARGO_MANIFEST_DIR`.
+18. With `-Cpanic=abort` on the binaries only, the link of `//app/yak:yak` failed with "the crate `sysinfo` requires panic strategy `unwind` which is incompatible with this crate's strategy of `abort`", and the same for 4 `objc2` crates. rustc records a crate compiled with `unwind` that calls through the `C-unwind` ABI as requiring `unwind`, so a binary that aborts can link it only if it compiled with `abort` too. Cargo compiles a binary's dependencies with `abort` and separate copies with `unwind` for tests. The cell does the same through the constraint `prelude//rust/panic:panic`, which the members' binaries add with an incoming transition.
 
 ## Decision Log
 
@@ -59,7 +61,7 @@ The prototype ran on 2026-10-02 against a copy of `dfdf0496bf` on macOS, with `y
 
 ## Outcomes & Retrospective
 
-The prototype built a working binary, so the generated build is the approach. Items 1 to 6 are done, and the repository builds `//app/yak:yak` from the build files that `yak generate` writes.
+The prototype built a working binary, so the generated build is the approach. Items 1 to 7 are done, and the repository builds `//app/yak:yak` from the build files that `yak generate` writes, with the settings of `[profile.dev]`.
 
 ## Context and Orientation
 

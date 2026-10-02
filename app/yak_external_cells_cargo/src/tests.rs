@@ -17,6 +17,8 @@ use crate::generate_third_party;
 use crate::includes::IncludedFile;
 use crate::includes::IncludedPath;
 use crate::metadata::Metadata;
+use crate::profile::Profile;
+use crate::rustflags::ConfigFile;
 
 const REGISTRY: &str = "registry+https://github.com/rust-lang/crates.io-index";
 
@@ -136,7 +138,7 @@ fn platforms() -> Vec<CargoPlatform> {
 }
 
 fn generate() -> ThirdParty {
-    generate_third_party(&metadata(), &platforms()).unwrap()
+    generate_third_party(&metadata(), &platforms(), &Profile::default()).unwrap()
 }
 
 /// The build file of the package in directory `dir`.
@@ -196,9 +198,10 @@ fn test_library_deps_features_and_platforms() {
     assert!(serde.contains("platform = {\"linux-x86_64\": {\"deps\": [\"//libc-0.2.0:libc\"]}}"));
     // The build script's results reach the library.
     assert!(serde.contains("\"OUT_DIR\": \"$(location :serde-build-script-run[out_dir])\""));
-    assert!(
-        serde.contains("rustc_flags = [\"@$(location :serde-build-script-run[rustc_flags])\"]")
-    );
+    assert!(serde.contains(concat!(
+        "rustc_flags = [\"-Copt-level=0\", \"-Cdebuginfo=2\", \"-Cdebug-assertions=on\", \"-Coverflow-checks=on\", ",
+        "\"@$(location :serde-build-script-run[rustc_flags])\"]"
+    )));
     assert!(serde.contains("\"CARGO_MANIFEST_DIR\": \".\""));
     assert!(serde.contains("\"CARGO_PKG_VERSION_PATCH\": \"1\""));
     assert!(serde.contains("\"CARGO_PKG_VERSION_PRE\": \"beta.2\""));
@@ -250,7 +253,7 @@ fn test_build_script_takes_the_runs_of_normal_deps_with_links() {
             .push(build_script(&name, &version));
     }
     let metadata = Metadata::parse(&json.to_string()).unwrap();
-    let third_party = generate_third_party(&metadata, &platforms()).unwrap();
+    let third_party = generate_third_party(&metadata, &platforms(), &Profile::default()).unwrap();
     let out = build_file(&third_party, "serde-1.0.1-beta.2");
     let run = call_starting(
         &out,
@@ -285,18 +288,26 @@ fn platforms_with_rustflags(linux: &[&str], windows: &[&str]) -> Vec<CargoPlatfo
 #[test]
 fn test_rustflags_of_every_platform_apply_to_every_crate() {
     let flags = ["--cfg", "tokio_unstable"];
-    let third_party =
-        generate_third_party(&metadata(), &platforms_with_rustflags(&flags, &flags)).unwrap();
+    let third_party = generate_third_party(
+        &metadata(),
+        &platforms_with_rustflags(&flags, &flags),
+        &Profile::default(),
+    )
+    .unwrap();
     let out = build_file(&third_party, "serde-1.0.1-beta.2");
     let serde = call_starting(&out, "cargo.rust_library(\n    name = \"serde\"");
-    assert!(serde.contains(
-        "rustc_flags = [\"--cfg\", \"tokio_unstable\", \"@$(location :serde-build-script-run[rustc_flags])\"]"
-    ));
+    assert!(serde.contains(concat!(
+        "rustc_flags = [\"-Copt-level=0\", \"-Cdebuginfo=2\", \"-Cdebug-assertions=on\", \"-Coverflow-checks=on\", ",
+        "\"--cfg\", \"tokio_unstable\", \"@$(location :serde-build-script-run[rustc_flags])\"]"
+    )));
     let script = call_starting(
         &out,
         "cargo.rust_binary(\n    name = \"serde-build-script-build\"",
     );
-    assert!(script.contains("rustc_flags = [\"--cfg\", \"tokio_unstable\"]"));
+    assert!(script.contains(concat!(
+        "rustc_flags = [\"-Copt-level=0\", \"-Cdebuginfo=0\", \"-Cdebug-assertions=on\", \"-Coverflow-checks=on\", ",
+        "\"--cfg\", \"tokio_unstable\"]"
+    )));
 
     let workspace = crate::generate_workspace(
         &workspace_metadata(),
@@ -305,20 +316,100 @@ fn test_rustflags_of_every_platform_apply_to_every_crate() {
         "crates",
         &BTreeMap::new(),
         &util_includes(),
+        &Profile::default(),
     )
     .unwrap();
-    assert!(workspace.contains("\n_RUSTFLAGS = [\"--cfg\", \"tokio_unstable\"]\n"));
-    assert!(workspace.contains("rustc_flags = list(_RUSTFLAGS)"));
-    assert!(workspace.contains("rustc_flags = _RUSTFLAGS,"));
+    assert!(workspace.contains(
+        "\n_RUSTFLAGS = [\"--cfg\", \"tokio_unstable\"]\n\n_PANIC_FLAGS = []\n\n_BINARY_ATTRS = {}\n"
+    ));
+    assert!(workspace.contains("rustc_flags = profile[\"flags\"] + _RUSTFLAGS"));
+    assert!(workspace.contains("host_rustc_flags = profile[\"host_flags\"] + _RUSTFLAGS"));
+}
+
+#[test]
+fn test_profile_settings_reach_every_crate() {
+    let profile = Profile::parse(
+        &ConfigFile {
+            path: "Cargo.toml".to_owned(),
+            contents: "[profile.dev]\nopt-level = 1\npanic = \"abort\"\n".to_owned(),
+        },
+        &[],
+    )
+    .unwrap();
+    let third_party = generate_third_party(&metadata(), &platforms(), &profile).unwrap();
+
+    // The library compiles with the profile and its build script with the host settings. The run
+    // of the script gets the variables of the library's settings.
+    let out = build_file(&third_party, "serde-1.0.1-beta.2");
+    let serde = call_starting(&out, "cargo.rust_library(");
+    assert!(
+        serde.contains("rustc_flags = [\"-Copt-level=1\", \"-Cdebuginfo=2\""),
+        "{serde}"
+    );
+    let script = call_starting(&out, "cargo.rust_binary(");
+    assert!(
+        script.contains("rustc_flags = [\"-Copt-level=0\", \"-Cdebuginfo=0\""),
+        "{script}"
+    );
+    let run = call_starting(&out, "buildscript_run(");
+    assert!(run.contains("\"OPT_LEVEL\": \"1\""), "{run}");
+    assert!(run.contains("\"DEBUG\": \"true\""), "{run}");
+    assert!(run.contains("\"PROFILE\": \"debug\""), "{run}");
+    // The library selects `-Cpanic=abort` in the configuration of a binary that aborts on panic,
+    // and its build script always unwinds.
+    let select = concat!(
+        "+ select({\"prelude//rust/panic:panic[abort]\": [\"-Cpanic=abort\"], ",
+        "\"DEFAULT\": []})"
+    );
+    assert!(serde.contains(select), "{serde}");
+    assert!(!script.contains("-Cpanic"), "{script}");
+
+    // A procedural macro compiles with the host settings and unwinds.
+    let derive = build_file(&third_party, "serde_derive-1.0.0");
+    let derive_lib = call_starting(&derive, "cargo.rust_library(");
+    assert!(derive_lib.contains("rustc_flags = [\"-Copt-level=0\", \"-Cdebuginfo=0\""));
+    assert!(!derive_lib.contains("-Cpanic"), "{derive_lib}");
+
+    let workspace = crate::generate_workspace(
+        &workspace_metadata(),
+        &platforms(),
+        std::path::Path::new("/"),
+        "crates",
+        &BTreeMap::new(),
+        &util_includes(),
+        &profile,
+    )
+    .unwrap();
+    let util = member(&workspace, "util");
+    assert!(
+        util.contains("\"flags\": [\"-Copt-level=1\", \"-Cdebuginfo=2\""),
+        "{util}"
+    );
+    assert!(
+        util.contains("\"host_flags\": [\"-Copt-level=0\", \"-Cdebuginfo=0\""),
+        "{util}"
+    );
+    assert!(util.contains("\"OPT_LEVEL\": \"1\""), "{util}");
+    // Binaries transition to the configuration that aborts on panic, and their crates select the
+    // flag in it.
+    assert!(workspace.contains(
+        "\n_PANIC_FLAGS = select({\"prelude//rust/panic:panic[abort]\": [\"-Cpanic=abort\"], \"DEFAULT\": []})\n"
+    ));
+    assert!(workspace.contains(
+        "\n_BINARY_ATTRS = {\"incoming_transition\": \"prelude//rust/panic:panic_transition[abort]\"}\n"
+    ));
 }
 
 #[test]
 fn test_rustflags_that_differ_by_platform_select_on_it() {
     let platforms = platforms_with_rustflags(&["-Ctarget-cpu=native"], &[]);
-    let third_party = generate_third_party(&metadata(), &platforms).unwrap();
+    let third_party = generate_third_party(&metadata(), &platforms, &Profile::default()).unwrap();
     let out = build_file(&third_party, "memchr-2.0.0");
     let memchr = call_starting(&out, "cargo.rust_library(");
-    assert!(memchr.contains("rustc_flags = []"), "{memchr}");
+    assert!(
+        memchr.contains("rustc_flags = [\"-Copt-level=0\", \"-Cdebuginfo=2\", \"-Cdebug-assertions=on\", \"-Coverflow-checks=on\"]"),
+        "{memchr}"
+    );
     assert!(
         memchr.contains(
             "platform = {\"linux-x86_64\": {\"rustc_flags\": [\"-Ctarget-cpu=native\"]}}"
@@ -333,6 +424,7 @@ fn test_rustflags_that_differ_by_platform_select_on_it() {
         "crates",
         &BTreeMap::new(),
         &util_includes(),
+        &Profile::default(),
     )
     .unwrap();
     assert!(workspace.contains("\n_RUSTFLAGS = []\n"));
@@ -366,7 +458,7 @@ fn test_package_from_another_source_is_named_by_its_id() {
     other.source = Some("git+https://example.com/serde_derive#4567".to_owned());
     assert_ne!(crate::third_party::cell_dir(&other), dir);
 
-    let third_party = generate_third_party(&metadata, &platforms()).unwrap();
+    let third_party = generate_third_party(&metadata, &platforms(), &Profile::default()).unwrap();
     let serde = build_file(&third_party, "serde-1.0.1-beta.2");
     assert!(serde.contains(&format!("\"derive_impl\": \"//{dir}:serde_derive\"")));
     assert!(third_party.root_build_file.contains(&format!(
@@ -378,7 +470,7 @@ fn test_package_from_another_source_is_named_by_its_id() {
 fn test_path_dependency_outside_the_workspace_fails() {
     let mut metadata = metadata();
     metadata.packages[2].source = None;
-    let err = generate_third_party(&metadata, &platforms()).unwrap_err();
+    let err = generate_third_party(&metadata, &platforms(), &Profile::default()).unwrap_err();
     assert!(
         err.to_string()
             .contains("`serde_derive-1.0.0` is a path dependency outside the workspace"),
@@ -438,6 +530,7 @@ fn generate_workspace_bzl() -> String {
         "crates",
         &BTreeMap::new(),
         &util_includes(),
+        &Profile::default(),
     )
     .unwrap()
 }
@@ -527,6 +620,7 @@ fn test_workspace_member_alias_names_the_library_by_directory() {
         "crates",
         &BTreeMap::new(),
         &BTreeMap::new(),
+        &Profile::default(),
     )
     .unwrap();
     assert!(
@@ -588,6 +682,7 @@ fn test_workspace_member_includes_files_of_other_packages() {
         "crates",
         &BTreeMap::new(),
         &BTreeMap::new(),
+        &Profile::default(),
     )
     .unwrap_err();
     assert!(
@@ -647,6 +742,7 @@ fn test_workspace_member_at_the_root() {
         "crates",
         &BTreeMap::new(),
         &BTreeMap::new(),
+        &Profile::default(),
     )
     .unwrap();
     assert!(out.contains("_WORKSPACE_DIR = \"\""));
@@ -680,6 +776,7 @@ fn test_workspace_duplicate_target_fails() {
         "crates",
         &BTreeMap::new(),
         &BTreeMap::new(),
+        &Profile::default(),
     )
     .unwrap_err();
     assert!(

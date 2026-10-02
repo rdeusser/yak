@@ -215,7 +215,7 @@ A crate's targets keep the names of its Cargo targets, such as `//app/yak_core:y
 
 These `YAK` files declare what Cargo cannot express beside the generated targets:
 
-- `app/yak/YAK` declares the client-only library and binary (`yak_client-bin`), because a Cargo package builds with one set of dependencies.
+- `app/yak/YAK` declares the client-only library and binary (`yak_client-bin`), because a Cargo package builds with one set of dependencies. They repeat the `rustflags` of `.cargo/config.toml` and the `[profile.dev]` settings of `Cargo.toml`.
 - The root `YAK` declares `yak_bundle`, which puts the client-only binary next to the daemon binary for `yak.py`.
 - `app/yak_data`, `app/yak_host_sharing_proto`, and `app/yak_subscription_proto` declare `proto` filegroups, and the protobuf crates whose build scripts import those files name them in `include`.
 - `app/yak_external_cells_bundled/YAK` names `prelude//:source_listing` in `include`, because `build.rs` embeds the prelude.

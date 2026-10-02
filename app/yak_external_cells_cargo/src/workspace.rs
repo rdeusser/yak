@@ -35,6 +35,9 @@ use crate::includes::IncludedPath;
 use crate::metadata::Metadata;
 use crate::metadata::Package;
 use crate::metadata::Target;
+use crate::profile::PANIC_ABORT_TRANSITION;
+use crate::profile::Profile;
+use crate::profile::panic_flags_select;
 use crate::third_party::library_label;
 use crate::third_party::script_run_label;
 
@@ -44,6 +47,8 @@ use crate::third_party::script_run_label;
 /// package, `_EXPORTS` holds, by package, the files of the package that other members include
 /// and the packages that include each, and `_RUSTFLAGS` holds the flags of Cargo's configuration
 /// when every platform has the same. The `platform` data of a member holds them otherwise.
+/// `_PANIC_FLAGS` selects `-Cpanic=abort` in the configurations of binaries that abort on panic,
+/// and `_BINARY_ATTRS` gives the binaries their transition to such a configuration.
 const MACRO: &str = r#"
 def cargo_package(include = [], test_data = []):
     """Declares the targets of the member of the Cargo workspace in this directory.
@@ -151,7 +156,12 @@ def _declare_member(member, include, test_data):
     test_package_srcs.update(test_data)
 
     env = dict(member["env"])
-    rustc_flags = list(_RUSTFLAGS)
+
+    # Cargo passes the flags of the profile before those of its configuration, so `rustflags` can
+    # override them. Build scripts and procedural macros compile with the host settings.
+    profile = member["profile"]
+    rustc_flags = profile["flags"] + _RUSTFLAGS
+    host_rustc_flags = profile["host_flags"] + _RUSTFLAGS
     names = member["rules"]
 
     # The run target of the build script carries the search paths of the host libraries that the
@@ -160,6 +170,9 @@ def _declare_member(member, include, test_data):
 
     script = member["build_script"]
     if script != None:
+        script_env = dict(env)
+        script_env.update(profile["script_env"])
+
         # A build script builds for the execution platform of its run target. The requirement
         # keeps `//...` from building the script and its per-platform aliases for the target
         # platform and for every Cargo platform.
@@ -178,7 +191,7 @@ def _declare_member(member, include, test_data):
             named_deps = member["build_named_deps"],
             platform = member["build_platform"],
             env = env,
-            rustc_flags = _RUSTFLAGS,
+            rustc_flags = host_rustc_flags,
             target_compatible_with = exec_only,
             visibility = [],
         )
@@ -198,12 +211,14 @@ def _declare_member(member, include, test_data):
             buildscript_compatible_with = exec_only,
             # The build scripts of dependents read the metadata of a package with `links`.
             visibility = ["PUBLIC"] if "CARGO_MANIFEST_LINKS" in env else [],
-            env = env,
+            env = script_env,
             rustc_link_lib = True,
             rustc_link_search = True,
         )
         env["OUT_DIR"] = "$(location :{}[out_dir])".format(names["build_script_run"])
-        rustc_flags.append("@$(location :{}[rustc_flags])".format(names["build_script_run"]))
+        script_flags = "@$(location :{}[rustc_flags])".format(names["build_script_run"])
+        rustc_flags.append(script_flags)
+        host_rustc_flags.append(script_flags)
         script_deps = [":" + names["build_script_run"]]
 
     profile_files = select({
@@ -233,7 +248,7 @@ def _declare_member(member, include, test_data):
             deps = member["deps"] + script_deps,
             named_deps = member["named_deps"],
             env = env,
-            rustc_flags = rustc_flags,
+            rustc_flags = host_rustc_flags if lib["proc_macro"] else rustc_flags + _PANIC_FLAGS,
             tests = tests,
             visibility = ["PUBLIC"],
         )
@@ -271,9 +286,10 @@ def _declare_member(member, include, test_data):
             deps = member["deps"] + own + script_deps,
             named_deps = member["named_deps"],
             env = env,
-            rustc_flags = rustc_flags,
+            rustc_flags = rustc_flags + _PANIC_FLAGS,
             tests = tests,
             visibility = ["PUBLIC"],
+            **_BINARY_ATTRS
         )
         if target["unittest"] != None:
             _declare(
@@ -309,7 +325,8 @@ def _declare_member(member, include, test_data):
             deps = member["test_deps"] + own + script_deps,
             named_deps = member["test_named_deps"],
             env = env,
-            rustc_flags = rustc_flags,
+            rustc_flags = rustc_flags + _PANIC_FLAGS,
+            **(_BINARY_ATTRS if example["crate_types"] == ["bin"] else {})
         )
 
     # Cargo gives integration tests the paths of the package's binaries.
@@ -482,7 +499,8 @@ pub fn member_dirs(metadata: &Metadata) -> yak_error::Result<Vec<String>> {
 /// that the workspace's directory is relative to, and `cell` is the name of the cargo cell that
 /// holds the third-party packages. `cell_dirs` maps the name of each cell of the project to its
 /// directory relative to the project root. `includes` maps the directory of a member, relative to the
-/// workspace's directory, to the files of other packages that its Rust files include.
+/// workspace's directory, to the files of other packages that its Rust files include. The crates
+/// compile with the settings of `profile`.
 pub fn generate_workspace(
     metadata: &Metadata,
     platforms: &[CargoPlatform],
@@ -490,6 +508,7 @@ pub fn generate_workspace(
     cell: &str,
     cell_dirs: &BTreeMap<String, String>,
     includes: &BTreeMap<String, Vec<IncludedFile>>,
+    profile: &Profile,
 ) -> yak_error::Result<String> {
     let graph = Graph::new(metadata);
     let flags = PlatformFlags::new(platforms);
@@ -725,6 +744,20 @@ pub fn generate_workspace(
             _ => Value::None,
         };
 
+        // The build script of a procedural macro gets the settings that its crate compiles with.
+        let target = profile.target(&package.name, &package.version, true);
+        let host = profile.host(&package.name, &package.version, true);
+        let script_env = if lib_target(package).is_some_and(|lib| lib.is_proc_macro()) {
+            host.script_env()
+        } else {
+            target.script_env()
+        };
+        let profile_value = Value::Dict(vec![
+            ("flags".to_owned(), Value::strs(target.rustc_flags())),
+            ("host_flags".to_owned(), Value::strs(host.rustc_flags())),
+            ("script_env".to_owned(), Value::Dict(script_env)),
+        ]);
+
         let mut env = package_env(package);
         env.push((
             "CARGO_MANIFEST_DIR".to_owned(),
@@ -749,6 +782,7 @@ pub fn generate_workspace(
             ("examples".to_owned(), Value::List(examples)),
             ("build_script".to_owned(), build_script),
             ("alias".to_owned(), alias),
+            ("profile".to_owned(), profile_value),
         ];
         fields.extend(deps_fields("", &deps.normal, &flags));
         fields.extend(deps_fields("build_", &deps.build, &flags));
@@ -799,6 +833,20 @@ pub fn generate_workspace(
     .render(&mut out);
     out.push_str("\n\n_RUSTFLAGS = ");
     Value::strs(flags.all.iter().cloned()).render(&mut out);
+    // Cargo compiles a binary and its dependencies with `panic = "abort"` of the profile, and
+    // tests with `unwind`, so the binaries transition to a configuration that selects the flag.
+    if profile.aborts_on_panic() {
+        out.push_str("\n\n_PANIC_FLAGS = ");
+        out.push_str(&panic_flags_select());
+        out.push_str("\n\n_BINARY_ATTRS = ");
+        Value::Dict(vec![(
+            "incoming_transition".to_owned(),
+            Value::str(PANIC_ABORT_TRANSITION),
+        )])
+        .render(&mut out);
+    } else {
+        out.push_str("\n\n_PANIC_FLAGS = []\n\n_BINARY_ATTRS = {}");
+    }
     out.push('\n');
     out.push_str(MACRO);
     Ok(out)

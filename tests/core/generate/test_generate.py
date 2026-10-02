@@ -119,6 +119,49 @@ async def test_generate_applies_the_rustflags_of_the_cargo_configuration(
     assert result.stdout == "hello from vendored flag=false\n"
 
 
+
+@yak_test(data_dir="vendored")
+async def test_generate_applies_the_dev_profile(yak: Yak) -> None:
+    (yak.cwd / "app" / "src" / "main.rs").write_text(
+        """fn main() {
+    println!("{} debug_assertions={}", greet::greeting(), cfg!(debug_assertions));
+    if std::env::args().nth(1).as_deref() == Some("panic") {
+        let caught = std::panic::catch_unwind(|| panic!("boom")).is_err();
+        println!("caught={caught}");
+    }
+}
+
+#[test]
+fn tests_unwind() {
+    greet::greeting();
+    assert!(std::panic::catch_unwind(|| panic!("boom")).is_err());
+}
+"""
+    )
+    manifest = yak.cwd / "Cargo.toml"
+    workspace = manifest.read_text()
+    manifest.write_text(
+        workspace + '\n[profile.dev]\ndebug-assertions = false\npanic = "abort"\n'
+    )
+    await yak.generate()
+    # `greet` calls through the `C-unwind` ABI, so the binary links only if
+    # `greet` compiled with `-Cpanic=abort` too.
+    result = await yak.run("//app")
+    assert result.stdout == "hello from vendored debug_assertions=false\n"
+    # With `panic = "abort"`, the panic aborts the binary before `catch_unwind`
+    # returns.
+    await expect_failure(yak.run("//app", "--", "panic"), stderr_regex="boom")
+    # As with Cargo, tests unwind, and they link a copy of `greet` that unwinds.
+    await yak.test("//app")
+
+    # The cell reads the workspace's manifest through DICE, so the edit reaches
+    # the next build.
+    manifest.write_text(workspace)
+    result = await yak.run("//app", "--", "panic")
+    assert (
+        result.stdout == "hello from vendored debug_assertions=true\ncaught=true\n"
+    )
+
 def commit(repository: Path, message: str) -> None:
     for argv in (["add", "."], ["commit", "-q", "-m", message]):
         subprocess.run(

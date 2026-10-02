@@ -14,8 +14,8 @@
 //! `generated.rs` serves. Cargo checked the package's sources against `Cargo.lock` when it
 //! downloaded them, and `cargo metadata` follows the workspace's `.cargo/config.toml`, so
 //! packages from private registries, replaced sources, and Git build as they do with
-//! `cargo build`. The `rustflags` of the same configuration apply to every crate of the cell and
-//! of the workspace.
+//! `cargo build`. The `rustflags` of the same configuration and the `dev` profile of the workspace
+//! apply to every crate of the cell and of the workspace.
 
 use std::collections::BTreeMap;
 use std::collections::BTreeSet;
@@ -55,6 +55,7 @@ use yak_external_cells_cargo::includes::IncludedPath;
 use yak_external_cells_cargo::includes::included_paths;
 use yak_external_cells_cargo::member_dirs;
 use yak_external_cells_cargo::metadata::Metadata;
+use yak_external_cells_cargo::profile::Profile;
 use yak_external_cells_cargo::resolve_includes;
 use yak_external_cells_cargo::rustflags::ConfigFile;
 use yak_external_cells_cargo::rustflags::RustFlags;
@@ -131,15 +132,15 @@ async fn platforms(dir: &AbsPath, rustflags: &RustFlags) -> yak_error::Result<Ve
 /// reads `config` when both exist.
 const CONFIG_FILE_NAMES: [&str; 2] = ["config", "config.toml"];
 
-/// Reads the `rustflags` of the Cargo configuration files that apply in the workspace of
-/// `workspace_dir`: those of `$CARGO_HOME` and of the `.cargo` directories of the workspace's
-/// directory and its parents. The files in the project are read through DICE, so that editing
-/// one computes the cell again. A change to a file outside the project takes effect when the cell
-/// is next computed.
-async fn read_rustflags(
+/// Reads the Cargo configuration files that apply in the workspace of `workspace_dir`: those of
+/// `$CARGO_HOME` and of the `.cargo` directories of the workspace's directory and its parents,
+/// ordered from the lowest precedence to the highest. The files in the project are read through
+/// DICE, so that editing one computes the cell again. A change to a file outside the project takes
+/// effect when the cell is next computed.
+async fn read_config_files(
     ctx: &mut DiceComputations<'_>,
     workspace_dir: &ProjectRelativePath,
-) -> yak_error::Result<RustFlags> {
+) -> yak_error::Result<Vec<ConfigFile>> {
     let cells = ctx.get_cell_resolver().await?;
     let project_root = ctx.global_data().get_io_provider().project_root().dupe();
 
@@ -183,7 +184,7 @@ async fn read_rustflags(
         files.push(file);
     }
     files.reverse();
-    RustFlags::parse(&files)
+    Ok(files)
 }
 
 /// The configuration file in `cargo_dir`, a directory outside the project.
@@ -216,10 +217,12 @@ struct CargoWorkspace {
     metadata: Metadata,
     #[allocative(skip)]
     platforms: Vec<CargoPlatform>,
+    #[allocative(skip)]
+    profile: Profile,
 }
 
 /// Runs `cargo metadata` and `rustc --print cfg` for the workspace of `setup`, and reads the
-/// `rustflags` of its Cargo configuration.
+/// `rustflags` and the `dev` profile of its manifest and Cargo configuration.
 async fn read_workspace(
     ctx: &mut DiceComputations<'_>,
     setup: &CargoCellSetup,
@@ -230,10 +233,12 @@ async fn read_workspace(
     let lock_path = workspace_dir.join(ForwardRelativePath::new("Cargo.lock")?);
 
     // Read the manifests and the lock file through DICE, so that editing one of them computes
-    // the cell again. Their contents come from `cargo metadata`.
-    DiceFileComputations::read_file_if_exists(ctx, cells.get_cell_path(manifest).as_ref())
-        .await?
-        .ok_or_else(|| CargoCellError::MissingManifest(manifest.to_string()))?;
+    // the cell again. Their contents come from `cargo metadata`, except the profile of the
+    // workspace's manifest.
+    let manifest_contents =
+        DiceFileComputations::read_file_if_exists(ctx, cells.get_cell_path(manifest).as_ref())
+            .await?
+            .ok_or_else(|| CargoCellError::MissingManifest(manifest.to_string()))?;
     DiceFileComputations::read_file_if_exists(ctx, cells.get_cell_path(&lock_path).as_ref())
         .await?
         .ok_or_else(|| CargoCellError::MissingLockFile(manifest.to_string()))?;
@@ -279,11 +284,20 @@ async fn read_workspace(
         .await?;
     }
 
-    let rustflags = read_rustflags(ctx, workspace_dir).await?;
+    let config_files = read_config_files(ctx, workspace_dir).await?;
+    let rustflags = RustFlags::parse(&config_files)?;
+    let profile = Profile::parse(
+        &ConfigFile {
+            path: manifest.to_string(),
+            contents: manifest_contents,
+        },
+        &config_files,
+    )?;
     let platforms = platforms(&abs_dir, &rustflags).await?;
     Ok(CargoWorkspace {
         metadata,
         platforms,
+        profile,
     })
 }
 
@@ -571,7 +585,11 @@ async fn generate(
         .cells()
         .map(|(name, cell)| (name.as_str().to_owned(), cell.path().to_string()))
         .collect();
-    let third_party = generate_third_party(&workspace.metadata, &workspace.platforms)?;
+    let third_party = generate_third_party(
+        &workspace.metadata,
+        &workspace.platforms,
+        &workspace.profile,
+    )?;
     let workspace = generate_workspace(
         &workspace.metadata,
         &workspace.platforms,
@@ -579,6 +597,7 @@ async fn generate(
         cell_name.as_str(),
         &cell_dirs,
         &includes.0,
+        &workspace.profile,
     )?;
 
     let digest_config = ctx
