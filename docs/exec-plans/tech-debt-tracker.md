@@ -21,6 +21,7 @@ After the removal of the Buck1 compatibility code, the same setup gave 1727 pass
 After the rename of the messages and comments of the code, the same setup gave 1727 passed, 223 skipped, and 3 expected failures.
 The skipped tests need a Remote Execution backend, cgroup delegation, helper binaries, Go, or Watchman. The repository has no Remote Execution backend to test against.
 A separate run with Go 1.26, `clang`, and `lld` passed the 30 tests in `tests/prelude/test_prelude_rules.py`, which include the 19 Go tests.
+On 2026-10-02, the whole suite ran in `debian:bookworm-slim` with pytest under Python 3.12, Debian's Python 3.11 as `python3` for actions, clang 14, lld, Go 1.26.8, and the completion helper. It gave 1871 passed, 209 skipped, 3 expected failures, and 2 failures, in which `test_generate.py` built a build script that links a shared library through `CC`. The failures came from `from_any_dir.py`, which used an argument of `Path.relative_to` that Python 3.12 added, and from the `LD` shim, which let clang add `-pie` to a `-shared` link. After both fixes, the 212 tests of `tests/core/generate`, `tests/tools`, `tests/prelude`, `tests/core/external_cells`, `tests/core/test`, `tests/core/prelude`, and `tests/core/completion` passed.
 Whether the GitHub runner puts the daemon in a cgroup below the root of its cgroup namespace is unverified.
 
 Remove this entry when the workflow passes.
@@ -138,6 +139,11 @@ Only fbcc, Meta's compiler wrapper, understands the flag, so a plain clang rejec
 `prelude/cxx/tools/clang_tidy_wrapper.py` filters fbcc flags out of compile commands, and `prelude/cxx/dist_lto/tools/dist_lto_opt_gnu.py` expects the compiler command to start with the fbcc wrapper and a `--cc=` flag.
 
 Remove this entry when split debug info uses flags that clang accepts and no tool expects the fbcc command layout.
+
+### Build scripts on Linux cannot link a static executable through `CC`
+
+The `CC` that `buildscript_run` gives build scripts links through `--ld-path=<LD>`, and `LD` runs the toolchain's linker driver with each argument passed through as `-Wl,<arg>` (`prelude/rust/cargo_buildscript.bzl`). For `clang -static`, the driver behind `LD` receives `-static` only as a linker argument, so it adds a dynamic loader to a link of static startup files. On 2026-10-02, in `debian:bookworm-slim` with clang 14 and lld, `clang -static --ld-path=<LD> m.c s.c` linked a program that crashed at startup, and plain `clang -static` linked one that ran. Executables and shared libraries link correctly.
+Remove this entry when `CC` links static executables that run.
 
 ### Every command waits for the tool identities
 

@@ -37,7 +37,9 @@ def main():
     original_cwd = args.cwd.resolve()
     interim_cwd = Path.cwd().resolve()
     if original_cwd.is_relative_to(interim_cwd):
-        interim_cwd = interim_cwd.relative_to(original_cwd, walk_up=True)
+        # `os.path.relpath` gives the `..` path that `Path.relative_to(walk_up=True)` gives
+        # on Python 3.12 and later, and it runs on older Pythons too.
+        interim_cwd = Path(os.path.relpath(interim_cwd, original_cwd))
 
     placeholder = "\\${..}\\" if os.name == "nt" else "${..}/"
     cc = [arg.replace(placeholder, f"{interim_cwd}{os.sep}") for arg in args.cc]

@@ -339,6 +339,12 @@ def _cargo_buildscript_impl(ctx: AnalysisContext) -> list[Provider]:
     sanitizer_flags = ["-fno-sanitize=all"]
     cc_is_clang = cxx_toolchain_info.c_compiler_info.compiler_type.startswith("clang")
     cxx_is_clang = cxx_toolchain_info.cxx_compiler_info.compiler_type.startswith("clang")
+    # `LD` runs the toolchain's linker driver with each argument passed through as `-Wl,<arg>`,
+    # so it stands in for a plain linker. The arguments already hold the startup files, the
+    # libraries, and the output kind of the link, which the driver would add again. Without
+    # `-nostdlib` and `-no-pie`, a driver that defaults to PIE, such as Debian's clang, links
+    # its own startup files and adds `-pie` to a `-shared` link, which `ld.lld` rejects.
+    gnu_driver_flags = ["-nostdlib", "-no-pie"] if cxx_toolchain_info.linker_info.type == LinkerType("gnu") else []
     env["LD"] = _make_cc_shim(
         ctx = ctx,
         name = "__ld_shim",
@@ -346,6 +352,7 @@ def _cargo_buildscript_impl(ctx: AnalysisContext) -> list[Provider]:
             cxx_toolchain_info.linker_info.linker,
             cxx_toolchain_info.linker_info.linker_flags or [],
             rust_toolchain_info.linker_flags,
+            gnu_driver_flags,
             sanitizer_flags,
         ),
     )
