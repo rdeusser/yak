@@ -7,6 +7,7 @@
 # above-listed licenses.
 
 load("@prelude//:artifacts.bzl", "ArtifactGroupInfo")
+load("@prelude//utils:source_listing.bzl", "SourceListingInfo")
 
 def _get_artifacts(sources: Artifact) -> list[Artifact]:
     return [sources]
@@ -70,6 +71,7 @@ def package_srcs_arg():
             doc = """
     Adds the files of targets in other packages to the source tree, each below a
     directory of the tree at its path in the target's package. The files are the
+    sources of a `source_listing` at their paths relative to its package, the
     target's `ArtifactGroupInfo` artifacts, such as the files of a `filegroup`,
     or else its default outputs. For example,
     `package_srcs = {"//crates/data:testdata": "crates/data"}` places
@@ -100,10 +102,17 @@ def package_srcs_files(package_srcs: dict[Dependency, str]) -> dict[str, Artifac
     """The files of `package_srcs` by their paths in the source tree."""
     files = {}
     for dep, dir in package_srcs.items():
-        group = dep.get(ArtifactGroupInfo)
-        artifacts = group.artifacts if group else dep[DefaultInfo].default_outputs
-        for artifact in artifacts:
-            files[dir + "/" + artifact.short_path if dir else artifact.short_path] = artifact
+        # A `source_listing` names the files of its package and of the packages below it by their
+        # paths relative to its package.
+        listing = dep.get(SourceListingInfo)
+        if listing:
+            by_path = listing.sources
+        else:
+            group = dep.get(ArtifactGroupInfo)
+            artifacts = group.artifacts if group else dep[DefaultInfo].default_outputs
+            by_path = {artifact.short_path: artifact for artifact in artifacts}
+        for path, artifact in by_path.items():
+            files[dir + "/" + path if dir else path] = artifact
     return files
 
 def srcs_filegroup_arg():

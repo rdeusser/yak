@@ -1,32 +1,3 @@
-load("//build_defs:rust.bzl", "rust_library")
+load("@crates//:workspace.bzl", "cargo_package")
 
-rust_library(
-    name = "yak_server_ctx",
-    srcs = glob(["src/**/*.rs"]),
-    deps = [
-        "//allocative/allocative:allocative",
-        "//app/yak_build_signals:yak_build_signals",
-        "//app/yak_cli_proto:yak_cli_proto",
-        "//app/yak_common:yak_common",
-        "//app/yak_concurrency:yak_concurrency",
-        "//app/yak_core:yak_core",
-        "//app/yak_data:yak_data",
-        "//app/yak_error:yak_error",
-        "//app/yak_events:yak_events",
-        "//app/yak_execute:yak_execute",
-        "//app/yak_fs:yak_fs",
-        "//app/yak_hash:yak_hash",
-        "//app/yak_node:yak_node",
-        "//app/yak_util:yak_util",
-        "//app/yak_wrapper_common:yak_wrapper_common",
-        "//dice/dice:dice",
-        "//dice/dice_futures:dice_futures",
-        "//gazebo/dupe:dupe",
-        "//gazebo/gazebo:gazebo",
-        "//third-party/rust:async-trait",
-        "//third-party/rust:futures",
-        "//third-party/rust:pin-project",
-        "//third-party/rust:tonic",
-        "//third-party/rust:tracing",
-    ],
-)
+cargo_package()

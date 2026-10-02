@@ -147,7 +147,11 @@ filegroup(
 ```
 
 A target's files appear at their paths in the workspace, so a test of
-`crates/server` reads `../fixtures/data/users.json`. The copy that a test runs
+`crates/server` reads `../fixtures/data/users.json`. A target can belong to
+another cell whose directory is inside the workspace's directory. The files of a
+`source_listing` target (`prelude//utils:source_listing.bzl`) include those of
+the packages below its package, so `include = ["prelude//:source_listing"]`
+gives a build script every file of a `prelude` cell at `prelude/`. The copy that a test runs
 in holds only its package's files, its included files, and its `test_data`
 files, so a test that reads another file fails. The declarations tell
 [`yak test --changed-since`](../../advanced/changed_since.md) which tests a

@@ -1,14 +1,32 @@
-load("//build_defs:rust.bzl", "rust_binary", "rust_library")
-load(":transition.bzl", "yak_client_transition_alias")
+load("@crates//:workspace.bzl", "cargo_package")
+
+cargo_package()
+
+# The client-only binary, which `//:yak_bundle` and `yak.py` put next to the
+# daemon binary, and whose dependencies `//app_dep_graph_rules` checks. It
+# compiles the `yak` crate with `--cfg client_only` and without the daemon and
+# server crates. Cargo has no build of it, because a Cargo package builds with
+# one set of dependencies, so these targets are written by hand. Their
+# dependencies are those of `Cargo.toml` without the server crates, and the
+# `--cfg tokio_unstable` flag repeats `.cargo/config.toml`. A crate with
+# several versions in `Cargo.lock`, such as `nix`, is named with the version
+# that the `yak` package resolves.
+_CLIENT_ONLY_RUSTC_FLAGS = [
+    "--cfg=client_only",
+    "--cfg=tokio_unstable",
+]
 
 rust_library(
-    name = "yak",
+    name = "yak_client-lib",
     srcs = glob(["src/**/*.rs"]),
-    rustc_flags = select({
-        ":yak_client_only_setting[build]": ["--cfg=client_only"],
-        "DEFAULT": [],
-    }),
+    crate = "yak",
+    crate_root = "src/lib.rs",
+    edition = "2024",
+    rustc_flags = _CLIENT_ONLY_RUSTC_FLAGS,
     deps = [
+        "crates//:clap",
+        "crates//:tokio",
+        "crates//:tracing",
         "//app/yak_client:yak_client",
         "//app/yak_client_ctx:yak_client_ctx",
         "//app/yak_cmd_audit_client:yak_cmd_audit_client",
@@ -28,56 +46,36 @@ rust_library(
         "//app/yak_wrapper_common:yak_wrapper_common",
         "//gazebo/dupe:dupe",
         "//superconsole:superconsole",
-        "//third-party/rust:clap",
-        "//third-party/rust:tokio",
-        "//third-party/rust:tracing",
-    ]
-    + select({
-        ":yak_client_only_setting[build]": [],
-        "DEFAULT": [
-            "//app/yak_daemon:yak_daemon",
-            "//app/yak_server:yak_server",
-            "//app/yak_test_runner:yak_test_runner",
-        ],
-    })
-    + select({
+    ] + select({
         "DEFAULT": [],
         "prelude//os:linux": [
+            "crates//:dirs",
+            "crates//:libc",
+            "crates//:nix-0.31.3",
             "//app/yak_forkserver:yak_forkserver",
-            "//third-party/rust:dirs",
-            "//third-party/rust:libc",
-            "//third-party/rust:nix",
         ],
         "prelude//os:macos": [
+            "crates//:dirs",
+            "crates//:libc",
+            "crates//:nix-0.31.3",
             "//app/yak_forkserver:yak_forkserver",
-            "//third-party/rust:dirs",
-            "//third-party/rust:libc",
-            "//third-party/rust:nix",
         ],
         "prelude//os:windows": [
-            "//third-party/rust:windows-sys",
+            "crates//:windows-sys-0.61.2",
         ],
     }),
 )
 
 rust_binary(
-    name = "yak-bin",
+    name = "yak_client-bin",
     srcs = ["bin/yak.rs"],
-    allow_cache_upload = True,
     crate = "yak",
     crate_root = "bin/yak.rs",
-    env = {
-        # `-c yak.set_explicit_version=<version>` sets the version that `--version` prints.
-        "YAK_SET_EXPLICIT_VERSION": read_config("yak", "set_explicit_version", ""),
-    },
-    # `-c yak.emit_relocs=true` keeps ELF relocations in the binary for BOLT.
-    linker_flags = ["-Wl,--emit-relocs"] if read_config("yak", "emit_relocs", "") == "true" else [],
-    rustc_flags = select({
-        ":yak_client_only_setting[build]": ["--cfg=client_only"],
-        "DEFAULT": [],
-    }),
+    edition = "2024",
+    rustc_flags = _CLIENT_ONLY_RUSTC_FLAGS,
     deps = [
-        "//app/yak:yak",
+        ":yak_client-lib",
+        "crates//:tracing",
         "//app/yak_build_info:yak_build_info",
         "//app/yak_certs:yak_certs",
         "//app/yak_client_ctx:yak_client_ctx",
@@ -88,53 +86,11 @@ rust_binary(
         "//app/yak_wrapper_common:yak_wrapper_common",
         "//gazebo/dupe:dupe",
         "//superconsole:superconsole",
-        "//third-party/rust:tracing",
-    ]
-    + select({
+    ] + select({
         "DEFAULT": [],
-        "prelude//os:windows": [
-            "//third-party/rust:mimalloc",
-        ],
-    })
-    + select({
-        ":yak_client_only_setting[build]": [],
-        "DEFAULT": [
-            "//app/yak_action_impl:yak_action_impl",
-            "//app/yak_analysis:yak_analysis",
-            "//app/yak_anon_target:yak_anon_target",
-            "//app/yak_build_api:yak_build_api",
-            "//app/yak_build_signals_impl:yak_build_signals_impl",
-            "//app/yak_bxl:yak_bxl",
-            "//app/yak_cfg_constructor:yak_cfg_constructor",
-            "//app/yak_cmd_audit_server:yak_cmd_audit_server",
-            "//app/yak_cmd_docs_server:yak_cmd_docs_server",
-            "//app/yak_cmd_query_server:yak_cmd_query_server",
-            "//app/yak_cmd_starlark_server:yak_cmd_starlark_server",
-            "//app/yak_cmd_targets_server:yak_cmd_targets_server",
-            "//app/yak_configured:yak_configured",
-            "//app/yak_external_cells:yak_external_cells",
-            "//app/yak_interpreter_for_build:yak_interpreter_for_build",
-            "//app/yak_query_impls:yak_query_impls",
-            "//app/yak_server_commands:yak_server_commands",
-            "//app/yak_test:yak_test",
-            "//app/yak_transition:yak_transition",
-            "//app/yak_validation:yak_validation",
-        ],
+        "prelude//os:linux": ["crates//:tikv-jemallocator"],
+        "prelude//os:macos": ["crates//:tikv-jemallocator"],
+        "prelude//os:windows": ["crates//:mimalloc"],
     }),
-)
-
-constraint(
-    name = "yak_client_only_setting",
-    default = "unspecified",
-    values = [
-        "build",
-        "unspecified",
-    ],
-    visibility = ["PUBLIC"],
-)
-
-yak_client_transition_alias(
-    name = "yak_client-bin",
-    actual = ":yak-bin",
     visibility = ["PUBLIC"],
 )

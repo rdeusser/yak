@@ -23,7 +23,13 @@ cd examples/no_prelude
 ../../target/debug/yak --isolation-dir dev kill
 ```
 
-The repository has `YAK` files for its crates, but they name third-party crates as `//third-party/rust:<crate>`, which the repository no longer defines, so the yak build of this repository does not load.
+The repository also builds with yak. `yak build //app/yak:yak` builds the binary from the `YAK` files that `yak generate` writes from the `Cargo.toml` files (`ARCHITECTURE.md`, "Generated build files"). Run it with a binary built from this repository and its own `--isolation-dir`:
+
+```bash
+target/debug/yak --isolation-dir self build //app/yak:yak --show-output
+```
+
+After adding a workspace member, run `target/debug/yak generate` without `--force`, which keeps the `YAK` files that declare targets beside `cargo_package()`.
 
 On Windows, the build uses clang-cl when `-c cxx.windows_compiler_type=clang` is on the command line. The `toolchains` cell has no `.yakconfig` of its own, so the setting has no effect in the repository's `.yakconfig`.
 
@@ -134,15 +140,16 @@ The commit message names the upstream commit it ports, as `Ported from facebook/
 
 `facebook/buck2` builds inside Meta's internal repository, and its code marks what only that build uses (`#[cfg(fbcode_build)]` branches, `@oss-disable` and `@oss-enable` comments, `is_open_source()` checks, and `fbcode//` or `fbsource//` labels). This repository has none of these markers. A change ported from upstream keeps the open-source side of each marker and drops the rest.
 
-Upstream `BUCK` files load macros from Meta's cells and name crates by their path inside Meta's repository. A ported build file is named `YAK`, loads `//build_defs:rust.bzl` or `//build_defs:proto.bzl`, names third-party crates `//third-party/rust:<crate>` in place of `fbsource//third-party/rust:<crate>`, and names crates of this repository `//<path>:<crate>` in place of `//buck2/<path>:<crate>`.
+A port takes the `Cargo.toml` side of an upstream dependency change and drops the `BUCK` side, because `yak generate` derives the build files of the crates from `Cargo.toml`.
 
 ## Rust dependencies
 
-Each crate has a `Cargo.toml` and a `YAK` file, and a dependency change updates both:
+A crate's dependencies live in its `Cargo.toml`, which the yak build reads through the `crates` cell:
 
 1. Add the version to `[workspace.dependencies]` in the root `Cargo.toml` if it is new, and name it in the crate's `Cargo.toml` with `workspace = true`.
-2. Add the same dependency to the crate's `YAK` file. Third-party crates are named `//third-party/rust:<crate>`, and crates in this repository are named `//<path>:<crate>` (for example `//app/yak_core:yak_core`).
-3. Check the dependency against the crate dependency rules in `ARCHITECTURE.md`. `target/debug/yak build //app_dep_graph_rules:test_yak_dep_graph` fails when a dependency breaks one.
+2. Run `cargo build` or `cargo update --workspace`, so that `Cargo.lock` lists the dependency.
+3. If the crate is `app/yak`, update the client-only targets in `app/yak/YAK`, which list their dependencies by hand.
+4. Check the dependency against the crate dependency rules in `ARCHITECTURE.md`. `target/debug/yak build //app_dep_graph_rules:test_yak_dep_graph` fails when a dependency breaks one.
 
 ## Debugging and performance
 

@@ -1,0 +1,16 @@
+[package]
+name = "use_some_memory"
+version.workspace = true
+edition.workspace = true
+repository.workspace = true
+license.workspace = true
+
+[[bin]]
+name = "use_some_memory"
+path = "use_some_memory.rs"
+
+[dependencies]
+clap.workspace = true
+
+[lints]
+workspace = true

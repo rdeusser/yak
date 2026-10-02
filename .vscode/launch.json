@@ -26,7 +26,7 @@
             },
             "args": [
                 "build",
-                "//:yak"
+                "//app/yak:yak"
             ],
             "cwd": "${workspaceFolder}"
         },

@@ -63,8 +63,8 @@ The helper programs:
 | --- | --- | --- |
 | `THREE_BILLION_INSTRUCTIONS_BIN` | `shed/three_billion_instructions` | `cargo build -p three_billion_instructions --bin three_billion_instructions_bin` |
 | `SKETCH_SIZE_BIN` | `shed/setsketch` | `cargo build -p setsketch --bin sketch_size` |
-| `USE_SOME_MEMORY_BIN` | `shed/cgroups/use_some_memory` | It has a yak target but no Cargo target. |
-| `YAK_COMPLETION_VERIFY` | `shed/completion_verify` | It has a yak target but no Cargo target. |
+| `USE_SOME_MEMORY_BIN` | `shed/cgroups/use_some_memory` | `cargo build -p use_some_memory` |
+| `YAK_COMPLETION_VERIFY` | `shed/completion_verify`, which runs `bash`, `zsh`, and on Linux `fish` from `PATH` | `cargo build -p completion_verify` |
 | `INSTALLER_BIN`, `EARLY_EXIT_INSTALLER_BIN` | Installers for the `yak install` tests. | Their sources are not in this repository. |
 
 The Watchman tests in `core/io/` skip when `watchman` is not on `PATH`. The Go tests in `prelude/` skip when `go` is not on `PATH`.

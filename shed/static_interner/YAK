@@ -1,22 +1,3 @@
-load("//build_defs:rust.bzl", "rust_library")
+load("@crates//:workspace.bzl", "cargo_package")
 
-rust_library(
-    name = "static_interner",
-    srcs = glob(["src/**/*.rs"]),
-    crate_root = "src/lib.rs",
-    # yak uses every integration impl (`Allocative`, `Dupe`, `StrongHash`) on
-    # `Intern<T>`, so enable all features. Users of the published crate enable
-    # the features they need, and the default enables none.
-    features = [
-        "allocative",
-        "dupe",
-        "strong_hash",
-    ],
-    deps = [
-        "//allocative/allocative:allocative",
-        "//gazebo/dupe:dupe",
-        "//gazebo/strong_hash:strong_hash",
-        "//shed/lock_free_hashtable:lock_free_hashtable",
-        "//third-party/rust:equivalent",
-    ],
-)
+cargo_package()

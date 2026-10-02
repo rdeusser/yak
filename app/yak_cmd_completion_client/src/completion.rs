@@ -77,44 +77,20 @@ const GENERATED_TAG: &'static str = concat!("@", "generated");
 const COMPLETION_INSERTION_POINT: &'static str = "# %INSERT_OPTION_COMPLETION%";
 
 fn completion_wrapper(shell: Shell) -> &'static str {
-    #[cfg(yak_build)]
-    {
-        match shell {
-            Shell::Bash => completion_wrapper_bash::get(),
-            Shell::Fish => completion_wrapper_fish::get(),
-            Shell::Zsh => completion_wrapper_zsh::get(),
-            Shell::Powershell => completion_wrapper_powershell::get(),
-        }
-    }
-    #[cfg(not(yak_build))]
-    {
-        match shell {
-            Shell::Bash => include_str!("completion/completion-wrapper.bash"),
-            Shell::Fish => include_str!("completion/completion-wrapper.fish"),
-            Shell::Zsh => include_str!("completion/completion-wrapper.zsh"),
-            Shell::Powershell => include_str!("completion/completion-wrapper.ps1"),
-        }
+    match shell {
+        Shell::Bash => include_str!("completion/completion-wrapper.bash"),
+        Shell::Fish => include_str!("completion/completion-wrapper.fish"),
+        Shell::Zsh => include_str!("completion/completion-wrapper.zsh"),
+        Shell::Powershell => include_str!("completion/completion-wrapper.ps1"),
     }
 }
 
 fn options_wrapper(shell: Shell) -> &'static str {
-    #[cfg(yak_build)]
-    {
-        match shell {
-            Shell::Bash => options_wrapper_bash::get(),
-            Shell::Fish => options_wrapper_fish::get(),
-            Shell::Zsh => options_wrapper_zsh::get(),
-            Shell::Powershell => options_wrapper_powershell::get(),
-        }
-    }
-    #[cfg(not(yak_build))]
-    {
-        match shell {
-            Shell::Bash => include_str!("completion/options-wrapper.bash"),
-            Shell::Fish => include_str!("completion/options-wrapper.fish"),
-            Shell::Zsh => include_str!("completion/options-wrapper.zsh"),
-            Shell::Powershell => include_str!("completion/options-wrapper.ps1"),
-        }
+    match shell {
+        Shell::Bash => include_str!("completion/options-wrapper.bash"),
+        Shell::Fish => include_str!("completion/options-wrapper.fish"),
+        Shell::Zsh => include_str!("completion/options-wrapper.zsh"),
+        Shell::Powershell => include_str!("completion/options-wrapper.ps1"),
     }
 }
 

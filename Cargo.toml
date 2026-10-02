@@ -149,6 +149,7 @@ members = [
   "dice/dice_examples",
   "dice/dice_futures",
   "dice/dice_tests",
+  "dice/fuzzy_dice",
   "dice/read_dump",
   "games",
   "gazebo/cmp_any",
@@ -168,6 +169,8 @@ members = [
   "pagable_storage",
   "remote_execution/re_grpc",
   "remote_execution/re_grpc_proto",
+  "shed/cgroups/use_some_memory",
+  "shed/completion_verify",
   "shed/lock_free_hashtable",
   "shed/lock_free_vec",
   "shed/mini_vec",
@@ -175,6 +178,7 @@ members = [
   "shed/setsketch",
   "shed/static_interner",
   "shed/three_billion_instructions",
+  "starlark-rust/benchmark_memory",
   "starlark-rust/starlark",
   "starlark-rust/starlark_bin",
   "starlark-rust/starlark_derive",
@@ -331,7 +335,9 @@ prost = { version = "0.14.4", default-features = false }
 prost-types = { version = "0.14.4", features = ["std"], default-features = false }
 protoc-bin-vendored = "3.0.0"
 psutil = { version = "5.4.0", default-features = false, features = ["network"] }
+ptyprocess = "0.5.0"
 quick-xml = { version = "0.42.0", features = ["overlapped-lists", "serialize"] }
+quickcheck = "1.1"
 quote = "1.0.47"
 rand = "0.10.3"
 rand_chacha = "0.10"
@@ -417,6 +423,7 @@ triomphe = { version = "0.1.16", features = ["arc-swap"] }
 twox-hash = "2.1.4"
 uuid = { version = "1.26.1", features = ["rng-getrandom", "serde", "v4", "v5", "v6", "v7", "v8"] }
 vec1 = { version = "1.12.1", features = ["serde"] }
+vt100 = "0.16.2"
 walkdir = "2.3"
 watchman_client = "0.9"
 windows-sys = { version = "0.61.2", features = ["Win32_Foundation", "Win32_Globalization", "Win32_NetworkManagement_IpHelper", "Win32_NetworkManagement_Ndis", "Win32_NetworkManagement_WindowsFilteringPlatform", "Win32_Security", "Win32_Security_Authorization", "Win32_Security_Credentials", "Win32_Storage_FileSystem", "Win32_System_Console", "Win32_System_Environment", "Win32_System_IO", "Win32_System_JobObjects", "Win32_System_LibraryLoader", "Win32_System_Memory", "Win32_System_ProcessStatus", "Win32_System_Rpc", "Win32_System_SystemServices", "Win32_System_Threading", "Win32_UI_Shell"] }

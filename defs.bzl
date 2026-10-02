@@ -43,33 +43,3 @@ yak_bundle = rule(
         "_target_os_type": yak.target_os_type_arg(),
     },
 )
-
-def _pagable_transition_impl(platform: PlatformInfo, refs: struct) -> PlatformInfo:
-    val = refs.val[ConstraintValueInfo]
-    new_cfg = ConfigurationInfo(
-        constraints = platform.configuration.constraints | {val.setting.label: val},
-        values = platform.configuration.values,
-    )
-    return PlatformInfo(
-        label = platform.label,
-        configuration = new_cfg,
-    )
-
-_pagable_transition = transition(
-    impl = _pagable_transition_impl,
-    refs = {
-        "val": "//starlark-rust/starlark:pagable[enabled]",
-    },
-)
-
-def _pagable_alias_impl(ctx: AnalysisContext) -> list[Provider]:
-    return ctx.attrs.actual.providers
-
-# Builds `actual` with the `pagable` constraint of the starlark crate enabled.
-pagable_transition_alias = rule(
-    impl = _pagable_alias_impl,
-    attrs = {
-        "actual": attrs.dep(),
-    },
-    cfg = _pagable_transition,
-)

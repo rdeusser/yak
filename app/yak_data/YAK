@@ -1,43 +1,17 @@
-load("//build_defs:proto.bzl", "proto_srcs", "rust_protobuf_library")
+load("@crates//:workspace.bzl", "cargo_package")
 
-rust_protobuf_library(
-    name = "yak_data",
-    srcs = glob(["src/**/*.rs"]),
-    build_script = "build.rs",
-    proto_srcs = ":data_proto",
-    deps = [
-        "//allocative/allocative:allocative",
-        "//app/yak_host_sharing_proto:yak_host_sharing_proto",
-        "//app/yak_miniperf_proto:yak_miniperf_proto",
-        "//app/yak_proto_serde:yak_proto_serde",
-        "//gazebo/dupe:dupe",
-        "//gazebo/gazebo:gazebo",
-        "//pagable:pagable",
-        "//third-party/rust:derive_more",
-        "//third-party/rust:hex",
-        "//third-party/rust:prost-types",
-        "//third-party/rust:serde",
+cargo_package(include = [
+    "//app/yak_host_sharing_proto:proto",
+])
+
+# The build scripts of other protobuf crates import these files.
+filegroup(
+    name = "proto",
+    srcs = ["data.proto", "error.proto"],
+    visibility = [
+        "//app/yak_cli_proto:",
+        "//app/yak_forkserver_proto:",
+        "//app/yak_test_proto:",
+        "//app/yak_worker_proto:",
     ],
-)
-
-proto_srcs(
-    name = "data_proto",
-    srcs = [
-        "data.proto",
-        "error.proto",
-    ],
-    visibility = ["PUBLIC"],
-    deps = [
-        "//app/yak_host_sharing_proto:host_sharing.proto",
-    ],
-)
-
-export_file(
-    name = "error.proto",
-    visibility = ["PUBLIC"],
-)
-
-export_file(
-    name = "data.proto",
-    visibility = ["PUBLIC"],
 )

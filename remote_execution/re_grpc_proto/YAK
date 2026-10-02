@@ -1,13 +1,3 @@
-load("//build_defs:proto.bzl", "rust_protobuf_library")
+load("@crates//:workspace.bzl", "cargo_package")
 
-rust_protobuf_library(
-    name = "re_grpc_proto",
-    srcs = glob(["src/**/*.rs"]),
-    build_script = "build.rs",
-    protos = glob(["proto/**/*.proto"]),
-    deps = [
-        "//app/yak_proto_serde:yak_proto_serde",
-        "//third-party/rust:prost-types",
-        "//third-party/rust:serde",
-    ],
-)
+cargo_package()

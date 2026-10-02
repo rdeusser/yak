@@ -37,10 +37,8 @@ use yak_core::yak_env;
 use yak_fs::working_dir::AbsWorkingDir;
 use yak_wrapper_common::invocation_id::TraceId;
 
-// Cargo builds use jemalloc on Linux and macOS. A yak build (`cfg(yak_build)`) uses the system
-// allocator.
 #[global_allocator]
-#[cfg(all(any(target_os = "linux", target_os = "macos"), not(yak_build)))]
+#[cfg(any(target_os = "linux", target_os = "macos"))]
 static ALLOC: tikv_jemallocator::Jemalloc = tikv_jemallocator::Jemalloc;
 #[global_allocator]
 #[cfg(target_os = "windows")]

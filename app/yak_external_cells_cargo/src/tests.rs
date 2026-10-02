@@ -303,6 +303,7 @@ fn test_rustflags_of_every_platform_apply_to_every_crate() {
         &platforms_with_rustflags(&flags, &flags),
         std::path::Path::new("/"),
         "crates",
+        &BTreeMap::new(),
         &util_includes(),
     )
     .unwrap();
@@ -330,6 +331,7 @@ fn test_rustflags_that_differ_by_platform_select_on_it() {
         &platforms,
         std::path::Path::new("/"),
         "crates",
+        &BTreeMap::new(),
         &util_includes(),
     )
     .unwrap();
@@ -434,6 +436,7 @@ fn generate_workspace_bzl() -> String {
         &platforms(),
         std::path::Path::new("/"),
         "crates",
+        &BTreeMap::new(),
         &util_includes(),
     )
     .unwrap()
@@ -523,6 +526,7 @@ fn test_workspace_member_alias_names_the_library_by_directory() {
         std::path::Path::new("/"),
         "crates",
         &BTreeMap::new(),
+        &BTreeMap::new(),
     )
     .unwrap();
     assert!(
@@ -583,6 +587,7 @@ fn test_workspace_member_includes_files_of_other_packages() {
         std::path::Path::new("/"),
         "crates",
         &BTreeMap::new(),
+        &BTreeMap::new(),
     )
     .unwrap_err();
     assert!(
@@ -641,6 +646,7 @@ fn test_workspace_member_at_the_root() {
         std::path::Path::new("/ws"),
         "crates",
         &BTreeMap::new(),
+        &BTreeMap::new(),
     )
     .unwrap();
     assert!(out.contains("_WORKSPACE_DIR = \"\""));
@@ -672,6 +678,7 @@ fn test_workspace_duplicate_target_fails() {
         &platforms(),
         std::path::Path::new("/"),
         "crates",
+        &BTreeMap::new(),
         &BTreeMap::new(),
     )
     .unwrap_err();

@@ -1,14 +1,3 @@
-load("//build_defs:proto.bzl", "proto_srcs", "rust_protobuf_library")
+load("@crates//:workspace.bzl", "cargo_package")
 
-rust_protobuf_library(
-    name = "yak_action_metadata_proto",
-    srcs = glob(["src/**/*.rs"]),
-    build_script = "build.rs",
-    proto_srcs = ":yak_action_metadata_proto.proto",
-)
-
-proto_srcs(
-    name = "yak_action_metadata_proto.proto",
-    srcs = ["action_metadata.proto"],
-    visibility = ["PUBLIC"],
-)
+cargo_package()

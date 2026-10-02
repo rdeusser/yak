@@ -38,7 +38,7 @@ use std::time::Duration;
 
 use ptyprocess::PtyProcess;
 
-use crate::Shell;
+use crate::verify::Shell;
 
 /// Zsh runtime
 #[derive(Debug)]

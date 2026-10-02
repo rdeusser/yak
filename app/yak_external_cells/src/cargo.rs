@@ -565,12 +565,19 @@ async fn generate(
         .await?
         .dupe()?;
     let project_root = ctx.global_data().get_io_provider().project_root().dupe();
+    let cell_dirs = ctx
+        .get_cell_resolver()
+        .await?
+        .cells()
+        .map(|(name, cell)| (name.as_str().to_owned(), cell.path().to_string()))
+        .collect();
     let third_party = generate_third_party(&workspace.metadata, &workspace.platforms)?;
     let workspace = generate_workspace(
         &workspace.metadata,
         &workspace.platforms,
         project_root.root().as_path(),
         cell_name.as_str(),
+        &cell_dirs,
         &includes.0,
     )?;
 

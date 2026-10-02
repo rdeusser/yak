@@ -5,10 +5,6 @@ edition.workspace = true
 repository.workspace = true
 license.workspace = true
 
-[[bin]]
-name = "processor"
-path = "processor.rs"
-
 [build-dependencies]
 walkdir.workspace = true
 

@@ -1,17 +1,13 @@
-load(":defs.bzl", "pagable_transition_alias", "yak_bundle")
+load("@crates//:workspace.bzl", "cargo_workspace")
+load(":defs.bzl", "yak_bundle")
 
-# The transition builds yak with pagable enabled, whatever the configuration
-# of the target that depends on it.
-pagable_transition_alias(
-    name = "yak",
-    actual = "//app/yak:yak-bin",
-)
+cargo_workspace()
 
 # The client binary next to the daemon binary, the layout that the
 # client-only build expects. `yak.py` runs it.
 yak_bundle(
     name = "yak_bundle",
-    yak = "//:yak",
+    yak = "//app/yak:yak",
     yak_client = "//app/yak:yak_client-bin",
     visibility = ["PUBLIC"],
 )

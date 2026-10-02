@@ -67,7 +67,7 @@ A client restarts the daemon when the daemon's `DaemonConstraints` do not satisf
 - `app/yak_interpreter` holds the Starlark plumbing that build files, `.bzl` files, and BXL share (module paths, loaded modules, and the slots that downstream crates fill with globals).
 - `app/yak_interpreter_for_build` evaluates `YAK`, `.bzl`, and `PACKAGE` files and defines the build-file globals (`rule`, `attrs`, `select`, `read_config`, and others). `InterpreterResultsKey` and `EvalImportKey` live in `src/interpreter/calculation.rs`. `AttributeSpecExt::parse_params` checks each attribute value against the rule's `AttributeSpec` and converts it to a `CoercedAttr` through `AttrTypeCoerce` (`src/attrs/coerce.rs` and `src/attrs/coerce/`).
 - `app/yak_node` defines the target graph (`TargetNode`, `ConfiguredTargetNode`, `CoercedAttr`, `ConfiguredAttr`) and the traits through which other crates request nodes.
-- `app/yak_external_cells` serves cells whose files come from outside the repository, from the binary (`bundled`), from Git (`git`), from a Cargo workspace (`cargo`), or from a Go module (`go`). `src/generated.rs` serves the files of the `cargo` and `go` cells, which exist in memory apart from the third-party sources, and copies a third-party package's sources into `yak-out` when a build first reads them, declaring them to the materializer. `app/yak_external_cells_bundled` embeds `prelude/` in the binary at compile time (`build.rs` under Cargo, a generated `prelude/contents.rs` under yak).
+- `app/yak_external_cells` serves cells whose files come from outside the repository, from the binary (`bundled`), from Git (`git`), from a Cargo workspace (`cargo`), or from a Go module (`go`). `src/generated.rs` serves the files of the `cargo` and `go` cells, which exist in memory apart from the third-party sources, and copies a third-party package's sources into `yak-out` when a build first reads them, declaring them to the materializer. `app/yak_external_cells_bundled` embeds `prelude/` in the binary at compile time through `build.rs`.
 - `app/yak_external_cells_cargo` translates `cargo metadata` output into the `cargo` cell's build files: one per third-party package, a root `YAK` file of aliases, and a `workspace.bzl` whose `cargo_package` macro declares each workspace member's targets in the package of the member's directory. The macros export the files that a member includes from another generated package. It evaluates `cfg(...)` conditions against `rustc --print cfg` output. Its functions do no I/O. The `cargo` origin in `app/yak_external_cells/src/cargo.rs` runs `cargo` and `rustc` and reads the manifests through DICE. It scans the members' Rust files for `include!`, `include_str!`, and `include_bytes!` through a DICE key per file. `yak generate` reads the member list with the same crate.
 - `app/yak_external_cells_go` translates `go list -json` output into the `go` cell's build files: one per third-party module version, a root `YAK` file of aliases by import path, and a `module.bzl` whose `go_module` and `go_package` macros declare the targets of the module's packages. Each package belongs to the nearest build file at or above its directory. Its functions do no I/O. The `go` origin in `app/yak_external_cells/src/go.rs` runs `go list` for each GOOS and GOARCH pair. It reads `go.mod`, `go.sum`, the module's directory listings, and a header of each Go file through DICE, so an edit that leaves imports, build constraints, and `//go:embed` lines unchanged does not run `go list` again. `yak generate` (`app/yak_client/src/commands/generate.rs`) finds the project's `go.mod` files and configures a cell for each.
 - `app/yak_external_cells_starlark` writes the Starlark values of the generated build files for both translation crates.
@@ -127,7 +127,7 @@ Without an execution platform, this repository's build runs every action locally
 ### Build and tooling
 
 - `Cargo.toml` defines the Cargo workspace. CI builds and tests the repository with Cargo.
-- `.yakconfig`, the `YAK` files, `build_defs/`, `toolchains/`, and `third-party/` build the same crates with yak (see [Two build definitions](#two-build-definitions)).
+- `.yakconfig`, the `YAK` files, and `toolchains/` build the same crates with yak (see [Generated build files](#generated-build-files)).
 - `test.py` runs clippy, rustdoc, and the unit and doc tests. CI runs it after building the binary.
 - `integrations/rust-project` generates `rust-project.json` for rust-analyzer from yak targets.
 - `tools/starlark_fmt` formats Starlark and build files.
@@ -163,7 +163,7 @@ Code that needs the behavior depends on the interface crate.
   - `yak_build_api` and `yak_interpreter_for_build`
   - `yak_server` and `yak_server_commands`
   - `yak_bxl` and `yak_configured`
-- The client-only binary does not depend on the Remote Execution client. The yak build produces that binary (`yak_client-bin`, compiled with `--cfg client_only`), which leaves out the daemon, the server, and every late-binding implementation.
+- The client-only binary does not depend on the Remote Execution client. The yak build produces that binary (`//app/yak:yak_client-bin`, compiled with `--cfg client_only`), which leaves out the daemon, the server, and every late-binding implementation.
 
 `//app_dep_graph_rules:test_yak_dep_graph` checks the rules during analysis, so `yak build //app_dep_graph_rules:test_yak_dep_graph` fails when a dependency breaks one. CI runs no yak build, and the tech-debt tracker records that gap.
 
@@ -205,18 +205,24 @@ The daemon reports progress as `YakEvent`s, which the client renders and writes 
 
 ### Build flags
 
-Two `cfg` flags change what a crate compiles:
+`#[cfg(client_only)]` code compiles only in the client-only binary, which `app/yak/YAK` declares (see [Crate dependency rules](#crate-dependency-rules)).
 
-- `#[cfg(yak_build)]` code compiles only under yak. The macros in `build_defs/rust.bzl` set the flag. Under Cargo, `app/yak_external_cells_bundled` embeds the prelude through `build.rs`, and `app/yak/bin/yak.rs` sets jemalloc as the global allocator on Linux and macOS.
-- `#[cfg(client_only)]` code compiles only in the client-only binary (see [Crate dependency rules](#crate-dependency-rules)).
+### Generated build files
 
-### Two build definitions
+`Cargo.toml` and `Cargo.lock` define the crates and their dependencies for both builds.
+`yak generate` writes a `YAK` file for each workspace member that calls `cargo_package()`, and the `crates` cell declares the targets from `cargo metadata` (`website/docs/users/languages/rust/cargo.md`).
+A crate's targets keep the names of its Cargo targets, such as `//app/yak_core:yak_core` and the binary `//app/yak:yak`.
 
-Each crate has a `Cargo.toml` and a `YAK` file, and a change to its dependencies updates both.
-The `YAK` files load their Rust macros from `build_defs/rust.bzl` and `build_defs/proto.bzl`, and they name crates in this repository as `//<path>:<crate>` (for example `//app/yak_core:yak_core`).
-They name third-party crates as `//third-party/rust:<crate>`, which this repository no longer defines, so the yak build of this repository does not load.
-`toolchains/YAK` defines the toolchains the build uses. `third-party/proto/` provides `protoc`, and `third-party/win/` provides the Windows libraries.
-`.yakconfig` sets `[external_cells] prelude = bundled`, so a yak build of this repository loads the prelude embedded in the running binary. Changes to `prelude/` take effect after a rebuild of the binary.
+These `YAK` files declare what Cargo cannot express beside the generated targets:
+
+- `app/yak/YAK` declares the client-only library and binary (`yak_client-bin`), because a Cargo package builds with one set of dependencies.
+- The root `YAK` declares `yak_bundle`, which puts the client-only binary next to the daemon binary for `yak.py`.
+- `app/yak_data`, `app/yak_host_sharing_proto`, and `app/yak_subscription_proto` declare `proto` filegroups, and the protobuf crates whose build scripts import those files name them in `include`.
+- `app/yak_external_cells_bundled/YAK` names `prelude//:source_listing` in `include`, because `build.rs` embeds the prelude.
+
+`yak generate --force` replaces these files with the generated ones.
+`.yakconfig` reads the `prelude` cell from `prelude/`, so a build of this repository uses the prelude of the working tree. An edit of `prelude/` reaches the next build, but an edit that the running binary cannot evaluate breaks the build until the binary is rebuilt.
+`toolchains/YAK` defines the toolchains the build uses.
 
 ### Memory
 

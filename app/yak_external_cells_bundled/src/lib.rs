@@ -23,12 +23,6 @@ pub struct BundledCell {
     pub is_testing: bool,
 }
 
-#[cfg(yak_build)]
-mod prelude {
-    include!("prelude/contents.rs");
-}
-
-#[cfg(not(yak_build))]
 mod prelude {
     include!(concat!(env!("OUT_DIR"), "/include.rs"));
 }

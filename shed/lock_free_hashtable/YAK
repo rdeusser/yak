@@ -1,31 +1,3 @@
-load("//build_defs:rust.bzl", "rust_binary", "rust_library")
+load("@crates//:workspace.bzl", "cargo_package")
 
-rust_library(
-    name = "lock_free_hashtable",
-    srcs = glob(["src/**/*.rs"]),
-    crate_root = "src/lib.rs",
-    features = ["allocative"],
-    deps = [
-        "//allocative/allocative:allocative",
-        "//third-party/rust:atomic",
-        "//third-party/rust:bytemuck",
-        "//third-party/rust:parking_lot",
-    ],
-)
-
-rust_binary(
-    name = "stress",
-    srcs = ["examples/stress.rs"],
-    deps = [
-        ":lock_free_hashtable",
-        "//third-party/rust:num_cpus",
-    ],
-)
-
-rust_binary(
-    name = "bench",
-    srcs = ["examples/bench.rs"],
-    deps = [
-        ":lock_free_hashtable",
-    ],
-)
+cargo_package()

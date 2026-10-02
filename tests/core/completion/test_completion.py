@@ -20,7 +20,7 @@ pytestmark = pytest.mark.needs_binary("YAK_COMPLETION_VERIFY")
 
 IS_LINUX: bool = platform.system() == "Linux"
 
-# Downloading fish on Mac is not straightforward, so only test it on Linux
+# `completion_verify` runs the shells from `PATH`. Only Linux tests fish.
 SHELLS = ["bash", "fish", "zsh"] if IS_LINUX else ["bash", "zsh"]
 
 
@@ -35,7 +35,7 @@ def completion_test(
 ) -> None:
     for shell in shells:
         if shell == "fish" and not IS_LINUX:
-            # As above, not supported on Mac
+            # As above, only Linux tests fish.
             continue
 
         # shell=shell is a trick to get the variable captured by value

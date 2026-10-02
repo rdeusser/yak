@@ -2,12 +2,11 @@
 root = .
 prelude = prelude
 toolchains = toolchains
+# The third-party crates of the Cargo workspace, which yak generates from `cargo metadata`.
+crates = .crates
 
 [cell_aliases]
 config = prelude
-
-[external_cells]
-prelude = bundled
 
 [buildfile]
 name = YAK
@@ -25,3 +24,6 @@ ignore = \
     .jj, \
     .git, \
     target
+
+[external_cells]
+crates = cargo

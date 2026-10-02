@@ -211,6 +211,23 @@ async def test_generate_runs_a_build_script_in_the_workspace_layout(yak: Yak) ->
     assert result.stdout == "api=v2 file=crates/gen/src/main.rs\n"
 
 
+@yak_test(data_dir="includecell")
+async def test_generate_includes_the_files_of_another_cell(yak: Yak) -> None:
+    # `include` of `crates/gen` names the `source_listing` of the `assets`
+    # cell, which lists the files of its package `sub` too.
+    await yak.generate()
+    config = yak.cwd / ".yakconfig"
+    config.write_text(
+        config.read_text().replace("[cells]\n", "[cells]\n  assets = assets\n", 1)
+    )
+    result = await yak.run("//crates/gen")
+    assert result.stdout == "assets=top sub\n"
+
+    (yak.cwd / "assets" / "sub" / "sub.txt").write_text("edited\n")
+    result = await yak.run("//crates/gen")
+    assert result.stdout == "assets=top edited\n"
+
+
 @yak_test(data_dir="linksmetadata")
 async def test_generate_passes_links_metadata_to_build_scripts(yak: Yak) -> None:
     # `sys` sets `links = "answer"`, and its build script reports a directory
@@ -298,7 +315,7 @@ async def test_generate_runs_tests_as_cargo_test_does(yak: Yak) -> None:
     )
     await expect_failure(
         yak.targets("//probe:"),
-        stderr_regex="`test_data` takes labels of targets in this cell",
+        stderr_regex="`test_data` takes labels of targets, such as",
     )
 
     # The manifest no longer declares yak's inputs.

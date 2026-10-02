@@ -9,18 +9,10 @@
  */
 
 use std::env;
-use std::ffi::OsString;
 use std::io;
 use std::path::Path;
-#[cfg(not(yak_build))]
 use std::path::PathBuf;
 
-fn get_env(key: &str) -> Option<OsString> {
-    println!("cargo:rerun-if-env-changed={key}");
-    env::var_os(key)
-}
-
-#[cfg(not(yak_build))]
 unsafe fn set_var(
     var: &str,
     override_var: &str,
@@ -50,35 +42,27 @@ unsafe fn set_var(
 ///
 /// Note: repo root is expected to be a relative or absolute path to the root of the repository.
 unsafe fn maybe_set_protoc() {
-    #[cfg(not(yak_build))]
-    {
-        // `cargo build` of `yak` does not require external `protoc` dependency
-        // because it uses prebuilt bundled `protoc` binary from `protoc-bin-vendored` crate.
-        // However, prebuilt `protoc` binaries do not work in NixOS builds, see
-        // https://github.com/facebook/buck2/issues/65
-        // So for NixOS builds path to `protoc` binary can be overridden with
-        // `YAK_BUILD_PROTOC` environment variable.
-        unsafe {
-            set_var(
-                "PROTOC",
-                "YAK_BUILD_PROTOC",
-                protoc_bin_vendored::protoc_bin_path(),
-            );
-        }
+    // The build does not require an external `protoc`, because it uses the prebuilt `protoc` of
+    // the `protoc-bin-vendored` crate. Prebuilt `protoc` binaries do not work in NixOS builds
+    // (https://github.com/facebook/buck2/issues/65), so the `YAK_BUILD_PROTOC` environment
+    // variable can name another `protoc`.
+    unsafe {
+        set_var(
+            "PROTOC",
+            "YAK_BUILD_PROTOC",
+            protoc_bin_vendored::protoc_bin_path(),
+        );
     }
 }
 
 /// Set $PROTOC_INCLUDE.
 unsafe fn maybe_set_protoc_include() {
-    #[cfg(not(yak_build))]
-    {
-        unsafe {
-            set_var(
-                "PROTOC_INCLUDE",
-                "YAK_BUILD_PROTOC_INCLUDE",
-                protoc_bin_vendored::include_path(),
-            );
-        }
+    unsafe {
+        set_var(
+            "PROTOC_INCLUDE",
+            "YAK_BUILD_PROTOC_INCLUDE",
+            protoc_bin_vendored::include_path(),
+        );
     }
 }
 
@@ -138,15 +122,7 @@ impl Builder {
     where
         P: AsRef<Path>,
     {
-        let Self { mut tonic } = self;
-
-        // yak likes to set $OUT in a genrule, while Cargo likes to set $OUT_DIR.
-        // If we have $OUT set only, move it into the config
-        if get_env("OUT_DIR").is_none() {
-            if let Some(out) = get_env("OUT") {
-                tonic = tonic.out_dir(out);
-            }
-        }
+        let Self { tonic } = self;
 
         // Tell Cargo that if the given file changes, to rerun this build script.
         for proto_file in protos {

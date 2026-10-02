@@ -1,0 +1,25 @@
+[package]
+name = "completion_verify"
+version.workspace = true
+edition.workspace = true
+repository.workspace = true
+license.workspace = true
+
+# The unit tests run bash, fish, and zsh, which the machines that run `cargo test` may lack. The
+# completion tests in `tests/core/completion` run the binary.
+[[bin]]
+name = "completion_verify"
+path = "src/main.rs"
+test = false
+
+[dependencies]
+clap.workspace = true
+
+[target.'cfg(unix)'.dependencies]
+nix.workspace = true
+ptyprocess.workspace = true
+tempfile.workspace = true
+vt100.workspace = true
+
+[lints]
+workspace = true

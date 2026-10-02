@@ -1,24 +1,15 @@
-load("//build_defs:proto.bzl", "proto_srcs", "rust_protobuf_library")
+load("@crates//:workspace.bzl", "cargo_package")
 
-rust_protobuf_library(
-    name = "yak_host_sharing_proto",
-    srcs = glob(["src/**/*.rs"]),
-    build_script = "build.rs",
-    proto_srcs = ":host_sharing.proto",
-    deps = [
-        "//allocative/allocative:allocative",
-        "//third-party/rust:serde",
-    ],
-)
+cargo_package()
 
-proto_srcs(
-    name = "host_sharing.proto",
+# The build scripts of other protobuf crates import these files.
+filegroup(
+    name = "proto",
     srcs = ["host_sharing.proto"],
-    visibility = ["PUBLIC"],
-)
-
-export_file(
-    name = "host_sharing_proto",
-    src = "host_sharing.proto",
-    visibility = ["PUBLIC"],
+    visibility = [
+        "//app/yak_cli_proto:",
+        "//app/yak_data:",
+        "//app/yak_forkserver_proto:",
+        "//app/yak_test_proto:",
+    ],
 )

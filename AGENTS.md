@@ -23,7 +23,7 @@ The fork is named yak. The binary is `yak`, it reads `YAK` build files and `.yak
 | `prelude/` | Starlark rules and toolchains, which the binary embeds. |
 | `remote_execution/` | The Remote Execution API client. |
 | `allocative/`, `gazebo/`, `pagable*/`, `shed/`, `superconsole/`, `host_sharing/` | Libraries the binary uses. |
-| `YAK` files, `.yakconfig`, `build_defs/`, `toolchains/`, `third-party/` | The yak build of this repository. |
+| `YAK` files, `.yakconfig`, `toolchains/` | The yak build of this repository, generated from the `Cargo.toml` files by `yak generate`. |
 | `examples/` | Example projects to run a build against. |
 | `tests/` | Integration tests (pytest) that run `target/debug/yak` against small projects. `tests/README.md` shows how to run them. |
 | `website/` | The user documentation site. `website/docs/` holds its pages, and `website/gen_docs.py` generates the reference pages into it. |
@@ -49,7 +49,7 @@ To check behavior end to end, run `target/debug/yak` in a project under `example
 
 - The fork does not merge `facebook/buck2`. It ports single upstream commits under yak names, as `docs/developers/basics.md` describes.
 - Code ported from `facebook/buck2` keeps only its open-source side. Drop `#[cfg(fbcode_build)]` branches, `@oss-disable` lines, `is_open_source()` checks, and `fbcode//` or `fbsource//` labels (`docs/developers/basics.md`).
-- A dependency change updates both the crate's `Cargo.toml` and its `YAK` file. `docs/developers/basics.md` gives the steps, including `third-party/rust/` for new third-party crates.
+- A dependency change updates the crate's `Cargo.toml` and `Cargo.lock`. `yak generate` derives the `YAK` files of the crates from them, and `docs/developers/basics.md` gives the steps.
 - Check new crate dependencies against the late-binding and dependency rules in `ARCHITECTURE.md`. The yak build checks them (`docs/developers/basics.md`), but CI does not run the yak build.
 - Read files, yakconfig, and other build state inside DICE computations only through DICE, so invalidation stays correct.
 - `prelude/` changes reach a build only after the binary is rebuilt, because the binary embeds the prelude.

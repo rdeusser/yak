@@ -51,22 +51,25 @@ fn write_include_file(prelude: &Path, mut include_file: impl io::Write) -> io::R
         "pub(crate) const DATA: &[crate::BundledFile] = &["
     )?;
 
-    for res in walkdir::WalkDir::new(prelude) {
+    // A yak build runs the script in a tree of symlinks to the prelude's files. Sorting keeps the
+    // output the same on every machine.
+    for res in walkdir::WalkDir::new(prelude)
+        .follow_links(true)
+        .sort_by_file_name()
+    {
         let entry = res.map_err(|e| e.into_io_error().unwrap())?;
         if !entry.file_type().is_file() {
             continue;
         }
 
+        let path = as_unix_like(entry.path().strip_prefix(prelude).unwrap());
         writeln!(include_file, "crate::BundledFile {{")?;
+        writeln!(include_file, "  path: r\"{path}\",")?;
+        // The path is relative to the package, because a yak build compiles the crate in another
+        // directory than the one the script ran in.
         writeln!(
             include_file,
-            "  path: r\"{}\",",
-            as_unix_like(entry.path().strip_prefix(prelude).unwrap())
-        )?;
-        writeln!(
-            include_file,
-            "  contents: include_bytes!(r\"{}\"),",
-            entry.path().display()
+            "  contents: include_bytes!(concat!(env!(\"CARGO_MANIFEST_DIR\"), r\"/../../prelude/{path}\")),"
         )?;
 
         let exec_bit;

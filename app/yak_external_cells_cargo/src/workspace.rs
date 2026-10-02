@@ -39,7 +39,8 @@ use crate::third_party::library_label;
 use crate::third_party::script_run_label;
 
 /// The macros that the build files of the workspace call. `_WORKSPACE_DIR` is the directory of
-/// the workspace relative to the project root, `_MEMBERS` holds the data of each member by its
+/// the workspace relative to the project root, `_CELL_DIRS` holds the directory of each cell
+/// relative to the project root by the cell's name, `_MEMBERS` holds the data of each member by its
 /// package, `_EXPORTS` holds, by package, the files of the package that other members include
 /// and the packages that include each, and `_RUSTFLAGS` holds the flags of Cargo's configuration
 /// when every platform has the same. The `platform` data of a member holds them otherwise.
@@ -50,8 +51,8 @@ def cargo_package(include = [], test_data = []):
     The member builds from the files of its directory and the files that its Rust sources name in
     `include!`, `include_str!`, and `include_bytes!`. `include` names the targets of other
     packages whose files its crates read at compile time, and `test_data` the targets whose files
-    its tests read at run time, such as `filegroup`s. Their files appear at their paths in the
-    workspace."""
+    its tests read at run time, such as `filegroup`s. The targets can belong to other cells inside
+    the workspace's directory. Their files appear at their paths in the workspace."""
     member = _MEMBERS.get(package_name())
     if member == None:
         fail("`cargo_package()` belongs in the build file of a member of the Cargo workspace at `{}`, and `{}` is not one".format(_WORKSPACE_DIR or ".", package_name() or "."))
@@ -81,15 +82,20 @@ def _package_dirs(labels, arg):
     dirs = {}
     for label in labels:
         if label.startswith(":"):
-            package = package_name()
-        elif label.startswith("//"):
-            package = label.removeprefix("//").split(":")[0]
+            cell, package = get_cell_name(), package_name()
+        elif "//" in label:
+            cell, rest = label.removeprefix("@").split("//", 1)
+            cell = cell or get_cell_name()
+            package = rest.split(":")[0]
         else:
-            fail("`{}` takes labels of targets in this cell, such as `//crates/data:testdata`, and `{}` is not one".format(arg, label))
-        if package == _WORKSPACE_DIR:
+            fail("`{}` takes labels of targets, such as `//crates/data:testdata`, and `{}` is not one".format(arg, label))
+        if cell not in _CELL_DIRS:
+            fail("`{}` names `{}`, and `{}` is no cell of the project".format(arg, label, cell))
+        path = "/".join([p for p in [_CELL_DIRS[cell], package] if p])
+        if path == _WORKSPACE_DIR:
             dirs[label] = ""
-        elif package.startswith(prefix):
-            dirs[label] = package.removeprefix(prefix)
+        elif path.startswith(prefix):
+            dirs[label] = path.removeprefix(prefix)
         else:
             fail("`{}` names `{}`, whose package is outside the Cargo workspace at `{}`".format(arg, label, _WORKSPACE_DIR or "."))
     return dirs
@@ -474,13 +480,15 @@ pub fn member_dirs(metadata: &Metadata) -> yak_error::Result<Vec<String>> {
 
 /// Writes `workspace.bzl` for the members of the workspace. `project_root` is the directory
 /// that the workspace's directory is relative to, and `cell` is the name of the cargo cell that
-/// holds the third-party packages. `includes` maps the directory of a member, relative to the
+/// holds the third-party packages. `cell_dirs` maps the name of each cell of the project to its
+/// directory relative to the project root. `includes` maps the directory of a member, relative to the
 /// workspace's directory, to the files of other packages that its Rust files include.
 pub fn generate_workspace(
     metadata: &Metadata,
     platforms: &[CargoPlatform],
     project_root: &Path,
     cell: &str,
+    cell_dirs: &BTreeMap<String, String>,
     includes: &BTreeMap<String, Vec<IncludedFile>>,
 ) -> yak_error::Result<String> {
     let graph = Graph::new(metadata);
@@ -761,6 +769,14 @@ pub fn generate_workspace(
          _WORKSPACE_DIR = ",
     );
     Value::str(&workspace_dir).render(&mut out);
+    out.push_str("\n\n_CELL_DIRS = ");
+    Value::Dict(
+        cell_dirs
+            .iter()
+            .map(|(name, dir)| (name.clone(), Value::str(dir)))
+            .collect(),
+    )
+    .render(&mut out);
     out.push_str("\n\n_MEMBERS = ");
     Value::Dict(values).render(&mut out);
     out.push_str("\n\n_EXPORTS = ");

@@ -1,12 +1,3 @@
-load("//build_defs:rust.bzl", "rust_library")
+load("@crates//:workspace.bzl", "cargo_package")
 
-rust_library(
-    name = "yak_hash",
-    srcs = glob(["src/**/*.rs"]),
-    deps = [
-        "//gazebo/dupe:dupe",
-        "//third-party/rust:dashmap",
-        "//third-party/rust:fxhash",
-        "//third-party/rust:indexmap",
-    ],
-)
+cargo_package()

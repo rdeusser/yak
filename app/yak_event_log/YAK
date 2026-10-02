@@ -1,34 +1,3 @@
-load("//build_defs:rust.bzl", "rust_library")
+load("@crates//:workspace.bzl", "cargo_package")
 
-rust_library(
-    name = "yak_event_log",
-    srcs = glob(["src/**/*.rs"]),
-    deps = [
-        "//allocative/allocative:allocative",
-        "//app/yak_cli_proto:yak_cli_proto",
-        "//app/yak_common:yak_common",
-        "//app/yak_data:yak_data",
-        "//app/yak_error:yak_error",
-        "//app/yak_event_observer:yak_event_observer",
-        "//app/yak_events:yak_events",
-        "//app/yak_fs:yak_fs",
-        "//app/yak_wrapper_common:yak_wrapper_common",
-        "//gazebo/dupe:dupe",
-        "//gazebo/gazebo:gazebo",
-        "//third-party/rust:async-compression",
-        "//third-party/rust:futures",
-        "//third-party/rust:itertools",
-        "//third-party/rust:jiff",
-        "//third-party/rust:pin-project",
-        "//third-party/rust:prost",
-        "//third-party/rust:prost-types",
-        "//third-party/rust:regex",
-        "//third-party/rust:serde",
-        "//third-party/rust:serde_json",
-        "//third-party/rust:shlex",
-        "//third-party/rust:tokio",
-        "//third-party/rust:tokio-stream",
-        "//third-party/rust:tokio-util",
-        "//third-party/rust:tracing",
-    ],
-)
+cargo_package()

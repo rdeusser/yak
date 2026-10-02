@@ -1,26 +1,3 @@
-load("//build_defs:rust.bzl", "rust_test")
+load("@crates//:workspace.bzl", "cargo_package")
 
-filegroup(
-    name = "tests",
-    srcs = glob([
-        "src/**/*.golden",
-        "src/**",
-    ]),
-    visibility = ["PUBLIC"],
-)
-
-rust_test(
-    name = "yak_error_tests",
-    srcs = glob(["src/**/*.rs"]),
-    env = {
-        # Some of our tests include testcase files relative to CARGO_MANIFEST_DIR.
-        # This is a hack that allows both `cargo test` and `yak test` to work.
-        "CARGO_MANIFEST_DIR": "$(location :tests)",
-    },
-    deps = [
-        "//app/yak_error:yak_error",
-        "//app/yak_util:yak_util",
-        "//starlark-rust/starlark:starlark",
-        "//third-party/rust:anyhow",
-    ],
-)
+cargo_package()

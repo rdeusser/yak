@@ -16,21 +16,25 @@ def _check_client_to_re_path(ctx: AnalysisContext):
         m += "".join(["\n" + str(t) for t in path])
         fail(m)
 
+def _outside_app_yak(targets):
+    # The library and binaries of `app/yak` share the dependencies of its `Cargo.toml`.
+    return filter(lambda t: not str(t.label).startswith("root//app/yak:"), targets)
+
 def _check_late_binding_only(ctx: AnalysisContext):
     for all_paths in ctx.attrs.late_binding_only_paths:
         all_paths = list(all_paths)
         target = all_paths.pop()
-        all_paths.pop(0)
-        if len(all_paths) != 0:
+        remainder = _outside_app_yak(all_paths)
+        if len(remainder) != 0:
             m = "Late-binding-only crate `" + str(target.label) + "` may not be depended on by:"
-            m += "".join(["\n" + str(p.label) for p in all_paths])
+            m += "".join(["\n" + str(p.label) for p in remainder])
             fail(m)
 
 def _check_top_level_only(ctx: AnalysisContext):
     for all_paths in ctx.attrs.top_level_only_paths:
         all_paths = list(all_paths)
         target = all_paths.pop()
-        remainder = filter(lambda t: not str(t.label).startswith("root//app/yak:"), all_paths)
+        remainder = _outside_app_yak(all_paths)
 
         if len(remainder) != 0:
             m = "Top-level-only crate `" + str(target.label) + "` may not be depended on by:"
@@ -65,7 +69,7 @@ _test_yak_dep_graph = rule(
 
 _CLIENT_BIN = "//app/yak:yak_client-bin"
 
-_YAK_BIN = "//app/yak:yak-bin"
+_YAK_BIN = "//app/yak:yak"
 
 _RE_CLIENT_TARGET = "//remote_execution/re_grpc:remote_execution"
 

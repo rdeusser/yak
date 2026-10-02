@@ -1,30 +1,3 @@
-load("//build_defs:rust.bzl", "rust_binary")
+load("@crates//:workspace.bzl", "cargo_package")
 
-rust_binary(
-    name = "fuzzy_dice",
-    srcs = glob(
-        ["src/**/*.rs"],
-    ),
-    deps = [
-        "//allocative/allocative:allocative",
-        "//dice/dice:dice",
-        "//dice/dice_futures:dice_futures",
-        "//gazebo/dupe:dupe",
-        "//pagable:pagable",
-        "//third-party/rust:anyhow",
-        "//third-party/rust:async-trait",
-        "//third-party/rust:clap",
-        "//third-party/rust:crossbeam",
-        "//third-party/rust:derivative",
-        "//third-party/rust:derive_more",
-        "//third-party/rust:futures",
-        "//third-party/rust:parking_lot",
-        "//third-party/rust:quickcheck",
-        "//third-party/rust:serde",
-        "//third-party/rust:serde_json",
-        "//third-party/rust:thiserror",
-        "//third-party/rust:tokio",
-        "//third-party/rust:tracing-subscriber",
-        "//third-party/rust:uuid",
-    ],
-)
+cargo_package()

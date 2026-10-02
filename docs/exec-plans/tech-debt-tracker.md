@@ -5,11 +5,6 @@ Counts and results are from 2026-09-26 unless an entry gives another date. Comma
 
 ## Build and verification
 
-### The yak build of this repository has no third-party crates
-
-The `YAK` files of the repository name third-party crates as `//third-party/rust:<crate>`, but the repository no longer has a `third-party/rust` package or a tool that generates one, so `yak build //:yak` fails to load.
-Remove this entry when the repository defines its third-party Rust crates for yak again.
-
 ### The repository needs nightly Rust and tokio's unstable API
 
 `rust-toolchain.toml` pins a nightly toolchain, and the crates enable 23 unstable features. On 2026-10-02, most had stable replacements of one or a few lines each, or mechanical rewrites (30 `try` blocks, 21 `box` patterns, 8 trait aliases, 10 `macro` definitions). Two features need API changes:
@@ -37,10 +32,15 @@ Remove this entry when the workflow passes.
 
 ### The crate dependency rules run only in the Yak build
 
-`//app_dep_graph_rules:test_yak_dep_graph` checks the rules in `app_dep_graph_rules/rules.bzl` during analysis, and `yak build //app_dep_graph_rules:test_yak_dep_graph` succeeded on Linux on 2026-09-28.
+`//app_dep_graph_rules:test_yak_dep_graph` checks the rules in `app_dep_graph_rules/rules.bzl` during analysis, and `yak build //app_dep_graph_rules:test_yak_dep_graph` succeeded on macOS on 2026-10-02, with the build files that `yak generate` writes.
 CI runs no Yak build, so a change that breaks a rule passes CI.
 
 Remove this entry when CI runs the check.
+
+### Two Rust tests are compiled out
+
+`app/yak_interpreter/src/dice.rs` compiles `pagable_starlark_test` only under `cfg(all(test, yak_build))`, and `create_minimal_for_test` in `app/yak_resource_control/src/cgroup.rs` returns `None` unless `cfg(yak_build)` is set. No build sets `yak_build`, so neither `cargo test` nor `yak test` runs these tests. The cgroup test also reads `PREP_CGROUP_SCRIPT`, which names `shed/cgroups/prep_cgroup.sh` and which no build sets.
+Remove this entry when both tests run under `cargo test`, or when they are deleted.
 
 ### The `.elapsed()` ban is unenforced
 
@@ -65,15 +65,6 @@ Remove this entry when each build reads lint levels from one source, or when a c
 `cargo build --bin=yak` prints ``patch `bindgen v0.72.1 (...)` was not used in the crate graph``.
 
 Remove this entry when the warning no longer appears.
-
-### `//shed/completion_verify` needs `dnf`
-
-`download_rpm` in `shed/rpm_download/packages.bzl` runs `dnf download` and `rpm2archive`, so `//shed/completion_verify/packages:zsh` and `//shed/completion_verify/packages:fish` build only where those tools exist, such as on Fedora.
-On Linux, `//shed/completion_verify:completion_verify` takes both packages as resources.
-The completion tests need the binary through `YAK_COMPLETION_VERIFY`, and they skip without it (`tests/README.md`).
-On Linux on 2026-09-28, a `completion_verify` built with Cargo from `shed/completion_verify/src/` ran them. Its `completion_verify.resources.json` pointed at directories that link the Debian `fish` and `zsh` into the layout of the RPMs.
-
-Remove this entry when the completion packages build without `dnf`.
 
 ### `yak_miniperf_test` runs no test
 
@@ -163,6 +154,11 @@ Remove this entry when the daemon computes the identities without running the to
 
 `system_toolchains()` passes `tool_identity.clang` to `system_cxx_toolchain`, which runs the MSVC tools of `prelude//toolchains/msvc:msvc_tools` on Windows. An upgrade of MSVC leaves the keys of C and C++ actions unchanged there. The archiver of the toolchain (`ar` on other systems) carries no identity.
 Remove this entry when the Windows toolchain carries an identity of the MSVC compiler.
+
+### The C++ toolchain of this repository carries no tool identity
+
+`toolchains/YAK` declares `system_cxx_toolchain` with `gcc` and `g++`, and the daemon computes identities only for `rustc`, `go`, and `clang` (`app/yak_server/src/tool_identity.rs`). An upgrade of gcc leaves the keys of the actions that run `gcc` or `g++` unchanged, such as the links of Rust binaries.
+Remove this entry when the toolchain carries an identity of its compiler.
 
 ### The C compiles of the Go standard library miss a shared cache
 

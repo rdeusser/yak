@@ -11,8 +11,8 @@
 use std::io;
 use std::path::Path;
 
-use crate::extract_from_outputs;
 use crate::runtime::BashRuntime;
+use crate::verify::extract_from_outputs;
 
 pub(crate) fn run_bash(
     completion_name: &str,

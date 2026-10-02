@@ -1,22 +1,6 @@
-load("//build_defs:proto.bzl", "proto_srcs", "rust_protobuf_library")
+load("@crates//:workspace.bzl", "cargo_package")
 
-rust_protobuf_library(
-    name = "yak_test_proto",
-    srcs = glob(["src/**/*.rs"]),
-    build_script = "build.rs",
-    proto_srcs = ":yak_test_proto.proto",
-    deps = [
-        "//app/yak_data:yak_data",
-        "//app/yak_host_sharing_proto:yak_host_sharing_proto",
-        "//third-party/rust:prost-types",
-    ],
-)
-
-proto_srcs(
-    name = "yak_test_proto.proto",
-    srcs = ["test.proto"],
-    visibility = ["PUBLIC"],
-    deps = [
-        "//app/yak_data:data_proto",
-    ],
-)
+cargo_package(include = [
+    "//app/yak_data:proto",
+    "//app/yak_host_sharing_proto:proto",
+])

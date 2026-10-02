@@ -1,34 +1,3 @@
-load("//build_defs:rust.bzl", "rust_binary", "rust_library")
+load("@crates//:workspace.bzl", "cargo_package")
 
-rust_library(
-    name = "yak_resources",
-    srcs = [
-        "src/lib.rs",
-        "src/manifest.rs",
-    ],
-    # Other targets use the published crate, `//third-party/rust:yak-resources`.
-    visibility = [],
-    deps = [
-        "//third-party/rust:dunce",
-        "//third-party/rust:once_cell",
-        "//third-party/rust:serde",
-        "//third-party/rust:serde_json",
-        "//third-party/rust:thiserror",
-    ],
-)
-
-rust_binary(
-    name = "hello",
-    srcs = ["tests/src/hello.rs"],
-)
-
-rust_binary(
-    name = "yak_resources_test",
-    srcs = ["tests/src/main.rs"],
-    resources = {
-        "hello_binary": ":hello",
-    },
-    deps = [
-        ":yak_resources",
-    ],
-)
+cargo_package()
