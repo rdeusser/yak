@@ -6,8 +6,11 @@
  * above-listed licenses.
  */
 
-//! A snapshot of the metadata of the project's files, which the notify watcher compares when the
-//! operating system reports that it dropped events.
+//! A snapshot of the metadata of the project's files, which the notify watcher keeps current from
+//! its events.
+//!
+//! The operating system reports a renamed or removed directory as one event for the directory.
+//! The snapshot names the paths that were under it, so each of them is invalidated.
 //!
 //! A build that writes many outputs can overflow the event queue of FSEvents or inotify. Dropping
 //! the DICE graph after an overflow makes the next build analyze everything again, and on macOS
@@ -15,9 +18,12 @@
 //! changed since the earlier one, including the changes whose events were dropped, so only those
 //! files are invalidated.
 
-use std::collections::HashMap;
+use std::collections::BTreeMap;
+use std::collections::HashSet;
 use std::fs;
 use std::io;
+use std::ops::Bound;
+use std::path::Path;
 use std::path::PathBuf;
 use std::time::SystemTime;
 
@@ -62,8 +68,9 @@ impl Entry {
 }
 
 /// Snapshot holds the metadata of every file, directory, and symlink of the project apart from
-/// `yak-out`, the directories of version control systems, and the paths the cells ignore.
-pub(crate) struct Snapshot(HashMap<ProjectRelativePathBuf, Entry>);
+/// `yak-out`, the directories of version control systems, and the paths the cells ignore. The
+/// paths under a directory sort together, after the directory.
+pub(crate) struct Snapshot(BTreeMap<ProjectRelativePathBuf, Entry>);
 
 impl Snapshot {
     pub(crate) fn crawl(
@@ -71,8 +78,20 @@ impl Snapshot {
         cells: &CellResolver,
         ignore_specs: &StdYakHashMap<CellName, IgnoreSet>,
     ) -> yak_error::Result<Snapshot> {
-        let mut snapshot = Snapshot(HashMap::new());
-        let mut dirs = vec![ProjectRelativePathBuf::default()];
+        let mut snapshot = Snapshot(BTreeMap::new());
+        snapshot.crawl_under(ProjectRelativePathBuf::default(), root, cells, ignore_specs)?;
+        Ok(snapshot)
+    }
+
+    /// Adds the paths under `dir` to the snapshot.
+    fn crawl_under(
+        &mut self,
+        dir: ProjectRelativePathBuf,
+        root: &ProjectRoot,
+        cells: &CellResolver,
+        ignore_specs: &StdYakHashMap<CellName, IgnoreSet>,
+    ) -> yak_error::Result<()> {
+        let mut dirs = vec![dir];
         while let Some(dir) = dirs.pop() {
             let entries = match fs::read_dir(root.resolve(&dir).as_path()) {
                 Ok(entries) => entries,
@@ -90,32 +109,75 @@ impl Snapshot {
                 if is_skipped(&path, cells, ignore_specs) {
                     continue;
                 }
-                let metadata = match fs::symlink_metadata(entry.path()) {
-                    Ok(metadata) => metadata,
-                    Err(e) if e.kind() == io::ErrorKind::NotFound => continue,
-                    Err(e) => return Err(e.into()),
+                let Some(info) = read_entry(&entry.path())? else {
+                    continue;
                 };
-                let file_type = metadata.file_type();
-                let info = if file_type.is_dir() {
+                if info == Entry::Directory {
                     dirs.push(path.clone());
-                    Entry::Directory
-                } else if file_type.is_symlink() {
-                    match fs::read_link(entry.path()) {
-                        Ok(target) => Entry::Symlink(target),
-                        Err(e) if e.kind() == io::ErrorKind::NotFound => continue,
-                        Err(e) => return Err(e.into()),
-                    }
-                } else {
-                    Entry::File {
-                        len: metadata.len(),
-                        modified: metadata.modified().ok(),
-                        status_change: StatusChange::of(&metadata),
-                    }
-                };
-                snapshot.0.insert(path, info);
+                }
+                self.0.insert(path, info);
             }
         }
-        Ok(snapshot)
+        Ok(())
+    }
+
+    /// Brings the entries of `paths`, which file system events named, and of the paths under
+    /// them up to date. Records a change for each path under one of `paths` whose entry changed,
+    /// and returns how many paths it recorded. The events themselves record the changes of
+    /// `paths`.
+    ///
+    /// FSEvents and inotify report a renamed, removed, or replaced directory as one event for the
+    /// directory, so the paths under it are compared with the files.
+    pub(crate) fn apply(
+        &mut self,
+        paths: impl IntoIterator<Item = ProjectRelativePathBuf>,
+        root: &ProjectRoot,
+        cells: &CellResolver,
+        ignore_specs: &StdYakHashMap<CellName, IgnoreSet>,
+        changed: &mut FileChangeTracker,
+        stats: &mut FileWatcherStats,
+    ) -> yak_error::Result<usize> {
+        let mut count = 0;
+        for path in paths.into_iter().collect::<HashSet<_>>() {
+            if path.is_empty() || is_skipped(&path, cells, ignore_specs) {
+                continue;
+            }
+            let old = Snapshot(self.remove_under(&path).into_iter().collect());
+            let mut new = Snapshot(BTreeMap::new());
+            let current = read_entry(root.resolve(&path).as_path())?;
+            if current == Some(Entry::Directory) {
+                new.crawl_under(path.clone(), root, cells, ignore_specs)?;
+            }
+            count += old.changes(&new, cells, changed, stats);
+            self.0.extend(new.0);
+            match current {
+                Some(entry) => self.0.insert(path, entry),
+                None => self.0.remove(&path),
+            };
+        }
+        Ok(count)
+    }
+
+    /// The entries under `dir`, without `dir` itself.
+    fn under<'a>(
+        &'a self,
+        dir: &'a ProjectRelativePath,
+    ) -> impl Iterator<Item = (&'a ProjectRelativePathBuf, &'a Entry)> + 'a {
+        // The paths whose text starts with the text of `dir` sort together, and the paths under
+        // `dir` are among them.
+        self.0
+            .range::<ProjectRelativePath, _>((Bound::Excluded(dir), Bound::Unbounded))
+            .take_while(move |(path, _)| path.as_str().starts_with(dir.as_str()))
+            .filter(move |(path, _)| path.starts_with(dir))
+    }
+
+    fn remove_under(&mut self, dir: &ProjectRelativePath) -> Vec<(ProjectRelativePathBuf, Entry)> {
+        let removed: Vec<ProjectRelativePathBuf> =
+            self.under(dir).map(|(path, _)| path.clone()).collect();
+        removed
+            .into_iter()
+            .filter_map(|path| self.0.remove(&path).map(|entry| (path, entry)))
+            .collect()
     }
 
     /// Records the changes from this snapshot to `new` in `changed` and `stats`, and returns
@@ -156,6 +218,40 @@ impl Snapshot {
         }
         count
     }
+}
+
+/// Reads the entry of a path, or `None` if the path does not exist.
+fn read_entry(path: &Path) -> yak_error::Result<Option<Entry>> {
+    let metadata = match fs::symlink_metadata(path) {
+        Ok(metadata) => metadata,
+        Err(e) if is_missing(&e) => return Ok(None),
+        Err(e) => return Err(e.into()),
+    };
+    let file_type = metadata.file_type();
+    Ok(Some(if file_type.is_dir() {
+        Entry::Directory
+    } else if file_type.is_symlink() {
+        match fs::read_link(path) {
+            Ok(target) => Entry::Symlink(target),
+            Err(e) if is_missing(&e) => return Ok(None),
+            Err(e) => return Err(e.into()),
+        }
+    } else {
+        Entry::File {
+            len: metadata.len(),
+            modified: metadata.modified().ok(),
+            status_change: StatusChange::of(&metadata),
+        }
+    }))
+}
+
+/// Whether an error means the path does not exist. A path whose parent became a file reports
+/// `NotADirectory`.
+fn is_missing(e: &io::Error) -> bool {
+    matches!(
+        e.kind(),
+        io::ErrorKind::NotFound | io::ErrorKind::NotADirectory
+    )
 }
 
 fn record_change(
@@ -232,11 +328,52 @@ mod tests {
 
     use super::*;
 
+    fn fixture() -> (ProjectRoot, CellResolver, tempfile::TempDir) {
+        let tempdir = tempfile::tempdir().unwrap();
+        let root_path =
+            fs_util::canonicalize(AbsNormPathBuf::new(tempdir.path().to_owned()).unwrap()).unwrap();
+        let root = ProjectRoot::new(root_path).unwrap();
+        let cells = CellResolver::testing_with_name_and_path(
+            CellName::testing_new("root"),
+            CellRootPathBuf::testing_new(""),
+        );
+        (root, cells, tempdir)
+    }
+
     fn changes(root: &ProjectRoot, cells: &CellResolver, before: &Snapshot) -> Vec<String> {
         let after = Snapshot::crawl(root, cells, &StdYakHashMap::default()).unwrap();
         let mut changed = FileChangeTracker::new();
         let mut stats = FileWatcherStats::new(Default::default(), 0);
         before.changes(&after, cells, &mut changed, &mut stats);
+        events(stats)
+    }
+
+    /// Applies the paths that events named, and returns the changes that `apply` recorded.
+    fn apply(
+        snapshot: &mut Snapshot,
+        root: &ProjectRoot,
+        cells: &CellResolver,
+        paths: &[&str],
+    ) -> Vec<String> {
+        let mut changed = FileChangeTracker::new();
+        let mut stats = FileWatcherStats::new(Default::default(), 0);
+        let paths = paths
+            .iter()
+            .map(|p| ProjectRelativePathBuf::unchecked_new((*p).to_owned()));
+        snapshot
+            .apply(
+                paths,
+                root,
+                cells,
+                &StdYakHashMap::default(),
+                &mut changed,
+                &mut stats,
+            )
+            .unwrap();
+        events(stats)
+    }
+
+    fn events(stats: FileWatcherStats) -> Vec<String> {
         let mut events: Vec<String> = stats
             .finish()
             .events
@@ -256,14 +393,7 @@ mod tests {
 
     #[test]
     fn test_snapshot_changes() {
-        let tempdir = tempfile::tempdir().unwrap();
-        let root_path =
-            fs_util::canonicalize(AbsNormPathBuf::new(tempdir.path().to_owned()).unwrap()).unwrap();
-        let root = ProjectRoot::new(root_path).unwrap();
-        let cells = CellResolver::testing_with_name_and_path(
-            CellName::testing_new("root"),
-            CellRootPathBuf::testing_new(""),
-        );
+        let (root, cells, tempdir) = fixture();
         let dir = tempdir.path();
         fs::create_dir_all(dir.join("src")).unwrap();
         fs::write(dir.join("src/lib.rs"), "a").unwrap();
@@ -300,5 +430,83 @@ mod tests {
                 "Modify File root//src/restored.rs",
             ]
         );
+    }
+
+    #[test]
+    fn test_apply_rename_of_directory() {
+        let (root, cells, tempdir) = fixture();
+        let dir = tempdir.path();
+        fs::create_dir_all(dir.join("pkg/sub")).unwrap();
+        fs::write(dir.join("pkg/YAK"), "").unwrap();
+        fs::write(dir.join("pkg/sub/YAK"), "").unwrap();
+        fs::write(dir.join("pkg-sibling"), "").unwrap();
+        let mut snapshot = Snapshot::crawl(&root, &cells, &StdYakHashMap::default()).unwrap();
+
+        fs::rename(dir.join("pkg"), dir.join("pkg2")).unwrap();
+        assert_eq!(
+            apply(&mut snapshot, &root, &cells, &["pkg", "pkg2"]),
+            [
+                "Create Directory root//pkg2/sub",
+                "Create File root//pkg2/YAK",
+                "Create File root//pkg2/sub/YAK",
+                "Delete Directory root//pkg/sub",
+                "Delete File root//pkg/YAK",
+                "Delete File root//pkg/sub/YAK",
+            ]
+        );
+        // The snapshot matches the files, so a rescan finds no other change.
+        assert!(changes(&root, &cells, &snapshot).is_empty());
+
+        // Renames that end where they began within one sync leave the same files.
+        fs::rename(dir.join("pkg2"), dir.join("pkg")).unwrap();
+        fs::rename(dir.join("pkg"), dir.join("pkg2")).unwrap();
+        assert!(apply(&mut snapshot, &root, &cells, &["pkg", "pkg2"]).is_empty());
+
+        // Another directory in the place of `pkg2` reports the paths of both.
+        fs::rename(dir.join("pkg2"), dir.join("old")).unwrap();
+        fs::create_dir(dir.join("pkg2")).unwrap();
+        fs::write(dir.join("pkg2/other"), "").unwrap();
+        assert_eq!(
+            apply(&mut snapshot, &root, &cells, &["pkg2", "old"]),
+            [
+                "Create Directory root//old/sub",
+                "Create File root//old/YAK",
+                "Create File root//old/sub/YAK",
+                "Create File root//pkg2/other",
+                "Delete Directory root//pkg2/sub",
+                "Delete File root//pkg2/YAK",
+                "Delete File root//pkg2/sub/YAK",
+            ]
+        );
+        assert!(changes(&root, &cells, &snapshot).is_empty());
+    }
+
+    #[test]
+    fn test_apply_removal_and_replacement() {
+        let (root, cells, tempdir) = fixture();
+        let dir = tempdir.path();
+        fs::create_dir_all(dir.join("a/b")).unwrap();
+        fs::write(dir.join("a/b/f"), "").unwrap();
+        fs::create_dir_all(dir.join("c")).unwrap();
+        fs::write(dir.join("c/g"), "").unwrap();
+        let mut snapshot = Snapshot::crawl(&root, &cells, &StdYakHashMap::default()).unwrap();
+
+        // A removal reports the paths that were under the directory, and a file in place of a
+        // directory reports the same.
+        fs::remove_dir_all(dir.join("a")).unwrap();
+        fs::remove_dir_all(dir.join("c")).unwrap();
+        fs::write(dir.join("c"), "").unwrap();
+        assert_eq!(
+            apply(&mut snapshot, &root, &cells, &["a", "c"]),
+            [
+                "Delete Directory root//a/b",
+                "Delete File root//a/b/f",
+                "Delete File root//c/g",
+            ]
+        );
+        assert!(changes(&root, &cells, &snapshot).is_empty());
+
+        // A path that events name inside a removed directory needs no entry.
+        assert!(apply(&mut snapshot, &root, &cells, &["a/b/f"]).is_empty());
     }
 }

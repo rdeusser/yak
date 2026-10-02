@@ -210,20 +210,6 @@ All of these are missing at `903bfd7a61` too.
 
 Remove this entry when every label the Apple rules select on exists in the prelude, or the documentation says which labels a project's `config` cell must define.
 
-### A running daemon keeps the packages of a renamed directory
-
-With the default `notify` file watcher, a directory renamed under a running daemon keeps its packages at the old path until the daemon restarts.
-For a rename, `app/yak_file_watcher/src/notify.rs` passes the renamed path to `file_added_or_removed` and `dir_added_or_removed` in `app/yak_common/src/file_ops/dice.rs`.
-Those calls invalidate the path's metadata and its parent's listing, but not the directory's own listing or the build files under it, so a query against the old path reads the cached listing and build file.
-
-On macOS on 2026-09-27, a project had a `.yakconfig` that sets only `[cells] root = .` and a `pkg/YAK` that defines one target `a` with a rule returning `DefaultInfo()`.
-`yak uquery //pkg/...` printed `root//pkg:a`.
-After `mv pkg pkg2`, the daemon reported two file change events.
-Seven seconds later, `yak uquery //pkg/...` still printed `root//pkg:a` and exited 0.
-After `yak kill`, the same query failed because `pkg` does not exist. The Linux behavior was not checked.
-
-Remove this entry when the query after the rename fails without a daemon restart.
-
 ### A command can miss a file changed just before it starts
 
 With the default `notify` file watcher, a command that starts milliseconds after a file is created or edited can miss the change until the next command.

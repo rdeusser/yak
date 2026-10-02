@@ -36,6 +36,7 @@ use yak_core::cells::CellResolver;
 use yak_core::cells::cell_path::CellPath;
 use yak_core::cells::name::CellName;
 use yak_core::fs::project::ProjectRoot;
+use yak_core::fs::project_rel_path::ProjectRelativePathBuf;
 use yak_data::FileWatcherEventType;
 use yak_data::FileWatcherKind;
 use yak_error::conversion::from_any_with_tag;
@@ -65,6 +66,9 @@ struct NotifyFileData {
     ignored: u64,
     #[allocative(skip)]
     events: OrderedSet<(CellPath, EventKind)>,
+    /// The paths of `events`, which the snapshot brings up to date.
+    #[allocative(skip)]
+    paths: OrderedSet<ProjectRelativePathBuf>,
     /// Whether file system changes were missed
     missed_events: bool,
 }
@@ -74,6 +78,7 @@ impl NotifyFileData {
         Self {
             ignored: 0,
             events: OrderedSet::new(),
+            paths: OrderedSet::new(),
             missed_events: false,
         }
     }
@@ -125,6 +130,7 @@ impl NotifyFileData {
                 self.ignored += 1;
             } else {
                 self.events.insert((cell_path, event.kind));
+                self.paths.insert(path.into_owned());
             }
         }
         Ok(())
@@ -244,6 +250,7 @@ impl NotifyFileData {
         Synced {
             stats,
             changed,
+            paths: self.paths.into_iter().collect(),
             missed_events: self.missed_events,
         }
     }
@@ -251,7 +258,7 @@ impl NotifyFileData {
 
 /// The stats of a sync that drops the DICE graph because it cannot tell which files changed,
 /// reported with the fields that watchman's fresh instance uses for the same wipe.
-fn clear_graph(mut stats: FileWatcherStats) -> yak_data::FileWatcherStats {
+fn clear_graph(mut stats: FileWatcherStats, reason: String) -> yak_data::FileWatcherStats {
     let base = stats.base_mut();
     base.fresh_instance = true;
     base.fresh_instance_data = Some(yak_data::FreshInstance {
@@ -259,8 +266,7 @@ fn clear_graph(mut stats: FileWatcherStats) -> yak_data::FileWatcherStats {
         cleared_dice: true,
         cleared_dep_files: false,
     });
-    base.incomplete_events_reason =
-        Some("notify dropped events (kernel queue overflow)".to_owned());
+    base.incomplete_events_reason = Some(reason);
     stats.finish()
 }
 
@@ -268,7 +274,18 @@ fn clear_graph(mut stats: FileWatcherStats) -> yak_data::FileWatcherStats {
 struct Synced {
     stats: FileWatcherStats,
     changed: FileChangeTracker,
+    paths: Vec<ProjectRelativePathBuf>,
     missed_events: bool,
+}
+
+/// The snapshot of the project that the watcher keeps current from its events.
+enum SnapshotState {
+    /// No sync has run, so DICE holds no state of the project's files.
+    Initial,
+    Current(Snapshot),
+    /// A crawl or an update of the snapshot failed, so the snapshot cannot name the paths under a
+    /// changed directory.
+    Lost,
 }
 
 /// The source of file system events, which delivers them until it is dropped.
@@ -290,10 +307,10 @@ pub struct NotifyFileWatcher {
     cells: CellResolver,
     #[allocative(skip)]
     ignore_specs: Arc<StdYakHashMap<CellName, IgnoreSet>>,
-    /// The project's files at the last crawl, which a rescan after dropped events compares with.
-    /// It is taken at the first sync.
+    /// The project's files as of the last sync. The first sync crawls the project, and each later
+    /// sync applies its events.
     #[allocative(skip)]
-    snapshot: Mutex<Option<Snapshot>>,
+    snapshot: Mutex<SnapshotState>,
 }
 
 impl NotifyFileWatcher {
@@ -323,7 +340,7 @@ impl NotifyFileWatcher {
             root: root.dupe(),
             cells,
             ignore_specs,
-            snapshot: Mutex::new(None),
+            snapshot: Mutex::new(SnapshotState::Initial),
         })
     }
 
@@ -361,6 +378,32 @@ impl NotifyFileWatcher {
         spawn_blocking(move || Snapshot::crawl(&root, &cells, &ignore_specs)).await?
     }
 
+    /// Applies the paths of a sync's events to the snapshot, and records the changes under the
+    /// directories they name.
+    async fn apply(
+        &self,
+        mut snapshot: Snapshot,
+        paths: Vec<ProjectRelativePathBuf>,
+        mut changed: FileChangeTracker,
+        mut stats: FileWatcherStats,
+    ) -> yak_error::Result<(Snapshot, FileChangeTracker, FileWatcherStats)> {
+        let root = self.root.dupe();
+        let cells = self.cells.dupe();
+        let ignore_specs = self.ignore_specs.dupe();
+        spawn_blocking(move || {
+            snapshot.apply(
+                paths,
+                &root,
+                &cells,
+                &ignore_specs,
+                &mut changed,
+                &mut stats,
+            )?;
+            Ok((snapshot, changed, stats))
+        })
+        .await?
+    }
+
     async fn sync2(
         &self,
         mut dice: DiceTransactionUpdater,
@@ -372,33 +415,85 @@ impl NotifyFileWatcher {
         let Synced {
             mut stats,
             mut changed,
+            paths,
             missed_events,
         } = old?.sync();
 
-        let previous = self.snapshot.lock().unwrap().take();
-        match (previous, missed_events) {
-            (Some(previous), false) => *self.snapshot.lock().unwrap() = Some(previous),
-            // The first sync takes the snapshot that later rescans compare with.
-            (None, false) => match self.crawl().await {
-                Ok(snapshot) => *self.snapshot.lock().unwrap() = Some(snapshot),
-                Err(e) => warn!("FileWatcher: Could not crawl the project: {e:#}"),
-            },
+        // A failure below leaves the state lost.
+        let previous = mem::replace(&mut *self.snapshot.lock().unwrap(), SnapshotState::Lost);
+        let (next, clear_reason) = match (previous, missed_events) {
+            (SnapshotState::Current(snapshot), false) => {
+                match self.apply(snapshot, paths, changed, stats).await {
+                    Ok((snapshot, applied, applied_stats)) => {
+                        changed = applied;
+                        stats = applied_stats;
+                        (SnapshotState::Current(snapshot), None)
+                    }
+                    Err(e) => {
+                        warn!("FileWatcher: Could not update the snapshot of the project: {e:#}");
+                        // The tracker and stats moved into the failed update.
+                        changed = FileChangeTracker::new();
+                        stats = FileWatcherStats::new(Default::default(), 0);
+                        (
+                            SnapshotState::Lost,
+                            Some(format!(
+                                "notify could not update its snapshot of the project: {e:#}"
+                            )),
+                        )
+                    }
+                }
+            }
             // The operating system dropped events, so the files that changed since the last
-            // crawl are found by crawling again.
-            (Some(previous), true) => match self.crawl().await {
+            // sync are found by crawling again.
+            (SnapshotState::Current(previous), true) => match self.crawl().await {
                 Ok(snapshot) => {
                     let count = previous.changes(&snapshot, &self.cells, &mut changed, &mut stats);
-                    *self.snapshot.lock().unwrap() = Some(snapshot);
                     stats.base_mut().incomplete_events_reason = Some(format!(
                         "notify dropped events, and a rescan of the project found {count} changed paths"
                     ));
+                    (SnapshotState::Current(snapshot), None)
                 }
                 Err(e) => {
                     warn!("FileWatcher: Could not crawl the project: {e:#}");
-                    return Ok((clear_graph(stats), dice.unstable_take()));
+                    (
+                        SnapshotState::Lost,
+                        Some(format!(
+                            "notify dropped events, and a rescan of the project failed: {e:#}"
+                        )),
+                    )
                 }
             },
-            (None, true) => return Ok((clear_graph(stats), dice.unstable_take())),
+            // The first sync takes the snapshot that later syncs keep current.
+            (SnapshotState::Initial, missed_events) => {
+                let next = match self.crawl().await {
+                    Ok(snapshot) => SnapshotState::Current(snapshot),
+                    Err(e) => {
+                        warn!("FileWatcher: Could not crawl the project: {e:#}");
+                        SnapshotState::Lost
+                    }
+                };
+                let reason =
+                    missed_events.then(|| "notify dropped events before its first sync".to_owned());
+                (next, reason)
+            }
+            // Without a snapshot, the changes under a directory are unknown.
+            (SnapshotState::Lost, _) => {
+                let next = match self.crawl().await {
+                    Ok(snapshot) => SnapshotState::Current(snapshot),
+                    Err(e) => {
+                        warn!("FileWatcher: Could not crawl the project: {e:#}");
+                        SnapshotState::Lost
+                    }
+                };
+                (
+                    next,
+                    Some("notify has no snapshot of the project from the last sync".to_owned()),
+                )
+            }
+        };
+        *self.snapshot.lock().unwrap() = next;
+        if let Some(reason) = clear_reason {
+            return Ok((clear_graph(stats, reason), dice.unstable_take()));
         }
         changed.write_to_dice(&mut dice)?;
         Ok((stats.finish(), dice))
@@ -499,7 +594,10 @@ mod tests {
     /// fresh-instance path does.
     #[test]
     fn clear_graph_reports_fresh_instance() {
-        let stats = clear_graph(FileWatcherStats::new(Default::default(), 0));
+        let stats = clear_graph(
+            FileWatcherStats::new(Default::default(), 0),
+            "dropped events".to_owned(),
+        );
         assert!(stats.fresh_instance);
         let fresh = stats
             .fresh_instance_data

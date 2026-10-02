@@ -21,9 +21,9 @@ To see it working, run the reproductions of those entries in `docs/exec-plans/te
 
 ## Progress
 
-- [ ] Milestone 1 (prototype): choose how a renamed or removed directory invalidates the paths under it.
+- [x] Milestone 1 (prototype): choose how a renamed or removed directory invalidates the paths under it (2026-10-02). The snapshot design fixed the reproduction on macOS and Linux, and a no-op `yak build //gazebo/dupe:dupe` took a median of 44.0 to 45.3 ms with and without it over 3 runs of 30 builds each.
 - [ ] Milestone 2: the notify watcher waits for a sync marker before it reports changes.
-- [ ] Milestone 3: a renamed or removed directory invalidates every path under it.
+- [x] Milestone 3: a renamed or removed directory invalidates every path under it (2026-10-02). `test_apply_rename_of_directory` and `test_apply_removal_and_replacement` in `app/yak_file_watcher/src/rescan.rs` cover the snapshot. `test_notify_rename_parent_directory` fails with the binary before the change and passes after it.
 - [ ] Milestone 4: `yak.file_watcher` selects Watchman when it is installed.
 - [ ] Milestone 5: killing the daemon stops its local actions.
 - [ ] Milestone 6: the client reports a failed daemon start when the daemon exits.
@@ -36,6 +36,9 @@ To see it working, run the reproductions of those entries in `docs/exec-plans/te
 - `app/yak_file_watcher/src/watchman/` already implements a Watchman watcher, which `yak.file_watcher = watchman` selects. `tests/core/io/test_watchman.py` runs when `watchman` is on `PATH` and passed in a full run of the integration suite on macOS on 2026-10-02.
 - Watchman queries wait for a sync cookie by default, so the Watchman watcher does not have the race of milestone 2. `SyncableQuery::new` leaves `sync_timeout` at its default (`app/yak_file_watcher/src/watchman/core.rs`).
 - `tests/e2e_util/yak_workspace.py` writes a `.watchmanconfig` with `ignore_dirs` of `yak-out`, `.git`, and `.hg` into every test project.
+- A query that walks down from an unchanged parent sees a renamed directory, because the rename invalidates the parent's listing. A glob of `files/**/*` from the root package after `mv files other` returned no files with the binary before the fix. Only a query that starts at the old path, such as `yak targets root//files/d:`, read the stale listing.
+- Watchman reports the paths under a renamed directory. `test_watchman_rename_parent_directory` and `test_fs_hash_crawler_rename_parent_directory` pass with the binary before the change.
+- An event that names a directory can stand for a replacement of the directory by another one, which leaves a directory at the path. Comparing only whether the path was and is a directory missed the paths of both, so `Snapshot::apply` compares the whole subtree under each path that an event names.
 - `IgnoreSet::from_ignore_spec` always ignores `yak-out` in the root cell (`app/yak_common/src/ignores/ignore_set.rs`), so both watchers drop its events after they arrive. Watchman still watches `yak-out` unless a `.watchmanconfig` lists it in `ignore_dirs`.
 
 ## Decision Log
@@ -44,11 +47,13 @@ To see it working, run the reproductions of those entries in `docs/exec-plans/te
 - 2026-10-02: A sync marker that does not arrive within its timeout counts as dropped events. The watcher then rescans the project through `rescan.rs` and reports the reason in `incomplete_events_reason`, so a slow or lost marker cannot make a command read old contents.
 - 2026-10-02: `yak.file_watcher` defaults to `auto`, which selects Watchman when `WATCHMAN_SOCK` is set or `watchman` is on the daemon's `PATH`, and the notify watcher otherwise. An installed Watchman that fails fails the command and names `yak.file_watcher = notify` in the error. A failure of an installed Watchman would otherwise switch the project to a different watcher without a report.
 - 2026-10-02: The integration test harness sets `yak.file_watcher = notify` for every test project, so the suite runs the same watcher on every machine. The tests of `tests/core/io/` select their watcher explicitly, and milestone 4 adds tests of `auto`.
+- 2026-10-02: The notify watcher keeps its snapshot current from its events, which the prototype of milestone 1 chose over a prefix invalidation in DICE. It changes only `yak_file_watcher`, and the snapshot already held the project in memory for rescans. A failed update or crawl leaves the snapshot lost, and the next sync crawls again and clears the DICE graph, because without a snapshot the paths under a changed directory are unknown.
+- 2026-10-02: Milestone 3 lands before milestone 2, because the prototype of milestone 1 was its implementation.
 - 2026-10-02: Remote Execution keeps its retries for a backend that refuses connections, because they cover a backend that is restarting. A configuration without an engine or CAS address fails without retries.
 
 ## Outcomes & Retrospective
 
-Nothing is done yet.
+Milestones 1 and 3 are done. A renamed, removed, or replaced directory invalidates the paths under it with the notify watcher.
 
 ## Context and Orientation
 

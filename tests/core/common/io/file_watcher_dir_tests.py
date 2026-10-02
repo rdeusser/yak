@@ -21,6 +21,7 @@ from core.common.io.file_watcher_tests import (
     verify_results,
 )
 from e2e_util.api.yak import Yak
+from e2e_util.asserts import expect_failure
 
 
 async def run_create_directory_test(
@@ -90,3 +91,25 @@ async def run_rename_directory_test(
     is_fresh_instance, results = await get_file_watcher_events(yak)
     assert not is_fresh_instance
     verify_results(results, required)
+
+
+async def run_rename_parent_directory_test(
+    yak: Yak,
+    file_watcher_provider: FileWatcherProvider,
+) -> None:
+    """The operating system reports a renamed directory as one event, but a query of the package
+    `files/d` reads the listing of `files/d` and its build file directly."""
+    await setup_file_watcher_test(yak)
+    with open(os.path.join(yak.cwd, "files", "d", "YAK.fixture"), "w") as f:
+        f.write('print("Package d")\n')
+    await yak.targets("root//files/d:")
+
+    os.rename(os.path.join(yak.cwd, "files"), os.path.join(yak.cwd, "other"))
+    await expect_failure(
+        yak.targets("root//files/d:"),
+        stderr_regex="files/d",
+    )
+    await yak.targets("root//other/d:")
+
+    os.rename(os.path.join(yak.cwd, "other"), os.path.join(yak.cwd, "files"))
+    await yak.targets("root//files/d:")

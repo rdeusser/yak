@@ -20,6 +20,7 @@ from core.common.io.file_watcher_dir_tests import (
     run_create_directory_test,
     run_remove_directory_test,
     run_rename_directory_test,
+    run_rename_parent_directory_test,
 )
 from core.common.io.file_watcher_file_tests import (
     run_create_file_test,
@@ -152,3 +153,8 @@ async def test_watchman_replace_file_with_symlink(yak: Yak) -> None:
 @yak_test()
 async def test_watchman_change_symlink_target_test(yak: Yak) -> None:
     await run_change_symlink_target_test(yak, FileWatcherProvider.WATCHMAN)
+
+
+@yak_test()
+async def test_watchman_rename_parent_directory(yak: Yak) -> None:
+    await run_rename_parent_directory_test(yak, FileWatcherProvider.WATCHMAN)

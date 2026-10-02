@@ -96,7 +96,7 @@ A client restarts the daemon when the daemon's `DaemonConstraints` do not satisf
 - `app/yak_execute_local` spawns local processes and streams their output. On Unix the daemon spawns them through a forkserver process (`app/yak_forkserver`).
 - `remote_execution/re_grpc` (package `remote_execution`) is the client for the Bazel Remote Execution API v2. `app/yak_re_configuration` reads its settings from the `[yak_re_client]` yakconfig section.
 - `app/yak_resource_control` limits the memory of local actions with Linux cgroup v2. `host_sharing` limits how many local commands and tests run at once.
-- `app/yak_file_watcher` reports file changes to DICE. The `yak.file_watcher` yakconfig key selects `notify` (the default in this repository), `watchman`, or `fs_hash_crawler`.
+- `app/yak_file_watcher` reports file changes to DICE. The `yak.file_watcher` yakconfig key selects `notify` (the default in this repository), `watchman`, or `fs_hash_crawler`. The notify watcher keeps a snapshot of the project's files (`src/rescan.rs`) current from its events. FSEvents and inotify report a renamed or removed directory as one event, and the snapshot names the paths under it.
 
 An execution platform's `CommandExecutorConfig` selects local, remote, or hybrid execution for each action.
 Without an execution platform, this repository's build runs every action locally (`get_default_executor_config` in `app/yak_server/src/daemon/common.rs`).
