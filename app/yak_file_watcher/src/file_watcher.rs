@@ -33,6 +33,10 @@ use crate::watchman::interface::WatchmanFileWatcher;
 
 #[async_trait]
 pub trait FileWatcher: Allocative + Send + Sync + 'static {
+    /// Begins the part of the next `sync` that can run while the command loads its
+    /// configuration, such as writing a sync marker.
+    fn start_sync(&self) {}
+
     async fn sync(
         &self,
         dice: DiceTransactionUpdater,

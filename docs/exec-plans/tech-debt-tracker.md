@@ -210,18 +210,6 @@ All of these are missing at `903bfd7a61` too.
 
 Remove this entry when every label the Apple rules select on exists in the prelude, or the documentation says which labels a project's `config` cell must define.
 
-### A command can miss a file changed just before it starts
-
-With the default `notify` file watcher, a command that starts milliseconds after a file is created or edited can miss the change until the next command.
-`NotifyFileWatcher::sync2` in `app/yak_file_watcher/src/notify.rs` takes the events that have arrived when the command starts, and macOS delivers FSEvents asynchronously, so an event can arrive after the sync.
-
-On macOS on 2026-09-30, a loop created a file in a package of a Go module, ran `yak build //...` or `yak targets //...`, deleted the file, and ran the command again.
-In 17 rounds over 3 runs of the loop, 5 first commands did not see the new file. In 1 of those rounds the next command saw it, and in the other 4 the creation and the deletion both went unseen.
-Later runs of 8 and 20 rounds missed none. The Linux behavior was not checked.
-On 2026-10-01, `tests/core/build/test_modify.py::test_modify_genrule_notify` failed once in a full run of the integration suite on macOS, where the build after an edit printed the old contents of the file, and it passed in 3 reruns.
-
-Remove this entry when the sync waits for the events of changes made before the command started, as Watchman's sync cookie does.
-
 ### Go cells support no workspace, vendoring, or local replacement
 
 `app/yak_external_cells/src/go.rs` runs `go list` with `GOWORK=off`, so a `go.work` file does not apply, and it fails when the module has a `vendor/modules.txt`.

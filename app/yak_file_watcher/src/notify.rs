@@ -8,9 +8,16 @@
  * above-listed licenses.
  */
 
+use std::fs;
+use std::io;
 use std::mem;
+use std::path::PathBuf;
 use std::sync::Arc;
 use std::sync::Mutex;
+use std::sync::atomic::AtomicU64;
+use std::sync::atomic::Ordering;
+use std::time::Duration;
+use std::time::SystemTime;
 
 use allocative::Allocative;
 use async_trait::async_trait;
@@ -36,18 +43,211 @@ use yak_core::cells::CellResolver;
 use yak_core::cells::cell_path::CellPath;
 use yak_core::cells::name::CellName;
 use yak_core::fs::project::ProjectRoot;
+use yak_core::fs::project_rel_path::ProjectRelativePath;
 use yak_core::fs::project_rel_path::ProjectRelativePathBuf;
 use yak_data::FileWatcherEventType;
 use yak_data::FileWatcherKind;
 use yak_error::conversion::from_any_with_tag;
 use yak_events::dispatch::span_async;
 use yak_fs::paths::abs_norm_path::AbsNormPath;
+use yak_fs::paths::abs_norm_path::AbsNormPathBuf;
 use yak_hash::StdYakHashMap;
 
 use crate::file_watcher::FileWatcher;
 use crate::mergebase::Mergebase;
 use crate::rescan::Snapshot;
+use crate::rescan::VCS_DIRS;
 use crate::stats::FileWatcherStats;
+
+/// How long a sync waits for the event of its marker.
+const MARKER_TIMEOUT: Duration = Duration::from_secs(10);
+
+/// The age after which a marker belongs to a daemon that stopped during a sync.
+const STALE_MARKER_AGE: Duration = Duration::from_secs(60);
+
+/// The prefix of the names of sync markers.
+const MARKER_PREFIX: &str = ".yak-sync-";
+
+/// SyncMarkers are the files that a sync writes and waits to see an event for. FSEvents and
+/// inotify deliver the events of a stream in order, so once the event of a marker arrives, the
+/// events of every change made before the marker was written have arrived too. Watchman syncs
+/// with cookie files the same way.
+struct SyncMarkers {
+    /// The directory of the markers: the version control directory of the project root, which
+    /// keeps them out of the status of the working tree, or the project root.
+    dir: AbsNormPathBuf,
+    /// `dir` relative to the project root.
+    project_dir: ProjectRelativePathBuf,
+    /// The prefix of this daemon's markers, which names its pid. Other daemons can watch the same
+    /// project.
+    own_prefix: String,
+    /// The number of the last marker written.
+    written: AtomicU64,
+    /// The highest number of this daemon's markers whose event arrived.
+    seen: tokio::sync::watch::Sender<u64>,
+    /// The marker that `start` wrote for the next sync.
+    started: Mutex<Option<WrittenMarker>>,
+}
+
+/// A marker that an event names.
+enum Marker {
+    Own(u64),
+    Other,
+}
+
+impl SyncMarkers {
+    fn new(root: &ProjectRoot) -> SyncMarkers {
+        let project_dir = VCS_DIRS
+            .iter()
+            .map(|dir| ProjectRelativePathBuf::unchecked_new((*dir).to_owned()))
+            .find(|dir| root.resolve(dir).as_path().is_dir())
+            .unwrap_or_default();
+        SyncMarkers {
+            dir: root.resolve(&project_dir),
+            project_dir,
+            own_prefix: format!("{MARKER_PREFIX}{}-", std::process::id()),
+            written: AtomicU64::new(0),
+            seen: tokio::sync::watch::Sender::new(0),
+            started: Mutex::new(None),
+        }
+    }
+
+    /// Deletes the markers that daemons stopped during a sync left behind.
+    fn remove_stale(&self) {
+        let entries = match fs::read_dir(self.dir.as_path()) {
+            Ok(entries) => entries,
+            Err(e) => {
+                warn!("FileWatcher: Could not list `{}`: {e}", self.dir);
+                return;
+            }
+        };
+        for entry in entries.flatten() {
+            if !entry
+                .file_name()
+                .to_string_lossy()
+                .starts_with(MARKER_PREFIX)
+            {
+                continue;
+            }
+            let stale = entry
+                .metadata()
+                .and_then(|m| m.modified())
+                .ok()
+                .and_then(|modified| SystemTime::now().duration_since(modified).ok())
+                .is_some_and(|age| age > STALE_MARKER_AGE);
+            if stale {
+                if let Err(e) = fs::remove_file(entry.path()) {
+                    warn!(
+                        "FileWatcher: Could not remove `{}`: {e}",
+                        entry.path().display()
+                    );
+                }
+            }
+        }
+    }
+
+    fn parse(&self, path: &ProjectRelativePath) -> Option<Marker> {
+        if path.parent() != Some(self.project_dir.as_ref()) {
+            return None;
+        }
+        let name = path.file_name()?.as_str();
+        if !name.starts_with(MARKER_PREFIX) {
+            return None;
+        }
+        match name
+            .strip_prefix(&self.own_prefix)
+            .and_then(|n| n.parse().ok())
+        {
+            Some(n) => Some(Marker::Own(n)),
+            None => Some(Marker::Other),
+        }
+    }
+
+    fn arrived(&self, n: u64) {
+        self.seen.send_if_modified(|seen| {
+            let newer = n > *seen;
+            if newer {
+                *seen = n;
+            }
+            newer
+        });
+    }
+
+    /// Writes the marker of the next sync, so its event can arrive while the command does other
+    /// work. A later `start` replaces it with a newer marker.
+    fn start(&self) {
+        let marker = self.write();
+        *self.started.lock().unwrap() = Some(marker);
+    }
+
+    /// Waits for the event of the marker `start` wrote, or writes one. Returns why the marker
+    /// failed, in which case the events of earlier changes may not have arrived.
+    async fn wait(&self) -> Result<(), String> {
+        let started = self.started.lock().unwrap().take();
+        let marker = started.unwrap_or_else(|| self.write());
+        marker.wait().await
+    }
+
+    fn write(&self) -> WrittenMarker {
+        let n = self.written.fetch_add(1, Ordering::Relaxed) + 1;
+        let path = self.dir.as_path().join(format!("{}{n}", self.own_prefix));
+        let seen = self.seen.subscribe();
+        let written = fs::write(&path, b"").map_err(|e| {
+            format!(
+                "notify could not write its sync marker `{}`: {e}",
+                path.display()
+            )
+        });
+        WrittenMarker {
+            n,
+            path,
+            seen,
+            written,
+        }
+    }
+}
+
+/// A marker that a sync waits for. Dropping it deletes the file.
+struct WrittenMarker {
+    n: u64,
+    path: PathBuf,
+    seen: tokio::sync::watch::Receiver<u64>,
+    written: Result<(), String>,
+}
+
+impl WrittenMarker {
+    async fn wait(mut self) -> Result<(), String> {
+        if let Err(e) = &self.written {
+            return Err(e.clone());
+        }
+        let n = self.n;
+        match tokio::time::timeout(MARKER_TIMEOUT, self.seen.wait_for(|seen| *seen >= n)).await {
+            Ok(Ok(_)) => Ok(()),
+            // The watcher owns the sender, so it outlives the wait.
+            Ok(Err(_)) => Err("notify stopped before its sync marker arrived".to_owned()),
+            Err(_) => Err(format!(
+                "the event of notify's sync marker did not arrive within {} seconds",
+                MARKER_TIMEOUT.as_secs()
+            )),
+        }
+    }
+}
+
+impl Drop for WrittenMarker {
+    fn drop(&mut self) {
+        if self.written.is_err() {
+            return;
+        }
+        match fs::remove_file(&self.path) {
+            Ok(()) => {}
+            Err(e) if e.kind() == io::ErrorKind::NotFound => {}
+            Err(e) => warn!(
+                "FileWatcher: Could not remove `{}`: {e}",
+                self.path.display()
+            ),
+        }
+    }
+}
 
 fn ignore_event_kind(event_kind: EventKind) -> bool {
     match event_kind {
@@ -89,6 +289,7 @@ impl NotifyFileData {
         root: &ProjectRoot,
         cells: &CellResolver,
         ignore_specs: &StdYakHashMap<CellName, IgnoreSet>,
+        markers: &SyncMarkers,
     ) -> yak_error::Result<()> {
         let event = event.map_err(|e| from_any_with_tag(e, yak_error::ErrorTag::NotifyWatcher))?;
 
@@ -104,6 +305,15 @@ impl NotifyFileData {
             // Testing shows that we get absolute paths back from the `notify` library.
             // It's not documented though.
             let path = root.relativize(AbsNormPath::new(&path)?)?;
+
+            match markers.parse(&path) {
+                Some(Marker::Own(n)) => {
+                    markers.arrived(n);
+                    continue;
+                }
+                Some(Marker::Other) => continue,
+                None => {}
+            }
 
             // We ignore the yak-out prefix, as those are uninteresting events caused by us.
             // We also ignore other yak-out directories, as if you have two isolation dirs running at once, they are not interesting.
@@ -311,6 +521,8 @@ pub struct NotifyFileWatcher {
     /// sync applies its events.
     #[allocative(skip)]
     snapshot: Mutex<SnapshotState>,
+    #[allocative(skip)]
+    markers: Arc<SyncMarkers>,
 }
 
 impl NotifyFileWatcher {
@@ -325,10 +537,13 @@ impl NotifyFileWatcher {
         let cells2 = cells.dupe();
         let ignore_specs = Arc::new(ignore_specs);
         let ignore_specs2 = ignore_specs.dupe();
+        let markers = Arc::new(SyncMarkers::new(root));
+        markers.remove_stale();
+        let markers2 = markers.dupe();
         let handler = move |event| {
             let mut guard = data2.lock().unwrap();
             if let Ok(state) = &mut *guard {
-                if let Err(e) = state.process(event, &root2, &cells2, &ignore_specs2) {
+                if let Err(e) = state.process(event, &root2, &cells2, &ignore_specs2, &markers2) {
                     *guard = Err(e);
                 }
             }
@@ -341,6 +556,7 @@ impl NotifyFileWatcher {
             cells,
             ignore_specs,
             snapshot: Mutex::new(SnapshotState::Initial),
+            markers,
         })
     }
 
@@ -408,6 +624,7 @@ impl NotifyFileWatcher {
         &self,
         mut dice: DiceTransactionUpdater,
     ) -> yak_error::Result<(yak_data::FileWatcherStats, DiceTransactionUpdater)> {
+        let marker = self.markers.wait().await;
         let old = {
             let mut guard = self.data.lock().unwrap();
             mem::replace(&mut *guard, Ok(NotifyFileData::new()))
@@ -418,11 +635,16 @@ impl NotifyFileWatcher {
             paths,
             missed_events,
         } = old?.sync();
+        let missed = if missed_events {
+            Some("notify dropped events".to_owned())
+        } else {
+            marker.err()
+        };
 
         // A failure below leaves the state lost.
         let previous = mem::replace(&mut *self.snapshot.lock().unwrap(), SnapshotState::Lost);
-        let (next, clear_reason) = match (previous, missed_events) {
-            (SnapshotState::Current(snapshot), false) => {
+        let (next, clear_reason) = match (previous, missed) {
+            (SnapshotState::Current(snapshot), None) => {
                 match self.apply(snapshot, paths, changed, stats).await {
                     Ok((snapshot, applied, applied_stats)) => {
                         changed = applied;
@@ -443,13 +665,13 @@ impl NotifyFileWatcher {
                     }
                 }
             }
-            // The operating system dropped events, so the files that changed since the last
-            // sync are found by crawling again.
-            (SnapshotState::Current(previous), true) => match self.crawl().await {
+            // Events were dropped or may not have arrived, so the files that changed since the
+            // last sync are found by crawling again.
+            (SnapshotState::Current(previous), Some(missed)) => match self.crawl().await {
                 Ok(snapshot) => {
                     let count = previous.changes(&snapshot, &self.cells, &mut changed, &mut stats);
                     stats.base_mut().incomplete_events_reason = Some(format!(
-                        "notify dropped events, and a rescan of the project found {count} changed paths"
+                        "{missed}, and a rescan of the project found {count} changed paths"
                     ));
                     (SnapshotState::Current(snapshot), None)
                 }
@@ -458,13 +680,13 @@ impl NotifyFileWatcher {
                     (
                         SnapshotState::Lost,
                         Some(format!(
-                            "notify dropped events, and a rescan of the project failed: {e:#}"
+                            "{missed}, and a rescan of the project failed: {e:#}"
                         )),
                     )
                 }
             },
             // The first sync takes the snapshot that later syncs keep current.
-            (SnapshotState::Initial, missed_events) => {
+            (SnapshotState::Initial, missed) => {
                 let next = match self.crawl().await {
                     Ok(snapshot) => SnapshotState::Current(snapshot),
                     Err(e) => {
@@ -472,9 +694,7 @@ impl NotifyFileWatcher {
                         SnapshotState::Lost
                     }
                 };
-                let reason =
-                    missed_events.then(|| "notify dropped events before its first sync".to_owned());
-                (next, reason)
+                (next, missed)
             }
             // Without a snapshot, the changes under a directory are unknown.
             (SnapshotState::Lost, _) => {
@@ -502,6 +722,10 @@ impl NotifyFileWatcher {
 
 #[async_trait]
 impl FileWatcher for NotifyFileWatcher {
+    fn start_sync(&self) {
+        self.markers.start();
+    }
+
     async fn sync(
         &self,
         dice: DiceTransactionUpdater,
@@ -563,7 +787,9 @@ mod tests {
         let (root, cells, ignores, _t) = fixture();
         let mut state = NotifyFileData::new();
         let event = notify::Event::new(EventKind::Any).set_flag(Flag::Rescan);
-        state.process(Ok(event), &root, &cells, &ignores).unwrap();
+        state
+            .process(Ok(event), &root, &cells, &ignores, &SyncMarkers::new(&root))
+            .unwrap();
         assert!(
             state.missed_events,
             "a pathless rescan event must set missed_events"
@@ -578,7 +804,9 @@ mod tests {
         let event = notify::Event::new(EventKind::Create(CreateKind::File))
             .add_path(path.into_abs_path_buf().into_path_buf())
             .set_flag(Flag::Rescan);
-        state.process(Ok(event), &root, &cells, &ignores).unwrap();
+        state
+            .process(Ok(event), &root, &cells, &ignores, &SyncMarkers::new(&root))
+            .unwrap();
         assert!(state.missed_events);
     }
 
@@ -588,6 +816,82 @@ mod tests {
         state.missed_events = true;
         assert!(state.sync().missed_events);
         assert!(!NotifyFileData::new().sync().missed_events);
+    }
+
+    /// A change made just before a sync is among the sync's events. FSEvents delivers events
+    /// asynchronously, so a sync that takes the events at once misses some of them.
+    #[tokio::test]
+    async fn sync_marker_waits_for_earlier_changes() {
+        let (root, cells, ignores, tempdir) = fixture();
+        let watcher = NotifyFileWatcher::new(&root, cells, ignores).unwrap();
+        for i in 0..200 {
+            let name = format!("f{i}");
+            fs::write(tempdir.path().join(&name), "").unwrap();
+            // The command's update starts the sync for half of the syncs.
+            if i % 2 == 0 {
+                watcher.start_sync();
+            }
+            watcher.markers.wait().await.unwrap();
+            let data = mem::replace(
+                &mut *watcher.data.lock().unwrap(),
+                Ok(NotifyFileData::new()),
+            )
+            .unwrap();
+            let paths: Vec<&str> = data.paths.iter().map(|p| p.as_str()).collect();
+            assert!(
+                paths.contains(&name.as_str()),
+                "sync {i} missed `{name}`: {paths:?}"
+            );
+            assert!(
+                paths.iter().all(|p| !p.contains(MARKER_PREFIX)),
+                "a marker reached the events: {paths:?}"
+            );
+        }
+        assert_eq!(markers_in(tempdir.path()), Vec::<String>::new());
+    }
+
+    fn markers_in(dir: &std::path::Path) -> Vec<String> {
+        let mut names: Vec<String> = fs::read_dir(dir)
+            .unwrap()
+            .map(|e| e.unwrap().file_name().into_string().unwrap())
+            .filter(|name| name.starts_with(MARKER_PREFIX))
+            .collect();
+        names.sort();
+        names
+    }
+
+    /// Markers go in the version control directory. A new watcher deletes the markers that a
+    /// stopped daemon left behind, and a sync ignores the markers of other daemons and deletes a
+    /// marker that a newer one replaced.
+    #[tokio::test]
+    async fn sync_markers_in_vcs_dir() {
+        let (root, cells, ignores, tempdir) = fixture();
+        let git = tempdir.path().join(".git");
+        fs::create_dir(&git).unwrap();
+        let stale = fs::File::create(git.join(format!("{MARKER_PREFIX}2-1"))).unwrap();
+        stale
+            .set_modified(SystemTime::now() - 2 * STALE_MARKER_AGE)
+            .unwrap();
+        let watcher = NotifyFileWatcher::new(&root, cells, ignores).unwrap();
+        assert_eq!(markers_in(&git), Vec::<String>::new());
+        assert_eq!(
+            watcher.markers.dir.as_path(),
+            root.root().as_path().join(".git")
+        );
+
+        let other = format!("{MARKER_PREFIX}1-1");
+        fs::write(git.join(&other), "").unwrap();
+        watcher.start_sync();
+        watcher.start_sync();
+        assert_eq!(markers_in(&git).len(), 2, "{:?}", markers_in(&git));
+        watcher.markers.wait().await.unwrap();
+        assert_eq!(markers_in(&git), vec![other]);
+        let data = mem::replace(
+            &mut *watcher.data.lock().unwrap(),
+            Ok(NotifyFileData::new()),
+        )
+        .unwrap();
+        assert!(data.paths.is_empty(), "{:?}", data.paths);
     }
 
     /// A sync that cannot tell which files changed surfaces the wipe the same way watchman's

@@ -44,7 +44,7 @@ use crate::stats::FileWatcherStats;
 
 /// Directories of version control systems, whose files no build reads and which can hold many
 /// files.
-const VCS_DIRS: &[&str] = &[".git", ".hg", ".jj", ".sl"];
+pub(crate) const VCS_DIRS: &[&str] = &[".git", ".hg", ".jj", ".sl"];
 
 #[derive(Debug, PartialEq, Eq)]
 enum Entry {

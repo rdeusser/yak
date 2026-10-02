@@ -26,6 +26,16 @@ differ. The crawl skips `yak-out`, the `.git`, `.hg`, `.jj`, and `.sl`
 directories, and the ignored subtrees. On macOS, the watcher also leaves
 `yak-out` out of the events it receives.
 
+The operating system delivers file system events after a delay, about 12
+milliseconds for FSEvents on macOS. At the start of each command, the default
+file watcher writes a file named `.yak-sync-<pid>-<number>` and waits for its
+event before it reports changes, so the command sees every change made before it
+started. The file goes in the `.git`, `.hg`, `.jj`, or `.sl` directory of the
+project root when one exists, and in the project root otherwise, and the watcher
+deletes it after its event arrives. If the event does not arrive within 10
+seconds, or the file cannot be written, the watcher crawls the project as it
+does after dropped events.
+
 You can see detailed information about the status of the daemon by running
 `yak status`.
 

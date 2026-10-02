@@ -22,7 +22,7 @@ To see it working, run the reproductions of those entries in `docs/exec-plans/te
 ## Progress
 
 - [x] Milestone 1 (prototype): choose how a renamed or removed directory invalidates the paths under it (2026-10-02). The snapshot design fixed the reproduction on macOS and Linux, and a no-op `yak build //gazebo/dupe:dupe` took a median of 44.0 to 45.3 ms with and without it over 3 runs of 30 builds each.
-- [ ] Milestone 2: the notify watcher waits for a sync marker before it reports changes.
+- [x] Milestone 2: the notify watcher waits for a sync marker before it reports changes (2026-10-02). `sync_marker_waits_for_earlier_changes` in `app/yak_file_watcher/src/notify.rs` fails at its first sync without the marker and passes 200 syncs with it. `sync_markers_in_vcs_dir` covers the marker's directory, other daemons' markers, and the removal of replaced and stale markers. `test_modify_genrule_notify` passed 20 runs in a row on macOS. `python3 test.py yak_file_watcher` and the tests of `tests/core/io`, `test_modify.py`, and `test_symlinks.py` pass on macOS and Linux. A no-op `yak build //gazebo/dupe:dupe` took a median of 44.4 ms against 44.1 ms before the change.
 - [x] Milestone 3: a renamed or removed directory invalidates every path under it (2026-10-02). `test_apply_rename_of_directory` and `test_apply_removal_and_replacement` in `app/yak_file_watcher/src/rescan.rs` cover the snapshot. `test_notify_rename_parent_directory` fails with the binary before the change and passes after it.
 - [ ] Milestone 4: `yak.file_watcher` selects Watchman when it is installed.
 - [ ] Milestone 5: killing the daemon stops its local actions.
@@ -39,6 +39,8 @@ To see it working, run the reproductions of those entries in `docs/exec-plans/te
 - A query that walks down from an unchanged parent sees a renamed directory, because the rename invalidates the parent's listing. A glob of `files/**/*` from the root package after `mv files other` returned no files with the binary before the fix. Only a query that starts at the old path, such as `yak targets root//files/d:`, read the stale listing.
 - Watchman reports the paths under a renamed directory. `test_watchman_rename_parent_directory` and `test_fs_hash_crawler_rename_parent_directory` pass with the binary before the change.
 - An event that names a directory can stand for a replacement of the directory by another one, which leaves a directory at the path. Comparing only whether the path was and is a directory missed the paths of both, so `Snapshot::apply` compares the whole subtree under each path that an event names.
+- FSEvents delivers the event of a marker about 12 ms after the write on macOS, so a sync that waited for its marker made a no-op build take 57 ms instead of 45 ms. `FSEventStreamFlushSync` does not shorten the wait: after a flush, the event of 1 write in 200 had arrived.
+- The loop of the tracker entry missed no change in 200 commands with the binary before the change or after it. Client startup and configuration loading usually take longer than the FSEvents delay, so the race needs a command that reaches the sync within about 12 ms of the change.
 - `IgnoreSet::from_ignore_spec` always ignores `yak-out` in the root cell (`app/yak_common/src/ignores/ignore_set.rs`), so both watchers drop its events after they arrive. Watchman still watches `yak-out` unless a `.watchmanconfig` lists it in `ignore_dirs`.
 
 ## Decision Log
@@ -48,18 +50,20 @@ To see it working, run the reproductions of those entries in `docs/exec-plans/te
 - 2026-10-02: `yak.file_watcher` defaults to `auto`, which selects Watchman when `WATCHMAN_SOCK` is set or `watchman` is on the daemon's `PATH`, and the notify watcher otherwise. An installed Watchman that fails fails the command and names `yak.file_watcher = notify` in the error. A failure of an installed Watchman would otherwise switch the project to a different watcher without a report.
 - 2026-10-02: The integration test harness sets `yak.file_watcher = notify` for every test project, so the suite runs the same watcher on every machine. The tests of `tests/core/io/` select their watcher explicitly, and milestone 4 adds tests of `auto`.
 - 2026-10-02: The notify watcher keeps its snapshot current from its events, which the prototype of milestone 1 chose over a prefix invalidation in DICE. It changes only `yak_file_watcher`, and the snapshot already held the project in memory for rescans. A failed update or crawl leaves the snapshot lost, and the next sync crawls again and clears the DICE graph, because without a snapshot the paths under a changed directory are unknown.
+- 2026-10-02: `FileWatcher::start_sync` writes the marker at the start of the command's DICE update, and `sync` waits for it after the configuration is loaded, so the FSEvents delay overlaps the configuration loading. The marker is written after the command started, which keeps the guarantee. A later `start_sync` replaces the marker and deletes its file, and a `sync` without a started marker writes its own. Milestone 9 shortens the configuration loading, so the overlap can shrink, and the measurement of milestone 9 covers the no-op build with the marker.
+- 2026-10-02: A new watcher deletes markers older than 60 seconds, which a daemon that stopped during a sync left behind. It ignores the markers of other daemons, which watch the same project from other isolation directories.
 - 2026-10-02: Milestone 3 lands before milestone 2, because the prototype of milestone 1 was its implementation.
 - 2026-10-02: Remote Execution keeps its retries for a backend that refuses connections, because they cover a backend that is restarting. A configuration without an engine or CAS address fails without retries.
 
 ## Outcomes & Retrospective
 
-Milestones 1 and 3 are done. A renamed, removed, or replaced directory invalidates the paths under it with the notify watcher.
+Milestones 1 to 3 are done. A renamed, removed, or replaced directory invalidates the paths under it with the notify watcher. Each command waits for the event of a sync marker, so it sees every change made before it started.
 
 ## Context and Orientation
 
 The file watcher tells DICE which files changed before each command. `yak_file_watcher` (`app/yak_file_watcher/src/`) holds the watchers, and `file_watcher.rs` selects one from `yak.file_watcher` (`watchman`, `notify`, or `fs_hash_crawler`, default `notify`).
 
-- `notify.rs` collects events in `NotifyFileData` and turns them into invalidations in `sync`. `sync2` takes the events that have arrived when the command starts, which is the race of milestone 2.
+- `notify.rs` collects events in `NotifyFileData` and turns them into invalidations in `sync`. `sync2` took the events that had arrived when the command started, which was the race of milestone 2.
 - On macOS, `fsevents.rs` runs an FSEvents stream of the project root that leaves out `yak-out`, with latency 0 and `kFSEventStreamCreateFlagNoDefer`. Elsewhere, `notify::recommended_watcher` watches the root recursively.
 - `rescan.rs` crawls the project into a `Snapshot` and compares two snapshots after the operating system drops events. The watcher takes the snapshot at its first sync and replaces it only after dropped events.
 - `FileChangeTracker` (`app/yak_common/src/file_ops/dice.rs`) turns a changed path into DICE invalidations. `file_added_or_removed` and `dir_added_or_removed` invalidate the path's `ReadFileKey`, `PathMetadataKey`, and `ExistsMatchingExactCaseKey`, and the listings of its parent. Nothing invalidates the keys of paths under a renamed or removed directory, so a query of `//pkg/...` after `mv pkg pkg2` reads the cached listing and build file.
@@ -86,7 +90,7 @@ The prototype implements the snapshot design behind the existing `rescan.rs` typ
 
 ### Milestone 2: sync marker
 
-1. `NotifyFileWatcher::sync2` (`app/yak_file_watcher/src/notify.rs`) creates a marker file named for the daemon's pid and a counter, waits until the event handler sees an event for it, deletes it, and then takes the events. The handler records marker events apart from other events and never invalidates them.
+1. `NotifyFileWatcher` (`app/yak_file_watcher/src/notify.rs`) creates a marker file named for the daemon's pid and a counter when the command's DICE update starts. `sync2` waits until the event handler sees an event for it, deletes it, and then takes the events. The handler records marker events apart from other events and never invalidates them.
 2. A marker that does not arrive within 10 seconds, or that cannot be written, sets `missed_events`, so the sync rescans.
 3. A unit test in `notify.rs` creates a file in a temporary project and syncs at once, 200 times, and checks that every sync reports its file. It fails before the change on macOS.
 4. `tests/core/build/test_modify.py::test_modify_genrule_notify` and the loop of the tracker entry pass without misses.

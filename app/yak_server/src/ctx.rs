@@ -681,6 +681,8 @@ impl DiceUpdater for DiceCommandUpdater<'_, '_> {
         mut ctx: DiceTransactionUpdater,
         early_timings: &mut EarlyCommandTimingBuilder,
     ) -> yak_error::Result<(DiceTransactionUpdater, UserComputationData)> {
+        let file_watcher = &self.cmd_ctx.base_context.repo().file_watcher;
+        file_watcher.start_sync();
         let existing_state = ctx.existing_state().await.clone();
         let cells_and_configs = self
             .cmd_ctx
@@ -740,13 +742,7 @@ impl DiceUpdater for DiceCommandUpdater<'_, '_> {
         )?;
 
         early_timings.start_span(FILE_WATCHER_WAIT.to_owned());
-        let (ctx, mergebase) = self
-            .cmd_ctx
-            .base_context
-            .repo()
-            .file_watcher
-            .sync(ctx)
-            .await?;
+        let (ctx, mergebase) = file_watcher.sync(ctx).await?;
         early_timings.end_known_span();
 
         let mut user_data = self.make_user_computation_data(&cells_and_configs.root_config)?;
